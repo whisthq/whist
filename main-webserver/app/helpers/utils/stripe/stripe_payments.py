@@ -21,7 +21,7 @@ def stripeChargeHourly(username):
     try:
         payload = stripe.Subscription.retrieve(subscription_id)
 
-        if os.getenv("HOURLY_PLAN_ID") == payload["items"]["data"][0]["plan"]["id"]:
+        if getEnvVar("HOURLY_PLAN_ID") == payload["items"]["data"][0]["plan"]["id"]:
             command = text(
                 """
                 SELECT *

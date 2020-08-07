@@ -20,11 +20,11 @@ def chargeHelper(token, email, code, plan):
 
     customer_id = ""
 
-    PLAN_ID = os.getenv("MONTHLY_PLAN_ID")
+    PLAN_ID = getEnvVar("MONTHLY_PLAN_ID")
     if plan == "unlimited":
-        PLAN_ID = os.getenv("UNLIMITED_PLAN_ID")
+        PLAN_ID = getEnvVar("UNLIMITED_PLAN_ID")
     elif plan == "hourly":
-        PLAN_ID = os.getenv("HOURLY_PLAN_ID")
+        PLAN_ID = getEnvVar("HOURLY_PLAN_ID")
 
     trial_end = 0
     customer_exists = False
@@ -406,9 +406,9 @@ def addProductHelper(email, productName):
 
     PLAN_ID = None
     if productName == "256disk":
-        PLAN_ID = os.getenv("SMALLDISK_PLAN_ID")
+        PLAN_ID = getEnvVar("SMALLDISK_PLAN_ID")
     elif productName == "512disk":
-        PLAN_ID = os.getenv("MEDIUMDISK_PLAN_ID")
+        PLAN_ID = getEnvVar("MEDIUMDISK_PLAN_ID")
 
     if PLAN_ID is None:
         return (
@@ -460,9 +460,9 @@ def removeProductHelper(email, productName):
 
     PLAN_ID = None
     if productName == "256disk":
-        PLAN_ID = os.getenv("SMALLDISK_PLAN_ID")
+        PLAN_ID = getEnvVar("SMALLDISK_PLAN_ID")
     elif productName == "512disk":
-        PLAN_ID = os.getenv("MEDIUMDISK_PLAN_ID")
+        PLAN_ID = getEnvVar("MEDIUMDISK_PLAN_ID")
 
     if PLAN_ID is None:
         return (
@@ -573,11 +573,11 @@ def webhookHelper(event):
 def updateHelper(username, new_plan_type):
     new_plan_id = None
     if new_plan_type == "Hourly":
-        new_plan_id = os.getenv("HOURLY_PLAN_ID")
+        new_plan_id = getEnvVar("HOURLY_PLAN_ID")
     elif new_plan_type == "Monthly":
-        new_plan_id = os.getenv("MONTHLY_PLAN_ID")
+        new_plan_id = getEnvVar("MONTHLY_PLAN_ID")
     elif new_plan_type == "Unlimited":
-        new_plan_id = os.getenv("UNLIMITED_PLAN_ID")
+        new_plan_id = getEnvVar("UNLIMITED_PLAN_ID")
     else:
         return (
             jsonify({"status": NOT_ACCEPTABLE, "error": "Invalid plan type"}),

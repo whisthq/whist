@@ -11,11 +11,11 @@ def createClients():
     ResourceManagementClient, ComputeManagementClient, NetworkManagementClient
 
    """
-    subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
+    subscription_id = getEnvVar("AZURE_SUBSCRIPTION_ID")
     credentials = ServicePrincipalCredentials(
-        client_id=os.getenv("AZURE_CLIENT_ID"),
-        secret=os.getenv("AZURE_CLIENT_SECRET"),
-        tenant=os.getenv("AZURE_TENANT_ID"),
+        client_id=getEnvVar("AZURE_CLIENT_ID"),
+        secret=getEnvVar("AZURE_CLIENT_SECRET"),
+        tenant=getEnvVar("AZURE_TENANT_ID"),
     )
     r = ResourceManagementClient(credentials, subscription_id)
     c = ComputeManagementClient(credentials, subscription_id)
@@ -162,11 +162,11 @@ def checkResourceGroup(resource_group):
         label="None",
         logs="Checking to see if {resource_group} is allowed under server type {server_type}".format(
             resource_group=resource_group,
-            server_type=str(os.getenv("SERVER_TYPE")),
+            server_type=str(getEnvVar("SERVER_TYPE")),
         ),
     )
 
-    if str(os.getenv("SERVER_TYPE")).upper() == "PRODUCTION":
+    if str(getEnvVar("SERVER_TYPE")).upper() == "PRODUCTION":
         valid_resource_group = resource_group == "Fractal"
         fractalLog(
             function="checkResourceGroup",

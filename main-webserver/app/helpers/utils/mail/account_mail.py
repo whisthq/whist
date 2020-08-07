@@ -10,7 +10,7 @@ def signupMail(username, promo_code):
             subject="Welcome to Fractal",
             html_content=render_template("on_signup.html", code=promo_code),
         )
-        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(getEnvVar("SENDGRID_API_KEY"))
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(

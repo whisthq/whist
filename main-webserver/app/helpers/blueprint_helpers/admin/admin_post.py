@@ -5,7 +5,7 @@ from app.helpers.utils.general.tokens import *
 
 
 def adminLoginHelper(username, password):
-    if username == os.getenv("DASHBOARD_USERNAME") and password == os.getenv(
+    if username == getEnvVar("DASHBOARD_USERNAME") and password == getEnvVar(
         "DASHBOARD_PASSWORD"
     ):
         access_token, refresh_token = getAccessTokens(username)
