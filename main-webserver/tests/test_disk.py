@@ -6,7 +6,7 @@ from .helpers.tests.azure_vm import *
 
 @pytest.mark.disk_serial
 def test_delete_disk_initial(input_token, admin_token):
-    if os.getenv("USE_PRODUCTION_DATABASE").upper() == "TRUE":
+    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE":
         fractalLog(
             function="test_delete_disk_initial",
             label="azure_disk/delete",
