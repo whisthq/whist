@@ -545,10 +545,10 @@ jobs:
         run: |
           if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
             echo "Proceeding with job"
-            curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses:${{github.sha}}  -d '{"state": "success", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "protocol-build-release"}'
+            curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}}  -d '{"state": "success", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "protocol-build-release"}'
           else
             echo "Killing release job because builds or tests failed"
-            curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses:${{github.sha}}  -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "protocol-build-release"}'
+            curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}}  -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "protocol-build-release"}'
             exit 1
           fi
           if ! ${{ needs.params.outputs.should_release }}; then
