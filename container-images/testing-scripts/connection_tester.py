@@ -22,7 +22,7 @@ def server():
 		data, address = test_socket.recvfrom(4096)
 		print("Recieved %d bytes from %s" % (len(data), address))
 		if len(data) > 0:
-			timeDelay = current_milli_time() - data
+			timeDelay = current_milli_time() - int(data)
 			print("Time delay is %d" % timeDelay)
 
 	print("Been doing this for 30 seconds, retiring")
@@ -32,10 +32,11 @@ def server():
 
 
 def client(dest):
-	test_socket = socket.socket(socker.AF_INET, socket.SOCK_DGRAM)
+	test_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	startTime = time.time()
-	while time.time() - startTime > 12.0:
-		test_socket.sendto(current_milli_time(), (dest, test_port))
+	while time.time() - startTime < 12.0:
+		print("Sending data...")
+		test_socket.sendto(str(current_milli_time()), (dest, test_port))
 		time.sleep(1)
 		
 
@@ -45,8 +46,9 @@ def client(dest):
 def main():
 	is_server = False
 	destination = ""
-	if (sys.argv[1] in ["client", "server"]) or sys.argv[1] == "server":
-		is_server = True
+	if (sys.argv[1] in ["client", "server"]):
+		if sys.argv[1] == "server":
+			is_server = True
 	else:
 		print("Invalid first argument " + sys.argv[1])
 
