@@ -14,18 +14,18 @@ def server():
 	# conversation_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	# conversation_socket.bind(('', conversation_port))
 
-	test_socket = socket.socket(socker.AF_INET, socket.SOCK_DGRAM)
+	test_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	test_socket.bind(('', test_port))
 	startTime = time.time()
 
-	while time.time() - startTime > 12.0:
+	while time.time() - startTime < 30.0:
 		data, address = test_socket.recvfrom(4096)
 		print("Recieved %d bytes from %s" % (len(data), address))
-		if len(data) > 0
+		if len(data) > 0:
 			timeDelay = current_milli_time() - data
 			print("Time delay is %d" % timeDelay)
 
-	print("Been doing this for 12 seconds, retiring")
+	print("Been doing this for 30 seconds, retiring")
 	test_socket.close()
 	return
 
@@ -45,7 +45,7 @@ def client(dest):
 def main():
 	is_server = False
 	destination = ""
-	if (sys.argv[1] in ["client", "server"]) || sys.argv[1] == "server":
+	if (sys.argv[1] in ["client", "server"]) or sys.argv[1] == "server":
 		is_server = True
 	else:
 		print("Invalid first argument " + sys.argv[1])
@@ -53,7 +53,7 @@ def main():
 	if not is_server:
 		try: 
 			destination = sys.argv[2]
-		except IndexError,e:
+		except IndexError:
 			print("Need to specify the IP address to conect to")
 
 
