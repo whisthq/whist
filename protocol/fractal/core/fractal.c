@@ -200,7 +200,8 @@ int runcmd(const char* cmdline, char** response) {
     }
 #else
     if (response == NULL) {
-        system(cmdline);
+        int ret = system(cmdline);
+        LOG_INFO("runcmd %s WITH STATUS %d", cmdline, ret);
         return 0;
     } else {
         FILE* p_pipe;

@@ -675,7 +675,6 @@ int SDL_main(int argc, char* argv[]) {
     if (running_ci) {
         LOG_INFO("Running in CI mode");
     }
-#endif
 
 // Windows GHA VM cannot render, it just segfaults on creating the renderer
 #if defined(_WIN32)

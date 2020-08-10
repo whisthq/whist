@@ -10,7 +10,9 @@ Call the respective functions to log a device's OS, model, CPU, RAM, etc.
 */
 
 #include "sysinfo.h"
-#ifdef __arm__
+#ifdef __ANDROID_API__
+#include "cpu-features.h"
+#elif __arm__
 #include "cpuinfo_arm.h"
 #endif
 
@@ -279,9 +281,7 @@ void print_ram_info() {
     size_t total_ram;
     size_t total_ram_usage;
     struct sysinfo info;
-    LOG_INFO("SYSINFO BEFORE");
     sysinfo(&info);
-    LOG_INFO("SYSINFO AFTER");
 
     total_ram = info.totalram;
     total_ram_usage = info.totalram - (info.freeram + info.bufferram);
@@ -318,18 +318,45 @@ void print_memory_info() {
 void cpu_id(unsigned i, unsigned regs[4]) {
 #ifdef _WIN32
     __cpuid((int*)regs, (int)i);
-#else
-#if defined(__x86_64__)
+#elif __x86_64__
     asm volatile("cpuid"
                  : "=a"(regs[0]), "=b"(regs[1]), "=c"(regs[2]), "=d"(regs[3])
                  : "a"(i), "c"(0));
     // ECX is set to zero for CPUID function 4
-#elif defined(__arm__)
-    // TODO: define ARM cpuid equivalent
-#endif
+// #elif __ANDROID_API__
+//     // android ndk implementation is slightly modified from just regular arm (below)
+
+// #elif __arm__
+//     // TODO: define ARM cpuid equivalent
+#else
+    // TODO: need a condition here to prevent blocking in PrintCPUInfo()
 #endif
 }
 
+#if defined(__ANDROID_API__) || defined(__arm__)
+void print_cpu_info() {
+    // https://github.com/google/cpu_features/tree/master/test
+    // LOG_INFO("CPU Vendor: %s", cpuVendor);
+    // LOG_INFO("CPU Type: %s", CPUBrandString);
+    // LOG_INFO("Logical Cores: %d", logical);
+    // if (strcmp(cpuVendor, "GenuineIntel") == 0) {
+    //     // Get DCP cache info
+    //     cpuID(4, regs);
+    //     cores = ((regs[0] >> 26) & 0x3f) + 1;  // EAX[31:26] + 1
+
+    // } else if (strcmp(cpuVendor, "AuthenticAMD") == 0) {
+    //     // Get NC: Number of CPU cores - 1
+    //     cpuID(0x80000008, regs);
+    //     cores = ((unsigned)(regs[2] & 0xff)) + 1;  // ECX[7:0] + 1
+    // } else {
+    //     LOG_WARNING("Unrecognized processor: %s", cpuVendor);
+    // }
+    // LOG_INFO("Physical Cores: %d", cores);
+    // LOG_INFO("HyperThreaded: %s", (hyperThreads ? "true" : "false"));
+    // LOG_INFO("  %s", cpu_usage);
+    LOG_ERROR("PrintCPUInfo NOT IMPLEMENTED");
+}
+#else
 void print_cpu_info() {
     // https://stackoverflow.com/questions/2901694/how-to-detect-the-number-of-physical-processors-cores-on-windows-mac-and-linu
     unsigned regs[4];
@@ -400,6 +427,7 @@ void print_cpu_info() {
     LOG_INFO("  %s", cpu_usage);
 #endif
 }
+#endif
 
 void print_hard_drive_info() {
     double used_space;

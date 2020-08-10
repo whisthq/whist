@@ -600,6 +600,8 @@ char *get_log_dir(void) {
 
 #ifdef _WIN32
     return dupstring(".");
+#elif __ANDROID_API__
+    return dupstring("/data/data/org.fractal.desktop");
 #else
     return append_path_to_home(".fractal");
 #endif
@@ -629,7 +631,8 @@ int log_connection_id(int connection_id) {
 #ifdef _WIN32
     path = dupstring("connection_id.txt");
 #elif __ANDROID_API__
-    path = dupstring("");
+    // path = dupstring("");
+    path = dupstring("/data/data/org.fractal.desktop/connection_id.txt");
     return 0;
 #else
     path = append_path_to_home(".fractal/connection_id.txt");
@@ -737,11 +740,16 @@ int configure_cache(void) {
             (int): 0 on success
     */
 
+#ifdef __ANDROID_API__
+    runcmd("rm -f /data/data/org.fractal.desktop/log.txt", NULL);
+    runcmd("rm -f /data/data/org.fractal.desktop/connection_id.txt", NULL);
+#else
 #ifndef _WIN32 || __ANDROID_API__
     runcmd("mkdir -p ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
     runcmd("rm -f ~/.fractal/log.txt", NULL);
     runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
+#endif
 #endif
     return 0;
 }
