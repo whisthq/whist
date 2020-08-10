@@ -308,13 +308,6 @@ int32_t SendVideo(void* opaque) {
                 LOG_INFO("Sending current frame!");
             }
 
-            if (wants_iframe) {
-		// True I-Frame is WIP
-		LOG_ERROR("NOT GUARANTEED TO BE TRUE IFRAME");
-                video_encoder_set_iframe(encoder);
-                wants_iframe = false;
-            }
-
             // transfer the screen to a buffer
             int transfer_res = 2;  // haven't tried anything yet
 #if defined(_WIN32)
@@ -331,6 +324,13 @@ int32_t SendVideo(void* opaque) {
                 // if there was a failure
                 connected = false;
                 break;
+            }
+
+            if (wants_iframe) {
+		// True I-Frame is WIP
+		LOG_ERROR("NOT GUARANTEED TO BE TRUE IFRAME");
+                video_encoder_set_iframe(encoder);
+                wants_iframe = false;
             }
 
             clock t;

@@ -687,6 +687,9 @@ void destroy_video_encoder(video_encoder_t *encoder) {
 }
 
 void video_encoder_set_iframe(video_encoder_t *encoder) {
+    if (encoder->already_encoded) {
+        return;
+    }
     encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
     encoder->sw_frame->pts +=
         encoder->pCodecCtx->gop_size - (encoder->sw_frame->pts % encoder->pCodecCtx->gop_size);
@@ -694,6 +697,9 @@ void video_encoder_set_iframe(video_encoder_t *encoder) {
 }
 
 void video_encoder_unset_iframe(video_encoder_t *encoder) {
+    if (encoder->already_encoded) {
+        return;
+    }
     encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
     encoder->sw_frame->key_frame = 0;
 }

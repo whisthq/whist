@@ -9,13 +9,14 @@ int cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder) {
 	encoder->encoded_frame_size = device->nvidia_capture_device.size;
 	encoder->is_iframe = device->nvidia_capture_device.is_iframe;
         encoder->already_encoded = true;
+	return 0;
     } else {
         encoder->already_encoded = false;
     }
 #endif
 
     static int times_measured = 0;
-    static double time_spent = 0.;
+    static double time_spent = 0.0;
 
     clock cpu_transfer_timer;
     StartTimer(&cpu_transfer_timer);
