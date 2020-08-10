@@ -104,7 +104,7 @@ jobs:
           description: 'Running proc-branch_build_release.yaml'
           state: 'pending'
           sha: ${{github.sha}}
-          target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{GITHUB_RUN_ID}}"
+          target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{github.run_id}}"
 
   build:
     name: Build on ${{ matrix.config.os }} using ${{ matrix.config.cc }}/${{ matrix.config.cxx }}
