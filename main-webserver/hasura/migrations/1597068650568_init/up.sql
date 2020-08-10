@@ -39,7 +39,6 @@ CREATE TABLE hardware.os_disks (
     rsa_private_key character varying(250),
     using_stun boolean NOT NULL,
     ssh_password character varying(50),
-    apps_id uuid DEFAULT public.uuid_generate_v4(),
     user_id integer,
     last_pinged integer,
     branch character varying(50) DEFAULT 'master'::character varying NOT NULL

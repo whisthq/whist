@@ -1,5 +1,6 @@
 version: 2
 endpoint: https://newdb-wrapper.herokuapp.com
+admin_secret: Fractalcomputers!
 metadata_directory: metadata
 actions:
   kind: synchronous
