@@ -7,14 +7,25 @@ source /utils.sh && Install-FractalService
 # Based on: http://www.richud.com/wiki/Ubuntu_Fluxbox_GUI_with_x11vnc_and_Xvfb
 
 main() {
-    log_i "Starting xvfb virtual display..."
-    launch_xvfb
-    log_i "Starting window manager..."
-    launch_window_manager
-    log_i "Starting VNC server..."
+    # log_i "Starting xvfb virtual display..."
+    # launch_xvfb
+    log_i "Starting xdummy virtual display"
+    launch_xdummy
+    #log_i "Starting window manager..."
+    #launch_window_manager
+    #log_i "Starting VNC server..."
+    log_i "Starting chrome"
     google-chrome --no-sandbox --no-first-run &
-    run_vnc_server
+    #run_vnc_server
 
+}
+
+launch_xdummy(){
+    local display_num=10
+    local config_file=/usr/share/X11/xorg.conf.d/01-dummy.conf
+    local log_file=/home/fractal/10.log
+    
+    Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile $log_file -config $config_file :$display_num
 }
 
 launch_xvfb() {

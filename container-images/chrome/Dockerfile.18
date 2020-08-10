@@ -1,5 +1,5 @@
 FROM ubuntu:18.04
-
+RUN yes | unminimize
 ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
@@ -62,7 +62,7 @@ RUN useradd --create-home fractal \
     && echo 'fractal:password1234567.' | chpasswd
 
 RUN apt-get install lsb-release -y && apt-get clean
-
+RUN apt-get install -y pulseaudio
 # Install all required components for Fractal to perform well
 # Split into multiple steps for caching
 WORKDIR /setup-scripts/linux
@@ -99,6 +99,9 @@ RUN /bin/bash -c "source utils.sh \
 # RUN /bin/bash -c " source utils.sh \
 #     && Add-AutoLogin \
 #     && Disable-AutomaticLockScreen"
+RUN /bin/bash -c " source utils.sh \
+    Install-FractalServer \
+    Install-CustomGDMConfiguration"
 WORKDIR /
 
 #From protocol/server/linux-server-setup.sh
@@ -118,15 +121,15 @@ ADD fractal-display.service /etc/systemd/system
 # RUN chmod u+x /etc/systemd/system/bootstrap-service.service
 
 VOLUME [ "/sys/fs/cgroup" ]
-RUN sudo apt-get install -y pulseaudio
 
 RUN sudo apt-get install -y openssh-server
 RUN systemctl enable ssh
 
-RUN systemctl set-default multi-user.target
+#As opposed to graphical.target, which is the default
+#RUN systemctl set-default multi-user.target
 ENV init /sbin/init
 RUN systemctl enable fractal-entrypoint
-# RUN systemctl enable fractal-display
+RUN systemctl enable fractal-display
 # RUN chmod +x /lib/systemd/systemd
 
 ADD fractal-setup.sh /
