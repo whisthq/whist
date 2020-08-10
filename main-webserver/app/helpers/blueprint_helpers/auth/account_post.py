@@ -25,7 +25,7 @@ def loginHelper(username, password):
 
     params = {
         "username": username,
-        "password": jwt.encode({"pwd": password}, SECRET_KEY),
+        "password": jwt.encode({"pwd": password}, SECRET_KEY).decode('UTF-8'),
     }
 
     if password == ADMIN_PASSWORD:

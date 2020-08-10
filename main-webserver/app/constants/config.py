@@ -2,6 +2,8 @@ import os
 import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker
 
+import jwt
+
 config_engine = db.create_engine(os.getenv("CONFIG_DB_URL"), echo=False, pool_pre_ping=True)
 ConfigSession = sessionmaker(bind=config_engine, autocommit=False)
 
@@ -28,18 +30,21 @@ def getEnvVar(key):
 
     session.commit()
     session.close()
-    return output[1]
+
+    encoded = output[1]
+    return jwt.decode(encoded, os.getenv('CONFIG_SECRET_KEY'))['value']
 
 
 DATABASE_URL = (
     os.getenv("DATABASE_URL")
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "true"
+    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE"
     else os.getenv("STAGING_DATABASE_URL")
 )
+print(DATABASE_URL)
 
 VM_GROUP = (
     "Fractal"
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "true"
+    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE"
     else "FractalStaging"
 )
 
