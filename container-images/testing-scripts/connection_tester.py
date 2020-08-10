@@ -22,7 +22,7 @@ def server():
 		data, address = test_socket.recvfrom(4096)
 		print("Recieved %d bytes from %s" % (len(data), address))
 		if len(data) > 0:
-			timeDelay = current_milli_time() - int(data)
+			timeDelay = current_milli_time() - int.from_bytes(data, byteorder='big')
 			print("Time delay is %d" % timeDelay)
 
 	print("Been doing this for 30 seconds, retiring")
@@ -36,7 +36,7 @@ def client(dest):
 	startTime = time.time()
 	while time.time() - startTime < 12.0:
 		print("Sending data...")
-		test_socket.sendto(str(current_milli_time()), (dest, test_port))
+		test_socket.sendto(current_milli_time().to_bytes(8, byteorder='big'), (dest, test_port))
 		time.sleep(1)
 		
 
