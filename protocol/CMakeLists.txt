@@ -210,7 +210,6 @@ add_subdirectory(sentry-native)
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
-include_directories(include/SDL_image)
 include_directories(sentry-native/include)
 
 

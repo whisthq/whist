@@ -96,6 +96,16 @@ jobs:
           echo "Env vars:"
           printenv
 
+      - name: Set status to in progress # You would run your tests before this using the output to set state/desc
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{secrets.GITHUB_TOKEN}}
+          context: 'protocol-build-release'
+          description: 'Running proc-branch_build_release.yaml'
+          state: 'pending'
+          sha: ${{github.sha}}
+          target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{github.run_id}}"
+
   build:
     name: Build on ${{ matrix.config.os }} using ${{ matrix.config.cc }}/${{ matrix.config.cxx }}
     needs: [params]
@@ -376,7 +386,7 @@ jobs:
           -d "{
           \"vm_name\" : \"$SERVER_VM_NAME\",
           \"resource_group\" : \"FractalProtocolCI\" }" \
-          $WEBSERVER_BASE_URL/azure_vm/start
+          $WEBSERVER_BASE_URL/vm/start
           NUM_RETRIES=0
           until [ $NUM_RETRIES -eq 5 ] || ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"; do
               (( NUM_RETRIES++ ))
@@ -517,7 +527,7 @@ jobs:
           curl -v -X POST -H "Content-Type:application/json" -H "Authorization: Bearer ${token}"  -d "{
           \"vm_name\" : \"$SERVER_VM_NAME\",
           \"resource_group\" : \"FractalProtocolCI\" }" \
-          $WEBSERVER_BASE_URL/azure_vm/deallocate
+          $WEBSERVER_BASE_URL/vm/deallocate
 
   create-release:
     name: Create release
@@ -526,20 +536,23 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_html_url: ${{ steps.create_release.outputs.html_url }}
       version_id: ${{ steps.release_info.outputs.version_id }}
     steps:
       - name: Check if all builds succeeded
         # This step was added because the job level if `needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success')`
         # was resulting in the job skipping even when the value was shown to be true when printed.
         run: |
-          if ! ${{ needs.params.outputs.should_release }}; then
-            echo "Killing release job because should_release=${{ needs.params.outputs.should_release }}"
-            exit 1
-          fi
           if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
             echo "Proceeding with job"
+            curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}}  -d '{"state": "success", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "protocol-build-release"}'
           else
             echo "Killing release job because builds or tests failed"
+            curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}}  -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "protocol-build-release"}'
+            exit 1
+          fi
+          if ! ${{ needs.params.outputs.should_release }}; then
+            echo "Killing release job because should_release=${{ needs.params.outputs.should_release }}"
             exit 1
           fi
       # TODO convert this into its own Github Action (ie. not embedded in this workflow but as its own published action)
@@ -684,3 +697,28 @@ jobs:
           asset_path: ./${{ matrix.config.client_artifact_name }}.zip
           asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.client_artifact_name }}.zip
           asset_content_type: application/zip
+
+  trigger-clientapp-builds:
+    needs: [params, build, upload-builds, test_client, create-release]
+    if: always() # See not in first step to understand why this is set to always run (which would seem incorrect since it should only run when builds succeed)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if all builds succeeded
+        # This step was added because the job level if `needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success')`
+        # was resulting in the job skipping even when the value was shown to be true when printed.
+        run: |
+          if ! ${{ needs.params.outputs.should_release }}; then
+            echo "Killing release job because should_release=${{ needs.params.outputs.should_release }}"
+            exit 1
+          fi
+          if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
+            echo "Proceeding with job"
+          else
+            echo "Killing release job because builds or tests failed"
+            exit 1
+          fi
+      - name: Trigger a client-app build for ${{ steps.release_info.outputs.version_id }}
+        run: |
+          echo "base64 encoded PROC_BRANCH_BUILD_RELEASE_ID (pipe to `base64 -d` to decode): "
+          echo "${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}" | base64
+          curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches  -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "${{ needs['create-release'].outputs.version_id }}", "should_test": "false", "should_release": "true"}}'
