@@ -95,10 +95,6 @@ jobs:
           JSON
           echo "Env vars:"
           printenv
-      - name: Set check status to pending
-        run: |
-          curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses:${{github.sha}}  -d '{"state": "pending", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID"}'
-
 
   build:
     name: Build on ${{ matrix.config.os }} using ${{ matrix.config.cc }}/${{ matrix.config.cxx }}
@@ -537,18 +533,17 @@ jobs:
         # This step was added because the job level if `needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success')`
         # was resulting in the job skipping even when the value was shown to be true when printed.
         run: |
-          if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
-            echo "Proceeding with job"
-            curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses:${{github.sha}}  -d '{"state": "success", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID"}'
-          else
-            echo "Killing release job because builds or tests failed"
-            curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses:${{github.sha}}  -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID"}'
-            exit 1
-          fi
           if ! ${{ needs.params.outputs.should_release }}; then
             echo "Killing release job because should_release=${{ needs.params.outputs.should_release }}"
             exit 1
           fi
+          if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
+            echo "Proceeding with job"
+          else
+            echo "Killing release job because builds or tests failed"
+            exit 1
+          fi
+
       # TODO convert this into its own Github Action (ie. not embedded in this workflow but as its own published action)
       # - https://docs.github.com/en/actions/creating-actions/creating-a-javascript-action
       # - https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-using-action-in-the-same-repository-as-the-workflow
