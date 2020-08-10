@@ -24,7 +24,6 @@ jobs:
 
         # NOTE: the root "ref" tag points to `master` because that is the version of the workflow that
         # we want to run (as in, that is the branch containing the specific YAML file that should be used)
-
         # TODO enable testing once it is working reliably
 
         # Pipe secrets.PROC_BRANCH_BUILD_RELEASE_ID to base64 so that the user can see it in the logs
