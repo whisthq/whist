@@ -1,17 +1,17 @@
 #include "cpucapturetransfer.h"
 
 int cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder) {
-#ifndef _WIN32
+#ifdef _WIN32
+    encoder->already_encoded = false;
+#else
     if (device->using_nvidia) {
         encoder->encoded_frame_data = device->nvidia_capture_device.frame;
 	encoder->encoded_frame_size = device->nvidia_capture_device.size;
 	encoder->is_iframe = device->nvidia_capture_device.is_iframe;
-        encoder->already_captured = true;
+        encoder->already_encoded = true;
     } else {
-        encoder->already_captured = false;
+        encoder->already_encoded = false;
     }
-#else
-    encoder->already_captured = false;
 #endif
 
     static int times_measured = 0;

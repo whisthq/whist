@@ -173,14 +173,15 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
     } else {
         encoderConfig.dwProfile      = 1;
     }
-    encoderConfig.dwFrameRateNum     = 60;
+    encoderConfig.dwFrameRateNum     = FPS;
     encoderConfig.dwFrameRateDen     = 1;
     encoderConfig.dwAvgBitRate       = bitrate;
+    LOG_INFO("BITRATE!!!!!!!!!!!!!! %d", bitrate);
     encoderConfig.dwPeakBitRate      = encoderConfig.dwAvgBitRate * 1.5;
     encoderConfig.dwGOPLength        = 99999;
-    encoderConfig.eRateControl       = NVFBC_HWENC_PARAMS_RC_VBR;
+    encoderConfig.eRateControl       = NVFBC_HWENC_PARAMS_RC_CBR;
     encoderConfig.ePresetConfig      = NVFBC_HWENC_PRESET_LOW_LATENCY_HP;
-    encoderConfig.dwQP               = 26;
+    encoderConfig.dwQP               = 18;
     encoderConfig.eInputBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
     encoderConfig.dwVBVBufferSize    = encoderConfig.dwAvgBitRate;
     encoderConfig.dwVBVInitialDelay  = encoderConfig.dwVBVBufferSize;

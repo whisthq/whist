@@ -122,6 +122,6 @@ void ReleaseScreen(CaptureDevice* device);
  */
 void DestroyCaptureDevice(CaptureDevice* device);
 
-void UpdateHardwareEncoder(CaptureDevice* device); 
+bool UpdateCaptureEncoder(CaptureDevice* device);
 
 #endif  // DXGI_CAPTURE_H

@@ -104,6 +104,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
 	device->using_nvidia = false;
     } else {
 	device->using_nvidia = true;
+    	LOG_INFO("Using Nvidia Capture SDK!");
 	return 0;
     }
 #endif
@@ -228,10 +229,12 @@ void DestroyCaptureDevice(CaptureDevice* device) {
     XCloseDisplay(device->display);
 }
 
-void UpdateHardwareEncoder(CaptureDevice* device, int bitrate, CodecType codec) {
+bool UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec) {
     if (device->using_nvidia) {
 	DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
 	CreateNvidiaCaptureDevice(&device->nvidia_capture_device, bitrate, codec);
+	return true;
     }
+    return false;
 }
 

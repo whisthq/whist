@@ -17,7 +17,7 @@ Usage
 int video_encoder_receive_packet(video_encoder_t *encoder, AVPacket *packet);
 int video_encoder_send_frame(video_encoder_t *encoder);
 
-#define GOP_SIZE 9999
+#define GOP_SIZE 99999
 #define MIN_NVENC_WIDTH 33
 #define MIN_NVENC_HEIGHT 17
 
@@ -45,7 +45,7 @@ video_encoder_t *create_nvenc_encoder(int in_width, int in_height, int out_width
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
-    encoder->already_captured = false;
+    encoder->already_encoded = false;
     encoder->frames_since_last_iframe = 0;
 
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
@@ -280,6 +280,8 @@ video_encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width, 
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
+    encoder->already_encoded = false;
+    encoder->frames_since_last_iframe = 0;
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
     enum AVPixelFormat hw_format = AV_PIX_FMT_QSV;
     enum AVPixelFormat sw_format = AV_PIX_FMT_RGB32;
@@ -464,6 +466,9 @@ video_encoder_t *create_sw_encoder(int in_width, int in_height, int out_width, i
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
+    encoder->already_encoded = false;
+    encoder->frames_since_last_iframe = 0;
+
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
     enum AVPixelFormat out_format = AV_PIX_FMT_YUV420P;
 
@@ -611,7 +616,13 @@ video_encoder_t *create_sw_encoder(int in_width, int in_height, int out_width, i
 // Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the
 // next one when the previous one doesn't work
 video_encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int out_height,
-                                      int bitrate, CodecType codec_type) {
+                                      int bitrate, CodecType codec_type, bool using_capture_encoder) {
+    if (using_capture_encoder) {
+        video_encoder_t *encoder = malloc(sizeof(video_encoder_t));
+	memset(encoder, 0, sizeof(video_encoder_t));
+	encoder->using_capture_encoder = true;
+	return encoder;
+    }
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only linux uses FFmpeg 3.4.x because of canonical system packages
@@ -649,6 +660,10 @@ void destroy_video_encoder(video_encoder_t *encoder) {
         return;
     }
 
+    if (encoder->using_capture_encoder) {
+	return;
+    }
+
     if (encoder->pCodecCtx) {
         avcodec_free_context(&encoder->pCodecCtx);
     }
@@ -684,7 +699,12 @@ void video_encoder_unset_iframe(video_encoder_t *encoder) {
 }
 
 int video_encoder_encode(video_encoder_t *encoder) {
-    if (encoder->already_captured) {
+    if (encoder->using_capture_encoder != encoder->already_encoded) {
+	LOG_ERROR("NOT VALID: USING CAPTURE ENCODE != ALREADY ENCODED!");
+	return -1;
+    }
+
+    if (encoder->already_encoded) {
 	encoder->num_packets = 1;
 	encoder->packets[0].data = encoder->encoded_frame_data;
 	encoder->packets[0].size = encoder->encoded_frame_size;

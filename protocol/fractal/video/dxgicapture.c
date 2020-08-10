@@ -460,7 +460,8 @@ void DestroyCaptureDevice(CaptureDevice* device) {
     }
 }
 
-void UpdateHardwareEncoder(CaptureDevice* device) {
+bool UpdateCaptureEncoder(CaptureDevice* device) {
     device;
+    return false;
 }
 
