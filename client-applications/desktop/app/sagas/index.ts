@@ -31,8 +31,6 @@ function* loginUser(action) {
             }
         );
 
-        console.log(json)
-
         if (json && json.verified) {
             yield put(Action.storeUsername(action.username, action.password));
             yield put(Action.storeIsUser(json.is_user));
@@ -301,7 +299,6 @@ function* getVersion() {
 
 function* restartPC(action) {
     const state = yield select();
-    console.log(state);
 
     const { json } = yield call(
         apiPost,
