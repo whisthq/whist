@@ -108,6 +108,7 @@ WORKDIR /
 RUN sudo apt-get install ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils -y
 ADD bootstrap.sh /home/fractal
 ADD entry.sh /home/fractal
+ADD display-service-envs /home/fractal
 ADD fractal-input.rules home/fractal
 
 RUN chmod +x /home/fractal/bootstrap.sh \
@@ -118,6 +119,7 @@ RUN chmod +x /home/fractal/entry.sh
 
 ADD fractal-entrypoint.service /etc/systemd/system
 ADD fractal-display.service /etc/systemd/system
+ADD fractal-protocol.service /etc/systmed/system
 # RUN chmod u+x /etc/systemd/system/bootstrap-service.service
 
 VOLUME [ "/sys/fs/cgroup" ]
@@ -130,6 +132,7 @@ RUN systemctl set-default multi-user.target
 ENV init /sbin/init
 RUN systemctl enable fractal-entrypoint
 RUN systemctl enable fractal-display
+RUN systemctl enable fractal-protocol
 # RUN chmod +x /lib/systemd/systemd
 
 ADD fractal-setup.sh /

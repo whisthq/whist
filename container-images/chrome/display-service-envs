@@ -1,0 +1,3 @@
+xorg_config_file=/usr/share/X11/xorg.conf.d/01-dummy.conf
+display_num=10
+xorg_log_file=/home/fractal/10.log
