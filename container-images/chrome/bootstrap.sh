@@ -25,7 +25,8 @@ launch_xdummy(){
     local config_file=/usr/share/X11/xorg.conf.d/01-dummy.conf
     local log_file=/home/fractal/10.log
     
-    Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile $log_file -config $config_file :$display_num
+    Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile $log_file -config $config_file :$display_num &
+    export DISPLAY=$display_num
 }
 
 launch_xvfb() {
