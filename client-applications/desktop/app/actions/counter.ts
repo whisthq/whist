@@ -51,10 +51,11 @@ export function googleLogin(code: any) {
     };
 }
 
-export function storeUsername(username: null) {
+export function storeUsername(username: null, password: null) {
     return {
         type: STORE_USERNAME,
-        username
+        username,
+        password
     };
 }
 
@@ -298,3 +299,4 @@ export function setVersion(versions: any) {
         versions
     };
 }
+

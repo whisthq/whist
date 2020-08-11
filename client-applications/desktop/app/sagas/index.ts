@@ -22,7 +22,7 @@ function* refreshAccess(action) {
 
 function* loginUser(action) {
     if (action.username !== "" && action.password !== "") {
-        const { json, response } = yield call(
+        const { json } = yield call(
             apiPost,
             `${config.url.PRIMARY_SERVER}/account/login`,
             {
@@ -32,7 +32,7 @@ function* loginUser(action) {
         );
 
         if (json && json.verified) {
-            yield put(Action.storeUsername(action.username));
+            yield put(Action.storeUsername(action.username, action.password));
             yield put(Action.storeIsUser(json.is_user));
             yield put(Action.storeJWT(json.access_token, json.refresh_token));
             yield put(Action.fetchDisk(action.username));
@@ -119,7 +119,7 @@ function* fetchDisk(action) {
         state.counter.access_token
     );
 
-    if (json && json.status && json.status === 401) {
+    if (response.status === 401 || response.status === 422) {
         yield call(refreshAccess);
         yield call(fetchDisk, action);
     }
@@ -139,32 +139,6 @@ function* fetchDisk(action) {
     yield put(Action.fetchDiskStatus(true));
 }
 
-function* loginStudio(action) {
-    const { json, response } = yield call(
-        apiPost,
-        `${config.url.PRIMARY_SERVER}/account/login`,
-        {
-            username: action.username,
-            password: action.password
-        },
-        state.counter.access_token
-    );
-
-    if (json && json.status && json.status === 401) {
-        yield call(refreshAccess);
-        yield call(loginStudio, action);
-    }
-
-    if (json && json.verified) {
-        yield put(Action.storeUsername(action.username));
-        yield put(Action.storeIsUser(json.is_user));
-        yield put(Action.storeIP(""));
-        history.push("/studios");
-    } else {
-        yield put(Action.loginFailed(true));
-    }
-}
-
 function* sendFeedback(action) {
     const state = yield select();
     const { json } = yield call(
@@ -178,7 +152,7 @@ function* sendFeedback(action) {
         state.counter.access_token
     );
 
-    if (json && json.status && json.status === 401) {
+    if (response.status === 401 || response.status === 422) {
         yield call(refreshAccess);
         yield call(sendFeedback, action);
     }
@@ -210,7 +184,7 @@ function* storeIPInfo(action) {
         state.counter.access_token
     );
 
-    if (json && json.status && json.status === 401) {
+    if (response.status === 401 || response.status === 422) {
         yield call(refreshAccess);
         yield call(pingIPInfo, action);
     }
@@ -235,25 +209,6 @@ function* storeIPInfo(action) {
     }
 }
 
-function* fetchComputers(action) {
-    const state = yield select();
-    const { json, response } = yield call(
-        apiPost,
-        `${config.url.PRIMARY_SERVER}/account/fetchComputers`,
-        {
-            username: state.counter.username
-        },
-        state.counter.access_token
-    );
-
-    if (json && json.status && json.status === 401) {
-        yield call(refreshAccess);
-        yield call(fetchComputers, action);
-    }
-
-    yield put(Action.storeComputers(json.computers));
-}
-
 function* attachDisk(action) {
     const state = yield select();
     const { json, response } = yield call(
@@ -263,10 +218,10 @@ function* attachDisk(action) {
             disk_name: state.counter.disk,
             resource_group: config.azure.RESOURCE_GROUP
         },
-        state.counter.access_token
+        state.counter.access_token,
     );
 
-    if (json && json.status && json.status === 401) {
+    if (response.status === 401 || response.status === 422) {
         yield call(refreshAccess);
         yield call(attachDisk, action);
     }
@@ -344,7 +299,6 @@ function* getVersion() {
 
 function* restartPC(action) {
     const state = yield select();
-    console.log(state);
 
     const { json } = yield call(
         apiPost,
@@ -410,10 +364,8 @@ export default function* rootSaga() {
         takeEvery(Action.SEND_FEEDBACK, sendFeedback),
         takeEvery(Action.LOGIN_USER, loginUser),
         takeEvery(Action.GOOGLE_LOGIN, googleLogin),
-        takeEvery(Action.LOGIN_STUDIO, loginStudio),
         takeEvery(Action.PING_IPINFO, pingIPInfo),
         takeEvery(Action.STORE_IPINFO, storeIPInfo),
-        takeEvery(Action.FETCH_COMPUTERS, fetchComputers),
         takeEvery(Action.FETCH_DISK, fetchDisk),
         takeEvery(Action.ATTACH_DISK, attachDisk),
         takeEvery(Action.FETCH_VM, fetchVM),
