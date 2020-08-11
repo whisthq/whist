@@ -200,8 +200,7 @@ int runcmd(const char* cmdline, char** response) {
     }
 #else
     if (response == NULL) {
-        int ret = system(cmdline);
-        LOG_INFO("runcmd %s WITH STATUS %d", cmdline, ret);
+        system(cmdline);
         return 0;
     } else {
         FILE* p_pipe;
@@ -260,8 +259,6 @@ int runcmd(const char* cmdline, char** response) {
 
         *response = db->buf;
         free(db);
-
-        LOG_INFO("runcmd response %s", *response);
 
         /* Close pipe and print return value of pPipe. */
         if (feof(p_pipe)) {
