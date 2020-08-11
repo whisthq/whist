@@ -7,12 +7,12 @@ CREATE TABLE devops.alembic_version (
 );
 CREATE TABLE devops.release_groups (
     release_stage integer NOT NULL,
-    branch character varying(50) NOT NULL
+    branch character varying(250) NOT NULL
 );
 CREATE TABLE hardware.apps_to_install (
     disk_id character varying(250) NOT NULL,
     user_id character varying(250) NOT NULL,
-    app_id character varying(50) NOT NULL
+    app_id character varying(250) NOT NULL
 );
 CREATE TABLE hardware.install_commands (
     install_command_id integer NOT NULL,
@@ -30,32 +30,32 @@ ALTER TABLE hardware.install_commands ALTER COLUMN install_command_id ADD GENERA
 );
 CREATE TABLE hardware.os_disks (
     disk_id character varying(250) NOT NULL,
-    location character varying(50) NOT NULL,
-    os character varying(50) NOT NULL,
+    location character varying(250) NOT NULL,
+    os character varying(250) NOT NULL,
     disk_size integer NOT NULL,
     allow_autoupdate boolean NOT NULL,
     has_dedicated_vm boolean NOT NULL,
-    version character varying(50),
+    version character varying(250),
     rsa_private_key character varying(250),
     using_stun boolean NOT NULL,
-    ssh_password character varying(50),
+    ssh_password character varying(250),
     user_id integer,
     last_pinged integer,
-    branch character varying(50) DEFAULT 'master'::character varying NOT NULL
+    branch character varying(250) DEFAULT 'master'::character varying NOT NULL
 );
 CREATE TABLE hardware.secondary_disks (
     disk_id character varying(250) NOT NULL,
     user_id character varying(250) NOT NULL,
-    os character varying(50) NOT NULL,
+    os character varying(250) NOT NULL,
     disk_size integer NOT NULL,
-    location character varying(50) NOT NULL
+    location character varying(250) NOT NULL
 );
 CREATE TABLE hardware.user_vms (
     vm_id character varying(250) NOT NULL,
-    ip character varying(50) NOT NULL,
-    location character varying(50) NOT NULL,
-    os character varying(50) NOT NULL,
-    state character varying(50) NOT NULL,
+    ip character varying(250) NOT NULL,
+    location character varying(250) NOT NULL,
+    os character varying(250) NOT NULL,
+    state character varying(250) NOT NULL,
     lock boolean NOT NULL,
     user_id integer,
     temporary_lock integer
@@ -79,10 +79,10 @@ CREATE TABLE logs.monitor_logs (
 CREATE TABLE logs.protocol_logs (
     user_id character varying(250),
     server_logs character varying(250),
-    connection_id character varying(50) NOT NULL,
+    connection_id character varying(250) NOT NULL,
     bookmarked boolean NOT NULL,
     "timestamp" integer,
-    version character varying(50),
+    version character varying(250),
     client_logs character varying(250)
 );
 CREATE TABLE public.users (
@@ -94,7 +94,7 @@ CREATE TABLE public.users (
     stripe_customer_id character varying(250),
     created_timestamp integer,
     reason_for_signup text,
-    referral_code character varying(50),
+    referral_code character varying(250),
     credits_outstanding integer DEFAULT 0,
     using_google_login boolean DEFAULT false
 );
@@ -110,7 +110,7 @@ CREATE TABLE sales.main_newsletter (
     user_id character varying(250) NOT NULL
 );
 CREATE TABLE sales.stripe_products (
-    stripe_product_id character varying(50) NOT NULL,
+    stripe_product_id character varying(250) NOT NULL,
     product_name character varying(250) NOT NULL
 );
 ALTER TABLE ONLY hardware.apps_to_install
