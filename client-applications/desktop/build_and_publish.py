@@ -236,7 +236,6 @@ if __name__ == "__main__":
     # Step: Protocol
     # #####
     shutil.rmtree(protocol_dir, ignore_errors=True)
-    shutil.mkdir()
     print(f"Unpacking '{protocol}' to '{protocol_dir}'")
     shutil.unpack_archive(protocol, protocol_dir)
     cleanup_list.append(protocol_dir)
