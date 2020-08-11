@@ -1,7 +1,5 @@
 from app import *
 from app.helpers.utils.mail.stripe_mail import *
-from app.helpers.utils.general.logs import *
-import logging
 from pyzipcode import ZipCodeDatabase
 from app.constants.tax_rates import *
 

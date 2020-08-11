@@ -6,6 +6,7 @@
 !app/
 !tests/
 !migrations/
+!secrets/
 !*.py
 !stem-cell.sh
 **/.DS_Store

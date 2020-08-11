@@ -179,7 +179,7 @@ def fractalVMStart(
     resource_group=os.getenv("VM_GROUP"),
     s=None,
 ):
-    """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary 
+    """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary
     (big brain thoughts from Ming)
 
     Args:

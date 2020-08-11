@@ -10,11 +10,11 @@ def lockVMAndUpdate(
     Args:
         vm_name (str): Name of VM
         state (str): Desired state of VM
-            [RUNNING_AVAILABLE, RUNNING_UNAVAILABLE, DEALLOCATED, DEALLOCATING, STOPPED, STOPPING, 
+            [RUNNING_AVAILABLE, RUNNING_UNAVAILABLE, DEALLOCATED, DEALLOCATING, STOPPED, STOPPING,
             DELETING, CREATING, RESTARTING, STARTING]
         lock (bool): True if VM is locked, False otherwise
         temporary_lock (int): Number of minutes, starting from now, to lock the VM (max is 10)
-         
+
 
     Returns:
         int: 1 = vm is unlocked, -1 = giving up
