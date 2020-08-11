@@ -126,7 +126,7 @@ RUN sudo apt-get install -y openssh-server
 RUN systemctl enable ssh
 
 #As opposed to graphical.target, which is the default
-#RUN systemctl set-default multi-user.target
+RUN systemctl set-default multi-user.target
 ENV init /sbin/init
 RUN systemctl enable fractal-entrypoint
 RUN systemctl enable fractal-display
