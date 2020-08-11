@@ -224,7 +224,7 @@ if __name__ == "__main__":
 
     desktop_dir = Path(args.src_dir)
     protocol_packages_dir = Path(args.protocol_packages_dir)
-    protocol_dir = (desktop_dir / "protocol-build").resolve()
+    protocol_dir = (desktop_dir / "protocol-build" / "desktop").resolve()
     protocol_dir.mkdir(parents=True, exist_ok=True)
 
     cleanup_list = []

@@ -16,7 +16,7 @@ on:
         default: "noupdates"
         required: false
       version_id:
-        description: version identifier to set for this build !! TODO come up with a versioning strategy
+        description: version identifier to set for this build, in the form "year.month.day-extra_info"
         required: true
       should_test:
         # TODO: see the note above "test_predicate" for why this only works with running all tests or
