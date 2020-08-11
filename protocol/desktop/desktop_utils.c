@@ -631,7 +631,6 @@ int log_connection_id(int connection_id) {
 #ifdef _WIN32
     path = dupstring("connection_id.txt");
 #elif __ANDROID_API__
-    // path = dupstring("");
     path = dupstring("/data/data/org.fractal.desktop/connection_id.txt");
     return 0;
 #else

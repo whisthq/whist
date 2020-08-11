@@ -501,9 +501,9 @@ int receive_packets(void* opaque) {
                 case PACKET_AUDIO:
                     // Audio packet
                     start_timer(&audio_timer);
-#ifndef __ANDROID_API__
+// #ifndef __ANDROID_API__
                     receive_audio(packet);
-#endif                    
+// #endif                    
                     audio_time += get_timer(audio_timer);
                     max_audio_time = max(max_audio_time, get_timer(audio_timer));
                     break;
@@ -756,9 +756,9 @@ int SDL_main(int argc, char* argv[]) {
 
         // Initialize audio and variables
         is_timing_latency = false;
-#ifndef __ANDROID_API__
+// #ifndef __ANDROID_API__
         init_audio();
-#endif
+// #endif
 
         // Create thread to receive all packets and handle them as needed
         run_receive_packets = true;
