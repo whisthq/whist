@@ -135,16 +135,16 @@ def prep_linux(protocol_dir: Path) -> None:
 def prep_windows(protocol_dir: Path) -> None:
     rcedit_path = desktop_dir / "rcedit-x64.exe"
     cleanup_list.append(rcedit_path)
-    if not rcedit_path.exists():
-        rcedit_version = "v1.1.1"
-        print(f"Downloading rcedit-x64.exe {rcedit_version}")
-        with requests.get(
-            f"https://github.com/electron/rcedit/releases/download/{rcedit_version}/rcedit-x64.exe",
-            stream=True,
-        ) as r:
-            r.raise_for_status()
-            with open(rcedit_path, 'wb') as f:
-                shutil.copyfileobj(r.raw, f)
+    # if not rcedit_path.exists():
+    rcedit_version = "v1.1.1"
+    print(f"Downloading rcedit-x64.exe {rcedit_version}")
+    with requests.get(
+        f"https://github.com/electron/rcedit/releases/download/{rcedit_version}/rcedit-x64.exe",
+        stream=True,
+    ) as r:
+        r.raise_for_status()
+        with open(rcedit_path, 'wb') as f:
+            shutil.copyfileobj(r.raw, f)
     rcedit_cmd = [
         str(rcedit_path),
         str(protocol_dir / "FractalClient.exe"),
