@@ -20,7 +20,8 @@ RUN apt-get update \
             build-essential \
             libssl-dev \
             libffi-dev \
-            python-dev
+            python-dev \
+            libpq-dev
 
 # Install python requirements
 COPY requirements.txt ./

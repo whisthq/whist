@@ -171,6 +171,7 @@ def fractalSQLInsert(table_name, params, unique_keys=None):
     )
 
     command = text(command)
+    print(command)
     return fractalRunSQL(command, params)
 
 
