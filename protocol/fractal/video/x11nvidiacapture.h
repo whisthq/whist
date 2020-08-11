@@ -10,6 +10,9 @@ typedef struct NvidiaCaptureDevice {
     void *frame;
     unsigned int size;
     bool is_iframe;
+    int width;
+    int height;
+    CodecType codec_type;
 } NvidiaCaptureDevice;
 
 int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecType codec);

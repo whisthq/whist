@@ -34,8 +34,10 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
 
     NVFBC_HWENC_CODEC codec;
     if (requested_codec == CODEC_TYPE_H265) {
+        device->codec_type = CODEC_TYPE_H265;
         codec = NVFBC_HWENC_CODEC_HEVC;
     } else {
+        device->codec_type = CODEC_TYPE_H264;
         codec = NVFBC_HWENC_CODEC_H264;
     }
 
@@ -176,7 +178,6 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
     encoderConfig.dwFrameRateNum     = FPS;
     encoderConfig.dwFrameRateDen     = 1;
     encoderConfig.dwAvgBitRate       = bitrate;
-    LOG_INFO("BITRATE!!!!!!!!!!!!!! %d", bitrate);
     encoderConfig.dwPeakBitRate      = encoderConfig.dwAvgBitRate * 1.5;
     encoderConfig.dwGOPLength        = 99999;
     encoderConfig.eRateControl       = NVFBC_HWENC_PARAMS_RC_CBR;
@@ -294,6 +295,9 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
     device->is_iframe = encFrameInfo.bIsIFrame;
     printf("New %dx%d frame id %u size %u%s%s grabbed and saved in %llu ms\n",
            frameInfo.dwWidth, frameInfo.dwHeight, frameInfo.dwCurrentFrame, device->size, encFrameInfo.bIsIFrame ? " (i-frame)" : "", frameInfo.bIsNewFrame ? " (new frame)" : "", (unsigned long long) (t2 - t1));
+
+    device->width = frameInfo.dwWidth;
+    device->height = frameInfo.dwHeight;
 
     return 0;
 }

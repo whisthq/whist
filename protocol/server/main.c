@@ -435,8 +435,8 @@ int32_t SendVideo(void* opaque) {
                     // Create frame struct with compressed frame data and
                     // metadata
                     Frame* frame = (Frame*)buf;
-                    frame->width = encoder->pCodecCtx->width;
-                    frame->height = encoder->pCodecCtx->height;
+                    frame->width = encoder->out_width;
+                    frame->height = encoder->out_height;
                     frame->codec_type = encoder->codec_type;
 
                     frame->size = encoder->encoded_frame_size;
