@@ -102,6 +102,14 @@ else()
     endif()
 endif()
 
+#download latest sentry release
+MESSAGE(STATUS "Downloading sentry-native from GitHub")
+execute_process(COMMAND python get_latest_sentry.py
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        RESULT_VARIABLE download_res)
+if (NOT ${download_res} EQUAL "0")
+    message(FATAL_ERROR "Failed to sentry-native from GitHub: exitcode: ${download_res}")
+endif()
 
 # FFmpeg: using our provided libs on mac and windows and system on linux.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
