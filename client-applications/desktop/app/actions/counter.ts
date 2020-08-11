@@ -35,7 +35,6 @@ export const UPDATE_FOUND = "UPDATE_FOUND";
 export const READY_TO_CONNECT = "READY_TO_CONNECT";
 export const GET_VERSION = "GET_VERSION";
 export const SET_VERSION = "SET_VERSION";
-export const GOOGLE_LOGIN = "GOOGLE_LOGIN";
 
 export function loginUser(username: any, password: any) {
     return {
@@ -52,10 +51,11 @@ export function googleLogin(code: any) {
     };
 }
 
-export function storeUsername(username: null) {
+export function storeUsername(username: null, password: null) {
     return {
         type: STORE_USERNAME,
-        username
+        username,
+        password
     };
 }
 
@@ -297,13 +297,6 @@ export function setVersion(versions: any) {
     return {
         type: SET_VERSION,
         versions
-    };
-}
-
-export function googleLogin(code: any) {
-    return {
-        type: GOOGLE_LOGIN,
-        code
     };
 }
 
