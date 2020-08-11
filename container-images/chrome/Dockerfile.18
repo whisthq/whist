@@ -2,7 +2,7 @@ FROM ubuntu:18.04
 RUN yes | unminimize
 ENV container docker
 ENV LC_ALL C
-ENV DEBIAN_FRONTEND noninteractive
+# ENV DEBIAN_FRONTEND noninteractive
 
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
@@ -94,11 +94,11 @@ RUN /bin/bash -c "source utils.sh \
 RUN /bin/bash -c "source utils.sh \
     && Install-Unison \
     && Enable-SSHKey"
-# RUN /bin/bash -c " source utils.sh \
-#     && Disable-Shutdown"
-# RUN /bin/bash -c " source utils.sh \
-#     && Add-AutoLogin \
-#     && Disable-AutomaticLockScreen"
+RUN /bin/bash -c " source utils.sh \
+    && Disable-Shutdown"
+RUN /bin/bash -c " source utils.sh \
+    && Add-AutoLogin \
+    && Disable-AutomaticLockScreen"
 RUN /bin/bash -c " source utils.sh \
     Install-FractalServer \
     Install-CustomGDMConfiguration"
@@ -119,7 +119,7 @@ RUN chmod +x /home/fractal/entry.sh
 
 ADD fractal-entrypoint.service /etc/systemd/system
 ADD fractal-display.service /etc/systemd/system
-ADD fractal-protocol.service /etc/systmed/system
+ADD fractal-protocol.service /etc/systemd/system
 # RUN chmod u+x /etc/systemd/system/bootstrap-service.service
 
 VOLUME [ "/sys/fs/cgroup" ]
@@ -128,7 +128,7 @@ RUN sudo apt-get install -y openssh-server
 RUN systemctl enable ssh
 
 #As opposed to graphical.target, which is the default
-RUN systemctl set-default multi-user.target
+#RUN systemctl set-default multi-user.target
 ENV init /sbin/init
 RUN systemctl enable fractal-entrypoint
 RUN systemctl enable fractal-display
