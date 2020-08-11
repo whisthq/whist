@@ -11,4 +11,9 @@ rm /var/run/nologin
 sudo rm /etc/udev/rules.d/90-fractal-input.rules
 sudo ln -s /home/fractal/fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
 # echo "Entry.sh handing off to bootstrap.sh" 
-source /setup-scripts/linux/utils.sh && Install-FractalService
+
+#This from setup-scripts install fractal service
+echo "Start Pam Systemd Process for User fractal"
+export FRACTAL_UID=`id -u fractal`
+sudo install -d -o fractal /run/user/$FRACTAL_UID
+sudo systemctl start user@$FRACTAL_UID
