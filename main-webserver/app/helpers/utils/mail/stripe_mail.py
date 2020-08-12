@@ -3,7 +3,11 @@ from app.helpers.utils.general.logs import *
 
 
 def chargeFailedMail(username, custId):
-    sendInfo(ID, "Sending charge failed email to {}".format(username))
+    fractalLog(
+        function="chargeFailedMail",
+        label=username,
+        logs="Sending charge failed email to {}".format(username),
+    )
     try:
         message = SendGridMail(
             from_email="noreply@fractalcomputers.com",
@@ -11,10 +15,15 @@ def chargeFailedMail(username, custId):
             subject="Your Payment is Overdue",
             html_content=render_template("charge_failed.html"),
         )
-        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
     except Exception as e:
-        sendError(ID, "Mail send failed: Error code " + e.message)
+        fractalLog(
+            function="chargeFailedMail",
+            label=username,
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
+        )
 
     message = SendGridMail(
         from_email="noreply@fractalcomputers.com",
@@ -23,11 +32,20 @@ def chargeFailedMail(username, custId):
         html_content="<div>The charge has failed for account " + custId + "</div>",
     )
     try:
-        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
-        sendInfo(ID, "Sent charge failed email to support")
+        fractalLog(
+            function="chargeFailedMail",
+            label=username,
+            logs="Sent charge failed email to support",
+        )
     except Exception as e:
-        sendError(ID, "Mail send failed: Error code " + e.message)
+        fractalLog(
+            function="chargeFailedMail",
+            label=username,
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
+        )
 
 
 def chargeSuccessMail(username, custId):
@@ -38,7 +56,7 @@ def chargeSuccessMail(username, custId):
         html_content="<div>The charge has succeeded for account " + custId + "</div>",
     )
     try:
-        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
         fractalLog(
             function="chargeSuccessMail",
@@ -67,7 +85,7 @@ def trialEndingMail(user):
         html_content=render_template("trial_ending.html"),
     )
     try:
-        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
         fractalLog(
             function="trialEndingMail",
@@ -91,7 +109,7 @@ def trialEndedMail(username):
         html_content=render_template("trial_ended.html"),
     )
     try:
-        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
         fractalLog(
             function="trialEndedMail",
@@ -124,7 +142,7 @@ def creditAppliedMail(username):
     )
 
     try:
-        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(internal_message)
         fractalLog(
             function="creditAppliedMail",
@@ -151,7 +169,7 @@ def planChangeMail(username, newPlan):
         html_content=render_template("plan_changed.html", plan=newPlan),
     )
     try:
-        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
         fractalLog(
             function="planChangeMail",

@@ -66,7 +66,7 @@ def hooks(**kwargs):
 
     # Endpoint for stripe webhooks
     sigHeader = request.headers["Stripe-Signature"]
-    endpointSecret = os.getenv("ENDPOINT_SECRET")
+    endpointSecret = ENDPOINT_SECRET
     event = None
 
     try:

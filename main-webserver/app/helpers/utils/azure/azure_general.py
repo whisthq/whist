@@ -11,11 +11,11 @@ def createClients():
     ResourceManagementClient, ComputeManagementClient, NetworkManagementClient
 
    """
-    subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
+    subscription_id = AZURE_SUBSCRIPTION_ID
     credentials = ServicePrincipalCredentials(
-        client_id=os.getenv("AZURE_CLIENT_ID"),
-        secret=os.getenv("AZURE_CLIENT_SECRET"),
-        tenant=os.getenv("AZURE_TENANT_ID"),
+        client_id=AZURE_CLIENT_ID,
+        secret=AZURE_CLIENT_SECRET,
+        tenant=AZURE_TENANT_ID,
     )
     r = ResourceManagementClient(credentials, subscription_id)
     c = ComputeManagementClient(credentials, subscription_id)
@@ -59,7 +59,7 @@ def createDiskName():
     return disk_name
 
 
-def createVMInstance(vm_name, resource_group=os.getenv("VM_GROUP")):
+def createVMInstance(vm_name, resource_group=VM_GROUP):
     """Retrieves information about the model view or the instance view of an Azure virtual machine
 
     Parameters:
@@ -85,7 +85,7 @@ def createVMInstance(vm_name, resource_group=os.getenv("VM_GROUP")):
         return None
 
 
-def getVMIP(vm_name, resource_group=os.getenv("VM_GROUP")):
+def getVMIP(vm_name, resource_group=VM_GROUP):
     """Gets the IP address for a vm
 
     Args:
@@ -136,7 +136,7 @@ def resourceGroupToTable(resource_group):
         return None
 
 
-def getVMUser(vm_name, resource_group=os.getenv("VM_GROUP")):
+def getVMUser(vm_name, resource_group=VM_GROUP):
     output = fractalSQLSelect(
         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
     )
@@ -160,19 +160,19 @@ def checkResourceGroup(resource_group):
     fractalLog(
         function="checkResourceGroup",
         label="None",
-        logs="Checking to see if {resource_group} is allowed under production database {use_production_database}".format(
+        logs="Checking to see if {resource_group} is allowed where USE_PRODUCTION_KEYS is {server_type}".format(
             resource_group=resource_group,
-            use_production_database=str(os.getenv("USE_PRODUCTION_DATABASE")),
+            server_type=str(os.getenv("USE_PRODUCTION_KEYS")),
         ),
     )
 
-    if str(os.getenv("USE_PRODUCTION_DATABASE")).upper() == "TRUE":
-        valid_resource_group = resource_group == os.getenv("VM_GROUP")
+    if str(os.getenv("USE_PRODUCTION_KEYS")).upper() == "true":
+        valid_resource_group = resource_group == "Fractal"
         fractalLog(
             function="checkResourceGroup",
             label="None",
             logs="The production resource group is {resource_group}, valid resource group is {valid_resource_group}".format(
-                resource_group=os.getenv("VM_GROUP"),
+                resource_group=VM_GROUP,
                 valid_resource_group=str(valid_resource_group),
             ),
         )

@@ -18,7 +18,7 @@ def azure_vm_restart(**kwargs):
     # Restarts an Azure VM
 
     vm_name = kwargs["body"]["vm_name"]
-    resource_group = os.getenv("VM_GROUP")
+    resource_group = VM_GROUP
     if "resource_group" in kwargs["body"].keys():
         resource_group = kwargs["body"]["resource_group"]
 
@@ -79,7 +79,7 @@ def azure_vm_post(action, **kwargs):
         # Starts an Azure VM
 
         vm_name = kwargs["body"]["vm_name"]
-        resource_group = os.getenv("VM_GROUP")
+        resource_group = VM_GROUP
         if "resource_group" in kwargs["body"].keys():
             resource_group = kwargs["body"]["resource_group"]
 
@@ -107,7 +107,7 @@ def azure_vm_post(action, **kwargs):
         # Deallocates an Azure VM
 
         vm_name = kwargs["body"]["vm_name"]
-        resource_group = os.getenv("VM_GROUP")
+        resource_group = VM_GROUP
         if "resource_group" in kwargs["body"].keys():
             resource_group = kwargs["body"]["resource_group"]
 

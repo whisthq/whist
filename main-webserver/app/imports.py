@@ -50,9 +50,6 @@ from msrest.exceptions import ClientException
 from google_auth_oauthlib.flow import Flow
 import pandas as pd
 
-from .constants.http_codes import *
-from .constants.resources import *
-
 load_dotenv()
 
 from .constants.http_codes import *

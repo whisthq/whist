@@ -5,7 +5,7 @@ from app.helpers.utils.azure.azure_helpers.azure_resource_state_management_helpe
 
 
 def sendVMStartCommand(
-    vm_name, needs_restart, needs_winlogon, resource_group=os.getenv("VM_GROUP"), s=None
+    vm_name, needs_restart, needs_winlogon, resource_group=VM_GROUP, s=None
 ):
     """Starts a VM
 
@@ -176,7 +176,7 @@ def fractalVMStart(
     vm_name,
     needs_restart=False,
     needs_winlogon=True,
-    resource_group=os.getenv("VM_GROUP"),
+    resource_group=VM_GROUP,
     s=None,
 ):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary
