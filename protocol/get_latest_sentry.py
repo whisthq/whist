@@ -14,7 +14,7 @@ try:
 except:
     print("Failed to download sentry.")
     print("Headers: ", response.headers)
-    print("Response: ", response.json)
+    print("Response: ", response.json())
 
 with ZipFile('sentry-native.zip', 'r') as zipObj:
     # Extract all the contents of zip file in current directory
