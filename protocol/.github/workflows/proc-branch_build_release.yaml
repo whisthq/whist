@@ -153,8 +153,10 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name: Install Python requests (for sentry download)
-        run: pip3 install requests
+      - name: Get latest sentry
+        run: |
+          pip3 install requests
+          python3 ${{ github.workspace }}/get_latest_sentry.py ${{secrets.GITHUB_TOKEN}}
 
       - name: Install CUDA for windows
         if: runner.os == 'Windows'
