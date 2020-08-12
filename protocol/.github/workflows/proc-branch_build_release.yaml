@@ -117,6 +117,7 @@ jobs:
           - os: windows-latest
             client_artifact_name: "Windows-64bit_client"
             client_artifact_relpath: "/desktop/build64/Windows"
+            client_name: "/FractalClient.exe"
             server_artifact_name: "Windows-64bit_server"
             server_artifact_relpath: "/server/build64"
             cc: "cl"
@@ -126,11 +127,13 @@ jobs:
           - os: ubuntu-latest
             client_artifact_name: "Linux-64bit_client"
             client_artifact_relpath: "/desktop/build64/Linux"
+            client_name: "/FractalClient"
             cc: "gcc"
             cxx: "g++"
           - os: macos-latest
             client_artifact_name: "macOS-64bit_client"
             client_artifact_relpath: "/desktop/build64/Darwin"
+            client_name: "/FractalClient"
             cc: "clang"
             cxx: "clang++"
 
@@ -343,6 +346,17 @@ jobs:
           endif()
 
           execute_process(COMMAND ccache -s)
+
+      - name: Setup Sentry CLI
+        uses: mathrix-education/setup-sentry-cli@0.1.0
+        with:
+          token: ${{ secrets.SENTRY_AUTH_TOKEN }} # from GitHub secrets
+          organization: Fractal
+          project: protocol
+
+      - name: upload debug information to sentry
+        run: |
+            sentry-cli upload-dif -o Fractal -p protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
 
       - name: Upload server artifact (if requested on this platform)
         if: matrix.config.server_artifact_name
