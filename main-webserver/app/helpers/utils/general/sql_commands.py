@@ -4,6 +4,8 @@ from app.helpers.utils.general.logs import *
 from app.models.public import *
 from app.models.hardware import *
 from app.models.devops import *
+from app.models.logs import *
+from app.models.sales import *
 
 
 engine = db.create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
