@@ -153,6 +153,10 @@ jobs:
         with:
           python-version: '3.8'
 
+      - name: Install Pytho requests (for sentry download)
+          uses: actions/setup-python@v2
+          run: pip3 install requests
+
       - name: Install CUDA for windows
         if: runner.os == 'Windows'
         env:
