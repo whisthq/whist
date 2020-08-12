@@ -6,11 +6,15 @@ This file downloads and extracts the latest sentry-native release direct from th
 
 import requests
 from zipfile import ZipFile
-
-response = requests.get("https://api.github.com/repos/getsentry/sentry-native/releases/latest")
-download_url = response.json()['assets'][0]['browser_download_url']
-r = requests.get(download_url, allow_redirects=True)
-open('sentry-native.zip', 'wb+').write(r.content)
+try:
+    response = requests.get("https://api.github.com/repos/getsentry/sentry-native/releases/latest")
+    download_url = response.json()['assets'][0]['browser_download_url']
+    r = requests.get(download_url, allow_redirects=True)
+    open('sentry-native.zip', 'wb+').write(r.content)
+except:
+    print("Failed to download sentry.")
+    print("Headers: ", response.headers)
+    print("Response: ", response.json)
 
 with ZipFile('sentry-native.zip', 'r') as zipObj:
     # Extract all the contents of zip file in current directory
