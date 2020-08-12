@@ -224,9 +224,6 @@ include_directories(include/SDL2)
 include_directories(sentry-native/include)
 
 
-
-add_subdirectory(sentry-native)
-
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
 if (${BUILD_CLIENT} MATCHES "ON")

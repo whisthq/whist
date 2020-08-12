@@ -1,5 +1,5 @@
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_library(fractalInput "")
+    add_library(fractalInput STATIC "")
 
     if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         target_sources(fractalInput PRIVATE
