@@ -15,7 +15,7 @@ def get_env_from_release(release_str):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Incorrect usgae. Usage: python sentry_env_from_release <release_name>")
+        print("Incorrect usage. Usage: python sentry_env_from_release <release_name>")
         sys.exit(1)
     else:
         get_env_from_release(sys.argv[1])
