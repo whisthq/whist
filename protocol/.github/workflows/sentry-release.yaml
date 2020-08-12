@@ -18,9 +18,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
-       - name: Install Pytho requests (for sentry download)
-         uses: actions/setup-python@v2
-         run: pip3 install requests
+      - name: Install Pytho requests (for sentry download)
+        uses: actions/setup-python@v2
+        run: pip3 install requests
       - name: Set Sentry Environment
         id: sentry_env
         run: python3 sentry_env_from_release.py ${{ github.event.release.tag_name }}
