@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Written by Hamish Nicholson 2020/08/11
 This file downloads and extracts the latest sentry-native release direct from their github

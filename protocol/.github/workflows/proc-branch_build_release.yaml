@@ -148,6 +148,11 @@ jobs:
         with:
           args: install "${{ github.workspace }}\.github\choco-install.config" --force
 
+      - name: Install Python (for sentry download)
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
       - name: Install CUDA for windows
         if: runner.os == 'Windows'
         env:
