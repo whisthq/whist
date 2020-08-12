@@ -4,17 +4,26 @@ from app.helpers.utils.general.sql_commands import *
 
 
 def forgotPasswordHelper(username):
-    params = {"username": username}
-    user = fractalSQLSelect("users", params)["rows"]
+    params = {"email": username}
+    user = fractalSQLSelect("users", params)
+    fractalLog(
+        function="forgotPasswordHelper",
+        label=username,
+        logs="POOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOo",
+    )
     if user:
         upperCase = string.ascii_uppercase
         lowerCase = string.ascii_lowercase
         numbers = "1234567890"
-        c1 = "".join([random.choice(upperCase) for _ in range(0, 3)])
-        c2 = "".join([random.choice(lowerCase) for _ in range(0, 9)]) + c1
-        c3 = "".join([random.choice(lowerCase) for _ in range(0, 5)]) + c2
-        c4 = "".join([random.choice(numbers) for _ in range(0, 4)]) + c3
-        token = "".join(random.sample(c4, len(c4)))
+        token = jwt.encode(
+            {
+                "sub": username,
+                "exp": (dt.now() + timedelta(minutes=10))
+                .replace(tzinfo=timezone.utc)
+                .timestamp(),
+            },
+            os.getenv("SECRET_KEY"),
+        )
         timeIssued = dt.now().strftime("%m-%d-%Y, %H:%M:%S")
 
         message = SendGridMail(
@@ -37,10 +46,6 @@ def forgotPasswordHelper(username):
             )
             return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
-        fractalSQLInsert(
-            "password_tokens",
-            {"token": token, "time_issued": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),},
-        )
         return jsonify({"verified": True}), SUCCESS
     else:
         return jsonify({"verified": False}), NOT_FOUND
