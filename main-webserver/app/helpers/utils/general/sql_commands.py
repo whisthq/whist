@@ -13,58 +13,6 @@ metadata.create_all(bind=engine)
 Session = sessionmaker(bind=engine, autocommit=False)
 
 
-def fractalCleanSQLOutput(output):
-    if output:
-        is_list = isinstance(output, list)
-        if is_list:
-            return [dict(row) for row in output]
-        else:
-            return dict(output)
-    return None
-
-
-def fractalRunSQL(command, params):
-    session = Session()
-
-    try:
-        rows = session.execute(command, params)
-
-        if rows.returns_rows:
-            output = {
-                "success": True,
-                "returns_rows": True,
-                "rows": fractalCleanSQLOutput(rows.fetchall()),
-                "error": None,
-            }
-        else:
-            output = {
-                "success": True,
-                "returns_rows": False,
-                "rows": None,
-                "error": None,
-            }
-    except Exception as e:
-        output = {
-            "success": False,
-            "returns_rows": False,
-            "rows": None,
-            "error": str(e),
-        }
-
-        fractalLog(
-            function="fractalRunSQL",
-            label="None",
-            logs="Error executing SQL command [{command}]: {error}".format(
-                command=str(command), error=str(e)
-            ),
-            level=logging.ERROR,
-        )
-
-    session.commit()
-    session.close()
-
-    return output
-
 def tableToObject(table_name):
     tableMap = {
         "users": User,
@@ -101,9 +49,6 @@ def fractalSQLUpdate(table_name, conditional_params, new_params):
         table_name (str): Name of table to update
         conditional_params (arr[str]): The params that need to be satisfied for the row to update
         new_params (arr[str]): The new values to update
-
-    Returns:
-        [type]: [description]
     """
     session = Session()
 
