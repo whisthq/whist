@@ -33,35 +33,33 @@ class OSDisk(Base):
     last_pinged = Column(Integer)
     branch = Column(String(250), nullable=False, server_default=text("'master'::character varying"))
 
-# class SecondaryDisk(Base):
-#     __table__ = Table(
-#         'secondary_disks', metadata,
-#         Column('disk_id', String(250), nullable=False),
-#         Column('os', String(250), nullable=False),
-#         Column('disk_size', Integer, nullable=False),
-#         Column('location', String(250), nullable=False),
-#         Column('user_id', Integer),
-#         schema='hardware'
-#     )
+class SecondaryDisk(Base):
+    __tablename__ = 'secondary_disks'
+    __table_args__ = {'extend_existing': True, 'schema': 'hardware'}
+    
+    disk_id = Column(String(250), nullable=False, primary_key=True)
+    os = Column(String(250), nullable=False)
+    disk_size = Column(Integer, nullable=False)
+    location = Column(String(250), nullable=False)
+    user_id = Column(Integer)
 
-# class InstallCommand(Base):
-#     __table__ = Table(
-#         'install_commands', metadata,
-#         Column('install_command_id', Integer, nullable=False),
-#         Column('windows_install_command', Text),
-#         Column('linux_install_command', Text),
-#         Column('app_name', Text),
-#         schema='hardware'
-#     )
+class InstallCommand(Base):
+    __tablename__ = 'install_commands'
+    __table_args__ = {'extend_existing': True, 'schema': 'hardware'}
+    
+    install_command_id = Column(Integer, nullable=False, primary_key=True)
+    windows_install_command = Column(Text)
+    linux_install_command = Column(Text)
+    app_name = Column(Text)
 
-# class AppsToInstall(Base):
-#     __tablename__ = 'apps_to_install'
-#     __table_args__ = (
-#         Index('fkIdx_115', 'disk_id', 'user_id'),
-#         {'schema': 'hardware'}
-#     )
+class AppsToInstall(Base):
+    __tablename__ = 'apps_to_install'
+    __table_args__ = (
+        Index('fkIdx_115', 'disk_id', 'user_id'),
+        {'schema': 'hardware', 'extend_existing': True}
+    )
 
-#     disk_id = Column(String(250), primary_key=True, nullable=False)
-#     user_id = Column(String(250), primary_key=True, nullable=False)
-#     app_id = Column(String(250), nullable=False, index=True)
+    disk_id = Column(String(250), primary_key=True, nullable=False)
+    user_id = Column(String(250), primary_key=True, nullable=False)
+    app_id = Column(String(250), nullable=False, index=True)
 
