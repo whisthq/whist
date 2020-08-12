@@ -299,12 +299,12 @@ if __name__ == "__main__":
     else:
         update_bucket = default_channel_s3_buckets[args.update_channel][args.platform]  # type: ignore
 
-    if args.set_version and not args.override_version_check:
-        version_id_re = re.compile(r"(\S+)-(\d{8}).(\d+)")
-        if not version_id_re.match(args.set_version):
-            raise Exception(
-                f"Invalid version ID: '{args.set_version}'. It must be in the form GITREF-YYYYMMDD.#, or --override-version-check must be passed."
-            )
+    # if args.set_version and not args.override_version_check:
+    #     version_id_re = re.compile(r"(\S+)-(\d{8}).(\d+)")
+    #     if not version_id_re.match(args.set_version):
+    #         raise Exception(
+    #             f"Invalid version ID: '{args.set_version}'. It must be in the form GITREF-YYYYMMDD.#, or --override-version-check must be passed."
+    #         )
 
     version = args.set_version
 
