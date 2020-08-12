@@ -3,6 +3,7 @@ from app.helpers.utils.azure.azure_general import *
 from app.helpers.utils.azure.azure_resource_creation import *
 from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_locks import *
+from app.helpers.utils.general.crypto import *
 
 
 @celery_instance.task(bind=True)
@@ -108,6 +109,10 @@ def createVM(
     vm_instance = createVMInstance(vm_name, resource_group=resource_group)
     disk_name = vm_instance.storage_profile.os_disk.name
 
+    # Generate private key for AES
+
+    private_key = generatePrivateKey()
+
     self.update_state(
         state="PENDING",
         meta={
@@ -129,6 +134,7 @@ def createVM(
             "os": operating_system,
             "lock": True,
             "disk_name": disk_name,
+            "private_key": private_key,
         },
     )
 

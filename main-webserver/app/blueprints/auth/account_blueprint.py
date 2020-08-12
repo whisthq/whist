@@ -105,8 +105,3 @@ def account_get_no_auth(action, **kwargs):
         output = codeHelper(username)
 
         return jsonify(output), output["status"]
-
-    elif action == "fetch":
-        # Get the user's info
-        username = request.args.get("username")
-        return fetchUserHelper(username)

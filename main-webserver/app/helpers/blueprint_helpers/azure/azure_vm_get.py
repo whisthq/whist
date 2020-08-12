@@ -33,6 +33,7 @@ def protocolInfoHelper(ip_address):
                 "branch": "dev",
                 "status": NOT_FOUND,
                 "using_stun": False,
+                "private_key": None,
                 "access_token": None,
                 "refresh_token": None,
             }
@@ -48,11 +49,13 @@ def protocolInfoHelper(ip_address):
         )
 
         if output["rows"] and output["success"]:
+            settings = output["rows"][0]
             return {
                 "dev": vm_info["dev"],
-                "branch": output["rows"][0]["branch"],
+                "branch": settings["branch"],
                 "status": SUCCESS,
-                "using_stun": output["rows"][0]["using_stun"],
+                "using_stun": settings["using_stun"],
+                "private_key": vm_info["private_key"],
                 "access_token": access_token,
                 "refresh_token": refresh_token,
             }
@@ -71,6 +74,7 @@ def protocolInfoHelper(ip_address):
                 "branch": "dev",
                 "status": NOT_FOUND,
                 "using_stun": False,
+                "private_key": vm_info["private_key"],
                 "access_token": None,
                 "refresh_token": None,
             }

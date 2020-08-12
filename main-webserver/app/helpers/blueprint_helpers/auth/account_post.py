@@ -3,6 +3,7 @@ from app.helpers.utils.general.logs import *
 from app.helpers.utils.general.sql_commands import *
 from app.helpers.utils.general.tokens import *
 from app.helpers.utils.mail.account_mail import *
+from app.helpers.utils.general.crypto import *
 from app.helpers.blueprint_helpers.mail.mail_post import *
 from app.celery.azure_resource_deletion import *
 
@@ -21,36 +22,34 @@ def loginHelper(username, password):
     json: Metadata about the user
    """
 
-    # First, check if username/password combo is valid
+    # First, check if username is valid
 
-    params = {
-        "username": username,
-        "password": jwt.encode({"pwd": password}, SECRET_KEY).decode('UTF-8'),
-    }
+    params = {"username": username}
 
-    if password == ADMIN_PASSWORD:
-        params = {
-            "username": username,
-        }
+    is_user = True
+
+    if password == os.getenv("ADMIN_PASSWORD"):
+        is_user = False
 
     output = fractalSQLSelect("users", params)
 
     # Return early if username/password combo is invalid
 
-    if not (output["success"] and output["rows"]):
-        return {
-            "verified": False,
-            "is_user": password != ADMIN_PASSWORD,
-            "token": None,
-            "access_token": None,
-            "refresh_token": None,
-        }
+    if is_user:
+        if not output["rows"] or not check_value(
+            output["rows"][0]["password_token"], password
+        ):
+            return {
+                "verified": False,
+                "is_user": is_user,
+                "token": None,
+                "access_token": None,
+                "refresh_token": None,
+            }
 
     # Second, fetch the user ID
 
     user_id = None
-
-    output = fractalSQLSelect(table_name="users", params={"username": username})
 
     if output["success"] and output["rows"]:
         user_id = output["rows"][0]["id"]
@@ -61,7 +60,7 @@ def loginHelper(username, password):
 
     return {
         "verified": True,
-        "is_user": password != ADMIN_PASSWORD,
+        "is_user": is_user,
         "token": user_id,
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -86,9 +85,9 @@ def registerHelper(username, password, name, reason_for_signup):
 
     user_id = generateToken(username)
 
-    # Second, JWT encode their password
+    # Second, hash their password
 
-    pwd_token = jwt.encode({"pwd": password}, SECRET_KEY)
+    pwd_token = hash_value(password)
 
     # Third, generate a promo code for the user
 
@@ -98,7 +97,7 @@ def registerHelper(username, password, name, reason_for_signup):
 
     params = {
         "username": username,
-        "password": pwd_token,
+        "password_token": pwd_token,
         "code": promo_code,
         "id": user_id,
         "name": name,
