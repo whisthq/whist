@@ -76,7 +76,6 @@ def hooks(**kwargs):
         return jsonify({"status": "Invalid payload"}), NOT_ACCEPTABLE
     except stripe.error.SignatureVerificationError as e:
         # Invalid signature
-        print(e)
         return jsonify({"status": "Invalid signature"}), FORBIDDEN
 
     return webhookHelper(event)
