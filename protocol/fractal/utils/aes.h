@@ -40,6 +40,33 @@ Public Functions
 uint32_t Hash(void* key, size_t len);
 
 /**
+ * @brief                          Generate a random IV
+ *
+ * @param iv                       Buffer to save the IV to
+ */
+void gen_iv(void* iv);
+
+/**
+ * @brief                          Generate an hmac signature
+ *
+ * @param signature                Buffer to save the signature to
+ * @param buf                      Buffer to sign
+ * @param len                      Length of buffer to sign
+ * @param key                      Private key to sign with
+ */
+int hmac(void* signature, void* buf, int len, void* key);
+
+/**
+ * @brief                          Verify an hmac signature
+ *
+ * @param signature                Signature of the buffer
+ * @param buf                      Buffer that is signed
+ * @param len                      Length of signed buffer
+ * @param key                      Private key that was signed with
+ */
+bool verify_hmac(void* signature, void* buf, int len, void* key);
+
+/**
  * @brief                          Encrypts a data packet using the AES private
  *                                 key
  *
@@ -66,7 +93,7 @@ int encrypt_packet(FractalPacket* plaintext_packet, int packet_len, FractalPacke
  * @param private_key              AES private key used to encrypt and decrypt
  *                                 the packets
  *
- * @returns                        Will return -1 on failure, will return the
+ * @returns                        Will return -1 on failure, else will return the
  *                                 length of the decrypted packets
  */
 int decrypt_packet(FractalPacket* encrypted_packet, int packet_len, FractalPacket* plaintext_packet,
@@ -83,11 +110,39 @@ int decrypt_packet(FractalPacket* encrypted_packet, int packet_len, FractalPacke
  * @param private_key              AES private key used to encrypt and decrypt
  *                                 the packets
  *
- * @returns                        Will return -1 on failure, will return the
+ * @returns                        Will return -1 on failure, else will return the
  *                                 length of the decrypted packets
  */
 int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
                      FractalPacket* plaintext_packet, int plaintext_len,
                      unsigned char* private_key);
+
+/**
+ * @brief                          Encrypt plaintext data
+ *
+ * @param plaintext                Pointer to the plaintext to encrypt
+ * @param plaintext_len            Length of the plaintext
+ * @param key                      AES Private Key used to encrypt the plaintext
+ * @param iv                       IV used to seed the AES encryption
+ * @param ciphertext               Pointer to buffer for receiving ciphertext
+ *
+ * @returns                        Will return -1 on failure, else will return the
+ *                                 length of the encrypted result
+ */
+int aes_encrypt(void* plaintext, int plaintext_len, void* key, void* iv, void* ciphertext);
+
+/**
+ * @brief                          Decrypt ciphertext data
+ *
+ * @param ciphertext               Pointer to the ciphertext to encrypt
+ * @param ciphertext_len           Length of the ciphertext
+ * @param key                      AES Private Key used to encrypt the plaintext
+ * @param iv                       IV used to seed the AES encryption
+ * @param plaintext                Pointer to buffer for receiving plaintext
+ *
+ * @returns                        Will return -1 on failure, else will return the
+ *                                 length of the decrypted result
+ */
+int aes_decrypt(void* ciphertext, int ciphertext_len, void* key, void* iv, void* plaintext);
 
 #endif  // AES_H

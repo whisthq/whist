@@ -4,7 +4,6 @@
 
 add_executable(FractalClient
         main.c
-        main.h
         audio.c
         desktop_utils.c
         fractalgetopt.c
@@ -62,7 +61,6 @@ target_link_libraries(FractalClient
         fractalNetwork
         fractalUtils
         ${STATIC_SDL2}
-        ${STATIC_OPENSSL}
         )
 
 #[[
@@ -78,6 +76,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ${X11_Xfixes_LIB}
             ${ALSA_LIBRARIES}
             m
+            OpenSSL::Crypto
             )
     target_link_libraries(FractalClient sentry)
 endif()
@@ -100,6 +99,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "-framework QuartzCore"
         objc
         iconv
+        ${STATIC_OPENSSL}
         )
 endif()
 
@@ -122,6 +122,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     # Link to system libs
     target_link_libraries(FractalClient
+            ${STATIC_OPENSSL}
             libvcruntime
             libucrt
             libcmt

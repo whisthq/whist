@@ -143,7 +143,7 @@ bool parse_json(char* str, json_t* json) {
     /*
     for (int i = 0; i < json->size; i++) {
         kv_pair_t* kv = &json->pairs[i];
-        LOG_INFO("KEY BEGIN: %s\n", kv->key);
+        LOG_INFO("KEY BEGIN: %s", kv->key);
         switch (kv->type) {
             case JSON_BOOL:
                 LOG_INFO("VALUE BEGIN: %s", kv->bool_value ? "true" : "false");

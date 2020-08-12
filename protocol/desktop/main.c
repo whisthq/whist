@@ -15,8 +15,7 @@ its threads.
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "main.h"
-
+#include "sentry.h"
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -42,7 +41,6 @@ its threads.
 #include "../fractal/utils/mac_utils.h"
 #endif
 
-#include <sentry.h>
 int audio_frequency = -1;
 
 // Width and Height
@@ -55,6 +53,7 @@ volatile int max_bitrate = STARTING_BITRATE;
 volatile bool update_mbps = false;
 
 // Global state variables
+volatile char aes_private_key[16];
 volatile int connection_id;
 volatile SDL_Window* window;
 volatile bool run_receive_packets;
@@ -81,6 +80,9 @@ bool ctrl_pressed = false;
 bool lgui_pressed = false;
 bool rgui_pressed = false;
 
+// Mouse motion state
+mouse_motion_accumulation mouse_state = {0};
+
 clock window_resize_timer;
 
 // Function Declarations
@@ -100,7 +102,7 @@ volatile int try_amount;
 char filename[300];
 char username[50];
 
-#define MS_IN_SECOND 1000.0
+#define MS_IN_SECOND 1000
 #define WINDOWS_DEFAULT_DPI 96.0
 #define BYTES_IN_KILOBYTE 1024.0
 
@@ -164,7 +166,7 @@ void update() {
         ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
         if (clipboard) {
             FractalClientMessage* fmsg_clipboard =
-                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
+                    malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
             fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
             memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
             SendFmsg(fmsg_clipboard);
@@ -184,7 +186,7 @@ void update() {
         fmsg.dimensions.height = (int)output_height;
         fmsg.dimensions.codec_type = (CodecType)output_codec_type;
         fmsg.dimensions.dpi =
-            (int)(WINDOWS_DEFAULT_DPI * output_width / get_virtual_screen_width());
+                (int)(WINDOWS_DEFAULT_DPI * output_width / get_virtual_screen_width());
         SendFmsg(&fmsg);
         UpdateData.tried_to_update_dimension = true;
     }
@@ -250,22 +252,6 @@ void update() {
     // End Ping
 }
 // END UPDATER CODE
-
-// Large fmsg's should be sent over TCP. At the moment, this is only CLIPBOARD
-// messages FractalClientMessage packet over UDP that requires multiple
-// sub-packets to send, it not supported (If low latency large
-// FractalClientMessage packets are needed, then this will have to be
-// implemented)
-int SendFmsg(FractalClientMessage* fmsg) {
-    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_TIME) {
-        return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
-    } else {
-        static int sent_packet_id = 0;
-        sent_packet_id++;
-        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg),
-                             sent_packet_id, -1, NULL, NULL);
-    }
-}
 
 int ReceivePackets(void* opaque) {
     LOG_INFO("ReceivePackets running on Thread %p", SDL_GetThreadID(NULL));
@@ -398,11 +384,11 @@ int ReceivePackets(void* opaque) {
 
         if (packet) {
             // Log if it's been a while since the last packet was received
-            if (lastrecv > 20.0 / MS_IN_SECOND) {
+            if (lastrecv > 50.0 / MS_IN_SECOND) {
                 LOG_INFO(
-                    "Took more than 20ms to receive something!! Took %fms "
-                    "total!",
-                    lastrecv * MS_IN_SECOND);
+                        "Took more than 50ms to receive something!! Took %fms "
+                        "total!",
+                        lastrecv * MS_IN_SECOND);
             }
             lastrecv = 0.0;
         }
@@ -517,15 +503,8 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    sentry_options_t *options = sentry_options_new();
-    sentry_options_set_debug(options, true);
-    sentry_options_set_dsn(options, "https://74b830088cfa4e35aa48869707b57cfe@o420280.ingest.sentry.io/5338251");
-    sentry_init(options);
-    sentry_capture_event(sentry_value_new_message_event(
-            /*   level */ SENTRY_LEVEL_INFO,
-            /*  logger */ "custom",
-            /* message */ "It works!"
-    ));
+
+
 
     if (initSocketLibrary() != 0) {
         LOG_ERROR("Failed to initialize socket library.");
@@ -586,7 +565,7 @@ int main(int argc, char* argv[]) {
         // Create thread to receive all packets and handle them as needed
         run_receive_packets = true;
         SDL_Thread* receive_packets_thread =
-            SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
+                SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
         StartTimer(&window_resize_timer);
 
@@ -598,9 +577,10 @@ int main(int argc, char* argv[]) {
         clock ci_timer;
         StartTimer(&ci_timer);
 
-        clock ack_timer, keyboard_sync_timer;
+        clock ack_timer, keyboard_sync_timer, mouse_motion_timer;
         StartTimer(&ack_timer);
         StartTimer(&keyboard_sync_timer);
+        StartTimer(&mouse_motion_timer);
 
         SDL_Event sdl_msg;
 
@@ -611,7 +591,7 @@ int main(int argc, char* argv[]) {
                 Ack(&PacketTCPContext);
                 StartTimer(&ack_timer);
             }
-            // if we are running a CI test we run for time_to_run_ci secondsA
+            // if we are running a CI test we run for time_to_run_ci seconds
             // before exiting
             if (running_ci && GetTimer(ci_timer) > time_to_run_ci) {
                 exiting = 1;
@@ -625,12 +605,24 @@ int main(int argc, char* argv[]) {
                 }
                 StartTimer(&keyboard_sync_timer);
             }
-            if (SDL_PollEvent(&sdl_msg)) {
-                if (handleSDLEvent(&sdl_msg) != 0) {
+            int events = SDL_PollEvent(&sdl_msg);
+
+            if (events && handleSDLEvent(&sdl_msg) != 0) {
+                // unable to handle event
+                failed = true;
+                break;
+            }
+
+            if (GetTimer(mouse_motion_timer) > 0.5 / MS_IN_SECOND) {
+                if (updateMouseMotion()) {
                     failed = true;
                     break;
                 }
-            } else {
+                StartTimer(&mouse_motion_timer);
+            }
+
+            if (!events) {
+                // no events found
                 SDL_Delay(1);
             }
         }
@@ -644,11 +636,28 @@ int main(int argc, char* argv[]) {
         closeConnections();
     }
 
+    if (failed) {
+        sentry_value_t event = sentry_value_new_message_event(
+                /*   level */ SENTRY_LEVEL_ERROR,
+                /*  logger */ "client-errors",
+                /* message */ "Failure in main loop"
+        );
+        sentry_capture_event(event);
+    }
+
+    if (try_amount >= 3){
+        sentry_value_t event = sentry_value_new_message_event(
+                /*   level */ SENTRY_LEVEL_ERROR,
+                /*  logger */ "client-errors",
+                /* message */ "Failed to connect after three attemps"
+        );
+        sentry_capture_event(event);
+    }
+
     LOG_INFO("Closing Client...");
     destroyVideo();
     destroySDL((SDL_Window*)window);
     destroySocketLibrary();
     destroyLogger();
-    sentry_shutdown();
     return (try_amount < 3 && !failed) ? 0 : -1;
 }

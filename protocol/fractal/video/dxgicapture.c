@@ -44,7 +44,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     while (factory->lpVtbl->EnumAdapters1(factory, num_adapters, &hardware->adapter) !=
            DXGI_ERROR_NOT_FOUND) {
         if (num_adapters == MAX_NUM_ADAPTERS) {
-            LOG_WARNING("Too many adapters!\n");
+            LOG_WARNING("Too many adapters!");
             break;
         }
         adapters[num_adapters] = hardware->adapter;
@@ -135,7 +135,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
             set_width = pDescs[k].Width;
             set_height = pDescs[k].Height;
             ratio_closeness = 0.0;
-            LOG_INFO("FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator,
+            LOG_INFO("FPS: %d/%d", pDescs[k].RefreshRate.Numerator,
                      pDescs[k].RefreshRate.Denominator);
         }
     }
@@ -147,7 +147,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
             fabs(1.0 * pDescs[k].Width / pDescs[k].Height - 1.0 * width / height) + 0.001;
         if (fabs(current_ratio_closeness - ratio_closeness) / ratio_closeness < 0.01) {
             LOG_INFO("Ratio match found with %dx%d!", pDescs[k].Width, pDescs[k].Height);
-            LOG_INFO("FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator,
+            LOG_INFO("FPS: %d/%d", pDescs[k].RefreshRate.Numerator,
                      pDescs[k].RefreshRate.Denominator);
 
             if (set_width == 0) {
@@ -237,12 +237,12 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     }
 
     if (hardware->final_output_desc.DesktopCoordinates.left != 0) {
-        LOG_ERROR("final_output_desc left found: %d\n",
+        LOG_ERROR("final_output_desc left found: %d",
                   hardware->final_output_desc.DesktopCoordinates.left);
     }
 
     if (hardware->final_output_desc.DesktopCoordinates.top != 0) {
-        LOG_ERROR("final_output_desc top found: %d\n",
+        LOG_ERROR("final_output_desc top found: %d",
                   hardware->final_output_desc.DesktopCoordinates.top);
     }
 

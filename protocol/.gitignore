@@ -4,6 +4,7 @@
 *.obj
 *.iml
 *.pyc
+*.cbp
 
 # visual studio
 **/Debug/
@@ -38,6 +39,7 @@ desktop/external_utils/Windows/unison.exe
 desktop/external_utils/Windows/ssh.exe
 desktop/loading/
 *.v
+._share
 
 # cmake
 *.cmake

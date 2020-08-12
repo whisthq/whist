@@ -20,6 +20,7 @@ packet), before being saved in a proper video frame format.
 #include "../fractal/utils/png.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "SDL2/SDL.h"
+#include "network.h"
 
 #define UNUSED(x) (void)(x)
 
@@ -186,7 +187,7 @@ void updateSwsContext() {
 
     sws_input_fmt = decoder->sw_frame->format;
 
-    mprintf("Decoder Format: %s\n", av_get_pix_fmt_name(sws_input_fmt));
+    LOG_INFO("Decoder Format: %s", av_get_pix_fmt_name(sws_input_fmt));
 
     if (videoContext.sws) {
         av_freep(&videoContext.data[0]);
@@ -377,7 +378,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             continue;
         }
 
-        // LOG_INFO( "Decode Time: %f\n", GetTimer( decode_timer ) );
+        // LOG_INFO( "Decode Time: %f", GetTimer( decode_timer ) );
 
         SDL_LockMutex(render_mutex);
         updatePixelFormat();
@@ -400,7 +401,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                        sizeof(videoContext.linesize));
             }
 
-            // LOG_INFO( "SWS Time: %f\n", GetTimer( sws_timer ) );
+            // LOG_INFO( "SWS Time: %f", GetTimer( sws_timer ) );
 
             SDL_UpdateYUVTexture(videoContext.texture, NULL, videoContext.data[0],
                                  videoContext.linesize[0], videoContext.data[1],
@@ -468,7 +469,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         SDL_UnlockMutex(render_mutex);
 
 #if LOG_VIDEO
-        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size,
+        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", renderContext.id, renderContext.frame_size,
                   GetTimer(renderContext.frame_creation_timer));
 #endif
 
@@ -663,8 +664,8 @@ void updateVideo() {
         VideoData.nack_by_bitrate[VideoData.bucket] += VideoData.num_nacked;
         VideoData.seconds_by_bitrate[VideoData.bucket] += time;
 
-        mprintf("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====\n",
-                VideoData.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
+        LOG_INFO("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====",
+                 VideoData.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
 
         // Print statistics
 
@@ -723,7 +724,11 @@ void updateVideo() {
         if (VideoData.most_recent_iframe - 1 > VideoData.last_rendered_id) {
             LOG_INFO("Skipping from %d to i-frame %d!", VideoData.last_rendered_id,
                      VideoData.most_recent_iframe);
-            for (int i = VideoData.last_rendered_id + 1; i < VideoData.most_recent_iframe; i++) {
+            // If `last_rendered_id` is further back than the first frame received, start from the
+            // first frame received
+            for (int i = max(VideoData.last_rendered_id + 1,
+                             VideoData.most_recent_iframe - VideoData.frames_received + 1);
+                 i < VideoData.most_recent_iframe; i++) {
                 int index = i % RECV_FRAMES_BUFFER_SIZE;
                 if (receiving_frames[index].id == i) {
                     LOG_WARNING("Frame dropped with ID %d: %d/%d", i,

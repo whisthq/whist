@@ -20,14 +20,25 @@ void PrintOSInfo() {
     DWORD product_size = sizeof(product);
     DWORD version_size = sizeof(version);
     DWORD buildlab_size = sizeof(buildlab);
-    RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                 "ProductName", RRF_RT_ANY, NULL, &product, &product_size);
-    RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                 "CurrentVersion", RRF_RT_ANY, NULL, &version, &version_size);
-    RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "BuildLab",
-                 RRF_RT_ANY, NULL, &buildlab, &buildlab_size);
-
-    LOG_INFO("PROD NAME: %S", product);
+    LSTATUS ret;
+    ret = RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+                       "ProductName", RRF_RT_ANY, NULL, &product, &product_size);
+    if (ret != ERROR_SUCCESS) {
+        LOG_INFO("ERROR: %ll", ret);
+        product[0] = '\0';
+    }
+    ret = RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+                       "CurrentVersion", RRF_RT_ANY, NULL, &version, &version_size);
+    if (ret != ERROR_SUCCESS) {
+        LOG_INFO("ERROR: %ll", ret);
+        version[0] = '\0';
+    }
+    ret = RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+                       "BuildLab", RRF_RT_ANY, NULL, &buildlab, &buildlab_size);
+    if (ret != ERROR_SUCCESS) {
+        LOG_INFO("ERROR: %ll", ret);
+        buildlab[0] = '\0';
+    }
 
     char winOSstring[512];
     snprintf(winOSstring, sizeof(winOSstring), "%s %s.%s", product, version, buildlab);
@@ -35,8 +46,10 @@ void PrintOSInfo() {
 
 #ifdef _WIN32
     snprintf(buf, sizeof(buf), "32-bit %s", winOSstring);
+    LOG_INFO("  OS: %s", buf);
 #elif _WIN64
     snprintf(buf, sizeof(buf), "64-bit %s", winOSstring);
+    LOG_INFO("  OS: %s", buf);
 #elif __APPLE__ || __MACH__
     char* os_version = NULL;
     runcmd("sw_vers", &os_version);

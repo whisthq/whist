@@ -129,10 +129,12 @@ Custom types
 typedef struct SocketContext {
     bool is_server;
     bool is_tcp;
+    int timeout;
     SOCKET s;
     struct sockaddr_in addr;
     int ack;
     SDL_mutex* mutex;
+    char aes_private_key[16];
 } SocketContext;
 
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
@@ -230,9 +232,9 @@ int GetLastNetworkError();
  *                                 success
  */
 int CreateUDPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
-                     int connection_timeout_ms, bool using_stun);
+                     int connection_timeout_ms, bool using_stun, char* aes_private_key);
 int CreateTCPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
-                     int connection_timeout_ms, bool using_stun);
+                     int connection_timeout_ms, bool using_stun, char* aes_private_key);
 
 /**
  * @brief                          This will send a FractalPacket over TCP to
@@ -328,6 +330,7 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  * @param path                     The /path/to/the/endpoint
  * @param jsonObj                  A string consisting of the JSON-complient
  *                                 datastream to send to the webserver
+ * @param access_token             The access token for authentication
  *
  * @returns                        Will return false on failure, will return
  *                                 true on success Failure implies that the
@@ -335,7 +338,7 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendJSONPost(char* host_s, char* path, char* jsonObj);
+bool SendJSONPost(char* host_s, char* path, char* jsonObj, char* access_token);
 
 /**
  * @brief                          Sends a JSON GET request to the Fractal

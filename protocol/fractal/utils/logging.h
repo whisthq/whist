@@ -39,7 +39,7 @@ Includes
 */
 
 #include <string.h>
-
+#include "sentry.h"
 #include "../core/fractal.h"
 #include "clock.h"
 
@@ -48,6 +48,8 @@ Includes
 Defines
 ============================
 */
+
+#define SENTRY_DSN "https://62090d93120c4937971347505b53e48d@o400459.ingest.sentry.io/5373388"
 
 #define LOGGER_QUEUE_SIZE 1000
 #define LOGGER_BUF_SIZE 1000
@@ -71,6 +73,8 @@ Defines
 #endif
 
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
+#define SENTRYBREADCRUMB(tag, format, ...) sentry_send_bread_crumb(tag, format, ##__VA_ARGS__)
+#define SENTRYEVENT(format, ...) sentry_send_event(format, ##__VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-15s | %30s:%-5d | "
 #define LOG_ARGS(LOG_TAG) CurrentTimeStr(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
@@ -96,14 +100,16 @@ Defines
 
 #if LOG_LEVEL >= WARNING_LEVEL
 #define LOG_WARNING(message, ...) \
-    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__)
+    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__);  \
+    SENTRYBREADCRUMB(WARNING_TAG, message, ##__VA_ARGS__)
 #else
 #define LOG_WARNING(message, ...)
 #endif
 
 #if LOG_LEVEL >= ERROR_LEVEL
 #define LOG_ERROR(message, ...) \
-    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__)
+    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__); \
+    SENTRYEVENT(message, ##__VA_ARGS__)
 #else
 #define LOG_ERROR(message, ...)
 #endif
@@ -121,11 +127,16 @@ Public Functions
 ============================
 */
 
+void sentry_send_bread_crumb(char* tag, const char* fmtStr, ...);
+
+void sentry_send_event(const char* fmtStr, ...);
+
 /**
  * @brief                          Initialize the logger
  *
  * @param log_directory            The directory to store the log files in. Pass
  *                                 NULL to not store the logs in a log file
+ *
  */
 void initLogger(char* log_directory);
 
@@ -143,8 +154,25 @@ void destroyLogger();
 
 /**
  * @brief                          Send the log history to the webserver
+ *
+ * @returns                         0: success -1: failure to send file,
+ *                                  sent cache instead   -2: outright failure
  */
-bool sendLogHistory();
+int sendConnectionHistory();
+
+/**
+ * @brief                          Set the logger to categorize all logs from now
+ *                                  on as a new connection. Only these will be sent
+ *                                  on a sendConnectionHistory call.
+ */
+void startConnectionLog();
+
+/**
+ * @brief                          Save the current connection id into the log history
+ *
+ * @param connection_id            The connection id to use
+ */
+void saveConnectionID(int connection_id);
 
 /**
  * @brief                          Tell the server the WinLogon and connection

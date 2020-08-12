@@ -33,7 +33,7 @@ audio_device_t *CreateAudioDevice() {
     hr = audio_device->pMMDeviceEnumerator->lpVtbl->GetDefaultAudioEndpoint(
         audio_device->pMMDeviceEnumerator, eRender, eConsole, &audio_device->device);
     if (FAILED(hr)) {
-        LOG_ERROR("Failed to get default audio endpoint.\n");
+        LOG_ERROR("Failed to get default audio endpoint.");
         free(audio_device);
         return NULL;
     }
@@ -90,7 +90,7 @@ audio_device_t *CreateAudioDevice() {
         free(audio_device);
         return NULL;
     }
-    LOG_INFO("Minimum period: %d\n", minimum_period);
+    LOG_INFO("Minimum period: %d", minimum_period);
 
     audio_device->sample_rate = audio_device->pwfx->nSamplesPerSec;
 
@@ -108,7 +108,7 @@ void StartAudioDevice(audio_device_t *audio_device) {
     BOOL bOK =
         SetWaitableTimer(audio_device->hWakeUp, &liFirstFire, lTimeBetweenFires, NULL, NULL, FALSE);
     if (bOK == 0) {
-        LOG_WARNING("Failed to SetWaitableTimer\n");
+        LOG_WARNING("Failed to SetWaitableTimer");
         return;
     }
 

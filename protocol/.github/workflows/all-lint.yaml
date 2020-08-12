@@ -31,9 +31,4 @@ jobs:
         run: |
           git config --local user.email "linter@fractalcomputers.com"
           git config --local user.name "Fractal Linter"
-          git diff-index --quiet HEAD || git commit -m "Linted via clang-format" -a
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
+          git diff-index --quiet HEAD || (echo "To pass this check please lint the code" && false)

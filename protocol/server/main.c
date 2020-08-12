@@ -60,11 +60,12 @@ its threads.
 
 #define BITS_IN_BYTE 8.0
 #define BYTES_IN_KILOBYTE 1024.0
-#define MS_IN_SECOND 1000.0
+#define MS_IN_SECOND 1000
 #define TCP_CONNECTION_WAIT 5000
 
 extern Client clients[MAX_NUM_CLIENTS];
 
+char aes_private_key[16];
 volatile int connection_id;
 static volatile bool connected;
 static volatile bool running;
@@ -222,7 +223,7 @@ int32_t SendVideo(void* opaque) {
                 }
             } else {
                 current_bitrate = (int)(STARTING_BITRATE);
-                LOG_INFO("Updating Encoder using Bitrate: %d from %f\n", current_bitrate, max_mbps);
+                LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate, max_mbps);
                 pending_encoder = true;
                 encoder_finished = false;
                 encoder_factory_server_w = device->width;
@@ -352,10 +353,10 @@ int32_t SendVideo(void* opaque) {
             max_frame_size = max(max_frame_size, encoder->encoded_frame_size);
 
             if (frame_stat_number % 30 == 0) {
-                LOG_INFO("Longest Encode Time: %f\n", max_frame_time);
-                LOG_INFO("Average Encode Time: %f\n", total_frame_time / 30);
-                LOG_INFO("Longest Encode Size: %f\n", max_frame_size);
-                LOG_INFO("Average Encode Size: %f\n", total_frame_sizes / 30);
+                LOG_INFO("Longest Encode Time: %f", max_frame_time);
+                LOG_INFO("Average Encode Time: %f", total_frame_time / 30);
+                LOG_INFO("Longest Encode Size: %f", max_frame_size);
+                LOG_INFO("Average Encode Size: %f", total_frame_sizes / 30);
                 total_frame_time = 0.0;
                 max_frame_time = 0.0;
                 total_frame_sizes = 0.0;
@@ -625,6 +626,8 @@ int32_t SendAudio(void* opaque) {
 }
 
 void update() {
+    update_webserver_parameters();
+
     if (is_dev_vm()) {
         LOG_INFO("dev vm - not auto-updating");
     } else {
@@ -640,7 +643,7 @@ void update() {
 #ifdef _WIN32
                  "powershell -command \"iwr -outf 'C:\\Program "
                  "Files\\Fractal\\update.bat' "
-                 "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/"
+                 "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/Windows/"
                  "update.bat\"",
                  get_branch()
 #else
@@ -662,6 +665,8 @@ void update() {
             ,
             NULL);
     }
+
+    memcpy(aes_private_key, get_private_key(), sizeof(aes_private_key));
 }
 
 #include <time.h>
@@ -747,6 +752,10 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     reply_msg->UDP_port = clients[*client_id].UDP_port;
     reply_msg->TCP_port = clients[*client_id].TCP_port;
 
+    // Save connection ID
+    saveConnectionID(connection_id);
+
+    // Send connection ID to client
     reply_msg->connection_id = connection_id;
     char* server_username = "Fractal";
     memcpy(reply_msg->username, server_username, strlen(server_username) + 1);
@@ -782,8 +791,35 @@ int MultithreadedWaitForClient(void* opaque) {
     clock last_update_timer;
     StartTimer(&last_update_timer);
 
+    sendConnectionHistory();
+    connection_id = rand();
+    startConnectionLog();
+    bool have_sent_logs = true;
+
     while (running) {
-        if (num_controlling_clients == 0) {
+        if (readLock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to read-acquire an active RW lock.");
+            continue;
+        }
+        int saved_num_active_clients = num_active_clients;
+        if (readUnlock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to read-release and active RW lock.");
+            continue;
+        }
+
+        LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
+                 have_sent_logs ? "yes" : "no");
+        if (saved_num_active_clients == 0 && !have_sent_logs) {
+            sendConnectionHistory();
+            have_sent_logs = true;
+        } else if (saved_num_active_clients > 0 && have_sent_logs) {
+            have_sent_logs = false;
+        }
+
+        if (saved_num_active_clients == 0) {
+            connection_id = rand();
+            startConnectionLog();
+
             if (trying_to_update) {
                 if (GetTimer(last_update_timer) > 10.0) {
                     update();
@@ -798,7 +834,7 @@ int MultithreadedWaitForClient(void* opaque) {
         }
 
         if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                             USING_STUN) < 0) {
+                             get_using_stun(), aes_private_key) < 0) {
             continue;
         }
 
@@ -811,11 +847,24 @@ int MultithreadedWaitForClient(void* opaque) {
 
         // Client is not in use so we don't need to worry about anyone else
         // touching it
-        if (connectClient(client_id) != 0) {
+        if (connectClient(client_id, aes_private_key) != 0) {
             LOG_WARNING(
                 "Failed to establish connection with client. "
                 "(ID: %d)",
                 client_id);
+            continue;
+        }
+
+        if (writeLock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-acquire is active RW lock.");
+            if (quitClient(client_id) != 0) {
+                LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
+            }
+            if (host_id == client_id) {
+                // if (randomlyAssignHost() != 0) {
+                //     LOG_ERROR("Failed to randomly assigned host.");
+                // }
+            }
             continue;
         }
 
@@ -837,19 +886,8 @@ int MultithreadedWaitForClient(void* opaque) {
 
         StartTimer(&(clients[client_id].last_ping));
 
-        if (writeLock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-acquire is active RW lock.");
-            if (quitClient(client_id) != 0) {
-                LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
-            }
-            if (host_id == client_id) {
-                // if (randomlyAssignHost() != 0) {
-                //     LOG_ERROR("Failed to randomly assigned host.");
-                // }
-            }
-            continue;
-        }
         clients[client_id].is_active = true;
+
         if (writeUnlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
             LOG_ERROR("VERY BAD. IRRECOVERABLE.");
@@ -964,19 +1002,19 @@ int main() {
 
         while (connected) {
             if (GetTimer(ack_timer) > 5) {
-#if USING_STUN
-                // Broadcast ack
-                if (readLock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to read-acquire is active RW lock.");
-                } else {
-                    if (broadcastAck() != 0) {
-                        LOG_ERROR("Failed to broadcast acks.");
-                    }
-                    if (readUnlock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to read-release is active RW lock.");
+                if (get_using_stun()) {
+                    // Broadcast ack
+                    if (readLock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-acquire is active RW lock.");
+                    } else {
+                        if (broadcastAck() != 0) {
+                            LOG_ERROR("Failed to broadcast acks.");
+                        }
+                        if (readUnlock(&is_active_rwlock) != 0) {
+                            LOG_ERROR("Failed to read-release is active RW lock.");
+                        }
                     }
                 }
-#endif
                 updateStatus(num_controlling_clients > 0);
                 StartTimer(&ack_timer);
             }
@@ -984,11 +1022,12 @@ int main() {
             // If they clipboard as updated, we should send it over to the
             // client
             if (hasClipboardUpdated()) {
-                FractalServerMessage* fmsg_response = malloc(10000000);
-                fmsg_response->type = SMESSAGE_CLIPBOARD;
-                ClipboardData* cb = GetClipboard();
-                memcpy(&fmsg_response->clipboard, cb, sizeof(ClipboardData) + cb->size);
                 LOG_INFO("Received clipboard trigger! Sending to client");
+                ClipboardData* cb = GetClipboard();
+                FractalServerMessage* fmsg_response =
+                    malloc(sizeof(FractalServerMessage) + cb->size);
+                fmsg_response->type = SMESSAGE_CLIPBOARD;
+                memcpy(&fmsg_response->clipboard, cb, sizeof(ClipboardData) + cb->size);
                 if (readLock(&is_active_rwlock) != 0) {
                     LOG_ERROR("Failed to read-acquire is active RW lock.");
                 } else {
@@ -1072,6 +1111,7 @@ int main() {
                 LOG_ERROR("Failed to write-acquire is active lock.");
                 continue;
             }
+
             for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
                 if (!clients[id].is_active) continue;
 
@@ -1110,8 +1150,6 @@ int main() {
                 continue;
             }
         }
-
-        sendLogHistory();
 
         LOG_INFO("Disconnected");
 

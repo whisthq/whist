@@ -13,11 +13,11 @@ TODO
 #include "network.h"
 
 #include "../fractal/core/fractal.h"
-#include "main.h"
 #include "network.h"
 #include "desktop_utils.h"
 
 // Data
+extern volatile char aes_private_key[16];
 extern char filename[300];
 extern char username[50];
 extern int UDP_port;
@@ -30,20 +30,19 @@ extern char *server_ip;
 extern bool received_server_init_message;
 extern int uid;
 
-#define SHORT_TCP_CONNECTION_WAIT 500  // ms
-#define LONG_TCP_CONNECTION_WAIT 750   // ms
-#define UDP_CONNECTION_WAIT 500        // ms
+#define TCP_CONNECTION_WAIT 1000  // ms
+#define UDP_CONNECTION_WAIT 1000  // ms
 
 bool using_stun;
 
 int discoverPorts(void) {
     SocketContext context;
     using_stun = true;
-    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, SHORT_TCP_CONNECTION_WAIT,
-                         using_stun) < 0) {
+    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, using_stun,
+                         (char *)aes_private_key) < 0) {
         using_stun = false;
-        if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, LONG_TCP_CONNECTION_WAIT,
-                             using_stun) < 0) {
+        if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
+                             using_stun, (char *)aes_private_key) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
             return -1;
         }
@@ -131,7 +130,7 @@ int connectToServer(void) {
     }
 
     if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10, UDP_CONNECTION_WAIT,
-                         using_stun) < 0) {
+                         using_stun, (char *)aes_private_key) < 0) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
@@ -145,8 +144,8 @@ int connectToServer(void) {
         return -1;
     }
 
-    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, LONG_TCP_CONNECTION_WAIT,
-                         using_stun) < 0) {
+    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, TCP_CONNECTION_WAIT, using_stun,
+                         (char *)aes_private_key) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         closesocket(PacketSendContext.s);
         return -1;
@@ -175,4 +174,26 @@ int sendServerQuitMessages(int num_messages) {
         }
     }
     return retval;
+}
+
+// Here we send Large fmsg's over TCP. At the moment, this is only CLIPBOARD.
+// Currently, sending FractalClientMessage packets over UDP that require multiple
+// sub-packets to send, it not supported (If low latency large
+// FractalClientMessage packets are needed, then this will have to be
+// implemented)
+int SendFmsg(FractalClientMessage *fmsg) {
+    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_TIME) {
+        return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
+    } else {
+        if ((size_t)GetFmsgSize(fmsg) > MAX_PACKET_SIZE) {
+            LOG_ERROR(
+                "Attempting to send FMSG that is too large for UDP, and only CLIPBOARD and TIME is "
+                "presumed to be over TCP");
+            return -1;
+        }
+        static int sent_packet_id = 0;
+        sent_packet_id++;
+        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg),
+                             sent_packet_id, -1, NULL, NULL);
+    }
 }

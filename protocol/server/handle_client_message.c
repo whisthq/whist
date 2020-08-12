@@ -136,7 +136,7 @@ static int handleKeyboardStateMessage(FractalClientMessage *fmsg, int client_id,
 static int handleBitrateMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
-    LOG_INFO("MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps);
+    LOG_INFO("MSG RECEIVED FOR MBPS: %f", fmsg->mbps);
     max_mbps = max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
     // update_encoder = true;
     return 0;
@@ -250,7 +250,11 @@ static int handleIFrameRequestMessage(FractalClientMessage *fmsg, int client_id,
     if (fmsg->reinitialize_encoder) {
         update_encoder = true;
     } else {
-        wants_iframe = true;
+        if (USING_FFMPEG_IFRAME_FLAG) {
+            wants_iframe = true;
+        } else {
+            update_encoder = true;
+        }
     }
     return 0;
 }

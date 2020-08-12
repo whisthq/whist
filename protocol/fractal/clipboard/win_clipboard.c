@@ -40,7 +40,7 @@ char* set_clipboard_directory() {
 }
 #endif
 
-void initClipboard() {
+void unsafe_initClipboard() {
     get_clipboard_directory();
     set_clipboard_directory();
     StartTrackingClipboardUpdates();
@@ -199,7 +199,7 @@ bool StartTrackingClipboardUpdates() {
     return true;
 }
 
-bool hasClipboardUpdated() {
+bool unsafe_hasClipboardUpdated() {
     bool hasUpdated = false;
 
     int new_clipboard_sequence_number = GetClipboardSequenceNumber();
@@ -210,13 +210,17 @@ bool hasClipboardUpdated() {
     return hasUpdated;
 }
 
-ClipboardData* GetClipboard() {
+ClipboardData* unsafe_GetClipboard() {
+    // We have to wait a bit after hasClipboardUpdated, before the clipboard actually updates
+    SDL_Delay(15);
+
     ClipboardData* cb = (ClipboardData*)clipboard_buf;
 
     cb->size = 0;
     cb->type = CLIPBOARD_NONE;
 
     if (!OpenClipboard(NULL)) {
+        LOG_WARNING("Failed to open clipboard!");
         return cb;
     }
 
@@ -255,16 +259,24 @@ ClipboardData* GetClipboard() {
 
     if (cf_type == -1) {
         LOG_WARNING("Clipboard not found");
+        int ret = 0;
+        int new_ret;
+        while ((new_ret = EnumClipboardFormats(ret)) != 0) {
+            char buf[1000];
+            GetClipboardFormatNameA(new_ret, buf, sizeof(buf));
+            LOG_INFO("Potential Format: %s", buf);
+            ret = new_ret;
+        }
     } else {
         switch (cf_type) {
             case CF_TEXT:
                 // Read the contents of lptstr which just a pointer to the
                 // string.
-                // LOG_INFO( "CLIPBOARD STRING: %s", cb->data );
+                LOG_INFO("CLIPBOARD STRING Received! Size: %d", cb->size);
                 cb->type = CLIPBOARD_TEXT;
                 break;
             case CF_DIB:
-                // LOG_ERROR( "Clipboard bitmap received! Size: %d", cb->size );
+                LOG_INFO("Clipboard bitmap received! Size: %d", cb->size);
                 cb->type = CLIPBOARD_IMAGE;
                 break;
             case CF_HDROP:
@@ -407,7 +419,7 @@ HGLOBAL getGlobalAlloc(void* buf, int len) {
     return hMem;
 }
 
-void SetClipboard(ClipboardData* cb) {
+void unsafe_SetClipboard(ClipboardData* cb) {
     if (cb->type == CLIPBOARD_NONE) {
         return;
     }
@@ -426,6 +438,28 @@ void SetClipboard(ClipboardData* cb) {
         case CLIPBOARD_IMAGE:
             LOG_INFO("SetClipboard to Image with size %d", cb->size);
             if (cb->size > 0) {
+                if ((*(int*)&cb->data[8]) < 0) {
+                    LOG_INFO("Original Height: %d", (*(int*)&cb->data[8]));
+                    (*(int*)&cb->data[8]) = -(*(int*)&cb->data[8]);
+                    int height = (*(int*)&cb->data[8]);
+                    // row_size = 4 * floor( (bits_per_pixel * image_width + 31)/32 )
+                    int row_size =
+                        (((*(short*)&cb->data[14]) * (*(int*)&cb->data[4]) + 31) / 32) * 4;
+                    char* buf = cb->data + cb->size - row_size * height;
+                    char* tmp = malloc(row_size);
+                    LOG_INFO("Width: %d", (*(int*)&cb->data[4]));
+                    LOG_INFO("Height: %d", (*(int*)&cb->data[8]));
+                    LOG_INFO("Bits per pixel: %d", (*(short*)&cb->data[14]));
+                    LOG_INFO("Row Size: %d", row_size);
+                    LOG_INFO("OFFSET: %d", (int)(buf - cb->data));
+                    LOG_INFO("Header Size: %d", (*(int*)&cb->data[0]));
+                    for (int i = 0; i < height / 2; i++) {
+                        memcpy(tmp, buf + row_size * i, row_size);
+                        memcpy(buf + row_size * i, buf + row_size * (height - 1 - i), row_size);
+                        memcpy(buf + row_size * (height - 1 - i), tmp, row_size);
+                    }
+                    free(tmp);
+                }
                 cf_type = CF_DIB;
                 hMem = getGlobalAlloc(cb->data, cb->size);
             }
@@ -513,5 +547,5 @@ void SetClipboard(ClipboardData* cb) {
     }
 
     // Update the status so that this specific update doesn't count
-    hasClipboardUpdated();
+    unsafe_hasClipboardUpdated();
 }

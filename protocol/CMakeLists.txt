@@ -102,6 +102,17 @@ else()
     endif()
 endif()
 
+#download latest sentry release
+# example on how we would automate this. We are currently running get_latest_sentry.py on its own
+# because we need to use an authenticated API call and passing the github token around from githubactions
+# to cmake to python is more trouble than it is worth.
+#MESSAGE(STATUS "Downloading sentry-native from GitHub")
+#execute_process(COMMAND python3 get_latest_sentry.py
+#        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#        RESULT_VARIABLE download_res)
+#if (NOT ${download_res} EQUAL "0")
+#    message(FATAL_ERROR "Failed to download sentry-native from GitHub: exitcode: ${download_res}")
+#endif()
 
 # FFmpeg: using our provided libs on mac and windows and system on linux.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -154,6 +165,25 @@ endif ()
 ################## Libraries we supply ##################
 ]]
 # the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
+# For linux we use the system openssl/libcrypto. For mac and windows we bundle our own because is not included with the os
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
+            NO_DEFAULT_PATH
+            NO_CMAKE_ENVIRONMENT PATH
+            NO_CMAKE_PATH
+            NO_SYSTEM_ENVIRONMENT_PATH
+            NO_CMAKE_SYSTEM_PATH
+            NO_CMAKE_FIND_ROOT_PATH)
+
+    if (NOT STATIC_OPENSSL)
+        message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
+    endif()
+else()
+    find_package(OpenSSL REQUIRED)
+endif()
+
+
+
 find_library(STATIC_SDL2 NAMES SDL2 PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT PATH
@@ -165,17 +195,6 @@ if (NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
-find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
-        NO_DEFAULT_PATH
-        NO_CMAKE_ENVIRONMENT PATH
-        NO_CMAKE_PATH
-        NO_SYSTEM_ENVIRONMENT_PATH
-        NO_CMAKE_SYSTEM_PATH
-        NO_CMAKE_FIND_ROOT_PATH)
-
-if (NOT STATIC_OPENSSL)
-    message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
-endif()
 
 find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/
         NO_DEFAULT_PATH
@@ -196,11 +215,15 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Require MacOS 10.13 or up, to ensure LibObj-C is standard
 endif()
 
+add_subdirectory(sentry-native)
+
 # Tell CMake where to look for includes
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
-include_directories(include/SDL_image)
+include_directories(sentry-native/include)
+
+
 
 add_subdirectory(sentry-native)
 

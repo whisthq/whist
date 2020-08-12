@@ -1,5 +1,10 @@
 #ifndef FRACTAL_H
 #define FRACTAL_H
+
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file fractal.h
@@ -73,6 +78,16 @@ Includes
 Defines
 ============================
 */
+/*
+ Environment, should be set with cmake using -DFRACTAL_ENVIRONMENT="<env>"
+ <env> should be one of "dev" "staging" "production"
+ This is used to set the sentry environment
+ TODO: discuss pro of this approach or using is_dev()
+ is_dev I believe does not consider staging or not staging
+*/
+#ifndef FRACTAL_ENVIRONMENT
+#define FRACTAL_ENVIRONMENT "dev"
+#endif
 
 #define NUM_KEYCODES 265
 
@@ -81,13 +96,12 @@ Defines
 #define BASE_UDP_PORT 32263
 #define BASE_TCP_PORT (BASE_UDP_PORT + MAX_NUM_CLIENTS)
 
-#define PRODUCTION_HOST "cube-celery-vm.herokuapp.com"
+#define PRODUCTION_HOST "main-webserver.fractalcomputers.com"
 #define STAGING_HOST "cube-celery-staging.herokuapp.com"
 
-#define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
-
-#if defined(_WIN32)
+#define USING_FFMPEG_IFRAME_FLAG false
+#ifdef _WIN32
 // possible on windows, so let's do it
 #define USING_SERVERSIDE_SCALE true
 #else
@@ -109,7 +123,7 @@ Defines
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
-#define PRIVATE_KEY "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
+#define DEFAULT_PRIVATE_KEY "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
 
 #define MOUSE_SCALING_FACTOR 100000
 
@@ -561,6 +575,23 @@ int runcmd(const char* cmdline, char** response);
 char* get_ip();
 
 /**
+ * @brief                          Reads a 16-byte hexidecimal string and copies
+ * it into private_key
+ *
+ * @param hex_string               The hexidecimal string to copy
+ * @param private_key              The 16-byte buffer to copy the bytes into
+ *
+ * @returns                        True if hex_string was a 16-byte hexadecimal
+ * value, otherwise false
+ */
+bool read_hexadecimal_private_key(char* hex_string, char* private_key);
+
+/**
+ * @brief                          Queries the webserver for various parameters
+ */
+void update_webserver_parameters();
+
+/**
  * @brief                          Queries the webserver to ask if a VM is
  *                                 development VM
  *
@@ -568,6 +599,30 @@ char* get_ip();
  *                                 protocol branch), False otherwise
  */
 bool is_dev_vm();
+
+/**
+ * @brief                          Queries the webserver to get the VM's aes
+ * private key
+ *
+ * @returns                        The VM's 16-byte aes private key
+ */
+char* get_private_key();
+
+/**
+ * @brief                          Queries the webserver to get the using_stun
+ * status
+ *
+ * @returns                        The using_stun status
+ */
+bool get_using_stun();
+
+/**
+ * @brief                          Queries the webserver for the get access token
+ * status
+ *
+ * @returns                        The access token
+ */
+char* get_access_token();
 
 /**
  * @brief                          Calculate the size of a FractalClientMessage

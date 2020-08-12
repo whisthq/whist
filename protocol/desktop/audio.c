@@ -13,6 +13,7 @@ audio format.
 */
 
 #include "audio.h"
+#include "network.h"
 
 extern int audio_frequency;
 extern bool has_rendered_yet;
@@ -102,7 +103,7 @@ void destroyAudio() {
 
 void updateAudio() {
 #if LOG_AUDIO
-    // mprintf("Queue: %d\n", SDL_GetQueuedAudioSize(AudioData.dev));
+    // mprintf("Queue: %d", SDL_GetQueuedAudioSize(AudioData.dev));
 #endif
     if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
         LOG_INFO("Updating audio frequency to %d!", audio_frequency);

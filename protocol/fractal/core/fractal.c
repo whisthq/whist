@@ -6,6 +6,7 @@
 
 #include "fractal.h"  // header file for this protocol, includes winsock
 
+#include <ctype.h>
 #include <stdio.h>
 
 #include "../utils/json.h"
@@ -135,8 +136,15 @@ int runcmd(const char* cmdline, char** response) {
 
     char cmd_buf[1000];
 
+    while (cmdline[0] == ' ') {
+        cmdline++;
+    }
+
     if (strlen((const char*)cmdline) + 1 > sizeof(cmd_buf)) {
-        mprintf("runcmd cmdline too long!\n");
+        LOG_WARNING("runcmd cmdline too long!");
+        if (response) {
+            *response = NULL;
+        }
         return -1;
     }
 
@@ -148,7 +156,9 @@ int runcmd(const char* cmdline, char** response) {
                        &pi)) {
     } else {
         LOG_ERROR("CreateProcessA failed!");
-        *response = NULL;
+        if (response) {
+            *response = NULL;
+        }
         return -1;
     }
 
@@ -185,6 +195,13 @@ int runcmd(const char* cmdline, char** response) {
         free(db);
         return size;
     } else {
+        CloseHandle(hChildStd_OUT_Wr);
+        CloseHandle(hChildStd_IN_Rd);
+        CloseHandle(hChildStd_IN_Wr);
+
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
         return 0;
     }
 #else
@@ -235,51 +252,50 @@ int runcmd(const char* cmdline, char** response) {
         if (feof(pPipe)) {
             return current_len;
         } else {
-            LOG_WARNING("Error: Failed to read the pipe to the end.\n");
+            LOG_WARNING("Error: Failed to read the pipe to the end.");
+            *response = NULL;
             return -1;
         }
     }
 #endif
 }
 
-char* get_ip() {
-    static char ip[128];
-    static bool already_obtained_ip = false;
-    if (already_obtained_ip) {
-        return ip;
+bool read_hexadecimal_private_key(char* hex_string, char* private_key) {
+    for (int i = 0; i < 16; i++) {
+        if (!isxdigit(hex_string[2 * i]) || !isxdigit(hex_string[2 * i + 1]) ||
+            hex_string[32] != '\0') {
+            return false;
+        }
+        sscanf(&hex_string[2 * i], "%2hhx", &(private_key[i]));
     }
-
-    char* buf;
-    runcmd("curl ipinfo.io", &buf);
-
-    json_t json;
-    if (!parse_json(buf, &json)) {
-        LOG_WARNING("curl ipinfo.io did not return an IP: %s", buf);
-        return NULL;
-    }
-    kv_pair_t* kv = get_kv(&json, "ip");
-
-    memcpy(ip, kv->str_value, sizeof(ip));
-
-    free_json(json);
-
-    already_obtained_ip = true;
-    return ip;
+    return true;
 }
 
+static char aes_private_key[16];
 static char* branch = NULL;
 static bool is_dev;
 static bool already_obtained_vm_type = false;
 static clock last_vm_info_check_time;
+static bool is_using_stun;
+static char* access_token = NULL;
+bool is_trying_staging_protocol_info = false;
 
-char* get_branch() {
-    is_dev_vm();
-    return branch;
-}
+void update_webserver_parameters() {
+    if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 30.0) {
+        return;
+    }
 
-bool is_dev_vm() {
-    if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 60.0) {
-        return is_dev;
+    bool will_try_staging = false;
+    if (is_trying_staging_protocol_info) {
+        will_try_staging = true;
+    }
+    is_trying_staging_protocol_info = false;
+
+    if (!already_obtained_vm_type) {
+        // Set Default Values
+        is_dev = true;
+        memcpy(aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+        is_using_stun = false;
     }
 
     char buf[4800];
@@ -287,14 +303,15 @@ bool is_dev_vm() {
 
     LOG_INFO("GETTING JSON");
 
-    if (!SendJSONGet(PRODUCTION_HOST, "/vm/isDev", buf, len)) {
-        if (already_obtained_vm_type) {
-            return is_dev;
-        } else {
-            return true;
-        }
+    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/vm/protocol_info", buf,
+                     len)) {
+        already_obtained_vm_type = true;
+        StartTimer(&last_vm_info_check_time);
+        return;
     }
 
+    // Find JSON as the data after all HTTP headers, ie after the string
+    // "\r\n\r\n"
     char* json_str = NULL;
     for (size_t i = 0; i < len - 4; i++) {
         if (memcmp(buf + i, "\r\n\r\n", 4) == 0) {
@@ -303,54 +320,119 @@ bool is_dev_vm() {
     }
 
     if (!json_str) {
-        if (already_obtained_vm_type) {
-            return is_dev;
-        } else {
-            return true;
-        }
+        already_obtained_vm_type = true;
+        StartTimer(&last_vm_info_check_time);
+        return;
     }
+
+    // Set Default Values
+    is_dev = true;
+    memcpy(aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+    is_using_stun = false;
 
     json_t json;
     if (!parse_json(json_str, &json)) {
-        LOG_WARNING("Failed to parse JSON from /vm/isDev");
+        LOG_ERROR("Failed to parse JSON from /vm/protocol_info");
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
-        is_dev = true;
-        return is_dev;
+        return;
     }
 
     kv_pair_t* dev_value = get_kv(&json, "dev");
     kv_pair_t* branch_value = get_kv(&json, "branch");
+    kv_pair_t* private_key = get_kv(&json, "private_key");
+    kv_pair_t* using_stun = get_kv(&json, "using_stun");
+    kv_pair_t* access_token_value = get_kv(&json, "access_token");
+
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {
-            return false;
+            free_json(json);
+            already_obtained_vm_type = true;
+            StartTimer(&last_vm_info_check_time);
+            return;
         }
 
         is_dev = dev_value->bool_value;
+
+        if (branch) {
+            free(branch);
+        }
         if (branch_value->type == JSON_STRING) {
             branch = clone(branch_value->str_value);
         } else if (branch_value->type == JSON_NULL) {
-            branch = "[NULL]";
+            branch = clone("[NULL]");
         } else {
-            branch = "";
+            branch = clone("");
         }
 
         LOG_INFO("Is Dev? %s", dev_value->bool_value ? "true" : "false");
         LOG_INFO("Branch: %s", branch);
 
-        free_json(json);
+        if (private_key && private_key->type == JSON_BOOL) {
+            LOG_INFO("Private Key: %s", private_key->str_value);
+            read_hexadecimal_private_key(private_key->str_value, aes_private_key);
+        }
 
-        already_obtained_vm_type = true;
-        StartTimer(&last_vm_info_check_time);
-        return is_dev;
+        if (using_stun && using_stun->type == JSON_BOOL) {
+            LOG_INFO("Using Stun: %s", using_stun->bool_value ? "Yes" : "No");
+            is_using_stun = using_stun->bool_value;
+        }
+
+        if (access_token_value && access_token_value->type == JSON_STRING) {
+            if (!access_token) {
+                free(access_token);
+            }
+            access_token = clone(access_token_value->str_value);
+        }
     } else {
-        LOG_WARNING("COULD NOT GET JSON FROM: %s", json_str);
-        free_json(json);
+        LOG_WARNING("COULD NOT GET JSON PARAMETERS FROM: %s", json_str);
+    }
+
+    free_json(json);
+    if (is_dev && !will_try_staging) {
+        is_trying_staging_protocol_info = true;
+        // This time trying the staging protocol info, if we haven't already
+        update_webserver_parameters();
+        return;
+    } else {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
-        is_dev = true;
-        return is_dev;
     }
+}
+
+char* get_branch() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return branch;
+}
+
+char* get_private_key() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return aes_private_key;
+}
+
+bool get_using_stun() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return is_using_stun;
+}
+
+bool is_dev_vm() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return is_dev;
+}
+
+char* get_access_token() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return access_token;
 }
 
 int GetFmsgSize(FractalClientMessage* fmsg) {

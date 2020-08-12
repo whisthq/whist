@@ -149,7 +149,7 @@ int CaptureScreen(CaptureDevice* device) {
         XDamageSubtract(device->display, device->damage, None, None);
 
         if (!is_same_wh(device)) {
-            LOG_ERROR("Wrong width/height!\n");
+            LOG_ERROR("Wrong width/height!");
             update = -1;
         } else {
             XErrorHandler prev_handler = XSetErrorHandler(handler);
