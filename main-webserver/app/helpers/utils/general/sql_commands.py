@@ -1,6 +1,10 @@
 from app.imports import *
 from app.helpers.utils.general.logs import *
 
+from app.models.public import *
+from app.models.hardware import *
+from app.models.devops import *
+
 
 engine = db.create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 Session = sessionmaker(bind=engine, autocommit=False)
