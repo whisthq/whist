@@ -364,7 +364,7 @@ jobs:
 
       - name: upload debug information to sentry
         run: |
-            sentry-cli upload-dif --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} -o Fractal -p protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
+            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o Fractal -p protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
 
       - name: Upload server artifact (if requested on this platform)
         if: matrix.config.server_artifact_name
