@@ -9,6 +9,7 @@ from app.models.sales import *
 
 
 engine = db.create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+metadata.create_all(bind=engine)
 Session = sessionmaker(bind=engine, autocommit=False)
 
 
@@ -64,36 +65,33 @@ def fractalRunSQL(command, params):
 
     return output
 
+def tableToObject(table_name):
+    tableMap = {
+        "users": User,
+        "os_disks": OSDisk,
+        "user_vms": UserVM,
+        "secondary_disks": SecondaryDisk,
+        "install_commands": InstallCommand,
+        "apps_to_install": AppsToInstall,
+        "release_groups": ReleaseGroup,
+        "stripe_products": StripeProduct,
+        "main_newsletter": MainNewsletter
+    }
+
 
 def fractalSQLSelect(table_name, params):
-    command = """
-        SELECT * FROM \"{table_name}\" WHERE""".format(
-        table_name=table_name
-    )
+    session = Session()
 
-    if not params or len(params) == 0:
-        command = """
-            SELECT * FROM \"{table_name}\"""".format(
-            table_name=table_name
-        )
-    else:
-        number_of_params = 1
+    table_object = tableToObject(table_name)
+    rows = session.query(table_object).filter_by(**params)
 
-        for param_name, param_value in params.items():
-            if number_of_params == 1:
-                command += """ "{param_name}" = :{param_name}""".format(
-                    param_name=param_name
-                )
-            else:
-                command += """ AND "{param_name}" = :{param_name}""".format(
-                    param_name=param_name
-                )
+    session.commit()
+    session.close()
 
-            number_of_params += 1
+    rows = rows.all()
+    result = [row.__dict__ for row in rows]
 
-        command = text(command)
-
-    return fractalRunSQL(command, params)
+    return result
 
 
 def fractalSQLUpdate(table_name, conditional_params, new_params):
@@ -107,94 +105,35 @@ def fractalSQLUpdate(table_name, conditional_params, new_params):
     Returns:
         [type]: [description]
     """
-    number_of_new_params = number_of_conditional_params = 1
+    session = Session()
 
-    command = """
-        UPDATE \"{table_name}\" SET""".format(
-        table_name=table_name
-    )
+    table_object = tableToObject(table_name)
+    session.query(table_object).filter_by(**conditional_params).update(new_params)
 
-    for param_name, param_value in new_params.items():
-        if number_of_new_params == 1:
-            command += """ "{param_name}" = :{param_name}""".format(
-                param_name=param_name
-            )
-        else:
-            command += ""","{param_name}" = :{param_name}""".format(
-                param_name=param_name
-            )
-
-        number_of_new_params += 1
-
-    for param_name, param_value in conditional_params.items():
-        if number_of_conditional_params == 1:
-            command += """ WHERE "{param_name}" = :{param_name}""".format(
-                param_name=param_name
-            )
-        else:
-            command += """ AND "{param_name}" = :{param_name}""".format(
-                param_name=param_name
-            )
-
-        number_of_conditional_params += 1
-
-    command = text(command)
-    conditional_params.update(new_params)
-
-    return fractalRunSQL(command, conditional_params)
+    session.commit()
+    session.close()
 
 
-def fractalSQLInsert(table_name, params, unique_keys=None):
-    if unique_keys:
-        output = fractalSQLSelect(table_name, unique_keys)
-        if output["success"] and output["rows"]:
-            output = {
-                "success": False,
-                "returns_rows": False,
-                "rows": None,
-                "error": "A row with column values {unique_keys} already exists in {table_name}".format(
-                    unique_keys=str(unique_keys), table_name=table_name
-                ),
-            }
+def fractalSQLInsert(table_name, params):
+    session = Session()
 
-    columns = values = "("
-    number_of_params = len(params.keys())
-    current_param_number = 1
+    table_object = tableToObject(table_name)
+    new_row = table_object(**params)
 
-    for param_name, param_value in params.items():
-        if current_param_number == number_of_params:
-            columns += '"{param_name}")'.format(param_name=param_name)
-            values += ":{param_name})".format(param_name=param_name)
-        else:
-            columns += '"{param_name}", '.format(param_name=param_name)
-            values += ":{param_name}, ".format(param_name=param_name)
+    session.add(new_row)
 
-        current_param_number += 1
+    session.commit()
+    session.close()
 
-    command = """
-        INSERT INTO \"{table_name}\"{columns} VALUES{values}""".format(
-        table_name=table_name, columns=columns, values=values
-    )
-
-    command = text(command)
-    print(command)
-    return fractalRunSQL(command, params)
 
 
 def fractalSQLDelete(table_name, params, and_or="AND"):
-    conditions = ""
-    number_of_params = len(params.keys())
-    current_param = 1
+    session = Session()
 
-    for param_name, param_value in params.items():
-        conditions += '"{param_name}" = :{param_name}'.format(param_name=param_name)
-        if not current_param == number_of_params:
-            conditions += " {} ".format(and_or.upper())
-        current_param += 1
+    table_object = tableToObject(table_name)
 
-    command = 'DELETE FROM "{table_name}" WHERE {conditions}'.format(
-        table_name=table_name, conditions=conditions
-    )
+    rows = session.query(table_object).filter_by(and_(**params)) if and_or == "AND" else session.query(table_object).filter_by(or_(**params))
+    rows.delete()
 
-    command = text(command)
-    return fractalRunSQL(command, params)
+    session.commit()
+    session.close()
