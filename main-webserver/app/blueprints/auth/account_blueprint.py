@@ -4,7 +4,6 @@ from app.helpers.blueprint_helpers.auth.account_post import *
 
 account_bp = Blueprint("account_bp", __name__)
 
-
 @account_bp.route("/account/delete", methods=["POST"])
 @fractalPreProcess
 @jwt_required
@@ -12,8 +11,6 @@ account_bp = Blueprint("account_bp", __name__)
 def account_postDelete(**kwargs):
     # Account deletion endpoint
     username = kwargs["body"]["username"]
-
-    print("delete0")
 
     output = deleteHelper(username)
 
@@ -26,7 +23,6 @@ def account_postDelete(**kwargs):
 @fractalAuth
 def account_postUpdate(**kwargs):
     # Change the user's name, email, or password
-    print("update")
     return updateUserHelper(kwargs["body"])
 
 

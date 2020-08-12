@@ -12,7 +12,6 @@ engine = db.create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 metadata.create_all(bind=engine)
 Session = sessionmaker(bind=engine, autocommit=False)
 
-
 def tableToObject(table_name):
     tableMap = {
         "users": User,
@@ -26,6 +25,7 @@ def tableToObject(table_name):
         "main_newsletter": MainNewsletter
     }
 
+    return tableMap[table_name]
 
 def fractalSQLSelect(table_name, params):
     session = Session()
@@ -41,15 +41,7 @@ def fractalSQLSelect(table_name, params):
 
     return result
 
-
 def fractalSQLUpdate(table_name, conditional_params, new_params):
-    """Updates an entry in the database
-
-    Args:
-        table_name (str): Name of table to update
-        conditional_params (arr[str]): The params that need to be satisfied for the row to update
-        new_params (arr[str]): The new values to update
-    """
     session = Session()
 
     table_object = tableToObject(table_name)
@@ -69,7 +61,6 @@ def fractalSQLInsert(table_name, params):
 
     session.commit()
     session.close()
-
 
 
 def fractalSQLDelete(table_name, params, and_or="AND"):
