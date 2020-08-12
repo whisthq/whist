@@ -17,6 +17,7 @@ def addCard(**kwargs):
 @jwt_required
 def deleteCard(**kwargs):
     body = kwargs["body"]
+
     return deleteCardHelper(body["custId"], body["cardId"])
 
 

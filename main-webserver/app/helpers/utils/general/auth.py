@@ -44,10 +44,23 @@ def fractalAuth(f):
             current_user != username
             and not DASHBOARD_USERNAME in current_user
         ):
+            format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
+
+            logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.DEBUG)
+
+            logger.info(
+                "Authorization failed. Provided username {username} does not match username associated with provided Bearer token {bearer}.".format(
+                    username=str(username), bearer=str(current_user)
+                )
+            )
             return (
                 jsonify(
                     {
-                        "error": "Authorization failed. Provided username does not match username associated with provided Bearer token."
+                        "error": "Authorization failed. Provided username {username} does not match username associated with provided Bearer token {bearer}.".format(
+                            username=str(username), bearer=str(current_user)
+                        )
                     }
                 ),
                 UNAUTHORIZED,
