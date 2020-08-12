@@ -355,15 +355,9 @@ jobs:
 
           execute_process(COMMAND ccache -s)
 
-      - name: Setup Sentry CLI
-        uses: mathrix-education/setup-sentry-cli@0.1.0
-        with:
-          token: ${{ secrets.SENTRY_AUTH_TOKEN }} # from GitHub secrets
-          organization: Fractal
-          project: protocol
-
-      - name: upload debug information to sentry
+      - name: Upload debug information to sentry
         run: |
+            curl -sL https://sentry.io/get-cli/ | bash
             sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o Fractal -p protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
 
       - name: Upload server artifact (if requested on this platform)
