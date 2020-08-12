@@ -14,9 +14,13 @@ jobs:
       - name: Set git short sha
         id: vars
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+         python-version: '3.8'
       - name: Set Sentry Environment
         id: sentry_env
-        run: python sentry_env_from_release.py ${{ github.event.release.tag_name }}
+        run: python3 sentry_env_from_release.py ${{ github.event.release.tag_name }}
       - name: Create a Sentry.io release
         uses: tclindner/sentry-releases-action@v1.2.0
         env:

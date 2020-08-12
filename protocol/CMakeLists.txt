@@ -104,7 +104,7 @@ endif()
 
 #download latest sentry release
 MESSAGE(STATUS "Downloading sentry-native from GitHub")
-execute_process(COMMAND python get_latest_sentry.py
+execute_process(COMMAND python3 get_latest_sentry.py
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         RESULT_VARIABLE download_res)
 if (NOT ${download_res} EQUAL "0")
