@@ -41,8 +41,6 @@ def fractalSQLSelect(table_name, params):
     rows = rows.all()
     result = [row.__dict__ for row in rows]
 
-    print(result)
-
     return result
 
 

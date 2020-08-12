@@ -218,10 +218,3 @@ def computerReadyHelper(user, date, code, location):
 
     return jsonify({"status": SUCCESS}), SUCCESS
 
-
-def newsletterSubscribe(username):
-    fractalSQLInsert(table_name="newsletter", params={"username": username})
-
-
-def newsletterUnsubscribe(username):
-    fractalSQLDelete(table_name="newsletter", params={"username": username})

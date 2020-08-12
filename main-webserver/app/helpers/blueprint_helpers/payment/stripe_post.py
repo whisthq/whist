@@ -27,13 +27,19 @@ def chargeHelper(token, email, code, plan):
     trial_end = 0
     customer_exists = False
 
-    output = fractalSQLSelect("customers", {"username": email})["rows"]
+    output = fractalSQLSelect("users", {"email": email})
     if output:
         customer = output[0]
         customer_exists = True
-        if customer["trial_end"]:
-            trial_end = max(
-                customer["trial_end"], round((dt.now() + timedelta(days=1)).timestamp())
+        if customer["stripe_customer_id"]:
+            subscriptions = stripe.Subscription.list(
+                customer=customer["stripe_customer_id"]
+            )
+            trial_end = round(
+                max(
+                    subscriptions["data"][0]["trial_end"],
+                    (dt.now() + timedelta(days=1)).timestamp(),
+                )
             )
         else:
             trial_end = round((dt.now() + timedelta(days=1)).timestamp())
@@ -42,9 +48,7 @@ def chargeHelper(token, email, code, plan):
         subscription_id = ""
         new_customer = stripe.Customer.create(email=email, source=token)
         customer_id = new_customer["id"]
-        credits = fractalSQLSelect("users", {"username": email})["rows"][0][
-            "credits_outstanding"
-        ]
+        credits = fractalSQLSelect("users", {"email": email})[0]["credits_outstanding"]
 
         metadata = fractalSQLSelect("users", {"code": code})["rows"]
 
@@ -117,14 +121,9 @@ def chargeHelper(token, email, code, plan):
     try:
         if customer_exists:
             fractalSQLUpdate(
-                "customers",
-                {"username": email},
-                {
-                    "id": customer_id,
-                    "subscription": subscription_id,
-                    "trial_end": trial_end,
-                    "paid": True,
-                },
+                "users",
+                {"email": email},
+                {"stripe_customer_id": customer_id, "trial_end": trial_end,},
             )
             fractalLog(
                 function="chargeHelper", label=email, logs="Customer updated successful"
@@ -133,13 +132,12 @@ def chargeHelper(token, email, code, plan):
             fractalSQLInsert(
                 "customers",
                 {
-                    "username": email,
-                    "id": customer_id,
-                    "subscription": subscription_id,
+                    "email": email,
+                    "stripe_customer_id": customer_id,
                     "location": "",
-                    "trial_end": trial_end,
-                    "paid": True,
-                    "created": dt.now(datetime.timezone.utc).timestamp(),
+                    "created_timestamp": round(
+                        dt.now(datetime.timezone.utc).timestamp()
+                    ),
                 },
             )
             fractalLog(

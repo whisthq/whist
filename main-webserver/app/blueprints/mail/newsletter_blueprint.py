@@ -8,10 +8,4 @@ newsletter_bp = Blueprint("newsletter_bp", __name__)
 @fractalPreProcess
 def newsletter(action, **kwargs):
     body = kwargs["body"]
-    if action == "subscribe":
-        newsletterSubscribe(body["username"])
-        return jsonify({"status": SUCCESS}), SUCCESS
-
-    elif action == "unsubscribe":
-        newsletterUnsubscribe(body["username"])
-        return jsonify({"status": SUCCESS}), SUCCESS
+    return jsonify({}), SUCCESS
