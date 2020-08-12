@@ -156,7 +156,7 @@ jobs:
       - name: Get latest sentry
         run: |
           pip3 install requests
-          python3 ${{ github.workspace }}/get_latest_sentry.py --token ${{secrets.GITHUB_TOKEN}}
+          python ${{ github.workspace }}/get_latest_sentry.py --token ${{secrets.GITHUB_TOKEN}}
 
       - name: Install CUDA for windows
         if: runner.os == 'Windows'
