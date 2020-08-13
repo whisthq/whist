@@ -515,7 +515,7 @@ def updateHelper(username, new_plan_type):
     customer = customer[0]
     if not customer["stripe_customer_id"]:
         return (
-            jsonify({"status": NOT_ACCEPTABLE, "error": "User has is not on stripe"}),
+            jsonify({"status": NOT_ACCEPTABLE, "error": "User is not on stripe"}),
             NOT_ACCEPTABLE,
         )
 
@@ -524,12 +524,13 @@ def updateHelper(username, new_plan_type):
     ]
     if not subscriptions:
         return (
-            jsonify({"status": NOT_ACCEPTABLE, "error": "User has is not on any plan"}),
+            jsonify({"status": NOT_ACCEPTABLE, "error": "User is not on any plan"}),
             NOT_ACCEPTABLE,
         )
 
-    subscription_id = subscriptions[0]["id"]
-    stripe.SubscriptionItem.modify(subscription_id, plan=new_plan_id)
+    stripe.SubscriptionItem.modify(
+        subscriptions[0]["items"]["data"][0]["id"], plan=new_plan_id
+    )
     planChangeMail(username, new_plan_type)
     return jsonify({"status": SUCCESS}), SUCCESS
 
