@@ -92,6 +92,7 @@ def run_cmd(cmd: List[str], **kwargs):
 
 def prep_unix(protocol_dir: Path) -> None:  # Shared by Linux and macOS
     (protocol_dir / "sshkey").chmod(0o600)
+    (protocol_dir / "FractalClient").chmod(0o744)
 
 
 def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) -> None:
