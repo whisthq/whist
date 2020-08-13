@@ -17,6 +17,7 @@ def addCard(**kwargs):
 @jwt_required
 def deleteCard(**kwargs):
     body = kwargs["body"]
+
     return deleteCardHelper(body["custId"], body["cardId"])
 
 
@@ -66,7 +67,7 @@ def hooks(**kwargs):
 
     # Endpoint for stripe webhooks
     sigHeader = request.headers["Stripe-Signature"]
-    endpointSecret = os.getenv("ENDPOINT_SECRET")
+    endpointSecret = ENDPOINT_SECRET
     event = None
 
     try:
@@ -76,7 +77,6 @@ def hooks(**kwargs):
         return jsonify({"status": "Invalid payload"}), NOT_ACCEPTABLE
     except stripe.error.SignatureVerificationError as e:
         # Invalid signature
-        print(e)
         return jsonify({"status": "Invalid signature"}), FORBIDDEN
 
     return webhookHelper(event)

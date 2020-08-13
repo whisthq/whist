@@ -52,7 +52,4 @@ from botocore.exceptions import NoCredentialsError
 from msrest.exceptions import ClientException
 from google_auth_oauthlib.flow import Flow
 
-from .constants.http_codes import *
-from .constants.resources import *
-
 load_dotenv()

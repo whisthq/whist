@@ -3,7 +3,7 @@ from app.helpers.utils.azure.azure_general import *
 
 
 def lockVMAndUpdate(
-    vm_name, state, lock, temporary_lock, resource_group=os.getenv("VM_GROUP")
+    vm_name, state, lock, temporary_lock, resource_group=VM_GROUP
 ):
     """Changes the state, lock, and temporary lock of a VM
 
@@ -49,7 +49,7 @@ def lockVMAndUpdate(
 
 
 def checkLock(vm_name, resource_group=None):
-    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+    resource_group = VM_GROUP if not resource_group else resource_group
 
     output = fractalSQLSelect(
         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
@@ -63,7 +63,7 @@ def checkLock(vm_name, resource_group=None):
     return locked
 
 
-def spinLock(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
+def spinLock(vm_name, resource_group=VM_GROUP, s=None):
     """Waits for vm to be unlocked
 
     Args:

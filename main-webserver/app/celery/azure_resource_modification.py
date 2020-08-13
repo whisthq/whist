@@ -7,7 +7,7 @@ from app.helpers.utils.azure.azure_resource_modification import *
 
 
 @celery_instance.task(bind=True)
-def swapSpecificDisk(self, vm_name, disk_name, resource_group=os.getenv("VM_GROUP")):
+def swapSpecificDisk(self, vm_name, disk_name, resource_group=VM_GROUP):
     """Swaps out a disk in a vm
 
     Args:
@@ -105,7 +105,7 @@ def deployArtifact(
 
 
 @celery_instance.task(bind=True)
-def runPowershell(self, vm_name, command, resource_group=os.getenv("VM_GROUP")):
+def runPowershell(self, vm_name, command, resource_group=VM_GROUP):
     """Runs a powershell script on a VM
 
     Args:
@@ -167,7 +167,7 @@ def runPowershell(self, vm_name, command, resource_group=os.getenv("VM_GROUP")):
 
 
 @celery_instance.task(bind=True)
-def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
+def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
     """Find an available VM to attach a disk to
 
     Args:

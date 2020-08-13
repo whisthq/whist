@@ -10,15 +10,34 @@ from app.celery.azure_resource_modification import *
 azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 
 
+@azure_vm_bp.route("/vm/ping", methods=["POST"])
+@fractalPreProcess
+def vm_ping(**kwargs):
+    # Receives pings from active VMs
+
+    available, vm_ip = kwargs["body"]["available"], kwargs["received_from"]
+
+    if "resource_group" in kwargs["body"].keys():
+        resource_group = kwargs["body"]["resource_group"]
+
+    version = None
+    if "version" in kwargs["body"].keys():
+        version = kwargs["body"]["version"]
+
+    output = pingHelper(available, vm_ip, version)
+
+    return jsonify(output), output["status"]
+
+
 @azure_vm_bp.route("/vm/restart", methods=["POST"])
 @fractalPreProcess
 @jwt_required
 @fractalAuth
-def azure_vm_restart(**kwargs):
+def vm_restart(**kwargs):
     # Restarts an Azure VM
 
     vm_name = kwargs["body"]["vm_name"]
-    resource_group = os.getenv("VM_GROUP")
+    resource_group = VM_GROUP
     if "resource_group" in kwargs["body"].keys():
         resource_group = kwargs["body"]["resource_group"]
 
@@ -34,7 +53,7 @@ def azure_vm_restart(**kwargs):
 @fractalPreProcess
 @jwt_required
 @adminRequired
-def azure_vm_post(action, **kwargs):
+def vm_post(action, **kwargs):
     if action == "create":
         # Creates an Azure VM
 
@@ -79,7 +98,7 @@ def azure_vm_post(action, **kwargs):
         # Starts an Azure VM
 
         vm_name = kwargs["body"]["vm_name"]
-        resource_group = os.getenv("VM_GROUP")
+        resource_group = VM_GROUP
         if "resource_group" in kwargs["body"].keys():
             resource_group = kwargs["body"]["resource_group"]
 
@@ -107,7 +126,7 @@ def azure_vm_post(action, **kwargs):
         # Deallocates an Azure VM
 
         vm_name = kwargs["body"]["vm_name"]
-        resource_group = os.getenv("VM_GROUP")
+        resource_group = VM_GROUP
         if "resource_group" in kwargs["body"].keys():
             resource_group = kwargs["body"]["resource_group"]
 
@@ -124,21 +143,6 @@ def azure_vm_post(action, **kwargs):
         vm_name, dev = kwargs["body"]["vm_name"], kwargs["body"]["dev"]
 
         output = devHelper(vm_name, dev)
-
-        return jsonify(output), output["status"]
-    elif action == "ping" or action == "connectionStatus":
-        # Receives pings from active VMs
-
-        available, vm_ip = kwargs["body"]["available"], kwargs["received_from"]
-
-        if "resource_group" in kwargs["body"].keys():
-            resource_group = kwargs["body"]["resource_group"]
-
-        version = None
-        if "version" in kwargs["body"].keys():
-            version = kwargs["body"]["version"]
-
-        output = pingHelper(available, vm_ip, version)
 
         return jsonify(output), output["status"]
     elif action == "command":
@@ -160,7 +164,7 @@ def azure_vm_post(action, **kwargs):
 
 @azure_vm_bp.route("/vm/<action>", methods=["GET"])
 @fractalPreProcess
-def azure_vm_get(action, **kwargs):
+def vm_get(action, **kwargs):
     if action == "ip":
         # Gets the IP address of a VM using Azure SDK
 

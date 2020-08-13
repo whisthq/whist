@@ -203,8 +203,8 @@ def claimAvailableVM(
         fractalLog(
             function="claimAvailableVM",
             label=str(username),
-            logs="Querying all {location} VMs with state {state}".format(
-                state=state, location=location
+            logs="Querying all {location} {operating_system} VMs with state {state}".format(
+                state=state, location=location, operating_system=os_type
             ),
         )
 
