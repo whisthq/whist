@@ -68,6 +68,7 @@ volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
+volatile char user_email[USER_EMAIL_MAXLEN];
 
 int UDP_port = -1;
 int TCP_port = -1;
@@ -493,6 +494,8 @@ int main(int argc, char* argv[]) {
 
     initLogger(log_dir);
     free(log_dir);
+    //Set sentry user here based on email from command line args
+
     if (running_ci) {
         LOG_INFO("Running in CI mode");
     }
@@ -558,7 +561,7 @@ int main(int argc, char* argv[]) {
         connected = true;
         received_server_init_message = true;
 
-        // Initialize audio and variables
+        // Initialize audio and variablessendTimeToServer
         is_timing_latency = false;
         initAudio();
 
@@ -571,6 +574,10 @@ int main(int argc, char* argv[]) {
 
         if (sendTimeToServer() != 0) {
             LOG_ERROR("Failed to synchronize time with server.");
+        }
+
+        if (sendEmailToServer(user_email) != 0) {
+            LOG_ERROR("Failed to send user email to server");
         }
 
         // Timer used in CI mode to exit after 1 min

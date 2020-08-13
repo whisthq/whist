@@ -129,6 +129,8 @@ Defines
 
 #define WRITE_MPRINTF_TO_LOG true
 
+#define USER_EMAIL_MAXLEN 200
+
 /*
 ============================
 Custom Types
@@ -470,6 +472,8 @@ typedef struct FractalClientMessage {
         bool reinitialize_encoder;
 
         FractalTimeData time_data;
+
+        char user_email[USER_EMAIL_MAXLEN];
     };
 
     // CMESSAGE_CLIPBOARD
@@ -483,6 +487,7 @@ typedef enum FractalServerMessageType {
     SMESSAGE_CLIPBOARD = 3,
     MESSAGE_INIT = 4,
     MESSAGE_DISCOVERY_REPLY = 5,
+    MESSAGE_USER_EMAIL = 6,
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 

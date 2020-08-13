@@ -32,6 +32,7 @@ extern volatile CodecType output_codec_type;
 
 extern volatile int max_bitrate;
 extern volatile int running_ci;
+extern volatile char user_email[USER_EMAIL_MAXLEN];
 extern volatile CodecType codec_type;
 
 extern mouse_motion_accumulation mouse_state;
@@ -46,12 +47,13 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"bitrate", required_argument, NULL, 'b'},
                                      {"codec", required_argument, NULL, 'c'},
                                      {"private-key", optional_argument, NULL, 'p'},
+                                     {"user", optional_argument, NULL, 'u'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
-#define OPTION_STRING "w:h:b:sc:kp::"
+#define OPTION_STRING "w:h:b:sc:kp::u::"
 
 int parseArgs(int argc, char *argv[]) {
     char *usage =
@@ -73,6 +75,7 @@ int parseArgs(int argc, char *argv[]) {
         "  -p, --private-key=PK          pass in the RSA Private Key as a "
         "hexadecimal string\n"
         "  -k, --use_ci                  launch the protocol in CI mode\n"
+        " -u --user                      Tell fractal the users email"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
@@ -130,6 +133,9 @@ int parseArgs(int argc, char *argv[]) {
                     printf("%s", usage);
                     return -1;
                 }
+                break;
+            case 'u':
+                strcpy(user_email, optarg);
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);
@@ -197,6 +203,12 @@ char *getLogDir(void) {
 }
 
 int logConnectionID(int connection_id) {
+    // itoa is not portable
+    char* str_connection_id[100];
+    sprintf(str_connection_id, "%d", connection_id);
+    // send connection id to sentry as a tag, server also does this
+    sentry_set_tag("connection_id", str_connection_id);
+
     char *path;
 #ifdef _WIN32
     path = dupstring("connection_id.txt");
@@ -299,6 +311,18 @@ int sendTimeToServer(void) {
     SendFmsg(&fmsg);
 
     return 0;
+}
+
+int sendEmailToServer(char* email) {
+    struct FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_USER_EMAIL;
+    strcpy(fmsg.user_email, email);
+
+    if (SendFmsg(&fmsg) != 0) {
+        return -1;
+    } else {
+        return 0;
+    }
 }
 
 int updateMouseMotion() {

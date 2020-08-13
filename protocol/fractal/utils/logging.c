@@ -108,10 +108,6 @@ void initLogger(char *log_dir) {
     sentry_options_set_release(options, release);
     sentry_options_set_environment(options, FRACTAL_ENVIRONMENT);
     sentry_init(options);
-    sentry_value_t user = sentry_value_new_object();
-    // TODO set users properly
-    sentry_value_set_by_key(user, "email", sentry_value_new_string("hamish@fractalcomputers.com"));
-    sentry_set_user(user);
 
     logger_history_len = 0;
     char f[1000] = "";
@@ -196,7 +192,7 @@ void sentry_send_bread_crumb(char* tag, const char* fmtStr, ...){
     char sentry_str[LOGGER_BUF_SIZE];
     sprintf(sentry_str, fmtStr, args);
     sentry_value_t crumb = sentry_value_new_breadcrumb("default", sentry_str);
-    sentry_value_set_by_key(crumb, "category", sentry_value_new_string("client-logs"));
+    sentry_value_set_by_key(crumb, "category", sentry_value_new_string("protocol-logs"));
     sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));
     sentry_add_breadcrumb(crumb);
     va_end(args);
@@ -707,6 +703,11 @@ void saveConnectionID(int connection_id_int) {
     FILE *connection_id_file = fopen(connection_id_filename, "wb");
     fprintf(connection_id_file, "%d", connection_id_int);
     fclose(connection_id_file);
+
+    // send connection id to sentry as a tag, client also does this
+    char* str_connection_id[100];
+    sprintf(str_connection_id, "%d", connection_id_int);
+    sentry_set_tag("connection_id", str_connection_id);
 }
 
 // The first time this is called will include the initial log messages,

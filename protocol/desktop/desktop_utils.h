@@ -61,6 +61,13 @@ int configureSSHKeys(void);
 
 int sendTimeToServer(void);
 
+/**
+ * Used to tell the server the user, which is used for sentry
+ * @param email user email
+ * @return 0 for success, 1 for failure
+ */
+int sendEmailToServer(char* email);
+
 int updateMouseMotion();
 
 #endif  // DESKTOP_UTILS_H
