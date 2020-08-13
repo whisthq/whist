@@ -77,7 +77,7 @@ volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
 input_device_t* input_device = NULL;
 // volatile
-
+extern volatile char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
 
 #define VIDEO_BUFFER_SIZE 25
@@ -630,12 +630,14 @@ void update() {
 
     if (is_dev_vm()) {
         LOG_INFO("dev vm - not auto-updating");
+        sentry_set_tag("environment", "dev");
     } else {
         if (!get_branch()) {
             LOG_ERROR("COULD NOT GET BRANCH");
             return;
         }
-
+        LOG_INFO("setting sentry environment");
+        sentry_set_tag("environment", get_branch());
         LOG_INFO("Checking for server protocol updates...");
         char cmd[5000];
 
@@ -921,6 +923,8 @@ int main() {
 
     srand((unsigned int)time(NULL));
     connection_id = rand();
+    // set env to dev and update later
+    strcpy(sentry_environment, "dev");
 #ifdef _WIN32
     initLogger("C:\\ProgramData\\FractalCache");
 #else

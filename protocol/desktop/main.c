@@ -69,6 +69,8 @@ volatile char* server_ip;
 int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
 volatile char user_email[USER_EMAIL_MAXLEN];
+extern volatile char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+
 
 int UDP_port = -1;
 int TCP_port = -1;
@@ -505,9 +507,6 @@ int main(int argc, char* argv[]) {
         destroyLogger();
         return -1;
     }
-
-
-
 
     if (initSocketLibrary() != 0) {
         LOG_ERROR("Failed to initialize socket library.");

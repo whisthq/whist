@@ -78,16 +78,6 @@ Includes
 Defines
 ============================
 */
-/*
- Environment, should be set with cmake using -DFRACTAL_ENVIRONMENT="<env>"
- <env> should be one of "dev" "staging" "production"
- This is used to set the sentry environment
- TODO: discuss pro of this approach or using is_dev()
- is_dev I believe does not consider staging or not staging
-*/
-#ifndef FRACTAL_ENVIRONMENT
-#define FRACTAL_ENVIRONMENT "dev"
-#endif
 
 #define NUM_KEYCODES 265
 
@@ -130,6 +120,7 @@ Defines
 #define WRITE_MPRINTF_TO_LOG true
 
 #define USER_EMAIL_MAXLEN 200
+#define FRACTAL_ENVIRONMENT_MAXLEN 100
 
 /*
 ============================

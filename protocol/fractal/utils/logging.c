@@ -57,6 +57,7 @@ int get_logger_history_len();
 void initBacktraceHandler();
 
 extern int connection_id;
+extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 
 // logger Semaphores and Mutexes
 static volatile SDL_sem *logger_semaphore;
@@ -106,7 +107,7 @@ void initLogger(char *log_dir) {
     char release[200];
     sprintf(release, "fractal-protocol@%s", FRACTAL_GIT_REVISION);
     sentry_options_set_release(options, release);
-    sentry_options_set_environment(options, FRACTAL_ENVIRONMENT);
+    sentry_options_set_environment(options, sentry_environment);
     sentry_init(options);
 
     logger_history_len = 0;

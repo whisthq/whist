@@ -33,6 +33,8 @@ extern volatile CodecType output_codec_type;
 extern volatile int max_bitrate;
 extern volatile int running_ci;
 extern volatile char user_email[USER_EMAIL_MAXLEN];
+extern volatile char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+
 extern volatile CodecType codec_type;
 
 extern mouse_motion_accumulation mouse_state;
@@ -53,7 +55,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
-#define OPTION_STRING "w:h:b:sc:kp::u::"
+#define OPTION_STRING "w:h:b:sc:kp::u::e::"
 
 int parseArgs(int argc, char *argv[]) {
     char *usage =
@@ -75,11 +77,17 @@ int parseArgs(int argc, char *argv[]) {
         "  -p, --private-key=PK          pass in the RSA Private Key as a "
         "hexadecimal string\n"
         "  -k, --use_ci                  launch the protocol in CI mode\n"
-        " -u --user                      Tell fractal the users email"
+        "  -u, --user                      Tell fractal the users email"
+        "  -e, --environment              The environment the protocol is running"
+        "                                 in. e.g master, staging, dev"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
     memcpy((char *)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+    // default sentry environment
+    strcpy(sentry_environment, "dev");
+    // default sentry environment
+    strcpy(user_email, "None");
 
     int opt;
     long int ret;
@@ -136,6 +144,9 @@ int parseArgs(int argc, char *argv[]) {
                 break;
             case 'u':
                 strcpy(user_email, optarg);
+                break;
+            case 'e':
+                strcpy(sentry_environment, optarg);
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);

@@ -13,6 +13,7 @@
 #include "../utils/sysinfo.h"
 
 #define UNUSED(x) (void)(x)
+volatile char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 
 // Print Memory Info
 
