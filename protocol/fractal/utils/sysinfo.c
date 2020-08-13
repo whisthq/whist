@@ -10,11 +10,6 @@ Call the respective functions to log a device's OS, model, CPU, RAM, etc.
 */
 
 #include "sysinfo.h"
-#ifdef __ANDROID_API__
-#include "cpu-features.h"
-#elif __arm__
-#include "cpuinfo_arm.h"
-#endif
 
 void print_os_info() {
 #ifdef _WIN32
@@ -333,28 +328,22 @@ void cpu_id(unsigned i, unsigned regs[4]) {
 #endif
 }
 
-#if defined(__ANDROID_API__) || defined(__arm__)
+#if defined(__ANDROID_API__)
 void print_cpu_info() {
-    // https://github.com/google/cpu_features/tree/master/test
-    // LOG_INFO("CPU Vendor: %s", cpuVendor);
-    // LOG_INFO("CPU Type: %s", CPUBrandString);
-    // LOG_INFO("Logical Cores: %d", logical);
-    // if (strcmp(cpuVendor, "GenuineIntel") == 0) {
-    //     // Get DCP cache info
-    //     cpuID(4, regs);
-    //     cores = ((regs[0] >> 26) & 0x3f) + 1;  // EAX[31:26] + 1
+    // Not ideal, but /proc/cpuinfo is different on Android than on most *nix devices
+    char* cpuVendor;
+    runcmd("cat /proc/cpuinfo | grep 'Processor' | awk -F'\t: ' '{print $2}'", &cpuVendor);
+    LOG_INFO("Processor Type: %s", cpuVendor);
 
-    // } else if (strcmp(cpuVendor, "AuthenticAMD") == 0) {
-    //     // Get NC: Number of CPU cores - 1
-    //     cpuID(0x80000008, regs);
-    //     cores = ((unsigned)(regs[2] & 0xff)) + 1;  // ECX[7:0] + 1
-    // } else {
-    //     LOG_WARNING("Unrecognized processor: %s", cpuVendor);
-    // }
+    char* CPUBrandString;
+    runcmd("cat /proc/cpuinfo | grep 'Hardware' | awk -F'\t: ' '{print $2}'", &CPUBrandString);
+    LOG_INFO("CPU Type: %s", CPUBrandString);
+
+    int logical = sysconf( _SC_NPROCESSORS_CONF );
+    LOG_INFO("Logical Cores: %d", logical);
     // LOG_INFO("Physical Cores: %d", cores);
     // LOG_INFO("HyperThreaded: %s", (hyperThreads ? "true" : "false"));
     // LOG_INFO("  %s", cpu_usage);
-    LOG_ERROR("PrintCPUInfo NOT IMPLEMENTED");
 }
 #else
 void print_cpu_info() {

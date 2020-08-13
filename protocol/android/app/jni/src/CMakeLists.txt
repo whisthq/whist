@@ -9,5 +9,3 @@ add_library(main SHARED)
 target_sources(main PRIVATE test.c)
 
 target_link_libraries(main include/SDL2)
-
-
