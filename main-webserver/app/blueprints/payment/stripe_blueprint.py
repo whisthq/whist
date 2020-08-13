@@ -20,6 +20,14 @@ def deleteCard(**kwargs):
     return deleteCardHelper(body["custId"], body["cardId"])
 
 
+@stripe_bp.route("/stripe/discount", methods=["POST"])
+@fractalPreProcess
+@jwt_required
+def discount(**kwargs):
+    body = kwargs["body"]
+    return discountHelper(body["code"])
+
+
 @stripe_bp.route("/stripe/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
@@ -44,13 +52,6 @@ def payment(action, **kwargs):
     # Cancel a stripe subscription
     elif action == "cancel":
         return cancelStripeHelper(body["username"])
-
-    elif action == "discount":
-        return discountHelper(body["code"])
-
-    # Inserts a customer to the table
-    elif action == "insert":
-        return insertCustomerHelper(body["username"], body["location"])
 
     elif action == "update":
         # When a customer requests to change their plan type

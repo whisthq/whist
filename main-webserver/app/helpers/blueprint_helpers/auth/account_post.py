@@ -23,7 +23,7 @@ def loginHelper(username, password):
 
     # First, check if username is valid
 
-    params = {"username": username}
+    params = {"email": username}
 
     is_user = True
 
@@ -35,9 +35,7 @@ def loginHelper(username, password):
     # Return early if username/password combo is invalid
 
     if is_user:
-        if not output["rows"] or not check_value(
-            output["rows"][0]["password_token"], password
-        ):
+        if not output or not check_value(output[0]["password_token"], password):
             return {
                 "verified": False,
                 "is_user": is_user,
@@ -50,8 +48,8 @@ def loginHelper(username, password):
 
     user_id = None
 
-    if output["success"] and output["rows"]:
-        user_id = output["rows"][0]["id"]
+    if output:
+        user_id = output[0]["user_id"]
 
     # Lastly, fetch the JWT tokens
 

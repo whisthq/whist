@@ -39,7 +39,10 @@ def fractalSQLSelect(table_name, params):
     session.close()
 
     rows = rows.all()
-    result = [row.__dict__ for row in rows]
+    result = []
+    for row in rows:
+        row.__dict__.pop("_sa_instance_state", None)
+        result.append(row.__dict__)
 
     return result
 

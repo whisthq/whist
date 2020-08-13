@@ -3,8 +3,9 @@ from app.imports import *
 Base = declarative_base()
 metadata = Base.metadata
 
+
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     user_id = Column(Integer, primary_key=True)
     email = Column(String(250), nullable=False, unique=True)
@@ -17,3 +18,4 @@ class User(Base):
     referral_code = Column(String(250))
     credits_outstanding = Column(Integer, server_default=text("0"))
     using_google_login = Column(Boolean, server_default=text("false"))
+
