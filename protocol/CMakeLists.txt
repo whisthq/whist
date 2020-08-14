@@ -215,6 +215,7 @@ add_subdirectory(sentry-native)
 # set a standard location for the sentry shared lib so we can copy it into client/server build folders as a post build step
 set_target_properties(sentry PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
         )
 
 #Set OSX compiler and SDK globally

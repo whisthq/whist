@@ -706,7 +706,7 @@ void saveConnectionID(int connection_id_int) {
     fclose(connection_id_file);
 
     // send connection id to sentry as a tag, client also does this
-    char* str_connection_id[100];
+    char str_connection_id[100];
     sprintf(str_connection_id, "%d", connection_id_int);
     sentry_set_tag("connection_id", str_connection_id);
 }

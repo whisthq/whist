@@ -18,7 +18,7 @@ add_executable(FractalClient
 add_custom_command(
         TARGET FractalClient POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/sentry-native/sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
+        ${CMAKE_SOURCE_DIR}/sentry-native/${CMAKE_SHARED_LIBRARY_PREFIX}sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
         ${CMAKE_SOURCE_DIR}/desktop/build${arch}/${CMAKE_SYSTEM_NAME})
 
 # set the build directory
