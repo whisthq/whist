@@ -23,7 +23,6 @@ from jose import jwt
 def main():
     OLD_DATABASE_URL = "postgres://ufsj4f8so50sl5:p3a075e5151b02b739c7b3bbbf3f2a1f25b0fbe3fb2e1164ac949b44839ec0e26@ec2-35-168-221-115.compute-1.amazonaws.com:5432/d4lf18ud6qj6nr"
     NEW_DATABASE_URL = "postgres://twszrurldwyufl:9648cb0d7dd6306084a2148273103f00997dce04cb4c898e8dbbb6f4cf06c8ea@ec2-52-72-34-184.compute-1.amazonaws.com:5432/d3a9stgidpj3ig"
-    SECRET_KEY = "philis@littlec@n@di@n6969"
     SHA_SECRET_KEY = "ASDF89!#3q4;kaSJF!!ljsa4598@Az)00o!?"
 
     old_engine = db.create_engine(

@@ -1,4 +1,5 @@
 from app.imports import *
+from app.constants.config import *
 from app.helpers.utils.general.logs import *
 
 from app.models.public import *
@@ -12,6 +13,7 @@ engine = db.create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 metadata.create_all(bind=engine)
 Session = sessionmaker(bind=engine, autocommit=False)
 
+
 def tableToObject(table_name):
     tableMap = {
         "users": User,
@@ -22,10 +24,11 @@ def tableToObject(table_name):
         "apps_to_install": AppsToInstall,
         "release_groups": ReleaseGroup,
         "stripe_products": StripeProduct,
-        "main_newsletter": MainNewsletter
+        "main_newsletter": MainNewsletter,
     }
 
     return tableMap[table_name]
+
 
 def fractalSQLSelect(table_name, params):
     session = Session()
@@ -40,6 +43,7 @@ def fractalSQLSelect(table_name, params):
     result = [row.__dict__ for row in rows]
 
     return result
+
 
 def fractalSQLUpdate(table_name, conditional_params, new_params):
     session = Session()
@@ -68,7 +72,11 @@ def fractalSQLDelete(table_name, params, and_or="AND"):
 
     table_object = tableToObject(table_name)
 
-    rows = session.query(table_object).filter_by(and_(**params)) if and_or == "AND" else session.query(table_object).filter_by(or_(**params))
+    rows = (
+        session.query(table_object).filter_by(and_(**params))
+        if and_or == "AND"
+        else session.query(table_object).filter_by(or_(**params))
+    )
     rows.delete()
 
     session.commit()
