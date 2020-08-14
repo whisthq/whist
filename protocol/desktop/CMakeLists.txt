@@ -14,6 +14,13 @@ add_executable(FractalClient
         video.c
         )
 
+# copy the sentry shared library to the build folder after the build
+add_custom_command(
+        TARGET FractalClient POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/sentry-native/sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
+        ${CMAKE_SOURCE_DIR}/desktop/build${arch}/${CMAKE_SYSTEM_NAME})
+
 # set the build directory
 set_target_properties(FractalClient PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/desktop/build${arch}/${CMAKE_SYSTEM_NAME}
@@ -61,6 +68,7 @@ target_link_libraries(FractalClient
         fractalNetwork
         fractalUtils
         ${STATIC_SDL2}
+        sentry
         )
 
 #[[
@@ -78,7 +86,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             m
             OpenSSL::Crypto
             )
-    target_link_libraries(FractalClient sentry)
 endif()
 
 #[[

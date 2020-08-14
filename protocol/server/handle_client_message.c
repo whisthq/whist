@@ -54,7 +54,7 @@ static int handleQuitMessage(FractalClientMessage *fmsg, int client_id, bool is_
 static int handleTimeMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handleMouseInactiveMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling);
-static int handleEmailMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handleEmailMessage(FractalClientMessage *fmsg, int client_id);
 
 int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     switch (fmsg->type) {
@@ -86,7 +86,7 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_contr
         case MESSAGE_TIME:
             return handleTimeMessage(fmsg, client_id, is_controlling);
         case MESSAGE_USER_EMAIL:
-            return handleEmailMessage(fmsg, client_id, is_controlling);
+            return handleEmailMessage(fmsg, client_id);
         case MESSAGE_MOUSE_INACTIVE:
             return handleMouseInactiveMessage(fmsg, client_id, is_controlling);
         default:
@@ -98,7 +98,7 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_contr
     }
 }
 
-static int handleEmailMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling){
+static int handleEmailMessage(FractalClientMessage *fmsg, int client_id){
     if (client_id == host_id){
         sentry_value_t user = sentry_value_new_object();
         sentry_value_set_by_key(user, "email", sentry_value_new_string(fmsg->user_email));

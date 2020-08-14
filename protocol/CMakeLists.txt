@@ -212,6 +212,11 @@ endif()
 # Do this before setting the OSX compiler so we do not mess with the sentry-native build
 add_subdirectory(sentry-native)
 
+# set a standard location for the sentry shared lib so we can copy it into client/server build folders as a post build step
+set_target_properties(sentry PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
+        )
+
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     SET(CMAKE_C_COMPILER clang)
