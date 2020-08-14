@@ -45,6 +45,7 @@ def test_delete_vm_initial(input_token, admin_token):
 
 
 @pytest.mark.vm_serial
+@disabled
 def test_vm_create(input_token):
     newLine()
 

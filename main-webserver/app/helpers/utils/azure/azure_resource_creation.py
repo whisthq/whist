@@ -19,7 +19,7 @@ def createNic(vm_name, location, tries, resource_group=None):
         dict: The network id object
     """
 
-    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+    resource_group = VM_GROUP if not resource_group else resource_group
 
     _, _, network_client = createClients()
     vnet_name, subnet_name, ip_name, nic_name = (
@@ -128,7 +128,7 @@ def createVMParameters(
 
     # Set computer name, admin username, and admin password (for autologin and RDP)
 
-    admin_password = os.getenv("VM_PASSWORD") if not admin_password else admin_password
+    admin_password = VM_PASSWORD if not admin_password else admin_password
 
     os_profile = {
         "computer_name": vm_name,

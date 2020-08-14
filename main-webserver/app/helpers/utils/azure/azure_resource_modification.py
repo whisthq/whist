@@ -3,7 +3,7 @@ from app.helpers.utils.azure.azure_general import *
 from app.helpers.utils.azure.azure_helpers.azure_resource_modification_helpers import *
 
 
-def attachDiskToVM(disk_name, vm_name, resource_group=os.getenv("VM_GROUP")):
+def attachDiskToVM(disk_name, vm_name, resource_group=VM_GROUP):
     """Creates a network id
 
     Args:

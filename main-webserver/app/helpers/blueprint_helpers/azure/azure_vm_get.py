@@ -45,7 +45,7 @@ def protocolInfoHelper(ip_address):
         )
 
         access_token, refresh_token = getAccessTokens(
-            os.getenv("DASHBOARD_USERNAME") + "@gmail.com"
+            DASHBOARD_USERNAME + "@gmail.com"
         )
 
         if output["rows"] and output["success"]:
@@ -55,7 +55,7 @@ def protocolInfoHelper(ip_address):
                 "branch": settings["branch"],
                 "status": SUCCESS,
                 "using_stun": settings["using_stun"],
-                "private_key": vm_info["private_key"],
+                "private_key": vm_info["rsa_private_key"],
                 "access_token": access_token,
                 "refresh_token": refresh_token,
             }
@@ -74,7 +74,7 @@ def protocolInfoHelper(ip_address):
                 "branch": "dev",
                 "status": NOT_FOUND,
                 "using_stun": False,
-                "private_key": vm_info["private_key"],
+                "private_key": vm_info["rsa_private_key"],
                 "access_token": None,
                 "refresh_token": None,
             }

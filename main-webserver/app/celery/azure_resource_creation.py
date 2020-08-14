@@ -13,7 +13,7 @@ def createVM(
     location,
     operating_system,
     admin_password=None,
-    resource_group=os.getenv("VM_GROUP"),
+    resource_group=VM_GROUP,
 ):
     """Creates a Windows/Linux VM of size vm_size in Azure region location
 
@@ -229,7 +229,7 @@ def cloneDisk(
     operating_system,
     branch,
     apps=[],
-    resource_group=os.getenv("VM_GROUP"),
+    resource_group=VM_GROUP,
 ):
     """Clones a Windows/Linux Fractal disk
 
@@ -353,7 +353,7 @@ def cloneDisk(
 
 @celery_instance.task(bind=True)
 def createDisk(
-    self, disk_size, username, location, resource_group=os.getenv("VM_GROUP"),
+    self, disk_size, username, location, resource_group=VM_GROUP,
 ):
     """Creates an empty Windows Azure managed disk
 
