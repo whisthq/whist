@@ -35,5 +35,5 @@ jobs:
           curl -u "${{ secrets.CI_PAT }}:" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/fractalcomputers/protocol/actions/workflows/${{ secrets.PROC_BRANCH_BUILD_RELEASE_ID }}/dispatches \
-            -d '{"ref": "hamish-trigger_clientapps", "inputs": {"ref": "${{ github.ref }}", "should_test": "false"}}'
+            -d '{"ref": "master", "inputs": {"ref": "${{ github.ref }}", "should_test": "false"}}'
 
