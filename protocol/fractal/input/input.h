@@ -25,7 +25,7 @@ Includes
 #ifdef _WIN32
 #include "windowsinput.h"
 #else
-#include "linuxinput.h"
+#include "x11input.h"
 #endif
 
 /*

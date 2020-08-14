@@ -4,8 +4,8 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         target_sources(fractalInput PRIVATE
                 input.h
-                linuxinput.c
-                linuxinput.h)
+                x11input.c
+                x11input.h)
     elseif(${WIN32})
         target_sources(fractalInput PRIVATE
             input.h
