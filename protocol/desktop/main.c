@@ -15,8 +15,6 @@ its threads.
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "main.h"
-
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -253,22 +251,6 @@ void update() {
     // End Ping
 }
 // END UPDATER CODE
-
-// Large fmsg's should be sent over TCP. At the moment, this is only CLIPBOARD
-// messages FractalClientMessage packet over UDP that requires multiple
-// sub-packets to send, it not supported (If low latency large
-// FractalClientMessage packets are needed, then this will have to be
-// implemented)
-int SendFmsg(FractalClientMessage* fmsg) {
-    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_TIME) {
-        return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
-    } else {
-        static int sent_packet_id = 0;
-        sent_packet_id++;
-        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg),
-                             sent_packet_id, -1, NULL, NULL);
-    }
-}
 
 int ReceivePackets(void* opaque) {
     LOG_INFO("ReceivePackets running on Thread %p", SDL_GetThreadID(NULL));

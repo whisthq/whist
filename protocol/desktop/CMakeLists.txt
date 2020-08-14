@@ -4,7 +4,6 @@
 
 add_executable(FractalClient
         main.c
-        main.h
         audio.c
         desktop_utils.c
         fractalgetopt.c
