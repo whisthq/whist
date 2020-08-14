@@ -102,7 +102,7 @@ def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) ->
     # attributes are coming from but they always appear to to occur, except for when the
     # protocol is built locally). This fix is from https://stackoverflow.com/a/39667628
     # code signing must go before adding the icon as xattr -c removes the icon
-    run_cmd(["xattr", "-c", str(client)])
+    # run_cmd(["xattr", "-c", str(client)])
     # codesign the FractalClient executable
     run_cmd(["codesign", "-s", codesign_identity, str(client)])
 
