@@ -4,6 +4,7 @@
  * Copyright Fractal Computers, Inc. 2020
  **/
 #include "input.h"
+#include <dirent.h>
 
 #define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                                      \
     if (ioctl(FD, PARAMS) == -1) {                                                             \
@@ -287,6 +288,8 @@ const int linux_keycodes[NUM_KEYCODES] = {
     KEY_SELECT         // 263 -> Media Select
 };
 
+bool keyboard_state[NUM_KEYCODES];
+
 const int linux_mouse_buttons[6] = {
     0,           // 0 -> no FractalMouseButton
     BTN_LEFT,    // 1 -> Left Button
@@ -302,130 +305,15 @@ int GetLinuxMouseButton(FractalMouseButton fractal_code) {
     return linux_mouse_buttons[fractal_code];
 }
 
-// void SendKeyInput(int x11_keysym, int pressed) {
-//     Window focusWindow;
-//     int revert;
-//     XGetInputFocus(disp, &focusWindow, &revert);
-//     KeyCode kcode = XKeysymToKeycode(disp, x11_keysym);
-//     int res = XTestFakeKeyEvent(disp, kcode, pressed, 0);
-// }
-
-// void KeyDown(int x11_keysym) { SendKeyInput(x11_keysym, 1); }
-
-// void KeyUp(int x11_keysym) { SendKeyInput(x11_keysym, 0); }
-
-// void updateKeyboardState(FractalClientMessage* fmsg) {
-//     if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
-//         mprintf(
-//             "updateKeyboardState requires fmsg.type to be "
-//             "MESSAGE_KEYBOARD_STATE\n");
-//         return;
-//     }
-
-//     // Setup base input data
-//     INPUT ip;
-//     ip.type = INPUT_KEYBOARD;
-//     ip.ki.wVk = 0;
-//     ip.ki.time = 0;
-//     ip.ki.dwExtraInfo = 0;
-
-//     bool server_caps_lock = GetKeyState(VK_CAPITAL) & 1;
-//     bool server_num_lock = GetKeyState(VK_NUMLOCK) & 1;
-
-//     bool caps_lock_holding = false;
-//     bool num_lock_holding = false;
-
-//     int keypress_mask = 1 << 15;
-
-//     // Depress all keys that are currently pressed but should not be pressed
-//     for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes;
-//     sdl_keycode++) {
-//         int windows_keycode = GetWindowsKeyCode(sdl_keycode);
-
-//         if (!windows_keycode) continue;
-
-//         // If I should key up, then key up
-//         if (!fmsg->keyboard_state[sdl_keycode] &&
-//             (GetAsyncKeyState(windows_keycode) & keypress_mask)) {
-//             KeyUp(windows_keycode);
-//         }
-//     }
-
-//     // Press all keys that are not currently pressed but should be pressed
-//     for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes;
-//     sdl_keycode++) {
-//         int windows_keycode = GetWindowsKeyCode(sdl_keycode);
-
-//         if (!windows_keycode) continue;
-
-//         // Keep track of keyboard state for caps lock and num lock
-
-//         if (windows_keycode == VK_CAPITAL) {
-//             caps_lock_holding = fmsg->keyboard_state[sdl_keycode];
-//         }
-
-//         if (windows_keycode == VK_NUMLOCK) {
-//             num_lock_holding = fmsg->keyboard_state[sdl_keycode];
-//         }
-
-//         // If I should key down, then key down
-//         if (fmsg->keyboard_state[sdl_keycode] &&
-//             !(GetAsyncKeyState(windows_keycode) & keypress_mask)) {
-//             KeyDown(windows_keycode);
-
-//             // In the process of swapping a toggle key
-//             if (windows_keycode == VK_CAPITAL) {
-//                 server_caps_lock = !server_caps_lock;
-//             }
-//             if (windows_keycode == VK_NUMLOCK) {
-//                 server_num_lock = !server_num_lock;
-//             }
-//         }
-//     }
-
-//     // If caps lock doesn't match, then send a correction
-//     if (!!server_caps_lock != !!fmsg->caps_lock) {
-//         mprintf("Caps lock out of sync, updating! From %s to %s\n",
-//                 server_caps_lock ? "caps" : "no caps",
-//                 fmsg->caps_lock ? "caps" : "no caps");
-//         // If I'm supposed to be holding it down, then just release and then
-//         // repress
-//         if (caps_lock_holding) {
-//             KeyUp(VK_CAPITAL);
-//             KeyDown(VK_CAPITAL);
-//         } else {
-//             // Otherwise, just press and let go like a normal key press
-//             KeyDown(VK_CAPITAL);
-//             KeyUp(VK_CAPITAL);
-//         }
-//     }
-
-//     // If num lock doesn't match, then send a correction
-//     if (!!server_num_lock != !!fmsg->num_lock) {
-//         mprintf("Num lock out of sync, updating! From %s to %s\n",
-//                 server_num_lock ? "num lock" : "no num lock",
-//                 fmsg->num_lock ? "num lock" : "no num lock");
-//         // If I'm supposed to be holding it down, then just release and then
-//         // repress
-//         if (num_lock_holding) {
-//             KeyUp(VK_NUMLOCK);
-//             KeyDown(VK_NUMLOCK);
-//         } else {
-//             // Otherwise, just press and let go like a normal key press
-//             KeyDown(VK_NUMLOCK);
-//             KeyUp(VK_NUMLOCK);
-//         }
-//     }
-// }
-
 input_device_t* CreateInputDevice() {
     input_device_t* input_device = malloc(sizeof(input_device_t));
     memset(input_device, 0, sizeof(input_device_t));
     // create event writing FDs
 
-    input_device->fd_absmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    input_device->fd_relmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    input_device->fd_keyboard = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    input_device->fd_absmouse       = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    input_device->fd_relmouse       = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    input_device->fd_keyboard       = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    memset(keyboard_state, 0, sizeof(keyboard_state));
 
     if (input_device->fd_absmouse < 0 || input_device->fd_relmouse < 0 ||
         input_device->fd_keyboard < 0) {
@@ -435,41 +323,41 @@ input_device_t* CreateInputDevice() {
     }
 
     // register keyboard events
-    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_EVBIT, EV_KEY)
+    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_EVBIT, EV_KEY);
     int kcode;
     for (int i = 0; i < NUM_KEYCODES; ++i) {
         if ((kcode = GetLinuxKeyCode(i))) {
-            _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_KEYBIT, kcode)
+            _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_KEYBIT, kcode);
         }
     }
 
     // register relative mouse events
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_EVBIT, EV_KEY)
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_LEFT)
+    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_EVBIT, EV_KEY);
+    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_LEFT);
     _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_RIGHT);
     _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_MIDDLE);
     _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_3);
     _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_4);
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_EVBIT, EV_REL)
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_X)
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_Y)
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_WHEEL)
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_HWHEEL)
+    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_EVBIT, EV_REL);
+    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_X);
+    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_Y);
+    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_WHEEL);
+    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_HWHEEL);
 
     // register absolute mouse events
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_EVBIT, EV_KEY)
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_TOUCH)
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_TOOL_PEN)
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_STYLUS)
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_EVBIT, EV_KEY);
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_TOUCH);
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_TOOL_PEN);
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_STYLUS);
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_EVBIT, EV_ABS)
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_ABSBIT, ABS_X)
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_ABSBIT, ABS_Y)
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_EVBIT, EV_ABS);
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_ABSBIT, ABS_X);
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_ABSBIT, ABS_Y);
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_PROPBIT, INPUT_PROP_POINTER)
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_PROPBIT, INPUT_PROP_POINTER);
 
     // config devices
 
@@ -482,37 +370,77 @@ input_device_t* CreateInputDevice() {
 
     usetup.id.product = 0x1122;
     strcpy(usetup.name, "Fractal Virtual Keyboard");
-    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_DEV_SETUP, &usetup)
+    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_DEV_SETUP, &usetup);
 
     // relative mouse config
 
     usetup.id.product = 0x1123;
     strcpy(usetup.name, "Fractal Virtual Relative Input");
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_DEV_SETUP, &usetup)
+    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_DEV_SETUP, &usetup);
 
     // absolute mouse config
 
     usetup.id.product = 0x1124;
     strcpy(usetup.name, "Fractal Virtual Absolute Input");
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_DEV_SETUP, &usetup)
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_DEV_SETUP, &usetup);
 
     struct uinput_abs_setup axis_setup = {0};
     axis_setup.absinfo.resolution = 1;
 
     axis_setup.code = ABS_X;
     axis_setup.absinfo.maximum = get_virtual_screen_width();
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_ABS_SETUP, &axis_setup)
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_ABS_SETUP, &axis_setup);
 
     axis_setup.code = ABS_Y;
     axis_setup.absinfo.maximum = get_virtual_screen_height();
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_ABS_SETUP, &axis_setup)
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_ABS_SETUP, &axis_setup);
 
     // create devices
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_DEV_CREATE)
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_DEV_CREATE)
-    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_DEV_CREATE)
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_DEV_CREATE);
+    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_DEV_CREATE);
+    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_DEV_CREATE);
     LOG_INFO("Created input devices!");
+
+    // Create file descriptor to read keyboard state
+
+    char sysfs_device_name[16];
+    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_GET_SYSNAME(sizeof(sysfs_device_name)), sysfs_device_name);
+
+    char sysfs_device_path[128];
+    snprintf(sysfs_device_path, sizeof(sysfs_device_path), "/sys/devices/virtual/input/%s", sysfs_device_name);
+    LOG_INFO("Keyboard State Filepath %s\n", sysfs_device_path);
+
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(sysfs_device_path);
+    if (!d) {
+        LOG_ERROR("Could not open directory %s! %s", sysfs_device_path, strerror(errno));
+	goto failure;
+    }
+    char event_name[16];
+    while((dir = readdir(d)) != NULL) {
+	char *prefix = "event";
+        if( strlen(dir->d_name) > strlen(prefix) && memcmp(dir->d_name, prefix, strlen(prefix)) == 0 ) {
+            memcpy(event_name, dir->d_name, strlen(dir->d_name)+1);
+	    break;
+	}
+    }
+    closedir(d);
+
+    char event_path[64];
+    snprintf(event_path, sizeof(event_path), "/dev/input/%s", event_name);
+    LOG_INFO("DIR: %s", event_path);
+    input_device->fd_keyboard_state = open(event_path, O_RDONLY | O_NONBLOCK);
+
+    system("ls -l /dev/input");
+
+    if (input_device->fd_keyboard_state < 0) {
+        LOG_ERROR("CreateInputDevice: Error opening '%s' for writing: %s",
+		  sysfs_device_path,
+                  strerror(errno));
+        goto failure;
+    }
 
     return input_device;
 failure:
@@ -546,6 +474,115 @@ void EmitInputEvent(int fd, int type, int code, int val) {
     write(fd, &ie, sizeof(ie));
 }
 
+bool GetKeyState(input_device_t* input_device, int key_code) {
+    return keyboard_state[key_code];
+
+    int key_map[KEY_MAX/8 + 1];
+    memset(key_map, 0, sizeof(key_map));
+
+    //fsync(input_device->fd_keyboard_state);
+    int m[2];
+    m[0] = key_code;
+    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard_state, EVIOCGKEY(sizeof(key_map)), key_map);
+
+    int key_byte = key_map[key_code / 8];
+    int key_mask = 1 << (key_code % 8);
+    bool is_pressed = !(key_byte & key_mask);
+
+    //is_pressed = m[1];
+    return is_pressed;
+failure:
+    LOG_ERROR("IOCTL KEYBOARD STATE FAILED! %p", input_device->fd_keyboard);
+    SDL_Delay(50);
+    exit(-1);
+}
+
+#define KeyUp(key_code) {EmitInputEvent(input_device->fd_keyboard, EV_KEY, (key_code), 0); keyboard_state[(key_code)] = 0;}
+#define KeyDown(key_code) {EmitInputEvent(input_device->fd_keyboard, EV_KEY, (key_code), 1); keyboard_state[(key_code)] = 1;}
+
+void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fmsg) {
+    if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
+        LOG_WARNING(
+            "updateKeyboardState requires fmsg.type to be "
+            "MESSAGE_KEYBOARD_STATE");
+        return;
+    }
+
+    bool server_caps_lock = GetKeyState(input_device, KEY_CAPSLOCK);
+    bool server_num_lock = GetKeyState(input_device, KEY_NUMLOCK);
+
+    bool client_caps_lock_holding = false;
+    bool client_num_lock_holding = false;
+
+    // Depress all keys that are currently pressed but should not be pressed
+    for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
+        int linux_keycode = GetLinuxKeyCode(sdl_keycode);
+
+	if (!linux_keycode) continue;
+
+	if (fmsg->keyboard_state[sdl_keycode] != GetKeyState(input_device, linux_keycode)) {
+	    LOG_INFO("%d is %s but should %s", linux_keycode, GetKeyState(input_device, linux_keycode) ? "pressed" : "not be pressed", fmsg->keyboard_state[sdl_keycode] ? "pressed" : "not be pressed");
+	}
+	if (!fmsg->keyboard_state[sdl_keycode] && GetKeyState(input_device, linux_keycode)) {
+	    // If key from keyboard_state shouldn't be pressed, but the key is actually pressed, then we must release it
+            KeyUp(linux_keycode);
+	}
+    }
+
+    // Press all keys that are currently not pressed but should be pressed
+    for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
+        int linux_keycode = GetLinuxKeyCode(sdl_keycode);
+
+	if (!linux_keycode) continue;
+
+	// Keep track of whether or not the client is holding down capslock/numlock
+	if (linux_keycode == KEY_CAPSLOCK) {
+	    client_caps_lock_holding = fmsg->keyboard_state[sdl_keycode];
+	}
+	if (linux_keycode == KEY_NUMLOCK) {
+	    client_num_lock_holding = fmsg->keyboard_state[sdl_keycode];
+	}
+
+	if (fmsg->keyboard_state[sdl_keycode] && !GetKeyState(input_device, linux_keycode)) {
+	    // If key from keyboard_state should be pressed, but the key is not actually pressed, then we must press it
+            KeyDown(linux_keycode);
+
+	    // If we pressed the capslock or numlock, then our cache for the value of these keys must thus be updated
+	    if (linux_keycode == KEY_CAPSLOCK) {
+	        server_caps_lock = !server_caps_lock;
+	    }
+	    if (linux_keycode == KEY_NUMLOCK) {
+	        server_num_lock = !server_num_lock;
+	    }
+	}
+    }
+
+    if (!!server_caps_lock != !!fmsg->caps_lock) {
+        LOG_INFO("Caps lock out of sync, updating! From %s to %s\n",
+			                 server_caps_lock ? "caps" : "no caps", fmsg->caps_lock ? "caps" : "no caps");
+	if (client_caps_lock_holding) {
+            KeyUp(KEY_CAPSLOCK);
+            KeyDown(KEY_CAPSLOCK);
+	} else {
+            KeyDown(KEY_CAPSLOCK);
+            KeyUp(KEY_CAPSLOCK);
+	}
+    }
+
+    if (!!server_num_lock != !!fmsg->num_lock) {
+        LOG_INFO("Num lock out of sync, updating! From %s to %s\n",
+		                     server_num_lock ? "num lock" : "no num lock",
+		                      fmsg->num_lock ? "num lock" : "no num lock");
+	if (client_num_lock_holding) {
+            KeyUp(KEY_NUMLOCK);
+            KeyDown(KEY_NUMLOCK);
+	} else {
+            KeyDown(KEY_NUMLOCK);
+            KeyUp(KEY_NUMLOCK);
+	}
+    }
+}
+
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
 bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
@@ -553,8 +590,11 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
             // event for keyboard action
-            EmitInputEvent(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(fmsg->keyboard.code),
-                           fmsg->keyboard.pressed);
+	    if (fmsg->keyboard.pressed) {
+	        KeyDown(GetLinuxKeyCode(fmsg->keyboard.code));
+	    } else {
+	        KeyUp(GetLinuxKeyCode(fmsg->keyboard.code));
+	    }
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event

@@ -113,7 +113,7 @@ Defines
 #define STARTING_BURST_BITRATE 31800000
 
 #define AUDIO_BITRATE 128000
-#define FPS 50
+#define FPS 45
 #define MIN_FPS 10
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
