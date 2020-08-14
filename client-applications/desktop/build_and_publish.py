@@ -97,6 +97,15 @@ def prep_unix(protocol_dir: Path) -> None:  # Shared by Linux and macOS
 
 def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) -> None:
     client = protocol_dir / "FractalClient"
+
+    # Anything codesigned must not have extra file attributes (it's unclear where these
+    # attributes are coming from but they always appear to to occur, except for when the
+    # protocol is built locally). This fix is from https://stackoverflow.com/a/39667628
+    # code signing must go before adding the icon as xattr -c removes the icon
+    run_cmd(["xattr", "-c", str(client)])
+    # codesign the FractalClient executable
+    run_cmd(["codesign", "-s", codesign_identity, str(client)])
+
     # Add logo to the FractalClient executable
     # TODO The "sips" command appears to do nothing. Test that icons are successfully
     # added without it and then feel free to remove it.
@@ -112,14 +121,10 @@ def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) ->
     run_cmd(  # append this resource to the file you want to icon-ize
         ["Rez", "-append", str(tmp_icon), "-o", str(client)]
     )
+
     run_cmd(["SetFile", "-a", "C", str(client)])  # use the resource to set the icon
     tmp_icon.unlink()
-    # Anything codesigned must not have extra file attributes (it's unclear where these
-    # attributes are coming from but they always appear to to occur, except for when the
-    # protocol is built locally). This fix is from https://stackoverflow.com/a/39667628
-    run_cmd(["xattr", "-c", str(client)])
-    # codesign the FractalClient executable
-    run_cmd(["codesign", "-s", codesign_identity, str(client)])
+
 
 
 def prep_linux(protocol_dir: Path) -> None:
