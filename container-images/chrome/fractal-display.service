@@ -6,7 +6,7 @@ Requires=fractal-entrypoint.service
 [Service]
 User=root
 EnvironmentFile=/home/fractal/display-service-envs
-ExecStart=Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile $xorg_log_file -config $xorg_config_file :$display_num
+ExecStart=/usr/bin/Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile ${xorg_log_file} -config ${xorg_config_file} :${display_num}
 
 [Install]
 WantedBy=multi-user.target
