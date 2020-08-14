@@ -44,6 +44,7 @@ def main():
     migrate_alembic_versions()
     migrate_protocol_logs()
     migrate_monitor_logs()
+    migrate_login_history()
 
 
 def hash_value(value):
@@ -542,6 +543,60 @@ def migrate_monitor_logs():
     session.close()
 
     print("DONE MIGRATING MONITOR LOGS TABLE \n ------------------------ \n")
+
+
+def migrate_login_history():
+    print("STARTING TO MIGRATE LOGING HISTORY TABLE \n ------------------------ \n")
+
+    session = old_session()
+
+    command = """
+        SELECT username, timestamp, action
+        FROM login_history
+    """
+
+    params = {}
+
+    rows = session.execute(command, params).fetchall()
+
+    session.commit()
+    session.close()
+
+    session = new_session()
+
+    for row in rows:
+        print("Migrating {time}".format(time=row["timestamp"]))
+        row = dict(row)
+
+        command = """
+            SELECT user_id FROM users
+            WHERE email = :email
+        """
+        params = {"email": row["username"]}
+        result = session.execute(command, params).fetchall()
+        if len(result) == 0:
+            continue
+
+        user_id = dict(result[0])["user_id"]
+
+        command = """
+            INSERT INTO logs.login_history(user_id, timestamp, action)
+            VALUES(:user_id, :timestamp, :action)
+        """
+        time = dt.strptime(row["timestamp"], "%m-%d-%Y, %H:%M:%S")
+
+        params = {
+            "timestamp": int(dt.timestamp(time)),
+            "action": row["action"],
+            "user_id": user_id,
+        }
+
+        session.execute(command, params)
+
+    session.commit()
+    session.close()
+
+    print("DONE MIGRATING LOGIN HISTORY TABLE \n ------------------------ \n")
 
 
 if __name__ == "__main__":

@@ -78,7 +78,7 @@ def chargeHelper(token, email, code, plan):
             if len(subscriptions) == 0:
                 trial_end = round((dt.now() + relativedelta(weeks=1)).timestamp())
                 stripe.Subscription.create(
-                    customer=new_customer["id"],
+                    customer=customer_id,
                     items=[{"plan": PLAN_ID}],
                     trial_end=trial_end,
                     trial_from_plan=False,
@@ -136,7 +136,7 @@ def chargeHelper(token, email, code, plan):
                 function="chargeHelper", label=email, logs="Customer added successful",
             )
 
-    except:
+    except Exception as e:
         track = traceback.format_exc()
         fractalLog(
             function="chargeHelper",

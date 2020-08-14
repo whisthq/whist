@@ -36,7 +36,7 @@ def loginHelper(email, password):
     # Return early if username/password combo is invalid
 
     if is_user:
-        if not output or not check_value(output[0]["password_token"], password):
+        if not output or not check_value(output[0]["password"], password):
             return {
                 "verified": False,
                 "is_user": is_user,
