@@ -32,8 +32,8 @@ extern volatile CodecType output_codec_type;
 
 extern volatile int max_bitrate;
 extern volatile int running_ci;
-extern volatile char user_email[USER_EMAIL_MAXLEN];
-extern volatile char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+extern char user_email[USER_EMAIL_MAXLEN];
+extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 
 extern volatile CodecType codec_type;
 
@@ -77,9 +77,9 @@ int parseArgs(int argc, char *argv[]) {
         "  -p, --private-key=PK          pass in the RSA Private Key as a "
         "hexadecimal string\n"
         "  -k, --use_ci                  launch the protocol in CI mode\n"
-        "  -u, --user                      Tell fractal the users email"
-        "  -e, --environment              The environment the protocol is running"
-        "                                 in. e.g master, staging, dev"
+        "  -u, --user                     Tell fractal the users email. Optional defaults to None"
+        "  -e, --environment              The environment the protocol is running \n"
+        "                                 in. e.g master, staging, dev. Optional defaults to dev"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
@@ -215,7 +215,7 @@ char *getLogDir(void) {
 
 int logConnectionID(int connection_id) {
     // itoa is not portable
-    char* str_connection_id[100];
+    char* str_connection_id = malloc(sizeof(char) * 100);
     sprintf(str_connection_id, "%d", connection_id);
     // send connection id to sentry as a tag, server also does this
     sentry_set_tag("connection_id", str_connection_id);

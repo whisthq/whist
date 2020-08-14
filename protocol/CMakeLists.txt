@@ -209,7 +209,7 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
 endif()
 
 
-
+# Do this before setting the OSX compiler so we do not mess with the sentry-native build
 add_subdirectory(sentry-native)
 
 #Set OSX compiler and SDK globally

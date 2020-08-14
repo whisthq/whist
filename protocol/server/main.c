@@ -76,8 +76,7 @@ volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
 input_device_t* input_device = NULL;
-// volatile
-extern volatile char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
 
 #define VIDEO_BUFFER_SIZE 25
