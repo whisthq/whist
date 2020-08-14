@@ -288,8 +288,6 @@ const int linux_keycodes[NUM_KEYCODES] = {
     KEY_SELECT         // 263 -> Media Select
 };
 
-bool keyboard_state[NUM_KEYCODES];
-
 const int linux_mouse_buttons[6] = {
     0,           // 0 -> no FractalMouseButton
     BTN_LEFT,    // 1 -> Left Button
@@ -308,12 +306,12 @@ int GetLinuxMouseButton(FractalMouseButton fractal_code) {
 input_device_t* CreateInputDevice() {
     input_device_t* input_device = malloc(sizeof(input_device_t));
     memset(input_device, 0, sizeof(input_device_t));
+
     // create event writing FDs
 
     input_device->fd_absmouse       = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     input_device->fd_relmouse       = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     input_device->fd_keyboard       = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    memset(keyboard_state, 0, sizeof(keyboard_state));
 
     if (input_device->fd_absmouse < 0 || input_device->fd_relmouse < 0 ||
         input_device->fd_keyboard < 0) {
@@ -402,46 +400,6 @@ input_device_t* CreateInputDevice() {
     _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_DEV_CREATE);
     LOG_INFO("Created input devices!");
 
-    // Create file descriptor to read keyboard state
-
-    char sysfs_device_name[16];
-    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_GET_SYSNAME(sizeof(sysfs_device_name)), sysfs_device_name);
-
-    char sysfs_device_path[128];
-    snprintf(sysfs_device_path, sizeof(sysfs_device_path), "/sys/devices/virtual/input/%s", sysfs_device_name);
-    LOG_INFO("Keyboard State Filepath %s\n", sysfs_device_path);
-
-    DIR *d;
-    struct dirent *dir;
-    d = opendir(sysfs_device_path);
-    if (!d) {
-        LOG_ERROR("Could not open directory %s! %s", sysfs_device_path, strerror(errno));
-	goto failure;
-    }
-    char event_name[16];
-    while((dir = readdir(d)) != NULL) {
-	char *prefix = "event";
-        if( strlen(dir->d_name) > strlen(prefix) && memcmp(dir->d_name, prefix, strlen(prefix)) == 0 ) {
-            memcpy(event_name, dir->d_name, strlen(dir->d_name)+1);
-	    break;
-	}
-    }
-    closedir(d);
-
-    char event_path[64];
-    snprintf(event_path, sizeof(event_path), "/dev/input/%s", event_name);
-    LOG_INFO("DIR: %s", event_path);
-    input_device->fd_keyboard_state = open(event_path, O_RDONLY | O_NONBLOCK);
-
-    system("ls -l /dev/input");
-
-    if (input_device->fd_keyboard_state < 0) {
-        LOG_ERROR("CreateInputDevice: Error opening '%s' for writing: %s",
-		  sysfs_device_path,
-                  strerror(errno));
-        goto failure;
-    }
-
     return input_device;
 failure:
     DestroyInputDevice(input_device);
@@ -475,30 +433,22 @@ void EmitInputEvent(int fd, int type, int code, int val) {
 }
 
 bool GetKeyState(input_device_t* input_device, int key_code) {
-    return keyboard_state[key_code];
-
-    int key_map[KEY_MAX/8 + 1];
-    memset(key_map, 0, sizeof(key_map));
-
-    //fsync(input_device->fd_keyboard_state);
-    int m[2];
-    m[0] = key_code;
-    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard_state, EVIOCGKEY(sizeof(key_map)), key_map);
-
-    int key_byte = key_map[key_code / 8];
-    int key_mask = 1 << (key_code % 8);
-    bool is_pressed = !(key_byte & key_mask);
-
-    //is_pressed = m[1];
-    return is_pressed;
-failure:
-    LOG_ERROR("IOCTL KEYBOARD STATE FAILED! %p", input_device->fd_keyboard);
-    SDL_Delay(50);
-    exit(-1);
+    return input_device->keyboard_state[key_code];
 }
 
-#define KeyUp(key_code) {EmitInputEvent(input_device->fd_keyboard, EV_KEY, (key_code), 0); keyboard_state[(key_code)] = 0;}
-#define KeyDown(key_code) {EmitInputEvent(input_device->fd_keyboard, EV_KEY, (key_code), 1); keyboard_state[(key_code)] = 1;}
+void KeyPress(input_device_t* input_device, int key_code, int press) {
+    EmitInputEvent(input_device->fd_keyboard, EV_KEY, key_code, press);
+    input_device->keyboard_state[key_code] = press;
+    if (key_code == KEY_CAPSLOCK && press) {
+        input_device->caps_lock = !input_device->caps_lock;
+    }
+    if (key_code == KEY_NUMLOCK && press) {
+        input_device->num_lock = !input_device->num_lock;
+    }
+}
+
+#define KeyUp(key_code) KeyPress(input_device, (key_code), 0);
+#define KeyDown(key_code) KeyPress(input_device, (key_code), 1);
 
 void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fmsg) {
     if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
@@ -508,8 +458,8 @@ void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fms
         return;
     }
 
-    bool server_caps_lock = GetKeyState(input_device, KEY_CAPSLOCK);
-    bool server_num_lock = GetKeyState(input_device, KEY_NUMLOCK);
+    bool server_caps_lock = input_device->caps_lock;
+    bool server_num_lock = input_device->num_lock;
 
     bool client_caps_lock_holding = false;
     bool client_num_lock_holding = false;
