@@ -118,8 +118,9 @@ def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) ->
         run_cmd(  # extract the icon to its own resource file
             ["DeRez", "-only", "icns", str(src_icon)], stdout=f
         )
+    run_cmd(["ls"])
     run_cmd(  # append this resource to the file you want to icon-ize
-        ["Rez", "-append", str(tmp_icon), "-o", str(client)]
+        ["Rez", "-append", "tmpicns.rsrc", "-o", str(client)]
     )
 
     run_cmd(["SetFile", "-a", "C", str(client)])  # use the resource to set the icon
