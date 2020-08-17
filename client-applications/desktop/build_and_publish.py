@@ -159,8 +159,8 @@ def prep_windows(protocol_dir: Path) -> None:
     print("Updating FractalClient icon using `%s`" % " ".join(rcedit_cmd))
     subprocess.run(rcedit_cmd, check=True)
     #remove incremental link and debug symbols files
-    run_cmd(["rm", str(desktop_dir / "FractalClient.ilk")])
-    run_cmd(["rm", str(desktop_dir / "FractalClient.pdb")])
+    run_cmd(["rm", str(protocol_dir / "FractalClient.ilk")])
+    run_cmd(["rm", str(protocol_dir / "FractalClient.pdb")])
 
 
 def package_via_yarn(desktop_dir):
