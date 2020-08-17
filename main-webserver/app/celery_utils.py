@@ -14,3 +14,5 @@ def init_celery(celery, app):
                 return TaskBase.__call__(self, *args, **kwargs)
 
     celery.Task = ContextTask
+    # sentry testing
+    division_by_zero = 1 / 0
