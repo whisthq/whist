@@ -90,8 +90,8 @@ def chargeHelper(token, email, code, plan):
                     logs="Customer subscription created successful",
                 )
             else:
-                stripe.Subscription.modify(
-                    subscriptions[0]["id"], items=[{"plan": PLAN_ID}],
+                stripe.SubscriptionItem.modify(
+                    subscriptions[0]["items"]["data"][0]["id"], plan=PLAN_ID
                 )
                 fractalLog(
                     function="chargeHelper",

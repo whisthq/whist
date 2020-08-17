@@ -25,6 +25,7 @@ def tableToObject(table_name):
         "release_groups": ReleaseGroup,
         "stripe_products": StripeProduct,
         "main_newsletter": MainNewsletter,
+        "login_history": LoginHistory,
     }
 
     return tableMap[table_name]

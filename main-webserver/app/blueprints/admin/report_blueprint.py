@@ -59,10 +59,8 @@ def userReport(**kwargs):
     body = request.get_json()
     output = {}
     if body["timescale"]:
-        output = userReportHelper(body["username"], timescale=body["timescale"])
+        return userReportHelper(body["username"], timescale=body["timescale"])
     elif body["start_date"]:
-        output = userReportHelper(body["username"], start_date=body["start_date"])
+        return userReportHelper(body["username"], start_date=body["start_date"])
     else:
         return jsonify({}), BAD_REQUEST
-
-    return jsonify(output), SUCCESS
