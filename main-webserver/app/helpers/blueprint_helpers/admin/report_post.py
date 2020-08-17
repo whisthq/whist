@@ -3,6 +3,12 @@ from app.helpers.utils.general.analytics import *
 from app.helpers.utils.general.logs import *
 from app.helpers.utils.general.sql_commands import *
 
+from app.models.logs import *
+
+engine = db.create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+metadata.create_all(bind=engine)
+Session = sessionmaker(bind=engine, autocommit=False)
+
 
 def regionReportHelper(timescale):
     command = text("")
@@ -50,52 +56,54 @@ def regionReportHelper(timescale):
 
 def userReportHelper(username, timescale=None, start_date=None):
     today = dt.now()
-    command = text(
-        """
-        SELECT *
-        FROM login_history
-        WHERE "username" = :username AND timestamp > :date AND is_user = true
-        ORDER BY timestamp ASC
-        """
-    )
-    params = {}
+
+    date = 0
 
     if timescale:
         if timescale == "day":
             return []
         elif timescale == "week":
             lastWeek = today - datetime.timedelta(days=7)
-            params = {
-                "username": username,
-                "date": lastWeek.strftime("%m-%d-%y"),
-            }
+            date = int(dt.timestamp(lastWeek))
         elif timescale == "month":
             lastMonth = today - datetime.timedelta(days=30)
-            params = {
-                "username": username,
-                "date": lastMonth.strftime("%m-%d-%y"),
-            }
+            date = int(dt.timestamp(lastMonth))
         elif timescale == "beginningMonth":
             beginning_month = dt.strptime(
                 "{year}-{month}-{day}".format(
                     year=today.year, month=today.month, day="1"
                 ),
                 "%Y-%m-%d",
-            ).strftime("%m-%d-%y")
-            params = {
-                "username": username,
-                "date": beginning_month,
-            }
+            )
+
+            date = int(dt.timestamp(beginning_month))
 
     if start_date:
-        params = {
-            "username": username,
-            "date": unixToDate(start_date).strftime("%m-%d-%y"),
-        }
+        date = start_date
 
-    report = fractalRunSQL(command, params)
+    user = fractalSQLSelect("users", {"email": username})
+    if not user:
+        return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
+
+    session = Session()
+
+    rows = (
+        session.query(LoginHistory)
+        .filter(LoginHistory.user_id == user[0]["email"], LoginHistory.timestamp > date)
+        .order_by(LoginHistory.timestamp)
+    )
+
+    session.commit()
+    session.close()
+
+    rows = rows.all()
+    result = []
+    for row in rows:
+        row.__dict__.pop("_sa_instance_state", None)
+        result.append(row.__dict__)
+
     output = []
-    if report["success"] and report["rows"]:
-        output = loginsToMinutes(report["rows"])
+    if result:
+        output = loginsToMinutes(result)
 
-    return output
+    return jsonify(output), SUCCESS

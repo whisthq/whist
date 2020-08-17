@@ -64,7 +64,7 @@ def uploadLogsToS3(self, sender, connection_id, logs, vm_ip, version):
         last_updated = getCurrentTime()
         username = None
 
-        output = fractalSQLSelect(table_name="v_ms", params={"ip": vm_ip})
+        output = fractalSQLSelect(table_name="user_vms", params={"ip": vm_ip})
 
         vm_info = None
         if output["success"] and output["rows"]:
@@ -76,11 +76,11 @@ def uploadLogsToS3(self, sender, connection_id, logs, vm_ip, version):
 
         if sender == "CLIENT":
             output = fractalSQLSelect(
-                table_name="logs", params={"connection_id": connection_id}
+                table_name="protocol_logs", params={"connection_id": connection_id}
             )
             if output["success"] and output["rows"]:
                 fractalSQLUpdate(
-                    table_name="logs",
+                    table_name="protocol_logs",
                     conditional_params={"connection_id": connection_id},
                     new_params={
                         "ip": vm_ip,
@@ -91,7 +91,7 @@ def uploadLogsToS3(self, sender, connection_id, logs, vm_ip, version):
                 )
             else:
                 fractalSQLInsert(
-                    table_name="logs",
+                    table_name="protocol_logs",
                     params={
                         "ip": vm_ip,
                         "last_updated": last_updated,
@@ -102,11 +102,11 @@ def uploadLogsToS3(self, sender, connection_id, logs, vm_ip, version):
                 )
         elif sender == "SERVER":
             output = fractalSQLSelect(
-                table_name="logs", params={"connection_id": connection_id}
+                table_name="protocol_logs", params={"connection_id": connection_id}
             )
             if output["success"] and output["rows"]:
                 fractalSQLUpdate(
-                    table_name="logs",
+                    table_name="protocol_logs",
                     conditional_params={"connection_id": connection_id},
                     new_params={
                         "ip": vm_ip,
@@ -118,7 +118,7 @@ def uploadLogsToS3(self, sender, connection_id, logs, vm_ip, version):
                 )
             else:
                 fractalSQLInsert(
-                    table_name="logs",
+                    table_name="protocol_logs",
                     params={
                         "ip": vm_ip,
                         "last_updated": last_updated,

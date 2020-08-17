@@ -25,6 +25,8 @@ def tableToObject(table_name):
         "release_groups": ReleaseGroup,
         "stripe_products": StripeProduct,
         "main_newsletter": MainNewsletter,
+        "login_history": LoginHistory,
+        "protocol_logs": ProtocolLog,
     }
 
     return tableMap[table_name]
@@ -40,7 +42,10 @@ def fractalSQLSelect(table_name, params):
     session.close()
 
     rows = rows.all()
-    result = [row.__dict__ for row in rows]
+    result = []
+    for row in rows:
+        row.__dict__.pop("_sa_instance_state", None)
+        result.append(row.__dict__)
 
     return result
 

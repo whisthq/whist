@@ -44,7 +44,7 @@ def deleteLogsFromS3(sender, connection_id):
             )
 
     output = fractalSQLSelect(
-        table_name="logs", params={"connection_id": connection_id}
+        table_name="protocol_logs", params={"connection_id": connection_id}
     )
 
     if output["success"] and output["rows"]:
@@ -55,6 +55,6 @@ def deleteLogsFromS3(sender, connection_id):
         if logs_found["client_logs"]:
             S3Delete(logs_found["client_logs"])
 
-        fractalSQLDelete(table_name="logs", params={"connection_id": connection_id})
+        fractalSQLDelete(table_name="protocol_logs", params={"connection_id": connection_id})
 
     return {"status": SUCCESS}

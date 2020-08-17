@@ -41,7 +41,7 @@ from sqlalchemy.sql import text
 from jose import jwt
 from flask_cors import CORS
 from flask_mail import Mail, Message
-from datetime import timedelta, datetime as dt
+from datetime import timedelta, datetime as dt, timezone
 from multiprocessing.util import register_after_fork
 from flask_jwt_extended import *
 from sendgrid import SendGridAPIClient
