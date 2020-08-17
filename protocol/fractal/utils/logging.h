@@ -43,6 +43,10 @@ Includes
 #include "../core/fractal.h"
 #include "clock.h"
 
+#ifdef __ANDROID_API__
+#include <android/log.h>
+#endif
+
 /*
 ============================
 Defines

@@ -632,7 +632,6 @@ int log_connection_id(int connection_id) {
     path = dupstring("connection_id.txt");
 #elif __ANDROID_API__
     path = dupstring("/data/data/org.fractal.desktop/connection_id.txt");
-    return 0;
 #else
     path = append_path_to_home(".fractal/connection_id.txt");
 #endif

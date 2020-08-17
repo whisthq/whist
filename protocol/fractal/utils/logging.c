@@ -47,6 +47,10 @@ could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 #endif
 
 #include "string_utils.h"
+#ifdef __ANDROID_API__
+#include <android/log.h>
+#endif
+
 #include "../core/fractal.h"
 #include "../network/network.h"
 #include "logging.h"
@@ -283,7 +287,11 @@ int multi_threaded_printf(void *opaque) {
             logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 3] = '.';
             logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 2] = '\n';
             logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 1] = '\0';
+#ifndef __ANDROID_API__
             fprintf(stdout, "%s", logger_queue_cache[i].buf);
+#else
+            __android_log_print(ANDROID_LOG_DEBUG, "ANDROID_DEBUG", "%s", logger_queue_cache[i].buf);
+#endif
 
             int chars_written =
                 sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
