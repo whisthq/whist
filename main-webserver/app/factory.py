@@ -15,7 +15,9 @@ def create_app(app_name=PKG_NAME, **kwargs):
         env = "staging"
     sentry_sdk.init(
         dsn="https://3d228295baab4919a7e4fa8163c72098@o400459.ingest.sentry.io/5394545",
-        integrations=[FlaskIntegration(), CeleryIntegration()]
+        integrations=[FlaskIntegration(), CeleryIntegration()],
+        environment=env,
+        release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT")
     )
 
     template_dir = os.path.dirname(os.path.realpath(__file__))
