@@ -97,6 +97,8 @@ def prep_unix(protocol_dir: Path) -> None:  # Shared by Linux and macOS
 
 def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) -> None:
     client = protocol_dir / "FractalClient"
+    # strip debug symbols from protocol
+    run_cmd(["strip", "-S", str(client)])
     # Add logo to the FractalClient executable
     # TODO The "sips" command appears to do nothing. Test that icons are successfully
     # added without it and then feel free to remove it.
@@ -131,6 +133,8 @@ def prep_linux(protocol_dir: Path) -> None:
     unison.chmod(
         unison.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )  # this long chain is equivalent to "chmod +x"
+    # strip debug symbols from the client
+    run_cmd(["strip", "--strip-debug", str(client)])
 
 
 def prep_windows(protocol_dir: Path) -> None:
@@ -154,6 +158,9 @@ def prep_windows(protocol_dir: Path) -> None:
     ]
     print("Updating FractalClient icon using `%s`" % " ".join(rcedit_cmd))
     subprocess.run(rcedit_cmd, check=True)
+    #remove incremental link and debug symbols files
+    run_cmd(["rm", str(desktop_dir / "FractalClient.ilk")])
+    run_cmd(["rm", str(desktop_dir / "FractalClient.pdb")])
 
 
 def package_via_yarn(desktop_dir):
