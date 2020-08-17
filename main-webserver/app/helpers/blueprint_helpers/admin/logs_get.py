@@ -5,17 +5,7 @@ def logsHelper(connection_id, username, bookmarked):
     session = Session()
 
     if bookmarked:
-        command = text(
-            """
-            SELECT * FROM "bookmarked_logs" LEFT JOIN "logs" ON (bookmarked_logs.connection_id = logs.connection_id)
-            """
-        )
-
-        params = {"connection_id": connection_id}
-
-        output = fractalCleanSQLOutput(session.execute(command, params).fetchall())
-        session.commit()
-        session.close()
+        output = fractalSQLSelect(table_name="protocol_logs", params={"bookmarked": True }
 
         connection_ids = []
         if output:
@@ -23,41 +13,45 @@ def logsHelper(connection_id, username, bookmarked):
 
         return {"logs": output, "connection_ids": connection_ids, "status": SUCCESS}
     if connection_id:
-        command = text(
-            """
-            SELECT * FROM logs WHERE "connection_id" = :connection_id ORDER BY last_updated DESC
-            """
+        rows = (
+            session.query(ProtocolLog).filter(ProtProtocolLog.connection_id == connection_id).order_by(ProtocolLog.timestamp)
         )
-        params = {"connection_id": connection_id}
 
-        output = fractalCleanSQLOutput(session.execute(command, params).fetchall())
+
         session.commit()
         session.close()
+
+        rows = rows.all()
+        output = []
+        for row in rows:
+            row.__dict__.pop("_sa_instance_state", None)
+            output.append(row.__dict__)
 
         return {"logs": output, "status": SUCCESS}
     elif username:
-        command = text(
-            """
-            SELECT * FROM logs WHERE "username" LIKE :username ORDER BY last_updated DESC
-            """
-        )
-        params = {"username": username + "%"}
+        users = fractalSQLSelect(table_name="users", params={"email": username})
 
-        output = fractalCleanSQLOutput(session.execute(command, params).fetchall())
+        user_id = users["rows"][0]["user_id"]
+
+        rows = (
+            session.query(ProtocolLog).filter(ProtProtocolLog.user_id == user_id).order_by(ProtocolLog.timestamp)
+        )
+
+
         session.commit()
         session.close()
 
+        rows = rows.all()
+        output = []
+        for row in rows:
+            row.__dict__.pop("_sa_instance_state", None)
+            output.append(row.__dict__)
+
+
         return {"logs": output, "status": SUCCESS}
     else:
-        command = text(
-            """
-            SELECT * FROM logs ORDER BY last_updated DESC
-            """
-        )
+        output = session.query(ProtocolLog).order_by(ProtocolLog.timestamp)
 
-        params = {}
-
-        output = fractalCleanSQLOutput(session.execute(command, params).fetchall())
         session.commit()
         session.close()
 
