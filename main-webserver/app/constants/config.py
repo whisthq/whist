@@ -4,8 +4,11 @@ import jwt
 
 from sqlalchemy.orm import sessionmaker
 
-config_engine = db.create_engine(os.getenv("CONFIG_DB_URL"), echo=False, pool_pre_ping=True)
+config_engine = db.create_engine(
+    os.getenv("CONFIG_DB_URL"), echo=False, pool_pre_ping=True
+)
 ConfigSession = sessionmaker(bind=config_engine, autocommit=False)
+
 
 def getEnvVar(key):
     if os.getenv("USE_PRODUCTION_KEYS").upper() == "true":
@@ -24,15 +27,17 @@ def getEnvVar(key):
         rows = session.execute(command, params)
         output = rows.fetchone()
     except Exception as e:
-        print("Error executing fetching config variable [{command}]: {error}".format(
-            command=str(command), error=str(e)
-        ))
+        print(
+            "Error executing fetching config variable [{command}]: {error}".format(
+                command=str(command), error=str(e)
+            )
+        )
 
     session.commit()
     session.close()
 
     encoded = output[1]
-    return jwt.decode(encoded, os.getenv('CONFIG_SECRET_KEY'))['value']
+    return jwt.decode(encoded, os.getenv("CONFIG_SECRET_KEY"))["value"]
 
 
 DATABASE_URL = (

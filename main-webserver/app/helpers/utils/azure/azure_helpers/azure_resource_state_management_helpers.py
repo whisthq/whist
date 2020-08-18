@@ -3,9 +3,7 @@ from app.helpers.utils.azure.azure_general import *
 from app.helpers.utils.azure.azure_resource_locks import *
 
 
-def boot_if_necessary(
-    vm_name, needs_restart, resource_group=VM_GROUP, s=None
-):
+def boot_if_necessary(vm_name, needs_restart, resource_group=VM_GROUP, s=None):
     _, compute_client, _ = createClients()
 
     power_state = "PowerState/deallocated"

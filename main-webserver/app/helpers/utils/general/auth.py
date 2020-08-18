@@ -40,10 +40,7 @@ def fractalAuth(f):
 
         current_user = get_jwt_identity()
 
-        if (
-            current_user != username
-            and not DASHBOARD_USERNAME in current_user
-        ):
+        if current_user != username and not DASHBOARD_USERNAME in current_user:
             format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
 
             logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
