@@ -15,6 +15,7 @@ import socket
 import boto3
 import dateutil.parser
 import sqlalchemy
+import flask_sqlalchemy
 import numpy as np
 import json
 import secrets
@@ -25,7 +26,6 @@ from inspect import getsourcefile
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import *
-from flask_sqlalchemy import SQLAlchemy
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.network import NetworkManagementClient
@@ -34,11 +34,11 @@ from azure.mgmt.compute.models import DiskCreateOption
 from msrestazure.azure_exceptions import CloudError
 from haikunator import Haikunator
 from dotenv import *
-from flask_sqlalchemy import *
 from flask_migrate import Migrate
 from celery import Celery, uuid, task
 from flask import Flask, request, jsonify, Blueprint, make_response, render_template
 from sqlalchemy.sql import text
+from flask_sqlalchemy import SQLAlchemy
 from jose import jwt
 from flask_cors import CORS
 from flask_mail import Mail, Message

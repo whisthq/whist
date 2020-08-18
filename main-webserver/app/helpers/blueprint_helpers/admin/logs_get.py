@@ -5,7 +5,7 @@ def logsHelper(connection_id, username, bookmarked):
     session = Session()
 
     if bookmarked:
-        output = fractalSQLSelect(table_name="protocol_logs", params={"bookmarked": True }
+        output = fractalSQLSelect(table_name="protocol_logs", params={"bookmarked": True })
 
         connection_ids = []
         if output:

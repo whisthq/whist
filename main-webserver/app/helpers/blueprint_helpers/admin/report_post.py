@@ -6,7 +6,6 @@ from app.helpers.utils.general.sql_commands import *
 from app.models.logs import *
 
 engine = sqlalchemy.create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
-metadata.create_all(bind=engine)
 Session = sessionmaker(bind=engine, autocommit=False)
 
 

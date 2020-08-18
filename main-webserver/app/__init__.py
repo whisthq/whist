@@ -62,12 +62,12 @@ def fractalPreProcess(f):
 celery_instance = make_celery()
 
 app, jwtManager = create_app(celery=celery_instance)
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+
+db = SQLAlchemy(app) # initialize FlaskSQLAlchemy
 app = init_app(app)
 
 app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
 app.config["ROOT_DIRECTORY"] = os.path.dirname(os.path.abspath(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-
-db = SQLAlchemy(app) # initialize FlaskSQLAlchemy
 
 CORS(app)
