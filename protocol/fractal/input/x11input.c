@@ -376,6 +376,8 @@ bool ReplayUserInput(input_device_t* input_device, struct FractalClientMessage* 
             break;
     }
 
+    XFlush(input_device->display);
+
     // // send FMSG mapped to Windows event to Windows and return
     // int num_events_sent =
     //     SendInput(1, &Event, sizeof(INPUT));  // 1 structure to send
