@@ -73,6 +73,18 @@ int handleSDLEvent(SDL_Event *event) {
             break;
         case SDL_KEYDOWN:
         case SDL_KEYUP:
+#ifdef __APPLE__
+            // if (event->key.keysym.scancode == FK_LGUI) {
+            //     event->key.keysym.scancode = (SDL_Scancode) FK_LCTRL;
+            //     lgui_pressed = event->key.type == SDL_KEYDOWN;;
+            // }
+            // if (lgui_pressed) {
+            //     event->key.keysym.mod = MOD_LCTRL;
+            // }
+            if (event->key.keysym.scancode == FK_C) {
+                event->key.keysym.scancode = FK_V;
+            }
+#endif
             if (handleKeyUpDown(event) != 0) {
                 return -1;
             }
@@ -181,14 +193,17 @@ int handleKeyUpDown(SDL_Event *event) {
     }
 
     // On Mac, map cmd+C to ctrl+C and cmd+V to ctrl+V
-#ifdef __APPLE__
-    if (keycode == FK_LGUI) {
-        keycode = FK_LCTRL;
-    }
-    if (lgui_pressed) {
-        keymod = MOD_LCTRL;
-    }
-#endif
+// #ifdef __APPLE__
+    // if (keycode == FK_LGUI) {
+    //     keycode = FK_LCTRL;
+    // }
+    // if (lgui_pressed) {
+    //     keymod = MOD_LCTRL;
+    // }
+    // if (keycode == FK_C) {
+    //     keycode = FK_V;
+    // }
+// #endif
 
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_KEYBOARD;
