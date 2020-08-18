@@ -3,8 +3,8 @@
 #define XK_LATIN1
 #define XK_MISCELLANY
 #define XK_3270
+
 #include <X11/XF86keysym.h>
-#include <X11/Xlib.h>
 #include <X11/extensions/XTest.h>
 #include <X11/keysymdef.h>
 
@@ -277,38 +277,38 @@ const int x11_keysyms[NUM_KEYCODES] = {
     XF86XK_AudioMedia   // 263 -> Media Select
 };
 
-static Display* disp;
-
 input_device_t* CreateInputDevice() {
     input_device_t* input_device = malloc(sizeof(input_device_t));
     memset(input_device, 0, sizeof(input_device_t));
 
-    disp = XOpenDisplay(NULL);
+    input_device->display = XOpenDisplay(NULL);
     return input_device;
 }
 
 void DestroyInputDevice(input_device_t* input_device) {
+    XCloseDisplay(NULL);
     free(input_device);
     return;
 }
 
-void SendKeyInput(int x11_keysym, int pressed) {
-    XLockDisplay(disp);
-    KeyCode kcode = XKeysymToKeycode(disp, x11_keysym);
-    XTestFakeKeyEvent(disp, kcode, pressed, 0);
-    XUnlockDisplay(disp);
+void SendKeyInput(input_device_t* input_device, int x11_keysym, int pressed) {
+    XLockDisplay(input_device->display);
+    KeyCode kcode = XKeysymToKeycode(input_device->display, x11_keysym);
+    XTestFakeKeyEvent(input_device->display, kcode, pressed, 0);
+    XUnlockDisplay(input_device->display);
 }
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
 bool ReplayUserInput(input_device_t* input_device, struct FractalClientMessage* fmsg) {
-    input_device;
     // switch to fill in the event depending on the FractalClientMessage
     // type
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
             // event for keyboard action
-            SendKeyInput(x11_keysyms[fmsg->keyboard.code], fmsg->keyboard.pressed);
+            LOG_INFO("KEYBOARD CODE %d --> %d RECEIVED!", fmsg->keyboard.code,
+                     x11_keysyms[fmsg->keyboard.code]);
+            SendKeyInput(input_device, x11_keysyms[fmsg->keyboard.code], fmsg->keyboard.pressed);
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event

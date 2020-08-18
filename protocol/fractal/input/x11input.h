@@ -18,12 +18,16 @@ Includes
 #include "../core/fractal.h"
 // #include "../utils/sdlscreeninfo.h"
 
+#include <X11/Xlib.h>
+
 /*
 ============================
 Custom Types
 ============================
 */
 
-typedef char input_device_t;
+typedef struct input_device_t {
+    Display* display;
+} input_device_t;
 
 #endif  // LINUX_INPUT_H
