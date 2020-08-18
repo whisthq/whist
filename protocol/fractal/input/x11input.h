@@ -16,7 +16,7 @@ Includes
 */
 
 #include "../core/fractal.h"
-// #include "../utils/sdlscreeninfo.h"
+#include "../utils/sdlscreeninfo.h"
 
 #include <X11/Xlib.h>
 

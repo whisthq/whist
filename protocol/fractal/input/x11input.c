@@ -315,18 +315,23 @@ bool ReplayUserInput(input_device_t* input_device, struct FractalClientMessage* 
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
             if (fmsg->mouseMotion.relative) {
-                LOG_INFO("RELATIVE MOUSE MOTION x %d y %d RECEIVED!",
-                         (int)(fmsg->mouseMotion.x * 0.9), (int)(fmsg->mouseMotion.y * 0.9));
-                XTestFakeRelativeMotionEvent(input_device->display,
-                                             (int)(fmsg->mouseMotion.x * 0.9),
-                                             (int)(fmsg->mouseMotion.y * 0.9), CurrentTime);
+                LOG_INFO("RELATIVE MOUSE MOTION x %d y %d RECEIVED!", fmsg->mouseMotion.x,
+                         fmsg->mouseMotion.y);
+                XTestFakeRelativeMotionEvent(input_device->display, fmsg->mouseMotion.x,
+                                             fmsg->mouseMotion.y, CurrentTime);
             } else {
                 LOG_INFO("ABSOLUTE MOUSE MOTION x %d y %d RECEIVED!",
-                         (int)(fmsg->mouseMotion.x * (double)65536 / 1000000),
-                         (int)(fmsg->mouseMotion.y * (double)65536 / 1000000));
+                         (int)(fmsg->mouseMotion.x * (int32_t)get_virtual_screen_width() /
+                               MOUSE_SCALING_FACTOR),
+                         (int)(fmsg->mouseMotion.y * (int32_t)get_virtual_screen_height() /
+                               MOUSE_SCALING_FACTOR));
                 XTestFakeMotionEvent(
-                    input_device->display, 0, (int)(fmsg->mouseMotion.x * (double)65536 / 1000000),
-                    (int)(fmsg->mouseMotion.y * (double)65536 / 1000000), CurrentTime);
+                    input_device->display, 0,
+                    (int)(fmsg->mouseMotion.x * (int32_t)get_virtual_screen_width() /
+                          MOUSE_SCALING_FACTOR),
+                    (int)(fmsg->mouseMotion.y * (int32_t)get_virtual_screen_height() /
+                          MOUSE_SCALING_FACTOR),
+                    CurrentTime);
             }
             break;
         case MESSAGE_MOUSE_BUTTON:
