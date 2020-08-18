@@ -13,6 +13,24 @@ class ProtocolLog(Base):
     version = Column(String(250))
     client_logs = Column(String(250))
 
+class MonitorLog(Base):
+    __tablename__ = "monitor_logs"
+    __table_args__ = {"extend_existing": True, "schema": "logs"}
+
+    logons = Column(Integer)
+    logoffs = Column(Integer)
+    users_online = Column(Integer)
+    eastus_available = Column(Integer)
+    southcentralus_available = Column(Integer)
+    northcentralus_available = Column(Integer)
+    eastus_unavailable = Column(Integer)
+    southcentralus_unavailable = Column(Integer)
+    northcentralus_unavailable = Column(Integer)
+    eastus_deallocated = Column(Integer)
+    southcentralus_deallocated = Column(Integer)
+    northcentralus_deallocated = Column(Integer)
+    total_vms_deallocated = Column(Integer)
+    timestamp = Column(Integer)
 
 class LoginHistory(Base):
     __tablename__ = "login_history"
