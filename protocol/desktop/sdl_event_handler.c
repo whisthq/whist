@@ -137,6 +137,7 @@ int handleMouseLeftWindow(SDL_Event *event) {
 
 int handleKeyUpDown(SDL_Event *event) {
     FractalKeycode keycode = (FractalKeycode)event->key.keysym.scancode;
+    FractalKeymod keymod = (FractalKeymod)event->key.keysym.mod;
     bool is_pressed = event->key.type == SDL_KEYDOWN;
 
     // Keep memory of alt/ctrl/lgui/rgui status
@@ -179,11 +180,18 @@ int handleKeyUpDown(SDL_Event *event) {
         SendFmsg(&fmsg);
     }
 
+    // On Mac, map cmd+C to ctrl+C and cmd+V to ctrl+V
+    #ifdef __APPLE__
+    if ((lgui_pressed || rgui_pressed) && (keycode == FK_C || keycode == FK_V)) {
+        keymod = MOD_LCTRL;
+    }
+    #endif
+
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_KEYBOARD;
     fmsg.keyboard.code = keycode;
     fmsg.keyboard.pressed = is_pressed;
-    fmsg.keyboard.mod = event->key.keysym.mod;
+    fmsg.keyboard.mod = keymod;
     SendFmsg(&fmsg);
 
     return 0;
