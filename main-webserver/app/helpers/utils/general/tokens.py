@@ -2,17 +2,17 @@ from app.imports import *
 from app.helpers.utils.general.sql_commands import *
 from app.constants.bad_words import *
 
-
+from app.models.public import *
 
 def generatePrivateKey():
     return secrets.token_hex(16)
 
 
 def generateUniquePromoCode():
-    output = fractalSQLSelect("users", {})
+    users = User.query.all()
     old_codes = []
-    if output["rows"]:
-        old_codes = [user["code"] for user in output["rows"]]
+    if users:
+        old_codes = [user.referral_code for user in users]
     new_code = generatePromoCode()
     while new_code in old_codes:
         new_code = generatePromoCode()
