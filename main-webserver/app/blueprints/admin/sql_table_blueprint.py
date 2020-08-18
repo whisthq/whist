@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.general.auth import *
 
 table_bp = Blueprint("table_bp", __name__)
 

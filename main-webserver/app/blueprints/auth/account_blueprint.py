@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.general.auth import *
 from app.helpers.blueprint_helpers.auth.account_get import *
 from app.helpers.blueprint_helpers.auth.account_post import *
 

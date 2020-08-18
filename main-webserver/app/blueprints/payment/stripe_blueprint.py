@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.general.auth import *
 from app.helpers.blueprint_helpers.payment.stripe_post import *
 
 stripe_bp = Blueprint("stripe_bp", __name__)
