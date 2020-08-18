@@ -4,10 +4,7 @@ from app.helpers.utils.general.logs import *
 from app.helpers.utils.general.sql_commands import *
 
 from app.models.logs import *
-
-engine = sqlalchemy.create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
-Session = sessionmaker(bind=engine, autocommit=False)
-
+from app.serializers.logs import *
 
 def regionReportHelper(timescale):
     command = text("")
@@ -54,6 +51,8 @@ def regionReportHelper(timescale):
 
 
 def userReportHelper(username, timescale=None, start_date=None):
+    login_history_schema = LoginHistorySchema()
+
     today = dt.now()
 
     date = 0
@@ -80,29 +79,15 @@ def userReportHelper(username, timescale=None, start_date=None):
     if start_date:
         date = start_date
 
-    user = fractalSQLSelect("users", {"email": username})
+    user = User.query.filter_by(email=username).first()
     if not user:
         return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
 
-    session = Session()
+    histories = LoginHistory.query.filter((LoginHistory.user_id == user.email) & (LoginHistory.timestamp > date)).order_by(LoginHistory.timestamp).all()
 
-    rows = (
-        session.query(LoginHistory)
-        .filter(LoginHistory.user_id == user[0]["email"], LoginHistory.timestamp > date)
-        .order_by(LoginHistory.timestamp)
-    )
+    # import and use serializers
+    histories = [login_history_schema.dump(history) for history in histories]
 
-    session.commit()
-    session.close()
-
-    rows = rows.all()
-    result = []
-    for row in rows:
-        row.__dict__.pop("_sa_instance_state", None)
-        result.append(row.__dict__)
-
-    output = []
-    if result:
-        output = loginsToMinutes(result)
+    output = loginsToMinutes(histories)
 
     return jsonify(output), SUCCESS
