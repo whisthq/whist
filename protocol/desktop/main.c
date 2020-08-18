@@ -453,10 +453,15 @@ int syncKeyboardState(void) {
     fmsg.num_keycodes = fmin(NUM_KEYCODES, num_keys);
 #endif
 
+#ifdef __APPLE__
+    state[FK_LCTRL] = state[FK_LCTRL] || lgui_pressed;
+    state[FK_RCTRL] = state[FK_RCTRL] || rgui_pressed;
+#else
     // lgui/rgui don't work with SDL_GetKeyboardState for some
     // reason, so set manually
     state[FK_LGUI] = lgui_pressed;
     state[FK_RGUI] = rgui_pressed;
+#endif
     // Copy keyboard state
     memcpy(fmsg.keyboard_state, state, fmsg.num_keycodes);
 

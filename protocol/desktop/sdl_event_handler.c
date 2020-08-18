@@ -181,11 +181,14 @@ int handleKeyUpDown(SDL_Event *event) {
     }
 
     // On Mac, map cmd+C to ctrl+C and cmd+V to ctrl+V
-    #ifdef __APPLE__
-    if ((lgui_pressed || rgui_pressed) && (keycode == FK_C || keycode == FK_V)) {
+#ifdef __APPLE__
+    if (keycode == FK_LGUI) {
+        keycode = FK_LCTRL;
+    }
+    if (lgui_pressed) {
         keymod = MOD_LCTRL;
     }
-    #endif
+#endif
 
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_KEYBOARD;
@@ -193,6 +196,8 @@ int handleKeyUpDown(SDL_Event *event) {
     fmsg.keyboard.pressed = is_pressed;
     fmsg.keyboard.mod = keymod;
     SendFmsg(&fmsg);
+
+    LOG_INFO("Sent keyboard message: %d, %d, %d", keycode, is_pressed, keymod);
 
     return 0;
 }
