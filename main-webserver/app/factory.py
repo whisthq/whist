@@ -10,7 +10,7 @@ PKG_NAME = os.path.dirname(os.path.realpath(__file__)).split("/")[-1]
 
 def create_app(app_name=PKG_NAME, **kwargs):
     if os.getenv("USE_PRODUCTION_KEYS").upper() == "true":
-        env = "production"
+        env = "prod"
     else:
         env = "staging"
     sentry_sdk.init(
