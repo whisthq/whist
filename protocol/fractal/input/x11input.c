@@ -291,11 +291,9 @@ void DestroyInputDevice(input_device_t* input_device) {
     return;
 }
 
-void SendKeyInput(input_device_t* input_device, int x11_keysym, int pressed) {
-    XLockDisplay(input_device->display);
-    KeyCode kcode = XKeysymToKeycode(input_device->display, x11_keysym);
-    XTestFakeKeyEvent(input_device->display, kcode, pressed, 0);
-    XUnlockDisplay(input_device->display);
+void SendKeyInput(Display* display, int x11_keysym, int pressed) {
+    KeyCode kcode = XKeysymToKeycode(display, x11_keysym);
+    XTestFakeKeyEvent(display, kcode, pressed, CurrentTime);
 }
 
 /// @brief replays a user action taken on the client and sent to the server
@@ -303,80 +301,63 @@ void SendKeyInput(input_device_t* input_device, int x11_keysym, int pressed) {
 bool ReplayUserInput(input_device_t* input_device, struct FractalClientMessage* fmsg) {
     // switch to fill in the event depending on the FractalClientMessage
     // type
+
+    XLockDisplay(input_device->display);
+
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
             // event for keyboard action
             LOG_INFO("KEYBOARD CODE %d --> %d RECEIVED!", fmsg->keyboard.code,
                      x11_keysyms[fmsg->keyboard.code]);
-            SendKeyInput(input_device, x11_keysyms[fmsg->keyboard.code], fmsg->keyboard.pressed);
+            SendKeyInput(input_device->display, x11_keysyms[fmsg->keyboard.code],
+                         fmsg->keyboard.pressed);
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
-            // Event.type = INPUT_MOUSE;
-            // if (fmsg->mouseMotion.relative) {
-            //     Event.mi.dx = (LONG)(fmsg->mouseMotion.x * 0.9);
-            //     Event.mi.dy = (LONG)(fmsg->mouseMotion.y * 0.9);
-            //     Event.mi.dwFlags = MOUSEEVENTF_MOVE;
-            // } else {
-            //     Event.mi.dx =
-            //         (LONG)(fmsg->mouseMotion.x * (double)65536 / 1000000);
-            //     Event.mi.dy =
-            //         (LONG)(fmsg->mouseMotion.y * (double)65536 / 1000000);
-            //     Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-            // }
+            if (fmsg->mouseMotion.relative) {
+                XTestFakeRelativeMotionEvent(input_device->display,
+                                             (int)(fmsg->mouseMotion.x * 0.9),
+                                             (int)(fmsg->mouseMotion.y * 0.9), CurrentTime);
+            } else {
+                XTestFakeMotionEvent(
+                    input_device->display, 0, (int)(fmsg->mouseMotion.x * (double)65536 / 1000000),
+                    (int)(fmsg->mouseMotion.y * (double)65536 / 1000000), CurrentTime);
+            }
             break;
         case MESSAGE_MOUSE_BUTTON:
             // mouse button event
-            // Event.type = INPUT_MOUSE;
-            // Event.mi.dx = 0;
-            // Event.mi.dy = 0;
-
-            // // Emulating button click
-            // // switch to parse button type
-            // switch (fmsg->mouseButton.button) {
-            //     case SDL_BUTTON_LEFT:
-            //         // left click
-            //         if (fmsg->mouseButton.pressed) {
-            //             Event.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-            //         } else {
-            //             Event.mi.dwFlags = MOUSEEVENTF_LEFTUP;
-            //         }
-            //         break;
-            //     case SDL_BUTTON_MIDDLE:
-            //         // middle click
-            //         if (fmsg->mouseButton.pressed) {
-            //             Event.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
-            //         } else {
-            //             Event.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
-            //         }
-            //         break;
-            //     case SDL_BUTTON_RIGHT:
-            //         // right click
-            //         if (fmsg->mouseButton.pressed) {
-            //             Event.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-            //         } else {
-            //             Event.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
-            //         }
-            //        break;
-            // }
-            // End emulating button click
-
+            XTestFakeButtonEvent(input_device->display, fmsg->mouseButton.button,
+                                 fmsg->mouseButton.pressed, CurrentTime);
             break;  // outer switch
         case MESSAGE_MOUSE_WHEEL:
             // mouse wheel event
-            // Event.type = INPUT_MOUSE;
-            // Event.mi.dwFlags = MOUSEEVENTF_WHEEL;
-            // Event.mi.dx = 0;
-            // Event.mi.dy = 0;
-            // Event.mi.mouseData = fmsg->mouseWheel.y * 100;
+            if (fmsg->mouseWheel.y < 0) {
+                // Up
+                XTestFakeButtonEvent(input_device->display, 4, 1, CurrentTime);
+                XTestFakeButtonEvent(input_device->display, 4, 0, CurrentTime);
+            } else if (fmsg->mouseWheel.y > 0) {
+                // Down
+                XTestFakeButtonEvent(input_device->display, 5, 1, CurrentTime);
+                XTestFakeButtonEvent(input_device->display, 5, 0, CurrentTime);
+            }
+            if (fmsg->mouseWheel.x < 0) {
+                // Left
+                XTestFakeButtonEvent(input_device->display, 6, 1, CurrentTime);
+                XTestFakeButtonEvent(input_device->display, 6, 0, CurrentTime);
+            } else if (fmsg->mouseWheel.x > 0) {
+                // Right
+                XTestFakeButtonEvent(input_device->display, 7, 1, CurrentTime);
+                XTestFakeButtonEvent(input_device->display, 7, 0, CurrentTime);
+            }
             break;
             // TODO: add clipboard
         default:
             // do nothing
             break;
     }
+    XSync(input_device->display, false);
 
-    XFlush(input_device->display);
+    XUnlockDisplay(input_device->display);
 
     // // send FMSG mapped to Windows event to Windows and return
     // int num_events_sent =
