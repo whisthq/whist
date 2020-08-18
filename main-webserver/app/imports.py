@@ -39,6 +39,7 @@ from celery import Celery, uuid, task
 from flask import Flask, request, jsonify, Blueprint, make_response, render_template
 from sqlalchemy.sql import text
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 from jose import jwt
 from flask_cors import CORS
 from flask_mail import Mail, Message

@@ -63,7 +63,8 @@ app, jwtManager = create_app(celery=celery_instance)
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app) # initialize FlaskSQLAlchemy
+db = SQLAlchemy(app) 
+ma = Marshmallow(app)
 app = init_app(app)
 
 app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
