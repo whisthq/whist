@@ -5,22 +5,31 @@ from app.helpers.utils.general.sql_commands import *
 
 
 def latestHelper():
-    command = text(
-        """
-        SELECT *
-        FROM status_report
-        ORDER BY timestamp DESC
-        """
-    )
-    output = fractalRunSQL(command, {})
+    session = Session()
 
-    if output["success"] and output["rows"]:
-        return output["rows"][0]
+    rows = (
+        session.query(MonitorLog).order_by(MonitorLog.timestamp)
+    )
+
+    session.commit()
+    session.close()
+
+    rows = rows.all()
+    output = []
+    for row in rows:
+        row.__dict__.pop("_sa_instance_state", None)
+        output.append(row.__dict__)
+
+
+    if output:
+        return output[0]
     else:
         return None
 
 
 def totalUsageHelper():
+    session = Session()
+
     today = dt.now()
     command = text(
         """

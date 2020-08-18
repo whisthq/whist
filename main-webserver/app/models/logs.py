@@ -1,7 +1,7 @@
 from app.models.public import *
+from app import db
 
-
-class ProtocolLog(Base):
+class ProtocolLog(db.Model):
     __tablename__ = "protocol_logs"
     __table_args__ = {"extend_existing": True, "schema": "logs"}
 
@@ -13,7 +13,7 @@ class ProtocolLog(Base):
     version = Column(String(250))
     client_logs = Column(String(250))
 
-class MonitorLog(Base):
+class MonitorLog(db.Model):
     __tablename__ = "monitor_logs"
     __table_args__ = {"extend_existing": True, "schema": "logs"}
 

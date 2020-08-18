@@ -1,6 +1,7 @@
 from app.models.public import *
+from app import db
 
-class UserVM(Base):
+class UserVM(db.Model):
     __tablename__ = 'user_vms'
     __table_args__ = {'extend_existing': True, 'schema': 'hardware'}
 
@@ -15,10 +16,10 @@ class UserVM(Base):
 
     user = relationship('User')
 
-class OSDisk(Base):
+class OSDisk(db.Model):
     __tablename__ = 'os_disks'
     __table_args__ = {'schema': 'hardware', 'extend_existing': True}
-    
+
     disk_id = Column(String(250), nullable=False, unique=True, primary_key=True)
     location =  Column(String(250), nullable=False)
     os = Column(String(250), nullable=False)
@@ -33,26 +34,26 @@ class OSDisk(Base):
     last_pinged = Column(Integer)
     branch = Column(String(250), nullable=False, server_default=text("'master'::character varying"))
 
-class SecondaryDisk(Base):
+class SecondaryDisk(db.Model):
     __tablename__ = 'secondary_disks'
     __table_args__ = {'extend_existing': True, 'schema': 'hardware'}
-    
+
     disk_id = Column(String(250), nullable=False, primary_key=True)
     os = Column(String(250), nullable=False)
     disk_size = Column(Integer, nullable=False)
     location = Column(String(250), nullable=False)
     user_id = Column(Integer)
 
-class InstallCommand(Base):
+class InstallCommand(db.Model):
     __tablename__ = 'install_commands'
     __table_args__ = {'extend_existing': True, 'schema': 'hardware'}
-    
+
     install_command_id = Column(Integer, nullable=False, primary_key=True)
     windows_install_command = Column(Text)
     linux_install_command = Column(Text)
     app_name = Column(Text)
 
-class AppsToInstall(Base):
+class AppsToInstall(db.Model):
     __tablename__ = 'apps_to_install'
     __table_args__ = (
         Index('fkIdx_115', 'disk_id', 'user_id'),
@@ -62,4 +63,3 @@ class AppsToInstall(Base):
     disk_id = Column(String(250), primary_key=True, nullable=False)
     user_id = Column(String(250), primary_key=True, nullable=False)
     app_id = Column(String(250), nullable=False, index=True)
-

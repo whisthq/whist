@@ -1,9 +1,9 @@
 import os
-import sqlalchemy as db
+import sqlalchemy
 
 from sqlalchemy.orm import sessionmaker
 
-config_engine = db.create_engine(
+config_engine = sqlalchemy.create_engine(
     os.getenv("CONFIG_DB_URL"), echo=False, pool_pre_ping=True
 )
 ConfigSession = sessionmaker(bind=config_engine, autocommit=False)

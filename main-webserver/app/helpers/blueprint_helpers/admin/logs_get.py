@@ -14,7 +14,7 @@ def logsHelper(connection_id, username, bookmarked):
         return {"logs": output, "connection_ids": connection_ids, "status": SUCCESS}
     if connection_id:
         rows = (
-            session.query(ProtocolLog).filter(ProtProtocolLog.connection_id == connection_id).order_by(ProtocolLog.timestamp)
+            session.query(ProtocolLog).filter(ProtocolLog.connection_id == connection_id).order_by(ProtocolLog.timestamp)
         )
 
 

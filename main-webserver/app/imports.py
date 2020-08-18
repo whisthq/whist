@@ -14,7 +14,7 @@ import logging
 import socket
 import boto3
 import dateutil.parser
-import sqlalchemy as db
+import sqlalchemy
 import numpy as np
 import json
 import secrets
@@ -25,6 +25,7 @@ from inspect import getsourcefile
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import *
+from flask_sqlalchemy import SQLAlchemy
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.network import NetworkManagementClient

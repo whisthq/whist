@@ -1,13 +1,14 @@
 from app.models.public import *
+from app import db
 
-class StripeProduct(Base):
+class StripeProduct(db.Model):
     __tablename__ = 'stripe_products'
     __table_args__ = {'schema': 'sales', 'extend_existing': True}
 
     stripe_product_id = Column(String(250), primary_key=True)
     product_name = Column(String(250), nullable=False)
 
-class MainNewsletter(Base):
+class MainNewsletter(db.Model):
     __tablename__ = 'main_newsletter'
     __table_args__ = {'schema': 'sales', 'extend_existing': True}
 
