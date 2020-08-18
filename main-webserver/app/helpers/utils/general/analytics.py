@@ -3,6 +3,7 @@ from app.helpers.utils.general.time import *
 
 
 def totalMinutes(report):
+    # TODO - need to adapt this to new output
     reportByUser = {}
     for entry in report:
         if entry["username"] in reportByUser:
