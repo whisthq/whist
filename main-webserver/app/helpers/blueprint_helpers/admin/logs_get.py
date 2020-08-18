@@ -1,58 +1,31 @@
 from app import *
 
+from app.models.logs import *
+from app.models.public import *
 
 def logsHelper(connection_id, username, bookmarked):
     session = Session()
 
     if bookmarked:
-        output = fractalSQLSelect(table_name="protocol_logs", params={"bookmarked": True })
+        logs = ProtocolLog.query.filter_by(bookmarked=True).all()
 
         connection_ids = []
-        if output:
-            connection_ids = [element["connection_id"] for element in output]
+        if logs:
+            connection_ids = [log.connection_id for log in logs]
 
-        return {"logs": output, "connection_ids": connection_ids, "status": SUCCESS}
+        return {"logs": logs, "connection_ids": connection_ids, "status": SUCCESS}
     if connection_id:
-        rows = (
-            session.query(ProtocolLog).filter(ProtocolLog.connection_id == connection_id).order_by(ProtocolLog.timestamp)
-        )
+        logs = ProtocolLog.filter_by(connection_id=connection_id).order_by(ProtocolLog.timestamp).all()
 
-
-        session.commit()
-        session.close()
-
-        rows = rows.all()
-        output = []
-        for row in rows:
-            row.__dict__.pop("_sa_instance_state", None)
-            output.append(row.__dict__)
-
-        return {"logs": output, "status": SUCCESS}
+        return {"logs": logs, "status": SUCCESS}
     elif username:
-        users = fractalSQLSelect(table_name="users", params={"email": username})
+        user = User.query.filter_by(email=username).first()
+        user_id = user.user_id
 
-        user_id = users["rows"][0]["user_id"]
+        logs = ProtocolLog.query.filer_by(user_id=user_id).order_by(ProtocolLog.timestamp).all()
 
-        rows = (
-            session.query(ProtocolLog).filter(ProtProtocolLog.user_id == user_id).order_by(ProtocolLog.timestamp)
-        )
-
-
-        session.commit()
-        session.close()
-
-        rows = rows.all()
-        output = []
-        for row in rows:
-            row.__dict__.pop("_sa_instance_state", None)
-            output.append(row.__dict__)
-
-
-        return {"logs": output, "status": SUCCESS}
+        return {"logs": logs, "status": SUCCESS}
     else:
-        output = session.query(ProtocolLog).order_by(ProtocolLog.timestamp)
+        logs = ProtocolLog.query.order_by(ProtocolLog.timestamp).all()
 
-        session.commit()
-        session.close()
-
-        return {"logs": output, "status": SUCCESS}
+        return {"logs": logs, "status": SUCCESS}
