@@ -1,6 +1,5 @@
 from app import *
 from app.helpers.utils.general.logs import *
-from app.helpers.utils.general.sql_commands import *
 
 
 def forgotPasswordHelper(username):
@@ -218,4 +217,3 @@ def computerReadyHelper(user, date, code, location):
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
     return jsonify({"status": SUCCESS}), SUCCESS
-

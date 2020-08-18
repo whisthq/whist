@@ -1,5 +1,4 @@
 from app.imports import *
-from app.helpers.utils.general.sql_commands import *
 from app.constants.bad_words import *
 
 from app.models.public import *

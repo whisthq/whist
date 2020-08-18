@@ -1,6 +1,5 @@
 from app import *
 from app.helpers.utils.general.logs import *
-from app.helpers.utils.general.sql_commands import *
 from app.helpers.utils.general.tokens import *
 from app.helpers.utils.mail.account_mail import *
 from app.helpers.utils.general.crypto import *
