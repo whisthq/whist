@@ -119,7 +119,7 @@ static int handleUserInputMessage(FractalClientMessage *fmsg, int client_id, boo
     if (fmsg->type == MESSAGE_KEYBOARD) {
         LOG_INFO(
         "Keyboard message received: %d, %d, %d",
-        fmsg->keyboard.code, fmsg->keyboard.mod, fmsg->keyboard.is_pressed);
+        fmsg->keyboard.code, fmsg->keyboard.mod, fmsg->keyboard.pressed);
     }
 
     return 0;
