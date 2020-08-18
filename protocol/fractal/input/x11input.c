@@ -299,32 +299,31 @@ void SendKeyInput(Display* display, int x11_keysym, int pressed) {
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
 bool ReplayUserInput(input_device_t* input_device, struct FractalClientMessage* fmsg) {
-    // switch to fill in the event depending on the FractalClientMessage
-    // type
+    // switch to fill in the event depending on the FractalClientMessage type
 
     XLockDisplay(input_device->display);
 
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
             // event for keyboard action
-            LOG_INFO("KEYBOARD CODE %d --> %d RECEIVED!", fmsg->keyboard.code,
-                     x11_keysyms[fmsg->keyboard.code]);
+            // LOG_INFO("KEYBOARD CODE %d --> %d RECEIVED!", fmsg->keyboard.code,
+            //  x11_keysyms[fmsg->keyboard.code]);
             SendKeyInput(input_device->display, x11_keysyms[fmsg->keyboard.code],
                          fmsg->keyboard.pressed);
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
             if (fmsg->mouseMotion.relative) {
-                LOG_INFO("RELATIVE MOUSE MOTION x %d y %d RECEIVED!", fmsg->mouseMotion.x,
-                         fmsg->mouseMotion.y);
+                // LOG_INFO("RELATIVE MOUSE MOTION x %d y %d RECEIVED!", fmsg->mouseMotion.x,
+                //  fmsg->mouseMotion.y);
                 XTestFakeRelativeMotionEvent(input_device->display, fmsg->mouseMotion.x,
                                              fmsg->mouseMotion.y, CurrentTime);
             } else {
-                LOG_INFO("ABSOLUTE MOUSE MOTION x %d y %d RECEIVED!",
-                         (int)(fmsg->mouseMotion.x * (int32_t)get_virtual_screen_width() /
-                               MOUSE_SCALING_FACTOR),
-                         (int)(fmsg->mouseMotion.y * (int32_t)get_virtual_screen_height() /
-                               MOUSE_SCALING_FACTOR));
+                // LOG_INFO("ABSOLUTE MOUSE MOTION x %d y %d RECEIVED!",
+                //  (int)(fmsg->mouseMotion.x * (int32_t)get_virtual_screen_width() /
+                //        MOUSE_SCALING_FACTOR),
+                //  (int)(fmsg->mouseMotion.y * (int32_t)get_virtual_screen_height() /
+                //        MOUSE_SCALING_FACTOR));
                 XTestFakeMotionEvent(
                     input_device->display, 0,
                     (int)(fmsg->mouseMotion.x * (int32_t)get_virtual_screen_width() /
@@ -336,8 +335,8 @@ bool ReplayUserInput(input_device_t* input_device, struct FractalClientMessage* 
             break;
         case MESSAGE_MOUSE_BUTTON:
             // mouse button event
-            LOG_INFO("MOUSE BUTTON %d PRESSED? %d RECEIVED!", fmsg->mouseButton.button,
-                     fmsg->mouseButton.pressed);
+            // LOG_INFO("MOUSE BUTTON %d PRESSED? %d RECEIVED!", fmsg->mouseButton.button,
+            //  fmsg->mouseButton.pressed);
             XTestFakeButtonEvent(input_device->display, fmsg->mouseButton.button,
                                  fmsg->mouseButton.pressed, CurrentTime);
             break;  // outer switch
@@ -345,25 +344,23 @@ bool ReplayUserInput(input_device_t* input_device, struct FractalClientMessage* 
             // mouse wheel event
             if (fmsg->mouseWheel.y < 0) {
                 // Up
-                LOG_INFO("MOUSE WHEEL Y UP RECEIVED!");
+                // LOG_INFO("MOUSE WHEEL Y UP RECEIVED!");
                 XTestFakeButtonEvent(input_device->display, 4, 1, CurrentTime);
                 XTestFakeButtonEvent(input_device->display, 4, 0, CurrentTime);
             } else if (fmsg->mouseWheel.y > 0) {
                 // Down
-                LOG_INFO("MOUSE WHEEL Y DOWN RECEIVED!");
-
+                // LOG_INFO("MOUSE WHEEL Y DOWN RECEIVED!");
                 XTestFakeButtonEvent(input_device->display, 5, 1, CurrentTime);
                 XTestFakeButtonEvent(input_device->display, 5, 0, CurrentTime);
             }
             if (fmsg->mouseWheel.x < 0) {
                 // Left
-                LOG_INFO("MOUSE WHEEL X LEFT RECEIVED!");
+                // LOG_INFO("MOUSE WHEEL X LEFT RECEIVED!");
                 XTestFakeButtonEvent(input_device->display, 6, 1, CurrentTime);
                 XTestFakeButtonEvent(input_device->display, 6, 0, CurrentTime);
             } else if (fmsg->mouseWheel.x > 0) {
                 // Right
-                LOG_INFO("MOUSE WHEEL X RIGHT RECEIVED!");
-
+                // LOG_INFO("MOUSE WHEEL X RIGHT RECEIVED!")
                 XTestFakeButtonEvent(input_device->display, 7, 1, CurrentTime);
                 XTestFakeButtonEvent(input_device->display, 7, 0, CurrentTime);
             }
