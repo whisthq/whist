@@ -315,10 +315,15 @@ bool ReplayUserInput(input_device_t* input_device, struct FractalClientMessage* 
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
             if (fmsg->mouseMotion.relative) {
+                LOG_INFO("RELATIVE MOUSE MOTION x %d y %d RECEIVED!",
+                         (int)(fmsg->mouseMotion.x * 0.9), (int)(fmsg->mouseMotion.y * 0.9));
                 XTestFakeRelativeMotionEvent(input_device->display,
                                              (int)(fmsg->mouseMotion.x * 0.9),
                                              (int)(fmsg->mouseMotion.y * 0.9), CurrentTime);
             } else {
+                LOG_INFO("ABSOLUTE MOUSE MOTION x %d y %d RECEIVED!",
+                         (int)(fmsg->mouseMotion.x * (double)65536 / 1000000),
+                         (int)(fmsg->mouseMotion.y * (double)65536 / 1000000));
                 XTestFakeMotionEvent(
                     input_device->display, 0, (int)(fmsg->mouseMotion.x * (double)65536 / 1000000),
                     (int)(fmsg->mouseMotion.y * (double)65536 / 1000000), CurrentTime);
@@ -326,6 +331,8 @@ bool ReplayUserInput(input_device_t* input_device, struct FractalClientMessage* 
             break;
         case MESSAGE_MOUSE_BUTTON:
             // mouse button event
+            LOG_INFO("MOUSE BUTTON %d PRESSED? %d RECEIVED!", fmsg->mouseButton.button,
+                     fmsg->mouseButton.pressed);
             XTestFakeButtonEvent(input_device->display, fmsg->mouseButton.button,
                                  fmsg->mouseButton.pressed, CurrentTime);
             break;  // outer switch
@@ -333,19 +340,25 @@ bool ReplayUserInput(input_device_t* input_device, struct FractalClientMessage* 
             // mouse wheel event
             if (fmsg->mouseWheel.y < 0) {
                 // Up
+                LOG_INFO("MOUSE WHEEL Y UP RECEIVED!");
                 XTestFakeButtonEvent(input_device->display, 4, 1, CurrentTime);
                 XTestFakeButtonEvent(input_device->display, 4, 0, CurrentTime);
             } else if (fmsg->mouseWheel.y > 0) {
                 // Down
+                LOG_INFO("MOUSE WHEEL Y DOWN RECEIVED!");
+
                 XTestFakeButtonEvent(input_device->display, 5, 1, CurrentTime);
                 XTestFakeButtonEvent(input_device->display, 5, 0, CurrentTime);
             }
             if (fmsg->mouseWheel.x < 0) {
                 // Left
+                LOG_INFO("MOUSE WHEEL X LEFT RECEIVED!");
                 XTestFakeButtonEvent(input_device->display, 6, 1, CurrentTime);
                 XTestFakeButtonEvent(input_device->display, 6, 0, CurrentTime);
             } else if (fmsg->mouseWheel.x > 0) {
                 // Right
+                LOG_INFO("MOUSE WHEEL X RIGHT RECEIVED!");
+
                 XTestFakeButtonEvent(input_device->display, 7, 1, CurrentTime);
                 XTestFakeButtonEvent(input_device->display, 7, 0, CurrentTime);
             }
