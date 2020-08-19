@@ -7,7 +7,9 @@ from app.helpers.blueprint_helpers.mail.mail_post import *
 from app.celery.azure_resource_deletion import *
 
 from app.models.public import *
+from app.models.hardware import *
 from app.serializers.public import *
+from app.serializers.hardware import *
 
 
 def loginHelper(email, password):
@@ -146,10 +148,10 @@ def verifyHelper(username, provided_user_id):
 
     user_id = None
 
-    output = fractalSQLSelect(table_name="users", params={"email": username})
+    user = User.query.filter_by(user_id=username).first()
 
-    if output:
-        user_id = output[0]["user_id"]
+    if user:
+        user_id = user.token
 
     # Check to see if the provided user ID matches the selected user ID
 
@@ -163,7 +165,7 @@ def verifyHelper(username, provided_user_id):
 
         if not alreadyVerified:
             # Send welcome mail to user after they verify for the first time
-            signupMail(output["rows"][0]["email"], output["rows"][0]["code"])
+            signupMail(user.user_id, user.referral_code)
 
         return {"status": SUCCESS, "verified": True}
     else:
@@ -179,15 +181,19 @@ def deleteHelper(username):
     Returns:
     json: Success/failure of deletion
    """
-    output = fractalSQLDelete("users", {"email": username})
 
-    if not output["success"]:
+    user = User.query.filter_by(user_id=username).first()
+
+    if not user:
         return {"status": BAD_REQUEST, "error": output["error"]}
 
-    disks = fractalSQLSelect("disks", {"email": username})["rows"]
+    db.session.delete(user)
+    db.session.commit()
+
+    disks = OSDisk.query.filter_by(user_id=username).all()
     if disks:
         for disk in disks:
-            deleteDisk.apply_async([disk["disk_name"], VM_GROUP])
+            deleteDisk.apply_async([disk.disk_id, VM_GROUP])
 
     return {"status": SUCCESS, "error": None}
 
@@ -199,13 +205,16 @@ def resetPasswordHelper(username, password):
         username (str): The user to update the password for
         password (str): The new password
     """
-    # TODO: NEEDS TO BE CHANGED TO SHA256, NOT JWT
-    pwd_token = jwt.encode({"pwd": password}, SHA_SECRET_KEY)
-    fractalSQLUpdate(
-        table_name="users",
-        conditional_params={"email": username},
-        new_params={"password": pwd_token},
-    )
+    user = User.query.filter_by(user_id=username).first()
+
+    if user:
+        pwd_token = hash_value(password)
+
+        user.password = pwd_token
+        db.session.commit()
+        return {"status": SUCCESS}
+    else:
+        return {"status": BAD_REQUEST}
 
 
 def lookupHelper(username):
@@ -214,38 +223,29 @@ def lookupHelper(username):
     Args:
         username (str): The user to lookup
     """
-    params = {
-        "email": username,
-    }
+    user = User.query.filter_by(user_id=username).first()
 
-    output = fractalSQLSelect("users", params)
-
-    if output["success"]:
-        if output["rows"]:
-            return {"exists": True, "status": SUCCESS}
-        else:
-            return {"exists": False, "status": SUCCESS}
+    if user:
+        return {"exists": True, "status": SUCCESS}
     else:
-        return {"status": BAD_REQUEST}
+        return {"exists": False, "status": SUCCESS}
 
 
 def updateUserHelper(body):
-    if "name" in body:
-        fractalSQLUpdate(
-            table_name="users",
-            conditional_params={"email": body["email"]},
-            new_params={"name": body["name"]},
-        )
-        return jsonify({"msg": "Name updated successfully"}), SUCCESS
-    if "email" in body:
-        fractalSQLUpdate(
-            table_name="users",
-            conditional_params={"email": body["email"]},
-            new_params={"email": body["email"], "verified": False},
-        )
-        token = fractalSQLSelect("users", {"email": body["email"]})["rows"][0]["id"]
-        return verificationHelper(body["email"], token)
-    if "password" in body:
-        resetPasswordHelper(body["email"], body["password"])
-        return jsonify({"msg": "Password updated successfully"}), SUCCESS
-    return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE
+    user = User.query.filter_by(user_id=body["username"]).first()
+    if user:
+        if "name" in body:
+            user.name = body["name"]
+            db.session.commit()
+
+            return jsonify({"msg": "Name updated successfully"}), SUCCESS
+        if "email" in body:
+            user.user_id = body["email"]
+            db.session.commit()
+
+            token = user.token
+            return verificationHelper(body["email"], token)
+        if "password" in body:
+            resetPasswordHelper(body["username"], body["password"])
+            return jsonify({"msg": "Password updated successfully"}), SUCCESS
+        return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE

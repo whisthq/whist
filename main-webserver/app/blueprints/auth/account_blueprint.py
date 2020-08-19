@@ -63,8 +63,8 @@ def account_post(action, **kwargs):
     elif action == "resetPassword":
         # Reset user password
 
-        resetPasswordHelper(body["username"], body["password"])
-        return jsonify({"status": SUCCESS}), SUCCESS
+        output = resetPasswordHelper(body["username"], body["password"])
+        return jsonify(output), output["status"]
     elif action == "lookup":
         # Check if user exists
 
