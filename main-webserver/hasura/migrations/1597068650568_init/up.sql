@@ -89,6 +89,7 @@ CREATE TABLE logs.login_history (
 )
 CREATE TABLE public.users (
     user_id character varying(250) NOT NULL,
+    token character varying(250),
     name character varying(250),
     password character varying(250) NOT NULL,
     release_stage integer NOT NULL,
