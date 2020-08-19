@@ -16,7 +16,7 @@ on:
         default: "noupdates"
         required: false
       should_update:
-        desciption: ture/false, yarn publish
+        description: true/false, runs yarn package:publish if true and package if false.
         default: "false"
         required: false
       version_id:
