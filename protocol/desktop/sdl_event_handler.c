@@ -73,7 +73,6 @@ int handleSDLEvent(SDL_Event *event) {
             }
             break;
         case SDL_AUDIODEVICEADDED:
-            LOG_INFO("AUDIO DEVICE ADDED!\n");
         case SDL_AUDIODEVICEREMOVED:
             destroyAudio();
             initAudio();
