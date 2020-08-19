@@ -41,7 +41,6 @@ def main():
     migrate_secondary_disks()
     migrate_install_commands()
     migrate_release_groups()
-    migrate_alembic_versions()
     migrate_protocol_logs()
     migrate_monitor_logs()
     migrate_login_history()
@@ -68,7 +67,7 @@ def migrate_users():
     session = old_session()
 
     command = """
-        SELECT users.username, users.password, users.code, users.credits_outstanding, users.verified, users.id, users.name, users.reason_for_signup, users.created, users.google_login, customers.id
+        SELECT users.username, users.password, users.code, users.credits_outstanding, users.verified, users.id as user_id, users.name, users.reason_for_signup, users.created, users.google_login, customers.id as customer_id
         FROM users LEFT OUTER JOIN customers on users.username = customers.username
     """
 
@@ -85,8 +84,8 @@ def migrate_users():
         row = dict(row)
 
         command = """
-            INSERT INTO "users"("email", "name", "password", "using_google_login", "release_stage", "stripe_customer_id", "created_timestamp", "reason_for_signup", "referral_code", "credits_outstanding")
-            VALUES(:email, :name, :password, :using_google_login, :release_stage, :stripe_customer_id, :created_timestamp, :reason_for_signup, :referral_code, :credits_outstanding)
+            INSERT INTO "users"("user_id", "name", "password", "using_google_login", "release_stage", "stripe_customer_id", "created_timestamp", "reason_for_signup", "referral_code", "credits_outstanding", "token")
+            VALUES(:user_id, :name, :password, :using_google_login, :release_stage, :stripe_customer_id, :created_timestamp, :reason_for_signup, :referral_code, :credits_outstanding, :token)
         """
 
         if row["password"] and row["username"]:
@@ -96,7 +95,7 @@ def migrate_users():
             hashed_password = hash_value(password["pwd"])
 
             params = {
-                "email": row["username"],
+                "user_id": row["username"],
                 "name": row["name"],
                 "password": hashed_password,
                 "using_google_login": row["google_login"]
@@ -107,7 +106,8 @@ def migrate_users():
                 "reason_for_signup": row["reason_for_signup"],
                 "referral_code": row["code"],
                 "credits_outstanding": row["credits_outstanding"],
-                "stripe_customer_id": row["id"],
+                "stripe_customer_id": row["customer_id"],
+                "token": row["user_id"]
             }
 
             session.execute(command, params)
@@ -124,7 +124,7 @@ def migrate_user_vms():
     session = old_session()
 
     command = """
-        SELECT v_ms.vm_name, v_ms.ip, v_ms.location, v_ms.state, v_ms.lock, v_ms.temporary_lock, v_ms.os, v_ms.username 
+        SELECT v_ms.vm_name, v_ms.ip, v_ms.location, v_ms.state, v_ms.lock, v_ms.temporary_lock, v_ms.os, v_ms.username
         FROM v_ms
     """
 
@@ -139,18 +139,6 @@ def migrate_user_vms():
 
     for row in rows:
         row = dict(row)
-        user_id = None
-
-        if row["username"]:
-            command = """
-                SELECT user_id FROM users WHERE "email"=:username
-            """
-            params = {"username": row["username"]}
-
-            new_row = session.execute(command, params).fetchone()
-
-            if new_row:
-                user_id = new_row["user_id"]
 
         command = """
             INSERT INTO hardware.user_vms("vm_id", "ip", "location", "os", "state", "lock", "temporary_lock", "user_id")
@@ -165,7 +153,7 @@ def migrate_user_vms():
             "state": row["state"],
             "lock": row["lock"],
             "temporary_lock": row["temporary_lock"],
-            "user_id": user_id,
+            "user_id": row["username"],
         }
 
         session.execute(command, params)
@@ -183,7 +171,7 @@ def migrate_os_disks():
     session = old_session()
 
     command = """
-        SELECT disks.disk_name, disks.username, disks.location, disks.os, disks.disk_size, v_ms.dev, v_ms.ready_to_connect, disks.version, v_ms.rsa_private_key  
+        SELECT disks.disk_name, disks.username, disks.location, disks.os, disks.disk_size, v_ms.dev, v_ms.ready_to_connect, disks.version, v_ms.rsa_private_key
         FROM disks LEFT OUTER JOIN v_ms on disks.username = v_ms.username
         WHERE disks.main=:main
     """
@@ -199,18 +187,6 @@ def migrate_os_disks():
 
     for row in rows:
         row = dict(row)
-        user_id = None
-
-        if row["username"]:
-            command = """
-                SELECT user_id FROM users WHERE "email"=:username
-            """
-            params = {"username": row["username"]}
-
-            new_row = session.execute(command, params).fetchone()
-
-            if new_row:
-                user_id = new_row["user_id"]
 
         command = """
             INSERT INTO hardware.os_disks("disk_id", "user_id", "location", "os", "disk_size", "allow_autoupdate", "has_dedicated_vm", "last_pinged", "version", "rsa_private_key", "using_stun", "ssh_password")
@@ -219,7 +195,7 @@ def migrate_os_disks():
 
         params = {
             "disk_id": row["disk_name"],
-            "user_id": user_id,
+            "user_id": row["username"],
             "location": row["location"],
             "os": row["os"],
             "disk_size": row["disk_size"],
@@ -263,18 +239,6 @@ def migrate_secondary_disks():
 
     for row in rows:
         row = dict(row)
-        user_id = None
-
-        if row["username"]:
-            command = """
-                SELECT user_id FROM users WHERE "email"=:username
-            """
-            params = {"username": row["username"]}
-
-            new_row = session.execute(command, params).fetchone()
-
-            if new_row:
-                user_id = new_row["user_id"]
 
         command = """
             INSERT INTO hardware.secondary_disks("disk_id", "user_id", "location", "os", "disk_size")
@@ -283,7 +247,7 @@ def migrate_secondary_disks():
 
         params = {
             "disk_id": row["disk_name"],
-            "user_id": user_id,
+            "user_id": row["username"],
             "location": row["location"],
             "os": row["os"],
             "disk_size": row["disk_size"],
@@ -386,45 +350,6 @@ def migrate_release_groups():
     session.close()
 
     print("DONE MIGRATING VERSIONS TABLE \n ------------------------ \n")
-
-
-def migrate_alembic_versions():
-    print("STARTING TO ALEMBIC VERSIONS TABLE \n ------------------------ \n")
-
-    session = old_session()
-
-    command = """
-        SELECT version_num
-        FROM alembic_version
-    """
-
-    params = {}
-
-    rows = session.execute(command, params).fetchall()
-
-    session.commit()
-    session.close()
-
-    session = new_session()
-
-    for row in rows:
-        row = dict(row)
-
-        command = """
-            INSERT INTO devops.alembic_version("version_num")
-            VALUES(:num)
-        """
-
-        print("Migrating {stage}".format(stage=row["version_num"]))
-
-        params = {"num": row["version_num"]}
-
-        session.execute(command, params)
-
-    session.commit()
-    session.close()
-
-    print("DONE MIGRATING ALEMBIC VERSIONS TABLE \n ------------------------ \n")
 
 
 def migrate_protocol_logs():
@@ -569,17 +494,6 @@ def migrate_login_history():
         row = dict(row)
 
         command = """
-            SELECT user_id FROM users
-            WHERE email = :email
-        """
-        params = {"email": row["username"]}
-        result = session.execute(command, params).fetchall()
-        if len(result) == 0:
-            continue
-
-        user_id = dict(result[0])["user_id"]
-
-        command = """
             INSERT INTO logs.login_history(user_id, timestamp, action)
             VALUES(:user_id, :timestamp, :action)
         """
@@ -588,7 +502,7 @@ def migrate_login_history():
         params = {
             "timestamp": int(dt.timestamp(time)),
             "action": row["action"],
-            "user_id": user_id,
+            "user_id": row["username"],
         }
 
         session.execute(command, params)

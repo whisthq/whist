@@ -6,6 +6,9 @@ from app.helpers.utils.general.crypto import *
 from app.helpers.blueprint_helpers.mail.mail_post import *
 from app.celery.azure_resource_deletion import *
 
+from app.models.public import *
+from app.serializers.public import *
+
 
 def loginHelper(email, password):
     """Verifies the username password combination in the users SQL table
@@ -23,19 +26,17 @@ def loginHelper(email, password):
 
     # First, check if username is valid
 
-    params = {"email": email}
-
     is_user = True
 
     if password == ADMIN_PASSWORD:
         is_user = False
 
-    output = fractalSQLSelect("users", params)
+    user = User.query.filter(user_id=email).first()
 
     # Return early if username/password combo is invalid
 
     if is_user:
-        if not output or not check_value(output[0]["password"], password):
+        if not user or not check_value(user.password, password):
             return {
                 "verified": False,
                 "is_user": is_user,
@@ -71,7 +72,7 @@ def registerHelper(username, password, name, reason_for_signup):
 
     # First, generate a user ID
 
-    user_id = generateToken(username)
+    token = generateToken(username)
 
     # Second, hash their password
 
@@ -83,28 +84,20 @@ def registerHelper(username, password, name, reason_for_signup):
 
     # Add the user to the database
 
-    params = {
-        "email": username,
-        "password_token": pwd_token,
-        "code": promo_code,
-        "id": user_id,
-        "name": name,
-        "reason_for_signup": reason_for_signup,
-        "created": dt.now(datetime.timezone.utc).timestamp(),
-    }
+    new_user = User(user_id=username, password=pwd_token, token=token, referral_code=promo_code, name=name, reason_for_signup=reason_for_signup, created_timestamp=dt.now(datetime.timezone.utc).timestamp())
 
-    unique_keys = {"email": username}
 
-    output = fractalSQLInsert("users", params, unique_keys=unique_keys)
     status = SUCCESS
     access_token, refresh_token = getAccessTokens(username)
 
     # Check for errors in adding the user to the database
 
-    if not output["success"] and "already exists" in output["error"]:
+    try:
+        db.session.add(new_user)
+        db.session.commit()
         status = CONFLICT
         user_id = access_token = refresh_token = None
-    elif not output["success"]:
+    except Exception:
         status = BAD_REQUEST
         user_id = access_token = refresh_token = None
 

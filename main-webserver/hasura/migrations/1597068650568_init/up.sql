@@ -2,9 +2,6 @@ CREATE SCHEMA devops;
 CREATE SCHEMA hardware;
 CREATE SCHEMA logs;
 CREATE SCHEMA sales;
-CREATE TABLE devops.alembic_version (
-    version_num character varying
-);
 CREATE TABLE devops.release_groups (
     release_stage integer NOT NULL,
     branch character varying(250) NOT NULL
@@ -39,7 +36,7 @@ CREATE TABLE hardware.os_disks (
     rsa_private_key character varying(250),
     using_stun boolean NOT NULL,
     ssh_password character varying(250),
-    user_id integer,
+    user_id character varying(250),
     last_pinged integer,
     branch character varying(250) DEFAULT 'master'::character varying NOT NULL
 );
@@ -57,7 +54,7 @@ CREATE TABLE hardware.user_vms (
     os character varying(250) NOT NULL,
     state character varying(250) NOT NULL,
     lock boolean NOT NULL,
-    user_id integer,
+    user_id character varying(250),
     temporary_lock integer
 );
 CREATE TABLE logs.monitor_logs (
@@ -85,9 +82,13 @@ CREATE TABLE logs.protocol_logs (
     version character varying(250),
     client_logs character varying(250)
 );
+CREATE TABLE logs.login_history (
+  user_id character varying(250) NOT NULL,
+  action character varying(250),
+  "timestamp" integer
+)
 CREATE TABLE public.users (
-    user_id integer NOT NULL,
-    email character varying(250) NOT NULL,
+    user_id character varying(250) NOT NULL,
     name character varying(250),
     password character varying(250) NOT NULL,
     release_stage integer NOT NULL,
@@ -126,7 +127,7 @@ ALTER TABLE ONLY hardware.user_vms
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT "PK_users" PRIMARY KEY (user_id);
 ALTER TABLE ONLY public.users
-    ADD CONSTRAINT unique_email UNIQUE (email);
+    ADD CONSTRAINT unique_user_id UNIQUE (user_id);
 ALTER TABLE ONLY sales.stripe_products
     ADD CONSTRAINT "PK_stripe_products" PRIMARY KEY (stripe_product_id);
 ALTER TABLE ONLY sales.main_newsletter
@@ -139,4 +140,12 @@ CREATE INDEX "fkIdx_91" ON sales.main_newsletter USING btree (user_id);
 ALTER TABLE ONLY hardware.user_vms
     ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES public.users(user_id);
 ALTER TABLE ONLY hardware.os_disks
+    ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES public.users(user_id);
+ALTER TABLE ONLY hardware.secondary_disks
+    ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES public.users(user_id);
+ALTER TABLE ONLY logs.login_history
+    ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES public.users(user_id);
+ALTER TABLE ONLY logs.protocol_logs
+    ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES public.users(user_id);
+ALTER TABLE ONLY sales.main_newsletter
     ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES public.users(user_id);
