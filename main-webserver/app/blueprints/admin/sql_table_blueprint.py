@@ -11,10 +11,15 @@ table_bp = Blueprint("table_bp", __name__)
 def sql_table_get(**kwargs):
     table_name = request.args.get("table_name")
 
-    output = fractalSQLSelect(table_name=table_name, params={})
+    if table_name == "user_vms":
+        output = fetchVMsHelper()
+    elif table_name == "users":
+        output = fetchUsersHelper()
+    elif table_name == "os_disks":
+        output = fetchDisksHelper()
 
-    if output["success"] and output["rows"]:
-        return jsonify({"output": output["rows"]}), SUCCESS
+    if output:
+        return jsonify({"output": output}), SUCCESS
     else:
         fractalLog(
             function="sql_table_get",
