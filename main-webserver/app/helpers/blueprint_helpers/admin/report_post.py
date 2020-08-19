@@ -79,11 +79,11 @@ def userReportHelper(username, timescale=None, start_date=None):
     if start_date:
         date = start_date
 
-    user = User.query.filter_by(email=username).first()
+    user = User.query.filter_by(user_id=username).first()
     if not user:
         return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
 
-    histories = LoginHistory.query.filter((LoginHistory.user_id == user.email) & (LoginHistory.timestamp > date)).order_by(LoginHistory.timestamp).all()
+    histories = LoginHistory.query.filter((LoginHistory.user_id == username) & (LoginHistory.timestamp > date)).order_by(LoginHistory.timestamp).all()
 
     # import and use serializers
     histories = [login_history_schema.dump(history) for history in histories]

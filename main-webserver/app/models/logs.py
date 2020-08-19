@@ -5,7 +5,7 @@ class ProtocolLog(db.Model):
     __tablename__ = "protocol_logs"
     __table_args__ = {"extend_existing": True, "schema": "logs"}
 
-    user_id = db.Column(db.String(250), index=True)
+    user_id = db.Column(db.ForeignKey('users.user_id'))
     server_logs = db.Column(db.String(250))
     connection_id = db.Column(db.String(250), nullable=False, primary_key=True)
     bookmarked = db.Column(db.Boolean, nullable=False)
@@ -35,6 +35,6 @@ class MonitorLog(db.Model):
 class LoginHistory(db.Model):
     __tablename__ = "login_history"
     __table_args__ = {"extend_existing": True, "schema": "logs"}
-    user_id = db.Column(db.String)
+    user_id = db.Column(db.ForeignKey('users.user_id'))
     action = db.Column(db.String)
     timestamp = db.Column(db.Integer, primary_key=True)

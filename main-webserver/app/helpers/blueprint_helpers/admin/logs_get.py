@@ -24,10 +24,7 @@ def logsHelper(connection_id, username, bookmarked):
 
         return {"logs": logs, "status": SUCCESS}
     elif username:
-        user = User.query.filter_by(email=username).first()
-        user_id = user.user_id
-
-        logs = ProtocolLog.query.filer_by(user_id=user_id).order_by(ProtocolLog.timestamp).all()
+        logs = ProtocolLog.query.filer_by(user_id=username).order_by(ProtocolLog.timestamp).all()
         logs = [log_schema.dump(log) for log in logs]
 
         return {"logs": logs, "status": SUCCESS}

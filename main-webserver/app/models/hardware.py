@@ -34,6 +34,8 @@ class OSDisk(db.Model):
     last_pinged = db.Column(db.Integer)
     branch = db.Column(db.String(250), nullable=False, server_default=text("'master'::character varying"))
 
+    user = db.relationship('User')
+
 class SecondaryDisk(db.Model):
     __tablename__ = 'secondary_disks'
     __table_args__ = {'extend_existing': True, 'schema': 'hardware'}
@@ -42,7 +44,8 @@ class SecondaryDisk(db.Model):
     os = db.Column(db.String(250), nullable=False)
     disk_size = db.Column(db.Integer, nullable=False)
     location = db.Column(db.String(250), nullable=False)
-    user_id = db.Column(db.Integer)
+    user_id = db.Column(db.ForeignKey('users.user_id'))
+    user = db.relationship('User')
 
 class InstallCommand(db.Model):
     __tablename__ = 'install_commands'
