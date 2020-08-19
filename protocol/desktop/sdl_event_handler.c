@@ -74,16 +74,13 @@ int handleSDLEvent(SDL_Event *event) {
         case SDL_KEYDOWN:
         case SDL_KEYUP:
 #ifdef __APPLE__
-            // if (event->key.keysym.scancode == FK_LGUI) {
-            //     event->key.keysym.scancode = (SDL_Scancode) FK_LCTRL;
-            //     lgui_pressed = event->key.type == SDL_KEYDOWN;;
-            // }
-            // if (lgui_pressed) {
+            if (event->key.keysym.scancode == FK_LGUI) {
+                event->key.keysym.scancode = (SDL_Scancode) FK_LCTRL;
+                ctrl_pressed = (event->key.type == SDL_KEYDOWN);
+            }
+            // if (ctrl_pressed) {
             //     event->key.keysym.mod = MOD_LCTRL;
             // }
-            if (event->key.keysym.scancode == FK_C) {
-                event->key.keysym.scancode = FK_V;
-            }
 #endif
             if (handleKeyUpDown(event) != 0) {
                 return -1;
