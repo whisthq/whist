@@ -42,6 +42,15 @@ default_channel_s3_buckets = {
     ),
 }
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def select_protocol_binary(platform: str, protocol_id: str, protocol_dir: Path) -> Path:
     valid_protocols = protocol_dir.glob(f"*{platform}*.*")
@@ -194,8 +203,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--push-new-update",
+        type=str2bool,
+        nargs='?', # zero or one argument
         help="push the release to the auto update system (see --update-channel to define target)",
-        action="store_true",
+        const=True,
         default=False,
     )
     parser.add_argument(
