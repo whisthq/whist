@@ -115,13 +115,6 @@ static int handleUserInputMessage(FractalClientMessage *fmsg, int client_id, boo
         clients[client_id].mouse.y = fmsg->mouseMotion.y_nonrel;
         SDL_UnlockMutex(state_lock);
     }
-
-    if (fmsg->type == MESSAGE_KEYBOARD) {
-        LOG_INFO(
-        "Keyboard message received: %d, %d, %d",
-        fmsg->keyboard.code, fmsg->keyboard.mod, fmsg->keyboard.pressed);
-    }
-
     return 0;
 }
 
