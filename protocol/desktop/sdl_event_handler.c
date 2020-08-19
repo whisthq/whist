@@ -76,11 +76,12 @@ int handleSDLEvent(SDL_Event *event) {
 #ifdef __APPLE__
             if (event->key.keysym.scancode == FK_LGUI) {
                 event->key.keysym.scancode = (SDL_Scancode) FK_LCTRL;
-                ctrl_pressed = (event->key.type == SDL_KEYDOWN);
+                lgui_pressed = event->key.type == SDL_KEYDOWN;
             }
-            // if (ctrl_pressed) {
-            //     event->key.keysym.mod = MOD_LCTRL;
-            // }
+            if (lgui_pressed) {
+                event->key.keysym.mod = MOD_LCTRL;
+            }
+            LOG_INFO("Keydown/keyup keyboard message: %d, %d, %d", event->key.keysym.scancode, event->key.type == SDL_KEYDOWN, event->key.keysym.mod);
 #endif
             if (handleKeyUpDown(event) != 0) {
                 return -1;
@@ -209,7 +210,7 @@ int handleKeyUpDown(SDL_Event *event) {
     fmsg.keyboard.mod = keymod;
     SendFmsg(&fmsg);
 
-    LOG_INFO("Sent keyboard message: %d, %d, %d", keycode, is_pressed, keymod);
+    // LOG_INFO("Sent keyboard message: %d, %d, %d", keycode, is_pressed, keymod);
 
     return 0;
 }
