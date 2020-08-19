@@ -443,21 +443,26 @@ int syncKeyboardState(void) {
     fmsg.type = MESSAGE_KEYBOARD_STATE;
 
     int num_keys;
-    Uint8* state = (Uint8*)SDL_GetKeyboardState(&num_keys);
+    const Uint8* state = SDL_GetKeyboardState(&num_keys);
 #if defined(_WIN32)
     fmsg.num_keycodes = (short)min(NUM_KEYCODES, num_keys);
 #else
     fmsg.num_keycodes = fmin(NUM_KEYCODES, num_keys);
 #endif
 
-    // lgui/rgui don't work with SDL_GetKeyboardState for some
-    // reason, so set manually
-    state[FK_LGUI] = lgui_pressed;
-    state[FK_RGUI] = rgui_pressed;
     // Copy keyboard state
     memcpy(fmsg.keyboard_state, state, fmsg.num_keycodes);
 
     // Also send caps lock and num lock status for syncronization
+#ifdef __APPLE__
+    fmsg.keyboard_state[FK_LCTRL] = ctrl_pressed;
+    fmsg.keyboard_state[FK_LGUI] = false;
+    fmsg.keyboard_state[FK_RGUI] = false;
+#else
+    fmsg.keyboard_state[FK_LGUI] = lgui_pressed;
+    fmsg.keyboard_state[FK_RGUI] = rgui_pressed;
+#endif
+
     fmsg.caps_lock = SDL_GetModState() & KMOD_CAPS;
     fmsg.num_lock = SDL_GetModState() & KMOD_NUM;
 
