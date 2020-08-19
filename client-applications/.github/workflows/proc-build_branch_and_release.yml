@@ -16,7 +16,7 @@ on:
         default: "noupdates"
         required: false
       should_update:
-        description: true/false, runs yarn package:publish if true and package if false.
+        description: true/false, runs yarn package-ci if true and package if false.
         default: "false"
         required: false
       version_id:
