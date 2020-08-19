@@ -29,7 +29,7 @@ platform_map_no_size = {
 default_channel_s3_buckets = {
     "testing": {
         "Windows-64bit": "fractal-applications-testing",
-        "Linux-64bit": "fractal-linux-applications-testing",  # TODO as of 2020-07-18 this bucket does not exist!
+        "Linux-64bit": "fractal-linux-applications-testing",
         "macOS-64bit": "fractal-mac-application-testing",
     },
     "production": {
