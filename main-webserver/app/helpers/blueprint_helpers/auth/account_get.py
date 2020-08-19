@@ -74,7 +74,7 @@ def disksHelper(username, main):
         ),
     )
 
-    user = User.query.filter_by(user_id=username).first()
+    user = User.query.get(username)
     if not user:
         return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
 

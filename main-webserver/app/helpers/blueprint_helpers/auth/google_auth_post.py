@@ -1,6 +1,10 @@
 from app import *
 from app.helpers.utils.general.tokens import *
 
+from app.models.public import *
+from app.models.hardware import *
+from app.serializers.public import *
+from app.serializers.hardware import *
 
 def registerGoogleUser(username, name, token, reason_for_signup=None):
     """Registers a user, and stores it in the users table
@@ -13,19 +17,17 @@ def registerGoogleUser(username, name, token, reason_for_signup=None):
     Returns:
         int: 200 on success, 400 on fail
     """
-    code = generateUniquePromoCode()
+    promo_code = generateUniquePromoCode()
 
-    params = {
-        "username": username,
-        "password": None,
-        "code": code,
-        "id": token,
-        "name": name,
-        "reason_for_signup": reason_for_signup,
-        "google_login": True,
-        "verified": True,
-    }
-    return fractalSQLInsert("users", params)
+    new_user = User(user_id=username, referral_code=promo_code, name=name, reason_for_signup=reason_for_signup, using_google_login=True created_timestamp=dt.now(datetime.timezone.utc).timestamp())
+
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+
+        return {"status": SUCCESS}
+    except Exception:
+        return {"status": BAD_REQUEST}
 
 
 def loginHelper(code, clientApp):
@@ -36,10 +38,10 @@ def loginHelper(code, clientApp):
     token = generateToken(username)
     access_token, refresh_token = getAccessTokens(username)
 
-    output = fractalSQLSelect(table_name="users", params={"username": username})
+    user = User.query.get(username)
 
-    if output["success"] and output["rows"]:
-        if output["rows"][0]["google_login"]:
+    if user:
+        if user.using_google_login:
             return {
                 "new_user": False,
                 "is_user": True,
@@ -74,13 +76,12 @@ def loginHelper(code, clientApp):
 
 
 def reasonHelper(username, reason_for_signup):
-    output = fractalSQLUpdate(
-        table_name="users",
-        new_params={"reason_for_signup": reason_for_signup, "verified": True},
-        conditional_params={"username": username},
-    )
+    user = User.query.get(username)
+    user.reason_for_signup = reason_for_signup
 
-    if output["success"]:
+    try:
+        db.session.add(user)
+        db.session.commit()
         return {"status": SUCCESS}
-    else:
+    except Exception:
         return {"status": BAD_REQUEST}

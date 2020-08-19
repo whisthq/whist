@@ -79,7 +79,7 @@ def userReportHelper(username, timescale=None, start_date=None):
     if start_date:
         date = start_date
 
-    user = User.query.filter_by(user_id=username).first()
+    user = User.query.get(username)
     if not user:
         return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
 

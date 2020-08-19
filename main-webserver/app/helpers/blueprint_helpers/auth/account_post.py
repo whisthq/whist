@@ -148,7 +148,7 @@ def verifyHelper(username, provided_user_id):
 
     user_id = None
 
-    user = User.query.filter_by(user_id=username).first()
+    user = User.query.get(username)
 
     if user:
         user_id = user.token
@@ -182,7 +182,7 @@ def deleteHelper(username):
     json: Success/failure of deletion
    """
 
-    user = User.query.filter_by(user_id=username).first()
+    user = User.query.get(username)
 
     if not user:
         return {"status": BAD_REQUEST, "error": output["error"]}
@@ -205,7 +205,7 @@ def resetPasswordHelper(username, password):
         username (str): The user to update the password for
         password (str): The new password
     """
-    user = User.query.filter_by(user_id=username).first()
+    user = User.query.get(username)
 
     if user:
         pwd_token = hash_value(password)
@@ -223,7 +223,7 @@ def lookupHelper(username):
     Args:
         username (str): The user to lookup
     """
-    user = User.query.filter_by(user_id=username).first()
+    user = User.query.get(username)
 
     if user:
         return {"exists": True, "status": SUCCESS}
@@ -232,7 +232,7 @@ def lookupHelper(username):
 
 
 def updateUserHelper(body):
-    user = User.query.filter_by(user_id=body["username"]).first()
+    user = User.query.get(body["username"])
     if user:
         if "name" in body:
             user.name = body["name"]
