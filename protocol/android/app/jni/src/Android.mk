@@ -87,7 +87,6 @@ LOCAL_SRC_FILES := $(wildcard $(LOCAL_PATH)/../../../../desktop/*.c) \
 				   $(LOCAL_PATH)/../../../../fractal/utils/sysinfo.c \
 				   $(LOCAL_PATH)/../../../../fractal/video/videodecode.c \
 
-
 LOCAL_STATIC_LIBRARIES := libssl libcrypto
 LOCAL_SHARED_LIBRARIES := SDL2 SDL2_main libavcodec libavdevice libavformat libavfilter libavutil libswscale libswresample
 

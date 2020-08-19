@@ -184,6 +184,7 @@ void update_audio() {
     int bytes_until_can_play = (most_recent_audio_id - last_played_id) * MAX_PAYLOAD_SIZE +
                                SDL_GetQueuedAudioSize(audio_data.dev);
     if (!gapping && bytes_until_can_play < AUDIO_QUEUE_LOWER_LIMIT) {
+        LOG_INFO("most_recent_audio_id: %d, last_played_id: %d, queued audio size: %d", most_recent_audio_id, last_played_id, SDL_GetQueuedAudioSize(AudioData.dev));
         LOG_INFO("Audio Queue too low: %d. Needs to catch up!", bytes_until_can_play);
         gapping = true;
     }

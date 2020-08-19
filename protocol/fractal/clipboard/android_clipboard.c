@@ -5,6 +5,7 @@
  **/
 #include "clipboard.h"
 #include "../utils/logging.h"
+#include "../../desktop/android_jni_cache.h"
 #include <stddef.h>
 #include <jni.h>
 #include <memory.h>
@@ -16,11 +17,27 @@ extern JavaVM *javaVM;
 static char cb_buf[MAX_CLIPBOARD_SIZE];
 
 void initClipboard() {
-    JNIEnv *env;
-    (*javaVM)->GetEnv(javaVM, (void **)&env, JNI_VERSION_1_6);
-    jclass clazz = (*env)->FindClass(env, "org/fractal/app/Fractal");
+    LOG_INFO("clazz init clipboard start");
+    // JNIEnv *env;
+    // (*javaVM)->GetEnv(javaVM, (void **)&env, JNI_VERSION_1_6);
+    JNIEnv* env = getEnv();
+    LOG_INFO("clazz init clipboard 1");
+    // jclass clazz = (*env)->FindClass(env, "org/fractal/app/Fractal");
+    jclass clazz = findClass("org/fractal/app/Fractal");
+    LOG_INFO("clazz: %p", clazz);
+    if (clazz == NULL) {
+        if ((*env)->ExceptionOccurred(env)) {
+            LOG_ERROR("clazz exception occurred");
+            (*env)->ExceptionDescribe(env);
+        } else {
+            LOG_ERROR("clazz is null but no exception was thrown");
+        }
+    }
+    LOG_INFO("init clipboard 2");
     jmethodID mid = (*env)->GetStaticMethodID(env, clazz, "initClipboard", "()V");
+    LOG_INFO("init clipboard 3");
     (*env)->CallStaticVoidMethod(env, clazz, mid);
+    LOG_INFO("init clipboard end");
 }
 
 bool hasClipboardUpdated() {

@@ -53,6 +53,7 @@ Includes
 
 #ifdef __ANDROID_API__
 #include <jni.h>
+#include "android_jni_cache.h"
 JavaVM* javaVM = NULL;
 #endif
 
@@ -672,6 +673,8 @@ int SDL_main(int argc, char* argv[]) {
         }
     }
 
+    cacheFinders(javaVM);
+
     if (running_ci) {
         LOG_INFO("Running in CI mode");
     }
@@ -871,14 +874,6 @@ int SDL_main(int argc, char* argv[]) {
         SDL_WaitThread(send_clipboard_thread, NULL);
         destroy_audio();
         close_connections();
-    }
-
-    if (failed && using_sentry) {
-        sentry_value_t event = sentry_value_new_message_event(
-            /*   level */ SENTRY_LEVEL_ERROR,
-            /*  logger */ "client-errors",
-            /* message */ "Failure in main loop");
-        sentry_capture_event(event);
     }
 
     if (try_amount >= 3 && using_sentry) {
