@@ -16,6 +16,7 @@ trigged an SDL event must be triggered in sdl_event_handler.c
 #include "../fractal/utils/logging.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "sdl_utils.h"
+#include "audio.h"
 #include "desktop_utils.h"
 #include "network.h"
 
@@ -70,6 +71,12 @@ int handleSDLEvent(SDL_Event *event) {
                     return -1;
                 }
             }
+            break;
+        case SDL_AUDIODEVICEADDED:
+            LOG_INFO("AUDIO DEVICE ADDED!\n");
+        case SDL_AUDIODEVICEREMOVED:
+            destroyAudio();
+            initAudio();
             break;
         case SDL_KEYDOWN:
         case SDL_KEYUP:

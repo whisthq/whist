@@ -59,8 +59,10 @@ int decoder_frequency = 48000;  // Hertz
 
 clock test_timer;
 double test_time;
+bool do_not_update = true;
 
 void initAudio() {
+    do_not_update = true;
     StartTimer(&nack_timer);
 
     // cast socket and SDL variables back to their data type for usage
@@ -80,7 +82,7 @@ void initAudio() {
     AudioData.dev =
         SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (AudioData.dev == 0) {
-        LOG_ERROR("Failed to open audio");
+        LOG_ERROR("Failed to open audio, %s", SDL_GetError());
         destroyLogger();
         exit(1);
     }
@@ -92,6 +94,7 @@ void initAudio() {
         receiving_audio[i].nacked_amount = 0;
         receiving_audio[i].nacked_for = -1;
     }
+    do_not_update = false;
 }
 
 void destroyAudio() {
@@ -102,6 +105,9 @@ void destroyAudio() {
 }
 
 void updateAudio() {
+    if (do_not_update) {
+        return;
+    }
 #if LOG_AUDIO
     // mprintf("Queue: %d", SDL_GetQueuedAudioSize(AudioData.dev));
 #endif
