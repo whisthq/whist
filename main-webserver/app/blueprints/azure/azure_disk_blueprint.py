@@ -7,6 +7,8 @@ from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_modification import *
 
+from app.models.hardware import *
+
 azure_disk_bp = Blueprint("azure_disk_bp", __name__)
 
 
@@ -49,12 +51,12 @@ def azure_disk_post(action, **kwargs):
         if "username" in kwargs["body"].keys():
             username = kwargs["body"]["username"]
 
-            output = fractalSQLSelect(table_name="disks", params={"username": username})
+            disks = OSDisk.query.filter_by(user_id=username).all()
 
-            if output["success"] and output["rows"]:
+            if disks:
                 task = None
-                for disk in output["rows"]:
-                    task = deleteDisk.apply_async([disk["disk_name"], resource_group])
+                for disk in disks:
+                    task = deleteDisk.apply_async([disk.disk_id, resource_group])
 
                 return jsonify({"ID": task.id}), ACCEPTED
 
