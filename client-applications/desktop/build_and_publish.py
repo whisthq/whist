@@ -360,7 +360,7 @@ if __name__ == "__main__":
             "`yarn` must be installed in order to build and package the application"
         )
     run_cmd([yarn_cmd], cwd=desktop_dir)  # Ensure that all dependencies are installed
-    package_script = "package:publish" if args.push_new_update else "package"
+    package_script = "package-ci" if args.push_new_update else "package"
     run_cmd([yarn_cmd, package_script], cwd=desktop_dir)
 
     # #####
