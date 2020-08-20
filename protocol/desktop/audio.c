@@ -15,7 +15,7 @@ audio format.
 #include "audio.h"
 #include "network.h"
 
-extern int audio_frequency;
+extern volatile int audio_frequency;
 extern bool has_rendered_yet;
 
 // Hold information about audio data as the packets come in
