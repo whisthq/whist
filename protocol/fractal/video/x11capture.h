@@ -32,6 +32,7 @@ Includes
 #include <stdbool.h>
 
 #include "../core/fractal.h"
+#include "x11nvidiacapture.h"
 
 /*
 ============================
@@ -53,6 +54,8 @@ typedef struct CaptureDevice {
     int event;
     bool texture_on_gpu;
     bool released;
+    bool using_nvidia;
+    NvidiaCaptureDevice nvidia_capture_device;
 } CaptureDevice;
 
 typedef unsigned int UINT;
@@ -110,5 +113,7 @@ void ReleaseScreen(CaptureDevice* device);
  *                                 destroy and free the memory of
  */
 void DestroyCaptureDevice(CaptureDevice* device);
+
+bool UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec); 
 
 #endif  // CAPTURE_X11CAPTURE_H

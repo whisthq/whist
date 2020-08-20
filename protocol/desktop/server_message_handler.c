@@ -29,7 +29,6 @@ extern char filename[300];
 extern char username[50];
 extern bool exiting;
 extern int audio_frequency;
-extern volatile bool received_server_init_message;
 extern volatile bool is_timing_latency;
 extern volatile clock latency_timer;
 extern volatile int ping_id;
@@ -37,7 +36,6 @@ extern volatile int ping_failures;
 extern volatile int try_amount;
 extern int client_id;
 
-static int handleInitMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handleQuitMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handleAudioFrequencyMessage(FractalServerMessage *fmsg, size_t fmsg_size);
@@ -45,8 +43,6 @@ static int handleClipboardMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 
 int handleServerMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
     switch (fmsg->type) {
-        case MESSAGE_INIT:
-            return handleInitMessage(fmsg, fmsg_size);
         case MESSAGE_PONG:
             return handlePongMessage(fmsg, fmsg_size);
         case SMESSAGE_QUIT:
@@ -59,30 +55,6 @@ int handleServerMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
             LOG_WARNING("Unknown FractalServerMessage Received");
             return -1;
     }
-}
-
-static int handleInitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
-    if (fmsg_size != sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit)) {
-        LOG_ERROR(
-            "Incorrect message size for a server message"
-            " (type: init message)!");
-        return -1;
-    }
-
-    LOG_INFO("Received init message!");
-
-    FractalServerMessageInit *fmsg_init = (FractalServerMessageInit *)fmsg->init_msg;
-
-    memcpy(filename, fmsg_init->filename, min(sizeof(filename), sizeof(fmsg_init->filename)));
-    memcpy(username, fmsg_init->username, min(sizeof(username), sizeof(fmsg_init->username)));
-
-    if (logConnectionID(fmsg_init->connection_id) < 0) {
-        LOG_ERROR("Failed to log connection ID.");
-        return -1;
-    }
-
-    received_server_init_message = true;
-    return 0;
 }
 
 static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
