@@ -269,11 +269,9 @@ def deleteDisk(self, disk_name, resource_group=VM_GROUP):
 
         try:
             disk = OSDisk.query.get(disk_name)
-            if not disk:
-                disk = SecondaryDisk.query.get(disk_name)
-
             db.session.delete(disk)
             db.session.commit()
+
             fractalLog(
                 function="deleteDisk",
                 label=str(disk_name),
@@ -300,11 +298,9 @@ def deleteDisk(self, disk_name, resource_group=VM_GROUP):
         )
         try:
             disk = OSDisk.query.get(disk_name)
-            if not disk:
-                disk = SecondaryDisk.query.get(disk_name)
-
             disk.state = "TO_BE_DELETED"
             db.session.commit()
+            
         except Exception as e:
             fractalLog(
                 function="deleteDisk",
