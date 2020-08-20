@@ -461,7 +461,7 @@ int syncKeyboardState(void) {
     fmsg.keyboard_state[FK_LCTRL] = ctrl_pressed;
     fmsg.keyboard_state[FK_LGUI] = false;
     fmsg.keyboard_state[FK_RGUI] = false;
-#else 
+#else
     fmsg.keyboard_state[FK_LGUI] = lgui_pressed;
     fmsg.keyboard_state[FK_RGUI] = rgui_pressed;
 #endif
