@@ -59,15 +59,24 @@ int decoder_frequency = 48000;  // Hertz
 
 clock test_timer;
 double test_time;
-bool do_not_update = true;
+SDL_mutex *mutex;
 
 void initAudio() {
-    do_not_update = true;
-    StartTimer(&nack_timer);
-
+    if (!mutex) {
+        mutex = SDL_CreateMutex();
+        if (!mutex) {
+            LOG_ERROR("Failed to initialize mutex!");
+            SDL_Delay(50);
+            exit(-1);
+        }
+    }
+    if (SDL_LockMutex(mutex) != 0) {
+        LOG_ERROR("Failed to lock mutex!");
+        SDL_Delay(50);
+        exit(-1);
+    }
     // cast socket and SDL variables back to their data type for usage
     SDL_AudioSpec wantedSpec = {0}, audioSpec = {0};
-
     AudioData.audio_decoder = create_audio_decoder(decoder_frequency);
 
     SDL_zero(wantedSpec);
@@ -94,19 +103,38 @@ void initAudio() {
         receiving_audio[i].nacked_amount = 0;
         receiving_audio[i].nacked_for = -1;
     }
-    do_not_update = false;
+    SDL_UnlockMutex(mutex);
 }
 
 void destroyAudio() {
+    if (!mutex || SDL_LockMutex(mutex) != 0) {
+        LOG_ERROR("Mutex is either not initialized yet, or we failed to lock!");
+        SDL_Delay(50);
+        exit(-1);
+    }
     SDL_CloseAudioDevice(AudioData.dev);
     if (AudioData.audio_decoder) {
         destroy_audio_decoder(AudioData.audio_decoder);
     }
+    SDL_UnlockMutex(mutex);
 }
 
 void updateAudio() {
-    if (do_not_update) {
+    if (!mutex) {
+        LOG_ERROR("Mutex is not initialized yet!");
+        SDL_Delay(50);
+        exit(-1);
+    }
+    int status = SDL_TryLockMutex(mutex);
+    if (status == SDL_MUTEX_TIMEDOUT) {
         return;
+    }
+    else if (status == 0) {
+        SDL_UnlockMutex(mutex);
+    } else {
+        LOG_ERROR("Try lock failed!");
+        SDL_Delay(50);
+        exit(-1);
     }
 #if LOG_AUDIO
     // mprintf("Queue: %d", SDL_GetQueuedAudioSize(AudioData.dev));
