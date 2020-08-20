@@ -9,7 +9,7 @@ class User(db.Model):
     name = db.Column(db.String(250))
     token = db.Column(db.String(250))
     password = db.Column(db.String(250), nullable=False)
-    release_stage = db.Column(db.Integer, nullable=False)
+    release_stage = db.Column(db.Integer, nullable=False, server_default=text("50"))
     stripe_customer_id = db.Column(db.String(250))
     created_timestamp = db.Column(db.Integer)
     reason_for_signup = db.Column(Text)

@@ -12,6 +12,7 @@ class UserVM(db.Model):
     state = db.Column(db.String(250), nullable=False)
     lock = db.Column(db.Boolean, nullable=False)
     user_id = db.Column(db.ForeignKey('users.user_id'))
+    disk_id = db.Column(db.ForeignKey('os_disks.disk_id'))
     temporary_lock = db.Column(db.Integer)
 
     user = db.relationship('User')
@@ -30,6 +31,7 @@ class OSDisk(db.Model):
     rsa_private_key = db.Column(db.String(250))
     using_stun = db.Column(db.Boolean, nullable=False)
     ssh_password = db.Column(db.String(250))
+    state = db.Column(db.String(250))
     user_id = db.Column(db.ForeignKey('users.user_id'))
     last_pinged = db.Column(db.Integer)
     branch = db.Column(db.String(250), nullable=False, server_default=text("'master'::character varying"))

@@ -5,6 +5,7 @@ from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_locks import *
 from app.helpers.utils.general.crypto import *
 
+from app.models.hardware import *
 
 @celery_instance.task(bind=True)
 def createVM(
