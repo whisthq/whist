@@ -75,6 +75,8 @@ void initAudio() {
         SDL_Delay(50);
         exit(-1);
     }
+    StartTimer(&nack_timer);
+
     // cast socket and SDL variables back to their data type for usage
     SDL_AudioSpec wantedSpec = {0}, audioSpec = {0};
     AudioData.audio_decoder = create_audio_decoder(decoder_frequency);
