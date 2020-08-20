@@ -6,6 +6,7 @@ from app.helpers.utils.azure.azure_resource_locks import *
 from app.helpers.utils.general.crypto import *
 
 from app.models.hardware import *
+from app.serializers.hardware import *
 
 @celery_instance.task(bind=True)
 def createVM(
@@ -124,30 +125,13 @@ def createVM(
     )
 
     ip_address = getVMIP(vm_name, resource_group)
-    fractalSQLInsert(
-        table_name=resourceGroupToTable(resource_group),
-        params={
-            "vm_name": vm_name,
-            "ip": ip_address,
-            "state": "CREATING",
-            "location": location,
-            "dev": False,
-            "os": operating_system,
-            "lock": True,
-            "disk_name": disk_name,
-            "private_key": private_key,
-        },
-    )
+    vm = UserVM(vm_id=vm_name, ip=ip_address, state="CREATING", location=location, os=operating_system, temporary_lock=True, disk_id=disk_name)
+    db.session.add(vm)
 
-    fractalSQLInsert(
-        table_name="disks",
-        params={
-            "disk_name": disk_name,
-            "location": location,
-            "state": "TO_BE_DELETED",
-            "disk_size": 120,
-        },
-    )
+    disk = OSDisk(disk_id=disk_name, location=location, state="TO_BE_DELETED", disk_size=120, os=operating_system)
+    db.session.add(disk)
+
+    db.session.commit()
 
     # Install NVIDIA GRID driver
 
@@ -196,10 +180,7 @@ def createVM(
     )
 
     # Fetch VM columns from SQL and return
-
-    output = fractalSQLSelect(
-        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-    )
+    vm = UserVM.query.get(vm_name)
 
     lockVMAndUpdate(
         vm_name,
@@ -209,7 +190,7 @@ def createVM(
         resource_group=resource_group,
     )
 
-    if output["success"] and output["rows"]:
+    if vm:
         fractalLog(
             function="createVM",
             label=str(vm_name),
@@ -320,21 +301,10 @@ def cloneDisk(
             ),
         )
 
-        fractalSQLInsert(
-            table_name="disks",
-            params={
-                "disk_name": disk_name,
-                "username": username,
-                "location": location,
-                "vm_size": vm_size,
-                "os": operating_system,
-            },
-        )
+        disk = OSDisk(disk_id=disk_name, user_id=username, location=location, os="operating_system", allow_autoupdate=True, has_dedicated_vm=False, branch=branch, using_stun=False, disk_size=120)
 
-        fractalSQLInsert(
-            table_name="disk_settings",
-            params={"disk_name": disk_name, "branch": branch, "using_stun": False,},
-        )
+        db.session.add(disk)
+        db.session.commit()
 
         return {"status": SUCCESS, "disk_name": disk_name}
 
@@ -354,7 +324,7 @@ def cloneDisk(
 
 @celery_instance.task(bind=True)
 def createDisk(
-    self, disk_size, username, location, resource_group=VM_GROUP,
+    self, disk_size, username, location, resource_group=VM_GROUP, operating_system="Windows"
 ):
     """Creates an empty Windows Azure managed disk
 
@@ -389,16 +359,11 @@ def createDisk(
 
     async_disk_creation.wait()
 
-    fractalSQLInsert(
-        table_name="disks",
-        params={
-            "disk_name": disk_name,
-            "username": username,
-            "location": location,
-            "disk_size": disk_size,
-            "main": False,
-        },
-    )
+    disk = SecondaryDisk(disk_id=disk_name, user_id=username, location=location, disk_size=120, os=operating_system)
+
+    db.session.add(disk)
+    db.session.commit()
+
 
     fractalLog(
         function="createDisk",

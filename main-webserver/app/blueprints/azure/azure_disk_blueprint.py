@@ -106,8 +106,9 @@ def azure_disk_post(action, **kwargs):
             kwargs["body"]["location"],
             kwargs["body"]["resource_group"],
         )
+        operating_system = kwards["body"]["operating_system"]
 
-        output = createHelper(disk_size, username, location, resource_group)
+        output = createHelper(disk_size, username, location, resource_group, operating_system)
 
         return jsonify({"ID": output["ID"]}), output["status"]
 

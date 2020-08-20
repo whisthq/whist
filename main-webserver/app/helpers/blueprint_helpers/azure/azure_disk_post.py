@@ -6,13 +6,13 @@ from app.models.hardware import *
 from app.serializers.hardware import *
 
 
-def createHelper(disk_size, username, location, resource_group):
+def createHelper(disk_size, username, location, resource_group, operating_system):
     disk = OSDisk.query.filter_by(user_id=username).first()
 
     if disk:
         # Create Empty Task
 
-        task = createDisk.apply_async([disk_size, username, location, resource_group])
+        task = createDisk.apply_async([disk_size, username, location, resource_group, operating_system])
         return {"ID": task.id, "status": ACCEPTED}
     else:
         return {"ID": None, "status": NOT_FOUND}
