@@ -5,6 +5,11 @@ from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_locks import *
 from app.helpers.utils.azure.azure_resource_modification import *
 
+from app.models.hardware import *
+from app.serializers.hardware import *
+
+user_vm_schema = UserVMSchema()
+os_disk_schema = OSDiskSchema()
 
 @celery_instance.task(bind=True)
 def swapSpecificDisk(self, vm_name, disk_name, resource_group=VM_GROUP):
@@ -44,11 +49,10 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=VM_GROUP):
         resource_group=resource_group,
     )
 
-    output = fractalSQLSelect(
-        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-    )
+    vm = UserVM.query.get(vm_name)
+    vm = user_vm_schema.dump(vm)
 
-    return {"status": SUCCESS, "payload": output["rows"][0]}
+    return {"status": SUCCESS, "payload": vm}
 
 
 @celery_instance.task(bind=True)
@@ -220,10 +224,10 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
     # Get the username associated with the disk
 
     username = None
-    output = fractalSQLSelect(table_name="disks", params={"disk_name": disk_name})
+    disk = OSDisk.query.get(disk_name)
 
-    if output["success"] and output["rows"]:
-        username = output["rows"][0]["username"]
+    if disk:
+        username = disk.user_id
 
     # Get the VM and location of the disk
 
@@ -287,15 +291,11 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                 # Update database to make sure that the VM is associated with the correct disk
                 # and username
 
-                fractalSQLUpdate(
-                    table_name=resourceGroupToTable(resource_group),
-                    conditional_params={"vm_name": vm_name,},
-                    new_params={
-                        "disk_name": disk_name,
-                        "username": username,
-                        "location": location,
-                    },
-                )
+                vm = UserVM.query.get(vm_name)
+                vm.disk_id = disk_name
+                vm.user_id = username
+                vm.location = location
+                db.session.commit()
 
                 self.update_state(
                     state="PENDING",
@@ -334,13 +334,11 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                     resource_group=resource_group,
                 )
 
-                output = fractalSQLSelect(
-                    table_name=resourceGroupToTable(resource_group),
-                    params={"vm_name": vm_name},
-                )
+                vm = UserVM.query.get(vm_name)
 
-                if output["success"] and output["rows"]:
-                    return output["rows"][0]
+                if vm:
+                    vm = user_vm_schema.dump(vm)
+                    return vm
                 else:
                     return {}
 
@@ -404,13 +402,11 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                             resource_group=resource_group,
                         )
 
-                        output = fractalSQLSelect(
-                            table_name=resourceGroupToTable(resource_group),
-                            params={"vm_name": vm_name},
-                        )
+                        vm = UserVM.query.get(vm_name)
 
-                        if output["success"] and output["rows"]:
-                            return output["rows"][0]
+                        if vm:
+                            vm = user_vm_schema.dump(vm)
+                            return vm
                         else:
                             return {}
 
@@ -426,13 +422,11 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
 
                     disk_attached = True
 
-                    output = fractalSQLSelect(
-                        table_name=resourceGroupToTable(resource_group),
-                        params={"vm_name": vm_name},
-                    )
+                    vm = UserVM.query.get(vm_name)
 
-                    if output["success"] and output["rows"]:
-                        return output["rows"][0]
+                    if vm:
+                        vm = user_vm_schema.dump(vm)
+                        return vm
                     else:
                         return {}
                 except Exception as e:
