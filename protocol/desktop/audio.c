@@ -118,12 +118,13 @@ void destroyAudio() {
     if (AudioData.audio_decoder) {
         destroy_audio_decoder(AudioData.audio_decoder);
     }
+    AudioData.dev = 0;
     SDL_UnlockMutex(mutex);
 }
 
 void updateAudio() {
-    if (!mutex) {
-        LOG_ERROR("Mutex is not initialized yet!");
+    if (!mutex || !AudioData.dev) {
+        LOG_ERROR("Mutex or audio is not initialized yet!");
         SDL_Delay(50);
         exit(-1);
     }
