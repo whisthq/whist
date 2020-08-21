@@ -70,7 +70,7 @@ void OpenWindow() {
 }
 
 // Log into the desktop, and block until the login process finishes
-bool InitDesktop() {
+bool InitDesktop(char* vm_password) {
     DesktopContext lock_screen;
 
     OpenWindow();
@@ -88,17 +88,46 @@ bool InitDesktop() {
             break;
         }
 
-        enum FractalKeycode keycodes[] = {FK_SPACE, FK_BACKSPACE, FK_BACKSPACE};
+        // Setup typing area (Unknown true use?)
+
+        FractalKeycode keycodes[] = {FK_SPACE, FK_BACKSPACE, FK_BACKSPACE};
 
         EnterWinString(keycodes, 3);
 
         Sleep(500);
 
-        enum FractalKeycode keycodes2[] = {FK_P, FK_A, FK_S, FK_S,      FK_W,     FK_O,
-                                           FK_R, FK_D, FK_1, FK_2,      FK_3,     FK_4,
-                                           FK_5, FK_6, FK_7, FK_PERIOD, FK_ENTER, FK_ENTER};
+        // Type the vm password
 
-        EnterWinString(keycodes2, 18);
+        // Translate vm_password into keycodes
+        int password_len = strlen(vm_password);
+        FractalKeycode password_keycodes = malloc(password_len);
+
+        for (int i = 0; i < password_len; i++) {
+            char c = vm_password[i];
+            if ('a' <= c && c <= 'f') {
+                password_keycodes[i] = FK_A + (c - 'a');
+            }
+            else if ('1' <= c && c <= '9') {
+                password_keycodes[i] = FK_1 + (c - '1');
+            } else if (c == '0') {
+                password_keycodes[i] = FK_0;
+            } else if (c == '.') {
+                password_keycodes[i] = FK_PERIOD;
+            } else {
+                LOG_ERROR("CANNOT PARSE CHARACTER: %c (%d)", c, (int)c);
+            }
+        }
+
+        // Type in the password
+        EnterWinString(password_keycodes, password_len);
+
+        free(password_keycodes);
+
+        // Hit enter
+
+        FractalKeycode keycodes[] = {FK_ENTER, FK_ENTER};
+
+        EnterWinString(keycodes, 2);
 
         Sleep(1000);
 

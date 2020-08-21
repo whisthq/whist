@@ -939,8 +939,10 @@ int main() {
     }
 #endif
 
+    update_webserver_parameters();
+
 #ifdef _WIN32
-    if (!InitDesktop()) {
+    if (!InitDesktop(get_vm_password())) {
         LOG_WARNING("Could not winlogon!\n");
         destroyLogger();
         return 0;

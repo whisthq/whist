@@ -615,6 +615,14 @@ bool get_using_stun();
 char* get_access_token();
 
 /**
+ * @brief                          Queries the webserver for the VM password
+ * status
+ *
+ * @returns                        The password for the VM
+ */
+char* get_vm_password();
+
+/**
  * @brief                          Calculate the size of a FractalClientMessage
  *                                 struct
  *

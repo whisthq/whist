@@ -88,8 +88,10 @@ void OpenWindow();
  *                                 to Winsta0 (the standard Windows desktop) by
  *                                 entering the Fractal password
  *
+ * @param vm_password              The password to the VM
+ *
  * @returns                        Return false is succeeded, else true
  */
-bool InitDesktop();
+bool InitDesktop(char* vm_password);
 
 #endif  // WINDOWS_UTILS_H
