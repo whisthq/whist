@@ -766,7 +766,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
 #endif
 
     LOG_INFO("Sending discovery packet");
-    LOG_INFO("Fmsg size is %d", fmsg_size);
+    LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
     if (SendTCPPacket(context, PACKET_MESSAGE, (uint8_t*)fsmsg, (int)fsmsg_size) < 0) {
         LOG_ERROR("Failed to send send discovery reply message.");
         closesocket(context->s);
