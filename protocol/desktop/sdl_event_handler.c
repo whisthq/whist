@@ -74,8 +74,7 @@ int handleSDLEvent(SDL_Event *event) {
             break;
         case SDL_AUDIODEVICEADDED:
         case SDL_AUDIODEVICEREMOVED:
-            destroyAudio();
-            initAudio();
+            reinitAudio();
             break;
         case SDL_KEYDOWN:
         case SDL_KEYUP:

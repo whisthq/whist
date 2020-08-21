@@ -122,13 +122,13 @@ void destroyAudio() {
 }
 
 void updateAudio() {
-    if (!mutex || !AudioData.dev) {
+    if (!mutex) {
         LOG_ERROR("Mutex or audio is not initialized yet!");
         destroyLogger();
         exit(-1);
     }
     int status = SDL_TryLockMutex(mutex);
-    if (status == SDL_MUTEX_TIMEDOUT) {
+    if (!AudioData.dev || status == SDL_MUTEX_TIMEDOUT) {
         return;
     }
     if (status != 0) {
