@@ -4,22 +4,16 @@ from app.models.logs import *
 
 
 def bookmarkHelper(connection_id):
-    try:
-        log = ProtocolLog.query.filter_by(connection_id=connection_id).first()
-        log.bookmarked = True
-        db.session.commit()
 
-        return {"status": SUCCESS}
-    except Exception:
-        return {"status": BAD_REQUEST}
+    log = ProtocolLog.query.filter_by(connection_id=str(connection_id)).first()
+    log.bookmarked = True
+    db.session.commit()
 
+    return {"status": SUCCESS}
 
 def unbookmarkHelper(connection_id):
-        try:
-            log = ProtocolLog.query.filter_by(connection_id=connection_id).first()
-            log.bookmarked = False
-            db.session.commit()
+    log = ProtocolLog.query.filter_by(connection_id=str(connection_id)).first()
+    log.bookmarked = False
+    db.session.commit()
 
-            return {"status": SUCCESS}
-        except Exception:
-            return {"status": BAD_REQUEST}
+    return {"status": SUCCESS}

@@ -1,5 +1,6 @@
 from app import *
 from app.helpers.utils.general.auth import *
+from app.helpers.blueprint_helpers.admin.report_get import *
 
 table_bp = Blueprint("table_bp", __name__)
 
