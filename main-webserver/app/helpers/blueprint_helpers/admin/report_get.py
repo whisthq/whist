@@ -26,13 +26,13 @@ def latestHelper():
 def totalUsageHelper():
     today = dt.now()
 
-    dayParams = dt.combine(today.date(), dt.min.time()).strftime("%m-%d-%y")
+    dayParams = dt.combine(today.date(), dt.min.time()).timestamp()
     dayReport = LoginHistory.query.filter(LoginHistory.timestamp > dayParams).order_by(LoginHistory.timestamp).all()
 
-    weekParams = (today - datetime.timedelta(days=7)).strftime("%m-%d-%y")
+    weekParams = (today - datetime.timedelta(days=7)).timestamp()
     weekReport = LoginHistory.query.filter(LoginHistory.timestamp > weekParams).order_by(LoginHistory.timestamp).all()
 
-    monthParams = (today - datetime.timedelta(days=30)).strftime("%m-%d-%y")
+    monthParams = (today - datetime.timedelta(days=30)).timestamp()
     monthReport = LoginHistory.query.filter(LoginHistory.timestamp > monthParams).order_by(LoginHistory.timestamp).all()
 
     dayMins = totalMinutes(dayReport) if dayReport else 0
