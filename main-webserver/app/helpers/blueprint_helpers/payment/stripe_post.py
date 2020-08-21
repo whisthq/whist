@@ -3,11 +3,17 @@ from app.helpers.utils.mail.stripe_mail import *
 from pyzipcode import ZipCodeDatabase
 from app.constants.states import *
 
+from app.models.public import *
+from app.models.hardware import *
+from app.serializers.public import *
+from app.serializers.hardware import *
+
 stripe.api_key = STRIPE_SECRET
 zcdb = ZipCodeDatabase()
 
 import logging
 
+user_schema = UserSchema()
 
 def chargeHelper(token, email, code, plan):
     fractalLog(
@@ -28,11 +34,10 @@ def chargeHelper(token, email, code, plan):
     customer_exists = False
     customer_id = ""
 
-    output = fractalSQLSelect("users", {"email": email})
-    if output:
-        customer = output[0]
-        if customer["stripe_customer_id"]:
-            customer_id = customer["stripe_customer_id"]
+    customer = User.query.get(email)
+    if customer:
+        if customer.stripe_customer_id:
+            customer_id = customer.stripe_customer_id
             customer_exists = True
         else:
             trial_end = round((dt.now() + timedelta(days=1)).timestamp())
@@ -101,11 +106,10 @@ def chargeHelper(token, email, code, plan):
         else:
             new_customer = stripe.Customer.create(email=email, source=token)
             customer_id = new_customer["id"]
-            credits = fractalSQLSelect("users", {"email": email})[0][
-                "credits_outstanding"
-            ]
+            user = User.query.get(email)
+            credits = user.credits_outstanding
 
-            referrer = fractalSQLSelect("users", {"referral_code": code})
+            referrer = User.query.filter_by(referral_code=code).first()
 
             if referrer:
                 trial_end = round((dt.now() + relativedelta(months=1)).timestamp())
@@ -127,11 +131,10 @@ def chargeHelper(token, email, code, plan):
                     default_tax_rates=taxRate,
                 )
 
-            fractalSQLUpdate(
-                "users",
-                {"email": email},
-                {"stripe_customer_id": customer_id, "credits_outstanding": 0,},
-            )
+            user.stripe_customer_id = customer_id
+            user.credits_outstanding = 0
+            db.session.commit()
+
             fractalLog(
                 function="chargeHelper", label=email, logs="Customer added successful",
             )
@@ -157,12 +160,9 @@ def retrieveStripeHelper(email):
         label="Stripe",
         logs="Retrieving subscriptions for {}".format(email),
     )
-    customerOutput = fractalSQLSelect("users", {"email": email})
+    customer = User.query.get(email)
 
-    customer = None
-    if customerOutput:
-        customer = customerOutput[0]
-    else:
+    if not customer:
         return (
             jsonify(
                 {"status": PAYMENT_REQUIRED, "error": "No such user for that email!"}
@@ -170,6 +170,7 @@ def retrieveStripeHelper(email):
             PAYMENT_REQUIRED,
         )
 
+    customer = user_schema.dump(customer)
     credits = customer["credits_outstanding"]
 
     try:
@@ -180,6 +181,7 @@ def retrieveStripeHelper(email):
         cards = payload["sources"]["data"]
 
         account_locked = subscription["trial_end"] < dateToUnix(getToday())
+
         return (
             jsonify(
                 {
@@ -217,12 +219,11 @@ def retrieveStripeHelper(email):
 
 
 def cancelStripeHelper(email):
-    output = fractalSQLSelect("users", {"email": email})
-    if not output:
+    customer = User.query.get(email)
+    if not customer:
         return jsonify({"status": PAYMENT_REQUIRED}), PAYMENT_REQUIRED
 
-    customer = output[0]
-    subscription = stripe.Subscription.list(customer=customer["stripe_customer_id"])[
+    subscription = stripe.Subscription.list(customer=customer.stripe_customer_id)[
         "data"
     ]
 
@@ -256,7 +257,7 @@ def cancelStripeHelper(email):
 
 
 def discountHelper(code):
-    metadata = fractalSQLSelect("users", {"referral_code": code})
+    metadata = User.query.filter_by(referral_code=code).first()
 
     if not metadata:
         fractalLog(
@@ -267,21 +268,21 @@ def discountHelper(code):
         )
         return jsonify({"status": NOT_FOUND}), NOT_FOUND
 
-    creditsOutstanding = metadata[0]["credits_outstanding"]
-    email = metadata["email"]
+    creditsOutstanding = metadata.credits_outstanding
+    email = metadata.user_id
     has_subscription = False
     subscription = None
     trial_end = 0
 
-    if metadata["stripe_customer_id"]:
+    if metadata.stripe_customer_id:
         has_subscription = True
         subscription = stripe.Subscription.list(
-            customer=customer["stripe_customer_id"]
+            customer=customer.stripe_customer_id
         )["data"][0]
 
-    fractalSQLUpdate(
-        "users", {"email": email}, {"credits_outstanding": creditsOutstanding + 1},
-    )
+    metadata.credits_outstanding = creditsOutstanding + 1
+    db.session.commit()
+
     fractalLog(
         function="discountHelper",
         label=email,
@@ -303,16 +304,16 @@ def addProductHelper(email, productName):
     Returns:
         http response
     """
-    customers = fractalSQLSelect("users", {"email": email})
-    if not customers:
+    customer = User.query.get(email)
+    if not customer:
         return (
             jsonify({"status": "Customer with this email does not exist!"}),
             BAD_REQUEST,
         )
 
     customer_id = None
-    if customers[0]["stripe_customer_id"]:
-        customer_id = customers[0]["stripe_customer_id"]
+    if customers.stripe_customer_id:
+        customer_id = customers.stripe_customer_id
     else:
         return (
             jsonify({"status": "Customer does not have a Stripe ID!"}),
@@ -361,16 +362,16 @@ def removeProductHelper(email, productName):
     Returns:
         http response
     """
-    customers = fractalSQLSelect("users", {"email": email})
-    if not customers:
+    customer = User.query.get(email)
+    if not customer:
         return (
             jsonify({"status": "Customer with this email does not exist!"}),
             BAD_REQUEST,
         )
 
     customer_id = None
-    if customers[0]["stripe_customer_id"]:
-        customer_id = customers[0]["stripe_customer_id"]
+    if customers.stripe_customer_id:
+        customer_id = customers.stripe_customer_id
     else:
         return (
             jsonify({"status": "Customer does not have a Stripe ID!"}),
@@ -445,18 +446,16 @@ def webhookHelper(event):
             logs="Charge failed webhook received from stripe",
         )
         custId = event.data.object.customer
-        customer = fractalSQLSelect("customers", {"id": custId})["rows"]
+        customer = User.query.filter_by(stripe_customer_id=custId).first()
 
         if customer:
-            chargeFailedMail(customer["username"], custId)
+            chargeFailedMail(customer.email, custId)
 
             # Schedule disk deletion in 7 days
             expiry = (dt.today() + timedelta(days=7)).strftime("%m/%d/%Y, %H:%M")
-            fractalSQLUpdate(
-                "disks",
-                {"username": customer["username"]},
-                {"state": "TO_BE_DELETED", "delete_date": expiry},
-            )
+
+            disks = OSDisk.query.filter_by(user_id=customer.user_id).update({ "state": "TO_BE_DELETED", "delete_date": expiry})
+            db.session.commit()
 
     elif event.type == "charge.succeeded":
         fractalLog(
@@ -465,9 +464,9 @@ def webhookHelper(event):
             logs="Charge succeeded webhook received from stripe",
         )
         custId = event.data.object.customer
-        customer = fractalSQLSelect("customers", {"id": custId})["rows"]
+        customer = User.query.filter_by(stripe_customer_id=custId).first()
         if customer:
-            chargeSuccessMail(customer["username"], custId)
+            chargeSuccessMail(customer.user_id, custId)
 
     elif event.type == "customer.subscription.trial_will_end":
         fractalLog(
@@ -476,13 +475,13 @@ def webhookHelper(event):
             logs="Charge ending webhook received from stripe",
         )
         custId = event.data.object.customer
-        customer = fractalSQLSelect("customers", {"id": custId})["rows"]
+        customer = User.query.filter_by(stripe_customer_id=custId).first()
         status = event.data.object.status
         if customer:
             if status == "trialing":
-                trialEndingMail(customer["username"])
+                trialEndingMail(customer.user_id)
             else:
-                trialEndedMail(customer["username"])
+                trialEndedMail(customer.user_id)
     else:
         return jsonify({}), NOT_FOUND
 
@@ -503,7 +502,7 @@ def updateHelper(username, new_plan_type):
             NOT_ACCEPTABLE,
         )
 
-    customer = fractalSQLSelect("users", {"email": username})
+    customer = User.query.get(username)
     if not customer:
         return (
             jsonify(
@@ -512,14 +511,13 @@ def updateHelper(username, new_plan_type):
             NOT_ACCEPTABLE,
         )
 
-    customer = customer[0]
-    if not customer["stripe_customer_id"]:
+    if not customer.stripe_customer_id:
         return (
             jsonify({"status": NOT_ACCEPTABLE, "error": "User is not on stripe"}),
             NOT_ACCEPTABLE,
         )
 
-    subscriptions = stripe.Subscription.list(customer=customer["stripe_customer_id"])[
+    subscriptions = stripe.Subscription.list(customer=customer.stripe_customer_id)[
         "data"
     ]
     if not subscriptions:
@@ -538,9 +536,9 @@ def updateHelper(username, new_plan_type):
 def referralHelper(code, username):
     code_username = None
 
-    metadata = fractalSQLSelect("users", {"code": code})
+    metadata = User.query.filter_by(referral_code=code)
     if metadata:
-        code_username = metadata[0]["email"]
+        code_username = metadata.user_id
     if username == code_username:
         return jsonify({"status": SUCCESS, "verified": False}), SUCCESS
     verified = code_username is not None
