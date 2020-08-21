@@ -58,7 +58,9 @@ def get_server_asset_from_release(
             and flavor.lower() in asset.name.lower()
         ):
             return asset
-
+    raise Exception(
+        f"Unable to find sever asset for '{desired_release}'!"
+    )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -69,14 +71,14 @@ if __name__ == "__main__":
         help="IP address of VM to test on",
     )
     parser.add_argument(
-        "--protocol-repo",
-        help="name of the protocol repository",
-        default="fractalcomputers/protocol",
-    )
-    parser.add_argument(
         "--release",
         help="which release to download the packages from; either a fully qualified release name or 'latest:branch' which will pick the latest for the branch",
         default="latest:dev",
+    )
+    parser.add_argument(
+        "--protocol-repo",
+        help="name of the protocol repository",
+        default="fractalcomputers/protocol",
     )
     parser.add_argument(
         "--out-dir",
@@ -103,28 +105,23 @@ if __name__ == "__main__":
 
     release = get_release(github_client.get_repo(args.protocol_repo), args.release)
     print(f"Selected release '{release.title}'")
-    server_asset = get_server_asset_from_release(release)
-    if len(assets) != len(platforms):
-        print(
-            f"WARNING: Only matched {len(assets)} of {len(platforms)} requested platforms"
-        )
+    asset = get_server_asset_from_release(release)
     if args.wipe_old:
         print(f"Clearing out all files currently in '{args.out_dir}'")
         shutil.rmtree(args.out_dir, ignore_errors=True)
     Path(args.out_dir).mkdir(parents=True, exist_ok=True)
-    for platform, asset in assets.items():
-        out_path = os.path.join(args.out_dir, asset.name)
-        print(f"Downloading {asset.url}")
-        with requests.get(
-            asset.url,
-            auth=requests.auth.HTTPBasicAuth(github_token, ""),
-            headers={"Accept": "application/octet-stream"},
-            stream=True,
-        ) as r:
-            r.raise_for_status()
-            print(f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes")
-            with open(out_path, "wb") as out:
-                shutil.copyfileobj(r.raw, out)
-        print(f"Saved '{out_path}'")
+    out_path = os.path.join(args.out_dir, asset.name)
+    print(f"Downloading {asset.url}")
+    with requests.get(
+        asset.url,
+        auth=requests.auth.HTTPBasicAuth(github_token, ""),
+        headers={"Accept": "application/octet-stream"},
+        stream=True,
+    ) as r:
+        r.raise_for_status()
+        print(f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes")
+        with open(out_path, "wb") as out:
+            shutil.copyfileobj(r.raw, out)
+    print(f"Saved '{out_path}'")
     
     
