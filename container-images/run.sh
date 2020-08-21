@@ -1,11 +1,11 @@
 #!/bin/bash
 
 runcontainer (){
-    docker run -it -d --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(cd $2;pwd),destination=/protocol -p 5900:5900 -p 32262:32262 -p 32263:32263/udp -p 32273:32273 -p 80:80 -p 2200:22 -p 443:443 -e VNC_SERVER_PASSWORD=password -t chrome-systemd-$1
+    docker run -it -d --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(cd $3;pwd),destination=/protocol -p 5900:5900 -p 32262:32262 -p 32263:32263/udp -p 32273:32273 -p 80:80 -p 2200:22 -p 443:443 -e VNC_SERVER_PASSWORD=password -t $1-systemd-$2
 }
 
-docker build -f chrome/Dockerfile.$1 chrome -t chrome-systemd-$1
-container_id=$(runcontainer $1 $2)
+docker build -f $1/Dockerfile.$2 $1 -t $1-systemd-$2
+container_id=$(runcontainer $1 $2 $3)
 # docker exec -u 0 $container_id /bin/bash -c "source /utils.sh && Enable-FractalFirewallRule"
 # docker exec -u 0 $container_id /bin/bash -c "yes | ufw allow 5900"
 # docker cp ../docker-systemctl-replacement/files/docker/systemctl.py
