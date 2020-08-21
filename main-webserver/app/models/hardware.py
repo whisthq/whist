@@ -1,4 +1,5 @@
 from app.models.public import *
+from sqlalchemy.sql import expression
 from app import db
 
 class UserVM(db.Model):
@@ -10,12 +11,10 @@ class UserVM(db.Model):
     location = db.Column(db.String(250), nullable=False)
     os = db.Column(db.String(250), nullable=False)
     state = db.Column(db.String(250), nullable=False)
-    lock = db.Column(db.Boolean, nullable=False)
+    lock = db.Column(db.Boolean, nullable=False, server_default=expression.false())
     user_id = db.Column(db.ForeignKey('users.user_id'))
-    disk_id = db.Column(db.ForeignKey('os_disks.disk_id'))
+    disk_id = db.Column(db.ForeignKey('hardware.os_disks.disk_id'))
     temporary_lock = db.Column(db.Integer)
-
-    user = db.relationship('User')
 
 class OSDisk(db.Model):
     __tablename__ = 'os_disks'
@@ -25,18 +24,16 @@ class OSDisk(db.Model):
     location =  db.Column(db.String(250), nullable=False)
     os = db.Column(db.String(250), nullable=False)
     disk_size = db.Column(db.Integer, nullable=False)
-    allow_autoupdate = db.Column(db.Boolean, nullable=False, server_default=True)
-    has_dedicated_vm = db.Column(db.Boolean, nullable=False, server_default=False)
+    allow_autoupdate = db.Column(db.Boolean, nullable=False, server_default=expression.true())
+    has_dedicated_vm = db.Column(db.Boolean, nullable=False, server_default=expression.false())
     version = db.Column(db.String(250))
     rsa_private_key = db.Column(db.String(250))
-    using_stun = db.Column(db.Boolean, nullable=False, server_default=False)
+    using_stun = db.Column(db.Boolean, nullable=False, server_default=expression.false())
     ssh_password = db.Column(db.String(250))
     state = db.Column(db.String(250))
     user_id = db.Column(db.ForeignKey('users.user_id'))
     last_pinged = db.Column(db.Integer)
     branch = db.Column(db.String(250), nullable=False, server_default=text("'master'::character varying"))
-
-    user = db.relationship('User')
 
 class SecondaryDisk(db.Model):
     __tablename__ = 'secondary_disks'
@@ -47,7 +44,6 @@ class SecondaryDisk(db.Model):
     disk_size = db.Column(db.Integer, nullable=False)
     location = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.ForeignKey('users.user_id'))
-    user = db.relationship('User')
 
 class InstallCommand(db.Model):
     __tablename__ = 'install_commands'

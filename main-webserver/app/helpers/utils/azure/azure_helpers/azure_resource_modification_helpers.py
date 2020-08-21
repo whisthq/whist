@@ -4,6 +4,8 @@ from app.helpers.utils.azure.azure_resource_locks import *
 from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_modification import *
 
+from app.models.public import *
+from app.serializers.public import *
 
 def attachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
     fractalLog(
@@ -119,13 +121,9 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
         ),
     )
 
-    output = fractalSQLSelect(
-        table_name="disks",
-        params={"username": username, "state": "ACTIVE", "main": False},
-    )
+    secondary_disks = SecondaryDisk.query.filter_by(user_id=username, state="ACTIVE").all()
 
-    if output["success"] and output["rows"]:
-        secondary_disks = output["rows"]
+    if secondary_disks:
 
         fractalLog(
             function="attachSecondaryDisks",
@@ -154,7 +152,7 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
 
         for secondary_disk in secondary_disks:
             attachSecondaryDisk(
-                secondary_disk["disk_name"], vm_name, resource_group=resource_group, s=s
+                secondary_disk.disk_id, vm_name, resource_group=resource_group, s=s
             )
 
         # Lock immediately
@@ -178,23 +176,9 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
 def claimAvailableVM(
     username, disk_name, location, resource_group, os_type="Windows", s=None
 ):
-    session = Session()
-
-    command = text(
-        """
-        SELECT * FROM {table_name}
-        WHERE username=:username
-        """.format(
-            table_name=resourceGroupToTable(resource_group)
-        )
-    )
-    params = {"username": username}
-
-    available_vm = fractalCleanSQLOutput(session.execute(command, params).fetchone())
+    available_vm = UserVM.query.filter_by(user_id=username).first()
 
     if available_vm:
-        session.commit()
-        session.close()
         return available_vm
 
     state_preference = ["RUNNING_AVAILABLE", "STOPPED", "DEALLOCATED"]
@@ -207,6 +191,8 @@ def claimAvailableVM(
                 state=state, location=location, operating_system=os_type
             ),
         )
+
+        # UPDATE HERE
 
         command = text(
             """

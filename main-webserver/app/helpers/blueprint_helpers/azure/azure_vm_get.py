@@ -18,12 +18,12 @@ def ipHelper(vm_name, resource_group):
 
 
 def protocolInfoHelper(ip_address):
-
     vm = UserVM.query.filter_by(ip=ip_address).first()
 
     if not vm:
         return {
-            "dev": True,
+            "allow_autoupdate": True,
+            "has_dedicated_vm": False,
             "branch": "dev",
             "status": NOT_FOUND,
             "using_stun": False,
@@ -40,6 +40,8 @@ def protocolInfoHelper(ip_address):
 
         if disk:
             return {
+                "allow_autoupdate": disk.allow_autoupdate,
+                "has_dedicated_vm": disk.has_dedicated_vm,
                 "branch": disk.branch,
                 "status": SUCCESS,
                 "using_stun": disk.using_stun,
@@ -58,7 +60,8 @@ def protocolInfoHelper(ip_address):
             )
 
             return {
-                "branch": "dev",
+                "allow_autoupdate": True,
+                "has_dedicated_vm": False,
                 "status": NOT_FOUND,
                 "using_stun": False,
                 "private_key": None,
