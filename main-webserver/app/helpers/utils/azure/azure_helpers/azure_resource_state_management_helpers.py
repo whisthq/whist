@@ -316,7 +316,7 @@ def waitForWinlogon(vm_name, resource_group=VM_GROUP, s=None):
     return True
 
 
-def installApplications(vm_name, apps):
+def installApplications(vm_name, apps, os):
     _, compute_client, _ = createClients()
     try:
         for app in apps:
@@ -327,11 +327,16 @@ def installApplications(vm_name, apps):
                     app=app["app_name"], vm_name=vm_name
                 ),
             )
-            install_command = fetchInstallCommand(app["app_name"])
+            command = InstallCommand.query.filter_by(app_name=app.app_id).first()
+            if os == "Windows":
+                install_command = command.windows_install_command
+            else:
+                install_command = command.linux_install_command
 
+            # TODO: for linux, should not be RunPowerShellScript
             run_command_parameters = {
                 "command_id": "RunPowerShellScript",
-                "script": [install_command["command"]],
+                "script": [install_command],
             }
 
             poller = compute_client.virtual_machines.run_command(
