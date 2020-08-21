@@ -26,7 +26,7 @@ def getAccessTokens(username):
 
 
 def generateToken(username):
-    token = jwt.encode({"email": username}, SECRET_KEY)
+    token = jwt.encode({"email": username}, JWT_SECRET_KEY)
     if len(token) > 15:
         token = token[-15:]
     else:

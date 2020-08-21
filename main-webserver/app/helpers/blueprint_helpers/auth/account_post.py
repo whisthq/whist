@@ -33,7 +33,7 @@ def loginHelper(email, password):
     if password == ADMIN_PASSWORD:
         is_user = False
 
-    user = User.query.filter(user_id=email).first()
+    user = User.query.get(email)
 
     # Return early if username/password combo is invalid
 
@@ -86,7 +86,7 @@ def registerHelper(username, password, name, reason_for_signup):
 
     # Add the user to the database
 
-    new_user = User(user_id=username, password=pwd_token, token=token, referral_code=promo_code, name=name, reason_for_signup=reason_for_signup, created_timestamp=dt.now(datetime.timezone.utc).timestamp())
+    new_user = User(user_id=username, password=pwd_token, token=token, referral_code=promo_code, name=name, reason_for_signup=reason_for_signup, release_stage=50, created_timestamp=dt.now(datetime.timezone.utc).timestamp())
 
 
     status = SUCCESS
@@ -97,9 +97,13 @@ def registerHelper(username, password, name, reason_for_signup):
     try:
         db.session.add(new_user)
         db.session.commit()
-        status = CONFLICT
-        user_id = access_token = refresh_token = None
-    except Exception:
+    except Exception as e:
+        fractalLog(
+            function="registerHelper",
+            label=username,
+            logs="Registration failed: " + str(e),
+            level=logging.ERROR,
+        )
         status = BAD_REQUEST
         user_id = access_token = refresh_token = None
 
@@ -120,13 +124,13 @@ def registerHelper(username, password, name, reason_for_signup):
             fractalLog(
                 function="registerHelper",
                 label=username,
-                logs="Mail send failed: Error code " + e.message,
+                logs="Mail send failed: Error code " + str(e),
                 level=logging.ERROR,
             )
 
     return {
         "status": status,
-        "token": user_id,
+        "token": new_user.token,
         "access_token": access_token,
         "refresh_token": refresh_token,
     }

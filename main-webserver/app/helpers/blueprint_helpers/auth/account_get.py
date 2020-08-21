@@ -22,7 +22,7 @@ def codeHelper(username):
 
     # Query database for user
 
-    user = User.query.filter(user_id=username).first()
+    user = User.query.get(username)
 
     # Return user's promo code
 
@@ -44,7 +44,7 @@ def fetchUserHelper(username):
     Returns:
         http response
     """
-    user = User.query.filter(user_id=username).first()
+    user = User.query.get(username)
 
     # Return user
     if user:
@@ -78,14 +78,11 @@ def disksHelper(username, main):
     if not user:
         return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
 
-    os_disks = OSDisk.query.filter(user_id=username).all()
+    os_disks = OSDisk.query.filter_by(user_id=username).all()
     os_disks = [os_disk_schema.dump(disk) for disk in os_disks]
 
-    if not main:
-        secondary_disks = SecondaryDisk.query.filter(user_id=username).all()
-        secondary_disks = [secondary_disk_schema.dump(disk) for disk in secondary_disks]
-
-    # Return SQL output
+    secondary_disks = SecondaryDisk.query.filter_by(user_id=username).all()
+    secondary_disks = [secondary_disk_schema.dump(disk) for disk in secondary_disks]
 
     fractalLog(
         function="disksHelper",
@@ -96,6 +93,10 @@ def disksHelper(username, main):
             username=username,
         ),
     )
+
+    # Return SQL output
+
+
     return {"os_disks": os_disks, "secondary_disks": secondary_disks, "status": SUCCESS}
 
 
