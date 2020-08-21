@@ -1,5 +1,7 @@
 from app import *
 
+from app.models.public import *
+from app.serializers.public import *
 
 def createClients():
     """Creates Azure management clients
@@ -29,10 +31,10 @@ def createVMName():
     Returns:
         str: The generated name
     """
-    output = fractalSQLSelect("v_ms", {})
+    vms = UserVM.query.all()
     old_names = []
-    if output["rows"]:
-        old_names = [vm["vm_name"] for vm in output["rows"]]
+    if vms:
+        old_names = [vm.vm_id for vm in vms]
     vm_name = genHaiku(1)[0]
 
     while vm_name in old_names:
@@ -47,10 +49,10 @@ def createDiskName():
     Returns:
         str: The generated name
     """
-    output = fractalSQLSelect("disks", {})
+    disks = OSDisk.query.all()
     old_names = []
-    if output["rows"]:
-        old_names = [disk["disk_name"] for disk in output["rows"]]
+    if disks:
+        old_names = [disk.disk_id for disk in disks]
     disk_name = genHaiku(1)[0] + "_disk"
 
     while disk_name in old_names:
@@ -137,21 +139,19 @@ def resourceGroupToTable(resource_group):
 
 
 def getVMUser(vm_name, resource_group=VM_GROUP):
-    output = fractalSQLSelect(
-        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-    )
+    vm = UserVM.query.get(vm_name)
 
-    if output["success"] and output["rows"]:
-        return str(output["rows"][0]["username"])
+    if vm:
+        return str(vm.user_id)
 
     return "None"
 
 
 def getDiskUser(disk_name):
-    output = fractalSQLSelect(table_name="disks", params={"disk_name": disk_name})
+    disk = OSDisk.query.get(disk_name)
 
-    if output["success"] and output["rows"]:
-        return str(output["rows"][0]["username"])
+    if disk:
+        return str(disk.user_id)
 
     return "None"
 
