@@ -142,8 +142,8 @@ void updateAudio() {
     if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
         LOG_INFO("Updating audio frequency to %d!", audio_frequency);
         decoder_frequency = audio_frequency;
-        initAudio();
         destroyAudio();
+        initAudio();
     }
 
     bool still_more_audio_packets = true;
