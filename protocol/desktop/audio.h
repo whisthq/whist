@@ -31,6 +31,12 @@ Public Functions
 */
 
 /**
+ * @brief                          This will destroy and initialize audio again,
+ *                                 locking to avoid race conditions with update
+ */
+void reinitAudio();
+
+/**
  * @brief                          This will initialize the FFmpeg AAC audio
  *                                 decoder, and set the proper audio parameters
  *                                 for receiving from the server
