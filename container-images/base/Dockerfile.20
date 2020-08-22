@@ -105,6 +105,11 @@ RUN chown root:root /run/user
 RUN chmod +x /home/fractal/entry.sh
 
 
+#### FROM PHIL 1/2 on this file: I think this new service for Nvidia needs to be added here, but not certain
+#### It apparently needs to run before X so it might need to be even before (?)
+ADD fractal-update-nvidia-busid.service /etc/systemd/system
+####
+
 ADD fractal-entrypoint.service /etc/systemd/system
 ADD fractal-display.service /etc/systemd/system
 # RUN chmod u+x /etc/systemd/system/bootstrap-service.service
@@ -113,6 +118,12 @@ VOLUME [ "/sys/fs/cgroup" ]
 
 RUN systemctl set-default multi-user.target
 ENV init /lib/systemd/systemd
+
+
+#### FROM PHIL 2/2 on this file: running the new service from above!
+RUN systemctl enable fractal-update-nvidia-busid
+####
+
 RUN systemctl enable fractal-entrypoint
 RUN systemctl enable fractal-display
 

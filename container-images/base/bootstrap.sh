@@ -11,6 +11,13 @@ main() {
     # launch_xvfb
     log_i "Starting xdummy virtual display"
     launch_xdummy
+
+
+    # FROM PHIL: uncomment this to also start the nvidia display for GPU capture
+    # log_i "Starting xnvidia-dummy virtual display"
+    # launch_xnvidia-dummy
+
+    
     #log_i "Starting window manager..."
     #launch_window_manager
     #log_i "Starting VNC server..."
@@ -21,8 +28,20 @@ main() {
 }
 
 launch_xdummy(){
+    local display_num=11
+    local config_file=/usr/share/X11/xorg.conf.d/02-fractal-dummy.conf
+    local log_file=/home/fractal/11.log
+
+    touch /home/fractal/.Xauthority
+    sudo Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile $log_file -config $config_file :$display_num &
+    export DISPLAY=$display_num
+    export XSOCKET=/tmp/.X11-unix/X$(display_num)
+    export XAUTHORITY=/home/fractal/.Xauthority
+}
+
+launch_xnvidia_dummy(){
     local display_num=10
-    local config_file=/usr/share/X11/xorg.conf.d/01-dummy.conf
+    local config_file=/usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
     local log_file=/home/fractal/10.log
 
     touch /home/fractal/.Xauthority
@@ -30,7 +49,6 @@ launch_xdummy(){
     export DISPLAY=$display_num
     export XSOCKET=/tmp/.X11-unix/X$(display_num)
     export XAUTHORITY=/home/fractal/.Xauthority
-    
 }
 
 launch_xvfb() {

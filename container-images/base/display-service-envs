@@ -1,3 +1,6 @@
-xorg_config_file=/usr/share/X11/xorg.conf.d/01-dummy.conf
-display_num=10
-xorg_log_file=/home/fractal/10.log
+xorg_config_file_nvidia=/usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
+xorg_config_file_dummy=/usr/share/X11/xorg.conf.d/02-fractal-dummy.conf
+display_num_nvidia=10
+display_num_dummy=11
+xorg_log_file_nvidia=/home/fractal/10.log
+xorg_log_file_nvidia=/home/fractal/11.log
