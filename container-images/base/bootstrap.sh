@@ -15,7 +15,7 @@ main() {
 
     # FROM PHIL: uncomment this to also start the nvidia display for GPU capture
     # log_i "Starting xnvidia-dummy virtual display"
-    # launch_xnvidia-dummy
+    # launch_xnvidia_dummy
 
     
     #log_i "Starting window manager..."
