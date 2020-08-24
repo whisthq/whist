@@ -138,28 +138,7 @@ if __name__ == "__main__":
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh_client.connect(hostname=args.vm_ip, username=args.vm_user, port=22, key_filename=args.ssh_key, timeout=10)
-    cmd = f'powershell $Token = \""{GITHUB_TOKEN}\"";'
-    print(cmd)
-    stdin, stdout, stderr = ssh_client.exec_command(cmd)
-    stderr = stderr.readlines()
-    error = ""
-    for err in stderr:
-        error += err
-    print(error)
-    # cmd = f'powershell net stop fractal ;\
-    #     taskkill /IM "FractalService.exe" /F ;\
-    #     taskkill /IM "FractalServer.exe" /F ;\
-    #     Remove-Item C:\ProgramData\FractalCache\log.txt ;\
-    #     New-Item -ItemType Directory -Force -Path C:\server_build ;\
-    #     $Uri = '"{asset.url}"';\
-    #     $Token = '"{GITHUB_TOKEN}"';\
-    #     $Outfile = '"{args.out_path}"';\
-    #     $Base64Token = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Token));\
-    #     $Headers = @{{\
-    #         Authorization = "Basic {{0}}" -f $Base64Token\
-    #         Accept = application/octet-stream\
-    #     }};\
-    #     Invoke-WebRequest -Uri $Uri -Headers $Headers -Outfile $Outfile;'
+    # cmd = f'powershell $Token = \\"{GITHUB_TOKEN}\\";'
     # print(cmd)
     # stdin, stdout, stderr = ssh_client.exec_command(cmd)
     # stderr = stderr.readlines()
@@ -167,6 +146,25 @@ if __name__ == "__main__":
     # for err in stderr:
     #     error += err
     # print(error)
+    cmd = f'powershell net stop fractal ;\
+        taskkill /IM "FractalService.exe" /F ;\
+        taskkill /IM "FractalServer.exe" /F ;\
+        Remove-Item C:\ProgramData\FractalCache\log.txt ;\
+        New-Item -ItemType Directory -Force -Path C:\server_build ;\
+        $Uri = \\"{asset.url}\\";\
+        $Token = \\"{GITHUB_TOKEN}\\";\
+        $Outfile = \\"{args.out_path}\\";\
+        $Base64Token = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Token));\
+        $Headers = @{{\\"Authorization\\" = \\"Basic {{0}}\\" -f $Base64Token;\
+                      \\"Accept\\" = \\"application/octet-stream\\"}};\
+        Invoke-WebRequest -Uri $Uri -Headers $Headers -Outfile $Outfile;'
+    print(cmd)
+    stdin, stdout, stderr = ssh_client.exec_command(cmd)
+    stderr = stderr.readlines()
+    error = ""
+    for err in stderr:
+        error += err
+    print(error)
     # ssh_client.exec_command('powershell python -c ;\
     #     import github ;\
     #     github_client = github.Github(GITHUB_TOKEN) ;\
