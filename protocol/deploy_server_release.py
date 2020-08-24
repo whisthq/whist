@@ -141,11 +141,7 @@ if __name__ == "__main__":
         taskkill /IM "FractalServer.exe" /F ;\
         Remove-Item C:\ProgramData\FractalCache\log.txt ;\
         mkdir C:\server_build ;')
-    #sftp_client = ssh_client.open_sftp()
-    #subprocess.run(['scp', out_path, 'Fractal@52.168.66.248:C:\server_build\Windows-64bit_server'], check=True)
-    # with closing(Write(ssh_client.get_transport(), 'C:\server_build')) as scp:
-    #     scp.send_file(out_path, remote_filename='Windows-64bit_server')
     scp_client = SCPClient(ssh_client.get_transport(), socket_timeout=10)
-    scp_client.put(args.out_dir, recursive=True, remote_path='C:/server_build')
+    scp_client.put(out_path, remote_path='C:\server_build\Windows-64bit_server')
     scp_client.put(out_path, remote_path='C:\Program Files\Fractal')
-    # ssh_client.exec_command('powershell net start fractal ; shutdown /r ;')
+    ssh_client.exec_command('powershell net start fractal ; shutdown /r ;')
