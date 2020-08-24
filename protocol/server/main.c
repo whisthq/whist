@@ -105,12 +105,12 @@ int encoder_factory_client_w;
 int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
-bool encoder_factory_using_capture_encoder;
+
 int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
     encoder_factory_result = create_video_encoder(
         encoder_factory_server_w, encoder_factory_server_h, encoder_factory_client_w,
-        encoder_factory_client_h, encoder_factory_current_bitrate, encoder_factory_codec_type, encoder_factory_using_capture_encoder);
+        encoder_factory_client_h, encoder_factory_current_bitrate, encoder_factory_codec_type);
     encoder_finished = true;
     return 0;
 }
@@ -222,7 +222,7 @@ int32_t SendVideo(void* opaque) {
 
         // Update encoder with new parameters
         if (update_encoder) {
-            bool using_capture_encoder = UpdateCaptureEncoder(device, current_bitrate, client_codec_type);
+            UpdateCaptureEncoder(device, current_bitrate, client_codec_type);
             // encoder = NULL;
             if (pending_encoder) {
                 if (encoder_finished) {
@@ -245,7 +245,6 @@ int32_t SendVideo(void* opaque) {
                 encoder_factory_client_h = (int)client_height;
                 encoder_factory_codec_type = (CodecType)client_codec_type;
                 encoder_factory_current_bitrate = current_bitrate;
-		encoder_factory_using_capture_encoder = using_capture_encoder;
                 if (encoder == NULL) {
                     // Run on this thread bc we have to wait for it anyway
                     MultithreadedEncoderFactory(NULL);

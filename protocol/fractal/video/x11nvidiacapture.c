@@ -220,8 +220,12 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
     return 0;
 }
 
+#define SHOW_DEBUG_FRAMES false
+
 int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
+#if SHOW_DEBUG_FRAMES
     uint64_t t1, t2;
+#endif
 
     NVFBCSTATUS fbcStatus;
 
@@ -230,7 +234,9 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
     NVFBC_FRAME_GRAB_INFO frameInfo;
     NVFBC_HWENC_FRAME_INFO encFrameInfo;
 
+#if SHOW_DEBUG_FRAMES
     t1 = NvFBCUtilsGetTimeInMillis();
+#endif
 
     memset(&grabParams, 0, sizeof(grabParams));
     memset(&frameInfo, 0, sizeof(frameInfo));
@@ -244,7 +250,7 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
      * The application will wait for new frames.  New frames are generated
      * when the mouse cursor moves or when the screen if refreshed.
      */
-    grabParams.dwFlags = NVFBC_TOHWENC_GRAB_FLAGS_NOFLAGS;
+    grabParams.dwFlags = NVFBC_TOHWENC_GRAB_FLAGS_NOWAIT;
 
     /*
      * This structure will contain information about the captured frame.
@@ -290,16 +296,18 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
     device->size = encFrameInfo.dwByteSize;
     //fwrite(frame, 1, frameInfo.dwByteSize, fd);
 
-    t2 = NvFBCUtilsGetTimeInMillis();
-
     device->is_iframe = encFrameInfo.bIsIFrame;
+
+#if SHOW_DEBUG_FRAMES
+    t2 = NvFBCUtilsGetTimeInMillis();
     printf("New %dx%d frame id %u size %u%s%s grabbed and saved in %llu ms\n",
            frameInfo.dwWidth, frameInfo.dwHeight, frameInfo.dwCurrentFrame, device->size, encFrameInfo.bIsIFrame ? " (i-frame)" : "", frameInfo.bIsNewFrame ? " (new frame)" : "", (unsigned long long) (t2 - t1));
+#endif
 
     device->width = frameInfo.dwWidth;
     device->height = frameInfo.dwHeight;
 
-    return 0;
+    return 1;
 }
 
 void DestroyNvidiaCaptureDevice(NvidiaCaptureDevice* device) {

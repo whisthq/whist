@@ -462,6 +462,5 @@ void DestroyCaptureDevice(CaptureDevice* device) {
 
 bool UpdateCaptureEncoder(CaptureDevice* device) {
     device;
-    return false;
 }
 

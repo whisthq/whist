@@ -56,6 +56,7 @@ typedef struct CaptureDevice {
     bool released;
     bool using_nvidia;
     NvidiaCaptureDevice nvidia_capture_device;
+    bool capture_is_on_nvidia;
 } CaptureDevice;
 
 typedef unsigned int UINT;
@@ -114,6 +115,6 @@ void ReleaseScreen(CaptureDevice* device);
  */
 void DestroyCaptureDevice(CaptureDevice* device);
 
-bool UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec); 
+void UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec); 
 
 #endif  // CAPTURE_X11CAPTURE_H

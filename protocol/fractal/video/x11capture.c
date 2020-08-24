@@ -104,6 +104,9 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
 	device->using_nvidia = false;
     } else {
 	device->using_nvidia = true;
+        device->image = NULL;
+        CaptureScreen(device);
+	device->capture_is_on_nvidia = false;
     	LOG_INFO("Using Nvidia Capture SDK!");
 	return 0;
     }
@@ -146,6 +149,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     device->image = NULL;
     CaptureScreen(device);
 #endif
+    device->capture_is_on_nvidia = false;
     device->texture_on_gpu = false;
 
     return 0;
@@ -159,7 +163,8 @@ int CaptureScreen(CaptureDevice* device) {
 	} else {
 	    device->frame_data = device->nvidia_capture_device.frame;
 	    device->pitch = device->width * 4;
-	    return 1;
+	    device->capture_is_on_nvidia = true;
+	    return ret;
 	}
     }
 
@@ -229,12 +234,10 @@ void DestroyCaptureDevice(CaptureDevice* device) {
     XCloseDisplay(device->display);
 }
 
-bool UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec) {
+void UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec) {
     if (device->using_nvidia) {
 	DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
 	CreateNvidiaCaptureDevice(&device->nvidia_capture_device, bitrate, codec);
-	return true;
     }
-    return false;
 }
 
