@@ -91,12 +91,17 @@ Defines
 
 #define USING_AUDIO_ENCODE_DECODE true
 #define USING_FFMPEG_IFRAME_FLAG false
+
 #ifdef _WIN32
 // possible on windows, so let's do it
 #define USING_SERVERSIDE_SCALE true
 #else
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
+
+#define USING_GPU_CAPTURE true
+#define USING_SHM true
+
 #endif
 
 #define MAXIMUM_BITRATE 30000000
@@ -108,7 +113,7 @@ Defines
 #define STARTING_BURST_BITRATE 31800000
 
 #define AUDIO_BITRATE 128000
-#define FPS 50
+#define FPS 45
 #define MIN_FPS 10
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
@@ -483,19 +488,14 @@ typedef enum FractalServerMessageType {
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
-typedef struct FractalServerMessageInit {
-    char filename[300];
-    char username[50];
-    int connection_id;
-} FractalServerMessageInit;
-
 typedef struct FractalDiscoveryReplyMessage {
     int client_id;
     int UDP_port;
     int TCP_port;
+    int connection_id;
+    int audio_sample_rate;
     char filename[300];
     char username[50];
-    int connection_id;
 } FractalDiscoveryReplyMessage;
 
 typedef struct PeerUpdateMessage {

@@ -162,7 +162,7 @@ void nack(int id, int index) {
 }
 
 bool requestIframe() {
-    if (GetTimer(VideoData.last_iframe_request_timer) > 250.0 / 1000.0) {
+    if (GetTimer(VideoData.last_iframe_request_timer) > 1500.0 / 1000.0) {
         FractalClientMessage fmsg;
         fmsg.type = MESSAGE_IFRAME_REQUEST;
         if (VideoData.last_rendered_id == 0) {

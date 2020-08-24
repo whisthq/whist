@@ -73,6 +73,12 @@ int handleSDLEvent(SDL_Event *event) {
             break;
         case SDL_KEYDOWN:
         case SDL_KEYUP:
+#ifdef __APPLE__
+            // On Mac, map cmd to ctrl
+            if (event->key.keysym.scancode == FK_LGUI) {
+                event->key.keysym.scancode = (SDL_Scancode)FK_LCTRL;
+            }
+#endif
             if (handleKeyUpDown(event) != 0) {
                 return -1;
             }

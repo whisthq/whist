@@ -141,9 +141,7 @@ static int handleKeyboardStateMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
-#ifdef _WIN32
     UpdateKeyboardState(input_device, fmsg);
-#endif
     return 0;
 }
 
