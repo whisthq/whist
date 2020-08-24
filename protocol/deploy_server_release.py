@@ -98,12 +98,6 @@ if __name__ == "__main__":
         help="where to store the downloaded protocol in the VM",
         default=default_protocol_dir,
     )
-    parser.add_argument(
-        "--wipe-old",
-        help="delete older protocol packages in the specified out_dir",
-        action="store_true",
-        default=False
-    )
     args = parser.parse_args()
 
     github_client = github.Github(GITHUB_TOKEN)
