@@ -15,11 +15,7 @@ import github
 import subprocess
 
 GITHUB_TOKEN = '3dd175ed9ef231590537b9401a60edd9b9dca475'
-
-# default_protocol_dir = os.path.join(
-#     os.path.dirname(os.path.realpath(__file__)), "protocol-packages"
-# )
-default_protocol_path = 'C:\server_build\Windows-64bit_server'
+default_protocol_dir = 'C:\server_build'
 
 def get_release(
     repo: github.Repository.Repository, desired_release: str
@@ -48,7 +44,6 @@ def get_release(
     raise Exception(
         f"Unable to find a release for '{desired_release}' in {len(all_release_names)} releases: {all_release_names}"
     )
-
 
 def get_server_asset_from_release(
     release: github.GitRelease.GitRelease
@@ -99,9 +94,9 @@ if __name__ == "__main__":
         default="fractalcomputers/protocol",
     )
     parser.add_argument(
-        "--out-path",
+        "--out-dir",
         help="where to store the downloaded protocol in the VM",
-        default=default_protocol_path,
+        default=default_protocol_dir,
     )
     parser.add_argument(
         "--wipe-old",
@@ -115,37 +110,12 @@ if __name__ == "__main__":
     release = get_release(github_client.get_repo(args.protocol_repo), args.release)
     print(f"Selected release '{release.title}'")
     asset = get_server_asset_from_release(release)
-    # if args.wipe_old:
-    #     print(f"Clearing out all files currently in '{args.out_dir}'")
-    #     shutil.rmtree(args.out_dir, ignore_errors=True)
-    # Path(args.out_dir).mkdir(parents=True, exist_ok=True)
-    # out_path = os.path.join(args.out_dir, asset.name)
-    # print(f"Downloading {asset.url}")
-    # with requests.get(
-    #     asset.url,
-    #     auth=requests.auth.HTTPBasicAuth(GITHUB_TOKEN, ""),
-    #     headers={"Accept": "application/octet-stream"},
-    #     stream=True,
-    # ) as r:
-    #     r.raise_for_status()
-    #     print(f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes")
-    #     with open(out_path, "wb") as out:
-    #         shutil.copyfileobj(r.raw, out)
-    # print(f"Saved '{out_path}'")
-    
-    print(asset.url)
-    #out_path = '/Users/tinalu/Desktop/protocol/protocol-packages/protocol_tlu2.deploy-server-release-20200821.2_Windows-64bit_client.zip'
+    out_path = args.out_dir + "\\" + asset.name
+    all_out_path = out_path + '\*'
+
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh_client.connect(hostname=args.vm_ip, username=args.vm_user, port=22, key_filename=args.ssh_key, timeout=10)
-    # cmd = f'powershell $Token = \\"{GITHUB_TOKEN}\\";'
-    # print(cmd)
-    # stdin, stdout, stderr = ssh_client.exec_command(cmd)
-    # stderr = stderr.readlines()
-    # error = ""
-    # for err in stderr:
-    #     error += err
-    # print(error)
     cmd = f'powershell net stop fractal ;\
         taskkill /IM "FractalService.exe" /F ;\
         taskkill /IM "FractalServer.exe" /F ;\
@@ -153,24 +123,20 @@ if __name__ == "__main__":
         New-Item -ItemType Directory -Force -Path C:\server_build ;\
         $Uri = \\"{asset.url}\\";\
         $Token = \\"{GITHUB_TOKEN}\\";\
-        $Outfile = \\"{args.out_path}\\";\
+        $Outfile = \\"{out_path}\\";\
         $Base64Token = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Token));\
         $Headers = @{{\\"Authorization\\" = \\"Basic {{0}}\\" -f $Base64Token;\
                       \\"Accept\\" = \\"application/octet-stream\\"}};\
-        Invoke-WebRequest -Uri $Uri -Headers $Headers -Outfile $Outfile;'
-    print(cmd)
+        $ProgressPreference = \\"SilentlyContinue\\";\
+        Invoke-WebRequest -Uri $Uri -Headers $Headers -Outfile $Outfile -UseBasicParsing;\
+        Copy-item -Force -Recurse \\"{all_out_path}\\" -Destination \\"C:\server_build\Windows-64bit_server\\";\
+        Copy-item -Force -Recurse \\"C:\server_build\Windows-64bit_server\*\\"  -Destination \\"C:\Program Files\Fractal\\\";\
+        net start fractal ; shutdown /r ;'
     stdin, stdout, stderr = ssh_client.exec_command(cmd)
-    stderr = stderr.readlines()
-    error = ""
-    for err in stderr:
-        error += err
-    print(error)
-    # ssh_client.exec_command('powershell python -c ;\
-    #     import github ;\
-    #     github_client = github.Github(GITHUB_TOKEN) ;\
-    #     Remove-Item C:\ProgramData\FractalCache\log.txt ;\
-    #     mkdir C:\server_build ;')
-    # scp_client = SCPClient(ssh_client.get_transport(), socket_timeout=10)
-    # scp_client.put(out_path, remote_path='C:\server_build\Windows-64bit_server')
-    # scp_client.put(out_path, remote_path='C:\Program Files\Fractal')
-    # ssh_client.exec_command('powershell net start fractal ; shutdown /r ;')
+    error = stderr.readlines()
+    if error:
+        err_message = ""
+        for err in error:
+            err_message += err
+        raise Exception(f'SSH resulted in error: {err_message}!')
+    print("Deployed server release to VM")
