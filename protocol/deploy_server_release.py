@@ -16,9 +16,10 @@ import subprocess
 
 GITHUB_TOKEN = '3dd175ed9ef231590537b9401a60edd9b9dca475'
 
-default_protocol_dir = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "protocol-packages"
-)
+# default_protocol_dir = os.path.join(
+#     os.path.dirname(os.path.realpath(__file__)), "protocol-packages"
+# )
+default_protocol_path = 'C:\server_build\Windows-64bit_server'
 
 def get_release(
     repo: github.Repository.Repository, desired_release: str
@@ -98,9 +99,9 @@ if __name__ == "__main__":
         default="fractalcomputers/protocol",
     )
     parser.add_argument(
-        "--out-dir",
+        "--out-path",
         help="where to store the downloaded protocol in the VM",
-        default=default_protocol_dir,
+        default=default_protocol_path,
     )
     parser.add_argument(
         "--wipe-old",
@@ -110,10 +111,10 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # github_client = github.Github(GITHUB_TOKEN)
-    # release = get_release(github_client.get_repo(args.protocol_repo), args.release)
-    # print(f"Selected release '{release.title}'")
-    # asset = get_server_asset_from_release(release)
+    github_client = github.Github(GITHUB_TOKEN)
+    release = get_release(github_client.get_repo(args.protocol_repo), args.release)
+    print(f"Selected release '{release.title}'")
+    asset = get_server_asset_from_release(release)
     # if args.wipe_old:
     #     print(f"Clearing out all files currently in '{args.out_dir}'")
     #     shutil.rmtree(args.out_dir, ignore_errors=True)
@@ -132,16 +133,46 @@ if __name__ == "__main__":
     #         shutil.copyfileobj(r.raw, out)
     # print(f"Saved '{out_path}'")
     
-    out_path = '/Users/tinalu/Desktop/protocol/protocol-packages/protocol_tlu2.deploy-server-release-20200821.2_Windows-64bit_client.zip'
+    print(asset.url)
+    #out_path = '/Users/tinalu/Desktop/protocol/protocol-packages/protocol_tlu2.deploy-server-release-20200821.2_Windows-64bit_client.zip'
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh_client.connect(hostname=args.vm_ip, username=args.vm_user, port=22, key_filename=args.ssh_key, timeout=10)
-    ssh_client.exec_command('powershell net stop fractal ;\
-        taskkill /IM "FractalService.exe" /F ;\
-        taskkill /IM "FractalServer.exe" /F ;\
-        Remove-Item C:\ProgramData\FractalCache\log.txt ;\
-        mkdir C:\server_build ;')
-    scp_client = SCPClient(ssh_client.get_transport(), socket_timeout=10)
-    scp_client.put(out_path, remote_path='C:\server_build\Windows-64bit_server')
-    scp_client.put(out_path, remote_path='C:\Program Files\Fractal')
-    ssh_client.exec_command('powershell net start fractal ; shutdown /r ;')
+    cmd = f'powershell $Token = \""{GITHUB_TOKEN}\"";'
+    print(cmd)
+    stdin, stdout, stderr = ssh_client.exec_command(cmd)
+    stderr = stderr.readlines()
+    error = ""
+    for err in stderr:
+        error += err
+    print(error)
+    # cmd = f'powershell net stop fractal ;\
+    #     taskkill /IM "FractalService.exe" /F ;\
+    #     taskkill /IM "FractalServer.exe" /F ;\
+    #     Remove-Item C:\ProgramData\FractalCache\log.txt ;\
+    #     New-Item -ItemType Directory -Force -Path C:\server_build ;\
+    #     $Uri = '"{asset.url}"';\
+    #     $Token = '"{GITHUB_TOKEN}"';\
+    #     $Outfile = '"{args.out_path}"';\
+    #     $Base64Token = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Token));\
+    #     $Headers = @{{\
+    #         Authorization = "Basic {{0}}" -f $Base64Token\
+    #         Accept = application/octet-stream\
+    #     }};\
+    #     Invoke-WebRequest -Uri $Uri -Headers $Headers -Outfile $Outfile;'
+    # print(cmd)
+    # stdin, stdout, stderr = ssh_client.exec_command(cmd)
+    # stderr = stderr.readlines()
+    # error = ""
+    # for err in stderr:
+    #     error += err
+    # print(error)
+    # ssh_client.exec_command('powershell python -c ;\
+    #     import github ;\
+    #     github_client = github.Github(GITHUB_TOKEN) ;\
+    #     Remove-Item C:\ProgramData\FractalCache\log.txt ;\
+    #     mkdir C:\server_build ;')
+    # scp_client = SCPClient(ssh_client.get_transport(), socket_timeout=10)
+    # scp_client.put(out_path, remote_path='C:\server_build\Windows-64bit_server')
+    # scp_client.put(out_path, remote_path='C:\Program Files\Fractal')
+    # ssh_client.exec_command('powershell net start fractal ; shutdown /r ;')
