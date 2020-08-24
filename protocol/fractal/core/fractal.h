@@ -421,8 +421,8 @@ typedef enum FractalClientMessageType {
     MESSAGE_TIME = 15,
     CMESSAGE_INTERACTION_MODE = 16,
     MESSAGE_DISCOVERY_REQUEST = 17,
-    MESSAGE_USER_EMAIL = 18, ///< used to send user email to the server, to set
-                            ///< sentry user
+    MESSAGE_USER_EMAIL = 18,  ///< used to send user email to the server, to set
+                              ///< sentry user
     CMESSAGE_QUIT = 100,
 } FractalClientMessageType;
 

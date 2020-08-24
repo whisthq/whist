@@ -34,8 +34,8 @@ int handler(Display* d, XErrorEvent* a) {
 void get_wh(CaptureDevice* device, int* w, int* h) {
     XWindowAttributes window_attributes;
     if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
-	*w = 0;
-	*h = 0;
+        *w = 0;
+        *h = 0;
         LOG_ERROR("Error while getting window attributes");
         return;
     }
@@ -65,31 +65,31 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     device->height = height;
 
     if (!is_same_wh(device)) {
-	char modename[1024];
-	char cmd[1024];
+        char modename[1024];
+        char cmd[1024];
 
-	snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
+        snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
 
-	snprintf(cmd, sizeof(cmd), "xrandr --delmode default %s", modename);
+        snprintf(cmd, sizeof(cmd), "xrandr --delmode default %s", modename);
         system(cmd);
-	snprintf(cmd, sizeof(cmd), "xrandr --delmode DVI-D-0 %s", modename);
+        snprintf(cmd, sizeof(cmd), "xrandr --delmode DVI-D-0 %s", modename);
         system(cmd);
         snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
         system(cmd);
 
         snprintf(cmd, sizeof(cmd),
-                "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
-                "cut -d' ' -f3-)",
-                modename, width, height);
+                 "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
+                 "cut -d' ' -f3-)",
+                 modename, width, height);
         system(cmd);
 
-	snprintf(cmd, sizeof(cmd), "xrandr --addmode default %s", modename);
+        snprintf(cmd, sizeof(cmd), "xrandr --addmode default %s", modename);
         system(cmd);
-	snprintf(cmd, sizeof(cmd), "xrandr --output default --mode %s", modename);
+        snprintf(cmd, sizeof(cmd), "xrandr --output default --mode %s", modename);
         system(cmd);
-	snprintf(cmd, sizeof(cmd), "xrandr --addmode DVI-D-0 %s", modename);
+        snprintf(cmd, sizeof(cmd), "xrandr --addmode DVI-D-0 %s", modename);
         system(cmd);
-	snprintf(cmd, sizeof(cmd), "xrandr --output DVI-D-0 --mode %s", modename);
+        snprintf(cmd, sizeof(cmd), "xrandr --output DVI-D-0 --mode %s", modename);
         system(cmd);
 
         // If it's still not the correct dimensions
@@ -100,12 +100,13 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     }
 
 #if USING_GPU_CAPTURE
-    if (CreateNvidiaCaptureDevice(&device->nvidia_capture_device, 10000000, CODEC_TYPE_UNKNOWN) < 0) {
-	device->using_nvidia = false;
+    if (CreateNvidiaCaptureDevice(&device->nvidia_capture_device, 10000000, CODEC_TYPE_UNKNOWN) <
+        0) {
+        device->using_nvidia = false;
     } else {
-	device->using_nvidia = true;
-    	LOG_INFO("Using Nvidia Capture SDK!");
-	return 0;
+        device->using_nvidia = true;
+        LOG_INFO("Using Nvidia Capture SDK!");
+        return 0;
     }
 #endif
 
@@ -154,13 +155,13 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
 int CaptureScreen(CaptureDevice* device) {
     if (device->using_nvidia) {
         int ret = NvidiaCaptureScreen(&device->nvidia_capture_device);
-	if (ret < 0) {
-	    return ret;
-	} else {
-	    device->frame_data = device->nvidia_capture_device.frame;
-	    device->pitch = device->width * 4;
-	    return 1;
-	}
+        if (ret < 0) {
+            return ret;
+        } else {
+            device->frame_data = device->nvidia_capture_device.frame;
+            device->pitch = device->width * 4;
+            return 1;
+        }
     }
 
     static bool first = true;
@@ -220,9 +221,9 @@ void ReleaseScreen(CaptureDevice* device) {}
 
 void DestroyCaptureDevice(CaptureDevice* device) {
     if (device->using_nvidia) {
-	DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
+        DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
     } else {
-	if (device->image) {
+        if (device->image) {
             XFree(device->image);
         }
     }
@@ -231,10 +232,9 @@ void DestroyCaptureDevice(CaptureDevice* device) {
 
 bool UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec) {
     if (device->using_nvidia) {
-	DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
-	CreateNvidiaCaptureDevice(&device->nvidia_capture_device, bitrate, codec);
-	return true;
+        DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
+        CreateNvidiaCaptureDevice(&device->nvidia_capture_device, bitrate, codec);
+        return true;
     }
     return false;
 }
-

@@ -464,4 +464,3 @@ bool UpdateCaptureEncoder(CaptureDevice* device) {
     device;
     return false;
 }
-

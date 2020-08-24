@@ -101,9 +101,10 @@ void startConnectionLog();
 void initLogger(char *log_dir) {
     initBacktraceHandler();
     sentry_options_t *options = sentry_options_new();
-//    sentry_options_set_debug(options, true); //if sentry is playing up uncomment this
+    //    sentry_options_set_debug(options, true); //if sentry is playing up uncomment this
     sentry_options_set_dsn(options, SENTRY_DSN);
-    // These are used by sentry to classify events and so we can keep track of version specific issues.
+    // These are used by sentry to classify events and so we can keep track of version specific
+    // issues.
     char release[200];
     sprintf(release, "fractal-protocol@%s", FRACTAL_GIT_REVISION);
     sentry_options_set_release(options, release);
@@ -187,7 +188,7 @@ void destroyLogger() {
     }
 }
 
-void sentry_send_bread_crumb(char* tag, const char* fmtStr, ...){
+void sentry_send_bread_crumb(char *tag, const char *fmtStr, ...) {
     va_list args;
     va_start(args, fmtStr);
     char sentry_str[LOGGER_BUF_SIZE];
@@ -197,26 +198,20 @@ void sentry_send_bread_crumb(char* tag, const char* fmtStr, ...){
     sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));
     sentry_add_breadcrumb(crumb);
     va_end(args);
-
 }
 
-void sentry_send_event(const char* fmtStr, ...){
+void sentry_send_event(const char *fmtStr, ...) {
     va_list args;
     va_start(args, fmtStr);
-    char sentry_str[LOGGER_BUF_SIZE]; \
-    sprintf(sentry_str, fmtStr, args); \
+    char sentry_str[LOGGER_BUF_SIZE];
+    sprintf(sentry_str, fmtStr, args);
     va_end(args);
     sentry_value_t event = sentry_value_new_message_event(
-            /*   level */ SENTRY_LEVEL_ERROR,
-            /*  logger */ "client-logs",
-            /* message */ sentry_str
-    );
+        /*   level */ SENTRY_LEVEL_ERROR,
+        /*  logger */ "client-logs",
+        /* message */ sentry_str);
     sentry_capture_event(event);
 }
-
-
-
-
 
 int MultiThreadedPrintf(void *opaque) {
     UNUSED(opaque);

@@ -114,6 +114,6 @@ void ReleaseScreen(CaptureDevice* device);
  */
 void DestroyCaptureDevice(CaptureDevice* device);
 
-bool UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec); 
+bool UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec);
 
 #endif  // CAPTURE_X11CAPTURE_H

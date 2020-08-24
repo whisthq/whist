@@ -99,15 +99,15 @@ Defines
 #endif
 
 #if LOG_LEVEL >= WARNING_LEVEL
-#define LOG_WARNING(message, ...) \
-    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__);  \
+#define LOG_WARNING(message, ...)                                                 \
+    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__); \
     SENTRYBREADCRUMB(WARNING_TAG, message, ##__VA_ARGS__)
 #else
 #define LOG_WARNING(message, ...)
 #endif
 
 #if LOG_LEVEL >= ERROR_LEVEL
-#define LOG_ERROR(message, ...) \
+#define LOG_ERROR(message, ...)                                                 \
     PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__); \
     SENTRYEVENT(message, ##__VA_ARGS__)
 #else

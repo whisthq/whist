@@ -215,7 +215,7 @@ char *getLogDir(void) {
 
 int logConnectionID(int connection_id) {
     // itoa is not portable
-    char* str_connection_id = malloc(sizeof(char) * 100);
+    char *str_connection_id = malloc(sizeof(char) * 100);
     sprintf(str_connection_id, "%d", connection_id);
     // send connection id to sentry as a tag, server also does this
     sentry_set_tag("connection_id", str_connection_id);
@@ -324,7 +324,7 @@ int sendTimeToServer(void) {
     return 0;
 }
 
-int sendEmailToServer(char* email) {
+int sendEmailToServer(char *email) {
     struct FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_USER_EMAIL;
     strcpy(fmsg.user_email, email);
