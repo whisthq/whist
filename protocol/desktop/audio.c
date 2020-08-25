@@ -128,13 +128,8 @@ void updateAudio() {
         exit(-1);
     }
     int status = SDL_TryLockMutex(audio_mutex);
-    if (!AudioData.dev || status == SDL_MUTEX_TIMEDOUT) {
+    if (!AudioData.dev || status != 0) {
         return;
-    }
-    if (status != 0) {
-        LOG_ERROR("Try lock failed with error %s!", SDL_GetError());
-        destroyLogger();
-        exit(-1);
     }
 #if LOG_AUDIO
     // mprintf("Queue: %d", SDL_GetQueuedAudioSize(AudioData.dev));
