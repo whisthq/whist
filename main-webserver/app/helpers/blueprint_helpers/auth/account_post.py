@@ -86,8 +86,16 @@ def registerHelper(username, password, name, reason_for_signup):
 
     # Add the user to the database
 
-    new_user = User(user_id=username, password=pwd_token, token=token, referral_code=promo_code, name=name, reason_for_signup=reason_for_signup, release_stage=50, created_timestamp=dt.now(datetime.timezone.utc).timestamp())
-
+    new_user = User(
+        user_id=username,
+        password=pwd_token,
+        token=token,
+        referral_code=promo_code,
+        name=name,
+        reason_for_signup=reason_for_signup,
+        release_stage=50,
+        created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
+    )
 
     status = SUCCESS
     access_token, refresh_token = getAccessTokens(username)
@@ -157,19 +165,19 @@ def verifyHelper(username, provided_user_id):
     if user:
         user_id = user.token
 
-    # Check to see if the provided user ID matches the selected user ID
-    #
-    # if provided_user_id == user_id:
-    #     alreadyVerified = output["rows"][0]["verified"]
-    #     fractalSQLUpdate(
-    #         table_name="users",
-    #         conditional_params={"email": username},
-    #         new_params={"verified": True},
-    #     )
-    #
-    #     if not alreadyVerified:
-    #         # Send welcome mail to user after they verify for the first time
-    #         signupMail(user.user_id, user.referral_code)
+        # Check to see if the provided user ID matches the selected user ID
+        #
+        # if provided_user_id == user_id:
+        #     alreadyVerified = output["rows"][0]["verified"]
+        #     fractalSQLUpdate(
+        #         table_name="users",
+        #         conditional_params={"email": username},
+        #         new_params={"verified": True},
+        #     )
+        #
+        #     if not alreadyVerified:
+        #         # Send welcome mail to user after they verify for the first time
+        #         signupMail(user.user_id, user.referral_code)
 
         return {"status": SUCCESS, "verified": True}
     else:
