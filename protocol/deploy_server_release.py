@@ -55,9 +55,10 @@ def get_server_asset_from_release(
         #
         # Compare against lowercase for caller ease of use since the OS and flavor
         # identifiers are not dependent on case
+        asset_flavor = asset.name.split("_")[-1]
         if (
             os.lower() in asset.name.lower()
-            and flavor.lower() in asset.name.lower()
+            and flavor.lower() in asset_flavor.lower()
         ):
             return asset
     raise Exception(
@@ -104,8 +105,10 @@ if __name__ == "__main__":
     release = get_release(github_client.get_repo(args.protocol_repo), args.release)
     print(f"Selected release '{release.title}'")
     asset = get_server_asset_from_release(release)
+    print(f"Selected asset '{asset.name}'")
     out_path = args.out_dir + "\\" + asset.name
-    all_out_path = out_path + '\*'
+    out_path_unzipped = out_path + '_unzipped'
+    new_server_build = out_path_unzipped + '\Windows-64bit_server\*'
 
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -123,7 +126,8 @@ if __name__ == "__main__":
                       \\"Accept\\" = \\"application/octet-stream\\"}};\
         $ProgressPreference = \\"SilentlyContinue\\";\
         Invoke-WebRequest -Uri $Uri -Headers $Headers -Outfile $Outfile -UseBasicParsing;\
-        Copy-item -Force -Recurse \\"{all_out_path}\\" -Destination \\"C:\server_build\Windows-64bit_server\\";\
+        Expand-Archive -Force -LiteralPath \\"{out_path}\\" -DestinationPath \\"{out_path_unzipped}\\";\
+        Copy-item -Force -Recurse \\"{new_server_build}\\" -Destination \\"C:\server_build\Windows-64bit_server\\";\
         Copy-item -Force -Recurse \\"C:\server_build\Windows-64bit_server\*\\"  -Destination \\"C:\Program Files\Fractal\\\";\
         net start fractal ; shutdown /r ;'
     stdin, stdout, stderr = ssh_client.exec_command(cmd)
