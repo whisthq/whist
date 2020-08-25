@@ -67,8 +67,8 @@ void reinitAudio() {
         destroyLogger();
         exit(-1);
     }
-    initAudio();
     destroyAudio();
+    initAudio();
     SDL_UnlockMutex(mutex);
 }
 
