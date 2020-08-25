@@ -132,7 +132,7 @@ void updateAudio() {
         return;
     }
     if (status != 0) {
-        LOG_ERROR("Try lock failed!");
+        LOG_ERROR("Try lock failed with error %s!", SDL_GetError());
         destroyLogger();
         exit(-1);
     }
