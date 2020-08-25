@@ -59,23 +59,23 @@ int decoder_frequency = 48000;  // Hertz
 
 clock test_timer;
 double test_time;
-SDL_mutex *mutex;
+SDL_mutex *audio_mutex;
 
 void reinitAudio() {
-    if (SDL_LockMutex(mutex) != 0) {
+    if (SDL_LockMutex(audio_mutex) != 0) {
         LOG_ERROR("Failed to lock mutex!");
         destroyLogger();
         exit(-1);
     }
     destroyAudio();
     initAudio();
-    SDL_UnlockMutex(mutex);
+    SDL_UnlockMutex(audio_mutex);
 }
 
 void initAudio() {
-    if (!mutex) {
-        mutex = SDL_CreateMutex();
-        if (!mutex) {
+    if (!audio_mutex) {
+        audio_mutex = SDL_CreateMutex();
+        if (!audio_mutex) {
             LOG_ERROR("Failed to initialize mutex!");
             destroyLogger();
             exit(-1);
@@ -122,12 +122,12 @@ void destroyAudio() {
 }
 
 void updateAudio() {
-    if (!mutex) {
+    if (!audio_mutex) {
         LOG_ERROR("Mutex or audio is not initialized yet!");
         destroyLogger();
         exit(-1);
     }
-    int status = SDL_TryLockMutex(mutex);
+    int status = SDL_TryLockMutex(audio_mutex);
     if (!AudioData.dev || status == SDL_MUTEX_TIMEDOUT) {
         return;
     }
@@ -175,7 +175,7 @@ void updateAudio() {
 
     if (gapping) {
         if (bytes_until_can_play < TARGET_AUDIO_QUEUE_LIMIT) {
-            SDL_UnlockMutex(mutex);
+            SDL_UnlockMutex(audio_mutex);
             return;
         } else {
             LOG_INFO("Done catching up! Audio Queue: %d", bytes_until_can_play);
@@ -184,7 +184,7 @@ void updateAudio() {
     }
 
     if (last_played_id == -1) {
-        SDL_UnlockMutex(mutex);
+        SDL_UnlockMutex(audio_mutex);
         return;
     }
 
@@ -195,7 +195,7 @@ void updateAudio() {
 
         if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
             LOG_WARNING("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!");
-            SDL_UnlockMutex(mutex);
+            SDL_UnlockMutex(audio_mutex);
             return;
         }
 
@@ -307,7 +307,7 @@ void updateAudio() {
             last_nacked_id = i;
         }
     }
-    SDL_UnlockMutex(mutex);
+    SDL_UnlockMutex(audio_mutex);
 }
 
 int32_t ReceiveAudio(FractalPacket* packet) {
