@@ -175,6 +175,7 @@ void updateAudio() {
 
     if (gapping) {
         if (bytes_until_can_play < TARGET_AUDIO_QUEUE_LIMIT) {
+            SDL_UnlockMutex(mutex);
             return;
         } else {
             LOG_INFO("Done catching up! Audio Queue: %d", bytes_until_can_play);
@@ -183,6 +184,7 @@ void updateAudio() {
     }
 
     if (last_played_id == -1) {
+        SDL_UnlockMutex(mutex);
         return;
     }
 
@@ -193,6 +195,7 @@ void updateAudio() {
 
         if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
             LOG_WARNING("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!");
+            SDL_UnlockMutex(mutex);
             return;
         }
 
