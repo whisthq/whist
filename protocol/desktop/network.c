@@ -33,16 +33,15 @@ extern int uid;
 #define TCP_CONNECTION_WAIT 1000  // ms
 #define UDP_CONNECTION_WAIT 1000  // ms
 
-bool using_stun;
-
-int discoverPorts(void) {
+int discoverPorts(bool* using_stun) {
     SocketContext context;
-    using_stun = true;
-    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, using_stun,
+    LOG_INFO("using stun is %d", *using_stun);
+    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
                          (char *)aes_private_key) < 0) {
-        using_stun = false;
+        *using_stun = !*using_stun;
+        LOG_INFO("using stun is updated to %d", *using_stun);
         if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                             using_stun, (char *)aes_private_key) < 0) {
+                             *using_stun, (char *)aes_private_key) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
             return -1;
         }
@@ -119,7 +118,8 @@ int discoverPorts(void) {
 }
 
 // must be called after
-int connectToServer(void) {
+int connectToServer(bool using_stun) {
+    LOG_INFO("using stun is %d", using_stun);
     if (UDP_port < 0) {
         LOG_ERROR("Trying to connect UDP but port not set.");
         return -1;

@@ -73,6 +73,7 @@ int parseArgs(int argc, char *argv[]) {
         "  -p, --private-key=PK          pass in the RSA Private Key as a "
         "hexadecimal string\n"
         "  -k, --use_ci                  launch the protocol in CI mode\n"
+        "  -cn, --connection_type        which connection type to try first, either STUN or DIRECT\n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
@@ -130,6 +131,9 @@ int parseArgs(int argc, char *argv[]) {
                     printf("%s", usage);
                     return -1;
                 }
+                break;
+            case 'cn':
+                running_ci = 1;
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);

@@ -533,6 +533,7 @@ int main(int argc, char* argv[]) {
 
     exiting = false;
     bool failed = false;
+    bool using_stun = true;
 
     for (try_amount = 0; try_amount < MAX_NUM_CONNECTION_ATTEMPTS && !exiting && !failed;
          try_amount++) {
@@ -541,12 +542,12 @@ int main(int argc, char* argv[]) {
             SDL_Delay(1000);
         }
 
-        if (discoverPorts() != 0) {
+        if (discoverPorts(&using_stun) != 0) {
             LOG_WARNING("Failed to discover ports.");
             continue;
         }
 
-        if (connectToServer() != 0) {
+        if (connectToServer(using_stun) != 0) {
             LOG_WARNING("Failed to connect to server.");
             continue;
         }
