@@ -362,8 +362,12 @@ jobs:
       - name: Upload debug information to sentry
         run: |
             sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractalcomputers -p protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
+      - name: upload windows pdb
+        if: runner.os == 'Windows'
+        run:
+          sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractalcomputers -p protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
 
-      - name: Upload server artifact (if requested on this platform)
+    - name: Upload server artifact (if requested on this platform)
         if: matrix.config.server_artifact_name
         uses: actions/upload-artifact@v2
         with:
