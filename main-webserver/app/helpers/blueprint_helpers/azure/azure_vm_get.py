@@ -44,9 +44,7 @@ def protocolInfoHelper(ip_address):
             table_name="disk_settings", params={"disk_name": vm_info["disk_name"]}
         )
 
-        access_token, refresh_token = getAccessTokens(
-            DASHBOARD_USERNAME + "@gmail.com"
-        )
+        access_token, refresh_token = getAccessTokens(DASHBOARD_USERNAME + "@gmail.com")
 
         if output["rows"] and output["success"]:
             settings = output["rows"][0]

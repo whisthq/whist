@@ -13,9 +13,7 @@ def createClients():
    """
     subscription_id = AZURE_SUBSCRIPTION_ID
     credentials = ServicePrincipalCredentials(
-        client_id=AZURE_CLIENT_ID,
-        secret=AZURE_CLIENT_SECRET,
-        tenant=AZURE_TENANT_ID,
+        client_id=AZURE_CLIENT_ID, secret=AZURE_CLIENT_SECRET, tenant=AZURE_TENANT_ID,
     )
     r = ResourceManagementClient(credentials, subscription_id)
     c = ComputeManagementClient(credentials, subscription_id)
@@ -172,8 +170,7 @@ def checkResourceGroup(resource_group):
             function="checkResourceGroup",
             label="None",
             logs="The production resource group is {resource_group}, valid resource group is {valid_resource_group}".format(
-                resource_group=VM_GROUP,
-                valid_resource_group=str(valid_resource_group),
+                resource_group=VM_GROUP, valid_resource_group=str(valid_resource_group),
             ),
         )
 
