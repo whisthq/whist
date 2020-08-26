@@ -129,6 +129,7 @@ void updateAudio() {
     }
     int status = SDL_TryLockMutex(audio_mutex);
     if (!AudioData.dev || status != 0) {
+        LOG_INFO("Couldn't lock mutex in updateAudio!");
         return;
     }
 #if LOG_AUDIO
