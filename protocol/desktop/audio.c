@@ -62,6 +62,7 @@ double test_time;
 SDL_mutex *audio_mutex;
 
 void reinitAudio() {
+    LOG_INFO("Re-init'ing Audio!");
     if (SDL_LockMutex(audio_mutex) != 0) {
         LOG_ERROR("Failed to lock mutex!");
         destroyLogger();
