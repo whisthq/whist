@@ -29,7 +29,7 @@ platform_map_no_size = {
 default_channel_s3_buckets = {
     "testing": {
         "Windows-64bit": "fractal-applications-testing",
-        "Linux-64bit": "fractal-linux-applications-testing",  # TODO as of 2020-07-18 this bucket does not exist!
+        "Linux-64bit": "fractal-linux-applications-testing",
         "macOS-64bit": "fractal-mac-application-testing",
     },
     "production": {
@@ -42,6 +42,15 @@ default_channel_s3_buckets = {
     ),
 }
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def select_protocol_binary(platform: str, protocol_id: str, protocol_dir: Path) -> Path:
     valid_protocols = protocol_dir.glob(f"*{platform}*.*")
@@ -201,8 +210,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--push-new-update",
+        type=str2bool,
+        nargs='?', # zero or one argument
         help="push the release to the auto update system (see --update-channel to define target)",
-        action="store_true",
+        const=True,
         default=False,
     )
     parser.add_argument(
@@ -356,7 +367,7 @@ if __name__ == "__main__":
             "`yarn` must be installed in order to build and package the application"
         )
     run_cmd([yarn_cmd], cwd=desktop_dir)  # Ensure that all dependencies are installed
-    package_script = "package:publish" if args.push_new_update else "package"
+    package_script = "package-ci" if args.push_new_update else "package"
     run_cmd([yarn_cmd, package_script], cwd=desktop_dir)
 
     # #####
