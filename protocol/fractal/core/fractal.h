@@ -397,28 +397,29 @@ typedef enum FractalClientMessageType {
     CMESSAGE_NONE = 0,         ///< No Message
     MESSAGE_KEYBOARD = 1,      ///< `keyboard` FractalKeyboardMessage is valid in
                                ///< FractClientMessage.
-    MESSAGE_MOUSE_BUTTON = 2,  ///< `mouseButton` FractalMouseButtonMessage is
+    MESSAGE_KEYBOARD_STATE = 2,
+    MESSAGE_MOUSE_BUTTON = 3,  ///< `mouseButton` FractalMouseButtonMessage is
                                ///< valid in FractClientMessage.
-    MESSAGE_MOUSE_WHEEL = 3,   ///< `mouseWheel` FractalMouseWheelMessage is
+    MESSAGE_MOUSE_WHEEL = 4,   ///< `mouseWheel` FractalMouseWheelMessage is
                                ///< valid in FractClientMessage.
-    MESSAGE_MOUSE_MOTION = 4,  ///< `mouseMotion` FractalMouseMotionMessage is
+    MESSAGE_MOUSE_MOTION = 5,  ///< `mouseMotion` FractalMouseMotionMessage is
                                ///< valid in FractClientMessage.
-    MESSAGE_MOUSE_INACTIVE = 5,
-    MESSAGE_RELEASE = 6,  ///< Message instructing the host to release all input
+    MESSAGE_MOUSE_INACTIVE = 6,
+    MESSAGE_MULTIGESTURE = 7, ///< Gesture Event
+    MESSAGE_RELEASE = 8,  ///< Message instructing the host to release all input
                           ///< that is currently pressed.
-    MESSAGE_MBPS = 7,     ///< `mbps` double is valid in FractClientMessage.
-    MESSAGE_PING = 8,
-    MESSAGE_DIMENSIONS = 9,  ///< `dimensions.width` int and `dimensions.height`
+    MESSAGE_MBPS = 107,     ///< `mbps` double is valid in FractClientMessage.
+    MESSAGE_PING = 108,
+    MESSAGE_DIMENSIONS = 109,  ///< `dimensions.width` int and `dimensions.height`
                              ///< int is valid in FractClientMessage
-    MESSAGE_VIDEO_NACK = 10,
-    MESSAGE_AUDIO_NACK = 11,
-    MESSAGE_KEYBOARD_STATE = 12,
-    CMESSAGE_CLIPBOARD = 13,
-    MESSAGE_IFRAME_REQUEST = 14,
-    MESSAGE_TIME = 15,
-    CMESSAGE_INTERACTION_MODE = 16,
-    MESSAGE_DISCOVERY_REQUEST = 17,
-    CMESSAGE_QUIT = 100,
+    MESSAGE_VIDEO_NACK = 110,
+    MESSAGE_AUDIO_NACK = 111,
+    CMESSAGE_CLIPBOARD = 112,
+    MESSAGE_IFRAME_REQUEST = 113,
+    MESSAGE_TIME = 114,
+    CMESSAGE_INTERACTION_MODE = 115,
+    MESSAGE_DISCOVERY_REQUEST = 116,
+    CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
 
 typedef struct FractalClientMessage {
@@ -429,6 +430,9 @@ typedef struct FractalClientMessage {
         FractalMouseWheelMessage mouseWheel;              ///< Mouse wheel message.
         FractalMouseMotionMessage mouseMotion;            ///< Mouse motion message.
         FractalDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
+           
+        // MESSAGE_MULTIGESTURE
+        SDL_MultiGestureEvent multigestureData;
 
         // CMESSAGE_INTERACTION_MODE
         InteractionMode interaction_mode;

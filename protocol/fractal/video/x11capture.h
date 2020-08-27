@@ -115,6 +115,15 @@ void ReleaseScreen(CaptureDevice* device);
  */
 void DestroyCaptureDevice(CaptureDevice* device);
 
+/**
+ * @brief                          Updates the capture device if the capture device is also the encoder
+ *
+ * @param device                   The Linux Ubuntu screencapture device
+ * @param bitrate                  The new bitrate to use for encoding
+ * @param codec                    The new codec to use for encoding
+ *
+ * @returns                        True if the capture device was indeed updated as an encoder
+ */
 void UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec); 
 
 #endif  // CAPTURE_X11CAPTURE_H
