@@ -216,8 +216,9 @@ if(NOT EXISTS ${sentry_dir})
     file(DOWNLOAD ${sentry_url} ${filename}.zip
             TIMEOUT 60  # seconds
             TLS_VERIFY ON)
+    file(MAKE_DIRECTORY ${sentry_dir})
 endif()
-file(MAKE_DIRECTORY ${sentry_dir})
+
 execute_process(
         COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${sentry_dir}
