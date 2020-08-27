@@ -67,6 +67,7 @@ volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
+bool using_stun = true;
 
 int UDP_port = -1;
 int TCP_port = -1;
@@ -533,7 +534,6 @@ int main(int argc, char* argv[]) {
 
     exiting = false;
     bool failed = false;
-    bool using_stun = true;
 
     for (try_amount = 0; try_amount < MAX_NUM_CONNECTION_ATTEMPTS && !exiting && !failed;
          try_amount++) {

@@ -30,8 +30,8 @@ extern SocketContext PacketTCPContext;
 extern char *server_ip;
 extern int uid;
 
-#define TCP_CONNECTION_WAIT 1000  // ms
-#define UDP_CONNECTION_WAIT 1000  // ms
+#define TCP_CONNECTION_WAIT 300  // ms
+#define UDP_CONNECTION_WAIT 300  // ms
 
 int discoverPorts(bool* using_stun) {
     SocketContext context;

@@ -6,8 +6,8 @@
 
 #include "client.h"
 
-#define UDP_CONNECTION_WAIT 1500
-#define TCP_CONNECTION_WAIT 1500
+#define UDP_CONNECTION_WAIT 1000
+#define TCP_CONNECTION_WAIT 1000
 #define BITS_IN_BYTE 8.0
 
 extern Client clients[MAX_NUM_CLIENTS];
