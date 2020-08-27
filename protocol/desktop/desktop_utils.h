@@ -11,7 +11,7 @@
 
 #define HOST_PUBLIC_KEY_PATH "ssh_host_ecdsa_key.pub"
 #define CLIENT_PRIVATE_KEY_PATH "sshkey"
-#define MAX_NUM_CONNECTION_ATTEMPTS (3)
+#define MAX_NUM_CONNECTION_ATTEMPTS (15)
 
 /**
  * Copyright Fractal Computers, Inc. 2020
