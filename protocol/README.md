@@ -123,7 +123,7 @@ To see the warnings in context go to the Actions tab, click on your PR/push that
 
 ### Testing on VMs
 
-As mentioned above, every commit to `dev`, `staging` and `master` and every new PR results in a build being uploaded to Github Releases. The server build in this release can be easily uploaded to a VM for testing using the `deploy_server_release.py` script. The script requires that you specify the IP address of a VM that is currently running and also allows you to specify the specific release to test, defaulting to the latest release on `dev`. For example, to run the server build in the latest release in the `staging` branch on the VM at IP address 52.168.66.248, you can run `python deploy_server_release.py --vm-ip=52.168.66.248 --release=latest:staging`. To see other optional arguments that are exposed (but probably won't be too helpful), just open up `deploy_server_release.py`.
+As mentioned above, every commit to `dev`, `staging` and `master` and every new PR results in a build being uploaded to Github Releases. The server build in this release can be easily uploaded to a VM for testing using the `deploy_server_release.py` script. The script requires that you specify the IP address of a VM that is currently running and also allows you to specify the specific release to test, defaulting to the latest release on `dev`. For example, to run the server build in the latest release in the `staging` branch on the VM at IP address 52.168.66.248, you can run `python deploy_server_release.py --vm-ip=52.168.66.248 --release=latest:staging`. To see other optional arguments that are exposed, just open up `deploy_server_release.py`.
 
 ### Special Cases
 
