@@ -208,7 +208,20 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/")
 endif()
 
-
+#download and install Sentry CMake project
+# This is fixed to sdk version 0.4.1
+set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.1/sentry-native.zip)
+set(sentry_dir sentry-native)
+if(NOT EXISTS ${sentry_dir})
+    file(DOWNLOAD ${sentry_url} ${filename}.zip
+            TIMEOUT 60  # seconds
+            TLS_VERIFY ON)
+endif()
+file(MAKE_DIRECTORY ${sentry_dir})
+execute_process(
+        COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${sentry_dir}
+)
 # Do this before setting the OSX compiler so we do not mess with the sentry-native build
 add_subdirectory(sentry-native)
 
