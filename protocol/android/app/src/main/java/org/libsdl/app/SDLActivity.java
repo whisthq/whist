@@ -258,7 +258,6 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
 
         // Set up the surface
         mSurface = new SDLSurface(getApplication());
-
         mLayout = new RelativeLayout(this);
         mLayout.addView(mSurface);
 
@@ -268,7 +267,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         SDLActivity.onNativeOrientationChanged(mCurrentOrientation);
         setContentView(mLayout);
 
-        setWindowStyle(false);
+        setWindowStyle(true); // set fullscreen
 
         getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(this);
 

@@ -23,7 +23,8 @@
 #ifndef SDL_androidvideo_h_
 #define SDL_androidvideo_h_
 
-#include "SDL_mutex.h"
+// #include "SDL_mutex.h"
+#include "SDL_androidsem.h"
 #include "SDL_rect.h"
 #include "../SDL_sysvideo.h"
 
@@ -42,8 +43,8 @@ typedef struct SDL_VideoData
 
 extern int Android_SurfaceWidth;
 extern int Android_SurfaceHeight;
-extern SDL_sem *Android_PauseSem, *Android_ResumeSem;
-extern SDL_mutex *Android_ActivityMutex;
+// extern SDL_sem *Android_PauseSem, *Android_ResumeSem;
+// extern SDL_mutex *Android_ActivityMutex;
 
 #endif /* SDL_androidvideo_h_ */
 

@@ -372,7 +372,7 @@ QueueCmdSetDrawColor(SDL_Renderer *renderer, const Uint8 r, const Uint8 g, const
 {
     const Uint32 color = ((a << 24) | (r << 16) | (g << 8) | b);
     int retval = 0;
-    
+
     if (!renderer->color_queued || (color != renderer->last_queued_color)) {
         SDL_RenderCommand *cmd = AllocateRenderCommand(renderer);
         retval = -1;
@@ -641,7 +641,7 @@ SDL_RendererEventWatch(void *userdata, SDL_Event *event)
                 }
             } else if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
                 renderer->hidden = SDL_TRUE;
-            } else if (event->window.event == SDL_WINDOWEVENT_RESTORED || 
+            } else if (event->window.event == SDL_WINDOWEVENT_RESTORED ||
                        event->window.event == SDL_WINDOWEVENT_MAXIMIZED) {
                 if (!(SDL_GetWindowFlags(window) & SDL_WINDOW_HIDDEN)) {
                     renderer->hidden = SDL_FALSE;
@@ -1222,7 +1222,7 @@ SDL_CreateTextureFromSurface(SDL_Renderer * renderer, SDL_Surface * surface)
 
     if (format == surface->format->format) {
         if (surface->format->Amask && SDL_HasColorKey(surface)) {
-            /* Surface and Renderer formats are identicals. 
+            /* Surface and Renderer formats are identicals.
              * Intermediate conversion is needed to convert color key to alpha (SDL_ConvertColorkeyToAlpha()). */
             direct_update = SDL_FALSE;
         } else {
@@ -1996,9 +1996,9 @@ UpdateLogicalSize(SDL_Renderer *renderer)
         SDL_RenderSetViewport(renderer, NULL);
     } else if (want_aspect > real_aspect) {
         if (scale_policy == 1) {
-            /* We want a wider aspect ratio than is available - 
-             zoom so logical height matches the real height 
-             and the width will grow off the screen 
+            /* We want a wider aspect ratio than is available -
+             zoom so logical height matches the real height
+             and the width will grow off the screen
              */
             scale = (float)h / renderer->logical_h;
             viewport.y = 0;

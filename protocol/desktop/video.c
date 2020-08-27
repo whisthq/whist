@@ -59,6 +59,11 @@ extern volatile FractalRGBColor* native_window_color;
 extern volatile bool native_window_color_update;
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
+#ifdef __ANDROID_API__
+SDL_sem *Android_ResumeSem;
+SDL_sem *Android_PauseSem;
+#endif
+
 // START VIDEO VARIABLES
 volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* cursor = NULL;
@@ -260,6 +265,13 @@ int32_t render_screen(SDL_Renderer* renderer) {
     // present the loading screen
     loading_sdl(renderer, loading_index);
 
+#ifdef __ANDROID_API__
+    // android pause/resume context storage
+    int isPaused = 0;
+    int isPausing = 1;
+    SDL_GLContext saved_context;
+#endif
+
     while (video_data.run_render_screen_thread) {
         int ret = SDL_SemTryWait(video_data.renderscreen_semaphore);
         safe_SDL_LockMutex(render_mutex);
@@ -284,6 +296,39 @@ int32_t render_screen(SDL_Renderer* renderer) {
             SDL_Delay(50);
             continue;
         }
+
+#ifdef __ANDROID_API__
+        // check if the android app is paused (backgrounded) and store the context
+        // when resuming, restore the context to the one that has just been stored
+        // this code is derived from that in `SDL2/src/video/android/SDL_androidevents.c`
+        // for backup and restore of context
+        if (isPaused) {
+            saved_context = SDL_GL_GetCurrentContext();
+            /* We need to do this so the EGLSurface can be freed */
+            SDL_GL_MakeCurrent((SDL_Window*) window, NULL);
+
+            if (SDL_SemWait(Android_ResumeSem) == 0) {
+                isPaused = 0;
+
+                SDL_Event event;
+                if (SDL_GL_MakeCurrent((SDL_Window*) window, saved_context)) {
+                    /* The context is no longer valid, create a new one */
+                    SDL_GL_MakeCurrent((SDL_Window*) window, saved_context);
+                    event.type = SDL_RENDER_DEVICE_RESET;
+                    SDL_PushEvent(&event);
+                }
+            }
+        } else {
+            if (isPausing || SDL_SemTryWait(Android_PauseSem) == 0) {
+                if (SDL_NumberOfEvents(SDL_APP_DIDENTERBACKGROUND) > SDL_SemValue(Android_PauseSem)) {
+                    isPausing = 1;
+                } else {
+                    isPausing = 0;
+                    isPaused = 1;
+                }
+            }
+        }
+#endif
 
         loading_index = -1;
 
@@ -1129,6 +1174,19 @@ int32_t receive_video(FractalPacket* packet) {
 
     // mprintf("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)\n",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
+
+//    int pauseSignaled = 0;
+//    int resumeSignaled = 0;
+//    SDL_LockMutex(Android_ActivityMutex);
+//    pauseSignaled = SDL_SemValue(Android_PauseSem);
+//    resumeSignaled = SDL_SemValue(Android_ResumeSem);
+//    if (pauseSignaled > resumeSignaled) {
+//        android_egl_context_backup(Android_Window);
+//        SDL_UnlockMutex(Android_ActivityMutex);
+//    } else {
+//        android_egl_context_restore(Android_Window);
+//        SDL_UnlockMutex(Android_ActivityMutex);
+//    }
 
     // Find frame in linked list that matches the id
     video_data.bytes_transferred += packet->payload_size;
