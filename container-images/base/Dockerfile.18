@@ -106,13 +106,11 @@ WORKDIR /
 
 #From protocol/server/linux-server-setup.sh
 RUN sudo apt-get install ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils -y
-ADD bootstrap.sh /home/fractal
 ADD entry.sh /home/fractal
 ADD display-service-envs /home/fractal
 ADD fractal-input.rules home/fractal
 
-RUN chmod +x /home/fractal/bootstrap.sh \
-    && chown -v -R fractal:fractal /home/fractal
+RUN chown -v -R fractal:fractal /home/fractal
 RUN chown root:root /run/user
 RUN chmod +x /home/fractal/entry.sh
 
@@ -124,7 +122,6 @@ ADD fractal-update-nvidia-busid.service /etc/systemd/system
 ADD fractal-entrypoint.service /etc/systemd/system
 ADD fractal-display.service /etc/systemd/system
 ADD fractal-protocol.service /etc/systemd/system
-# RUN chmod u+x /etc/systemd/system/bootstrap-service.service
 
 VOLUME [ "/sys/fs/cgroup" ]
 
@@ -142,12 +139,10 @@ RUN systemctl enable fractal-update-nvidia-busid
 RUN systemctl enable fractal-entrypoint
 RUN systemctl enable fractal-display
 RUN systemctl enable fractal-protocol
-# RUN chmod +x /lib/systemd/systemd
 
 ADD fractal-setup.sh /
 RUN chmod +x /fractal-setup.sh
 
-# USER fractal
-#ENTRYPOINT ["/usr/bin/sudo"]
+RUN sudo rm /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
+
 CMD ["/lib/systemd/systemd"]
-# CMD ["/home/fractal/bootstrap.sh"]
