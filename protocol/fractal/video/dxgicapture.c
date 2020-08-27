@@ -460,8 +460,8 @@ void DestroyCaptureDevice(CaptureDevice* device) {
     }
 }
 
-bool UpdateCaptureEncoder(CaptureDevice* device) {
-    device;
+bool UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec) {
+    device; bitrate; codec;
     return false;
 }
 
