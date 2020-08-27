@@ -36,3 +36,13 @@ Secret key: skmUeOSEcPjkrdwkKuId3psFABrHdFbUq2vtNdzD
 Console login link: https://747391415460.signin.aws.amazon.com/console
 
 Console password: qxQ!McAhFu0)
+
+use  docker tag base-systemd-18:latest .dkr.ecr.us-east-2.amazonaws.com/fractal-containers:latest to tag, then
+
+aws ecr get-login-password  --region us-east-2 | docker login --username AWS --password-stdin 747391415460.dkr.ecr.us-east-2.amazonaws.com
+
+to login,
+
+then 
+
+docker push 747391415460.dkr.ecr.us-east-2.amazonaws.com/fractal-containers:latest to push
