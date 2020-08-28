@@ -223,14 +223,6 @@ execute_process(
         COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${sentry_dir}
 )
-
-#Set OSX compiler and SDK globally
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    SET(CMAKE_C_COMPILER clang)
-    set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Require MacOS 10.13 or up, to ensure LibObj-C is standard
-endif()
-
 # Do this before setting the OSX compiler so we do not mess with the sentry-native build
 add_subdirectory(sentry-native)
 
@@ -240,7 +232,12 @@ set_target_properties(sentry PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
         )
 
-
+#Set OSX compiler and SDK globally
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    SET(CMAKE_C_COMPILER clang)
+    set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Require MacOS 10.13 or up, to ensure LibObj-C is standard
+endif()
 
 # Tell CMake where to look for includes
 include_directories(fractal)
