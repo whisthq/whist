@@ -58,9 +58,7 @@ public class Fractal extends SDLActivity {
         if(clipboard != null) {
             ClipData data = clipboard.getPrimaryClip();
             if (data != null) {
-                Log.d("Native", "CALL : GetClipboard");
-                Log.d("CLIP BOARD CONTENT : ", data.getItemAt(0).coerceToText(__singleton.getApplicationContext()).toString());
-                return data.getItemAt(0).coerceToText(__singleton.getApplicationContext()).toString();
+                 return data.getItemAt(0).coerceToText(__singleton.getApplicationContext()).toString();
             }
         }
         return "";

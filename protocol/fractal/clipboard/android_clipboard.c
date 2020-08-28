@@ -54,9 +54,6 @@ ClipboardData *GetClipboard() {
     const char *java_string = (*env)->GetStringUTFChars(env, clip, 0);
     memcpy(cb->data, java_string, (size_t)size + 1);
     (*env)->ReleaseStringUTFChars(env, clip, java_string);
-    LOG_ERROR("Type : %d", type);
-    LOG_ERROR("Size : %d", size);
-    LOG_ERROR("Buff : %s", cb->data);
     return cb;
 }
 
@@ -65,5 +62,6 @@ void SetClipboard(ClipboardData *cb) {
     jclass clazz = findClass("org/fractal/app/Fractal");
     jmethodID mid =
         (*env)->GetStaticMethodID(env, clazz, "SetClipboard", "(IILjava/lang/String;)V");
-    (*env)->CallStaticVoidMethod(env, clazz, mid, cb->size, (int)cb->type, (jstring)cb->data);
+    jstring cbData = (*env)->NewStringUTF(env, cb->data);
+    (*env)->CallStaticVoidMethod(env, clazz, mid, cb->size, (int)cb->type, cbData);
 }
