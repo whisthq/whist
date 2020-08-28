@@ -17,42 +17,23 @@ extern JavaVM *javaVM;
 static char cb_buf[MAX_CLIPBOARD_SIZE];
 
 void initClipboard() {
-    LOG_INFO("clazz init clipboard start");
-    // JNIEnv *env;
-    // (*javaVM)->GetEnv(javaVM, (void **)&env, JNI_VERSION_1_6);
     JNIEnv* env = getEnv();
-    LOG_INFO("clazz init clipboard 1");
-    // jclass clazz = (*env)->FindClass(env, "org/fractal/app/Fractal");
     jclass clazz = findClass("org/fractal/app/Fractal");
-    LOG_INFO("clazz: %p", clazz);
-    if (clazz == NULL) {
-        if ((*env)->ExceptionOccurred(env)) {
-            LOG_ERROR("clazz exception occurred");
-            (*env)->ExceptionDescribe(env);
-        } else {
-            LOG_ERROR("clazz is null but no exception was thrown");
-        }
-    }
-    LOG_INFO("init clipboard 2");
     jmethodID mid = (*env)->GetStaticMethodID(env, clazz, "initClipboard", "()V");
-    LOG_INFO("init clipboard 3");
     (*env)->CallStaticVoidMethod(env, clazz, mid);
-    LOG_INFO("init clipboard end");
 }
 
 bool hasClipboardUpdated() {
-    JNIEnv *env;
-    (*javaVM)->GetEnv(javaVM, (void **)&env, JNI_VERSION_1_6);
-    jclass clazz = (*env)->FindClass(env, "org/fractal/app/Fractal");
+    JNIEnv* env = getEnv();
+    jclass clazz = findClass("org/fractal/app/Fractal");
     jmethodID mid = (*env)->GetStaticMethodID(env, clazz, "hasClipboardUpdated", "()Z");
     jboolean b = (*env)->CallStaticBooleanMethod(env, clazz, mid);
     return b;
 }
 
 ClipboardData *GetClipboard() {
-    JNIEnv *env;
-    (*javaVM)->GetEnv(javaVM, (void **)&env, JNI_VERSION_1_6);
-    jclass clazz = (*env)->FindClass(env, "org/fractal/app/Fractal");
+    JNIEnv* env = getEnv();
+    jclass clazz = findClass("org/fractal/app/Fractal");
 
     // Get size
     jmethodID mid = (*env)->GetStaticMethodID(env, clazz, "GetClipboardSize", "()I");
@@ -80,9 +61,8 @@ ClipboardData *GetClipboard() {
 }
 
 void SetClipboard(ClipboardData *cb) {
-    JNIEnv *env;
-    (*javaVM)->GetEnv(javaVM, (void **)&env, JNI_VERSION_1_6);
-    jclass clazz = (*env)->FindClass(env, "org/fractal/app/Fractal");
+    JNIEnv* env = getEnv();
+    jclass clazz = findClass("org/fractal/app/Fractal");
     jmethodID mid =
         (*env)->GetStaticMethodID(env, clazz, "SetClipboard", "(IILjava/lang/String;)V");
     (*env)->CallStaticVoidMethod(env, clazz, mid, cb->size, (int)cb->type, (jstring)cb->data);

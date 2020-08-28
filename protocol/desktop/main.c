@@ -202,7 +202,6 @@ void update() {
 
     FractalClientMessage fmsg;
 
-#ifndef __ANDROID_API__
     // Check for a new clipboard update from the server, if it's been 25ms since
     // the last time we checked the TCP socket, and the clipboard isn't actively
     // busy
@@ -225,7 +224,6 @@ void update() {
         // Update the last tcp check timer
         start_timer((clock*)&update_data.last_tcp_check_timer);
     }
-#endif
 
     // If we haven't yet tried to update the dimension, and the dimensions don't
     // line up, then request the proper dimension
@@ -759,9 +757,8 @@ int SDL_main(int argc, char* argv[]) {
 
         // Initialize audio and variables
         is_timing_latency = false;
-// #ifndef __ANDROID_API__
+
         init_audio();
-// #endif
 
         // Create thread to receive all packets and handle them as needed
         run_receive_packets = true;
