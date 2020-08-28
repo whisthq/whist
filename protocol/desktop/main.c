@@ -500,9 +500,7 @@ int receive_packets(void* opaque) {
                 case PACKET_AUDIO:
                     // Audio packet
                     start_timer(&audio_timer);
-// #ifndef __ANDROID_API__
                     receive_audio(packet);
-// #endif                    
                     audio_time += get_timer(audio_timer);
                     max_audio_time = max(max_audio_time, get_timer(audio_timer));
                     break;
@@ -671,7 +669,9 @@ int SDL_main(int argc, char* argv[]) {
         }
     }
 
+#ifdef __ANDROID_API__
     cacheFinders(javaVM);
+#endif
 
     if (running_ci) {
         LOG_INFO("Running in CI mode");
