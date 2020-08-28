@@ -245,7 +245,7 @@ int32_t SendVideo(void* opaque) {
                 encoder_factory_client_h = (int)client_height;
                 encoder_factory_codec_type = (CodecType)client_codec_type;
                 encoder_factory_current_bitrate = current_bitrate;
-		encoder_factory_using_capture_encoder = using_capture_encoder;
+		        encoder_factory_using_capture_encoder = using_capture_encoder;
                 if (encoder == NULL) {
                     // Run on this thread bc we have to wait for it anyway
                     MultithreadedEncoderFactory(NULL);
