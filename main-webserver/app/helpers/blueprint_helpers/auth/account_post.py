@@ -6,11 +6,6 @@ from app.helpers.utils.general.crypto import *
 from app.helpers.blueprint_helpers.mail.mail_post import *
 from app.celery.azure_resource_deletion import *
 
-from app.models.public import *
-from app.models.hardware import *
-from app.serializers.public import *
-from app.serializers.hardware import *
-
 
 def loginHelper(email, password):
     """Verifies the username password combination in the users SQL table

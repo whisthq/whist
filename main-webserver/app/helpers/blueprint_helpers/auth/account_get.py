@@ -10,6 +10,7 @@ user_schema = UserSchema()
 os_disk_schema = OSDiskSchema()
 secondary_disk_schema = SecondaryDiskSchema()
 
+
 def codeHelper(username):
     """Fetches a user's promo code
 
@@ -96,9 +97,7 @@ def disksHelper(username, main):
 
     # Return SQL output
 
-
     return {"os_disks": os_disks, "secondary_disks": secondary_disks, "status": SUCCESS}
-
 
 
 def verifiedHelper(username):
@@ -113,16 +112,9 @@ def verifiedHelper(username):
 
     # Query database for user
 
-    # output = fractalSQLSelect(table_name="users", params={"email": username})
+    user = User.query.get(username)
 
-    # Check if user is verified
-
-    # if output:
-    #     verified = output[0]["verified"]
-
-    #     return {"verified": verified, "status": SUCCESS}
-
-    # else:
-    #     return {"verified": False, "status": BAD_REQUEST}
-
-    return {"verified": True, "status": SUCCESS}
+    if not user:
+        return {"verified": False, "status": SUCCESS}
+    else:
+        return {"verified": verified, "status": SUCCESS}

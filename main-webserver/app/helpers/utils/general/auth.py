@@ -1,5 +1,13 @@
 from app.imports import *
+
+from app.helpers.utils.general.logs import *
+
+from app.models.public import *
 from app.models.hardware import *
+
+from app.serializers.public import *
+from app.serializers.hardware import *
+
 
 def fractalAuth(f):
     @wraps(f)
@@ -19,19 +27,23 @@ def fractalAuth(f):
                     vm = UserVM.query.get(vm_name).first()
 
                     if vm:
-                        user_id = vm.user_id
-                        username = User.query.get(user_id).email
+                        username = vm.user_id
                 elif "disk_name" in body.keys():
                     disk_name = body["disk_name"]
 
-                    disk = OSDisk.query.get(disk_id)
+                    disk = OSDisk.query.get(disk_name)
 
                     if disk:
-                        user_id = disk.user_id
-                        username = User.query.get(user_id).email
+                        username = disk.user_id
             elif request.method == "GET":
                 username = request.args.get("username")
         except Exception as e:
+            fractalLog(
+                function="",
+                label="",
+                logs="Bearer error: {error}".format(error=str(e)),
+                level=logging.ERROR,
+            )
             return (
                 jsonify(
                     {"error": "No username provided, cannot authorize Bearer token."}
@@ -41,10 +53,7 @@ def fractalAuth(f):
 
         current_user = get_jwt_identity()
 
-        if (
-            current_user != username
-            and not DASHBOARD_USERNAME in current_user
-        ):
+        if current_user != username and not DASHBOARD_USERNAME in current_user:
             format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
 
             logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")

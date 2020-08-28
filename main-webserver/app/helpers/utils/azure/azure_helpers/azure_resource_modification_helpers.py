@@ -9,6 +9,7 @@ from app.serializers.public import *
 
 user_vm_schema = UserVMSchema()
 
+
 def attachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
     fractalLog(
         function="attachSecondaryDisk",
@@ -123,7 +124,9 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
         ),
     )
 
-    secondary_disks = SecondaryDisk.query.filter_by(user_id=username, state="ACTIVE").all()
+    secondary_disks = SecondaryDisk.query.filter_by(
+        user_id=username, state="ACTIVE"
+    ).all()
 
     if secondary_disks:
 
@@ -178,10 +181,11 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
 def claimAvailableVM(
     username, disk_name, location, resource_group, os_type="Windows", s=None
 ):
-    available_vm = UserVM.query.filter_by(user_id=username).first()
+    # available_vm = UserVM.query.filter_by(user_id=username).first()
 
-    if available_vm:
-        return available_vm
+    # if available_vm:
+    #     fractalLog(function="", label="", logs=str(available_vm))
+    #     return available_vm
 
     state_preference = ["RUNNING_AVAILABLE", "STOPPED", "DEALLOCATED"]
 
@@ -194,7 +198,23 @@ def claimAvailableVM(
             ),
         )
 
-        available_vm = UserVM.query.filter(UserVM.lock == False, UserVM.state == state, UserVM.os == os_type, UserVM.location == location).filter((UserVM.temporary_lock <= dateToUnix(getToday()))| ( UserVM.temporary_lock == None)).first()
+        available_vm = (
+            UserVM.query.filter(
+                UserVM.lock == False,
+                UserVM.state == state,
+                UserVM.os == os_type,
+                UserVM.location == location,
+            )
+            .filter(
+                (UserVM.temporary_lock <= dateToUnix(getToday()))
+                | (UserVM.temporary_lock == None)
+            )
+            .first()
+        )
+
+        fractalLog(
+            function="claimAvailableVM", label=str(username), logs=str(available_vm)
+        )
 
         if available_vm:
             fractalLog(
@@ -224,7 +244,12 @@ def claimAvailableVM(
                         },
                     )
 
-            available_vm.update({ 'lock': True, 'user_id': username, 'disk_id': disk_name, 'state': 'ATTACHING', 'last_updated': getCurrentTime()})
+            available_vm.lock = True
+            available_vm.user_id = username
+            available_vm.disk_id = disk_name
+            available_vm.state = "ATTACHING"
+            available_vm.last_updated = getCurrentTime()
+
             db.session.commit()
 
             available_vm = user_vm_schema.dump(available_vm)

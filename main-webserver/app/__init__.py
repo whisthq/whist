@@ -4,6 +4,7 @@ from .constants.config import *
 
 from .helpers.utils.general.logs import *
 from .helpers.utils.general.time import *
+from .helpers.utils.general.sql_commands import *
 
 
 def make_celery(app_name=__name__):
@@ -59,10 +60,10 @@ def fractalPreProcess(f):
 celery_instance = make_celery()
 
 app, jwtManager = create_app(celery=celery_instance)
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
+db = SQLAlchemy(app, engine_options={"pool_pre_ping": True})
 ma = Marshmallow(app)
 app = init_app(app)
 

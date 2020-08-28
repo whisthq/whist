@@ -18,7 +18,7 @@ def artifact_post(action, **kwargs):
             kwargs["body"]["vm_name"],
         )
 
-    resource_group = "FractalProtocolCI"
+    resource_group = VM_GROUP
     if "resource_group" in kwargs["body"].keys():
         resource_group = kwargs["body"]["resource_group"]
 

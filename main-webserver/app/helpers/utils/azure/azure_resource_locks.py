@@ -3,9 +3,8 @@ from app.helpers.utils.azure.azure_general import *
 
 from app.models.hardware import *
 
-def lockVMAndUpdate(
-    vm_name, state, lock, temporary_lock, resource_group=VM_GROUP
-):
+
+def lockVMAndUpdate(vm_name, state, lock, temporary_lock, resource_group=VM_GROUP):
     """Changes the state, lock, and temporary lock of a VM
 
     Args:
@@ -42,8 +41,8 @@ def lockVMAndUpdate(
         ),
     )
 
-    UserVM.query.get(vm_name).update(new_params)
-    db.session.commit()
+    vm = UserVM.query.filter_by(vm_id=vm_name)
+    fractalSQLCommit(db, lambda _, x: x.update(new_params), vm)
 
 
 def checkLock(vm_name, resource_group=None):
