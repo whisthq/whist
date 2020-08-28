@@ -212,10 +212,12 @@ endif()
 # This is fixed to sdk version 0.4.1
 set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.1/sentry-native.zip)
 set(sentry_dir sentry-native)
-if(NOT EXISTS ${sentry_dir})
-    file(DOWNLOAD ${sentry_url} ${filename}.zip
-            TIMEOUT 60  # seconds
-            TLS_VERIFY ON)
+MESSAGE(VERBOSE ${CMAKE_SOURCE_DIR}/${sentry_dir})
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
+    MESSAGE(STATUS "Downloading Sentry")
+    file(DOWNLOAD ${sentry_url} "${CMAKE_SOURCE_DIR}/${sentry_dir}.zip"
+            STATUS sentry_dl_status)
+    MESSAGE(VERBOSE ${sentry_dl_status})
     file(MAKE_DIRECTORY ${sentry_dir})
 endif()
 
