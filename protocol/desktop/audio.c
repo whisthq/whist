@@ -14,6 +14,7 @@ audio format.
 
 #include "audio.h"
 #include "network.h"
+#define UNUSED(x) (void)(x)
 
 extern volatile int audio_frequency;
 extern bool has_rendered_yet;
@@ -71,6 +72,12 @@ void reinitAudio() {
     destroyAudio();
     initAudio();
     SDL_UnlockMutex(audio_mutex);
+}
+
+int MultithreadedReinitAudio(void* opaque) {
+    UNUSED(opaque);
+    reinitAudio();
+    return 0;
 }
 
 void initAudio() {

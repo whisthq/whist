@@ -34,7 +34,7 @@ Public Functions
  * @brief                          This will destroy and initialize audio again,
  *                                 locking to avoid race conditions with update
  */
-void reinitAudio();
+int MultithreadedReinitAudio(void* opaque);
 
 /**
  * @brief                          This will initialize the FFmpeg AAC audio

@@ -75,7 +75,7 @@ int handleSDLEvent(SDL_Event *event) {
             break;
         case SDL_AUDIODEVICEADDED:
         case SDL_AUDIODEVICEREMOVED: 
-            SDL_DetachThread(SDL_CreateThread(reinitAudio, "ReinitAudio", NULL));
+            SDL_DetachThread(SDL_CreateThread(MultithreadedReinitAudio, "MultithreadedReinitAudio", NULL));
             break;
         case SDL_KEYDOWN:
         case SDL_KEYUP:
