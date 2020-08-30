@@ -35,6 +35,8 @@ def loginHelper(email, password):
 
     user = User.query.filter(user_id=email).first()
 
+    fractalLog(function="", label="", logs=str(user))
+
     # Return early if username/password combo is invalid
 
     if is_user:
@@ -86,8 +88,15 @@ def registerHelper(username, password, name, reason_for_signup):
 
     # Add the user to the database
 
-    new_user = User(user_id=username, password=pwd_token, token=token, referral_code=promo_code, name=name, reason_for_signup=reason_for_signup, created_timestamp=dt.now(datetime.timezone.utc).timestamp())
-
+    new_user = User(
+        user_id=username,
+        password=pwd_token,
+        token=token,
+        referral_code=promo_code,
+        name=name,
+        reason_for_signup=reason_for_signup,
+        created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
+    )
 
     status = SUCCESS
     access_token, refresh_token = getAccessTokens(username)

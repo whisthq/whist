@@ -17,7 +17,6 @@ def ipHelper(vm_name, resource_group):
 
 
 def protocolInfoHelper(ip_address):
-
     output = fractalSQLSelect(table_name="v_ms", params={"ip": ip_address})
 
     if not output["success"] or not output["rows"]:
