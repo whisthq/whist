@@ -22,11 +22,8 @@ def devHelper(vm_name, dev):
         ),
     )
 
-    output = fractalSQLUpdate(
-        table_name="v_ms",
-        conditional_params={"vm_name": vm_name},
-        new_params={"dev": dev},
-    )
+    vm = UserVM.query.filter_by(vm_id=vm_name)
+    fractalSQLCommit(db, lambda _, x: x.update({"has_dedicated_vm": dev}), vm)
 
     if output["success"]:
         return {"status": SUCCESS}
@@ -46,102 +43,103 @@ def pingHelper(available, vm_ip, version=None):
 
     # Retrieve VM data based on VM IP
 
-    vm_info = None
-    username = None
+    vm_info = UserVM.query.filter_by(ip=vm_ip).first()
 
-    output = fractalSQLSelect(table_name="v_ms", params={"ip": vm_ip})
+    fractalLog(function="", label="", logs=str(vm_info))
 
-    if output["success"] and output["rows"]:
-        vm_info = output["rows"][0]
-        username = vm_info["username"]
-    else:
-        return {"status": BAD_REQUEST}
+    # output = fractalSQLSelect(table_name="v_ms", params={"ip": vm_ip})
 
-    fractalSQLUpdate(
-        table_name="v_ms",
-        conditional_params={"vm_name": vm_info["vm_name"]},
-        new_params={"ready_to_connect": dateToUnix(getToday())},
-    )
+    # if output["success"] and output["rows"]:
+    #     vm_info = output["rows"][0]
+    #     username = vm_info["username"]
+    # else:
+    #     return {"status": BAD_REQUEST}
 
-    # Update disk version
+    # fractalSQLUpdate(
+    #     table_name="v_ms",
+    #     conditional_params={"vm_name": vm_info["vm_name"]},
+    #     new_params={"ready_to_connect": dateToUnix(getToday())},
+    # )
 
-    if version:
-        fractalSQLUpdate(
-            table_name="disks",
-            conditional_params={"disk_name": vm_info["disk_name"]},
-            new_params={"version": version},
-        )
+    # # Update disk version
 
-    # Define states where we don't change the VM state
+    # if version:
+    #     fractalSQLUpdate(
+    #         table_name="disks",
+    #         conditional_params={"disk_name": vm_info["disk_name"]},
+    #         new_params={"version": version},
+    #     )
 
-    intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
+    # # Define states where we don't change the VM state
 
-    # Detect and handle disconnect event
+    # intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
 
-    if vm_info["state"] == "RUNNING_UNAVAILABLE" and available:
+    # # Detect and handle disconnect event
 
-        # Add pending charge if the user is an hourly subscriber
+    # if vm_info["state"] == "RUNNING_UNAVAILABLE" and available:
 
-        stripeChargeHourly(username)
+    #     # Add pending charge if the user is an hourly subscriber
 
-        # Add logoff event to timetable
+    #     stripeChargeHourly(username)
 
-        fractalSQLInsert(
-            table_name="login_history",
-            params={
-                "username": username,
-                "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
-                "action": "logoff",
-            },
-        )
+    #     # Add logoff event to timetable
 
-        fractalLog(
-            function="pingHelper",
-            label=str(username),
-            logs="{username} just disconnected from their cloud PC".format(
-                username=username
-            ),
-        )
+    #     fractalSQLInsert(
+    #         table_name="login_history",
+    #         params={
+    #             "username": username,
+    #             "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
+    #             "action": "logoff",
+    #         },
+    #     )
 
-    # Detect and handle logon event
+    #     fractalLog(
+    #         function="pingHelper",
+    #         label=str(username),
+    #         logs="{username} just disconnected from their cloud PC".format(
+    #             username=username
+    #         ),
+    #     )
 
-    if vm_info["state"] == "RUNNING_AVAILABLE" and not available:
+    # # Detect and handle logon event
 
-        # Add logon event to timetable
+    # if vm_info["state"] == "RUNNING_AVAILABLE" and not available:
 
-        fractalSQLInsert(
-            table_name="login_history",
-            params={
-                "username": username,
-                "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
-                "action": "logon",
-            },
-        )
+    #     # Add logon event to timetable
 
-        fractalLog(
-            function="pingHelper",
-            label=str(username),
-            logs="{username} just connected to their cloud PC".format(
-                username=username
-            ),
-        )
+    #     fractalSQLInsert(
+    #         table_name="login_history",
+    #         params={
+    #             "username": username,
+    #             "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
+    #             "action": "logon",
+    #         },
+    #     )
 
-    # Change VM states accordingly
+    #     fractalLog(
+    #         function="pingHelper",
+    #         label=str(username),
+    #         logs="{username} just connected to their cloud PC".format(
+    #             username=username
+    #         ),
+    #     )
 
-    if not vm_info["state"] in intermediate_states and not available:
-        lockVMAndUpdate(
-            vm_name=vm_info["vm_name"],
-            state="RUNNING_UNAVAILABLE",
-            lock=True,
-            temporary_lock=0,
-        )
+    # # Change VM states accordingly
 
-    if not vm_info["state"] in intermediate_states and available:
-        lockVMAndUpdate(
-            vm_name=vm_info["vm_name"],
-            state="RUNNING_AVAILABLE",
-            lock=False,
-            temporary_lock=None,
-        )
+    # if not vm_info["state"] in intermediate_states and not available:
+    #     lockVMAndUpdate(
+    #         vm_name=vm_info["vm_name"],
+    #         state="RUNNING_UNAVAILABLE",
+    #         lock=True,
+    #         temporary_lock=0,
+    #     )
+
+    # if not vm_info["state"] in intermediate_states and available:
+    #     lockVMAndUpdate(
+    #         vm_name=vm_info["vm_name"],
+    #         state="RUNNING_AVAILABLE",
+    #         lock=False,
+    #         temporary_lock=None,
+    #     )
 
     return {"status": SUCCESS}

@@ -1,15 +1,11 @@
 from app import *
 from app.helpers.utils.general.logs import *
 
+from app.models.public import *
 
 def forgotPasswordHelper(username):
-    params = {"email": username}
-    user = fractalSQLSelect("users", params)
-    fractalLog(
-        function="forgotPasswordHelper",
-        label=username,
-        logs="POOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOo",
-    )
+    user = User.query.get(username)
+
     if user:
         upperCase = string.ascii_uppercase
         lowerCase = string.ascii_lowercase

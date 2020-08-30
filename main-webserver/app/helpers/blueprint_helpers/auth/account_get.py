@@ -10,6 +10,7 @@ user_schema = UserSchema()
 os_disk_schema = OSDiskSchema()
 secondary_disk_schema = SecondaryDiskSchema()
 
+
 def codeHelper(username):
     """Fetches a user's promo code
 
@@ -22,7 +23,7 @@ def codeHelper(username):
 
     # Query database for user
 
-    user = User.query.filter(user_id=username).first()
+    user = User.query.get(username)
 
     # Return user's promo code
 
@@ -44,7 +45,7 @@ def fetchUserHelper(username):
     Returns:
         http response
     """
-    user = User.query.filter(user_id=username).first()
+    user = User.query.get(username)
 
     # Return user
     if user:
@@ -78,14 +79,11 @@ def disksHelper(username, main):
     if not user:
         return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
 
-    os_disks = OSDisk.query.filter(user_id=username).all()
+    os_disks = OSDisk.query.filter_by(user_id=username).all()
     os_disks = [os_disk_schema.dump(disk) for disk in os_disks]
 
-    if not main:
-        secondary_disks = SecondaryDisk.query.filter(user_id=username).all()
-        secondary_disks = [secondary_disk_schema.dump(disk) for disk in secondary_disks]
-
-    # Return SQL output
+    secondary_disks = SecondaryDisk.query.filter_by(user_id=username).all()
+    secondary_disks = [secondary_disk_schema.dump(disk) for disk in secondary_disks]
 
     fractalLog(
         function="disksHelper",
@@ -96,8 +94,10 @@ def disksHelper(username, main):
             username=username,
         ),
     )
-    return {"os_disks": os_disks, "secondary_disks": secondary_disks, "status": SUCCESS}
 
+    # Return SQL output
+
+    return {"os_disks": os_disks, "secondary_disks": secondary_disks, "status": SUCCESS}
 
 
 def verifiedHelper(username):
@@ -112,16 +112,9 @@ def verifiedHelper(username):
 
     # Query database for user
 
-    # output = fractalSQLSelect(table_name="users", params={"email": username})
+    user = User.query.get(username)
 
-    # Check if user is verified
-
-    # if output:
-    #     verified = output[0]["verified"]
-
-    #     return {"verified": verified, "status": SUCCESS}
-
-    # else:
-    #     return {"verified": False, "status": BAD_REQUEST}
-
-    return {"verified": True, "status": SUCCESS}
+    if not user:
+        return {"verified": False, "status": SUCCESS}
+    else:
+        return {"verified": verified, "status": SUCCESS}

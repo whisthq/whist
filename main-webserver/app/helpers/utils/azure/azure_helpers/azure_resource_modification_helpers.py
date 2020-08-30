@@ -4,6 +4,11 @@ from app.helpers.utils.azure.azure_resource_locks import *
 from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_modification import *
 
+from app.models.public import *
+from app.serializers.public import *
+
+user_vm_schema = UserVMSchema()
+
 
 def attachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
     fractalLog(
@@ -119,14 +124,9 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
         ),
     )
 
-    output = fractalSQLSelect(
-        table_name="disks",
-        params={"username": username, "state": "ACTIVE", "main": False},
-    )
+    secondary_disks = SecondaryDisk.query.filter_by(user_id=username).all()
 
-    if output["success"] and output["rows"]:
-        secondary_disks = output["rows"]
-
+    if secondary_disks:
         fractalLog(
             function="attachSecondaryDisks",
             label=getVMUser(vm_name),
@@ -154,7 +154,7 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
 
         for secondary_disk in secondary_disks:
             attachSecondaryDisk(
-                secondary_disk["disk_name"], vm_name, resource_group=resource_group, s=s
+                secondary_disk.disk_id, vm_name, resource_group=resource_group, s=s
             )
 
         # Lock immediately
@@ -178,24 +178,11 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
 def claimAvailableVM(
     username, disk_name, location, resource_group, os_type="Windows", s=None
 ):
-    session = Session()
+    # available_vm = UserVM.query.filter_by(user_id=username).first()
 
-    command = text(
-        """
-        SELECT * FROM {table_name}
-        WHERE username=:username
-        """.format(
-            table_name=resourceGroupToTable(resource_group)
-        )
-    )
-    params = {"username": username}
-
-    available_vm = fractalCleanSQLOutput(session.execute(command, params).fetchone())
-
-    if available_vm:
-        session.commit()
-        session.close()
-        return available_vm
+    # if available_vm:
+    #     fractalLog(function="", label="", logs=str(available_vm))
+    #     return available_vm
 
     state_preference = ["RUNNING_AVAILABLE", "STOPPED", "DEALLOCATED"]
 
@@ -208,26 +195,22 @@ def claimAvailableVM(
             ),
         )
 
-        command = text(
-            """
-            SELECT * FROM {table_name}
-            WHERE lock = :lock AND state = :state AND dev = :dev AND os = :os_type AND location = :location
-            AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
-            """.format(
-                table_name=resourceGroupToTable(resource_group)
+        available_vm = (
+            UserVM.query.filter(
+                UserVM.lock == False,
+                UserVM.state == state,
+                UserVM.os == os_type,
+                UserVM.location == location,
             )
+            .filter(
+                (UserVM.temporary_lock <= dateToUnix(getToday()))
+                | (UserVM.temporary_lock == None)
+            )
+            .first()
         )
-        params = {
-            "lock": False,
-            "state": state,
-            "dev": False,
-            "location": location,
-            "temporary_lock": dateToUnix(getToday()),
-            "os_type": os_type,
-        }
 
-        available_vm = fractalCleanSQLOutput(
-            session.execute(command, params).fetchone()
+        fractalLog(
+            function="claimAvailableVM", label=str(username), logs=str(available_vm)
         )
 
         if available_vm:
@@ -238,7 +221,7 @@ def claimAvailableVM(
                     location=location,
                     state=state,
                     disk_name=disk_name,
-                    vm_name=available_vm["vm_name"],
+                    vm_name=available_vm.vm_id,
                 ),
             )
 
@@ -258,27 +241,16 @@ def claimAvailableVM(
                         },
                     )
 
-            command = text(
-                """
-                UPDATE {table_name}
-                SET lock = :lock, username = :username, disk_name = :disk_name, state = :state, last_updated = :last_updated
-                WHERE vm_name = :vm_name
-                """.format(
-                    table_name=resourceGroupToTable(resource_group)
-                )
-            )
+            available_vm.lock = True
+            available_vm.user_id = username
+            available_vm.disk_id = disk_name
+            available_vm.state = "ATTACHING"
+            available_vm.last_updated = getCurrentTime()
 
-            params = {
-                "lock": True,
-                "username": username,
-                "disk_name": disk_name,
-                "vm_name": available_vm["vm_name"],
-                "state": "ATTACHING",
-                "last_updated": getCurrentTime(),
-            }
-            session.execute(command, params)
-            session.commit()
-            session.close()
+            db.session.commit()
+
+            available_vm = user_vm_schema.dump(available_vm)
+
             return available_vm
         else:
             fractalLog(
@@ -290,6 +262,4 @@ def claimAvailableVM(
                 level=logging.WARNING,
             )
 
-    session.commit()
-    session.close()
     return None

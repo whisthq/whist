@@ -12,7 +12,7 @@ def regionReportHelper(timescale):
         command = text(
             """
         SELECT timestamp, users_online, eastus_unavailable, northcentralus_unavailable, southcentralus_unavailable
-        FROM status_report
+        FROM logs.monitor_logs
         ORDER BY timestamp DESC
         LIMIT 24
         """
@@ -21,7 +21,7 @@ def regionReportHelper(timescale):
         command = text(
             """
         SELECT date_trunc('day', to_timestamp("timestamp")) as "timestamp", SUM(users_online) as "users_online", SUM(eastus_unavailable) as "eastus_unavailable", SUM(northcentralus_unavailable) as "northcentralus_unavailable", SUM(southcentralus_unavailable) as "southcentralus_unavailable"
-        FROM status_report
+        FROM logs.monitor_logs
         GROUP BY 1
         ORDER BY date_trunc('day', to_timestamp("timestamp")) DESC
         LIMIT 7
@@ -31,7 +31,7 @@ def regionReportHelper(timescale):
         command = text(
             """
         SELECT date_trunc('day', to_timestamp("timestamp")) as "timestamp", SUM(users_online) as "users_online", SUM(eastus_unavailable) as "eastus_unavailable", SUM(northcentralus_unavailable) as "northcentralus_unavailable", SUM(southcentralus_unavailable) as "southcentralus_unavailable"
-        FROM status_report
+        FROM logs.monitor_logs
         GROUP BY 1
         ORDER BY date_trunc('day', to_timestamp("timestamp")) DESC
         LIMIT 30

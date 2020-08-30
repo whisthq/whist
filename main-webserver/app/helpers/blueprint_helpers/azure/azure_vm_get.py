@@ -1,6 +1,8 @@
 from app import *
 from app.helpers.utils.azure.azure_general import *
 
+from app.models.hardware import *
+
 
 def ipHelper(vm_name, resource_group):
     """Fetches the IP address of a VM
@@ -17,44 +19,32 @@ def ipHelper(vm_name, resource_group):
 
 
 def protocolInfoHelper(ip_address):
-    output = fractalSQLSelect(table_name="v_ms", params={"ip": ip_address})
+    vm = UserVM.query.filter_by(ip=ip_address).first()
 
-    if not output["success"] or not output["rows"]:
-        output = fractalSQLSelect(
-            table_name="VMs_FractalProtocolCI", params={"ip": ip_address}
-        )
-
-        if not output["success"] or not output["rows"]:
-            output = fractalSQLSelect(table_name="v_ms", params={"ip": ip_address})
-
-            return {
-                "dev": True,
-                "branch": "dev",
-                "status": NOT_FOUND,
-                "using_stun": False,
-                "private_key": None,
-                "access_token": None,
-                "refresh_token": None,
-            }
+    if not vm:
+        return {
+            "allow_autoupdate": True,
+            "has_dedicated_vm": False,
+            "branch": "dev",
+            "status": NOT_FOUND,
+            "using_stun": False,
+            "private_key": None,
+            "access_token": None,
+            "refresh_token": None,
+        }
     else:
-        vm_info = output["rows"][0]
+        disk = OSDisk.query.get(vm.disk_id)
 
-        output = fractalSQLSelect(
-            table_name="disk_settings", params={"disk_name": vm_info["disk_name"]}
-        )
+        access_token, refresh_token = getAccessTokens(DASHBOARD_USERNAME + "@gmail.com")
 
-        access_token, refresh_token = getAccessTokens(
-            DASHBOARD_USERNAME + "@gmail.com"
-        )
-
-        if output["rows"] and output["success"]:
-            settings = output["rows"][0]
+        if disk:
             return {
-                "dev": vm_info["dev"],
-                "branch": settings["branch"],
+                "allow_autoupdate": disk.allow_autoupdate,
+                "has_dedicated_vm": disk.has_dedicated_vm,
+                "branch": disk.branch,
                 "status": SUCCESS,
-                "using_stun": settings["using_stun"],
-                "private_key": vm_info["rsa_private_key"],
+                "using_stun": disk.using_stun,
+                "private_key": disk.rsa_private_key,
                 "access_token": access_token,
                 "refresh_token": refresh_token,
             }
@@ -69,11 +59,11 @@ def protocolInfoHelper(ip_address):
             )
 
             return {
-                "dev": vm_info["dev"],
-                "branch": "dev",
+                "allow_autoupdate": True,
+                "has_dedicated_vm": False,
                 "status": NOT_FOUND,
                 "using_stun": False,
-                "private_key": vm_info["rsa_private_key"],
+                "private_key": None,
                 "access_token": None,
                 "refresh_token": None,
             }

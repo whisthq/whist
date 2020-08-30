@@ -34,7 +34,7 @@ def report_get(action, **kwargs):
         output = fetchVMsHelper()
         return jsonify(output), SUCCESS
     elif action == "fetchCustomers":
-        output = fetchCustomersHelper()
+        output = fetchUsersHelper()
         return jsonify(output), SUCCESS
     elif action == "fetchDisks":
         output = fetchDisksHelper()

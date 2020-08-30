@@ -12,7 +12,7 @@ from app.models.hardware import *
 azure_disk_bp = Blueprint("azure_disk_bp", __name__)
 
 
-@azure_disk_bp.route("/azure_disk/<action>", methods=["POST"])
+@azure_disk_bp.route("/disk/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
 @fractalAuth
@@ -28,7 +28,6 @@ def azure_disk_post(action, **kwargs):
             [
                 kwargs["body"]["username"],
                 kwargs["body"]["location"],
-                kwargs["body"]["vm_size"],
                 kwargs["body"]["operating_system"],
                 branch,
                 kwargs["body"]["apps"],
@@ -106,9 +105,11 @@ def azure_disk_post(action, **kwargs):
             kwargs["body"]["location"],
             kwargs["body"]["resource_group"],
         )
-        operating_system = kwards["body"]["operating_system"]
+        operating_system = kwargs["body"]["operating_system"]
 
-        output = createHelper(disk_size, username, location, resource_group, operating_system)
+        output = createHelper(
+            disk_size, username, location, resource_group, operating_system
+        )
 
         return jsonify({"ID": output["ID"]}), output["status"]
 

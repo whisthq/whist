@@ -40,6 +40,7 @@ CREATE TABLE hardware.os_disks (
     user_id character varying(250),
     last_pinged integer,
     branch character varying(250) DEFAULT 'master'::character varying NOT NULL
+    first_time boolean DEFAULT true
 );
 CREATE TABLE hardware.secondary_disks (
     disk_id character varying(250) NOT NULL,

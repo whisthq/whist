@@ -8,6 +8,10 @@ from app.helpers.utils.general.crypto import *
 from app.models.hardware import *
 from app.serializers.hardware import *
 
+user_vm_schema = UserVMSchema()
+os_disk_schema = OSDiskSchema()
+
+
 @celery_instance.task(bind=True)
 def createVM(
     self,
@@ -125,72 +129,90 @@ def createVM(
     )
 
     ip_address = getVMIP(vm_name, resource_group)
-    vm = UserVM(vm_id=vm_name, ip=ip_address, state="CREATING", location=location, os=operating_system, temporary_lock=True, disk_id=disk_name)
-    db.session.add(vm)
 
-    disk = OSDisk(disk_id=disk_name, location=location, state="TO_BE_DELETED", disk_size=120, os=operating_system)
-    db.session.add(disk)
-
-    db.session.commit()
-
-    # Install NVIDIA GRID driver
-
-    extension_parameters = (
-        {
-            "location": location,
-            "publisher": "Microsoft.HpcCompute",
-            "vm_extension_name": "NvidiaGpuDriverWindows",
-            "virtual_machine_extension_type": "NvidiaGpuDriverWindows",
-            "type_handler_version": "1.2",
-        }
-        if operating_system == "Windows"
-        else {
-            "location": location,
-            "publisher": "Microsoft.HpcCompute",
-            "vm_extension_name": "NvidiaGpuDriverLinux",
-            "virtual_machine_extension_type": "NvidiaGpuDriverLinux",
-            "type_handler_version": "1.2",
-        }
+    vm = UserVM(
+        vm_id=vm_name,
+        ip=ip_address,
+        state="CREATING",
+        location=location,
+        os=operating_system,
+        temporary_lock=0,
+        disk_id=disk_name,
+        lock=False,
     )
 
-    time.sleep(30)
-
-    self.update_state(
-        state="PENDING",
-        meta={"msg": "VM {} installing NVIDIA extension".format(vm_name)},
+    disk = OSDisk(
+        disk_id=disk_name,
+        location=location,
+        os=operating_system,
+        allow_autoupdate=True,
+        has_dedicated_vm=False,
+        branch="master",
+        using_stun=False,
+        disk_size=120,
+        state="TO_BE_DELETED",
     )
 
-    async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(
-        resource_group,
-        vm_name,
-        extension_parameters["vm_extension_name"],
-        extension_parameters,
-    )
+    add_disk = fractalSQLCommit(db, lambda db, x: db.session.add(x), disk)
+    add_vm = fractalSQLCommit(db, lambda db, x: db.session.add(x), vm)
 
-    fractalLog(
-        function="createVM",
-        label=str(vm_name),
-        logs="Started to install NVIDIA extension",
-    )
+    if add_disk and add_vm:
+        # Install NVIDIA GRID driver
 
-    async_vm_extension.wait()
+        fractalLog(
+            function="createVM",
+            label=str(vm_name),
+            logs="Started to install NVIDIA extension",
+        )
 
-    fractalLog(
-        function="createVM", label=str(vm_name), logs="NVIDIA extension done installing"
-    )
+        extension_parameters = (
+            {
+                "location": location,
+                "publisher": "Microsoft.HpcCompute",
+                "vm_extension_name": "NvidiaGpuDriverWindows",
+                "virtual_machine_extension_type": "NvidiaGpuDriverWindows",
+                "type_handler_version": "1.2",
+            }
+            if operating_system == "Windows"
+            else {
+                "location": location,
+                "publisher": "Microsoft.HpcCompute",
+                "vm_extension_name": "NvidiaGpuDriverLinux",
+                "virtual_machine_extension_type": "NvidiaGpuDriverLinux",
+                "type_handler_version": "1.2",
+            }
+        )
 
-    # Fetch VM columns from SQL and return
-    vm = UserVM.query.get(vm_name)
+        time.sleep(30)
 
-    lockVMAndUpdate(
-        vm_name,
-        "RUNNING_AVAILABLE",
-        False,
-        temporary_lock=None,
-        resource_group=resource_group,
-    )
+        self.update_state(
+            state="PENDING",
+            meta={"msg": "VM {} installing NVIDIA extension".format(vm_name)},
+        )
 
-    if vm:
+        async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(
+            resource_group,
+            vm_name,
+            extension_parameters["vm_extension_name"],
+            extension_parameters,
+        )
+
+        async_vm_extension.wait()
+
+        fractalLog(
+            function="createVM",
+            label=str(vm_name),
+            logs="NVIDIA extension done installing",
+        )
+
+        lockVMAndUpdate(
+            vm_name,
+            "RUNNING_AVAILABLE",
+            False,
+            temporary_lock=None,
+            resource_group=resource_group,
+        )
+
         fractalLog(
             function="createVM",
             label=str(vm_name),
@@ -198,8 +220,28 @@ def createVM(
                 operating_system=operating_system, location=location
             ),
         )
-        return output["rows"][0]
-    return None
+
+        # Fetch VM columns from SQL and return
+        vm = UserVM.query.get(vm_name)
+        vm = user_vm_schema.dump(vm)
+
+        return vm
+
+    else:
+        fractalLog(
+            function="createVM", label=str(vm_name), logs="SQL insertion unsuccessful",
+        )
+
+        self.update_state(
+            state="FAILURE",
+            meta={
+                "msg": "Error inserting VM {vm_name} and disk into SQL".format(
+                    vm_name=vm_name
+                )
+            },
+        )
+
+        return None
 
 
 @celery_instance.task(bind=True)
@@ -207,7 +249,6 @@ def cloneDisk(
     self,
     username,
     location,
-    vm_size,
     operating_system,
     branch,
     apps=[],
@@ -301,10 +342,23 @@ def cloneDisk(
             ),
         )
 
-        disk = OSDisk(disk_id=disk_name, user_id=username, location=location, os="operating_system", allow_autoupdate=True, has_dedicated_vm=False, branch=branch, using_stun=False, disk_size=120)
+        try:
+            disk = OSDisk(
+                disk_id=disk_name,
+                user_id=username,
+                location=location,
+                os=operating_system,
+                allow_autoupdate=True,
+                has_dedicated_vm=False,
+                branch=branch,
+                using_stun=False,
+                disk_size=120,
+                state="ACTIVE",
+            )
 
-        db.session.add(disk)
-        db.session.commit()
+            fractalSQLCommit(db, lambda db, x: db.session.add(x), disk)
+        except:
+            return {"status": BAD_REQUEST, "disk_name": disk_name}
 
         return {"status": SUCCESS, "disk_name": disk_name}
 
@@ -324,7 +378,12 @@ def cloneDisk(
 
 @celery_instance.task(bind=True)
 def createDisk(
-    self, disk_size, username, location, resource_group=VM_GROUP, operating_system="Windows"
+    self,
+    disk_size,
+    username,
+    location,
+    resource_group=VM_GROUP,
+    operating_system="Windows",
 ):
     """Creates an empty Windows Azure managed disk
 
@@ -359,11 +418,15 @@ def createDisk(
 
     async_disk_creation.wait()
 
-    disk = SecondaryDisk(disk_id=disk_name, user_id=username, location=location, disk_size=120, os=operating_system)
+    disk = SecondaryDisk(
+        disk_id=disk_name,
+        user_id=username,
+        location=location,
+        disk_size=disk_size,
+        os=operating_system,
+    )
 
-    db.session.add(disk)
-    db.session.commit()
-
+    fractalSQLCommit(db, lambda db, x: db.session.add(x), disk)
 
     fractalLog(
         function="createDisk",

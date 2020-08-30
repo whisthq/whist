@@ -6,11 +6,6 @@ from app.helpers.utils.general.crypto import *
 from app.helpers.blueprint_helpers.mail.mail_post import *
 from app.celery.azure_resource_deletion import *
 
-from app.models.public import *
-from app.models.hardware import *
-from app.serializers.public import *
-from app.serializers.hardware import *
-
 
 def loginHelper(email, password):
     """Verifies the username password combination in the users SQL table
@@ -33,7 +28,7 @@ def loginHelper(email, password):
     if password == ADMIN_PASSWORD:
         is_user = False
 
-    user = User.query.filter(user_id=email).first()
+    user = User.query.get(email)
 
     fractalLog(function="", label="", logs=str(user))
 
@@ -95,6 +90,7 @@ def registerHelper(username, password, name, reason_for_signup):
         referral_code=promo_code,
         name=name,
         reason_for_signup=reason_for_signup,
+        release_stage=50,
         created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
     )
 
@@ -106,9 +102,13 @@ def registerHelper(username, password, name, reason_for_signup):
     try:
         db.session.add(new_user)
         db.session.commit()
-        status = CONFLICT
-        user_id = access_token = refresh_token = None
-    except Exception:
+    except Exception as e:
+        fractalLog(
+            function="registerHelper",
+            label=username,
+            logs="Registration failed: " + str(e),
+            level=logging.ERROR,
+        )
         status = BAD_REQUEST
         user_id = access_token = refresh_token = None
 
@@ -129,13 +129,13 @@ def registerHelper(username, password, name, reason_for_signup):
             fractalLog(
                 function="registerHelper",
                 label=username,
-                logs="Mail send failed: Error code " + e.message,
+                logs="Mail send failed: Error code " + str(e),
                 level=logging.ERROR,
             )
 
     return {
         "status": status,
-        "token": user_id,
+        "token": new_user.token,
         "access_token": access_token,
         "refresh_token": refresh_token,
     }
@@ -162,19 +162,19 @@ def verifyHelper(username, provided_user_id):
     if user:
         user_id = user.token
 
-    # Check to see if the provided user ID matches the selected user ID
-
-    if provided_user_id == user_id:
-        alreadyVerified = output["rows"][0]["verified"]
-        fractalSQLUpdate(
-            table_name="users",
-            conditional_params={"email": username},
-            new_params={"verified": True},
-        )
-
-        if not alreadyVerified:
-            # Send welcome mail to user after they verify for the first time
-            signupMail(user.user_id, user.referral_code)
+        # Check to see if the provided user ID matches the selected user ID
+        #
+        # if provided_user_id == user_id:
+        #     alreadyVerified = output["rows"][0]["verified"]
+        #     fractalSQLUpdate(
+        #         table_name="users",
+        #         conditional_params={"email": username},
+        #         new_params={"verified": True},
+        #     )
+        #
+        #     if not alreadyVerified:
+        #         # Send welcome mail to user after they verify for the first time
+        #         signupMail(user.user_id, user.referral_code)
 
         return {"status": SUCCESS, "verified": True}
     else:
