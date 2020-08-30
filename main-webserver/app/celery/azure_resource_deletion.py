@@ -122,9 +122,7 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
         async_vm_delete.wait()
 
         vm = UserVM.query.get(vm_name)
-
-        db.session.delete(vm)
-        db.session.commit()
+        fractalSQLCommit(db, lambda db, x: db.session.delete(x), vm)
 
         fractalLog(
             function="deleteVM",
@@ -225,8 +223,7 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
             )
 
             disk = OSDisk.query.get(os_disk_name)
-            db.session.delete(disk)
-            db.session.commit()
+            fractalSQLCommit(db, lambda db, x: db.session.delete(x), disk)
 
         except Exception as e:
             fractalLog(
@@ -272,8 +269,7 @@ def deleteDisk(self, disk_name, resource_group=VM_GROUP):
         )
 
         disk = OSDisk.query.get(disk_name)
-        db.session.delete(disk)
-        db.session.commit()
+        fractalSQLCommit(db, lambda db, x: db.session.delete(x), disk)
 
         return {"status": SUCCESS}
 
@@ -299,8 +295,7 @@ def deleteDisk(self, disk_name, resource_group=VM_GROUP):
 
         try:
             disk = OSDisk.query.get(disk_name)
-            db.session.delete(disk)
-            db.session.commit()
+            fractalSQLCommit(db, lambda db, x: db.session.delete(x), disk)
 
             fractalLog(
                 function="deleteDisk",
@@ -327,10 +322,10 @@ def deleteDisk(self, disk_name, resource_group=VM_GROUP):
             level=logging.WARNING,
         )
         try:
-            disk = OSDisk.query.get(disk_name)
-            if disk:
-                disk.state = "TO_BE_DELETED"
-            db.session.commit()
+            disk = OSDisk.query.filter_by(disk_id=disk_name)
+            fractalSQLCommit(
+                db, lambda _, x: x.update({"state": "TO_BE_DELETED"}), disk
+            )
 
         except Exception as e:
             fractalLog(

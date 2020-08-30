@@ -12,24 +12,31 @@ def fractalSQLCommit(db, f=None, *args):
     while attempts <= 5 and not commit_successful:
         attempts = attempts + 1
         try:
-            fractalLog(function="", label="", logs="Attempting SQL commit.")
             if f:
                 f(db, *args)
             db.session.commit()
             commit_successful = True
             break
         except exc.OperationalError as e:
-            fractalLog(function="", label="", logs=str(e))
             if attempts < 5:
-                fractalLog(
-                    function="",
-                    label="",
-                    logs="SQL commit failed. Attempting to roll back.",
-                )
                 db.session.rollback()
                 time.sleep(2 ** attempts)
             else:
-                logger.error("Maximum number of retries reached. Raising an error")
+                fractalLog(
+                    function="fractalSQLCommit",
+                    label="None",
+                    logs="SQL commit failed after five retries.",
+                    level=logging.CRITICAL,
+                )
                 return False
+
+    if commit_successful:
+        fractalLog(
+            function="fractalSQLCommit",
+            label="None",
+            logs="SQL commit successful after {num_tries} tries".format(
+                num_tries=attempts
+            ),
+        )
 
     return commit_successful

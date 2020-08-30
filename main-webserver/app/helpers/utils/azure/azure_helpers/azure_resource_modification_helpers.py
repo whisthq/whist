@@ -124,12 +124,9 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
         ),
     )
 
-    secondary_disks = SecondaryDisk.query.filter_by(
-        user_id=username, state="ACTIVE"
-    ).all()
+    secondary_disks = SecondaryDisk.query.filter_by(user_id=username).all()
 
     if secondary_disks:
-
         fractalLog(
             function="attachSecondaryDisks",
             label=getVMUser(vm_name),

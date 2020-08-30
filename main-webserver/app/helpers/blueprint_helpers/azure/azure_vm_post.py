@@ -22,11 +22,8 @@ def devHelper(vm_name, dev):
         ),
     )
 
-    output = fractalSQLUpdate(
-        table_name="v_ms",
-        conditional_params={"vm_name": vm_name},
-        new_params={"dev": dev},
-    )
+    vm = UserVM.query.filter_by(vm_id=vm_name)
+    fractalSQLCommit(db, lambda _, x: x.update({"has_dedicated_vm": dev}), vm)
 
     if output["success"]:
         return {"status": SUCCESS}
@@ -46,8 +43,7 @@ def pingHelper(available, vm_ip, version=None):
 
     # Retrieve VM data based on VM IP
 
-    vm_info = None
-    username = None
+    vm_info = UserVM.query.filter_by(ip=vm_ip)
 
     output = fractalSQLSelect(table_name="v_ms", params={"ip": vm_ip})
 

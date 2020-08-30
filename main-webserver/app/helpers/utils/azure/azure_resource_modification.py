@@ -4,6 +4,7 @@ from app.helpers.utils.azure.azure_helpers.azure_resource_modification_helpers i
 
 from app.models.hardware import *
 
+
 def attachDiskToVM(disk_name, vm_name, resource_group=VM_GROUP):
     """Creates a network id
 
@@ -51,9 +52,12 @@ def attachDiskToVM(disk_name, vm_name, resource_group=VM_GROUP):
         if disk:
             username = disk.user_id
 
-        UserVM.query.get(vm_name).update({"disk_name": disk_name, "user_id": str(username)})
-
-        db.session.commit()
+        vm = UserVM.query.filter_by(vm_id=vm_name)
+        fractalSQLCommit(
+            db,
+            lambda _, x: x.update({"disk_name": disk_name, "user_id": str(username)}),
+            vm,
+        )
 
         return 1
     except Exception as e:

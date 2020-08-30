@@ -356,8 +356,7 @@ def cloneDisk(
                 state="ACTIVE",
             )
 
-            db.session.add(disk)
-            db.session.commit()
+            fractalSQLCommit(db, lambda db, x: db.session.add(x), disk)
         except:
             return {"status": BAD_REQUEST, "disk_name": disk_name}
 
@@ -423,12 +422,11 @@ def createDisk(
         disk_id=disk_name,
         user_id=username,
         location=location,
-        disk_size=120,
+        disk_size=disk_size,
         os=operating_system,
     )
 
-    db.session.add(disk)
-    db.session.commit()
+    fractalSQLCommit(db, lambda db, x: db.session.add(x), disk)
 
     fractalLog(
         function="createDisk",
