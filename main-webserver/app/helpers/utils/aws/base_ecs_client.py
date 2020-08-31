@@ -1,3 +1,4 @@
+from pprint import pprint
 import time
 
 import boto3
@@ -28,6 +29,7 @@ class ECSClient:
         grab_logs (Optional[bool]):  whether to pull down ECS logs
         starter_client (boto3.client): starter ecs client, used for mocking
         starter_log_client (boto3.client): starter log client, used for mocking
+        starter_ec2_client (boto3.client): starter log client, used for mocking
     TODO: find ECS specific logs, if they exist -- right now logs are stdout and stderr
     """
 
@@ -40,6 +42,7 @@ class ECSClient:
         base_cluster=None,
         starter_client=None,
         starter_log_client=None,
+        starter_ec2_client=None,
         grab_logs=True,
     ):
         self.key_id = check_str_param(key_id, "key_id")
@@ -50,6 +53,7 @@ class ECSClient:
         self.grab_logs = check_bool_param(grab_logs, "grab_logs")
         self.task_definition_arn = None
         self.tasks = []
+        self.task_ips = {}
         self.tasks_done = []
         self.offset = -1
         self.container_name = None
@@ -66,6 +70,10 @@ class ECSClient:
             self.log_client = self.make_client("logs")
         else:
             self.log_client = starter_log_client
+        if starter_ec2_client is None:
+            self.ec2_client = self.make_client("ec2")
+        else:
+            self.ec2_client = starter_ec2_client
         self.set_cluster(cluster_name=base_cluster)
 
     def make_client(self, client_type, **kwargs):
@@ -77,24 +85,25 @@ class ECSClient:
         Returns:
             client: the constructed client object
         """
-        if self.key_id != "":
-            clients = boto3.client(
-                client_type,
-                aws_access_key_id=(self.key_id if len(self.key_id) > 0 else None),
-                aws_secret_access_key=(self.access_key if len(self.access_key) > 0 else None),
-                region_name=(self.region_name if len(self.region_name) > 0 else None),
-                **kwargs
-            )
-        else:
-            clients = boto3.client(client_type, region_name=self.region_name, **kwargs)
+        clients = boto3.client(
+            client_type,
+            aws_access_key_id=(self.key_id if len(self.key_id) > 0 else None),
+            aws_secret_access_key=(self.access_key if len(self.access_key) > 0 else None),
+            region_name=(self.region_name if len(self.region_name) > 0 else None),
+            **kwargs
+        )
 
         return clients
 
-    def set_cluster(self, cluster_name = None):
+    def set_cluster(self, cluster_name=None):
         """
         sets the task's compute cluster to be the first available/default compute cluster.
         """
-        self.cluster = (check_str_param(cluster_name, 'cluster_name') if cluster_name else self.ecs_client.list_clusters()["clusterArns"][0])
+        self.cluster = (
+            check_str_param(cluster_name, 'cluster_name')
+            if cluster_name
+            else self.ecs_client.list_clusters()["clusterArns"][0]
+        )
 
     def set_and_register_task(
         self,
@@ -175,18 +184,22 @@ class ECSClient:
         self.tasks_done.append(False)
         self.offset += 1
 
-    def print_if_running(self, offset=0):
+    def get_instance_ip(self, offset=0):
         if self.tasks_done[offset]:
-            return True
+            return False
         response = self.ecs_client.describe_tasks(tasks=self.tasks, cluster=self.cluster)
         resp = response["tasks"][offset]
-        if resp["lastStatus"] == "RUNNING":
-            print(resp)
-        if resp["lastStatus"] == "STOPPED":
-            self.tasks_done[offset] = True
+        if resp["lastStatus"] == "RUNNING" or resp["lastStatus"] == "STOPPED":
+            container_info = self.ecs_client.describe_container_instances(
+                cluster=self.cluster, containerInstances=[resp['containerInstanceArn']]
+            )
+            ec2_id = container_info['containerInstances'][0]['ec2InstanceId']
+            ec2_info = self.ec2_client.describe_instances(InstanceIds=[ec2_id])
+            public_ip = ec2_info['Reservations'][0]['Instances'][0].get('PublicIpAddress', -1)
+            self.task_ips[offset]=public_ip
             return True
-
         return False
+
     def check_if_done(self, offset=0):
         """
         polls ECS to see if the task is complete, pulling down logs if so
@@ -221,6 +234,10 @@ class ECSClient:
             return True
         return False
 
+    def spin_til_running(self, offset=0, time_delay=5):
+        while not self.get_instance_ip(offset=offset):
+            time.sleep(time_delay)
+
     def spin_til_done(self, offset=0, time_delay=5):
         """
         spinpolls the ECS servers to test if the task is done
@@ -240,24 +257,23 @@ class ECSClient:
         for i in range(self.offset + 1):
             self.spin_til_done(offset=i, time_delay=time_delay)
 
+    def run_all(self, time_delay=5):
+        for i in range(self.offset + 1):
+            self.spin_til_running(offset=i, time_delay=time_delay)
+
 
 if __name__ == "__main__":
 
-    testclient = ECSClient(base_cluster='default')
+    testclient = ECSClient()
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage",
     )
     networkConfiguration = {
         "awsvpcConfiguration": {
             "subnets": ["subnet-0dc1b0c43c4d47945",],
-            "securityGroups": ["sg-036ebf091f469a23e",]
+            "securityGroups": ["sg-036ebf091f469a23e",],
         }
     }
     testclient.run_task(networkConfiguration=networkConfiguration)
-
-    testclient.set_and_register_task(
-        ["echo middle"], ["/bin/bash", "-c"], family="multimessage",
-    )
-    testclient.run_task(networkConfiguration=networkConfiguration)
-    testclient.spin_all(time_delay=2)
-    print(testclient.logs_messages)  # pylint: disable=print-call
+    testclient.spin_til_running(time_delay=2)
+    print(testclient.task_ips)
