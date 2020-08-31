@@ -25,7 +25,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-
 #ifndef _NVFBC_H_
 #define _NVFBC_H_
 
@@ -184,65 +183,64 @@ extern "C" {
 /*!
  * NvFBC API version.
  */
-#define NVFBC_VERSION (uint32_t) (NVFBC_VERSION_MINOR | (NVFBC_VERSION_MAJOR << 8))
+#define NVFBC_VERSION (uint32_t)(NVFBC_VERSION_MINOR | (NVFBC_VERSION_MAJOR << 8))
 
 /*!
  * Creates a version number for structure parameters.
  */
 #define NVFBC_STRUCT_VERSION(typeName, ver) \
-    (uint32_t) (sizeof(typeName) | ((ver) << 16) | (NVFBC_VERSION << 24))
+    (uint32_t)(sizeof(typeName) | ((ver) << 16) | (NVFBC_VERSION << 24))
 
 /*!
  * Defines error codes.
  *
  * \see NvFBCGetLastErrorStr
  */
-typedef enum _NVFBCSTATUS
-{
+typedef enum _NVFBCSTATUS {
     /*!
      * This indicates that the API call returned with no errors.
      */
-    NVFBC_SUCCESS             = 0,
+    NVFBC_SUCCESS = 0,
     /*!
      * This indicates that the API version between the client and the library
      * is not compatible.
      */
-    NVFBC_ERR_API_VERSION     = 1,
+    NVFBC_ERR_API_VERSION = 1,
     /*!
      * An internal error occurred.
      */
-    NVFBC_ERR_INTERNAL        = 2,
+    NVFBC_ERR_INTERNAL = 2,
     /*!
      * This indicates that one or more of the parameter passed to the API call
      * is invalid.
      */
-    NVFBC_ERR_INVALID_PARAM   = 3,
+    NVFBC_ERR_INVALID_PARAM = 3,
     /*!
      * This indicates that one or more of the pointers passed to the API call
      * is invalid.
      */
-    NVFBC_ERR_INVALID_PTR     = 4,
+    NVFBC_ERR_INVALID_PTR = 4,
     /*!
      * This indicates that the handle passed to the API call to identify the
      * client is invalid.
      */
-    NVFBC_ERR_INVALID_HANDLE  = 5,
+    NVFBC_ERR_INVALID_HANDLE = 5,
     /*!
      * This indicates that the maximum number of threaded clients of the same
      * process has been reached.  The limit is 10 threads per process.
      * There is no limit on the number of process.
      */
-    NVFBC_ERR_MAX_CLIENTS     = 6,
+    NVFBC_ERR_MAX_CLIENTS = 6,
     /*!
      * This indicates that the requested feature is not currently supported
      * by the library.
      */
-    NVFBC_ERR_UNSUPPORTED     = 7,
+    NVFBC_ERR_UNSUPPORTED = 7,
     /*!
      * This indicates that the API call failed because it was unable to allocate
      * enough memory to perform the requested operation.
      */
-    NVFBC_ERR_OUT_OF_MEMORY   = 8,
+    NVFBC_ERR_OUT_OF_MEMORY = 8,
     /*!
      * This indicates that the API call was not expected.  This happens when
      * API calls are performed in a wrong order, such as trying to capture
@@ -250,7 +248,7 @@ typedef enum _NVFBCSTATUS
      * a capture to video memory although a capture session to system memory
      * was created.
      */
-    NVFBC_ERR_BAD_REQUEST     = 9,
+    NVFBC_ERR_BAD_REQUEST = 9,
     /*!
      * This indicates an X error, most likely meaning that the X server has
      * been terminated.  When this error is returned, the only resort is to
@@ -265,27 +263,27 @@ typedef enum _NVFBCSTATUS
      * the OpenGL driver, close the forked process running the capture, or
      * restart the application.
      */
-    NVFBC_ERR_X               = 10,
+    NVFBC_ERR_X = 10,
     /*!
      * This indicates a GLX error.
      */
-    NVFBC_ERR_GLX             = 11,
+    NVFBC_ERR_GLX = 11,
     /*!
      * This indicates an OpenGL error.
      */
-    NVFBC_ERR_GL              = 12,
+    NVFBC_ERR_GL = 12,
     /*!
      * This indicates a CUDA error.
      */
-    NVFBC_ERR_CUDA            = 13,
+    NVFBC_ERR_CUDA = 13,
     /*!
      * This indicates a HW encoder error.
      */
-    NVFBC_ERR_ENCODER         = 14,
+    NVFBC_ERR_ENCODER = 14,
     /*!
      * This indicates an NvFBC context error.
      */
-    NVFBC_ERR_CONTEXT         = 15,
+    NVFBC_ERR_CONTEXT = 15,
     /*!
      * This indicates that the application must recreate the capture session.
      *
@@ -293,14 +291,13 @@ typedef enum _NVFBCSTATUS
      * frames, and NVFBC_CREATE_HANDLE_PARAMS::bDisableAutoModesetRecovery
      * was set to NVFBC_TRUE.
      */
-    NVFBC_ERR_MUST_RECREATE   = 16,
+    NVFBC_ERR_MUST_RECREATE = 16,
 } NVFBCSTATUS;
 
 /*!
  * Defines boolean values.
  */
-typedef enum _NVFBC_BOOL
-{
+typedef enum _NVFBC_BOOL {
     /*!
      * False value.
      */
@@ -319,8 +316,7 @@ typedef enum _NVFBC_BOOL
 /*!
  * Capture type.
  */
-typedef enum _NVFBC_CAPTURE_TYPE
-{
+typedef enum _NVFBC_CAPTURE_TYPE {
     /*!
      * Capture frames to a buffer in system memory.
      */
@@ -357,8 +353,7 @@ typedef enum _NVFBC_CAPTURE_TYPE
  * output captures the region of the X screen that the RandR CRTC is sending to
  * the RandR output.
  */
-typedef enum
-{
+typedef enum {
     /*!
      * By default, NvFBC tries to track a connected primary output.  If none is
      * found, then it tries to track the first connected output.  If none is
@@ -389,8 +384,7 @@ typedef enum
 /*!
  * Buffer format.
  */
-typedef enum _NVFBC_BUFFER_FORMAT
-{
+typedef enum _NVFBC_BUFFER_FORMAT {
     /*!
      * Data will be converted to ARGB8888 byte-order format. 32 bpp.
      */
@@ -434,8 +428,7 @@ typedef uint64_t NVFBC_SESSION_HANDLE;
  * 800x600+100+50 effectively captures a region of 800x600+2020+50 relative to
  * the X screen.
  */
-typedef struct _NVFBC_BOX
-{
+typedef struct _NVFBC_BOX {
     /*!
      * [in] X offset of the box.
      */
@@ -457,8 +450,7 @@ typedef struct _NVFBC_BOX
 /*!
  * Size used to describe the size of a frame.
  */
-typedef struct _NVFBC_SIZE
-{
+typedef struct _NVFBC_SIZE {
     /*!
      * [in] Width.
      */
@@ -472,8 +464,7 @@ typedef struct _NVFBC_SIZE
 /*!
  * Describes information about a captured frame.
  */
-typedef struct _NVFBC_FRAME_GRAB_INFO
-{
+typedef struct _NVFBC_FRAME_GRAB_INFO {
     /*!
      * [out] Width of the captured frame.
      */
@@ -540,8 +531,7 @@ typedef struct _NVFBC_FRAME_GRAB_INFO
 /*!
  * Defines parameters for the CreateHandle() API call.
  */
-typedef struct _NVFBC_CREATE_HANDLE_PARAMS
-{
+typedef struct _NVFBC_CREATE_HANDLE_PARAMS {
     /*!
      * [in] Must be set to NVFBC_CREATE_HANDLE_PARAMS_VER
      */
@@ -601,8 +591,7 @@ typedef struct _NVFBC_CREATE_HANDLE_PARAMS
 /*!
  * Defines parameters for the ::NvFBCDestroyHandle() API call.
  */
-typedef struct _NVFBC_DESTROY_HANDLE_PARAMS
-{
+typedef struct _NVFBC_DESTROY_HANDLE_PARAMS {
     /*!
      * [in] Must be set to NVFBC_DESTROY_HANDLE_PARAMS_VER
      */
@@ -632,8 +621,7 @@ typedef struct _NVFBC_DESTROY_HANDLE_PARAMS
  *
  * \see Requirements
  */
-typedef struct _NVFBC_OUTPUT
-{
+typedef struct _NVFBC_OUTPUT {
     /*!
      * Identifier of the RandR output.
      */
@@ -654,8 +642,7 @@ typedef struct _NVFBC_OUTPUT
 /*!
  * Defines parameters for the ::NvFBCGetStatus() API call.
  */
-typedef struct _NVFBC_GET_STATUS_PARAMS
-{
+typedef struct _NVFBC_GET_STATUS_PARAMS {
     /*!
      * [in] Must be set to NVFBC_GET_STATUS_PARAMS_VER
      */
@@ -716,8 +703,7 @@ typedef struct _NVFBC_GET_STATUS_PARAMS
 /*!
  * Defines parameters for the ::NvFBCCreateCaptureSession() API call.
  */
-typedef struct _NVFBC_CREATE_CAPTURE_SESSION_PARAMS
-{
+typedef struct _NVFBC_CREATE_CAPTURE_SESSION_PARAMS {
     /*!
      * [in] Must be set to NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER
      */
@@ -837,13 +823,13 @@ typedef struct _NVFBC_CREATE_CAPTURE_SESSION_PARAMS
 /*!
  * NVFBC_CREATE_CAPTURE_SESSION_PARAMS structure version.
  */
-#define NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_CREATE_CAPTURE_SESSION_PARAMS, 5)
+#define NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER \
+    NVFBC_STRUCT_VERSION(NVFBC_CREATE_CAPTURE_SESSION_PARAMS, 5)
 
 /*!
  * Defines parameters for the ::NvFBCDestroyCaptureSession() API call.
  */
-typedef struct _NVFBC_DESTROY_CAPTURE_SESSION_PARAMS
-{
+typedef struct _NVFBC_DESTROY_CAPTURE_SESSION_PARAMS {
     /*!
      * [in] Must be set to NVFBC_DESTROY_CAPTURE_SESSION_PARAMS_VER
      */
@@ -853,13 +839,13 @@ typedef struct _NVFBC_DESTROY_CAPTURE_SESSION_PARAMS
 /*!
  * NVFBC_DESTROY_CAPTURE_SESSION_PARAMS structure version.
  */
-#define NVFBC_DESTROY_CAPTURE_SESSION_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_DESTROY_CAPTURE_SESSION_PARAMS, 1)
+#define NVFBC_DESTROY_CAPTURE_SESSION_PARAMS_VER \
+    NVFBC_STRUCT_VERSION(NVFBC_DESTROY_CAPTURE_SESSION_PARAMS, 1)
 
 /*!
  * Defines parameters for the ::NvFBCBindContext() API call.
  */
-typedef struct _NVFBC_BIND_CONTEXT_PARAMS
-{
+typedef struct _NVFBC_BIND_CONTEXT_PARAMS {
     /*!
      * [in] Must be set to NVFBC_BIND_CONTEXT_PARAMS_VER
      */
@@ -874,8 +860,7 @@ typedef struct _NVFBC_BIND_CONTEXT_PARAMS
 /*!
  * Defines parameters for the ::NvFBCReleaseContext() API call.
  */
-typedef struct _NVFBC_RELEASE_CONTEXT_PARAMS
-{
+typedef struct _NVFBC_RELEASE_CONTEXT_PARAMS {
     /*!
      * [in] Must be set to NVFBC_RELEASE_CONTEXT_PARAMS_VER
      */
@@ -890,8 +875,7 @@ typedef struct _NVFBC_RELEASE_CONTEXT_PARAMS
 /*!
  * Defines flags that can be used when capturing to system memory.
  */
-typedef enum
-{
+typedef enum {
     /*!
      * Default, capturing waits for a new frame or mouse move.
      *
@@ -900,7 +884,7 @@ typedef enum
      * ready that the client hasn't seen.
      * \see NVFBC_TOSYS_GRAB_FLAGS_NOWAIT_IF_NEW_FRAME_READY
      */
-    NVFBC_TOSYS_GRAB_FLAGS_NOFLAGS       = 0,
+    NVFBC_TOSYS_GRAB_FLAGS_NOFLAGS = 0,
     /*!
      * Capturing does not wait for a new frame nor a mouse move.
      *
@@ -908,7 +892,7 @@ typedef enum
      * When this occurs, the dwCurrentFrame parameter of the
      * NVFBC_FRAME_GRAB_INFO structure is not incremented.
      */
-    NVFBC_TOSYS_GRAB_FLAGS_NOWAIT        = (1 << 0),
+    NVFBC_TOSYS_GRAB_FLAGS_NOWAIT = (1 << 0),
     /*!
      * Forces the destination buffer to be refreshed even if the frame has not
      * changed since previous capture.
@@ -931,8 +915,7 @@ typedef enum
 /*!
  * Defines parameters for the ::NvFBCToSysSetUp() API call.
  */
-typedef struct _NVFBC_TOSYS_SETUP_PARAMS
-{
+typedef struct _NVFBC_TOSYS_SETUP_PARAMS {
     /*!
      * [in] Must be set to NVFBC_TOSYS_SETUP_PARAMS_VER
      */
@@ -1010,8 +993,7 @@ typedef struct _NVFBC_TOSYS_SETUP_PARAMS
 /*!
  * Defines parameters for the ::NvFBCToSysGrabFrame() API call.
  */
-typedef struct _NVFBC_TOSYS_GRAB_FRAME_PARAMS
-{
+typedef struct _NVFBC_TOSYS_GRAB_FRAME_PARAMS {
     /*!
      * [in] Must be set to NVFBC_TOSYS_GRAB_FRAME_PARAMS_VER
      */
@@ -1062,8 +1044,7 @@ typedef struct _NVFBC_TOSYS_GRAB_FRAME_PARAMS
 /*!
  * Defines flags that can be used when capturing to a CUDA buffer in video memory.
  */
-typedef enum
-{
+typedef enum {
     /*!
      * Default, capturing waits for a new frame or mouse move.
      *
@@ -1072,7 +1053,7 @@ typedef enum
      * ready that the client hasn't seen.
      * \see NVFBC_TOCUDA_GRAB_FLAGS_NOWAIT_IF_NEW_FRAME_READY
      */
-    NVFBC_TOCUDA_GRAB_FLAGS_NOFLAGS      = 0,
+    NVFBC_TOCUDA_GRAB_FLAGS_NOFLAGS = 0,
     /*!
      * Capturing does not wait for a new frame nor a mouse move.
      *
@@ -1080,7 +1061,7 @@ typedef enum
      * When this occurs, the dwCurrentFrame parameter of the
      * NVFBC_FRAME_GRAB_INFO structure is not incremented.
      */
-    NVFBC_TOCUDA_GRAB_FLAGS_NOWAIT       = (1 << 0),
+    NVFBC_TOCUDA_GRAB_FLAGS_NOWAIT = (1 << 0),
     /*!
      * [in] Forces the destination buffer to be refreshed even if the frame
      * has not changed since previous capture.
@@ -1103,8 +1084,7 @@ typedef enum
 /*!
  * Defines parameters for the ::NvFBCToCudaSetUp() API call.
  */
-typedef struct _NVFBC_TOCUDA_SETUP_PARAMS
-{
+typedef struct _NVFBC_TOCUDA_SETUP_PARAMS {
     /*!
      * [in] Must be set to NVFBC_TOCUDA_SETUP_PARAMS_VER
      */
@@ -1123,8 +1103,7 @@ typedef struct _NVFBC_TOCUDA_SETUP_PARAMS
 /*!
  * Defines parameters for the ::NvFBCToCudaGrabFrame() API call.
  */
-typedef struct _NVFBC_TOCUDA_GRAB_FRAME_PARAMS
-{
+typedef struct _NVFBC_TOCUDA_GRAB_FRAME_PARAMS {
     /*!
      * [in] Must be set to NVFBC_TOCUDA_GRAB_FRAME_PARAMS_VER.
      */
@@ -1189,8 +1168,7 @@ typedef struct _NVFBC_TOCUDA_GRAB_FRAME_PARAMS
 /*!
  * Defines flags that can be used when capturing to an OpenGL buffer in video memory.
  */
-typedef enum
-{
+typedef enum {
     /*!
      * Default, capturing waits for a new frame or mouse move.
      *
@@ -1199,7 +1177,7 @@ typedef enum
      * ready that the client hasn't seen.
      * \see NVFBC_TOGL_GRAB_FLAGS_NOWAIT_IF_NEW_FRAME_READY
      */
-    NVFBC_TOGL_GRAB_FLAGS_NOFLAGS      = 0,
+    NVFBC_TOGL_GRAB_FLAGS_NOFLAGS = 0,
     /*!
      * Capturing does not wait for a new frame nor a mouse move.
      *
@@ -1207,7 +1185,7 @@ typedef enum
      * When this occurs, the dwCurrentFrame parameter of the
      * NVFBC_FRAME_GRAB_INFO structure is not incremented.
      */
-    NVFBC_TOGL_GRAB_FLAGS_NOWAIT       = (1 << 0),
+    NVFBC_TOGL_GRAB_FLAGS_NOWAIT = (1 << 0),
     /*!
      * [in] Forces the destination buffer to be refreshed even if the frame
      * has not changed since previous capture.
@@ -1235,8 +1213,7 @@ typedef enum
 /*!
  * Defines parameters for the ::NvFBCToGLSetUp() API call.
  */
-typedef struct _NVFBC_TOGL_SETUP_PARAMS
-{
+typedef struct _NVFBC_TOGL_SETUP_PARAMS {
     /*!
      * [in] Must be set to NVFBC_TOGL_SETUP_PARAMS_VER
      */
@@ -1302,8 +1279,7 @@ typedef struct _NVFBC_TOGL_SETUP_PARAMS
 /*!
  * Defines parameters for the ::NvFBCToGLGrabFrame() API call.
  */
-typedef struct _NVFBC_TOGL_GRAB_FRAME_PARAMS
-{
+typedef struct _NVFBC_TOGL_GRAB_FRAME_PARAMS {
     /*!
      * [in] Must be set to NVFBC_TOGL_GRAB_FRAME_PARAMS_VER.
      */
@@ -1374,12 +1350,11 @@ typedef struct _NVFBC_TOGL_GRAB_FRAME_PARAMS
  * \deprecated Defines flags that can be used when capturing HW encoded
  * compressed frames to system memory.
  */
-typedef enum
-{
+typedef enum {
     /*!
      * Default, capturing waits for a new frame or mouse move.
      */
-    NVFBC_TOHWENC_GRAB_FLAGS_NOFLAGS       = 0,
+    NVFBC_TOHWENC_GRAB_FLAGS_NOFLAGS = 0,
     /*!
      * Capturing does not wait for a new frame nor a mouse move.
      *
@@ -1387,14 +1362,13 @@ typedef enum
      * When this occurs, the dwCurrentFrame parameter of the
      * NVFBC_FRAME_GRAB_INFO structure is not incremented.
      */
-    NVFBC_TOHWENC_GRAB_FLAGS_NOWAIT        = (1 << 0),
+    NVFBC_TOHWENC_GRAB_FLAGS_NOWAIT = (1 << 0),
 } NVFBC_TOHWENC_GRAB_FLAGS;
 
 /*!
  * \deprecated Defines encoder presets.
  */
-typedef enum
-{
+typedef enum {
     /*!
      * Use for fastest encoding, with suboptimal quality
      */
@@ -1422,8 +1396,7 @@ typedef enum
 /*!
  * \deprecated Defines encoder rate control modes.
  */
-typedef enum _NVFBC_HWENC_PARAMS_RC_MODE
-{
+typedef enum _NVFBC_HWENC_PARAMS_RC_MODE {
     /*!
      * Constant QP mode.
      */
@@ -1455,12 +1428,11 @@ typedef enum _NVFBC_HWENC_PARAMS_RC_MODE
 /*!
  * \deprecated Defines encoder flags.
  */
-typedef enum
-{
+typedef enum {
     /*!
      * Encodes the current frame as an IDR picture.
      */
-    NVFBC_HWENC_PARAM_FLAG_FORCEIDR           = (1 << 0),
+    NVFBC_HWENC_PARAM_FLAG_FORCEIDR = (1 << 0),
     /*!
      * Indicates change in bitrate from current frame onwards.
      */
@@ -1470,8 +1442,7 @@ typedef enum
 /*!
  * \deprecated Defines slicing modes.
  */
-typedef enum
-{
+typedef enum {
     /*!
      * Disable slicing mode.
      */
@@ -1500,8 +1471,7 @@ typedef enum
 /*!
  * \deprecated Defines video codecs.
  */
-typedef enum
-{
+typedef enum {
     /*!
      * H.264 codec.
      */
@@ -1520,8 +1490,7 @@ typedef enum
 /*!
  * \deprecated Describes HW encoder configuration.
  */
-typedef struct _NVFBC_HWENC_CONFIG
-{
+typedef struct _NVFBC_HWENC_CONFIG {
     /*!
      * [in] Sets to NVFBC_HWENC_CONFIG_VER.
      */
@@ -1705,8 +1674,7 @@ typedef struct _NVFBC_HWENC_CONFIG
 /*!
  * \deprecated Describes encode parameters.
  */
-typedef struct _NVFBC_HWENC_ENCODE_PARAMS
-{
+typedef struct _NVFBC_HWENC_ENCODE_PARAMS {
     /*!
      * [in] Set to NVFBC_HWENC_ENCODE_PARAMS_VER.
      */
@@ -1786,8 +1754,7 @@ typedef struct _NVFBC_HWENC_ENCODE_PARAMS
 /*!
  * \deprecated Describes an encoded frame.
  */
-typedef struct _NVFBC_HWENC_FRAME_INFO
-{
+typedef struct _NVFBC_HWENC_FRAME_INFO {
     /*!
      * [out] Is NVFBC_TRUE if the current frame is an I-frame.
      */
@@ -1810,8 +1777,7 @@ typedef struct _NVFBC_HWENC_FRAME_INFO
 /*!
  * \deprecated Defines parameters for the ToHwGetCaps() API call.
  */
-typedef struct _NVFBC_TOHWENC_GET_CAPS_PARAMS
-{
+typedef struct _NVFBC_TOHWENC_GET_CAPS_PARAMS {
     /*!
      * [in] Must be set to NVFBC_TOHWENC_GET_CAPS_PARAMS_VER.
      */
@@ -1897,8 +1863,7 @@ typedef struct _NVFBC_TOHWENC_GET_CAPS_PARAMS
 /*!
  * \deprecated Defines parameters for the ToHwEncSetUp() API call.
  */
-typedef struct _NVFBC_TOHWENC_SETUP_PARAMS
-{
+typedef struct _NVFBC_TOHWENC_SETUP_PARAMS {
     /*!
      * [in] Must be set to NVFBC_TOHWENC_SETUP_PARAMS_VER.
      */
@@ -1917,8 +1882,7 @@ typedef struct _NVFBC_TOHWENC_SETUP_PARAMS
 /*!
  * \deprecated Defines parameters for the ::NvFBCToHwEncGrabFrame() API call.
  */
-typedef struct _NVFBC_TOHWENC_GRAB_FRAME_PARAMS
-{
+typedef struct _NVFBC_TOHWENC_GRAB_FRAME_PARAMS {
     /*!
      * [in] Must be set to NVFBC_TOHWENC_GRAB_FRAME_PARAMS_VER.
      */
@@ -1978,8 +1942,7 @@ typedef struct _NVFBC_TOHWENC_GRAB_FRAME_PARAMS
 /*!
  * \deprecated Defines parameters for the ::NvFBCToHwEncGetHeader() API call.
  */
-typedef struct _NVFBC_TOHWENC_GET_HEADER_PARAMS
-{
+typedef struct _NVFBC_TOHWENC_GET_HEADER_PARAMS {
     /*!
      * [in] Must be set to NVFBC_TOHWENC_GET_HEADER_PARAMS_VER.
      */
@@ -2089,7 +2052,7 @@ typedef struct _NVFBC_TOHWENC_GET_HEADER_PARAMS
  *   A NULL terminated error message, or an empty string.  Its maximum length
  *   is NVFBC_ERROR_STR_LEN.
  */
-const char* NVFBCAPI NvFBCGetLastErrorStr(const NVFBC_SESSION_HANDLE sessionHandle);
+const char *NVFBCAPI NvFBCGetLastErrorStr(const NVFBC_SESSION_HANDLE sessionHandle);
 
 /*!
  * \brief Allocates a new handle for an NvFBC client.
@@ -2115,7 +2078,8 @@ const char* NVFBCAPI NvFBCGetLastErrorStr(const NVFBC_SESSION_HANDLE sessionHand
  *   ::NVFBC_ERR_GL
  *
  */
-NVFBCSTATUS NVFBCAPI NvFBCCreateHandle(NVFBC_SESSION_HANDLE *pSessionHandle, NVFBC_CREATE_HANDLE_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCCreateHandle(NVFBC_SESSION_HANDLE *pSessionHandle,
+                                       NVFBC_CREATE_HANDLE_PARAMS *pParams);
 
 /*!
  * \brief Destroys the handle of an NvFBC client.
@@ -2141,7 +2105,8 @@ NVFBCSTATUS NVFBCAPI NvFBCCreateHandle(NVFBC_SESSION_HANDLE *pSessionHandle, NVF
  *   ::NVFBC_ERR_CONTEXT \n
  *   ::NVFBC_ERR_X
  */
-NVFBCSTATUS NVFBCAPI NvFBCDestroyHandle(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_DESTROY_HANDLE_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCDestroyHandle(const NVFBC_SESSION_HANDLE sessionHandle,
+                                        NVFBC_DESTROY_HANDLE_PARAMS *pParams);
 
 /*!
  * \brief Gets the current status of the display driver.
@@ -2160,7 +2125,8 @@ NVFBCSTATUS NVFBCAPI NvFBCDestroyHandle(const NVFBC_SESSION_HANDLE sessionHandle
  *   ::NVFBC_ERR_INTERNAL \n
  *   ::NVFBC_ERR_X
  */
-NVFBCSTATUS NVFBCAPI NvFBCGetStatus(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_GET_STATUS_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCGetStatus(const NVFBC_SESSION_HANDLE sessionHandle,
+                                    NVFBC_GET_STATUS_PARAMS *pParams);
 
 /*!
  * \brief Binds the FBC context to the calling thread.
@@ -2194,7 +2160,8 @@ NVFBCSTATUS NVFBCAPI NvFBCGetStatus(const NVFBC_SESSION_HANDLE sessionHandle, NV
  *   ::NVFBC_ERR_INTERNAL \n
  *   ::NVFBC_ERR_X
  */
-NVFBCSTATUS NVFBCAPI NvFBCBindContext(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_BIND_CONTEXT_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCBindContext(const NVFBC_SESSION_HANDLE sessionHandle,
+                                      NVFBC_BIND_CONTEXT_PARAMS *pParams);
 
 /*!
  * \brief Releases the FBC context from the calling thread.
@@ -2215,7 +2182,8 @@ NVFBCSTATUS NVFBCAPI NvFBCBindContext(const NVFBC_SESSION_HANDLE sessionHandle, 
  *   ::NVFBC_ERR_INTERNAL \n
  *   ::NVFBC_ERR_X
  */
-NVFBCSTATUS NVFBCAPI NvFBCReleaseContext(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_RELEASE_CONTEXT_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCReleaseContext(const NVFBC_SESSION_HANDLE sessionHandle,
+                                         NVFBC_RELEASE_CONTEXT_PARAMS *pParams);
 
 /*!
  * \brief Creates a capture session for an FBC client.
@@ -2251,7 +2219,8 @@ NVFBCSTATUS NVFBCAPI NvFBCReleaseContext(const NVFBC_SESSION_HANDLE sessionHandl
  *   ::NVFBC_ERR_ENCODER \n
  *   ::NVFBC_ERR_INTERNAL
  */
-NVFBCSTATUS NVFBCAPI NvFBCCreateCaptureSession(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_CREATE_CAPTURE_SESSION_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCCreateCaptureSession(const NVFBC_SESSION_HANDLE sessionHandle,
+                                               NVFBC_CREATE_CAPTURE_SESSION_PARAMS *pParams);
 
 /*!
  * \brief Destroys a capture session for an FBC client.
@@ -2275,7 +2244,8 @@ NVFBCSTATUS NVFBCAPI NvFBCCreateCaptureSession(const NVFBC_SESSION_HANDLE sessio
  *   ::NVFBC_ERR_INTERNAL \n
  *   ::NVFBC_ERR_X
  */
-NVFBCSTATUS NVFBCAPI NvFBCDestroyCaptureSession(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_DESTROY_CAPTURE_SESSION_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCDestroyCaptureSession(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                NVFBC_DESTROY_CAPTURE_SESSION_PARAMS *pParams);
 
 /*!
  * \brief Sets up a capture to system memory session.
@@ -2307,7 +2277,8 @@ NVFBCSTATUS NVFBCAPI NvFBCDestroyCaptureSession(const NVFBC_SESSION_HANDLE sessi
  *   ::NVFBC_ERR_OUT_OF_MEMORY \n
  *   ::NVFBC_ERR_X
  */
-NVFBCSTATUS NVFBCAPI NvFBCToSysSetUp(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOSYS_SETUP_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToSysSetUp(const NVFBC_SESSION_HANDLE sessionHandle,
+                                     NVFBC_TOSYS_SETUP_PARAMS *pParams);
 
 /*!
  * \brief Captures a frame to a buffer in system memory.
@@ -2346,7 +2317,8 @@ NVFBCSTATUS NVFBCAPI NvFBCToSysSetUp(const NVFBC_SESSION_HANDLE sessionHandle, N
  *   \see NvFBCCreateCaptureSession \n
  *   \see NvFBCToSysSetUp
  */
-NVFBCSTATUS NVFBCAPI NvFBCToSysGrabFrame(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOSYS_GRAB_FRAME_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToSysGrabFrame(const NVFBC_SESSION_HANDLE sessionHandle,
+                                         NVFBC_TOSYS_GRAB_FRAME_PARAMS *pParams);
 
 /*!
  * \brief Sets up a capture to video memory session.
@@ -2374,7 +2346,8 @@ NVFBCSTATUS NVFBCAPI NvFBCToSysGrabFrame(const NVFBC_SESSION_HANDLE sessionHandl
  *   ::NVFBC_ERR_MUST_RECREATE \n
  *   ::NVFBC_ERR_X
  */
-NVFBCSTATUS NVFBCAPI NvFBCToCudaSetUp(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOCUDA_SETUP_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToCudaSetUp(const NVFBC_SESSION_HANDLE sessionHandle,
+                                      NVFBC_TOCUDA_SETUP_PARAMS *pParams);
 
 /*!
  * \brief Captures a frame to a CUDA device in video memory.
@@ -2402,7 +2375,8 @@ NVFBCSTATUS NVFBCAPI NvFBCToCudaSetUp(const NVFBC_SESSION_HANDLE sessionHandle, 
  *   \see NvFBCCreateCaptureSession \n
  *   \see NvFBCToCudaSetUp
  */
-NVFBCSTATUS NVFBCAPI NvFBCToCudaGrabFrame(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOCUDA_GRAB_FRAME_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToCudaGrabFrame(const NVFBC_SESSION_HANDLE sessionHandle,
+                                          NVFBC_TOCUDA_GRAB_FRAME_PARAMS *pParams);
 
 /*!
  * \brief Sets up a capture to OpenGL buffer in video memory session.
@@ -2430,7 +2404,8 @@ NVFBCSTATUS NVFBCAPI NvFBCToCudaGrabFrame(const NVFBC_SESSION_HANDLE sessionHand
  *   ::NVFBC_ERR_MUST_RECREATE \n
  *   ::NVFBC_ERR_X
  */
-NVFBCSTATUS NVFBCAPI NvFBCToGLSetUp(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOGL_SETUP_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToGLSetUp(const NVFBC_SESSION_HANDLE sessionHandle,
+                                    NVFBC_TOGL_SETUP_PARAMS *pParams);
 
 /*!
  * \brief Captures a frame to an OpenGL buffer in video memory.
@@ -2457,7 +2432,8 @@ NVFBCSTATUS NVFBCAPI NvFBCToGLSetUp(const NVFBC_SESSION_HANDLE sessionHandle, NV
  *   \see NvFBCCreateCaptureSession \n
  *   \see NvFBCToCudaSetUp
  */
-NVFBCSTATUS NVFBCAPI NvFBCToGLGrabFrame(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOGL_GRAB_FRAME_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToGLGrabFrame(const NVFBC_SESSION_HANDLE sessionHandle,
+                                        NVFBC_TOGL_GRAB_FRAME_PARAMS *pParams);
 
 /*!
  * \deprecated \see NvFBCToHwEncSetUp
@@ -2487,7 +2463,8 @@ NVFBCSTATUS NVFBCAPI NvFBCToGLGrabFrame(const NVFBC_SESSION_HANDLE sessionHandle
  *   ::NVFBC_ERR_MUST_RECREATE \n
  *   ::NVFBC_ERR_X
  */
-NVFBCSTATUS NVFBCAPI NvFBCToH264SetUp(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_SETUP_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToH264SetUp(const NVFBC_SESSION_HANDLE sessionHandle,
+                                      NVFBC_TOH264_SETUP_PARAMS *pParams);
 
 /*!
  * \deprecated \see NvFBCToHwEncGrabFrame
@@ -2518,7 +2495,8 @@ NVFBCSTATUS NVFBCAPI NvFBCToH264SetUp(const NVFBC_SESSION_HANDLE sessionHandle, 
  *   \see NvFBCCreateCaptureSession \n
  *   \see NvFBCToH264SetUp
  */
-NVFBCSTATUS NVFBCAPI NvFBCToH264GrabFrame(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_GRAB_FRAME_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToH264GrabFrame(const NVFBC_SESSION_HANDLE sessionHandle,
+                                          NVFBC_TOH264_GRAB_FRAME_PARAMS *pParams);
 
 /*!
  * \deprecated \see NvFBCToHwEncGetHeader
@@ -2544,7 +2522,8 @@ NVFBCSTATUS NVFBCAPI NvFBCToH264GrabFrame(const NVFBC_SESSION_HANDLE sessionHand
  *   ::NVFBC_ERR_ENCODER \n
  *   ::NVFBC_ERR_MUST_RECREATE
  */
-NVFBCSTATUS NVFBCAPI NvFBCToH264GetHeader(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_GET_HEADER_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToH264GetHeader(const NVFBC_SESSION_HANDLE sessionHandle,
+                                          NVFBC_TOH264_GET_HEADER_PARAMS *pParams);
 
 /*!
  * \deprecated Queries HW encoder capabilities for a given codec.
@@ -2567,7 +2546,8 @@ NVFBCSTATUS NVFBCAPI NvFBCToH264GetHeader(const NVFBC_SESSION_HANDLE sessionHand
  *   ::NVFBC_ERR_INVALID_PARAM \n
  *   ::NVFBC_ERR_ENCODER
  */
-NVFBCSTATUS NVFBCAPI NvFBCToHwEncGetCaps(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GET_CAPS_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToHwEncGetCaps(const NVFBC_SESSION_HANDLE sessionHandle,
+                                         NVFBC_TOHWENC_GET_CAPS_PARAMS *pParams);
 
 /*!
  * \deprecated Sets up a capture to HW compressed frames in system memory.
@@ -2597,7 +2577,8 @@ NVFBCSTATUS NVFBCAPI NvFBCToHwEncGetCaps(const NVFBC_SESSION_HANDLE sessionHandl
  *   ::NVFBC_ERR_ENCODER \n
  *   ::NVFBC_ERR_X
  */
-NVFBCSTATUS NVFBCAPI NvFBCToHwEncSetUp(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_SETUP_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToHwEncSetUp(const NVFBC_SESSION_HANDLE sessionHandle,
+                                       NVFBC_TOHWENC_SETUP_PARAMS *pParams);
 
 /*!
  * \deprecated Captures a HW compressed frame to a bitstream in system memory.
@@ -2626,7 +2607,8 @@ NVFBCSTATUS NVFBCAPI NvFBCToHwEncSetUp(const NVFBC_SESSION_HANDLE sessionHandle,
  *   \see NvFBCCreateCaptureSession \n
  *   \see NvFBCToHwEncSetUp
  */
-NVFBCSTATUS NVFBCAPI NvFBCToHwEncGrabFrame(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GRAB_FRAME_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToHwEncGrabFrame(const NVFBC_SESSION_HANDLE sessionHandle,
+                                           NVFBC_TOHWENC_GRAB_FRAME_PARAMS *pParams);
 
 /*!
  * \deprecated Gets SPS/PPS headers
@@ -2651,34 +2633,55 @@ NVFBCSTATUS NVFBCAPI NvFBCToHwEncGrabFrame(const NVFBC_SESSION_HANDLE sessionHan
  *   ::NVFBC_ERR_MUST_RECREATE \n
  *   ::NVFBC_ERR_X
  */
-NVFBCSTATUS NVFBCAPI NvFBCToHwEncGetHeader(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GET_HEADER_PARAMS *pParams);
+NVFBCSTATUS NVFBCAPI NvFBCToHwEncGetHeader(const NVFBC_SESSION_HANDLE sessionHandle,
+                                           NVFBC_TOHWENC_GET_HEADER_PARAMS *pParams);
 
 /*!
  * \cond FBC_PFN
  *
  * Defines API function pointers
  */
-typedef const char* (NVFBCAPI* PNVFBCGETLASTERRORSTR)(const NVFBC_SESSION_HANDLE sessionHandle);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCCREATEHANDLE)(NVFBC_SESSION_HANDLE *pSessionHandle, NVFBC_CREATE_HANDLE_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCDESTROYHANDLE)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_DESTROY_HANDLE_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCBINDCONTEXT)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_BIND_CONTEXT_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCRELEASECONTEXT)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_RELEASE_CONTEXT_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCGETSTATUS)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_GET_STATUS_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCCREATECAPTURESESSION)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_CREATE_CAPTURE_SESSION_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCDESTROYCAPTURESESSION)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_DESTROY_CAPTURE_SESSION_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOSYSSETUP)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOSYS_SETUP_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOSYSGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOSYS_GRAB_FRAME_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOCUDASETUP)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOCUDA_SETUP_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOCUDAGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOCUDA_GRAB_FRAME_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOH264SETUP)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_SETUP_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOH264GRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_GRAB_FRAME_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOH264GETHEADER)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_GET_HEADER_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOHWENCGETCAPS)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GET_CAPS_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOHWENCSETUP)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_SETUP_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOHWENCGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GRAB_FRAME_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOHWENCGETHEADER)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GET_HEADER_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOGLSETUP)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOGL_SETUP_PARAMS *pParams);
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOGLGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOGL_GRAB_FRAME_PARAMS *pParams);
+typedef const char *(NVFBCAPI *PNVFBCGETLASTERRORSTR)(const NVFBC_SESSION_HANDLE sessionHandle);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCCREATEHANDLE)(NVFBC_SESSION_HANDLE *pSessionHandle,
+                                                  NVFBC_CREATE_HANDLE_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCDESTROYHANDLE)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                   NVFBC_DESTROY_HANDLE_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCBINDCONTEXT)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                 NVFBC_BIND_CONTEXT_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCRELEASECONTEXT)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                    NVFBC_RELEASE_CONTEXT_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCGETSTATUS)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                               NVFBC_GET_STATUS_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCCREATECAPTURESESSION)(
+    const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_CREATE_CAPTURE_SESSION_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCDESTROYCAPTURESESSION)(
+    const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_DESTROY_CAPTURE_SESSION_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOSYSSETUP)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                NVFBC_TOSYS_SETUP_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOSYSGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                    NVFBC_TOSYS_GRAB_FRAME_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOCUDASETUP)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                 NVFBC_TOCUDA_SETUP_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOCUDAGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                     NVFBC_TOCUDA_GRAB_FRAME_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOH264SETUP)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                 NVFBC_TOH264_SETUP_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOH264GRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                     NVFBC_TOH264_GRAB_FRAME_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOH264GETHEADER)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                     NVFBC_TOH264_GET_HEADER_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOHWENCGETCAPS)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                    NVFBC_TOHWENC_GET_CAPS_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOHWENCSETUP)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                  NVFBC_TOHWENC_SETUP_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOHWENCGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                      NVFBC_TOHWENC_GRAB_FRAME_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOHWENCGETHEADER)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                      NVFBC_TOHWENC_GET_HEADER_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOGLSETUP)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                               NVFBC_TOGL_SETUP_PARAMS *pParams);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCTOGLGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle,
+                                                   NVFBC_TOGL_GRAB_FRAME_PARAMS *pParams);
 /// \endcond
 
 /*! @} FBC_FUNC */
@@ -2688,30 +2691,31 @@ typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOGLGRABFRAME)(const NVFBC_SESSION_HANDLE s
  *
  * Structure populated with API function pointers.
  */
-typedef struct
-{
-    uint32_t                                  dwVersion;                  //!< [in] Must be set to NVFBC_VERSION.
-    PNVFBCGETLASTERRORSTR                     nvFBCGetLastErrorStr;       //!< [out] Pointer to ::NvFBCGetLastErrorStr().
-    PNVFBCCREATEHANDLE                        nvFBCCreateHandle;          //!< [out] Pointer to ::NvFBCCreateHandle().
-    PNVFBCDESTROYHANDLE                       nvFBCDestroyHandle;         //!< [out] Pointer to ::NvFBCDestroyHandle().
-    PNVFBCGETSTATUS                           nvFBCGetStatus;             //!< [out] Pointer to ::NvFBCGetStatus().
-    PNVFBCCREATECAPTURESESSION                nvFBCCreateCaptureSession;  //!< [out] Pointer to ::NvFBCCreateCaptureSession().
-    PNVFBCDESTROYCAPTURESESSION               nvFBCDestroyCaptureSession; //!< [out] Pointer to ::NvFBCDestroyCaptureSession().
-    PNVFBCTOSYSSETUP                          nvFBCToSysSetUp;            //!< [out] Pointer to ::NvFBCToSysSetUp().
-    PNVFBCTOSYSGRABFRAME                      nvFBCToSysGrabFrame;        //!< [out] Pointer to ::NvFBCToSysGrabFrame().
-    PNVFBCTOCUDASETUP                         nvFBCToCudaSetUp;           //!< [out] Pointer to ::NvFBCToCudaSetUp().
-    PNVFBCTOCUDAGRABFRAME                     nvFBCToCudaGrabFrame;       //!< [out] Pointer to ::NvFBCToCudaGrabFrame().
-    PNVFBCTOH264SETUP                         nvFBCToH264SetUp;           //!< [out] Pointer to ::NvFBCToH264SetUp().
-    PNVFBCTOH264GRABFRAME                     nvFBCToH264GrabFrame;       //!< [out] Pointer to ::NvFBCToH264GrabFrame().
-    PNVFBCTOH264GETHEADER                     nvFBCToH264GetHeader;       //!< [out] Pointer to ::NvFBCToH264GetHeader().
-    PNVFBCBINDCONTEXT                         nvFBCBindContext;           //!< [out] Pointer to ::NvFBCBindContext().
-    PNVFBCRELEASECONTEXT                      nvFBCReleaseContext;        //!< [out] Pointer to ::NvFBCReleaseContext().
-    PNVFBCTOHWENCSETUP                        nvFBCToHwEncSetUp;          //!< [out] Pointer to ::NvFBCToHwEncSetUp().
-    PNVFBCTOHWENCGRABFRAME                    nvFBCToHwEncGrabFrame;      //!< [out] Pointer to ::NvFBCToHwEncGrabFrame().
-    PNVFBCTOHWENCGETHEADER                    nvFBCToHwEncGetHeader;      //!< [out] Pointer to ::NvFBCToHwEncGetHeader().
-    PNVFBCTOHWENCGETCAPS                      nvFBCToHwEncGetCaps;        //!< [out] Pointer to ::nvFBCToHwEncGetCaps().
-    PNVFBCTOGLSETUP                           nvFBCToGLSetUp;             //!< [out] Pointer to ::nvFBCToGLSetup().
-    PNVFBCTOGLGRABFRAME                       nvFBCToGLGrabFrame;         //!< [out] Pointer to ::nvFBCToGLGrabFrame().
+typedef struct {
+    uint32_t dwVersion;                          //!< [in] Must be set to NVFBC_VERSION.
+    PNVFBCGETLASTERRORSTR nvFBCGetLastErrorStr;  //!< [out] Pointer to ::NvFBCGetLastErrorStr().
+    PNVFBCCREATEHANDLE nvFBCCreateHandle;        //!< [out] Pointer to ::NvFBCCreateHandle().
+    PNVFBCDESTROYHANDLE nvFBCDestroyHandle;      //!< [out] Pointer to ::NvFBCDestroyHandle().
+    PNVFBCGETSTATUS nvFBCGetStatus;              //!< [out] Pointer to ::NvFBCGetStatus().
+    PNVFBCCREATECAPTURESESSION
+        nvFBCCreateCaptureSession;  //!< [out] Pointer to ::NvFBCCreateCaptureSession().
+    PNVFBCDESTROYCAPTURESESSION
+        nvFBCDestroyCaptureSession;            //!< [out] Pointer to ::NvFBCDestroyCaptureSession().
+    PNVFBCTOSYSSETUP nvFBCToSysSetUp;          //!< [out] Pointer to ::NvFBCToSysSetUp().
+    PNVFBCTOSYSGRABFRAME nvFBCToSysGrabFrame;  //!< [out] Pointer to ::NvFBCToSysGrabFrame().
+    PNVFBCTOCUDASETUP nvFBCToCudaSetUp;        //!< [out] Pointer to ::NvFBCToCudaSetUp().
+    PNVFBCTOCUDAGRABFRAME nvFBCToCudaGrabFrame;    //!< [out] Pointer to ::NvFBCToCudaGrabFrame().
+    PNVFBCTOH264SETUP nvFBCToH264SetUp;            //!< [out] Pointer to ::NvFBCToH264SetUp().
+    PNVFBCTOH264GRABFRAME nvFBCToH264GrabFrame;    //!< [out] Pointer to ::NvFBCToH264GrabFrame().
+    PNVFBCTOH264GETHEADER nvFBCToH264GetHeader;    //!< [out] Pointer to ::NvFBCToH264GetHeader().
+    PNVFBCBINDCONTEXT nvFBCBindContext;            //!< [out] Pointer to ::NvFBCBindContext().
+    PNVFBCRELEASECONTEXT nvFBCReleaseContext;      //!< [out] Pointer to ::NvFBCReleaseContext().
+    PNVFBCTOHWENCSETUP nvFBCToHwEncSetUp;          //!< [out] Pointer to ::NvFBCToHwEncSetUp().
+    PNVFBCTOHWENCGRABFRAME nvFBCToHwEncGrabFrame;  //!< [out] Pointer to ::NvFBCToHwEncGrabFrame().
+    PNVFBCTOHWENCGETHEADER nvFBCToHwEncGetHeader;  //!< [out] Pointer to ::NvFBCToHwEncGetHeader().
+    PNVFBCTOHWENCGETCAPS nvFBCToHwEncGetCaps;      //!< [out] Pointer to ::nvFBCToHwEncGetCaps().
+    PNVFBCTOGLSETUP nvFBCToGLSetUp;                //!< [out] Pointer to ::nvFBCToGLSetup().
+    PNVFBCTOGLGRABFRAME nvFBCToGLGrabFrame;        //!< [out] Pointer to ::nvFBCToGLGrabFrame().
 } NVFBC_API_FUNCTION_LIST;
 
 /*!
@@ -2736,11 +2740,10 @@ NVFBCSTATUS NVFBCAPI NvFBCCreateInstance(NVFBC_API_FUNCTION_LIST *pFunctionList)
  *
  * Defines function pointer for the ::NvFBCCreateInstance() API call.
  */
-typedef NVFBCSTATUS (NVFBCAPI* PNVFBCCREATEINSTANCE)(NVFBC_API_FUNCTION_LIST *pFunctionList);
+typedef NVFBCSTATUS(NVFBCAPI *PNVFBCCREATEINSTANCE)(NVFBC_API_FUNCTION_LIST *pFunctionList);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _NVFBC_H_
-
+#endif  // _NVFBC_H_

@@ -47,60 +47,63 @@ audio_device_t *CreateAudioDevice() {
     res = snd_pcm_hw_params_any(audio_device->handle, params);
     if (res < 0) {
         LOG_WARNING("No available PCM hardware configurations.");
-	snd_pcm_close(audio_device->handle);
+        snd_pcm_close(audio_device->handle);
         free(audio_device);
         return NULL;
     }
 
-#define FREE_ALL() {snd_pcm_close(audio_device->handle); free(audio_device); snd_pcm_hw_params_free(params);};
+#define FREE_ALL()                           \
+    {                                        \
+        snd_pcm_close(audio_device->handle); \
+        free(audio_device);                  \
+        snd_pcm_hw_params_free(params);      \
+    };
 
     // set sample format
     // we should do format cascading selection here and similarly below
     audio_device->sample_format = SND_PCM_FORMAT_FLOAT_LE;
-    res = snd_pcm_hw_params_set_format(audio_device->handle, params,
-                                       audio_device->sample_format);
+    res = snd_pcm_hw_params_set_format(audio_device->handle, params, audio_device->sample_format);
 
     if (res < 0) {
         LOG_WARNING("PCM sample format 'enum _snd_pcm_format %d' unavailable.",
                     audio_device->sample_format);
-	FREE_ALL();
+        FREE_ALL();
         return NULL;
     }
 
     // number of channels
     audio_device->channels = 2;
-    res = snd_pcm_hw_params_set_channels_near(audio_device->handle, params,
-                                              &audio_device->channels);
+    res =
+        snd_pcm_hw_params_set_channels_near(audio_device->handle, params, &audio_device->channels);
     if (res < 0) {
         LOG_WARNING("PCM cannot set format with num channels: %d", audio_device->channels);
-	FREE_ALL();
+        FREE_ALL();
         return NULL;
     }
 
     // set device to read interleaved samples
-    res = snd_pcm_hw_params_set_access(audio_device->handle, params,
-                                       SND_PCM_ACCESS_RW_INTERLEAVED);
+    res = snd_pcm_hw_params_set_access(audio_device->handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
     if (res < 0) {
         LOG_WARNING("Unavailable PCM access type.");
-	FREE_ALL();
+        FREE_ALL();
         return NULL;
     }
 
     res = snd_pcm_hw_params_set_rate_resample(audio_device->handle, params, 0);
     if (res < 0) {
         LOG_WARNING("PCM cannot set resample");
-	FREE_ALL();
+        FREE_ALL();
         return NULL;
     }
 
     // set stream rate
     audio_device->sample_rate = 44100;  // Hertz
     int dir = 0;
-    res = snd_pcm_hw_params_set_rate_near(audio_device->handle, params,
-                                          &audio_device->sample_rate, &dir);
+    res = snd_pcm_hw_params_set_rate_near(audio_device->handle, params, &audio_device->sample_rate,
+                                          &dir);
     if (res < 0) {
         LOG_WARNING("PCM cannot set format with sample rate: %d", audio_device->sample_rate);
-	FREE_ALL();
+        FREE_ALL();
         return NULL;
     }
 
@@ -111,7 +114,7 @@ audio_device_t *CreateAudioDevice() {
 
     if (res < 0) {
         LOG_WARNING("PCM cannot set period: %s", snd_strerror(res));
-	FREE_ALL();
+        FREE_ALL();
         return NULL;
     }
 
@@ -119,11 +122,11 @@ audio_device_t *CreateAudioDevice() {
         (snd_pcm_format_width(audio_device->sample_format) / 8) * audio_device->channels;
     audio_device->buffer_size = audio_device->num_frames * audio_device->frame_size;
 
-    res = snd_pcm_hw_params_set_buffer_size_near(audio_device->handle, params, &audio_device->buffer_size);
-    if(res < 0)
-    {
-        LOG_WARNING("PCM Error setting buffersize: [%s]\n", snd_strerror(res) );
-	FREE_ALL();
+    res = snd_pcm_hw_params_set_buffer_size_near(audio_device->handle, params,
+                                                 &audio_device->buffer_size);
+    if (res < 0) {
+        LOG_WARNING("PCM Error setting buffersize: [%s]\n", snd_strerror(res));
+        FREE_ALL();
         return NULL;
     }
 
@@ -133,7 +136,7 @@ audio_device_t *CreateAudioDevice() {
 
     if (res < 0) {
         LOG_WARNING("Unable to set hw parameters. Error: %s", snd_strerror(res));
-	FREE_ALL();
+        FREE_ALL();
         return NULL;
     }
 

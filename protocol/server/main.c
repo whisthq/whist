@@ -200,7 +200,7 @@ int32_t SendVideo(void* opaque) {
 
             LOG_INFO("Created Capture Device of dimensions %dx%d", device->width, device->height);
 
-	    while(pending_encoder) {
+            while (pending_encoder) {
                 if (encoder_finished) {
                     if (encoder) {
                         SDL_CreateThread(MultithreadedDestroyEncoder, "MultithreadedDestroyEncoder",
@@ -209,10 +209,10 @@ int32_t SendVideo(void* opaque) {
                     encoder = encoder_factory_result;
                     pending_encoder = false;
                     update_encoder = false;
-		    break;
+                    break;
                 }
                 SDL_Delay(1);
-	    }
+            }
             update_encoder = true;
             if (encoder) {
                 MultithreadedDestroyEncoder(encoder);
@@ -326,8 +326,8 @@ int32_t SendVideo(void* opaque) {
             }
 
             if (wants_iframe) {
-		// True I-Frame is WIP
-		LOG_ERROR("NOT GUARANTEED TO BE TRUE IFRAME");
+                // True I-Frame is WIP
+                LOG_ERROR("NOT GUARANTEED TO BE TRUE IFRAME");
                 video_encoder_set_iframe(encoder);
                 wants_iframe = false;
             }

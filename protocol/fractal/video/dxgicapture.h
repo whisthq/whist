@@ -123,7 +123,8 @@ void ReleaseScreen(CaptureDevice* device);
 void DestroyCaptureDevice(CaptureDevice* device);
 
 /**
- * @brief                          Updates the capture device if the capture device is also the encoder
+ * @brief                          Updates the capture device if the capture device is also the
+ * encoder
  *
  * @param device                   The Linux Ubuntu screencapture device
  * @param bitrate                  The new bitrate to use for encoding

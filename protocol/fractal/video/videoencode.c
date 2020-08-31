@@ -696,10 +696,10 @@ void video_encoder_unset_iframe(video_encoder_t *encoder) {
 
 int video_encoder_encode(video_encoder_t *encoder) {
     if (encoder->already_encoded) {
-	encoder->num_packets = 1;
-	encoder->packets[0].data = encoder->encoded_frame_data;
-	encoder->packets[0].size = encoder->encoded_frame_size;
-	encoder->encoded_frame_size += 8;
+        encoder->num_packets = 1;
+        encoder->packets[0].data = encoder->encoded_frame_data;
+        encoder->packets[0].size = encoder->encoded_frame_size;
+        encoder->encoded_frame_size += 8;
         return 0;
     }
 
@@ -734,7 +734,7 @@ int video_encoder_encode(video_encoder_t *encoder) {
 
     encoder->is_iframe = encoder->frames_since_last_iframe % encoder->gop_size == 0;
     if (encoder->is_iframe) {
-	encoder->frames_since_last_iframe = 0;
+        encoder->frames_since_last_iframe = 0;
     }
 
     encoder->frames_since_last_iframe++;
@@ -827,4 +827,3 @@ int video_encoder_receive_packet(video_encoder_t *encoder, AVPacket *packet) {
 
     return 0;
 }
-

@@ -309,9 +309,9 @@ input_device_t* CreateInputDevice() {
 
     // create event writing FDs
 
-    input_device->fd_absmouse       = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    input_device->fd_relmouse       = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    input_device->fd_keyboard       = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    input_device->fd_absmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    input_device->fd_relmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    input_device->fd_keyboard = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
 
     if (input_device->fd_absmouse < 0 || input_device->fd_relmouse < 0 ||
         input_device->fd_keyboard < 0) {
@@ -468,68 +468,73 @@ void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fms
     for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
         int linux_keycode = GetLinuxKeyCode(sdl_keycode);
 
-	if (!linux_keycode) continue;
+        if (!linux_keycode) continue;
 
-	if (fmsg->keyboard_state[sdl_keycode] != GetKeyState(input_device, linux_keycode)) {
-	    LOG_INFO("%d is %s but should %s", linux_keycode, GetKeyState(input_device, linux_keycode) ? "pressed" : "not be pressed", fmsg->keyboard_state[sdl_keycode] ? "pressed" : "not be pressed");
-	}
-	if (!fmsg->keyboard_state[sdl_keycode] && GetKeyState(input_device, linux_keycode)) {
-	    // If key from keyboard_state shouldn't be pressed, but the key is actually pressed, then we must release it
+        if (fmsg->keyboard_state[sdl_keycode] != GetKeyState(input_device, linux_keycode)) {
+            LOG_INFO("%d is %s but should %s", linux_keycode,
+                     GetKeyState(input_device, linux_keycode) ? "pressed" : "not be pressed",
+                     fmsg->keyboard_state[sdl_keycode] ? "pressed" : "not be pressed");
+        }
+        if (!fmsg->keyboard_state[sdl_keycode] && GetKeyState(input_device, linux_keycode)) {
+            // If key from keyboard_state shouldn't be pressed, but the key is actually pressed,
+            // then we must release it
             KeyUp(linux_keycode);
-	}
+        }
     }
 
     // Press all keys that are currently not pressed but should be pressed
     for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
         int linux_keycode = GetLinuxKeyCode(sdl_keycode);
 
-	if (!linux_keycode) continue;
+        if (!linux_keycode) continue;
 
-	// Keep track of whether or not the client is holding down capslock/numlock
-	if (linux_keycode == KEY_CAPSLOCK) {
-	    client_caps_lock_holding = fmsg->keyboard_state[sdl_keycode];
-	}
-	if (linux_keycode == KEY_NUMLOCK) {
-	    client_num_lock_holding = fmsg->keyboard_state[sdl_keycode];
-	}
+        // Keep track of whether or not the client is holding down capslock/numlock
+        if (linux_keycode == KEY_CAPSLOCK) {
+            client_caps_lock_holding = fmsg->keyboard_state[sdl_keycode];
+        }
+        if (linux_keycode == KEY_NUMLOCK) {
+            client_num_lock_holding = fmsg->keyboard_state[sdl_keycode];
+        }
 
-	if (fmsg->keyboard_state[sdl_keycode] && !GetKeyState(input_device, linux_keycode)) {
-	    // If key from keyboard_state should be pressed, but the key is not actually pressed, then we must press it
+        if (fmsg->keyboard_state[sdl_keycode] && !GetKeyState(input_device, linux_keycode)) {
+            // If key from keyboard_state should be pressed, but the key is not actually pressed,
+            // then we must press it
             KeyDown(linux_keycode);
 
-	    // If we pressed the capslock or numlock, then our cache for the value of these keys must thus be updated
-	    if (linux_keycode == KEY_CAPSLOCK) {
-	        server_caps_lock = !server_caps_lock;
-	    }
-	    if (linux_keycode == KEY_NUMLOCK) {
-	        server_num_lock = !server_num_lock;
-	    }
-	}
+            // If we pressed the capslock or numlock, then our cache for the value of these keys
+            // must thus be updated
+            if (linux_keycode == KEY_CAPSLOCK) {
+                server_caps_lock = !server_caps_lock;
+            }
+            if (linux_keycode == KEY_NUMLOCK) {
+                server_num_lock = !server_num_lock;
+            }
+        }
     }
 
     if (!!server_caps_lock != !!fmsg->caps_lock) {
         LOG_INFO("Caps lock out of sync, updating! From %s to %s\n",
-			                 server_caps_lock ? "caps" : "no caps", fmsg->caps_lock ? "caps" : "no caps");
-	if (client_caps_lock_holding) {
+                 server_caps_lock ? "caps" : "no caps", fmsg->caps_lock ? "caps" : "no caps");
+        if (client_caps_lock_holding) {
             KeyUp(KEY_CAPSLOCK);
             KeyDown(KEY_CAPSLOCK);
-	} else {
+        } else {
             KeyDown(KEY_CAPSLOCK);
             KeyUp(KEY_CAPSLOCK);
-	}
+        }
     }
 
     if (!!server_num_lock != !!fmsg->num_lock) {
         LOG_INFO("Num lock out of sync, updating! From %s to %s\n",
-		                     server_num_lock ? "num lock" : "no num lock",
-		                      fmsg->num_lock ? "num lock" : "no num lock");
-	if (client_num_lock_holding) {
+                 server_num_lock ? "num lock" : "no num lock",
+                 fmsg->num_lock ? "num lock" : "no num lock");
+        if (client_num_lock_holding) {
             KeyUp(KEY_NUMLOCK);
             KeyDown(KEY_NUMLOCK);
-	} else {
+        } else {
             KeyDown(KEY_NUMLOCK);
             KeyUp(KEY_NUMLOCK);
-	}
+        }
     }
 }
 
@@ -540,11 +545,11 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
             // event for keyboard action
-	    if (fmsg->keyboard.pressed) {
-	        KeyDown(GetLinuxKeyCode(fmsg->keyboard.code));
-	    } else {
-	        KeyUp(GetLinuxKeyCode(fmsg->keyboard.code));
-	    }
+            if (fmsg->keyboard.pressed) {
+                KeyDown(GetLinuxKeyCode(fmsg->keyboard.code));
+            } else {
+                KeyUp(GetLinuxKeyCode(fmsg->keyboard.code));
+            }
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
@@ -573,10 +578,10 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
             EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_WHEEL, fmsg->mouseWheel.y);
             break;
         case MESSAGE_MULTIGESTURE:
-            LOG_WARNING( "Multi-touch X11 Driver not added yet!" );
+            LOG_WARNING("Multi-touch X11 Driver not added yet!");
             break;
         default:
-            LOG_ERROR( "Unknown message type! %d", fmsg->type );
+            LOG_ERROR("Unknown message type! %d", fmsg->type);
             break;
     }
 
