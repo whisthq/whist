@@ -25,8 +25,6 @@ def vm_ping(**kwargs):
     if "version" in kwargs["body"].keys():
         version = kwargs["body"]["version"]
 
-    vm_ip = "52.146.43.205"
-
     output = pingHelper(available, vm_ip, version)
 
     return jsonify(output), output["status"]

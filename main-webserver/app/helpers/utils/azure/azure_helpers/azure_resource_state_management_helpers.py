@@ -119,7 +119,9 @@ def waitForWinlogon(vm_name, resource_group=VM_GROUP, s=None):
     """
 
     # Check if a VM has winlogon'ed within the last 10 seconds
-DD
+    def checkWinlogon(vm_name, resource_group):
+        vm = UserVM.query.get(vm_name)
+
         if not vm:
             fractalLog(
                 function="waitForWinlogon",

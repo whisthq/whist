@@ -40,3 +40,8 @@ def fractalSQLCommit(db, f=None, *args):
         )
 
     return commit_successful
+
+
+def fractalSQLUpdate(db, obj, attributes):
+    for k, v in attributes.items():
+        setattr(obj, k, v)

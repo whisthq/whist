@@ -44,102 +44,90 @@ def pingHelper(available, vm_ip, version=None):
     # Retrieve VM data based on VM IP
 
     vm_info = UserVM.query.filter_by(ip=vm_ip).first()
+    username = None
 
-    fractalLog(function="", label="", logs=str(vm_info))
+    if vm_info:
+        username = vm_info.user_id
+    else:
+        return {"status": BAD_REQUEST}
 
-    # output = fractalSQLSelect(table_name="v_ms", params={"ip": vm_ip})
+    fractalLog(function="", label="", logs=str(username))
 
-    # if output["success"] and output["rows"]:
-    #     vm_info = output["rows"][0]
-    #     username = vm_info["username"]
-    # else:
-    #     return {"status": BAD_REQUEST}
+    disk = OSDisk.query.filter_by(user_id=username).first()
 
-    # fractalSQLUpdate(
-    #     table_name="v_ms",
-    #     conditional_params={"vm_name": vm_info["vm_name"]},
-    #     new_params={"ready_to_connect": dateToUnix(getToday())},
-    # )
+    fractalSQLCommit(
+        db, fractalSQLUpdate, disk, {"last_pinged": dateToUnix(getToday())}
+    )
 
-    # # Update disk version
+    # Update disk version
 
-    # if version:
-    #     fractalSQLUpdate(
-    #         table_name="disks",
-    #         conditional_params={"disk_name": vm_info["disk_name"]},
-    #         new_params={"version": version},
-    #     )
+    if version:
+        fractalSQLCommit(db, fractalSQLUpdate, disk, {"version": version})
 
-    # # Define states where we don't change the VM state
+    # Define states where we don't change the VM state
 
-    # intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
+    intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
 
-    # # Detect and handle disconnect event
+    # Detect and handle disconnect event
 
-    # if vm_info["state"] == "RUNNING_UNAVAILABLE" and available:
+    if vm_info.state == "RUNNING_UNAVAILABLE" and available:
 
-    #     # Add pending charge if the user is an hourly subscriber
+        # Add pending charge if the user is an hourly subscriber
 
-    #     stripeChargeHourly(username)
+        stripeChargeHourly(username)
 
-    #     # Add logoff event to timetable
+        # Add logoff event to timetable
 
-    #     fractalSQLInsert(
-    #         table_name="login_history",
-    #         params={
-    #             "username": username,
-    #             "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
-    #             "action": "logoff",
-    #         },
-    #     )
+        log = LoginHistory(
+            user_id=username, action="logoff", timestamp=dateToUnix(getToday()),
+        )
 
-    #     fractalLog(
-    #         function="pingHelper",
-    #         label=str(username),
-    #         logs="{username} just disconnected from their cloud PC".format(
-    #             username=username
-    #         ),
-    #     )
+        fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
-    # # Detect and handle logon event
+        fractalLog(
+            function="pingHelper",
+            label=str(username),
+            logs="{username} just disconnected from their cloud PC".format(
+                username=username
+            ),
+        )
 
-    # if vm_info["state"] == "RUNNING_AVAILABLE" and not available:
+    # Detect and handle logon event
 
-    #     # Add logon event to timetable
+    if vm_info.state == "RUNNING_AVAILABLE" and not available:
 
-    #     fractalSQLInsert(
-    #         table_name="login_history",
-    #         params={
-    #             "username": username,
-    #             "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
-    #             "action": "logon",
-    #         },
-    #     )
+        # Add logon event to timetable
 
-    #     fractalLog(
-    #         function="pingHelper",
-    #         label=str(username),
-    #         logs="{username} just connected to their cloud PC".format(
-    #             username=username
-    #         ),
-    #     )
+        log = LoginHistory(
+            user_id=username, action="logon", timestamp=dateToUnix(getToday()),
+        )
 
-    # # Change VM states accordingly
+        fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
-    # if not vm_info["state"] in intermediate_states and not available:
-    #     lockVMAndUpdate(
-    #         vm_name=vm_info["vm_name"],
-    #         state="RUNNING_UNAVAILABLE",
-    #         lock=True,
-    #         temporary_lock=0,
-    #     )
+        fractalLog(
+            function="pingHelper",
+            label=str(username),
+            logs="{username} just connected to their cloud PC".format(
+                username=username
+            ),
+        )
 
-    # if not vm_info["state"] in intermediate_states and available:
-    #     lockVMAndUpdate(
-    #         vm_name=vm_info["vm_name"],
-    #         state="RUNNING_AVAILABLE",
-    #         lock=False,
-    #         temporary_lock=None,
-    #     )
+    # Change VM states accordingly
+
+    if not vm_info.state in intermediate_states and not available:
+        lockVMAndUpdate(
+            vm_name=vm_info.vm_id,
+            state="RUNNING_UNAVAILABLE",
+            lock=True,
+            temporary_lock=0,
+        )
+
+    if not vm_info.state in intermediate_states and available:
+        lockVMAndUpdate(
+            vm_name=vm_info.vm_id,
+            state="RUNNING_AVAILABLE",
+            lock=False,
+            temporary_lock=None,
+        )
 
     return {"status": SUCCESS}
