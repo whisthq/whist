@@ -35,7 +35,6 @@ def test_basic_ecs_client():
         }
     }
     testclient.run_task(networkConfiguration=networkConfiguration)
-
     testclient.set_and_register_task(
         ["echo middle"], ["/bin/bash", "-c"], family="multimessage",
     )
@@ -144,4 +143,3 @@ def test_region():
     assert taskdef["family"] == "basefam"
     logger = taskdef["containerDefinitions"][0]["logConfiguration"]["options"]
     assert "us-east-1" in logger["awslogs-region"]
-
