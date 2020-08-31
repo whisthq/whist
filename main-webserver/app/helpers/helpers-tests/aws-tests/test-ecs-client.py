@@ -43,7 +43,6 @@ def test_basic_ecs_client():
     testclient.spin_all(time_delay=2)
     assert testclient.logs_messages == {0: ['start'], 1: ['middle']}  # pylint: disable=print-call
 
-
 @mock_ecs
 @mock_logs
 def test_set_cluster():
