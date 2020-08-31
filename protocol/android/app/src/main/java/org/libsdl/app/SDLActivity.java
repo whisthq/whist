@@ -268,7 +268,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         SDLActivity.onNativeOrientationChanged(mCurrentOrientation);
         setContentView(mLayout);
 
-        setWindowStyle(true); // set fullscreen
+        setWindowStyle(false); // set initial mode to windowed mode
 
         getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(this);
 
