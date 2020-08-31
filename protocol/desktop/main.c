@@ -537,7 +537,6 @@ int main(int argc, char* argv[]) {
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
     for (try_amount = 0; try_amount < max_connection_attempts && !exiting && !failed;
          try_amount++) {
-        LOG_INFO("try amount is %d, max connection attempts is %d\n", try_amount, max_connection_attempts);
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
