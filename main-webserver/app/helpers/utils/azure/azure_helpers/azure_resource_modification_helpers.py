@@ -241,13 +241,14 @@ def claimAvailableVM(
                         },
                     )
 
-            available_vm.lock = True
-            available_vm.user_id = username
-            available_vm.disk_id = disk_name
-            available_vm.state = "ATTACHING"
-            available_vm.last_updated = getCurrentTime()
+            new_params = {
+                "lock": True,
+                "user_id": username,
+                "disk_id": disk_id,
+                "state": "ATTACHING",
+            }
 
-            db.session.commit()
+            fractalSQLCommit(db, fractalSQLUpdate, available_vm, new_params)
 
             available_vm = user_vm_schema.dump(available_vm)
 
