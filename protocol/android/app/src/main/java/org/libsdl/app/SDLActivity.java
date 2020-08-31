@@ -162,13 +162,14 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
      * @return arguments for the native application.
      */
     protected String[] getArguments() {
+        // TODO: take these arguments from the client application instead of hard-coding them
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         Integer widthPixels = metrics.widthPixels - 100;
         Integer heightPixels = metrics.heightPixels - 100;
         return /*new String[5] = */new String[]{
             "137.117.99.176",
-            "-w", widthPixels.toString(),
-            "-h", heightPixels.toString()
+            "-w", widthPixels.toString(), // "0" for full-screen
+            "-h", heightPixels.toString() // "0" for full-screen
         };
     }
 

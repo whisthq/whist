@@ -670,19 +670,10 @@ void crash_handler(int sig) {
 #endif
 
 void init_backtrace_handler() {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    crash_handler_mutex = safe_SDL_CreateMutex();
-=======
-=======
-void initBacktraceHandler() {
 #ifndef _WIN32
 #ifndef __ANDROID_API__
->>>>>>> Android desktop
-=======
->>>>>>> 011594fda (works!)
-    crash_handler_mutex = SDL_CreateMutex();
->>>>>>> 3aa8990d4 (Android desktop)
+    crash_handler_mutex = safe_SDL_CreateMutex();
+#endif
 #ifdef _WIN32
     SetUnhandledExceptionFilter(windows_exception_handler);
 #else

@@ -44,6 +44,10 @@ extern volatile CodecType server_codec_type;
 
 extern int client_id;
 
+extern volatile bool appBackgrounded;
+extern volatile bool appBackgrounding;
+extern volatile bool appResuming;
+
 // Keeping track of max mbps
 extern volatile int max_bitrate;
 extern volatile bool update_mbps;
@@ -270,6 +274,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
     int isPaused = 0;
     int isPausing = 1;
     SDL_GLContext saved_context;
+    SDL_Event sdl_msg;
 #endif
 
     while (video_data.run_render_screen_thread) {
@@ -298,35 +303,22 @@ int32_t render_screen(SDL_Renderer* renderer) {
         }
 
 #ifdef __ANDROID_API__
-        // check if the android app is paused (backgrounded) and store the context
-        // when resuming, restore the context to the one that has just been stored
-        // this code is derived from that in `SDL2/src/video/android/SDL_androidevents.c`
-        // for backup and restore of context
-        if (isPaused) {
+        // this is slightly questionable because it repeatdly saves the context, but it works
+        if (appBackgrounding) {
             saved_context = SDL_GL_GetCurrentContext();
-            /* We need to do this so the EGLSurface can be freed */
             SDL_GL_MakeCurrent((SDL_Window*) window, NULL);
-
-            if (SDL_SemWait(Android_ResumeSem) == 0) {
-                isPaused = 0;
-
-                SDL_Event event;
-                if (SDL_GL_MakeCurrent((SDL_Window*) window, saved_context)) {
-                    /* The context is no longer valid, create a new one */
-                    SDL_GL_MakeCurrent((SDL_Window*) window, saved_context);
-                    event.type = SDL_RENDER_DEVICE_RESET;
-                    SDL_PushEvent(&event);
-                }
+            appBackgrounded = true;
+        }
+        if (appResuming) {
+            SDL_Event event;
+            if (SDL_GL_MakeCurrent((SDL_Window*) window, saved_context) < 0) {
+                saved_context = SDL_GL_CreateContext(window);
+                SDL_GL_MakeCurrent(window, (SDL_GLContext) saved_context);
+                event.type = SDL_RENDER_DEVICE_RESET;
+                SDL_PushEvent(&event);
             }
-        } else {
-            if (isPausing || SDL_SemTryWait(Android_PauseSem) == 0) {
-                if (SDL_NumberOfEvents(SDL_APP_DIDENTERBACKGROUND) > SDL_SemValue(Android_PauseSem)) {
-                    isPausing = 1;
-                } else {
-                    isPausing = 0;
-                    isPaused = 1;
-                }
-            }
+            appBackgrounded = false;
+            appResuming = false;
         }
 #endif
 
@@ -1174,19 +1166,6 @@ int32_t receive_video(FractalPacket* packet) {
 
     // mprintf("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)\n",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
-
-//    int pauseSignaled = 0;
-//    int resumeSignaled = 0;
-//    SDL_LockMutex(Android_ActivityMutex);
-//    pauseSignaled = SDL_SemValue(Android_PauseSem);
-//    resumeSignaled = SDL_SemValue(Android_ResumeSem);
-//    if (pauseSignaled > resumeSignaled) {
-//        android_egl_context_backup(Android_Window);
-//        SDL_UnlockMutex(Android_ActivityMutex);
-//    } else {
-//        android_egl_context_restore(Android_Window);
-//        SDL_UnlockMutex(Android_ActivityMutex);
-//    }
 
     // Find frame in linked list that matches the id
     video_data.bytes_transferred += packet->payload_size;

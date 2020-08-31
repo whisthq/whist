@@ -1,11 +1,6 @@
 ## Fractal Android/Chromebook Client
 
 
-__IMPORTANT NOTE__: For the SDL threading implementation used, the built-in Android context saving and restoring is not sufficient, so there are changes in the SDL library itself. Noted here are the changes to be aware of if upgrading the SDL library:
-CREATE `include/SDL_androidsem.h`
-MODIFY `include/SDL.h` (to include SDL_androidsem.h)
-MODIFY `src/video/android/SDL_androidevents.h` (instead of defining the pause/resume semaphores here, import SDL_androidsem.h; this also means the SDL_mutex.h import is no longer necessary)
-
 1: Install Android Studio and choose a path for Android SDK
 
 

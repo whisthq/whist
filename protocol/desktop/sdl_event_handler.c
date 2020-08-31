@@ -41,6 +41,9 @@ extern clock window_resize_timer;
 extern volatile bool pending_resize_message;
 
 extern volatile SDL_Window *window;
+extern volatile bool appBackgrounded;
+extern volatile bool appBackgrounding;
+extern volatile bool appResuming;
 
 extern volatile int output_width;
 extern volatile int output_height;

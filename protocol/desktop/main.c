@@ -85,6 +85,9 @@ volatile bool is_timing_latency;
 volatile clock latency_timer;
 volatile int ping_id;
 volatile int ping_failures;
+volatile bool appBackgrounded = false;
+volatile bool appBackgrounding = false;
+volatile bool appResuming = false;
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 volatile FractalRGBColor* native_window_color = NULL;
@@ -841,6 +844,11 @@ int SDL_main(int argc, char* argv[]) {
             }
 
             int events = SDL_PollEvent(&sdl_msg);
+            if (sdl_msg.type == SDL_APP_DIDENTERBACKGROUND) {
+                LOG_INFO("events entering background");
+            } else if (sdl_msg.type == SDL_APP_DIDENTERFOREGROUND) {
+                LOG_INFO("events entering foreground");
+            }
 
             if (events && handle_sdl_event(&sdl_msg) != 0) {
                 // unable to handle event
