@@ -203,6 +203,20 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     set_native_window_color(sdl_window, black);
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
+    if (!is_fullscreen) {
+        // Resize event handling
+        SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)sdl_window);
+        if (!sdl_window) {
+            LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
+            return NULL;
+        }
+        SDL_SetWindowResizable((SDL_Window*)sdl_window, true);
+    }
+    SDL_SetWindowResizable((SDL_Window*)window, true);
+
+    // setting fullscreen mode here insetad of in SDL_CreateWindow allows future changes to mode
+    SDL_SetWindowFullscreen(window, is_fullscreen ? fullscreen_flags : windowed_flags);
+
     SDL_Event cur_event;
     while (SDL_PollEvent(&cur_event)) {
         // spin to clear SDL event queue

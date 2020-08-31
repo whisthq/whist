@@ -270,11 +270,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
     loading_sdl(renderer, loading_index);
 
 #ifdef __ANDROID_API__
-    // android pause/resume context storage
-    int isPaused = 0;
-    int isPausing = 1;
     SDL_GLContext saved_context;
-    SDL_Event sdl_msg;
 #endif
 
     while (video_data.run_render_screen_thread) {
@@ -303,13 +299,15 @@ int32_t render_screen(SDL_Renderer* renderer) {
         }
 
 #ifdef __ANDROID_API__
-        // this is slightly questionable because it repeatdly saves the context, but it works
+        // this is slightly questionable because it repeatedly saves the context, but it works
         if (appBackgrounding) {
+            // if app is backgrounding, save context
             saved_context = SDL_GL_GetCurrentContext();
             SDL_GL_MakeCurrent((SDL_Window*) window, NULL);
             appBackgrounded = true;
         }
         if (appResuming) {
+            // if app is foregrounding, restore context
             SDL_Event event;
             if (SDL_GL_MakeCurrent((SDL_Window*) window, saved_context) < 0) {
                 saved_context = SDL_GL_CreateContext(window);
