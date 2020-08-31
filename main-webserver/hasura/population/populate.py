@@ -75,8 +75,8 @@ def migrate_users():
         row = dict(row)
 
         command = """
-            INSERT INTO "users"("user_id", "name", "password", "using_google_login", "release_stage", "stripe_customer_id", "created_timestamp", "reason_for_signup", "referral_code", "credits_outstanding", "token")
-            VALUES(:user_id, :name, :password, :using_google_login, :release_stage, :stripe_customer_id, :created_timestamp, :reason_for_signup, :referral_code, :credits_outstanding, :token)
+            INSERT INTO "users"("user_id", "name", "password", "using_google_login", "release_stage", "stripe_customer_id", "created_timestamp", "reason_for_signup", "referral_code", "credits_outstanding", "token", "verified")
+            VALUES(:user_id, :name, :password, :using_google_login, :release_stage, :stripe_customer_id, :created_timestamp, :reason_for_signup, :referral_code, :credits_outstanding, :token, :verified)
         """
 
         if row["password"] and row["username"]:
@@ -98,7 +98,8 @@ def migrate_users():
                 "referral_code": row["code"],
                 "credits_outstanding": row["credits_outstanding"],
                 "stripe_customer_id": row["customer_id"],
-                "token": row["user_id"]
+                "token": row["user_id"],
+                "verified": row["verified"]
             }
 
             session.execute(command, params)

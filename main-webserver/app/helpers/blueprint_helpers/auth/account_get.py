@@ -117,4 +117,4 @@ def verifiedHelper(username):
     if not user:
         return {"verified": False, "status": SUCCESS}
     else:
-        return {"verified": verified, "status": SUCCESS}
+        return {"verified": user.verified, "status": SUCCESS}

@@ -81,19 +81,19 @@ def account_get_no_auth(action, **kwargs):
         output = disksHelper(username, main)
 
         return jsonify(output), output["status"]
-    # elif action == "verified":
-    #     # Check if the user's email has been verified
-    #     username = request.args.get("username")
+    elif action == "verified":
+        # Check if the user's email has been verified
+        username = request.args.get("username")
 
-    #     output = verifiedHelper(username)
+        output = verifiedHelper(username)
 
-    #     return jsonify(output), output["status"]
+        return jsonify(output), output["status"]
 
-    # # TODO: Delete later
-    # elif action == "code":
-    #     # Get the user's promo code
-    #     username = request.args.get("username")
+    # TODO: Delete later
+    elif action == "code":
+        # Get the user's promo code
+        username = request.args.get("username")
 
-    #     output = codeHelper(username)
+        output = codeHelper(username)
 
-    #     return jsonify(output), output["status"]
+        return jsonify(output), output["status"]

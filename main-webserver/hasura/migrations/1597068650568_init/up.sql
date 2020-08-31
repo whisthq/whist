@@ -102,6 +102,7 @@ CREATE TABLE public.users (
     referral_code character varying(250),
     credits_outstanding integer DEFAULT 0,
     using_google_login boolean DEFAULT false
+    verified boolean DEFAULT false
 );
 CREATE TABLE sales.main_newsletter (
     user_id character varying(250) NOT NULL

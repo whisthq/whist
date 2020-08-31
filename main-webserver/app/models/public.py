@@ -1,9 +1,9 @@
 from app.imports import *
 from app import db
 
+
 class User(db.Model):
     __tablename__ = "users"
-
 
     user_id = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
     name = db.Column(db.String(250))
@@ -16,3 +16,4 @@ class User(db.Model):
     referral_code = db.Column(db.String(250))
     credits_outstanding = db.Column(db.Integer, server_default=text("0"))
     using_google_login = db.Column(db.Boolean, server_default=text("false"))
+    verified = db.Column(db.Boolean, server_default=text("false"))
