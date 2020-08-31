@@ -15,6 +15,7 @@ import logging
 
 user_schema = UserSchema()
 
+
 def chargeHelper(token, email, code, plan):
     fractalLog(
         function="chargeHelper",
@@ -175,21 +176,34 @@ def retrieveStripeHelper(email):
 
     try:
         payload = stripe.Customer.retrieve(customer["stripe_customer_id"])
-        subscription = stripe.Subscription.list(
-            customer=customer["stripe_customer_id"]
-        )["data"][0]
-        cards = payload["sources"]["data"]
+        subscription = stripe.Subscription.list(customer=customer["stripe_customer_id"])
+        if subscription and subscription["data"]:
+            subscription = subscription["data"][0]
+            cards = payload["sources"]["data"]
 
-        account_locked = subscription["trial_end"] < dateToUnix(getToday())
+            account_locked = subscription["trial_end"] < dateToUnix(getToday())
 
+            return (
+                jsonify(
+                    {
+                        "status": SUCCESS,
+                        "subscription": subscription,
+                        "cards": cards,
+                        "creditsOutstanding": credits,
+                        "account_locked": account_locked,
+                        "customer": customer,
+                    }
+                ),
+                SUCCESS,
+            )
         return (
             jsonify(
                 {
                     "status": SUCCESS,
-                    "subscription": subscription,
-                    "cards": cards,
+                    "subscription": None,
+                    "cards": [],
                     "creditsOutstanding": credits,
-                    "account_locked": account_locked,
+                    "account_locked": False,
                     "customer": customer,
                 }
             ),
@@ -198,7 +212,7 @@ def retrieveStripeHelper(email):
     except Exception as e:
         fractalLog(
             function="retrieveStripeHelper",
-            label="Stripe",
+            label=email,
             logs=str(e),
             level=logging.ERROR,
         )
@@ -276,9 +290,9 @@ def discountHelper(code):
 
     if metadata.stripe_customer_id:
         has_subscription = True
-        subscription = stripe.Subscription.list(
-            customer=customer.stripe_customer_id
-        )["data"][0]
+        subscription = stripe.Subscription.list(customer=customer.stripe_customer_id)[
+            "data"
+        ][0]
 
     metadata.credits_outstanding = creditsOutstanding + 1
     db.session.commit()
@@ -454,7 +468,9 @@ def webhookHelper(event):
             # Schedule disk deletion in 7 days
             expiry = (dt.today() + timedelta(days=7)).strftime("%m/%d/%Y, %H:%M")
 
-            disks = OSDisk.query.filter_by(user_id=customer.user_id).update({ "state": "TO_BE_DELETED", "delete_date": expiry})
+            disks = OSDisk.query.filter_by(user_id=customer.user_id).update(
+                {"state": "TO_BE_DELETED", "delete_date": expiry}
+            )
             db.session.commit()
 
     elif event.type == "charge.succeeded":
