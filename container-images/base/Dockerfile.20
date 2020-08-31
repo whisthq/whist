@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV container docker
 ENV LC_ALL C
@@ -79,26 +79,22 @@ RUN /bin/bash -c "source utils.sh \
     && Install-CustomX11Configuration"
 RUN /bin/bash -c "source utils.sh \ 
     && Set-FractalDirectory \
-    && Install-FractalServer dev"
-# RUN /bin/bash -c "source utils.sh \ 
-#     && Install-FractalExitScript"
-RUN /bin/bash -c "source utils.sh \
-    && Install-FractalAutoUpdate master"
-RUN /bin/bash -c "source utils.sh \
-    && Install-FractalLinuxInputDriver"
-# RUN /bin/bash -c "source utils.sh \
-#     && Install-FractalWallpaper"
+    && Install-FractalServer master"
+RUN /bin/bash -c "source utils.sh \ 
+    && Install-FractalExitScript \
+    && Install-FractalAutoUpdate master \
+    && Install-FractalLinuxInputDriver \
+    && Install-FractalWallpaper "
 RUN /bin/bash -c "source utils.sh \ 
     && Install-Unison \
-    && Enable-SSHKey"
-# RUN /bin/bash -c " source utils.sh \
-#     && Disable-Shutdown"
-# RUN /bin/bash -c " source utils.sh \
-#     && Add-AutoLogin \
-#     && Disable-AutomaticLockScreen"
+    && Enable-SSHKey \
+    && Disable-Shutdown \
+    && Add-AutoLogin \ 
+    && Disable-AutomaticLockScreen "
 
 #From protocol/server/linux-server-setup.sh
 RUN sudo apt-get install ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils -y
+
 ADD bootstrap.sh /home/fractal
 ADD entry.sh /home/fractal
 ADD fractal-input.rules home/fractal
@@ -109,6 +105,11 @@ RUN chown root:root /run/user
 RUN chmod +x /home/fractal/entry.sh
 
 
+#### FROM PHIL 1/2 on this file: I think this new service for Nvidia needs to be added here, but not certain
+#### It apparently needs to run before X so it might need to be even before (?)
+ADD fractal-update-nvidia-busid.service /etc/systemd/system
+####
+
 ADD fractal-entrypoint.service /etc/systemd/system
 ADD fractal-display.service /etc/systemd/system
 # RUN chmod u+x /etc/systemd/system/bootstrap-service.service
@@ -117,9 +118,14 @@ VOLUME [ "/sys/fs/cgroup" ]
 
 RUN systemctl set-default multi-user.target
 ENV init /lib/systemd/systemd
+
+
+#### FROM PHIL 2/2 on this file: running the new service from above!
+RUN systemctl enable fractal-update-nvidia-busid
+####
+
 RUN systemctl enable fractal-entrypoint
 RUN systemctl enable fractal-display
-RUN sudo apt-get install -y pulseaudio
 
 # USER fractal
 

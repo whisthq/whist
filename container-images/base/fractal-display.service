@@ -1,0 +1,12 @@
+[Unit]
+Description=Display and protocol entrypoint, runs as user fractal
+After=fractal-entrypoint.service
+Requires=fractal-entrypoint.service
+
+[Service]
+User=root
+EnvironmentFile=/home/fractal/display-service-envs
+ExecStart=/usr/bin/Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile ${xorg_log_file_dummy} -config ${xorg_config_file_dummy} :${display_num_dummy}
+
+[Install]
+WantedBy=multi-user.target
