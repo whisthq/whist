@@ -12,3 +12,4 @@ ipaddr=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{e
 echo "Container is running with IP address $ipaddr"
 docker exec -it $container_id /bin/bash
 docker kill $container_id
+docker rm $container_id
