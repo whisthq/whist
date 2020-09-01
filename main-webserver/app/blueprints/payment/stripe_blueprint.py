@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.general.auth import *
 from app.helpers.blueprint_helpers.payment.stripe_post import *
 
 stripe_bp = Blueprint("stripe_bp", __name__)
@@ -19,6 +20,14 @@ def deleteCard(**kwargs):
     body = kwargs["body"]
 
     return deleteCardHelper(body["custId"], body["cardId"])
+
+
+@stripe_bp.route("/stripe/discount", methods=["POST"])
+@fractalPreProcess
+@jwt_required
+def discount(**kwargs):
+    body = kwargs["body"]
+    return discountHelper(body["code"])
 
 
 @stripe_bp.route("/stripe/<action>", methods=["POST"])
@@ -45,13 +54,6 @@ def payment(action, **kwargs):
     # Cancel a stripe subscription
     elif action == "cancel":
         return cancelStripeHelper(body["username"])
-
-    elif action == "discount":
-        return discountHelper(body["code"])
-
-    # Inserts a customer to the table
-    elif action == "insert":
-        return insertCustomerHelper(body["username"], body["location"])
 
     elif action == "update":
         # When a customer requests to change their plan type

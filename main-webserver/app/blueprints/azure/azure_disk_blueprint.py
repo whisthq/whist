@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.general.auth import *
 from app.helpers.blueprint_helpers.azure.azure_disk_post import *
 from app.helpers.utils.azure.azure_general import *
 
@@ -6,10 +7,12 @@ from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_modification import *
 
+from app.models.hardware import *
+
 azure_disk_bp = Blueprint("azure_disk_bp", __name__)
 
 
-@azure_disk_bp.route("/azure_disk/<action>", methods=["POST"])
+@azure_disk_bp.route("/disk/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
 @fractalAuth
@@ -25,7 +28,6 @@ def azure_disk_post(action, **kwargs):
             [
                 kwargs["body"]["username"],
                 kwargs["body"]["location"],
-                kwargs["body"]["vm_size"],
                 kwargs["body"]["operating_system"],
                 branch,
                 kwargs["body"]["apps"],
@@ -48,12 +50,12 @@ def azure_disk_post(action, **kwargs):
         if "username" in kwargs["body"].keys():
             username = kwargs["body"]["username"]
 
-            output = fractalSQLSelect(table_name="disks", params={"username": username})
+            disks = OSDisk.query.filter_by(user_id=username).all()
 
-            if output["success"] and output["rows"]:
+            if disks:
                 task = None
-                for disk in output["rows"]:
-                    task = deleteDisk.apply_async([disk["disk_name"], resource_group])
+                for disk in disks:
+                    task = deleteDisk.apply_async([disk.disk_id, resource_group])
 
                 return jsonify({"ID": task.id}), ACCEPTED
 
@@ -103,8 +105,11 @@ def azure_disk_post(action, **kwargs):
             kwargs["body"]["location"],
             kwargs["body"]["resource_group"],
         )
+        operating_system = kwargs["body"]["operating_system"]
 
-        output = createHelper(disk_size, username, location, resource_group)
+        output = createHelper(
+            disk_size, username, location, resource_group, operating_system
+        )
 
         return jsonify({"ID": output["ID"]}), output["status"]
 

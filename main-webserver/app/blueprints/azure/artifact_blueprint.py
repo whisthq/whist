@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.general.auth import *
 from app.helpers.blueprint_helpers.azure.artifact_post import *
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_modification import *
@@ -17,7 +18,7 @@ def artifact_post(action, **kwargs):
             kwargs["body"]["vm_name"],
         )
 
-    resource_group = "FractalProtocolCI"
+    resource_group = VM_GROUP
     if "resource_group" in kwargs["body"].keys():
         resource_group = kwargs["body"]["resource_group"]
 

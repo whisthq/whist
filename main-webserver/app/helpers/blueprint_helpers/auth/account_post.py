@@ -1,6 +1,5 @@
 from app import *
 from app.helpers.utils.general.logs import *
-from app.helpers.utils.general.sql_commands import *
 from app.helpers.utils.general.tokens import *
 from app.helpers.utils.mail.account_mail import *
 from app.helpers.utils.general.crypto import *
@@ -8,14 +7,14 @@ from app.helpers.blueprint_helpers.mail.mail_post import *
 from app.celery.azure_resource_deletion import *
 
 
-def loginHelper(username, password):
+def loginHelper(email, password):
     """Verifies the username password combination in the users SQL table
 
     If the password is the admin password, just check if the username exists
     Else, check to see if the username is in the database and the jwt encoded password is in the database
 
     Parameters:
-    username (str): The username
+    email (str): The email
     password (str): The password
 
     Returns:
@@ -24,46 +23,37 @@ def loginHelper(username, password):
 
     # First, check if username is valid
 
-    params = {"username": username}
-
     is_user = True
 
-    if password == os.getenv("ADMIN_PASSWORD"):
+    if password == ADMIN_PASSWORD:
         is_user = False
 
-    output = fractalSQLSelect("users", params)
+    user = User.query.get(email)
+
+    fractalLog(function="", label="", logs=str(user))
 
     # Return early if username/password combo is invalid
 
     if is_user:
-        if not output["rows"] or not check_value(
-            output["rows"][0]["password_token"], password
-        ):
+        if not user or not check_value(user.password, password):
             return {
                 "verified": False,
                 "is_user": is_user,
-                "token": None,
                 "access_token": None,
                 "refresh_token": None,
+                "verification_token": None,
             }
 
-    # Second, fetch the user ID
+    # Fetch the JWT tokens
 
-    user_id = None
-
-    if output["success"] and output["rows"]:
-        user_id = output["rows"][0]["id"]
-
-    # Lastly, fetch the JWT tokens
-
-    access_token, refresh_token = getAccessTokens(username)
+    access_token, refresh_token = getAccessTokens(email)
 
     return {
         "verified": True,
         "is_user": is_user,
-        "token": user_id,
         "access_token": access_token,
         "refresh_token": refresh_token,
+        "verification_token": user.token,
     }
 
 
@@ -83,7 +73,7 @@ def registerHelper(username, password, name, reason_for_signup):
 
     # First, generate a user ID
 
-    user_id = generateToken(username)
+    token = generateToken(username)
 
     # Second, hash their password
 
@@ -95,28 +85,32 @@ def registerHelper(username, password, name, reason_for_signup):
 
     # Add the user to the database
 
-    params = {
-        "username": username,
-        "password_token": pwd_token,
-        "code": promo_code,
-        "id": user_id,
-        "name": name,
-        "reason_for_signup": reason_for_signup,
-        "created": dt.now(datetime.timezone.utc).timestamp(),
-    }
+    new_user = User(
+        user_id=username,
+        password=pwd_token,
+        token=token,
+        referral_code=promo_code,
+        name=name,
+        reason_for_signup=reason_for_signup,
+        release_stage=50,
+        created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
+    )
 
-    unique_keys = {"username": username}
-
-    output = fractalSQLInsert("users", params, unique_keys=unique_keys)
     status = SUCCESS
     access_token, refresh_token = getAccessTokens(username)
 
     # Check for errors in adding the user to the database
 
-    if not output["success"] and "already exists" in output["error"]:
-        status = CONFLICT
-        user_id = access_token = refresh_token = None
-    elif not output["success"]:
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+    except Exception as e:
+        fractalLog(
+            function="registerHelper",
+            label=username,
+            logs="Registration failed: " + str(e),
+            level=logging.ERROR,
+        )
         status = BAD_REQUEST
         user_id = access_token = refresh_token = None
 
@@ -137,13 +131,13 @@ def registerHelper(username, password, name, reason_for_signup):
             fractalLog(
                 function="registerHelper",
                 label=username,
-                logs="Mail send failed: Error code " + e.message,
+                logs="Mail send failed: Error code " + str(e),
                 level=logging.ERROR,
             )
 
     return {
         "status": status,
-        "token": user_id,
+        "token": new_user.token,
         "access_token": access_token,
         "refresh_token": refresh_token,
     }
@@ -165,26 +159,36 @@ def verifyHelper(username, provided_user_id):
 
     user_id = None
 
-    output = fractalSQLSelect(table_name="users", params={"username": username})
+    user = User.query.filter_by(user_id=username).first()
 
-    if output["success"] and output["rows"]:
-        user_id = output["rows"][0]["id"]
+    if user:
+        user_id = user.token
 
-    # Check to see if the provided user ID matches the selected user ID
+        # Check to see if the provided user ID matches the selected user ID
 
-    if provided_user_id == user_id:
-        alreadyVerified = output["rows"][0]["verified"]
-        fractalSQLUpdate(
-            table_name="users",
-            conditional_params={"username": username},
-            new_params={"verified": True},
-        )
+        if provided_user_id == user_id:
+            fractalLog(
+                function="verifyHelper",
+                label=user_id,
+                logs="Verification token is valid, verifying.",
+            )
+            alreadyVerified = user.verified
+            fractalSQLCommit(db, fractalSQLUpdate, user, {"verified": True})
 
-        if not alreadyVerified:
-            # Send welcome mail to user after they verify for the first time
-            signupMail(output["rows"][0]["username"], output["rows"][0]["code"])
-
-        return {"status": SUCCESS, "verified": True}
+            # if not alreadyVerified:
+            #     # Send welcome mail to user after they verify for the first time
+            #     signupMail(user.user_id, user.referral_code)
+            return {"status": SUCCESS, "verified": True}
+        else:
+            fractalLog(
+                function="verifyHelper",
+                label=user_id,
+                logs="Verification token {token} is invalid, cannot validate.".format(
+                    token=provided_user_id
+                ),
+                level=logging.WARNING,
+            )
+            return {"status": UNAUTHORIZED, "verified": False}
     else:
         return {"status": UNAUTHORIZED, "verified": False}
 
@@ -198,15 +202,19 @@ def deleteHelper(username):
     Returns:
     json: Success/failure of deletion
    """
-    output = fractalSQLDelete("users", {"username": username})
 
-    if not output["success"]:
+    user = User.query.get(username)
+
+    if not user:
         return {"status": BAD_REQUEST, "error": output["error"]}
 
-    disks = fractalSQLSelect("disks", {"username": username})["rows"]
+    db.session.delete(user)
+    db.session.commit()
+
+    disks = OSDisk.query.filter_by(user_id=username).all()
     if disks:
         for disk in disks:
-            deleteDisk.apply_async([disk["disk_name"], VM_GROUP])
+            deleteDisk.apply_async([disk.disk_id, VM_GROUP])
 
     return {"status": SUCCESS, "error": None}
 
@@ -218,12 +226,16 @@ def resetPasswordHelper(username, password):
         username (str): The user to update the password for
         password (str): The new password
     """
-    pwd_token = jwt.encode({"pwd": password}, SECRET_KEY)
-    fractalSQLUpdate(
-        table_name="users",
-        conditional_params={"username": username},
-        new_params={"password": pwd_token},
-    )
+    user = User.query.get(username)
+
+    if user:
+        pwd_token = hash_value(password)
+
+        user.password = pwd_token
+        db.session.commit()
+        return {"status": SUCCESS}
+    else:
+        return {"status": BAD_REQUEST}
 
 
 def lookupHelper(username):
@@ -232,38 +244,29 @@ def lookupHelper(username):
     Args:
         username (str): The user to lookup
     """
-    params = {
-        "username": username,
-    }
+    user = User.query.get(username)
 
-    output = fractalSQLSelect("users", params)
-
-    if output["success"]:
-        if output["rows"]:
-            return {"exists": True, "status": SUCCESS}
-        else:
-            return {"exists": False, "status": SUCCESS}
+    if user:
+        return {"exists": True, "status": SUCCESS}
     else:
-        return {"status": BAD_REQUEST}
+        return {"exists": False, "status": SUCCESS}
 
 
 def updateUserHelper(body):
-    if "name" in body:
-        fractalSQLUpdate(
-            table_name="users",
-            conditional_params={"username": body["username"]},
-            new_params={"name": body["name"]},
-        )
-        return jsonify({"msg": "Name updated successfully"}), SUCCESS
-    if "email" in body:
-        fractalSQLUpdate(
-            table_name="users",
-            conditional_params={"username": body["username"]},
-            new_params={"username": body["email"], "verified": False},
-        )
-        token = fractalSQLSelect("users", {"username": body["email"]})["rows"][0]["id"]
-        return verificationHelper(body["email"], token)
-    if "password" in body:
-        resetPasswordHelper(body["username"], body["password"])
-        return jsonify({"msg": "Password updated successfully"}), SUCCESS
-    return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE
+    user = User.query.get(body["username"])
+    if user:
+        if "name" in body:
+            user.name = body["name"]
+            db.session.commit()
+
+            return jsonify({"msg": "Name updated successfully"}), SUCCESS
+        if "email" in body:
+            user.user_id = body["email"]
+            db.session.commit()
+
+            token = user.token
+            return verificationHelper(body["email"], token)
+        if "password" in body:
+            resetPasswordHelper(body["username"], body["password"])
+            return jsonify({"msg": "Password updated successfully"}), SUCCESS
+        return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE

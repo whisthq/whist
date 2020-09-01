@@ -3,12 +3,13 @@ from app.helpers.utils.general.time import *
 
 
 def totalMinutes(report):
+    # TODO - need to adapt this to new output
     reportByUser = {}
     for entry in report:
-        if entry["username"] in reportByUser:
-            reportByUser[entry["username"]].append(entry)
+        if entry.user_id in reportByUser:
+            reportByUser[entry.user_id].append(entry)
         else:
-            reportByUser[entry["username"]] = [entry]
+            reportByUser[entry.user_id] = [entry]
     totalMinutes = 0
     for userReport in reportByUser.values():
         userMinutes = loginsToMinutes(userReport)
@@ -31,8 +32,8 @@ def loginsToMinutes(report):
     minutesOnline = 0
 
     while report is not None and index < len(report):
-        earlyTime = dt.strptime(report[index - 1]["timestamp"], "%m-%d-%Y, %H:%M:%S")
-        lateTime = dt.strptime(report[index]["timestamp"], "%m-%d-%Y, %H:%M:%S")
+        earlyTime = unixToDate(report[index - 1]["timestamp"])
+        lateTime = unixToDate(report[index]["timestamp"])
 
         if earlyTime.date() == lateTime.date():  # Same day
             if report[index]["action"] != report[index - 1]["action"]:

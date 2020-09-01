@@ -1,5 +1,10 @@
 from app import *
 
+from app.models.hardware import *
+from app.models.logs import *
+
+from app.serializers.hardware import *
+from app.serializers.logs import *
 
 @celery_instance.task(bind=True)
 def uploadLogsToS3(self, sender, connection_id, logs, vm_ip, version):
@@ -64,70 +69,40 @@ def uploadLogsToS3(self, sender, connection_id, logs, vm_ip, version):
         last_updated = getCurrentTime()
         username = None
 
-        output = fractalSQLSelect(table_name="v_ms", params={"ip": vm_ip})
+        vm = UserVM.query.filter_by(ip=vm_ip).first()
 
         vm_info = None
-        if output["success"] and output["rows"]:
-            vm_info = output["rows"][0]
-            username = vm_info["username"]
+        if vm:
+            username = vm.user_id
 
         file_name = S3Upload(logs, last_updated, sender, username)
         file_name = file_name if file_name else ""
 
         if sender == "CLIENT":
-            output = fractalSQLSelect(
-                table_name="logs", params={"connection_id": connection_id}
-            )
-            if output["success"] and output["rows"]:
-                fractalSQLUpdate(
-                    table_name="logs",
-                    conditional_params={"connection_id": connection_id},
-                    new_params={
-                        "ip": vm_ip,
-                        "last_updated": last_updated,
-                        "client_logs": file_name,
-                        "username": username,
-                    },
-                )
+            log = ProtocolLog.query.get(connection_id)
+            if log:
+                log.ip = vm_ip
+                log.timestamp = last_updated
+                log.client_logs = file_name
+                log.user_id = username
+                db.session.commit()
             else:
-                fractalSQLInsert(
-                    table_name="logs",
-                    params={
-                        "ip": vm_ip,
-                        "last_updated": last_updated,
-                        "client_logs": file_name,
-                        "username": username,
-                        "connection_id": connection_id,
-                    },
-                )
+                log = ProtocolLog(ip=vm_ip, timestamp=last_updated, client_logs=file_name, user_id=username, connection_id=connection_id)
+                db.session.add(log)
+                db.session.commit()
         elif sender == "SERVER":
-            output = fractalSQLSelect(
-                table_name="logs", params={"connection_id": connection_id}
-            )
-            if output["success"] and output["rows"]:
-                fractalSQLUpdate(
-                    table_name="logs",
-                    conditional_params={"connection_id": connection_id},
-                    new_params={
-                        "ip": vm_ip,
-                        "last_updated": last_updated,
-                        "server_logs": file_name,
-                        "username": username,
-                        "version": version,
-                    },
-                )
+            log = ProtocolLog.query.get(connection_id)
+            if log:
+                log.ip = vm_ip
+                log.timestamp = last_updated
+                log.server_logs = file_name
+                log.user_id = username
+                log.version = version
+                db.session.commit()
             else:
-                fractalSQLInsert(
-                    table_name="logs",
-                    params={
-                        "ip": vm_ip,
-                        "last_updated": last_updated,
-                        "server_logs": file_name,
-                        "username": username,
-                        "connection_id": connection_id,
-                        "version": version,
-                    },
-                )
+                log = ProtocolLog(ip=vm_ip, timestamp=last_updated, server_logs=file_name, user_id=username, connection_id=connection_id, version=version)
+                db.session.add(log)
+                db.session.commit()
 
         return {"status": SUCCESS}
     except Exception as e:

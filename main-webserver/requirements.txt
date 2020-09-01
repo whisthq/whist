@@ -117,6 +117,7 @@ Flask-Mail==0.9.1
 Flask-Migrate==2.5.2
 Flask-PaperTrail==0.0.3
 Flask-SQLAlchemy==2.4.1
+flask-marshmallow==0.13.0
 flower==0.9.3
 freezegun==0.3.15
 future==0.17.1
@@ -133,6 +134,7 @@ jmespath==0.9.5
 kombu==4.6.8
 Mako==1.1.0
 MarkupSafe==1.1.1
+marshmallow-sqlalchemy==0.23.1
 mirakuru==2.3.0
 more-itertools==5.0.0
 msgpack==1.0.0

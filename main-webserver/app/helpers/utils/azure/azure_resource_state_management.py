@@ -3,6 +3,8 @@ from app.helpers.utils.azure.azure_general import *
 from app.helpers.utils.azure.azure_resource_locks import *
 from app.helpers.utils.azure.azure_helpers.azure_resource_state_management_helpers import *
 
+from app.models.hardware import *
+from app.serializers.hardware import *
 
 def sendVMStartCommand(
     vm_name, needs_restart, needs_winlogon, resource_group=VM_GROUP, s=None
@@ -28,15 +30,13 @@ def sendVMStartCommand(
 
         # Fetch the name of the disk currently attached to the VM
 
-        output = fractalSQLSelect(
-            table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-        )
+        vm = UserVM.query.get(vm_name)
 
         disk_name = None
         username = None
-        if output["success"] and output["rows"]:
-            disk_name = output["rows"][0]["disk_name"]
-            username = output["rows"][0]["username"]
+        if vm:
+            disk_name = vm.disk_id
+            username = vm.user_id
         else:
             fractalLog(
                 function="sendVMStartCommand",
@@ -133,12 +133,10 @@ def sendVMStartCommand(
                         },
                     )
 
-                output = fractalSQLSelect(
-                    table_name="disk_apps", params={"disk_name": disk_name}
-                )
+                apps = AppsToInstall.query.filter_by(disk_id=disk_name).all()
 
-                if output["success"] and output["rows"]:
-                    if installApplications(vm_name, output["rows"]) < 0:
+                if apps:
+                    if installApplications(vm_name, apps, vm.os) < 0:
                         fractalLog(
                             function="sendVMStartCommand",
                             label=str(username),

@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.general.auth import *
 from app.helpers.blueprint_helpers.auth.account_get import *
 from app.helpers.blueprint_helpers.auth.account_post import *
 
@@ -13,8 +14,6 @@ def account_postDelete(**kwargs):
     # Account deletion endpoint
     username = kwargs["body"]["username"]
 
-    print("delete0")
-
     output = deleteHelper(username)
 
     return jsonify(output), output["status"]
@@ -26,7 +25,6 @@ def account_postDelete(**kwargs):
 @fractalAuth
 def account_postUpdate(**kwargs):
     # Change the user's name, email, or password
-    print("update")
     return updateUserHelper(kwargs["body"])
 
 
@@ -62,12 +60,6 @@ def account_post(action, **kwargs):
         output = verifyHelper(username, token)
 
         return jsonify(output), output["status"]
-
-    elif action == "resetPassword":
-        # Reset user password
-
-        resetPasswordHelper(body["username"], body["password"])
-        return jsonify({"status": SUCCESS}), SUCCESS
     elif action == "lookup":
         # Check if user exists
 

@@ -3,6 +3,11 @@ from app.helpers.utils.azure.azure_general import *
 from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_locks import *
 
+from app.models.hardware import *
+from app.serializers.hardware import *
+
+user_vm_schema = UserVMSchema()
+os_disk_schema = OSDiskSchema()
 
 @celery_instance.task(bind=True)
 def startVM(self, vm_name, resource_group=VM_GROUP):
@@ -33,9 +38,7 @@ def startVM(self, vm_name, resource_group=VM_GROUP):
 
     fractalVMStart(vm_name, resource_group=resource_group, s=self)
 
-    output = fractalSQLSelect(
-        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-    )
+    vm = UserVM.query.get(vm_name)
 
     fractalLog(
         function="startVM",
@@ -43,8 +46,9 @@ def startVM(self, vm_name, resource_group=VM_GROUP):
         logs="VM {vm_name} successfully started.".format(vm_name=vm_name),
     )
 
-    if output["success"] and output["rows"]:
-        return output["rows"][0]
+    if vm:
+        vm = user_vm_schema.dump(vm)
+        return vm
 
 
 @celery_instance.task(bind=True)
@@ -76,9 +80,7 @@ def restartVM(self, vm_name, resource_group=VM_GROUP):
 
     fractalVMStart(vm_name, needs_restart=True, resource_group=resource_group, s=self)
 
-    output = fractalSQLSelect(
-        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-    )
+    vm = UserVM.query.get(vm_name)
 
     fractalLog(
         function="restartVM",
@@ -86,8 +88,9 @@ def restartVM(self, vm_name, resource_group=VM_GROUP):
         logs="VM {vm_name} successfully restarted.".format(vm_name=vm_name),
     )
 
-    if output["success"] and output["rows"]:
-        return output["rows"][0]
+    if vm:
+        vm = user_vm_schema.dump(vm)
+        return vm
 
 
 @celery_instance.task(bind=True)
@@ -120,9 +123,7 @@ def deallocateVM(self, vm_name, resource_group=VM_GROUP):
     )
     async_vm_deallocate.wait()
 
-    output = fractalSQLSelect(
-        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-    )
+    vm = UserVM.query.get(vm_name)
 
     lockVMAndUpdate(vm_name=vm_name, state="DEALLOCATED", lock=False, temporary_lock=0)
 
@@ -132,5 +133,6 @@ def deallocateVM(self, vm_name, resource_group=VM_GROUP):
         logs="VM {vm_name} successfully deallocated.".format(vm_name=vm_name),
     )
 
-    if output["success"] and output["rows"]:
-        return output["rows"][0]
+    if vm:
+        vm = user_vm_schema.dump(vm)
+        return vm
