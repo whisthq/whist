@@ -22,7 +22,7 @@ def test_pulling_ip():
     assert testclient.task_ips == {0: '34.229.191.6'}
 
 
-def test_create_capacity_provider():
+def test_create_cluster_with_auto_scaling_group():
     testclient = ECSClient(region_name="us-east-2")
     launch_config_name = testclient.create_launch_configuration(instance_type='t2.micro', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
     
@@ -40,6 +40,13 @@ def test_create_capacity_provider():
     assert capacity_provider['name'] == capacity_provider_name
     assert capacity_provider['autoScalingGroupProvider']['autoScalingGroupArn'] == auto_scaling_group['AutoScalingGroupARN']
 
+    cluster_name = testclient.create_cluster(capacity_providers=[capacity_provider_name])
+    assert testclient.cluster == cluster_name
+    clusters_def = testclient.ecs_client.describe_clusters(clusters=[cluster_name])
+    assert len(clusters_def['clusters']) > 0
+    cluster = clusters_def['clusters'][0]
+    assert cluster['clusterName'] == cluster_name
+    assert cluster['capacityProviders'] == [capacity_provider_name]
 
 @pytest.mark.skipif(
     "AWS_ECS_TEST_DO_IT_LIVE" not in os.environ,
