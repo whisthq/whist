@@ -42,26 +42,6 @@ def test_basic_ecs_client():
     assert testclient.task_ips == {0: '34.229.191.6'}
 
 
-@pytest.mark.skipif(
-    "AWS_ECS_TEST_DO_IT_LIVE" not in os.environ,
-    reason="This test is slow and requires a live ECS cluster; run only upon explicit request",
-)
-def test_basic_ecs_client():
-    testclient = ECSClient(launch_type="EC2")
-    networkConfiguration = {
-        "awsvpcConfiguration": {
-            "subnets": ["subnet-0dc1b0c43c4d47945", ],
-            "securityGroups": ["sg-036ebf091f469a23e", ]
-        }
-    }
-    testclient.run_task(networkConfiguration=networkConfiguration)
-    testclient.set_and_register_task(
-        ["echo middle"], ["/bin/bash", "-c"], family="multimessage",
-    )
-    testclient.run_task(networkConfiguration=networkConfiguration)
-    testclient.spin_all(time_delay=2)
-    assert testclient.logs_messages == {0: ['start'], 1: ['middle']}  # pylint: disable=print-call
-
 
 @mock_ecs
 @mock_logs
