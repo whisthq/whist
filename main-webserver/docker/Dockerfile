@@ -40,13 +40,6 @@ COPY --from=builder /usr/local/lib/python3.6/site-packages /usr/local/lib/python
 # into this final image to ease developer usage
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Create and change to the app directory.
+# Change to the app directory, which is a mounted Docker volume.
 WORKDIR /app
-
-# Copy local code to the container image
-# - This is split out in an attempt to improve Docker cache hits so that the full
-#   dependency installation step doesn't need to be run again.
-# - This expects .dockerignore to omit anything unnecessary for the image
-COPY ./ ./
-
 ENTRYPOINT ["./stem-cell.sh"]

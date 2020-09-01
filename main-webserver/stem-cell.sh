@@ -12,7 +12,12 @@
 # environments.
 
 case "$1" in
-    "web") exec waitress-serve --port="$PORT" app:app ;;
-    "celery") exec celery worker --app=celery_worker.celery_instance ;;
+    "web")
+	if [ "$HOT_RELOAD" = "true" ]; then
+	    FLASK_ENV=development flask run --host "0.0.0.0" --port "$PORT"
+	else
+	    waitress-serve --port="$PORT" app:app
+	fi ;;
+    "celery") celery worker --app=celery_worker.celery_instance ;;
     *) echo "Specify either 'web' or 'celery' to determine what this instance will manifest as." ;;
 esac
