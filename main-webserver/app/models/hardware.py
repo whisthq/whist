@@ -17,6 +17,17 @@ class UserVM(db.Model):
     disk_id = db.Column(db.ForeignKey("hardware.os_disks.disk_id"))
     temporary_lock = db.Column(db.Integer)
 
+class UserContainer(db.Model):
+    __tablename__ = "user_containers"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+    container_id = db.Column(db.String(250), primary_key=True, unique=True)
+    ip = db.Column(db.String(250), nullable=False)
+    location = db.Column(db.String(250), nullable=False)
+    os = db.Column(db.String(250), nullable=False)
+    state = db.Column(db.String(250), nullable=False)
+    lock = db.Column(db.Boolean, nullable=False, server_default=expression.false())
+    user_id = db.Column(db.ForeignKey("users.user_id"))
+
 
 class OSDisk(db.Model):
     __tablename__ = "os_disks"

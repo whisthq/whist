@@ -31,23 +31,15 @@
       <path>
         <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
         <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="BRANCH:ecs-work" type="e8cecc67:BranchNodeDescriptor" />
         <item name="GROUP_NODE:mingy98" type="e8cecc67:BranchNodeDescriptor" />
       </path>
     </select>
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6ee83c85-a153-4448-a850-418f9e4aa8d9" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/app/helpers/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/helpers/helpers-tests/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/helpers/helpers-tests/aws-tests/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/helpers/utils/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/helpers/utils/aws/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/helpers/helpers-tests/aws-tests/test-ecs-client.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/helpers/helpers-tests/aws-tests/test-ecs-client.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/helpers/setup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/helpers/helpers-tests/aws-tests/test-ecs-client.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/helpers/helpers-tests/aws-tests/test_ecs_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/celery/aws_ecs_creation.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/celery/aws_ecs_creation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/models/hardware.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/hardware.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -85,7 +77,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$/app/helpers/helpers-tests/aws-tests/test-ecs-client.py" />
     <property name="settings.editor.selected.configurable" value="preferences.externalTools" />
   </component>
-  <component name="RunManager" selected="Python tests.pytest in test-ecs-client.py">
+  <component name="RunManager" selected="Python.test-ecs-client">
     <configuration name="base_ecs_client (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="main-webserver" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -163,7 +155,7 @@
     <list>
       <item itemvalue="Python.test-ecs-client" />
       <item itemvalue="Python.base_ecs_client (1)" />
-      <item itemvalue="Python tests.pytest in test-ecs-client.py" />
+      <item itemvalue="Python tests.pytest in test_ecs_client.py" />
     </list>
     <recent_temporary>
       <list>
@@ -218,7 +210,14 @@
       <option name="project" value="LOCAL" />
       <updated>1598961823219</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="fixed pytest, &#10;&#10;install helpers for pytest with pip install -e . from helpers dir">
+      <created>1598971882359</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1598971882360</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -226,19 +225,7 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State>
-              <option name="FILTERS">
-                <map>
-                  <entry key="branch">
-                    <value>
-                      <list>
-                        <option value="ecs-work" />
-                      </list>
-                    </value>
-                  </entry>
-                </map>
-              </option>
-            </State>
+            <State />
           </value>
         </entry>
       </map>
@@ -246,10 +233,12 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
+    <option name="CHECK_NEW_TODO" value="false" />
     <MESSAGE value="starting ecs pipeline" />
     <MESSAGE value="adding IP retrieval for tasks and spinpolling runs" />
     <MESSAGE value="starting to scaffold out the celery tasks" />
-    <option name="LAST_COMMIT_MESSAGE" value="starting to scaffold out the celery tasks" />
+    <MESSAGE value="fixed pytest, &#10;&#10;install helpers for pytest with pip install -e . from helpers dir" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed pytest, &#10;&#10;install helpers for pytest with pip install -e . from helpers dir" />
   </component>
   <component name="WindowStateProjectService">
     <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1598900205486">
@@ -264,10 +253,6 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="395" y="0" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1598961822291" />
-    <state x="548" y="167" key="FileChooserDialogImpl" timestamp="1598971201251">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state x="548" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1598971201251" />
     <state x="548" y="167" key="FileChooserDialogImpl" timestamp="1598900203477">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -276,22 +261,22 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="261" y="95" key="Git.Interactive.Rebase.Dialog/0.0.1536.824@0.0.1536.824" timestamp="1598966820910" />
-    <state width="1493" height="210" key="GridCell.Tab.0.bottom" timestamp="1598968615383">
+    <state width="1493" height="210" key="GridCell.Tab.0.bottom" timestamp="1598972569853">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1598968615383" />
-    <state width="1493" height="210" key="GridCell.Tab.0.center" timestamp="1598968615382">
+    <state width="1493" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1598972569853" />
+    <state width="1493" height="210" key="GridCell.Tab.0.center" timestamp="1598972569852">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1598968615382" />
-    <state width="1493" height="210" key="GridCell.Tab.0.left" timestamp="1598968615380">
+    <state width="1493" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1598972569851" />
+    <state width="1493" height="210" key="GridCell.Tab.0.left" timestamp="1598972569844">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1598968615380" />
-    <state width="1493" height="210" key="GridCell.Tab.0.right" timestamp="1598968615383">
+    <state width="1493" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1598972569844" />
+    <state width="1493" height="210" key="GridCell.Tab.0.right" timestamp="1598972569852">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1598968615383" />
+    <state width="1493" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1598972569852" />
     <state x="147" y="64" key="MergeDialog" timestamp="1598960022269">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -304,14 +289,14 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="277" y="57" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1598907762253" />
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1598967613538">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1598972244728">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1598967613538" />
-    <state x="579" y="326" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1598959824509">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1598972244728" />
+    <state x="579" y="326" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1598978069821">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="579" y="326" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1536.824@0.0.1536.824" timestamp="1598959824509" />
+    <state x="579" y="326" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1536.824@0.0.1536.824" timestamp="1598978069821" />
     <state x="477" y="145" width="581" height="534" key="find.popup" timestamp="1598960261488">
       <screen x="0" y="0" width="1536" height="824" />
     </state>

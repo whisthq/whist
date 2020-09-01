@@ -1,5 +1,4 @@
 from app import *
-from app.helpers.utils.azure.azure_resource_creation import *
 
 
 
@@ -50,19 +49,29 @@ def create_new_container(self, username, taskinfo):
         )
 
         return
-    private_key = generatePrivateKey()
-    fractalSQLInsert(
-        table_name=resourceGroupToTable("eastus"),
-        params={
-            "vm_name": ecs_client.tasks[0],
-            "ip": curr_ip,
-            "state": "CREATING",
-            "location": "eastus",
-            "dev": False,
-            "os": "Linux",
-            "lock": True,
-            "disk_name": "",
-            "private_key": private_key,
-        },
+    container = UserContainer(
+        container_id=ecs_client.tasks[0],
+        ip=curr_ip,
+        state="CREATING",
+        location="us-east-1",
+        os="Linux",
+        lock=False
     )
+
+    container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
+    if container_sql:
+        pass
+    else:
+        fractalLog(
+            function="create_new_container", label=str(ecs_client.tasks[0]), logs="SQL insertion unsuccessful",
+        )
+        self.update_state(
+            state="FAILURE",
+            meta={
+                "msg": "Error inserting VM {cli} and disk into SQL".format(
+                    cli=ecs_client.tasks[0]
+                )
+            },
+        )
+        return None
 
