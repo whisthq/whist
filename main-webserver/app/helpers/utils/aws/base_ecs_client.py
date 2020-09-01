@@ -106,6 +106,22 @@ class ECSClient:
         letters = string.ascii_lowercase
         return starter_name + '_' + ''.join(random.choice(letters) for i in range(10))
 
+    def create_cluster(self, capacity_providers, cluster_name=None):
+        """
+        Creates a new cluster with the specified capacity providers and sets the task's computer cluster to it
+        """
+        if isinstance(capacity_providers, str):
+            capacity_providers = [capacity_providers]
+        if not isinstance(capacity_providers, list):
+            raise Exception("capacity_providers must be a list of strs")
+        cluster_name = cluster_name or self.generate_name("cluster")
+        self.ecs_client.create_cluster(
+            clusterName=cluster_name,
+            capacityProviders=capacity_providers,
+        )
+        self.set_cluster(cluster_name)
+        return cluster_name
+
     def set_cluster(self, cluster_name=None):
         """
         sets the task's compute cluster to be the first available/default compute cluster.
@@ -214,13 +230,18 @@ class ECSClient:
         return launch_config_name
 
     def create_auto_scaling_group(self, launch_config_name, auto_scaling_group_name=None, min_size=1, max_size=10, availability_zones=None):
+        availability_zones = availability_zones or [self.region_name + 'a']
+        if isinstance(availability_zones, str):
+            availability_zones = [availability_zones]
+        if not isinstance(availability_zones, list):
+            raise Exception("availability_zones should be a list of strs")
         auto_scaling_group_name = auto_scaling_group_name or self.generate_name('auto_scaling_group')
         response = self.auto_scaling_client.create_auto_scaling_group(
             AutoScalingGroupName=auto_scaling_group_name,
             LaunchConfigurationName=launch_config_name,
             MaxSize=max_size,
             MinSize=min_size,
-            AvailabilityZones=availability_zones or [self.region_name + 'a'],
+            AvailabilityZones=availability_zones,
         )
         return auto_scaling_group_name
 
