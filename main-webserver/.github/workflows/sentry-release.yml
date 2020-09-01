@@ -1,0 +1,22 @@
+name: Sentry Release
+
+on:
+  push:
+    branches:
+      - master
+
+
+jobs:
+  createSentryRelease:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create a Sentry.io release
+        uses: tclindner/sentry-releases-action@v1.2.0
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: Fractal
+          SENTRY_PROJECT: protocol
+        with:
+          tagName: ${{ github.sha }}
+          releaseNamePrefix: fractal-protocol@
+          environment: "prod"

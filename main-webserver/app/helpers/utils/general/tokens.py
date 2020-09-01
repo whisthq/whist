@@ -3,6 +3,7 @@ from app.constants.bad_words import *
 
 from app.models.public import *
 
+
 def generatePrivateKey():
     return secrets.token_hex(16)
 

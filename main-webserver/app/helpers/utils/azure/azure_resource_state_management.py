@@ -171,11 +171,7 @@ def sendVMStartCommand(
 
 
 def fractalVMStart(
-    vm_name,
-    needs_restart=False,
-    needs_winlogon=True,
-    resource_group=VM_GROUP,
-    s=None,
+    vm_name, needs_restart=False, needs_winlogon=True, resource_group=VM_GROUP, s=None,
 ):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary
     (big brain thoughts from Ming)

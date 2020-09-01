@@ -3,7 +3,6 @@ from app.helpers.utils.azure.azure_general import *
 
 from app.models.hardware import *
 
-
 def lockVMAndUpdate(vm_name, state, lock, temporary_lock, resource_group=VM_GROUP):
     """Changes the state, lock, and temporary lock of a VM
 

@@ -61,7 +61,7 @@ useful_env_vars = [
     "PROD_DB_URL",
     "REDIS_URL",
     "STAGING_DB_URL",
-    "USE_PRODUCTION_KEYS"
+    "USE_PRODUCTION_KEYS",
 ]
 
 useful_config = {k: env_config.get(k) for k in useful_env_vars}
