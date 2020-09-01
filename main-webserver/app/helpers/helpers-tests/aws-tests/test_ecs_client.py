@@ -22,6 +22,25 @@ def test_pulling_ip():
     assert testclient.task_ips == {0: '34.229.191.6'}
 
 
+def test_create_capacity_provider():
+    testclient = ECSClient(region_name="us-east-2")
+    launch_config_name = testclient.create_launch_configuration(instance_type='t2.micro', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
+    
+    auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
+    auto_scaling_groups_def = testclient.auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=[auto_scaling_group_name])
+    assert len(auto_scaling_groups_def['AutoScalingGroups']) > 0
+    auto_scaling_group = auto_scaling_groups_def['AutoScalingGroups'][0]
+    assert auto_scaling_group['AutoScalingGroupName'] == auto_scaling_group_name
+    assert auto_scaling_group['LaunchConfigurationName'] == launch_config_name
+
+    capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
+    capacity_providers_def = testclient.ecs_client.describe_capacity_providers(capacityProviders=[capacity_provider_name])
+    assert len(capacity_providers_def['capacityProviders']) > 0
+    capacity_provider = capacity_providers_def['capacityProviders'][0]
+    assert capacity_provider['name'] == capacity_provider_name
+    assert capacity_provider['autoScalingGroupProvider']['autoScalingGroupArn'] == auto_scaling_group['AutoScalingGroupARN']
+
+
 @pytest.mark.skipif(
     "AWS_ECS_TEST_DO_IT_LIVE" not in os.environ,
     reason="This test is slow and requires a live ECS cluster; run only upon explicit request",
@@ -143,37 +162,3 @@ def test_region():
     assert taskdef["family"] == "basefam"
     logger = taskdef["containerDefinitions"][0]["logConfiguration"]["options"]
     assert "us-east-1" in logger["awslogs-region"]
-
-    
-@mock_ec2
-@mock_ecs
-@mock_autoscaling 
-@mock_logs
-def test_auto_scaling_group():
-    log_client = boto3.client("logs", region_name="us-east-2")
-    ecs_client = boto3.client("ecs", region_name="us-east-2")
-    auto_scaling_client = boto3.client("autoscaling", region_name="us-east-2")
-    ecs_client.create_cluster(clusterName="test_ecs_cluster")
-    testclient = ECSClient(
-        key_id="Testing",
-        access_key="Testing",
-        region_name="us-east-2",
-        starter_client=ecs_client,
-        starter_log_client=log_client,
-    )
-    launch_config_name = testclient.create_launch_configuration(instance_type='t2.micro', ami='ami-1234abcd', launch_config_name=None)
-    
-    auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
-    auto_scaling_groups_def = auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=[auto_scaling_group_name])
-    assert len(auto_scaling_groups_def['AutoScalingGroups']) > 0
-    auto_scaling_group = auto_scaling_groups_def['AutoScalingGroups'][0]
-    assert auto_scaling_group['AutoScalingGroupName'] == auto_scaling_group_name
-    assert auto_scaling_group['LaunchConfigurationName'] == launch_config_name
-
-    # capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
-    # capacity_providers_def = ecs_client.describe_capacity_providers(capacityProviders=[capacity_provider_name])
-    # assert len(capacity_providers_def['capacityProviders']) > 0
-    # capacity_provider = capacity_provider_def['capacityProviders'][0]
-    # assert capacity_provider['name'] == capacity_provider_name
-    # assert capacity_provider['autoScalingGroupProvider']['autoScalingGroupArn'] == auto_scaling_group['AutoScalingGroupArn']
-
