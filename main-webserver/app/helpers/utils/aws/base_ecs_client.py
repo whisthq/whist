@@ -107,8 +107,8 @@ class ECSClient:
 
     def set_and_register_task(
         self,
-        command,
-        entrypoint,
+        command=None,
+        entrypoint=None,
         family="echostart",
         containername="basictest",
         imagename="httpd:2.4",
@@ -132,6 +132,7 @@ class ECSClient:
             self.log_client.create_log_group(logGroupName="/ecs/{}".format(fmtstr))
         except botocore.exceptions.ClientError as e:
             self.warnings.append(str(e))
+        #TODO:  update basedict to mimic successful task launch
         basedict = {
             "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(self.account_id),
             "containerDefinitions": [
@@ -159,6 +160,10 @@ class ECSClient:
             "networkMode": "awsvpc",
             "cpu": cpu,
         }
+        if basedict["containerDefinitions"][0]["command"] is None:
+            basedict["containerDefinitions"][0].pop("command")
+        if basedict["containerDefinitions"][0]["entryPoint"] is None:
+            basedict["containerDefinitions"][0].pop("entryPoint")
         response = self.ecs_client.register_task_definition(**basedict)
         arn = response["taskDefinition"]["taskDefinitionArn"]
         self.task_definition_arn = arn
@@ -183,6 +188,10 @@ class ECSClient:
         self.tasks.append(running_task_arn)
         self.tasks_done.append(False)
         self.offset += 1
+
+    def stop_task(self, reason="user stopped", offset=0):
+        self.ecs_client.stop_task(cluster=self.cluster, task=self.tasks[offset], reason=reason)
+        self.tasks_done[offset]=True
 
     def get_instance_ip(self, offset=0):
         if self.tasks_done[offset]:
