@@ -144,3 +144,19 @@ def test_region():
     assert taskdef["family"] == "basefam"
     logger = taskdef["containerDefinitions"][0]["logConfiguration"]["options"]
     assert "us-east-1" in logger["awslogs-region"]
+
+
+@mock_ecs
+@mock_logs
+def test_auto_scaling_group():
+    log_client = boto3.client("logs", region_name="us-east-2")
+    ecs_client = boto3.client("ecs", region_name="us-east-2")
+    ecs_client.create_cluster(clusterName="test_ecs_cluster")
+    testclient = ECSClient(
+        key_id="Testing",
+        access_key="Testing",
+        starter_client=ecs_client,
+        starter_log_client=log_client,
+    )
+    launch_config_name = testclient.create_launch_configuration(instance_type='t2.micro', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
+    auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)

@@ -1,5 +1,7 @@
 from pprint import pprint
 import time
+import random
+import string
 
 import boto3
 import botocore.exceptions
@@ -43,6 +45,7 @@ class ECSClient:
         starter_client=None,
         starter_log_client=None,
         starter_ec2_client=None,
+        starter_auto_scaling_client=None,
         grab_logs=True,
     ):
         self.key_id = check_str_param(key_id, "key_id")
@@ -74,6 +77,10 @@ class ECSClient:
             self.ec2_client = self.make_client("ec2")
         else:
             self.ec2_client = starter_ec2_client
+        if starter_auto_scaling_client is None:
+            self.auto_scaling_client = self.make_client("autoscaling")
+        else:
+            self.auto_scaling_client = starter_auto_scaling_client
         self.set_cluster(cluster_name=base_cluster)
 
     def make_client(self, client_type, **kwargs):
@@ -94,6 +101,10 @@ class ECSClient:
         )
 
         return clients
+
+    def generate_name(self, starter_name=''):
+        letters = string.ascii_lowercase
+        return starter_name + '_' + ''.join(random.choice(letters) for i in range(10))
 
     def set_cluster(self, cluster_name=None):
         """
@@ -193,6 +204,38 @@ class ECSClient:
         self.ecs_client.stop_task(cluster=self.cluster, task=self.tasks[offset], reason=reason)
         self.tasks_done[offset]=True
 
+    def create_launch_configuration(self, instance_type, ami, launch_config_name=None):
+        launch_config_name = launch_config_name or self.generate_name('launch_configuration')
+        response = self.auto_scaling_client.create_launch_configuration(
+            LaunchConfigurationName=launch_config_name,
+            ImageId=ami,
+            InstanceType=instance_type,
+        )
+        return launch_config_name
+
+    def create_auto_scaling_group(self, launch_config_name, auto_scaling_group_name=None, min_size=1, max_size=10, availability_zones=None):
+        auto_scaling_group_name = auto_scaling_group_name or self.generate_name('auto_scaling_group')
+        response = self.auto_scaling_client.create_auto_scaling_group(
+            AutoScalingGroupName=auto_scaling_group_name,
+            LaunchConfigurationName=launch_config_name,
+            MaxSize=max_size,
+            MinSize=min_size,
+            AvailabilityZones=availability_zones or [self.region_name + 'a'],
+        )
+        return auto_scaling_group_name
+
+    def create_capacity_provider(self, auto_scaling_group_name, capacity_provider_name=None):
+        auto_scaling_group_info = self.auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=[auto_scaling_group_name])
+        auto_scaling_group_arn = auto_scaling_group_info['AutoScalingGroups'][0]['AutoScalingGroupARN']
+        capacity_provider_name = capacity_provider_name or self.generate_name('capacity_provider')
+        response = self.ecs_client.create_capacity_provider(
+            name=capacity_provider_name,
+            autoScalingGroupProvider={
+                'autoScalingGroupArn': auto_scaling_group_arn,
+            }
+        )
+        return capacity_provider_name
+
     def get_instance_ip(self, offset=0):
         if self.tasks_done[offset]:
             return False
@@ -272,17 +315,19 @@ class ECSClient:
 
 
 if __name__ == "__main__":
-
-    testclient = ECSClient()
-    testclient.set_and_register_task(
-        ["echo start"], ["/bin/bash", "-c"], family="multimessage",
-    )
-    networkConfiguration = {
-        "awsvpcConfiguration": {
-            "subnets": ["subnet-0dc1b0c43c4d47945",],
-            "securityGroups": ["sg-036ebf091f469a23e",],
-        }
-    }
-    testclient.run_task(networkConfiguration=networkConfiguration)
-    testclient.spin_til_running(time_delay=2)
-    print(testclient.task_ips)
+    testclient = ECSClient(region_name="us-east-2")
+    # testclient.set_and_register_task(
+    #     ["echo start"], ["/bin/bash", "-c"], family="multimessage",
+    # )
+    # networkConfiguration = {
+    #     "awsvpcConfiguration": {
+    #         "subnets": ["subnet-0dc1b0c43c4d47945",],
+    #         "securityGroups": ["sg-036ebf091f469a23e",],
+    #     }
+    # }
+    # testclient.run_task(networkConfiguration=networkConfiguration)
+    # testclient.spin_til_running(time_delay=2)
+    # print(testclient.task_ips)
+    launch_config_name = testclient.create_launch_configuration(instance_type='t2.micro', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
+    auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
+    capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
