@@ -1,6 +1,7 @@
 from app import *
 
 
+user_container_schema = UserContainerSchema()
 
 def preprocess_task_info(taskinfo):
     #TODO:  actually write this
@@ -60,7 +61,9 @@ def create_new_container(self, username, taskinfo):
 
     container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
     if container_sql:
-        pass
+        container = UserContainer.query.get(ecs_client.tasks[0])
+        container = user_container_schema.dump(container)
+        return container
     else:
         fractalLog(
             function="create_new_container", label=str(ecs_client.tasks[0]), logs="SQL insertion unsuccessful",
