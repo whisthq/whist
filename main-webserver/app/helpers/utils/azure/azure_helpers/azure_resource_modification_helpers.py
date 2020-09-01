@@ -244,7 +244,7 @@ def claimAvailableVM(
             new_params = {
                 "lock": True,
                 "user_id": username,
-                "disk_id": disk_id,
+                "disk_id": disk_name,
                 "state": "ATTACHING",
             }
 

@@ -159,26 +159,36 @@ def verifyHelper(username, provided_user_id):
 
     user_id = None
 
-    user = User.query.get(username)
+    user = User.query.filter_by(user_id=username).first()
 
     if user:
         user_id = user.token
 
         # Check to see if the provided user ID matches the selected user ID
-        #
-        # if provided_user_id == user_id:
-        #     alreadyVerified = output["rows"][0]["verified"]
-        #     fractalSQLUpdate(
-        #         table_name="users",
-        #         conditional_params={"email": username},
-        #         new_params={"verified": True},
-        #     )
-        #
-        #     if not alreadyVerified:
-        #         # Send welcome mail to user after they verify for the first time
-        #         signupMail(user.user_id, user.referral_code)
 
-        return {"status": SUCCESS, "verified": True}
+        if provided_user_id == user_id:
+            fractalLog(
+                function="verifyHelper",
+                label=user_id,
+                logs="Verification token is valid, verifying.",
+            )
+            alreadyVerified = user.verified
+            fractalSQLCommit(db, fractalSQLUpdate, user, {"verified": True})
+
+            # if not alreadyVerified:
+            #     # Send welcome mail to user after they verify for the first time
+            #     signupMail(user.user_id, user.referral_code)
+            return {"status": SUCCESS, "verified": True}
+        else:
+            fractalLog(
+                function="verifyHelper",
+                label=user_id,
+                logs="Verification token {token} is invalid, cannot validate.".format(
+                    token=provided_user_id
+                ),
+                level=logging.WARNING,
+            )
+            return {"status": UNAUTHORIZED, "verified": False}
     else:
         return {"status": UNAUTHORIZED, "verified": False}
 

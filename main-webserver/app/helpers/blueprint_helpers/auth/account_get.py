@@ -79,7 +79,7 @@ def disksHelper(username, main):
     if not user:
         return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
 
-    os_disks = OSDisk.query.filter_by(user_id=username).all()
+    os_disks = OSDisk.query.filter_by(user_id=username, state="ACTIVE").all() if main else OSDisk.query.filter_by(user_id=username).all()
     os_disks = [os_disk_schema.dump(disk) for disk in os_disks]
 
     secondary_disks = SecondaryDisk.query.filter_by(user_id=username).all()

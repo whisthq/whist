@@ -174,62 +174,65 @@ def retrieveStripeHelper(email):
     customer = user_schema.dump(customer)
     credits = customer["credits_outstanding"]
 
-    try:
-        payload = stripe.Customer.retrieve(customer["stripe_customer_id"])
-        subscription = stripe.Subscription.list(customer=customer["stripe_customer_id"])
-        if subscription and subscription["data"]:
-            subscription = subscription["data"][0]
-            cards = payload["sources"]["data"]
+    if customer["stripe_customer_id"]:
+        try:
+            payload = stripe.Customer.retrieve(customer["stripe_customer_id"])
+            subscription = stripe.Subscription.list(
+                customer=customer["stripe_customer_id"]
+            )
+            if subscription and subscription["data"]:
+                subscription = subscription["data"][0]
+                cards = payload["sources"]["data"]
 
-            account_locked = subscription["trial_end"] < dateToUnix(getToday())
+                account_locked = subscription["trial_end"] < dateToUnix(getToday())
 
+                return (
+                    jsonify(
+                        {
+                            "status": SUCCESS,
+                            "subscription": subscription,
+                            "cards": cards,
+                            "creditsOutstanding": credits,
+                            "account_locked": account_locked,
+                            "customer": customer,
+                        }
+                    ),
+                    SUCCESS,
+                )
             return (
                 jsonify(
                     {
                         "status": SUCCESS,
-                        "subscription": subscription,
-                        "cards": cards,
+                        "subscription": None,
+                        "cards": [],
                         "creditsOutstanding": credits,
-                        "account_locked": account_locked,
+                        "account_locked": False,
                         "customer": customer,
                     }
                 ),
                 SUCCESS,
             )
-        return (
-            jsonify(
-                {
-                    "status": SUCCESS,
-                    "subscription": None,
-                    "cards": [],
-                    "creditsOutstanding": credits,
-                    "account_locked": False,
-                    "customer": customer,
-                }
-            ),
-            SUCCESS,
-        )
-    except Exception as e:
-        fractalLog(
-            function="retrieveStripeHelper",
-            label=email,
-            logs=str(e),
-            level=logging.ERROR,
-        )
+        except Exception as e:
+            fractalLog(
+                function="retrieveStripeHelper",
+                label=email,
+                logs=str(e),
+                level=logging.ERROR,
+            )
 
-        return (
-            jsonify(
-                {
-                    "status": PAYMENT_REQUIRED,
-                    "subscription": {},
-                    "cards": [],
-                    "creditsOutstanding": credits,
-                    "account_locked": False,
-                    "customer": customer,
-                }
-            ),
-            PAYMENT_REQUIRED,
-        )
+    return (
+        jsonify(
+            {
+                "status": PAYMENT_REQUIRED,
+                "subscription": {},
+                "cards": [],
+                "creditsOutstanding": credits,
+                "account_locked": False,
+                "customer": {},
+            }
+        ),
+        PAYMENT_REQUIRED,
+    )
 
 
 def cancelStripeHelper(email):
