@@ -1,3 +1,4 @@
+// @ts-ignore
 const production = {
     url: {
         PRIMARY_SERVER: "https://main-webserver.fractalcomputers.com",
@@ -12,6 +13,7 @@ const production = {
     sentry_env: "production",
 };
 
+// @ts-ignore
 const staging = {
     url: {
         PRIMARY_SERVER: "https://cube-celery-staging.herokuapp.com",
@@ -26,6 +28,7 @@ const staging = {
     sentry_env: "development",
 };
 
+// @ts-ignore
 const development = {
     url: {
         PRIMARY_SERVER: "http://localhost:7730",
@@ -41,7 +44,7 @@ const development = {
 };
 
 
-// TODO: Change config to development/production after changes in staging are deployed to the other vm webservers
+// TODO: Change config to development/production after changes in staging are deployed to the other main-webservers
 export const config =
     process.env.NODE_ENV === "development" ? development : staging;
 
