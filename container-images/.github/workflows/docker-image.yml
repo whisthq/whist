@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # Workflow to build Docker images to ensure they build properly
-=======
-# This workflow builds a Docker image
->>>>>>> master
 
 name: Docker Image CI
 
