@@ -32,21 +32,21 @@ def loginsToMinutes(report):
     minutesOnline = 0
 
     while report is not None and index < len(report):
-        earlyTime = dt.strptime(report[index - 1].timestamp, "%m-%d-%Y, %H:%M:%S")
-        lateTime = dt.strptime(report[index].timestamp, "%m-%d-%Y, %H:%M:%S")
+        earlyTime = unixToDate(report[index - 1]["timestamp"])
+        lateTime = unixToDate(report[index]["timestamp"])
 
         if earlyTime.date() == lateTime.date():  # Same day
-            if report[index].action != report[index - 1].action:
-                if report[index].action == "logoff":
+            if report[index]["action"] != report[index - 1]["action"]:
+                if report[index]["action"] == "logoff":
                     deltaTime = lateTime - earlyTime
                     minutesOnline += deltaTime.seconds / 60
             else:
-                if report[index].action == "logon":
+                if report[index]["action"] == "logon":
                     deltaTime = lateTime - earlyTime
                     minutesOnline += deltaTime.seconds / 60
         else:
             if (
-                report[index - 1].action == "logon"
+                report[index - 1]["action"] == "logon"
             ):  # User session continued to next day
                 midnight = dt.combine(lateTime.date(), dt.min.time())
                 deltaTime = midnight - earlyTime
@@ -61,14 +61,14 @@ def loginsToMinutes(report):
                 )
             minutesOnline = 0
             if (
-                report[index - 1].action == "logon"
+                report[index - 1]["action"] == "logon"
             ):  # User session continued to next day
                 midnight = dt.combine(lateTime.date(), dt.min.time())
                 deltaTime = lateTime - midnight
                 minutesOnline += deltaTime.seconds / 60
 
         if index == len(report) - 1:  # Last entry
-            if report[index].action == "logon":
+            if report[index]["action"] == "logon":
                 deltaTime = dt.now() - lateTime
                 minutesOnline += deltaTime.seconds / 60
             if minutesOnline > 1:

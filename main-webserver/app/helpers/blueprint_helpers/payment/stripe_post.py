@@ -279,36 +279,27 @@ def discountHelper(code):
     if not metadata:
         fractalLog(
             function="discountHelper",
-            label="Stripe",
+            label="None",
             logs="No user for code {}".format(code),
             level=logging.ERROR,
         )
         return jsonify({"status": NOT_FOUND}), NOT_FOUND
+    else:
+        creditsOutstanding = metadata.credits_outstanding
+        email = metadata.user_id
 
-    creditsOutstanding = metadata.credits_outstanding
-    email = metadata.user_id
-    has_subscription = False
-    subscription = None
-    trial_end = 0
+        metadata.credits_outstanding = creditsOutstanding + 1
+        db.session.commit()
 
-    if metadata.stripe_customer_id:
-        has_subscription = True
-        subscription = stripe.Subscription.list(customer=customer.stripe_customer_id)[
-            "data"
-        ][0]
+        fractalLog(
+            function="discountHelper",
+            label=email,
+            logs="Applied discount and updated credits outstanding",
+        )
 
-    metadata.credits_outstanding = creditsOutstanding + 1
-    db.session.commit()
+        creditAppliedMail(email)
 
-    fractalLog(
-        function="discountHelper",
-        label=email,
-        logs="Applied discount and updated credits outstanding",
-    )
-
-    creditAppliedMail(email)
-
-    return jsonify({"status": SUCCESS}), SUCCESS
+        return jsonify({"status": SUCCESS}), SUCCESS
 
 
 def addProductHelper(email, productName):
@@ -555,7 +546,7 @@ def updateHelper(username, new_plan_type):
 def referralHelper(code, username):
     code_username = None
 
-    metadata = User.query.filter_by(referral_code=code)
+    metadata = User.query.filter_by(referral_code=code).first()
     if metadata:
         code_username = metadata.user_id
     if username == code_username:
