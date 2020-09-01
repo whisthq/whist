@@ -1,6 +1,6 @@
 # Fractal Website
 
-![Node.js CI](https://github.com/fractalcomputers/website/workflows/Node.js%20CI/badge.svg)
+![Node.js CI](https://github.com/fractalcomputers/new-website/workflows/Node.js%20CI/badge.svg)
 
 This repository contains the code for the new Fractal website for single app streaming.
 
