@@ -17,6 +17,7 @@ herokulogs.txtgg
 *.box
 ubuntu-bionic-18.04-cloudimg-console.log
 
+.idea/*
 # VS Code
 .vscode/*
 .vscode

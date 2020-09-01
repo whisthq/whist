@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from helpers.utils.aws.base_ecs_client import *
+from utils.aws.base_ecs_client import *
 from moto import mock_ecs, mock_logs
 
 
@@ -40,7 +40,6 @@ def test_basic_ecs_client():
     testclient.run_task(networkConfiguration=networkConfiguration)
     testclient.spin_til_running(time_delay=2)
     assert testclient.task_ips == {0: '34.229.191.6'}
-
 
 
 @mock_ecs
