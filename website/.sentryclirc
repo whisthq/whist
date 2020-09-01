@@ -1,0 +1,6 @@
+[defaults]
+org = fractalcomputers
+project = website
+url = https://sentry.io/
+[auth]
+token = 3f5d93ede4a0437082084a7c82468ac2ae42b519fc6a4b1bb92600e7d605459a
