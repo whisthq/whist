@@ -316,18 +316,15 @@ class ECSClient:
 
 if __name__ == "__main__":
     testclient = ECSClient(region_name="us-east-2")
-    # testclient.set_and_register_task(
-    #     ["echo start"], ["/bin/bash", "-c"], family="multimessage",
-    # )
-    # networkConfiguration = {
-    #     "awsvpcConfiguration": {
-    #         "subnets": ["subnet-0dc1b0c43c4d47945",],
-    #         "securityGroups": ["sg-036ebf091f469a23e",],
-    #     }
-    # }
-    # testclient.run_task(networkConfiguration=networkConfiguration)
-    # testclient.spin_til_running(time_delay=2)
-    # print(testclient.task_ips)
-    launch_config_name = testclient.create_launch_configuration(instance_type='t2.micro', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
-    auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
-    capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
+    testclient.set_and_register_task(
+        ["echo start"], ["/bin/bash", "-c"], family="multimessage",
+    )
+    networkConfiguration = {
+        "awsvpcConfiguration": {
+            "subnets": ["subnet-0dc1b0c43c4d47945",],
+            "securityGroups": ["sg-036ebf091f469a23e",],
+        }
+    }
+    testclient.run_task(networkConfiguration=networkConfiguration)
+    testclient.spin_til_running(time_delay=2)
+    print(testclient.task_ips)
