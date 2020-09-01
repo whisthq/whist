@@ -3,7 +3,7 @@ import os
 import pytest
 
 from utils.aws.base_ecs_client import *
-from moto import mock_ecs, mock_logs
+from moto import mock_ecs, mock_logs, mock_autoscaling, mock_ec2
 
 
 def test_pulling_ip():
@@ -20,6 +20,25 @@ def test_pulling_ip():
     testclient.run_task(networkConfiguration=networkConfiguration)
     testclient.spin_til_running(time_delay=2)
     assert testclient.task_ips == {0: '34.229.191.6'}
+
+
+def test_create_capacity_provider():
+    testclient = ECSClient(region_name="us-east-2")
+    launch_config_name = testclient.create_launch_configuration(instance_type='t2.micro', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
+    
+    auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
+    auto_scaling_groups_def = testclient.auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=[auto_scaling_group_name])
+    assert len(auto_scaling_groups_def['AutoScalingGroups']) > 0
+    auto_scaling_group = auto_scaling_groups_def['AutoScalingGroups'][0]
+    assert auto_scaling_group['AutoScalingGroupName'] == auto_scaling_group_name
+    assert auto_scaling_group['LaunchConfigurationName'] == launch_config_name
+
+    capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
+    capacity_providers_def = testclient.ecs_client.describe_capacity_providers(capacityProviders=[capacity_provider_name])
+    assert len(capacity_providers_def['capacityProviders']) > 0
+    capacity_provider = capacity_providers_def['capacityProviders'][0]
+    assert capacity_provider['name'] == capacity_provider_name
+    assert capacity_provider['autoScalingGroupProvider']['autoScalingGroupArn'] == auto_scaling_group['AutoScalingGroupARN']
 
 
 @pytest.mark.skipif(

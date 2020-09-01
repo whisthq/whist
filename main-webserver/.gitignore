@@ -1,5 +1,6 @@
 # Python
 .env*
+*.egg-info/
 env/
 Test-Environment
 *.pyc
