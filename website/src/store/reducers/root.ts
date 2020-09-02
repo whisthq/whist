@@ -1,6 +1,8 @@
+import LandingReducer from "store/reducers/landing";
 import { combineReducers } from "redux";
 
 const reducers = combineReducers({
+    LandingReducer: LandingReducer
 });
 
 const rootReducer = (state: any, action: any) => {
