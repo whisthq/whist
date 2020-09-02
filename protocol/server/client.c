@@ -144,4 +144,3 @@ int fillPeerUpdateMessages(PeerUpdateMessage *msgs, size_t *num_msgs) {
     }
     return 0;
 }
-

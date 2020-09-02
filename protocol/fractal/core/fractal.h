@@ -394,9 +394,9 @@ typedef struct FractalDiscoveryRequestMessage {
 typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
 
 typedef enum FractalClientMessageType {
-    CMESSAGE_NONE = 0,         ///< No Message
-    MESSAGE_KEYBOARD = 1,      ///< `keyboard` FractalKeyboardMessage is valid in
-                               ///< FractClientMessage.
+    CMESSAGE_NONE = 0,     ///< No Message
+    MESSAGE_KEYBOARD = 1,  ///< `keyboard` FractalKeyboardMessage is valid in
+                           ///< FractClientMessage.
     MESSAGE_KEYBOARD_STATE = 2,
     MESSAGE_MOUSE_BUTTON = 3,  ///< `mouseButton` FractalMouseButtonMessage is
                                ///< valid in FractClientMessage.
@@ -405,13 +405,13 @@ typedef enum FractalClientMessageType {
     MESSAGE_MOUSE_MOTION = 5,  ///< `mouseMotion` FractalMouseMotionMessage is
                                ///< valid in FractClientMessage.
     MESSAGE_MOUSE_INACTIVE = 6,
-    MESSAGE_MULTIGESTURE = 7, ///< Gesture Event
-    MESSAGE_RELEASE = 8,  ///< Message instructing the host to release all input
-                          ///< that is currently pressed.
-    MESSAGE_MBPS = 107,     ///< `mbps` double is valid in FractClientMessage.
+    MESSAGE_MULTIGESTURE = 7,  ///< Gesture Event
+    MESSAGE_RELEASE = 8,       ///< Message instructing the host to release all input
+                               ///< that is currently pressed.
+    MESSAGE_MBPS = 107,        ///< `mbps` double is valid in FractClientMessage.
     MESSAGE_PING = 108,
     MESSAGE_DIMENSIONS = 109,  ///< `dimensions.width` int and `dimensions.height`
-                             ///< int is valid in FractClientMessage
+                               ///< int is valid in FractClientMessage
     MESSAGE_VIDEO_NACK = 110,
     MESSAGE_AUDIO_NACK = 111,
     CMESSAGE_CLIPBOARD = 112,
@@ -430,7 +430,7 @@ typedef struct FractalClientMessage {
         FractalMouseWheelMessage mouseWheel;              ///< Mouse wheel message.
         FractalMouseMotionMessage mouseMotion;            ///< Mouse motion message.
         FractalDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
-           
+
         // MESSAGE_MULTIGESTURE
         SDL_MultiGestureEvent multigestureData;
 
