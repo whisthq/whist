@@ -1,6 +1,6 @@
 [Unit]
 Description=Fractal Service
-After=fractal-display.service
+After=fractal-display.service fractal-audio.service
 Requires=fractal-display.service
 
 [Service]

@@ -63,6 +63,13 @@ RUN useradd --create-home fractal \
 
 RUN apt-get install lsb-release -y && apt-get clean
 RUN apt-get install -y pulseaudio
+RUN addgroup --system pulse \
+    && adduser --system --ingroup pulse --home /var/run/pulse pulse \
+    && addgroup --system pulse-access \
+    && adduser pulse audio \
+    && adduser root pulse-access \
+    && adduser fractal pulse-access
+
 # Install all required components for Fractal to perform well
 # Split into multiple steps for caching
 WORKDIR /setup-scripts/linux
@@ -114,15 +121,6 @@ RUN chown -v -R fractal:fractal /home/fractal
 RUN chown root:root /run/user
 RUN chmod +x /home/fractal/entry.sh
 
-#### FROM PHIL 1/2 on this file: I think this new service for Nvidia needs to be added here, but not certain
-#### It apparently needs to run before X so it might need to be even before (?)
-ADD fractal-update-nvidia-busid.service /etc/systemd/system
-####
-
-ADD fractal-entrypoint.service /etc/systemd/system
-ADD fractal-display.service /etc/systemd/system
-ADD fractal-protocol.service /etc/systemd/system
-
 VOLUME [ "/sys/fs/cgroup" ]
 
 RUN sudo apt-get install -y openssh-server
@@ -132,12 +130,23 @@ RUN systemctl enable ssh
 #RUN systemctl set-default multi-user.target
 ENV init /sbin/init
 
+#### FROM PHIL 1/2 on this file: I think this new service for Nvidia needs to be added here, but not certain
+#### It apparently needs to run before X so it might need to be even before (?)
+ADD fractal-update-nvidia-busid.service /etc/systemd/system
+####
+#
+ADD fractal-entrypoint.service /etc/systemd/system
+ADD fractal-display.service /etc/systemd/system
+ADD fractal-audio.service /etc/systemd/system
+ADD fractal-protocol.service /etc/systemd/system
+
 #### FROM PHIL 2/2 on this file: running the new service from above!
 RUN systemctl enable fractal-update-nvidia-busid
 ####
 
 RUN systemctl enable fractal-entrypoint
 RUN systemctl enable fractal-display
+RUN systemctl enable fractal-audio
 RUN systemctl enable fractal-protocol
 
 ADD fractal-setup.sh /
