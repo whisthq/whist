@@ -2,6 +2,7 @@ from app import *
 
 from app.models.logs import *
 
+
 @celery_instance.task(bind=True)
 def deleteLogsFromS3(sender, connection_id):
     """Delete logs from S3

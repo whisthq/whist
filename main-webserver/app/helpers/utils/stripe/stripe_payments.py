@@ -3,6 +3,7 @@ from app import *
 from app.models.public import *
 from app.models.logs import *
 
+
 def stripeChargeHourly(username):
 
     # Check to see if the user is a current customer
@@ -20,8 +21,11 @@ def stripeChargeHourly(username):
         payload = stripe.Subscription.retrieve(subscription_id)
 
         if HOURLY_PLAN_ID == payload["items"]["data"][0]["plan"]["id"]:
-            user_activity = LoginHistory.query.filter_by(user_id=username).order_by(LoginHistory.timestamp.desc()).first()
-
+            user_activity = (
+                LoginHistory.query.filter_by(user_id=username)
+                .order_by(LoginHistory.timestamp.desc())
+                .first()
+            )
 
             if user_activity.action != "logon":
                 fractalLog(

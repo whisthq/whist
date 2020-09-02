@@ -38,7 +38,6 @@ def getEnvVar(key):
     return output[1]
 
 
-
 DATABASE_URL = (
     os.getenv("PROD_DB_URL")
     if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE"
