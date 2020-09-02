@@ -47,6 +47,7 @@ int handleKeyUpDown(SDL_Event *event);
 int handleMouseMotion(SDL_Event *event);
 int handleMouseWheel(SDL_Event *event);
 int handleMouseButtonUpDown(SDL_Event *event);
+int handleMultiGesture(SDL_Event *event);
 
 int tryHandleSDLEvent(void) {
     SDL_Event event;
@@ -73,6 +74,12 @@ int handleSDLEvent(SDL_Event *event) {
             break;
         case SDL_KEYDOWN:
         case SDL_KEYUP:
+#ifdef __APPLE__
+            // On Mac, map cmd to ctrl
+            if (event->key.keysym.scancode == FK_LGUI) {
+                event->key.keysym.scancode = (SDL_Scancode)FK_LCTRL;
+            }
+#endif
             if (handleKeyUpDown(event) != 0) {
                 return -1;
             }
@@ -90,6 +97,11 @@ int handleSDLEvent(SDL_Event *event) {
             break;
         case SDL_MOUSEWHEEL:
             if (handleMouseWheel(event) != 0) {
+                return -1;
+            }
+            break;
+        case SDL_MULTIGESTURE:
+            if (handleMultiGesture(event) != 0) {
                 return -1;
             }
             break;
@@ -234,6 +246,15 @@ int handleMouseWheel(SDL_Event *event) {
     fmsg.type = MESSAGE_MOUSE_WHEEL;
     fmsg.mouseWheel.x = event->wheel.x;
     fmsg.mouseWheel.y = event->wheel.y;
+    SendFmsg(&fmsg);
+
+    return 0;
+}
+
+int handleMultiGesture(SDL_Event *event) {
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_MULTIGESTURE;
+    fmsg.multigestureData = event->mgesture;
     SendFmsg(&fmsg);
 
     return 0;

@@ -59,6 +59,7 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_contr
         case MESSAGE_MOUSE_BUTTON:
         case MESSAGE_MOUSE_WHEEL:
         case MESSAGE_MOUSE_MOTION:
+        case MESSAGE_MULTIGESTURE:
             return handleUserInputMessage(fmsg, client_id, is_controlling);
         case MESSAGE_KEYBOARD_STATE:
             return handleKeyboardStateMessage(fmsg, client_id, is_controlling);
@@ -125,9 +126,7 @@ static int handleKeyboardStateMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
-#ifdef _WIN32
     UpdateKeyboardState(input_device, fmsg);
-#endif
     return 0;
 }
 

@@ -17,7 +17,7 @@ Usage
 int video_encoder_receive_packet(video_encoder_t *encoder, AVPacket *packet);
 int video_encoder_send_frame(video_encoder_t *encoder);
 
-#define GOP_SIZE 9999
+#define GOP_SIZE 99999
 #define MIN_NVENC_WIDTH 33
 #define MIN_NVENC_HEIGHT 17
 
@@ -45,6 +45,9 @@ video_encoder_t *create_nvenc_encoder(int in_width, int in_height, int out_width
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
+    encoder->already_encoded = false;
+    encoder->frames_since_last_iframe = 0;
+
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
     enum AVPixelFormat hw_format = AV_PIX_FMT_CUDA;
     enum AVPixelFormat sw_format = AV_PIX_FMT_0RGB32;
@@ -277,6 +280,8 @@ video_encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width, 
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
+    encoder->already_encoded = false;
+    encoder->frames_since_last_iframe = 0;
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
     enum AVPixelFormat hw_format = AV_PIX_FMT_QSV;
     enum AVPixelFormat sw_format = AV_PIX_FMT_RGB32;
@@ -461,6 +466,9 @@ video_encoder_t *create_sw_encoder(int in_width, int in_height, int out_width, i
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
+    encoder->already_encoded = false;
+    encoder->frames_since_last_iframe = 0;
+
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
     enum AVPixelFormat out_format = AV_PIX_FMT_YUV420P;
 
@@ -669,6 +677,9 @@ void destroy_video_encoder(video_encoder_t *encoder) {
 }
 
 void video_encoder_set_iframe(video_encoder_t *encoder) {
+    if (encoder->already_encoded) {
+        return;
+    }
     encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
     encoder->sw_frame->pts +=
         encoder->pCodecCtx->gop_size - (encoder->sw_frame->pts % encoder->pCodecCtx->gop_size);
@@ -676,11 +687,22 @@ void video_encoder_set_iframe(video_encoder_t *encoder) {
 }
 
 void video_encoder_unset_iframe(video_encoder_t *encoder) {
+    if (encoder->already_encoded) {
+        return;
+    }
     encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
     encoder->sw_frame->key_frame = 0;
 }
 
 int video_encoder_encode(video_encoder_t *encoder) {
+    if (encoder->already_encoded) {
+        encoder->num_packets = 1;
+        encoder->packets[0].data = encoder->encoded_frame_data;
+        encoder->packets[0].size = encoder->encoded_frame_size;
+        encoder->encoded_frame_size += 8;
+        return 0;
+    }
+
     if (video_encoder_send_frame(encoder)) {
         LOG_ERROR("Unable to send frame to encoder!");
         return -1;
@@ -710,6 +732,12 @@ int video_encoder_encode(video_encoder_t *encoder) {
         }
     }
 
+    encoder->is_iframe = encoder->frames_since_last_iframe % encoder->gop_size == 0;
+    if (encoder->is_iframe) {
+        encoder->frames_since_last_iframe = 0;
+    }
+
+    encoder->frames_since_last_iframe++;
     return 0;
 }
 

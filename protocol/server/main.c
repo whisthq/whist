@@ -105,6 +105,7 @@ int encoder_factory_client_w;
 int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
+
 int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
     encoder_factory_result = create_video_encoder(
@@ -155,7 +156,6 @@ int32_t SendVideo(void* opaque) {
     StartTimer(&world_timer);
 
     int id = 1;
-    int frames_since_first_iframe = 0;
     update_device = true;
 
     clock last_frame_capture;
@@ -200,6 +200,19 @@ int32_t SendVideo(void* opaque) {
 
             LOG_INFO("Created Capture Device of dimensions %dx%d", device->width, device->height);
 
+            while (pending_encoder) {
+                if (encoder_finished) {
+                    if (encoder) {
+                        SDL_CreateThread(MultithreadedDestroyEncoder, "MultithreadedDestroyEncoder",
+                                         encoder);
+                    }
+                    encoder = encoder_factory_result;
+                    pending_encoder = false;
+                    update_encoder = false;
+                    break;
+                }
+                SDL_Delay(1);
+            }
             update_encoder = true;
             if (encoder) {
                 MultithreadedDestroyEncoder(encoder);
@@ -209,6 +222,7 @@ int32_t SendVideo(void* opaque) {
 
         // Update encoder with new parameters
         if (update_encoder) {
+            UpdateCaptureEncoder(device, current_bitrate, client_codec_type);
             // encoder = NULL;
             if (pending_encoder) {
                 if (encoder_finished) {
@@ -217,7 +231,6 @@ int32_t SendVideo(void* opaque) {
                                          encoder);
                     }
                     encoder = encoder_factory_result;
-                    frames_since_first_iframe = 0;
                     pending_encoder = false;
                     update_encoder = false;
                 }
@@ -236,7 +249,6 @@ int32_t SendVideo(void* opaque) {
                     // Run on this thread bc we have to wait for it anyway
                     MultithreadedEncoderFactory(NULL);
                     encoder = encoder_factory_result;
-                    frames_since_first_iframe = 0;
                     pending_encoder = false;
                     update_encoder = false;
                 } else {
@@ -295,16 +307,6 @@ int32_t SendVideo(void* opaque) {
                 LOG_INFO("Sending current frame!");
             }
 
-            bool is_iframe = false;
-            if (frames_since_first_iframe % encoder->gop_size == 0) {
-                wants_iframe = false;
-                is_iframe = true;
-            } else if (wants_iframe) {
-                video_encoder_set_iframe(encoder);
-                wants_iframe = false;
-                is_iframe = true;
-            }
-
             // transfer the screen to a buffer
             int transfer_res = 2;  // haven't tried anything yet
 #if defined(_WIN32)
@@ -323,6 +325,13 @@ int32_t SendVideo(void* opaque) {
                 break;
             }
 
+            if (wants_iframe) {
+                // True I-Frame is WIP
+                LOG_ERROR("NOT GUARANTEED TO BE TRUE IFRAME");
+                video_encoder_set_iframe(encoder);
+                wants_iframe = false;
+            }
+
             clock t;
             StartTimer(&t);
 
@@ -337,8 +346,6 @@ int32_t SendVideo(void* opaque) {
                 break;
             }
             // else we have an encoded frame, so handle it!
-
-            frames_since_first_iframe++;
 
             static int frame_stat_number = 0;
             static double total_frame_time = 0.0;
@@ -427,15 +434,15 @@ int32_t SendVideo(void* opaque) {
                     // Create frame struct with compressed frame data and
                     // metadata
                     Frame* frame = (Frame*)buf;
-                    frame->width = encoder->pCodecCtx->width;
-                    frame->height = encoder->pCodecCtx->height;
+                    frame->width = encoder->out_width;
+                    frame->height = encoder->out_height;
                     frame->codec_type = encoder->codec_type;
 
                     frame->size = encoder->encoded_frame_size;
                     frame->cursor = GetCurrentCursor();
                     // True if this frame does not require previous frames to
                     // render
-                    frame->is_iframe = is_iframe;
+                    frame->is_iframe = encoder->is_iframe;
                     video_encoder_write_buffer(encoder, (void*)frame->compressed_frame);
 
                     // mprintf("Sent video packet %d (Size: %d) %s\n", id,
@@ -506,6 +513,8 @@ int32_t SendVideo(void* opaque) {
     return 0;
 }
 
+static int sample_rate = -1;
+
 int32_t SendAudio(void* opaque) {
     opaque;
     int id = 1;
@@ -521,21 +530,7 @@ int32_t SendAudio(void* opaque) {
     int res;
 
     // Tell the client what audio frequency we're using
-
-    FractalServerMessage fmsg;
-    fmsg.type = MESSAGE_AUDIO_FREQUENCY;
-    fmsg.frequency = audio_device->sample_rate;
-    if (readLock(&is_active_rwlock) != 0) {
-        LOG_ERROR("Failed to read-acquire is active RW lock.");
-    } else {
-        if (broadcastUDPPacket(PACKET_MESSAGE, (uint8_t*)&fmsg, sizeof(fmsg), 1,
-                               STARTING_BURST_BITRATE, NULL, NULL) != 0) {
-            LOG_ERROR("Failed to broadcast audio packet.");
-        }
-        if (readUnlock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to read-release is active RW lock.");
-        }
-    }
+    sample_rate = audio_device->sample_rate;
     LOG_INFO("Audio Frequency: %d", audio_device->sample_rate);
 
     // setup
@@ -757,6 +752,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
 
     // Send connection ID to client
     reply_msg->connection_id = connection_id;
+    reply_msg->audio_sample_rate = sample_rate;
     char* server_username = "Fractal";
     memcpy(reply_msg->username, server_username, strlen(server_username) + 1);
 #ifdef _WIN32

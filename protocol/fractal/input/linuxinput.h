@@ -31,6 +31,9 @@ typedef struct input_device_t {
     int fd_absmouse;
     int fd_relmouse;
     int fd_keyboard;
+    int keyboard_state[NUM_KEYCODES];
+    bool caps_lock;
+    bool num_lock;
 } input_device_t;
 
 #endif  // LINUX_INPUT_H
