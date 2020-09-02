@@ -18,6 +18,12 @@ case "$1" in
 	else
 	    waitress-serve --port="$PORT" app:app
 	fi ;;
-    "celery") celery worker --app=celery_worker.celery_instance ;;
+    "celery")
+	# The two containers share the same requirements.txt file, but we only
+	# want the watchmedo utility to be installed in the Celery container.
+	$([ "$HOT_RELOAD" = "true" ] && \
+	      (pip install watchdog[watchmedo] >&2
+	       echo "watchmedo auto-restart -R -d . --")) \
+		   celery worker --app=celery_worker.celery_instance ;;
     *) echo "Specify either 'web' or 'celery' to determine what this instance will manifest as." ;;
 esac
