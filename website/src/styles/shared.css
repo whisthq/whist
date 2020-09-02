@@ -1,0 +1,9 @@
+@import url("https://fonts.googleapis.com/css?family=Maven+Pro|Kalam&display=swap");
+
+body {
+    overflow-x: hidden !important;
+}
+
+body, div, html {
+    font-family: "Maven Pro" !important;
+}

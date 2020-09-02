@@ -5,7 +5,7 @@ import { applyMiddleware, createStore } from "redux";
 import createSagaMiddleware from "redux-saga";
 import { persistStore, persistReducer } from "redux-persist";
 import { routerMiddleware } from "connected-react-router";
-import { Route, Switch } from "react-router-dom";
+import { Route } from "react-router-dom";
 import { Router } from "react-router";
 import { PersistGate } from "redux-persist/integration/react";
 import { composeWithDevTools } from "redux-devtools-extension";
@@ -18,7 +18,9 @@ import { config } from "constants/config";
 import rootReducer from "store/reducers/root";
 import * as serviceWorker from 'serviceWorker';
 
-import Landing from 'pages/PageLanding/Landing';
+import 'styles/shared.css';
+
+import Landing from 'pages/landing/landing';
 
 Sentry.init({
   dsn:

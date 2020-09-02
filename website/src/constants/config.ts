@@ -1,16 +1,16 @@
-const production = {
-    url: {
-        PRIMARY_SERVER: "https://main-webserver.fractalcomputers.com",
-    },
-    stripe: {
-        PUBLIC_KEY: "pk_live_XLjiiZB93KN0EjY8hwCxvKmB00whKEIj3U",
-    },
-    azure: {
-        RESOURCE_GROUP: "Fractal",
-    },
-    new_server: true,
-    sentry_env: "production",
-};
+// const production = {
+//     url: {
+//         PRIMARY_SERVER: "https://main-webserver.fractalcomputers.com",
+//     },
+//     stripe: {
+//         PUBLIC_KEY: "pk_live_XLjiiZB93KN0EjY8hwCxvKmB00whKEIj3U",
+//     },
+//     azure: {
+//         RESOURCE_GROUP: "Fractal",
+//     },
+//     new_server: true,
+//     sentry_env: "production",
+// };
 
 const staging = {
     url: {
