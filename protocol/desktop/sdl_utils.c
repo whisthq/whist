@@ -30,6 +30,9 @@ extern volatile int output_height;
 extern volatile SDL_Window* window;
 bool skip_taskbar = false;
 
+volatile int full_width;
+volatile int full_height;
+
 #if defined(_WIN32)
 HHOOK g_h_keyboard_hook;
 LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param);
@@ -143,8 +146,8 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     }
 
     // TODO: make this a commandline argument based on client app settings!
-    int full_width = get_virtual_screen_width();
-    int full_height = get_virtual_screen_height();
+    full_width = get_virtual_screen_width();
+    full_height = get_virtual_screen_height();
 
     bool maximized = target_output_width == 0 && target_output_height == 0;
 
@@ -214,14 +217,14 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     }
     SDL_SetWindowResizable((SDL_Window*)window, true);
 
-    // setting fullscreen mode here insetad of in SDL_CreateWindow allows future changes to mode
-    SDL_SetWindowFullscreen(window, is_fullscreen ? fullscreen_flags : windowed_flags);
-
     SDL_Event cur_event;
     while (SDL_PollEvent(&cur_event)) {
         // spin to clear SDL event queue
         // this effectively waits for window load on Mac
     }
+
+    // setting fullscreen mode here insetad of in SDL_CreateWindow allows future changes to mode
+    SDL_SetWindowFullscreen(window, is_fullscreen ? fullscreen_flags : windowed_flags);
 
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
