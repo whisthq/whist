@@ -63,11 +63,7 @@ RUN useradd --create-home fractal \
 
 RUN apt-get install lsb-release -y && apt-get clean
 RUN apt-get install -y pulseaudio
-RUN addgroup --system pulse \
-    && adduser --system --ingroup pulse --home /var/run/pulse pulse \
-    && addgroup --system pulse-access \
-    && adduser pulse audio \
-    && adduser root pulse-access \
+RUN adduser root pulse-access \
     && adduser fractal pulse-access
 
 # Install all required components for Fractal to perform well
