@@ -6,6 +6,7 @@ from app.models.hardware import *
 from app.serializers.public import *
 from app.serializers.hardware import *
 
+
 def registerGoogleUser(username, name, token, reason_for_signup=None):
     """Registers a user, and stores it in the users table
 
@@ -19,7 +20,14 @@ def registerGoogleUser(username, name, token, reason_for_signup=None):
     """
     promo_code = generateUniquePromoCode()
 
-    new_user = User(user_id=username, referral_code=promo_code, name=name, reason_for_signup=reason_for_signup, using_google_login=True, created_timestamp=dt.now(datetime.timezone.utc).timestamp())
+    new_user = User(
+        user_id=username,
+        referral_code=promo_code,
+        name=name,
+        reason_for_signup=reason_for_signup,
+        using_google_login=True,
+        created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
+    )
 
     try:
         db.session.add(new_user)

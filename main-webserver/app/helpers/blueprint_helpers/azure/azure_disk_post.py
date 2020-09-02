@@ -12,7 +12,9 @@ def createHelper(disk_size, username, location, resource_group, operating_system
     if disk:
         # Create Empty Task
 
-        task = createDisk.apply_async([disk_size, username, location, resource_group, operating_system])
+        task = createDisk.apply_async(
+            [disk_size, username, location, resource_group, operating_system]
+        )
         return {"ID": task.id, "status": ACCEPTED}
     else:
         return {"ID": None, "status": NOT_FOUND}

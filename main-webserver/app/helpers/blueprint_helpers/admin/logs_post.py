@@ -11,6 +11,7 @@ def bookmarkHelper(connection_id):
 
     return {"status": SUCCESS}
 
+
 def unbookmarkHelper(connection_id):
     log = ProtocolLog.query.filter_by(connection_id=str(connection_id)).first()
     log.bookmarked = False
