@@ -191,13 +191,32 @@ def trialStartHelper(user, location, code):
 def computerReadyHelper(user, date, code, location):
     title = "Your Cloud PC Is Ready!"
 
-    internal_message = SendGridMail(
+    message = SendGridMail(
         from_email="support@fractalcomputers.com",
         to_emails=user,
         subject=title,
         html_content=render_template(
             "on_cloud_pc_ready.html", date=date, code=code, location=location
         ),
+    )
+
+    try:
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+    except Exception as e:
+        fractalLog(
+            function="computerReadyHelper",
+            label=user,
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
+        )
+        return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
+
+    internal_message = SendGridMail(
+        from_email="noreply@fractalcomputers.com",
+        to_emails="support@fractalcomputers.com",
+        subject="[CLOUD PC CREATED] " + user + " has created a cloud PC",
+        html_content="<div>{} has created a cloud PC.</div>".format(user),
     )
 
     try:
