@@ -22,6 +22,7 @@ class UserContainer(db.Model):
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     container_id = db.Column(db.String(250), primary_key=True, unique=True)
     ip = db.Column(db.String(250), nullable=False)
+    port = db.Column(db.Integer(), nullable=False)
     location = db.Column(db.String(250), nullable=False)
     os = db.Column(db.String(250), nullable=False)
     state = db.Column(db.String(250), nullable=False)

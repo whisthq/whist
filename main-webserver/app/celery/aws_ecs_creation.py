@@ -35,6 +35,7 @@ def create_new_container(self, username, taskinfo):
     )
     ecs_client.spin_til_running(time_delay=2)
     curr_ip = ecs_client.task_ips.get(0, -1)
+    curr_port = 80
     if curr_ip == -1:
         fractalLog(
             function="create_new_container",
@@ -52,7 +53,9 @@ def create_new_container(self, username, taskinfo):
         return
     container = UserContainer(
         container_id=ecs_client.tasks[0],
+        user_id=username,
         ip=curr_ip,
+        port = curr_port,
         state="CREATING",
         location="us-east-1",
         os="Linux",

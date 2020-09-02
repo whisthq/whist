@@ -142,7 +142,7 @@ def resourceGroupToTable(resource_group):
         return None
 
 
-def getVMUser(vm_name, resource_group=VM_GROUP):
+def getVMUser(vm_name):
     vm = UserVM.query.get(vm_name)
 
     if vm:
