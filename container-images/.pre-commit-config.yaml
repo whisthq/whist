@@ -1,4 +1,4 @@
-exclude: .pre-commit-config.yaml
+files: Dockerfile
 repos:
     - repo: git://github.com/pre-commit/pre-commit-hooks
       rev: v3.2.0
