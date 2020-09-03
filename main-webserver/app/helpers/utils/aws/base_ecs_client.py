@@ -207,7 +207,7 @@ class ECSClient:
         self.tasks_done.append(False)
         self.offset += 1
 
-    def run_task(self, **kwargs):
+    def run_task(self, use_launch_type=True,**kwargs):
         """
         sets this client's task running.
         TODO: explicitly add overrides as params here for cpu, command, and environment vars
@@ -216,7 +216,7 @@ class ECSClient:
         """
         taskdict = self.ecs_client.run_task(
             taskDefinition=self.task_definition_arn,
-            launchType=self.launch_type,
+            launchType=(self.launch_type if use_launch_type else None),
             cluster=self.cluster,
             **kwargs
         )

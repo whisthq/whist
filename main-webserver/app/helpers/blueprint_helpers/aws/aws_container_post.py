@@ -97,7 +97,7 @@ def pingHelper(available, container_ip, version=None):
             container_name=container_info.container_id,
             state="RUNNING_AVAILABLE",
             lock=False,
-            temporary_lock=None,
+            temporary_lock=0,
         )
 
     return {"status": SUCCESS}
