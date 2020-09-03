@@ -26,7 +26,7 @@ ndk.dir=D\:\\Android\\Sdk\\ndk\\13b
 7: In the main directory (`protocol`), run `make .` (or whatever the equivalent command is for your system)
 
 
-8: THIS STEP SHOULD EVENTUALLY BE REMOVED: change the host IP address in `app/src/main/java/org/libsdl/app/SDLActivity.java` in the `getArguments` method.
+8: THIS STEP SHOULD EVENTUALLY BE REMOVED: change the server IP address in `app/src/main/java/org/libsdl/app/SDLActivity.java` in the `getArguments` method.
 
 
 9: In Android Studio, click File > Sync Project with Gradle Files
@@ -35,7 +35,7 @@ ndk.dir=D\:\\Android\\Sdk\\ndk\\13b
 10: Open the project folder with android studio and compile. The apk will be released in the folder app/build/outputs/apk/ under either the release or debug folder
 
 
-11: If testing on an emulator, make sure to select an x86_64 image for testing. The emulator doesn't run very well, though, so this is not recommended.
+11: If testing on an emulator, make sure to select an x86_64 image for testing. The emulator doesn't run very well, though, so this is not recommended. Instead, either send the file to yourself and install on a Chromebook, or connect your Android device to your development machine and click the "run" button to install and run on your device. By default this will happen in debug mode, so to test the release apk, go to Build > Generate Signed Bundle / APK and follow the instructions. Then go to Build > Select Build Variant to select release mode as the one to be run on your device.
 
 **TODO**:
 When linking up to the client application, a few things need to be changed to allow user-defined arguments in places where they are currently hard-coded:
