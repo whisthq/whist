@@ -145,6 +145,11 @@ RUN systemctl enable fractal-display
 RUN systemctl enable fractal-audio
 RUN systemctl enable fractal-protocol
 
+# Disable some extra systemd services
+RUN systemctl mask plymouth
+RUN systemctl mask systemd-hostnamed
+
+
 ADD fractal-setup.sh /
 RUN chmod +x /fractal-setup.sh
 
