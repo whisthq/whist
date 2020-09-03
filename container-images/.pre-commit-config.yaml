@@ -14,5 +14,6 @@ repos:
           name: Dockerfile lint with Hadolint
           entry: lint.sh
           language: script
-          files: base/Dockerfile.18
+          exclude: .pre-commit-config.yaml
+          args: [base/Dockerfile.18, base/Dockerfile.20, base/Dockerfile.huge]
         
