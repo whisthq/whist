@@ -7,8 +7,12 @@ repos:
           - id: check-symlinks
           - id: detect-private-key
 
-    - repo: https://github.com/petalmd/dockerfile-pre-commit
-      rev: v1.0
+    - repo: local # to add subfolder access to hook
       hooks:
+        # https://github.com/petalmd/dockerfile-pre-commit
         - id: dockerlint
-          args: [base/Dockerfile.18]
+          name: Dockerfile lint with Hadolint
+          entry: lint.sh
+          language: script
+          args: [base/Dockerfile.18, base/Dockerfile.20, base/Dockerfile.huge]
+          exclude: '.pre-commit-config.yaml'
