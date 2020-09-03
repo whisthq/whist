@@ -2,7 +2,8 @@ import React, { Component } from "react";
 
 import { db } from "utils/firebase";
 
-import 'styles/landing.css';
+import "styles/landing.css";
+import WaitlistForm from "pages/landing/components/waitlistForm"
 
 type LandingProps = {};
 type LandingState = { waitlist: Array<any> };
@@ -27,7 +28,7 @@ class Landing extends Component<LandingProps, LandingState> {
         textAlign: "center",
         marginTop: 200,
       }}>
-        New website code here!
+        <WaitlistForm />
       </div>
     );
   }

@@ -1,0 +1,51 @@
+@import url("https://fonts.googleapis.com/css?family=Maven+Pro|Kalam&display=swap");
+
+body {
+    overflow-x: hidden;
+}
+
+body, div, html, input, Button {
+    font-family: "Maven Pro" !important;
+}
+
+select {
+    width: 100%;
+    background: #F4F4F4;
+    border-radius: 5px;
+    padding: 30px 20px;
+    width: 350px !important;
+    border: none;
+    outline: none;
+    margin-top: 20px;
+    font-family: "Maven Pro" !important;
+}
+
+option, ::placeholder {
+    font-family: "Maven Pro" !important;
+}
+
+.waitlist-form {
+    border-radius: 5px;
+    width: 310px;
+    background-color: #F4F4F4;
+    border: none;
+    padding: 30px 20px;
+    outline: none;
+}
+
+.waitlist-button {
+    width: 350px;
+    margin-top: 20px;
+    border: none;
+    outline: none;
+    padding: 20px;
+    border-radius: 5px;
+    background: #00D4FF;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.waitlist-button:hover {
+    cursor: pointer;
+}
