@@ -48,6 +48,7 @@ def test_create_cluster_with_auto_scaling_group():
     assert cluster['clusterName'] == cluster_name
     assert cluster['capacityProviders'] == [capacity_provider_name]
 
+
 @pytest.mark.skipif(
     "AWS_ECS_TEST_DO_IT_LIVE" not in os.environ,
     reason="This test is slow and requires a live ECS cluster; run only upon explicit request",

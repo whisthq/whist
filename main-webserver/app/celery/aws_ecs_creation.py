@@ -66,3 +66,37 @@ def create_new_container(self, username, taskinfo):
         },
     )
 
+@celery_instance.task(bind=True)
+def create_new_cluster(self, instance_type, ami, min_size=1, max_size=10, region_name="us-east-2", availability_zones=None):
+    fractalLog(
+        function="create_new_cluster",
+        label="None",
+        logs=f"Creating new cluster on ECS with instance_type {instance_type} and ami {ami} in region {region_name}"
+    )
+    ecs_client = ECSClient(launch_type='EC2', region_name=region_name)
+
+    ecs_client.run_task(networkConfiguration=networkConfiguration)
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": f"Creating new cluster on ECS with instance_type {instance_type} and ami {ami} in region {region_name}"
+        },
+    )
+
+    try: 
+        launch_config_name = ecs_client.create_launch_configuration(instance_type=instance_type, ami=ami, launch_config_name=None)
+        auto_scaling_group_name = ecs_client.create_auto_scaling_group(launch_config_name=launch_config_name, min_size=min_size, max_size=max_size, availability_zones=availability_zones)
+        capacity_provider_name = ecs_client.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
+        return ecs_client.create_cluster(capacity_providers=[capacity_provider_name])
+    except Exception as e:
+        fractalLog(
+            function="create_new_cluster",
+            logs=f"Encountered error: {e}",
+            level=logging.ERROR,
+        )
+        self.update_state(
+            state="FAILURE",
+            meta={
+                "msg": f"Encountered error: {e}"
+            },
+        )
