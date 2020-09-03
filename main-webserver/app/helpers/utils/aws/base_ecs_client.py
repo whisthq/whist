@@ -1,7 +1,7 @@
-from pprint import pprint
-import time
 import random
 import string
+import time
+from pprint import pprint
 
 import boto3
 import botocore.exceptions
@@ -116,8 +116,7 @@ class ECSClient:
             raise Exception("capacity_providers must be a list of strs")
         cluster_name = cluster_name or self.generate_name("cluster")
         self.ecs_client.create_cluster(
-            clusterName=cluster_name,
-            capacityProviders=capacity_providers,
+            clusterName=cluster_name, capacityProviders=capacity_providers,
         )
         self.set_cluster(cluster_name)
         return cluster_name
@@ -159,7 +158,7 @@ class ECSClient:
             self.log_client.create_log_group(logGroupName="/ecs/{}".format(fmtstr))
         except botocore.exceptions.ClientError as e:
             self.warnings.append(str(e))
-        #TODO:  update basedict to mimic successful task launch
+        # TODO:  update basedict to mimic successful task launch
         basedict = {
             "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(self.account_id),
             "containerDefinitions": [
@@ -196,6 +195,18 @@ class ECSClient:
         self.task_definition_arn = arn
         self.container_name = containername
 
+    def add_task(self, task_arn):
+        """
+        Adds a task by arn to this client's task list.  Useful for keeping an eye on already running tasks.
+        Args:
+            task_arn: the ID of the task to add.
+
+
+        """
+        self.tasks.append(task_arn)
+        self.tasks_done.append(False)
+        self.offset += 1
+
     def run_task(self, **kwargs):
         """
         sets this client's task running.
@@ -217,25 +228,33 @@ class ECSClient:
         self.offset += 1
 
     def stop_task(self, reason="user stopped", offset=0):
-        self.ecs_client.stop_task(cluster=self.cluster, task=self.tasks[offset], reason=reason)
-        self.tasks_done[offset]=True
+        self.ecs_client.stop_task(
+            cluster=self.cluster, task=(self.tasks[offset]), reason=reason,
+        )
 
     def create_launch_configuration(self, instance_type, ami, launch_config_name=None):
         launch_config_name = launch_config_name or self.generate_name('launch_configuration')
         response = self.auto_scaling_client.create_launch_configuration(
-            LaunchConfigurationName=launch_config_name,
-            ImageId=ami,
-            InstanceType=instance_type,
+            LaunchConfigurationName=launch_config_name, ImageId=ami, InstanceType=instance_type,
         )
         return launch_config_name
 
-    def create_auto_scaling_group(self, launch_config_name, auto_scaling_group_name=None, min_size=1, max_size=10, availability_zones=None):
+    def create_auto_scaling_group(
+        self,
+        launch_config_name,
+        auto_scaling_group_name=None,
+        min_size=1,
+        max_size=10,
+        availability_zones=None,
+    ):
         availability_zones = availability_zones or [self.region_name + 'a']
         if isinstance(availability_zones, str):
             availability_zones = [availability_zones]
         if not isinstance(availability_zones, list):
             raise Exception("availability_zones should be a list of strs")
-        auto_scaling_group_name = auto_scaling_group_name or self.generate_name('auto_scaling_group')
+        auto_scaling_group_name = auto_scaling_group_name or self.generate_name(
+            'auto_scaling_group'
+        )
         response = self.auto_scaling_client.create_auto_scaling_group(
             AutoScalingGroupName=auto_scaling_group_name,
             LaunchConfigurationName=launch_config_name,
@@ -246,14 +265,16 @@ class ECSClient:
         return auto_scaling_group_name
 
     def create_capacity_provider(self, auto_scaling_group_name, capacity_provider_name=None):
-        auto_scaling_group_info = self.auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=[auto_scaling_group_name])
-        auto_scaling_group_arn = auto_scaling_group_info['AutoScalingGroups'][0]['AutoScalingGroupARN']
+        auto_scaling_group_info = self.auto_scaling_client.describe_auto_scaling_groups(
+            AutoScalingGroupNames=[auto_scaling_group_name]
+        )
+        auto_scaling_group_arn = auto_scaling_group_info['AutoScalingGroups'][0][
+            'AutoScalingGroupARN'
+        ]
         capacity_provider_name = capacity_provider_name or self.generate_name('capacity_provider')
         response = self.ecs_client.create_capacity_provider(
             name=capacity_provider_name,
-            autoScalingGroupProvider={
-                'autoScalingGroupArn': auto_scaling_group_arn,
-            }
+            autoScalingGroupProvider={'autoScalingGroupArn': auto_scaling_group_arn,},
         )
         return capacity_provider_name
 
@@ -269,7 +290,7 @@ class ECSClient:
             ec2_id = container_info['containerInstances'][0]['ec2InstanceId']
             ec2_info = self.ec2_client.describe_instances(InstanceIds=[ec2_id])
             public_ip = ec2_info['Reservations'][0]['Instances'][0].get('PublicIpAddress', -1)
-            self.task_ips[offset]=public_ip
+            self.task_ips[offset] = public_ip
             return True
         return False
 
