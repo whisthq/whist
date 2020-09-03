@@ -82,7 +82,7 @@ Public Functions
  * @returns                        The newly created encoder
  */
 video_encoder_t* create_video_encoder(int in_width, int in_height, int out_width, int out_height,
-                                      int bitrate, CodecType codec_type, bool using_capture_encoder);
+                                      int bitrate, CodecType codec_type);
 
 /**
  * @brief                          Put the input data into a software frame, and

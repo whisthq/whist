@@ -50,11 +50,8 @@ extern "C" {
  * \return
  *   0 in case of success, 1 otherwise.
  */
-int NvFBCUtilsSaveFrame(NVFBC_BUFFER_FORMAT format,
-                        const char *filename,
-                        unsigned char *data,
-                        const int width,
-                        const int height);
+int NvFBCUtilsSaveFrame(NVFBC_BUFFER_FORMAT format, const char *filename, unsigned char *data,
+                        const int width, const int height);
 
 /*!
  * Converts an R diffmap to a BMP then saves it on the hard drive.
@@ -71,9 +68,7 @@ int NvFBCUtilsSaveFrame(NVFBC_BUFFER_FORMAT format,
  * \return
  *   0 in case of success, 1 otherwise.
  */
-int NvFBCUtilsSaveDiffMap(const char *filename,
-                          unsigned char *data,
-                          const int width,
+int NvFBCUtilsSaveDiffMap(const char *filename, unsigned char *data, const int width,
                           const int height);
 
 /*!
@@ -103,9 +98,8 @@ void NvFBCUtilsPrintStatus(NVFBC_GET_STATUS_PARAMS *status);
  * \param [out] outputName
  *   Parsed output name, if any.
  */
-void NvFBCUtilsParseTrackingType(const char* optarg,
-                                 NVFBC_TRACKING_TYPE *trackingType,
-                                 char* outputName);
+void NvFBCUtilsParseTrackingType(const char *optarg, NVFBC_TRACKING_TYPE *trackingType,
+                                 char *outputName);
 
 /*!
  * Finds an RandR output id from its name.
@@ -120,9 +114,8 @@ void NvFBCUtilsParseTrackingType(const char* optarg,
  * \return
  *   The output id if found, 0 otherwise.
  */
-uint32_t NvFBCUtilsGetOutputId(NVFBC_RANDR_OUTPUT_INFO *outputs,
-                               uint32_t outputNum,
-                               const char* outputName);
+uint32_t NvFBCUtilsGetOutputId(NVFBC_RANDR_OUTPUT_INFO *outputs, uint32_t outputNum,
+                               const char *outputName);
 
 /*!
  * Prints the application and the local NvFBC API versions.
@@ -136,4 +129,4 @@ void NvFBCUtilsPrintVersions(const unsigned int appVersion);
 }
 #endif
 
-#endif // _UTILS_H_
+#endif  // _UTILS_H_
