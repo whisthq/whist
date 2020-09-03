@@ -119,6 +119,10 @@ RUN chmod +x /home/fractal/entry.sh
 ADD fractal-update-nvidia-busid.service /etc/systemd/system
 ####
 
+COPY /protocol-temp /protocol-temp
+RUN ls /
+RUN /bin/bash -c "mkdir /protocol ; mkdir /protocol/server; mv /protocol-temp /protocol/server/build64"
+
 ADD fractal-entrypoint.service /etc/systemd/system
 ADD fractal-display.service /etc/systemd/system
 ADD fractal-protocol.service /etc/systemd/system
