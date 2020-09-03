@@ -13,7 +13,7 @@ repos:
         # https://github.com/petalmd/dockerfile-pre-commit
         - id: dockerlint
           name: Dockerfile lint with Hadolint
-          exclude: .pre-commit-config.yaml
+          exclude: '.pre-commit-config.yaml'
           entry: lint.sh
           language: script
           args: [base/Dockerfile.18, base/Dockerfile.20, base/Dockerfile.huge]
