@@ -73,6 +73,7 @@
             android:alwaysRetainTaskState="true"
             android:launchMode="singleInstance"
             android:configChanges="orientation|screenSize|uiMode|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation"
+            android:resizeableActivity="false"
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

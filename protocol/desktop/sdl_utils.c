@@ -215,7 +215,13 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         }
         SDL_SetWindowResizable((SDL_Window*)sdl_window, true);
     }
-    SDL_SetWindowResizable((SDL_Window*)window, true);
+#ifndef __ANDROID_API__
+if (!is_fullscreen) {
+    SDL_SetWindowResizable((SDL_Window*)window, SDL_TRUE);
+}
+#else
+    SDL_SetWindowResizable((SDL_Window*)window, SDL_FALSE);
+#endif
 
     SDL_Event cur_event;
     while (SDL_PollEvent(&cur_event)) {
