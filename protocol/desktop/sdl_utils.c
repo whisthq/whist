@@ -220,6 +220,7 @@ if (!is_fullscreen) {
     SDL_SetWindowResizable((SDL_Window*)window, SDL_TRUE);
 }
 #else
+    // TODO: allow window resizing on Android when not in fullscreen mode
     SDL_SetWindowResizable((SDL_Window*)window, SDL_FALSE);
 #endif
 
