@@ -15,5 +15,5 @@ repos:
           entry: lint.sh
           language: script
           files: Dockerfile
-          args: [base/Dockerfile.18]
+          args: [base/Dockerfile.18, base/Dockerfile.20, base/Dockerfile.huge]
         
