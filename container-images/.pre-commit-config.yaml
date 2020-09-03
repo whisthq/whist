@@ -14,4 +14,4 @@ repos:
           name: Dockerfile Lint
           language: docker_image
           entry: hadolint/hadolint:v1.18.0 hadolint
-          files: ^.*Dockerfile.*$
+          files: ^base/.*Dockerfile.*$
