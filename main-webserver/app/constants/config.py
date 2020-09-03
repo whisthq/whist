@@ -10,7 +10,7 @@ ConfigSession = sessionmaker(bind=config_engine, autocommit=False)
 
 
 def getEnvVar(key):
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "true":
+    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE":
         env = "production"
     else:
         env = "staging"
