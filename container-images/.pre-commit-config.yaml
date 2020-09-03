@@ -11,4 +11,4 @@ repos:
       rev: v1.0
       hooks:
         - id: dockerlint
-          args: [base/Dockerfile.18, base/Dockerfile.20, base/Dockerfile.huge]
+          args: [base/Dockerfile.18]
