@@ -1,0 +1,19 @@
+repos:
+    - repo: git://github.com/pre-commit/pre-commit-hooks
+      rev: v3.2.0
+      hooks:
+          - id: check-case-conflict
+          - id: check-merge-conflict
+          - id: check-symlinks
+          - id: detect-private-key
+
+    - repo: local # to add subfolder access to hook
+      hooks:
+        # https://github.com/petalmd/dockerfile-pre-commit
+        - id: dockerlint
+          name: Dockerfile lint with hadolint
+          entry: lint.sh
+          language: script
+          files: Dockerfile
+          args: [base/Dockerfile.18, base/Dockerfile.20, base/Dockerfile.huge]
+        
