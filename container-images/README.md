@@ -25,6 +25,12 @@ If you get access denied issues, you need to set-up your local SSH key with your
 
 We have basic continuous integration set for each container image through GitHub Actions. At every push or PR to master, the Docker images will be built to ensure they work, and the status badges are listed in the respective subfolders' READMEs. You should make sure that your code passes all tests under the Actions tab.
 
+## Styling
+
+We use [Hadolint](https://github.com/hadolint/hadolint) to format the Dockerfiles in this project. Your first need to install Hadolint via your local package manager, i.e. `brew install hadolint`, before linting a specific file by running `hadolint <file-path>`. 
+
+We also have [pre-commit hooks](https://pre-commit.com/) with Hadolint support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Hadolint.Dockerfile improvements will be printed to the terminal for all Dockerfiles specified under `args` in `.pre-commit-config.yaml`. If you need/want to add other Dockerfiles, you need to specify them there.
+
 ## Publishing
 
 For pushing images to the AWS container registry and using ECS, a `container-admin` user exists with the credentials:
