@@ -2,6 +2,8 @@ from pprint import pprint
 import time
 import random
 import string
+import paramiko
+import io
 
 import boto3
 import botocore.exceptions
@@ -45,6 +47,7 @@ class ECSClient:
         starter_client=None,
         starter_log_client=None,
         starter_ec2_client=None,
+        starter_s3_client=None,
         starter_auto_scaling_client=None,
         grab_logs=True,
     ):
@@ -64,6 +67,7 @@ class ECSClient:
         self.logs_messages = dict()
         self.warnings = []
         self.cluster = None
+        #self.ec2 = boto3.resource('ec2', self.region_name)
         if starter_client is None:
             self.ecs_client = self.make_client("ecs")
             self.account_id = boto3.client("sts").get_caller_identity().get("Account")
@@ -77,6 +81,10 @@ class ECSClient:
             self.ec2_client = self.make_client("ec2")
         else:
             self.ec2_client = starter_ec2_client
+        if starter_s3_client is None:
+            self.s3_client = self.make_client("s3")
+        else:
+            self.s3_client = starter_s3_client
         if starter_auto_scaling_client is None:
             self.auto_scaling_client = self.make_client("autoscaling")
         else:
@@ -108,7 +116,7 @@ class ECSClient:
 
     def create_cluster(self, capacity_providers, cluster_name=None):
         """
-        Creates a new cluster with the specified capacity providers and sets the task's computer cluster to it
+        Creates a new cluster with the specified capacity providers and sets the task's compute cluster to it
         """
         if isinstance(capacity_providers, str):
             capacity_providers = [capacity_providers]
@@ -131,6 +139,117 @@ class ECSClient:
             if cluster_name
             else self.ecs_client.list_clusters()["clusterArns"][0]
         )
+
+    def get_all_clusters(self):
+        """
+        returns list of all cluster ARNs
+        """
+        clusters, next_token = [], None
+        while True:
+            clusters_response = self.ecs_client.list_clusters(next_token) if next_token else self.ecs_client.list_clusters()
+            clusters.extend(clusters_response['clusterArns'])
+            next_token = clusters_response['nextToken'] if 'nextToken' in clusters_response else None
+            if not next_token:
+                break
+        return clusters
+    
+    def get_containers_in_cluster(self, cluster):
+        """
+        returns list of all container instance IDs in the auto scaling group of the capacity provider for the cluster
+        """
+        instances = []
+        capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])['clusters'][0]['capacityProviders']
+        capacity_providers_info = self.ecs_client.describe_capacity_providers(capacityProviders=capacity_providers)['capacityProviders']
+        auto_scaling_groups = list(map(lambda cp: cp['autoScalingGroupProvider']['autoScalingGroupArn'].split('/')[-1], capacity_providers_info))
+        auto_scaling_groups_info = self.auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=auto_scaling_groups)['AutoScalingGroups']
+        for auto_scaling_group in auto_scaling_groups_info:
+            pprint(auto_scaling_group)
+            instances += list(map(lambda instance: instance['InstanceId'], auto_scaling_group['Instances']))
+        print(capacity_providers, auto_scaling_groups, instances)
+        return instances
+
+    def terminate_containers_in_cluster(self, cluster):
+        containers = self.get_containers_in_cluster(cluster)
+        if containers:
+            self.ec2_client.terminate_instances(InstanceIds=containers)
+
+    def ssh_container(self, container, ssh_command):
+        instance_info = self.ec2_client.describe_instances(InstanceIds=[container])['Reservations'][0]['Instances'][0]
+        pprint(instance_info)
+        instance_ip = instance_info['PublicIpAddress']
+
+        instance_key_name = instance_info['KeyName']
+        instance_key_material = self.s3_client.get_object(Bucket='fractal-container-keys', Key=instance_key_name)['Body'].read().decode("utf-8")
+        private_key_file = io.StringIO()
+        private_key_file.write(instance_key_material)
+        private_key_file.seek(0)
+        private_key = paramiko.RSAKey.from_private_key(private_key_file)
+
+        ssh_client = paramiko.SSHClient()
+        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        # Connect/ssh to an instance
+        try:
+            ssh_client.connect(hostname=instance_ip, username="ubuntu", pkey=private_key)
+            print(f"SSH connected to EC2 instance {instance_id} at public IP {instance_ip}")
+
+            # Execute a command(cmd) after connecting/ssh to an instance
+            stdin, stdout, stderr = ssh_client.exec_command(ssh_command)
+            err = stderr.readlines()
+            if not err:
+                print(f"SSH success! Command output: {''.join(stdout.readlines())}")
+            else:
+                print(f"SSH command error: {''.join(err)}")
+
+            # close the client connection once the job is done
+            ssh_client.close()
+        except Exception as e:
+            print(f"SSH encountered error: {e}")
+        finally:
+            private_key_file.close()
+
+    def ssh_containers_in_cluster(self, cluster, ssh_command):
+        containers = self.get_containers_in_cluster(cluster)
+        for container in containers:
+            self.ssh_container(container, ssh_command)
+
+    def ssh_all_containers(self, ssh_command):
+        clusters = self.get_all_clusters()
+        for cluster in clusters:
+            self.ssh_containers_in_cluster(cluster, ssh_command)
+                
+    def get_clusters_usage(self, clusters=None):
+        """
+        gets usage of all clusters
+        """
+        clusters, clusters_usage = self.get_all_clusters(), {}
+        for cluster in clusters:
+            cluster_info = self.ecs_client.describe_clusters(clusters=[cluster], include=['STATISTICS'])['clusters'][0]
+            containers, containers_usage = self.get_containers_in_cluster(cluster), {}
+            for container in containers:
+                instance_info = self.ecs_client.describe_container_instances(cluster=cluster, containerInstances=[container])['containerInstances'][0]
+                resources = {}
+                for resource in instance_info['remainingResources']:
+                    if resource['name'] == 'CPU' or resource['name'] == 'MEMORY':
+                        resources[resource['name']] = resource['integerValue']
+                
+                containers_usage[container] = {  
+                    'remainingResources': resources,
+                    'pendingTasksCount': instance_info['pendingTasksCount'],
+                    'runningTasksCount': instance_info['runningTasksCount']
+                }
+            
+            clusters_usage[cluster_info['clusterName']] = {
+                'status': cluster_info['status'],
+                'pendingTasksCount': cluster_info['pendingTasksCount'],
+                'runningTasksCount': cluster_info['runningTasksCount'],
+                'detailedStatistics': {stat['name']: stat['value'] for stat in cluster_info['statistics'] if 'Fargate' not in stat['name']},
+                'registeredContainerInstancesCount': cluster_info['registeredContainerInstancesCount'],
+                'containersUsage': containers_usage,
+            }
+
+        pprint(clusters_usage)
+        return clusters_usage
 
     def set_and_register_task(
         self,
@@ -220,12 +339,21 @@ class ECSClient:
         self.ecs_client.stop_task(cluster=self.cluster, task=self.tasks[offset], reason=reason)
         self.tasks_done[offset]=True
 
-    def create_launch_configuration(self, instance_type, ami, launch_config_name=None):
+    def create_launch_configuration(self, instance_type, ami, launch_config_name=None, key_name=None):
+        if not key_name:
+            key_name = self.generate_name('key')
+            key_material = self.ec2_client.create_key_pair(KeyName=key_name)['KeyMaterial']
+            self.s3_client.put_object(
+                Key=key_name,
+                Body=key_material,
+                Bucket='fractal-container-keys'
+            )
         launch_config_name = launch_config_name or self.generate_name('launch_configuration')
         response = self.auto_scaling_client.create_launch_configuration(
             LaunchConfigurationName=launch_config_name,
             ImageId=ami,
             InstanceType=instance_type,
+            KeyName=key_name,
         )
         return launch_config_name
 
@@ -337,15 +465,48 @@ class ECSClient:
 
 if __name__ == "__main__":
     testclient = ECSClient(region_name="us-east-2")
+    # testclient.set_and_register_task(
+    #     ["echo start"], ["/bin/bash", "-c"], family="multimessage",
+    # )
+    # networkConfiguration = {
+    #     "awsvpcConfiguration": {
+    #         "subnets": ["subnet-0dc1b0c43c4d47945",],
+    #         "securityGroups": ["sg-036ebf091f469a23e",],
+    #     }
+    # }
+    # testclient.run_task(networkConfiguration=networkConfiguration)
+    # testclient.spin_til_running(time_delay=2)
+    # testclient.get_clusters_usage()
+    # testclient.ssh_all_containers(ssh_command='echo hello')
+
+
+    launch_config_name = testclient.create_launch_configuration(instance_type='t2.micro', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
+    auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
+    capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
+    cluster_name = testclient.create_cluster(capacity_providers=[capacity_provider_name])
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage",
     )
-    networkConfiguration = {
-        "awsvpcConfiguration": {
-            "subnets": ["subnet-0dc1b0c43c4d47945",],
-            "securityGroups": ["sg-036ebf091f469a23e",],
-        }
-    }
-    testclient.run_task(networkConfiguration=networkConfiguration)
+    # networkConfiguration = {
+    #     "awsvpcConfiguration": {
+    #         "subnets": ["subnet-0dc1b0c43c4d47945",],
+    #         "securityGroups": ["sg-036ebf091f469a23e",],
+    #     }
+    # }
+    #testclient.run_task(networkConfiguration=networkConfiguration)
+    testclient.run_task()
     testclient.spin_til_running(time_delay=2)
-    print(testclient.task_ips)
+    testclient.get_clusters_usage()
+
+    container_instances = []
+    # while not container_instances:
+    #     container_instances = testclient.get_containers_in_cluster()
+        # spin
+    
+    
+    # testclient.ssh_containers_in_cluster('cluster_jhchrdngkg', ssh_command='echo hello')
+    # testclient.terminate_containers_in_cluster('cluster_jhchrdngkg')
+
+    testclient.ssh_container('i-0f5f840ab7437c672', ssh_command='echo hello')
+    # print(cluster_name)
+    # print(testclient.task_ips)
