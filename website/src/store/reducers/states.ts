@@ -1,1 +1,6 @@
-export const LANDING_DEFAULT = {}
+export const AUTH_DEFAULT = {
+    "user": {
+        "email": null,
+        "name": null
+    }
+}

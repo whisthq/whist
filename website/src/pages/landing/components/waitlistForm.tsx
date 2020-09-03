@@ -5,6 +5,8 @@ import { CountryDropdown } from 'react-country-region-selector';
 
 import { db } from "utils/firebase";
 
+import { insertWaitlistAction } from "store/actions/auth/waitlist"
+
 import "styles/landing.css";
 
 function WaitlistForm(props: any) {
@@ -17,6 +19,7 @@ function WaitlistForm(props: any) {
     })
 
     useEffect(() => {
+        console.log(props.user)
     });
 
     function updateEmail(evt: any) {
@@ -45,7 +48,8 @@ function WaitlistForm(props: any) {
                 email: state.email,
                 referrals: 0,
                 points: 50,
-            })
+            });
+            insertWaitlistAction(state.email, state.name);
         } else {
             console.log("ALREADY EXISTS")
         }
@@ -96,7 +100,9 @@ function WaitlistForm(props: any) {
 }
 
 function mapStateToProps(state) {
-    return {}
+    return {
+        user: state.AuthReducer.user
+    }
 }
 
 export default connect(mapStateToProps)(WaitlistForm);

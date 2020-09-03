@@ -1,8 +1,8 @@
-import LandingReducer from "store/reducers/landing";
+import AuthReducer from "store/reducers/auth";
 import { combineReducers } from "redux";
 
 const reducers = combineReducers({
-    LandingReducer: LandingReducer
+    AuthReducer: AuthReducer
 });
 
 const rootReducer = (state: any, action: any) => {
