@@ -1651,6 +1651,8 @@ class SDLMain implements Runnable {
         String function = SDLActivity.mSingleton.getMainFunction();
         String[] arguments = SDLActivity.mSingleton.getArguments();
 
+        SDLActivity.setWindowStyle(true); // hardcoded to be in fullscreen mode for now
+
         try {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY);
         } catch (Exception e) {
