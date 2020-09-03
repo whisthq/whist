@@ -13,14 +13,14 @@
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
 
 int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec) {
-    NVFBC_SIZE frameSize = { 0, 0 };
+    NVFBC_SIZE frameSize = {0, 0};
     NVFBC_BOOL printStatusOnly = NVFBC_FALSE;
 
     NVFBC_TRACKING_TYPE trackingType = NVFBC_TRACKING_DEFAULT;
     char outputName[NVFBC_OUTPUT_NAME_LEN];
     uint32_t outputId = 0;
 
-    void *libNVFBC = NULL;
+    void* libNVFBC = NULL;
     PNVFBCCREATEINSTANCE NvFBCCreateInstance_ptr = NULL;
 
     NVFBCSTATUS fbcStatus;
@@ -56,8 +56,7 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
      * Resolve the 'NvFBCCreateInstance' symbol that will allow us to get
      * the API function pointers.
      */
-    NvFBCCreateInstance_ptr =
-        (PNVFBCCREATEINSTANCE) dlsym(libNVFBC, "NvFBCCreateInstance");
+    NvFBCCreateInstance_ptr = (PNVFBCCREATEINSTANCE)dlsym(libNVFBC, "NvFBCCreateInstance");
     if (NvFBCCreateInstance_ptr == NULL) {
         fprintf(stderr, "Unable to resolve symbol 'NvFBCCreateInstance'\n");
         return -1;
@@ -74,8 +73,7 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
 
     fbcStatus = NvFBCCreateInstance_ptr(&device->pFn);
     if (fbcStatus != NVFBC_SUCCESS) {
-        fprintf(stderr, "Unable to create NvFBC instance (status: %d)\n",
-                fbcStatus);
+        fprintf(stderr, "Unable to create NvFBC instance (status: %d)\n", fbcStatus);
         return -1;
     }
 
@@ -114,8 +112,9 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
     }
 
     if (statusParams.bCanCreateNow == NVFBC_FALSE) {
-        fprintf(stderr, "It is not possible to create a capture session "
-                        "on this system.\n");
+        fprintf(stderr,
+                "It is not possible to create a capture session "
+                "on this system.\n");
         return -1;
     }
 
@@ -126,9 +125,8 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
             return -1;
         }
 
-        outputId = NvFBCUtilsGetOutputId(statusParams.outputs,
-                                         statusParams.dwOutputNum,
-                                         outputName);
+        outputId =
+            NvFBCUtilsGetOutputId(statusParams.outputs, statusParams.dwOutputNum, outputName);
         if (outputId == 0) {
             fprintf(stderr, "RandR output '%s' not found.\n", outputName);
             return -1;
@@ -142,12 +140,12 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
 
     memset(&createCaptureParams, 0, sizeof(createCaptureParams));
 
-    createCaptureParams.dwVersion       = NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER;
-    createCaptureParams.eCaptureType    = NVFBC_CAPTURE_TO_HW_ENCODER;
-    createCaptureParams.bWithCursor     = NVFBC_FALSE;
-    createCaptureParams.frameSize       = frameSize;
+    createCaptureParams.dwVersion = NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER;
+    createCaptureParams.eCaptureType = NVFBC_CAPTURE_TO_HW_ENCODER;
+    createCaptureParams.bWithCursor = NVFBC_FALSE;
+    createCaptureParams.frameSize = frameSize;
     createCaptureParams.bRoundFrameSize = NVFBC_TRUE;
-    createCaptureParams.eTrackingType   = trackingType;
+    createCaptureParams.eTrackingType = trackingType;
 
     if (trackingType == NVFBC_TRACKING_OUTPUT) {
         createCaptureParams.dwOutputId = outputId;
@@ -169,24 +167,24 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
      */
     memset(&encoderConfig, 0, sizeof(encoderConfig));
 
-    encoderConfig.dwVersion          = NVFBC_HWENC_CONFIG_VER;
+    encoderConfig.dwVersion = NVFBC_HWENC_CONFIG_VER;
     if (codec == NVFBC_HWENC_CODEC_H264) {
-        encoderConfig.dwProfile      = 77;
+        encoderConfig.dwProfile = 77;
     } else {
-        encoderConfig.dwProfile      = 1;
+        encoderConfig.dwProfile = 1;
     }
-    encoderConfig.dwFrameRateNum     = FPS;
-    encoderConfig.dwFrameRateDen     = 1;
-    encoderConfig.dwAvgBitRate       = bitrate;
-    encoderConfig.dwPeakBitRate      = encoderConfig.dwAvgBitRate * 1.5;
-    encoderConfig.dwGOPLength        = 99999;
-    encoderConfig.eRateControl       = NVFBC_HWENC_PARAMS_RC_CBR;
-    encoderConfig.ePresetConfig      = NVFBC_HWENC_PRESET_LOW_LATENCY_HP;
-    encoderConfig.dwQP               = 18;
+    encoderConfig.dwFrameRateNum = FPS;
+    encoderConfig.dwFrameRateDen = 1;
+    encoderConfig.dwAvgBitRate = bitrate;
+    encoderConfig.dwPeakBitRate = encoderConfig.dwAvgBitRate * 1.5;
+    encoderConfig.dwGOPLength = 99999;
+    encoderConfig.eRateControl = NVFBC_HWENC_PARAMS_RC_CBR;
+    encoderConfig.ePresetConfig = NVFBC_HWENC_PRESET_LOW_LATENCY_HP;
+    encoderConfig.dwQP = 18;
     encoderConfig.eInputBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
-    encoderConfig.dwVBVBufferSize    = encoderConfig.dwAvgBitRate;
-    encoderConfig.dwVBVInitialDelay  = encoderConfig.dwVBVBufferSize;
-    encoderConfig.codec              = codec;
+    encoderConfig.dwVBVBufferSize = encoderConfig.dwAvgBitRate;
+    encoderConfig.dwVBVInitialDelay = encoderConfig.dwVBVBufferSize;
+    encoderConfig.codec = codec;
 
     /*
      * Frame headers are included with the frame.  Set this to TRUE for
@@ -200,7 +198,7 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
      */
     memset(&setupParams, 0, sizeof(setupParams));
 
-    setupParams.dwVersion     = NVFBC_TOHWENC_SETUP_PARAMS_VER;
+    setupParams.dwVersion = NVFBC_TOHWENC_SETUP_PARAMS_VER;
     setupParams.pEncodeConfig = &encoderConfig;
 
     fbcStatus = device->pFn.nvFBCToHwEncSetUp(device->fbcHandle, &setupParams);
@@ -215,13 +213,18 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
     /*
      * We are now ready to start grabbing frames.
      */
-    printf("Frame capture session started.  New frames will be captured when "
-           "the display is refreshed or when the mouse cursor moves.\n");
+    printf(
+        "Frame capture session started.  New frames will be captured when "
+        "the display is refreshed or when the mouse cursor moves.\n");
     return 0;
 }
 
+#define SHOW_DEBUG_FRAMES false
+
 int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
+#if SHOW_DEBUG_FRAMES
     uint64_t t1, t2;
+#endif
 
     NVFBCSTATUS fbcStatus;
 
@@ -230,7 +233,9 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
     NVFBC_FRAME_GRAB_INFO frameInfo;
     NVFBC_HWENC_FRAME_INFO encFrameInfo;
 
+#if SHOW_DEBUG_FRAMES
     t1 = NvFBCUtilsGetTimeInMillis();
+#endif
 
     memset(&grabParams, 0, sizeof(grabParams));
     memset(&frameInfo, 0, sizeof(frameInfo));
@@ -244,7 +249,7 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
      * The application will wait for new frames.  New frames are generated
      * when the mouse cursor moves or when the screen if refreshed.
      */
-    grabParams.dwFlags = NVFBC_TOHWENC_GRAB_FLAGS_NOFLAGS;
+    grabParams.dwFlags = NVFBC_TOHWENC_GRAB_FLAGS_NOWAIT;
 
     /*
      * This structure will contain information about the captured frame.
@@ -269,7 +274,7 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
      * Make sure this pointer stays the same during the capture session
      * to prevent memory leaks.
      */
-    grabParams.ppBitStreamBuffer = (void **) &device->frame;
+    grabParams.ppBitStreamBuffer = (void**)&device->frame;
 
     /*
      * Capture a new frame.
@@ -286,20 +291,24 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
      * Information such as dimension and size in bytes is available from
      * the frameInfo structure.
      */
-    
-    device->size = encFrameInfo.dwByteSize;
-    //fwrite(frame, 1, frameInfo.dwByteSize, fd);
 
-    t2 = NvFBCUtilsGetTimeInMillis();
+    device->size = encFrameInfo.dwByteSize;
+    // fwrite(frame, 1, frameInfo.dwByteSize, fd);
 
     device->is_iframe = encFrameInfo.bIsIFrame;
-    printf("New %dx%d frame id %u size %u%s%s grabbed and saved in %llu ms\n",
-           frameInfo.dwWidth, frameInfo.dwHeight, frameInfo.dwCurrentFrame, device->size, encFrameInfo.bIsIFrame ? " (i-frame)" : "", frameInfo.bIsNewFrame ? " (new frame)" : "", (unsigned long long) (t2 - t1));
+
+#if SHOW_DEBUG_FRAMES
+    t2 = NvFBCUtilsGetTimeInMillis();
+    printf("New %dx%d frame id %u size %u%s%s grabbed and saved in %llu ms\n", frameInfo.dwWidth,
+           frameInfo.dwHeight, frameInfo.dwCurrentFrame, device->size,
+           encFrameInfo.bIsIFrame ? " (i-frame)" : "", frameInfo.bIsNewFrame ? " (new frame)" : "",
+           (unsigned long long)(t2 - t1));
+#endif
 
     device->width = frameInfo.dwWidth;
     device->height = frameInfo.dwHeight;
 
-    return 0;
+    return 1;
 }
 
 void DestroyNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
@@ -333,4 +342,3 @@ void DestroyNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
         return;
     }
 }
-
