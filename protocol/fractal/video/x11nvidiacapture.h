@@ -7,7 +7,7 @@
 typedef struct NvidiaCaptureDevice {
     NVFBC_SESSION_HANDLE fbcHandle;
     NVFBC_API_FUNCTION_LIST pFn;
-    void *frame;
+    void* frame;
     unsigned int size;
     bool is_iframe;
     int width;
