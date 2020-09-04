@@ -11,6 +11,11 @@ class OSDiskSchema(ma.SQLAlchemyAutoSchema):
         model = OSDisk
         include_fk = True
 
+class UserContainerSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = UserContainer
+        include_fk = True
+
 class SecondaryDiskSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SecondaryDisk

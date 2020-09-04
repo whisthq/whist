@@ -51,9 +51,9 @@ def protocolInfoHelper(ip_address):
         else:
             fractalLog(
                 function="protocolInfoHelper",
-                label=vm_info["username"],
+                label=vm["username"],
                 logs="Error fetching disk settings for disk {disk_name}: {error}".format(
-                    disk_name=str(vm_info["disk_name"]), error=output["error"]
+                    disk_name=str(vm["disk_name"]), error="error"
                 ),
                 level=logging.ERROR,
             )
