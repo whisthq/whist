@@ -2,6 +2,8 @@
 | ------ | ----------------- |
 | #nb    | Insert Title Here |
 
+If you would like to not build a release on every push to this PR, e.g you are still actively working on it, then put WIP in the title of the PR or put skip-ci in the commit message. 
+
 ## Description
 
 Give a brief description and context of what you are working on.
@@ -40,5 +42,5 @@ Please give instructions for other people to test, e.g.:
 ## Checklist
 
 - [ ] Appropriate Unit test coverage
-- [ ] Manual top-hatting has been performed
+- [ ] Manual testing has been performed
 - [ ] This PR is linted, tested and follows the best practices of the organization
