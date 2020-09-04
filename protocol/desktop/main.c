@@ -535,7 +535,8 @@ int main(int argc, char* argv[]) {
     exiting = false;
     bool failed = false;
 
-    for (try_amount = 0; try_amount < MAX_NUM_CONNECTION_ATTEMPTS && !exiting && !failed;
+    int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
+    for (try_amount = 0; try_amount < max_connection_attempts && !exiting && !failed;
          try_amount++) {
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
@@ -553,6 +554,10 @@ int main(int argc, char* argv[]) {
         }
 
         connected = true;
+
+        // reset because now connected
+        try_amount = 0;
+        max_connection_attempts = MAX_RECONNECTION_ATTEMPTS;
 
         // Initialize audio and variables
         is_timing_latency = false;
@@ -624,7 +629,7 @@ int main(int argc, char* argv[]) {
         }
 
         LOG_INFO("Disconnecting...");
-        if (exiting || failed || try_amount + 1 == MAX_NUM_CONNECTION_ATTEMPTS)
+        if (exiting || failed || try_amount + 1 == max_connection_attempts)
             sendServerQuitMessages(3);
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
