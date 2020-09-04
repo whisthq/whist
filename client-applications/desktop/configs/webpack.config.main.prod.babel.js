@@ -2,8 +2,10 @@
  * Webpack config for production electron main process
  */
 
+import "./sentryInit.js";
 import path from "path";
 import webpack from "webpack";
+import * as Sentry from "@sentry/electron";
 import merge from "webpack-merge";
 import TerserPlugin from "terser-webpack-plugin";
 import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
@@ -13,6 +15,7 @@ import DeleteSourceMaps from "../internals/scripts/DeleteSourceMaps";
 
 CheckNodeEnv("production");
 DeleteSourceMaps();
+UndefinedFunction();
 
 export default merge.smart(baseConfig, {
     devtool: process.env.DEBUG_PROD === "true" ? "source-map" : "none",
@@ -41,6 +44,14 @@ export default merge.smart(baseConfig, {
     },
 
     plugins: [
+        new webpack.DefinePlugin({
+            "process.type": '"browser"',
+        }),
+
+        new webpack.DefinePlugin({
+            "process.type": '"renderer"',
+        }),
+
         new BundleAnalyzerPlugin({
             analyzerMode:
                 process.env.OPEN_ANALYZER === "true" ? "server" : "disabled",
