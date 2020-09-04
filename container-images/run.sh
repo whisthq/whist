@@ -5,6 +5,11 @@ runcontainer (){
 	    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
 	    --tmpfs /run \
 	    --tmpfs /run/lock \
+	    --gpus all \
+	    -e NVIDIA_CONTAINER_CAPABILITIES=all \
+	    -e NVIDIA_VISIBLE_DEVICES=all \
+	    --privileged \
+	    --shm-size=8g \
 	    --security-opt seccomp=unconfined \
             --cap-drop ALL \
             --cap-add CAP_SETPCAP \
