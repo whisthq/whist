@@ -33,7 +33,7 @@ env:
   SERVER_VM_NAME: crimsonbonus543
   SERVER_VM_USER: Fractal
   SERVER_VM_IP: 20.185.40.33
-  WEBSERVER_BASE_URL: https://cube-celery-staging4.herokuapp.com
+  WEBSERVER_BASE_URL: https://main-webserver.fractalcomputers.com
 
 jobs:
   params:
