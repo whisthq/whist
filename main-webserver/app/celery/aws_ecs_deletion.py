@@ -1,8 +1,15 @@
-from app import *
-from app.helpers.utils.aws.aws_resource_locks import *
-from app.helpers.utils.aws.base_ecs_client import *
-from app.models.hardware import *
-from app.serializers.hardware import *
+from app import (
+    INTERNAL_SERVER_ERROR,
+    REQUEST_TIMEOUT,
+    SUCCESS,
+    celery_instance,
+    db,
+    fractalLog,
+    fractalSQLCommit,
+)
+from app.helpers.utils.aws.aws_resource_locks import lockContainerAndUpdate, spinLock
+from app.helpers.utils.aws.base_ecs_client import ECSClient
+from app.serializers.hardware import UserContainer
 
 
 @celery_instance.task(bind=True)

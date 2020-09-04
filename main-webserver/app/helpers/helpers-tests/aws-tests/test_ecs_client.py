@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from utils.aws.base_ecs_client import *
+from utils.aws.base_ecs_client import ECSClient, boto3
 from moto import mock_ecs, mock_logs, mock_autoscaling, mock_ec2
 
 
