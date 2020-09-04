@@ -4,6 +4,7 @@ from flask_jwt_extended import jwt_required
 
 from app import fractalPreProcess
 from app.celery.aws_ecs_creation import BadAppError, create_new_container
+from app.celery.aws_ecs_deletion import deleteContainer
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.utils.general.auth import fractalAuth
 
@@ -67,9 +68,14 @@ def aws_container_post(action, **kwargs):
                     response = jsonify({"ID": task.id}), ACCEPTED
 
         elif action == "delete":
-            # TODO: Read HTTP request body, call the container deletion function in celery.aws_ecs_deletion and return a
-            # task ID. See the "delete" endpoint in blueprints.azure.azure_disk_blueprint for inspiration.
-            pass
+            try:
+                container = body.pop("container_id")
+            except KeyError:
+                response = jsonify({"ID": None}), BAD_REQUEST
+            else:
+                # Delete the container
+                task = deleteContainer(container, user)
+                response = jsonify({"ID": task.id}), ACCEPTED
 
         elif action == "restart":
             # TODO: Same as above, but inspire yourself from the vm/restart endpoint.
