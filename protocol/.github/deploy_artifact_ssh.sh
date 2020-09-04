@@ -39,6 +39,5 @@ Copy-item -Force -Recurse C:\server_build\Windows-64bit_server\* -Destination 'C
 net start fractal ;
 shutdown /r ;
 HEREDOC
-it
 #Copy-item -Force -Recurse build\* -Destination 'C:\Program Files\Fractal' ;
 #Remove-Item C:\ProgramData\FractalCache\log.txt ;

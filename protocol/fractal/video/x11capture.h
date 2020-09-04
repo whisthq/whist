@@ -56,6 +56,7 @@ typedef struct CaptureDevice {
     bool released;
     bool using_nvidia;
     NvidiaCaptureDevice nvidia_capture_device;
+    bool capture_is_on_nvidia;
 } CaptureDevice;
 
 typedef unsigned int UINT;
@@ -114,6 +115,16 @@ void ReleaseScreen(CaptureDevice* device);
  */
 void DestroyCaptureDevice(CaptureDevice* device);
 
-bool UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec); 
+/**
+ * @brief                          Updates the capture device if the capture device is also the
+ * encoder
+ *
+ * @param device                   The Linux Ubuntu screencapture device
+ * @param bitrate                  The new bitrate to use for encoding
+ * @param codec                    The new codec to use for encoding
+ *
+ * @returns                        True if the capture device was indeed updated as an encoder
+ */
+void UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec);
 
 #endif  // CAPTURE_X11CAPTURE_H
