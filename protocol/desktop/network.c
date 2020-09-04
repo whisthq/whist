@@ -33,7 +33,7 @@ extern int uid;
 #define TCP_CONNECTION_WAIT 300  // ms
 #define UDP_CONNECTION_WAIT 300  // ms
 
-int discoverPorts(bool* using_stun) {
+int discoverPorts(bool *using_stun) {
     SocketContext context;
     LOG_INFO("using stun is %d", *using_stun);
     if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
