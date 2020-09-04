@@ -6,6 +6,7 @@ from app import fractalPreProcess
 from app.celery.aws_ecs_creation import BadAppError, create_new_container
 from app.celery.aws_ecs_deletion import deleteContainer
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
+from app.helpers.blueprint_helpers.aws.aws_container_post import pingHelper
 from app.helpers.utils.general.auth import fractalAuth
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
@@ -82,10 +83,16 @@ def aws_container_post(action, **kwargs):
             pass
 
         elif action == "ping":
-            # TODO: Read the ip address of the sender, and pass it into a helper function that updates the timestamp
-            # of the container in SQL, marks it as either RUNNING_AVAILABLE/RUNNING_UNAVAILABLE, etc. Basically,
-            # migrate the vm/ping endpoint blueprints.azure.azure_vm_blueprint for containers.
-            pass
+            address = kwargs.pop("received_from")
+
+            try:
+                available = body.pop("available")
+            except KeyError:
+                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+            else:
+                # Update container status.
+                status = pingHelper(available, address)
+                response = jsonify(status), status["status"]
 
         elif action == "stun":
             # TODO: Toggle whether a container uses stun. Inspire yourself from the disk/stun endpoint. You'll need to
