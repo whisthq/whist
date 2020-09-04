@@ -308,6 +308,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         if (ret == SDL_MUTEX_TIMEDOUT) {
             if (loading_index >= 0) {
                 loading_index++;
+                printf("!!!!!!!!!!!!!!!!!!\n");
                 loadingSDL(renderer, loading_index);
             }
 

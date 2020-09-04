@@ -67,6 +67,7 @@ volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
+bool using_stun = true;
 
 int UDP_port = -1;
 int TCP_port = -1;
@@ -542,12 +543,12 @@ int main(int argc, char* argv[]) {
             SDL_Delay(1000);
         }
 
-        if (discoverPorts() != 0) {
+        if (discoverPorts(&using_stun) != 0) {
             LOG_WARNING("Failed to discover ports.");
             continue;
         }
 
-        if (connectToServer() != 0) {
+        if (connectToServer(using_stun) != 0) {
             LOG_WARNING("Failed to connect to server.");
             continue;
         }
