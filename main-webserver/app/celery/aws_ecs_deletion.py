@@ -18,24 +18,10 @@ def deleteContainer(self, container_name, user_id):
 
     if spinLock(container_name) < 0:
         return {"status": REQUEST_TIMEOUT}
-    fractalLog(
-        function="deleteContainer",
-        label=str(container_name),
-        logs="Beginning to delete Container {container_name}. Goodbye, {container_name}!".format(
-            container_name=container_name
-        ),
-    )
-
-    lockContainerAndUpdate(
-        container_name=container_name, state="DELETING", lock=True, temporary_lock=10
-    )
-
     container = UserContainer.query.get(container_name)
     if container.user_id != user_id:
         fractalLog(
-            function="deleteContainer",
-            label=str(container_name),
-            logs="Wrong user",
+            function="deleteContainer", label=str(container_name), logs="Wrong user",
         )
 
         self.update_state(
@@ -47,6 +33,17 @@ def deleteContainer(self, container_name, user_id):
             },
         )
         return {'status': UNAUTHORIZED}
+    fractalLog(
+        function="deleteContainer",
+        label=str(container_name),
+        logs="Beginning to delete Container {container_name}. Goodbye, {container_name}!".format(
+            container_name=container_name
+        ),
+    )
+
+    lockContainerAndUpdate(
+        container_name=container_name, state="DELETING", lock=True, temporary_lock=10
+    )
     container_cluster = container.cluster
     ecs_client = ECSClient(base_cluster=container_cluster, grab_logs=False)
     ecs_client.add_task(container_name)
