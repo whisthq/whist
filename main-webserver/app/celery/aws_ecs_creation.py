@@ -89,6 +89,12 @@ base_task = {
 }
 
 
+class BadAppError(Exception):
+    """Raised when `preprocess_task_info` doesn't recognized an input."""
+
+    pass
+
+
 def preprocess_task_info(taskinfo):
     # TODO:  actually write this
     return []

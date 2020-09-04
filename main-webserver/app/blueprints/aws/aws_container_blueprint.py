@@ -1,15 +1,11 @@
-# TODO:  create blueprints for:  getting container info, starting a new container given a task and a user, stopping a container
-# this file is for Owen's work
+from flask import Blueprint
+from flask.json import jsonify
+from flask_jwt_extended import jwt_required
 
-from app import *
-from app.helpers.utils.general.auth import *
-
-from app.helpers.utils.aws.aws_general import *
-
-from app.celery.aws_ecs_creation import *
-from app.celery.aws_ecs_deletion import *
-
-from app.models.hardware import *
+from app import fractalPreProcess
+from app.celery.aws_ecs_creation import BadAppError, create_new_container
+from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
+from app.helpers.utils.general.auth import fractalAuth
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -47,32 +43,52 @@ def test_endpoint(action, **kwargs):
 @jwt_required
 @fractalAuth
 def aws_container_post(action, **kwargs):
-    if action == "create":
-        # TODO: Read HTTP request body, call the container creation function in celery.aws_ecs_creation and return a
-        # task ID. See the "clone" endpoint in blueprints.azure.azure_disk_blueprint for inspiration.
-        pass
+    response = jsonify({"error": "Not Found"}), NOT_FOUND
+    body = kwargs.pop("body")
+    try:
+        user = body.pop("username")
+    except KeyError:
+        response = jsonify({"error": "Bad Request"}), BAD_REQUEST
+    else:
+        if action == "create":
+            # Access required keys.
+            try:
+                app = body.pop("app")
+            except KeyError:
+                response = jsonify({"error": "Bad Request"}), BAD_REQUEST
+            else:
+                # Create a container.
+                # TODO: Don't just create every container in us-east-1
+                try:
+                    task = create_new_container.delay(user, app)
+                except BadAppError:
+                    response = jsonify({"error": "Bad Request"}), BAD_REQUEST
+                else:
+                    response = jsonify({"ID": task.id}), ACCEPTED
 
-    elif action == "delete":
-        # TODO: Read HTTP request body, call the container deletion function in celery.aws_ecs_deletion and return a
-        # task ID. See the "delete" endpoint in blueprints.azure.azure_disk_blueprint for inspiration.
-        pass
+        elif action == "delete":
+            # TODO: Read HTTP request body, call the container deletion function in celery.aws_ecs_deletion and return a
+            # task ID. See the "delete" endpoint in blueprints.azure.azure_disk_blueprint for inspiration.
+            pass
 
-    elif action == "restart":
-        # TODO: Same as above, but inspire yourself from the vm/restart endpoint.
-        pass
+        elif action == "restart":
+            # TODO: Same as above, but inspire yourself from the vm/restart endpoint.
+            pass
 
-    elif action == "ping":
-        # TODO: Read the ip address of the sender, and pass it into a helper function that updates the timestamp
-        # of the container in SQL, marks it as either RUNNING_AVAILABLE/RUNNING_UNAVAILABLE, etc. Basically,
-        # migrate the vm/ping endpoint blueprints.azure.azure_vm_blueprint for containers.
-        pass
+        elif action == "ping":
+            # TODO: Read the ip address of the sender, and pass it into a helper function that updates the timestamp
+            # of the container in SQL, marks it as either RUNNING_AVAILABLE/RUNNING_UNAVAILABLE, etc. Basically,
+            # migrate the vm/ping endpoint blueprints.azure.azure_vm_blueprint for containers.
+            pass
 
-    elif action == "stun":
-        # TODO: Toggle whether a container uses stun. Inspire yourself from the disk/stun endpoint. You'll need to
-        # create a using_stun column in the user_containers table, which you can do from TablePlus. When you create
-        # a new column, make sure to modify the appropriate class in the /models folder.
-        pass
+        elif action == "stun":
+            # TODO: Toggle whether a container uses stun. Inspire yourself from the disk/stun endpoint. You'll need to
+            # create a using_stun column in the user_containers table, which you can do from TablePlus. When you create
+            # a new column, make sure to modify the appropriate class in the /models folder.
+            pass
 
-    elif action == "protocol_info":
-        # TODO: Same as /stun, migrate over disk/protocol_info
-        pass
+        elif action == "protocol_info":
+            # TODO: Same as /stun, migrate over disk/protocol_info
+            pass
+
+    return response
