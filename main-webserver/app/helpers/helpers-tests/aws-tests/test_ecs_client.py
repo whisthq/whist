@@ -7,7 +7,7 @@ from moto import mock_ecs, mock_logs, mock_autoscaling, mock_ec2
 
 
 def test_pulling_ip():
-    testclient = ECSClient()
+    testclient = ECSClient(base_cluster="basetest2")
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage",
     )
