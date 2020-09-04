@@ -4,4 +4,5 @@ export const AUTH_DEFAULT = {
         name: null,
     },
     logged_in: false,
+    waitlist: [],
 };

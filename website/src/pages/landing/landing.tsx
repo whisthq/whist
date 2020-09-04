@@ -1,46 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
-
 import { db } from "utils/firebase";
+
+import { updateWaitlistAction } from "store/actions/auth/waitlist";
 
 import "styles/landing.css";
 import WaitlistForm from "pages/landing/components/waitlistForm";
 import CountdownTimer from "pages/landing/components/countdown";
 
+import Leaderboard from "pages/leaderboard/leaderboard";
+
 function Landing(props: any) {
-  const [state, setState] = useState(() => {
-    return ({
-      "waitlist": []
-    })
-  })
+    const [waitlist, setWaitlist] = useState(props.waitlist);
 
-  useEffect(() => {
-    getWaitlist().then(function (waitlist) {
-      setState(prevState => { return { ...prevState, "waitlist": waitlist } })
-    })
-  }, []);
+    useEffect(() => {
+        const unsubscribe = db
+            .collection("waitlist")
+            .orderBy("points", "desc")
+            .onSnapshot((querySnapshot) => {
+                props.dispatch(
+                    updateWaitlistAction(
+                        querySnapshot.docs.map((doc) => doc.data())
+                    )
+                );
+            });
+        return unsubscribe;
+    }, []);
 
-  async function getWaitlist() {
-    const waitlist = await db.collection("waitlist").get()
-    return (waitlist.docs.map(doc => doc.data()))
-  }
-
-  return (
-    <div style={{
-      fontWeight: "bold",
-      textAlign: "center",
-      marginTop: 200,
-    }}>
-      <WaitlistForm />
-      <CountdownTimer />
-    </div>
-  );
+    return (
+        <div
+            style={{
+                textAlign: "center",
+            }}
+        >
+            <WaitlistForm />
+            <CountdownTimer />
+            <Leaderboard />
+        </div>
+    );
 }
 
 function mapStateToProps(state) {
-  return {
-    user: state.AuthReducer.user
-  }
+    return {
+        user: state.AuthReducer.user,
+        waitlist: state.AuthReducer.waitlist,
+    };
 }
 
 export default connect(mapStateToProps)(Landing);

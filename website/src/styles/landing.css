@@ -4,13 +4,17 @@ body {
     overflow-x: hidden;
 }
 
-body, div, html, input, Button {
+body,
+div,
+html,
+input,
+Button {
     font-family: "Maven Pro" !important;
 }
 
 select {
     width: 100%;
-    background: #F4F4F4;
+    background: #f4f4f4;
     border-radius: 5px;
     padding: 30px 20px;
     width: 350px !important;
@@ -20,14 +24,15 @@ select {
     font-family: "Maven Pro" !important;
 }
 
-option, ::placeholder {
+option,
+::placeholder {
     font-family: "Maven Pro" !important;
 }
 
 .waitlist-form {
     border-radius: 5px;
     width: 310px;
-    background-color: #F4F4F4;
+    background-color: #f4f4f4;
     border: none;
     padding: 30px 20px;
     outline: none;
@@ -40,7 +45,7 @@ option, ::placeholder {
     outline: none;
     padding: 20px;
     border-radius: 5px;
-    background: #00D4FF;
+    background: #00d4ff;
     color: white;
     font-weight: bold;
     text-transform: uppercase;
@@ -48,4 +53,13 @@ option, ::placeholder {
 
 .waitlist-button:hover {
     cursor: pointer;
+}
+
+.table {
+    width: 400px;
+    margin: auto;
+}
+
+.table td {
+    padding: 5px;
 }
