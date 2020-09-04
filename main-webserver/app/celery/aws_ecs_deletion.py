@@ -2,6 +2,7 @@ from app import (
     INTERNAL_SERVER_ERROR,
     REQUEST_TIMEOUT,
     SUCCESS,
+    UNAUTHORIZED,
     celery_instance,
     db,
     fractalLog,
@@ -13,7 +14,7 @@ from app.serializers.hardware import UserContainer
 
 
 @celery_instance.task(bind=True)
-def deleteContainer(self, container_name):
+def deleteContainer(self, container_name, user_id):
 
     if spinLock(container_name) < 0:
         return {"status": REQUEST_TIMEOUT}
@@ -30,6 +31,22 @@ def deleteContainer(self, container_name):
     )
 
     container = UserContainer.query.get(container_name)
+    if container.user_id != user_id:
+        fractalLog(
+            function="deleteContainer",
+            label=str(container_name),
+            logs="Wrong user",
+        )
+
+        self.update_state(
+            state="FAILURE",
+            meta={
+                "msg": "Container {container_name} doesn't belong to user {user_id}".format(
+                    container_name=container_name, user_id=user_id
+                )
+            },
+        )
+        return {'status': UNAUTHORIZED}
     container_cluster = container.cluster
     ecs_client = ECSClient(base_cluster=container_cluster, grab_logs=False)
     ecs_client.add_task(container_name)
