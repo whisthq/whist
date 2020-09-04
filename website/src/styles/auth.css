@@ -1,0 +1,43 @@
+.auth-wrapper {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    width: 350px;
+    margin: auto;
+    margin-top: 200px;
+}
+
+.google-button {
+    font-family: "Maven Pro" !important;
+    width: 350px;
+    margin-top: 20px;
+    border: none;
+    outline: none;
+    padding: 20px;
+    border-radius: 5px;
+    background: #4285f4;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.google-button:hover {
+    cursor: pointer;
+}
+
+.signout-button {
+    font-family: "Maven Pro" !important;
+    width: 350px;
+    margin-top: 20px;
+    border: none;
+    outline: none;
+    padding: 20px;
+    border-radius: 5px;
+    background: #f4f4f4;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.signout-button:hover {
+    cursor: pointer;
+}

@@ -1,6 +1,7 @@
 export const AUTH_DEFAULT = {
-    "user": {
-        "email": null,
-        "name": null
-    }
-}
+    user: {
+        email: null,
+        name: null,
+    },
+    logged_in: false,
+};

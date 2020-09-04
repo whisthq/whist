@@ -2,7 +2,7 @@ import AuthReducer from "store/reducers/auth";
 import { combineReducers } from "redux";
 
 const reducers = combineReducers({
-    AuthReducer: AuthReducer
+    AuthReducer: AuthReducer,
 });
 
 const rootReducer = (state: any, action: any) => {
