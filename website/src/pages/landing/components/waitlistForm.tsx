@@ -19,8 +19,8 @@ function WaitlistForm(props: any) {
     })
 
     useEffect(() => {
-        console.log(props.user)
-    });
+        console.log("Use Effect waitlist")
+    }, []);
 
     function updateEmail(evt: any) {
         evt.persist();
@@ -49,10 +49,9 @@ function WaitlistForm(props: any) {
                 referrals: 0,
                 points: 50,
             });
-            insertWaitlistAction(state.email, state.name);
-        } else {
-            console.log("ALREADY EXISTS")
         }
+
+        insertWaitlistAction(state.email, state.name);
     }
 
     return (
@@ -101,7 +100,6 @@ function WaitlistForm(props: any) {
 
 function mapStateToProps(state) {
     return {
-        user: state.AuthReducer.user
     }
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { connect } from "react-redux";
 
 import { db } from "utils/firebase";
 
@@ -15,9 +16,10 @@ function Landing(props: any) {
 
   useEffect(() => {
     getWaitlist().then(function (waitlist) {
+      console.log("Use effect")
       setState(prevState => { return { ...prevState, "waitlist": waitlist } })
     })
-  });
+  }, []);
 
   async function getWaitlist() {
     const waitlist = await db.collection("waitlist").get()
@@ -35,4 +37,11 @@ function Landing(props: any) {
   );
 }
 
-export default Landing;
+function mapStateToProps(state) {
+  console.log(state)
+  return {
+    user: state.AuthReducer.user
+  }
+}
+
+export default connect(mapStateToProps)(Landing);
