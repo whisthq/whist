@@ -6,6 +6,7 @@ import * as LoginAction from "store/actions/auth/login_actions";
 export default function (state = AUTH_DEFAULT, action) {
     switch (action.type) {
         case WaitlistAction.INSERT_WAITLIST:
+            console.log(action)
             return {
                 ...state,
                 user: state.user
