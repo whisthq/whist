@@ -74,10 +74,10 @@ RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \
     && Install-GoogleChrome"
-RUN /bin/bash -c "source utils.sh \
-    && Install-NvidiaTeslaPublicDrivers \
-    && Disable-TCC \
-    && Set-OptimalGPUSettings"
+# RUN /bin/bash -c "source utils.sh \
+#     && Install-NvidiaTeslaPublicDrivers \
+#     && Disable-TCC \
+#     && Set-OptimalGPUSettings"
 RUN /bin/bash -c "source utils.sh \
     && Install-CustomX11Configuration"
 RUN /bin/bash -c "source utils.sh \
