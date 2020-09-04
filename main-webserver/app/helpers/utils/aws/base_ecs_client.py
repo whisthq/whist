@@ -136,7 +136,7 @@ class ECSClient:
         command=None,
         entrypoint=None,
         basedict=None,
-        port_mappings = None,
+        port_mappings=None,
         family="echostart",
         containername="basictest",
         imagename="httpd:2.4",
@@ -159,9 +159,7 @@ class ECSClient:
         """
         fmtstr = family + str(self.offset + 1)
         if port_mappings is None:
-            port_mappings =  [
-                            {"hostPort": 8080, "protocol": "tcp", "containerPort": 8080}
-                        ]
+            port_mappings = [{"hostPort": 8080, "protocol": "tcp", "containerPort": 8080}]
         base_log_config = {
             "logDriver": "awslogs",
             "options": {
@@ -184,7 +182,7 @@ class ECSClient:
                     {
                         "logConfiguration": base_log_config,
                         "entryPoint": entrypoint,
-                        "portMappings":port_mappings,
+                        "portMappings": port_mappings,
                         "command": command,
                         "cpu": 0,
                         "environment": [{"name": "TEST", "value": "end"}],
@@ -211,9 +209,9 @@ class ECSClient:
             if imagename is not None:
                 container_params["image"] = imagename
             container_params["name"] = containername
-            container_params["portMappings"] =port_mappings
+            container_params["portMappings"] = port_mappings
             container_params["logConfiguration"] = base_log_config
-            basedict["family"]=family
+            basedict["family"] = family
 
         response = self.ecs_client.register_task_definition(**basedict)
         arn = response["taskDefinition"]["taskDefinitionArn"]
