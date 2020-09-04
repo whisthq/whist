@@ -21,6 +21,36 @@ def test_pulling_ip():
     testclient.spin_til_running(time_delay=2)
     assert testclient.task_ips == {0: '34.229.191.6'}
 
+def test_partial_works():
+    basedict = {
+        "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(
+            747391415460
+        ),
+        "containerDefinitions": [
+            {
+                "cpu": 0,
+                "environment": [{"name": "TEST", "value": "end"}]
+            }
+        ],
+        "placementConstraints": [],
+        "memory": "512",
+        "networkMode": "awsvpc",
+        "cpu": "256",
+    }
+    testclient = ECSClient(base_cluster="basetest2")
+    testclient.set_and_register_task(
+        ["echo start"], ["/bin/bash", "-c"], family="multimessage", basedict=basedict
+    )
+    networkConfiguration = {
+        "awsvpcConfiguration": {
+            "subnets": ["subnet-0dc1b0c43c4d47945", ],
+            "securityGroups": ["sg-036ebf091f469a23e", ],
+        }
+    }
+    testclient.run_task(networkConfiguration=networkConfiguration)
+    testclient.spin_til_running(time_delay=2)
+    assert testclient.task_ips == {0: '34.229.191.6'}
+
 
 def test_create_cluster_with_auto_scaling_group():
     testclient = ECSClient(region_name="us-east-2")
