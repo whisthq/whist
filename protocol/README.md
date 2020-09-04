@@ -148,4 +148,6 @@ choco install llvm --force
 
 If using VSCode or Visual Studio, please set this up in your editor to format on save if possible (in Visual Studio, this is through the C/C++ extension settings, as well as the general 'Format on Save' setting/shortcut). Otherwise, please make sure to run your code through `clang` before commits. You can run it from the CLI by running `cmake . && make clang-format`, on MacOS/Linux, or `cmake -G "NMake Makefiles" && make clang-format`, on Windows.
 
+We have [pre-commit hooks](https://pre-commit.com/) with clang-format support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for clang-format.
+
 We also have a custom build target in the CMake 'clang-format' which will run with this style over all `.c` and `.h` files in `server/` `desktop/` and `fractal/`. You can call it by running `make clang-format`.
