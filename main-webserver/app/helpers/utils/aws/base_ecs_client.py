@@ -349,8 +349,7 @@ class ECSClient:
             task_args['launchType'] = self.launch_type
         taskdict = self.ecs_client.run_task(**task_args, **kwargs)
         task = taskdict["tasks"][0]
-        container = task["containers"][0]
-        running_task_arn = container["taskArn"]
+        running_task_arn = task["taskArn"]
         self.tasks.append(running_task_arn)
         self.tasks_done.append(False)
         self.offset += 1
