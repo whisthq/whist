@@ -5,7 +5,7 @@ import { db } from "utils/firebase";
 
 import "styles/landing.css";
 import WaitlistForm from "pages/landing/components/waitlistForm";
-import Countdown from "pages/landing/components/countdown";
+import CountdownTimer from "pages/landing/components/countdown";
 
 function Landing(props: any) {
   const [state, setState] = useState(() => {
@@ -32,7 +32,7 @@ function Landing(props: any) {
       marginTop: 200,
     }}>
       <WaitlistForm />
-      <Countdown />
+      <CountdownTimer />
     </div>
   );
 }
