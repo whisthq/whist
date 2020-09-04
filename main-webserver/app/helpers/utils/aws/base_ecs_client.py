@@ -174,7 +174,7 @@ class ECSClient:
             self.log_client.create_log_group(logGroupName="/ecs/{}".format(fmtstr))
         except botocore.exceptions.ClientError as e:
             self.warnings.append(str(e))
-        # TODO:  update basedict to mimic successful task launch
+        # TODO:  refactor this horrifying mess into multiple functions
         if basedict is None:
             basedict = {
                 "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(
