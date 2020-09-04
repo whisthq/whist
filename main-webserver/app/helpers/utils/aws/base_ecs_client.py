@@ -334,19 +334,20 @@ class ECSClient:
         self.tasks_done.append(False)
         self.offset += 1
 
-    def run_task(self, **kwargs):
+    def run_task(self, use_launch_type=True, **kwargs):
         """
         sets this client's task running.
         TODO: explicitly add overrides as params here for cpu, command, and environment vars
         Args:
             **kwargs: Any add'l params you want the task to have
         """
-        taskdict = self.ecs_client.run_task(
-            taskDefinition=self.task_definition_arn,
-            #launchType=self.launch_type,
-            cluster=self.cluster,
-            **kwargs
-        )
+        task_args = {
+            'taskDefinition': self.task_definition_arn,
+            'cluster': self.cluster,
+        }
+        if use_launch_type:
+            task_args['launchType'] = self.launch_type
+        taskdict = self.ecs_client.run_task(**task_args, **kwargs)
         task = taskdict["tasks"][0]
         container = task["containers"][0]
         running_task_arn = container["taskArn"]
@@ -537,7 +538,7 @@ if __name__ == "__main__":
         ["echo start"], ["/bin/bash", "-c"], family="multimessage"
     )
     print(cluster_name)
-    testclient.run_task()
+    testclient.run_task(use_launch_type=False)
     testclient.spin_til_running(time_delay=2)
     testclient.get_clusters_usage()
 
