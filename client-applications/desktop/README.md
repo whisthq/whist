@@ -65,6 +65,8 @@ To package the MacOS application it needs to be notarized. This means it needs t
 
 Fractal runs two update channels, `production` and `testing`. The `dev` branch should be published automatically to `testing`, while `production` should match `master`. The build script has a special `noupdates` channel which should be used for any builds that aren't on one of these branches.
 
+To publish to S3 the `AWS_SECRET_ACCESS_KEY` and `AWS_ACCESS_KEY_ID` environment variables must be set 
+
 Any CI generated builds are also stored in GitHub Releases which can be manually downloaded and used.
 
 CI should handle releases, however, 

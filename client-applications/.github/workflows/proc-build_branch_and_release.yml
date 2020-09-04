@@ -15,8 +15,12 @@ on:
         description: channel that these builds should be subscribed to for updates
         default: "noupdates"
         required: false
+      should_update:
+        description: true/false, runs yarn package-ci if true and package if false.
+        default: "false"
+        required: false
       version_id:
-        description: version identifier to set for this build !! TODO come up with a versioning strategy
+        description: version identifier to set for this build, in the form "year.month.day-extra_info"
         required: true
       should_test:
         # TODO: see the note above "test_predicate" for why this only works with running all tests or
@@ -47,6 +51,7 @@ jobs:
       should_release: ${{ steps.values.outputs.should_release }}
       version_id: ${{ steps.values.outputs.version_id }}
       update_channel: ${{ steps.values.outputs.update_channel }}
+      should_update: ${{steps.values.outputs.should_update}}
       should_test: ${{ steps.values.outputs.should_test }}
       should_test_windows: ${{ steps.values.outputs.should_test_windows }}
       should_test_linux: ${{ steps.values.outputs.should_test_linux }}
@@ -86,27 +91,13 @@ jobs:
           echo ::set-output name=update_channel::${{ github.event.inputs.update_channel }}
           echo ::set-output name=should_release::${{ github.event.inputs.should_release }}
           echo ::set-output name=should_test::$(if [[ "${{ github.event.inputs.should_test }}" == "false" ]]; then echo ""; else echo "true"; fi)
+          echo ::set-output name=should_update::${{ github.event.inputs.should_update }}
           export SHOULD_TEST=${{ github.event.inputs.should_test }}
           echo ::set-output name=should_test_windows::$(if [[ $SHOULD_TEST == *"windows"* ]]; then echo "true"; else echo "false"; fi)
           echo ::set-output name=should_test_linux::$(if [[ $SHOULD_TEST == *"linux"* ]]; then echo "true"; else echo "false"; fi)
           echo ::set-output name=should_test_macos::$(if [[ $SHOULD_TEST == *"macos"* ]]; then echo "true"; else echo "false"; fi)
           echo ::set-output name=overridden_version_id::${{ github.event.inputs.overridden_version_id }}
 
-
-
-
-          echo ::set-output name=git_sha::$(git rev-parse HEAD)
-          echo ::set-output name=protocol_version::dev-20200722.5
-          echo ::set-output name=version_id::0.0.0-test-20200324.0
-          echo ::set-output name=overridden_version_id::testing_release.0
-          echo ::set-output name=update_channel::noupdates
-          echo ::set-output name=should_release::true
-          echo ::set-output name=should_test::false
-          export SHOULD_TEST=false
-          echo ::set-output name=should_test_windows::$(if [[ $SHOULD_TEST == *"windows"* ]]; then echo "true"; else echo "false"; fi)
-          echo ::set-output name=should_test_linux::$(if [[ $SHOULD_TEST == *"linux"* ]]; then echo "true"; else echo "false"; fi)
-          echo ::set-output name=should_test_macos::$(if [[ $SHOULD_TEST == *"macos"* ]]; then echo "true"; else echo "false"; fi)
-          echo ::set-output name=overridden_version_id::${{ github.event.inputs.overridden_version_id }}
       - name: Show all env and output vars
         run: |
           cat <<JSON
@@ -223,8 +214,11 @@ jobs:
 
       # Build the bundle application
       - name: Build the bundled application
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          poetry run python ./desktop/build_and_publish.py --set-version ${{ needs.params.outputs.version_id }}  --update-channel ${{ needs.params.outputs.update_channel }} || true
+          poetry run python ./desktop/build_and_publish.py --set-version ${{ needs.params.outputs.version_id }}  --update-channel ${{ needs.params.outputs.update_channel }} --push-new-update ${{ needs.params.outputs.should_update }}|| true
           ls ${{ github.workspace }}/desktop/ || true
           ls ${{ github.workspace }}/desktop/release/ || true
 #          find . -not \( -path ./desktop/node_modules -prune \) -not \( -path ./.git -prune \)  # list files, useful for debugging doesn't run on windows.
