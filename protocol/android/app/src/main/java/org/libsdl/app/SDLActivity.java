@@ -30,6 +30,8 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ApplicationInfo;
 
+import io.sentry.core.Sentry;
+
 /**
     SDL Activity
 */

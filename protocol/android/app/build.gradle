@@ -8,6 +8,10 @@ else {
     apply plugin: 'com.android.library'
 }
 
+repositories {
+    jcenter()
+}
+
 android {
     signingConfigs {
         release {
@@ -19,6 +23,10 @@ android {
     }
     packagingOptions {
         pickFirst '**/libSDL2.so'
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     compileSdkVersion 26
     defaultConfig {
@@ -90,4 +98,5 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'io.sentry:sentry-android:2.3.1'
 }
