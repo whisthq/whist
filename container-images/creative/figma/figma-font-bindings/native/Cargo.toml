@@ -1,6 +1,6 @@
 [package]
 name = "figma-linux-rust-binding"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["ChugunovRoman <Zebs-BMK@yandex.ru>"]
 edition = "2018"
 license = "GPL-2.0-only"
@@ -23,5 +23,6 @@ crate-type = ["dylib"]
 neon-build = "0.3.3"
 
 [dependencies]
-neon = "0.3.3"
-libfonthelper = "0.2.4"
+neon = "0.4.0"
+libfonthelper = "0.2.8"
+log = "0.4"
