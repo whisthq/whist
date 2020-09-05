@@ -1,6 +1,8 @@
 extern crate libfonthelper;
+extern crate log;
 
 use libfonthelper::{font::Font, Fonts};
+use log::{info, warn};
 use neon::{prelude::*, task::Task};
 
 struct Worker {
@@ -33,11 +35,13 @@ impl Task for Worker {
     ) -> JsResult<JsObject> {
         let js_fonts = JsObject::new(&mut cx);
 
+        info!("Reading fonts complete");
+
         match result {
-            Err(err) => println!("Cannot get fonts, error: {}", err),
+            Err(err) => warn!("Cannot get fonts, error: {}", err),
             Ok(fonts) => {
                 for font in fonts {
-                    if (font.path.eq("")) {
+                    if font.path.eq("") {
                         continue;
                     }
 
