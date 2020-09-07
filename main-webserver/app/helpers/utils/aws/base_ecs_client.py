@@ -139,7 +139,7 @@ class ECSClient:
         port_mappings=None,
         family="echostart",
         containername="basictest",
-        imagename="httpd:2.4",
+        imagename=None,
         memory="512",
         cpu="256",
     ):
@@ -186,7 +186,7 @@ class ECSClient:
                         "command": command,
                         "cpu": 0,
                         "environment": [{"name": "TEST", "value": "end"}],
-                        "image": imagename,
+                        "image": (imagename if imagename is not None else "httpd:2.4"),
                         "name": containername,
                     }
                 ],
