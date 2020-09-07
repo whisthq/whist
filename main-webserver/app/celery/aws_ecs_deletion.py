@@ -15,7 +15,16 @@ from app.serializers.hardware import UserContainer
 
 @celery_instance.task(bind=True)
 def deleteContainer(self, container_name, user_id):
+    """
 
+    Args:
+        self: the celery instance running the task
+        container_name (str): the ARN of the running container
+        user_id (str): the user trying to delete thr container
+
+    Returns: json indicating success or failure
+
+    """
     if spinLock(container_name) < 0:
         return {"status": REQUEST_TIMEOUT}
     container = UserContainer.query.get(container_name)

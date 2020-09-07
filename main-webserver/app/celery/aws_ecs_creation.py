@@ -12,6 +12,17 @@ def preprocess_task_info(taskinfo):
 
 @celery_instance.task(bind=True)
 def create_new_container(self, username, taskinfo):
+    """
+
+    Args:
+        self: the celery instance running the task
+        username (str): the username of the person creating the container
+        taskinfo: info about the task to be run
+        # TODO: fill in with types when known
+
+    Returns:
+
+    """
     fractalLog(
         function="create_new_container",
         label="None",
