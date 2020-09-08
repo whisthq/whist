@@ -11,7 +11,7 @@ import "styles/landing.css";
 import WaitlistForm from "pages/landing/components/waitlistForm";
 import CountdownTimer from "pages/landing/components/countdown";
 
-import Leaderboard from "pages/leaderboard/leaderboard";
+import Leaderboard from "pages/landing/components/leaderboard";
 
 function Landing(props: any) {
     const [waitlist, setWaitlist] = useState(props.waitlist);
@@ -23,6 +23,12 @@ function Landing(props: any) {
             .then((waitlist) => {
                 setWaitlist(waitlist);
                 props.dispatch(updateWaitlistAction(waitlist));
+                if (props.user && props.user.ranking == 0) {
+                    const ranking = getInitialRanking(waitlist);
+                    props.dispatch(
+                        updateUserAction(props.user.points, ranking)
+                    );
+                }
             })
             .then(() => {
                 if (props.user && props.user.email) {
@@ -33,6 +39,7 @@ function Landing(props: any) {
                             console.log("IN SNAPSHOT");
                             const userData = doc.data();
                             const ranking = updateRanking(userData);
+                            console.log(ranking);
                             if (userData.points != props.user.points) {
                                 props.dispatch(
                                     updateUserAction(userData.points, ranking)
@@ -50,6 +57,15 @@ function Landing(props: any) {
             .orderBy("points", "desc")
             .get();
         return waitlist.docs.map((doc) => doc.data());
+    }
+
+    function getInitialRanking(waitlist) {
+        for (var i = 0; i < waitlist.length; i++) {
+            if (waitlist[i].email == props.user.email) {
+                return i + 1;
+            }
+        }
+        return 0;
     }
 
     function updateRanking(userData) {

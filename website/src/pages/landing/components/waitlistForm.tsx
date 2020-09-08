@@ -9,7 +9,7 @@ import { insertWaitlistAction } from "store/actions/auth/waitlist";
 
 import "styles/landing.css";
 
-const INITIAL_POINTS = 50;
+const INITIAL_POINTS = 10;
 
 function WaitlistForm(props: any) {
     const [email, setEmail] = useState();

@@ -60,6 +60,11 @@ option,
     margin: auto;
 }
 
-.table td {
+.table td,
+.table th {
     padding: 5px;
+}
+
+.userRow {
+    background-color: #f4f4f4;
 }
