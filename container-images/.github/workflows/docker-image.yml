@@ -1,4 +1,4 @@
-# Workflow to build Docker images to ensure they build properly
+# Workflow to build Docker images for basic testing
 
 name: Docker Image CI
 
@@ -7,11 +7,15 @@ on:
     branches: [ master, dev ]
 
 jobs:
-  build:
+  docker-build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout Git repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
       
-    - name: Build the Docker Chrome Image
-      run: cd chrome && docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    # - name: Build the Docker Chrome Image
+    #   run: cd chrome && docker build . --file Dockerfile --tag my-image-name:$(date +%s)
