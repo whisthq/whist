@@ -123,7 +123,7 @@ RUN sudo apt install -y glmark2
 
 
 
-# nvidia-docker
+# Set up nvidia inside container
 LABEL com.nvidia.volumes.needed="nvidia_driver"
 
 RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
@@ -137,20 +137,6 @@ ENV PATH /usr/local/nvidia/bin:${PATH}
 ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
 # ENV LD_PRELOAD /opt/nvidia/\$LIB/libGL.so.1:${LD_PRELOAD}
 
-
-# ADD nvidia_drv.so /usr/lib/xorg/modules/drivers/
-# ADD libglxserver_nvidia.so /usr/lib/x86_64-linux-gnu/nvidia/xorg/
-# ADD libglxserver_nvidia.so.450.51.06 /usr/lib/x86_64-linux-gnu/nvidia/xorg/
-# ADD libnvidia-tls.so.450.51.06 /usr/lib/x86_64-linux-gnu/nvidia/xorg/
-# ADD nvidia_drv.so /usr/lib/x86_64-linux-gnu/nvidia/xorg/
-
- 
-# RUN curl -fsSL -o virtualgl.deb https://sourceforge.net/projects/virtualgl/files/2.5/virtualgl_2.5_amd64.deb/download && \
-#     dpkg -i virtualgl.deb && rm virtualgl.deb
-# 
-# ENV PATH /opt/VirtualGL/bin/:${PATH}
-
-
 RUN sudo apt-get -y install linux-headers-$(uname -r)
 ENV distribution $(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
@@ -161,7 +147,7 @@ RUN sudo apt-get -y update
 RUN sudo apt-get -y install cuda-drivers
 ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
- 
+
 
 #### FROM PHIL 1/2 on this file: I think this new service for Nvidia needs to be added here, but not certain
 #### It apparently needs to run before X so it might need to be even before (?)
