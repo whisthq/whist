@@ -199,7 +199,7 @@ class ECSClient:
         # Connect/ssh to an instance
         try:
             ssh_client.connect(hostname=instance_ip, username="ubuntu", pkey=private_key)
-            print(f"SSH connected to EC2 instance {instance_id} at public IP {instance_ip}")
+            print(f"SSH connected to EC2 instance {container} at public IP {instance_ip}")
 
             # Execute a command(cmd) after connecting/ssh to an instance
             stdin, stdout, stderr = ssh_client.exec_command(ssh_command)
