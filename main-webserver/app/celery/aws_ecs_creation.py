@@ -86,11 +86,12 @@ def create_new_container(self, username, taskinfo):
         fractalLog(
             function="create_new_container",
             label=str(ecs_client.tasks[0]),
-            logs="SQL insertion unsuccessful",)
+            logs="SQL insertion unsuccessful",
+        )
         self.update_state(
             state="FAILURE",
             meta={
-            "msg": "Error inserting VM {cli} and disk into SQL".format(cli=ecs_client.tasks[0])
+                "msg": "Error inserting VM {cli} and disk into SQL".format(cli=ecs_client.tasks[0])
             },
         )
         return None
@@ -112,7 +113,7 @@ def create_new_cluster(self, instance_type, ami, min_size=1, max_size=10, region
         },
     )
 
-    try:
+    try: 
         launch_config_name = ecs_client.create_launch_configuration(instance_type=instance_type, ami=ami, launch_config_name=None)
         auto_scaling_group_name = ecs_client.create_auto_scaling_group(launch_config_name=launch_config_name, min_size=min_size, max_size=max_size, availability_zones=availability_zones)
         capacity_provider_name = ecs_client.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
