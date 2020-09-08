@@ -130,6 +130,7 @@ class ECSClient:
                 {
                     'capacityProvider': capacity_provider,
                     'weight': 1,
+                    'base': 0,
                 } 
                 for capacity_provider in capacity_providers
             ],
@@ -203,27 +204,32 @@ class ECSClient:
             # Execute a command(cmd) after connecting/ssh to an instance
             stdin, stdout, stderr = ssh_client.exec_command(ssh_command)
             err = stderr.readlines()
+            output = ''.join(stdout.readlines())
             if not err:
-                print(f"SSH success! Command output: {''.join(stdout.readlines())}")
+                print(f"SSH success! Command output: {output}")
             else:
                 print(f"SSH command error: {''.join(err)}")
 
             # close the client connection once the job is done
             ssh_client.close()
         except Exception as e:
+            output = ''
             print(f"SSH encountered error: {e}")
         finally:
             private_key_file.close()
+            return output
 
     def ssh_containers_in_cluster(self, cluster, ssh_command):
         containers = self.get_containers_in_cluster(cluster)
         for container in containers:
-            self.ssh_container(container, ssh_command)
+            output = self.ssh_container(container, ssh_command)
+        return output
 
     def ssh_all_containers(self, ssh_command):
         clusters = self.get_all_clusters()
         for cluster in clusters:
-            self.ssh_containers_in_cluster(cluster, ssh_command)
+            output = self.ssh_containers_in_cluster(cluster, ssh_command)
+        return output
                 
     def get_clusters_usage(self, clusters=None):
         """
@@ -415,6 +421,8 @@ class ECSClient:
             autoScalingGroupProvider={
                 'autoScalingGroupArn': auto_scaling_group_arn,
                 'managedScaling': {
+                    'maximumScalingStepSize': 1000,
+                    'minimumScalingStepSize': 1,
                     'status': 'ENABLED',
                     'targetCapacity': 100,
                 },
@@ -475,6 +483,15 @@ class ECSClient:
     def spin_til_running(self, offset=0, time_delay=5):
         while not self.get_instance_ip(offset=offset):
             time.sleep(time_delay)
+    
+    def spin_til_containers_up(self, cluster_name, time_delay=5):
+        container_instances = []
+        while not container_instances:
+            container_instances = testclient.get_containers_in_cluster(cluster_name)
+            time.sleep(time_delay)
+        
+        # wait another 30 seconds just to be safe
+        time.sleep(30)
 
     def spin_til_done(self, offset=0, time_delay=5):
         """
@@ -502,51 +519,24 @@ class ECSClient:
 
 if __name__ == "__main__":
     testclient = ECSClient(region_name="us-east-2")
-    # testclient.set_and_register_task(
-    #     ["echo start"], ["/bin/bash", "-c"], family="multimessage",
-    # )
-    # networkConfiguration = {
-    #     "awsvpcConfiguration": {
-    #         "subnets": ["subnet-0dc1b0c43c4d47945",],
-    #         "securityGroups": ["sg-036ebf091f469a23e",],
-    #     }
-    # }
-    # testclient.run_task(networkConfiguration=networkConfiguration)
-    # testclient.spin_til_running(time_delay=2)
-    # testclient.get_clusters_usage()
-    # testclient.ssh_all_containers(ssh_command='echo hello')
-
-    # launch_config_name = testclient.create_launch_configuration(instance_type='t2.micro', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
-    # auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
-    # capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
-    # cluster_name = testclient.create_cluster(capacity_providers=[capacity_provider_name])
-
-    # networkConfiguration = {
-    #     "awsvpcConfiguration": {
-    #         "subnets": ["subnet-0dc1b0c43c4d47945",],
-    #         "securityGroups": ["sg-036ebf091f469a23e",],
-    #     }
-    # }
-    #testclient.run_task(networkConfiguration=networkConfiguration)
-    cluster_name = 'cluster_okkuvspaca'
-    container_instances = []
-    while not container_instances:
-        container_instances = testclient.get_containers_in_cluster(cluster_name)
-    testclient.cluster = cluster_name
+    launch_config_name = testclient.create_launch_configuration(instance_type='t2.small', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
+    auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
+    capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
+    cluster_name = testclient.create_cluster(capacity_providers=[capacity_provider_name])
+    testclient.spin_til_containers_up(cluster_name)
+    #cluster_name = 'cluster_bvjimbvnir'
+    #testclient.cluster = cluster_name
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage"
     )
     print(cluster_name)
     testclient.run_task(use_launch_type=False)
     testclient.spin_til_running(time_delay=2)
+    testclient.ssh_containers_in_cluster(cluster_name, ssh_command='echo hello')
     testclient.get_clusters_usage()
-
     
-    
-    
-    # testclient.ssh_containers_in_cluster('cluster_jhchrdngkg', ssh_command='echo hello')
     # testclient.terminate_containers_in_cluster('cluster_jhchrdngkg')
 
-    testclient.ssh_container('i-0f5f840ab7437c672', ssh_command='echo hello')
+    # testclient.ssh_container('i-0eeea4666fcdb50b4', ssh_command='echo hello')
     # print(cluster_name)
     # print(testclient.task_ips)

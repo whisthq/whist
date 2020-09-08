@@ -22,9 +22,10 @@ def test_pulling_ip():
     assert testclient.task_ips == {0: '34.229.191.6'}
 
 
-def test_create_cluster_with_auto_scaling_group():
+def test_cluster_with_auto_scaling_group():
+    # tests 1) creating cluster with auto scaling group, 2) running a task on the cluster, 3) ssh'ing into instances in the cluster
     testclient = ECSClient(region_name="us-east-2")
-    launch_config_name = testclient.create_launch_configuration(instance_type='t2.micro', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
+    launch_config_name = testclient.create_launch_configuration(instance_type='t2.small', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
     
     auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
     auto_scaling_groups_def = testclient.auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=[auto_scaling_group_name])
@@ -47,6 +48,17 @@ def test_create_cluster_with_auto_scaling_group():
     cluster = clusters_def['clusters'][0]
     assert cluster['clusterName'] == cluster_name
     assert cluster['capacityProviders'] == [capacity_provider_name]
+
+    testclient.spin_til_containers_up(cluster_name)
+    testclient.set_and_register_task(
+        ["echo start"], ["/bin/bash", "-c"], family="multimessage"
+    )
+    testclient.run_task(use_launch_type=False)
+    testclient.spin_til_running(time_delay=2)
+    print(testclient.task_ips)
+
+    assert testclient.ssh_containers_in_cluster(cluster_name, ssh_command='echo hello') == 'hello'
+    
 
 
 @pytest.mark.skipif(
