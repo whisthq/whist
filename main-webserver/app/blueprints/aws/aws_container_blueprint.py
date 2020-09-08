@@ -6,6 +6,7 @@ from app import fractalPreProcess
 from app.celery.aws_ecs_creation import BadAppError, create_new_container
 from app.celery.aws_ecs_deletion import deleteContainer
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
+from app.helpers.blueprint_helpers.aws.aws_container_get import protocol_info
 from app.helpers.blueprint_helpers.aws.aws_container_post import pingHelper
 from app.helpers.blueprint_helpers.aws.aws_container_post import set_stun
 from app.helpers.utils.general.auth import fractalAuth
@@ -105,8 +106,21 @@ def aws_container_post(action, **kwargs):
                 status = set_stun(user, container_id, using_stun)
                 response = jsonify({"status": status}), status
 
-        elif action == "protocol_info":
-            # TODO: Same as /stun, migrate over disk/protocol_info
-            pass
+    return response
+
+
+@aws_container_bp.route("/container/<action>")
+@fractalPreProcess
+def aws_container_get(action, **kwargs):
+    response = jsonify({"error": NOT_FOUND}), NOT_FOUND
+
+    if action == "protocol_info":
+        address = kwargs.pop("received_from")
+        info, status = protocol_info(address)
+
+        if info:
+            response = jsonify(info), status
+        else:
+            response = jsonify({"error": status}), status
 
     return response
