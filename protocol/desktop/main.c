@@ -451,8 +451,14 @@ int syncKeyboardState(void) {
     fmsg.num_keycodes = fmin(NUM_KEYCODES, num_keys);
 #endif
 
-    // Copy keyboard state
-    memcpy(fmsg.keyboard_state, state, fmsg.num_keycodes);
+    // Copy keyboard state, but using scancodes of the keys in the current keyboard layout.
+    // Must convert to/from the name of the key so SDL returns the scancode for the key in the current layout 
+    // rather than the scancode for the physical key.
+    for (int i = 0; i < fmsg.num_keycodes; i++) {
+        if (state[i]) {
+            fmsg.keyboard_state[SDL_GetScancodeFromName(SDL_GetKeyName(SDL_GetKeyFromScancode(i)))] = 1;
+        }
+    }
 
     // Also send caps lock and num lock status for syncronization
 #ifdef __APPLE__
