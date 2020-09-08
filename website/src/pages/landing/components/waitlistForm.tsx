@@ -9,14 +9,12 @@ import { insertWaitlistAction } from "store/actions/auth/waitlist";
 
 import "styles/landing.css";
 
+const INITIAL_POINTS = 50;
+
 function WaitlistForm(props: any) {
-    const [state, setState] = useState(() => {
-        return {
-            email: null,
-            name: null,
-            country: "United States",
-        };
-    });
+    const [email, setEmail] = useState();
+    const [name, setName] = useState();
+    const [country, setCountry] = useState("United States");
 
     useEffect(() => {
         console.log("Use Effect waitlist");
@@ -24,42 +22,33 @@ function WaitlistForm(props: any) {
 
     function updateEmail(evt: any) {
         evt.persist();
-        setState((prevState) => {
-            return { ...prevState, email: evt.target.value };
-        });
+        setEmail(evt.target.value);
     }
 
     function updateName(evt: any) {
         evt.persist();
-        setState((prevState) => {
-            return { ...prevState, name: evt.target.value };
-        });
+        setName(evt.target.value);
     }
 
     function updateCountry(country: string) {
-        setState((prevState) => {
-            return { ...prevState, country: country };
-        });
+        setCountry(country);
     }
 
     async function insertWaitlist() {
-        var emails = db
-            .collection("waitlist")
-            .where("email", "==", state.email);
+        var emails = db.collection("waitlist").where("email", "==", email);
         const exists = await emails.get().then(function (snapshot) {
             return !snapshot.empty;
         });
 
         if (!exists) {
-            db.collection("waitlist").add({
-                name: state.name,
-                email: state.email,
+            db.collection("waitlist").doc(email).set({
+                name: name,
+                email: email,
                 referrals: 0,
-                points: 50,
+                points: INITIAL_POINTS,
             });
+            props.dispatch(insertWaitlistAction(email, name, INITIAL_POINTS));
         }
-
-        insertWaitlistAction(state.email, state.name);
     }
 
     return (
@@ -88,23 +77,16 @@ function WaitlistForm(props: any) {
                     <br />
                 </InputGroup>
                 <CountryDropdown
-                    value={state.country}
+                    value={country}
                     onChange={(country) => updateCountry(country)}
                 />
                 <div>
                     <Button
                         onClick={insertWaitlist}
                         className="waitlist-button"
-                        disabled={
-                            state.email && state.name && state.country
-                                ? false
-                                : true
-                        }
+                        disabled={email && name && country ? false : true}
                         style={{
-                            opacity:
-                                state.email && state.name && state.country
-                                    ? 1.0
-                                    : 0.5,
+                            opacity: email && name && country ? 1.0 : 0.5,
                         }}
                     >
                         Submit

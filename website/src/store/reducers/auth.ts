@@ -19,8 +19,22 @@ export default function (state = AUTH_DEFAULT, action) {
                           ...state.user,
                           email: action.email,
                           name: action.name,
+                          points: action.points,
                       }
-                    : { email: action.email, name: action.name },
+                    : {
+                          email: action.email,
+                          name: action.name,
+                          points: action.points,
+                      },
+            };
+        case WaitlistAction.UPDATE_USER:
+            return {
+                ...state,
+                user: {
+                    ...state.user,
+                    points: action.points,
+                    ranking: action.ranking,
+                },
             };
         case LoginAction.GOOGLE_LOGIN:
             return {
