@@ -34,8 +34,8 @@ class UserContainer(db.Model):
     last_pinged = db.Column(db.Integer)
     cluster = db.Column(db.ForeignKey("hardware.cluster_info.cluster"))
     using_stun = db.Column(db.Boolean, nullable=False, default=False)
-    allow_autoupdate = db.Column(db.Boolean, nullable=False, default=False)
     branch = db.Column(db.String(250), nullable=False, default="master")
+    allow_autoupdate = db.Column(db.Boolean, nullable=False, default=True)
     temporary_lock = db.Column(db.Integer)
 
 
