@@ -1,6 +1,16 @@
-from app import *
-from app.helpers.utils.aws.aws_resource_locks import *
-from app.helpers.utils.stripe.stripe_payments import *
+from app.helpers.utils.aws.aws_resource_locks import UserContainer, lockContainerAndUpdate
+from app.helpers.utils.stripe.stripe_payments import (
+    BAD_REQUEST,
+    SUCCESS,
+    LoginHistory,
+    dateToUnix,
+    db,
+    fractalLog,
+    fractalSQLCommit,
+    fractalSQLUpdate,
+    getToday,
+    stripeChargeHourly,
+)
 
 
 def pingHelper(available, container_ip, version=None):
@@ -25,9 +35,7 @@ def pingHelper(available, container_ip, version=None):
 
     fractalLog(function="", label="", logs=str(username))
 
-    fractalSQLCommit(
-        db, fractalSQLUpdate, container_info, {"last_pinged": dateToUnix(getToday())}
-    )
+    fractalSQLCommit(db, fractalSQLUpdate, container_info, {"last_pinged": dateToUnix(getToday())})
 
     # Update container_info version
 
@@ -48,18 +56,14 @@ def pingHelper(available, container_ip, version=None):
 
         # Add logoff event to timetable
 
-        log = LoginHistory(
-            user_id=username, action="logoff", timestamp=dateToUnix(getToday()),
-        )
+        log = LoginHistory(user_id=username, action="logoff", timestamp=dateToUnix(getToday()),)
 
         fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
         fractalLog(
             function="pingHelper",
             label=str(username),
-            logs="{username} just disconnected from their cloud PC".format(
-                username=username
-            ),
+            logs="{username} just disconnected from their cloud PC".format(username=username),
         )
 
     # Detect and handle logon event
@@ -68,18 +72,14 @@ def pingHelper(available, container_ip, version=None):
 
         # Add logon event to timetable
 
-        log = LoginHistory(
-            user_id=username, action="logon", timestamp=dateToUnix(getToday()),
-        )
+        log = LoginHistory(user_id=username, action="logon", timestamp=dateToUnix(getToday()),)
 
         fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
         fractalLog(
             function="pingHelper",
             label=str(username),
-            logs="{username} just connected to their cloud PC".format(
-                username=username
-            ),
+            logs="{username} just connected to their cloud PC".format(username=username),
         )
 
     # Change Container states accordingly

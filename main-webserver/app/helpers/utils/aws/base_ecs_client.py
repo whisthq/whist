@@ -67,7 +67,6 @@ class ECSClient:
         self.logs_messages = dict()
         self.warnings = []
         self.cluster = None
-        #self.ec2 = boto3.resource('ec2', self.region_name)
         if starter_client is None:
             self.ecs_client = self.make_client("ecs")
             self.account_id = boto3.client("sts").get_caller_identity().get("Account")
@@ -124,14 +123,14 @@ class ECSClient:
             raise Exception("capacity_providers must be a list of strs")
         cluster_name = cluster_name or self.generate_name("cluster")
         self.ecs_client.create_cluster(
-            clusterName=cluster_name, 
+            clusterName=cluster_name,
             capacityProviders=capacity_providers,
             defaultCapacityProviderStrategy=[
                 {
                     'capacityProvider': capacity_provider,
                     'weight': 1,
                     'base': 0,
-                } 
+                }
                 for capacity_provider in capacity_providers
             ],
         )
@@ -160,7 +159,7 @@ class ECSClient:
             if not next_token:
                 break
         return clusters
-    
+
     def get_containers_in_cluster(self, cluster):
         """
         returns list of all container instance IDs in the auto scaling group of the capacity provider for the cluster
@@ -230,7 +229,7 @@ class ECSClient:
         for cluster in clusters:
             output = self.ssh_containers_in_cluster(cluster, ssh_command)
         return output
-                
+
     def get_clusters_usage(self, clusters=None):
         """
         gets usage of all clusters
@@ -245,13 +244,13 @@ class ECSClient:
                 for resource in instance_info['remainingResources']:
                     if resource['name'] == 'CPU' or resource['name'] == 'MEMORY':
                         resources[resource['name']] = resource['integerValue']
-                
-                containers_usage[container] = {  
+
+                containers_usage[container] = {
                     'remainingResources': resources,
                     'pendingTasksCount': instance_info['pendingTasksCount'],
                     'runningTasksCount': instance_info['runningTasksCount']
                 }
-            
+
             clusters_usage[cluster_info['clusterName']] = {
                 'status': cluster_info['status'],
                 'pendingTasksCount': cluster_info['pendingTasksCount'],
@@ -268,9 +267,11 @@ class ECSClient:
         self,
         command=None,
         entrypoint=None,
+        basedict=None,
+        port_mappings=None,
         family="echostart",
         containername="basictest",
-        imagename="httpd:2.4",
+        imagename=None,
         memory="512",
         cpu="256",
     ):
@@ -280,6 +281,8 @@ class ECSClient:
         Args:
             command (List[str]): Command to run on container
             entrypoint (List[str]): Entrypoint for container
+            basedict (Optional[Dict[str, Any]]): the base parametrization of your task.
+            port_mappings (Optional[List[Dict]): any port mappings you want on the host container, defaults to 8080 tcp.
             family (Optional[str]): what task family you want this task revising
             containername (Optional[str]):  what you want the container the task is on to be called
             imagename (Optional[str]): the URI for the docker image
@@ -287,42 +290,61 @@ class ECSClient:
             cpu (Optional[str]): how much CPU (in vCPU) the task needs
         """
         fmtstr = family + str(self.offset + 1)
+        if port_mappings is None:
+            port_mappings = [{"hostPort": 8080, "protocol": "tcp", "containerPort": 8080}]
+        base_log_config = {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "/ecs/{}".format(fmtstr),
+                "awslogs-region": self.region_name,
+                "awslogs-stream-prefix": "ecs",
+            },
+        }
         try:
             self.log_client.create_log_group(logGroupName="/ecs/{}".format(fmtstr))
         except botocore.exceptions.ClientError as e:
             self.warnings.append(str(e))
-        # TODO:  update basedict to mimic successful task launch
-        basedict = {
-            "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(self.account_id),
-            "containerDefinitions": [
-                {
-                    "logConfiguration": {
-                        "logDriver": "awslogs",
-                        "options": {
-                            "awslogs-group": "/ecs/{}".format(fmtstr),
-                            "awslogs-region": self.region_name,
-                            "awslogs-stream-prefix": "ecs",
-                        },
-                    },
-                    "entryPoint": entrypoint,
-                    "portMappings": [{"hostPort": 8080, "protocol": "tcp", "containerPort": 8080}],
-                    "command": command,
-                    "cpu": 0,
-                    "environment": [{"name": "TEST", "value": "end"}],
-                    "image": imagename,
-                    "name": containername,
-                }
-            ],
-            "placementConstraints": [],
-            "memory": memory,
-            "family": family,
-            # "networkMode": "awsvpc",
-            "cpu": cpu,
-        }
-        if basedict["containerDefinitions"][0]["command"] is None:
-            basedict["containerDefinitions"][0].pop("command")
-        if basedict["containerDefinitions"][0]["entryPoint"] is None:
-            basedict["containerDefinitions"][0].pop("entryPoint")
+        # TODO:  refactor this horrifying mess into multiple functions
+        if basedict is None:
+            basedict = {
+                "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(
+                    self.account_id
+                ),
+                "containerDefinitions": [
+                    {
+                        "logConfiguration": base_log_config,
+                        "entryPoint": entrypoint,
+                        "portMappings": port_mappings,
+                        "command": command,
+                        "cpu": 0,
+                        "environment": [{"name": "TEST", "value": "end"}],
+                        "image": (imagename if imagename is not None else "httpd:2.4"),
+                        "name": containername,
+                    }
+                ],
+                "placementConstraints": [],
+                "memory": memory,
+                "family": family,
+                "networkMode": "awsvpc",
+                "cpu": cpu,
+            }
+            if basedict["containerDefinitions"][0]["command"] is None:
+                basedict["containerDefinitions"][0].pop("command")
+            if basedict["containerDefinitions"][0]["entryPoint"] is None:
+                basedict["containerDefinitions"][0].pop("entryPoint")
+        else:
+            container_params = basedict["containerDefinitions"][0]
+            if command is not None:
+                container_params["command"] = command
+            if entrypoint is not None:
+                container_params["entryPoint"] = entrypoint
+            if imagename is not None:
+                container_params["image"] = imagename
+            container_params["name"] = containername
+            container_params["portMappings"] = port_mappings
+            container_params["logConfiguration"] = base_log_config
+            basedict["family"] = family
+
         response = self.ecs_client.register_task_definition(**basedict)
         arn = response["taskDefinition"]["taskDefinitionArn"]
         self.task_definition_arn = arn
@@ -483,13 +505,13 @@ class ECSClient:
     def spin_til_running(self, offset=0, time_delay=5):
         while not self.get_instance_ip(offset=offset):
             time.sleep(time_delay)
-    
+
     def spin_til_containers_up(self, cluster_name, time_delay=5):
         container_instances = []
         while not container_instances:
             container_instances = testclient.get_containers_in_cluster(cluster_name)
             time.sleep(time_delay)
-        
+
         # wait another 30 seconds just to be safe
         time.sleep(30)
 
@@ -534,7 +556,7 @@ if __name__ == "__main__":
     testclient.spin_til_running(time_delay=2)
     testclient.ssh_containers_in_cluster(cluster_name, ssh_command='echo hello')
     testclient.get_clusters_usage()
-    
+
     # testclient.terminate_containers_in_cluster('cluster_jhchrdngkg')
 
     # testclient.ssh_container('i-0eeea4666fcdb50b4', ssh_command='echo hello')
