@@ -1,8 +1,13 @@
-from app import *
-from app.helpers.utils.aws.aws_general import *
-from app.helpers.utils.azure.azure_general import *
-
+from app.helpers.utils.aws.aws_general import getContainerUser
+from app.helpers.utils.azure.azure_general import (
+    dateToUnix,
+    fractalLog,
+    fractalSQLCommit,
+    getToday,
+    shiftUnixByMinutes,
+)
 from app.models.hardware import *
+
 
 def lockContainerAndUpdate(container_name, state, lock, temporary_lock):
     """Changes the state, lock, and temporary lock of a Container
@@ -19,7 +24,6 @@ def lockContainerAndUpdate(container_name, state, lock, temporary_lock):
     Returns:
         int: 1 = container is unlocked, -1 = giving up
     """
-
 
     new_params = {"state": state, "lock": lock}
 
@@ -92,7 +96,9 @@ def spinLock(container_name, s=None):
         fractalLog(
             function="spinLock",
             label=str(username),
-            logs="Container {container_name} found unlocked on first try.".format(container_name=container_name),
+            logs="Container {container_name} found unlocked on first try.".format(
+                container_name=container_name
+            ),
         )
         return 1
     else:
@@ -106,9 +112,7 @@ def spinLock(container_name, s=None):
         if s:
             s.update_state(
                 state="PENDING",
-                meta={
-                    "msg": "Cloud PC is downloading an update. This could take a few minutes."
-                },
+                meta={"msg": "Cloud PC is downloading an update. This could take a few minutes."},
             )
 
     while locked:

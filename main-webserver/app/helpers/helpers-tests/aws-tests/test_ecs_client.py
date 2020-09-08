@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from utils.aws.base_ecs_client import *
+from utils.aws.base_ecs_client import ECSClient, boto3
 from moto import mock_ecs, mock_logs, mock_autoscaling, mock_ec2
 
 
@@ -15,6 +15,71 @@ def test_pulling_ip():
         "awsvpcConfiguration": {
             "subnets": ["subnet-0dc1b0c43c4d47945",],
             "securityGroups": ["sg-036ebf091f469a23e",],
+        }
+    }
+    testclient.run_task(networkConfiguration=networkConfiguration)
+    testclient.spin_til_running(time_delay=2)
+    assert testclient.task_ips == {0: '34.229.191.6'}
+
+def test_partial_works():
+    basedict = {
+        "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(
+            747391415460
+        ),
+        "containerDefinitions": [
+            {
+                "cpu": 0,
+                "environment": [{"name": "TEST", "value": "end"}],
+                "image":"httpd:2.4"
+            }
+        ],
+        "placementConstraints": [],
+        "memory": "512",
+        "networkMode": "awsvpc",
+        "cpu": "256",
+    }
+    testclient = ECSClient(base_cluster="basetest2")
+    testclient.set_and_register_task(
+        ["echo start"], ["/bin/bash", "-c"], family="multimessage", basedict=basedict
+    )
+    networkConfiguration = {
+        "awsvpcConfiguration": {
+            "subnets": ["subnet-0dc1b0c43c4d47945", ],
+            "securityGroups": ["sg-036ebf091f469a23e", ],
+        }
+    }
+    testclient.run_task(networkConfiguration=networkConfiguration)
+    testclient.spin_til_running(time_delay=2)
+    assert testclient.task_ips == {0: '34.229.191.6'}
+
+
+def test_full_base_config():
+    basedict = {
+        "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(
+            747391415460
+        ),
+        "containerDefinitions": [
+            {
+                "cpu": 0,
+                "environment": [{"name": "TEST", "value": "end"}],
+                "image": "httpd:2.4",
+                "command":["echo start"],
+                "entryPoint":["/bin/bash", "-c"]
+            }
+        ],
+        "placementConstraints": [],
+        "memory": "512",
+        "networkMode": "awsvpc",
+        "cpu": "256",
+    }
+    testclient = ECSClient(base_cluster="basetest2")
+    testclient.set_and_register_task(
+        family="multimessage", basedict=basedict
+    )
+    networkConfiguration = {
+        "awsvpcConfiguration": {
+            "subnets": ["subnet-0dc1b0c43c4d47945", ],
+            "securityGroups": ["sg-036ebf091f469a23e", ],
         }
     }
     testclient.run_task(networkConfiguration=networkConfiguration)
