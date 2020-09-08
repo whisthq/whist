@@ -7,6 +7,7 @@ from app.celery.aws_ecs_creation import BadAppError, create_new_container
 from app.celery.aws_ecs_deletion import deleteContainer
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_post import pingHelper
+from app.helpers.blueprint_helpers.aws.aws_container_post import set_stun
 from app.helpers.utils.general.auth import fractalAuth
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
@@ -95,10 +96,14 @@ def aws_container_post(action, **kwargs):
                 response = jsonify(status), status["status"]
 
         elif action == "stun":
-            # TODO: Toggle whether a container uses stun. Inspire yourself from the disk/stun endpoint. You'll need to
-            # create a using_stun column in the user_containers table, which you can do from TablePlus. When you create
-            # a new column, make sure to modify the appropriate class in the /models folder.
-            pass
+            try:
+                container_id = body.pop("container_id")
+                using_stun = body.pop("stun")
+            except KeyError:
+                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+            else:
+                status = set_stun(user, container_id, using_stun)
+                response = jsonify({"status": status}), status
 
         elif action == "protocol_info":
             # TODO: Same as /stun, migrate over disk/protocol_info
