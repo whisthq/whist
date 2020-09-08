@@ -1,6 +1,8 @@
-from app.models.public import *
-from sqlalchemy.sql import expression
+from sqlalchemy import Index
+from sqlalchemy.sql import expression, text
+
 from app import db
+from app.models.public import User
 
 
 class UserVM(db.Model):
@@ -17,6 +19,7 @@ class UserVM(db.Model):
     disk_id = db.Column(db.ForeignKey("hardware.os_disks.disk_id"))
     temporary_lock = db.Column(db.Integer)
 
+
 class UserContainer(db.Model):
     __tablename__ = "user_containers"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
@@ -29,18 +32,19 @@ class UserContainer(db.Model):
     user_id = db.Column(db.ForeignKey("users.user_id"))
     port = db.Column(db.Integer, nullable=False)
     last_pinged = db.Column(db.Integer)
-    cluster = db.Column(db.ForeignKey('hardware.cluster_info.cluster'))
+    cluster = db.Column(db.ForeignKey("hardware.cluster_info.cluster"))
     using_stun = db.Column(db.Boolean, nullable=False, default=False)
     allow_autoupdate = db.Column(db.Boolean, nullable=False, default=False)
-    branch = db.Column(db.String(250),nullable=False, default="master")
+    branch = db.Column(db.String(250), nullable=False, default="master")
     temporary_lock = db.Column(db.Integer)
+
 
 class ClusterInfo(db.Model):
     __tablename__ = "cluster_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     cluster = db.Column(db.String(250), primary_key=True, unique=True)
-    avgCPURemainingPerContainer = db.Column(db.Float,nullable=False, default=1024.0)
-    avgMemoryRemainingPerContainer = db.Column(db.Float,nullable=False, default=2000.0)
+    avgCPURemainingPerContainer = db.Column(db.Float, nullable=False, default=1024.0)
+    avgMemoryRemainingPerContainer = db.Column(db.Float, nullable=False, default=2000.0)
     pendingTasksCount = db.Column(db.Integer, nullable=False, default=0)
     runningTasksCount = db.Column(db.Integer, nullable=False, default=0)
     registeredContainerInstancesCount = db.Column(db.Integer, nullable=False, default=0)
