@@ -5,6 +5,9 @@
  **/
 
 #include "input_driver.h"
+
+#if !USING_XTEST_INPUT_DRIVER
+
 #include <fcntl.h>
 #include <linux/uinput.h>
 #include <dirent.h>
@@ -300,6 +303,9 @@ const int linux_mouse_buttons[6] = {
     BTN_4        // 5 -> Extra Mouse Button 2
 };
 
+#define GetLinuxKeyCode(sdl_keycode) linux_keycodes[sdl_keycode]
+#define GetLinuxMouseButton(sdl_button) linux_mouse_buttons[sdl_button]
+
 input_device_t* CreateInputDevice() {
     input_device_t* input_device = malloc(sizeof(input_device_t));
     memset(input_device, 0, sizeof(input_device_t));
@@ -417,9 +423,6 @@ void DestroyInputDevice(input_device_t* input_device) {
     free(input_device);
 }
 
-#define GetLinuxKeyCode(sdl_keycode) linux_keycodes[sdl_keycode]
-#define GetLinuxMouseButton(sdl_button) linux_mouse_buttons[sdl_button]
-
 void EmitInputEvent(int fd, int type, int code, int val) {
     struct input_event ie;
     ie.type = type;
@@ -496,8 +499,10 @@ int EmitMouseButtonEvent(input_device_t* input_device, FractalMouseButton button
 }
 
 int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
-    EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_HWHEEL, fmsg->mouseWheel.x);
-    EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_WHEEL, fmsg->mouseWheel.y);
+    EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x);
+    EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_WHEEL, y);
     EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     return 0;
 }
+
+#endif  // !USING_XTEST_INPUT_DRIVER

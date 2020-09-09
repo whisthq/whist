@@ -71,6 +71,6 @@ void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fms
  * @returns                        The number of keycodes successfully inputted from
  *                                 the array
  */
-size_t InputKeycodes(input_device_t* input_device, FractalKeycode* keycodes, size_t count)
+size_t InputKeycodes(input_device_t* input_device, FractalKeycode* keycodes, size_t count);
 
 #endif  // INPUT_H

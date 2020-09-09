@@ -1,4 +1,6 @@
-#include "input.h"
+#include "input_driver.h"
+
+#if USING_XTEST_INPUT_DRIVER
 
 #define XK_LATIN1
 #define XK_MISCELLANY
@@ -320,7 +322,7 @@ int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int p
         LOG_WARNING("Not a valid keycode for X11!");
         return -1;
     }
-    XtestFakeKeyEvent(input_device->display, kcode, pressed, CurrentTime);
+    XTestFakeKeyEvent(input_device->display, kcode, pressed, CurrentTime);
     XSync(input_device->display, false);
 
     XUnlockDisplay(input_device->display);
@@ -385,3 +387,5 @@ int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
     XUnlockDisplay(input_device->display);
     return 0;
 }
+
+#endif  // USING_XTEST_INPUT_DRIVER

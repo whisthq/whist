@@ -11,17 +11,17 @@ void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fms
         return;
     }
 
-    bool server_caps_lock = GetServerModifierState(input_device, FK_CAPSLOCK);
-    bool server_num_lock = GetServerModifierState(input_device, FK_NUMLOCK);
+    bool server_caps_lock = GetKeyboardModifierState(input_device, FK_CAPSLOCK);
+    bool server_num_lock = GetKeyboardModifierState(input_device, FK_NUMLOCK);
 
     bool client_caps_lock_holding = fmsg->keyboard_state[FK_CAPSLOCK];
     bool client_num_lock_holding = fmsg->keyboard_state[FK_NUMLOCK];
 
     for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; ++sdl_keycode) {
-        if (!fmsg->keyboard_state[sdl_keycode] && GetServerKeyState(input_device, sdl_keycode)) {
+        if (!fmsg->keyboard_state[sdl_keycode] && GetKeyboardKeyState(input_device, sdl_keycode)) {
             KeyUp(input_device, sdl_keycode);
         } else if (fmsg->keyboard_state[sdl_keycode] &&
-                   !GetServerKeyState(input_device, sdl_keycode)) {
+                   !GetKeyboardKeyState(input_device, sdl_keycode)) {
             KeyDown(input_device, sdl_keycode);
 
             if (sdl_keycode == FK_CAPSLOCK) {
