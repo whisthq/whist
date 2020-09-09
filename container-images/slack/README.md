@@ -1,3 +1,11 @@
-# SLACK Container Image
+# Slack Container Image
 
-TBD.
+This container image runs [Slack](https://www.slack.com) as an Electron application containerized on Linux Ubuntu and streamed via Fractal. This Dockerfile is based on the `base/Dockerfile.18` Dockerfile for the core Fractal container structure - see the `base/README.md` for non-application specific guidance.
+
+## Development
+
+TBD
+
+## Publishing
+
+TBD
