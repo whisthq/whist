@@ -308,18 +308,13 @@ int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_ke
 }
 
 int GetKeyboardKeyState(input_device_t* input_device, FractalKeycode sdl_keycode) {
-    if (GetX11KeySym(sdl_keycode)) {
-        return input_device->keyboard_state[sdl_keycode];
-    }
-    LOG_WARNING("Not a valid keycode for X11!");
-    return -1;
+    return input_device->keyboard_state[sdl_keycode];
 }
 
 int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed) {
     XLockDisplay(input_device->display);
     KeyCode kcode = XKeysymToKeycode(input_device->display, GetX11KeySym(sdl_keycode));
     if (!kcode) {
-        LOG_WARNING("Not a valid keycode for X11!");
         return -1;
     }
     XTestFakeKeyEvent(input_device->display, kcode, pressed, CurrentTime);

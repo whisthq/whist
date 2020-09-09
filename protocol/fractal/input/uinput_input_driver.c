@@ -448,18 +448,11 @@ int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_ke
 }
 
 int GetKeyboardKeyState(input_device_t* input_device, FractalKeycode sdl_keycode) {
-    if (GetLinuxKeyCode(sdl_keycode)) {
-        return input_device->keyboard_state[sdl_keycode];
-    }
-    LOG_WARNING("Not a valid keycode for Linux!");
+    return input_device->keyboard_state[sdl_keycode];
     return -1;
 }
 
 int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed) {
-    if (!GetLinuxKeyCode(sdl_keycode)) {
-        LOG_WARNING("Not a valid keycode for Linux!");
-        return -1;
-    }
     EmitInputEvent(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(sdl_keycode), pressed);
     EmitInputEvent(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
     input_device->keyboard_state[sdl_keycode] = pressed;
