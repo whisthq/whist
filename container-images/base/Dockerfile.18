@@ -53,8 +53,7 @@ RUN apt-get -y install tzdata keyboard-configuration ufw
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
-# RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.sh >>/dev/null 2>&1
-# Using local setup-scripts repository for development
+# Use local setup-scripts repository for development
 ADD setup-scripts /setup-scripts
 
 RUN useradd --create-home fractal \
@@ -110,20 +109,15 @@ ADD entry.sh /home/fractal
 ADD display-service-envs /home/fractal
 ADD fractal-input.rules home/fractal
 
+RUN sudo apt-get install -y openssh-server
+RUN systemctl enable ssh
+
 RUN chown -v -R fractal:fractal /home/fractal
 RUN chown root:root /run/user
 RUN chmod +x /home/fractal/entry.sh
 
 
-# FOR DEBUGGING ONLY
-RUN sudo apt install tmux
-RUN sudo apt install -y xserver-xorg-video-dummy x11-apps
-RUN sudo apt install -y mesa-utils
-RUN sudo apt install -y glmark2
-
-
-
-# Set up nvidia inside container
+###### Set up nvidia inside container
 LABEL com.nvidia.volumes.needed="nvidia_driver"
 
 RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
@@ -147,11 +141,21 @@ RUN sudo apt-get -y update
 RUN sudo apt-get -y install cuda-drivers
 ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
+# Set up service (that starts before X) to fix the NVIDIA GPU bus ID
+ADD setup-scripts/linux/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/
+ADD fractal-update-nvidia-busid.service /etc/systemd/system/
+ADD setup-scripts/linux/update-nvidia-busid.sh /usr/share/fractal/
+RUN systemctl enable fractal-update-nvidia-busid
+
 # Set display environment variable to our nvidia-powered display
 ENV DISPLAY :10
 
 # Install libraries for (limited) hardware acceleration
 RUN apt install -y vainfo vdpauinfo vdpau-va-driver libvdpau-va-gl1
+
+
+# Install some useful utilities for debugging/testing
+RUN sudo apt install -y tmux xserver-xorg-video-dummy x11-apps mesa-utils glmark2 mpv
 
 # Install firefox nightly (for testing only)
 # RUN sudo add-apt-repository ppa:ubuntu-mozilla-daily/ppa
@@ -159,32 +163,22 @@ RUN apt install -y vainfo vdpauinfo vdpau-va-driver libvdpau-va-gl1
 # RUN sudo apt install firefox-trunk
 
 
-#### FROM PHIL 1/2 on this file: I think this new service for Nvidia needs to be added here, but not certain
-#### It apparently needs to run before X so it might need to be even before (?)
-ADD setup-scripts/linux/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/
-ADD fractal-update-nvidia-busid.service /etc/systemd/system
-####
-
+# Install fractal services
 ADD fractal-entrypoint.service /etc/systemd/system
+RUN systemctl enable fractal-entrypoint
 ADD fractal-display.service /etc/systemd/system
+RUN systemctl enable fractal-display
 ADD fractal-protocol.service /etc/systemd/system
+RUN systemctl enable fractal-protocol
+
+ADD fractal-setup.sh /
+RUN chmod +x /fractal-setup.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
-
-RUN sudo apt-get install -y openssh-server
-RUN systemctl enable ssh
 
 #As opposed to graphical.target, which is the default
 #RUN systemctl set-default multi-user.target
 ENV init /sbin/init
-
-#### FROM PHIL 2/2 on this file: running the new service from above!
-RUN systemctl enable fractal-update-nvidia-busid
-####
-
-RUN systemctl enable fractal-entrypoint
-RUN systemctl enable fractal-display
-RUN systemctl enable fractal-protocol
 
 # Disable some extra systemd services
 RUN systemctl mask plymouth
