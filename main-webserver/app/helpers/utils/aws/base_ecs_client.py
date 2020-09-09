@@ -36,6 +36,10 @@ class ECSClient:
         starter_client (boto3.client): starter ecs client, used for mocking
         starter_log_client (boto3.client): starter log client, used for mocking
         starter_ec2_client (boto3.client): starter log client, used for mocking
+        starter_s3_client (boto3.client): starter s3 client, used for mocking
+        starter_ssm_client (boto3.client): starter ssm client, used for mocking
+        starter_iam_client (boto3.client): starter iam client, used for mocking
+        starter_auto_scaling_client (boto3.client): starter auto scaling client, used for mocking
     TODO: find ECS specific logs, if they exist -- right now logs are stdout and stderr
     """
 
@@ -71,7 +75,7 @@ class ECSClient:
         self.logs_messages = dict()
         self.warnings = []
         self.cluster = None
-        #self.ec2 = boto3.resource('ec2', self.region_name)
+
         if starter_client is None:
             self.ecs_client = self.make_client("ecs")
             self.account_id = boto3.client("sts").get_caller_identity().get("Account")
@@ -103,7 +107,7 @@ class ECSClient:
             self.auto_scaling_client = starter_auto_scaling_client
         self.set_cluster(cluster_name=base_cluster)
 
-        # Create role + instance profile that allows containers to use SSM, S3, and EC2
+        # Create role and instance profile that allows containers to use SSM, S3, and EC2
         self.role_name = self.generate_name('role_name')
         assume_role_policy_document = {
             "Version": "2012-10-17", 
@@ -146,7 +150,7 @@ class ECSClient:
 
     def make_client(self, client_type, **kwargs):
         """
-        constructs an ECS client object with the given params
+        Constructs an ECS client object with the given params
         Args:
             client_type (str): which ECS client you're trying to produce
             **kwargs: any add'l keyword params
@@ -163,12 +167,22 @@ class ECSClient:
         return clients
 
     def generate_name(self, starter_name=''):
+        """
+        Helper function for generating a name with a random UUID
+        Args:
+            starter_name (Optional[str]): starter string for the name
+        Returns:
+            str: the generated name
+        """
         letters = string.ascii_lowercase
         return starter_name + '_' + ''.join(random.choice(letters) for i in range(10))
 
     def create_cluster(self, capacity_providers, cluster_name=None):
         """
         Creates a new cluster with the specified capacity providers and sets the task's compute cluster to it
+        Args:
+            capacity_providers (List[str]): capacity providers to use for cluster
+            cluster_name (Optional[str]): name of cluster, will be automatically generated if not provided
         """
         if isinstance(capacity_providers, str):
             capacity_providers = [capacity_providers]
@@ -192,7 +206,9 @@ class ECSClient:
 
     def set_cluster(self, cluster_name=None):
         """
-        sets the task's compute cluster to be the first available/default compute cluster.
+        Sets the task's compute cluster to be the inputted cluster, or the first available/default compute cluster if a cluster is not provided
+        Args:
+            cluster_name (Optional[str]): name of cluster to set task's compute cluster to
         """
         self.cluster = (
             check_str_param(cluster_name, 'cluster_name')
@@ -202,7 +218,8 @@ class ECSClient:
 
     def get_all_clusters(self):
         """
-        returns list of all cluster ARNs
+        Returns:
+            List[str]: list of all cluster ARNs owned by AWS account
         """
         clusters, next_token = [], None
         while True:
@@ -214,32 +231,67 @@ class ECSClient:
         return clusters
     
     def describe_auto_scaling_groups_in_cluster(self, cluster):
+        """
+        Args:
+            cluster (str): name of cluster to set task's compute cluster to
+        Returns:
+            List[Dict]: each dict contains details about an auto scaling group in the cluster
+        """
         capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])['clusters'][0]['capacityProviders']
         capacity_providers_info = self.ecs_client.describe_capacity_providers(capacityProviders=capacity_providers)['capacityProviders']
         auto_scaling_groups = list(map(lambda cp: cp['autoScalingGroupProvider']['autoScalingGroupArn'].split('/')[-1], capacity_providers_info))
         return self.auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=auto_scaling_groups)['AutoScalingGroups']
 
-    def get_container_instance_ips(self, cluster, container_arns):
-        ec2_ids = self.get_container_instance_ids(cluster, container_arns)
+    def get_container_instance_ips(self, cluster, containers):
+        """
+        Args:
+            cluster (str): name of cluster
+            containers (List[str]): either the full ARNs or ec2 instance IDs of the containers
+        Returns:
+            List[str]: the public IP address of each container
+        """
+        ec2_ids = self.get_container_instance_ids(cluster, containers)
         ec2_info = self.ec2_client.describe_instances(InstanceIds=ec2_ids)
         return list(map(lambda info: info.get('PublicIpAddress', -1), ec2_info['Reservations'][0]['Instances']))
 
-    def get_container_instance_ids(self, cluster, container_arns):
-        full_containers_info = self.ecs_client.describe_container_instances(cluster=cluster, containerInstances=container_arns)['containerInstances']
+    def get_container_instance_ids(self, cluster, containers):
+        """
+        Args:
+            cluster (str): name of cluster
+            containers (List[str]): either the full ARNs or ec2 instance IDs of the containers
+        Returns:
+            List[str]: the ec2 instance IDs of the containers
+        """ 
+        full_containers_info = self.ecs_client.describe_container_instances(cluster=cluster, containerInstances=containers)['containerInstances']
         return list(map(lambda info: info['ec2InstanceId'], full_containers_info))
 
     def get_containers_in_cluster(self, cluster):
         """
-        returns list of all container instance IDs in the auto scaling group of the capacity provider for the cluster
+        Args:
+            cluster (str): name of cluster
+        Returns:
+            List[str]: the ARNs of the containers in the cluster
         """
         return self.ecs_client.list_container_instances(cluster=cluster)['containerInstanceArns']
 
     def terminate_containers_in_cluster(self, cluster):
+        """
+        Terminates all of the containers in the cluster. They will eventually be cleaned up automatically.
+        Args:
+            cluster (str): name of cluster
+        """
         containers = self.get_container_instance_ids(cluster, self.get_containers_in_cluster(cluster))
         if containers:
             self.ec2_client.terminate_instances(InstanceIds=containers)
 
     def exec_commands_on_containers(self, cluster, containers, commands):
+        """
+        Runs shell commands on the specified containers in the cluster
+        Args:
+            cluster (str): name of cluster
+            containers (List[str]): either the ARN or ec2 instance IDs of the containers
+            commands (List[str]): shell commands to run on the containers
+        """
         resp = self.ssm_client.send_command(
             DocumentName="AWS-RunShellScript", # One of AWS' preconfigured documents
             Parameters={'commands': commands},
@@ -250,6 +302,11 @@ class ECSClient:
         return resp
 
     def exec_commands_all_containers(self, commands):
+        """
+        Runs shell commands on all containers in all clusters associated with current AWS account
+        Args:
+            commands (List[str]): shell commands to run on the containers
+        """
         clusters = self.get_all_clusters()
         for cluster in clusters:
             containers = self.get_containers_in_cluster(cluster)
@@ -257,7 +314,12 @@ class ECSClient:
 
     def get_clusters_usage(self, clusters=None):
         """
-        gets usage of all clusters
+        Gets usage info of clusters, including status, pending tasks, running tasks, 
+        container instances, container usage, min containers, and max containers
+        Args:
+            clusters (Optional[List[str]]): the clusters to get the usage info for, defaults to all clusters associated with AWS account
+        Returns:
+            Dict[Dict]: A dictionary mapping each cluster name to cluster usage info, which is stored in a dict
         """
         clusters, clusters_usage = clusters or self.get_all_clusters(), {}
         for cluster in clusters:
@@ -380,8 +442,6 @@ class ECSClient:
         Adds a task by arn to this client's task list.  Useful for keeping an eye on already running tasks.
         Args:
             task_arn: the ID of the task to add.
-
-
         """
         self.tasks.append(task_arn)
         self.tasks_done.append(False)
@@ -412,7 +472,22 @@ class ECSClient:
             cluster=self.cluster, task=(self.tasks[offset]), reason=reason,
         )
 
-    def create_launch_configuration(self, instance_type, ami, launch_config_name=None, cluster_name=None):
+    def create_launch_configuration(
+        self, 
+        instance_type='t2.small', 
+        ami='ami-04cfcf6827bb29439',
+        launch_config_name=None, 
+        cluster_name=None,
+    ):
+        """
+        Args:
+             instance_type (Optional[str]): size of instances to create in auto scaling group, defaults to t2.small
+             ami (Optional[str]): AMI to use for the instances created in auto scaling group, defaults to an ECS-optimized, GPU-optimized Amazon Linux 2 AMI
+             launch_config_name (Optional[str]): the name to give the generated launch configuration, will be automatically generated if not provided
+             cluster_name (Optional[str]): the cluster name that the launch configuration will be used for, will be automatically generated if not provided
+        Returns:
+             (str, str): name of cluster for launch configuration, name of launch configuration created
+        """
         cluster_name = cluster_name or self.generate_name('cluster')
 
         # Initial data/scripts to be run on all container instances
@@ -495,6 +570,16 @@ class ECSClient:
         max_size=10,
         availability_zones=None,
     ):
+        """
+        Args:
+             launch_config_name (str): the launch configuration to use for the instances created by the auto scaling group
+             auto_scaling_group_name (Optional[str]): the name to give the generated auto scaling group, will be automatically generated if not provided
+             min_size (Optional[int]): the minimum number of containers in the auto scaling group, defaults to 1
+             max_size (Optional[int]): the maximum number of containers in the auto scaling group, defaults to 10
+             availability_zones (Optional[string]): the availability zones for creating instances in the auto scaling group
+        Returns:
+             str: name of auto scaling group created
+        """
         availability_zones = availability_zones or [self.region_name + 'a']
         if isinstance(availability_zones, str):
             availability_zones = [availability_zones]
@@ -513,6 +598,13 @@ class ECSClient:
         return auto_scaling_group_name
 
     def create_capacity_provider(self, auto_scaling_group_name, capacity_provider_name=None):
+        """
+        Args:
+             auto_scaling_group_name (str): the auto scaling group to create a capacity provider for
+             capacity_provider_name (Optional[str]): the name to give the generated capacity provider, will be automatically generated if not provided
+        Returns:
+             str: name of capacity provider created
+        """
         auto_scaling_group_info = self.auto_scaling_client.describe_auto_scaling_groups(
             AutoScalingGroupNames=[auto_scaling_group_name]
         )
@@ -589,6 +681,12 @@ class ECSClient:
             time.sleep(time_delay)
     
     def spin_til_containers_up(self, cluster_name, time_delay=5):
+        """
+        spinpolls until container instances have been assigned to the cluster
+        Args:
+            cluster_name (str)
+            time_delay (int): how long to wait between polls, seconds
+        """
         container_instances = []
         while not container_instances:
             container_instances = self.get_containers_in_cluster(cluster_name)
@@ -599,6 +697,14 @@ class ECSClient:
         return container_instances
 
     def spin_til_command_executed(self, command_id, time_delay=5):
+        """
+        spinpolls until command has been executed
+        Args:
+            command_id (str): the command to wait on
+            time_delay (int): how long to wait between polls, seconds
+        Returns:
+            bool: True if the command executed successfully
+        """
         while True:
             status = self.ssm_client.list_commands(CommandId=command_id)['Commands'][0]['Status']
             if status == 'Success':
@@ -632,6 +738,14 @@ class ECSClient:
             self.spin_til_running(offset=i, time_delay=time_delay)
 
     def create_auto_scaling_cluster(self, instance_type='t2.small', ami='ami-04cfcf6827bb29439'):
+        """
+        Creates launch configuration, auto scaling group, capacity provider, and cluster
+        Args:
+            instance_type (Optional[str]): size of instances to create in auto scaling group, defaults to t2.small
+            ami (Optional[str]): AMI to use for the instances created in auto scaling group, defaults to an ECS-optimized, GPU-optimized Amazon Linux 2 AMI
+        Returns:
+            (str, str, str, str): cluster name, launch configuration name, auto scaling group name, capacity provider name
+        """
         cluster_name, launch_config_name = testclient.create_launch_configuration(instance_type=instance_type, ami=ami)
         auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
         capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)

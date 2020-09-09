@@ -16,6 +16,11 @@ class UserContainerSchema(ma.SQLAlchemyAutoSchema):
         model = UserContainer
         include_fk = True
 
+class ClusterInfoSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = ClusterInfo
+        include_fk = True
+
 class SecondaryDiskSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SecondaryDisk
