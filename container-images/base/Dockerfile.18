@@ -183,6 +183,22 @@ RUN systemctl mask plymouth
 RUN systemctl mask systemd-hostnamed
 
 
+# Install wine
+RUN curl https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/Release.key > Release.key 
+RUN sudo apt-key add Release.key
+RUN sudo add-apt-repository 'deb https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/ ./'
+RUN sudo apt update
+RUN sudo dpkg --add-architecture i386 
+RUN wget -nc https://dl.winehq.org/wine-builds/winehq.key
+RUN sudo apt-key add winehq.key
+RUN rm Release.key
+RUN rm winehq.key
+RUN sudo add-apt-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ bionic main' 
+RUN sudo apt update
+RUN sudo apt install -y --install-recommends winehq-stable
+
+
+
 ADD fractal-setup.sh /
 RUN chmod +x /fractal-setup.sh
 
