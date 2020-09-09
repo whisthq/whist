@@ -3,6 +3,7 @@ import string
 import paramiko
 import io
 import time
+import json
 from pprint import pprint
 
 import boto3
@@ -48,6 +49,8 @@ class ECSClient:
         starter_log_client=None,
         starter_ec2_client=None,
         starter_s3_client=None,
+        starter_ssm_client=None,
+        starter_iam_client=None,
         starter_auto_scaling_client=None,
         grab_logs=True,
     ):
@@ -85,11 +88,58 @@ class ECSClient:
             self.s3_client = self.make_client("s3")
         else:
             self.s3_client = starter_s3_client
+        if starter_ssm_client is None:
+            self.ssm_client = self.make_client("ssm")
+        else:
+            self.ssm_client = starter_ssm_client
+        if starter_iam_client is None:
+            self.iam_client = self.make_client("iam")
+        else:
+            self.iam_client = starter_iam_client
         if starter_auto_scaling_client is None:
             self.auto_scaling_client = self.make_client("autoscaling")
         else:
             self.auto_scaling_client = starter_auto_scaling_client
         self.set_cluster(cluster_name=base_cluster)
+        self.instance_profile = self.generate_name('instance_profile')
+        self.iam_client.create_instance_profile(InstanceProfileName=self.instance_profile)
+        self.role_name = self.generate_name('role_name')
+        assume_role_policy_document = {
+            "Version": "2012-10-17", 
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": [
+                            "ec2.amazonaws.com"
+                        ]
+                    },
+                    "Action": [
+                        "sts:AssumeRole"
+                    ]
+                }
+            ]
+        }
+        self.iam_client.create_role(
+            RoleName=self.role_name,
+            AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
+        )
+        self.iam_client.attach_role_policy(
+            PolicyArn='arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore',
+            RoleName=self.role_name,
+        )
+        self.iam_client.attach_role_policy(
+            PolicyArn='arn:aws:iam::aws:policy/AmazonS3FullAccess',
+            RoleName=self.role_name,
+        )
+        self.iam_client.attach_role_policy(
+            PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role',
+            RoleName=self.role_name,
+        )
+        self.iam_client.add_role_to_instance_profile(
+            InstanceProfileName=self.instance_profile,
+            RoleName=self.role_name
+        )
 
     def make_client(self, client_type, **kwargs):
         """
@@ -180,6 +230,16 @@ class ECSClient:
         containers = self.get_containers_in_cluster(cluster)
         if containers:
             self.ec2_client.terminate_instances(InstanceIds=containers)
+
+    def exec_commands_on_containers(self, containers, commands):
+        resp = self.ssm_client.send_command(
+            DocumentName="AWS-RunShellScript", # One of AWS' preconfigured documents
+            Parameters={'commands': commands},
+            InstanceIds=containers,
+            OutputS3Region=self.region_name,
+            OutputS3BucketName='fractal-container-outputs',
+        )
+        return resp
 
     def ssh_container(self, container, ssh_command):
         instance_info = self.ec2_client.describe_instances(InstanceIds=[container])['Reservations'][0]['Instances'][0]
@@ -326,7 +386,7 @@ class ECSClient:
                 "placementConstraints": [],
                 "memory": memory,
                 "family": family,
-                "networkMode": "awsvpc",
+                #"networkMode": "awsvpc",
                 "cpu": cpu,
             }
             if basedict["containerDefinitions"][0]["command"] is None:
@@ -388,21 +448,85 @@ class ECSClient:
             cluster=self.cluster, task=(self.tasks[offset]), reason=reason,
         )
 
-    def create_launch_configuration(self, instance_type, ami, launch_config_name=None, key_name=None):
-        if not key_name:
-            key_name = self.generate_name('key')
-            key_material = self.ec2_client.create_key_pair(KeyName=key_name)['KeyMaterial']
-            self.s3_client.put_object(
-                Key=key_name,
-                Body=key_material,
-                Bucket='fractal-container-keys'
-            )
+    def create_launch_configuration(self, instance_type, ami, launch_config_name=None, cluster_name=None):
+        # userdata = """#cloud-config
+        #     runcmd:
+        #     - /home/ec2-user/sudo npm run prod
+        #     - cd /tmp
+        #     - curl https://amazon-ssm-%s.s3.amazonaws.com/latest/linux_amd64/amazon-ssm-agent.rpm -o amazon-ssm-agent.rpm
+        #     - yum install -y amazon-ssm-agent.rpm
+        # """ % self.region_name 
+        if not cluster_name:
+            cluster_name = self.generate_name('cluster')
+        userdata = """
+            #!/bin/bash
+            # Install Docker
+            apt-get update -y && apt-get install -y docker.io
+            echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
+            apt-get update -y && apt-get install -y docker.io
+            echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
+            apt-get -y install iptables-persistent
+
+            # Set iptables rules
+            echo 'net.ipv4.conf.all.route_localnet = 1' >> /etc/sysctl.conf
+            sysctl -p /etc/sysctl.conf
+            iptables -t nat -A PREROUTING -p tcp -d 169.254.170.2 --dport 80 -j DNAT --to-destination 127.0.0.1:51679
+            iptables -t nat -A OUTPUT -d 169.254.170.2 -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 51679
+
+            # Write iptables rules to persist after reboot
+            iptables-save > /etc/iptables/rules.v4
+
+            # Create directories for ECS agent
+            mkdir -p /var/log/ecs /var/lib/ecs/data /etc/ecs
+
+            # Write ECS config file
+            cat << EOF > /etc/ecs/ecs.config
+            ECS_DATADIR=/data
+            ECS_ENABLE_TASK_IAM_ROLE=true
+            ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
+            ECS_LOGFILE=/log/ecs-agent.log
+            ECS_AVAILABLE_LOGGING_DRIVERS=["json-file","awslogs"]
+            ECS_LOGLEVEL=info
+            ECS_CLUSTER={}
+            EOF
+
+            # Write systemd unit file
+            cat << EOF > /etc/systemd/system/docker-container@ecs-agent.service
+            [Unit]
+            Description=Docker Container %I
+            Requires=docker.service
+            After=docker.service
+
+            [Service]
+            Restart=always
+            ExecStartPre=-/usr/bin/docker rm -f %i 
+            ExecStart=/usr/bin/docker run --name %i \
+            --restart=on-failure:10 \
+            --volume=/var/run:/var/run \
+            --volume=/var/log/ecs/:/log \
+            --volume=/var/lib/ecs/data:/data \
+            --volume=/etc/ecs:/etc/ecs \
+            --net=host \
+            --env-file=/etc/ecs/ecs.config \
+            amazon/amazon-ecs-agent:latest
+            ExecStop=/usr/bin/docker stop %i
+
+            [Install]
+            WantedBy=default.target
+            EOF
+
+            systemctl enable docker-container@ecs-agent.service
+            systemctl start docker-container@ecs-agent.service
+        """.format(cluster_name)
+        pprint(self.iam_client.list_instance_profiles())
         launch_config_name = launch_config_name or self.generate_name('launch_configuration')
         response = self.auto_scaling_client.create_launch_configuration(
             LaunchConfigurationName=launch_config_name,
             ImageId=ami,
             InstanceType=instance_type,
-            KeyName=key_name,
+            #KeyName=key_name,
+            IamInstanceProfile=self.instance_profile,
+            UserData=userdata,
         )
         return launch_config_name
 
@@ -515,6 +639,7 @@ class ECSClient:
         
         # wait another 30 seconds just to be safe
         time.sleep(30)
+        return container_instances
 
     def spin_til_done(self, offset=0, time_delay=5):
         """
@@ -539,29 +664,27 @@ class ECSClient:
         for i in range(self.offset + 1):
             self.spin_til_running(offset=i, time_delay=time_delay)
 
+    def create_auto_scaling_cluster(self, instance_type='t2.small', ami='ami-04cfcf6827bb29439'):
+        cluster_name = self.generate_name('cluster')
+        launch_config_name = testclient.create_launch_configuration(instance_type=instance_type, ami=ami, cluster_name=cluster_name, launch_config_name=None)
+        auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
+        capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
+        cluster_name = testclient.create_cluster(capacity_providers=[capacity_provider_name], cluster_name=cluster_name)
+        return cluster_name
 
 if __name__ == "__main__":
     testclient = ECSClient(region_name="us-east-2")
-    testclient.ssh_container('i-0345c2d1edf3ec8d6', 'echo hello')
+    time.sleep(15)
+    cluster_name = testclient.create_auto_scaling_cluster()
+    container_instances = testclient.spin_til_containers_up(cluster_name)
+    testclient.set_and_register_task(
+        ["echo start"], ["/bin/bash", "-c"], family="multimessage"
+    )
+    print(cluster_name)
+    time.sleep(15)
+    print(testclient.exec_commands_on_containers(container_instances, ['echo hello']))
+    testclient.run_task(use_launch_type=False)
+    testclient.spin_til_running(time_delay=2)
 
-    # launch_config_name = testclient.create_launch_configuration(instance_type='t2.small', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
-    # auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
-    # capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
-    # cluster_name = testclient.create_cluster(capacity_providers=[capacity_provider_name])
-    # testclient.spin_til_containers_up(cluster_name)
-    # #cluster_name = 'cluster_bvjimbvnir'
-    # #testclient.cluster = cluster_name
-    # testclient.set_and_register_task(
-    #     ["echo start"], ["/bin/bash", "-c"], family="multimessage"
-    # )
-    # print(cluster_name)
-    # testclient.run_task(use_launch_type=False)
-    # testclient.spin_til_running(time_delay=2)
-    # testclient.ssh_containers_in_cluster(cluster_name, ssh_command='echo hello')
-    # testclient.get_clusters_usage()
-    
-    # testclient.terminate_containers_in_cluster('cluster_jhchrdngkg')
-
-    # testclient.ssh_container('i-0eeea4666fcdb50b4', ssh_command='echo hello')
-    # print(cluster_name)
-    # print(testclient.task_ips)
+    testclient.get_clusters_usage()
+    testclient.terminate_containers_in_cluster(cluster_name)
