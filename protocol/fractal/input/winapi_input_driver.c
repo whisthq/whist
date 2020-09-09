@@ -300,7 +300,7 @@ void DestroyInputDevice(input_device_t* input_device) {
     return;
 }
 
-#define GetWindowsKeycode(sdl_keycode) windows_keycodes[sdl_keycode]
+#define GetWindowsKeyCode(sdl_keycode) windows_keycodes[sdl_keycode]
 #define KEYPRESS_MASK 0x8000
 
 int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_keycode) {
@@ -324,8 +324,10 @@ int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int p
 
     HKL keyboard_layout = GetKeyboardLayout(0);
 
-    ip.ki.wScan = (WORD)MapVirtualKeyExA(GetWindowsKeyCode(sdl_keycode) & ~USE_NUMPAD,
-                                         MAPVK_VK_TO_VSC_EX, keyboard_layout);
+    int windows_keycode = GetWindowsKeyCode(sdl_keycode);
+
+    ip.ki.wScan =
+        (WORD)MapVirtualKeyExA(windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX, keyboard_layout);
     ip.ki.dwFlags = KEYEVENTF_SCANCODE;
     if (!pressed) {
         ip.ki.dwFlags |= KEYEVENTF_KEYUP;
@@ -432,7 +434,7 @@ int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
     ip[1].mi.mouseData = x * 100;
     ip[1].mi.dwFlags = MOUSEEVENTF_HWHEEL;
 
-    int ret = SendInput(2, &ip, sizeof(INPUT));
+    unsigned int ret = SendInput(2, ip, sizeof(INPUT));
 
     if (ret == 1) {
         LOG_INFO("Didn't send horizontal mouse motion for x %d!", x);
