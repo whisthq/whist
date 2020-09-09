@@ -17,13 +17,14 @@ function Landing(props: any) {
     const [waitlist, setWaitlist] = useState(props.waitlist);
 
     useEffect(() => {
-        console.log(props);
+        console.log("use effect landing");
+        console.log(props.user);
         var unsubscribe;
         getWaitlist()
             .then((waitlist) => {
                 setWaitlist(waitlist);
                 props.dispatch(updateWaitlistAction(waitlist));
-                if (props.user && props.user.ranking == 0) {
+                if (props.user.email && props.user.ranking == 0) {
                     const ranking = getInitialRanking(waitlist);
                     props.dispatch(
                         updateUserAction(props.user.points, ranking)

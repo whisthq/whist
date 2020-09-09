@@ -5,15 +5,13 @@ import { Table } from "react-bootstrap";
 import "styles/landing.css";
 
 const Leaderboard = (props) => {
-    // const [onWaitlist, setOnWaitlist] = useState(false);
     const [topSix, setTopSix] = useState([]);
 
     useEffect(() => {
+        console.log("use effect leaderboard");
         console.log(props.waitlist);
-        console.log(props.user);
-        // setOnWaitlist(props.user && props.email);
         setTopSix(props.waitlist ? props.waitlist.slice(0, 6) : []);
-    }, [props]);
+    }, [props.waitlist]);
 
     const getRows = () => {
         if (!props.user.email || props.user.ranking <= 5) {
