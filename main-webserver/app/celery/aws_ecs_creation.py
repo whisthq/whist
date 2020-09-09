@@ -1,8 +1,9 @@
 from app import ECSClient, celery_instance, fractalLog, fractalSQLCommit, logging, db
-from app.models.hardware import UserContainer
-from app.serializers.hardware import UserContainerSchema
+from app.models.hardware import UserContainer, ClusterInfo
+from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 
 user_container_schema = UserContainerSchema()
+user_cluster_schema = ClusterInfoSchema()
 
 base_task = {
   "ipcMode": None,
@@ -283,7 +284,28 @@ def create_new_cluster(self, instance_type, ami, min_size=1, max_size=10, region
         launch_config_name = ecs_client.create_launch_configuration(instance_type=instance_type, ami=ami, launch_config_name=None)
         auto_scaling_group_name = ecs_client.create_auto_scaling_group(launch_config_name=launch_config_name, min_size=min_size, max_size=max_size, availability_zones=availability_zones)
         capacity_provider_name = ecs_client.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
-        return ecs_client.create_cluster(capacity_providers=[capacity_provider_name])
+        cluster_name = ecs_client.create_cluster(capacity_providers=[capacity_provider_name])
+        nclust = ClusterInfo(
+            cluster_name=cluster_name
+        )
+        cluster_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), nclust)
+        if cluster_sql:
+            cluster = ClusterInfo.query.get(cluster_name)
+            cluster = user_cluster_schema.dump(cluster)
+            return cluster
+        else:
+            fractalLog(
+                function="create_new_cluster",
+                label=str(ecs_client.tasks[0]),
+                logs="SQL insertion unsuccessful",
+            )
+            self.update_state(
+                state="FAILURE",
+                meta={
+                    "msg": "Error inserting VM {cli} and disk into SQL".format(cli=ecs_client.tasks[0])
+                },
+            )
+            return None
     except Exception as e:
         fractalLog(
             function="create_new_cluster",
