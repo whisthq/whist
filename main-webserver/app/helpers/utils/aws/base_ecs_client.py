@@ -101,8 +101,8 @@ class ECSClient:
         else:
             self.auto_scaling_client = starter_auto_scaling_client
         self.set_cluster(cluster_name=base_cluster)
-        self.instance_profile = self.generate_name('instance_profile')
-        self.iam_client.create_instance_profile(InstanceProfileName=self.instance_profile)
+
+        # Create role + instance profile that allows containers to use SSM, S3, and EC2
         self.role_name = self.generate_name('role_name')
         assume_role_policy_document = {
             "Version": "2012-10-17", 
@@ -136,6 +136,8 @@ class ECSClient:
             PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role',
             RoleName=self.role_name,
         )
+        self.instance_profile = self.generate_name('instance_profile')
+        self.iam_client.create_instance_profile(InstanceProfileName=self.instance_profile)
         self.iam_client.add_role_to_instance_profile(
             InstanceProfileName=self.instance_profile,
             RoleName=self.role_name
@@ -157,7 +159,6 @@ class ECSClient:
             region_name=(self.region_name if len(self.region_name) > 0 else None),
             **kwargs
         )
-
         return clients
 
     def generate_name(self, starter_name=''):
@@ -241,56 +242,13 @@ class ECSClient:
         )
         return resp
 
-    def ssh_container(self, container, ssh_command):
-        instance_info = self.ec2_client.describe_instances(InstanceIds=[container])['Reservations'][0]['Instances'][0]
-        pprint(instance_info)
-        instance_ip = instance_info['PublicIpAddress']
-
-        instance_key_name = instance_info['KeyName']
-        instance_key_material = self.s3_client.get_object(Bucket='fractal-container-keys', Key=instance_key_name)['Body'].read().decode("utf-8")
-        private_key_file = io.StringIO()
-        private_key_file.write(instance_key_material)
-        private_key_file.seek(0)
-        private_key = paramiko.RSAKey.from_private_key(private_key_file)
-
-        ssh_client = paramiko.SSHClient()
-        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-        # Connect/ssh to an instance
-        try:
-            ssh_client.connect(hostname=instance_ip, username="ubuntu", pkey=private_key)
-            print(f"SSH connected to EC2 instance {instance_id} at public IP {instance_ip}")
-
-            # Execute a command(cmd) after connecting/ssh to an instance
-            stdin, stdout, stderr = ssh_client.exec_command(ssh_command)
-            err = stderr.readlines()
-            output = ''.join(stdout.readlines())
-            if not err:
-                print(f"SSH success! Command output: {output}")
-            else:
-                print(f"SSH command error: {''.join(err)}")
-
-            # close the client connection once the job is done
-            ssh_client.close()
-        except Exception as e:
-            output = ''
-            print(f"SSH encountered error: {e}")
-        finally:
-            private_key_file.close()
-            return output
-
-    def ssh_containers_in_cluster(self, cluster, ssh_command):
-        containers = self.get_containers_in_cluster(cluster)
-        for container in containers:
-            output = self.ssh_container(container, ssh_command)
-        return output
-
-    def ssh_all_containers(self, ssh_command):
+    def exec_commands_all_containers(self, commands):
+        all_containers = []
         clusters = self.get_all_clusters()
         for cluster in clusters:
-            output = self.ssh_containers_in_cluster(cluster, ssh_command)
-        return output
-                
+            all_containers.extend(self.get_containers_in_cluster(cluster))
+        self.exec_commands_on_containers(all_containers, ssh_command)
+
     def get_clusters_usage(self, clusters=None):
         """
         gets usage of all clusters
@@ -449,15 +407,10 @@ class ECSClient:
         )
 
     def create_launch_configuration(self, instance_type, ami, launch_config_name=None, cluster_name=None):
-        # userdata = """#cloud-config
-        #     runcmd:
-        #     - /home/ec2-user/sudo npm run prod
-        #     - cd /tmp
-        #     - curl https://amazon-ssm-%s.s3.amazonaws.com/latest/linux_amd64/amazon-ssm-agent.rpm -o amazon-ssm-agent.rpm
-        #     - yum install -y amazon-ssm-agent.rpm
-        # """ % self.region_name 
         if not cluster_name:
             cluster_name = self.generate_name('cluster')
+
+        # Initial data/scripts to be run on all container instances
         userdata = """
             #!/bin/bash
             # Install Docker
@@ -518,13 +471,13 @@ class ECSClient:
             systemctl enable docker-container@ecs-agent.service
             systemctl start docker-container@ecs-agent.service
         """.format(cluster_name)
+
         pprint(self.iam_client.list_instance_profiles())
         launch_config_name = launch_config_name or self.generate_name('launch_configuration')
         response = self.auto_scaling_client.create_launch_configuration(
             LaunchConfigurationName=launch_config_name,
             ImageId=ami,
             InstanceType=instance_type,
-            #KeyName=key_name,
             IamInstanceProfile=self.instance_profile,
             UserData=userdata,
         )
