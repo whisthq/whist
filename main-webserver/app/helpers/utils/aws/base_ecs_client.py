@@ -4,6 +4,7 @@ import paramiko
 import io
 import time
 import json
+from collections import defaultdict
 from pprint import pprint
 
 import boto3
@@ -212,71 +213,76 @@ class ECSClient:
                 break
         return clusters
     
+    def describe_auto_scaling_groups_in_cluster(self, cluster):
+        capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])['clusters'][0]['capacityProviders']
+        capacity_providers_info = self.ecs_client.describe_capacity_providers(capacityProviders=capacity_providers)['capacityProviders']
+        auto_scaling_groups = list(map(lambda cp: cp['autoScalingGroupProvider']['autoScalingGroupArn'].split('/')[-1], capacity_providers_info))
+        return self.auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=auto_scaling_groups)['AutoScalingGroups']
+
+    def get_container_instance_ips(self, cluster, container_arns):
+        ec2_ids = self.get_container_instance_ids(cluster, container_arns)
+        ec2_info = self.ec2_client.describe_instances(InstanceIds=ec2_ids)
+        return list(map(lambda info: info.get('PublicIpAddress', -1), ec2_info['Reservations'][0]['Instances']))
+
+    def get_container_instance_ids(self, cluster, container_arns):
+        full_containers_info = self.ecs_client.describe_container_instances(cluster=cluster, containerInstances=container_arns)['containerInstances']
+        return list(map(lambda info: info['ec2InstanceId'], full_containers_info))
+
     def get_containers_in_cluster(self, cluster):
         """
         returns list of all container instance IDs in the auto scaling group of the capacity provider for the cluster
         """
-        instances = []
-        capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])['clusters'][0]['capacityProviders']
-        capacity_providers_info = self.ecs_client.describe_capacity_providers(capacityProviders=capacity_providers)['capacityProviders']
-        auto_scaling_groups = list(map(lambda cp: cp['autoScalingGroupProvider']['autoScalingGroupArn'].split('/')[-1], capacity_providers_info))
-        auto_scaling_groups_info = self.auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=auto_scaling_groups)['AutoScalingGroups']
-        for auto_scaling_group in auto_scaling_groups_info:
-            pprint(auto_scaling_group)
-            instances += list(map(lambda instance: instance['InstanceId'], auto_scaling_group['Instances']))
-        print(capacity_providers, auto_scaling_groups, instances)
-        return instances
+        return self.ecs_client.list_container_instances(cluster=cluster)['containerInstanceArns']
 
     def terminate_containers_in_cluster(self, cluster):
-        containers = self.get_containers_in_cluster(cluster)
+        containers = self.get_container_instance_ids(cluster, self.get_containers_in_cluster(cluster))
         if containers:
             self.ec2_client.terminate_instances(InstanceIds=containers)
 
-    def exec_commands_on_containers(self, containers, commands):
+    def exec_commands_on_containers(self, cluster, containers, commands):
         resp = self.ssm_client.send_command(
             DocumentName="AWS-RunShellScript", # One of AWS' preconfigured documents
             Parameters={'commands': commands},
-            InstanceIds=containers,
+            InstanceIds=self.get_container_instance_ids(cluster, containers),
             OutputS3Region=self.region_name,
             OutputS3BucketName='fractal-container-outputs',
         )
         return resp
 
     def exec_commands_all_containers(self, commands):
-        all_containers = []
         clusters = self.get_all_clusters()
         for cluster in clusters:
-            all_containers.extend(self.get_containers_in_cluster(cluster))
-        self.exec_commands_on_containers(all_containers, ssh_command)
+            containers = self.get_containers_in_cluster(cluster)
+            self.exec_commands_on_containers(cluster, containers, ssh_command)
 
     def get_clusters_usage(self, clusters=None):
         """
         gets usage of all clusters
         """
-        clusters, clusters_usage = self.get_all_clusters(), {}
+        clusters, clusters_usage = clusters or self.get_all_clusters(), {}
         for cluster in clusters:
-            cluster_info = self.ecs_client.describe_clusters(clusters=[cluster], include=['STATISTICS'])['clusters'][0]
-            containers, containers_usage = self.get_containers_in_cluster(cluster), {}
+            cluster_info = self.ecs_client.describe_clusters(clusters=[cluster])['clusters'][0]
+            containers = self.get_containers_in_cluster(cluster)
+            auto_scaling_group_info = self.describe_auto_scaling_groups_in_cluster(cluster)[0]
+            total_resources = defaultdict(int)
             for container in containers:
                 instance_info = self.ecs_client.describe_container_instances(cluster=cluster, containerInstances=[container])['containerInstances'][0]
-                resources = {}
                 for resource in instance_info['remainingResources']:
                     if resource['name'] == 'CPU' or resource['name'] == 'MEMORY':
-                        resources[resource['name']] = resource['integerValue']
-                
-                containers_usage[container] = {  
-                    'remainingResources': resources,
-                    'pendingTasksCount': instance_info['pendingTasksCount'],
-                    'runningTasksCount': instance_info['runningTasksCount']
-                }
+                        total_resources[resource['name']] += resource['integerValue']
             
+            for resource in total_resources.keys():
+                total_resources[resource] /= len(containers)
+
             clusters_usage[cluster_info['clusterName']] = {
                 'status': cluster_info['status'],
                 'pendingTasksCount': cluster_info['pendingTasksCount'],
                 'runningTasksCount': cluster_info['runningTasksCount'],
-                'detailedStatistics': {stat['name']: stat['value'] for stat in cluster_info['statistics'] if 'Fargate' not in stat['name']},
                 'registeredContainerInstancesCount': cluster_info['registeredContainerInstancesCount'],
-                'containersUsage': containers_usage,
+                'avgCPURemainingPerContainer': total_resources['CPU'],
+                'avgMemoryRemainingPerContainer': total_resources['MEMORY'],
+                'minContainers': auto_scaling_group_info['MinSize'],
+                'maxContainers': auto_scaling_group_info['MaxSize'],
             }
 
         pprint(clusters_usage)
@@ -407,8 +413,7 @@ class ECSClient:
         )
 
     def create_launch_configuration(self, instance_type, ami, launch_config_name=None, cluster_name=None):
-        if not cluster_name:
-            cluster_name = self.generate_name('cluster')
+        cluster_name = cluster_name or self.generate_name('cluster')
 
         # Initial data/scripts to be run on all container instances
         userdata = """
@@ -472,7 +477,6 @@ class ECSClient:
             systemctl start docker-container@ecs-agent.service
         """.format(cluster_name)
 
-        pprint(self.iam_client.list_instance_profiles())
         launch_config_name = launch_config_name or self.generate_name('launch_configuration')
         response = self.auto_scaling_client.create_launch_configuration(
             LaunchConfigurationName=launch_config_name,
@@ -481,7 +485,7 @@ class ECSClient:
             IamInstanceProfile=self.instance_profile,
             UserData=userdata,
         )
-        return launch_config_name
+        return cluster_name, launch_config_name
 
     def create_auto_scaling_group(
         self,
@@ -587,12 +591,22 @@ class ECSClient:
     def spin_til_containers_up(self, cluster_name, time_delay=5):
         container_instances = []
         while not container_instances:
-            container_instances = testclient.get_containers_in_cluster(cluster_name)
+            container_instances = self.get_containers_in_cluster(cluster_name)
             time.sleep(time_delay)
         
         # wait another 30 seconds just to be safe
         time.sleep(30)
         return container_instances
+
+    def spin_til_command_executed(self, command_id, time_delay=5):
+        while True:
+            status = self.ssm_client.list_commands(CommandId=command_id)['Commands'][0]['Status']
+            if status == 'Success':
+                return True
+            elif status == 'Pending' or status == 'InProgress':
+                time.sleep(time_delay)
+            else:
+                return False
 
     def spin_til_done(self, offset=0, time_delay=5):
         """
@@ -618,26 +632,42 @@ class ECSClient:
             self.spin_til_running(offset=i, time_delay=time_delay)
 
     def create_auto_scaling_cluster(self, instance_type='t2.small', ami='ami-04cfcf6827bb29439'):
-        cluster_name = self.generate_name('cluster')
-        launch_config_name = testclient.create_launch_configuration(instance_type=instance_type, ami=ami, cluster_name=cluster_name, launch_config_name=None)
+        cluster_name, launch_config_name = testclient.create_launch_configuration(instance_type=instance_type, ami=ami)
         auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
         capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
-        cluster_name = testclient.create_cluster(capacity_providers=[capacity_provider_name], cluster_name=cluster_name)
-        return cluster_name
+        testclient.create_cluster(capacity_providers=[capacity_provider_name], cluster_name=cluster_name)
+        return cluster_name, launch_config_name, auto_scaling_group_name, capacity_provider_name
 
 if __name__ == "__main__":
     testclient = ECSClient(region_name="us-east-2")
     time.sleep(15)
-    cluster_name = testclient.create_auto_scaling_cluster()
+    cluster_name, launch_config_name, auto_scaling_group_name, capacity_provider_name = testclient.create_auto_scaling_cluster()
+    print(cluster_name)
     container_instances = testclient.spin_til_containers_up(cluster_name)
+    print("container instances are up!")
+    print(container_instances)
+
+    time.sleep(15)
+    command_id = testclient.exec_commands_on_containers(cluster_name, container_instances, ['echo hello'])['Command']['CommandId']
+    print(command_id)
+    testclient.spin_til_command_executed(command_id)
+    
+
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage"
     )
-    print(cluster_name)
-    time.sleep(15)
-    print(testclient.exec_commands_on_containers(container_instances, ['echo hello']))
     testclient.run_task(use_launch_type=False)
     testclient.spin_til_running(time_delay=2)
+    print(testclient.task_ips)
+    print(testclient.get_container_instance_ips(cluster_name, container_instances))
 
-    testclient.get_clusters_usage()
+    testclient.get_clusters_usage(clusters=[cluster_name])
+
+    # Clean Up
     testclient.terminate_containers_in_cluster(cluster_name)
+    testclient.iam_client.delete_role(RoleName=testclient.role_name)
+    testclient.iam_client.delete_instance_profile(InstanceProfileName=testclient.instance_profile)
+    testclient.auto_scaling_client.delete_launch_configuration(LaunchConfigurationName=launch_config_name)
+    testclient.auto_scaling_client.delete_auto_scaling_group(AutoScalingGroupName=auto_scaling_group_name, ForceDelete=True)
+    testclient.ecs_client.delete_capacity_provider(capacityProvider=capacity_provider_name)
+    testclient.ecs_client.delete_cluster(cluster=cluster_name)

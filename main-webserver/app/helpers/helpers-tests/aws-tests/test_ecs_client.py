@@ -1,9 +1,9 @@
 import os
-
+import time
 import pytest
 
 from utils.aws.base_ecs_client import ECSClient, boto3
-from moto import mock_ecs, mock_logs, mock_autoscaling, mock_ec2
+from moto import mock_ecs, mock_logs, mock_autoscaling, mock_ec2, mock_iam
 
 
 def test_pulling_ip():
@@ -88,10 +88,11 @@ def test_full_base_config():
 
 
 def test_cluster_with_auto_scaling_group():
-    # tests 1) creating cluster with auto scaling group, 2) running a task on the cluster, 3) ssh'ing into instances in the cluster
     testclient = ECSClient(region_name="us-east-2")
-    launch_config_name = testclient.create_launch_configuration(instance_type='t2.small', ami='ami-07e651ecd67a4f6d2', launch_config_name=None)
-    
+    time.sleep(10)
+
+    # test creating launch configuration, auto scaling group, capacity provider, and cluster
+    cluster_name, launch_config_name = testclient.create_launch_configuration(instance_type='t2.small', ami='ami-04cfcf6827bb29439')
     auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
     auto_scaling_groups_def = testclient.auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=[auto_scaling_group_name])
     assert len(auto_scaling_groups_def['AutoScalingGroups']) > 0
@@ -106,7 +107,7 @@ def test_cluster_with_auto_scaling_group():
     assert capacity_provider['name'] == capacity_provider_name
     assert capacity_provider['autoScalingGroupProvider']['autoScalingGroupArn'] == auto_scaling_group['AutoScalingGroupARN']
 
-    cluster_name = testclient.create_cluster(capacity_providers=[capacity_provider_name])
+    testclient.create_cluster(capacity_providers=[capacity_provider_name], cluster_name=cluster_name)
     assert testclient.cluster == cluster_name
     clusters_def = testclient.ecs_client.describe_clusters(clusters=[cluster_name])
     assert len(clusters_def['clusters']) > 0
@@ -114,17 +115,29 @@ def test_cluster_with_auto_scaling_group():
     assert cluster['clusterName'] == cluster_name
     assert cluster['capacityProviders'] == [capacity_provider_name]
 
-    testclient.spin_til_containers_up(cluster_name)
+    # test running task on newly created cluster
+    container_instances = testclient.spin_til_containers_up(cluster_name)
+    print(container_instances)
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage"
     )
     testclient.run_task(use_launch_type=False)
     testclient.spin_til_running(time_delay=2)
-    print(testclient.task_ips)
+    assert testclient.task_ips[0] == testclient.get_container_instance_ips(cluster_name, container_instances)[0]
 
-    assert testclient.ssh_containers_in_cluster(cluster_name, ssh_command='echo hello') == 'hello'
+    # test sending commands to containers in cluster
+    command_id = testclient.exec_commands_on_containers(cluster_name, container_instances, ['echo hello'])['Command']['CommandId']
+    assert testclient.spin_til_command_executed(command_id)
+
+    # Clean Up
+    testclient.terminate_containers_in_cluster(cluster_name)
+    testclient.iam_client.delete_role(RoleName=testclient.role_name)
+    testclient.iam_client.delete_instance_profile(InstanceProfileName=testclient.instance_profile)
+    testclient.auto_scaling_client.delete_launch_configuration(LaunchConfigurationName=launch_config_name)
+    testclient.auto_scaling_client.delete_auto_scaling_group(AutoScalingGroupName=auto_scaling_group_name, ForceDelete=True)
+    testclient.ecs_client.delete_capacity_provider(capacityProvider=capacity_provider_name)
+    testclient.ecs_client.delete_cluster(cluster=cluster_name)
     
-
 
 @pytest.mark.skipif(
     "AWS_ECS_TEST_DO_IT_LIVE" not in os.environ,
@@ -148,30 +161,36 @@ def test_basic_ecs_client():
 
 @mock_ecs
 @mock_logs
+@mock_iam
 def test_set_cluster():
     log_client = boto3.client("logs", region_name="us-east-2")
     ecs_client = boto3.client("ecs", region_name="us-east-2")
+    iam_client = boto3.client("iam", region_name="us-east-2")
     ecs_client.create_cluster(clusterName="test_clust")
     testclient = ECSClient(
         key_id="Testing",
         access_key="Testing",
         starter_client=ecs_client,
         starter_log_client=log_client,
+        starter_iam_client=iam_client,
     )
     assert "test_clust" in testclient.cluster
 
 
 @mock_ecs
 @mock_logs
+@mock_iam
 def test_command():
     log_client = boto3.client("logs", region_name="us-east-2")
     ecs_client = boto3.client("ecs", region_name="us-east-2")
+    iam_client = boto3.client("iam", region_name="us-east-2")
     ecs_client.create_cluster(clusterName="test_ecs_cluster")
     testclient = ECSClient(
         key_id="Testing",
         access_key="Testing",
         starter_client=ecs_client,
         starter_log_client=log_client,
+        starter_iam_client=iam_client,
     )
     testclient.set_and_register_task(
         ["echoes"], [""], family=" ",
@@ -184,15 +203,18 @@ def test_command():
 
 @mock_ecs
 @mock_logs
+@mock_iam
 def test_entry():
     log_client = boto3.client("logs", region_name="us-east-2")
     ecs_client = boto3.client("ecs", region_name="us-east-2")
+    iam_client = boto3.client("iam", region_name="us-east-2")
     ecs_client.create_cluster(clusterName="test_ecs_cluster")
     testclient = ECSClient(
         key_id="Testing",
         access_key="Testing",
         starter_client=ecs_client,
         starter_log_client=log_client,
+        starter_iam_client=iam_client,
     )
     testclient.set_and_register_task(
         [" "], ["entries"], family=" ",
@@ -205,15 +227,18 @@ def test_entry():
 
 @mock_ecs
 @mock_logs
+@mock_iam
 def test_family():
     log_client = boto3.client("logs", region_name="us-east-2")
     ecs_client = boto3.client("ecs", region_name="us-east-2")
+    iam_client = boto3.client("iam", region_name="us-east-2")
     ecs_client.create_cluster(clusterName="test_ecs_cluster")
     testclient = ECSClient(
         key_id="Testing",
         access_key="Testing",
         starter_client=ecs_client,
         starter_log_client=log_client,
+        starter_iam_client=iam_client,
     )
     testclient.set_and_register_task(
         ["echoes"], [""], family="basefam",
@@ -228,15 +253,18 @@ def test_family():
 
 @mock_ecs
 @mock_logs
+@mock_iam
 def test_region():
     log_client = boto3.client("logs", region_name="us-east-2")
     ecs_client = boto3.client("ecs", region_name="us-east-2")
+    iam_client = boto3.client("iam", region_name="us-east-2")
     ecs_client.create_cluster(clusterName="test_ecs_cluster")
     testclient = ECSClient(
         key_id="Testing",
         access_key="Testing",
         starter_client=ecs_client,
         starter_log_client=log_client,
+        starter_iam_client=iam_client,
     )
     testclient.set_and_register_task(
         ["echoes"], [""], family="basefam",
