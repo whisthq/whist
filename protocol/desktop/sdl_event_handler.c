@@ -153,7 +153,7 @@ int handleMouseLeftWindow(SDL_Event *event) {
 }
 
 int handleKeyUpDown(SDL_Event *event) {
-    FractalKeycode keycode = (FractalKeycode)event->key.keysym.scancode;
+    FractalKeycode keycode = (FractalKeycode) SDL_GetScancodeFromName(SDL_GetKeyName(event->key.keysym.sym));
     bool is_pressed = event->key.type == SDL_KEYDOWN;
 
     // Keep memory of alt/ctrl/lgui/rgui status
