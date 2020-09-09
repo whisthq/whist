@@ -190,6 +190,7 @@ def create_new_container(self, username, taskinfo):
         username (str): the username of the person creating the container
         taskinfo: info about the task to be run
         # TODO: fill in with types when known
+        # TODO: add logic for figuring out which cluster to run the task on
 
     Returns:
 
@@ -233,8 +234,8 @@ def create_new_container(self, username, taskinfo):
         self.update_state(
             state="FAILURE", meta={"msg": "Error generating task with running IP"},
         )
-
         return
+
     container = UserContainer(
         container_id=ecs_client.tasks[0],
         user_id=username,
@@ -250,7 +251,6 @@ def create_new_container(self, username, taskinfo):
     if container_sql:
         container = UserContainer.query.get(ecs_client.tasks[0])
         container = user_container_schema.dump(container)
-        return container
     else:
         fractalLog(
             function="create_new_container",
@@ -261,6 +261,37 @@ def create_new_container(self, username, taskinfo):
             state="FAILURE",
             meta={
                 "msg": "Error inserting VM {cli} and disk into SQL".format(cli=ecs_client.tasks[0])
+            },
+        )
+        return
+
+    cluster_usage = ecs_client.get_clusters_usage(clusters=[ecs_client.cluster])[ecs_client.cluster]
+    cluster_info = ClusterInfo(
+        cluster=ecs_client.cluster,
+        avgCPURemainingPerContainer=cluster_usage['avgCPURemainingPerContainer'],
+        avgMemoryRemainingPerContainer=cluster_usage['avgMemoryRemainingPerContainer'],
+        pendingTasksCount=cluster_usage['pendingTasksCount'],
+        runningTasksCount=cluster_usage['runningTasksCount'],
+        registeredContainerInstancesCount=cluster_usage['registeredContainerInstancesCount'],
+        minContainers=cluster_usage['minContainers'],
+        maxContainers=cluster_usage['maxContainers'],
+        status=cluster_usage['status'],
+    )
+    cluster_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), cluster_info)
+    if cluster_sql:
+        cluster = ClusterInfo.query.get(cluster_name)
+        cluster = user_cluster_schema.dump(cluster)
+        return container
+    else:
+        fractalLog(
+            function="create_new_container",
+            label=str(ecs_client.tasks[0]),
+            logs="SQL insertion unsuccessful",
+        )
+        self.update_state(
+            state="FAILURE",
+            meta={
+                "msg": "Error updating cluster {} in SQL".format(cluster=ecs_client.cluster)
             },
         )
         return None
@@ -281,10 +312,7 @@ def create_new_cluster(self, instance_type, ami, min_size=1, max_size=10, region
     )
 
     try: 
-        launch_config_name = ecs_client.create_launch_configuration(instance_type=instance_type, ami=ami, launch_config_name=None)
-        auto_scaling_group_name = ecs_client.create_auto_scaling_group(launch_config_name=launch_config_name, min_size=min_size, max_size=max_size, availability_zones=availability_zones)
-        capacity_provider_name = ecs_client.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
-        cluster_name = ecs_client.create_cluster(capacity_providers=[capacity_provider_name])
+        cluster_name, _, _, _ = ecs_client.create_auto_scaling_cluster()
         nclust = ClusterInfo(
             cluster_name=cluster_name
         )
