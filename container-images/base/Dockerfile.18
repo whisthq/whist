@@ -150,6 +150,11 @@ ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 # Set display environment variable to our nvidia-powered display
 ENV DISPLAY :10
 
+RUN apt install -y vainfo
+RUN sudo add-apt-repository ppa:ubuntu-mozilla-daily/ppa
+RUN sudo apt update
+RUN sudo apt install firefox-trunk
+
 
 #### FROM PHIL 1/2 on this file: I think this new service for Nvidia needs to be added here, but not certain
 #### It apparently needs to run before X so it might need to be even before (?)
