@@ -291,95 +291,97 @@ void DestroyInputDevice(input_device_t* input_device) {
     return;
 }
 
-void SendKeyInput(Display* display, int x11_keysym, int pressed) {
-    KeyCode kcode = XKeysymToKeycode(display, x11_keysym);
-    XTestFakeKeyEvent(display, kcode, pressed, CurrentTime);
+#define GetX11KeySym(sdl_keycode) x11_keysyms[sdl_keycode]
+
+int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_keycode) {
+    switch (sdl_keycode) {
+        case FK_CAPSLOCK:
+            return input_device->caps_lock;
+        case FK_NUMLOCK:
+            return input_device->num_lock;
+        default:
+            LOG_WARNING("Not a modifier!");
+            return -1;
+    }
 }
 
-/// @brief replays a user action taken on the client and sent to the server
-/// @details parses the FractalClientMessage struct and send input to Windows OS
-bool ReplayUserInput(input_device_t* input_device, struct FractalClientMessage* fmsg) {
-    // switch to fill in the event depending on the FractalClientMessage type
-
-    XLockDisplay(input_device->display);
-
-    switch (fmsg->type) {
-        case MESSAGE_KEYBOARD:
-            // event for keyboard action
-            // LOG_INFO("KEYBOARD CODE %d --> %d RECEIVED!", fmsg->keyboard.code,
-            //  x11_keysyms[fmsg->keyboard.code]);
-            SendKeyInput(input_device->display, x11_keysyms[fmsg->keyboard.code],
-                         fmsg->keyboard.pressed);
-            break;
-        case MESSAGE_MOUSE_MOTION:
-            // mouse motion event
-            if (fmsg->mouseMotion.relative) {
-                // LOG_INFO("RELATIVE MOUSE MOTION x %d y %d RECEIVED!", fmsg->mouseMotion.x,
-                //  fmsg->mouseMotion.y);
-                XTestFakeRelativeMotionEvent(input_device->display, fmsg->mouseMotion.x,
-                                             fmsg->mouseMotion.y, CurrentTime);
-            } else {
-                LOG_INFO("ABSOLUTE MOUSE MOTION x %d y %d RECEIVED!",
-                         (int)(fmsg->mouseMotion.x * (int32_t)get_virtual_screen_width() /
-                               MOUSE_SCALING_FACTOR),
-                         (int)(fmsg->mouseMotion.y * (int32_t)get_virtual_screen_height() /
-                               MOUSE_SCALING_FACTOR));
-                XTestFakeMotionEvent(
-                    input_device->display, 0,
-                    (int)(fmsg->mouseMotion.x * (int32_t)get_virtual_screen_width() /
-                          MOUSE_SCALING_FACTOR),
-                    (int)(fmsg->mouseMotion.y * (int32_t)get_virtual_screen_height() /
-                          MOUSE_SCALING_FACTOR),
-                    CurrentTime);
-            }
-            break;
-        case MESSAGE_MOUSE_BUTTON:
-            // mouse button event
-            // LOG_INFO("MOUSE BUTTON %d PRESSED? %d RECEIVED!", fmsg->mouseButton.button,
-            //  fmsg->mouseButton.pressed);
-            XTestFakeButtonEvent(input_device->display, fmsg->mouseButton.button,
-                                 fmsg->mouseButton.pressed, CurrentTime);
-            break;  // outer switch
-        case MESSAGE_MOUSE_WHEEL:
-            // mouse wheel event
-            if (fmsg->mouseWheel.y > 0) {
-                // Up
-                // LOG_INFO("MOUSE WHEEL Y DOWN RECEIVED!");
-                XTestFakeButtonEvent(input_device->display, 4, 1, CurrentTime);
-                XTestFakeButtonEvent(input_device->display, 4, 0, CurrentTime);
-            } else if (fmsg->mouseWheel.y < 0) {
-                // Down
-                // LOG_INFO("MOUSE WHEEL Y UP RECEIVED!");
-                XTestFakeButtonEvent(input_device->display, 5, 1, CurrentTime);
-                XTestFakeButtonEvent(input_device->display, 5, 0, CurrentTime);
-            }
-            if (fmsg->mouseWheel.x > 0) {
-                // Left
-                // LOG_INFO("MOUSE WHEEL X RIGHT RECEIVED!");
-                XTestFakeButtonEvent(input_device->display, 6, 1, CurrentTime);
-                XTestFakeButtonEvent(input_device->display, 6, 0, CurrentTime);
-            } else if (fmsg->mouseWheel.x < 0) {
-                // Right
-                // LOG_INFO("MOUSE WHEEL X LEFT RECEIVED!")
-                XTestFakeButtonEvent(input_device->display, 7, 1, CurrentTime);
-                XTestFakeButtonEvent(input_device->display, 7, 0, CurrentTime);
-            }
-            break;
-            // TODO: add clipboard
-        default:
-            // do nothing
-            break;
+int GetKeyboardKeyState(input_device_t* input_device, FractalKeycode sdl_keycode) {
+    if (GetX11KeySym(sdl_keycode)) {
+        return input_device->keyboard_state[sdl_keycode];
     }
+    LOG_WARNING("Not a valid keycode for X11!");
+    return -1;
+}
+
+int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed) {
+    XLockDisplay(input_device->display);
+    KeyCode kcode = XKeysymToKeycode(input_device->display, GetX11KeySym(sdl_keycode));
+    if (!kcode) {
+        LOG_WARNING("Not a valid keycode for X11!");
+        return -1;
+    }
+    XtestFakeKeyEvent(input_device->display, kcode, pressed, CurrentTime);
     XSync(input_device->display, false);
 
     XUnlockDisplay(input_device->display);
 
-    // // send FMSG mapped to Windows event to Windows and return
-    // int num_events_sent =
-    //     SendInput(1, &Event, sizeof(INPUT));  // 1 structure to send
+    input_device->keyboard_state[sdl_keycode] = pressed;
 
-    // if (1 != num_events_sent) {
-    //     mprintf("SendInput did not send all events! %d\n", num_events_sent);
-    // }
-    return true;
+    if (sdl_keycode == FK_CAPSLOCK && pressed) {
+        input_device->caps_lock = !input_device->caps_lock;
+    }
+    if (sdl_keycode == FK_NUMLOCK && pressed) {
+        input_device->num_lock = !input_device->num_lock;
+    }
+    return 0;
+}
+
+int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int relative) {
+    XLockDisplay(input_device->display);
+    if (relative) {
+        XTestFakeRelativeMotionEvent(input_device->display, x, y, CurrentTime);
+    } else {
+        XTestFakeMotionEvent(input_device->display, 0,
+                             (int)(x * (int32_t)get_virtual_screen_width() / MOUSE_SCALING_FACTOR),
+                             (int)(y * (int32_t)get_virtual_screen_height() / MOUSE_SCALING_FACTOR),
+                             CurrentTime);
+    }
+    XSync(input_device->display, false);
+    XUnlockDisplay(input_device->display);
+    return 0;
+}
+
+int EmitMouseButtonEvent(input_device_t* input_device, FractalMouseButton button, int pressed) {
+    XLockDisplay(input_device->display);
+    XTestFakeButtonEvent(input_device->display, button, pressed, CurrentTime);
+    XSync(input_device->display, false);
+    XUnlockDisplay(input_device->display);
+    return 0;
+}
+
+int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
+    XLockDisplay(input_device->display);
+
+    if (y > 0) {
+        // Up
+        XTestFakeButtonEvent(input_device->display, 4, 1, CurrentTime);
+        XTestFakeButtonEvent(input_device->display, 4, 0, CurrentTime);
+    } else if (y < 0) {
+        // Down
+        XTestFakeButtonEvent(input_device->display, 5, 1, CurrentTime);
+        XTestFakeButtonEvent(input_device->display, 5, 0, CurrentTime);
+    }
+    if (x > 0) {
+        // Left
+        XTestFakeButtonEvent(input_device->display, 6, 1, CurrentTime);
+        XTestFakeButtonEvent(input_device->display, 6, 0, CurrentTime);
+    } else if (x < 0) {
+        // Right
+        XTestFakeButtonEvent(input_device->display, 7, 1, CurrentTime);
+        XTestFakeButtonEvent(input_device->display, 7, 0, CurrentTime);
+    }
+
+    XSync(input_device->display, false);
+    XUnlockDisplay(input_device->display);
+    return 0;
 }

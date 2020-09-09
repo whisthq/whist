@@ -3,7 +3,10 @@
  *
  * Copyright Fractal Computers, Inc. 2020
  **/
-#include "input.h"
+
+#include "input_driver.h"
+#include <fcntl.h>
+#include <linux/uinput.h>
 #include <dirent.h>
 
 #define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                                      \
@@ -297,12 +300,6 @@ const int linux_mouse_buttons[6] = {
     BTN_4        // 5 -> Extra Mouse Button 2
 };
 
-int GetLinuxKeyCode(int sdl_keycode) { return linux_keycodes[sdl_keycode]; }
-
-int GetLinuxMouseButton(FractalMouseButton fractal_code) {
-    return linux_mouse_buttons[fractal_code];
-}
-
 input_device_t* CreateInputDevice() {
     input_device_t* input_device = malloc(sizeof(input_device_t));
     memset(input_device, 0, sizeof(input_device_t));
@@ -420,6 +417,9 @@ void DestroyInputDevice(input_device_t* input_device) {
     free(input_device);
 }
 
+#define GetLinuxKeyCode(sdl_keycode) linux_keycodes[sdl_keycode]
+#define GetLinuxMouseButton(sdl_button) linux_mouse_buttons[sdl_button]
+
 void EmitInputEvent(int fd, int type, int code, int val) {
     struct input_event ie;
     ie.type = type;
@@ -432,164 +432,72 @@ void EmitInputEvent(int fd, int type, int code, int val) {
     write(fd, &ie, sizeof(ie));
 }
 
-bool GetKeyState(input_device_t* input_device, int key_code) {
-    return input_device->keyboard_state[key_code];
+int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_keycode) {
+    switch (sdl_keycode) {
+        case FK_CAPSLOCK:
+            return input_device->caps_lock;
+        case FK_NUMLOCK:
+            return input_device->num_lock;
+        default:
+            LOG_WARNING("Not a modifier!");
+            return -1;
+    }
 }
 
-void KeyPress(input_device_t* input_device, int key_code, int press) {
-    EmitInputEvent(input_device->fd_keyboard, EV_KEY, key_code, press);
-    input_device->keyboard_state[key_code] = press;
-    if (key_code == KEY_CAPSLOCK && press) {
+int GetKeyboardKeyState(input_device_t* input_device, FractalKeycode sdl_keycode) {
+    if (GetLinuxKeyCode(sdl_keycode)) {
+        return input_device->keyboard_state[sdl_keycode];
+    }
+    LOG_WARNING("Not a valid keycode for Linux!");
+    return -1;
+}
+
+int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed) {
+    if (!GetLinuxKeyCode(sdl_keycode)) {
+        LOG_WARNING("Not a valid keycode for Linux!");
+        return -1;
+    }
+    EmitInputEvent(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(sdl_keycode), pressed);
+    EmitInputEvent(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
+    input_device->keyboard_state[sdl_keycode] = pressed;
+
+    if (sdl_keycode == FK_CAPSLOCK && pressed) {
         input_device->caps_lock = !input_device->caps_lock;
     }
-    if (key_code == KEY_NUMLOCK && press) {
+    if (sdl_keycode == FK_NUMLOCK && pressed) {
         input_device->num_lock = !input_device->num_lock;
     }
+
+    return 0;
 }
 
-#define KeyUp(key_code) KeyPress(input_device, (key_code), 0);
-#define KeyDown(key_code) KeyPress(input_device, (key_code), 1);
-
-void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fmsg) {
-    if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
-        LOG_WARNING(
-            "updateKeyboardState requires fmsg.type to be "
-            "MESSAGE_KEYBOARD_STATE");
-        return;
+int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int relative) {
+    if (relative) {
+        EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_X, x);
+        EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_Y, y);
+        EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
+    } else {
+        EmitInputEvent(
+            input_device->fd_absmouse, EV_ABS, ABS_X,
+            (int)(x * (int32_t)get_virtual_screen_width() / (int32_t)MOUSE_SCALING_FACTOR));
+        EmitInputEvent(
+            input_device->fd_absmouse, EV_ABS, ABS_Y,
+            (int)(y * (int32_t)get_virtual_screen_height() / (int32_t)MOUSE_SCALING_FACTOR));
+        EmitInputEvent(input_device->fd_absmouse, EV_KEY, BTN_TOOL_PEN, 1);
+        EmitInputEvent(input_device->fd_absmouse, EV_SYN, SYN_REPORT, 0);
     }
-
-    bool server_caps_lock = input_device->caps_lock;
-    bool server_num_lock = input_device->num_lock;
-
-    bool client_caps_lock_holding = false;
-    bool client_num_lock_holding = false;
-
-    // Depress all keys that are currently pressed but should not be pressed
-    for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
-        int linux_keycode = GetLinuxKeyCode(sdl_keycode);
-
-        if (!linux_keycode) continue;
-
-        if (fmsg->keyboard_state[sdl_keycode] != GetKeyState(input_device, linux_keycode)) {
-            LOG_INFO("%d is %s but should %s", linux_keycode,
-                     GetKeyState(input_device, linux_keycode) ? "pressed" : "not be pressed",
-                     fmsg->keyboard_state[sdl_keycode] ? "pressed" : "not be pressed");
-        }
-        if (!fmsg->keyboard_state[sdl_keycode] && GetKeyState(input_device, linux_keycode)) {
-            // If key from keyboard_state shouldn't be pressed, but the key is actually pressed,
-            // then we must release it
-            KeyUp(linux_keycode);
-        }
-    }
-
-    // Press all keys that are currently not pressed but should be pressed
-    for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
-        int linux_keycode = GetLinuxKeyCode(sdl_keycode);
-
-        if (!linux_keycode) continue;
-
-        // Keep track of whether or not the client is holding down capslock/numlock
-        if (linux_keycode == KEY_CAPSLOCK) {
-            client_caps_lock_holding = fmsg->keyboard_state[sdl_keycode];
-        }
-        if (linux_keycode == KEY_NUMLOCK) {
-            client_num_lock_holding = fmsg->keyboard_state[sdl_keycode];
-        }
-
-        if (fmsg->keyboard_state[sdl_keycode] && !GetKeyState(input_device, linux_keycode)) {
-            // If key from keyboard_state should be pressed, but the key is not actually pressed,
-            // then we must press it
-            KeyDown(linux_keycode);
-
-            // If we pressed the capslock or numlock, then our cache for the value of these keys
-            // must thus be updated
-            if (linux_keycode == KEY_CAPSLOCK) {
-                server_caps_lock = !server_caps_lock;
-            }
-            if (linux_keycode == KEY_NUMLOCK) {
-                server_num_lock = !server_num_lock;
-            }
-        }
-    }
-
-    if (!!server_caps_lock != !!fmsg->caps_lock) {
-        LOG_INFO("Caps lock out of sync, updating! From %s to %s\n",
-                 server_caps_lock ? "caps" : "no caps", fmsg->caps_lock ? "caps" : "no caps");
-        if (client_caps_lock_holding) {
-            KeyUp(KEY_CAPSLOCK);
-            KeyDown(KEY_CAPSLOCK);
-        } else {
-            KeyDown(KEY_CAPSLOCK);
-            KeyUp(KEY_CAPSLOCK);
-        }
-    }
-
-    if (!!server_num_lock != !!fmsg->num_lock) {
-        LOG_INFO("Num lock out of sync, updating! From %s to %s\n",
-                 server_num_lock ? "num lock" : "no num lock",
-                 fmsg->num_lock ? "num lock" : "no num lock");
-        if (client_num_lock_holding) {
-            KeyUp(KEY_NUMLOCK);
-            KeyDown(KEY_NUMLOCK);
-        } else {
-            KeyDown(KEY_NUMLOCK);
-            KeyUp(KEY_NUMLOCK);
-        }
-    }
+    return 0;
 }
 
-/// @brief replays a user action taken on the client and sent to the server
-/// @details parses the FractalClientMessage struct and send input to Windows OS
-bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
-    // switch to fill in the event depending on the FractalClientMessage type
-    switch (fmsg->type) {
-        case MESSAGE_KEYBOARD:
-            // event for keyboard action
-            if (fmsg->keyboard.pressed) {
-                KeyDown(GetLinuxKeyCode(fmsg->keyboard.code));
-            } else {
-                KeyUp(GetLinuxKeyCode(fmsg->keyboard.code));
-            }
-            break;
-        case MESSAGE_MOUSE_MOTION:
-            // mouse motion event
-            if (fmsg->mouseMotion.relative) {
-                EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_X, fmsg->mouseMotion.x);
-                EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_Y, fmsg->mouseMotion.y);
-            } else {
-                EmitInputEvent(input_device->fd_absmouse, EV_ABS, ABS_X,
-                               (int)(fmsg->mouseMotion.x * (int32_t)get_virtual_screen_width() /
-                                     (int32_t)MOUSE_SCALING_FACTOR));
-                EmitInputEvent(input_device->fd_absmouse, EV_ABS, ABS_Y,
-                               (int)(fmsg->mouseMotion.y * (int32_t)get_virtual_screen_height() /
-                                     (int32_t)MOUSE_SCALING_FACTOR));
-                EmitInputEvent(input_device->fd_absmouse, EV_KEY, BTN_TOOL_PEN, 1);
-            }
-            break;
-        case MESSAGE_MOUSE_BUTTON:
-            // mouse button event
-            EmitInputEvent(input_device->fd_relmouse, EV_KEY,
-                           GetLinuxMouseButton(fmsg->mouseButton.button),
-                           fmsg->mouseButton.pressed);
-            break;  // outer switch
-        case MESSAGE_MOUSE_WHEEL:
-            // mouse wheel event
-            EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_HWHEEL, fmsg->mouseWheel.x);
-            EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_WHEEL, fmsg->mouseWheel.y);
-            break;
-        case MESSAGE_MULTIGESTURE:
-            LOG_WARNING("Multi-touch X11 Driver not added yet!");
-            break;
-        default:
-            LOG_ERROR("Unknown message type! %d", fmsg->type);
-            break;
-    }
-
-    // only really needs EV_SYN for the fd that was just written
-
-    EmitInputEvent(input_device->fd_absmouse, EV_SYN, SYN_REPORT, 0);
+int EmitMouseButtonEvent(input_device_t* input_device, FractalMouseButton button, int pressed) {
+    EmitInputEvent(input_device->fd_relmouse, EV_KEY, GetLinuxMouseButton(button), pressed);
     EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
-    EmitInputEvent(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
+    return 0;
+}
 
-    return true;
+int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
+    EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_HWHEEL, fmsg->mouseWheel.x);
+    EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_WHEEL, fmsg->mouseWheel.y);
+    EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
+    return 0;
 }
