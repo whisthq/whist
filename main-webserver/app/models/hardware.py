@@ -22,14 +22,18 @@ class UserContainer(db.Model):
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     container_id = db.Column(db.String(250), primary_key=True, unique=True)
     ip = db.Column(db.String(250), nullable=False)
-    port = db.Column(db.Integer, nullable=False)
     location = db.Column(db.String(250), nullable=False)
-    cluster = db.Column(db.ForeignKey('hardware.cluster_info'))
     os = db.Column(db.String(250), nullable=False)
     state = db.Column(db.String(250), nullable=False)
-    last_pinged = db.Column(db.Integer)
     lock = db.Column(db.Boolean, nullable=False, default=False)
     user_id = db.Column(db.ForeignKey("users.user_id"))
+    port = db.Column(db.Integer, nullable=False)
+    last_pinged = db.Column(db.Integer)
+    cluster = db.Column(db.ForeignKey('hardware.cluster_info'))
+    using_stun = db.Column(db.Boolean, nullable=False, default=False)
+    allow_autoupdate = db.Column(db.Boolean, nullable=False, default=False)
+    branch = db.Column(db.String(250),nullable=False, default="master")
+    temporary_lock = db.Column(db.Integer)
 
 class ClusterInfo(db.Model):
     __tablename__ = "cluster_info"
