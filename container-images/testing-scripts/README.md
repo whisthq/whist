@@ -11,6 +11,6 @@ Usage:
 # Client side
 python3 connection_tester.py client [SERVER IP]
 
-Server side
+# Server side
 python3 connection_tester.py server
 ```
