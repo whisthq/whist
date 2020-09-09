@@ -235,7 +235,7 @@ class ECSClient:
         """
         gets usage of all clusters
         """
-        clusters, clusters_usage = self.get_all_clusters(), {}
+        clusters, clusters_usage = (clusters if clusters else self.get_all_clusters()), {}
         for cluster in clusters:
             cluster_info = self.ecs_client.describe_clusters(clusters=[cluster], include=['STATISTICS'])['clusters'][0]
             containers, containers_usage = self.get_containers_in_cluster(cluster), {}
