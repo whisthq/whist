@@ -29,7 +29,7 @@ class UserContainer(db.Model):
     user_id = db.Column(db.ForeignKey("users.user_id"))
     port = db.Column(db.Integer, nullable=False)
     last_pinged = db.Column(db.Integer)
-    cluster = db.Column(db.ForeignKey('hardware.cluster_info'))
+    cluster = db.Column(db.ForeignKey('hardware.cluster_info.cluster'))
     using_stun = db.Column(db.Boolean, nullable=False, default=False)
     allow_autoupdate = db.Column(db.Boolean, nullable=False, default=False)
     branch = db.Column(db.String(250),nullable=False, default="master")
