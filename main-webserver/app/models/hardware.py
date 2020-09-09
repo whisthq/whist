@@ -28,20 +28,20 @@ class UserContainer(db.Model):
     os = db.Column(db.String(250), nullable=False)
     state = db.Column(db.String(250), nullable=False)
     last_pinged = db.Column(db.Integer)
-    lock = db.Column(db.Boolean, nullable=False, server_default=expression.false())
+    lock = db.Column(db.Boolean, nullable=False, default=False)
     user_id = db.Column(db.ForeignKey("users.user_id"))
 
 class ClusterInfo(db.Model):
     __tablename__ = "cluster_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     cluster = db.Column(db.String(250), primary_key=True, unique=True)
-    avgCPURemainingPerContainer = db.Column(db.Float,nullable=False, server_default=1024.0)
-    avgMemoryRemainingPerContainer = db.Column(db.Float,nullable=False, server_default=2000.0)
-    pendingTasksCount = db.Column(db.Integer, nullable=False, server_default=0)
-    runningTasksCount = db.Column(db.Integer, nullable=False, server_default=0)
-    registeredContainerInstancesCount = db.Column(db.Integer, nullable=False, server_default=0)
-    minContainers = db.Column(db.Integer, nullable=False, server_default=0)
-    maxContainers = db.Column(db.Integer, nullable=False, server_default=0)
+    avgCPURemainingPerContainer = db.Column(db.Float,nullable=False, default=1024.0)
+    avgMemoryRemainingPerContainer = db.Column(db.Float,nullable=False, default=2000.0)
+    pendingTasksCount = db.Column(db.Integer, nullable=False, default=0)
+    runningTasksCount = db.Column(db.Integer, nullable=False, default=0)
+    registeredContainerInstancesCount = db.Column(db.Integer, nullable=False, default=0)
+    minContainers = db.Column(db.Integer, nullable=False, default=0)
+    maxContainers = db.Column(db.Integer, nullable=False, default=0)
     status = db.Column(db.String(250), nullable=False)
 
 
