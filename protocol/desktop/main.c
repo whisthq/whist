@@ -67,6 +67,7 @@ volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
+bool using_stun = true;
 
 int UDP_port = -1;
 int TCP_port = -1;
@@ -450,8 +451,14 @@ int syncKeyboardState(void) {
     fmsg.num_keycodes = fmin(NUM_KEYCODES, num_keys);
 #endif
 
-    // Copy keyboard state
-    memcpy(fmsg.keyboard_state, state, fmsg.num_keycodes);
+    // Copy keyboard state, but using scancodes of the keys in the current keyboard layout.
+    // Must convert to/from the name of the key so SDL returns the scancode for the key in the current layout 
+    // rather than the scancode for the physical key.
+    for (int i = 0; i < fmsg.num_keycodes; i++) {
+        if (state[i]) {
+            fmsg.keyboard_state[SDL_GetScancodeFromName(SDL_GetKeyName(SDL_GetKeyFromScancode(i)))] = 1;
+        }
+    }
 
     // Also send caps lock and num lock status for syncronization
 #ifdef __APPLE__
@@ -534,24 +541,29 @@ int main(int argc, char* argv[]) {
     exiting = false;
     bool failed = false;
 
-    for (try_amount = 0; try_amount < MAX_NUM_CONNECTION_ATTEMPTS && !exiting && !failed;
+    int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
+    for (try_amount = 0; try_amount < max_connection_attempts && !exiting && !failed;
          try_amount++) {
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
         }
 
-        if (discoverPorts() != 0) {
+        if (discoverPorts(&using_stun) != 0) {
             LOG_WARNING("Failed to discover ports.");
             continue;
         }
 
-        if (connectToServer() != 0) {
+        if (connectToServer(using_stun) != 0) {
             LOG_WARNING("Failed to connect to server.");
             continue;
         }
 
         connected = true;
+
+        // reset because now connected
+        try_amount = 0;
+        max_connection_attempts = MAX_RECONNECTION_ATTEMPTS;
 
         // Initialize audio and variables
         is_timing_latency = false;
@@ -623,7 +635,7 @@ int main(int argc, char* argv[]) {
         }
 
         LOG_INFO("Disconnecting...");
-        if (exiting || failed || try_amount + 1 == MAX_NUM_CONNECTION_ATTEMPTS)
+        if (exiting || failed || try_amount + 1 == max_connection_attempts)
             sendServerQuitMessages(3);
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);

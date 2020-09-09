@@ -40,6 +40,7 @@ desktop/external_utils/Windows/ssh.exe
 desktop/loading/
 *.v
 ._share
+connection_id.txt
 
 # cmake
 *.cmake
@@ -71,3 +72,6 @@ docs/latex/
 .vagrant
 *.box
 ubuntu-bionic-18.04-cloudimg-console.log
+
+# tags
+tags

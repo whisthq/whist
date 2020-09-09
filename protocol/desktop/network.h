@@ -16,10 +16,10 @@ TODO
 */
 
 // must be called before connectToServer()
-int discoverPorts(void);
+int discoverPorts(bool* using_stun);
 
 // must be called after discoverPorts()
-int connectToServer(void);
+int connectToServer(bool using_stun);
 
 int closeConnections(void);
 
