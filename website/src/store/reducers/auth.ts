@@ -11,7 +11,7 @@ export default function (state = AUTH_DEFAULT, action) {
                 waitlist: action.waitlist,
             };
         case WaitlistAction.INSERT_WAITLIST:
-            console.log(action)
+            console.log(action);
             return {
                 ...state,
                 user: state.user
@@ -43,7 +43,17 @@ export default function (state = AUTH_DEFAULT, action) {
                 user: { ...state.user, email: action.email },
             };
         case LoginAction.LOGOUT:
-            return AUTH_DEFAULT;
+            return {
+                ...state,
+                logged_in: false,
+                user: {
+                    email: null,
+                    name: null,
+                    referrals: 0,
+                    points: 0,
+                    ranking: 0,
+                },
+            };
         default:
             return state;
     }
