@@ -183,10 +183,8 @@ ENV init /sbin/init
 # Disable some extra systemd services
 RUN systemctl mask plymouth
 RUN systemctl mask systemd-hostnamed
-
-
-ADD fractal-setup.sh /
-RUN chmod +x /fractal-setup.sh
+RUN systemctl mask acpid
+RUN systemctl mask NetworkManager-wait-online
 
 
 CMD ["/lib/systemd/systemd"]
