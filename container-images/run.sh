@@ -26,7 +26,10 @@ runcontainer (){
             --cap-add CAP_NET_BIND_SERVICE \
             --cap-add CAP_SYS_CHROOT \
             --cap-add CAP_SETFCAP \
+	    --cap-add SYS_NICE \
             --mount type=bind,source=$(cd $3;pwd),destination=/protocol -p 32262:32262 -p 32263:32263/udp -p 32273:32273 $1-systemd-$2
+
+# capabilities not enabled by default: CAP_NICE
 }
 
 docker build -f $1/Dockerfile.$2 $1 -t $1-systemd-$2
