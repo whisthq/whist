@@ -63,8 +63,8 @@ function Landing(props: any) {
               , just <span style={{ color: "#00D4FF" }}>faster</span>.
           </div>
           </div>
-          <div style={{ fontSize: 15, width: 600, margin: "auto", lineHeight: 1.5 }}>
-            Fractal uses cloud streaming to supercharge your laptop's applications. <br /> To get access, join our waitlist before the countdown ends.
+          <div style={{ fontSize: 15, width: 500, margin: "auto", lineHeight: 1.5 }}>
+            Fractal uses cloud streaming to supercharge your laptop's applications. <br /> Say goodbye to laggy apps — join our waitlist before the countdown ends for access.
           </div>
           <div style={{ marginTop: 50 }}>
             <WaitlistForm />
