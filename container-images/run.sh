@@ -6,7 +6,6 @@ runcontainer (){
 	    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
 	    --tmpfs /run \
 	    --tmpfs /run/lock \
-	    --device /dev/tty10 \
 	    --device /dev/dri/card0 \
 	    --gpus all \
 	    -e NVIDIA_CONTAINER_CAPABILITIES=all \
