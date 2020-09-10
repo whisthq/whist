@@ -1,0 +1,31 @@
+# Workflow to build Docker images for basic testing
+
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master, dev ]
+
+jobs:
+  docker-build-base-ubuntu18:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Git repository
+        uses: actions/checkout@v2
+
+      - name: Checkout setup-scripts repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
+          repository: fractalcomputers/setup-scripts
+          token: ${{ secrets.CI_PAT }} # `CI_PAT` is a secret that contains the fractal-github user Personal Access Token
+          path: base/setup-scripts     
+
+      - name: Build the Ubuntu 18.04 Base Image
+        run: cd base && docker build . --file Dockerfile.18 --tag my-image-name:$(date +%s)
+
+      # TODO: Actually write tests for the base image and application images, integrated with protocol for streaming  
