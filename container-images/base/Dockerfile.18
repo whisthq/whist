@@ -145,7 +145,7 @@ RUN apt install -y vainfo vdpauinfo vdpau-va-driver libvdpau-va-gl1
 
 
 # Install some useful utilities for debugging/testing
-RUN sudo apt install -y tmux xserver-xorg-video-dummy x11-apps mesa-utils glmark2 mpv
+RUN sudo apt install -y tmux xserver-xorg-video-dummy mesa-utils glmark2 mpv
 
 # Install firefox nightly (for testing only)
 # RUN sudo add-apt-repository ppa:ubuntu-mozilla-daily/ppa
