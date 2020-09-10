@@ -4,7 +4,6 @@ runcontainer (){
     docker run -it -d \
 	    --shm-size=8g \
 	    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-	    --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket:ro \
 	    --tmpfs /run \
 	    --tmpfs /run/lock \
 	    --gpus all \
