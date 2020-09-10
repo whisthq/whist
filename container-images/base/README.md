@@ -19,22 +19,3 @@ To build and run, run the following in the root of the project
 The runchrome script contains fixes for networking issues when setting up the firewall.
 
 Then open up vnc and connect it to 5900 with the VNC_SERVER_PASSWORD
-
-### Ignore the old info below, but it will change
-
-First, start the container and the Fractal server:
-
-```
-docker run -p 5900:5900 --name chrome --user fractal --privileged <image-name>
-```
-
-Once the container is running, you can use Fractal to go into it and run Chrome
-from a terminal window by running:
-```
-google-chrome
-```
-
-You can also start Google Chrome by right-clicking the Desktop and selecting:
-```
-Applications > Network > Web Browsing > Google Chrome
-```
