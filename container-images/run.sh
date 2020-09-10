@@ -2,7 +2,6 @@
 
 runcontainer (){
     docker run -it -d \
-	    --shm-size=8g \
 	    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
 	    --tmpfs /run \
 	    --tmpfs /run/lock \
