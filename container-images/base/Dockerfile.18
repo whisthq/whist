@@ -62,6 +62,9 @@ RUN useradd --create-home fractal \
 
 RUN apt-get install lsb-release -y && apt-get clean
 RUN apt-get install -y pulseaudio
+RUN adduser root pulse-access \
+    && adduser fractal pulse-access
+
 # Install all required components for Fractal to perform well
 # Split into multiple steps for caching
 WORKDIR /setup-scripts/linux
@@ -170,6 +173,9 @@ ADD fractal-display.service /etc/systemd/system
 RUN systemctl enable fractal-display
 ADD fractal-protocol.service /etc/systemd/system
 RUN systemctl enable fractal-protocol
+ADD fractal-audio.service /etc/systemd/system
+RUN systemctl enable fractal-audio
+
 
 ADD fractal-setup.sh /
 RUN chmod +x /fractal-setup.sh
