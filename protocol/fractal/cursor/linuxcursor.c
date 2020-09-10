@@ -28,7 +28,9 @@ FractalCursorImage GetCurrentCursor() {
     image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
     image.cursor_state = CURSOR_STATE_VISIBLE;
     if (disp) {
+        XLockDisplay(disp);
         XFixesCursorImage* ci = XFixesGetCursorImage(disp);
+        XUnlockDisplay(disp);
         image.cursor_bmp_width = ci->width;
         image.cursor_bmp_height = ci->height;
         image.cursor_bmp_hot_x = ci->xhot;
