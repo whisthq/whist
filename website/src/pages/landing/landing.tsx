@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
+import TypeWriterEffect from 'react-typewriter-effect';
+
 
 import { db } from "utils/firebase";
 
@@ -13,6 +15,7 @@ import Moon from "assets/largeGraphics/moon.svg";
 import Mars from "assets/largeGraphics/mars.svg";
 import Mercury from "assets/largeGraphics/mercury.svg";
 import Saturn from "assets/largeGraphics/saturn.svg";
+import Plants from "assets/largeGraphics/plants.svg";
 
 function Landing(props: any) {
   const [state, setState] = useState(() => {
@@ -34,7 +37,7 @@ function Landing(props: any) {
 
   return (
     <div>
-      <div className="banner-background" style={{ zIndex: 2 }}>
+      <div className="banner-background" style={{ zIndex: 2, width: "100vw" }}>
         <img src={Moon} style={{ position: "absolute", width: 100, height: 100, top: 125, left: 40 }} />
         <img src={Mars} style={{ position: "absolute", width: 120, height: 120, top: 185, right: -40 }} />
         <img src={Mercury} style={{ position: "absolute", width: 80, height: 80, top: 405, right: 90 }} />
@@ -43,26 +46,38 @@ function Landing(props: any) {
           <div className="logo">
             Fractal
           </div>
-        </div>
-        <div style={{ margin: "50px auto", color: "white", textAlign: "center", width: 800, position: "relative", bottom: 75 }}>
-          <div style={{ marginBottom: 50 }}>
+          <div style={{ position: "relative", right: 100 }}>
             <CountdownTimer />
           </div>
-          <div style={{ fontWeight: "bold", fontSize: 75, paddingBottom: 40 }}>
-            <span style={{ color: "#00D4FF" }}>Blender</span> on your computer, just <span style={{ color: "#00D4FF" }}>faster</span>.
+        </div>
+        <div style={{ margin: "auto", marginTop: 20, marginBottom: 20, color: "white", textAlign: "center", width: 800, }}>
+          <div style={{ display: "flex", margin: "auto", justifyContent: "center" }}>
+            <TypeWriterEffect
+              textStyle={{ fontFamily: "Maven Pro", color: "#00D4FF", fontSize: 70, fontWeight: "bold" }}
+              startDelay={0}
+              cursorColor="white"
+              multiText={["Blender", "Figma", "Adobe", "Maya", "Blender"]}
+              typeSpeed={150}
+            />
+            <div style={{ fontWeight: "bold", fontSize: 70, paddingBottom: 40 }}>
+              , just <span style={{ color: "#00D4FF" }}>faster</span>.
           </div>
-          <div style={{ fontSize: 16, marginLeft: 100, marginRight: 100 }}>
-            Fractal uses cloud streaming to run creative apps on your laptop without slowing down.
+          </div>
+          <div style={{ fontSize: 15, width: 600, margin: "auto", lineHeight: 1.5 }}>
+            Fractal uses cloud streaming to supercharge your laptop's applications. <br /> To get access, join our waitlist before the countdown ends.
+          </div>
+          <div style={{ marginTop: 50 }}>
+            <WaitlistForm />
           </div>
         </div>
-        <div style={{ margin: "auto", maxWidth: 600, position: "relative", bottom: 50, zIndex: 2 }}>
+        <div style={{ margin: "auto", maxWidth: 600, position: "relative", bottom: 60, zIndex: 2 }}>
           <img src={LaptopAwe} style={{ maxWidth: 600 }} />
         </div>
       </div>
       <div className="white-background-curved" style={{ height: 350, position: "relative", bottom: 150, background: "white", zIndex: 1 }}>
-
+        <img src={Plants} style={{ position: "absolute", width: 250, left: 0, top: 10 }} />
+        <img src={Plants} style={{ position: "absolute", width: 250, right: 0, top: 10, transform: "scaleX(-1)" }} />
       </div>
-      <WaitlistForm />
     </div>
   );
 }

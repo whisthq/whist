@@ -27,9 +27,13 @@ function CountdownTimer(props: any) {
         } else {
             // Render a countdown
             if (Number(seconds) < 10) {
-                seconds = "0" + seconds.toString()
+                seconds = seconds.toString()
             }
-            return <span>{days}:{hours}:{minutes}:{seconds}</span>;
+            return (
+                <div style={{ color: "#00D4FF", fontSize: 18, background: "none", padding: "8px 15px", borderRadius: 2, border: "solid 1px #00D4FF" }}>
+                    <strong>{days}</strong> <span style={{ fontSize: 12 }}> days &nbsp; </span> <strong>{hours}</strong> <span style={{ fontSize: 12 }}> hours </span> &nbsp; <strong>{minutes}</strong> <span style={{ fontSize: 12 }}> mins </span> &nbsp; <strong>{seconds}</strong> <span style={{ fontSize: 12 }}> secs </span>
+                </div>
+            );
         }
     };
 

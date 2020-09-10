@@ -9,33 +9,47 @@ body, div, html, input, Button {
 }
 
 select {
-    width: 100%;
-    background: #F4F4F4;
+    width: 200px;
+    background: #1C2A45;
+    color: #CCCCCC;
     border-radius: 5px;
-    padding: 30px 20px;
-    width: 350px !important;
+    padding: 20px 20px;
     border: none;
     outline: none;
-    margin-top: 20px;
     font-family: "Maven Pro" !important;
+}
+
+input {
+    color: white;
 }
 
 option, ::placeholder {
     font-family: "Maven Pro" !important;
 }
 
+option {
+    color: #000000;
+}
+
+::placeholder {
+    color: #CCCCCC
+}
+
+option {
+    background: white;
+}
+
 .waitlist-form {
     border-radius: 5px;
-    width: 310px;
-    background-color: #F4F4F4;
+    background-color: #1C2A45;
     border: none;
-    padding: 30px 20px;
+    padding: 20px 20px;
     outline: none;
+    margin: 0px;
 }
 
 .waitlist-button {
-    width: 350px;
-    margin-top: 20px;
+    width: 100%;
     border: none;
     outline: none;
     padding: 20px;
@@ -52,7 +66,7 @@ option, ::placeholder {
 
 .banner-background {
     width: 100%;
-    background: linear-gradient(180deg, #0D1D3C 0%, #203A98 100%);
+    background: #0F1726;
 }
 
 .white-background-curved {
@@ -63,5 +77,7 @@ option, ::placeholder {
 .logo {
     font-weight: bold;
     color: white;
-    font-size: 18px;
+    font-size: 22px;
+    padding-left: 20px;
 }
+

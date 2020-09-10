@@ -47,7 +47,7 @@ function WaitlistForm(props: any) {
         const exists = await emails.get().then(function (snapshot) {
             return !snapshot.empty
         });
-        
+
 
         if (!exists) {
             db.collection("waitlist").add({
@@ -63,43 +63,34 @@ function WaitlistForm(props: any) {
 
     return (
         <div>
-            <InputGroup className="mb-3" style={{ marginTop: 20 }}>
-                <FormControl
-                    type="email"
-                    aria-label="Default"
-                    aria-describedby="inputGroup-sizing-default"
+            <div style={{ width: 800, margin: "auto", marginTop: 20, display: "flex", justifyContent: "space-between" }}>
+                <input
+                    type="text"
                     placeholder="Email Address"
                     onChange={updateEmail}
                     className="waitlist-form"
+                    style={{ width: 150 }}
                 />
-                <br />
-            </InputGroup>
-            <InputGroup className="mb-3" style={{ marginTop: 20 }}>
-                <FormControl
-                    type="email"
-                    aria-label="Default"
-                    aria-describedby="inputGroup-sizing-default"
+                <input
+                    type="text"
                     placeholder="Name"
                     onChange={updateName}
                     className="waitlist-form"
+                    style={{ width: 150 }}
                 />
-                <br />
-            </InputGroup>
-            <InputGroup className="mb-3" style={{ marginTop: 20 }}>
-                <FormControl
-                    aria-label="Default"
-                    aria-describedby="inputGroup-sizing-default"
+                <input
+                    type="text"
                     placeholder="Referral Code (Optional)"
                     onChange={updateReferralCode}
                     className="waitlist-form"
+                    style={{ width: 150 }}
                 />
-                <br />
-            </InputGroup>
-            <CountryDropdown
-                value={state.country}
-                onChange={(country) => updateCountry(country)}
-            />
-            <div>
+                <CountryDropdown
+                    value={state.country}
+                    onChange={(country) => updateCountry(country)}
+                />
+            </div>
+            <div style={{ width: 800, margin: "auto", marginTop: 20, }}>
                 <Button
                     onClick={insertWaitlist}
                     className="waitlist-button"
