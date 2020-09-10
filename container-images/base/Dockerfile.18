@@ -79,14 +79,10 @@ RUN /bin/bash -c "source utils.sh \
 RUN /bin/bash -c "source utils.sh \
     && Set-FractalDirectory \
     && Install-FractalServer dev"
-# RUN /bin/bash -c "source utils.sh \ 
-#     && Install-FractalExitScript"
 RUN /bin/bash -c "source utils.sh \
     && Install-FractalAutoUpdate master"
 RUN /bin/bash -c "source utils.sh \
     && Install-FractalLinuxInputDriver"
-# RUN /bin/bash -c "source utils.sh \
-#     && Install-FractalWallpaper"
 RUN /bin/bash -c "source utils.sh \
     && Install-Unison \
     && Enable-SSHKey"
