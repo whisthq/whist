@@ -23,7 +23,7 @@ import {
 import "styles/landing.css"
 
 function WaitlistForm(props: any) {
-    const { dispatch, user, waitlist, isAction } = props
+    const { dispatch, user, waitlist, isAction, closingDate } = props
     const { width, referralCode } = useContext(MainContext)
 
     const [email, setEmail] = useState("")
@@ -109,7 +109,8 @@ function WaitlistForm(props: any) {
                             name,
                             newPoints,
                             unsortedLeaderboard[email].referralCode,
-                            0
+                            0,
+                            closingDate
                         )
                     )
                 )
@@ -121,7 +122,8 @@ function WaitlistForm(props: any) {
                     unsortedLeaderboard[email].name,
                     unsortedLeaderboard[email].points,
                     unsortedLeaderboard[email].referralCode,
-                    0
+                    0,
+                    closingDate
                 )
             )
         }
@@ -260,10 +262,13 @@ function WaitlistForm(props: any) {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any; waitlist: any } }) {
+function mapStateToProps(state: {
+    AuthReducer: { user: any; waitlist: any; closing_date: any }
+}) {
     return {
         user: state.AuthReducer.user,
         waitlist: state.AuthReducer.waitlist,
+        closingDate: state.AuthReducer.closing_date,
     }
 }
 

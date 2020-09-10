@@ -14,4 +14,5 @@ export const AUTH_DEFAULT = {
         number: 0,
         lastClicked: 0,
     },
+    closing_date: null,
 }

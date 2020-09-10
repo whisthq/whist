@@ -11,6 +11,7 @@ import { PersistGate } from "redux-persist/integration/react"
 import { composeWithDevTools } from "redux-devtools-extension"
 import ReduxPromise from "redux-promise"
 import storage from "redux-persist/lib/storage"
+import rootSaga from "store/sagas";
 import * as Sentry from "@sentry/react"
 
 import history from "shared/utils/history"
@@ -54,6 +55,8 @@ const store = createStore(
 )
 
 const persistor = persistStore(store)
+
+sagaMiddleware.run(rootSaga);
 
 ReactDOM.render(
     <React.StrictMode>

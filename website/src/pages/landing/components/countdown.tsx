@@ -7,6 +7,8 @@ import { db } from "shared/utils/firebase"
 
 import "styles/landing.css"
 
+import { setClosingDateAction } from "store/actions/auth/waitlist"
+
 const CountdownTimer = (props: any) => {
     const { width } = useContext(MainContext)
 
@@ -15,8 +17,9 @@ const CountdownTimer = (props: any) => {
     })
 
     useEffect(() => {
-        getCloseDate().then(function (closingDate) {
+        getCloseDate().then((closingDate) => {
             changeClosingDate(closingDate)
+            props.dispatch(setClosingDateAction(closingDate))
         })
     }, [])
 
