@@ -343,6 +343,8 @@ int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int
             (screen->height != get_virtual_screen_height())) {
             LOG_INFO("screen %dx%d != sdl %dx%d", screen->width, screen->height,
                      get_virtual_screen_width(), get_virtual_screen_height());
+        } else {
+            LOG_INFO("screen %dx%d", screen->width, screen->height);
         }
         XTestFakeMotionEvent(
             input_device->display, -1, (int)(x * (int32_t)screen->width / MOUSE_SCALING_FACTOR),
