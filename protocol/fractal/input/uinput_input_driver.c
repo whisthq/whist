@@ -18,11 +18,9 @@
         goto failure;                                                                          \
     }
 
-#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                                      \
-    if (ioctl(FD, PARAMS) == -1) {                                                             \
-        mprintf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", strerror(errno)); \
-        goto failure;                                                                          \
-    }
+// we control this to specify the normalization to uinput during device creation; we run into
+// annoying overflow issues if this is on the order of magnitude 0xffff
+#define UINPUT_MOUSE_COORDINATE_RANGE 0xfff
 
 // @brief Linux keycodes for replaying SDL user inputs on server
 // @details index is SDL keycode, value is Linux keycode.
@@ -389,11 +387,11 @@ input_device_t* CreateInputDevice() {
     axis_setup.absinfo.resolution = 1;
 
     axis_setup.code = ABS_X;
-    axis_setup.absinfo.maximum = get_virtual_screen_width();
+    axis_setup.absinfo.maximum = UINPUT_MOUSE_COORDINATE_RANGE;
     _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_ABS_SETUP, &axis_setup);
 
     axis_setup.code = ABS_Y;
-    axis_setup.absinfo.maximum = get_virtual_screen_height();
+    axis_setup.absinfo.maximum = UINPUT_MOUSE_COORDINATE_RANGE;
     _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_ABS_SETUP, &axis_setup);
 
     // create devices
@@ -473,14 +471,12 @@ int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int
         EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_Y, y);
         EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     } else {
-        LOG_INFO("sdl %dx%d", get_virtual_screen_width(), get_virtual_screen_height());
-
         EmitInputEvent(
             input_device->fd_absmouse, EV_ABS, ABS_X,
-            (int)(x * (int32_t)get_virtual_screen_width() / (int32_t)MOUSE_SCALING_FACTOR));
+            (int)(x * (int32_t)UINPUT_MOUSE_COORDINATE_RANGE / (int32_t)MOUSE_SCALING_FACTOR));
         EmitInputEvent(
             input_device->fd_absmouse, EV_ABS, ABS_Y,
-            (int)(y * (int32_t)get_virtual_screen_height() / (int32_t)MOUSE_SCALING_FACTOR));
+            (int)(y * (int32_t)UINPUT_MOUSE_COORDINATE_RANGE / (int32_t)MOUSE_SCALING_FACTOR));
         EmitInputEvent(input_device->fd_absmouse, EV_KEY, BTN_TOOL_PEN, 1);
         EmitInputEvent(input_device->fd_absmouse, EV_SYN, SYN_REPORT, 0);
     }

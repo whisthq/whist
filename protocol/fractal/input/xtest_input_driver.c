@@ -284,11 +284,25 @@ input_device_t* CreateInputDevice() {
     memset(input_device, 0, sizeof(input_device_t));
 
     input_device->display = XOpenDisplay(NULL);
+    input_device->root = DefaultRootWindow(input_device->display);
+
     return input_device;
 }
 
+void GetInputDimensions(input_device_t* input_device, int32_t* w, int32_t* h) {
+    XWindowAttributes window_attributes;
+    if (!XGetWindowAttributes(input_device->display, input_device->root, &window_attributes)) {
+        *w = 0;
+        *h = 0;
+        LOG_ERROR("Error while getting window attributes");
+        return;
+    }
+    *w = window_attributes.width;
+    *h = window_attributes.height;
+}
+
 void DestroyInputDevice(input_device_t* input_device) {
-    XCloseDisplay(NULL);
+    XCloseDisplay(input_device->display);
     free(input_device);
     return;
 }
@@ -338,17 +352,10 @@ int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int
     if (relative) {
         XTestFakeRelativeMotionEvent(input_device->display, x, y, CurrentTime);
     } else {
-        Screen* screen = DefaultScreenOfDisplay(input_device->display);
-        if ((screen->width != get_virtual_screen_width()) ||
-            (screen->height != get_virtual_screen_height())) {
-            LOG_INFO("screen %dx%d != sdl %dx%d", screen->width, screen->height,
-                     get_virtual_screen_width(), get_virtual_screen_height());
-        } else {
-            LOG_INFO("screen %dx%d", screen->width, screen->height);
-        }
-        XTestFakeMotionEvent(
-            input_device->display, -1, (int)(x * (int32_t)screen->width / MOUSE_SCALING_FACTOR),
-            (int)(y * (int32_t)screen->height / MOUSE_SCALING_FACTOR), CurrentTime);
+        int32_t w, h;
+        GetInputDimensions(input_device, &w, &h);
+        XTestFakeMotionEvent(input_device->display, -1, (int)(x * w / MOUSE_SCALING_FACTOR),
+                             (int)(y * h / MOUSE_SCALING_FACTOR), CurrentTime);
     }
     XSync(input_device->display, false);
     XUnlockDisplay(input_device->display);

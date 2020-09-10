@@ -28,6 +28,7 @@ Custom Types
 
 typedef struct input_device_t {
     Display* display;
+    Window root;
     int keyboard_state[NUM_KEYCODES];
     bool caps_lock;
     bool num_lock;
