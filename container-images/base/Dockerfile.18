@@ -68,18 +68,12 @@ RUN adduser root pulse-access \
 # Install all required components for Fractal to perform well
 # Split into multiple steps for caching
 WORKDIR /setup-scripts/linux
-RUN /bin/bash -c "source utils.sh \
-    && Update-Linux \
-    && Set-Time \
-    && Install-VirtualDisplay"
+RUN /bin/bash -c "source utils.sh && Update-Linux"
+RUN /bin/bash -c "source utils.sh && Install-VirtualDisplay-NoGnome"
 RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \
     && Install-GoogleChrome"
-# RUN /bin/bash -c "source utils.sh \
-#     && Install-NvidiaTeslaPublicDrivers \
-#     && Disable-TCC \
-#     && Set-OptimalGPUSettings"
 RUN /bin/bash -c "source utils.sh \
     && Install-CustomX11Configuration"
 RUN /bin/bash -c "source utils.sh \
@@ -98,9 +92,7 @@ RUN /bin/bash -c "source utils.sh \
     && Enable-SSHKey"
 RUN /bin/bash -c " source utils.sh \
     && Disable-Shutdown"
-RUN /bin/bash -c " source utils.sh \
-    && Add-AutoLogin \
-    && Disable-AutomaticLockScreen"
+RUN /bin/bash -c " source utils.sh && Add-AutoLogin"
 RUN /bin/bash -c " source utils.sh \
     Install-FractalServer \
     Install-CustomGDMConfiguration"
@@ -181,6 +173,7 @@ ADD fractal-setup.sh /
 RUN chmod +x /fractal-setup.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
+VOLUME [ "/run/dbus/system_bus_socket" ]
 
 #As opposed to graphical.target, which is the default
 #RUN systemctl set-default multi-user.target
