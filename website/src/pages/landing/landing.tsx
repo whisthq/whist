@@ -41,7 +41,10 @@ function Landing(props: any) {
                             const userData = doc.data();
                             const ranking = updateRanking(userData);
                             console.log(ranking);
-                            if (userData.points != props.user.points) {
+                            if (
+                                userData &&
+                                userData.points != props.user.points
+                            ) {
                                 props.dispatch(
                                     updateUserAction(userData.points, ranking)
                                 );

@@ -55,16 +55,50 @@ option,
     cursor: pointer;
 }
 
+.leaderboardPage {
+    height: 100vh;
+    background-color: #0d1d3c;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
 .table {
     width: 400px;
     margin: auto;
+    background-color: #0d0f34;
+    color: #c9c9f5;
+    border-collapse: collapse;
+    text-align: left;
+    border-radius: 10px !important;
+}
+
+.table thead {
+    background-color: #07082b;
+    color: #00d4ff;
+    border-radius: 10px 10px 0 0;
 }
 
 .table td,
 .table th {
-    padding: 5px;
+    padding: 20px;
+}
+
+.rankingColumn {
+    padding-left: 40px !important;
+}
+
+.nameColumn {
+    color: white;
+}
+
+.pointsColumn {
+    padding-right: 40px !important;
 }
 
 .userRow {
-    background-color: #f4f4f4;
+    background-color: #454e7e;
+    border-radius: 10px;
 }
