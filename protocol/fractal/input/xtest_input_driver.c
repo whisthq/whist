@@ -312,15 +312,12 @@ int GetKeyboardKeyState(input_device_t* input_device, FractalKeycode sdl_keycode
 }
 
 int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed) {
-    XLockDisplay(input_device->display);
     KeyCode kcode = XKeysymToKeycode(input_device->display, GetX11KeySym(sdl_keycode));
     if (!kcode) {
         return -1;
     }
     XTestFakeKeyEvent(input_device->display, kcode, pressed, CurrentTime);
     XSync(input_device->display, false);
-
-    XUnlockDisplay(input_device->display);
 
     input_device->keyboard_state[sdl_keycode] = pressed;
 
@@ -334,7 +331,6 @@ int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int p
 }
 
 int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int relative) {
-    XLockDisplay(input_device->display);
     if (relative) {
         XTestFakeRelativeMotionEvent(input_device->display, x, y, CurrentTime);
     } else {
@@ -351,21 +347,16 @@ int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int
             (int)(y * (int32_t)screen->height / MOUSE_SCALING_FACTOR), CurrentTime);
     }
     XSync(input_device->display, false);
-    XUnlockDisplay(input_device->display);
     return 0;
 }
 
 int EmitMouseButtonEvent(input_device_t* input_device, FractalMouseButton button, int pressed) {
-    XLockDisplay(input_device->display);
     XTestFakeButtonEvent(input_device->display, button, pressed, CurrentTime);
     XSync(input_device->display, false);
-    XUnlockDisplay(input_device->display);
     return 0;
 }
 
 int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
-    XLockDisplay(input_device->display);
-
     if (y > 0) {
         // Up
         XTestFakeButtonEvent(input_device->display, 4, 1, CurrentTime);
@@ -386,7 +377,6 @@ int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
     }
 
     XSync(input_device->display, false);
-    XUnlockDisplay(input_device->display);
     return 0;
 }
 

@@ -171,8 +171,6 @@ int CaptureScreen(CaptureDevice* device) {
 
     static bool first = true;
 
-    XLockDisplay(device->display);
-
     int update = 0;
     while (XPending(device->display)) {
         // XDamageNotifyEvent* dev; unused, remove or is this needed and should
@@ -216,7 +214,6 @@ int CaptureScreen(CaptureDevice* device) {
             XSetErrorHandler(prev_handler);
         }
     }
-    XUnlockDisplay(device->display);
     return update;
 }
 
