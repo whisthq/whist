@@ -184,7 +184,7 @@ def create_new_container(self, username, cluster_name, taskinfo=None):
         ip=curr_ip,
         port=curr_port,
         state="CREATING",
-        location="us-east-1",
+        location=ecs_client.region_name,
         os="Linux",
         lock=False,
     )
