@@ -436,6 +436,9 @@ class ECSClient:
         arn = response["taskDefinition"]["taskDefinitionArn"]
         self.task_definition_arn = arn
         self.container_name = containername
+    
+    def set_task_definition_arn(self, task_arn):
+        self.task_definition_arn = task_arn
 
     def add_task(self, task_arn):
         """
@@ -461,6 +464,7 @@ class ECSClient:
         if use_launch_type:
             task_args['launchType'] = self.launch_type
         taskdict = self.ecs_client.run_task(**task_args, **kwargs)
+        print(taskdict)
         task = taskdict["tasks"][0]
         running_task_arn = task["taskArn"]
         self.tasks.append(running_task_arn)
@@ -566,7 +570,7 @@ class ECSClient:
         self,
         launch_config_name,
         auto_scaling_group_name=None,
-        min_size=1,
+        min_size=0,
         max_size=10,
         availability_zones=None,
     ):
@@ -576,7 +580,7 @@ class ECSClient:
              auto_scaling_group_name (Optional[str]): the name to give the generated auto scaling group, will be automatically generated if not provided
              min_size (Optional[int]): the minimum number of containers in the auto scaling group, defaults to 1
              max_size (Optional[int]): the maximum number of containers in the auto scaling group, defaults to 10
-             availability_zones (Optional[string]): the availability zones for creating instances in the auto scaling group
+             availability_zones (Optional[List[str]]): the availability zones for creating instances in the auto scaling group
         Returns:
              str: name of auto scaling group created
         """
@@ -737,19 +741,23 @@ class ECSClient:
         for i in range(self.offset + 1):
             self.spin_til_running(offset=i, time_delay=time_delay)
 
-    def create_auto_scaling_cluster(self, instance_type='t2.small', ami='ami-04cfcf6827bb29439'):
+    def create_auto_scaling_cluster(self, instance_type='t2.small', ami='ami-04cfcf6827bb29439', min_size=0, max_size=10, availability_zones=None):
         """
         Creates launch configuration, auto scaling group, capacity provider, and cluster
         Args:
             instance_type (Optional[str]): size of instances to create in auto scaling group, defaults to t2.small
             ami (Optional[str]): AMI to use for the instances created in auto scaling group, defaults to an ECS-optimized, GPU-optimized Amazon Linux 2 AMI
+            min_size (Optional[int]): the minimum number of containers in the auto scaling group, defaults to 1
+            max_size (Optional[int]): the maximum number of containers in the auto scaling group, defaults to 10
+            region_name (Optional[str]): which AWS region you're running on
+            availability_zones (Optional[List[str]]): the availability zones for creating instances in the auto scaling group
         Returns:
             (str, str, str, str): cluster name, launch configuration name, auto scaling group name, capacity provider name
         """
-        cluster_name, launch_config_name = testclient.create_launch_configuration(instance_type=instance_type, ami=ami)
-        auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
-        capacity_provider_name = testclient.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
-        testclient.create_cluster(capacity_providers=[capacity_provider_name], cluster_name=cluster_name)
+        cluster_name, launch_config_name = self.create_launch_configuration(instance_type=instance_type, ami=ami)
+        auto_scaling_group_name = self.create_auto_scaling_group(launch_config_name=launch_config_name, min_size=min_size, max_size=max_size, availability_zones=availability_zones)
+        capacity_provider_name = self.create_capacity_provider(auto_scaling_group_name=auto_scaling_group_name)
+        self.create_cluster(capacity_providers=[capacity_provider_name], cluster_name=cluster_name)
         return cluster_name, launch_config_name, auto_scaling_group_name, capacity_provider_name
 
 if __name__ == "__main__":
@@ -779,9 +787,10 @@ if __name__ == "__main__":
 
     # Clean Up
     testclient.terminate_containers_in_cluster(cluster_name)
-    testclient.iam_client.delete_role(RoleName=testclient.role_name)
-    testclient.iam_client.delete_instance_profile(InstanceProfileName=testclient.instance_profile)
-    testclient.auto_scaling_client.delete_launch_configuration(LaunchConfigurationName=launch_config_name)
-    testclient.auto_scaling_client.delete_auto_scaling_group(AutoScalingGroupName=auto_scaling_group_name, ForceDelete=True)
-    testclient.ecs_client.delete_capacity_provider(capacityProvider=capacity_provider_name)
+    time.sleep(30)
     testclient.ecs_client.delete_cluster(cluster=cluster_name)
+    testclient.ecs_client.delete_capacity_provider(capacityProvider=capacity_provider_name)
+    testclient.auto_scaling_client.delete_auto_scaling_group(AutoScalingGroupName=auto_scaling_group_name, ForceDelete=True)
+    testclient.auto_scaling_client.delete_launch_configuration(LaunchConfigurationName=launch_config_name)
+    testclient.iam_client.delete_instance_profile(InstanceProfileName=testclient.instance_profile)
+    testclient.iam_client.delete_role(RoleName=testclient.role_name)

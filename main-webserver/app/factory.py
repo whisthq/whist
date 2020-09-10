@@ -46,6 +46,8 @@ def init_app(app):
 
     from .blueprints.celery.celery_status_blueprint import celery_status_bp
 
+    from .blueprints.aws.aws_container_blueprint import aws_container_bp
+
     from .blueprints.azure.azure_vm_blueprint import azure_vm_bp
     from .blueprints.azure.azure_disk_blueprint import azure_disk_bp
     from .blueprints.azure.artifact_blueprint import artifact_bp
@@ -59,6 +61,7 @@ def init_app(app):
     app.register_blueprint(token_bp)
     app.register_blueprint(azure_vm_bp)
     app.register_blueprint(celery_status_bp)
+    app.register_blueprint(aws_container_bp)
     app.register_blueprint(azure_disk_bp)
     app.register_blueprint(google_auth_bp)
     app.register_blueprint(artifact_bp)
