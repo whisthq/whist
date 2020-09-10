@@ -16,6 +16,7 @@ trigged an SDL event must be triggered in sdl_event_handler.c
 #include "../fractal/utils/logging.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "sdl_utils.h"
+#include "audio.h"
 #include "desktop_utils.h"
 #include "network.h"
 
@@ -71,6 +72,10 @@ int handleSDLEvent(SDL_Event *event) {
                     return -1;
                 }
             }
+            break;
+        case SDL_AUDIODEVICEADDED:
+        case SDL_AUDIODEVICEREMOVED: 
+            SDL_DetachThread(SDL_CreateThread(MultithreadedReinitAudio, "MultithreadedReinitAudio", NULL));
             break;
         case SDL_KEYDOWN:
         case SDL_KEYUP:
@@ -148,7 +153,7 @@ int handleMouseLeftWindow(SDL_Event *event) {
 }
 
 int handleKeyUpDown(SDL_Event *event) {
-    FractalKeycode keycode = (FractalKeycode)event->key.keysym.scancode;
+    FractalKeycode keycode = (FractalKeycode) SDL_GetScancodeFromName(SDL_GetKeyName(event->key.keysym.sym));
     bool is_pressed = event->key.type == SDL_KEYDOWN;
 
     // Keep memory of alt/ctrl/lgui/rgui status
