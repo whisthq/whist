@@ -69,21 +69,21 @@ function WaitlistForm(props: any) {
                     placeholder="Email Address"
                     onChange={updateEmail}
                     className="waitlist-form"
-                    style={{ width: 150 }}
+                    style={{ width: 180 }}
                 />
                 <input
                     type="text"
                     placeholder="Name"
                     onChange={updateName}
                     className="waitlist-form"
-                    style={{ width: 150 }}
+                    style={{ width: 180 }}
                 />
                 <input
                     type="text"
-                    placeholder="Referral Code (Optional)"
+                    placeholder="Referral Code"
                     onChange={updateReferralCode}
                     className="waitlist-form"
-                    style={{ width: 150 }}
+                    style={{ width: 180 }}
                 />
                 <CountryDropdown
                     value={state.country}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import TypeWriterEffect from 'react-typewriter-effect';
-
+import { Row, Col } from "react-bootstrap";
 
 import { db } from "utils/firebase";
 
@@ -16,6 +16,7 @@ import Mars from "assets/largeGraphics/mars.svg";
 import Mercury from "assets/largeGraphics/mercury.svg";
 import Saturn from "assets/largeGraphics/saturn.svg";
 import Plants from "assets/largeGraphics/plants.svg";
+import Wireframe from "assets/largeGraphics/wireframe.svg";
 
 function Landing(props: any) {
   const [state, setState] = useState(() => {
@@ -36,7 +37,7 @@ function Landing(props: any) {
   }
 
   return (
-    <div>
+    <div style={{ paddingBottom: 100 }}>
       <div className="banner-background" style={{ zIndex: 2, width: "100vw" }}>
         <img src={Moon} style={{ position: "absolute", width: 100, height: 100, top: 125, left: 40 }} />
         <img src={Mars} style={{ position: "absolute", width: 120, height: 120, top: 185, right: -40 }} />
@@ -46,24 +47,24 @@ function Landing(props: any) {
           <div className="logo">
             Fractal
           </div>
-          <div style={{ position: "relative", right: 100 }}>
+          <div style={{ position: "relative", right: 50 }}>
             <CountdownTimer />
           </div>
         </div>
         <div style={{ margin: "auto", marginTop: 20, marginBottom: 20, color: "white", textAlign: "center", width: 800, }}>
           <div style={{ display: "flex", margin: "auto", justifyContent: "center" }}>
             <TypeWriterEffect
-              textStyle={{ fontFamily: "Maven Pro", color: "#00D4FF", fontSize: 70, fontWeight: "bold" }}
+              textStyle={{ fontFamily: "Maven Pro", color: "#00D4FF", fontSize: 70, fontWeight: "bold", marginTop: 10 }}
               startDelay={0}
               cursorColor="white"
-              multiText={["Blender", "Figma", "Adobe", "Maya", "Blender"]}
+              multiText={["Blender", "Figma", "VSCode", "Maya", "Blender"]}
               typeSpeed={150}
             />
             <div style={{ fontWeight: "bold", fontSize: 70, paddingBottom: 40 }}>
               , just <span style={{ color: "#00D4FF" }}>faster</span>.
           </div>
           </div>
-          <div style={{ fontSize: 15, width: 500, margin: "auto", lineHeight: 1.5 }}>
+          <div style={{ fontSize: 15, width: 600, margin: "auto", lineHeight: 1.55, color: "#EFEFEF", letterSpacing: 1 }}>
             Fractal uses cloud streaming to supercharge your laptop's applications. <br /> Say goodbye to laggy apps — join our waitlist before the countdown ends for access.
           </div>
           <div style={{ marginTop: 50 }}>
@@ -77,8 +78,22 @@ function Landing(props: any) {
       <div className="white-background-curved" style={{ height: 350, position: "relative", bottom: 150, background: "white", zIndex: 1 }}>
         <img src={Plants} style={{ position: "absolute", width: 250, left: 0, top: 10 }} />
         <img src={Plants} style={{ position: "absolute", width: 250, right: 0, top: 10, transform: "scaleX(-1)" }} />
+        <Row style={{ paddingTop: 200, paddingRight: 50 }}>
+          <Col md={7}>
+            <img src={Wireframe} style={{ width: "100%" }} />
+          </Col>
+          <Col md={5} style={{ paddingLeft: 40 }}>
+            <div style={{ fontSize: 50, fontWeight: "bold", lineHeight: 1.2 }}>
+              Unlock desktop apps on any computer or tablet
+            </div>
+            <div style={{ marginTop: 40 }}>
+              Fractal is like Google Stadia for all your apps. For the first time, run VSCode on an iPad
+              or create 3D animations on a Chromebook.
+            </div>
+          </Col>
+        </Row>
       </div>
-    </div>
+    </div >
   );
 }
 

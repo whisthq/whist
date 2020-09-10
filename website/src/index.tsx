@@ -19,6 +19,7 @@ import rootReducer from "store/reducers/root";
 import * as serviceWorker from "serviceWorker";
 
 import "styles/shared.css";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 import Landing from "pages/landing/landing";
 import Auth from "pages/auth/auth";
