@@ -1,5 +1,9 @@
 # Fractal Container Images
 
+| Base Ubuntu 18.04 | Base Ubuntu 20.04
+|:--:|:--:|
+|![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|
+
 This repository contains the Docker images containerizing the various applications that Fractal streams or is planning to stream from containers via our streaming technology. The base image running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders.
 
 **Supported Applications**
@@ -8,7 +12,7 @@ This repository contains the Docker images containerizing the various applicatio
 
 ## Development
 
-To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfiles under `/base/`, unless your fixes are application-specific, in which case you should contribute to the relevant Dockerfile for the application. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of possible security attacks possible.
+To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfiles under `/base/`, unless your fixes are application-specific, in which case you should contribute to the relevant Dockerfile for the application. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of possible security attacks possible. Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master` once deployed to production.
 
 You can run the base image via the `run.sh` script. It takes in a few parameters, `APP`, which determines the name of the folder/app to build, `VERSION==18|20` which specificies the Ubuntu version, anad `PROTOCOL` which specifies the local Fractal protocol directory.
 
