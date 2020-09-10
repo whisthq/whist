@@ -2,6 +2,7 @@
 #this file is for Owen's work
 from app import *
 from app.celery.aws_ecs_creation import *
+from app.celery.aws_ecs_deletion import *
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -20,12 +21,24 @@ def test_endpoint(action, **kwargs):
 
         return jsonify({"ID": task.id}), ACCEPTED
 
-    if action == "launch_task":
+    if action == "create_container":
         username, cluster_name = (
             kwargs["body"]["username"],
             kwargs["body"]["cluster_name"],
         )
         task = create_new_container.apply_async([username, cluster_name])
+
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
+
+    if action == "delete_container":
+        user_id, container_name = (
+            kwargs["body"]["user_id"],
+            kwargs["body"]["container_name"],
+        )
+        task = deleteContainer.apply_async([user_id, container_name])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
