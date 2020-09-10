@@ -473,6 +473,8 @@ int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int
         EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_Y, y);
         EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     } else {
+        LOG_INFO("sdl %dx%d", get_virtual_screen_width(), get_virtual_screen_height());
+
         EmitInputEvent(
             input_device->fd_absmouse, EV_ABS, ABS_X,
             (int)(x * (int32_t)get_virtual_screen_width() / (int32_t)MOUSE_SCALING_FACTOR));
