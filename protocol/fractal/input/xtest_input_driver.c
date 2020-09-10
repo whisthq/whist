@@ -338,10 +338,15 @@ int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int
     if (relative) {
         XTestFakeRelativeMotionEvent(input_device->display, x, y, CurrentTime);
     } else {
-        XTestFakeMotionEvent(input_device->display, 0,
-                             (int)(x * (int32_t)get_virtual_screen_width() / MOUSE_SCALING_FACTOR),
-                             (int)(y * (int32_t)get_virtual_screen_height() / MOUSE_SCALING_FACTOR),
-                             CurrentTime);
+        Screen* screen = DefaultScreenOfDisplay(input_device->display);
+        if ((screen->width != get_virtual_screen_width()) ||
+            (screen->height != get_virtual_screen_height())) {
+            LOG_INFO("screen %dx%d != sdl %dx%d", screen->width, screen->height,
+                     get_virtual_screen_width(), get_virtual_screen_height());
+        }
+        XTestFakeMotionEvent(
+            input_device->display, -1, (int)(x * (int32_t)screen->width / MOUSE_SCALING_FACTOR),
+            (int)(y * (int32_t)screen->height / MOUSE_SCALING_FACTOR), CurrentTime);
     }
     XSync(input_device->display, false);
     XUnlockDisplay(input_device->display);
