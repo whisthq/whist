@@ -49,3 +49,19 @@ option, ::placeholder {
 .waitlist-button:hover {
     cursor: pointer;
 }
+
+.banner-background {
+    width: 100%;
+    background: linear-gradient(180deg, #0D1D3C 0%, #203A98 100%);
+}
+
+.white-background-curved {
+    border-top-left-radius: 50% 40%;
+    border-top-right-radius: 50% 40%;
+}
+
+.logo {
+    font-weight: bold;
+    color: white;
+    font-size: 18px;
+}

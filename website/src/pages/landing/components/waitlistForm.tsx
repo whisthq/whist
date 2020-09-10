@@ -14,7 +14,8 @@ function WaitlistForm(props: any) {
         return ({
             "email": null,
             "name": null,
-            "country": "United States"
+            "country": "United States",
+            "referralCode": null
         })
     })
 
@@ -36,11 +37,17 @@ function WaitlistForm(props: any) {
         setState(prevState => { return { ...prevState, "country": country } })
     }
 
+    function updateReferralCode(evt: any) {
+        evt.persist();
+        setState(prevState => { return { ...prevState, "referralCode": evt.target.value } })
+    }
+
     async function insertWaitlist() {
         var emails = db.collection("waitlist").where('email', '==', state.email);
         const exists = await emails.get().then(function (snapshot) {
             return !snapshot.empty
         });
+        
 
         if (!exists) {
             db.collection("waitlist").add({
@@ -74,6 +81,16 @@ function WaitlistForm(props: any) {
                     aria-describedby="inputGroup-sizing-default"
                     placeholder="Name"
                     onChange={updateName}
+                    className="waitlist-form"
+                />
+                <br />
+            </InputGroup>
+            <InputGroup className="mb-3" style={{ marginTop: 20 }}>
+                <FormControl
+                    aria-label="Default"
+                    aria-describedby="inputGroup-sizing-default"
+                    placeholder="Referral Code (Optional)"
+                    onChange={updateReferralCode}
                     className="waitlist-form"
                 />
                 <br />
