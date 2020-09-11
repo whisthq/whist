@@ -57,6 +57,8 @@ def init_app(app):
 
     from .blueprints.payment.stripe_blueprint import stripe_bp
 
+    from .blueprints.aws.aws_container_blueprint import aws_container_bp
+
     app.register_blueprint(account_bp)
     app.register_blueprint(token_bp)
     app.register_blueprint(azure_vm_bp)
@@ -73,5 +75,6 @@ def init_app(app):
     app.register_blueprint(admin_bp)
     app.register_blueprint(table_bp)
     app.register_blueprint(logs_bp)
+    app.register_blueprint(aws_container_bp)
 
     return app

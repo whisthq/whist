@@ -1,10 +1,18 @@
-#TODO:  create blueprints for:  getting container info, starting a new container given a task and a user, stopping a container
-#this file is for Owen's work
-from app import *
-from app.celery.aws_ecs_creation import *
-from app.celery.aws_ecs_deletion import *
+from flask import Blueprint
+from flask.json import jsonify
+from flask_jwt_extended import jwt_required
+
+from app import fractalPreProcess
+from app.celery.aws_ecs_creation import BadAppError, create_new_container, create_new_cluster
+from app.celery.aws_ecs_deletion import deleteContainer
+from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
+from app.helpers.blueprint_helpers.aws.aws_container_get import protocol_info
+from app.helpers.blueprint_helpers.aws.aws_container_post import pingHelper
+from app.helpers.blueprint_helpers.aws.aws_container_post import set_stun
+from app.helpers.utils.general.auth import fractalAuth
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
+
 
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
 @fractalPreProcess
@@ -37,8 +45,8 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
-
-    if action == "delete_container":
+     
+     if action == "delete_container":
         user_id, container_name = (
             kwargs["body"]["user_id"],
             kwargs["body"]["container_name"],
@@ -49,3 +57,87 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+
+      
+@aws_container_bp.route("/container/<action>", methods=["POST"])
+@fractalPreProcess
+@jwt_required
+@fractalAuth
+def aws_container_post(action, **kwargs):
+    response = jsonify({"error": "Not Found"}), NOT_FOUND
+    body = kwargs.pop("body")
+    try:
+        user = body.pop("username")
+    except KeyError:
+        response = jsonify({"error": "Bad Request"}), BAD_REQUEST
+    else:
+        if action == "create":
+            # Access required keys.
+            try:
+                app = body.pop("app")
+            except KeyError:
+                response = jsonify({"error": "Bad Request"}), BAD_REQUEST
+            else:
+                # Create a container.
+                # TODO: Don't just create every container in us-east-1
+                try:
+                    task = create_new_container.delay(user, app)
+                except BadAppError:
+                    response = jsonify({"error": "Bad Request"}), BAD_REQUEST
+                else:
+                    response = jsonify({"ID": task.id}), ACCEPTED
+
+        elif action == "delete":
+            try:
+                container = body.pop("container_id")
+            except KeyError:
+                response = jsonify({"ID": None}), BAD_REQUEST
+            else:
+                # Delete the container
+                task = deleteContainer(container, user)
+                response = jsonify({"ID": task.id}), ACCEPTED
+
+        elif action == "restart":
+            # TODO: Same as above, but inspire yourself from the vm/restart endpoint.
+            pass
+
+        elif action == "ping":
+            address = kwargs.pop("received_from")
+
+            try:
+                available = body.pop("available")
+            except KeyError:
+                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+            else:
+                # Update container status.
+                status = pingHelper(available, address)
+                response = jsonify(status), status["status"]
+
+        elif action == "stun":
+            try:
+                container_id = body.pop("container_id")
+                using_stun = body.pop("stun")
+            except KeyError:
+                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+            else:
+                status = set_stun(user, container_id, using_stun)
+                response = jsonify({"status": status}), status
+
+    return response
+
+
+@aws_container_bp.route("/container/<action>")
+@fractalPreProcess
+def aws_container_get(action, **kwargs):
+    response = jsonify({"error": NOT_FOUND}), NOT_FOUND
+
+    if action == "protocol_info":
+        address = kwargs.pop("received_from")
+        info, status = protocol_info(address)
+
+        if info:
+            response = jsonify(info), status
+        else:
+            response = jsonify({"error": status}), status
+
+    return response

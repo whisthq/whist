@@ -1,4 +1,12 @@
-from app import ECSClient, celery_instance, fractalLog, fractalSQLCommit, fractalSQLUpdate, logging, db
+from app import (
+    ECSClient,
+    celery_instance,
+    fractalLog,
+    fractalSQLCommit,
+    fractalSQLUpdate,
+    logging,
+    db,
+)
 from app.models.hardware import UserContainer, ClusterInfo
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 import time
@@ -7,109 +15,84 @@ user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
 base_task = {
-  "executionRoleArn": "arn:aws:iam::747391415460:role/ecsTaskExecutionRole",
-  "containerDefinitions": [
-    {
-      "portMappings": [
+    "executionRoleArn": "arn:aws:iam::747391415460:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
         {
-          "hostPort": 32262,
-          "protocol": "tcp",
-          "containerPort": 32262
-        },
-        {
-          "hostPort": 32263,
-          "protocol": "udp",
-          "containerPort": 32263
-        },
-        {
-          "hostPort": 32273,
-          "protocol": "tcp",
-          "containerPort": 32273
+            "portMappings": [
+                {"hostPort": 32262, "protocol": "tcp", "containerPort": 32262},
+                {"hostPort": 32263, "protocol": "udp", "containerPort": 32263},
+                {"hostPort": 32273, "protocol": "tcp", "containerPort": 32273},
+            ],
+            "linuxParameters": {
+                "capabilities": {
+                    "add": [
+                        "SETPCAP",
+                        "MKNOD",
+                        "AUDIT_WRITE",
+                        "CHOWN",
+                        "NET_RAW",
+                        "DAC_OVERRIDE",
+                        "FOWNER",
+                        "FSETID",
+                        "KILL",
+                        "SETGID",
+                        "SETUID",
+                        "NET_BIND_SERVICE",
+                        "SYS_CHROOT",
+                        "SETFCAP",
+                    ],
+                    "drop": ["ALL"],
+                },
+                "tmpfs": [
+                    {"containerPath": "/run", "size": 50},
+                    {"containerPath": "/run/lock", "size": 50},
+                ],
+            },
+            "cpu": 0,
+            "environment": [],
+            "mountPoints": [
+                {
+                    "readOnly": True,
+                    "containerPath": "/sys/fs/cgroup",
+                    "sourceVolume": "cgroup",
+                }
+            ],
+            "dockerSecurityOptions": ["label:seccomp:unconfined"],
+            "memory": 2048,
+            "volumesFrom": [],
+            "image": "747391415460.dkr.ecr.us-east-1.amazonaws.com/roshan-test:latest",
+            "name": "roshan-test-container-0",
         }
-      ],
-      "linuxParameters": {
-        "capabilities": {
-          "add": [
-            "SETPCAP",
-            "MKNOD",
-            "AUDIT_WRITE",
-            "CHOWN",
-            "NET_RAW",
-            "DAC_OVERRIDE",
-            "FOWNER",
-            "FSETID",
-            "KILL",
-            "SETGID",
-            "SETUID",
-            "NET_BIND_SERVICE",
-            "SYS_CHROOT",
-            "SETFCAP"
-          ],
-          "drop": [
-            "ALL"
-          ]
-        },
-        "tmpfs": [
-          {
-            "containerPath": "/run",
-            "size": 50
-          },
-          {
-            "containerPath": "/run/lock",
-            "size": 50
-          }
-        ],
-      },
-      "cpu": 0,
-      "environment": [],
-      "mountPoints": [
-        {
-          "readOnly": True,
-          "containerPath": "/sys/fs/cgroup",
-          "sourceVolume": "cgroup"
-        }
-      ],
-      "dockerSecurityOptions": [
-        "label:seccomp:unconfined"
-      ],
-      "memory": 2048,
-      "volumesFrom": [],
-      "image": "747391415460.dkr.ecr.us-east-1.amazonaws.com/roshan-test:latest",
-      "name": "roshan-test-container-0"
-    }
-  ],
-  "placementConstraints": [],
-  "taskRoleArn": "arn:aws:iam::747391415460:role/ecsTaskExecutionRole",
-  "family": "roshan-task-definition-test-0",
-#   "requiresAttributes": [
-#     {
-#       "name": "com.amazonaws.ecs.capability.ecr-auth"
-#     },
-#     {
-#       "name": "com.amazonaws.ecs.capability.selinux"
-#     },
-#     {
-#       "name": "com.amazonaws.ecs.capability.task-iam-role"
-#     },
-#     {
-#       "name": "com.amazonaws.ecs.capability.docker-remote-api.1.22"
-#     },
-#     {
-#       "name": "ecs.capability.execution-role-ecr-pull"
-#     }
-#   ],
-  "requiresCompatibilities": [
-    "EC2"
-  ],
-  "volumes": [
-    {
-      "name": "cgroup",
-      "host": {
-        "sourcePath": "/sys/fs/cgroup"
-      },
-    }
-  ]
+    ],
+    "placementConstraints": [],
+    "taskRoleArn": "arn:aws:iam::747391415460:role/ecsTaskExecutionRole",
+    "family": "roshan-task-definition-test-0",
+    #   "requiresAttributes": [
+    #     {
+    #       "name": "com.amazonaws.ecs.capability.ecr-auth"
+    #     },
+    #     {
+    #       "name": "com.amazonaws.ecs.capability.selinux"
+    #     },
+    #     {
+    #       "name": "com.amazonaws.ecs.capability.task-iam-role"
+    #     },
+    #     {
+    #       "name": "com.amazonaws.ecs.capability.docker-remote-api.1.22"
+    #     },
+    #     {
+    #       "name": "ecs.capability.execution-role-ecr-pull"
+    #     }
+    #   ],
+    "requiresCompatibilities": ["EC2"],
+    "volumes": [{"name": "cgroup", "host": {"sourcePath": "/sys/fs/cgroup"},}],
 }
+
+
+class BadAppError(Exception):
+    """Raised when `preprocess_task_info` doesn't recognized an input."""
+
+    pass
 
 
 def preprocess_task_info(taskinfo):
@@ -140,9 +123,11 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
     ecs_client = ECSClient(launch_type='EC2', region_name=region_name)
 
     if taskinfo:
-        processed_task_info_cmd, processed_task_info_entrypoint, processed_image = preprocess_task_info(
-            taskinfo
-        )
+        (
+            processed_task_info_cmd,
+            processed_task_info_entrypoint,
+            processed_image,
+        ) = preprocess_task_info(taskinfo)
 
     # ecs_client.set_and_register_task(
     #     basedict=base_task,
@@ -203,16 +188,18 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
         self.update_state(
             state="FAILURE",
             meta={
-                "msg": "Error inserting VM {cli} and disk into SQL".format(cli=ecs_client.tasks[0])
+                "msg": "Error inserting VM {cli} and disk into SQL".format(
+                    cli=ecs_client.tasks[0]
+                )
             },
         )
         return
 
-    cluster_usage = ecs_client.get_clusters_usage(clusters=[ecs_client.cluster])[ecs_client.cluster]
+    cluster_usage = ecs_client.get_clusters_usage(clusters=[ecs_client.cluster])[
+        ecs_client.cluster
+    ]
     cluster_info = ClusterInfo.query.filter_by(cluster=ecs_client.cluster).first()
-    cluster_sql = fractalSQLCommit(
-        db, fractalSQLUpdate, cluster_info, cluster_usage
-    )
+    cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
     if cluster_sql:
         fractalLog(
             function="create_new_container",
@@ -229,15 +216,24 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
         self.update_state(
             state="FAILURE",
             meta={
-                "msg": "Error updating cluster {} in SQL".format(cluster=ecs_client.cluster)
+                "msg": "Error updating cluster {} in SQL".format(
+                    cluster=ecs_client.cluster
+                )
             },
         )
         return None
 
-@celery_instance.task(bind=True)
-def create_new_cluster(self, instance_type='t2.small', ami='ami-026f9e275180a6982', region_name="us-east-1", min_size=0, max_size=10, availability_zones=None):
-    """
 
+@celery_instance.task(bind=True)
+def create_new_cluster(
+    self,
+    instance_type="t2.small",
+    ami="ami-026f9e275180a6982",
+    region_name="us-east-1",
+    min_size=0,
+    max_size=10,
+    availability_zones=None,
+):
     Args:
         self: the celery instance running the task
         instance_type (Optional[str]): size of instances to create in auto scaling group, defaults to t2.small
@@ -253,9 +249,9 @@ def create_new_cluster(self, instance_type='t2.small', ami='ami-026f9e275180a698
     fractalLog(
         function="create_new_cluster",
         label="None",
-        logs=f"Creating new cluster on ECS with instance_type {instance_type} and ami {ami} in region {region_name}"
+        logs=f"Creating new cluster on ECS with instance_type {instance_type} and ami {ami} in region {region_name}",
     )
-    ecs_client = ECSClient(launch_type='EC2', region_name=region_name)
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     self.update_state(
         state="PENDING",
         meta={
@@ -264,17 +260,15 @@ def create_new_cluster(self, instance_type='t2.small', ami='ami-026f9e275180a698
     )
     time.sleep(10)
 
-    try: 
+    try:
         cluster_name, _, _, _ = ecs_client.create_auto_scaling_cluster(
-            instance_type=instance_type, 
-            ami=ami, 
-            min_size=min_size, 
-            max_size=max_size, 
-            availability_zones=availability_zones
+            instance_type=instance_type,
+            ami=ami,
+            min_size=min_size,
+            max_size=max_size,
+            availability_zones=availability_zones,
         )
-        nclust = ClusterInfo(
-            cluster=cluster_name
-        )
+        nclust = ClusterInfo(cluster=cluster_name)
         cluster_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), nclust)
         if cluster_sql:
             cluster = ClusterInfo.query.get(cluster_name)
@@ -282,7 +276,7 @@ def create_new_cluster(self, instance_type='t2.small', ami='ami-026f9e275180a698
             fractalLog(
                 function="create_new_cluster",
                 label=cluster_name,
-                logs=f"Successfully created cluster {cluster_name}"
+                logs=f"Successfully created cluster {cluster_name}",
             )
             return cluster
         else:
@@ -294,7 +288,9 @@ def create_new_cluster(self, instance_type='t2.small', ami='ami-026f9e275180a698
             self.update_state(
                 state="FAILURE",
                 meta={
-                    "msg": "Error inserting VM {cli} and disk into SQL".format(cli=ecs_client.tasks[0])
+                    "msg": "Error inserting VM {cli} and disk into SQL".format(
+                        cli=ecs_client.tasks[0]
+                    )
                 },
             )
             return None
@@ -306,8 +302,5 @@ def create_new_cluster(self, instance_type='t2.small', ami='ami-026f9e275180a698
             level=logging.ERROR,
         )
         self.update_state(
-            state="FAILURE",
-            meta={
-                "msg": f"Encountered error: {e}"
-            },
+            state="FAILURE", meta={"msg": f"Encountered error: {e}"},
         )
