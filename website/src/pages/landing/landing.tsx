@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import TypeWriterEffect from 'react-typewriter-effect';
-import { Row, Col } from "react-bootstrap";
+import { Row, Col, Button } from "react-bootstrap";
 
 import { db } from "utils/firebase";
 
@@ -23,6 +23,7 @@ import Mercury from "assets/largeGraphics/mercury.svg";
 import Saturn from "assets/largeGraphics/saturn.svg";
 import Plants from "assets/largeGraphics/plants.svg";
 import Wireframe from "assets/largeGraphics/wireframe.svg";
+import Mountain from "assets/largeGraphics/mountain.svg";
 
 function Landing(props: any) {
   const [waitlist, setWaitlist] = useState(props.waitlist);
@@ -103,11 +104,15 @@ function Landing(props: any) {
 
   return (
     <div style={{ paddingBottom: 100 }}>
-      <div className="banner-background" style={{ zIndex: 2, width: "100vw" }}>
+      <div className="banner-background" style={{ width: "100vw", position: "relative", zIndex: 1 }}>
         <img src={Moon} style={{ position: "absolute", width: 100, height: 100, top: 125, left: 40 }} />
         <img src={Mars} style={{ position: "absolute", width: 120, height: 120, top: 185, right: -40 }} />
         <img src={Mercury} style={{ position: "absolute", width: 80, height: 80, top: 405, right: 90 }} />
         <img src={Saturn} style={{ position: "absolute", width: 100, height: 100, top: 425, left: 80 }} />
+        <img src={Mountain} style={{ position: "absolute", width: "100vw", bottom: 150, left: 0, zIndex: 1 }} />
+        <div style={{ position: "absolute", width: "100vw", bottom: 0, left: 0, height: 150, background: "white" }}></div>
+        <img src={Plants} style={{ position: "absolute", width: 250, left: 0, bottom: 130, zIndex: 2 }} />
+        <img src={Plants} style={{ position: "absolute", width: 250, right: 0, bottom: 130, transform: "scaleX(-1)", zIndex: 2 }} />
         <div style={{ display: "flex", justifyContent: "space-between", width: "100%", padding: 30 }}>
           <div className="logo">
             Fractal
@@ -136,14 +141,12 @@ function Landing(props: any) {
             <WaitlistForm />
           </div>
         </div>
-        <div style={{ margin: "auto", maxWidth: 600, position: "relative", bottom: 60, zIndex: 2 }}>
-          <img src={LaptopAwe} style={{ maxWidth: 600 }} />
+        <div style={{ margin: "auto", maxWidth: 600, position: "relative", bottom: 60, zIndex: 100 }}>
+          <img src={LaptopAwe} style={{ maxWidth: 600, zIndex: 100 }} />
         </div>
       </div>
-      <div className="white-background-curved" style={{ height: 350, position: "relative", bottom: 150, background: "white", zIndex: 1 }}>
-        <img src={Plants} style={{ position: "absolute", width: 250, left: 0, top: 10 }} />
-        <img src={Plants} style={{ position: "absolute", width: 250, right: 0, top: 10, transform: "scaleX(-1)" }} />
-        <Row style={{ paddingTop: 200, paddingRight: 50 }}>
+      <div style={{ position: "relative", background: "white" }}>
+        <Row style={{ paddingTop: 50, paddingRight: 50 }}>
           <Col md={7}>
             <img src={Wireframe} style={{ width: "100%" }} />
           </Col>
@@ -158,20 +161,22 @@ function Landing(props: any) {
           </Col>
         </Row>
       </div>
-      <div style={{ padding: 30, marginTop: 200 }}>
+      <div style={{ padding: 30, marginTop: 100 }}>
         <Row>
           <Col md={6}>
             <div style={{
-              padding: "25px 35px",
+              padding: "50px 35px",
               display: "flex",
               justifyContent: "space-between",
+              background: "rgba(221, 165, 248, 0.2)",
+              borderRadius: 5
             }}>
               <div style={{ fontSize: 35, fontWeight: "bold", lineHeight: 1.3 }}>
                 Q:
             </div>
               <div style={{ width: 25 }}></div>
               <div>
-                <div style={{ fontSize: 35, fontWeight: "bold", lineHeight: 1.3, paddingBottom: 10, borderBottom: "solid 9px #00D4FF" }}>
+                <div style={{ fontSize: 35, fontWeight: "bold", lineHeight: 1.3, paddingBottom: 10, }}>
                   How can I be invited to try Fractal?
               </div>
                 <div style={{ paddingTop: 20 }}>
@@ -180,15 +185,99 @@ function Landing(props: any) {
                 </div>
               </div>
             </div>
+            <div style={{
+              padding: "5px 30px",
+              background: "rgba(172, 207, 231, 0.2)",
+              borderRadius: 5,
+              marginTop: 25
+            }}>
+              <div style={{ fontWeight: "bold", fontSize: 125, height: 120 }}>
+                "
+              </div>
+              <div>
+                F*CKING AMAZING ... tried Minecraft VR - it was buttery smooth with almost no
+                detectable latency. Never thought it would work this well.
+              </div>
+              <div style={{ fontWeight: "bold", fontSize: 125, textAlign: "right", height: 100, position: "relative", bottom: 20 }}>
+                "
+              </div>
+              <div style={{ position: "relative", bottom: 30 }}>
+                <div style={{ fontWeight: "bold" }}>
+                  Sam S.
+                </div>
+                <div style={{ fontSize: 12 }}>
+                  Designer + VR user
+                </div>
+              </div>
+            </div>
           </Col>
           <Col md={6}>
             <div style={{
-              background: "rgba(172, 207, 231, 0.2)"
+              background: "rgba(172, 207, 231, 0.2)",
+              padding: "5px 30px",
+              borderRadius: 5
             }}>
-              Fractal is really good.
+              <div style={{ fontWeight: "bold", fontSize: 125, height: 120 }}>
+                "
+              </div>
+              <div>
+                Woah! What you've developed is something I've been dreaming of for years now... this
+                is a MASSIVE game changer for people that do the kind of work that I do.
+              </div>
+              <div style={{ fontWeight: "bold", fontSize: 125, textAlign: "right", height: 100, position: "relative", bottom: 20 }}>
+                "
+              </div>
+              <div style={{ position: "relative", bottom: 30 }}>
+                <div style={{ fontWeight: "bold" }}>
+                  Bert M.
+                </div>
+                <div style={{ fontSize: 12 }}>
+                  Animator
+                </div>
+              </div>
+            </div>
+            <div style={{
+              padding: "5px 30px",
+              background: "rgba(172, 207, 231, 0.2)",
+              borderRadius: 5,
+              marginTop: 25
+            }}>
+              <div style={{ fontWeight: "bold", fontSize: 125, height: 120 }}>
+                "
+              </div>
+              <div>
+                [Fractal] is an immense project with a fantastic amount of potential.
+              </div>
+              <div style={{ fontWeight: "bold", fontSize: 125, textAlign: "right", height: 100, position: "relative", bottom: 20 }}>
+                "
+              </div>
+              <div style={{ position: "relative", bottom: 30 }}>
+                <div style={{ fontWeight: "bold" }}>
+                  Joshua H.
+                </div>
+                <div style={{ fontSize: 12 }}>
+                  Software developer + gamer
+                </div>
+              </div>
             </div>
           </Col>
         </Row>
+      </div>
+      <div style={{ padding: 30 }}>
+        <div style={{ borderRadius: 5, boxShadow: "0px 4px 30px rgba(0, 0, 0, 0.1)", padding: "60px 100px", background: "white" }}>
+          <div style={{ maxWidth: 650, margin: "auto", textAlign: "left" }}>
+            <div style={{ fontSize: 40, fontWeight: "bold", lineHeight: 1.4 }}>
+              Give my computer superpowers.
+            </div>
+            <div style={{ marginTop: 20 }}>
+              Run the most demanding applications from my device without eating up your
+              RAM or processing power, all on 1GB datacenter internet.
+            </div>
+            <Button style={{ marginTop: 30, background: "#1C2A45", fontWeight: "bold", border: "none", padding: "10px 40px" }}>
+              I Want Access
+            </Button>
+          </div>
+        </div>
       </div>
     </div >
   );
