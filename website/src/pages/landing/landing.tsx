@@ -11,7 +11,7 @@ import "styles/landing.css";
 import WaitlistForm from "pages/landing/components/waitlistForm";
 import CountdownTimer from "pages/landing/components/countdown";
 
-import Leaderboard from "pages/landing/components/leaderboard";
+import LeaderboardPage from "pages/landing/components/leaderboardPage";
 
 function Landing(props: any) {
     const [waitlist, setWaitlist] = useState(props.waitlist);
@@ -98,7 +98,7 @@ function Landing(props: any) {
         >
             <WaitlistForm />
             <CountdownTimer />
-            <Leaderboard />
+            <LeaderboardPage />
         </div>
     );
 }

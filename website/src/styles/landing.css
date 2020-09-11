@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css?family=Maven+Pro|Kalam&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Kalam&family=Maven+Pro:wght@400;700&display=swap");
 
 body {
     overflow-x: hidden;
@@ -61,8 +61,8 @@ option,
     position: relative;
     display: flex;
     flex-direction: row;
-    justify-content: center;
-    align-items: center;
+    justify-content: space-evenly;
+    align-items: flex-start;
 }
 
 .table {
@@ -81,24 +81,52 @@ option,
     border-radius: 10px 10px 0 0;
 }
 
+.table tbody {
+    margin: 20px;
+}
+
 .table td,
 .table th {
     padding: 20px;
 }
 
+.topThree {
+    background-color: #00d4ff;
+    height: 20px;
+    width: 20px;
+    color: white;
+    border-radius: 2px;
+    text-align: center;
+    font-weight: bold;
+    padding: 3px;
+}
+
 .rankingColumn {
-    padding-left: 40px !important;
+    padding-left: 50px !important;
 }
 
 .nameColumn {
     color: white;
+    padding-right: 130px !important;
 }
 
 .pointsColumn {
-    padding-right: 40px !important;
+    padding-right: 50px !important;
 }
 
 .userRow {
     background-color: #454e7e;
     border-radius: 10px;
+    font-weight: bold;
+}
+
+.action {
+    background-color: #0d0f34;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 450px;
+    padding: 40px;
+    margin-bottom: 30px;
+    border-radius: 5px;
 }

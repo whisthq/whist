@@ -14,31 +14,55 @@ const Leaderboard = (props) => {
     }, [props.waitlist]);
 
     const getRows = () => {
+        const topThree = topSix.slice(0, 3);
         if (!props.waitlist) {
             return <tr>No data to show.</tr>;
         } else if (!props.user.email || props.user.ranking <= 5) {
-            return topSix.map((user, idx) => {
-                return (
-                    <tr
-                        className={
-                            idx + 1 == props.user.ranking ? "userRow" : ""
-                        }
-                    >
-                        <td className="rankingColumn">{idx + 1}</td>
-                        <td className="nameColumn">{user.name}</td>
-                        <td>{user.referrals}</td>
-                        <td className="pointsColumn">{user.points}</td>
-                    </tr>
+            const bottomThree = topSix.slice(-3);
+            return topThree
+                .map((user, idx) => {
+                    return (
+                        <tr
+                            className={
+                                idx + 1 == props.user.ranking ? "userRow" : ""
+                            }
+                        >
+                            <td className="rankingColumn">
+                                <div className="topThree">{idx + 1}</div>
+                            </td>
+                            <td className="nameColumn">{user.name}</td>
+                            <td>{user.referrals}</td>
+                            <td className="pointsColumn">{user.points}</td>
+                        </tr>
+                    );
+                })
+                .concat(
+                    bottomThree.map((user, idx) => {
+                        return (
+                            <tr
+                                className={
+                                    idx + 4 == props.user.ranking
+                                        ? "userRow"
+                                        : ""
+                                }
+                            >
+                                <td className="rankingColumn">{idx + 4}</td>
+                                <td className="nameColumn">{user.name}</td>
+                                <td>{user.referrals}</td>
+                                <td className="pointsColumn">{user.points}</td>
+                            </tr>
+                        );
+                    })
                 );
-            });
         } else if (props.user.ranking == props.waitlist.length) {
-            const topThree = topSix.slice(0, 3);
             const bottomThree = props.waitlist.slice(-3);
             return topThree
                 .map((user, idx) => {
                     return (
                         <tr>
-                            <td className="rankingColumn">{idx + 1}</td>
+                            <td className="rankingColumn">
+                                <div className="topThree">{idx + 1}</div>
+                            </td>
                             <td className="nameColumn">{user.name}</td>
                             <td>{user.referrals}</td>
                             <td className="pointsColumn">{user.points}</td>
@@ -60,7 +84,6 @@ const Leaderboard = (props) => {
                     })
                 );
         } else {
-            const topThree = topSix.slice(0, 3);
             const neighbors = props.waitlist.slice(
                 props.user.ranking - 2,
                 props.user.ranking + 1
@@ -69,7 +92,9 @@ const Leaderboard = (props) => {
                 .map((user, idx) => {
                     return (
                         <tr>
-                            <td className="rankingColumn">{idx + 1}</td>
+                            <td className="rankingColumn">
+                                <div className="topThree">{idx + 1}</div>
+                            </td>
                             <td className="nameColumn">{user.name}</td>
                             <td>{user.referrals}</td>
                             <td className="pointsColumn">{user.points}</td>
@@ -93,29 +118,35 @@ const Leaderboard = (props) => {
         }
     };
     return (
-        <div className="leaderboardPage">
-            <div
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                marginTop: "9vh",
+            }}
+        >
+            <h1
                 style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
+                    fontWeight: "bold",
+                    color: "white",
+                    marginBottom: "30px",
+                    fontSize: "40px",
                 }}
             >
-                <h1 style={{ fontWeight: "bold", color: "white" }}>
-                    Leaderboard
-                </h1>
-                <Table>
-                    <thead>
-                        <tr>
-                            <th className="rankingColumn">Ranking</th>
-                            <th>Name</th>
-                            <th>Referrals</th>
-                            <th className="pointsColumn">Points</th>
-                        </tr>
-                    </thead>
-                    <tbody>{getRows()}</tbody>
-                </Table>
-            </div>
+                Leaderboard
+            </h1>
+            <Table>
+                <thead>
+                    <tr>
+                        <th className="rankingColumn">Ranking</th>
+                        <th>Name</th>
+                        <th>Referrals</th>
+                        <th className="pointsColumn">Points</th>
+                    </tr>
+                </thead>
+                <tbody>{getRows()}</tbody>
+            </Table>
         </div>
     );
 };
