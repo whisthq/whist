@@ -1,7 +1,7 @@
+import hashlib
 from app.imports import *
 from app.helpers.utils.general.sql_commands import *
-from app.constants.bad_words import *
-
+from app.constants.bad_words_hashed import BAD_WORDS_HASHED
 
 def generatePrivateKey():
     return secrets.token_hex(16)
@@ -42,7 +42,8 @@ def generatePromoCode():
     while not allowed:
         c1 = "".join([random.choice(numbers) for _ in range(0, 3)])
         c2 = "".join([random.choice(upperCase) for _ in range(0, 3)]) + "-" + c1
-        if c2.lower() not in BAD_WORDS:
+        c2_encoding = c2.lower().encode('utf-8')
+        if hashlib.md5(c2_encoding).hexdigest() not in BAD_WORDS_HASHED:
             allowed = True
     return c2
 
