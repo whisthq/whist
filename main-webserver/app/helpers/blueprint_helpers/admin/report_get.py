@@ -16,6 +16,7 @@ user_schema = UserSchema()
 vm_schema = UserVMSchema()
 disk_schema = OSDiskSchema()
 
+
 def latestHelper():
     log = MonitorLog.query.order_by(MonitorLog.timestamp).first()
     log = monitor_log_schema.dump(log)
@@ -27,13 +28,25 @@ def totalUsageHelper():
     today = dt.now()
 
     dayParams = dt.combine(today.date(), dt.min.time()).timestamp()
-    dayReport = LoginHistory.query.filter(LoginHistory.timestamp > dayParams).order_by(LoginHistory.timestamp).all()
+    dayReport = (
+        LoginHistory.query.filter(LoginHistory.timestamp > dayParams)
+        .order_by(LoginHistory.timestamp)
+        .all()
+    )
 
     weekParams = (today - datetime.timedelta(days=7)).timestamp()
-    weekReport = LoginHistory.query.filter(LoginHistory.timestamp > weekParams).order_by(LoginHistory.timestamp).all()
+    weekReport = (
+        LoginHistory.query.filter(LoginHistory.timestamp > weekParams)
+        .order_by(LoginHistory.timestamp)
+        .all()
+    )
 
     monthParams = (today - datetime.timedelta(days=30)).timestamp()
-    monthReport = LoginHistory.query.filter(LoginHistory.timestamp > monthParams).order_by(LoginHistory.timestamp).all()
+    monthReport = (
+        LoginHistory.query.filter(LoginHistory.timestamp > monthParams)
+        .order_by(LoginHistory.timestamp)
+        .all()
+    )
 
     dayMins = totalMinutes(dayReport) if dayReport else 0
     weekMins = totalMinutes(weekReport) if weekReport else 0
@@ -48,7 +61,7 @@ def signupsHelper():
     dayParams = dt.combine(today.date(), dt.min.time()).timestamp()
     dayCount = User.query.filter(User.created_timestamp > dayParams).count()
 
-    weekParams = (today - datetime.timedelta(days=7)).timestamp(),
+    weekParams = ((today - datetime.timedelta(days=7)).timestamp(),)
     weekCount = User.query.filter(User.created_timestamp > weekParams).count()
 
     monthParams = (today - datetime.timedelta(days=30)).timestamp()
@@ -68,10 +81,12 @@ def fetchUsersHelper():
     users = [user_schema.dump(user) for user in users]
     return users
 
+
 def fetchVMsHelper():
     vms = UserVM.query.all()
     vms = [vm_schema.dump(vm) for vm in vms]
     return vms
+
 
 def fetchDisksHelper():
     disks = OSDisk.query.all()

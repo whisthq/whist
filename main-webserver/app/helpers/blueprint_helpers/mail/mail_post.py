@@ -3,6 +3,7 @@ from app.helpers.utils.general.logs import *
 
 from app.models.public import *
 
+
 def forgotPasswordHelper(username):
     user = User.query.get(username)
 

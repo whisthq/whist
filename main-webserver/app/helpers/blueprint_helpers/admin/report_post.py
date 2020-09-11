@@ -6,6 +6,7 @@ from app.helpers.utils.general.sql_commands import *
 from app.models.logs import *
 from app.serializers.logs import *
 
+
 def regionReportHelper(timescale):
     command = text("")
     if timescale == "day":
@@ -83,7 +84,13 @@ def userReportHelper(username, timescale=None, start_date=None):
     if not user:
         return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
 
-    histories = LoginHistory.query.filter((LoginHistory.user_id == username) & (LoginHistory.timestamp > date)).order_by(LoginHistory.timestamp).all()
+    histories = (
+        LoginHistory.query.filter(
+            (LoginHistory.user_id == username) & (LoginHistory.timestamp > date)
+        )
+        .order_by(LoginHistory.timestamp)
+        .all()
+    )
 
     # import and use serializers
     histories = [login_history_schema.dump(history) for history in histories]
