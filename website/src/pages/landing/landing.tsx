@@ -149,17 +149,46 @@ function Landing(props: any) {
           </Col>
           <Col md={5} style={{ paddingLeft: 40 }}>
             <div style={{ fontSize: 50, fontWeight: "bold", lineHeight: 1.2 }}>
-              Unlock desktop apps on any computer or tablet
+              Run demanding apps on any computer or tablet
             </div>
             <div style={{ marginTop: 40 }}>
-              Fractal is like Google Stadia for all your apps. For the first time, run VSCode on an iPad
+              Fractal is like Google Stadia for creative and productivity apps. With Fractal, you can run VSCode on an iPad
               or create 3D animations on a Chromebook.
             </div>
           </Col>
         </Row>
       </div>
-      <div style={{ marginTop: 200 }}>
-        <LeaderboardPage />
+      <div style={{ padding: 30, marginTop: 200 }}>
+        <Row>
+          <Col md={6}>
+            <div style={{
+              padding: "25px 35px",
+              display: "flex",
+              justifyContent: "space-between",
+            }}>
+              <div style={{ fontSize: 35, fontWeight: "bold", lineHeight: 1.3 }}>
+                Q:
+            </div>
+              <div style={{ width: 25 }}></div>
+              <div>
+                <div style={{ fontSize: 35, fontWeight: "bold", lineHeight: 1.3, paddingBottom: 10, borderBottom: "solid 9px #00D4FF" }}>
+                  How can I be invited to try Fractal?
+              </div>
+                <div style={{ paddingTop: 20 }}>
+                  When the countdown hits zero, we’ll invite <strong>20 people</strong> from the waitlist with the
+                  most compelling <strong>100-word submission</strong> on why they want Fractal to receive 1:1 onboarding.
+                </div>
+              </div>
+            </div>
+          </Col>
+          <Col md={6}>
+            <div style={{
+              background: "rgba(172, 207, 231, 0.2)"
+            }}>
+              Fractal is really good.
+            </div>
+          </Col>
+        </Row>
       </div>
     </div >
   );
