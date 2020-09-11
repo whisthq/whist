@@ -6,6 +6,7 @@ from app.helpers.utils.azure.azure_helpers.azure_resource_state_management_helpe
 from app.models.hardware import *
 from app.serializers.hardware import *
 
+
 def sendVMStartCommand(
     vm_name, needs_restart, needs_winlogon, resource_group=VM_GROUP, s=None
 ):

@@ -6,6 +6,7 @@ from app.models.logs import *
 from app.serializers.hardware import *
 from app.serializers.logs import *
 
+
 @celery_instance.task(bind=True)
 def uploadLogsToS3(self, sender, connection_id, logs, vm_ip, version):
     """Uploads a log .txt file tos S3
@@ -87,7 +88,13 @@ def uploadLogsToS3(self, sender, connection_id, logs, vm_ip, version):
                 log.user_id = username
                 db.session.commit()
             else:
-                log = ProtocolLog(ip=vm_ip, timestamp=last_updated, client_logs=file_name, user_id=username, connection_id=connection_id)
+                log = ProtocolLog(
+                    ip=vm_ip,
+                    timestamp=last_updated,
+                    client_logs=file_name,
+                    user_id=username,
+                    connection_id=connection_id,
+                )
                 db.session.add(log)
                 db.session.commit()
         elif sender == "SERVER":
@@ -100,7 +107,14 @@ def uploadLogsToS3(self, sender, connection_id, logs, vm_ip, version):
                 log.version = version
                 db.session.commit()
             else:
-                log = ProtocolLog(ip=vm_ip, timestamp=last_updated, server_logs=file_name, user_id=username, connection_id=connection_id, version=version)
+                log = ProtocolLog(
+                    ip=vm_ip,
+                    timestamp=last_updated,
+                    server_logs=file_name,
+                    user_id=username,
+                    connection_id=connection_id,
+                    version=version,
+                )
                 db.session.add(log)
                 db.session.commit()
 

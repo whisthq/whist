@@ -12,7 +12,6 @@ import datetime
 import pytz
 import logging
 import socket
-import boto3
 import dateutil.parser
 import sqlalchemy
 import flask_sqlalchemy
@@ -50,7 +49,6 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail as SendGridMail
 from logging.handlers import SysLogHandler
 from functools import wraps
-from botocore.exceptions import NoCredentialsError
 from msrest.exceptions import ClientException
 from google_auth_oauthlib.flow import Flow
 
