@@ -181,7 +181,8 @@ function Landing(props: any) {
               </div>
                 <div style={{ paddingTop: 20 }}>
                   When the countdown hits zero, we’ll invite <strong>20 people</strong> from the waitlist with the
-                  most compelling <strong>100-word submission</strong> on why they want Fractal to receive 1:1 onboarding.
+                  most compelling <strong>100-word submission</strong> on why they want Fractal to receive 1:1 onboarding. We'll
+                  also invite the top <strong>20 people</strong> with the
                 </div>
               </div>
             </div>
@@ -203,7 +204,7 @@ function Landing(props: any) {
               </div>
               <div style={{ position: "relative", bottom: 30 }}>
                 <div style={{ fontWeight: "bold" }}>
-                  Sam S.
+                  Sean S.
                 </div>
                 <div style={{ fontSize: 12 }}>
                   Designer + VR user
@@ -229,7 +230,7 @@ function Landing(props: any) {
               </div>
               <div style={{ position: "relative", bottom: 30 }}>
                 <div style={{ fontWeight: "bold" }}>
-                  Bert M.
+                  Brian M.
                 </div>
                 <div style={{ fontSize: 12 }}>
                   Animator
@@ -253,7 +254,7 @@ function Landing(props: any) {
               </div>
               <div style={{ position: "relative", bottom: 30 }}>
                 <div style={{ fontWeight: "bold" }}>
-                  Joshua H.
+                  Jonathan H.
                 </div>
                 <div style={{ fontSize: 12 }}>
                   Software developer + gamer
