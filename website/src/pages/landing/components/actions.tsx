@@ -44,6 +44,7 @@ const Actions = () => {
         >
             <h1
                 style={{
+                    fontWeight: "bold",
                     color: "white",
                     marginBottom: "30px",
                     fontSize: "40px",
