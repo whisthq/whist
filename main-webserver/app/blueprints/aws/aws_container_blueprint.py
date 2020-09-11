@@ -31,7 +31,14 @@ def test_endpoint(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "create_container":
-        username, cluster_name, region_name, task_definition_arn, use_launch_type, network_configuration = (
+        (
+            username,
+            cluster_name,
+            region_name,
+            task_definition_arn,
+            use_launch_type,
+            network_configuration,
+        ) = (
             kwargs["body"]["username"],
             kwargs["body"]["cluster_name"],
             kwargs["body"]["region_name"],
@@ -39,14 +46,22 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["use_launch_type"],
             kwargs["body"]["network_configuration"],
         )
-        task = create_new_container.apply_async([username, cluster_name, region_name, task_definition_arn, use_launch_type, network_configuration])
+        task = create_new_container.apply_async(
+            [
+                username,
+                cluster_name,
+                region_name,
+                task_definition_arn,
+                use_launch_type,
+                network_configuration,
+            ]
+        )
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
-     
-     if action == "delete_container":
+    if action == "delete_container":
         user_id, container_name = (
             kwargs["body"]["user_id"],
             kwargs["body"]["container_name"],
@@ -58,7 +73,7 @@ def test_endpoint(action, **kwargs):
 
         return jsonify({"ID": task.id}), ACCEPTED
 
-      
+
 @aws_container_bp.route("/container/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
