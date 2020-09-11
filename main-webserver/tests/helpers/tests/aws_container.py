@@ -11,13 +11,14 @@ def createCluster(instance_type, ami, region_name, input_token):
         headers={"Authorization": "Bearer " + input_token},
     )
 
-def createContainer(username, cluster_name, region_name, task_definition_arn, network_configuration=None, input_token=None):
+def createContainer(username, cluster_name, region_name, task_definition_arn, use_launch_type, network_configuration=None, input_token=None):
     return requests.post(
         (SERVER_URL + "/aws_container/create_container"),
         json={
             "username": username,
             "cluster_name": cluster_name,
             "region_name": region_name,
+            "use_launch_type": use_launch_type,
             "network_configuration": network_configuration,
             "task_definition_arn": task_definition_arn,
         },

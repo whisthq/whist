@@ -23,14 +23,15 @@ def test_endpoint(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "create_container":
-        username, cluster_name, region_name, task_definition_arn, network_configuration = (
+        username, cluster_name, region_name, task_definition_arn, use_launch_type, network_configuration = (
             kwargs["body"]["username"],
             kwargs["body"]["cluster_name"],
             kwargs["body"]["region_name"],
             kwargs["body"]["task_definition_arn"],
+            kwargs["body"]["use_launch_type"],
             kwargs["body"]["network_configuration"],
         )
-        task = create_new_container.apply_async([username, cluster_name, region_name, task_definition_arn, network_configuration])
+        task = create_new_container.apply_async([username, cluster_name, region_name, task_definition_arn, use_launch_type, network_configuration])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST

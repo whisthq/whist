@@ -118,7 +118,7 @@ def preprocess_task_info(taskinfo):
 
 
 @celery_instance.task(bind=True)
-def create_new_container(self, username, cluster_name, region_name, task_definition_arn, network_configuration=None, taskinfo=None):
+def create_new_container(self, username, cluster_name, region_name, task_definition_arn, use_launch_type, network_configuration=None, taskinfo=None):
     """
 
     Args:
@@ -152,9 +152,9 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
     ecs_client.set_cluster(cluster_name)
     ecs_client.set_task_definition_arn(task_definition_arn)
     if network_configuration:
-        ecs_client.run_task(use_launch_type=False, networkConfiguration=network_configuration)
+        ecs_client.run_task(use_launch_type=use_launch_type, networkConfiguration=network_configuration)
     else:
-        ecs_client.run_task(use_launch_type=False)
+        ecs_client.run_task(use_launch_type=use_launch_type)
     self.update_state(
         state="PENDING",
         meta={"msg": "Creating new container on ECS with info {}".format(taskinfo)},
@@ -174,6 +174,10 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
             state="FAILURE", meta={"msg": "Error generating task with running IP"},
         )
         return
+
+    cluster = ClusterInfo.query.get(ecs_client.cluster)
+    if not cluster:
+        fractalSQLCommit(db, lambda db, x: db.session.add(x), ClusterInfo(cluster=ecs_client.cluster))
 
     container = UserContainer(
         container_id=ecs_client.tasks[0],

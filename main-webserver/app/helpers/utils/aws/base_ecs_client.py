@@ -107,40 +107,41 @@ class ECSClient:
             self.auto_scaling_client = starter_auto_scaling_client
         self.set_cluster(cluster_name=base_cluster)
 
+        self.role_name = 'role_name_abcymbdzwl'
         # Create role and instance profile that allows containers to use SSM, S3, and EC2
-        self.role_name = self.generate_name('role_name')
-        assume_role_policy_document = {
-            "Version": "2012-10-17", 
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Principal": {
-                        "Service": [
-                            "ec2.amazonaws.com"
-                        ]
-                    },
-                    "Action": [
-                        "sts:AssumeRole"
-                    ]
-                }
-            ]
-        }
-        self.iam_client.create_role(
-            RoleName=self.role_name,
-            AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
-        )
-        self.iam_client.attach_role_policy(
-            PolicyArn='arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore',
-            RoleName=self.role_name,
-        )
-        self.iam_client.attach_role_policy(
-            PolicyArn='arn:aws:iam::aws:policy/AmazonS3FullAccess',
-            RoleName=self.role_name,
-        )
-        self.iam_client.attach_role_policy(
-            PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role',
-            RoleName=self.role_name,
-        )
+        # self.role_name = self.generate_name('role_name')
+        # assume_role_policy_document = {
+        #     "Version": "2012-10-17", 
+        #     "Statement": [
+        #         {
+        #             "Effect": "Allow",
+        #             "Principal": {
+        #                 "Service": [
+        #                     "ec2.amazonaws.com"
+        #                 ]
+        #             },
+        #             "Action": [
+        #                 "sts:AssumeRole"
+        #             ]
+        #         }
+        #     ]
+        # }
+        # self.iam_client.create_role(
+        #     RoleName=self.role_name,
+        #     AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
+        # )
+        # self.iam_client.attach_role_policy(
+        #     PolicyArn='arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore',
+        #     RoleName=self.role_name,
+        # )
+        # self.iam_client.attach_role_policy(
+        #     PolicyArn='arn:aws:iam::aws:policy/AmazonS3FullAccess',
+        #     RoleName=self.role_name,
+        # )
+        # self.iam_client.attach_role_policy(
+        #     PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role',
+        #     RoleName=self.role_name,
+        # )
         self.instance_profile = self.generate_name('instance_profile')
         self.iam_client.create_instance_profile(InstanceProfileName=self.instance_profile)
         self.iam_client.add_role_to_instance_profile(
@@ -463,6 +464,7 @@ class ECSClient:
         }
         if use_launch_type:
             task_args['launchType'] = self.launch_type
+        print(task_args)
         taskdict = self.ecs_client.run_task(**task_args, **kwargs)
         print(taskdict)
         task = taskdict["tasks"][0]
