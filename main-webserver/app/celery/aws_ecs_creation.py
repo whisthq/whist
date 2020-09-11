@@ -118,7 +118,7 @@ def preprocess_task_info(taskinfo):
 
 
 @celery_instance.task(bind=True)
-def create_new_container(self, username, cluster_name, taskinfo=None):
+def create_new_container(self, username, cluster_name, region_name, task_definition_arn, network_configuration=None, taskinfo=None):
     """
 
     Args:
@@ -137,7 +137,7 @@ def create_new_container(self, username, cluster_name, taskinfo=None):
         logs="Creating new container on ECS with info {}".format(taskinfo),
     )
 
-    ecs_client = ECSClient(launch_type='EC2', region_name='us-east-1')
+    ecs_client = ECSClient(launch_type='EC2', region_name=region_name)
 
     if taskinfo:
         processed_task_info_cmd, processed_task_info_entrypoint, processed_image = preprocess_task_info(
@@ -148,15 +148,13 @@ def create_new_container(self, username, cluster_name, taskinfo=None):
     #     basedict=base_task,
     #     family="fractal_container",
     # )
+
     ecs_client.set_cluster(cluster_name)
-    ecs_client.set_task_definition_arn('arn:aws:ecs:us-east-1:747391415460:task-definition/first-run-task-definition:3')
-    # networkConfiguration = {
-    #     "awsvpcConfiguration": {
-    #         "subnets": ["subnet-0dc1b0c43c4d47945",],
-    #         "securityGroups": ["sg-036ebf091f469a23e",],
-    #     }
-    # }
-    ecs_client.run_task(use_launch_type=False)#networkConfiguration=networkConfiguration)
+    ecs_client.set_task_definition_arn(task_definition_arn)
+    if network_configuration:
+        ecs_client.run_task(use_launch_type=False, networkConfiguration=network_configuration)
+    else:
+        ecs_client.run_task(use_launch_type=False)
     self.update_state(
         state="PENDING",
         meta={"msg": "Creating new container on ECS with info {}".format(taskinfo)},
@@ -233,7 +231,7 @@ def create_new_container(self, username, cluster_name, taskinfo=None):
         return None
 
 @celery_instance.task(bind=True)
-def create_new_cluster(self, instance_type='t2.small', ami='ami-026f9e275180a6982', min_size=0, max_size=10, region_name="us-east-1", availability_zones=None):
+def create_new_cluster(self, instance_type='t2.small', ami='ami-026f9e275180a6982', region_name="us-east-1", min_size=0, max_size=10, availability_zones=None):
     """
 
     Args:

@@ -10,11 +10,12 @@ aws_container_bp = Blueprint("aws_container_bp", __name__)
 @fractalPreProcess
 def test_endpoint(action, **kwargs):
     if action == "create_cluster":
-        instance_type, ami = (
+        instance_type, ami, region_name = (
             kwargs["body"]["instance_type"],
             kwargs["body"]["ami"],
+            kwargs["body"]["region_name"],
         )
-        task = create_new_cluster.apply_async([instance_type, ami])
+        task = create_new_cluster.apply_async([instance_type, ami, region_name])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
@@ -22,11 +23,14 @@ def test_endpoint(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "create_container":
-        username, cluster_name = (
+        username, cluster_name, region_name, task_definition_arn, network_configuration = (
             kwargs["body"]["username"],
             kwargs["body"]["cluster_name"],
+            kwargs["body"]["region_name"],
+            kwargs["body"]["task_definition_arn"],
+            kwargs["body"]["network_configuration"],
         )
-        task = create_new_container.apply_async([username, cluster_name])
+        task = create_new_container.apply_async([username, cluster_name, region_name, task_definition_arn, network_configuration])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST

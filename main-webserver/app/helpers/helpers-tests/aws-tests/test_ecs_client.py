@@ -88,11 +88,11 @@ def test_full_base_config():
 
 
 def test_cluster_with_auto_scaling_group():
-    testclient = ECSClient(region_name="us-east-2")
+    testclient = ECSClient(region_name="us-east-1")
     time.sleep(10)
 
     # test creating launch configuration, auto scaling group, capacity provider, and cluster
-    cluster_name, launch_config_name = testclient.create_launch_configuration(instance_type='t2.small', ami='ami-04cfcf6827bb29439')
+    cluster_name, launch_config_name = testclient.create_launch_configuration(instance_type='t2.small', ami='ami-026f9e275180a6982')
     auto_scaling_group_name = testclient.create_auto_scaling_group(launch_config_name=launch_config_name)
     auto_scaling_groups_def = testclient.auto_scaling_client.describe_auto_scaling_groups(AutoScalingGroupNames=[auto_scaling_group_name])
     assert len(auto_scaling_groups_def['AutoScalingGroups']) > 0
@@ -116,14 +116,14 @@ def test_cluster_with_auto_scaling_group():
     assert cluster['capacityProviders'] == [capacity_provider_name]
 
     # test running task on newly created cluster
-    container_instances = testclient.spin_til_containers_up(cluster_name)
-    print(container_instances)
+    time.sleep(10)
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage"
     )
     testclient.run_task(use_launch_type=False)
     testclient.spin_til_running(time_delay=2)
-    assert testclient.task_ips[0] == testclient.get_container_instance_ips(cluster_name, container_instances)[0]
+    container_instances = testclient.spin_til_containers_up(cluster_name)
+    assert testclient.task_ips[0] in testclient.get_container_instance_ips(cluster_name, container_instances)
 
     # test sending commands to containers in cluster
     command_id = testclient.exec_commands_on_containers(cluster_name, container_instances, ['echo hello'])['Command']['CommandId']
@@ -131,12 +131,13 @@ def test_cluster_with_auto_scaling_group():
 
     # Clean Up
     testclient.terminate_containers_in_cluster(cluster_name)
+    time.sleep(30)
     testclient.ecs_client.delete_cluster(cluster=cluster_name)
-    testclient.ecs_client.delete_capacity_provider(capacityProvider=capacity_provider_name)
-    testclient.auto_scaling_client.delete_auto_scaling_group(AutoScalingGroupName=auto_scaling_group_name, ForceDelete=True)
-    testclient.auto_scaling_client.delete_launch_configuration(LaunchConfigurationName=launch_config_name)
-    testclient.iam_client.delete_instance_profile(InstanceProfileName=testclient.instance_profile)
-    testclient.iam_client.delete_role(RoleName=testclient.role_name)
+    # testclient.ecs_client.delete_capacity_provider(capacityProvider=capacity_provider_name)
+    # testclient.auto_scaling_client.delete_auto_scaling_group(AutoScalingGroupName=auto_scaling_group_name, ForceDelete=True)
+    # testclient.auto_scaling_client.delete_launch_configuration(LaunchConfigurationName=launch_config_name)
+    # testclient.iam_client.delete_instance_profile(InstanceProfileName=testclient.instance_profile)
+    # testclient.iam_client.delete_role(RoleName=testclient.role_name)
     
     
 
