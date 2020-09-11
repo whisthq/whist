@@ -35,6 +35,15 @@ services:
   celery:
     << : *base-app
     command: celery
+    networks:
+      - primary
+    depends_on:
+      - redis
+    env_file: .env
+    environment:
+      - AWS_SHARED_CREDENTIALS_FILE=/.aws/credentials
+    volumes:
+      - $HOME/.aws:/.aws
 
 # TODO use a local DB (as commented out below) instead of the staging/production DB
 #   db:

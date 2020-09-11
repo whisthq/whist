@@ -101,6 +101,10 @@ Postman Team link: https://app.getpostman.com/join-team?invite_code=29d49d236585
 **Pytest**
 We have pytest tests in the `/tests` folder. To run tests, just run `pytest -o log_cli=true -s` in terminal. To run tests in parallel, run `pytest -o log_cli=true -s -n <num>`, with `<num>` as the # of workers in parallel.
 
+If tests are failing when you run the command above locally, make sure that the docker-compose stack is running. Start it if it's not. If the docker-compose stack has crashed, there's a good chance you haven't set the correct environment variables, especially if your terminal displays `AttributeError: 'NoneType' object has no attribute 'upper'`. Be sure that environment variables such as `DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD`, and `USE_PRODUCTION_KEYS` are set to the correct values. The username and password should match the values stored in the relevant configuration database. You can define the environment variables in a `.env` file inside of the repository root, or the `docker` or `tests` subdirectories, or you can set them in your shell.
+
+To get an idea of what environment variables you might be missing, try running `git grep 'os\.getenv'` in the repository root.
+
 ## Publishing
 
 Once you are ready to deploy to production, you can merge your code into master and then run `./update.sh`. The script will push your local code to Heroku on the master branch, and notify the team via Slack.
