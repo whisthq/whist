@@ -40,7 +40,4 @@ def admin_token():
             password=os.getenv("DASHBOARD_PASSWORD"),
         ),
     )
-    print(os.getenv("DASHBOARD_USERNAME"))
-    print(os.getenv("DASHBOARD_PASSWORD"))
-    print(resp.json())
     return resp.json()["access_token"]

@@ -3,8 +3,11 @@ from .helpers.tests.aws_container import *
 @pytest.mark.container_serial
 def test_create_cluster(input_token, admin_token):
     resp = createCluster(
-        instance_type='t2.small',
-        ami='ami-026f9e275180a6982',
+        instance_type='t2.large',
+        #ami='ami-04cfcf6827bb29439',
+        #ami='ami-026f9e275180a6982',
+        ami='ami-02f5ea673e84393c9', # roshan's ami
+        region_name='us-east-1',
         input_token=input_token,
     )
 
@@ -17,10 +20,40 @@ def test_create_cluster(input_token, admin_token):
     assert True
 
 @pytest.mark.container_serial
-def test_launch_task(input_token, admin_token):
-    resp = launchTask(
+def test_create_container(input_token, admin_token):
+    resp = createContainer(
         username='test-user@test.com',
-        cluster_name='cluster_visiytzucx',
+        cluster_name='cluster_ccybikginm',
+        #cluster_name='roshan-cluster-1',
+        #2: cluster_name='cluster_umqxpppdpg',
+        #1: cluster_name='cluster_visiytzucx',
+        region_name='us-east-1',
+        #task_definition_arn='arn:aws:ecs:us-east-1:747391415460:task-definition/first-run-task-definition:3',
+        #task_definition_arn='arn:aws:ecs:us-east-2:747391415460:task-definition/first-run-task-definition:4',
+        task_definition_arn='arn:aws:ecs:us-east-1:747391415460:task-definition/roshan-task-definition-test-0:2',
+        use_launch_type=False,
+        # network_configuration = {
+        #     "awsvpcConfiguration": {
+        #         "subnets": ["subnet-9b81d4e1",],
+        #         "securityGroups": ["sg-060d3e43d08f969ef",],
+        #     }
+        # },
+        input_token=input_token,
+    )
+
+    task = queryStatus(resp, timeout=10)
+    print(task)
+
+    if task["status"] < 1:
+        assert False
+
+    assert True
+
+@pytest.mark.container_serial
+def test_delete_container(input_token, admin_token):
+    resp = deleteContainer(
+        user_id='test-user@test.com',
+        container_name='arn:aws:ecs:us-east-1:747391415460:task/88e54b34-6644-4c0a-99ca-b8b520751689',
         input_token=input_token,
     )
 

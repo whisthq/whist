@@ -14,13 +14,13 @@ from app.serializers.hardware import UserContainer
 
 
 @celery_instance.task(bind=True)
-def deleteContainer(self, container_name, user_id):
+def deleteContainer(self, user_id, container_name):
     """
 
     Args:
         self: the celery instance running the task
         container_name (str): the ARN of the running container
-        user_id (str): the user trying to delete thr container
+        user_id (str): the user trying to delete the container
 
     Returns: json indicating success or failure
 

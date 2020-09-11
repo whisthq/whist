@@ -3,7 +3,7 @@ from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
 from app import fractalPreProcess
-from app.celery.aws_ecs_creation import BadAppError, create_new_container
+from app.celery.aws_ecs_creation import BadAppError, create_new_container, create_new_cluster
 from app.celery.aws_ecs_deletion import deleteContainer
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_get import protocol_info
@@ -18,30 +18,47 @@ aws_container_bp = Blueprint("aws_container_bp", __name__)
 @fractalPreProcess
 def test_endpoint(action, **kwargs):
     if action == "create_cluster":
-        instance_type, ami = (
+        instance_type, ami, region_name = (
             kwargs["body"]["instance_type"],
             kwargs["body"]["ami"],
+            kwargs["body"]["region_name"],
         )
-        task = create_new_cluster.apply_async([instance_type, ami])
+        task = create_new_cluster.apply_async([instance_type, ami, region_name])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
 
-    if action == "launch_task":
-        username, cluster_name = (
+    if action == "create_container":
+        username, cluster_name, region_name, task_definition_arn, use_launch_type, network_configuration = (
             kwargs["body"]["username"],
             kwargs["body"]["cluster_name"],
+            kwargs["body"]["region_name"],
+            kwargs["body"]["task_definition_arn"],
+            kwargs["body"]["use_launch_type"],
+            kwargs["body"]["network_configuration"],
         )
-        task = create_new_container.apply_async([username, cluster_name])
+        task = create_new_container.apply_async([username, cluster_name, region_name, task_definition_arn, use_launch_type, network_configuration])
+
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
+     
+     if action == "delete_container":
+        user_id, container_name = (
+            kwargs["body"]["user_id"],
+            kwargs["body"]["container_name"],
+        )
+        task = deleteContainer.apply_async([user_id, container_name])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
 
-
+      
 @aws_container_bp.route("/container/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
