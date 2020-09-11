@@ -1,6 +1,6 @@
 import * as firebase from "firebase";
 
-export var firebaseConfig = {
+var firebaseConfig = {
     apiKey: process.env.REACT_APP_API_KEY,
     authDomain: process.env.REACT_APP_AUTH_DOMAIN,
     databaseURL: process.env.REACT_APP_DATABASE_URL,

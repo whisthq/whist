@@ -1,46 +1,113 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
-
 import { db } from "utils/firebase";
+
+import {
+    updateUserAction,
+    updateWaitlistAction,
+} from "store/actions/auth/waitlist";
 
 import "styles/landing.css";
 import WaitlistForm from "pages/landing/components/waitlistForm";
 import CountdownTimer from "pages/landing/components/countdown";
 
+import LeaderboardPage from "pages/landing/components/leaderboardPage";
+
 function Landing(props: any) {
-  const [state, setState] = useState(() => {
-    return ({
-      "waitlist": []
-    })
-  })
+    const [waitlist, setWaitlist] = useState(props.waitlist);
 
-  useEffect(() => {
-    getWaitlist().then(function (waitlist) {
-      setState(prevState => { return { ...prevState, "waitlist": waitlist } })
-    })
-  }, []);
+    useEffect(() => {
+        console.log("use effect landing");
+        console.log(props.user);
+        var unsubscribe;
+        getWaitlist()
+            .then((waitlist) => {
+                setWaitlist(waitlist);
+                props.dispatch(updateWaitlistAction(waitlist));
+                if (props.user.email && props.user.ranking == 0) {
+                    const ranking = getInitialRanking(waitlist);
+                    props.dispatch(
+                        updateUserAction(props.user.points, ranking)
+                    );
+                }
+            })
+            .then(() => {
+                if (props.user && props.user.email) {
+                    unsubscribe = db
+                        .collection("waitlist")
+                        .doc(props.user.email)
+                        .onSnapshot((doc) => {
+                            console.log("IN SNAPSHOT");
+                            const userData = doc.data();
+                            const ranking = updateRanking(userData);
+                            console.log(ranking);
+                            if (
+                                userData &&
+                                userData.points != props.user.points
+                            ) {
+                                props.dispatch(
+                                    updateUserAction(userData.points, ranking)
+                                );
+                            }
+                        });
+                }
+            });
+        return unsubscribe;
+    }, [props.user]);
 
-  async function getWaitlist() {
-    const waitlist = await db.collection("waitlist").get()
-    return (waitlist.docs.map(doc => doc.data()))
-  }
+    async function getWaitlist() {
+        const waitlist = await db
+            .collection("waitlist")
+            .orderBy("points", "desc")
+            .get();
+        return waitlist.docs.map((doc) => doc.data());
+    }
 
-  return (
-    <div style={{
-      fontWeight: "bold",
-      textAlign: "center",
-      marginTop: 200,
-    }}>
-      <WaitlistForm />
-      <CountdownTimer />
-    </div>
-  );
+    function getInitialRanking(waitlist) {
+        for (var i = 0; i < waitlist.length; i++) {
+            if (waitlist[i].email == props.user.email) {
+                return i + 1;
+            }
+        }
+        return 0;
+    }
+
+    function updateRanking(userData) {
+        var currRanking = props.user.ranking - 1;
+        // Bubbles user up the leaderboard according to new points
+        while (
+            currRanking > 0 &&
+            userData.points > props.waitlist[currRanking - 1].points
+        ) {
+            setWaitlist((originalWaitlist) => {
+                var newWaitlist = [...originalWaitlist];
+                newWaitlist[currRanking] = originalWaitlist[currRanking - 1];
+                newWaitlist[currRanking - 1] = userData;
+                return newWaitlist;
+            });
+            currRanking--;
+        }
+        return currRanking + 1;
+    }
+
+    return (
+        <div
+            style={{
+                textAlign: "center",
+            }}
+        >
+            <WaitlistForm />
+            <CountdownTimer />
+            <LeaderboardPage />
+        </div>
+    );
 }
 
 function mapStateToProps(state) {
-  return {
-    user: state.AuthReducer.user
-  }
+    return {
+        user: state.AuthReducer.user,
+        waitlist: state.AuthReducer.waitlist,
+    };
 }
 
 export default connect(mapStateToProps)(Landing);
