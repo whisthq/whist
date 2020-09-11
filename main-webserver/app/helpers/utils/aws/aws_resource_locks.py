@@ -70,7 +70,6 @@ def spinLock(container_name, s=None):
     """
 
     # Check if Container is currently locked
-    container_name = container_name.split("/")[-1]
 
     container = UserContainer.query.get(container_name)
 
