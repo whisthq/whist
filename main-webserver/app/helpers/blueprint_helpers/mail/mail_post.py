@@ -214,3 +214,29 @@ def computerReadyHelper(user, date, code, location):
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
     return jsonify({"status": SUCCESS}), SUCCESS
+
+def joinWaitlistHelper(email, name, date):
+    title = "Success! You've Joined the Waitlist"
+
+    internal_message = SendGridMail(
+        from_email="support@fractalcomputers.com",
+        to_emails=email,
+        subject=title,
+        html_content=render_template(
+            "join_waitlist.html", name=name, date=date
+        ),
+    )
+
+    try:
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(internal_message)
+    except Exception as e:
+        fractalLog(
+            function="joinWaitlistHelper",
+            label=email,
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
+        )
+        return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
+
+    return jsonify({"status": SUCCESS}), SUCCESS
