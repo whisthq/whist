@@ -1,64 +1,61 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import { FormControl, InputGroup, Button } from "react-bootstrap";
-import { CountryDropdown } from 'react-country-region-selector';
+import { CountryDropdown } from "react-country-region-selector";
 
 import { db } from "utils/firebase";
 
-import { insertWaitlistAction } from "store/actions/auth/waitlist"
+import { insertWaitlistAction } from "store/actions/auth/waitlist";
 
 import "styles/landing.css";
 
+const INITIAL_POINTS = 10;
+
 function WaitlistForm(props: any) {
-    const [state, setState] = useState(() => {
-        return ({
-            "email": null,
-            "name": null,
-            "country": "United States",
-            "referralCode": null
-        })
-    })
+    const [email, setEmail] = useState();
+    const [name, setName] = useState();
+    const [country, setCountry] = useState("United States");
+    const [referralCode, setReferralCode] = useState();
 
     useEffect(() => {
-        console.log("Use Effect waitlist")
+        console.log("Use Effect waitlist");
     }, []);
 
     function updateEmail(evt: any) {
         evt.persist();
-        setState(prevState => { return { ...prevState, "email": evt.target.value } })
+        setEmail(evt.target.value);
     }
 
     function updateName(evt: any) {
         evt.persist();
-        setState(prevState => { return { ...prevState, "name": evt.target.value } })
+        setName(evt.target.value);
     }
 
     function updateCountry(country: string) {
-        setState(prevState => { return { ...prevState, "country": country } })
+        setCountry(country);
     }
 
     function updateReferralCode(evt: any) {
         evt.persist();
-        setState(prevState => { return { ...prevState, "referralCode": evt.target.value } })
+        setReferralCode(evt.target.value);
     }
 
     async function insertWaitlist() {
-        var emails = db.collection("waitlist").where('email', '==', state.email);
+        var emails = db.collection("waitlist").where("email", "==", email);
         const exists = await emails.get().then(function (snapshot) {
-            return !snapshot.empty
+            return !snapshot.empty;
         });
 
 
         if (!exists) {
-            db.collection("waitlist").add({
-                name: state.name,
-                email: state.email,
+            db.collection("waitlist").doc(email).set({
+                name: name,
+                email: email,
                 referrals: 0,
-                points: 50,
+                points: INITIAL_POINTS,
             });
+            props.dispatch(insertWaitlistAction(email, name, INITIAL_POINTS));
         }
-
-        insertWaitlistAction(state.email, state.name);
     }
 
     return (
@@ -86,7 +83,7 @@ function WaitlistForm(props: any) {
                     style={{ width: 180 }}
                 />
                 <CountryDropdown
-                    value={state.country}
+                    value={country}
                     onChange={(country) => updateCountry(country)}
                 />
             </div>
@@ -94,21 +91,22 @@ function WaitlistForm(props: any) {
                 <Button
                     onClick={insertWaitlist}
                     className="waitlist-button"
-                    disabled={state.email && state.name && state.country ? false : true}
+                    disabled={email && name && country ? false : true}
                     style={{
-                        opacity: state.email && state.name && state.country ? 1.0 : 0.5
+                        opacity: email && name && country ? 1.0 : 0.5
                     }}
                 >
                     Submit
                 </Button>
             </div>
-        </div >
+        </div>
     );
 }
 
 function mapStateToProps(state) {
     return {
-    }
+        user: state.AuthReducer.user,
+    };
 }
 
 export default connect(mapStateToProps)(WaitlistForm);

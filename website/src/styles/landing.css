@@ -1,10 +1,14 @@
-@import url("https://fonts.googleapis.com/css?family=Maven+Pro|Kalam&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Kalam&family=Maven+Pro:wght@400;700&display=swap");
 
 body {
     overflow-x: hidden;
 }
 
-body, div, html, input, Button {
+body,
+div,
+html,
+input,
+Button {
     font-family: "Maven Pro" !important;
 }
 
@@ -82,3 +86,78 @@ option {
     margin-left: 20px;
 }
 
+.leaderboardPage {
+    height: 100vh;
+    background-color: #0d1d3c;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: flex-start;
+}
+
+.table {
+    width: 400px;
+    margin: auto;
+    background-color: #0d0f34;
+    color: #c9c9f5;
+    border-collapse: collapse;
+    text-align: left;
+    border-radius: 10px !important;
+}
+
+.table thead {
+    background-color: #07082b;
+    color: #00d4ff;
+    border-radius: 10px 10px 0 0;
+}
+
+.table tbody {
+    margin: 20px;
+}
+
+.table td,
+.table th {
+    padding: 20px;
+}
+
+.topThree {
+    background-color: #00d4ff;
+    height: 20px;
+    width: 20px;
+    color: white;
+    border-radius: 2px;
+    text-align: center;
+    font-weight: bold;
+    padding: 3px;
+}
+
+.rankingColumn {
+    padding-left: 50px !important;
+}
+
+.nameColumn {
+    color: white;
+    padding-right: 130px !important;
+}
+
+.pointsColumn {
+    padding-right: 50px !important;
+}
+
+.userRow {
+    background-color: #454e7e;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.action {
+    background-color: #0d0f34;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 450px;
+    padding: 40px;
+    margin-bottom: 30px;
+    border-radius: 5px;
+}
