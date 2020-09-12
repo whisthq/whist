@@ -53,7 +53,7 @@ If you encounter a "daemon not running" error, this likely means that Docker is 
 
 Review `docker-compose.yml` to see which ports the various services are hosted on. For example, `"7810:6379"` means that the Redis service, running on port 6379 internally, will be available on `localhost:7810` from the host machine. Line 25 of `docker-compose.yml` will tell you where the web server itself is running.
 
-If you make a change to the webserver, you'll need to restart docker by first killing the server (Ctrl-C) and re-running `docker-compose up --build`.
+If you make a change to the webserver, you'll need to restart docker by first killing the server (Ctrl-C) and re-running `docker-compose up --build`. However, you can enable hot-reloading of the Flask web server and Celery task queue for development purposes by setting `HOT_RELOAD=true` in your Docker environment.
 
 ### Heroku Setup
 
