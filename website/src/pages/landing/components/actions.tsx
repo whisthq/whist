@@ -1,4 +1,6 @@
 import React from "react";
+import { connect } from "react-redux";
+import { Button } from "react-bootstrap";
 
 const SignupAction = () => {
     return (
@@ -32,7 +34,46 @@ const RecommendAction = () => {
     );
 };
 
-const Actions = () => {
+const JoinWaitlistAction = () => {
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+        });
+    };
+
+    return (
+        <Button onClick={scrollToTop} className="action">
+            <div
+                style={{
+                    color: "white",
+                    fontSize: "23px",
+                }}
+            >
+                Join Waitlist
+            </div>
+            <div style={{ color: "#00D4FF" }}> +50 points</div>
+        </Button>
+    );
+};
+
+const Actions = (props) => {
+    const renderActions = () => {
+        if (props.user && props.user.email) {
+            if (props.loggedIn) {
+                return <RecommendAction />;
+            } else {
+                return (
+                    <>
+                        <SignupAction /> <RecommendAction />
+                    </>
+                );
+            }
+        } else {
+            return <JoinWaitlistAction />;
+        }
+    };
+
     return (
         <div
             style={{
@@ -44,6 +85,7 @@ const Actions = () => {
         >
             <h1
                 style={{
+                    fontWeight: "bold",
                     color: "white",
                     marginBottom: "30px",
                     fontSize: "40px",
@@ -51,10 +93,16 @@ const Actions = () => {
             >
                 Actions
             </h1>
-            <SignupAction />
-            <RecommendAction />
+            {renderActions()}
         </div>
     );
 };
 
-export default Actions;
+const mapStateToProps = (state) => {
+    return {
+        user: state.AuthReducer.user,
+        loggedIn: state.AuthReducer.logged_in,
+    };
+};
+
+export default connect(mapStateToProps)(Actions);
