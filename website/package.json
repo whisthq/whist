@@ -29,17 +29,14 @@
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "^3.4.3",
-    "react-typewriter-effect": "^1.0.2",
-    "react-typing-animation": "^1.6.2",
-    "react-typing-effect": "^2.0.3",
+    "react-typewriter-effect": "github:rpadaki/react-typewriter-effect",
     "reactstrap": "^8.5.1",
     "redux": "^4.0.5",
     "redux-devtools-extension": "^2.13.8",
     "redux-persist": "^6.0.0",
     "redux-promise": "^0.6.0",
     "redux-saga": "^1.1.3",
-    "typescript": "^3.9.7",
-    "typewriter-effect": "^2.13.1"
+    "typescript": "^3.9.7"
   },
   "scripts": {
     "start": "react-scripts start",
