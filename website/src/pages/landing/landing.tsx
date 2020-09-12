@@ -555,7 +555,6 @@ function mapStateToProps(state) {
     return {
         user: state.AuthReducer.user,
         waitlist: state.AuthReducer.waitlist,
-        loggedIn: state.AuthReducer.logged_in,
     };
 }
 
