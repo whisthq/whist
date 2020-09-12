@@ -46,21 +46,34 @@ function WaitlistForm(props: any) {
             return !snapshot.empty;
         });
 
-
         if (!exists) {
-            db.collection("waitlist").doc(email).set({
-                name: name,
-                email: email,
-                referrals: 0,
-                points: INITIAL_POINTS,
-            });
-            props.dispatch(insertWaitlistAction(email, name, INITIAL_POINTS));
+            db.collection("waitlist")
+                .doc(email)
+                .set({
+                    name: name,
+                    email: email,
+                    referrals: 0,
+                    points: INITIAL_POINTS,
+                })
+                .then(() =>
+                    props.dispatch(
+                        insertWaitlistAction(email, name, INITIAL_POINTS)
+                    )
+                );
         }
     }
 
     return (
         <div>
-            <div style={{ width: 800, margin: "auto", marginTop: 20, display: "flex", justifyContent: "space-between" }}>
+            <div
+                style={{
+                    width: 800,
+                    margin: "auto",
+                    marginTop: 20,
+                    display: "flex",
+                    justifyContent: "space-between",
+                }}
+            >
                 <input
                     type="text"
                     placeholder="Email Address"
@@ -87,13 +100,13 @@ function WaitlistForm(props: any) {
                     onChange={(country) => updateCountry(country)}
                 />
             </div>
-            <div style={{ width: 800, margin: "auto", marginTop: 20, }}>
+            <div style={{ width: 800, margin: "auto", marginTop: 20 }}>
                 <Button
                     onClick={insertWaitlist}
                     className="waitlist-button"
                     disabled={email && name && country ? false : true}
                     style={{
-                        opacity: email && name && country ? 1.0 : 0.5
+                        opacity: email && name && country ? 1.0 : 0.5,
                     }}
                 >
                     Submit
