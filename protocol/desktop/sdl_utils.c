@@ -15,6 +15,7 @@ close the window.
 
 extern volatile int output_width;
 extern volatile int output_height;
+extern volatile SDL_Window* window;
 
 #if defined(_WIN32)
 HHOOK g_hKeyboardHook;
@@ -118,14 +119,14 @@ SDL_Window* initSDL(int target_output_width, int target_output_height) {
     return window;
 }
 
-void destroySDL(SDL_Window* window) {
+void destroySDL(SDL_Window* window_param) {
     LOG_INFO("Destroying SDL");
 #if defined(_WIN32)
     UnhookWindowsHookEx(g_hKeyboardHook);
 #endif
-    if (window) {
-        SDL_DestroyWindow((SDL_Window*)window);
-        window = NULL;
+    if (window_param) {
+        SDL_DestroyWindow((SDL_Window*)window_param);
+        window_param = NULL;
     }
     SDL_Quit();
 }
@@ -140,57 +141,59 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam) {
     // By returning a non-zero value from the hook procedure, the
     // message does not get passed to the target window
     KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)lParam;
+	int flags = SDL_GetWindowFlags(window);
+	if((flags & SDL_WINDOW_MOUSE_FOCUS)) {
+		switch (nCode) {
+			case HC_ACTION: {
+				// Check to see if the CTRL key is pressed
+				BOOL bControlKeyDown = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
+				BOOL bAltKeyDown = pkbhs->flags & LLKHF_ALTDOWN;
 
-    switch (nCode) {
-        case HC_ACTION: {
-            // Check to see if the CTRL key is pressed
-            BOOL bControlKeyDown = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
-            BOOL bAltKeyDown = pkbhs->flags & LLKHF_ALTDOWN;
+				int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
+				int time = pkbhs->time;
 
-            int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
-            int time = pkbhs->time;
+				// Disable LWIN
+				if (pkbhs->vkCode == VK_LWIN) {
+					SendCapturedKey(FK_LGUI, type, time);
+					return 1;
+				}
 
-            // Disable LWIN
-            if (pkbhs->vkCode == VK_LWIN) {
-                SendCapturedKey(FK_LGUI, type, time);
-                return 1;
-            }
+				// Disable RWIN
+				if (pkbhs->vkCode == VK_RWIN) {
+					SendCapturedKey(FK_RGUI, type, time);
+					return 1;
+				}
 
-            // Disable RWIN
-            if (pkbhs->vkCode == VK_RWIN) {
-                SendCapturedKey(FK_RGUI, type, time);
-                return 1;
-            }
+				// Disable CTRL+ESC
+				if (pkbhs->vkCode == VK_ESCAPE && bControlKeyDown) {
+					SendCapturedKey(FK_ESCAPE, type, time);
+					return 1;
+				}
 
-            // Disable CTRL+ESC
-            if (pkbhs->vkCode == VK_ESCAPE && bControlKeyDown) {
-                SendCapturedKey(FK_ESCAPE, type, time);
-                return 1;
-            }
+				// Disable ALT+ESC
+				if (pkbhs->vkCode == VK_ESCAPE && bAltKeyDown) {
+					SendCapturedKey(FK_ESCAPE, type, time);
+					return 1;
+				}
 
-            // Disable ALT+ESC
-            if (pkbhs->vkCode == VK_ESCAPE && bAltKeyDown) {
-                SendCapturedKey(FK_ESCAPE, type, time);
-                return 1;
-            }
+				// Disable ALT+TAB
+				if (pkbhs->vkCode == VK_TAB && bAltKeyDown) {
+					SendCapturedKey(FK_TAB, type, time);
+					return 1;
+				}
 
-            // Disable ALT+TAB
-            if (pkbhs->vkCode == VK_TAB && bAltKeyDown) {
-                SendCapturedKey(FK_TAB, type, time);
-                return 1;
-            }
+				// Disable ALT+F4
+				if (pkbhs->vkCode == VK_F4 && bAltKeyDown) {
+					SendCapturedKey(FK_F4, type, time);
+					return 1;
+				}
 
-            // Disable ALT+F4
-            if (pkbhs->vkCode == VK_F4 && bAltKeyDown) {
-                SendCapturedKey(FK_F4, type, time);
-                return 1;
-            }
-
-            break;
-        }
-        default:
-            break;
-    }
+				break;
+			}
+			default:
+				break;
+		}
+	}
     return CallNextHookEx(mule, nCode, wParam, lParam);
 }
 #endif

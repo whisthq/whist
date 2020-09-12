@@ -35,7 +35,7 @@ its threads.
 #include "sdl_utils.h"
 #include "server_message_handler.h"
 #include "video.h"
-
+#include "SDL_syswm.h"
 #ifdef __APPLE__
 #include "../fractal/utils/mac_utils.h"
 #endif
@@ -516,7 +516,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the SDL window
-    window = initSDL(output_width, output_height);
+    window = initSDL(output_width, output_height);	
     if (!window) {
         LOG_ERROR("Failed to initialize SDL");
         destroySocketLibrary();
