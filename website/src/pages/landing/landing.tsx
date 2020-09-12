@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import TypeWriterEffect from "react-typewriter-effect";
-import { Row, Col } from "react-bootstrap";
+import { Row, Col, Button } from "react-bootstrap";
 
 import { db } from "utils/firebase";
 
@@ -23,6 +23,7 @@ import Mercury from "assets/largeGraphics/mercury.svg";
 import Saturn from "assets/largeGraphics/saturn.svg";
 import Plants from "assets/largeGraphics/plants.svg";
 import Wireframe from "assets/largeGraphics/wireframe.svg";
+import Mountain from "assets/largeGraphics/mountain.svg";
 
 function Landing(props: any) {
     const [waitlist, setWaitlist] = useState(props.waitlist);
@@ -105,7 +106,7 @@ function Landing(props: any) {
         <div style={{ paddingBottom: 100 }}>
             <div
                 className="banner-background"
-                style={{ zIndex: 2, width: "100vw" }}
+                style={{ width: "100vw", position: "relative", zIndex: 1 }}
             >
                 <img
                     src={Moon}
@@ -145,6 +146,47 @@ function Landing(props: any) {
                         height: 100,
                         top: 425,
                         left: 80,
+                    }}
+                />
+                <img
+                    src={Mountain}
+                    style={{
+                        position: "absolute",
+                        width: "100vw",
+                        bottom: 150,
+                        left: 0,
+                        zIndex: 1,
+                    }}
+                />
+                <div
+                    style={{
+                        position: "absolute",
+                        width: "100vw",
+                        bottom: 0,
+                        left: 0,
+                        height: 150,
+                        background: "white",
+                    }}
+                ></div>
+                <img
+                    src={Plants}
+                    style={{
+                        position: "absolute",
+                        width: 250,
+                        left: 0,
+                        bottom: 130,
+                        zIndex: 2,
+                    }}
+                />
+                <img
+                    src={Plants}
+                    style={{
+                        position: "absolute",
+                        width: 250,
+                        right: 0,
+                        bottom: 130,
+                        transform: "scaleX(-1)",
+                        zIndex: 2,
                     }}
                 />
                 <div
@@ -187,9 +229,15 @@ function Landing(props: any) {
                             }}
                             startDelay={0}
                             cursorColor="white"
-                            multiText={["Blender", "Figma", "VSCode", "Maya"]}
-                            typeSpeed={150}
+                            multiText={[
+                                "Blender",
+                                "Figma",
+                                "VSCode",
+                                "Maya",
+                                "Blender",
+                            ]}
                             loop={true}
+                            typeSpeed={150}
                         />
                         <div
                             style={{
@@ -227,42 +275,17 @@ function Landing(props: any) {
                         maxWidth: 600,
                         position: "relative",
                         bottom: 60,
-                        zIndex: 2,
+                        zIndex: 100,
                     }}
                 >
-                    <img src={LaptopAwe} style={{ maxWidth: 600 }} />
+                    <img
+                        src={LaptopAwe}
+                        style={{ maxWidth: 600, zIndex: 100 }}
+                    />
                 </div>
             </div>
-            <div
-                className="white-background-curved"
-                style={{
-                    height: 350,
-                    position: "relative",
-                    bottom: 150,
-                    background: "white",
-                    zIndex: 1,
-                }}
-            >
-                <img
-                    src={Plants}
-                    style={{
-                        position: "absolute",
-                        width: 250,
-                        left: 0,
-                        top: 10,
-                    }}
-                />
-                <img
-                    src={Plants}
-                    style={{
-                        position: "absolute",
-                        width: 250,
-                        right: 0,
-                        top: 10,
-                        transform: "scaleX(-1)",
-                    }}
-                />
-                <Row style={{ paddingTop: 200, paddingRight: 50 }}>
+            <div style={{ position: "relative", background: "white" }}>
+                <Row style={{ paddingTop: 50, paddingRight: 50 }}>
                     <Col md={7}>
                         <img src={Wireframe} style={{ width: "100%" }} />
                     </Col>
@@ -274,18 +297,234 @@ function Landing(props: any) {
                                 lineHeight: 1.2,
                             }}
                         >
-                            Unlock desktop apps on any computer or tablet
+                            Run demanding apps on any computer or tablet
                         </div>
                         <div style={{ marginTop: 40 }}>
-                            Fractal is like Google Stadia for all your apps. For
-                            the first time, run VSCode on an iPad or create 3D
-                            animations on a Chromebook.
+                            Fractal is like Google Stadia for creative and
+                            productivity apps. With Fractal, you can run VSCode
+                            on an iPad or create 3D animations on a Chromebook.
                         </div>
                     </Col>
                 </Row>
             </div>
-            <div style={{ marginTop: 200 }}>
-                <LeaderboardPage />
+            <div style={{ padding: 30, marginTop: 100 }}>
+                <Row>
+                    <Col md={6}>
+                        <div
+                            style={{
+                                padding: "50px 35px",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                background: "rgba(221, 165, 248, 0.2)",
+                                borderRadius: 5,
+                            }}
+                        >
+                            <div
+                                style={{
+                                    fontSize: 35,
+                                    fontWeight: "bold",
+                                    lineHeight: 1.3,
+                                }}
+                            >
+                                Q:
+                            </div>
+                            <div style={{ width: 25 }}></div>
+                            <div>
+                                <div
+                                    style={{
+                                        fontSize: 35,
+                                        fontWeight: "bold",
+                                        lineHeight: 1.3,
+                                        paddingBottom: 10,
+                                    }}
+                                >
+                                    How can I be invited to try Fractal?
+                                </div>
+                                <div style={{ paddingTop: 20 }}>
+                                    When the countdown hits zero, we’ll invite{" "}
+                                    <strong>20 people</strong> from the waitlist
+                                    with the most compelling{" "}
+                                    <strong>100-word submission</strong> on why
+                                    they want Fractal to receive 1:1 onboarding.
+                                    We'll also invite the top{" "}
+                                    <strong>20 people</strong> with the
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            style={{
+                                padding: "5px 30px",
+                                background: "rgba(172, 207, 231, 0.2)",
+                                borderRadius: 5,
+                                marginTop: 25,
+                            }}
+                        >
+                            <div
+                                style={{
+                                    fontWeight: "bold",
+                                    fontSize: 125,
+                                    height: 120,
+                                }}
+                            >
+                                "
+                            </div>
+                            <div>
+                                F*CKING AMAZING ... tried Minecraft VR - it was
+                                buttery smooth with almost no detectable
+                                latency. Never thought it would work this well.
+                            </div>
+                            <div
+                                style={{
+                                    fontWeight: "bold",
+                                    fontSize: 125,
+                                    textAlign: "right",
+                                    height: 100,
+                                    position: "relative",
+                                    bottom: 20,
+                                }}
+                            >
+                                "
+                            </div>
+                            <div style={{ position: "relative", bottom: 30 }}>
+                                <div style={{ fontWeight: "bold" }}>
+                                    Sean S.
+                                </div>
+                                <div style={{ fontSize: 12 }}>
+                                    Designer + VR user
+                                </div>
+                            </div>
+                        </div>
+                    </Col>
+                    <Col md={6}>
+                        <div
+                            style={{
+                                background: "rgba(172, 207, 231, 0.2)",
+                                padding: "5px 30px",
+                                borderRadius: 5,
+                            }}
+                        >
+                            <div
+                                style={{
+                                    fontWeight: "bold",
+                                    fontSize: 125,
+                                    height: 120,
+                                }}
+                            >
+                                "
+                            </div>
+                            <div>
+                                Woah! What you've developed is something I've
+                                been dreaming of for years now... this is a
+                                MASSIVE game changer for people that do the kind
+                                of work that I do.
+                            </div>
+                            <div
+                                style={{
+                                    fontWeight: "bold",
+                                    fontSize: 125,
+                                    textAlign: "right",
+                                    height: 100,
+                                    position: "relative",
+                                    bottom: 20,
+                                }}
+                            >
+                                "
+                            </div>
+                            <div style={{ position: "relative", bottom: 30 }}>
+                                <div style={{ fontWeight: "bold" }}>
+                                    Brian M.
+                                </div>
+                                <div style={{ fontSize: 12 }}>Animator</div>
+                            </div>
+                        </div>
+                        <div
+                            style={{
+                                padding: "5px 30px",
+                                background: "rgba(172, 207, 231, 0.2)",
+                                borderRadius: 5,
+                                marginTop: 25,
+                            }}
+                        >
+                            <div
+                                style={{
+                                    fontWeight: "bold",
+                                    fontSize: 125,
+                                    height: 120,
+                                }}
+                            >
+                                "
+                            </div>
+                            <div>
+                                [Fractal] is an immense project with a fantastic
+                                amount of potential.
+                            </div>
+                            <div
+                                style={{
+                                    fontWeight: "bold",
+                                    fontSize: 125,
+                                    textAlign: "right",
+                                    height: 100,
+                                    position: "relative",
+                                    bottom: 20,
+                                }}
+                            >
+                                "
+                            </div>
+                            <div style={{ position: "relative", bottom: 30 }}>
+                                <div style={{ fontWeight: "bold" }}>
+                                    Jonathan H.
+                                </div>
+                                <div style={{ fontSize: 12 }}>
+                                    Software developer + gamer
+                                </div>
+                            </div>
+                        </div>
+                    </Col>
+                </Row>
+            </div>
+            <div style={{ padding: 30 }}>
+                <div
+                    style={{
+                        borderRadius: 5,
+                        boxShadow: "0px 4px 30px rgba(0, 0, 0, 0.1)",
+                        padding: "60px 100px",
+                        background: "white",
+                    }}
+                >
+                    <div
+                        style={{
+                            maxWidth: 650,
+                            margin: "auto",
+                            textAlign: "left",
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontSize: 40,
+                                fontWeight: "bold",
+                                lineHeight: 1.4,
+                            }}
+                        >
+                            Give my computer superpowers.
+                        </div>
+                        <div style={{ marginTop: 20 }}>
+                            Run the most demanding applications from my device
+                            without eating up your RAM or processing power, all
+                            on 1GB datacenter internet.
+                        </div>
+                        <Button
+                            style={{
+                                marginTop: 30,
+                                background: "#1C2A45",
+                                fontWeight: "bold",
+                                border: "none",
+                                padding: "10px 40px",
+                            }}
+                        >
+                            I Want Access
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );

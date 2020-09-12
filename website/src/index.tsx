@@ -23,6 +23,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 import Landing from "pages/landing/landing";
 import Auth from "pages/auth/auth";
+import Application from "pages/application/application";
 
 Sentry.init({
     dsn:
@@ -57,6 +58,7 @@ ReactDOM.render(
                 <PersistGate loading={null} persistor={persistor}>
                     <Route exact path="/" component={Landing} />
                     <Route exact path="/auth" component={Auth} />
+                    <Route exact path="/application" component={Application} />
                 </PersistGate>
             </Provider>
         </Router>
