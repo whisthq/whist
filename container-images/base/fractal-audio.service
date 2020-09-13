@@ -1,0 +1,13 @@
+[Unit]
+Description=Activates pulseaudio with correct settings
+After=fractal-display.service network.target
+Requires=fractal-display.service
+
+[Service]
+User=root
+Environment=DISPLAY=:11
+Environment=XAUTHORITY=/home/fractal/.Xauthority
+ExecStart=/usr/bin/pulseaudio --daemonize=no --exit-idle-time=-1 --disallow-exit
+
+[Install]
+WantedBy=multi-user.target
