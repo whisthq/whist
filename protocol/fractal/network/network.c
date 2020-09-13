@@ -222,6 +222,7 @@ bool handshakePrivateKey(SocketContext *context) {
                     GetLastNetworkError());
         return false;
     }
+    LOG_INFO("Private key request received");
     if (!signPrivateKey(&their_priv_key_data, recv_size, context->aes_private_key)) {
         LOG_ERROR("signPrivateKey failed!");
         return false;
@@ -240,6 +241,7 @@ bool handshakePrivateKey(SocketContext *context) {
         LOG_ERROR("Could not confirmPrivateKey!");
         return false;
     } else {
+		LOG_INFO("Private key confirmed");
         set_timeout(context->s, context->timeout);
         return true;
     }
@@ -384,6 +386,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
         // Send it off
         SDL_LockMutex(context->mutex);
+		LOG_INFO("Sending UDP Packet of length %d", encrypted_len);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
         SDL_UnlockMutex(context->mutex);
 
@@ -423,6 +426,7 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
                                      (unsigned char *)context->aes_private_key);
 
     SDL_LockMutex(context->mutex);
+    LOG_INFO("Replay Packet of length %d", encrypted_len);
     int sent_size = sendp(context, &encrypted_packet, encrypt_len);
     SDL_UnlockMutex(context->mutex);
 
@@ -535,7 +539,9 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
             int error = GetLastNetworkError();
             switch (error) {
                 case FRACTAL_ETIMEDOUT:
+					LOG_ERROR("Read UDP Packet error: Timeout");
                 case FRACTAL_EWOULDBLOCK:
+					LOG_ERROR("Read UDP Packet error: Blocked");
                     break;
                 default:
                     LOG_WARNING("Unexpected Packet Error: %d", error);
@@ -1297,7 +1303,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
         return -1;
     }
 
-    LOG_WARNING("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
                 port, ntohs(context->addr.sin_port));
 
     set_timeout(context->s, recvfrom_timeout_ms);
