@@ -1,122 +1,125 @@
-import React, { useState, useEffect } from "react";
-import { connect } from "react-redux";
-import TypeWriterEffect from "react-typewriter-effect";
-import { Row, Col, Button } from "react-bootstrap";
+import React, { useState, useEffect } from 'react'
+import { connect } from 'react-redux'
+import TypeWriterEffect from 'react-typewriter-effect'
+import { Row, Col, Button } from 'react-bootstrap'
 
-import { db } from "utils/firebase";
+import { db } from 'utils/firebase'
 
 import {
     updateUserAction,
     updateWaitlistAction,
-} from "store/actions/auth/waitlist";
+} from 'store/actions/auth/waitlist'
 
-import "styles/landing.css";
+import 'styles/landing.css'
 
-import WaitlistForm from "pages/landing/components/waitlistForm";
-import CountdownTimer from "pages/landing/components/countdown";
-import Leaderboard from "pages/landing/components/leaderboard";
-import Actions from "pages/landing/components/actions";
+import WaitlistForm from 'pages/landing/components/waitlistForm'
+import CountdownTimer from 'pages/landing/components/countdown'
+import Leaderboard from 'pages/landing/components/leaderboard'
+import Actions from 'pages/landing/components/actions'
 
-import LaptopAwe from "assets/largeGraphics/laptopAwe.svg";
-import Moon from "assets/largeGraphics/moon.svg";
-import Mars from "assets/largeGraphics/mars.svg";
-import Mercury from "assets/largeGraphics/mercury.svg";
-import Saturn from "assets/largeGraphics/saturn.svg";
-import Plants from "assets/largeGraphics/plants.svg";
-import Wireframe from "assets/largeGraphics/wireframe.svg";
-import Mountain from "assets/largeGraphics/mountain.svg";
+import LaptopAwe from 'assets/largeGraphics/laptopAwe.svg'
+import Moon from 'assets/largeGraphics/moon.svg'
+import Mars from 'assets/largeGraphics/mars.svg'
+import Mercury from 'assets/largeGraphics/mercury.svg'
+import Saturn from 'assets/largeGraphics/saturn.svg'
+import Plants from 'assets/largeGraphics/plants.svg'
+import Wireframe from 'assets/largeGraphics/wireframe.svg'
+import Mountain from 'assets/largeGraphics/mountain.svg'
 
 function Landing(props: any) {
-    const [waitlist, setWaitlist] = useState(props.waitlist);
+    const [, setWaitlist] = useState(props.waitlist)
 
     useEffect(() => {
-        console.log("use effect landing");
-        console.log(props);
-        var unsubscribe;
+        console.log('use effect landing')
+        console.log(props)
+        var unsubscribe
         getWaitlist()
             .then((waitlist) => {
-                setWaitlist(waitlist);
-                props.dispatch(updateWaitlistAction(waitlist));
-                if (props.user.email && props.user.ranking == 0) {
-                    const ranking = getInitialRanking(waitlist);
-                    props.dispatch(
-                        updateUserAction(props.user.points, ranking)
-                    );
+                setWaitlist(waitlist)
+                props.dispatch(updateWaitlistAction(waitlist))
+                if (props.user.email && props.user.ranking === 0) {
+                    const ranking = getInitialRanking(waitlist)
+                    props.dispatch(updateUserAction(props.user.points, ranking))
                 }
             })
             .then(() => {
                 if (props.user && props.user.email) {
                     unsubscribe = db
-                        .collection("waitlist")
+                        .collection('waitlist')
                         .doc(props.user.email)
                         .onSnapshot((doc) => {
-                            console.log("IN SNAPSHOT");
-                            const userData = doc.data();
-                            const ranking = updateRanking(userData);
-                            console.log(ranking);
+                            console.log('IN SNAPSHOT')
+                            const userData = doc.data()
+                            const ranking = updateRanking(userData)
+                            console.log(ranking)
                             if (
                                 userData &&
-                                userData.points != props.user.points
+                                userData.points !== props.user.points
                             ) {
                                 props.dispatch(
                                     updateUserAction(userData.points, ranking)
-                                );
+                                )
                             }
-                        });
+                        })
                 }
-            });
-        return unsubscribe;
-    }, [props.user]);
+            })
+        return unsubscribe
+    }, [getInitialRanking, props, props.user, updateRanking])
 
     async function getWaitlist() {
         const waitlist = await db
-            .collection("waitlist")
-            .orderBy("points", "desc")
-            .orderBy("email")
-            .get();
-        return waitlist.docs.map((doc) => doc.data());
+            .collection('waitlist')
+            .orderBy('points', 'desc')
+            .orderBy('email')
+            .get()
+        return waitlist.docs.map((doc) => doc.data())
     }
 
-    function getInitialRanking(waitlist) {
+    function getInitialRanking(waitlist: string | any[]) {
         for (var i = 0; i < waitlist.length; i++) {
-            if (waitlist[i].email == props.user.email) {
-                return i + 1;
+            if (waitlist[i].email === props.user.email) {
+                return i + 1
             }
         }
-        return 0;
+        return 0
     }
 
-    function updateRanking(userData) {
-        var currRanking = props.user.ranking - 1;
+    function updateRanking(userData: {
+        [x: string]: any
+        points?: any
+        email?: any
+    }) {
+        var currRanking = props.user.ranking - 1
         // Bubbles user up the leaderboard according to new points
         while (
             currRanking > 0 &&
             userData.points >= props.waitlist[currRanking - 1].points
         ) {
             if (userData.email > props.waitlist[currRanking - 1].email) {
-                break;
+                break
             }
-            setWaitlist((originalWaitlist) => {
-                var newWaitlist = [...originalWaitlist];
-                newWaitlist[currRanking] = originalWaitlist[currRanking - 1];
-                newWaitlist[currRanking - 1] = userData;
-                return newWaitlist;
-            });
-            currRanking--;
+            setWaitlist((originalWaitlist: any[]) => {
+                var newWaitlist = [...originalWaitlist]
+                newWaitlist[currRanking] = originalWaitlist[currRanking - 1]
+                newWaitlist[currRanking - 1] = userData
+                return newWaitlist
+            })
+            currRanking--
         }
-        return currRanking + 1;
+        return currRanking + 1
     }
 
     return (
         <div style={{ paddingBottom: 100 }}>
             <div
                 className="banner-background"
-                style={{ width: "100vw", position: "relative", zIndex: 1 }}
+                style={{ width: '100vw', position: 'relative', zIndex: 1 }}
             >
                 <img
                     src={Moon}
+                    alt=""
                     style={{
-                        position: "absolute",
+                        position: 'absolute',
                         width: 100,
                         height: 100,
                         top: 125,
@@ -125,8 +128,9 @@ function Landing(props: any) {
                 />
                 <img
                     src={Mars}
+                    alt=""
                     style={{
-                        position: "absolute",
+                        position: 'absolute',
                         width: 120,
                         height: 120,
                         top: 185,
@@ -135,8 +139,9 @@ function Landing(props: any) {
                 />
                 <img
                     src={Mercury}
+                    alt=""
                     style={{
-                        position: "absolute",
+                        position: 'absolute',
                         width: 80,
                         height: 80,
                         top: 405,
@@ -145,8 +150,9 @@ function Landing(props: any) {
                 />
                 <img
                     src={Saturn}
+                    alt=""
                     style={{
-                        position: "absolute",
+                        position: 'absolute',
                         width: 100,
                         height: 100,
                         top: 425,
@@ -155,9 +161,10 @@ function Landing(props: any) {
                 />
                 <img
                     src={Mountain}
+                    alt=""
                     style={{
-                        position: "absolute",
-                        width: "100vw",
+                        position: 'absolute',
+                        width: '100vw',
                         bottom: 150,
                         left: 0,
                         zIndex: 1,
@@ -165,18 +172,19 @@ function Landing(props: any) {
                 />
                 <div
                     style={{
-                        position: "absolute",
-                        width: "100vw",
+                        position: 'absolute',
+                        width: '100vw',
                         bottom: 0,
                         left: 0,
                         height: 150,
-                        background: "white",
+                        background: 'white',
                     }}
                 ></div>
                 <img
                     src={Plants}
+                    alt=""
                     style={{
-                        position: "absolute",
+                        position: 'absolute',
                         width: 250,
                         left: 0,
                         bottom: 130,
@@ -185,82 +193,83 @@ function Landing(props: any) {
                 />
                 <img
                     src={Plants}
+                    alt=""
                     style={{
-                        position: "absolute",
+                        position: 'absolute',
                         width: 250,
                         right: 0,
                         bottom: 130,
-                        transform: "scaleX(-1)",
+                        transform: 'scaleX(-1)',
                         zIndex: 2,
                     }}
                 />
                 <div
                     style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        width: "100%",
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        width: '100%',
                         padding: 30,
                     }}
                 >
                     <div className="logo">Fractal</div>
-                    <div style={{ position: "relative", right: 50 }}>
+                    <div style={{ position: 'relative', right: 50 }}>
                         <CountdownTimer />
                     </div>
                 </div>
                 <div
                     style={{
-                        margin: "auto",
+                        margin: 'auto',
                         marginTop: 20,
                         marginBottom: 20,
-                        color: "white",
-                        textAlign: "center",
+                        color: 'white',
+                        textAlign: 'center',
                         width: 800,
                     }}
                 >
                     <div
                         style={{
-                            display: "flex",
-                            margin: "auto",
-                            justifyContent: "center",
+                            display: 'flex',
+                            margin: 'auto',
+                            justifyContent: 'center',
                         }}
                     >
                         <TypeWriterEffect
                             textStyle={{
-                                fontFamily: "Maven Pro",
-                                color: "#00D4FF",
+                                fontFamily: 'Maven Pro',
+                                color: '#00D4FF',
                                 fontSize: 70,
-                                fontWeight: "bold",
+                                fontWeight: 'bold',
                                 marginTop: 10,
                             }}
                             startDelay={0}
                             cursorColor="white"
                             multiText={[
-                                "Blender",
-                                "Figma",
-                                "VSCode",
-                                "Maya",
-                                "Blender",
+                                'Blender',
+                                'Figma',
+                                'VSCode',
+                                'Maya',
+                                'Blender',
                             ]}
                             typeSpeed={150}
                         />
                         <div
                             style={{
-                                fontWeight: "bold",
+                                fontWeight: 'bold',
                                 fontSize: 70,
                                 paddingBottom: 40,
                             }}
                         >
-                            , just{" "}
-                            <span style={{ color: "#00D4FF" }}>faster</span>.
+                            , just{' '}
+                            <span style={{ color: '#00D4FF' }}>faster</span>.
                         </div>
                     </div>
                     <div
                         style={{
                             fontSize: 15,
                             width: 600,
-                            margin: "auto",
+                            margin: 'auto',
                             lineHeight: 1.55,
-                            color: "#EFEFEF",
+                            color: '#EFEFEF',
                             letterSpacing: 1,
                         }}
                     >
@@ -275,29 +284,30 @@ function Landing(props: any) {
                 </div>
                 <div
                     style={{
-                        margin: "auto",
+                        margin: 'auto',
                         maxWidth: 600,
-                        position: "relative",
+                        position: 'relative',
                         bottom: 60,
                         zIndex: 100,
                     }}
                 >
                     <img
                         src={LaptopAwe}
+                        alt=""
                         style={{ maxWidth: 600, zIndex: 100 }}
                     />
                 </div>
             </div>
-            <div style={{ position: "relative", background: "white" }}>
+            <div style={{ position: 'relative', background: 'white' }}>
                 <Row style={{ paddingTop: 50, paddingRight: 50 }}>
                     <Col md={7}>
-                        <img src={Wireframe} style={{ width: "100%" }} />
+                        <img src={Wireframe} alt="" style={{ width: '100%' }} />
                     </Col>
                     <Col md={5} style={{ paddingLeft: 40 }}>
                         <div
                             style={{
                                 fontSize: 50,
-                                fontWeight: "bold",
+                                fontWeight: 'bold',
                                 lineHeight: 1.2,
                             }}
                         >
@@ -316,17 +326,17 @@ function Landing(props: any) {
                     <Col md={6}>
                         <div
                             style={{
-                                padding: "50px 35px",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                background: "rgba(221, 165, 248, 0.2)",
+                                padding: '50px 35px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                background: 'rgba(221, 165, 248, 0.2)',
                                 borderRadius: 5,
                             }}
                         >
                             <div
                                 style={{
                                     fontSize: 35,
-                                    fontWeight: "bold",
+                                    fontWeight: 'bold',
                                     lineHeight: 1.3,
                                 }}
                             >
@@ -337,7 +347,7 @@ function Landing(props: any) {
                                 <div
                                     style={{
                                         fontSize: 35,
-                                        fontWeight: "bold",
+                                        fontWeight: 'bold',
                                         lineHeight: 1.3,
                                         paddingBottom: 10,
                                     }}
@@ -345,27 +355,27 @@ function Landing(props: any) {
                                     How can I be invited to try Fractal?
                                 </div>
                                 <div style={{ paddingTop: 20 }}>
-                                    When the countdown hits zero, we’ll invite{" "}
+                                    When the countdown hits zero, we’ll invite{' '}
                                     <strong>20 people</strong> from the waitlist
-                                    with the most compelling{" "}
+                                    with the most compelling{' '}
                                     <strong>100-word submission</strong> on why
                                     they want Fractal to receive 1:1 onboarding.
-                                    We'll also invite the top{" "}
+                                    We'll also invite the top{' '}
                                     <strong>20 people</strong> with the
                                 </div>
                             </div>
                         </div>
                         <div
                             style={{
-                                padding: "5px 30px",
-                                background: "rgba(172, 207, 231, 0.2)",
+                                padding: '5px 30px',
+                                background: 'rgba(172, 207, 231, 0.2)',
                                 borderRadius: 5,
                                 marginTop: 25,
                             }}
                         >
                             <div
                                 style={{
-                                    fontWeight: "bold",
+                                    fontWeight: 'bold',
                                     fontSize: 125,
                                     height: 120,
                                 }}
@@ -379,18 +389,18 @@ function Landing(props: any) {
                             </div>
                             <div
                                 style={{
-                                    fontWeight: "bold",
+                                    fontWeight: 'bold',
                                     fontSize: 125,
-                                    textAlign: "right",
+                                    textAlign: 'right',
                                     height: 100,
-                                    position: "relative",
+                                    position: 'relative',
                                     bottom: 20,
                                 }}
                             >
                                 "
                             </div>
-                            <div style={{ position: "relative", bottom: 30 }}>
-                                <div style={{ fontWeight: "bold" }}>
+                            <div style={{ position: 'relative', bottom: 30 }}>
+                                <div style={{ fontWeight: 'bold' }}>
                                     Sean S.
                                 </div>
                                 <div style={{ fontSize: 12 }}>
@@ -402,14 +412,14 @@ function Landing(props: any) {
                     <Col md={6}>
                         <div
                             style={{
-                                background: "rgba(172, 207, 231, 0.2)",
-                                padding: "5px 30px",
+                                background: 'rgba(172, 207, 231, 0.2)',
+                                padding: '5px 30px',
                                 borderRadius: 5,
                             }}
                         >
                             <div
                                 style={{
-                                    fontWeight: "bold",
+                                    fontWeight: 'bold',
                                     fontSize: 125,
                                     height: 120,
                                 }}
@@ -424,18 +434,18 @@ function Landing(props: any) {
                             </div>
                             <div
                                 style={{
-                                    fontWeight: "bold",
+                                    fontWeight: 'bold',
                                     fontSize: 125,
-                                    textAlign: "right",
+                                    textAlign: 'right',
                                     height: 100,
-                                    position: "relative",
+                                    position: 'relative',
                                     bottom: 20,
                                 }}
                             >
                                 "
                             </div>
-                            <div style={{ position: "relative", bottom: 30 }}>
-                                <div style={{ fontWeight: "bold" }}>
+                            <div style={{ position: 'relative', bottom: 30 }}>
+                                <div style={{ fontWeight: 'bold' }}>
                                     Brian M.
                                 </div>
                                 <div style={{ fontSize: 12 }}>Animator</div>
@@ -443,15 +453,15 @@ function Landing(props: any) {
                         </div>
                         <div
                             style={{
-                                padding: "5px 30px",
-                                background: "rgba(172, 207, 231, 0.2)",
+                                padding: '5px 30px',
+                                background: 'rgba(172, 207, 231, 0.2)',
                                 borderRadius: 5,
                                 marginTop: 25,
                             }}
                         >
                             <div
                                 style={{
-                                    fontWeight: "bold",
+                                    fontWeight: 'bold',
                                     fontSize: 125,
                                     height: 120,
                                 }}
@@ -464,18 +474,18 @@ function Landing(props: any) {
                             </div>
                             <div
                                 style={{
-                                    fontWeight: "bold",
+                                    fontWeight: 'bold',
                                     fontSize: 125,
-                                    textAlign: "right",
+                                    textAlign: 'right',
                                     height: 100,
-                                    position: "relative",
+                                    position: 'relative',
                                     bottom: 20,
                                 }}
                             >
                                 "
                             </div>
-                            <div style={{ position: "relative", bottom: 30 }}>
-                                <div style={{ fontWeight: "bold" }}>
+                            <div style={{ position: 'relative', bottom: 30 }}>
+                                <div style={{ fontWeight: 'bold' }}>
                                     Jonathan H.
                                 </div>
                                 <div style={{ fontSize: 12 }}>
@@ -490,8 +500,8 @@ function Landing(props: any) {
                 style={{
                     padding: 30,
                     marginTop: 100,
-                    background: "#0d1d3c",
-                    minHeight: "100vh",
+                    background: '#0d1d3c',
+                    minHeight: '100vh',
                 }}
             >
                 <Row>
@@ -507,22 +517,22 @@ function Landing(props: any) {
                 <div
                     style={{
                         borderRadius: 5,
-                        boxShadow: "0px 4px 30px rgba(0, 0, 0, 0.1)",
-                        padding: "60px 100px",
-                        background: "white",
+                        boxShadow: '0px 4px 30px rgba(0, 0, 0, 0.1)',
+                        padding: '60px 100px',
+                        background: 'white',
                     }}
                 >
                     <div
                         style={{
                             maxWidth: 650,
-                            margin: "auto",
-                            textAlign: "left",
+                            margin: 'auto',
+                            textAlign: 'left',
                         }}
                     >
                         <div
                             style={{
                                 fontSize: 40,
-                                fontWeight: "bold",
+                                fontWeight: 'bold',
                                 lineHeight: 1.4,
                             }}
                         >
@@ -536,10 +546,10 @@ function Landing(props: any) {
                         <Button
                             style={{
                                 marginTop: 30,
-                                background: "#1C2A45",
-                                fontWeight: "bold",
-                                border: "none",
-                                padding: "10px 40px",
+                                background: '#1C2A45',
+                                fontWeight: 'bold',
+                                border: 'none',
+                                padding: '10px 40px',
                             }}
                         >
                             I Want Access
@@ -548,14 +558,14 @@ function Landing(props: any) {
                 </div>
             </div>
         </div>
-    );
+    )
 }
 
 function mapStateToProps(state) {
     return {
         user: state.AuthReducer.user,
         waitlist: state.AuthReducer.waitlist,
-    };
+    }
 }
 
-export default connect(mapStateToProps)(Landing);
+export default connect(mapStateToProps)(Landing)

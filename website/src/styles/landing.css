@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Kalam&family=Maven+Pro:wght@400;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Kalam&family=Maven+Pro:wght@400;700&display=swap');
 
 body {
     overflow-x: hidden;
@@ -9,7 +9,7 @@ div,
 html,
 input,
 Button {
-    font-family: "Maven Pro" !important;
+    font-family: 'Maven Pro' !important;
 }
 
 select {
@@ -20,7 +20,7 @@ select {
     padding: 20px 20px;
     border: none;
     outline: none;
-    font-family: "Maven Pro" !important;
+    font-family: 'Maven Pro' !important;
 }
 
 input {
@@ -29,7 +29,7 @@ input {
 
 option,
 ::placeholder {
-    font-family: "Maven Pro" !important;
+    font-family: 'Maven Pro' !important;
 }
 
 option {

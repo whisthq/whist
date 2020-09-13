@@ -8,4 +8,4 @@ export const AUTH_DEFAULT = {
     },
     logged_in: false,
     waitlist: [],
-};
+}
