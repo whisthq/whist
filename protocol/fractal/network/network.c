@@ -386,7 +386,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
         // Send it off
         SDL_LockMutex(context->mutex);
-		LOG_INFO("Sending UDP Packet of length %d", encrypted_len);
+		LOG_INFO("Sending UDP Packet of length %d", encrypt_len);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
         SDL_UnlockMutex(context->mutex);
 
@@ -426,7 +426,7 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
                                      (unsigned char *)context->aes_private_key);
 
     SDL_LockMutex(context->mutex);
-    LOG_INFO("Replay Packet of length %d", encrypted_len);
+    LOG_INFO("Replay Packet of length %d", encrypt_len);
     int sent_size = sendp(context, &encrypted_packet, encrypt_len);
     SDL_UnlockMutex(context->mutex);
 
