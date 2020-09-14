@@ -311,7 +311,7 @@ class ECSClient:
         clusters = self.get_all_clusters()
         for cluster in clusters:
             containers = self.get_containers_in_cluster(cluster)
-            self.exec_commands_on_containers(cluster, containers, ssh_command)
+            self.exec_commands_on_containers(cluster, containers, commands)
 
     def get_clusters_usage(self, clusters=None):
         """
