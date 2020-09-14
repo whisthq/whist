@@ -1,5 +1,8 @@
 FROM ubuntu:20.04
 
+# -o option for pipefail before RUN commands with pipe in them, like unminimize
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
@@ -7,12 +10,12 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
 RUN apt-get update \
-    && apt-get install -y systemd systemd-sysv \
+    && apt-get install --no-install-recommends -y systemd systemd-sysv \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN cd /lib/systemd/system/sysinit.target.wants/ \
-    && ls | grep -v systemd-tmpfiles-setup | xargs rm -f $1
+    && ls | grep -v systemd-tmpfiles-setup | xargs rm -f "$1"
 
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /etc/systemd/system/*.wants/* \
@@ -24,7 +27,7 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/plymouth* \
     /lib/systemd/system/systemd-update-utmp*
 
-RUN apt-get update && apt-get clean && apt-get install -y \
+RUN apt-get update && apt-get clean && apt-get install --no-install-recommends -y \
     x11vnc \
     xvfb \
     fluxbox \
@@ -42,20 +45,23 @@ RUN apt-get update && apt-get clean && apt-get install -y \
     apt-utils \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
-    && apt-get update && apt-get -y install google-chrome-stable \
-    && apt-get clean
+    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Avoids interactive installation for tzdata
 # Uses UTC
 ENV LOCAL="yes"
-RUN apt-get -y install tzdata keyboard-configuration ufw
+RUN apt-get install --no-install-recommends -y tzdata keyboard-configuration ufw \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 # RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.sh >>/dev/null 2>&1
 # Using local setup-scripts repository for development
-ADD utils.sh /
+COPY utils.sh /
 
 RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \ 
@@ -93,11 +99,13 @@ RUN /bin/bash -c "source utils.sh \
     && Disable-AutomaticLockScreen "
 
 #From protocol/server/linux-server-setup.sh
-RUN sudo apt-get install ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils -y
+RUN sudo apt-get install --no-install-recommends -y ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-ADD bootstrap.sh /home/fractal
-ADD entry.sh /home/fractal
-ADD fractal-input.rules home/fractal
+COPY bootstrap.sh /home/fractal
+COPY entry.sh /home/fractal
+COPY fractal-input.rules home/fractal
 
 RUN chmod +x /home/fractal/bootstrap.sh \
     && chown -v -R fractal:fractal /home/fractal
@@ -107,11 +115,11 @@ RUN chmod +x /home/fractal/entry.sh
 
 #### FROM PHIL 1/2 on this file: I think this new service for Nvidia needs to be added here, but not certain
 #### It apparently needs to run before X so it might need to be even before (?)
-ADD fractal-update-nvidia-busid.service /etc/systemd/system
+COPY fractal-update-nvidia-busid.service /etc/systemd/system
 ####
 
-ADD fractal-entrypoint.service /etc/systemd/system
-ADD fractal-display.service /etc/systemd/system
+COPY fractal-entrypoint.service /etc/systemd/system
+COPY fractal-display.service /etc/systemd/system
 # RUN chmod u+x /etc/systemd/system/bootstrap-service.service
 
 VOLUME [ "/sys/fs/cgroup" ]

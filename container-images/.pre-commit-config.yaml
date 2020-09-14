@@ -7,7 +7,7 @@ repos:
         - id: check-symlinks
         - id: detect-private-key
 
-    # TODO: uncomment this and fix the errors to allow pre-commiting with Hadolint support
+    # TODO: uncomment this, and fix Hadolint errors/warnings
     # - repo: local
     #   hooks:
     #     # https://github.com/hadolint/hadolint

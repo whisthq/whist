@@ -1,4 +1,8 @@
 FROM ubuntu:18.04
+
+# -o option for pipefail before RUN commands with pipe in them, like unminimize
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 RUN yes | unminimize
 ENV container docker
 ENV LC_ALL C
@@ -7,12 +11,12 @@ ENV LC_ALL C
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
 RUN apt-get update \
-    && apt-get install -y systemd systemd-sysv \
+    && apt-get install --no-install-recommends -y systemd systemd-sysv \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN cd /lib/systemd/system/sysinit.target.wants/ \
-    && ls | grep -v systemd-tmpfiles-setup | xargs rm -f $1
+    && ls | grep -v systemd-tmpfiles-setup | xargs rm -f "$1"
 
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /etc/systemd/system/*.wants/* \
@@ -24,7 +28,7 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/plymouth* \
     /lib/systemd/system/systemd-update-utmp*
 
-RUN apt-get update && apt-get clean && apt-get install -y \
+RUN apt-get update && apt-get clean && apt-get install --no-install-recommends -y \
     x11vnc \
     xvfb \
     fluxbox \
@@ -42,26 +46,35 @@ RUN apt-get update && apt-get clean && apt-get install -y \
     apt-utils \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
-    && apt-get update && apt-get -y install google-chrome-stable \
-    && apt-get clean
+    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Avoids interactive installation for tzdata
 # Uses UTC
 ENV LOCAL="yes"
-RUN apt-get -y install tzdata keyboard-configuration ufw
+RUN apt-get install --no-install-recommends -y tzdata keyboard-configuration ufw \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 # Use local setup-scripts repository for development
-ADD setup-scripts /setup-scripts
+COPY setup-scripts /setup-scripts
 
 RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \
     && echo 'fractal:password1234567.' | chpasswd
 
-RUN apt-get install lsb-release -y && apt-get clean
-RUN apt-get install -y pulseaudio
+RUN apt-get install --no-install-recommends -y lsb-release \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get install --no-install-recommends -y pulseaudio \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN adduser root pulse-access \
     && adduser fractal pulse-access
 
@@ -95,12 +108,18 @@ RUN /bin/bash -c " source utils.sh \
 WORKDIR /
 
 #From protocol/server/linux-server-setup.sh
-RUN sudo apt-get install ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils -y
-ADD entry.sh /home/fractal
-ADD display-service-envs /home/fractal
-ADD fractal-input.rules home/fractal
+RUN sudo apt-get install --no-install-recommends -y ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN sudo apt-get install -y openssh-server
+COPY entry.sh /home/fractal
+COPY display-service-envs /home/fractal
+COPY fractal-input.rules home/fractal
+
+RUN sudo apt-get install --no-install-recommends -y openssh-server \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN systemctl enable ssh
 
 RUN chown -v -R fractal:fractal /home/fractal
@@ -121,31 +140,40 @@ RUN mkdir -p /opt/nvidia/lib && \
 ENV PATH /usr/local/nvidia/bin:${PATH}
 ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
 
-RUN sudo apt-get -y install linux-headers-$(uname -r)
+RUN sudo apt-get --no-install-recommends -y install "linux-headers-$(uname -r)" \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV distribution $(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
 RUN sudo mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc/apt/preferences.d/cuda-repository-pin-600
 RUN sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub
 RUN echo "deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
 RUN sudo apt-get -y update
-RUN sudo apt-get -y install cuda-drivers
+RUN sudo apt-get --no-install-recommends -y install cuda-drivers \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
 # Set up service (that starts before X) to fix the NVIDIA GPU bus ID
-ADD setup-scripts/linux/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/
-ADD fractal-update-nvidia-busid.service /etc/systemd/system/
-ADD setup-scripts/linux/update-nvidia-busid.sh /usr/share/fractal/
+COPY setup-scripts/linux/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/
+COPY fractal-update-nvidia-busid.service /etc/systemd/system/
+COPY setup-scripts/linux/update-nvidia-busid.sh /usr/share/fractal/
 RUN systemctl enable fractal-update-nvidia-busid
 
 # Set display environment variable to our nvidia-powered display
 ENV DISPLAY :10
 
 # Install libraries for (limited) hardware acceleration
-RUN apt install -y vainfo vdpauinfo vdpau-va-driver libvdpau-va-gl1
-
+RUN apt-get install --no-install-recommends -y vainfo vdpauinfo vdpau-va-driver libvdpau-va-gl1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install some useful utilities for debugging/testing
-RUN sudo apt install -y tmux xserver-xorg-video-dummy mesa-utils glmark2 mpv
+RUN sudo apt-get install --no-install-recommends -y tmux xserver-xorg-video-dummy mesa-utils glmark2 mpv \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install firefox nightly (for testing only)
 # RUN sudo add-apt-repository ppa:ubuntu-mozilla-daily/ppa
@@ -154,17 +182,17 @@ RUN sudo apt install -y tmux xserver-xorg-video-dummy mesa-utils glmark2 mpv
 
 
 # Install fractal services
-ADD fractal-entrypoint.service /etc/systemd/system
+COPY fractal-entrypoint.service /etc/systemd/system
 RUN systemctl enable fractal-entrypoint
-ADD fractal-display.service /etc/systemd/system
+COPY fractal-display.service /etc/systemd/system
 RUN systemctl enable fractal-display
-ADD fractal-protocol.service /etc/systemd/system
+COPY fractal-protocol.service /etc/systemd/system
 RUN systemctl enable fractal-protocol
-ADD fractal-audio.service /etc/systemd/system
+COPY fractal-audio.service /etc/systemd/system
 RUN systemctl enable fractal-audio
 
 
-ADD fractal-setup.sh /
+COPY fractal-setup.sh /
 RUN chmod +x /fractal-setup.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
