@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from "react"
 import { Button } from "react-bootstrap"
 import { connect } from "react-redux"
-import * as firebase from "firebase"
+import firebase from "firebase"
 
 import { googleLogin, logout } from "store/actions/auth/login_actions"
 
 import "styles/auth.css"
 
-const Auth = (props) => {
+const Auth = (props: { dispatch: (arg0: { type: string; email?: string }) => void; loggedIn: any; email: React.ReactNode }) => {
     const [, setError] = useState()
 
     useEffect(() => {
         console.log(props)
     }, [props])
 
-    const handleGoogleLogin = () => {
+    function handleGoogleLogin() {
         const provider = new firebase.auth.GoogleAuthProvider()
 
         firebase
@@ -52,7 +52,7 @@ const Auth = (props) => {
     )
 }
 
-const mapStateToProps = (state) => {
+function mapStateToProps(state: any) {
     return {
         reducer: state.AuthReducer,
         loggedIn: state.AuthReducer.logged_in,

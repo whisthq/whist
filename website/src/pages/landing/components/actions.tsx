@@ -57,7 +57,7 @@ const JoinWaitlistAction = () => {
     )
 }
 
-const Actions = (props) => {
+const Actions = (props: { user: { email: any }; loggedIn: any }) => {
     const renderActions = () => {
         if (props.user && props.user.email) {
             if (props.loggedIn) {
@@ -98,7 +98,7 @@ const Actions = (props) => {
     )
 }
 
-const mapStateToProps = (state) => {
+function mapStateToProps(state: { AuthReducer: { user: any; logged_in: any} } ) {
     return {
         user: state.AuthReducer.user,
         loggedIn: state.AuthReducer.logged_in,

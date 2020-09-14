@@ -40,7 +40,6 @@ const development = {
     sentry_env: "development",
 }
 
-// TODO: Change config to development/production after changes in staging are deployed to the other vm webservers
 export const config =
     process.env.NODE_ENV === "development" ? development : staging
 

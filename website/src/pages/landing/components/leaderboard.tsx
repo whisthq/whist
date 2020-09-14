@@ -151,7 +151,7 @@ const Leaderboard = (props) => {
     )
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state: { AuthReducer: { user: any; waitlist: any } }) => {
     return {
         user: state.AuthReducer.user,
         waitlist: state.AuthReducer.waitlist,
