@@ -18,7 +18,7 @@ runcontainer (){
 	    -e NVIDIA_VISIBLE_DEVICES=all \
 	    --shm-size=8g \
 	    --security-opt seccomp=unconfined \
-            --cap-drop ALL \
+	    --cap-drop ALL \
             --cap-add CAP_SETPCAP \
             --cap-add CAP_MKNOD \
             --cap-add CAP_AUDIT_WRITE \
