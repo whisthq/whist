@@ -3,10 +3,9 @@ FROM ubuntu:18.04
 # -o option for pipefail before RUN commands with pipe in them, like unminimize
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN yes | unminimize
 ENV container docker
 ENV LC_ALL C
-# ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
