@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { connect } from "react-redux"
 import TypeWriterEffect from "react-typewriter-effect"
 import { Row, Col, Button } from "react-bootstrap"
@@ -27,36 +27,68 @@ import Wireframe from "assets/largeGraphics/wireframe.svg"
 import Mountain from "assets/largeGraphics/mountain.svg"
 
 function Landing(props: any) {
-    const [, setWaitlist] = useState(props.waitlist)
+    const { dispatch, user, waitlist } = props
 
+    const [, setWaitlist] = useState(waitlist)
+
+    const getInitialRanking = useCallback(
+        (waitlist: string | any[]) => {
+            for (var i = 0; i < waitlist.length; i++) {
+                if (waitlist[i].email === user.email) {
+                    return i + 1
+                }
+            }
+            return 0
+        },
+        [user]
+    )
+
+    const updateRanking = useCallback(
+        (userData: { [x: string]: any; points?: any; email?: any }) => {
+            // Bubbles user up the leaderboard according to new points
+            for (
+                let currRanking = user.ranking - 1;
+                currRanking > 0 &&
+                userData.points >= waitlist[currRanking - 1].points;
+                currRanking--
+            ) {
+                if (userData.email > waitlist[currRanking - 1].email) {
+                    return currRanking + 1
+                }
+                setWaitlist((originalWaitlist: any[]) => {
+                    var newWaitlist = [...originalWaitlist]
+                    newWaitlist[currRanking] = originalWaitlist[currRanking - 1]
+                    newWaitlist[currRanking - 1] = userData
+                    return newWaitlist
+                })
+            }
+        },
+        [user, waitlist]
+    )
     useEffect(() => {
         console.log("use effect landing")
-        console.log(props)
         var unsubscribe
         getWaitlist()
             .then((waitlist) => {
                 setWaitlist(waitlist)
-                props.dispatch(updateWaitlistAction(waitlist))
-                if (props.user.email && props.user.ranking === 0) {
+                dispatch(updateWaitlistAction(waitlist))
+                if (user.email && user.ranking === 0) {
                     const ranking = getInitialRanking(waitlist)
-                    props.dispatch(updateUserAction(props.user.points, ranking))
+                    dispatch(updateUserAction(user.points, ranking))
                 }
             })
             .then(() => {
-                if (props.user && props.user.email) {
+                if (user && user.email) {
                     unsubscribe = db
                         .collection("waitlist")
-                        .doc(props.user.email)
+                        .doc(user.email)
                         .onSnapshot((doc) => {
                             console.log("IN SNAPSHOT")
                             const userData = doc.data()
                             const ranking = updateRanking(userData)
                             console.log(ranking)
-                            if (
-                                userData &&
-                                userData.points !== props.user.points
-                            ) {
-                                props.dispatch(
+                            if (userData && userData.points !== user.points) {
+                                dispatch(
                                     updateUserAction(userData.points, ranking)
                                 )
                             }
@@ -64,7 +96,7 @@ function Landing(props: any) {
                 }
             })
         return unsubscribe
-    }, [getInitialRanking, props, props.user, updateRanking])
+    }, [dispatch, user, getInitialRanking, updateRanking])
 
     async function getWaitlist() {
         const waitlist = await db
@@ -73,40 +105,6 @@ function Landing(props: any) {
             .orderBy("email")
             .get()
         return waitlist.docs.map((doc) => doc.data())
-    }
-
-    function getInitialRanking(waitlist: string | any[]) {
-        for (var i = 0; i < waitlist.length; i++) {
-            if (waitlist[i].email === props.user.email) {
-                return i + 1
-            }
-        }
-        return 0
-    }
-
-    function updateRanking(userData: {
-        [x: string]: any
-        points?: any
-        email?: any
-    }) {
-        var currRanking = props.user.ranking - 1
-        // Bubbles user up the leaderboard according to new points
-        while (
-            currRanking > 0 &&
-            userData.points >= props.waitlist[currRanking - 1].points
-        ) {
-            if (userData.email > props.waitlist[currRanking - 1].email) {
-                break
-            }
-            setWaitlist((originalWaitlist: any[]) => {
-                var newWaitlist = [...originalWaitlist]
-                newWaitlist[currRanking] = originalWaitlist[currRanking - 1]
-                newWaitlist[currRanking - 1] = userData
-                return newWaitlist
-            })
-            currRanking--
-        }
-        return currRanking + 1
     }
 
     return (
