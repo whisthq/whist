@@ -7,7 +7,7 @@ Requires=fractal-display.service
 User=root
 Environment=DISPLAY=:11
 Environment=XAUTHORITY=/home/fractal/.Xauthority
-ExecStart=/usr/bin/pulseaudio --daemonize=no --exit-idle-time=-1 --disallow-exit
+ExecStart=/usr/bin/pulseaudio --system --daemonize=no --exit-idle-time=-1 --disallow-exit
 
 [Install]
 WantedBy=multi-user.target
