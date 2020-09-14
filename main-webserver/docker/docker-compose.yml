@@ -1,7 +1,6 @@
 version: "3.8"
 
-x-app:
-  &base-app
+x-app: &base-app
   build:
     context: ..
     dockerfile: docker/Dockerfile
@@ -10,8 +9,6 @@ x-app:
   env_file: .env
   networks:
     - primary
-  volumes:
-    - ..:/app
 
 services:
 
@@ -31,18 +28,16 @@ services:
     environment:
       HOT_RELOAD: ${HOT_RELOAD}
       PORT: 7730
+    volumes:
+      - ..:/app
 
   celery:
     << : *base-app
     command: celery
-    networks:
-      - primary
-    depends_on:
-      - redis
-    env_file: .env
     environment:
       - AWS_SHARED_CREDENTIALS_FILE=/.aws/credentials
     volumes:
+      - ..:/app
       - $HOME/.aws:/.aws
 
 # TODO use a local DB (as commented out below) instead of the staging/production DB
