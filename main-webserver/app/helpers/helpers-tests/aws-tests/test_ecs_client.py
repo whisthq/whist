@@ -144,7 +144,6 @@ def test_cluster_with_auto_scaling_group():
     # testclient.iam_client.delete_role(RoleName=testclient.role_name)
     
     
-
 @pytest.mark.skipif(
     "AWS_ECS_TEST_DO_IT_LIVE" not in os.environ,
     reason="This test is slow and requires a live ECS cluster; run only upon explicit request",
@@ -205,6 +204,25 @@ def test_command():
         "taskDefinition"
     ]
     assert taskdef["containerDefinitions"][0]["command"][0] == "echoes"
+
+
+@mock_ecs
+@mock_logs
+@mock_iam
+def test_set_cluster():
+    log_client = boto3.client("logs", region_name="us-east-2")
+    ecs_client = boto3.client("ecs", region_name="us-east-2")
+    iam_client = boto3.client("iam", region_name="us-east-2")
+    ecs_client.create_cluster(clusterName="test_clust")
+    ecs_client.
+    testclient = ECSClient(
+        key_id="Testing",
+        access_key="Testing",
+        starter_client=ecs_client,
+        starter_log_client=log_client,
+        starter_iam_client=iam_client,
+    )
+    assert "test_clust" in testclient.cluster
 
 
 @mock_ecs

@@ -1,17 +1,19 @@
 from app.models.public import *
 from app import db
 
+
 class ProtocolLog(db.Model):
     __tablename__ = "protocol_logs"
     __table_args__ = {"extend_existing": True, "schema": "logs"}
 
-    user_id = db.Column(db.ForeignKey('users.user_id'))
+    user_id = db.Column(db.ForeignKey("users.user_id"))
     server_logs = db.Column(db.String(250))
     connection_id = db.Column(db.String(250), nullable=False, primary_key=True)
     bookmarked = db.Column(db.Boolean, nullable=False)
     timestamp = db.Column(db.Integer)
     version = db.Column(db.String(250))
     client_logs = db.Column(db.String(250))
+
 
 class MonitorLog(db.Model):
     __tablename__ = "monitor_logs"
@@ -32,9 +34,10 @@ class MonitorLog(db.Model):
     total_vms_deallocated = db.Column(db.Integer)
     timestamp = db.Column(db.Integer, nullable=False, primary_key=True)
 
+
 class LoginHistory(db.Model):
     __tablename__ = "login_history"
     __table_args__ = {"extend_existing": True, "schema": "logs"}
-    user_id = db.Column(db.ForeignKey('users.user_id'))
+    user_id = db.Column(db.ForeignKey("users.user_id"))
     action = db.Column(db.String)
     timestamp = db.Column(db.Integer, primary_key=True)

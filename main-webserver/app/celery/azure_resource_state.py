@@ -9,6 +9,7 @@ from app.serializers.hardware import *
 user_vm_schema = UserVMSchema()
 os_disk_schema = OSDiskSchema()
 
+
 @celery_instance.task(bind=True)
 def startVM(self, vm_name, resource_group=VM_GROUP):
     """Starts an Azure VM

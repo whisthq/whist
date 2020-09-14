@@ -20,7 +20,6 @@ import hashlib, binascii
 from jose import jwt
 
 
-
 OLD_DATABASE_URL = "postgres://ufsj4f8so50sl5:p3a075e5151b02b739c7b3bbbf3f2a1f25b0fbe3fb2e1164ac949b44839ec0e26@ec2-35-168-221-115.compute-1.amazonaws.com:5432/d4lf18ud6qj6nr"
 NEW_DATABASE_URL = "postgres://pvcmguzmacvzqo:bc1746f2cfd9d888b2ae1a16d9c5dc4e7da2d911eee62b2ff57990426a08d2bc@ec2-52-22-94-132.compute-1.amazonaws.com:5432/d52pi6qafcu525"
 SECRET_KEY = "philis@littlec@n@di@n6969"
@@ -99,7 +98,7 @@ def migrate_users():
                 "credits_outstanding": row["credits_outstanding"],
                 "stripe_customer_id": row["customer_id"],
                 "token": row["user_id"],
-                "verified": row["verified"]
+                "verified": row["verified"],
             }
 
             session.execute(command, params)
@@ -142,7 +141,7 @@ def migrate_user_vms():
                 "state": row["state"],
                 "lock": row["lock"],
                 "temporary_lock": row["temporary_lock"],
-                "disk_id": row["disk_name"]
+                "disk_id": row["disk_name"],
             }
 
             if row["username"] != "None":
@@ -209,7 +208,7 @@ def migrate_os_disks():
                 "rsa_private_key": row["rsa_private_key"],
                 "using_stun": False,
                 "ssh_password": None,
-                "state": row["state"]
+                "state": row["state"],
             }
 
             session.execute(command, params)
@@ -495,7 +494,13 @@ def migrate_login_history():
     session = new_session()
 
     for row in rows:
-        if not row["username"] == "pquiggles@alumni.stanford.edu" and not row["username"] == "sean@fractalcomputers.com" and not row["username"] == "None" and row["username"] and row["username"] != "roshan2@fractalcomputers.com":
+        if (
+            not row["username"] == "pquiggles@alumni.stanford.edu"
+            and not row["username"] == "sean@fractalcomputers.com"
+            and not row["username"] == "None"
+            and row["username"]
+            and row["username"] != "roshan2@fractalcomputers.com"
+        ):
             print("Migrating {time}".format(time=row["timestamp"]))
             row = dict(row)
 
@@ -519,12 +524,12 @@ def migrate_login_history():
     print("DONE MIGRATING LOGIN HISTORY TABLE \n ------------------------ \n")
 
 
-#migrate_users()
-#migrate_os_disks()
+# migrate_users()
+# migrate_os_disks()
 # migrate_user_vms()
 # migrate_secondary_disks()
 # migrate_install_commands()
-#migrate_release_groups()
-#migrate_protocol_logs()
-#migrate_monitor_logs()
+# migrate_release_groups()
+# migrate_protocol_logs()
+# migrate_monitor_logs()
 migrate_login_history()
