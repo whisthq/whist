@@ -241,13 +241,8 @@ function Landing(props: any) {
                             }}
                             startDelay={0}
                             cursorColor="white"
-                            multiText={[
-                                "Blender",
-                                "Figma",
-                                "VSCode",
-                                "Maya",
-                                "Blender",
-                            ]}
+                            multiText={["Blender", "Figma", "VSCode", "Maya"]}
+                            loop={true}
                             typeSpeed={150}
                         />
                         <div
