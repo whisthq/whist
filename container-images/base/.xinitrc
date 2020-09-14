@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-exec glxgears
+exec google-chrome --no-sandbox --start-maximized
