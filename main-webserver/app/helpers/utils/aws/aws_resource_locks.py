@@ -1,14 +1,12 @@
-from app.helpers.utils.aws.aws_general import getContainerUser
-from app.helpers.utils.azure.azure_general import (
-    dateToUnix,
-    fractalLog,
-    fractalSQLCommit,
-    getToday,
-    shiftUnixByMinutes,
-)
-from app.models.hardware import *
 import logging
-import time
+
+from app import db
+from app.helpers.utils.aws.aws_general import getContainerUser
+from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.sql_commands import fractalSQLCommit
+from app.helpers.utils.general.time import dateToUnix, getToday
+from app.helpers.utils.general.time import shiftUnixByMinutes
+from app.models.hardware import UserContainer
 
 
 def lockContainerAndUpdate(container_name, state, lock, temporary_lock):
@@ -150,7 +148,9 @@ def spinLock(container_name, s=None):
         if s:
             s.update_state(
                 state="PENDING",
-                meta={"msg": "Cloud PC is downloading an update. This could take a few minutes."},
+                meta={
+                    "msg": "Cloud PC is downloading an update. This could take a few minutes."
+                },
             )
 
     while locked:

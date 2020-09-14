@@ -10,7 +10,6 @@ import traceback
 import stripe
 import datetime
 import pytz
-import logging
 import socket
 import dateutil.parser
 import sqlalchemy
