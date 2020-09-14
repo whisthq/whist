@@ -1,7 +1,7 @@
-import React from 'react'
-import { connect } from 'react-redux'
+import React from "react"
+import { connect } from "react-redux"
 
-import 'styles/application.css'
+import "styles/application.css"
 
 function Application(props: any) {
     return <div>Application</div>

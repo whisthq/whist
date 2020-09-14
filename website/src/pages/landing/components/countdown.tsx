@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react'
-import { connect } from 'react-redux'
-import Countdown from 'react-countdown'
+import React, { useState, useEffect } from "react"
+import { connect } from "react-redux"
+import Countdown from "react-countdown"
 
-import { db } from 'utils/firebase'
+import { db } from "utils/firebase"
 
-import 'styles/landing.css'
+import "styles/landing.css"
 
 function CountdownTimer(props: any) {
     const [closingDate, changeClosingDate] = useState(() => {
@@ -19,8 +19,8 @@ function CountdownTimer(props: any) {
 
     async function getCloseDate() {
         const closingDate = await db
-            .collection('metadata')
-            .doc('waitlist')
+            .collection("metadata")
+            .doc("waitlist")
             .get()
         return closingDate.data().close_date.seconds * 1000
     }
@@ -36,21 +36,21 @@ function CountdownTimer(props: any) {
             return (
                 <div
                     style={{
-                        color: '#00D4FF',
+                        color: "#00D4FF",
                         fontSize: 18,
-                        background: 'none',
-                        padding: '8px 15px',
+                        background: "none",
+                        padding: "8px 15px",
                         borderRadius: 2,
-                        border: 'solid 1px #00D4FF',
+                        border: "solid 1px #00D4FF",
                     }}
                 >
-                    <strong>0</strong>{' '}
-                    <span style={{ fontSize: 12 }}> days &nbsp; </span>{' '}
-                    <strong>0</strong>{' '}
-                    <span style={{ fontSize: 12 }}> hours </span> &nbsp;{' '}
-                    <strong>0</strong>{' '}
-                    <span style={{ fontSize: 12 }}> mins </span> &nbsp;{' '}
-                    <strong>0</strong>{' '}
+                    <strong>0</strong>{" "}
+                    <span style={{ fontSize: 12 }}> days &nbsp; </span>{" "}
+                    <strong>0</strong>{" "}
+                    <span style={{ fontSize: 12 }}> hours </span> &nbsp;{" "}
+                    <strong>0</strong>{" "}
+                    <span style={{ fontSize: 12 }}> mins </span> &nbsp;{" "}
+                    <strong>0</strong>{" "}
                     <span style={{ fontSize: 12 }}> secs </span>
                 </div>
             )
@@ -62,21 +62,21 @@ function CountdownTimer(props: any) {
             return (
                 <div
                     style={{
-                        color: '#00D4FF',
+                        color: "#00D4FF",
                         fontSize: 18,
-                        background: 'none',
-                        padding: '8px 15px',
+                        background: "none",
+                        padding: "8px 15px",
                         borderRadius: 2,
-                        border: 'solid 1px #00D4FF',
+                        border: "solid 1px #00D4FF",
                     }}
                 >
-                    <strong>{days}</strong>{' '}
-                    <span style={{ fontSize: 12 }}> days &nbsp; </span>{' '}
-                    <strong>{hours}</strong>{' '}
-                    <span style={{ fontSize: 12 }}> hours </span> &nbsp;{' '}
-                    <strong>{minutes}</strong>{' '}
-                    <span style={{ fontSize: 12 }}> mins </span> &nbsp;{' '}
-                    <strong>{seconds}</strong>{' '}
+                    <strong>{days}</strong>{" "}
+                    <span style={{ fontSize: 12 }}> days &nbsp; </span>{" "}
+                    <strong>{hours}</strong>{" "}
+                    <span style={{ fontSize: 12 }}> hours </span> &nbsp;{" "}
+                    <strong>{minutes}</strong>{" "}
+                    <span style={{ fontSize: 12 }}> mins </span> &nbsp;{" "}
+                    <strong>{seconds}</strong>{" "}
                     <span style={{ fontSize: 12 }}> secs </span>
                 </div>
             )
