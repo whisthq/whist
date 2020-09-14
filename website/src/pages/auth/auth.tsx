@@ -1,42 +1,42 @@
-import React, { useEffect, useState, useContext } from "react";
-import { Button } from "react-bootstrap";
-import { connect } from "react-redux";
-import * as firebase from "firebase";
+import React, { useEffect, useState } from 'react'
+import { Button } from 'react-bootstrap'
+import { connect } from 'react-redux'
+import * as firebase from 'firebase'
 
-import { googleLogin, logout } from "store/actions/auth/login_actions";
+import { googleLogin, logout } from 'store/actions/auth/login_actions'
 
-import "styles/auth.css";
+import 'styles/auth.css'
 
 const Auth = (props) => {
-    const [error, setError] = useState();
+    const [, setError] = useState()
 
     useEffect(() => {
-        console.log(props);
-    }, [props]);
+        console.log(props)
+    }, [props])
 
     const handleGoogleLogin = () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
+        const provider = new firebase.auth.GoogleAuthProvider()
 
         firebase
             .auth()
             .signInWithPopup(provider)
             .then((result) => {
-                const email = result.user.email;
-                console.log(email);
-                props.dispatch(googleLogin(email));
+                const email = result.user.email
+                console.log(email)
+                props.dispatch(googleLogin(email))
             })
-            .catch((e) => setError(e));
-    };
+            .catch((e) => setError(e))
+    }
 
     const handleSignOut = () => {
         firebase
             .auth()
             .signOut()
             .then(() => {
-                console.log("signed out");
-                props.dispatch(logout());
-            });
-    };
+                console.log('signed out')
+                props.dispatch(logout())
+            })
+    }
 
     return (
         <div className="auth-wrapper">
@@ -49,8 +49,8 @@ const Auth = (props) => {
                 Sign out
             </Button>
         </div>
-    );
-};
+    )
+}
 
 const mapStateToProps = (state) => {
     return {
@@ -58,7 +58,7 @@ const mapStateToProps = (state) => {
         loggedIn: state.AuthReducer.logged_in,
         email: state.AuthReducer.user.email,
         name: state.AuthReducer.user.name,
-    };
-};
+    }
+}
 
-export default connect(mapStateToProps)(Auth);
+export default connect(mapStateToProps)(Auth)

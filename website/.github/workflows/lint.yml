@@ -1,0 +1,38 @@
+# This workflow will format via Prettier
+
+name: npm lint
+
+on:
+  pull_request:
+    branches: [ master, staging ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+        
+    steps:
+      - name: Checkout Git repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
+              
+      - name: Use Node.js 12
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          
+      - name: Run npm install
+        run: npm install
+          
+      - name: Install Prettier
+        run: npm install --global prettier
+
+      - name: Lint with Prettier
+        run: npm run format --write
+
+      - name: Commit files
+        run: |
+          git config --local user.email "linter@fractalcomputers.com"
+          git config --local user.name "Fractal Linter"
+          git diff-index --quiet HEAD || (echo "To pass this check please lint the code with Prettier" && false)
