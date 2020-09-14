@@ -1,6 +1,6 @@
 # Workflow to build Docker images for basic testing
 
-name: Docker Image CI
+name: Docker Image CI - Ubuntu 20.04
 
 on:
   pull_request:
