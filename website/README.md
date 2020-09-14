@@ -2,7 +2,9 @@
 
 ![Node.js CI](https://github.com/fractalcomputers/website/workflows/Node.js%20CI/badge.svg)
 
-This repository contains the code for the new Fractal website for single app streaming.
+This repository contains the code for the Fractal website where users create and manage their account to use Fractal's application-streaming software. It interfaces with the webservers and the admin dashboard.
+
+The Netlify staging version of the website is hosted [ADD NETLIFY HERE WHEN READY].
 
 ## Development
 
