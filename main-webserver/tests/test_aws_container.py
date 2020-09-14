@@ -3,11 +3,11 @@ from .helpers.tests.aws_container import *
 @pytest.mark.container_serial
 def test_create_cluster(input_token, admin_token):
     resp = createCluster(
-        instance_type='t2.large',
-        #ami='ami-04cfcf6827bb29439',
-        #ami='ami-026f9e275180a6982',
-        ami='ami-02f5ea673e84393c9', # roshan's ami
-        region_name='us-east-1',
+        instance_type='t2.small',
+        ami='ami-04cfcf6827bb29439', # us-east-2
+        #ami='ami-026f9e275180a6982', # us-east-1
+        #ami='ami-02f5ea673e84393c9', # roshan's ami
+        region_name='us-east-2',
         input_token=input_token,
     )
 
@@ -23,10 +23,10 @@ def test_create_cluster(input_token, admin_token):
 def test_create_container(input_token, admin_token):
     resp = createContainer(
         username='test-user@test.com',
-        cluster_name='cluster_ccybikginm',
+        cluster_name='cluster_eqbpomqrnp', #us-east-1, running roshan's ami
         #cluster_name='roshan-cluster-1',
-        #2: cluster_name='cluster_umqxpppdpg',
-        #1: cluster_name='cluster_visiytzucx',
+        #cluster_name='cluster_hddktayapr', #us-east-2
+        #cluster_name='cluster_visiytzucx', #us-east-1
         region_name='us-east-1',
         #task_definition_arn='arn:aws:ecs:us-east-1:747391415460:task-definition/first-run-task-definition:3',
         #task_definition_arn='arn:aws:ecs:us-east-2:747391415460:task-definition/first-run-task-definition:4',

@@ -87,6 +87,10 @@ def test_full_base_config():
     assert testclient.task_ips == {0: '34.229.191.6'}
 
 
+@pytest.mark.skipif(
+    "AWS_AUTO_SCALING_TEST" not in os.environ,
+    reason="This test is slow; run only upon explicit request",
+)
 def test_cluster_with_auto_scaling_group():
     testclient = ECSClient(region_name="us-east-1")
     time.sleep(10)

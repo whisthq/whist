@@ -46,7 +46,7 @@ def test_endpoint(action, **kwargs):
 
         return jsonify({"ID": task.id}), ACCEPTED
      
-     if action == "delete_container":
+    if action == "delete_container":
         user_id, container_name = (
             kwargs["body"]["user_id"],
             kwargs["body"]["container_name"],

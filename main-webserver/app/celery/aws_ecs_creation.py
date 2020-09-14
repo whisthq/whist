@@ -234,6 +234,7 @@ def create_new_cluster(
     max_size=10,
     availability_zones=None,
 ):
+    """
     Args:
         self: the celery instance running the task
         instance_type (Optional[str]): size of instances to create in auto scaling group, defaults to t2.small
@@ -244,8 +245,8 @@ def create_new_cluster(
         availability_zones (Optional[List[str]]): the availability zones for creating instances in the auto scaling group
     Returns:
         user_cluster_schema: information on cluster created
-
     """
+    
     fractalLog(
         function="create_new_cluster",
         label="None",
