@@ -1,19 +1,19 @@
-import React from 'react'
-import { connect } from 'react-redux'
-import { Button } from 'react-bootstrap'
+import React from "react"
+import { connect } from "react-redux"
+import { Button } from "react-bootstrap"
 
 const SignupAction = () => {
     return (
         <div className="action">
             <div
                 style={{
-                    color: 'white',
-                    fontSize: '23px',
+                    color: "white",
+                    fontSize: "23px",
                 }}
             >
                 Sign up for a free account
             </div>
-            <div style={{ color: '#00D4FF' }}> +100 points</div>
+            <div style={{ color: "#00D4FF" }}> +100 points</div>
         </div>
     )
 }
@@ -23,13 +23,13 @@ const RecommendAction = () => {
         <div className="action">
             <div
                 style={{
-                    color: 'white',
-                    fontSize: '23px',
+                    color: "white",
+                    fontSize: "23px",
                 }}
             >
                 Recommend a Friend
             </div>
-            <div style={{ color: '#00D4FF' }}> +100 points</div>
+            <div style={{ color: "#00D4FF" }}> +100 points</div>
         </div>
     )
 }
@@ -38,7 +38,7 @@ const JoinWaitlistAction = () => {
     const scrollToTop = () => {
         window.scrollTo({
             top: 0,
-            behavior: 'smooth',
+            behavior: "smooth",
         })
     }
 
@@ -46,13 +46,13 @@ const JoinWaitlistAction = () => {
         <Button onClick={scrollToTop} className="action">
             <div
                 style={{
-                    color: 'white',
-                    fontSize: '23px',
+                    color: "white",
+                    fontSize: "23px",
                 }}
             >
                 Join Waitlist
             </div>
-            <div style={{ color: '#00D4FF' }}> +50 points</div>
+            <div style={{ color: "#00D4FF" }}> +50 points</div>
         </Button>
     )
 }
@@ -77,18 +77,18 @@ const Actions = (props) => {
     return (
         <div
             style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                marginTop: '9vh',
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                marginTop: "9vh",
             }}
         >
             <h1
                 style={{
-                    fontWeight: 'bold',
-                    color: 'white',
-                    marginBottom: '30px',
-                    fontSize: '40px',
+                    fontWeight: "bold",
+                    color: "white",
+                    marginBottom: "30px",
+                    fontSize: "40px",
                 }}
             >
                 Actions

@@ -1,7 +1,7 @@
-import { AUTH_DEFAULT } from 'store/reducers/states'
+import { AUTH_DEFAULT } from "store/reducers/states"
 
-import * as WaitlistAction from 'store/actions/auth/waitlist'
-import * as LoginAction from 'store/actions/auth/login_actions'
+import * as WaitlistAction from "store/actions/auth/waitlist"
+import * as LoginAction from "store/actions/auth/login_actions"
 
 export default function (state = AUTH_DEFAULT, action) {
     switch (action.type) {

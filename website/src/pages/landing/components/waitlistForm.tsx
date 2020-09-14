@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from 'react'
-import { connect } from 'react-redux'
-import { Button } from 'react-bootstrap'
-import { CountryDropdown } from 'react-country-region-selector'
+import React, { useState, useEffect } from "react"
+import { connect } from "react-redux"
+import { Button } from "react-bootstrap"
+import { CountryDropdown } from "react-country-region-selector"
 
-import { db } from 'utils/firebase'
+import { db } from "utils/firebase"
 
-import { insertWaitlistAction } from 'store/actions/auth/waitlist'
+import { insertWaitlistAction } from "store/actions/auth/waitlist"
 
-import 'styles/landing.css'
+import "styles/landing.css"
 
 const INITIAL_POINTS = 10
 
 function WaitlistForm(props: any) {
     const [email, setEmail] = useState()
     const [name, setName] = useState()
-    const [country, setCountry] = useState('United States')
+    const [country, setCountry] = useState("United States")
     const [, setReferralCode] = useState()
 
     useEffect(() => {
-        console.log('Use Effect waitlist')
+        console.log("Use Effect waitlist")
     }, [])
 
     function updateEmail(evt: any) {
@@ -41,13 +41,13 @@ function WaitlistForm(props: any) {
     }
 
     async function insertWaitlist() {
-        var emails = db.collection('waitlist').where('email', '==', email)
+        var emails = db.collection("waitlist").where("email", "==", email)
         const exists = await emails.get().then(function (snapshot) {
             return !snapshot.empty
         })
 
         if (!exists) {
-            db.collection('waitlist')
+            db.collection("waitlist")
                 .doc(email)
                 .set({
                     name: name,
@@ -68,10 +68,10 @@ function WaitlistForm(props: any) {
             <div
                 style={{
                     width: 800,
-                    margin: 'auto',
+                    margin: "auto",
                     marginTop: 20,
-                    display: 'flex',
-                    justifyContent: 'space-between',
+                    display: "flex",
+                    justifyContent: "space-between",
                 }}
             >
                 <input
@@ -100,7 +100,7 @@ function WaitlistForm(props: any) {
                     onChange={(country) => updateCountry(country)}
                 />
             </div>
-            <div style={{ width: 800, margin: 'auto', marginTop: 20 }}>
+            <div style={{ width: 800, margin: "auto", marginTop: 20 }}>
                 <Button
                     onClick={insertWaitlist}
                     className="waitlist-button"

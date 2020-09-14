@@ -1,6 +1,6 @@
-export const INSERT_WAITLIST = 'INSERT_WAITLIST'
-export const UPDATE_WAITLIST = 'UPDATE_WAITLIST'
-export const UPDATE_USER = 'UPDATE_USER'
+export const INSERT_WAITLIST = "INSERT_WAITLIST"
+export const UPDATE_WAITLIST = "UPDATE_WAITLIST"
+export const UPDATE_USER = "UPDATE_USER"
 
 export function insertWaitlistAction(
     email: string,

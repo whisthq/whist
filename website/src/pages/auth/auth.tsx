@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react'
-import { Button } from 'react-bootstrap'
-import { connect } from 'react-redux'
-import * as firebase from 'firebase'
+import React, { useEffect, useState } from "react"
+import { Button } from "react-bootstrap"
+import { connect } from "react-redux"
+import * as firebase from "firebase"
 
-import { googleLogin, logout } from 'store/actions/auth/login_actions'
+import { googleLogin, logout } from "store/actions/auth/login_actions"
 
-import 'styles/auth.css'
+import "styles/auth.css"
 
 const Auth = (props) => {
     const [, setError] = useState()
@@ -33,7 +33,7 @@ const Auth = (props) => {
             .auth()
             .signOut()
             .then(() => {
-                console.log('signed out')
+                console.log("signed out")
                 props.dispatch(logout())
             })
     }
