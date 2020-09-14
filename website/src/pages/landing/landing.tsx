@@ -1,46 +1,45 @@
-import React, { useState, useEffect } from "react";
-import { connect } from "react-redux";
-import TypeWriterEffect from "react-typewriter-effect";
-import { Row, Col, Button } from "react-bootstrap";
+import React, { useState, useEffect } from "react"
+import { connect } from "react-redux"
+import TypeWriterEffect from "react-typewriter-effect"
+import { Row, Col, Button } from "react-bootstrap"
 
-import { db } from "utils/firebase";
+import { db } from "utils/firebase"
 
 import {
     updateUserAction,
     updateWaitlistAction,
-} from "store/actions/auth/waitlist";
+} from "store/actions/auth/waitlist"
 
-import "styles/landing.css";
+import "styles/landing.css"
 
-import WaitlistForm from "pages/landing/components/waitlistForm";
-import CountdownTimer from "pages/landing/components/countdown";
-import LeaderboardPage from "pages/landing/components/leaderboardPage";
+import WaitlistForm from "pages/landing/components/waitlistForm"
+import CountdownTimer from "pages/landing/components/countdown"
+import Leaderboard from "pages/landing/components/leaderboard"
+import Actions from "pages/landing/components/actions"
 
-import LaptopAwe from "assets/largeGraphics/laptopAwe.svg";
-import Moon from "assets/largeGraphics/moon.svg";
-import Mars from "assets/largeGraphics/mars.svg";
-import Mercury from "assets/largeGraphics/mercury.svg";
-import Saturn from "assets/largeGraphics/saturn.svg";
-import Plants from "assets/largeGraphics/plants.svg";
-import Wireframe from "assets/largeGraphics/wireframe.svg";
-import Mountain from "assets/largeGraphics/mountain.svg";
+import LaptopAwe from "assets/largeGraphics/laptopAwe.svg"
+import Moon from "assets/largeGraphics/moon.svg"
+import Mars from "assets/largeGraphics/mars.svg"
+import Mercury from "assets/largeGraphics/mercury.svg"
+import Saturn from "assets/largeGraphics/saturn.svg"
+import Plants from "assets/largeGraphics/plants.svg"
+import Wireframe from "assets/largeGraphics/wireframe.svg"
+import Mountain from "assets/largeGraphics/mountain.svg"
 
 function Landing(props: any) {
-    const [waitlist, setWaitlist] = useState(props.waitlist);
+    const [, setWaitlist] = useState(props.waitlist)
 
     useEffect(() => {
-        console.log("use effect landing");
-        console.log(props.user);
-        var unsubscribe;
+        console.log("use effect landing")
+        console.log(props)
+        var unsubscribe
         getWaitlist()
             .then((waitlist) => {
-                setWaitlist(waitlist);
-                props.dispatch(updateWaitlistAction(waitlist));
-                if (props.user.email && props.user.ranking == 0) {
-                    const ranking = getInitialRanking(waitlist);
-                    props.dispatch(
-                        updateUserAction(props.user.points, ranking)
-                    );
+                setWaitlist(waitlist)
+                props.dispatch(updateWaitlistAction(waitlist))
+                if (props.user.email && props.user.ranking === 0) {
+                    const ranking = getInitialRanking(waitlist)
+                    props.dispatch(updateUserAction(props.user.points, ranking))
                 }
             })
             .then(() => {
@@ -49,57 +48,65 @@ function Landing(props: any) {
                         .collection("waitlist")
                         .doc(props.user.email)
                         .onSnapshot((doc) => {
-                            console.log("IN SNAPSHOT");
-                            const userData = doc.data();
-                            const ranking = updateRanking(userData);
-                            console.log(ranking);
+                            console.log("IN SNAPSHOT")
+                            const userData = doc.data()
+                            const ranking = updateRanking(userData)
+                            console.log(ranking)
                             if (
                                 userData &&
-                                userData.points != props.user.points
+                                userData.points !== props.user.points
                             ) {
                                 props.dispatch(
                                     updateUserAction(userData.points, ranking)
-                                );
+                                )
                             }
-                        });
+                        })
                 }
-            });
-        return unsubscribe;
-    }, [props.user]);
+            })
+        return unsubscribe
+    }, [getInitialRanking, props, props.user, updateRanking])
 
     async function getWaitlist() {
         const waitlist = await db
             .collection("waitlist")
             .orderBy("points", "desc")
-            .get();
-        return waitlist.docs.map((doc) => doc.data());
+            .orderBy("email")
+            .get()
+        return waitlist.docs.map((doc) => doc.data())
     }
 
-    function getInitialRanking(waitlist) {
+    function getInitialRanking(waitlist: string | any[]) {
         for (var i = 0; i < waitlist.length; i++) {
-            if (waitlist[i].email == props.user.email) {
-                return i + 1;
+            if (waitlist[i].email === props.user.email) {
+                return i + 1
             }
         }
-        return 0;
+        return 0
     }
 
-    function updateRanking(userData) {
-        var currRanking = props.user.ranking - 1;
+    function updateRanking(userData: {
+        [x: string]: any
+        points?: any
+        email?: any
+    }) {
+        var currRanking = props.user.ranking - 1
         // Bubbles user up the leaderboard according to new points
         while (
             currRanking > 0 &&
-            userData.points > props.waitlist[currRanking - 1].points
+            userData.points >= props.waitlist[currRanking - 1].points
         ) {
-            setWaitlist((originalWaitlist) => {
-                var newWaitlist = [...originalWaitlist];
-                newWaitlist[currRanking] = originalWaitlist[currRanking - 1];
-                newWaitlist[currRanking - 1] = userData;
-                return newWaitlist;
-            });
-            currRanking--;
+            if (userData.email > props.waitlist[currRanking - 1].email) {
+                break
+            }
+            setWaitlist((originalWaitlist: any[]) => {
+                var newWaitlist = [...originalWaitlist]
+                newWaitlist[currRanking] = originalWaitlist[currRanking - 1]
+                newWaitlist[currRanking - 1] = userData
+                return newWaitlist
+            })
+            currRanking--
         }
-        return currRanking + 1;
+        return currRanking + 1
     }
 
     return (
@@ -110,6 +117,7 @@ function Landing(props: any) {
             >
                 <img
                     src={Moon}
+                    alt=""
                     style={{
                         position: "absolute",
                         width: 100,
@@ -120,6 +128,7 @@ function Landing(props: any) {
                 />
                 <img
                     src={Mars}
+                    alt=""
                     style={{
                         position: "absolute",
                         width: 120,
@@ -130,6 +139,7 @@ function Landing(props: any) {
                 />
                 <img
                     src={Mercury}
+                    alt=""
                     style={{
                         position: "absolute",
                         width: 80,
@@ -140,6 +150,7 @@ function Landing(props: any) {
                 />
                 <img
                     src={Saturn}
+                    alt=""
                     style={{
                         position: "absolute",
                         width: 100,
@@ -150,6 +161,7 @@ function Landing(props: any) {
                 />
                 <img
                     src={Mountain}
+                    alt=""
                     style={{
                         position: "absolute",
                         width: "100vw",
@@ -170,6 +182,7 @@ function Landing(props: any) {
                 ></div>
                 <img
                     src={Plants}
+                    alt=""
                     style={{
                         position: "absolute",
                         width: 250,
@@ -180,6 +193,7 @@ function Landing(props: any) {
                 />
                 <img
                     src={Plants}
+                    alt=""
                     style={{
                         position: "absolute",
                         width: 250,
@@ -229,13 +243,7 @@ function Landing(props: any) {
                             }}
                             startDelay={0}
                             cursorColor="white"
-                            multiText={[
-                                "Blender",
-                                "Figma",
-                                "VSCode",
-                                "Maya",
-                                "Blender",
-                            ]}
+                            multiText={["Blender", "Figma", "VSCode", "Maya"]}
                             loop={true}
                             typeSpeed={150}
                         />
@@ -280,6 +288,7 @@ function Landing(props: any) {
                 >
                     <img
                         src={LaptopAwe}
+                        alt=""
                         style={{ maxWidth: 600, zIndex: 100 }}
                     />
                 </div>
@@ -287,7 +296,7 @@ function Landing(props: any) {
             <div style={{ position: "relative", background: "white" }}>
                 <Row style={{ paddingTop: 50, paddingRight: 50 }}>
                     <Col md={7}>
-                        <img src={Wireframe} style={{ width: "100%" }} />
+                        <img src={Wireframe} alt="" style={{ width: "100%" }} />
                     </Col>
                     <Col md={5} style={{ paddingLeft: 40 }}>
                         <div
@@ -482,6 +491,23 @@ function Landing(props: any) {
                     </Col>
                 </Row>
             </div>
+            <div
+                style={{
+                    padding: 30,
+                    marginTop: 100,
+                    background: "#0d1d3c",
+                    minHeight: "100vh",
+                }}
+            >
+                <Row>
+                    <Col md={6}>
+                        <Leaderboard />
+                    </Col>
+                    <Col md={6}>
+                        <Actions />
+                    </Col>
+                </Row>
+            </div>
             <div style={{ padding: 30 }}>
                 <div
                     style={{
@@ -527,14 +553,14 @@ function Landing(props: any) {
                 </div>
             </div>
         </div>
-    );
+    )
 }
 
 function mapStateToProps(state) {
     return {
         user: state.AuthReducer.user,
         waitlist: state.AuthReducer.waitlist,
-    };
+    }
 }
 
-export default connect(mapStateToProps)(Landing);
+export default connect(mapStateToProps)(Landing)

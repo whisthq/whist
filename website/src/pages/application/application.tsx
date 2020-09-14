@@ -1,22 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { connect } from "react-redux";
-import { Row, Col, Button } from "react-bootstrap";
+import React from "react"
+import { connect } from "react-redux"
 
-import { db } from "utils/firebase";
-
-import "styles/application.css";
+import "styles/application.css"
 
 function Application(props: any) {
-  return (
-    <div>
-      Application
-    </div>
-  );
+    return <div>Application</div>
 }
 
 function mapStateToProps(state) {
-  return {
-  };
+    return {}
 }
 
-export default connect(mapStateToProps)(Application);
+export default connect(mapStateToProps)(Application)

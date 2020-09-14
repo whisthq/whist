@@ -5,6 +5,8 @@ body {
     margin: 0px !important;
 }
 
-body, div, html {
+body,
+div,
+html {
     font-family: "Maven Pro" !important;
 }

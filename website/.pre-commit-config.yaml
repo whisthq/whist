@@ -1,0 +1,13 @@
+repos:
+    - repo: git://github.com/pre-commit/pre-commit-hooks
+      rev: v3.2.0
+      hooks:
+          - id: check-case-conflict
+          - id: check-merge-conflict
+          - id: check-symlinks
+          - id: detect-private-key
+
+    - repo: https://github.com/prettier/prettier
+      rev: 2.0.5
+      hooks:
+          - id: prettier
