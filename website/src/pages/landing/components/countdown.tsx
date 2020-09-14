@@ -90,7 +90,7 @@ function CountdownTimer(props: any) {
     )
 }
 
-function mapStateToProps(state) {
+function mapStateToProps() {
     return {}
 }
 

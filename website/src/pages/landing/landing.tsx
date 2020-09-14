@@ -67,7 +67,7 @@ function Landing(props: any) {
     )
     useEffect(() => {
         console.log("use effect landing")
-        var unsubscribe
+        var unsubscribe: any
         getWaitlist()
             .then((waitlist) => {
                 setWaitlist(waitlist)
@@ -559,7 +559,7 @@ function Landing(props: any) {
     )
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: { AuthReducer: { user: any; waitlist: any } }) {
     return {
         user: state.AuthReducer.user,
         waitlist: state.AuthReducer.waitlist,

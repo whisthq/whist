@@ -98,7 +98,9 @@ const Actions = (props: { user: { email: any }; loggedIn: any }) => {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any; logged_in: any} } ) {
+function mapStateToProps(state: {
+    AuthReducer: { user: any; logged_in: any }
+}) {
     return {
         user: state.AuthReducer.user,
         loggedIn: state.AuthReducer.logged_in,

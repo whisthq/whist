@@ -7,7 +7,11 @@ import { googleLogin, logout } from "store/actions/auth/login_actions"
 
 import "styles/auth.css"
 
-const Auth = (props: { dispatch: (arg0: { type: string; email?: string }) => void; loggedIn: any; email: React.ReactNode }) => {
+const Auth = (props: {
+    dispatch: (arg0: { type: string; email?: string }) => void
+    loggedIn: any
+    email: React.ReactNode
+}) => {
     const [, setError] = useState()
 
     useEffect(() => {

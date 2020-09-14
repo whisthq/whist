@@ -4,7 +4,10 @@ import { Table } from "react-bootstrap"
 
 import "styles/landing.css"
 
-const Leaderboard = (props) => {
+const Leaderboard = (props: {
+    waitlist: any[]
+    user: { email: any; ranking: number }
+}) => {
     const [topSix, setTopSix] = useState([])
 
     useEffect(() => {
@@ -70,7 +73,7 @@ const Leaderboard = (props) => {
                     )
                 })
                 .concat(
-                    bottomThree.map((user, idx) => {
+                    bottomThree.map((user: any, idx: any) => {
                         return (
                             <tr className={idx === 2 ? "userRow" : ""}>
                                 <td className="rankingColumn">
@@ -102,7 +105,7 @@ const Leaderboard = (props) => {
                     )
                 })
                 .concat(
-                    neighbors.map((user, idx) => {
+                    neighbors.map((user: any, idx: any) => {
                         return (
                             <tr className={idx === 1 ? "userRow" : ""}>
                                 <td className="rankingColumn">
@@ -151,7 +154,9 @@ const Leaderboard = (props) => {
     )
 }
 
-const mapStateToProps = (state: { AuthReducer: { user: any; waitlist: any } }) => {
+const mapStateToProps = (state: {
+    AuthReducer: { user: any; waitlist: any }
+}) => {
     return {
         user: state.AuthReducer.user,
         waitlist: state.AuthReducer.waitlist,
