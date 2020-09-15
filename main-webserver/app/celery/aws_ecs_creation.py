@@ -245,8 +245,8 @@ def create_new_cluster(
         availability_zones (Optional[List[str]]): the availability zones for creating instances in the auto scaling group
     Returns:
         user_cluster_schema: information on cluster created
-
     """
+    
     fractalLog(
         function="create_new_cluster",
         label="None",
