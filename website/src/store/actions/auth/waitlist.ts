@@ -15,14 +15,14 @@ export function insertWaitlistAction(
     }
 }
 
-export function updateWaitlistAction(waitlist) {
+export function updateWaitlistAction(waitlist: any) {
     return {
         type: UPDATE_WAITLIST,
         waitlist,
     }
 }
 
-export function updateUserAction(points, ranking) {
+export function updateUserAction(points: any, ranking: number) {
     return {
         type: UPDATE_USER,
         points,

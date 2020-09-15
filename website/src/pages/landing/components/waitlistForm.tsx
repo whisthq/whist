@@ -116,7 +116,7 @@ function WaitlistForm(props: any) {
     )
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: { AuthReducer: { user: any } }) {
     return {
         user: state.AuthReducer.user,
     }

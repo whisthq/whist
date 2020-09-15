@@ -7,7 +7,7 @@ function Application(props: any) {
     return <div>Application</div>
 }
 
-function mapStateToProps(state) {
+function mapStateToProps() {
     return {}
 }
 
