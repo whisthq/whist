@@ -1,42 +1,43 @@
 version: "3.8"
+
+x-app: &base-app
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  depends_on:
+    - redis
+  env_file: .env
+  networks:
+    - primary
+
 services:
 
   redis:
     # Matches version being used by staging as of 2020-07-08
-    image: redis:5.0.8 
+    image: redis:5.0.8
     ports:
       - "7810:6379" # Proxy redis on localhost:7810
     networks:
       - primary
 
   web:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile
+    << : *base-app
     command: web
     ports:
       - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
-    networks:
-      - primary
-    depends_on:
-      - redis
-    env_file: .env
     environment:
+      HOT_RELOAD: ${HOT_RELOAD}
       PORT: 7730
+    volumes:
+      - ..:/app
 
   celery:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile
+    << : *base-app
     command: celery
-    networks:
-      - primary
-    depends_on:
-      - redis
-    env_file: .env
     environment:
       - AWS_SHARED_CREDENTIALS_FILE=/.aws/credentials
     volumes:
+      - ..:/app
       - $HOME/.aws:/.aws
 
 # TODO use a local DB (as commented out below) instead of the staging/production DB
