@@ -234,6 +234,7 @@ def create_new_cluster(
     max_size=10,
     availability_zones=None,
 ):
+    """
     Args:
         self: the celery instance running the task
         instance_type (Optional[str]): size of instances to create in auto scaling group, defaults to t2.small
