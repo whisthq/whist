@@ -4,7 +4,7 @@
 
 This repository contains the code for the new Fractal website for single app streaming.
 
-## Development
+## Setting Up Development
 
 The admin dashboard is developed using the `npm` package manager. You can start developing by running `npm install`, and can launch into a localhost via `npm start`.
 
@@ -36,3 +36,78 @@ To ensure that this extension is used over other extensions you may have install
   }
 }
 ```
+
+## Code Design Philosophy
+
+### Pages
+
+The website is divided into pages, where each page is defined as a component with its own React Router endpoint. Each page gets its own folder in the `pages` folder; within each page is a single base `.tsx` component, which is component rendered by the React Router, and two folders: `components` and `views`. A view is defined as a collection of components; for example, the landing page has a `TopView`, `MiddleView`, and `BottomView`, which are groups of components in the top, middle, and bottom sections of the landing page, respectively. A component is defined as any standalone React Component which is imported into a view, which is then imported into the base page component.
+
+### Components
+
+We choose to use functional React components instead of class components because of their simplicity and readability. For instance, whereas a traditional class component may look like 
+
+```
+export default class ExampleComponent<MyProps, MyState> extends React.Component
+```
+
+a functional component looks like
+
+```
+function ExampleComponent(props: any) 
+```
+
+For consistency, the use of functional React components is enforced across the repo.
+
+### Naming
+
+For consistency, we enforce all folder, variable, and file names to start with lowercase letters. If a name has multiple words (e.g. "landing page"), we format it as one word, where the first word is lowercased and the subsequent words are capitalized (e.g. `landingPage`). The one exception to the lowercase rule are component names, which are all uppercased; for instance, `import ExampleComponent from pages/ExamplePage/components/exampleComponent`.
+
+### Warnings
+
+To minimize the risk of bugs, we enforce that all PR's be warning-free. You can see warnings in the terminal where the website is running locally; if a PR has warnings, the CI will fail.
+
+### State Management
+
+We currently use Redux for state management, and try to split actions and reducers into related groups as best as possible. We are currently TBD on whether to use Redux sagas or React hooks for side effects (i.e. API calls).
+
+### Redux State Naming
+
+We encourage that redux state variables be grouped as nested JSON objects for improved readability. For example, instead of a Redux state that looks like 
+
+```
+EXAMPLE_STATE = {
+  username: null,
+  name: null,
+  access_token: null,
+  location: null,
+  stripe_data: {...}
+}
+```
+
+we can organize this state as
+
+```
+EXAMPLE_STATE = {
+  auth: {
+    username: null,
+    name: null,
+    access_token: null
+  },
+  account_data: {
+    location: null,
+    stripe_data: {...}
+  }
+}
+```
+
+### API Calls
+
+We currently use Firebase, so there is no need for many API calls.
+
+When we switch to SQL, whenever possible, we encourage the use of GraphQL instead of writing new server endpoints for the sake of simplicity and coding speed. The only time when we should be writing and calling server endpoints is if we are performing server-side operations that involve more than database operations; for example, an API call to create an ECS container.
+
+## Contributing
+
+Unless otherwise specified, contributors should branch off `staging` and PR back into `staging`. Because both `staging` and `master` auto-deploy the their respective Netlify sites, pushing to `staging` and `master` is blocked by non-code owners.
+
