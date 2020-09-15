@@ -243,7 +243,7 @@ function Landing(props: any) {
                             cursorColor="white"
                             multiText={["Blender", "Figma", "VSCode", "Maya"]}
                             loop={true}
-                            typeSpeed={150}
+                            typeSpeed={200}
                         />
                         <div
                             style={{
@@ -278,16 +278,18 @@ function Landing(props: any) {
                 <div
                     style={{
                         margin: "auto",
-                        maxWidth: 600,
+                        maxWidth: 1000,
+                        width: "45vw",
                         position: "relative",
                         bottom: 60,
                         zIndex: 100,
+                        textAlign: "center",
                     }}
                 >
                     <img
                         src={LaptopAwe}
                         alt=""
-                        style={{ maxWidth: 600, zIndex: 100 }}
+                        style={{ maxWidth: 1000, width: "100%", zIndex: 100 }}
                     />
                 </div>
             </div>
