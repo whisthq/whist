@@ -53,9 +53,9 @@ function Application(props: any) {
                             on the waitlist.
                         </h2>
                         <p style={{ marginTop: 50 }}>
-                            You’re on the waitlist as ming@fractalcomputers.com.
-                            When the countdown reaches zero, we'll invite people
-                            to receive 1:1 onboarding. You can signficantly
+                            You’re registered as ming@fractalcomputers.com. When
+                            the countdown reaches zero, we'll invite people to
+                            receive 1:1 onboarding. You can signficantly
                             increase your chances of being selected by{" "}
                             <strong>
                                 telling us why you should be selected
