@@ -10,7 +10,7 @@ The admin dashboard is developed using the `npm` package manager. You can start 
 
 If you need to update dependencies, you can run `npm upgrade`, followed by `npm prune` to remove unnecessary dependencies.
 
-Basic continuous integration is set up for this project. For every push or PR, basic NodeJS tests will be compiled and run within GitHub Actions. This will also attempt to format the code via Prettier and inform you if your code is not properly formatted. You should make sure that every pull request to `master` passes the build in GitHub Actions, and that you pre-formatted the code via Prettier beforehand. 
+Basic continuous integration is set up for this project. For every push or PR, basic NodeJS tests will be compiled and run within GitHub Actions. This will also attempt to format the code via Prettier and inform you if your code is not properly formatted. You should make sure that every pull request to `master` passes the build in GitHub Actions, and that you pre-formatted the code via Prettier beforehand.
 
 ## Styling
 
@@ -144,4 +144,3 @@ For the best image quality, we require that all images and icons be `.svg` files
 ## Contributing
 
 Unless otherwise specified, contributors should branch off `staging` and PR back into `staging`. Because both `staging` and `master` auto-deploy the their respective Netlify sites, pushing to `staging` and `master` is blocked by non-code owners.
-

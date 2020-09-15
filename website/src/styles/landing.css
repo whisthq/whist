@@ -1,0 +1,177 @@
+@import url("https://fonts.googleapis.com/css2?family=Kalam&family=Maven+Pro:wght@400;700&display=swap");
+
+body {
+    overflow-x: hidden;
+}
+
+body,
+div,
+html,
+input,
+Button {
+    font-family: "Maven Pro" !important;
+}
+
+select {
+    width: 200px;
+    background: #1c2a45;
+    color: #cccccc;
+    border-radius: 5px;
+    padding: 20px 20px;
+    border: none;
+    outline: none;
+    font-family: "Maven Pro" !important;
+}
+
+input {
+    color: white;
+}
+
+option,
+::placeholder {
+    font-family: "Maven Pro" !important;
+}
+
+option {
+    color: #000000;
+}
+
+::placeholder {
+    color: #cccccc;
+}
+
+option {
+    background: white;
+}
+
+.waitlist-form {
+    border-radius: 5px;
+    background-color: #1c2a45;
+    border: none;
+    padding: 0px 20px;
+    outline: none;
+    margin: 0px;
+}
+
+.waitlist-button {
+    width: 100%;
+    border: none;
+    outline: none;
+    padding: 15px 20px;
+    border-radius: 5px;
+    background: #00d4ff !important;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.waitlist-button:hover {
+    cursor: pointer;
+}
+
+.banner-background {
+    width: 100%;
+    background: #0f1726;
+}
+
+.white-background-curved {
+    border-top-left-radius: 50% 40%;
+    border-top-right-radius: 50% 40%;
+}
+
+.logo {
+    font-weight: bold;
+    color: white;
+    font-size: 20px;
+    letter-spacing: 6px;
+    margin-left: 20px;
+}
+
+.table {
+    width: 100%;
+    margin: auto;
+    background-color: #0d0f34;
+    color: #c9c9f5;
+    border-collapse: collapse;
+    text-align: left;
+    border-radius: 10px !important;
+}
+
+.table thead {
+    background-color: #07082b;
+    color: #00d4ff;
+    border-radius: 10px !important;
+    border-style: hidden;
+}
+
+.table tbody tr {
+    border-style: hidden;
+}
+
+.table td,
+.table th {
+    padding: 20px;
+}
+
+.topThree {
+    background-color: #00d4ff;
+    height: 25px;
+    width: 25px;
+    color: white;
+    border-radius: 2px;
+    text-align: center;
+    font-weight: bold;
+    padding: 1px;
+}
+
+.rankingColumn {
+    padding-left: 50px !important;
+}
+
+.nameColumn {
+    color: white;
+    padding-right: 70px !important;
+}
+
+.pointsColumn {
+    padding-right: 50px !important;
+}
+
+.userRow {
+    background-color: #454e7e;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.action {
+    background-color: #0d0f34 !important;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 40px;
+    margin-bottom: 30px;
+    border-radius: 5px;
+    border: none;
+}
+
+.action:hover {
+    cursor: pointer;
+}
+
+.access-button {
+    margin-top: 30px;
+    background: #1c2a45 !important;
+    font-weight: bold;
+    border: none;
+    padding: 15px 50px;
+    font-size: calc(14px + 0.25vw);
+    outline: none !important;
+    border: none;
+}
+
+.access-button:hover {
+    background: #00d4ff !important;
+    outline: none !important;
+}
