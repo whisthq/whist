@@ -45,7 +45,7 @@ The website is divided into pages, where each page is defined as a component wit
 
 ### Components
 
-We choose to use functional React components instead of class components because of their simplicity and readability. For instance, whereas a traditional class component may look like
+We choose to use functional React components instead of class components because of their simplicity and readability. For instance, whereas a traditional class component may look like 
 
 ```
 export default class ExampleComponent<MyProps, MyState> extends React.Component
@@ -54,7 +54,7 @@ export default class ExampleComponent<MyProps, MyState> extends React.Component
 a functional component looks like
 
 ```
-function ExampleComponent(props: any)
+function ExampleComponent(props: any) 
 ```
 
 For consistency, the use of functional React components is enforced across the repo.
@@ -77,7 +77,7 @@ We currently use Redux for state management, and try to split actions and reduce
 
 ### Redux State Naming
 
-We encourage that redux state variables be grouped as nested JSON objects for improved readability. For example, instead of a Redux state that looks like
+We encourage that redux state variables be grouped as nested JSON objects for improved readability. For example, instead of a Redux state that looks like 
 
 ```
 EXAMPLE_STATE = {
