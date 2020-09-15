@@ -90,6 +90,8 @@ function* getPromoCode(action) {
         state.counter.access_token
     );
 
+    console.log(json)
+
     if (json && json.status === 200) {
         yield put(Action.storePromoCode(json.code));
     }
@@ -213,7 +215,7 @@ function* attachDisk(action) {
     const state = yield select();
     const { json, response } = yield call(
         apiPost,
-        `${config.url.PRIMARY_SERVER}/azure_disk/attach`,
+        `${config.url.PRIMARY_SERVER}/disk/attach`,
         {
             disk_name: state.counter.disk,
             resource_group: config.azure.RESOURCE_GROUP
@@ -288,7 +290,7 @@ function* fetchVM(action) {
 function* getVersion() {
     const { json, response } = yield call(
         apiGet,
-        `${config.url.PRIMARY_SERVER}/azure_disk/version`,
+        `${config.url.PRIMARY_SERVER}/disk/version`,
         {}
     );
 
