@@ -30,7 +30,7 @@ def test_create_container(input_token, admin_token):
         region_name='us-east-1',
         #task_definition_arn='arn:aws:ecs:us-east-1:747391415460:task-definition/first-run-task-definition:3',
         #task_definition_arn='arn:aws:ecs:us-east-2:747391415460:task-definition/first-run-task-definition:4',
-        task_definition_arn='arn:aws:ecs:us-east-1:747391415460:task-definition/roshan-task-definition-test-0:2',
+        task_definition_arn='arn:aws:ecs:us-east-1:747391415460:task-definition/roshan-task-definition-test-0:5',
         use_launch_type=False,
         # network_configuration = {
         #     "awsvpcConfiguration": {
