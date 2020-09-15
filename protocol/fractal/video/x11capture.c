@@ -103,6 +103,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     if (CreateNvidiaCaptureDevice(&device->nvidia_capture_device, 10000000, CODEC_TYPE_UNKNOWN) <
         0) {
         device->using_nvidia = false;
+	LOG_WARNING("USING_GPU_CAPTURE defined but not using Nvidia Capture SDK!");
     } else {
         device->using_nvidia = true;
         device->image = NULL;
