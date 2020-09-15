@@ -152,8 +152,9 @@ RUN apt install -y vainfo vdpauinfo vdpau-va-driver libvdpau-va-gl1
 RUN sudo apt install -y tmux xserver-xorg-video-dummy mesa-utils glmark2 mpv psmisc gimp
 
 # Set up Window manager
-RUN sudo apt install -y openbox i3
+RUN sudo apt install -y openbox i3 
 ADD i3config /root/.config/i3/config
+RUN sudo apt install -y xclip parcellite
 
 
 # Install firefox nightly (for testing only)

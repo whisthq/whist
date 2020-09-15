@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 i3 &
+parcellite -d -n &
 
 # exec gimp
 
