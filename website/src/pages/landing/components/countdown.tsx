@@ -22,17 +22,18 @@ function CountdownTimer(props: any) {
             .collection("metadata")
             .doc("waitlist")
             .get()
-        return closingDate.data().close_date.seconds * 1000
+        const data = closingDate.data()
+        return data ? data.close_date.seconds * 1000 : 0
     }
 
-    const countdownRenderer = ({
-        days,
-        hours,
-        minutes,
-        seconds,
-        completed,
+    const countdownRenderer = (props: {
+        days: any
+        hours: any
+        minutes: any
+        seconds: any
+        completed: any
     }) => {
-        if (completed) {
+        if (props.completed) {
             return (
                 <div
                     style={{
@@ -56,8 +57,8 @@ function CountdownTimer(props: any) {
             )
         } else {
             // Render a countdown
-            if (Number(seconds) < 10) {
-                seconds = seconds.toString()
+            if (Number(props.seconds) < 10) {
+                props.seconds = props.seconds.toString()
             }
             return (
                 <div
@@ -70,13 +71,13 @@ function CountdownTimer(props: any) {
                         border: "solid 1px #00D4FF",
                     }}
                 >
-                    <strong>{days}</strong>{" "}
+                    <strong>{props.days}</strong>{" "}
                     <span style={{ fontSize: 12 }}> days &nbsp; </span>{" "}
-                    <strong>{hours}</strong>{" "}
+                    <strong>{props.hours}</strong>{" "}
                     <span style={{ fontSize: 12 }}> hours </span> &nbsp;{" "}
-                    <strong>{minutes}</strong>{" "}
+                    <strong>{props.minutes}</strong>{" "}
                     <span style={{ fontSize: 12 }}> mins </span> &nbsp;{" "}
-                    <strong>{seconds}</strong>{" "}
+                    <strong>{props.seconds}</strong>{" "}
                     <span style={{ fontSize: 12 }}> secs </span>
                 </div>
             )

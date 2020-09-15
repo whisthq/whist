@@ -25,9 +25,11 @@ const Auth = (props: {
             .auth()
             .signInWithPopup(provider)
             .then((result) => {
-                const email = result.user.email
-                console.log(email)
-                props.dispatch(googleLogin(email))
+                if (result && result.user && result.user.email) {
+                    const email = result.user.email
+                    console.log(email)
+                    props.dispatch(googleLogin(email))
+                }
             })
             .catch((e) => setError(e))
     }

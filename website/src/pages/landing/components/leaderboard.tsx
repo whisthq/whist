@@ -8,7 +8,7 @@ const Leaderboard = (props: {
     waitlist: any[]
     user: { email: any; ranking: number }
 }) => {
-    const [topSix, setTopSix] = useState([])
+    const [topSix, setTopSix]: any[] = useState([])
 
     useEffect(() => {
         console.log("use effect leaderboard")
@@ -21,9 +21,9 @@ const Leaderboard = (props: {
         if (!props.waitlist) {
             return <tr>No data to show.</tr>
         } else if (!props.user.email || props.user.ranking <= 5) {
-            const bottomThree = topSix.slice(-3)
+            const bottomThree = topSix.slice(3, 6)
             return topThree
-                .map((user, idx) => {
+                .map((user: any, idx: number) => {
                     return (
                         <tr
                             className={
@@ -40,7 +40,7 @@ const Leaderboard = (props: {
                     )
                 })
                 .concat(
-                    bottomThree.map((user, idx) => {
+                    bottomThree.map((user: any, idx: number) => {
                         return (
                             <tr
                                 className={
@@ -60,7 +60,7 @@ const Leaderboard = (props: {
         } else if (props.user.ranking === props.waitlist.length) {
             const bottomThree = props.waitlist.slice(-3)
             return topThree
-                .map((user, idx) => {
+                .map((user: any, idx: number) => {
                     return (
                         <tr>
                             <td className="rankingColumn">
@@ -73,7 +73,7 @@ const Leaderboard = (props: {
                     )
                 })
                 .concat(
-                    bottomThree.map((user: any, idx: any) => {
+                    bottomThree.map((user: any, idx: number) => {
                         return (
                             <tr className={idx === 2 ? "userRow" : ""}>
                                 <td className="rankingColumn">
@@ -87,12 +87,12 @@ const Leaderboard = (props: {
                     })
                 )
         } else {
-            const neighbors = props.waitlist.slice(
+            const bottomThree = props.waitlist.slice(
                 props.user.ranking - 2,
                 props.user.ranking + 1
             )
             return topThree
-                .map((user, idx) => {
+                .map((user: any, idx: number) => {
                     return (
                         <tr>
                             <td className="rankingColumn">
@@ -105,7 +105,7 @@ const Leaderboard = (props: {
                     )
                 })
                 .concat(
-                    neighbors.map((user: any, idx: any) => {
+                    bottomThree.map((user: any, idx: number) => {
                         return (
                             <tr className={idx === 1 ? "userRow" : ""}>
                                 <td className="rankingColumn">
@@ -155,7 +155,7 @@ const Leaderboard = (props: {
 }
 
 const mapStateToProps = (state: {
-    AuthReducer: { user: any; waitlist: any }
+    AuthReducer: { user: any; waitlist: any[] }
 }) => {
     return {
         user: state.AuthReducer.user,
