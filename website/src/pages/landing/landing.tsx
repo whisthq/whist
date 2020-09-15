@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useEffect, useCallback } from "react"
 import { connect } from "react-redux"
 import TypeWriterEffect from "react-typewriter-effect"
 import { Row, Col, Button } from "react-bootstrap"
 
 import { db } from "utils/firebase"
+import * as firebase from "firebase"
 
 import {
     updateUserAction,
@@ -27,12 +28,10 @@ import Wireframe from "assets/largeGraphics/wireframe.svg"
 import Mountain from "assets/largeGraphics/mountain.svg"
 
 function Landing(props: any) {
-    const { dispatch, user, waitlist } = props
+    const { dispatch, user } = props
 
-    const [, setWaitlist] = useState(waitlist)
-
-    const getInitialRanking = useCallback(
-        (waitlist: string | any[]) => {
+    const getRanking = useCallback(
+        (waitlist: any[]) => {
             for (var i = 0; i < waitlist.length; i++) {
                 if (waitlist[i].email === user.email) {
                     return i + 1
@@ -43,60 +42,74 @@ function Landing(props: any) {
         [user]
     )
 
-    const updateRanking = useCallback(
-        (userData: { [x: string]: any; points?: any; email?: any }) => {
-            // Bubbles user up the leaderboard according to new points
-            for (
-                let currRanking = user.ranking - 1;
-                currRanking > 0 &&
-                userData.points >= waitlist[currRanking - 1].points;
-                currRanking--
-            ) {
-                if (userData.email > waitlist[currRanking - 1].email) {
-                    return currRanking + 1
-                }
-                setWaitlist((originalWaitlist: any[]) => {
-                    var newWaitlist = [...originalWaitlist]
-                    newWaitlist[currRanking] = originalWaitlist[currRanking - 1]
-                    newWaitlist[currRanking - 1] = userData
-                    return newWaitlist
-                })
-            }
-        },
-        [user, waitlist]
-    )
     useEffect(() => {
         console.log("use effect landing")
         var unsubscribe: any
+
+        const updateRanking = (
+            userData: firebase.firestore.DocumentData | undefined,
+            waitlist: any[]
+        ) => {
+            // Bubbles user up the leaderboard according to new points
+            if (userData) {
+                for (
+                    let currRanking = user.ranking - 1;
+                    currRanking > 0 &&
+                    userData.points >= waitlist[currRanking - 1].points;
+                    currRanking--
+                ) {
+                    if (userData.email > waitlist[currRanking - 1].email) {
+                        return currRanking + 1
+                    }
+                }
+            }
+            return -1
+        }
+
         getWaitlist()
             .then((waitlist) => {
-                setWaitlist(waitlist)
                 dispatch(updateWaitlistAction(waitlist))
-                if (user.email && user.ranking === 0) {
-                    const ranking = getInitialRanking(waitlist)
-                    dispatch(updateUserAction(user.points, ranking))
+                if (user.email) {
+                    const ranking = getRanking(waitlist)
+                    if (ranking !== user.ranking) {
+                        dispatch(updateUserAction(user.points, ranking))
+                    }
                 }
+                return waitlist
             })
-            .then(() => {
+            .then((waitlist) => {
                 if (user && user.email) {
                     unsubscribe = db
                         .collection("waitlist")
                         .doc(user.email)
-                        .onSnapshot((doc) => {
-                            console.log("IN SNAPSHOT")
-                            const userData = doc.data()
-                            const ranking = updateRanking(userData)
-                            console.log(ranking)
-                            if (userData && userData.points !== user.points) {
-                                dispatch(
-                                    updateUserAction(userData.points, ranking)
+                        .onSnapshot(
+                            (doc: any) => {
+                                console.log("IN SNAPSHOT")
+                                const userData = doc.data()
+                                const ranking = updateRanking(
+                                    userData,
+                                    waitlist
                                 )
-                            }
-                        })
+                                console.log(ranking)
+                                if (
+                                    userData &&
+                                    userData.points !== user.points &&
+                                    ranking !== -1
+                                ) {
+                                    dispatch(
+                                        updateUserAction(
+                                            userData.points,
+                                            ranking
+                                        )
+                                    )
+                                }
+                            },
+                            (err: Error) => console.log(err)
+                        )
                 }
             })
         return unsubscribe
-    }, [dispatch, user, getInitialRanking, updateRanking])
+    }, [dispatch, user, getRanking])
 
     async function getWaitlist() {
         const waitlist = await db
@@ -104,7 +117,7 @@ function Landing(props: any) {
             .orderBy("points", "desc")
             .orderBy("email")
             .get()
-        return waitlist.docs.map((doc) => doc.data())
+        return waitlist.docs.map((doc: any) => doc.data())
     }
 
     return (
@@ -554,10 +567,9 @@ function Landing(props: any) {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any; waitlist: any } }) {
+function mapStateToProps(state: { AuthReducer: { user: any } }) {
     return {
         user: state.AuthReducer.user,
-        waitlist: state.AuthReducer.waitlist,
     }
 }
 

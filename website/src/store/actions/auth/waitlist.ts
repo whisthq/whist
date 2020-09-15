@@ -5,13 +5,15 @@ export const UPDATE_USER = "UPDATE_USER"
 export function insertWaitlistAction(
     email: string,
     name: string,
-    points: number
+    points: number,
+    ranking: number
 ) {
     return {
         type: INSERT_WAITLIST,
         email,
         name,
         points,
+        ranking,
     }
 }
 

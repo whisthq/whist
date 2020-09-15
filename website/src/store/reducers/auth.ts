@@ -3,7 +3,7 @@ import { AUTH_DEFAULT } from "store/reducers/states"
 import * as WaitlistAction from "store/actions/auth/waitlist"
 import * as LoginAction from "store/actions/auth/login_actions"
 
-export default function (state = AUTH_DEFAULT, action) {
+export default function (state = AUTH_DEFAULT, action: any) {
     switch (action.type) {
         case WaitlistAction.UPDATE_WAITLIST:
             return {
@@ -20,11 +20,13 @@ export default function (state = AUTH_DEFAULT, action) {
                           email: action.email,
                           name: action.name,
                           points: action.points,
+                          ranking: action.ranking,
                       }
                     : {
                           email: action.email,
                           name: action.name,
                           points: action.points,
+                          ranking: action.ranking,
                       },
             }
         case WaitlistAction.UPDATE_USER:
