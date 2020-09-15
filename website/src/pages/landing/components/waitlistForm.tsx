@@ -12,8 +12,8 @@ import "styles/landing.css"
 const INITIAL_POINTS = 10
 
 function WaitlistForm(props: any) {
-    const [email, setEmail] = useState()
-    const [name, setName] = useState()
+    const [email, setEmail] = useState("")
+    const [name, setName] = useState("")
     const [country, setCountry] = useState("United States")
     const [, setReferralCode] = useState()
 
@@ -42,7 +42,7 @@ function WaitlistForm(props: any) {
 
     async function insertWaitlist() {
         var emails = db.collection("waitlist").where("email", "==", email)
-        const exists = await emails.get().then(function (snapshot) {
+        const exists = await emails.get().then(function (snapshot: any) {
             return !snapshot.empty
         })
 
@@ -57,7 +57,7 @@ function WaitlistForm(props: any) {
                 })
                 .then(() =>
                     props.dispatch(
-                        insertWaitlistAction(email, name, INITIAL_POINTS)
+                        insertWaitlistAction(email, name, INITIAL_POINTS, 0)
                     )
                 )
         }
