@@ -175,7 +175,7 @@ void PrintMonitors() {
     for (i = 0; i < num_adapters; i++) {
         DXGI_ADAPTER_DESC1 desc;
         hr = adapters[i]->lpVtbl->GetDesc1(adapters[i], &desc);
-        LOG_WARNING("Adapter %d: %S", i, desc.Description);
+        LOG_INFO("Adapter %d: %S", i, desc.Description);
     }
 
     LOG_INFO("Monitor Info:");
