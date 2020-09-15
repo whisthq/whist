@@ -109,7 +109,7 @@ function WaitlistForm(props: any) {
                         opacity: email && name && country ? 1.0 : 0.5,
                     }}
                 >
-                    Submit
+                    REQUEST ACCESS
                 </Button>
             </div>
         </div>

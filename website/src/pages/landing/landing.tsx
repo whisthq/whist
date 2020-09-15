@@ -12,11 +12,13 @@ import {
 } from "store/actions/auth/waitlist"
 
 import "styles/landing.css"
+import "styles/shared.css"
 
 import WaitlistForm from "pages/landing/components/waitlistForm"
 import CountdownTimer from "pages/landing/components/countdown"
 import Leaderboard from "pages/landing/components/leaderboard"
 import Actions from "pages/landing/components/actions"
+import Testimonial from "pages/landing/components/testimonial"
 
 import LaptopAwe from "assets/largeGraphics/laptopAwe.svg"
 import Moon from "assets/largeGraphics/moon.svg"
@@ -118,6 +120,13 @@ function Landing(props: any) {
             .orderBy("email")
             .get()
         return waitlist.docs.map((doc: any) => doc.data())
+    }
+
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+        })
     }
 
     return (
@@ -234,7 +243,6 @@ function Landing(props: any) {
                         marginBottom: 20,
                         color: "white",
                         textAlign: "center",
-                        width: 800,
                     }}
                 >
                     <div
@@ -248,7 +256,7 @@ function Landing(props: any) {
                             textStyle={{
                                 fontFamily: "Maven Pro",
                                 color: "#00D4FF",
-                                fontSize: 70,
+                                fontSize: "calc(32px + 2.2vw)",
                                 fontWeight: "bold",
                                 marginTop: 10,
                             }}
@@ -260,8 +268,8 @@ function Landing(props: any) {
                         />
                         <div
                             style={{
+                                fontSize: "calc(32px + 2.2vw)",
                                 fontWeight: "bold",
-                                fontSize: 70,
                                 paddingBottom: 40,
                             }}
                         >
@@ -269,22 +277,20 @@ function Landing(props: any) {
                             <span style={{ color: "#00D4FF" }}>faster</span>.
                         </div>
                     </div>
-                    <div
+                    <p
                         style={{
-                            fontSize: 15,
-                            width: 600,
+                            width: 650,
                             margin: "auto",
-                            lineHeight: 1.55,
+                            lineHeight: 1.6,
                             color: "#EFEFEF",
-                            letterSpacing: 1,
+                            letterSpacing: 1.5,
                         }}
                     >
                         Fractal uses cloud streaming to supercharge your
-                        laptop's applications. <br /> Say goodbye to laggy apps
-                        — join our waitlist before the countdown ends for
-                        access.
-                    </div>
-                    <div style={{ marginTop: 50 }}>
+                        laptop's applications. Say goodbye to laggy apps — join
+                        our waitlist before the countdown ends for access.
+                    </p>
+                    <div style={{ marginTop: 70 }}>
                         <WaitlistForm />
                     </div>
                 </div>
@@ -312,20 +318,20 @@ function Landing(props: any) {
                         <img src={Wireframe} alt="" style={{ width: "100%" }} />
                     </Col>
                     <Col md={5} style={{ paddingLeft: 40 }}>
-                        <div
+                        <h2
                             style={{
-                                fontSize: 50,
                                 fontWeight: "bold",
                                 lineHeight: 1.2,
                             }}
                         >
                             Run demanding apps on any computer or tablet
-                        </div>
-                        <div style={{ marginTop: 40 }}>
+                        </h2>
+                        <p style={{ marginTop: 40 }}>
                             Fractal is like Google Stadia for creative and
                             productivity apps. With Fractal, you can run VSCode
-                            on an iPad or create 3D animations on a Chromebook.
-                        </div>
+                            on an iPad or create 3D animations on a Chromebook
+                            using 10x less RAM and processing power.
+                        </p>
                     </Col>
                 </Row>
             </div>
@@ -339,168 +345,58 @@ function Landing(props: any) {
                                 justifyContent: "space-between",
                                 background: "rgba(221, 165, 248, 0.2)",
                                 borderRadius: 5,
+                                marginBottom: 25,
                             }}
                         >
-                            <div
+                            <h2
                                 style={{
-                                    fontSize: 35,
                                     fontWeight: "bold",
                                     lineHeight: 1.3,
                                 }}
                             >
                                 Q:
-                            </div>
-                            <div style={{ width: 25 }}></div>
+                            </h2>
+                            <div style={{ width: 35 }}></div>
                             <div>
-                                <div
+                                <h2
                                     style={{
-                                        fontSize: 35,
                                         fontWeight: "bold",
                                         lineHeight: 1.3,
                                         paddingBottom: 10,
                                     }}
                                 >
                                     How can I be invited to try Fractal?
-                                </div>
-                                <div style={{ paddingTop: 20 }}>
+                                </h2>
+                                <p style={{ paddingTop: 20 }}>
                                     When the countdown hits zero, we’ll invite{" "}
                                     <strong>20 people</strong> from the waitlist
                                     with the most compelling{" "}
                                     <strong>100-word submission</strong> on why
                                     they want Fractal to receive 1:1 onboarding.
-                                    We'll also invite the top{" "}
-                                    <strong>20 people</strong> with the
-                                </div>
+                                    We'll also invite the{" "}
+                                    <strong>top 20</strong> people on the
+                                    leaderboard, which you can climb by
+                                    referring friends.
+                                </p>
                             </div>
                         </div>
-                        <div
-                            style={{
-                                padding: "5px 30px",
-                                background: "rgba(172, 207, 231, 0.2)",
-                                borderRadius: 5,
-                                marginTop: 25,
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontWeight: "bold",
-                                    fontSize: 125,
-                                    height: 120,
-                                }}
-                            >
-                                "
-                            </div>
-                            <div>
-                                F*CKING AMAZING ... tried Minecraft VR - it was
-                                buttery smooth with almost no detectable
-                                latency. Never thought it would work this well.
-                            </div>
-                            <div
-                                style={{
-                                    fontWeight: "bold",
-                                    fontSize: 125,
-                                    textAlign: "right",
-                                    height: 100,
-                                    position: "relative",
-                                    bottom: 20,
-                                }}
-                            >
-                                "
-                            </div>
-                            <div style={{ position: "relative", bottom: 30 }}>
-                                <div style={{ fontWeight: "bold" }}>
-                                    Sean S.
-                                </div>
-                                <div style={{ fontSize: 12 }}>
-                                    Designer + VR user
-                                </div>
-                            </div>
-                        </div>
+                        <Testimonial
+                            text="F*CKING AMAZING ... tried Minecraft VR - it was buttery smooth with almost no detectable latency. Never thought it would work this well."
+                            title="Sean S."
+                            subtitle="Designer + VR user"
+                        />
                     </Col>
                     <Col md={6}>
-                        <div
-                            style={{
-                                background: "rgba(172, 207, 231, 0.2)",
-                                padding: "5px 30px",
-                                borderRadius: 5,
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontWeight: "bold",
-                                    fontSize: 125,
-                                    height: 120,
-                                }}
-                            >
-                                "
-                            </div>
-                            <div>
-                                Woah! What you've developed is something I've
-                                been dreaming of for years now... this is a
-                                MASSIVE game changer for people that do the kind
-                                of work that I do.
-                            </div>
-                            <div
-                                style={{
-                                    fontWeight: "bold",
-                                    fontSize: 125,
-                                    textAlign: "right",
-                                    height: 100,
-                                    position: "relative",
-                                    bottom: 20,
-                                }}
-                            >
-                                "
-                            </div>
-                            <div style={{ position: "relative", bottom: 30 }}>
-                                <div style={{ fontWeight: "bold" }}>
-                                    Brian M.
-                                </div>
-                                <div style={{ fontSize: 12 }}>Animator</div>
-                            </div>
-                        </div>
-                        <div
-                            style={{
-                                padding: "5px 30px",
-                                background: "rgba(172, 207, 231, 0.2)",
-                                borderRadius: 5,
-                                marginTop: 25,
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontWeight: "bold",
-                                    fontSize: 125,
-                                    height: 120,
-                                }}
-                            >
-                                "
-                            </div>
-                            <div>
-                                [Fractal] is an immense project with a fantastic
-                                amount of potential.
-                            </div>
-                            <div
-                                style={{
-                                    fontWeight: "bold",
-                                    fontSize: 125,
-                                    textAlign: "right",
-                                    height: 100,
-                                    position: "relative",
-                                    bottom: 20,
-                                }}
-                            >
-                                "
-                            </div>
-                            <div style={{ position: "relative", bottom: 30 }}>
-                                <div style={{ fontWeight: "bold" }}>
-                                    Jonathan H.
-                                </div>
-                                <div style={{ fontSize: 12 }}>
-                                    Software developer + gamer
-                                </div>
-                            </div>
-                        </div>
+                        <Testimonial
+                            text="Woah! What you've developed is something I've been dreaming of for years now... this is a MASSIVE game changer for people that do the kind of work that I do."
+                            title="Brian M."
+                            subtitle="Animator"
+                        />
+                        <Testimonial
+                            text="[Fractal] is an immense project with a fantastic amount of potential."
+                            title="Jonathan H."
+                            subtitle="Software developer + gamer"
+                        />
                     </Col>
                 </Row>
             </div>
@@ -537,30 +433,22 @@ function Landing(props: any) {
                             textAlign: "left",
                         }}
                     >
-                        <div
+                        <h2
                             style={{
                                 fontSize: 40,
                                 fontWeight: "bold",
                                 lineHeight: 1.4,
                             }}
                         >
-                            Give my computer superpowers.
-                        </div>
-                        <div style={{ marginTop: 20 }}>
+                            Give my applications superpowers.
+                        </h2>
+                        <p style={{ marginTop: 20 }}>
                             Run the most demanding applications from my device
-                            without eating up your RAM or processing power, all
-                            on 1GB datacenter internet.
-                        </div>
-                        <Button
-                            style={{
-                                marginTop: 30,
-                                background: "#1C2A45",
-                                fontWeight: "bold",
-                                border: "none",
-                                padding: "10px 40px",
-                            }}
-                        >
-                            I Want Access
+                            using 10x less RAM and processing power, all on
+                            gigabyte datacenter Internet.
+                        </p>
+                        <Button className="access-button" onClick={scrollToTop}>
+                            REQUEST ACCESS
                         </Button>
                     </div>
                 </div>

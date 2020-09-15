@@ -10,3 +10,27 @@ div,
 html {
     font-family: "Maven Pro" !important;
 }
+
+h1 {
+    font-size: calc(32px + 2.2vw);
+}
+
+h2 {
+    font-size: calc(30px + 1.1vw) !important;
+}
+
+p {
+    font-size: calc(14px + 0.25vw);
+    letter-spacing: 1px;
+    line-height: 1.6;
+}
+
+@media only screen and (max-width: 720px) {
+    h1 {
+        font-size: 38px;
+    }
+
+    h2 {
+        font-size: 30px !important;
+    }
+}

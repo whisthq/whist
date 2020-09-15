@@ -48,7 +48,7 @@ option {
     border-radius: 5px;
     background-color: #1c2a45;
     border: none;
-    padding: 20px 20px;
+    padding: 0px 20px;
     outline: none;
     margin: 0px;
 }
@@ -57,7 +57,7 @@ option {
     width: 100%;
     border: none;
     outline: none;
-    padding: 20px;
+    padding: 15px 20px;
     border-radius: 5px;
     background: #00d4ff !important;
     color: white;
@@ -158,4 +158,20 @@ option {
 
 .action:hover {
     cursor: pointer;
+}
+
+.access-button {
+    margin-top: 30px;
+    background: #1c2a45 !important;
+    font-weight: bold;
+    border: none;
+    padding: 10px 40px;
+    font-size: calc(14px + 0.25vw);
+    outline: none !important;
+    border: none;
+}
+
+.access-button:hover {
+    background: #00d4ff !important;
+    outline: none !important;
 }
