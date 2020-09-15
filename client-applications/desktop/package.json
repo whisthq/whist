@@ -111,6 +111,7 @@
         "@typeform/embed": "^0.16.0",
         "app-root-dir": "^1.0.2",
         "app-root-path": "^3.0.0",
+        "bl": "^2.2.1",
         "chokidar": "3",
         "connected-react-router": "^6.6.1",
         "core-js": "^3",
