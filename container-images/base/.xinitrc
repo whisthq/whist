@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-openbox &
+i3 &
 
 # exec gimp
 
