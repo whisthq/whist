@@ -11,7 +11,6 @@ export default function (state = AUTH_DEFAULT, action: any) {
                 waitlist: action.waitlist,
             }
         case WaitlistAction.INSERT_WAITLIST:
-            console.log(action)
             return {
                 ...state,
                 user: state.user

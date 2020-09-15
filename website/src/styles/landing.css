@@ -63,10 +63,8 @@ option {
     color: white;
     font-weight: bold;
     text-transform: uppercase;
-}
-
-.waitlist-button:hover {
-    cursor: pointer;
+    height: 100%;
+    z-index: 101 !important;
 }
 
 .banner-background {

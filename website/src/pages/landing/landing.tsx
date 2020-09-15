@@ -36,7 +36,6 @@ function Landing(props: any) {
     )
 
     useEffect(() => {
-        console.log("use effect landing")
         var unsubscribe: any
 
         const updateRanking = (
@@ -77,7 +76,6 @@ function Landing(props: any) {
                         .doc(user.email)
                         .onSnapshot(
                             (doc: any) => {
-                                console.log("IN SNAPSHOT")
                                 const userData = doc.data()
                                 const ranking = updateRanking(
                                     userData,

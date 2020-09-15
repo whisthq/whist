@@ -12,11 +12,14 @@ html {
 }
 
 h1 {
-    font-size: calc(32px + 2.2vw);
+    font-size: calc(32px + 2.2vw) !important;
+    font-weight: bold !important;
 }
 
 h2 {
     font-size: calc(30px + 1.1vw) !important;
+    font-weight: bold !important;
+    letter-spacing: 1.2px !important;
 }
 
 p {

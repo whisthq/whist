@@ -185,14 +185,20 @@ function TopView(props: any) {
                     width: "45vw",
                     position: "relative",
                     bottom: 60,
-                    zIndex: 100,
+                    zIndex: 90,
                     textAlign: "center",
+                    pointerEvents: "none",
                 }}
             >
                 <img
                     src={LaptopAwe}
                     alt=""
-                    style={{ maxWidth: 1000, width: "100%", zIndex: 100 }}
+                    style={{
+                        maxWidth: 1000,
+                        width: "100%",
+                        zIndex: 90,
+                        pointerEvents: "none",
+                    }}
                 />
             </div>
         </div>
