@@ -1029,7 +1029,7 @@ class MainBox extends Component {
                         style={{
                             position: "relative",
                             width: 900,
-                            height: 490,
+                            height: 460,
                             borderRadius: 5,
                             boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.2)",
                             background: "white",
@@ -1320,17 +1320,19 @@ class MainBox extends Component {
                                 </div>
                             </div>
                         </div>
-                        <div style={{ padding: "30px 30px", marginBottom: 30 }}>
-                            <div style={{ float: "right" }}>
-                                <button
-                                    onClick={this.ExitSettings}
-                                    className={styles.signupButton}
-                                    style={{ borderRadius: 5, width: 140 }}
-                                >
-                                    Save &amp; Exit
-                                </button>
-                            </div>
-                        </div>
+                    </div>
+                    <div style={{ width: 900, marginTop: 20 }}>
+                        <button
+                            onClick={this.ExitSettings}
+                            className={styles.signupButton}
+                            style={{
+                                borderRadius: 5,
+                                width: 140,
+                                float: "right",
+                            }}
+                        >
+                            Save &amp; Exit
+                        </button>
                     </div>
                 </div>
             );
