@@ -59,6 +59,10 @@ function ExampleComponent(props: any)
 
 For consistency, the use of functional React components is enforced across the repo.
 
+### Inline vs. Separate Styling
+
+We do not have a preference for inline vs. separate CSS styling, with the exception of repeated CSS code, in which case we strongly encourage that a CSS class be created. All modifications to default HTML tags (e.g. `div`, `h1`, etc.) should be done in `styles/shared.css`. Every page has its own corresponding `.css` file; all other CSS should go there.
+
 ### Naming
 
 For consistency, we enforce all folder, variable, and file names to start with lowercase letters. If a name has multiple words (e.g. "landing page"), we format it as one word, where the first word is lowercased and the subsequent words are capitalized (e.g. `landingPage`). The one exception to the lowercase rule are component names, which are all uppercased; for instance, `import ExampleComponent from pages/ExamplePage/components/exampleComponent`.
@@ -106,6 +110,36 @@ EXAMPLE_STATE = {
 We currently use Firebase, so there is no need for many API calls.
 
 When we switch to SQL, whenever possible, we encourage the use of GraphQL instead of writing new server endpoints for the sake of simplicity and coding speed. The only time when we should be writing and calling server endpoints is if we are performing server-side operations that involve more than database operations; for example, an API call to create an ECS container.
+
+## UI Design Philosophy
+
+### Screen Compatibility
+
+We require all front-end code pushed to staging be tested for compatability on both mobile and normal laptop (13-15 inch) screens, and that all code pushed into production be tested for compatability on large screens (up to 27 inch monitors) and ultrawide panels (1440p 21:9 aspect ratios). We use two types of conditional CSS styling: inline conditional styling
+
+```
+<div style = {{fontSize: state.width > 720 ? 30 : 20}}>
+  Conditional font size
+</div>
+```
+
+and separate conditional CSS styling
+
+```
+.myClass {
+  font-size: 30px;
+}
+
+@media only screen and (max-width: 720px) {
+  .myClass {
+    font-size: 20px;
+  }
+}
+```
+
+### Images
+
+For the best image quality, we require that all images and icons be `.svg` files. You can easily create SVG or convert images to `.svg` in Figma; simply highlight the asset(s) you wish to export, right click, and Select Export > Copy to SVG.
 
 ## Contributing
 
