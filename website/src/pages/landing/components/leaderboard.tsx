@@ -11,6 +11,7 @@ const Leaderboard = (props: {
     const [topSix, setTopSix]: any[] = useState([])
 
     useEffect(() => {
+        console.log(props.waitlist)
         setTopSix(props.waitlist ? props.waitlist.slice(0, 6) : [])
     }, [props.waitlist])
 
