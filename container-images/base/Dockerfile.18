@@ -10,7 +10,9 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y systemd systemd-sysv \
+    && apt-get install --no-install-recommends -y \
+    systemd=237-3ubuntu10.38 \
+    systemd-sysv=237-3ubuntu10.38 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -29,22 +31,21 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/systemd-update-utmp*
 
 RUN apt-get update && apt-get clean && apt-get install --no-install-recommends -y \
-    x11vnc \
-    xvfb \
-    fluxbox \
-    wmctrl \
-    ca-certificates \
-    wget \
-    gnupg2 \
-    libgbm1 \
-    libxcb-dri3-0 \
-    wget \
-    python \
-    python3 \
-    gnupg2 \
-    sudo \
-    vim \
-    apt-utils \
+    x11vnc=0.9.13-3 \
+    xvfb=2:1.19.6-1ubuntu4.6 \
+    fluxbox=1.3.5-2build1 \
+    wmctrl=1.07-7build1 \
+    ca-certificates=20190110~18.04.1 \
+    wget=1.19.4-1ubuntu2.2 \
+    gnupg2=2.2.4-1ubuntu1.2 \
+    libgbm1=19.2.8-0ubuntu0~18.04.2 \
+    libxcb-dri3-0=1.13-1 \
+    wget=1.19.4-1ubuntu2.2 \
+    python=2.7.15~rc1-1 \
+    python3=3.6.5-3 \
+    sudo=1.8.21p2-3ubuntu1.2 \
+    vim=2:8.0.1453-1ubuntu1.3 \
+    apt-utils=1.6.12ubuntu0.1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -67,17 +68,21 @@ RUN apt-get update && apt-get clean && apt-get install --no-install-recommends -
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# install Google Chrome
 RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
-    && sudo sed -i '3 s/^/# /' /etc/apt/sources.list \
-    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable \
+    && sed -i '3 s/^/# /' /etc/apt/sources.list \
+    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable=85.0.4183.102-1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Avoids interactive installation for tzdata
 # Uses UTC
 ENV LOCAL="yes"
-RUN apt-get install --no-install-recommends -y tzdata keyboard-configuration ufw \
+RUN apt-get install --no-install-recommends -y \
+    tzdata \ 
+    keyboard-configuration \
+    ufw \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -91,11 +96,11 @@ RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \
     && echo 'fractal:password1234567.' | chpasswd
 
-RUN apt-get install --no-install-recommends -y lsb-release \
+RUN apt-get install --no-install-recommends -y lsb-release=9.20170808ubuntu1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install --no-install-recommends -y pulseaudio \
+RUN apt-get install --no-install-recommends -y pulseaudio=1:11.1-1ubuntu7.10 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -132,7 +137,16 @@ RUN /bin/bash -c " source utils.sh \
 WORKDIR /
 
 #From protocol/server/linux-server-setup.sh
-RUN sudo apt-get install --no-install-recommends -y ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils \
+RUN apt-get install --no-install-recommends -y \
+    ffmpeg \
+    libavcodec-dev \
+    libavdevice-dev \
+    libx11-dev \
+    libxtst-dev \
+    libxdamage-dev \
+    libasound2-dev \
+    xclip \
+    x11-xserver-utils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -140,7 +154,7 @@ COPY entry.sh /home/fractal
 COPY display-service-envs /home/fractal
 COPY fractal-input.rules home/fractal
 
-RUN sudo apt-get install --no-install-recommends -y openssh-server \
+RUN apt-get install --no-install-recommends -y openssh-server=1:7.6p1-4ubuntu0.3 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -164,17 +178,17 @@ RUN mkdir -p /opt/nvidia/lib && \
 ENV PATH /usr/local/nvidia/bin:${PATH}
 ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
 
-RUN sudo apt-get --no-install-recommends -y install "linux-headers-$(uname -r)" \
+RUN apt-get --no-install-recommends -y install "linux-headers-$(uname -r)" \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 ENV distribution $(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
-RUN sudo mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc/apt/preferences.d/cuda-repository-pin-600
-RUN sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub
+RUN mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc/apt/preferences.d/cuda-repository-pin-600
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub
 RUN echo "deb http://developer.download.nvidia.com/compute/cuda/repos/'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
-RUN sudo apt-get -y update
-RUN sudo apt-get --no-install-recommends -y install cuda-drivers \
+RUN apt-get -y update
+RUN apt-get --no-install-recommends -y install cuda-drivers \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -190,12 +204,20 @@ RUN systemctl enable fractal-update-nvidia-busid
 ENV DISPLAY :10
 
 # Install libraries for (limited) hardware acceleration
-RUN apt-get install --no-install-recommends -y vainfo vdpauinfo vdpau-va-driver libvdpau-va-gl1 \
+RUN apt-get install --no-install-recommends -y \
+    vainfo \
+    vdpauinfo \
+    vdpau-va-driver \
+    libvdpau-va-gl1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Install some useful utilities for debugging/testing
-RUN sudo apt-get install --no-install-recommends -y tmux xserver-xorg-video-dummy mesa-utils glmark2 mpv \
+RUN apt-get install --no-install-recommends -y \
+    tmux \
+    xserver-xorg-video-dummy \
+    mesa-utils glmark2 \
+    mpv \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

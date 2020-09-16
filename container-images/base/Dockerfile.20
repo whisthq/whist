@@ -10,7 +10,9 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y systemd systemd-sysv \
+    && apt-get install --no-install-recommends -y \
+    systemd=237-3ubuntu10.38 \
+    systemd-sysv=237-3ubuntu10.38 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -29,31 +31,32 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/systemd-update-utmp*
 
 RUN apt-get update && apt-get clean && apt-get install --no-install-recommends -y \
-    x11vnc \
-    xvfb \
-    fluxbox \
-    wmctrl \
-    wget \
-    gnupg2 \
-    libgbm1 \
-    libxcb-dri3-0 \
-    wget \
-    python \
-    python3 \
-    gnupg2 \
-    sudo \
-    vim \
-    apt-utils \
+    x11vnc=0.9.13-3 \
+    xvfb=2:1.19.6-1ubuntu4.6 \
+    fluxbox=1.3.5-2build1 \
+    wmctrl=1.07-7build1 \
+    gnupg2=2.2.4-1ubuntu1.2 \
+    libgbm1=19.2.8-0ubuntu0~18.04.2 \
+    libxcb-dri3-0=1.13-1 \
+    wget=1.19.4-1ubuntu2.2 \
+    python=2.7.15~rc1-1 \
+    python3=3.6.5-3 \
+    sudo=1.8.21p2-3ubuntu1.2 \
+    vim=2:8.0.1453-1ubuntu1.3 \
+    apt-utils=1.6.12ubuntu0.1 \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
-    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable \
+    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable=85.0.4183.102-1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Avoids interactive installation for tzdata
 # Uses UTC
 ENV LOCAL="yes"
-RUN apt-get install --no-install-recommends -y tzdata keyboard-configuration ufw \
+RUN apt-get install --no-install-recommends -y \
+    tzdata \
+    keyboard-configuration \
+    ufw \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -100,7 +103,16 @@ RUN /bin/bash -c "source utils.sh \
     && Disable-AutomaticLockScreen "
 
 #From protocol/server/linux-server-setup.sh
-RUN sudo apt-get install --no-install-recommends -y ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils \
+RUN apt-get install --no-install-recommends -y \ 
+    ffmpeg \ 
+    libavcodec-dev \
+    libavdevice-dev \
+    libx11-dev \
+    libxtst-dev \
+    libxdamage-dev \
+    libasound2-dev \
+    xclip \
+    x11-xserver-utils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
