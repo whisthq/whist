@@ -83,8 +83,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
             ${ALSA_LIBRARIES}
+            crypto
             m
-            OpenSSL::Crypto
             )
 endif()
 
