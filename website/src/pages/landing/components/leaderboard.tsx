@@ -14,6 +14,33 @@ const Leaderboard = (props: {
         setTopSix(props.waitlist ? props.waitlist.slice(0, 6) : [])
     }, [props.waitlist])
 
+    const renderRow = (
+        idx: number,
+        userRow: boolean,
+        name: string,
+        referrals: number,
+        points: number
+    ): any => {
+        return (
+            <tr className={userRow ? "userRow" : ""}>
+                <td className="rankingColumn">
+                    <div className="topThree">{idx}</div>
+                </td>
+                <td className="nameColumn">
+                    <div style={{ position: "relative", top: 7 }}>{name}</div>
+                </td>
+                <td>
+                    <div style={{ position: "relative", top: 7 }}>
+                        {referrals}
+                    </div>
+                </td>
+                <td className="pointsColumn">
+                    <div style={{ position: "relative", top: 7 }}>{points}</div>
+                </td>
+            </tr>
+        )
+    }
+
     const getRows = () => {
         const topThree = topSix.slice(0, 3)
         if (!props.waitlist) {
@@ -22,36 +49,22 @@ const Leaderboard = (props: {
             const bottomThree = topSix.slice(3, 6)
             return topThree
                 .map((user: any, idx: number) => {
-                    return (
-                        <tr
-                            className={
-                                idx + 1 === props.user.ranking ? "userRow" : ""
-                            }
-                        >
-                            <td className="rankingColumn">
-                                <div className="topThree">{idx + 1}</div>
-                            </td>
-                            <td className="nameColumn">{user.name}</td>
-                            <td>{user.referrals}</td>
-                            <td className="pointsColumn">{user.points}</td>
-                        </tr>
+                    return renderRow(
+                        idx + 1,
+                        idx + 1 === props.user.ranking,
+                        user.name,
+                        user.referrals,
+                        user.points
                     )
                 })
                 .concat(
                     bottomThree.map((user: any, idx: number) => {
-                        return (
-                            <tr
-                                className={
-                                    idx + 4 === props.user.ranking
-                                        ? "userRow"
-                                        : ""
-                                }
-                            >
-                                <td className="rankingColumn">{idx + 4}</td>
-                                <td className="nameColumn">{user.name}</td>
-                                <td>{user.referrals}</td>
-                                <td className="pointsColumn">{user.points}</td>
-                            </tr>
+                        return renderRow(
+                            idx + 4,
+                            idx + 4 === props.user.ranking,
+                            user.name,
+                            user.referrals,
+                            user.points
                         )
                     })
                 )
@@ -59,28 +72,22 @@ const Leaderboard = (props: {
             const bottomThree = props.waitlist.slice(-3)
             return topThree
                 .map((user: any, idx: number) => {
-                    return (
-                        <tr>
-                            <td className="rankingColumn">
-                                <div className="topThree">{idx + 1}</div>
-                            </td>
-                            <td className="nameColumn">{user.name}</td>
-                            <td>{user.referrals}</td>
-                            <td className="pointsColumn">{user.points}</td>
-                        </tr>
+                    return renderRow(
+                        idx + 1,
+                        false,
+                        user.name,
+                        user.referrals,
+                        user.points
                     )
                 })
                 .concat(
                     bottomThree.map((user: any, idx: number) => {
-                        return (
-                            <tr className={idx === 2 ? "userRow" : ""}>
-                                <td className="rankingColumn">
-                                    {props.user.ranking - 2 + idx}
-                                </td>
-                                <td className="nameColumn">{user.name}</td>
-                                <td>{user.referrals}</td>
-                                <td className="pointsColumn">{user.points}</td>
-                            </tr>
+                        return renderRow(
+                            props.user.ranking - 2 + idx,
+                            idx === 2,
+                            user.name,
+                            user.referrals,
+                            user.points
                         )
                     })
                 )
@@ -91,63 +98,61 @@ const Leaderboard = (props: {
             )
             return topThree
                 .map((user: any, idx: number) => {
-                    return (
-                        <tr>
-                            <td className="rankingColumn">
-                                <div className="topThree">{idx + 1}</div>
-                            </td>
-                            <td className="nameColumn">{user.name}</td>
-                            <td>{user.referrals}</td>
-                            <td className="pointsColumn">{user.points}</td>
-                        </tr>
+                    return renderRow(
+                        idx + 1,
+                        false,
+                        user.name,
+                        user.referrals,
+                        user.points
                     )
                 })
                 .concat(
                     bottomThree.map((user: any, idx: number) => {
-                        return (
-                            <tr className={idx === 1 ? "userRow" : ""}>
-                                <td className="rankingColumn">
-                                    {props.user.ranking - 1 + idx}
-                                </td>
-                                <td className="nameColumn">{user.name}</td>
-                                <td>{user.referrals}</td>
-                                <td className="pointsColumn">{user.points}</td>
-                            </tr>
+                        return renderRow(
+                            props.user.ranking - 1 + idx,
+                            idx === 1,
+                            user.name,
+                            user.referrals,
+                            user.points
                         )
                     })
                 )
         }
     }
+
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                marginTop: "9vh",
-            }}
-        >
+        <div className="leaderboard-container">
             <h1
                 style={{
                     fontWeight: "bold",
-                    color: "white",
+                    color: "#111111",
                     marginBottom: "30px",
                     fontSize: "40px",
                 }}
             >
                 Leaderboard
             </h1>
-            <Table>
-                <thead>
-                    <tr>
-                        <th className="rankingColumn">Ranking</th>
-                        <th>Name</th>
-                        <th>Referrals</th>
-                        <th className="pointsColumn">Points</th>
-                    </tr>
-                </thead>
-                <tbody>{getRows()}</tbody>
-            </Table>
+            <div
+                style={{
+                    overflowY: "scroll",
+                    maxHeight: 550,
+                    width: "100%",
+                    borderRadius: 10,
+                    boxShadow: "0px 4px 30px rgba(0, 0, 0, 0.1)",
+                }}
+            >
+                <Table>
+                    <thead>
+                        <tr>
+                            <th style={{ paddingLeft: 50 }}></th>
+                            <th>Name</th>
+                            <th>Referrals</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>{getRows()}</tbody>
+                </Table>
+            </div>
         </div>
     )
 }

@@ -88,15 +88,14 @@ option {
 .table {
     width: 100%;
     margin: auto;
-    background-color: #0d0f34;
-    color: #c9c9f5;
+    background-color: #26274b;
+    color: #efefef;
     border-collapse: collapse;
     text-align: left;
-    border-radius: 10px !important;
 }
 
 .table thead {
-    background-color: #07082b;
+    background-color: #20213d;
     color: #00d4ff;
     border-radius: 10px !important;
     border-style: hidden;
@@ -108,22 +107,24 @@ option {
 
 .table td,
 .table th {
-    padding: 20px;
+    padding: 15px 20px;
+}
+
+thead tr th {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
 }
 
 .topThree {
-    background-color: #00d4ff;
-    height: 25px;
-    width: 25px;
-    color: white;
-    border-radius: 2px;
-    text-align: center;
+    color: #00d4ff;
+    text-align: left;
     font-weight: bold;
-    padding: 1px;
 }
 
 .rankingColumn {
     padding-left: 50px !important;
+    font-size: 25px;
+    width: 150px;
 }
 
 .nameColumn {
@@ -133,10 +134,11 @@ option {
 
 .pointsColumn {
     padding-right: 50px !important;
+    font-weight: bold;
 }
 
 .userRow {
-    background-color: #454e7e;
+    background-color: #5b47d4;
     border-radius: 10px;
     font-weight: bold;
 }
@@ -203,4 +205,23 @@ option {
 .modal-button:hover {
     background: #00d4ff !important;
     outline: none !important;
+}
+
+.leaderboard-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.leaderboard-container ::-webkit-scrollbar {
+    width: 0px;
+}
+
+.leaderboard-container ::-webkit-scrollbar-track {
+    background: #00d4ff;
+    opacity: 0.1;
+}
+
+.leaderboard-container ::-webkit-scrollbar-thumb {
+    background: #00d4ff;
 }
