@@ -148,10 +148,14 @@ RUN apt install -y vainfo vdpauinfo vdpau-va-driver libvdpau-va-gl1
 # Install some useful utilities for debugging/testing
 RUN sudo apt install -y tmux xserver-xorg-video-dummy mesa-utils glmark2 mpv psmisc gimp
 
-# Set up Window manager
+# Set up Window manager with GTK/QT themes
 RUN sudo apt install -y openbox i3 
 ADD i3config /root/.config/i3/config
 RUN sudo apt install -y xclip parcellite
+RUN sudo apt install -y lxappearance gtk-chtheme qt4-qtconfig
+ADD gtk-3-settings.ini /root/.config/gtk-3.0/settings.ini
+ADD qt4-settings.conf /root/.config/Trolltech.conf
+
 
 
 # Install firefox nightly (for testing only)
