@@ -118,6 +118,8 @@ function Landing(props: any) {
             <div
                 style={{
                     padding: 30,
+                    marginTop: 30,
+                    marginBottom: 50,
                 }}
             >
                 <Row>

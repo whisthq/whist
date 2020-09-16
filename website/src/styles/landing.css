@@ -88,15 +88,15 @@ option {
 .table {
     width: 100%;
     margin: auto;
-    background-color: white;
-    color: #333333;
+    background-color: #26274b;
+    color: #efefef;
     border-collapse: collapse;
     text-align: left;
 }
 
 .table thead {
-    background-color: rgba(172, 207, 231, 0.2);
-    color: #111111;
+    background-color: #20213d;
+    color: #00d4ff;
     border-radius: 10px !important;
     border-style: hidden;
 }
@@ -107,20 +107,18 @@ option {
 
 .table td,
 .table th {
-    padding: 30px 20px;
+    padding: 15px 20px;
 }
 
 thead tr th {
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
 }
 
 .topThree {
     color: #00d4ff;
     text-align: left;
     font-weight: bold;
-    position: relative;
-    bottom: 5px;
 }
 
 .rankingColumn {
@@ -130,7 +128,7 @@ thead tr th {
 }
 
 .nameColumn {
-    color: #111111;
+    color: white;
     padding-right: 70px !important;
 }
 
@@ -140,7 +138,7 @@ thead tr th {
 }
 
 .userRow {
-    background-color: #454e7e;
+    background-color: #5b47d4;
     border-radius: 10px;
     font-weight: bold;
 }
