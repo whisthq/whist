@@ -518,7 +518,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the SDL window
-    window = initSDL(output_width, output_height, (char*) program_name);
+    window = initSDL(output_width, output_height, (char*)program_name);
     if (!window) {
         LOG_ERROR("Failed to initialize SDL");
         destroySocketLibrary();

@@ -28,7 +28,7 @@ extern volatile char aes_private_key[16];
 extern volatile char *server_ip;
 extern volatile int output_width;
 extern volatile int output_height;
-extern volatile char* program_name;
+extern volatile char *program_name;
 extern volatile CodecType output_codec_type;
 
 extern volatile int max_bitrate;
@@ -150,8 +150,8 @@ int parseArgs(int argc, char *argv[]) {
                 }
                 break;
             case 'n':
-				program_name = calloc(sizeof(char), strlen(optarg));
-				strcpy((char*) program_name, optarg);
+                program_name = calloc(sizeof(char), strlen(optarg));
+                strcpy((char *)program_name, optarg);
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);

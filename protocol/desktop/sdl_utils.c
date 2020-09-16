@@ -92,10 +92,10 @@ SDL_Window* initSDL(int target_output_width, int target_output_height, char* nam
 
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
-    sdl_window = SDL_CreateWindow((name == NULL ? "Fractal" : name),
-				  SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-				  target_output_width, target_output_height,
-				  SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : windowed_flags));
+    sdl_window = SDL_CreateWindow(
+        (name == NULL ? "Fractal" : name), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        target_output_width, target_output_height,
+        SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : windowed_flags));
 
     if (!is_fullscreen) {
         // Resize event handling
