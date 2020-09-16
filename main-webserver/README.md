@@ -8,7 +8,7 @@ Our webservers and CD pipeline are hosted on Heroku. Our production database is 
 
 Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?cols=core_host%2Ccore_service&from_ts=1593977274176&index=&live=true&messageDisplay=inline&stream_sort=desc&to_ts=1593978174176).
 
-## Development
+## Getting Started
 
 ### Local Setup
 
@@ -49,46 +49,25 @@ By default, hot-reloading of the Flask web server and Celery task queue is enabl
 
 ### Heroku Setup
 
-[ Deprecated, talk about pipeline ]
+For continuous integration and delivery, we leverage Heroku pipelines, which provides us with automated PR testing, isolation of environment variables, promotion/rollbacks, and auto-deploys from Github. Contributors should NOT push code to Heroku; only code owners are expected to do this. Instead, contributors should PR their changes into the appropriate Github branch (most often `master`).
 
-To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. Make sure you are added as a collaborator to any of the Heroku apps you plan to use. You can contact Ming, Phil, or Jonathan to be added.
+While our Heroku pipeline should not be modified without code owner permission, it is helpful to understand how it works [here](https://www.notion.so/fractalcomputers/Heroku-CI-CD-Pipeline-Webservers-f8ef5b43edc84c969cf005fcac4641ba).
 
-#### Create new Heroku server
+### Software Setup
 
-1. Inside your virtual environment, run the command `heroku create -a [DESIRED HEROKU SERVER NAME]`.
-2. `git checkout` to the branch you want to connect the new server to, and run the command `heroku git:remote -a [HEROKU SERVER NAME] -r [DESIRED LOCAL NICKNAME]`. For instance, if the app you created is called `cube-celery-staging5`, you could run `heroku git:remote -a cube-celery-staging5 -r staging5`.
-3. To transfer the environment variables over automatically, run the command `heroku config -s -a [EXISTING SERVER] > config.txt` and then `cat config.txt | tr '\n' ' ' | xargs heroku config:set -a [HEROKU SERVER NAME]`. Note that you need to be on a Mac or Linux computer to run the second command; I could not find a suitable workaround for Windows.
-4. Copy the environment variables locally by running `heroku config -s -a [HEROKU SERVER NAME]` >> .env`
-5. Install a Redis task Queue by going to the Heroku dashboard, finding the app you created, and navigating to Resources > Find More Addons > Heroku Redis. Follow the Heroku setup instructions and select the free plan.
-6. Under the Resources tab, make sure that the "web" and "celery" workers are both toggled on.
-7. All good to go! To push live, commit your branch and type `git push [LOCAL NICKNAME] [BRANCH NAME]:master`. For instance, if my nickname from step 2 is `staging5` and my branch name is `test-branch`, I will do `git push staging5 test-branch:master`.
+We recommend that you download several softwares to help you code and test:
 
-#### [Staging](https://cube-celery-staging.herokuapp.com)
+#### Postman
 
-Add the heroku app as a remote: `git remote add staging https://git.heroku.com/cube-celery-staging.git`  
-We have a secondary heroku staging app if two people want to deploy and test at the same time: `git remote add staging2 https://git.heroku.com/cube-celery-staging2.git`. We also have a tertiary staging app.
+We use Postman to send API requests to our server, to store our API endpoints, and to generate documentation. Our Postman team link is [here](https://app.getpostman.com/join-team?invite_code=29d49d2365850ccfb50fc09723a45a93). If you are not part of the team, contact @mingy98.
 
-To push to the primary staging server, first make sure you’re in the staging branch, then type `git add .`, then `git commit -m “COMMIT MESSAGE”`, then finally `git push staging staging:master`. If you are using another branch with name as {branchName}, you push via: `git push staging {branchName}:master`. If you get a git pull error, git pull by typing `git pull staging master` to pull from Heroku or `git pull origin staging` to pull from Github. To view the server logs, type `heroku logs --tail --remote staging`.
+To better understand how Postman works, refer to our wiki [here](https://www.notion.so/fractalcomputers/Postman-API-Documentation-602cc6df23e04cd0a026340c406bd663).
 
-To push to the secondary staging server, the steps are all the same, except you replace the remote with `staging2`.
+#### TablePlus
 
-To push to the Github production/staging repo, run `git add .`, `git commit -m "COMMIT MESSAGE"`, and finally `git push origin staging` to push to the staging repo, and `git push origin master` to push to the production repo.
-
-#### [Production](https://git.heroku.com/cube-celery-vm.git)
-
-To push to the live server, git add and commit and type git push heroku master. (Obviously, DO NOT push to the production server until we’ve all agreed that staging is stable).
-
-Test the webserver by running it on localhost and using Postman to send requests to the localhost address, and if that works, push to staging. To view the server logs, type `heroku logs --tail --app cube-celery-vm`.
-
-#### [SQL Database Scheme](https://pgweb-demo.herokuapp.com/)
-
-Select Scheme, and for the server URL scheme, copy the DATABASE_URL config var found on the Heroku instance.
+We use TablePlus to visualize, search, and modify our SQL database.
 
 ## Testing
-
-We have created a Postman workspace for a variety of API endpionts in vm-webserver, which can be used for testing in the Staging and Staging2 environments.
-
-Postman Team link: https://app.getpostman.com/join-team?invite_code=29d49d2365850ccfb50fc09723a45a93
 
 **Pytest**
 We have pytest tests in the `/tests` folder. To run tests, just run `pytest -o log_cli=true -s` in terminal. To run tests in parallel, run `pytest -o log_cli=true -s -n <num>`, with `<num>` as the # of workers in parallel.
