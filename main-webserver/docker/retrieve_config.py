@@ -32,9 +32,9 @@ args = parser.add_argument(
 args = parser.parse_args()
 
 env_to_app_name = {
-    "staging": "cube-celery-staging",
+    "main-like": "main-like-webserver",
     "production": "main-webserver",
-    "reorganization": "cube-celery-staging4",
+    "staging": "staging-webserver",
 }
 app_name = env_to_app_name.get(args.env, args.env)
 heroku_proc = subprocess.run(
@@ -55,7 +55,6 @@ env_config = json.loads(heroku_proc.stdout.decode("utf-8"))
 # ```
 useful_env_vars = [
     "CONFIG_DB_URL",
-    "CONFIG_SECRET_KEY",
     "DASHBOARD_PASSWORD",
     "DASHBOARD_USERNAME",
     "PROD_DB_URL",
