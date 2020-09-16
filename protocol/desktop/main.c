@@ -64,6 +64,7 @@ volatile int ping_failures;
 
 volatile int output_width;
 volatile int output_height;
+volatile char* program_name = NULL;
 volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 int time_to_run_ci = 300;  // Seconds to run CI tests for
@@ -530,7 +531,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the SDL window
-    window = initSDL(output_width, output_height);
+    window = initSDL(output_width, output_height, (char*)program_name);
     if (!window) {
         LOG_ERROR("Failed to initialize SDL");
         destroySocketLibrary();
