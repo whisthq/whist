@@ -64,6 +64,8 @@ useful_env_vars = [
 ]
 
 useful_config = {k: env_config.get(k) for k in useful_env_vars}
+useful_config["HOT_RELOAD"] = "true"
+
 try:
     with open(args.base_config) as f:
         base_config = json.load(f)
