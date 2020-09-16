@@ -156,6 +156,7 @@ int parseArgs(int argc, char *argv[]) {
                 break;
             case 'e':
                 strcpy(sentry_environment, optarg);
+                break;
             case 'z':
                 if (!strcmp(optarg, "STUN")) {
                     using_stun = true;
