@@ -235,7 +235,7 @@ def computerReadyHelper(user, date, code, location):
     return jsonify({"status": SUCCESS}), SUCCESS
 
 def joinWaitlistHelper(email, name, date):
-    title = "Success! You've Joined the Waitlist"
+    title = "Congrats! You're on the waitlist."
 
     internal_message = SendGridMail(
         from_email="support@fractalcomputers.com",
