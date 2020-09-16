@@ -41,7 +41,7 @@ Public Functions
  * @returns                        NULL if fails to create SDL window, else it
  *                                 returns the SDL window variable
  */
-SDL_Window* initSDL(int output_width, int output_height);
+SDL_Window* initSDL(int output_width, int output_height, char* name);
 
 /**
  * @brief                          Destroys an SDL window and associated
