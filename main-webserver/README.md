@@ -19,7 +19,7 @@ Currently, the full environment is only partially replicated, so `retrieve_confi
 #### 1. Retrieve Environment Variables
 
 
-First, ensure that the CLI tool `heroku` is installed and logged in. Next, use `retrieve_config.py`. It provides a `-h` help menu for understanding parameters. On Mac/Linux, run
+First, ensure that the CLI tool `heroku`, and then type `heroku login` to log in (if you're not already logged in). Next, use `retrieve_config.py`. It provides a `-h` help menu for understanding parameters. On Mac/Linux, run
 
 ```sh
 ./retrieve_config.py staging
