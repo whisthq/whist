@@ -73,13 +73,12 @@ const Actions = (props: { user: { email: any }; loggedIn: any }) => {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "flex-start",
-                marginTop: "9vh",
             }}
         >
             <h1
                 style={{
                     fontWeight: "bold",
-                    color: "white",
+                    color: "#111111",
                     marginBottom: "30px",
                     fontSize: "40px",
                 }}

@@ -118,16 +118,13 @@ function Landing(props: any) {
             <div
                 style={{
                     padding: 30,
-                    marginTop: 100,
-                    background: "#0d1d3c",
-                    minHeight: "100vh",
                 }}
             >
                 <Row>
-                    <Col md={6}>
+                    <Col md={8}>
                         <Leaderboard />
                     </Col>
-                    <Col md={6}>
+                    <Col md={4}>
                         <Actions />
                     </Col>
                 </Row>
