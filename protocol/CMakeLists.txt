@@ -102,18 +102,6 @@ else()
     endif()
 endif()
 
-#download latest sentry release
-# example on how we would automate this. We are currently running get_latest_sentry.py on its own
-# because we need to use an authenticated API call and passing the github token around from githubactions
-# to cmake to python is more trouble than it is worth.
-#MESSAGE(STATUS "Downloading sentry-native from GitHub")
-#execute_process(COMMAND python3 get_latest_sentry.py
-#        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-#        RESULT_VARIABLE download_res)
-#if (NOT ${download_res} EQUAL "0")
-#    message(FATAL_ERROR "Failed to download sentry-native from GitHub: exitcode: ${download_res}")
-#endif()
-
 # FFmpeg: using our provided libs on mac and windows and system on linux.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FFMPEG_LIBS libswresample.3.dylib;libavcodec.58.dylib;libavdevice.58.dylib;libavfilter.7.dylib;
