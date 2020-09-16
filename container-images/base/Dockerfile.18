@@ -48,6 +48,25 @@ RUN apt-get update && apt-get clean && apt-get install --no-install-recommends -
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# install Google Chrome dependencies explicitly
+RUN apt-get update && apt-get clean && apt-get install --no-install-recommends -y \
+    libappindicator3-1 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatspi2.0-0 \
+    libcups2 \
+    libgdk-pixbuf2.0-0 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxi6 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && sudo sed -i '3 s/^/# /' /etc/apt/sources.list \
