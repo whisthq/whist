@@ -57,16 +57,17 @@ def deleteContainer(self, user_id, container_name):
     ecs_client = ECSClient(base_cluster=container_cluster, grab_logs=False)
     ecs_client.add_task(container_name)
     try:
-        ecs_client.stop_task(reason='API triggered task stoppage', offset=0)
-        self.update_state(
+        if not ecs_client.check_if_done(offset=0):
+            ecs_client.stop_task(reason='API triggered task stoppage', offset=0)
+            self.update_state(
             state="PENDING",
             meta={
                 "msg": "Container {container_name} begun stoppage".format(
                     container_name=container_name,
                 )
             },
-        )
-        ecs_client.spin_til_done(offset=0)
+            )
+            ecs_client.spin_til_done(offset=0)
         fractalSQLCommit(db, lambda db, x: db.session.delete(x), container)
     except Exception as e:
         fractalLog(

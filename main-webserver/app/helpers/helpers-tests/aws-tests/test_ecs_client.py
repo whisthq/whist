@@ -6,6 +6,8 @@ from utils.aws.base_ecs_client import ECSClient, boto3
 from moto import mock_ecs, mock_logs, mock_autoscaling, mock_ec2, mock_iam
 
 
+
+
 def test_setup_vpc():
     testclient = ECSClient()
     testclient.set_and_register_task(
@@ -54,7 +56,7 @@ def test_partial_works():
     networkConfiguration = {
         "awsvpcConfiguration": {
             "subnets": ["subnet-0dc1b0c43c4d47945", ],
-            "securityGroups": ["sg-036ebf091f469a23e", ],
+            "securityGroups": ["sg-036ebf091f469a23e", ]
         }
     }
     testclient.run_task(networkConfiguration=networkConfiguration)

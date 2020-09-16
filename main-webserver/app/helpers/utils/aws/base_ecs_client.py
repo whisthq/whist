@@ -629,6 +629,7 @@ class ECSClient:
             container_info = self.ecs_client.describe_container_instances(
                 cluster=self.cluster, containerInstances=[resp['containerInstanceArn']]
             )
+            pprint(container_info['containerInstances'][0])
             ec2_id = container_info['containerInstances'][0]['ec2InstanceId']
             ec2_info = self.ec2_client.describe_instances(InstanceIds=[ec2_id])
             public_ip = ec2_info['Reservations'][0]['Instances'][0].get('PublicIpAddress', -1)
