@@ -58,6 +58,7 @@ class ECSClient:
         starter_iam_client=None,
         starter_auto_scaling_client=None,
         grab_logs=True,
+        mock=False,
     ):
         self.key_id = check_str_param(key_id, "key_id")
         self.region_name = check_str_param(region_name, "region_name")
@@ -78,6 +79,7 @@ class ECSClient:
         self.logs_messages = dict()
         self.warnings = []
         self.cluster = None
+        self.mock = mock
 
         if starter_client is None:
             self.ecs_client = self.make_client("ecs")
@@ -110,46 +112,47 @@ class ECSClient:
             self.auto_scaling_client = starter_auto_scaling_client
         self.set_cluster(cluster_name=base_cluster)
 
-        self.role_name = 'role_name_abcymbdzwl'
-        # Create role and instance profile that allows containers to use SSM, S3, and EC2
-        # self.role_name = self.generate_name('role_name')
-        # assume_role_policy_document = {
-        #     "Version": "2012-10-17",
-        #     "Statement": [
-        #         {
-        #             "Effect": "Allow",
-        #             "Principal": {
-        #                 "Service": [
-        #                     "ec2.amazonaws.com"
-        #                 ]
-        #             },
-        #             "Action": [
-        #                 "sts:AssumeRole"
-        #             ]
-        #         }
-        #     ]
-        # }
-        # self.iam_client.create_role(
-        #     RoleName=self.role_name,
-        #     AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
-        # )
-        # self.iam_client.attach_role_policy(
-        #     PolicyArn='arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore',
-        #     RoleName=self.role_name,
-        # )
-        # self.iam_client.attach_role_policy(
-        #     PolicyArn='arn:aws:iam::aws:policy/AmazonS3FullAccess',
-        #     RoleName=self.role_name,
-        # )
-        # self.iam_client.attach_role_policy(
-        #     PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role',
-        #     RoleName=self.role_name,
-        # )
-        self.instance_profile = self.generate_name('instance_profile')
-        self.iam_client.create_instance_profile(InstanceProfileName=self.instance_profile)
-        self.iam_client.add_role_to_instance_profile(
-            InstanceProfileName=self.instance_profile, RoleName=self.role_name
-        )
+        if not self.mock:
+            self.role_name = 'role_name_abcymbdzwl'
+            # Create role and instance profile that allows containers to use SSM, S3, and EC2
+            # self.role_name = self.generate_name('role_name')
+            # assume_role_policy_document = {
+            #     "Version": "2012-10-17",
+            #     "Statement": [
+            #         {
+            #             "Effect": "Allow",
+            #             "Principal": {
+            #                 "Service": [
+            #                     "ec2.amazonaws.com"
+            #                 ]
+            #             },
+            #             "Action": [
+            #                 "sts:AssumeRole"
+            #             ]
+            #         }
+            #     ]
+            # }
+            # self.iam_client.create_role(
+            #     RoleName=self.role_name,
+            #     AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
+            # )
+            # self.iam_client.attach_role_policy(
+            #     PolicyArn='arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore',
+            #     RoleName=self.role_name,
+            # )
+            # self.iam_client.attach_role_policy(
+            #     PolicyArn='arn:aws:iam::aws:policy/AmazonS3FullAccess',
+            #     RoleName=self.role_name,
+            # )
+            # self.iam_client.attach_role_policy(
+            #     PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role',
+            #     RoleName=self.role_name,
+            # )
+            self.instance_profile = self.generate_name('instance_profile')
+            self.iam_client.create_instance_profile(InstanceProfileName=self.instance_profile)
+            self.iam_client.add_role_to_instance_profile(
+                InstanceProfileName=self.instance_profile, RoleName=self.role_name
+            )
 
     def make_client(self, client_type, **kwargs):
         """
@@ -561,7 +564,7 @@ class ECSClient:
         auto_scaling_group_name=None,
         min_size=0,
         max_size=10,
-        availability_zones=None,
+        subnet_ids=None,
     ):
         """
         Args:
@@ -573,11 +576,11 @@ class ECSClient:
         Returns:
              str: name of auto scaling group created
         """
-        availability_zones = availability_zones or [self.region_name + 'a']
-        if isinstance(availability_zones, str):
-            availability_zones = [availability_zones]
-        if not isinstance(availability_zones, list):
-            raise Exception("availability_zones should be a list of strs")
+        subnet_ids = subnet_ids or self.pick_subnets()
+        if isinstance(subnet_ids, str):
+            subnet_ids = [subnet_ids]
+        if not isinstance(subnet_ids, list):
+            raise Exception("subnet_ids should be a list of strs")
         auto_scaling_group_name = auto_scaling_group_name or self.generate_name(
             'auto_scaling_group'
         )
@@ -586,7 +589,7 @@ class ECSClient:
             LaunchConfigurationName=launch_config_name,
             MaxSize=max_size,
             MinSize=min_size,
-            AvailabilityZones=availability_zones,
+            VPCZoneIdentifier=', '.join(subnet_ids),
         )
         return auto_scaling_group_name
 
@@ -672,18 +675,30 @@ class ECSClient:
         return networkConfiguration
 
     def get_vpc(self):
-
-        container = self.ecs_client.describe_container_instances(
-            cluster=self.cluster,
-            containerInstances=self.ecs_client.list_container_instances(
-                cluster=self.cluster
-            )['containerInstanceArns'],
-        )['containerInstances'][0]
-        attributes = container['attributes']
-        for attribute in attributes:
-            if attribute['name']=='ecs.vpc-id':
-                self.vpc = attribute['value']
-                break
+        container_arns = self.ecs_client.list_container_instances(
+            cluster=self.cluster
+        )['containerInstanceArns']
+        # First try to get VPC from containers running on the cluster
+        if container_arns:
+            container = self.ecs_client.describe_container_instances(
+                cluster=self.cluster,
+                containerInstances=container_arns,
+            )['containerInstances'][0]
+            attributes = container['attributes']
+            for attribute in attributes:
+                if attribute['name']=='ecs.vpc-id':
+                    self.vpc = attribute['value']
+                    return self.vpc
+        else:
+            auto_scaling_groups = self.describe_auto_scaling_groups_in_cluster(self.cluster)
+            if not auto_scaling_groups:
+                raise Exception('Cluster has no instances and no autoscaling group!')
+            if 'VPCZoneIdentifier' not in auto_scaling_groups[0]:
+                raise Exception('Cluster autoscaling group has no VPC Zone Identifier!')
+            subnet_ids = auto_scaling_groups[0]['VPCZoneIdentifier'].split(', ')
+            self.subnet = subnet_ids[0]
+            self.vpc = self.ec2_client.describe_subnets(SubnetIds=subnet_ids)['Subnets'][0]['VpcId']
+            return self.vpc
 
 
     def check_if_done(self, offset=0):
@@ -740,6 +755,22 @@ class ECSClient:
         time.sleep(30)
         return container_instances
 
+    def spin_til_no_containers(self, cluster_name, time_delay=5):
+        """
+        spinpolls until all container instances have been removed from the cluster
+        Args:
+            cluster_name (str)
+            time_delay (int): how long to wait between polls, seconds
+        """
+        container_instances = []
+        while container_instances:
+            container_instances = self.get_containers_in_cluster(cluster_name)
+            time.sleep(time_delay)
+
+        # wait another 30 seconds just to be safe
+        time.sleep(30)
+        return
+
     def spin_til_command_executed(self, command_id, time_delay=5):
         """
         spinpolls until command has been executed
@@ -787,7 +818,7 @@ class ECSClient:
         ami='ami-04cfcf6827bb29439',
         min_size=0,
         max_size=10,
-        availability_zones=None,
+        subnet_ids=None,
     ):
         """
         Creates launch configuration, auto scaling group, capacity provider, and cluster
@@ -808,7 +839,7 @@ class ECSClient:
             launch_config_name=launch_config_name,
             min_size=min_size,
             max_size=max_size,
-            availability_zones=availability_zones,
+            subnet_ids=subnet_ids,
         )
         capacity_provider_name = self.create_capacity_provider(
             auto_scaling_group_name=auto_scaling_group_name

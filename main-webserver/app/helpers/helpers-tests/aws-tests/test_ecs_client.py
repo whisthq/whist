@@ -147,11 +147,12 @@ def test_cluster_with_auto_scaling_group():
 
     # test sending commands to containers in cluster
     command_id = testclient.exec_commands_on_containers(cluster_name, container_instances, ['echo hello'])['Command']['CommandId']
+    print(command_id)
     assert testclient.spin_til_command_executed(command_id)
 
     # Clean Up
     testclient.terminate_containers_in_cluster(cluster_name)
-    time.sleep(30)
+    testclient.spin_til_no_containers(cluster_name)
     testclient.ecs_client.delete_cluster(cluster=cluster_name)
     
     
