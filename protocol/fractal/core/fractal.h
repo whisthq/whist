@@ -124,6 +124,11 @@ Defines
 
 #define WRITE_MPRINTF_TO_LOG true
 
+// Note: Must be larger than FRACTAL_ENVIRONMENT_MAXLEN in order to read email from environment
+// variable
+#define USER_EMAIL_MAXLEN 200
+#define FRACTAL_ENVIRONMENT_MAXLEN 100
+
 /*
 ============================
 Custom Types
@@ -403,7 +408,7 @@ typedef enum FractalClientMessageType {
     MESSAGE_MOUSE_WHEEL = 4,   ///< `mouseWheel` FractalMouseWheelMessage is
                                ///< valid in FractClientMessage.
     MESSAGE_MOUSE_MOTION = 5,  ///< `mouseMotion` FractalMouseMotionMessage is
-                               ///< valid in FractClientMessage.
+
     MESSAGE_MOUSE_INACTIVE = 6,
     MESSAGE_MULTIGESTURE = 7,  ///< Gesture Event
     MESSAGE_RELEASE = 8,       ///< Message instructing the host to release all input
@@ -419,6 +424,7 @@ typedef enum FractalClientMessageType {
     MESSAGE_TIME = 114,
     CMESSAGE_INTERACTION_MODE = 115,
     MESSAGE_DISCOVERY_REQUEST = 116,
+    MESSAGE_USER_EMAIL = 117,
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
 
@@ -469,6 +475,8 @@ typedef struct FractalClientMessage {
         bool reinitialize_encoder;
 
         FractalTimeData time_data;
+
+        char user_email[USER_EMAIL_MAXLEN];
     };
 
     // CMESSAGE_CLIPBOARD
