@@ -48,7 +48,7 @@ int resizingEventWatcher(void* data, SDL_Event* event) {
     return 0;
 }
 
-SDL_Window* initSDL(int target_output_width, int target_output_height) {
+SDL_Window* initSDL(int target_output_width, int target_output_height, char* name) {
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
@@ -93,8 +93,8 @@ SDL_Window* initSDL(int target_output_width, int target_output_height) {
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
     sdl_window = SDL_CreateWindow(
-        "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, target_output_width,
-        target_output_height,
+        (name == NULL ? "Fractal" : name), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        target_output_width, target_output_height,
         SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : windowed_flags));
 
     if (!is_fullscreen) {

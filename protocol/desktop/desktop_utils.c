@@ -28,6 +28,7 @@ extern volatile char aes_private_key[16];
 extern volatile char *server_ip;
 extern volatile int output_width;
 extern volatile int output_height;
+extern volatile char *program_name;
 extern volatile CodecType output_codec_type;
 
 extern volatile int max_bitrate;
@@ -48,12 +49,13 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"codec", required_argument, NULL, 'c'},
                                      {"private-key", optional_argument, NULL, 'p'},
                                      {"connection-method", optional_argument, NULL, 'z'},
+                                     {"name", optional_argument, NULL, 'n'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
-#define OPTION_STRING "w:h:b:sc:kp::z::"
+#define OPTION_STRING "w:h:b:sc:kp::z::n::"
 
 int parseArgs(int argc, char *argv[]) {
     char *usage =
@@ -77,6 +79,7 @@ int parseArgs(int argc, char *argv[]) {
         "  -k, --use_ci                  launch the protocol in CI mode\n"
         "  -z, --connection_method       which connection method to try first,\n"
         "                                  either STUN or DIRECT\n"
+        "  -n, --name=NAME       		 Name of the interface\n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
@@ -145,6 +148,10 @@ int parseArgs(int argc, char *argv[]) {
                     printf("%s", usage);
                     return -1;
                 }
+                break;
+            case 'n':
+                program_name = calloc(sizeof(char), strlen(optarg));
+                strcpy((char *)program_name, optarg);
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);
