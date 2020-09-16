@@ -2698,9 +2698,9 @@ typedef struct {
     PNVFBCDESTROYHANDLE nvFBCDestroyHandle;      //!< [out] Pointer to ::NvFBCDestroyHandle().
     PNVFBCGETSTATUS nvFBCGetStatus;              //!< [out] Pointer to ::NvFBCGetStatus().
     PNVFBCCREATECAPTURESESSION
-        nvFBCCreateCaptureSession;  //!< [out] Pointer to ::NvFBCCreateCaptureSession().
+    nvFBCCreateCaptureSession;  //!< [out] Pointer to ::NvFBCCreateCaptureSession().
     PNVFBCDESTROYCAPTURESESSION
-        nvFBCDestroyCaptureSession;            //!< [out] Pointer to ::NvFBCDestroyCaptureSession().
+    nvFBCDestroyCaptureSession;                //!< [out] Pointer to ::NvFBCDestroyCaptureSession().
     PNVFBCTOSYSSETUP nvFBCToSysSetUp;          //!< [out] Pointer to ::NvFBCToSysSetUp().
     PNVFBCTOSYSGRABFRAME nvFBCToSysGrabFrame;  //!< [out] Pointer to ::NvFBCToSysGrabFrame().
     PNVFBCTOCUDASETUP nvFBCToCudaSetUp;        //!< [out] Pointer to ::NvFBCToCudaSetUp().

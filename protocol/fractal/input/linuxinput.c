@@ -577,9 +577,11 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
             EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_HWHEEL, fmsg->mouseWheel.x);
             EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_WHEEL, fmsg->mouseWheel.y);
             break;
-            // TODO: add clipboard
+        case MESSAGE_MULTIGESTURE:
+            LOG_WARNING("Multi-touch X11 Driver not added yet!");
+            break;
         default:
-            // do nothing
+            LOG_ERROR("Unknown message type! %d", fmsg->type);
             break;
     }
 

@@ -36,7 +36,7 @@ its threads.
 #include "sdl_utils.h"
 #include "server_message_handler.h"
 #include "video.h"
-
+#include "SDL_syswm.h"
 #ifdef __APPLE__
 #include "../fractal/utils/mac_utils.h"
 #endif
@@ -70,6 +70,7 @@ int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
 char user_email[USER_EMAIL_MAXLEN];
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+bool using_stun = true;
 
 int UDP_port = -1;
 int TCP_port = -1;
@@ -453,8 +454,15 @@ int syncKeyboardState(void) {
     fmsg.num_keycodes = fmin(NUM_KEYCODES, num_keys);
 #endif
 
-    // Copy keyboard state
-    memcpy(fmsg.keyboard_state, state, fmsg.num_keycodes);
+    // Copy keyboard state, but using scancodes of the keys in the current keyboard layout.
+    // Must convert to/from the name of the key so SDL returns the scancode for the key in the
+    // current layout rather than the scancode for the physical key.
+    for (int i = 0; i < fmsg.num_keycodes; i++) {
+        if (state[i]) {
+            fmsg.keyboard_state[SDL_GetScancodeFromName(
+                SDL_GetKeyName(SDL_GetKeyFromScancode(i)))] = 1;
+        }
+    }
 
     // Also send caps lock and num lock status for syncronization
 #ifdef __APPLE__
@@ -547,19 +555,20 @@ int main(int argc, char* argv[]) {
     exiting = false;
     bool failed = false;
 
-    for (try_amount = 0; try_amount < MAX_NUM_CONNECTION_ATTEMPTS && !exiting && !failed;
+    int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
+    for (try_amount = 0; try_amount < max_connection_attempts && !exiting && !failed;
          try_amount++) {
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
         }
 
-        if (discoverPorts() != 0) {
+        if (discoverPorts(&using_stun) != 0) {
             LOG_WARNING("Failed to discover ports.");
             continue;
         }
 
-        if (connectToServer() != 0) {
+        if (connectToServer(using_stun) != 0) {
             LOG_WARNING("Failed to connect to server.");
             continue;
         }
@@ -567,6 +576,11 @@ int main(int argc, char* argv[]) {
         connected = true;
 
         // Initialize audio and variablessendTimeToServer
+        // reset because now connected
+        try_amount = 0;
+        max_connection_attempts = MAX_RECONNECTION_ATTEMPTS;
+
+        // Initialize audio and variables
         is_timing_latency = false;
         initAudio();
 
@@ -596,7 +610,8 @@ int main(int argc, char* argv[]) {
 
         SDL_Event sdl_msg;
 
-        // This code will run once every millisecond
+        // This code will run for as long as there are events queued, or once every millisecond if
+        // there are no events queued
         while (connected && !exiting && !failed) {
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);
@@ -640,7 +655,7 @@ int main(int argc, char* argv[]) {
         }
 
         LOG_INFO("Disconnecting...");
-        if (exiting || failed || try_amount + 1 == MAX_NUM_CONNECTION_ATTEMPTS)
+        if (exiting || failed || try_amount + 1 == max_connection_attempts)
             sendServerQuitMessages(3);
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);

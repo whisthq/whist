@@ -122,6 +122,14 @@ void ReleaseScreen(CaptureDevice* device);
  */
 void DestroyCaptureDevice(CaptureDevice* device);
 
-bool UpdateCaptureEncoder(CaptureDevice* device);
+/**
+ * @brief                          Updates the capture device if the capture device is also the
+ * encoder
+ *
+ * @param device                   The Linux Ubuntu screencapture device
+ * @param bitrate                  The new bitrate to use for encoding
+ * @param codec                    The new codec to use for encoding
+ */
+void UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec);
 
 #endif  // DXGI_CAPTURE_H

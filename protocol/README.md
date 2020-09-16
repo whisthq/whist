@@ -123,6 +123,10 @@ These builds will also (TODO) be tested against a live server VM. This workflow 
 
 To see the warnings in context go to the Actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log, where you can clearly see the warnings/errors generated. 
 
+### Testing on VMs
+
+As mentioned above, every commit to `dev`, `staging` and `master` and every new PR results in a build being uploaded to Github Releases. The server build in this release can be easily uploaded to a VM for testing using the `deploy_server_release.py` script. The script requires that you specify the IP address of a VM that is currently running and also allows you to specify the specific release to test, defaulting to the latest release on `dev`. For example, to run the server build in the latest release in the `staging` branch on the VM at IP address 52.168.66.248, you can run `python deploy_server_release.py --vm-ip=52.168.66.248 --release=latest:staging`. To see other optional arguments that are exposed, just open up `deploy_server_release.py`.
+
 ### Special Cases
 
 You can add `WIP` anywhere in the title of a PR to keep the CD auto-build workflow from running
@@ -149,5 +153,7 @@ choco install llvm --force
 ```
 
 If using VSCode or Visual Studio, please set this up in your editor to format on save if possible (in Visual Studio, this is through the C/C++ extension settings, as well as the general 'Format on Save' setting/shortcut). Otherwise, please make sure to run your code through `clang` before commits. You can run it from the CLI by running `cmake . && make clang-format`, on MacOS/Linux, or `cmake -G "NMake Makefiles" && make clang-format`, on Windows.
+
+We have [pre-commit hooks](https://pre-commit.com/) with clang-format support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for clang-format.
 
 We also have a custom build target in the CMake 'clang-format' which will run with this style over all `.c` and `.h` files in `server/` `desktop/` and `fractal/`. You can call it by running `make clang-format`.

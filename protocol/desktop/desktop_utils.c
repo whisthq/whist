@@ -36,6 +36,7 @@ extern char user_email[USER_EMAIL_MAXLEN];
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 
 extern volatile CodecType codec_type;
+extern bool using_stun;
 
 extern mouse_motion_accumulation mouse_state;
 extern volatile SDL_Window *window;
@@ -50,12 +51,15 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"codec", required_argument, NULL, 'c'},
                                      {"private-key", optional_argument, NULL, 'p'},
                                      {"user", optional_argument, NULL, 'u'},
+                                     {"environment", optional_argument, NULL, 'e'},
+                                     {"connection-method", optional_argument, NULL, 'z'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
-#define OPTION_STRING "w:h:b:sc:kp::u::e::"
+
+#define OPTION_STRING "w:h:b:sc:kp::z::u::e::"
 
 int parseArgs(int argc, char *argv[]) {
     char *usage =
@@ -75,11 +79,13 @@ int parseArgs(int argc, char *argv[]) {
         "  -c, --codec=CODEC             launch the protocol using the codec\n"
         "                                  specified: h264 (default) or h265\n"
         "  -p, --private-key=PK          pass in the RSA Private Key as a "
-        "hexadecimal string\n"
+        "                                  hexadecimal string\n"
         "  -k, --use_ci                  launch the protocol in CI mode\n"
         "  -u, --user                     Tell fractal the users email. Optional defaults to None"
         "  -e, --environment              The environment the protocol is running \n"
         "                                 in. e.g master, staging, dev. Optional defaults to dev"
+        "  -z, --connection_method       which connection method to try first,\n"
+        "                                  either STUN or DIRECT\n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
@@ -147,6 +153,16 @@ int parseArgs(int argc, char *argv[]) {
                 break;
             case 'e':
                 strcpy(sentry_environment, optarg);
+            case 'z':
+                if (!strcmp(optarg, "STUN")) {
+                    using_stun = true;
+                } else if (!strcmp(optarg, "DIRECT")) {
+                    using_stun = false;
+                } else {
+                    printf("Invalid connection type: '%s'\n", optarg);
+                    printf("%s", usage);
+                    return -1;
+                }
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);

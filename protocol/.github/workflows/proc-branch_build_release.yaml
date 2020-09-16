@@ -33,7 +33,7 @@ env:
   SERVER_VM_NAME: crimsonbonus543
   SERVER_VM_USER: Fractal
   SERVER_VM_IP: 20.185.40.33
-  WEBSERVER_BASE_URL: https://cube-celery-staging4.herokuapp.com
+  WEBSERVER_BASE_URL: https://main-webserver.fractalcomputers.com
 
 jobs:
   params:
@@ -680,44 +680,29 @@ jobs:
         config:
           # These should match the configurations defined in the build job
           # TODO: figure out how to DRY these configurations
-          - os: windows-latest
-            client_artifact_name: "Windows-64bit_client"
-            client_artifact_relpath: "/desktop/build64/Windows"
-            server_artifact_name: "Windows-64bit_server"
-            server_artifact_relpath: "/server/build64"
-            cc: "cl"
-            cxx: "cl"
-            cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc"
-            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-          - os: ubuntu-latest
-            client_artifact_name: "Linux-64bit_client"
-            client_artifact_relpath: "/desktop/build64/Linux"
-            cc: "gcc"
-            cxx: "g++"
-          - os: macos-latest
-            client_artifact_name: "macOS-64bit_client"
-            client_artifact_relpath: "/desktop/build64/Darwin"
-            cc: "clang"
-            cxx: "clang++"
-    name: Upload ${{ matrix.config.client_artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
+          - artifact_name: "Windows-64bit_client"
+          - artifact_name: "Windows-64bit_server"
+          - artifact_name: "Linux-64bit_client"
+          - artifact_name: "macOS-64bit_client"
+    name: Upload ${{ matrix.config.artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
     steps:
-      - name: Retrieve artifact ${{ matrix.config.client_artifact_name }}
+      - name: Retrieve artifact ${{ matrix.config.artifact_name }}
         uses: actions/download-artifact@v2
         with:
-          name: ${{ matrix.config.client_artifact_name }}
-          path: ${{ matrix.config.client_artifact_name }}
+          name: ${{ matrix.config.artifact_name }}
+          path: ${{ matrix.config.artifact_name }}
       - name: Package up artifact as a zip file
         run: |
           ls -laR
-          zip -r "${{ matrix.config.client_artifact_name }}" "${{ matrix.config.client_artifact_name }}"
+          zip -r "${{ matrix.config.artifact_name }}" "${{ matrix.config.artifact_name }}"
       - name: Upload to release ${{ needs['create-release'].outputs.version_id }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs['create-release'].outputs.release_upload_url }}
-          asset_path: ./${{ matrix.config.client_artifact_name }}.zip
-          asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.client_artifact_name }}.zip
+          asset_path: ./${{ matrix.config.artifact_name }}.zip
+          asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.artifact_name }}.zip
           asset_content_type: application/zip
 
   trigger-clientapp-builds:
