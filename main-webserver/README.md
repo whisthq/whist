@@ -2,14 +2,9 @@
 
 [![Heroku CI Status](https://heroku-cibadge.herokuapp.com/last.svg)](https://dashboard.heroku.com/pipelines/22da0c0d-7555-4647-8765-031c14b8398f/tests)
 
-This repository contains the code for the VM and user webserver, which handles interfacing between users, the Fractal cloud computers hosted on Azure (currently), and a variety of website & client applications functionalities. Runs Flask with Celery for asynchronous task handling.
+This repository contains the code for our webserver, which is our REST API and provides back-end support for our user interfaces, our internal tools, and our container/virtual machine management.
 
-Our webservers are hosted on Heroku:
-
-- [Production](https://main-webserver.herokuapp.com)
-- [Staging](https://cube-celery-staging.herokuapp.com)
-
-Our production database is attached as an Heroku Add-On PostgresSQL to the associated webserver in Heroku, `main-webserver`, and has automated backups in place daily at 2 AM PST. See [here](https://devcenter.heroku.com/articles/heroku-postgres-backups#creating-a-backup) for further information.
+Our webservers and CD pipeline are hosted on Heroku. Our production database is attached as an Heroku Add-On PostgresSQL to the associated webserver in Heroku, `main-webserver`, and has automated backups in place daily at 2 AM PST. See [here](https://devcenter.heroku.com/articles/heroku-postgres-backups#creating-a-backup) for further information.
 
 Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?cols=core_host%2Ccore_service&from_ts=1593977274176&index=&live=true&messageDisplay=inline&stream_sort=desc&to_ts=1593978174176).
 
@@ -23,23 +18,20 @@ Currently, the full environment is only partially replicated, so `retrieve_confi
 
 #### 1. Retrieve Environment Variables
 
-Use `retrieve_config.py`. It provides a `-h` help menu for understanding parameters. On Mac/Linux, run
+
+First, ensure that the CLI tool `heroku` is installed and logged in. Next, use `retrieve_config.py`. It provides a `-h` help menu for understanding parameters. On Mac/Linux, run
 
 ```sh
-./retrieve_config.py [NAME OF BRANCH]
+./retrieve_config.py staging
 ```
 
 On Windows, run
 
 ```sh
-py retrieve_config.py [NAME OF BRANCH]
+py retrieve_config.py staging
 ```
 
-To see the possible NAME_OF_BRANCH options, see Lines 34-38 of `retrieve_config.py`. This command will pull the config variables of NAME_OF_BRANCH and write them to `docker/.env`.
-
 You can review `dev-base-config.json` to see which values will be overriden for local development. For example, the `REDIS_URL` will be changed to use the local Docker version.
-
-This command requires the CLI tool `heroku` to be installed and logged in.
 
 #### 2. Spin Up Local Servers
 
@@ -53,7 +45,7 @@ If you encounter a "daemon not running" error, this likely means that Docker is 
 
 Review `docker-compose.yml` to see which ports the various services are hosted on. For example, `"7810:6379"` means that the Redis service, running on port 6379 internally, will be available on `localhost:7810` from the host machine. Line 25 of `docker-compose.yml` will tell you where the web server itself is running.
 
-If you make a change to the webserver, you'll need to restart docker by first killing the server (Ctrl-C) and re-running `docker-compose up --build`. However, you can enable hot-reloading of the Flask web server and Celery task queue for development purposes by setting `HOT_RELOAD=true` in your Docker environment.
+By default, hot-reloading of the Flask web server and Celery task queue is enabled. To disable, set `HOT_RELOAD=false` in your Docker `.env` file.
 
 ### Heroku Setup
 
