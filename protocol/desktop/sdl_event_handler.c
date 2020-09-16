@@ -158,6 +158,9 @@ int handleKeyUpDown(SDL_Event *event) {
         (FractalKeycode)SDL_GetScancodeFromName(SDL_GetKeyName(event->key.keysym.sym));
     bool is_pressed = event->key.type == SDL_KEYDOWN;
 
+    LOG_INFO("Scancode: %d", event->key.keysym.scancode);
+    LOG_INFO("Keycode: %d %d", keycode, is_pressed);
+
     // Keep memory of alt/ctrl/lgui/rgui status
     if (keycode == FK_LALT) {
         alt_pressed = is_pressed;

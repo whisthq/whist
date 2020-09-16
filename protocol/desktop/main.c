@@ -35,7 +35,7 @@ its threads.
 #include "sdl_utils.h"
 #include "server_message_handler.h"
 #include "video.h"
-
+#include "SDL_syswm.h"
 #ifdef __APPLE__
 #include "../fractal/utils/mac_utils.h"
 #endif
@@ -592,7 +592,8 @@ int main(int argc, char* argv[]) {
 
         SDL_Event sdl_msg;
 
-        // This code will run once every millisecond
+        // This code will run for as long as there are events queued, or once every millisecond if
+        // there are no events queued
         while (connected && !exiting && !failed) {
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);
