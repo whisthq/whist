@@ -173,3 +173,34 @@ option {
     background: #00d4ff !important;
     outline: none !important;
 }
+
+.modal-header {
+    border: none;
+}
+
+.modal-title {
+    font-weight: bold;
+}
+
+.modal-footer {
+    border: none;
+}
+
+.code-container {
+    margin-right: 20px;
+    background: rgba(172, 207, 231, 0.2);
+    border-radius: 5px;
+    padding: 10px 15px;
+}
+
+.modal-button {
+    background: #1c2a45 !important;
+    outline: none !important;
+    border: none;
+    padding: 10px 15px;
+}
+
+.modal-button:hover {
+    background: #00d4ff !important;
+    outline: none !important;
+}

@@ -41,7 +41,11 @@ export default function (state = AUTH_DEFAULT, action: any) {
             return {
                 ...state,
                 logged_in: true,
-                user: { ...state.user, email: action.email },
+                user: {
+                    ...state.user,
+                    google_auth_email: action.email,
+                    points: action.points,
+                },
             }
         case LoginAction.LOGOUT:
             return {

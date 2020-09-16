@@ -5,12 +5,10 @@ import { CountryDropdown } from "react-country-region-selector"
 
 import history from "utils/history"
 import { db } from "utils/firebase"
-
+import { INITIAL_POINTS } from "utils/points"
 import { insertWaitlistAction } from "store/actions/auth/waitlist"
 
 import "styles/landing.css"
-
-const INITIAL_POINTS = 10
 
 function WaitlistForm(props: any) {
     const { dispatch, user } = props
@@ -60,6 +58,7 @@ function WaitlistForm(props: any) {
                     email: email,
                     referrals: 0,
                     points: INITIAL_POINTS,
+                    google_auth_email: "",
                 })
                 .then(() =>
                     dispatch(
