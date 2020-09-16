@@ -153,7 +153,8 @@ RUN sudo apt install -y openbox i3
 ADD i3config /root/.config/i3/config
 RUN sudo apt install -y xclip parcellite
 RUN sudo apt install -y lxappearance gtk-chtheme qt4-qtconfig
-ADD gtk-3-settings.ini /root/.config/gtk-3.0/settings.ini
+ADD gtk-3-settings.ini /etc/gtk-3.0/settings.ini
+ADD .gtkrc-2.0 /root/.gtkrc-2.0
 ADD qt4-settings.conf /root/.config/Trolltech.conf
 
 
