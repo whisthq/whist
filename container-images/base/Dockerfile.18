@@ -33,6 +33,7 @@ RUN apt-get update && apt-get clean && apt-get install --no-install-recommends -
     xvfb \
     fluxbox \
     wmctrl \
+    ca-certificates \
     wget \
     gnupg2 \
     libgbm1 \
@@ -47,8 +48,9 @@ RUN apt-get update && apt-get clean && apt-get install --no-install-recommends -
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget --no-check-certificate -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+    && sudo sed -i '3 s/^/# /' /etc/apt/sources.list \
     && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
