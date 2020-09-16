@@ -10,7 +10,6 @@ def mail(action, **kwargs):
     body = kwargs["body"]
     if action == "forgot":
         return forgotPasswordHelper(body["username"])
-
     elif action == "cancel":
         return cancelHelper(body["username"], body["feedback"])
 
@@ -30,3 +29,5 @@ def mail(action, **kwargs):
         return computerReadyHelper(
             body["username"], body["date"], body["code"], body["location"]
         )
+    elif action == "joinWaitlist":
+        return joinWaitlistHelper(body["email"], body["name"], body["date"])

@@ -6,20 +6,29 @@ from utils.aws.base_ecs_client import ECSClient, boto3
 from moto import mock_ecs, mock_logs, mock_autoscaling, mock_ec2, mock_iam
 
 
-def test_pulling_ip():
-    testclient = ECSClient(base_cluster="basetest2")
+def test_setup_vpc():
+    testclient = ECSClient()
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage",
     )
+    testclient.get_vpc()
     networkConfiguration = {
         "awsvpcConfiguration": {
-            "subnets": ["subnet-0dc1b0c43c4d47945",],
-            "securityGroups": ["sg-036ebf091f469a23e",],
+            "subnets": testclient.pick_subnets(),
+            "securityGroups": testclient.pick_security_groups(),
         }
     }
     testclient.run_task(networkConfiguration=networkConfiguration)
-    testclient.spin_til_running(time_delay=2)
-    assert testclient.task_ips == {0: '34.229.191.6'}
+    testclient.spin_til_done(time_delay=2)
+
+def test_network_build():
+    testclient = ECSClient()
+    testclient.set_and_register_task(
+        ["echo start"], ["/bin/bash", "-c"], family="multimessage",
+    )
+    testclient.run_task(networkConfiguration=testclient.build_network_config())
+    testclient.spin_til_done(time_delay=2)
+
 
 def test_partial_works():
     basedict = {
@@ -209,7 +218,6 @@ def test_set_cluster():
     ecs_client = boto3.client("ecs", region_name="us-east-2")
     iam_client = boto3.client("iam", region_name="us-east-2")
     ecs_client.create_cluster(clusterName="test_clust")
-    ecs_client.
     testclient = ECSClient(
         key_id="Testing",
         access_key="Testing",

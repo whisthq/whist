@@ -70,6 +70,12 @@ def migrate_users():
 
     session = new_session()
 
+    command = """SELECT * FROM users"""
+    params = {}
+
+    new_rows = session.execute(command, params).fetchall()
+    already_migrated_users = [dict(row)["user_id"] for row in new_rows]
+
     for row in rows:
         row = dict(row)
 
@@ -78,7 +84,7 @@ def migrate_users():
             VALUES(:user_id, :name, :password, :using_google_login, :release_stage, :stripe_customer_id, :created_timestamp, :reason_for_signup, :referral_code, :credits_outstanding, :token, :verified)
         """
 
-        if row["password"] and row["username"]:
+        if row["password"] and row["username"] and not row["username"] in already_migrated_users:
 
             password = jwt.decode(row["password"], SECRET_KEY)
 
@@ -532,4 +538,4 @@ def migrate_login_history():
 # migrate_release_groups()
 # migrate_protocol_logs()
 # migrate_monitor_logs()
-migrate_login_history()
+# migrate_login_history()
