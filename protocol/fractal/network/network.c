@@ -386,7 +386,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
         // Send it off
         SDL_LockMutex(context->mutex);
-		LOG_INFO("Sending UDP Packet of length %d", encrypt_len);
+		//LOG_INFO("Sending UDP Packet of length %d", encrypt_len);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
         SDL_UnlockMutex(context->mutex);
 
@@ -539,9 +539,10 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
             int error = GetLastNetworkError();
             switch (error) {
                 case FRACTAL_ETIMEDOUT:
-					LOG_ERROR("Read UDP Packet error: Timeout");
+					//LOG_ERROR("Read UDP Packet error: Timeout");
                 case FRACTAL_EWOULDBLOCK:
-					LOG_ERROR("Read UDP Packet error: Blocked");
+					//LOG_ERROR("Read UDP Packet error: Blocked");
+                    // Break on expected network errors
                     break;
                 default:
                     LOG_WARNING("Unexpected Packet Error: %d", error);
