@@ -591,7 +591,7 @@ int main(int argc, char* argv[]) {
 
         SDL_Event sdl_msg;
 
-        // This code will run once every millisecond
+        // This code will run for as long as there are events queued, or once every millisecond if there are no events queued
         while (connected && !exiting && !failed) {
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);
