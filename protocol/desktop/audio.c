@@ -60,7 +60,7 @@ int decoder_frequency = 48000;  // Hertz
 
 clock test_timer;
 double test_time;
-SDL_mutex *audio_mutex;
+SDL_mutex* audio_mutex;
 
 void reinitAudio() {
     LOG_INFO("Re-init'ing Audio!");
