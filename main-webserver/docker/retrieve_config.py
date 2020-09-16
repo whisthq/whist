@@ -36,12 +36,22 @@ env_to_app_name = {
     "staging": "staging-webserver",
 }
 app_name = env_to_app_name.get(args.env, args.env)
-heroku_proc = subprocess.run(
-    ["heroku", "config", "--json", "--app", app_name],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE,
-    shell=True,
-)
+
+if "win" in sys.platform:
+    heroku_proc = subprocess.run(
+        ["heroku", "config", "--json", "--app", app_name],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+    )
+else:
+    heroku_proc = subprocess.run(
+        ["heroku config --json --app ", app_name],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+    )
+
 if heroku_proc.returncode != 0:
     print(heroku_proc.stderr.decode("utf-8"))
     sys.exit(heroku_proc.returncode)
