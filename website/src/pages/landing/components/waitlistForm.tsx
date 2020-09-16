@@ -3,18 +3,20 @@ import { connect } from "react-redux"
 import { Button } from "react-bootstrap"
 import { CountryDropdown } from "react-country-region-selector"
 
+import history from "utils/history"
 import { db } from "utils/firebase"
-
+import { INITIAL_POINTS } from "utils/points"
 import { insertWaitlistAction } from "store/actions/auth/waitlist"
 
 import "styles/landing.css"
 
-const INITIAL_POINTS = 10
-
 function WaitlistForm(props: any) {
+    const { dispatch, user } = props
+
     const [email, setEmail] = useState("")
     const [name, setName] = useState("")
     const [country, setCountry] = useState("United States")
+    const [processing, setProcessing] = useState(false)
     const [, setReferralCode] = useState()
 
     useEffect(() => {
@@ -41,6 +43,8 @@ function WaitlistForm(props: any) {
     }
 
     async function insertWaitlist() {
+        setProcessing(true)
+
         var emails = db.collection("waitlist").where("email", "==", email)
         const exists = await emails.get().then(function (snapshot: any) {
             return !snapshot.empty
@@ -54,12 +58,18 @@ function WaitlistForm(props: any) {
                     email: email,
                     referrals: 0,
                     points: INITIAL_POINTS,
+                    google_auth_email: "",
                 })
                 .then(() =>
-                    props.dispatch(
+                    dispatch(
                         insertWaitlistAction(email, name, INITIAL_POINTS, 0)
                     )
                 )
+                .then(() => history.push("/application"))
+        } else {
+            dispatch(
+                insertWaitlistAction(email, name, INITIAL_POINTS, 0)
+            ).then(() => setProcessing(false))
         }
     }
 
@@ -101,22 +111,45 @@ function WaitlistForm(props: any) {
                 />
             </div>
             <div style={{ width: 800, margin: "auto", marginTop: 20 }}>
-                <Button
-                    onClick={insertWaitlist}
-                    className="waitlist-button"
-                    disabled={email && name && country ? false : true}
-                    style={{
-                        opacity: email && name && country ? 1.0 : 0.5,
-                    }}
-                >
-                    REQUEST ACCESS
-                </Button>
+                {user && user.email ? (
+                    <Button
+                        className="waitlist-button"
+                        disabled={true}
+                        style={{
+                            opacity: 1.0,
+                        }}
+                    >
+                        You're on the waitlist as {user.name}.
+                    </Button>
+                ) : !processing ? (
+                    <Button
+                        onClick={insertWaitlist}
+                        className="waitlist-button"
+                        disabled={email && name && country ? false : true}
+                        style={{
+                            opacity: email && name && country ? 1.0 : 0.5,
+                        }}
+                    >
+                        REQUEST ACCESS
+                    </Button>
+                ) : (
+                    <Button
+                        className="waitlist-button"
+                        disabled={true}
+                        style={{
+                            opacity: email && name && country ? 1.0 : 0.5,
+                        }}
+                    >
+                        Processing
+                    </Button>
+                )}
             </div>
         </div>
     )
 }
 
 function mapStateToProps(state: { AuthReducer: { user: any } }) {
+    console.log(state)
     return {
         user: state.AuthReducer.user,
     }

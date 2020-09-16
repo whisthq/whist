@@ -1,36 +1,23 @@
-import React from "react"
+import React, { useState } from "react"
 import { connect } from "react-redux"
-import { Button } from "react-bootstrap"
+import { Button, Modal } from "react-bootstrap"
+import { CopyToClipboard } from "react-copy-to-clipboard"
 
-const SignupAction = () => {
+import GoogleButton from "pages/auth/googleButton"
+
+const ReferAction = (props: { onClick: any }) => {
     return (
-        <div className="action">
+        <Button className="action" onClick={props.onClick}>
             <div
                 style={{
                     color: "white",
                     fontSize: "23px",
                 }}
             >
-                Sign up for a free account
+                Refer a Friend
             </div>
             <div style={{ color: "#00D4FF" }}> +100 points</div>
-        </div>
-    )
-}
-
-const RecommendAction = () => {
-    return (
-        <div className="action">
-            <div
-                style={{
-                    color: "white",
-                    fontSize: "23px",
-                }}
-            >
-                Recommend a Friend
-            </div>
-            <div style={{ color: "#00D4FF" }}> +100 points</div>
-        </div>
+        </Button>
     )
 }
 
@@ -58,14 +45,20 @@ const JoinWaitlistAction = () => {
 }
 
 const Actions = (props: { user: { email: any }; loggedIn: any }) => {
+    const [showModal, setShowModal] = useState(false)
+
+    const handleOpenModal = () => setShowModal(true)
+    const handleCloseModal = () => setShowModal(false)
+
     const renderActions = () => {
         if (props.user && props.user.email) {
             if (props.loggedIn) {
-                return <RecommendAction />
+                return <ReferAction onClick={handleOpenModal} />
             } else {
                 return (
                     <>
-                        <SignupAction /> <RecommendAction />
+                        <GoogleButton />
+                        <ReferAction onClick={handleOpenModal} />
                     </>
                 )
             }
@@ -94,6 +87,37 @@ const Actions = (props: { user: { email: any }; loggedIn: any }) => {
                 Actions
             </h1>
             {renderActions()}
+
+            <Modal show={showModal} onHide={handleCloseModal}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Refer a Friend</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <div>
+                        Want to move up the waitlist? Refer a friend by sending
+                        them your referral code. Once they join and enter your
+                        referral code, you'll receive 100 points!
+                    </div>
+                    <br />
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                        }}
+                    >
+                        <div className="code-container">KG7GSJ2</div>
+                        <CopyToClipboard text="KG7GSJ2">
+                            <Button className="modal-button">Copy Code</Button>
+                        </CopyToClipboard>
+                    </div>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button className="modal-button" onClick={handleCloseModal}>
+                        Got it
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     )
 }
