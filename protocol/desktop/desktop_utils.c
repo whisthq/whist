@@ -33,8 +33,8 @@ extern volatile CodecType output_codec_type;
 
 extern volatile int max_bitrate;
 extern volatile int running_ci;
-extern char user_email[USER_EMAIL_MAXLEN];
-extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+extern char user_email[USER_EMAIL_MAXLEN]; // Note: Is larger than environment maxlen
+extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN+1];
 
 extern volatile CodecType codec_type;
 extern bool using_stun;
@@ -104,6 +104,10 @@ int parseArgs(int argc, char *argv[]) {
     char *endptr;
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
+        if (strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
+            printf("Option passed into %c is too long! Length of %d when max is %d", opt, strlen(optarg), FRACTAL_ENVIRONMENT_MAXLEN);
+            return -1;
+        }
         errno = 0;
         switch (opt) {
             case 'w':

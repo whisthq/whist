@@ -124,6 +124,7 @@ Defines
 
 #define WRITE_MPRINTF_TO_LOG true
 
+// Note: Must be larger than FRACTAL_ENVIRONMENT_MAXLEN in order to read email from environment variable
 #define USER_EMAIL_MAXLEN 200
 #define FRACTAL_ENVIRONMENT_MAXLEN 100
 
