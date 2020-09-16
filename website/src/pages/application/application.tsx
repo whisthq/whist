@@ -4,7 +4,7 @@ import { connect } from "react-redux"
 import "styles/application.css"
 
 function Application(props: any) {
-    return <div>Application</div>
+    return <div>Application Here</div>
 }
 
 function mapStateToProps() {
