@@ -37,16 +37,16 @@ env_to_app_name = {
 }
 app_name = env_to_app_name.get(args.env, args.env)
 
-if "win" in sys.platform:
+if "win" in str(sys.platform):
     heroku_proc = subprocess.run(
-        ["heroku", "config", "--json", "--app" + app_name],
+        ["heroku", "config", "--json", "--app", app_name],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=True,
     )
 else:
     heroku_proc = subprocess.run(
-        ["heroku config --json --app ", app_name],
+        ["heroku config --json --app " + app_name],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=True,
