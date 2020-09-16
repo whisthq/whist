@@ -49,6 +49,43 @@ def lockContainerAndUpdate(container_name, state, lock, temporary_lock):
     fractalSQLCommit(db, lambda _, x: x.update(new_params), container)
 
 
+def lockClusterAndUpdate(cluster, status, lock, temporary_lock):
+    """Changes the status, lock, and temporary lock of a Container
+
+    Args:
+        cluster (str): Name of cluster
+        status (str): Status of cluster
+            [ACTIVE, PROVISIONING, DEPROVISIONING, FAILED, INACTIVE]
+        lock (bool): True if Container is locked, False otherwise
+        temporary_lock (int): Number of minutes, starting from now, to lock the Container (max is 10)
+
+
+    Returns:
+        int: 1 = container is unlocked, -1 = giving up
+    """
+
+    new_params = {"status": status, "lock": lock}
+
+    if not state:
+        new_params = {"lock": lock}
+
+    if temporary_lock:
+        new_temporary_lock = shiftUnixByMinutes(dateToUnix(getToday()), temporary_lock)
+
+        new_params["temporary_lock"] = new_temporary_lock
+
+    fractalLog(
+        function="lockContainerAndUpdate",
+        label=getContainerUser(container_name),
+        logs="State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
+            state=state, lock=str(lock), temporary_lock=str(temporary_lock),
+        ),
+    )
+
+    container = UserContainer.query.filter_by(container_id=container_name)
+    fractalSQLCommit(db, lambda _, x: x.update(new_params), container)
+
+
 def checkLock(container_name):
 
     container = UserContainer.query.get(container_name)

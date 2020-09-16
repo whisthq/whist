@@ -3,8 +3,8 @@ from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
 from app import fractalPreProcess
-from app.celery.aws_ecs_creation import BadAppError, create_new_container, create_new_cluster
-from app.celery.aws_ecs_deletion import deleteContainer
+from app.celery.aws_ecs_creation import BadAppError, create_new_container, create_new_cluster, send_commands
+from app.celery.aws_ecs_deletion import deleteContainer, delete_cluster
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_get import protocol_info
 from app.helpers.blueprint_helpers.aws.aws_container_post import pingHelper
@@ -29,6 +29,19 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+    
+    if action == "delete_cluster":
+        cluster, region_name = (
+            kwargs["body"]["cluster"],
+            kwargs["body"]["region_name"],
+        )
+        task = delete_cluster.apply_async([cluster, region_name])
+
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
+    
 
     if action == "create_container":
         (
@@ -68,6 +81,20 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["container_name"],
         )
         task = deleteContainer.apply_async([user_id, container_name])
+
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
+    
+    if action == "send_commands":
+        cluster, region_name, commands, containers = {
+            kwargs["body"]["cluster"],
+            kwargs["body"]["region_name"],
+            kwargs["body"]["commands"],
+            kwargs["body"]["containers"],
+        }
+        task = send_commands.apply_async([cluster, region_name, commands, containers])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST

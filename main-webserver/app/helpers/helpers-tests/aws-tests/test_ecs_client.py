@@ -31,7 +31,6 @@ def test_network_build():
     testclient.run_task(networkConfiguration=testclient.build_network_config())
     testclient.spin_til_done(time_delay=2)
 
-
 def test_partial_works():
     basedict = {
         "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(
@@ -98,10 +97,10 @@ def test_full_base_config():
     assert testclient.task_ips == {0: '34.229.191.6'}
 
 
-@pytest.mark.skipif(
-    "AWS_AUTO_SCALING_TEST" not in os.environ,
-    reason="This test is slow; run only upon explicit request",
-)
+# @pytest.mark.skipif(
+#     "AWS_AUTO_SCALING_TEST" not in os.environ,
+#     reason="This test is slow; run only upon explicit request",
+# )
 def test_cluster_with_auto_scaling_group():
     testclient = ECSClient(region_name="us-east-1")
     time.sleep(10)
@@ -135,8 +134,16 @@ def test_cluster_with_auto_scaling_group():
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage"
     )
-    testclient.run_task(use_launch_type=False)
+    testclient.get_vpc()
+    networkConfiguration = {
+        "awsvpcConfiguration": {
+            "subnets": testclient.pick_subnets(),
+            "securityGroups": testclient.pick_security_groups(),
+        }
+    }
+    testclient.run_task(networkConfiguration=networkConfiguration, use_launch_type=False)
     testclient.spin_til_running(time_delay=2)
+    
     container_instances = testclient.spin_til_containers_up(cluster_name)
     assert testclient.task_ips[0] in testclient.get_container_instance_ips(cluster_name, container_instances)
 
@@ -148,11 +155,6 @@ def test_cluster_with_auto_scaling_group():
     testclient.terminate_containers_in_cluster(cluster_name)
     time.sleep(30)
     testclient.ecs_client.delete_cluster(cluster=cluster_name)
-    # testclient.ecs_client.delete_capacity_provider(capacityProvider=capacity_provider_name)
-    # testclient.auto_scaling_client.delete_auto_scaling_group(AutoScalingGroupName=auto_scaling_group_name, ForceDelete=True)
-    # testclient.auto_scaling_client.delete_launch_configuration(LaunchConfigurationName=launch_config_name)
-    # testclient.iam_client.delete_instance_profile(InstanceProfileName=testclient.instance_profile)
-    # testclient.iam_client.delete_role(RoleName=testclient.role_name)
     
     
 @pytest.mark.skipif(
@@ -189,6 +191,7 @@ def test_set_cluster():
         starter_client=ecs_client,
         starter_log_client=log_client,
         starter_iam_client=iam_client,
+        mock=True
     )
     assert "test_clust" in testclient.cluster
 
@@ -207,6 +210,7 @@ def test_command():
         starter_client=ecs_client,
         starter_log_client=log_client,
         starter_iam_client=iam_client,
+        mock=True
     )
     testclient.set_and_register_task(
         ["echoes"], [""], family=" ",
@@ -231,6 +235,7 @@ def test_set_cluster():
         starter_client=ecs_client,
         starter_log_client=log_client,
         starter_iam_client=iam_client,
+        mock=True
     )
     assert "test_clust" in testclient.cluster
 
@@ -249,6 +254,7 @@ def test_entry():
         starter_client=ecs_client,
         starter_log_client=log_client,
         starter_iam_client=iam_client,
+        mock=True
     )
     testclient.set_and_register_task(
         [" "], ["entries"], family=" ",
@@ -273,6 +279,7 @@ def test_family():
         starter_client=ecs_client,
         starter_log_client=log_client,
         starter_iam_client=iam_client,
+        mock=True
     )
     testclient.set_and_register_task(
         ["echoes"], [""], family="basefam",
@@ -299,6 +306,7 @@ def test_region():
         starter_client=ecs_client,
         starter_log_client=log_client,
         starter_iam_client=iam_client,
+        mock=True
     )
     testclient.set_and_register_task(
         ["echoes"], [""], family="basefam",

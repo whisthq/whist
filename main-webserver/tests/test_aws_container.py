@@ -20,6 +20,39 @@ def test_create_cluster(input_token, admin_token):
     assert True
 
 @pytest.mark.container_serial
+def test_delete_cluster(input_token, admin_token):
+    resp = deleteCluster(
+        cluster='cluster_xijgxqfbzn',
+        region_name='us-east-1',
+        input_token=input_token,
+    )
+
+    task = queryStatus(resp, timeout=10)
+    print(task)
+
+    if task["status"] < 1:
+        assert False
+
+    assert True
+
+@pytest.mark.container_serial
+def test_send_commands(input_token, admin_token):
+    resp = sendCommands(
+        cluster='basetest2',
+        region_name='us-east-1',
+        commands=['echo test_send_commands'],
+        input_token=input_token,
+    )
+
+    task = queryStatus(resp, timeout=10)
+    print(task)
+
+    if task["status"] < 1:
+        assert False
+
+    assert True
+
+@pytest.mark.container_serial
 def test_create_container(input_token, admin_token):
     resp = createContainer(
         username='test-user@test.com',
@@ -30,7 +63,7 @@ def test_create_container(input_token, admin_token):
         region_name='us-east-1',
         #task_definition_arn='arn:aws:ecs:us-east-1:747391415460:task-definition/first-run-task-definition:3',
         #task_definition_arn='arn:aws:ecs:us-east-2:747391415460:task-definition/first-run-task-definition:4',
-        task_definition_arn='arn:aws:ecs:us-east-1:747391415460:task-definition/roshan-task-definition-test-0:2',
+        task_definition_arn='arn:aws:ecs:us-east-1:747391415460:task-definition/roshan-task-definition-test-0:5',
         use_launch_type=False,
         # network_configuration = {
         #     "awsvpcConfiguration": {
