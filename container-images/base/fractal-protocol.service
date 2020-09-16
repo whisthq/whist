@@ -1,7 +1,7 @@
 [Unit]
 Description=Fractal Service
 After=fractal-display.service fractal-audio.service
-Requires=fractal-display.service
+Requires=fractal-display.service fractal-audio.service
 
 [Service]
 WorkingDirectory=/usr/share/fractal
