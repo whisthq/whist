@@ -78,7 +78,7 @@ const Actions = (props: { user: { email: any }; loggedIn: any }) => {
             <h1
                 style={{
                     fontWeight: "bold",
-                    color: "#111111",
+                    color: "white",
                     marginBottom: "30px",
                     fontSize: "40px",
                 }}

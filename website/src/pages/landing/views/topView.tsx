@@ -118,7 +118,7 @@ function TopView(props: any) {
             >
                 <div className="logo">Fractal</div>
                 <div style={{ position: "relative", right: 50 }}>
-                    <CountdownTimer />
+                    <CountdownTimer type="small" />
                 </div>
             </div>
             <div

@@ -1,6 +1,5 @@
 import React, { useEffect, useCallback } from "react"
 import { connect } from "react-redux"
-import { Row, Col } from "react-bootstrap"
 
 import { db } from "utils/firebase"
 import * as firebase from "firebase"
@@ -13,11 +12,9 @@ import {
 import "styles/landing.css"
 import "styles/shared.css"
 
-import Leaderboard from "pages/landing/components/leaderboard"
-import Actions from "pages/landing/components/actions"
-
 import TopView from "pages/landing/views/topView"
 import MiddleView from "pages/landing/views/middleView"
+import LeaderboardView from "pages/landing/views/leaderboardView"
 import BottomView from "pages/landing/views/bottomView"
 
 function Landing(props: any) {
@@ -115,22 +112,7 @@ function Landing(props: any) {
         <div style={{ paddingBottom: 100 }}>
             <TopView />
             <MiddleView />
-            <div
-                style={{
-                    padding: 30,
-                    marginTop: 30,
-                    marginBottom: 50,
-                }}
-            >
-                <Row>
-                    <Col md={8}>
-                        <Leaderboard />
-                    </Col>
-                    <Col md={4}>
-                        <Actions />
-                    </Col>
-                </Row>
-            </div>
+            <LeaderboardView />
             <BottomView />
         </div>
     )

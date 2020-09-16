@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { Table } from "react-bootstrap"
 
+import Countdown from "pages/landing/components/countdown"
+
 import "styles/landing.css"
 
 const Leaderboard = (props: {
@@ -24,7 +26,9 @@ const Leaderboard = (props: {
         return (
             <tr className={userRow ? "userRow" : ""}>
                 <td className="rankingColumn">
-                    <div className="topThree">{idx}</div>
+                    <div className={idx <= 3 ? "topThree" : "bottomThree"}>
+                        {idx}
+                    </div>
                 </td>
                 <td className="nameColumn">
                     <div style={{ position: "relative", top: 7 }}>{name}</div>
@@ -122,23 +126,35 @@ const Leaderboard = (props: {
 
     return (
         <div className="leaderboard-container">
-            <h1
+            <div
                 style={{
-                    fontWeight: "bold",
-                    color: "#111111",
-                    marginBottom: "30px",
-                    fontSize: "40px",
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "space-between",
                 }}
             >
-                Leaderboard
-            </h1>
+                <h1
+                    style={{
+                        fontWeight: "bold",
+                        color: "white",
+                        marginBottom: "30px",
+                        fontSize: "40px",
+                    }}
+                >
+                    Leaderboard
+                </h1>
+                <div style={{ position: "relative", top: 25 }}>
+                    <Countdown type="small" />
+                </div>
+            </div>
             <div
                 style={{
                     overflowY: "scroll",
                     maxHeight: 550,
                     width: "100%",
-                    borderRadius: 10,
+                    borderRadius: 5,
                     boxShadow: "0px 4px 30px rgba(0, 0, 0, 0.1)",
+                    zIndex: 2,
                 }}
             >
                 <Table>

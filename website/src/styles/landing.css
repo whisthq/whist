@@ -139,12 +139,12 @@ thead tr th {
 
 .userRow {
     background-color: #5b47d4;
-    border-radius: 10px;
+    border-radius: 5px;
     font-weight: bold;
 }
 
 .action {
-    background-color: #0d0f34 !important;
+    background-color: #26274b !important;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -154,6 +154,7 @@ thead tr th {
     margin-bottom: 30px;
     border-radius: 5px;
     border: none;
+    font-weight: bold;
 }
 
 .action:hover {
@@ -169,6 +170,7 @@ thead tr th {
     font-size: calc(14px + 0.25vw);
     outline: none !important;
     border: none;
+    letter-spacing: 1.1px;
 }
 
 .access-button:hover {

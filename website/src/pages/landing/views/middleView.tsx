@@ -28,8 +28,7 @@ function MiddleView(props: any) {
                                 lineHeight: 1.2,
                             }}
                         >
-                            Run demanding desktop apps on any computer or
-                            tablet.
+                            Run your favorite apps on any device.
                         </h2>
                         <p style={{ marginTop: 40 }}>
                             Fractal is like Google Stadia for creative and
@@ -86,6 +85,12 @@ function MiddleView(props: any) {
                                     leaderboard, which you can climb by
                                     referring friends.
                                 </p>
+                                <Button
+                                    className="access-button"
+                                    onClick={scrollToTop}
+                                >
+                                    JOIN NOW
+                                </Button>
                             </div>
                         </div>
                         <Testimonial
