@@ -281,8 +281,9 @@ class ECSClient:
         Args:
             cluster (str): name of cluster
         """
-        containers = self.get_container_instance_ids(cluster, self.get_containers_in_cluster(cluster))
-        if containers:
+        container_arns = self.get_containers_in_cluster(cluster)
+        if container_arns:
+            containers = self.get_container_instance_ids(cluster, container_arns)
             self.ec2_client.terminate_instances(InstanceIds=containers)
 
     def exec_commands_on_containers(self, cluster, containers, commands):

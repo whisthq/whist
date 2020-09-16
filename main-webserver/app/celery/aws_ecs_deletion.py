@@ -6,11 +6,13 @@ from app import (
     celery_instance,
     db,
     fractalLog,
+    logging,
     fractalSQLCommit,
 )
+import time
 from app.helpers.utils.aws.aws_resource_locks import lockContainerAndUpdate, spinLock
 from app.helpers.utils.aws.base_ecs_client import ECSClient
-from app.serializers.hardware import UserContainer
+from app.serializers.hardware import UserContainer, ClusterInfo
 
 
 @celery_instance.task(bind=True)
@@ -32,7 +34,6 @@ def deleteContainer(self, user_id, container_name):
         fractalLog(
             function="deleteContainer", label=str(container_name), logs="Wrong user",
         )
-
         self.update_state(
             state="FAILURE",
             meta={
@@ -85,3 +86,50 @@ def deleteContainer(self, user_id, container_name):
         )
         return {'status': INTERNAL_SERVER_ERROR}
     return {"status": SUCCESS}
+
+
+@celery_instance.task(bind=True)
+def delete_cluster(self, cluster, region_name):
+    try:
+        ecs_client = ECSClient(region_name=region_name)
+        running_tasks = ecs_client.ecs_client.list_tasks(cluster=cluster, desiredStatus='RUNNING')['taskArns']
+        if running_tasks:
+            fractalLog(
+                function="delete_cluster",
+                label=cluster,
+                logs=f"Cannot delete cluster {cluster} with running tasks {running_tasks}. Please delete the tasks first.",
+                level=logging.ERROR,
+            )
+            self.update_state(
+                state="FAILURE", meta={"msg": f"Cannot delete clusters with running tasks"},
+            )
+        else:
+            fractalLog(
+                function="delete_cluster",
+                label=cluster,
+                logs="Deleting cluster {} in region {} and all associated instances".format(cluster, region_name),
+            )
+            ecs_client.terminate_containers_in_cluster(cluster)
+            self.update_state(
+                state="PENDING",
+                meta={
+                    "msg": "Terminating containers in {}".format(
+                        cluster=cluster,
+                    )
+                },
+            )
+            cluster_info = ClusterInfo.query.filter_by(cluster=cluster)
+            fractalSQLCommit(db, lambda _, x: x.update({'status': 'INACTIVE'}), cluster_info)
+            time.sleep(30)
+            ecs_client.ecs_client.delete_cluster(cluster=cluster)
+            fractalSQLCommit(db, lambda db, x: db.session.delete(x), cluster)
+    except Exception as error:
+        fractalLog(
+            function="delete_cluster",
+            label="None",
+            logs=f"Encountered error: {error}",
+            level=logging.ERROR,
+        )
+        self.update_state(
+            state="FAILURE", meta={"msg": f"Encountered error: {error}"},
+        )

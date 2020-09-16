@@ -137,11 +137,6 @@ def test_cluster_with_auto_scaling_group():
     testclient.terminate_containers_in_cluster(cluster_name)
     time.sleep(30)
     testclient.ecs_client.delete_cluster(cluster=cluster_name)
-    # testclient.ecs_client.delete_capacity_provider(capacityProvider=capacity_provider_name)
-    # testclient.auto_scaling_client.delete_auto_scaling_group(AutoScalingGroupName=auto_scaling_group_name, ForceDelete=True)
-    # testclient.auto_scaling_client.delete_launch_configuration(LaunchConfigurationName=launch_config_name)
-    # testclient.iam_client.delete_instance_profile(InstanceProfileName=testclient.instance_profile)
-    # testclient.iam_client.delete_role(RoleName=testclient.role_name)
     
     
 @pytest.mark.skipif(

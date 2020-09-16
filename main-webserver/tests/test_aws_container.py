@@ -20,6 +20,39 @@ def test_create_cluster(input_token, admin_token):
     assert True
 
 @pytest.mark.container_serial
+def test_delete_cluster(input_token, admin_token):
+    resp = deleteCluster(
+        cluster='cluster_xijgxqfbzn',
+        region_name='us-east-1',
+        input_token=input_token,
+    )
+
+    task = queryStatus(resp, timeout=10)
+    print(task)
+
+    if task["status"] < 1:
+        assert False
+
+    assert True
+
+@pytest.mark.container_serial
+def test_send_commands(input_token, admin_token):
+    resp = sendCommands(
+        cluster='basetest2',
+        region_name='us-east-1',
+        commands=['echo test_send_commands'],
+        input_token=input_token,
+    )
+
+    task = queryStatus(resp, timeout=10)
+    print(task)
+
+    if task["status"] < 1:
+        assert False
+
+    assert True
+
+@pytest.mark.container_serial
 def test_create_container(input_token, admin_token):
     resp = createContainer(
         username='test-user@test.com',
