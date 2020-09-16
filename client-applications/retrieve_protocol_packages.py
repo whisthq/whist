@@ -18,7 +18,7 @@ def get_release(
     repo: github.Repository.Repository, desired_release: str
 ) -> github.GitRelease.GitRelease:
     all_releases = repo.get_releases()
-    print(f"Looking for '{desired_release}' in {all_releases.totalCount} releases")
+    print(f"Looking for '{desired_release}' in {all_releases.totalCount} releases", flush=True)
     version_id_re = re.compile(r"(\S+)-(\d{8})\.(\d+)")  # BRANCH-YYYYMMDD.#
     if "latest:" in desired_release:
         desired_branch = desired_release.split(":")[1]
@@ -51,7 +51,7 @@ def get_assets_for_platforms(
     for platform in platforms:
         # Trim to support ", " space delimation in addition to "," delimation
         os, flavor = platform.strip().split(":")
-        print(f"Looking for {os} {flavor} in {all_assets.totalCount} assets")
+        print(f"Looking for {os} {flavor} in {all_assets.totalCount} assets", flush=True)
         for asset in all_assets:
             # Asset IDs are expected to be in the form `protocol_dev-20200715.2_Windows-64bit_client.tar.gz`
             #
@@ -110,20 +110,18 @@ if __name__ == "__main__":
     github_client = github.Github(github_token)
 
     release = get_release(github_client.get_repo(args.protocol_repo), args.release)
-    print(f"Selected release '{release.title}'")
+    print(f"Selected release '{release.title}'", flush=True)
     platforms = args.platforms.split(",")
     assets = get_assets_for_platforms(release, platforms)
     if len(assets) != len(platforms):
-        print(
-            f"WARNING: Only matched {len(assets)} of {len(platforms)} requested platforms"
-        )
+        print(f"WARNING: Only matched {len(assets)} of {len(platforms)} requested platforms", flush=True)
     if args.wipe_old:
-        print(f"Clearing out all files currently in '{args.out_dir}'")
+        print(f"Clearing out all files currently in '{args.out_dir}'", flush=True)
         shutil.rmtree(args.out_dir, ignore_errors=True)
     Path(args.out_dir).mkdir(parents=True, exist_ok=True)
     for platform, asset in assets.items():
         out_path = os.path.join(args.out_dir, asset.name)
-        print(f"Downloading {asset.url}")
+        print(f"Downloading {asset.url}", flush=True)
         with requests.get(
             asset.url,
             auth=requests.auth.HTTPBasicAuth(github_token, ""),
@@ -131,7 +129,7 @@ if __name__ == "__main__":
             stream=True,
         ) as r:
             r.raise_for_status()
-            print(f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes")
+            print(f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes", flush=True)
             with open(out_path, "wb") as out:
                 shutil.copyfileobj(r.raw, out)
-        print(f"Saved '{out_path}'")
+        print(f"Saved '{out_path}'", flush=True)
