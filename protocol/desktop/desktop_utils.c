@@ -151,7 +151,7 @@ int parseArgs(int argc, char *argv[]) {
                 break;
             case 'n':
 				program_name = calloc(sizeof(char), strlen(optarg));
-				strcpy(program_name, optarg);
+				strcpy((const char*) program_name, optarg);
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);
