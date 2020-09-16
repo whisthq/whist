@@ -241,7 +241,7 @@ bool handshakePrivateKey(SocketContext *context) {
         LOG_ERROR("Could not confirmPrivateKey!");
         return false;
     } else {
-		LOG_INFO("Private key confirmed");
+        LOG_INFO("Private key confirmed");
         set_timeout(context->s, context->timeout);
         return true;
     }
@@ -386,7 +386,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
         // Send it off
         SDL_LockMutex(context->mutex);
-		//LOG_INFO("Sending UDP Packet of length %d", encrypt_len);
+        // LOG_INFO("Sending UDP Packet of length %d", encrypt_len);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
         SDL_UnlockMutex(context->mutex);
 
@@ -539,9 +539,9 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
             int error = GetLastNetworkError();
             switch (error) {
                 case FRACTAL_ETIMEDOUT:
-					//LOG_ERROR("Read UDP Packet error: Timeout");
+                    // LOG_ERROR("Read UDP Packet error: Timeout");
                 case FRACTAL_EWOULDBLOCK:
-					//LOG_ERROR("Read UDP Packet error: Blocked");
+                    // LOG_ERROR("Read UDP Packet error: Blocked");
                     // Break on expected network errors
                     break;
                 default:
@@ -1305,7 +1305,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     }
 
     LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
-                port, ntohs(context->addr.sin_port));
+             port, ntohs(context->addr.sin_port));
 
     set_timeout(context->s, recvfrom_timeout_ms);
 

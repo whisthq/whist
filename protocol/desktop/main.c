@@ -452,11 +452,12 @@ int syncKeyboardState(void) {
 #endif
 
     // Copy keyboard state, but using scancodes of the keys in the current keyboard layout.
-    // Must convert to/from the name of the key so SDL returns the scancode for the key in the current layout 
-    // rather than the scancode for the physical key.
+    // Must convert to/from the name of the key so SDL returns the scancode for the key in the
+    // current layout rather than the scancode for the physical key.
     for (int i = 0; i < fmsg.num_keycodes; i++) {
         if (state[i]) {
-            fmsg.keyboard_state[SDL_GetScancodeFromName(SDL_GetKeyName(SDL_GetKeyFromScancode(i)))] = 1;
+            fmsg.keyboard_state[SDL_GetScancodeFromName(
+                SDL_GetKeyName(SDL_GetKeyFromScancode(i)))] = 1;
         }
     }
 
@@ -516,7 +517,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the SDL window
-    window = initSDL(output_width, output_height);	
+    window = initSDL(output_width, output_height);
     if (!window) {
         LOG_ERROR("Failed to initialize SDL");
         destroySocketLibrary();
@@ -591,7 +592,8 @@ int main(int argc, char* argv[]) {
 
         SDL_Event sdl_msg;
 
-        // This code will run for as long as there are events queued, or once every millisecond if there are no events queued
+        // This code will run for as long as there are events queued, or once every millisecond if
+        // there are no events queued
         while (connected && !exiting && !failed) {
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);
