@@ -32,9 +32,9 @@ args = parser.add_argument(
 args = parser.parse_args()
 
 env_to_app_name = {
-    "staging": "cube-celery-staging",
+    "main-like": "main-like-webserver",
     "production": "main-webserver",
-    "reorganization": "cube-celery-staging4",
+    "staging": "staging-webserver",
 }
 app_name = env_to_app_name.get(args.env, args.env)
 heroku_proc = subprocess.run(
@@ -55,7 +55,6 @@ env_config = json.loads(heroku_proc.stdout.decode("utf-8"))
 # ```
 useful_env_vars = [
     "CONFIG_DB_URL",
-    "CONFIG_SECRET_KEY",
     "DASHBOARD_PASSWORD",
     "DASHBOARD_USERNAME",
     "PROD_DB_URL",
@@ -65,6 +64,8 @@ useful_env_vars = [
 ]
 
 useful_config = {k: env_config.get(k) for k in useful_env_vars}
+useful_config["HOT_RELOAD"] = "true"
+
 try:
     with open(args.base_config) as f:
         base_config = json.load(f)
