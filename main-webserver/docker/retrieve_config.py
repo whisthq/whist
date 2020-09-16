@@ -32,7 +32,6 @@ args = parser.add_argument(
 args = parser.parse_args()
 
 env_to_app_name = {
-    "main-like": "main-like-webserver",
     "production": "main-webserver",
     "staging": "staging-webserver",
 }
@@ -53,6 +52,7 @@ env_config = json.loads(heroku_proc.stdout.decode("utf-8"))
 # ```
 # ag "getenv\(.+?\)" --only-matching --nogroup --nofilename | sort | uniq
 # ```
+
 useful_env_vars = [
     "CONFIG_DB_URL",
     "DASHBOARD_PASSWORD",
