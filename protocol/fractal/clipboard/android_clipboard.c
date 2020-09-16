@@ -17,14 +17,14 @@ extern JavaVM *javaVM;
 static char cb_buf[MAX_CLIPBOARD_SIZE];
 
 void initClipboard() {
-    JNIEnv* env = getEnv();
+    JNIEnv *env = getEnv();
     jclass clazz = findClass("org/fractal/app/Fractal");
     jmethodID mid = (*env)->GetStaticMethodID(env, clazz, "initClipboard", "()V");
     (*env)->CallStaticVoidMethod(env, clazz, mid);
 }
 
 bool hasClipboardUpdated() {
-    JNIEnv* env = getEnv();
+    JNIEnv *env = getEnv();
     jclass clazz = findClass("org/fractal/app/Fractal");
     jmethodID mid = (*env)->GetStaticMethodID(env, clazz, "hasClipboardUpdated", "()Z");
     jboolean b = (*env)->CallStaticBooleanMethod(env, clazz, mid);
@@ -32,7 +32,7 @@ bool hasClipboardUpdated() {
 }
 
 ClipboardData *GetClipboard() {
-    JNIEnv* env = getEnv();
+    JNIEnv *env = getEnv();
     jclass clazz = findClass("org/fractal/app/Fractal");
 
     // Get size
@@ -58,7 +58,7 @@ ClipboardData *GetClipboard() {
 }
 
 void SetClipboard(ClipboardData *cb) {
-    JNIEnv* env = getEnv();
+    JNIEnv *env = getEnv();
     jclass clazz = findClass("org/fractal/app/Fractal");
     jmethodID mid =
         (*env)->GetStaticMethodID(env, clazz, "SetClipboard", "(IILjava/lang/String;)V");

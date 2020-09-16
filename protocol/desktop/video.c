@@ -303,15 +303,15 @@ int32_t render_screen(SDL_Renderer* renderer) {
         if (appBackgrounding) {
             // if app is backgrounding, save context
             saved_context = SDL_GL_GetCurrentContext();
-            SDL_GL_MakeCurrent((SDL_Window*) window, NULL);
+            SDL_GL_MakeCurrent((SDL_Window*)window, NULL);
             appBackgrounded = true;
         }
         if (appResuming) {
             // if app is foregrounding, restore context
             SDL_Event event;
-            if (SDL_GL_MakeCurrent((SDL_Window*) window, saved_context) < 0) {
+            if (SDL_GL_MakeCurrent((SDL_Window*)window, saved_context) < 0) {
                 saved_context = SDL_GL_CreateContext(window);
-                SDL_GL_MakeCurrent(window, (SDL_GLContext) saved_context);
+                SDL_GL_MakeCurrent(window, (SDL_GLContext)saved_context);
                 event.type = SDL_RENDER_DEVICE_RESET;
                 SDL_PushEvent(&event);
             }

@@ -339,7 +339,7 @@ void print_cpu_info() {
     runcmd("cat /proc/cpuinfo | grep 'Hardware' | awk -F'\t: ' '{print $2}'", &CPUBrandString);
     LOG_INFO("CPU Type: %s", CPUBrandString);
 
-    int logical = sysconf( _SC_NPROCESSORS_CONF );
+    int logical = sysconf(_SC_NPROCESSORS_CONF);
     LOG_INFO("Logical Cores: %d", logical);
     // LOG_INFO("Physical Cores: %d", cores);
     // LOG_INFO("HyperThreaded: %s", (hyperThreads ? "true" : "false"));

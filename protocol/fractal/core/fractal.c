@@ -225,13 +225,13 @@ int runcmd(const char* cmdline, char** response) {
 
         pipe(pipefd);
         pid = fork();
-        if (pid == 0) { // in child
+        if (pid == 0) {  // in child
             close(pipefd[0]);
             dup2(pipefd[1], STDOUT_FILENO);
             dup2(pipefd[1], STDERR_FILENO);
-            execl("/system/bin/sh", "sh", "-c", cmd, (char *)NULL);
-            _exit(0); // should only reach here if exec failed, so need to kill child
-        } else { // in parent
+            execl("/system/bin/sh", "sh", "-c", cmd, (char*)NULL);
+            _exit(0);  // should only reach here if exec failed, so need to kill child
+        } else {       // in parent
             close(pipefd[1]);
             pPipe = fdopen(pipefd[0], "r");
         }

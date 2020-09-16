@@ -216,9 +216,9 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         SDL_SetWindowResizable((SDL_Window*)sdl_window, true);
     }
 #ifndef __ANDROID_API__
-if (!is_fullscreen) {
-    SDL_SetWindowResizable((SDL_Window*)window, SDL_TRUE);
-}
+    if (!is_fullscreen) {
+        SDL_SetWindowResizable((SDL_Window*)window, SDL_TRUE);
+    }
 #else
     // TODO: allow window resizing on Android when not in fullscreen mode
     SDL_SetWindowResizable((SDL_Window*)window, SDL_FALSE);

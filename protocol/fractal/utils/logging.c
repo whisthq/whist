@@ -290,7 +290,8 @@ int multi_threaded_printf(void *opaque) {
 #ifndef __ANDROID_API__
             fprintf(stdout, "%s", logger_queue_cache[i].buf);
 #else
-            __android_log_print(ANDROID_LOG_DEBUG, "ANDROID_DEBUG", "%s", logger_queue_cache[i].buf);
+            __android_log_print(ANDROID_LOG_DEBUG, "ANDROID_DEBUG", "%s",
+                                logger_queue_cache[i].buf);
 #endif
 
             int chars_written =
