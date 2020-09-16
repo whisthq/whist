@@ -5,6 +5,7 @@ Requires=fractal-display.service
 
 [Service]
 User=root
+Type=exec
 Environment=DISPLAY=:11
 Environment=XAUTHORITY=/home/fractal/.Xauthority
 ExecStart=/usr/bin/pulseaudio --system --daemonize=no --exit-idle-time=-1 --disallow-exit
