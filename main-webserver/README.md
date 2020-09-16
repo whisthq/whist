@@ -47,12 +47,6 @@ Review `docker-compose.yml` to see which ports the various services are hosted o
 
 By default, hot-reloading of the Flask web server and Celery task queue is enabled. To disable, set `HOT_RELOAD=false` in your Docker `.env` file.
 
-### Heroku Setup
-
-For continuous integration and delivery, we leverage Heroku pipelines, which provides us with automated PR testing, isolation of environment variables, promotion/rollbacks, and auto-deploys from Github. Contributors should NOT push code to Heroku; only code owners are expected to do this. Instead, contributors should PR their changes into the appropriate Github branch (most often `master`).
-
-While our Heroku pipeline should not be modified without code owner permission, it is helpful to understand how it works [here](https://www.notion.so/fractalcomputers/Heroku-CI-CD-Pipeline-Webservers-f8ef5b43edc84c969cf005fcac4641ba).
-
 ### Software Setup
 
 We recommend that you download several softwares to help you code and test:
@@ -65,24 +59,28 @@ To better understand how Postman works, refer to our wiki [here](https://www.not
 
 #### TablePlus
 
-We use TablePlus to visualize, search, and modify our SQL database.
+We use TablePlus to visualize, search, and modify our SQL database. For instructions on how to set up TablePlus, refer to our wiki [here](https://www.notion.so/fractalcomputers/Using-TablePlus-to-Access-our-PostgresSQL-Database-d5badb38eb3841deb56a84698ccd20f5).
+
+### Heroku Setup
+
+For continuous integration and delivery, we leverage Heroku pipelines, which provides us with automated PR testing, isolation of environment variables, promotion/rollbacks, and auto-deploys from Github. Contributors should NOT push code to Heroku; only code owners are expected to do this. Instead, contributors should PR their changes into the appropriate Github branch (most often `master`).
+
+While our Heroku pipeline should not be modified without code owner permission, it is helpful to understand how it works [here](https://www.notion.so/fractalcomputers/Heroku-CI-CD-Pipeline-Webservers-f8ef5b43edc84c969cf005fcac4641ba).
+
+## Styling
+
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python black](https://github.com/psf/black) before making any PRs. You may find a variety of tutorial online for your personal setup. This README covers how to set it up on VSCode, Sublime Text and running it from the CLI. GitHub Actions will also automatically lint your code via Python Black for every push.
 
 ## Testing
 
 **Pytest**
+NOTE: Currently in the process of being fixed. Skip for now.
+
 We have pytest tests in the `/tests` folder. To run tests, just run `pytest -o log_cli=true -s` in terminal. To run tests in parallel, run `pytest -o log_cli=true -s -n <num>`, with `<num>` as the # of workers in parallel.
 
 If tests are failing when you run the command above locally, make sure that the docker-compose stack is running. Start it if it's not. If the docker-compose stack has crashed, there's a good chance you haven't set the correct environment variables, especially if your terminal displays `AttributeError: 'NoneType' object has no attribute 'upper'`. Be sure that environment variables such as `DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD`, and `USE_PRODUCTION_KEYS` are set to the correct values. The username and password should match the values stored in the relevant configuration database. You can define the environment variables in a `.env` file inside of the repository root, or the `docker` or `tests` subdirectories, or you can set them in your shell.
 
 To get an idea of what environment variables you might be missing, try running `git grep 'os\.getenv'` in the repository root.
-
-## Publishing
-
-Once you are ready to deploy to production, you can merge your code into master and then run `./update.sh`. The script will push your local code to Heroku on the master branch, and notify the team via Slack.
-
-## Styling
-
-To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python black](https://github.com/psf/black) before making any PRs. You may find a variety of tutorial online for your personal setup. This README covers how to set it up on VSCode, Sublime Text and running it from the CLI. GitHub Actions will also automatically lint your code via Python Black for every push.
 
 ### [VSCode](https://medium.com/@marcobelo/setting-up-python-black-on-visual-studio-code-5318eba4cd00)
 
