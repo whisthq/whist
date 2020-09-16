@@ -104,8 +104,8 @@ int parseArgs(int argc, char *argv[]) {
     char *endptr;
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
-        if (strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
-            printf("Option passed into %c is too long! Length of %d when max is %d", opt, strlen(optarg), FRACTAL_ENVIRONMENT_MAXLEN);
+        if (opt != -1 && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
+            printf("Option passed into %c is too long! Length of %zd when max is %d", opt, strlen(optarg), FRACTAL_ENVIRONMENT_MAXLEN);
             return -1;
         }
         errno = 0;
