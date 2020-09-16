@@ -673,19 +673,18 @@ class ECSClient:
         return networkConfiguration
 
     def get_vpc(self):
-
+        #TODO make this not be terrible
         container = self.ecs_client.describe_container_instances(
             cluster=self.cluster,
-            containerInstances=self.ecs_client.list_container_instances(
-                cluster=self.cluster
-            )['containerInstanceArns'],
+            containerInstances=self.ecs_client.list_container_instances(cluster=self.cluster)[
+                'containerInstanceArns'
+            ],
         )['containerInstances'][0]
         attributes = container['attributes']
         for attribute in attributes:
-            if attribute['name']=='ecs.vpc-id':
+            if attribute['name'] == 'ecs.vpc-id':
                 self.vpc = attribute['value']
                 break
-
 
     def check_if_done(self, offset=0):
         """
@@ -823,7 +822,7 @@ if __name__ == "__main__":
     pprint(
         testclient.ecs_client.describe_container_instances(
             cluster=testclient.cluster,
-            containerInstances= testclient.ecs_client.list_container_instances(
+            containerInstances=testclient.ecs_client.list_container_instances(
                 cluster=testclient.cluster
             )['containerInstanceArns'],
         )
