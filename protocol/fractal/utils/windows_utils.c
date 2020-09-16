@@ -106,8 +106,7 @@ bool InitDesktop(char* vm_password) {
             char c = vm_password[i];
             if ('a' <= c && c <= 'f') {
                 password_keycodes[i] = FK_A + (c - 'a');
-            }
-            else if ('1' <= c && c <= '9') {
+            } else if ('1' <= c && c <= '9') {
                 password_keycodes[i] = FK_1 + (c - '1');
             } else if (c == '0') {
                 password_keycodes[i] = FK_0;
