@@ -141,7 +141,8 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam) {
     // By returning a non-zero value from the hook procedure, the
     // message does not get passed to the target window
     KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)lParam;
-	int flags = SDL_GetWindowFlags(window);
+	int flags = SDL_GetWindowFlags((SDL_Window*)window);
+    LOG_INFO("Flag: %d", flags & SDL_WINDOW_MOUSE_FOCUS);
 	if((flags & SDL_WINDOW_MOUSE_FOCUS)) {
 		switch (nCode) {
 			case HC_ACTION: {
