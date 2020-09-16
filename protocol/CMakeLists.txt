@@ -213,6 +213,9 @@ execute_process(
         COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${sentry_dir}
 )
+execute_process(
+        COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
+)
 # Do this before setting the OSX compiler so we do not mess with the sentry-native build
 add_subdirectory(sentry-native)
 
@@ -221,6 +224,9 @@ set_target_properties(sentry PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
         )
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  target_compile_options(sentry PRIVATE -Wno-pedantic)
+endif()
 
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
