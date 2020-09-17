@@ -406,7 +406,7 @@ class ECSClient:
         """
         fmtstr = family + str(self.offset + 1)
         if port_mappings is None:
-            port_mappings = [{"hostPort": 8080, "protocol": "tcp", "containerPort": 8080}]
+            port_mappings = [{"hostPort": 0, "protocol": "tcp", "containerPort": 8080}]
         base_log_config = {
             "logDriver": "awslogs",
             "options": {
@@ -440,7 +440,7 @@ class ECSClient:
                 "placementConstraints": [],
                 "memory": memory,
                 "family": family,
-                "networkMode": "awsvpc",
+                #"networkMode": "awsvpc",
                 "cpu": cpu,
             }
             if basedict["containerDefinitions"][0]["command"] is None:
@@ -491,7 +491,6 @@ class ECSClient:
         }
         if use_launch_type:
             task_args['launchType'] = self.launch_type
-        print(task_args)
         taskdict = self.ecs_client.run_task(**task_args, **kwargs)
         print(taskdict)
         task = taskdict["tasks"][0]

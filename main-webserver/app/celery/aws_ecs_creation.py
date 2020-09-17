@@ -128,7 +128,7 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
     elif cluster_info.status == 'INACTIVE' or cluster_info.status == 'DEPROVISIONING':
         fractalLog(
             function="create_new_container",
-            label=cluster,
+            label=cluster_name,
             logs=f"Cluster status is {cluster_info.status}",
             level=logging.ERROR,
         )
@@ -325,8 +325,8 @@ def send_commands(self, cluster, region_name, commands, containers=None):
         ecs_client = ECSClient(region_name=region_name)
         cluster_info = ClusterInfo.query.get(cluster)
         if not cluster_info:
-            fractalSQLCommit(db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster_name))
-            cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
+            fractalSQLCommit(db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster))
+            cluster_info = ClusterInfo.query.filter_by(cluster=cluster).first()
         elif cluster_info.status == 'INACTIVE' or cluster_info.status == 'DEPROVISIONING':
             fractalLog(
                 function="send_command",

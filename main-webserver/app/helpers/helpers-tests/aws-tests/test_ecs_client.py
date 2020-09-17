@@ -60,7 +60,7 @@ def test_partial_works():
     }
     testclient.run_task(networkConfiguration=networkConfiguration)
     testclient.spin_til_running(time_delay=2)
-    assert testclient.task_ips == {0: '34.229.191.6'}
+    assert testclient.task_ips == {0: '18.213.246.92'}
 
 
 def test_full_base_config():
@@ -94,7 +94,7 @@ def test_full_base_config():
     }
     testclient.run_task(networkConfiguration=networkConfiguration)
     testclient.spin_til_running(time_delay=2)
-    assert testclient.task_ips == {0: '34.229.191.6'}
+    assert testclient.task_ips == {0: '18.213.246.92'}
 
 
 # @pytest.mark.skipif(
@@ -157,10 +157,7 @@ def test_cluster_with_auto_scaling_group():
     testclient.ecs_client.delete_cluster(cluster=cluster_name)
     
     
-@pytest.mark.skipif(
-    "AWS_ECS_TEST_DO_IT_LIVE" not in os.environ,
-    reason="This test is slow and requires a live ECS cluster; run only upon explicit request",
-)
+
 def test_basic_ecs_client():
     testclient = ECSClient(launch_type="EC2")
     testclient.set_and_register_task(
@@ -172,9 +169,9 @@ def test_basic_ecs_client():
             "securityGroups": ["sg-036ebf091f469a23e",],
         }
     }
-    testclient.run_task(networkConfiguration=networkConfiguration)
+    testclient.run_task()
     testclient.spin_til_running(time_delay=2)
-    assert testclient.task_ips == {0: '34.229.191.6'}
+    assert testclient.task_ips == {0: '18.213.246.92'}
 
 
 @mock_ecs
