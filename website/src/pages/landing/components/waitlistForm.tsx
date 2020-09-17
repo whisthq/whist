@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useContext } from "react"
 import { connect } from "react-redux"
 import { Button } from "react-bootstrap"
 import { CountryDropdown } from "react-country-region-selector"
 
-import history from "utils/history"
-import { db } from "utils/firebase"
-import { INITIAL_POINTS } from "utils/points"
+import history from "shared/utils/history"
+import { db } from "shared/utils/firebase"
+import ScreenContext from "shared/context/screenContext"
+import { INITIAL_POINTS } from "shared/utils/points"
 import { insertWaitlistAction } from "store/actions/auth/waitlist"
 
 import "styles/landing.css"
 
 function WaitlistForm(props: any) {
     const { dispatch, user } = props
+    const { width } = useContext(ScreenContext)
 
     const [email, setEmail] = useState("")
     const [name, setName] = useState("")
@@ -88,14 +90,18 @@ function WaitlistForm(props: any) {
     }
 
     return (
-        <div>
+        <div style={{ zIndex: 100 }}>
             <div
                 style={{
                     width: 800,
+                    maxWidth: "100%",
                     margin: "auto",
                     marginTop: 20,
-                    display: "flex",
+                    display: width > 720 ? "flex" : "block",
                     justifyContent: "space-between",
+                    zIndex: 100,
+                    padding: width > 720 ? 0 : 30,
+                    paddingBottom: 0,
                 }}
             >
                 <input
@@ -103,28 +109,36 @@ function WaitlistForm(props: any) {
                     placeholder="Email Address"
                     onChange={updateEmail}
                     className="waitlist-form"
-                    style={{ width: 180 }}
+                    style={{ width: width > 720 ? 180 : "100%" }}
                 />
                 <input
                     type="text"
                     placeholder="Name"
                     onChange={updateName}
                     className="waitlist-form"
-                    style={{ width: 180 }}
+                    style={{ width: width > 720 ? 180 : "100%" }}
                 />
                 <input
                     type="text"
                     placeholder="Referral Code"
                     onChange={updateReferralCode}
                     className="waitlist-form"
-                    style={{ width: 180 }}
+                    style={{ width: width > 720 ? 180 : "100%" }}
                 />
                 <CountryDropdown
                     value={country}
                     onChange={(country) => updateCountry(country)}
                 />
             </div>
-            <div style={{ width: 800, margin: "auto", marginTop: 20 }}>
+            <div
+                style={{
+                    width: 800,
+                    margin: "auto",
+                    marginTop: width > 720 ? 20 : 0,
+                    maxWidth: "100%",
+                    padding: width > 720 ? 0 : 30,
+                }}
+            >
                 {user && user.email ? (
                     <Button
                         className="waitlist-button"

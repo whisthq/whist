@@ -1,6 +1,8 @@
-import React from "react"
+import React, { useContext } from "react"
 import { connect } from "react-redux"
 import { Row, Col } from "react-bootstrap"
+
+import ScreenContext from "shared/context/screenContext"
 
 import Mars from "assets/largeGraphics/mars.svg"
 import Mercury from "assets/largeGraphics/mercury.svg"
@@ -10,6 +12,8 @@ import Leaderboard from "pages/landing/components/leaderboard"
 import Actions from "pages/landing/components/actions"
 
 function LeaderboardView(props: any) {
+    const { width } = useContext(ScreenContext)
+
     return (
         <div
             style={{
@@ -58,7 +62,13 @@ function LeaderboardView(props: any) {
             />
             <div style={{ zIndex: 2, width: "100%" }}>
                 <Row>
-                    <Col md={8} style={{ paddingRight: 40 }}>
+                    <Col
+                        md={8}
+                        style={{
+                            paddingRight: width > 720 ? 40 : 0,
+                            paddingLeft: 0,
+                        }}
+                    >
                         <Leaderboard />
                     </Col>
                     <Col md={4}>

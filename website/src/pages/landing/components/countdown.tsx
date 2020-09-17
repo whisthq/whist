@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useContext } from "react"
 import { connect } from "react-redux"
 import Countdown from "react-countdown"
 
-import { db } from "utils/firebase"
+import ScreenContext from "shared/context/screenContext"
+import { db } from "shared/utils/firebase"
 
 import "styles/landing.css"
 
 function CountdownTimer(props: any) {
+    const { width } = useContext(ScreenContext)
+
     const [closingDate, changeClosingDate] = useState(() => {
         return Date.now()
     })
@@ -32,25 +35,30 @@ function CountdownTimer(props: any) {
         minutes: number,
         seconds: number
     ): any => {
+        var screen_width = width ? width : 0
         return (
             <div
                 style={{
-                    color: props.color ? props.color : "#00D4FF",
-                    fontSize: 18,
+                    color: "#00D4FF",
+                    fontSize: width > 720 ? 18 : 12,
                     background: props.background ? props.background : "none",
                     padding: props.padding ? props.padding : "8px 15px",
                     borderRadius: 4,
                     border: props.border ? props.border : "solid 1px #00D4FF",
+                    textAlign: "center",
                 }}
             >
                 <strong>{days}</strong>{" "}
-                <span style={{ fontSize: 12 }}> days &nbsp; </span>{" "}
+                <span style={{ fontSize: width > 720 ? 12 : 9 }}>
+                    {" "}
+                    days &nbsp;{" "}
+                </span>{" "}
                 <strong>{hours}</strong>{" "}
-                <span style={{ fontSize: 12 }}> hours </span> &nbsp;{" "}
-                <strong>{minutes}</strong>{" "}
-                <span style={{ fontSize: 12 }}> mins </span> &nbsp;{" "}
-                <strong>{seconds}</strong>{" "}
-                <span style={{ fontSize: 12 }}> secs </span>
+                <span style={{ fontSize: width > 720 ? 12 : 10 }}> hrs </span>{" "}
+                &nbsp; <strong>{minutes}</strong>{" "}
+                <span style={{ fontSize: width > 720 ? 12 : 10 }}> mins </span>{" "}
+                &nbsp; <strong>{seconds}</strong>{" "}
+                <span style={{ fontSize: width > 720 ? 12 : 10 }}> secs </span>
             </div>
         )
     }

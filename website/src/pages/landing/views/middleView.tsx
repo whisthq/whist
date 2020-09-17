@@ -1,5 +1,7 @@
-import React from "react"
+import React, { useContext } from "react"
 import { Row, Col, Button } from "react-bootstrap"
+
+import ScreenContext from "shared/context/screenContext"
 
 import Testimonial from "pages/landing/components/testimonial"
 import Wireframe from "assets/largeGraphics/wireframe.svg"
@@ -7,6 +9,7 @@ import Wireframe from "assets/largeGraphics/wireframe.svg"
 import "styles/landing.css"
 
 function MiddleView(props: any) {
+    const { width } = useContext(ScreenContext)
     const scrollToTop = () => {
         window.scrollTo({
             top: 0,
@@ -15,17 +18,18 @@ function MiddleView(props: any) {
     }
 
     return (
-        <div>
+        <div style={{ position: "relative" }}>
             <div style={{ position: "relative", background: "white" }}>
                 <Row style={{ paddingTop: 50, paddingRight: 50 }}>
                     <Col md={7}>
                         <img src={Wireframe} alt="" style={{ width: "100%" }} />
                     </Col>
-                    <Col md={5} style={{ paddingLeft: 40 }}>
+                    <Col md={5} style={{ paddingLeft: 45 }}>
                         <h2
                             style={{
                                 fontWeight: "bold",
                                 lineHeight: 1.2,
+                                marginTop: width > 720 ? 0 : 25,
                             }}
                         >
                             Run your favorite apps on any device.
@@ -42,9 +46,9 @@ function MiddleView(props: any) {
                     </Col>
                 </Row>
             </div>
-            <div style={{ padding: 30, marginTop: 100 }}>
+            <div style={{ padding: 30, marginTop: width > 720 ? 100 : 40 }}>
                 <Row>
-                    <Col md={6}>
+                    <Col md={6} style={{ paddingLeft: width > 720 ? 0 : 15 }}>
                         <div
                             style={{
                                 padding: "50px 35px",

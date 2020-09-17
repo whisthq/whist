@@ -3,8 +3,8 @@ import { Row, Col, Button, FormControl } from "react-bootstrap"
 import { connect } from "react-redux"
 import { Link } from "react-router-dom"
 
-import history from "utils/history"
-import { db } from "utils/firebase"
+import history from "shared/utils/history"
+import { db } from "shared/utils/firebase"
 
 import "styles/application.css"
 

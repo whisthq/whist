@@ -1,8 +1,9 @@
-import React from "react"
+import React, { useContext } from "react"
 import TypeWriterEffect from "react-typewriter-effect"
 
 import WaitlistForm from "pages/landing/components/waitlistForm"
-import CountdownTimer from "pages/landing/components/countdown"
+import Header from "shared/components/header"
+import ScreenContext from "shared/context/screenContext"
 
 import LaptopAwe from "assets/largeGraphics/laptopAwe.svg"
 import Moon from "assets/largeGraphics/moon.svg"
@@ -15,20 +16,29 @@ import Mountain from "assets/largeGraphics/mountain.svg"
 import "styles/landing.css"
 
 function TopView(props: any) {
+    const { width } = useContext(ScreenContext)
+
     return (
         <div
             className="banner-background"
-            style={{ width: "100vw", position: "relative", zIndex: 1 }}
+            style={{
+                width: "100vw",
+                position: "relative",
+                zIndex: 1,
+                paddingBottom: width > 720 ? 0 : 70,
+            }}
         >
+            <Header />
             <img
                 src={Moon}
                 alt=""
                 style={{
                     position: "absolute",
-                    width: 100,
-                    height: 100,
-                    top: 125,
-                    left: 40,
+                    width: width > 720 ? 100 : 40,
+                    height: width > 720 ? 100 : 40,
+                    top: 120,
+                    left: -20,
+                    zIndex: 1,
                 }}
             />
             <img
@@ -36,10 +46,11 @@ function TopView(props: any) {
                 alt=""
                 style={{
                     position: "absolute",
-                    width: 120,
-                    height: 120,
-                    top: 185,
-                    right: -40,
+                    width: width > 720 ? 100 : 30,
+                    height: width > 720 ? 100 : 30,
+                    top: 155,
+                    right: 0,
+                    zIndex: 1,
                 }}
             />
             <img
@@ -47,10 +58,12 @@ function TopView(props: any) {
                 alt=""
                 style={{
                     position: "absolute",
-                    width: 80,
-                    height: 80,
-                    top: 405,
+                    width: width > 720 ? 100 : 30,
+                    height: width > 720 ? 100 : 30,
+                    top: 350,
                     right: 90,
+                    zIndex: 1,
+                    opacity: width > 720 ? 1.0 : 0,
                 }}
             />
             <img
@@ -58,10 +71,12 @@ function TopView(props: any) {
                 alt=""
                 style={{
                     position: "absolute",
-                    width: 100,
-                    height: 100,
+                    width: width > 720 ? 100 : 30,
+                    height: width > 720 ? 100 : 30,
                     top: 425,
                     left: 80,
+                    zIndex: 1,
+                    opacity: width > 720 ? 1.0 : 0,
                 }}
             />
             <img
@@ -81,7 +96,7 @@ function TopView(props: any) {
                     width: "100vw",
                     bottom: 0,
                     left: 0,
-                    height: 150,
+                    height: width > 720 ? 150 : 0,
                     background: "white",
                 }}
             ></div>
@@ -90,7 +105,7 @@ function TopView(props: any) {
                 alt=""
                 style={{
                     position: "absolute",
-                    width: 250,
+                    width: width > 720 ? 250 : 100,
                     left: 0,
                     bottom: 130,
                     zIndex: 2,
@@ -101,26 +116,13 @@ function TopView(props: any) {
                 alt=""
                 style={{
                     position: "absolute",
-                    width: 250,
+                    width: width > 720 ? 250 : 100,
                     right: 0,
                     bottom: 130,
                     transform: "scaleX(-1)",
                     zIndex: 2,
                 }}
             />
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    width: "100%",
-                    padding: 30,
-                }}
-            >
-                <div className="logo">Fractal</div>
-                <div style={{ position: "relative", right: 50 }}>
-                    <CountdownTimer type="small" />
-                </div>
-            </div>
             <div
                 style={{
                     margin: "auto",
@@ -132,49 +134,72 @@ function TopView(props: any) {
             >
                 <div
                     style={{
-                        display: "flex",
+                        display: "inline-block",
                         margin: "auto",
                         justifyContent: "center",
+                        textAlign: "center",
+                        paddingLeft: 20,
+                        paddingRight: 20,
                     }}
                 >
-                    <TypeWriterEffect
-                        textStyle={{
-                            fontFamily: "Maven Pro",
-                            color: "#00D4FF",
-                            fontSize: "calc(32px + 2.2vw)",
-                            fontWeight: "bold",
-                            marginTop: 10,
+                    <div
+                        style={{
+                            display: "inline-block",
+                            zIndex: 100,
                         }}
-                        startDelay={0}
-                        cursorColor="white"
-                        multiText={["Blender", "Figma", "VSCode", "Maya"]}
-                        loop={true}
-                        typeSpeed={200}
-                    />
+                    >
+                        <TypeWriterEffect
+                            textStyle={{
+                                fontFamily: "Maven Pro",
+                                color: "#00D4FF",
+                                fontSize: "calc(32px + 2.2vw)",
+                                fontWeight: "bold",
+                                marginTop: width > 720 ? 10 : 7,
+                                zIndex: 100,
+                                display: "inline-block",
+                            }}
+                            startDelay={0}
+                            cursorColor="white"
+                            multiText={[
+                                "Blender,",
+                                "Figma,",
+                                "VSCode,",
+                                "Maya,",
+                            ]}
+                            loop={true}
+                            typeSpeed={200}
+                        />
+                    </div>
                     <div
                         style={{
                             fontSize: "calc(32px + 2.2vw)",
                             fontWeight: "bold",
+                            display: "inline-block",
                             paddingBottom: 40,
+                            zIndex: 100,
                         }}
                     >
-                        , just <span style={{ color: "#00D4FF" }}>faster</span>.
+                        &nbsp;just{" "}
+                        <span style={{ color: "#00D4FF" }}>faster</span>.
                     </div>
                 </div>
                 <p
                     style={{
                         width: 650,
+                        maxWidth: "100%",
                         margin: "auto",
                         lineHeight: 1.6,
                         color: "#EFEFEF",
                         letterSpacing: 1.5,
+                        paddingLeft: 20,
+                        paddingRight: 20,
                     }}
                 >
                     Fractal uses cloud streaming to supercharge your laptop's
                     applications. Say goodbye to laggy apps — join our waitlist
                     before the countdown ends for access.
                 </p>
-                <div style={{ marginTop: 70 }}>
+                <div style={{ marginTop: width > 720 ? 70 : 20, zIndex: 100 }}>
                     <WaitlistForm />
                 </div>
             </div>
@@ -182,9 +207,9 @@ function TopView(props: any) {
                 style={{
                     margin: "auto",
                     maxWidth: 1000,
-                    width: "45vw",
+                    width: width > 720 ? "45vw" : "90vw",
                     position: "relative",
-                    bottom: 60,
+                    bottom: width > 720 ? 60 : 30,
                     zIndex: 90,
                     textAlign: "center",
                     pointerEvents: "none",

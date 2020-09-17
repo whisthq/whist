@@ -23,27 +23,6 @@ select {
     font-family: "Maven Pro" !important;
 }
 
-input {
-    color: white;
-}
-
-option,
-::placeholder {
-    font-family: "Maven Pro" !important;
-}
-
-option {
-    color: #000000;
-}
-
-::placeholder {
-    color: #cccccc;
-}
-
-option {
-    background: white;
-}
-
 .waitlist-form {
     border-radius: 5px;
     background-color: #1c2a45;
@@ -67,6 +46,40 @@ option {
     z-index: 101 !important;
 }
 
+@media only screen and (max-width: 720px) {
+    select {
+        width: 100%;
+        margin-top: 15px;
+    }
+
+    .waitlist-form {
+        margin-top: 15px;
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+}
+
+input {
+    color: white;
+}
+
+option,
+::placeholder {
+    font-family: "Maven Pro" !important;
+}
+
+option {
+    color: #000000;
+}
+
+::placeholder {
+    color: #cccccc;
+}
+
+option {
+    background: white;
+}
+
 .banner-background {
     width: 100%;
     background: #0f1726;
@@ -75,14 +88,6 @@ option {
 .white-background-curved {
     border-top-left-radius: 50% 40%;
     border-top-right-radius: 50% 40%;
-}
-
-.logo {
-    font-weight: bold;
-    color: white;
-    font-size: 20px;
-    letter-spacing: 6px;
-    margin-left: 20px;
 }
 
 .table {

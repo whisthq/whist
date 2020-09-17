@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useContext } from "react"
 import { connect } from "react-redux"
 import { Table } from "react-bootstrap"
 
 import Countdown from "pages/landing/components/countdown"
+import ScreenContext from "shared/context/screenContext"
 
 import "styles/landing.css"
 
@@ -10,6 +11,8 @@ const Leaderboard = (props: {
     waitlist: any[]
     user: { email: any; ranking: number }
 }) => {
+    const { width } = useContext(ScreenContext)
+
     const [topSix, setTopSix]: any[] = useState([])
 
     useEffect(() => {
@@ -23,26 +26,42 @@ const Leaderboard = (props: {
         referrals: number,
         points: number
     ): any => {
-        return (
-            <tr className={userRow ? "userRow" : ""}>
-                <td className="rankingColumn">
-                    <div className={idx <= 3 ? "topThree" : "bottomThree"}>
-                        {idx}
+        if (width > 720) {
+            return (
+                <tr className={userRow ? "userRow" : ""}>
+                    <td className="rankingColumn">
+                        <div className={idx <= 3 ? "topThree" : "bottomThree"}>
+                            {idx}
+                        </div>
+                    </td>
+                    <td className="nameColumn">
+                        <div style={{ position: "relative", top: 7 }}>
+                            {name}
+                        </div>
+                    </td>
+                    <td>
+                        <div style={{ position: "relative", top: 7 }}>
+                            {referrals}
+                        </div>
+                    </td>
+                    <td className="pointsColumn">
+                        <div style={{ position: "relative", top: 7 }}>
+                            {points}
+                        </div>
+                    </td>
+                </tr>
+            )
+        } else {
+            return (
+                <div style={{ display: "flex", color: "white" }}>
+                    <div>{idx}</div>
+                    <div>
+                        <div>{name}</div>
+                        <div>{points}</div>
                     </div>
-                </td>
-                <td className="nameColumn">
-                    <div style={{ position: "relative", top: 7 }}>{name}</div>
-                </td>
-                <td>
-                    <div style={{ position: "relative", top: 7 }}>
-                        {referrals}
-                    </div>
-                </td>
-                <td className="pointsColumn">
-                    <div style={{ position: "relative", top: 7 }}>{points}</div>
-                </td>
-            </tr>
-        )
+                </div>
+            )
+        }
     }
 
     const getRows = () => {
@@ -129,7 +148,7 @@ const Leaderboard = (props: {
             <div
                 style={{
                     width: "100%",
-                    display: "flex",
+                    display: width > 720 ? "flex" : "block",
                     justifyContent: "space-between",
                 }}
             >
@@ -143,7 +162,9 @@ const Leaderboard = (props: {
                 >
                     Leaderboard
                 </h1>
-                <div style={{ position: "relative", top: 25 }}>
+                <div
+                    style={{ position: "relative", top: width > 720 ? 25 : 0 }}
+                >
                     <Countdown type="small" />
                 </div>
             </div>
@@ -155,19 +176,24 @@ const Leaderboard = (props: {
                     borderRadius: 5,
                     boxShadow: "0px 4px 30px rgba(0, 0, 0, 0.1)",
                     zIndex: 2,
+                    paddingTop: 20,
                 }}
             >
-                <Table>
-                    <thead>
-                        <tr>
-                            <th style={{ paddingLeft: 50 }}></th>
-                            <th>Name</th>
-                            <th>Referrals</th>
-                            <th>Points</th>
-                        </tr>
-                    </thead>
-                    <tbody>{getRows()}</tbody>
-                </Table>
+                {width > 720 ? (
+                    <Table>
+                        <thead>
+                            <tr>
+                                <th style={{ paddingLeft: 50 }}></th>
+                                <th>Name</th>
+                                <th>Referrals</th>
+                                <th>Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>{getRows()}</tbody>
+                    </Table>
+                ) : (
+                    <div style={{ marginBottom: 30 }}>{getRows()}</div>
+                )}
             </div>
         </div>
     )

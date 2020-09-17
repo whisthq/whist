@@ -13,7 +13,8 @@ import ReduxPromise from "redux-promise"
 import storage from "redux-persist/lib/storage"
 import * as Sentry from "@sentry/react"
 
-import history from "utils/history"
+import history from "shared/utils/history"
+import { ScreenProvider } from "shared/context/screenContext"
 import { config } from "constants/config"
 import rootReducer from "store/reducers/root"
 import * as serviceWorker from "serviceWorker"
@@ -56,9 +57,15 @@ ReactDOM.render(
         <Router history={history}>
             <Provider store={store}>
                 <PersistGate loading={null} persistor={persistor}>
-                    <Route exact path="/" component={Landing} />
-                    <Route exact path="/auth" component={Auth} />
-                    <Route exact path="/application" component={Application} />
+                    <ScreenProvider>
+                        <Route exact path="/" component={Landing} />
+                        <Route exact path="/auth" component={Auth} />
+                        <Route
+                            exact
+                            path="/application"
+                            component={Application}
+                        />
+                    </ScreenProvider>
                 </PersistGate>
             </Provider>
         </Router>

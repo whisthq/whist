@@ -2,8 +2,8 @@ import React from "react"
 import { Button } from "react-bootstrap"
 import { connect } from "react-redux"
 import firebase from "firebase"
-import { db } from "utils/firebase"
-import { SIGNUP_POINTS } from "utils/points"
+import { db } from "shared/utils/firebase"
+import { SIGNUP_POINTS } from "shared/utils/points"
 import { googleLogin } from "store/actions/auth/login_actions"
 
 import "styles/landing.css"
@@ -26,12 +26,10 @@ const GoogleButton = (props: any) => {
                         console.log(email)
                         const newPoints = user.points + SIGNUP_POINTS
                         props.dispatch(googleLogin(email, newPoints))
-                        db.collection("waitlist")
-                            .doc(user.email)
-                            .update({
-                                google_auth_email: email,
-                                points: newPoints,
-                            })
+                        db.collection("waitlist").doc(user.email).update({
+                            google_auth_email: email,
+                            points: newPoints,
+                        })
                     }
                 })
                 .catch((e) => console.log(e))

@@ -1,13 +1,15 @@
-import React, { useEffect, useCallback } from "react"
+import React, { useEffect, useCallback, useContext } from "react"
 import { connect } from "react-redux"
-
-import { db } from "utils/firebase"
 import * as firebase from "firebase"
+
+import { db } from "shared/utils/firebase"
 
 import {
     updateUserAction,
     updateWaitlistAction,
 } from "store/actions/auth/waitlist"
+
+import ScreenContext from "shared/context/screenContext"
 
 import "styles/landing.css"
 import "styles/shared.css"
@@ -19,6 +21,7 @@ import BottomView from "pages/landing/views/bottomView"
 
 function Landing(props: any) {
     const { dispatch, user } = props
+    const { width } = useContext(ScreenContext)
 
     const getRanking = useCallback(
         (waitlist: any[]) => {
@@ -78,7 +81,6 @@ function Landing(props: any) {
                                     userData,
                                     waitlist
                                 )
-                                console.log(ranking)
                                 if (
                                     userData &&
                                     userData.points !== user.points &&
