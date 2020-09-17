@@ -7,13 +7,12 @@ repos:
         - id: check-symlinks
         - id: detect-private-key
 
-    # TODO: uncomment this, and fix Hadolint errors/warnings
-    # - repo: local
-    #   hooks:
-    #     # https://github.com/hadolint/hadolint
-    #     - id: dockerfile-lint
-    #       name: Dockerfile Lint
-    #       language: docker_image
-    #       entry: hadolint/hadolint:v1.18.0 hadolint
-    #       args: [base/Dockerfile.18,
-    #              base/Dockerfile.20]
+    - repo: local
+      hooks:
+        # https://github.com/hadolint/hadolint
+        - id: dockerfile-lint
+          name: Dockerfile Lint
+          language: docker_image
+          entry: hadolint/hadolint:v1.18.0 hadolint
+          args: [base/Dockerfile.18,
+                 base/Dockerfile.20]
