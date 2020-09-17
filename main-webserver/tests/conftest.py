@@ -1,5 +1,5 @@
 import os
-
+import sys
 from tests import *
 
 # parallelizes tests
@@ -18,10 +18,12 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture
 def input_token():
+    print(os.environ)
+    sys.stdout.flush()
     resp = requests.post(
         (SERVER_URL + "/account/login"),
         json=dict(
-            username="fractal-admin@gmail.com", password="!!fractal-admin-password!!"
+            username="fractal-admin@gmail.com", password="!!fractal-admin-password!!123"
         ),
     )
 
@@ -30,6 +32,8 @@ def input_token():
 
 @pytest.fixture
 def admin_token():
+    print(os.environ)
+    sys.stdout.flush()
     resp = requests.post(
         (SERVER_URL + "/admin/login"),
         json=dict(
