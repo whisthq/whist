@@ -5,6 +5,10 @@ runcontainer (){
 	    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
 	    --tmpfs /run \
 	    --tmpfs /run/lock \
+	    --gpus all \
+	    -e NVIDIA_CONTAINER_CAPABILITIES=all \
+	    -e NVIDIA_VISIBLE_DEVICES=all \
+	    --shm-size=8g \
 	    --security-opt seccomp=unconfined \
             --cap-drop ALL \
             --cap-add CAP_SETPCAP \
@@ -21,10 +25,12 @@ runcontainer (){
             --cap-add CAP_NET_BIND_SERVICE \
             --cap-add CAP_SYS_CHROOT \
             --cap-add CAP_SETFCAP \
-            --mount type=bind,source=$(cd $3;pwd),destination=/protocol -p 32262:32262 -p 32263:32263/udp -p 32273:32273 $1-systemd-$2
+	    --cap-add SYS_NICE \
+            --mount type=bind,source=$(cd base/protocol;pwd),destination=/usr/share/protocol -p 32262:32262 -p 32263:32263/udp -p 32273:32273 fractal-$1-$2
+
+# capabilities not enabled by default: CAP_NICE
 }
 
-docker build -f $1/Dockerfile.$2 $1 -t $1-systemd-$2
 container_id=$(runcontainer $1 $2 $3)
 
 echo "Running container with IP: $container_id"

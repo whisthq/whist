@@ -1,8 +1,7 @@
 FROM ubuntu:18.04
-RUN yes | unminimize
 ENV container docker
 ENV LC_ALL C
-# ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
@@ -53,8 +52,7 @@ RUN apt-get -y install tzdata keyboard-configuration ufw
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
-# RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.sh >>/dev/null 2>&1
-# Using local setup-scripts repository for development
+# Use local setup-scripts repository for development
 ADD setup-scripts /setup-scripts
 
 RUN useradd --create-home fractal \
@@ -63,42 +61,33 @@ RUN useradd --create-home fractal \
 
 RUN apt-get install lsb-release -y && apt-get clean
 RUN apt-get install -y pulseaudio
+RUN adduser root pulse-access \
+    && adduser fractal pulse-access
+
 # Install all required components for Fractal to perform well
 # Split into multiple steps for caching
 WORKDIR /setup-scripts/linux
-RUN /bin/bash -c "source utils.sh \
-    && Update-Linux \
-    && Set-Time \
-    && Install-VirtualDisplay"
+RUN /bin/bash -c "source utils.sh && Update-Linux"
+RUN /bin/bash -c "source utils.sh && Install-VirtualDisplay-NoGnome"
 RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \
     && Install-GoogleChrome"
 RUN /bin/bash -c "source utils.sh \
-    && Install-NvidiaTeslaPublicDrivers \
-    && Disable-TCC \
-    && Set-OptimalGPUSettings"
-RUN /bin/bash -c "source utils.sh \
     && Install-CustomX11Configuration"
 RUN /bin/bash -c "source utils.sh \
     && Set-FractalDirectory \
     && Install-FractalServer dev"
-# RUN /bin/bash -c "source utils.sh \ 
-#     && Install-FractalExitScript"
 RUN /bin/bash -c "source utils.sh \
     && Install-FractalAutoUpdate master"
 RUN /bin/bash -c "source utils.sh \
     && Install-FractalLinuxInputDriver"
-# RUN /bin/bash -c "source utils.sh \
-#     && Install-FractalWallpaper"
 RUN /bin/bash -c "source utils.sh \
     && Install-Unison \
     && Enable-SSHKey"
 RUN /bin/bash -c " source utils.sh \
     && Disable-Shutdown"
-RUN /bin/bash -c " source utils.sh \
-    && Add-AutoLogin \
-    && Disable-AutomaticLockScreen"
+RUN /bin/bash -c " source utils.sh && Add-AutoLogin"
 RUN /bin/bash -c " source utils.sh \
     Install-FractalServer \
     Install-CustomGDMConfiguration"
@@ -110,47 +99,96 @@ ADD entry.sh /home/fractal
 ADD display-service-envs /home/fractal
 ADD fractal-input.rules home/fractal
 
+RUN sudo apt-get install -y openssh-server
+RUN systemctl enable ssh
+
 RUN chown -v -R fractal:fractal /home/fractal
 RUN chown root:root /run/user
 RUN chmod +x /home/fractal/entry.sh
-
-#### FROM PHIL 1/2 on this file: I think this new service for Nvidia needs to be added here, but not certain
-#### It apparently needs to run before X so it might need to be even before (?)
-ADD fractal-update-nvidia-busid.service /etc/systemd/system
-####
-
-COPY /protocol-temp /protocol-temp
-RUN /bin/bash -c "mkdir /protocol ; mkdir /protocol/server; mv /protocol-temp /protocol/server/build64"
 
 ADD fractal-entrypoint.service /etc/systemd/system
 ADD fractal-display.service /etc/systemd/system
 ADD fractal-protocol.service /etc/systemd/system
 
-VOLUME [ "/sys/fs/cgroup" ]
+###### Set up nvidia inside container
+LABEL com.nvidia.volumes.needed="nvidia_driver"
 
-RUN sudo apt-get install -y openssh-server
-RUN systemctl enable ssh
+RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
+    echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
 
-#As opposed to graphical.target, which is the default
-#RUN systemctl set-default multi-user.target
-ENV init /sbin/init
+RUN mkdir -p /opt/nvidia/lib && \
+    ln -s /usr/local/nvidia/lib /opt/nvidia/lib/i386-linux-gnu && \
+    ln -s /usr/local/nvidia/lib64 /opt/nvidia/lib/x86_64-linux-gnu
 
-#### FROM PHIL 2/2 on this file: running the new service from above!
+ENV PATH /usr/local/nvidia/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+
+RUN sudo apt-get -y install linux-headers-$(uname -r)
+ENV distribution $(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
+RUN sudo mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc/apt/preferences.d/cuda-repository-pin-600
+RUN sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub
+RUN echo "deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
+RUN sudo apt-get -y update
+RUN sudo apt-get -y install cuda-drivers
+ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
+
+# Set up service (that starts before X) to fix the NVIDIA GPU bus ID
+ADD setup-scripts/linux/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/
+ADD fractal-update-nvidia-busid.service /etc/systemd/system/
+ADD setup-scripts/linux/update-nvidia-busid.sh /usr/share/fractal/
 RUN systemctl enable fractal-update-nvidia-busid
-####
 
+# Set display environment variable to our nvidia-powered display
+ENV DISPLAY :10
+
+# Install libraries for (limited) hardware acceleration
+RUN apt install -y vainfo vdpauinfo vdpau-va-driver libvdpau-va-gl1
+
+
+# Install some useful utilities for debugging/testing
+RUN sudo apt install -y tmux xserver-xorg-video-dummy mesa-utils glmark2 mpv
+
+# Install firefox nightly (for testing only)
+# RUN sudo add-apt-repository ppa:ubuntu-mozilla-daily/ppa
+# RUN sudo apt update
+# RUN sudo apt install firefox-trunk
+
+
+# Install fractal services
+ADD fractal-entrypoint.service /etc/systemd/system
 RUN systemctl enable fractal-entrypoint
+ADD fractal-display.service /etc/systemd/system
 RUN systemctl enable fractal-display
+ADD fractal-protocol.service /etc/systemd/system
 RUN systemctl enable fractal-protocol
+ADD fractal-audio.service /etc/systemd/system
+RUN systemctl enable fractal-audio
 
-# Disable some extra systemd services
-RUN systemctl mask plymouth
-RUN systemctl mask systemd-hostnamed
 
 
 ADD fractal-setup.sh /
 RUN chmod +x /fractal-setup.sh
 
-RUN sudo rm /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
+VOLUME [ "/sys/fs/cgroup" ]
+
+#As opposed to graphical.target, which is the default
+#RUN systemctl set-default multi-user.target
+ENV init /sbin/init
+
+# Disable some extra systemd services
+RUN systemctl mask plymouth
+RUN systemctl mask systemd-hostnamed
+RUN systemctl mask acpid
+RUN systemctl mask NetworkManager-wait-online
+RUN systemctl mask nvidia-persistenced
+
+# set up protocol symlinkk
+RUN sudo rm /usr/share/fractal/FractalServer.sh /usr/share/fractal/FractalServer
+RUN sudo mkdir -p /usr/share/fractal/protocol/server/build64/
+RUN sudo ln -s /usr/share/fractal/protocol/server/build64/FractalServer /usr/share/fractal/FractalServer
+
+# grab protocol
+ADD protocol/server/build64/FractalServer /usr/share/FractalServer
 
 CMD ["/lib/systemd/systemd"]

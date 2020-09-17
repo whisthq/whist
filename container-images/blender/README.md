@@ -1,3 +1,0 @@
-# Blender Container Image
-
-TBD.

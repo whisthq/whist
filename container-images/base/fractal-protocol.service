@@ -1,14 +1,14 @@
 [Unit]
 Description=Fractal Service
-After=fractal-display.service
+After=fractal-display.service fractal-audio.service
 Requires=fractal-display.service
 
 [Service]
 WorkingDirectory=/usr/share/fractal
 Type=simple
-Environment=DISPLAY=:11
+Environment=DISPLAY=:10
 Environment=XAUTHORITY=/home/fractal/.Xauthority
-ExecStart=/protocol/server/build64/FractalServer
+ExecStart=/usr/share/FractalServer
 Restart=always
 RestartSec=3
 
