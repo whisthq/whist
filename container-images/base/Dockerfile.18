@@ -183,7 +183,7 @@ RUN systemctl mask acpid
 RUN systemctl mask NetworkManager-wait-online
 RUN systemctl mask nvidia-persistenced
 
-# set up protocol symlinkk
+# set up protocol symlink
 RUN sudo rm /usr/share/fractal/FractalServer.sh /usr/share/fractal/FractalServer
 RUN sudo mkdir -p /usr/share/fractal/protocol/server/build64/
 RUN sudo ln -s /usr/share/fractal/protocol/server/build64/FractalServer /usr/share/fractal/FractalServer

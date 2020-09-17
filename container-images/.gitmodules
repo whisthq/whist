@@ -2,5 +2,5 @@
 	path = base/setup-scripts
 	url = https://github.com/fractalcomputers/setup-scripts.git
 [submodule "base/protocol"]
-	path = protocol
+	path = base/protocol
 	url = https://github.com/fractalcomputers/protocol
