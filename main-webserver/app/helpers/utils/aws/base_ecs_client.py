@@ -72,6 +72,7 @@ class ECSClient:
         self.task_definition_arn = None
         self.tasks = []
         self.task_ips = {}
+        self.task_ports = {}
         self.tasks_done = []
         self.offset = -1
         self.container_name = None
@@ -510,22 +511,10 @@ class ECSClient:
         taskdict = self.ecs_client.run_task(**task_args, **kwargs)
         task = taskdict["tasks"][0]
         running_task_arn = task["taskArn"]
-
-        #self.assign_task_ip_address(running_task_arn)
-
         self.tasks.append(running_task_arn)
         self.tasks_done.append(False)
         self.offset += 1
     
-    # def assign_task_ip_address(self, task, time_delay=5):
-    #     network_id = None
-    #     while not network_id:
-    #         task_info = self.ecs_client.describe_tasks(tasks=[task], cluster=self.cluster)["tasks"][0]
-    #         network_id = self.get_task_network_info(task_info, 'networkInterfaceId')
-    #         time.sleep(time_delay)
-    #         print(task_info, network_id)
-    #     self.ec2_client.assign_ipv6_addresses(Ipv6AddressCount=1, NetworkInterfaceId=network_id)
-
     def stop_task(self, reason="user stopped", offset=0):
         self.ecs_client.stop_task(
             cluster=self.cluster, task=(self.tasks[offset]), reason=reason,
@@ -654,29 +643,29 @@ class ECSClient:
                         return detail['value']
     
     def get_task_binding_info(self, task_info):
+        network_binding_map = {}
         for container in task_info['containers']:
             for network_binding in container['networkBindings']:
-                return network_binding
+                network_binding_map[network_binding['containerPort']] = network_binding['hostPort']
+        return network_binding_map
 
-    def get_task_ip(self, offset=0):
+    def get_task_ip_ports(self, offset=0):
         if self.tasks_done[offset]:
             return False
         response = self.ecs_client.describe_tasks(tasks=self.tasks, cluster=self.cluster)
         resp = response["tasks"][offset]
         if resp["lastStatus"] == "RUNNING" or resp["lastStatus"] == "STOPPED":
-            # container_info = self.ecs_client.describe_container_instances(
-            #     cluster=self.cluster, containerInstances=[resp['containerInstanceArn']]
-            # )
-            # pprint(container_info['containerInstances'][0])
-            # ec2_id = container_info['containerInstances'][0]['ec2InstanceId']
-            # ec2_info = self.ec2_client.describe_instances(InstanceIds=[ec2_id])
-            # public_ip = ec2_info['Reservations'][0]['Instances'][0].get('PublicIpAddress', -1)
-            # self.task_ips[offset] = public_ip
-            # return True
-            network_binding = self.get_task_binding_info(resp)
-            if network_binding:
-                print(network_binding)
-                self.task_ips[offset] = network_binding['bindIP']
+            container_info = self.ecs_client.describe_container_instances(
+                cluster=self.cluster, containerInstances=[resp['containerInstanceArn']]
+            )
+            ec2_id = container_info['containerInstances'][0]['ec2InstanceId']
+            ec2_info = self.ec2_client.describe_instances(InstanceIds=[ec2_id])
+            public_ip = ec2_info['Reservations'][0]['Instances'][0].get('PublicIpAddress', -1)
+            self.task_ips[offset] = public_ip
+
+            network_binding_map = self.get_task_binding_info(resp)
+            if network_binding_map:
+                self.task_ports[offset] = network_binding_map
                 return True
         return False
 
@@ -777,7 +766,7 @@ class ECSClient:
         return False
 
     def spin_til_running(self, offset=0, time_delay=5):
-        while not self.get_task_ip(offset=offset):
+        while not self.get_task_ip_ports(offset=offset):
             time.sleep(time_delay)
 
     def spin_til_containers_up(self, cluster_name, time_delay=5):

@@ -163,9 +163,9 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
     )
     ecs_client.spin_til_running(time_delay=2)
     curr_ip = ecs_client.task_ips.get(0, -1)
+    curr_network_binding = ecs_client.task_ports.get(0, -1)
     # TODO:  Get this right
-    curr_port = 80
-    if curr_ip == -1:
+    if curr_ip == -1 or curr_network_binding == -1:
         fractalLog(
             function="create_new_container",
             label=str(username),
@@ -177,12 +177,15 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
         )
         return
 
+    print(curr_network_binding)
     container = UserContainer(
         container_id=ecs_client.tasks[0],
         user_id=username,
         cluster=ecs_client.cluster,
         ip=curr_ip,
-        port=curr_port,
+        port_32262=curr_network_binding[32262],
+        port_32263=curr_network_binding[32263],
+        port_32273=curr_network_binding[32273],
         state="CREATING",
         location=ecs_client.region_name,
         os="Linux",
@@ -192,6 +195,12 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
     if container_sql:
         container = UserContainer.query.get(ecs_client.tasks[0])
         container = user_container_schema.dump(container)
+        fractalLog(
+            function="create_new_container",
+            label=str(ecs_client.tasks[0]),
+            logs=f"Inserted container with IP address {curr_ip} and network bindings {curr_network_binding}",
+            level=logging.ERROR,
+        )
     else:
         fractalLog(
             function="create_new_container",
