@@ -631,6 +631,7 @@ class ECSClient:
             container_info = self.ecs_client.describe_container_instances(
                 cluster=self.cluster, containerInstances=[resp['containerInstanceArn']]
             )
+            pprint(container_info['containerInstances'][0])
             ec2_id = container_info['containerInstances'][0]['ec2InstanceId']
             ec2_info = self.ec2_client.describe_instances(InstanceIds=[ec2_id])
             public_ip = ec2_info['Reservations'][0]['Instances'][0].get('PublicIpAddress', -1)
@@ -699,7 +700,6 @@ class ECSClient:
             self.subnet = subnet_ids[0]
             self.vpc = self.ec2_client.describe_subnets(SubnetIds=subnet_ids)['Subnets'][0]['VpcId']
             return self.vpc
-
 
     def check_if_done(self, offset=0):
         """
@@ -853,7 +853,7 @@ if __name__ == "__main__":
     pprint(
         testclient.ecs_client.describe_container_instances(
             cluster=testclient.cluster,
-            containerInstances= testclient.ecs_client.list_container_instances(
+            containerInstances=testclient.ecs_client.list_container_instances(
                 cluster=testclient.cluster
             )['containerInstanceArns'],
         )
