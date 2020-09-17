@@ -189,6 +189,6 @@ RUN sudo mkdir -p /usr/share/fractal/protocol/server/build64/
 RUN sudo ln -s /usr/share/fractal/protocol/server/build64/FractalServer /usr/share/fractal/FractalServer
 
 # grab protocol
-ADD ../protocol/server/build64/FractalServer /usr/share/fractal/protocol/server/build64/FractalServer
+ADD protocol/server/build64/FractalServer /usr/share/fractal/protocol/server/build64/FractalServer
 
 CMD ["/lib/systemd/systemd"]
