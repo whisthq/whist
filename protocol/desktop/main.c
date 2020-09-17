@@ -15,6 +15,7 @@ its threads.
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#include "sentry.h"
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -68,6 +69,8 @@ volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
+char user_email[USER_EMAIL_MAXLEN];
+extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 bool using_stun = true;
 
 int UDP_port = -1;
@@ -501,6 +504,15 @@ int main(int argc, char* argv[]) {
 
     initLogger(log_dir);
     free(log_dir);
+    // Set sentry user here based on email from command line args
+    // It defaults to None, so we only inform sentry if the client app passes in a user email
+    // We do this here instead of in initLogger because initLogger is used both by the client and
+    // the server so we have to do it for both in their respective main.c files.
+    if (strcmp(user_email, "None") != 0) {
+        sentry_value_t user = sentry_value_new_object();
+        sentry_value_set_by_key(user, "email", sentry_value_new_string(user_email));
+    }
+
     if (running_ci) {
         LOG_INFO("Running in CI mode");
     }
@@ -563,6 +575,7 @@ int main(int argc, char* argv[]) {
 
         connected = true;
 
+        // Initialize audio and variablessendTimeToServer
         // reset because now connected
         try_amount = 0;
         max_connection_attempts = MAX_RECONNECTION_ATTEMPTS;
@@ -580,6 +593,10 @@ int main(int argc, char* argv[]) {
 
         if (sendTimeToServer() != 0) {
             LOG_ERROR("Failed to synchronize time with server.");
+        }
+
+        if (sendEmailToServer(user_email) != 0) {
+            LOG_ERROR("Failed to send user email to server");
         }
 
         // Timer used in CI mode to exit after 1 min
@@ -646,11 +663,26 @@ int main(int argc, char* argv[]) {
         closeConnections();
     }
 
+    if (failed) {
+        sentry_value_t event = sentry_value_new_message_event(
+            /*   level */ SENTRY_LEVEL_ERROR,
+            /*  logger */ "client-errors",
+            /* message */ "Failure in main loop");
+        sentry_capture_event(event);
+    }
+
+    if (try_amount >= 3) {
+        sentry_value_t event = sentry_value_new_message_event(
+            /*   level */ SENTRY_LEVEL_ERROR,
+            /*  logger */ "client-errors",
+            /* message */ "Failed to connect after three attemps");
+        sentry_capture_event(event);
+    }
+
     LOG_INFO("Closing Client...");
     destroyVideo();
     destroySDL((SDL_Window*)window);
     destroySocketLibrary();
     destroyLogger();
-
     return (try_amount < 3 && !failed) ? 0 : -1;
 }

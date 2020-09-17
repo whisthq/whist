@@ -9,7 +9,7 @@ add_library(fractalUtils STATIC
         logging.c
         sdlscreeninfo.c
         json.c
-	sysinfo.c
+	    sysinfo.c
         png.c
         mouse.c
         rwlock.c
@@ -24,4 +24,4 @@ endif ()
 set_property(TARGET fractalUtils PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-target_link_libraries(fractalUtils ${STATIC_SDL2} ${CMAKE_DL_LIBS})
+target_link_libraries(fractalUtils ${STATIC_SDL2} ${CMAKE_DL_LIBS} sentry)

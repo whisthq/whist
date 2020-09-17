@@ -70,7 +70,9 @@ After doing this, you might have to restart your terminal or IDE, after which yo
 ### Building
 
 If you are on Linux Ubuntu, run `desktop/linux-client-setup.sh` to install the system dependencies.
-
+#### Sentry
+To build you will need to install the sentry-native sdk. This can be done by running the python script get_latest_sentry.py in the root directory of this repo. 
+The SDK is a CMake project which we load in our root CMakeLists.txt. 
 #### IDE
 
 We use CMake to build. If you are using VS code, VS or Clion, this is pretty easy to use. You need to either open the root repo folder as a project, or open the root `CMakelist.txt` as a project. On CLion and VS there is a menu to build at the top, on VS code you need the CMake extension and the build command is at the bottom. CMake currently has two types of builds, Debug and Release. You probably want to be building debug builds while developing, since they log more aggressively (Warning levels: Info and above). 
