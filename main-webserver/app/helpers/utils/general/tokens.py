@@ -42,9 +42,14 @@ def generatePromoCode():
     while not allowed:
         c1 = "".join([random.choice(numbers) for _ in range(0, 3)])
         c2 = "".join([random.choice(upperCase) for _ in range(0, 3)]) + "-" + c1
-        c2_encoding = c2.lower().encode('utf-8')
-        if hashlib.md5(c2_encoding).hexdigest() not in BAD_WORDS_HASHED:
-            allowed = True
+        c2_subsq = generate_subsequence_for_word(c2)
+        for result in c2_subsq:
+                c2_encoding = result.lower().encode('utf-8')
+                if hashlib.md5(c2_encoding).hexdigest() not in BAD_WORDS_HASHED:
+                        allowed = True
+                else:
+                        allowed = False
+                        break
     return c2
 
 
