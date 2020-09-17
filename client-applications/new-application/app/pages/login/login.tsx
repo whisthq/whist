@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
-import { history } from "store/configureStore";
-
+// import { history } from "store/configureStore";
+import styles from "styles/login.css";
 import Titlebar from "react-electron-titlebar";
 import Background from "assets/images/background.jpg";
 import Logo from "assets/images/logo.svg";
@@ -25,7 +25,7 @@ import {
 
 import { GOOGLE_CLIENT_ID } from "constants/config";
 
-import "styles/login.css";
+// import "styles/login.css";
 
 const Login = (props: any) => {
     const { dispatch, public_ip, os, warning } = props;
@@ -38,6 +38,7 @@ const Login = (props: any) => {
     const live = useState(true);
     const [updatePingReceived, setUpdatePingReceived] = useState(false);
     const [needsAutoupdate, setNeedsAutoupdate] = useState(false);
+    const [fetchedCredentials, setFetchedCredentials] = useState(false);
 
     const updateUsername = (evt: any) => {
         setUsername(evt.target.value);
@@ -59,6 +60,8 @@ const Login = (props: any) => {
         } else {
             storage.set("credentials", { username: "", password: "" });
         }
+        setUsername(username);
+        setPassword(password);
         dispatch(loginUser(username.trim(), password));
     };
 
@@ -110,10 +113,15 @@ const Login = (props: any) => {
     };
 
     useEffect(() => {
+        console.log("username");
+        console.log(username);
+        console.log(loggingIn);
         const ipc = require("electron").ipcRenderer;
         const storage = require("electron-json-storage");
 
         ipc.on("update", (_: any, update: any) => {
+            console.log("received update");
+            console.log(update);
             setUpdatePingReceived(true);
             setNeedsAutoupdate(update);
         });
@@ -123,7 +131,7 @@ const Login = (props: any) => {
         dispatch(setOS(os.platform()));
         setVersion(appVersion);
 
-        storage.get("credentials", function (error: any, data: any) {
+        storage.get("credentials", (error: any, data: any) => {
             if (error) throw error;
 
             if (data && Object.keys(data).length > 0) {
@@ -131,37 +139,35 @@ const Login = (props: any) => {
                     setUsername(data.username);
                     setPassword(data.password);
                     setLoggingIn(true);
+                    setFetchedCredentials(true);
+                    console.log("set loggingin to true");
                 }
             }
         });
 
-        if (username && public_ip && live) {
-            history.push("/dashboard");
-        }
+        // if (username && public_ip && live) {
+        //     history.push("/dashboard");
+        // }
     }, []);
 
     useEffect(() => {
-        const sleep = (milliseconds: number) => {
-            return new Promise((resolve) => setTimeout(resolve, milliseconds));
-        };
-
-        const wait_for_autoupdate = async () => {
-            await sleep(2000);
-        };
-
-        while (!updatePingReceived) {
-            wait_for_autoupdate();
-        }
-
-        if (updatePingReceived && !needsAutoupdate) {
-            wait_for_autoupdate();
+        console.log("in useeffect2");
+        console.log(updatePingReceived);
+        console.log(fetchedCredentials);
+        if (
+            updatePingReceived &&
+            fetchedCredentials &&
+            !needsAutoupdate &&
+            username &&
+            password
+        ) {
             dispatch(loginUser(username, password));
         }
-    }, [username, password, loggingIn]);
+    }, [updatePingReceived, fetchedCredentials]);
 
     return (
         <div
-            className="container"
+            className={styles.container}
             data-tid="container"
             style={{ backgroundImage: `url(${Background})` }}
         >
@@ -182,22 +188,22 @@ const Login = (props: any) => {
                     <Titlebar backgroundColor="#000000" />
                 </div>
             ) : (
-                <div className="macTitleBar" />
+                <div className={styles.macTitleBar} />
             )}
             {live ? (
-                <div className="removeDrag">
-                    <div className="landingHeader">
-                        <div className="landingHeaderLeft">
+                <div className={styles.removeDrag}>
+                    <div className={styles.landingHeader}>
+                        <div className={styles.landingHeaderLeft}>
                             <img src={Logo} width="18" height="18" />
-                            <span className="logoTitle">Fractal</span>
+                            <span className={styles.logoTitle}>Fractal</span>
                         </div>
-                        <div className="landingHeaderRight">
+                        <div className={styles.landingHeaderRight}>
                             <span id="forgotButton" onClick={forgotPassword}>
                                 Forgot Password?
                             </span>
                             <button
                                 type="button"
-                                className="signupButton"
+                                className={styles.signupButton}
                                 style={{ borderRadius: 5, marginLeft: 15 }}
                                 id="signup-button"
                                 onClick={signUp}
@@ -207,7 +213,7 @@ const Login = (props: any) => {
                         </div>
                     </div>
                     <div style={{ marginTop: warning ? 10 : 60 }}>
-                        <div className="loginContainer">
+                        <div className={styles.loginContainer}>
                             <div>
                                 <FontAwesomeIcon
                                     icon={faUser}
@@ -215,15 +221,17 @@ const Login = (props: any) => {
                                         color: "white",
                                         fontSize: 12,
                                     }}
-                                    className="inputIcon"
+                                    className={styles.inputIcon}
                                 />
                                 <input
                                     onKeyPress={loginKeyPress}
                                     onChange={updateUsername}
                                     type="text"
-                                    className="inputBox"
+                                    className={styles.inputBox}
                                     style={{ borderRadius: 5 }}
-                                    placeholder="Username"
+                                    placeholder={
+                                        username ? username : "Username"
+                                    }
                                     id="username"
                                 />
                             </div>
@@ -234,15 +242,17 @@ const Login = (props: any) => {
                                         color: "white",
                                         fontSize: 12,
                                     }}
-                                    className="inputIcon"
+                                    className={styles.inputIcon}
                                 />
                                 <input
                                     onKeyPress={loginKeyPress}
                                     onChange={updatePassword}
                                     type="password"
-                                    className="inputBox"
+                                    className={styles.inputBox}
                                     style={{ borderRadius: 5 }}
-                                    placeholder="Password"
+                                    placeholder={
+                                        password ? "•••••••••" : "Password"
+                                    }
                                     id="password"
                                 />
                             </div>
@@ -250,7 +260,7 @@ const Login = (props: any) => {
                                 {loggingIn && !warning ? (
                                     <button
                                         type="button"
-                                        className="loginButton"
+                                        className={styles.loginButton}
                                         id="login-button"
                                         style={{
                                             opacity: 0.6,
@@ -274,7 +284,7 @@ const Login = (props: any) => {
                                     <button
                                         onClick={handleLoginUser}
                                         type="button"
-                                        className="loginButton"
+                                        className={styles.loginButton}
                                         id="login-button"
                                     >
                                         START
@@ -284,7 +294,7 @@ const Login = (props: any) => {
                                     {loggingIn && !warning ? (
                                         <button
                                             type="button"
-                                            className="googleButton"
+                                            className={styles.googleButton}
                                             id="google-button"
                                             style={{
                                                 opacity: 0.6,
@@ -308,7 +318,7 @@ const Login = (props: any) => {
                                         <button
                                             onClick={handleGoogleLogin}
                                             type="button"
-                                            className="googleButton"
+                                            className={styles.googleButton}
                                             id="google-button"
                                         >
                                             <FaGoogle
@@ -344,7 +354,7 @@ const Login = (props: any) => {
                                         password, you can reset it on the&nbsp;
                                         <div
                                             onClick={forgotPassword}
-                                            className="pointerOnHover"
+                                            className={styles.pointerOnHover}
                                             style={{
                                                 display: "inline",
                                                 fontWeight: "bold",
@@ -365,13 +375,13 @@ const Login = (props: any) => {
                                     alignItems: "center",
                                 }}
                             >
-                                <label className="termsContainer">
+                                <label className={styles.termsContainer}>
                                     <input
                                         type="checkbox"
                                         onChange={changeRememberMe}
                                         onKeyPress={loginKeyPress}
                                     />
-                                    <span className="checkmark" />
+                                    <span className={styles.checkmark} />
                                 </label>
 
                                 <div style={{ fontSize: 12 }}>Remember Me</div>

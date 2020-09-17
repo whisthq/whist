@@ -17,7 +17,7 @@ function* loginUser(action: any) {
         );
 
         if (json && json.verified) {
-            yield put(Action.storeUsername(action.username, action.password));
+            yield put(Action.storeUsername(action.username));
             yield put(Action.storeIsUser(json.is_user));
             yield put(Action.storeJWT(json.access_token, json.refresh_token));
             yield put(Action.fetchDisk(action.username));

@@ -1,19 +1,48 @@
-import React, { Component } from "react";
+import React from "react";
 import { connect } from "react-redux";
+import { history } from "store/configureStore";
+import styles from "styles/dashboard.css";
 
-class Dashboard extends Component {
-    render() {
-        return (
-            <div
+import { logout } from "store/actions/counter_actions";
+
+const Dashboard = (props: any) => {
+    const { dispatch } = props;
+
+    const handleSignout = () => {
+        const storage = require("electron-json-storage");
+        storage.set("credentials", { username: "", password: "" });
+        dispatch(logout());
+        history.push("/");
+    };
+
+    return (
+        <div
+            style={{
+                marginTop: 200,
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+            }}
+        >
+            New dashboard here!
+            <button
+                type="button"
+                onClick={handleSignout}
+                className={styles.signoutButton}
+                id="signout-button"
                 style={{
-                    marginTop: 200,
                     textAlign: "center",
                 }}
             >
-                New dashboard here!
-            </div>
-        );
-    }
-}
+                SIGN OUT
+            </button>
+        </div>
+    );
+};
 
-export default connect()(Dashboard);
+const mapStateToProps = () => {
+    return {};
+};
+
+export default connect(mapStateToProps)(Dashboard);

@@ -94,7 +94,7 @@ const createWindow = async () => {
 
     // @TODO: Use 'ready-to-show' event
     //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
-    mainWindow.webContents.once("dom-ready", () => {
+    mainWindow.webContents.on("did-frame-finish-load", () => {
         console.log("frame finished loading");
         if (
             process.env.NODE_ENV === "development" ||

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
+import styles from "styles/login.css";
 import Titlebar from "react-electron-titlebar";
 import Logo from "assets/images/logo.svg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
-
-import "styles/login.css";
 
 const UpdateScreen = (props: any) => {
     const { os } = props;
@@ -32,9 +31,7 @@ const UpdateScreen = (props: any) => {
         const ipc = require("electron").ipcRenderer;
 
         ipc.on("update", (_: any, update: any) => {
-            if (update) {
-                setUpdateScreen(true);
-            }
+            setUpdateScreen(update);
         });
 
         ipc.on("percent", (_: any, percent: any) => {
@@ -83,18 +80,18 @@ const UpdateScreen = (props: any) => {
                     ) : (
                         <div style={{ marginTop: 10 }}></div>
                     )}
-                    <div className="landingHeader">
-                        <div className="landingHeaderLeft">
+                    <div className={styles.landingHeader}>
+                        <div className={styles.landingHeaderLeft}>
                             <img src={Logo} width="20" height="20" />
-                            <span className="logoTitle">Fractal</span>
+                            <span className={styles.logoTitle}>Fractal</span>
                         </div>
-                        <div className="landingHeaderRight">
+                        <div className={styles.landingHeaderRight}>
                             <span id="forgotButton" onClick={forgotPassword}>
                                 Forgot Password?
                             </span>
                             <button
                                 type="button"
-                                className="signupButton"
+                                className={styles.signupButton}
                                 id="signup-button"
                                 onClick={signUp}
                             >
