@@ -39,7 +39,6 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(FractalServer
 #            Threads::Threads
             ${CMAKE_DL_LIBS}
-            sentry
             )
 endif ()
 

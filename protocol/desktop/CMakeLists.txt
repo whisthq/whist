@@ -2,6 +2,7 @@
 ################## FractalClient ##################
 ]]
 
+set(CMAKE_INSTALL_RPATH $ORIGIN)
 add_executable(FractalClient
         main.c
         audio.c
