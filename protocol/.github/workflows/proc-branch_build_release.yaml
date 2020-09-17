@@ -26,7 +26,7 @@ on:
         required: false
 
 env:
-  CMAKE_VERSION: 3.15.7
+  CMAKE_VERSION: 3.16.4
   NINJA_VERSION: 1.9.0
   BUILD_TYPE: Debug
   CCACHE_VERSION: 3.7.7
@@ -117,6 +117,7 @@ jobs:
           - os: windows-latest
             client_artifact_name: "Windows-64bit_client"
             client_artifact_relpath: "/desktop/build64/Windows"
+            client_name: "/FractalClient.exe"
             server_artifact_name: "Windows-64bit_server"
             server_artifact_relpath: "/server/build64"
             cc: "cl"
@@ -126,11 +127,13 @@ jobs:
           - os: ubuntu-latest
             client_artifact_name: "Linux-64bit_client"
             client_artifact_relpath: "/desktop/build64/Linux"
+            client_name: "/FractalClient"
             cc: "gcc"
             cxx: "g++"
           - os: macos-latest
             client_artifact_name: "macOS-64bit_client"
             client_artifact_relpath: "/desktop/build64/Darwin"
+            client_name: "/FractalClient"
             cc: "clang"
             cxx: "clang++"
 
@@ -144,6 +147,16 @@ jobs:
         uses: crazy-max/ghaction-chocolatey@v1
         with:
           args: install "${{ github.workspace }}\.github\choco-install.config" --force
+
+      - name: Install Python (for sentry download)
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Get latest sentry
+        run: |
+          pip3 install requests
+          python ${{ github.workspace }}/get_latest_sentry.py --token ${{secrets.GITHUB_TOKEN}}
 
       - name: Install CUDA for windows
         if: runner.os == 'Windows'
@@ -344,6 +357,15 @@ jobs:
 
           execute_process(COMMAND ccache -s)
 
+      - name: Get latest sentry-cli
+        uses: mathrix-education/setup-sentry-cli@master
+      - name: Upload debug information to sentry
+        run: |
+            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractalcomputers -p protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
+      - name: upload windows pdb
+        if: runner.os == 'Windows'
+        run: sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractalcomputers -p protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
+
       - name: Upload server artifact (if requested on this platform)
         if: matrix.config.server_artifact_name
         uses: actions/upload-artifact@v2
@@ -388,7 +410,7 @@ jobs:
           \"resource_group\" : \"FractalProtocolCI\" }" \
           $WEBSERVER_BASE_URL/vm/start
           NUM_RETRIES=0
-          until [ $NUM_RETRIES -eq 5 ] || ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"; do
+          until [ $NUM_RETRIES -eq 5 ] || ssh-ping -v -l sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -W 30 -i 2; do
               (( NUM_RETRIES++ ))
               sleep 30
           done

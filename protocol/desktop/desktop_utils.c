@@ -33,6 +33,9 @@ extern volatile CodecType output_codec_type;
 
 extern volatile int max_bitrate;
 extern volatile int running_ci;
+extern char user_email[USER_EMAIL_MAXLEN];  // Note: Is larger than environment maxlen
+extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN + 1];
+
 extern volatile CodecType codec_type;
 extern bool using_stun;
 
@@ -48,6 +51,8 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"bitrate", required_argument, NULL, 'b'},
                                      {"codec", required_argument, NULL, 'c'},
                                      {"private-key", optional_argument, NULL, 'p'},
+                                     {"user", optional_argument, NULL, 'u'},
+                                     {"environment", optional_argument, NULL, 'e'},
                                      {"connection-method", optional_argument, NULL, 'z'},
                                      {"name", optional_argument, NULL, 'n'},
                                      // these are standard for POSIX programs
@@ -55,7 +60,8 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
-#define OPTION_STRING "w:h:b:sc:kp::z::n::"
+
+#define OPTION_STRING "w:h:b:sc:kp::z::u::e::n::"
 
 int parseArgs(int argc, char *argv[]) {
     char *usage =
@@ -77,6 +83,9 @@ int parseArgs(int argc, char *argv[]) {
         "  -p, --private-key=PK          pass in the RSA Private Key as a "
         "                                  hexadecimal string\n"
         "  -k, --use_ci                  launch the protocol in CI mode\n"
+        "  -u, --user                     Tell fractal the users email. Optional defaults to None"
+        "  -e, --environment              The environment the protocol is running \n"
+        "                                 in. e.g master, staging, dev. Optional defaults to dev"
         "  -z, --connection_method       which connection method to try first,\n"
         "                                  either STUN or DIRECT\n"
         "  -n, --name=NAME       		 Name of the interface\n"
@@ -84,6 +93,10 @@ int parseArgs(int argc, char *argv[]) {
         "      --version  output version information and exit\n";
 
     memcpy((char *)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+    // default sentry environment
+    strcpy(sentry_environment, "dev");
+    // default sentry environment
+    strcpy(user_email, "None");
 
     int opt;
     long int ret;
@@ -91,6 +104,11 @@ int parseArgs(int argc, char *argv[]) {
     char *endptr;
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
+        if (opt != -1 && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
+            printf("Option passed into %c is too long! Length of %zd when max is %d", opt,
+                   strlen(optarg), FRACTAL_ENVIRONMENT_MAXLEN);
+            return -1;
+        }
         errno = 0;
         switch (opt) {
             case 'w':
@@ -137,6 +155,12 @@ int parseArgs(int argc, char *argv[]) {
                     printf("%s", usage);
                     return -1;
                 }
+                break;
+            case 'u':
+                strcpy(user_email, optarg);
+                break;
+            case 'e':
+                strcpy(sentry_environment, optarg);
                 break;
             case 'z':
                 if (!strcmp(optarg, "STUN")) {
@@ -219,6 +243,12 @@ char *getLogDir(void) {
 }
 
 int logConnectionID(int connection_id) {
+    // itoa is not portable
+    char *str_connection_id = malloc(sizeof(char) * 100);
+    sprintf(str_connection_id, "%d", connection_id);
+    // send connection id to sentry as a tag, server also does this
+    sentry_set_tag("connection_id", str_connection_id);
+
     char *path;
 #ifdef _WIN32
     path = dupstring("connection_id.txt");
@@ -321,6 +351,18 @@ int sendTimeToServer(void) {
     SendFmsg(&fmsg);
 
     return 0;
+}
+
+int sendEmailToServer(char *email) {
+    struct FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_USER_EMAIL;
+    strcpy(fmsg.user_email, email);
+
+    if (SendFmsg(&fmsg) != 0) {
+        return -1;
+    } else {
+        return 0;
+    }
 }
 
 int updateMouseMotion() {
