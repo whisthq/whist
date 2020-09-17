@@ -67,9 +67,23 @@ function WaitlistForm(props: any) {
                 )
                 .then(() => history.push("/application"))
         } else {
-            dispatch(
-                insertWaitlistAction(email, name, INITIAL_POINTS, 0)
-            ).then(() => setProcessing(false))
+            db.collection("waitlist")
+                .doc(email)
+                .get()
+                .then(function (snapshot) {
+                    let document = snapshot.data()
+                    if (document) {
+                        dispatch(
+                            insertWaitlistAction(
+                                email,
+                                document.name,
+                                document.points,
+                                0
+                            )
+                        )
+                    }
+                })
+                .then(() => setProcessing(false))
         }
     }
 
@@ -149,7 +163,6 @@ function WaitlistForm(props: any) {
 }
 
 function mapStateToProps(state: { AuthReducer: { user: any } }) {
-    console.log(state)
     return {
         user: state.AuthReducer.user,
     }
