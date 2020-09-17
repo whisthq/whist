@@ -134,14 +134,15 @@ def test_cluster_with_auto_scaling_group():
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage"
     )
-    testclient.get_vpc()
-    networkConfiguration = {
-        "awsvpcConfiguration": {
-            "subnets": testclient.pick_subnets(),
-            "securityGroups": testclient.pick_security_groups(),
-        }
-    }
-    testclient.run_task(networkConfiguration=networkConfiguration, use_launch_type=False)
+    # testclient.get_vpc()
+    # networkConfiguration = {
+    #     "awsvpcConfiguration": {
+    #         "subnets": testclient.pick_subnets(),
+    #         "securityGroups": testclient.pick_security_groups(),
+    #     }
+    # }
+    # testclient.run_task(networkConfiguration=networkConfiguration, use_launch_type=False)
+    testclient.run_task(use_launch_type=False)
     testclient.spin_til_running(time_delay=2)
     
     container_instances = testclient.spin_til_containers_up(cluster_name)

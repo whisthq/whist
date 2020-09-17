@@ -113,9 +113,10 @@ class ECSClient:
         self.set_cluster(cluster_name=base_cluster)
 
         if not self.mock:
-            self.role_name = 'role_name_abcymbdzwl'
-            # Create role and instance profile that allows containers to use SSM, S3, and EC2
+            self.role_name = 'role_name_oqursxkjhh'
+            ## Create role and instance profile that allows containers to use SSM, S3, and EC2
             # self.role_name = self.generate_name('role_name')
+            # print(self.role_name)
             # assume_role_policy_document = {
             #     "Version": "2012-10-17",
             #     "Statement": [
@@ -146,6 +147,18 @@ class ECSClient:
             # )
             # self.iam_client.attach_role_policy(
             #     PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role',
+            #     RoleName=self.role_name,
+            # )
+            # self.iam_client.attach_role_policy(
+            #     PolicyArn='arn:aws:iam::aws:policy/AmazonEC2FullAccess',
+            #     RoleName=self.role_name,
+            # )
+            # self.iam_client.attach_role_policy(
+            #     PolicyArn='arn:aws:iam::aws:policy/AmazonEC2ContainerServiceFullAccess',
+            #     RoleName=self.role_name,
+            # )
+            # self.iam_client.attach_role_policy(
+            #     PolicyArn='arn:aws:iam::aws:policy/AmazonECS_FullAccess',
             #     RoleName=self.role_name,
             # )
             self.instance_profile = self.generate_name('instance_profile')
@@ -409,7 +422,7 @@ class ECSClient:
         """
         fmtstr = family + str(self.offset + 1)
         if port_mappings is None:
-            port_mappings = [{"hostPort": 8080, "protocol": "tcp", "containerPort": 8080}]
+            port_mappings = [{"hostPort": 0, "protocol": "tcp", "containerPort": 8080}]
         base_log_config = {
             "logDriver": "awslogs",
             "options": {
@@ -443,7 +456,7 @@ class ECSClient:
                 "placementConstraints": [],
                 "memory": memory,
                 "family": family,
-                "networkMode": "awsvpc",
+                "networkMode": "bridge",
                 "cpu": cpu,
             }
             if basedict["containerDefinitions"][0]["command"] is None:
@@ -494,14 +507,24 @@ class ECSClient:
         }
         if use_launch_type:
             task_args['launchType'] = self.launch_type
-        print(task_args)
         taskdict = self.ecs_client.run_task(**task_args, **kwargs)
-        print(taskdict)
         task = taskdict["tasks"][0]
         running_task_arn = task["taskArn"]
+
+        #self.assign_task_ip_address(running_task_arn)
+
         self.tasks.append(running_task_arn)
         self.tasks_done.append(False)
         self.offset += 1
+    
+    # def assign_task_ip_address(self, task, time_delay=5):
+    #     network_id = None
+    #     while not network_id:
+    #         task_info = self.ecs_client.describe_tasks(tasks=[task], cluster=self.cluster)["tasks"][0]
+    #         network_id = self.get_task_network_info(task_info, 'networkInterfaceId')
+    #         time.sleep(time_delay)
+    #         print(task_info, network_id)
+    #     self.ec2_client.assign_ipv6_addresses(Ipv6AddressCount=1, NetworkInterfaceId=network_id)
 
     def stop_task(self, reason="user stopped", offset=0):
         self.ecs_client.stop_task(
@@ -622,21 +645,39 @@ class ECSClient:
         )
         return capacity_provider_name
 
-    def get_instance_ip(self, offset=0):
+    def get_task_network_info(self, task_info, desired_detail):
+        for attachment in task_info['attachments']:
+            if attachment['type'] == 'ElasticNetworkInterface':
+                for detail in attachment['details']:
+                    print(detail['name'])
+                    if detail['name'] == desired_detail:
+                        return detail['value']
+    
+    def get_task_binding_info(self, task_info):
+        for container in task_info['containers']:
+            for network_binding in container['networkBindings']:
+                return network_binding
+
+    def get_task_ip(self, offset=0):
         if self.tasks_done[offset]:
             return False
         response = self.ecs_client.describe_tasks(tasks=self.tasks, cluster=self.cluster)
         resp = response["tasks"][offset]
         if resp["lastStatus"] == "RUNNING" or resp["lastStatus"] == "STOPPED":
-            container_info = self.ecs_client.describe_container_instances(
-                cluster=self.cluster, containerInstances=[resp['containerInstanceArn']]
-            )
-            pprint(container_info['containerInstances'][0])
-            ec2_id = container_info['containerInstances'][0]['ec2InstanceId']
-            ec2_info = self.ec2_client.describe_instances(InstanceIds=[ec2_id])
-            public_ip = ec2_info['Reservations'][0]['Instances'][0].get('PublicIpAddress', -1)
-            self.task_ips[offset] = public_ip
-            return True
+            # container_info = self.ecs_client.describe_container_instances(
+            #     cluster=self.cluster, containerInstances=[resp['containerInstanceArn']]
+            # )
+            # pprint(container_info['containerInstances'][0])
+            # ec2_id = container_info['containerInstances'][0]['ec2InstanceId']
+            # ec2_info = self.ec2_client.describe_instances(InstanceIds=[ec2_id])
+            # public_ip = ec2_info['Reservations'][0]['Instances'][0].get('PublicIpAddress', -1)
+            # self.task_ips[offset] = public_ip
+            # return True
+            network_binding = self.get_task_binding_info(resp)
+            if network_binding:
+                print(network_binding)
+                self.task_ips[offset] = network_binding['bindIP']
+                return True
         return False
 
     def pick_subnets(self):
@@ -736,7 +777,7 @@ class ECSClient:
         return False
 
     def spin_til_running(self, offset=0, time_delay=5):
-        while not self.get_instance_ip(offset=offset):
+        while not self.get_task_ip(offset=offset):
             time.sleep(time_delay)
 
     def spin_til_containers_up(self, cluster_name, time_delay=5):
