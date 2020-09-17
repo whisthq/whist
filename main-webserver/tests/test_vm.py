@@ -17,11 +17,11 @@ def test_delete_vm_initial(input_token, admin_token):
         fractalLog(
             function="test_delete_vm_initial",
             label="vm/delete",
-            logs="Starting to delete VM {vm_name}".format(vm_name=vm["vm_name"]),
+            logs="Starting to delete VM {vm_name}".format(vm_name=vm["vm_id"]),
         )
 
         resp = deleteVM(
-            vm_name=vm["vm_name"],
+            vm_name=vm["vm_id"],
             delete_disk=True,
             resource_group=RESOURCE_GROUP,
             input_token=input_token,

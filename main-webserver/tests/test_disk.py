@@ -22,11 +22,11 @@ def test_delete_disk_initial(input_token, admin_token):
             fractalLog(
                 function="test_delete_disk_initial",
                 label="azure_disk/delete",
-                logs="Deleting disk {disk_name}".format(disk_name=disk["disk_name"]),
+                logs="Deleting disk {disk_name}".format(disk_name=disk["disk_id"]),
             )
 
             resp = deleteDisk(
-                disk_name=disk["disk_name"],
+                disk_name=disk["disk_id"],
                 resource_group=RESOURCE_GROUP,
                 input_token=input_token,
             )
@@ -121,7 +121,7 @@ def test_disk_attach(input_token, admin_token):
     regions = ["eastus", "northcentralus", "southcentralus"]
 
     def attachDiskHelper(disk):
-        disk_name = disk["disk_name"]
+        disk_name = disk["disk_id"]
         if disk["main"] and disk["state"] == "ACTIVE":
             fractalLog(
                 function="test_disk_attach",
