@@ -1,6 +1,13 @@
 # build protocol
-base/protocol/docker-build-image.sh $2
-base/protocol/docker-build-protocol.sh $2
+( cd base/protocol && ./docker-build-image.sh $2 )
+base/protocol/docker-shell.sh \
+    $2 \
+    $(pwd) \
+    ''' \
+    cd base/protocol && \
+    cmake . && \
+    make -j \
+'''
 
 # build container with protocol inside it
 docker build -f $1/Dockerfile.$2 $1 -t fractal-$1-$2
