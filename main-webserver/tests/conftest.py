@@ -20,6 +20,8 @@ def pytest_collection_modifyitems(config, items):
 def input_token():
     print(os.environ)
     sys.stdout.flush()
+    print(SERVER_URL)
+    sys.stdout.flush()
     resp = requests.post(
         (SERVER_URL + "/account/login"),
         json=dict(
