@@ -37,7 +37,7 @@ runcontainer (){
         -p 32262:32262 \
         -p 32263:32263/udp \
         -p 32273:32273 \
-        fractal-$1:$git_hash.$2
+        fractal/$1:$git_hash.$2
 # capabilities not enabled by default: CAP_NICE
 }
 

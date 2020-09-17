@@ -14,4 +14,4 @@ base/protocol/docker-shell.sh \
 '''
 
 # build container with protocol inside it
-docker build -f $1/Dockerfile.$2 $1 -t fractal-$1:$git_hash.$2
+docker build -f $1/Dockerfile.$2 $1 -t fractal/$1:$git_hash.$2
