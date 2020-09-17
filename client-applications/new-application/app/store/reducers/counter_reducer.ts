@@ -1,5 +1,4 @@
-import { Action } from "redux";
-import * as MainAction from "actions/counter";
+import * as MainAction from "store/actions/counter_actions";
 
 const DEFAULT = {
     username: "",
@@ -66,7 +65,6 @@ export default function counter(
             return {
                 ...state,
                 username: action.username,
-                password: action.password,
             };
         case MainAction.STORE_IP:
             return {
