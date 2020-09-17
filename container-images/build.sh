@@ -3,12 +3,12 @@
 git_hash=$(git rev-parse --short HEAD)
 
 # build protocol
-( cd base/protocol && ./docker-build-image.sh $2 )
-base/protocol/docker-shell.sh \
+( cd protocol && ./docker-build-image.sh $2 )
+protocol/docker-shell.sh \
     $2 \
     $(pwd) \
     ''' \
-    cd base/protocol && \
+    cd protocol && \
     cmake . && \
     make -j \
 '''
