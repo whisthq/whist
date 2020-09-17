@@ -299,6 +299,7 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
 
 #if SHOW_DEBUG_FRAMES
     t2 = NvFBCUtilsGetTimeInMillis();
+
     printf("New %dx%d frame id %u size %u%s%s grabbed and saved in %llu ms\n", frameInfo.dwWidth,
            frameInfo.dwHeight, frameInfo.dwCurrentFrame, device->size,
            encFrameInfo.bIsIFrame ? " (i-frame)" : "", frameInfo.bIsNewFrame ? " (new frame)" : "",

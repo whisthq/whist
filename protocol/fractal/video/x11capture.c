@@ -65,7 +65,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     device->height = height;
 
     if (!is_same_wh(device)) {
-        char modename[1024];
+        char modename[128];
         char cmd[1024];
 
         snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
