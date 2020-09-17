@@ -27,10 +27,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
-      - name: Get latest sentry
-        run: |
-          pip3 install requests
-          python ${{ github.workspace }}/get_latest_sentry.py --token ${{secrets.GITHUB_TOKEN}}
       - name: cmake build
         run: cmake -DBUILD_SERVER=OFF -DBUILD_CLIENT=OFF -DBUILD_TESTS=OFF .
       - name: clang-format
