@@ -129,6 +129,7 @@ const Leaderboard = (props: {
         }
     }
 
+    // Renders correct leaderboard rows based on whether user is on waitlist and their ranking
     const getRows = () => {
         const topThree = topSix.slice(0, 3)
         if (!props.waitlist) {
@@ -267,11 +268,11 @@ const Leaderboard = (props: {
 }
 
 const mapStateToProps = (state: {
-    AuthReducer: { user: any; waitlist: any[] }
+    MainReducer: { user: any; waitlist: any[] }
 }) => {
     return {
-        user: state.AuthReducer.user,
-        waitlist: state.AuthReducer.waitlist,
+        user: state.MainReducer.user,
+        waitlist: state.MainReducer.waitlist,
     }
 }
 

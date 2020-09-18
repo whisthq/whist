@@ -8,7 +8,7 @@ import Wireframe from "assets/gifs/blenderDemo.gif"
 
 import "styles/landing.css"
 
-function MiddleView(props: any) {
+const MiddleView = (props: any) => {
     const { width } = useContext(ScreenContext)
     const scrollToTop = () => {
         window.scrollTo({

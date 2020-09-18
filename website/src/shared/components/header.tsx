@@ -2,7 +2,7 @@ import React from "react"
 
 import CountdownTimer from "pages/landing/components/countdown"
 
-function Header(props: any) {
+const Header = (props: any) => {
     return (
         <div
             style={{

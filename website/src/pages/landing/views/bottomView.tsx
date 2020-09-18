@@ -5,7 +5,7 @@ import ScreenContext from "shared/context/screenContext"
 
 import "styles/landing.css"
 
-function BottomView(props: any) {
+const BottomView = (props: any) => {
     const { width } = useContext(ScreenContext)
 
     const scrollToTop = () => {

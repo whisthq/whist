@@ -4,7 +4,7 @@ import { connect } from "react-redux"
 import firebase from "firebase"
 import { db } from "shared/utils/firebase"
 import { SIGNUP_POINTS } from "shared/utils/points"
-import { googleLogin } from "store/actions/auth/login_actions"
+import { googleLogin } from "store/actions/auth/login"
 
 import ScreenContext from "shared/context/screenContext"
 
@@ -26,7 +26,6 @@ const GoogleButton = (props: any) => {
                 .then((result) => {
                     if (result && result.user && result.user.email) {
                         const email = result.user.email
-                        console.log(email)
                         const newPoints = user.points + SIGNUP_POINTS
                         props.dispatch(googleLogin(email, newPoints))
                         db.collection("waitlist").doc(user.email).update({
@@ -54,9 +53,9 @@ const GoogleButton = (props: any) => {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
+const mapStateToProps = (state: { MainReducer: { user: any } }) => {
     return {
-        user: state.AuthReducer.user,
+        user: state.MainReducer.user,
     }
 }
 

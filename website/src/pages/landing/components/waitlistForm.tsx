@@ -11,7 +11,7 @@ import { insertWaitlistAction } from "store/actions/auth/waitlist"
 
 import "styles/landing.css"
 
-function WaitlistForm(props: any) {
+const WaitlistForm = (props: any) => {
     const { dispatch, user } = props
     const { width } = useContext(ScreenContext)
 
@@ -25,30 +25,30 @@ function WaitlistForm(props: any) {
         console.log("Use Effect waitlist")
     }, [])
 
-    function updateEmail(evt: any) {
+    const updateEmail = (evt: any) => {
         evt.persist()
         setEmail(evt.target.value)
     }
 
-    function updateName(evt: any) {
+    const updateName = (evt: any) => {
         evt.persist()
         setName(evt.target.value)
     }
 
-    function updateCountry(country: string) {
+    const updateCountry = (country: string) => {
         setCountry(country)
     }
 
-    function updateReferralCode(evt: any) {
+    const updateReferralCode = (evt: any) => {
         evt.persist()
         setReferralCode(evt.target.value)
     }
 
-    async function insertWaitlist() {
+    const insertWaitlist = async () => {
         setProcessing(true)
 
         var emails = db.collection("waitlist").where("email", "==", email)
-        const exists = await emails.get().then(function (snapshot: any) {
+        const exists = await emails.get().then((snapshot: any) => {
             return !snapshot.empty
         })
 
@@ -72,7 +72,7 @@ function WaitlistForm(props: any) {
             db.collection("waitlist")
                 .doc(email)
                 .get()
-                .then(function (snapshot) {
+                .then((snapshot) => {
                     let document = snapshot.data()
                     if (document) {
                         dispatch(
@@ -177,9 +177,9 @@ function WaitlistForm(props: any) {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
+const mapStateToProps = (state: { MainReducer: { user: any } }) => {
     return {
-        user: state.AuthReducer.user,
+        user: state.MainReducer.user,
     }
 }
 

@@ -7,7 +7,7 @@ import { db } from "shared/utils/firebase"
 
 import "styles/landing.css"
 
-function CountdownTimer(props: any) {
+const CountdownTimer = (props: any) => {
     const { width } = useContext(ScreenContext)
 
     const [closingDate, changeClosingDate] = useState(() => {
@@ -15,12 +15,12 @@ function CountdownTimer(props: any) {
     })
 
     useEffect(() => {
-        getCloseDate().then(function (closingDate) {
+        getCloseDate().then((closingDate) => {
             changeClosingDate(closingDate)
         })
     }, [])
 
-    async function getCloseDate() {
+    const getCloseDate = async () => {
         const closingDate = await db
             .collection("metadata")
             .doc("waitlist")
@@ -157,7 +157,7 @@ function CountdownTimer(props: any) {
     }
 }
 
-function mapStateToProps() {
+const mapStateToProps = () => {
     return {}
 }
 

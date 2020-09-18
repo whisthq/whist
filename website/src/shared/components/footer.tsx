@@ -13,7 +13,7 @@ import "styles/shared.css"
 
 import ScreenContext from "shared/context/screenContext"
 
-function Footer(props: any) {
+const Footer = (props: any) => {
     const { width } = useContext(ScreenContext)
     return (
         <div>

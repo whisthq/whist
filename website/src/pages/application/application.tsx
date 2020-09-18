@@ -13,18 +13,18 @@ import PaintingSky from "assets/largeGraphics/paintingSky.svg"
 import ScreenContext from "shared/context/screenContext"
 import Header from "shared/components/header"
 
-function Application(props: any) {
+const Application = (props: any) => {
     const { user } = props
     const { width } = useContext(ScreenContext)
 
     const [form, setForm] = useState("")
 
-    function changeForm(evt: any) {
+    const changeForm = (evt: any) => {
         evt.persist()
         setForm(evt.target.value)
     }
 
-    function submitForm() {
+    const submitForm = () => {
         db.collection("waitlist")
             .doc(user.email)
             .update({
@@ -139,9 +139,9 @@ function Application(props: any) {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
+const mapStateToProps = (state: { MainReducer: { user: any } }) => {
     return {
-        user: state.AuthReducer.user,
+        user: state.MainReducer.user,
     }
 }
 

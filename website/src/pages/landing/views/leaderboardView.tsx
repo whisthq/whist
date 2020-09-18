@@ -11,7 +11,7 @@ import Mountain from "assets/largeGraphics/mountain.svg"
 import Leaderboard from "pages/landing/components/leaderboard"
 import Actions from "pages/landing/components/actions"
 
-function LeaderboardView(props: any) {
+const LeaderboardView = (props: any) => {
     const { width } = useContext(ScreenContext)
 
     return (

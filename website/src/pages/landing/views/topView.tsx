@@ -15,7 +15,7 @@ import Mountain from "assets/largeGraphics/mountain.svg"
 
 import "styles/landing.css"
 
-function TopView(props: any) {
+const TopView = (props: any) => {
     const { width } = useContext(ScreenContext)
 
     return (

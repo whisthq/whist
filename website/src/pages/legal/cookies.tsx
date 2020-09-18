@@ -3,7 +3,7 @@ import { HashLink } from "react-router-hash-link"
 
 import ScreenContext from "shared/context/screenContext"
 
-function Cookies(props: any) {
+const Cookies = (props: any) => {
     const { width } = useContext(ScreenContext)
     return (
         <div style={{ overflowX: "hidden" }} id="top">

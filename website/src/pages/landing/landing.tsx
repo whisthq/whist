@@ -18,9 +18,10 @@ import LeaderboardView from "pages/landing/views/leaderboardView"
 import BottomView from "pages/landing/views/bottomView"
 import Footer from "shared/components/footer"
 
-function Landing(props: any) {
+const Landing = (props: any) => {
     const { dispatch, user } = props
 
+    // Gets user's ranking from the waitlist
     const getRanking = useCallback(
         (waitlist: any[]) => {
             for (var i = 0; i < waitlist.length; i++) {
@@ -36,11 +37,11 @@ function Landing(props: any) {
     useEffect(() => {
         var unsubscribe: any
 
+        // Bubbles user up the leaderboard according to new points
         const updateRanking = (
             userData: firebase.firestore.DocumentData | undefined,
             waitlist: any[]
         ) => {
-            // Bubbles user up the leaderboard according to new points
             if (userData) {
                 for (
                     let currRanking = user.ranking - 1;
@@ -69,6 +70,7 @@ function Landing(props: any) {
             })
             .then((waitlist) => {
                 if (user && user.email) {
+                    // Open a listener to update the user in real time
                     unsubscribe = db
                         .collection("waitlist")
                         .doc(user.email)
@@ -99,7 +101,7 @@ function Landing(props: any) {
         return unsubscribe
     }, [dispatch, user, getRanking])
 
-    async function getWaitlist() {
+    const getWaitlist = async () => {
         const waitlist = await db
             .collection("waitlist")
             .orderBy("points", "desc")
@@ -119,9 +121,9 @@ function Landing(props: any) {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
+const mapStateToProps = (state: { MainReducer: { user: any } }) => {
     return {
-        user: state.AuthReducer.user,
+        user: state.MainReducer.user,
     }
 }
 
