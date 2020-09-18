@@ -1,9 +1,9 @@
-#ifndef LINUX_INPUT_H
-#define LINUX_INPUT_H
+#ifndef XTEST_INPUT_DRIVER_H
+#define XTEST_INPUT_DRIVER_H
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file linuxinput.h
- * @brief This file defines the Linux input device type.
+ * @file xtest_input_driver.h
+ * @brief This file defines the X11 input device type.
 ============================
 Usage
 ============================
@@ -15,11 +15,10 @@ Includes
 ============================
 */
 
-#include <fcntl.h>
-#include <linux/uinput.h>
-
 #include "../core/fractal.h"
 #include "../utils/sdlscreeninfo.h"
+
+#include <X11/Xlib.h>
 
 /*
 ============================
@@ -28,12 +27,11 @@ Custom Types
 */
 
 typedef struct input_device_t {
-    int fd_absmouse;
-    int fd_relmouse;
-    int fd_keyboard;
+    Display* display;
+    Window root;
     int keyboard_state[NUM_KEYCODES];
     bool caps_lock;
     bool num_lock;
 } input_device_t;
 
-#endif  // LINUX_INPUT_H
+#endif  // XTEST_INPUT_DRIVER_H
