@@ -110,7 +110,7 @@ RUN useradd --create-home fractal \
 #keyboard-configuration
 
 
-RUN sudo apt-get update && sudo apt-get install --no-install-recommends -y \ 
+RUN apt-get update && apt-get install --no-install-recommends -y \ 
     lsb-release=9.20170808ubuntu1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*

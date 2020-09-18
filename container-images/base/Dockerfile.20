@@ -110,10 +110,11 @@ RUN useradd --create-home fractal \
 #ufw
 #keyboard-configuration
 
+#ufw=0.36-0ubuntu0.18.04.1
+#keyboard-configuration=1.178ubuntu2.9
 
 
-
-RUN sudo apt-get update && sudo apt-get install --no-install-recommends -y \ 
+RUN apt-get update && apt-get install --no-install-recommends -y \ 
     lsb-release=11.1.0ubuntu2 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
