@@ -26,12 +26,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install black
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        
-    - name: Format with Python Black
-      run: black .
-      
-    - name: Commit linted files
+              
+    - name: Check if code is formatted via Python Black
+      if: black --check != 0
       run: |
-        git config --local user.email "linter@fractalcomputers.com"
-        git config --local user.name "Fractal Linter"
-        git diff-index --quiet HEAD || (echo "To pass this check please lint the code with Python Black" && false)
+        echo "To pass this check please lint the code with Python Black" && false)
