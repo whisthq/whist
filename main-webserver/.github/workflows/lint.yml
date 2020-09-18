@@ -28,6 +28,6 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
               
     - name: Check if code is formatted via Python Black
-      if: black --check != 0
+      if: "(black --check) != 0" # black --check returns 0 if code is already linted
       run: |
         echo "To pass this check please lint the code with Python Black" && false)
