@@ -86,11 +86,6 @@ RUN apt-get upgrade
 
 # Install time while avoiding interactive installation for tzdata, uses UTC
 ENV LOCAL="yes"
-
-
-## HERE
-
-
 RUN apt-get update && apt-get install --no-install-recommends -y \
     tzdata=2020a-0ubuntu0.18.04 \
     && apt-get clean \
@@ -102,15 +97,26 @@ RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 # Use local setup-scripts repository for development
 COPY setup-scripts /setup-scripts
 
+# Create fractal user
 RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \
     && echo 'fractal:password1234567.' | chpasswd
 
-RUN apt-get install --no-install-recommends -y lsb-release=9.20170808ubuntu1 \
+
+
+
+#HERE
+
+
+
+
+RUN apt-get update && apt-get install --no-install-recommends -y \ 
+    lsb-release=9.20170808ubuntu1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install --no-install-recommends -y pulseaudio=1:11.1-1ubuntu7.10 \
+RUN apt-get update && apt-get install --no-install-recommends -y \ 
+    pulseaudio=1:11.1-1ubuntu7.10 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
