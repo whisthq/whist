@@ -8,7 +8,7 @@ WorkingDirectory=/usr/share/fractal
 Type=simple
 Environment=DISPLAY=:10
 Environment=XAUTHORITY=/home/fractal/.Xauthority
-ExecStart=/usr/share/FractalServer
+ExecStart=/usr/share/fractal/FractalServer
 Restart=always
 RestartSec=3
 
