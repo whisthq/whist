@@ -27,9 +27,10 @@ jobs:
         pip install black
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
               
-    - name: Check if code is formatted via Python Black
+    - name: Check if code is properly linted with Python Black
       run: |
-        if (black --check) != 0; then
+        result=$(black --check) # black --check returns 0 if the code is already linted
+        if [ "$result" -ne "0" ]; then        
           (echo "To pass this check please lint the code with Python Black" && false)
         else
           (echo "Code is linted with Python Black" && true)
