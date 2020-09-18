@@ -104,6 +104,10 @@ black {source_file_or_directory}
 
 Black doesn't provide many options. You can list them by running `black --help`:
 
+## Coding Philosophy
+
+Please read our in-depth guide on our coding philosophy for this repo [here](https://www.notion.so/fractalcomputers/Code-Philosophy-Webserver-backend-d036205444464f8b8a61dc36eeae7dbb).
+
 ## Testing
 
 **Pytest**
