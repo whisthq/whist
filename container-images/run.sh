@@ -2,7 +2,7 @@
 
 git_hash=$(git rev-parse --short HEAD)
 if [[ $3 == mount ]]; then
-    mount_protocol='--mount type=bind,source=$(cd base/protocol;pwd),destination=/usr/share/protocol'
+    mount_protocol='--mount type=bind,source=$(cd base/protocol/server/build64;pwd),destination=/usr/share/protocol/bin'
 else
     mount_protocol=''
 fi
