@@ -65,6 +65,8 @@ To package the MacOS application it needs to be notarized. This means it needs t
 
 Fractal runs two update channels, `production` and `testing`. The `dev` branch should be published automatically to `testing`, while `production` should match `master`. The build script has a special `noupdates` channel which should be used for any builds that aren't on one of these branches.
 
+To publish to S3 the `AWS_SECRET_ACCESS_KEY` and `AWS_ACCESS_KEY_ID` environment variables must be set 
+
 Any CI generated builds are also stored in GitHub Releases which can be manually downloaded and used.
 
 CI should handle releases, however, 
@@ -95,11 +97,13 @@ Additionally, [style](#styling) checks will be run by CI. You should make sure t
 
 ## Styling
 
-To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. You may find a variety of tutorial online for your personal setup. You can always run Prettier via the command-line by running `yarn format`. 
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Prettier.
+
+You can always run Prettier directly from a terminal by typing `yarn format`, or you can install it directly within your IDE by via the following instructions:
 
 ### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 
-Launch VS Code Quick Open (Ctrl+P), paste the following command, and press enter.
+Launch VS Code Quick Open (Ctrl+P/Cmd+P), paste the following command, and press enter.
 
 ```
 ext install esbenp.prettier-vscode

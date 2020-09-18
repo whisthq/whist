@@ -29,7 +29,7 @@ platform_map_no_size = {
 default_channel_s3_buckets = {
     "testing": {
         "Windows-64bit": "fractal-applications-testing",
-        "Linux-64bit": "fractal-linux-applications-testing",  # TODO as of 2020-07-18 this bucket does not exist!
+        "Linux-64bit": "fractal-linux-applications-testing",
         "macOS-64bit": "fractal-mac-application-testing",
     },
     "production": {
@@ -42,6 +42,15 @@ default_channel_s3_buckets = {
     ),
 }
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def select_protocol_binary(platform: str, protocol_id: str, protocol_dir: Path) -> Path:
     valid_protocols = protocol_dir.glob(f"*{platform}*.*")
@@ -92,10 +101,23 @@ def run_cmd(cmd: List[str], **kwargs):
 
 def prep_unix(protocol_dir: Path) -> None:  # Shared by Linux and macOS
     (protocol_dir / "sshkey").chmod(0o600)
+    (protocol_dir / "FractalClient").chmod(0o744)
 
 
 def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) -> None:
     client = protocol_dir / "FractalClient"
+
+    # Anything codesigned must not have extra file attributes (it's unclear where these
+    # attributes are coming from but they always appear to to occur, except for when the
+    # protocol is built locally). This fix is from https://stackoverflow.com/a/39667628
+    # code signing must go before adding the icon as xattr -c removes the icon
+    # run_cmd(["xattr", "-c", str(client)])
+    # codesign the FractalClient executable
+    run_cmd(["codesign", "-s", codesign_identity, str(client)])
+
+    # strip debug symbols from protocol
+    run_cmd(["strip", "-S", str(client)])
+
     # Add logo to the FractalClient executable
     # TODO The "sips" command appears to do nothing. Test that icons are successfully
     # added without it and then feel free to remove it.
@@ -108,17 +130,15 @@ def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) ->
         run_cmd(  # extract the icon to its own resource file
             ["DeRez", "-only", "icns", str(src_icon)], stdout=f
         )
+    run_cmd(["ls", str(tmp_icon)])
+    run_cmd(["ls", str(desktop_dir / "build")])
     run_cmd(  # append this resource to the file you want to icon-ize
         ["Rez", "-append", str(tmp_icon), "-o", str(client)]
     )
+
     run_cmd(["SetFile", "-a", "C", str(client)])  # use the resource to set the icon
     tmp_icon.unlink()
-    # Anything codesigned must not have extra file attributes (it's unclear where these
-    # attributes are coming from but they always appear to to occur, except for when the
-    # protocol is built locally). This fix is from https://stackoverflow.com/a/39667628
-    run_cmd(["xattr", "-c", str(client)])
-    # codesign the FractalClient executable
-    run_cmd(["codesign", "-s", codesign_identity, str(client)])
+
 
 
 def prep_linux(protocol_dir: Path) -> None:
@@ -130,21 +150,23 @@ def prep_linux(protocol_dir: Path) -> None:
     unison.chmod(
         unison.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )  # this long chain is equivalent to "chmod +x"
+    # strip debug symbols from the client
+    run_cmd(["strip", "--strip-debug", str(client)])
 
 
 def prep_windows(protocol_dir: Path) -> None:
     rcedit_path = desktop_dir / "rcedit-x64.exe"
     cleanup_list.append(rcedit_path)
-    if not rcedit_path.exists():
-        rcedit_version = "v1.1.1"
-        print(f"Downloading rcedit-x64.exe {rcedit_version}")
-        with requests.get(
-            f"https://github.com/electron/rcedit/releases/download/{rcedit_version}/rcedit-x64.exe",
-            stream=True,
-        ) as r:
-            r.raise_for_status()
-            with open(rcedit_path, 'wb') as f:
-                shutil.copyfileobj(r.raw, f)
+    # if not rcedit_path.exists():
+    rcedit_version = "v1.1.1"
+    print(f"Downloading rcedit-x64.exe {rcedit_version}")
+    with requests.get(
+        f"https://github.com/electron/rcedit/releases/download/{rcedit_version}/rcedit-x64.exe",
+        stream=True,
+    ) as r:
+        r.raise_for_status()
+        with open(rcedit_path, 'wb') as f:
+            shutil.copyfileobj(r.raw, f)
     rcedit_cmd = [
         str(rcedit_path),
         str(protocol_dir / "FractalClient.exe"),
@@ -153,6 +175,9 @@ def prep_windows(protocol_dir: Path) -> None:
     ]
     print("Updating FractalClient icon using `%s`" % " ".join(rcedit_cmd))
     subprocess.run(rcedit_cmd, check=True)
+    #remove incremental link and debug symbols files
+    run_cmd(["rm", str(protocol_dir / "FractalClient.ilk")])
+    run_cmd(["rm", str(protocol_dir / "FractalClient.pdb")])
 
 
 def package_via_yarn(desktop_dir):
@@ -193,8 +218,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--push-new-update",
+        type=str2bool,
+        nargs='?', # zero or one argument
         help="push the release to the auto update system (see --update-channel to define target)",
-        action="store_true",
+        const=True,
         default=False,
     )
     parser.add_argument(
@@ -224,7 +251,7 @@ if __name__ == "__main__":
 
     desktop_dir = Path(args.src_dir)
     protocol_packages_dir = Path(args.protocol_packages_dir)
-    protocol_dir = (desktop_dir / "protocol-build").resolve()
+    protocol_dir = (desktop_dir / "protocol-build" / "desktop").resolve()
     protocol_dir.mkdir(parents=True, exist_ok=True)
 
     cleanup_list = []
@@ -299,12 +326,12 @@ if __name__ == "__main__":
     else:
         update_bucket = default_channel_s3_buckets[args.update_channel][args.platform]  # type: ignore
 
-    if args.set_version and not args.override_version_check:
-        version_id_re = re.compile(r"(\S+)-(\d{8}).(\d+)")
-        if not version_id_re.match(args.set_version):
-            raise Exception(
-                f"Invalid version ID: '{args.set_version}'. It must be in the form GITREF-YYYYMMDD.#, or --override-version-check must be passed."
-            )
+    # if args.set_version and not args.override_version_check:
+    #     version_id_re = re.compile(r"(\S+)-(\d{8}).(\d+)")
+    #     if not version_id_re.match(args.set_version):
+    #         raise Exception(
+    #             f"Invalid version ID: '{args.set_version}'. It must be in the form GITREF-YYYYMMDD.#, or --override-version-check must be passed."
+    #         )
 
     version = args.set_version
 
@@ -348,7 +375,7 @@ if __name__ == "__main__":
             "`yarn` must be installed in order to build and package the application"
         )
     run_cmd([yarn_cmd], cwd=desktop_dir)  # Ensure that all dependencies are installed
-    package_script = "package:publish" if args.push_new_update else "package"
+    package_script = "package-ci" if args.push_new_update else "package"
     run_cmd([yarn_cmd, package_script], cwd=desktop_dir)
 
     # #####

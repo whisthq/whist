@@ -1029,7 +1029,7 @@ class MainBox extends Component {
                         style={{
                             position: "relative",
                             width: 900,
-                            height: 470,
+                            height: 460,
                             borderRadius: 5,
                             boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.2)",
                             background: "white",
