@@ -1,6 +1,6 @@
 """Tests for the /container/ping endpoint."""
 
-from app.helpers.blueprint_helpers.aws.aws_container_post import pingHelper
+from app.celery.aws_ecs_status import pingHelper
 
 
 def status(code):
