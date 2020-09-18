@@ -134,23 +134,16 @@ def test_cluster_with_auto_scaling_group():
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage"
     )
-    # testclient.get_vpc()
-    # networkConfiguration = {
-    #     "awsvpcConfiguration": {
-    #         "subnets": testclient.pick_subnets(),
-    #         "securityGroups": testclient.pick_security_groups(),
-    #     }
-    # }
-    # testclient.run_task(networkConfiguration=networkConfiguration, use_launch_type=False)
     testclient.run_task(use_launch_type=False)
     testclient.spin_til_running(time_delay=2)
     
     container_instances = testclient.spin_til_containers_up(cluster_name)
     assert testclient.task_ips[0] in testclient.get_container_instance_ips(cluster_name, container_instances)
+    print(testclient.task_ports[0])
+    assert testclient.task_ports[0][8080]
 
     # test sending commands to containers in cluster
     command_id = testclient.exec_commands_on_containers(cluster_name, container_instances, ['echo hello'])['Command']['CommandId']
-    print(command_id)
     assert testclient.spin_til_command_executed(command_id)
 
     # Clean Up

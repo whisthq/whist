@@ -177,7 +177,6 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
         )
         return
 
-    print(curr_network_binding)
     container = UserContainer(
         container_id=ecs_client.tasks[0],
         user_id=username,
@@ -227,7 +226,7 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
             label=str(ecs_client.tasks[0]),
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
-        return container
+        return ecs_client.tasks[0]
     else:
         fractalLog(
             function="create_new_container",
@@ -248,6 +247,7 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
 @celery_instance.task(bind=True)
 def create_new_cluster(
     self,
+    cluster_name=None,
     instance_type="t2.small",
     ami="ami-026f9e275180a6982",
     region_name="us-east-1",
@@ -267,7 +267,6 @@ def create_new_cluster(
     Returns:
         user_cluster_schema: information on cluster created
     """
-    
     fractalLog(
         function="create_new_cluster",
         label="None",
@@ -284,6 +283,7 @@ def create_new_cluster(
 
     try:
         cluster_name, _, _, _ = ecs_client.create_auto_scaling_cluster(
+            cluster_name=cluster_name,
             instance_type=instance_type,
             ami=ami,
             min_size=min_size,
@@ -362,7 +362,13 @@ def send_commands(self, cluster, region_name, commands, containers=None):
                     "msg":"Sending commands {} to containers {} in cluster {}".format(commands, containers, cluster)
                 },
             )
-            ecs_client.exec_commands_on_containers(cluster, containers, commands)
+            command_id = ecs_client.exec_commands_on_containers(cluster, containers, commands)['Command']['CommandId']
+            ecs_client.spin_til_command_executed(command_id)
+            fractalLog(
+                function="send_command",
+                label="None",
+                logs="Commands sent!",
+            )
         else:
             fractalLog(
                 function="send_command",
