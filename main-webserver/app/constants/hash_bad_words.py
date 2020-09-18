@@ -1,9 +1,13 @@
 from bad_words import BAD_WORDS
 import hashlib
 
+
 def hash_bad_words():
-    '''generates the hash complement of all the words in 
-    bad_words.py'''
+    """Hashes all bad words from bad_words.py and returns
+    a dictionary that contains all of these values
+    Args:
+        None
+    """
 
     bad_words_hash = {}
 
