@@ -105,9 +105,9 @@ function Footer(props: any) {
                     <Row
                         style={{
                             width: width > 700 ? 350 : "100%",
-                            paddingRight: width > 700 ? 30 : 15,
+                            paddingRight: width > 720 ? 30 : 15,
                             textAlign: "left",
-                            paddingTop: width > 700 ? 0 : 40,
+                            paddingTop: width > 720 ? 0 : 40,
                         }}
                     >
                         <Col
@@ -115,7 +115,7 @@ function Footer(props: any) {
                             style={{
                                 paddingTop: 15,
                                 paddingBottom: 20,
-                                textAlign: "right",
+                                textAlign: width > 720 ? "right" : "left",
                             }}
                         >
                             <div className="section-name">RESOURCES</div>
@@ -149,7 +149,7 @@ function Footer(props: any) {
                             style={{
                                 paddingTop: 15,
                                 paddingBottom: 20,
-                                textAlign: "right",
+                                textAlign: width > 720 ? "right" : "left",
                             }}
                         >
                             <div className="section-name">CONTACT</div>

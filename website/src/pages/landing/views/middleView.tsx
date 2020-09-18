@@ -31,7 +31,7 @@ function MiddleView(props: any) {
                         md={7}
                         xs={12}
                         style={{
-                            paddingRight: width > 720 ? 50 : 0,
+                            paddingRight: width > 720 ? 75 : 0,
                         }}
                     >
                         <img

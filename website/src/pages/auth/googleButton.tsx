@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useContext } from "react"
 import { Button } from "react-bootstrap"
 import { connect } from "react-redux"
 import firebase from "firebase"
@@ -6,9 +6,12 @@ import { db } from "shared/utils/firebase"
 import { SIGNUP_POINTS } from "shared/utils/points"
 import { googleLogin } from "store/actions/auth/login_actions"
 
+import ScreenContext from "shared/context/screenContext"
+
 import "styles/landing.css"
 
 const GoogleButton = (props: any) => {
+    const { width } = useContext(ScreenContext)
     const { user } = props
 
     const handleGoogleLogin = () => {
@@ -41,7 +44,7 @@ const GoogleButton = (props: any) => {
             <div
                 style={{
                     color: "white",
-                    fontSize: "23px",
+                    fontSize: width > 720 ? 22 : 16,
                 }}
             >
                 Sign in with Google

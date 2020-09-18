@@ -26,6 +26,8 @@ const ReferAction = (props: { onClick: any }) => {
 }
 
 const JoinWaitlistAction = () => {
+    const { width } = useContext(ScreenContext)
+
     const scrollToTop = () => {
         window.scrollTo({
             top: 0,
@@ -38,12 +40,12 @@ const JoinWaitlistAction = () => {
             <div
                 style={{
                     color: "white",
-                    fontSize: "23px",
+                    fontSize: width > 720 ? 22 : 16,
                 }}
             >
                 Join Waitlist
             </div>
-            <div style={{ color: "#00D4FF" }}> +50 points</div>
+            <div style={{ color: "#00D4FF" }}> +100 points</div>
         </Button>
     )
 }
