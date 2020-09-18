@@ -86,8 +86,7 @@ class Typeform extends Component {
     };
 
     render() {
-        // if (this.state.step === 1 && this.props.askFeedback) {
-        if (this.state.step === 1) {
+        if (this.state.step === 1 && this.props.askFeedback) {
             return (
                 <div
                     tabIndex="0"
