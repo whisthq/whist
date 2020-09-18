@@ -1,6 +1,9 @@
 import itertools
 
 def generate_subsequence_for_word(word):
+    '''generates all possible subsequences of names or Tokens
+    and stores them in an array called result```
+
     result = []
     combinations = []
     
