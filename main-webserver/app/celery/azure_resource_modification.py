@@ -5,6 +5,12 @@ from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_locks import *
 from app.helpers.utils.azure.azure_resource_modification import *
 
+from app.models.hardware import *
+from app.serializers.hardware import *
+
+user_vm_schema = UserVMSchema()
+os_disk_schema = OSDiskSchema()
+
 
 @celery_instance.task(bind=True)
 def swapSpecificDisk(self, vm_name, disk_name, resource_group=VM_GROUP):
@@ -44,17 +50,14 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=VM_GROUP):
         resource_group=resource_group,
     )
 
-    output = fractalSQLSelect(
-        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-    )
+    vm = UserVM.query.get(vm_name)
+    vm = user_vm_schema.dump(vm)
 
-    return {"status": SUCCESS, "payload": output["rows"][0]}
+    return {"status": SUCCESS, "payload": vm}
 
 
 @celery_instance.task(bind=True)
-def deployArtifact(
-    self, vm_name, artifact_name, run_id, resource_group="FractalProtocolCI"
-):
+def deployArtifact(self, vm_name, artifact_name, run_id, resource_group=VM_GROUP):
     """Swaps out a disk in a vm
 
     Args:
@@ -220,10 +223,10 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
     # Get the username associated with the disk
 
     username = None
-    output = fractalSQLSelect(table_name="disks", params={"disk_name": disk_name})
+    disk = OSDisk.query.get(disk_name)
 
-    if output["success"] and output["rows"]:
-        username = output["rows"][0]["username"]
+    if disk:
+        username = disk.user_id
 
     # Get the VM and location of the disk
 
@@ -243,6 +246,10 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
     )
 
     if vm_attached:
+        fractalLog(
+            function="automaticAttachDisk", label=str(username), logs="ALREADY ATTACHED"
+        )
+
         self.update_state(
             state="PENDING",
             meta={
@@ -287,15 +294,11 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                 # Update database to make sure that the VM is associated with the correct disk
                 # and username
 
-                fractalSQLUpdate(
-                    table_name=resourceGroupToTable(resource_group),
-                    conditional_params={"vm_name": vm_name,},
-                    new_params={
-                        "disk_name": disk_name,
-                        "username": username,
-                        "location": location,
-                    },
-                )
+                vm = UserVM.query.filter_by(vm_id=vm_name)
+                vm.disk_id = disk_name
+                vm.user_id = username
+                vm.location = location
+                db.session.commit()
 
                 self.update_state(
                     state="PENDING",
@@ -334,13 +337,11 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                     resource_group=resource_group,
                 )
 
-                output = fractalSQLSelect(
-                    table_name=resourceGroupToTable(resource_group),
-                    params={"vm_name": vm_name},
-                )
+                vm = UserVM.query.get(vm_name)
 
-                if output["success"] and output["rows"]:
-                    return output["rows"][0]
+                if vm:
+                    vm = user_vm_schema.dump(vm)
+                    return vm
                 else:
                     return {}
 
@@ -361,58 +362,41 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
 
         disk_attached = False
         while not disk_attached:
+            fractalLog(
+                function="automaticAttachDisk",
+                label=str(username),
+                logs="DISKNO T ATTACHED",
+            )
             vm = claimAvailableVM(
                 username, disk_name, location, resource_group, os_type, s=self
             )
             if vm:
-                try:
-                    vm_name = vm["vm_name"]
+                # try:
+                vm_name = vm["vm_id"]
 
-                    vm_info = compute_client.virtual_machines.get(
-                        resource_group, vm_name
-                    )
+                vm_info = compute_client.virtual_machines.get(resource_group, vm_name)
 
-                    for disk in vm_info.storage_profile.data_disks:
-                        if disk.name != disk_name:
-                            self.update_state(
-                                state="PENDING",
-                                meta={
-                                    "msg": "Making sure that you have a stable connection."
-                                },
-                            )
-
-                            detachSecondaryDisk(disk.name, vm_name, resource_group)
-
-                    if (
-                        swapDiskAndUpdate(
-                            disk_name, vm_name, needs_winlogon, resource_group, s=self
-                        )
-                        > 0
-                    ):
+                for disk in vm_info.storage_profile.data_disks:
+                    if disk.name != disk_name:
                         self.update_state(
                             state="PENDING",
-                            meta={"msg": "Data successfully uploaded to cloud PC."},
+                            meta={
+                                "msg": "Making sure that you have a stable connection."
+                            },
                         )
 
-                        attachSecondaryDisks(username, vm_name, resource_group, s=self)
+                        detachSecondaryDisk(disk.name, vm_name, resource_group)
 
-                        lockVMAndUpdate(
-                            vm_name=vm_name,
-                            state="RUNNING_AVAILABLE",
-                            lock=False,
-                            temporary_lock=1,
-                            resource_group=resource_group,
-                        )
-
-                        output = fractalSQLSelect(
-                            table_name=resourceGroupToTable(resource_group),
-                            params={"vm_name": vm_name},
-                        )
-
-                        if output["success"] and output["rows"]:
-                            return output["rows"][0]
-                        else:
-                            return {}
+                if (
+                    swapDiskAndUpdate(
+                        disk_name, vm_name, needs_winlogon, resource_group, s=self
+                    )
+                    > 0
+                ):
+                    self.update_state(
+                        state="PENDING",
+                        meta={"msg": "Data successfully uploaded to cloud PC."},
+                    )
 
                     attachSecondaryDisks(username, vm_name, resource_group, s=self)
 
@@ -424,26 +408,42 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                         resource_group=resource_group,
                     )
 
-                    disk_attached = True
+                    vm = UserVM.query.get(vm_name)
 
-                    output = fractalSQLSelect(
-                        table_name=resourceGroupToTable(resource_group),
-                        params={"vm_name": vm_name},
-                    )
-
-                    if output["success"] and output["rows"]:
-                        return output["rows"][0]
+                    if vm:
+                        vm = user_vm_schema.dump(vm)
+                        return vm
                     else:
                         return {}
-                except Exception as e:
-                    fractalLog(
-                        function="automaticAttachDisk",
-                        label=username,
-                        logs="Critical error attaching disk: {error}".format(
-                            error=str(e)
-                        ),
-                        level=logging.CRITICAL,
-                    )
+
+                attachSecondaryDisks(username, vm_name, resource_group, s=self)
+
+                lockVMAndUpdate(
+                    vm_name=vm_name,
+                    state="RUNNING_AVAILABLE",
+                    lock=False,
+                    temporary_lock=1,
+                    resource_group=resource_group,
+                )
+
+                disk_attached = True
+
+                vm = UserVM.query.filter_by(vm_id=vm_name)
+
+                if vm:
+                    vm = user_vm_schema.dump(vm)
+                    return vm
+                else:
+                    return {}
+                # except Exception as e:
+                #     fractalLog(
+                #         function="automaticAttachDisk",
+                #         label=username,
+                #         logs="Critical error attaching disk: {error}".format(
+                #             error=str(e)
+                #         ),
+                #         level=logging.CRITICAL,
+                #     )
 
             else:
                 self.update_state(

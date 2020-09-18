@@ -1,64 +1,44 @@
 from app import *
 
+from app.models.logs import *
+from app.models.public import *
+
+from app.serializers.logs import *
+
 
 def logsHelper(connection_id, username, bookmarked):
-    session = Session()
+    log_schema = ProtocolLogSchema()
 
     if bookmarked:
-        command = text(
-            """
-            SELECT * FROM "bookmarked_logs" LEFT JOIN "logs" ON (bookmarked_logs.connection_id = logs.connection_id)
-            """
-        )
-
-        params = {"connection_id": connection_id}
-
-        output = fractalCleanSQLOutput(session.execute(command, params).fetchall())
-        session.commit()
-        session.close()
+        logs = ProtocolLog.query.filter_by(bookmarked=True).all()
 
         connection_ids = []
-        if output:
-            connection_ids = [element["connection_id"] for element in output]
+        if logs:
+            connection_ids = [log.connection_id for log in logs]
 
-        return {"logs": output, "connection_ids": connection_ids, "status": SUCCESS}
+        logs = [log_schema.dump(log) for log in logs]
+
+        return {"logs": logs, "connection_ids": connection_ids, "status": SUCCESS}
     if connection_id:
-        command = text(
-            """
-            SELECT * FROM logs WHERE "connection_id" = :connection_id ORDER BY last_updated DESC
-            """
+        logs = (
+            ProtocolLog.filter_by(connection_id=connection_id)
+            .order_by(ProtocolLog.timestamp)
+            .all()
         )
-        params = {"connection_id": connection_id}
+        logs = [log_schema.dump(log) for log in logs]
 
-        output = fractalCleanSQLOutput(session.execute(command, params).fetchall())
-        session.commit()
-        session.close()
-
-        return {"logs": output, "status": SUCCESS}
+        return {"logs": logs, "status": SUCCESS}
     elif username:
-        command = text(
-            """
-            SELECT * FROM logs WHERE "username" LIKE :username ORDER BY last_updated DESC
-            """
+        logs = (
+            ProtocolLog.query.filer_by(user_id=username)
+            .order_by(ProtocolLog.timestamp)
+            .all()
         )
-        params = {"username": username + "%"}
+        logs = [log_schema.dump(log) for log in logs]
 
-        output = fractalCleanSQLOutput(session.execute(command, params).fetchall())
-        session.commit()
-        session.close()
-
-        return {"logs": output, "status": SUCCESS}
+        return {"logs": logs, "status": SUCCESS}
     else:
-        command = text(
-            """
-            SELECT * FROM logs ORDER BY last_updated DESC
-            """
-        )
+        logs = ProtocolLog.query.order_by(ProtocolLog.timestamp).all()
+        logs = [log_schema.dump(log) for log in logs]
 
-        params = {}
-
-        output = fractalCleanSQLOutput(session.execute(command, params).fetchall())
-        session.commit()
-        session.close()
-
-        return {"logs": output, "status": SUCCESS}
+        return {"logs": logs, "status": SUCCESS}

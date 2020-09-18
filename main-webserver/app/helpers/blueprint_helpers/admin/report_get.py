@@ -1,132 +1,94 @@
 from app import *
 from app.helpers.utils.general.analytics import *
 from app.helpers.utils.general.logs import *
-from app.helpers.utils.general.sql_commands import *
+
+from app.models.hardware import *
+from app.models.public import *
+from app.models.logs import *
+
+from app.serializers.hardware import *
+from app.serializers.public import *
+from app.serializers.logs import *
+
+monitor_log_schema = MonitorLogSchema()
+login_history_schema = LoginHistorySchema()
+user_schema = UserSchema()
+vm_schema = UserVMSchema()
+disk_schema = OSDiskSchema()
 
 
 def latestHelper():
-    command = text(
-        """
-        SELECT *
-        FROM status_report
-        ORDER BY timestamp DESC
-        """
-    )
-    output = fractalRunSQL(command, {})
+    log = MonitorLog.query.order_by(MonitorLog.timestamp).first()
+    log = monitor_log_schema.dump(log)
 
-    if output["success"] and output["rows"]:
-        return output["rows"][0]
-    else:
-        return None
+    return log
 
 
 def totalUsageHelper():
     today = dt.now()
-    command = text(
-        """
-        SELECT *
-        FROM login_history
-        WHERE timestamp > :date AND is_user = true
-        ORDER BY timestamp ASC
-        """
+
+    dayParams = dt.combine(today.date(), dt.min.time()).timestamp()
+    dayReport = (
+        LoginHistory.query.filter(LoginHistory.timestamp > dayParams)
+        .order_by(LoginHistory.timestamp)
+        .all()
     )
 
-    dayParams = {
-        "date": dt.combine(today.date(), dt.min.time()).strftime("%m-%d-%y"),
-    }
-    dayReport = fractalRunSQL(command, dayParams)
+    weekParams = (today - datetime.timedelta(days=7)).timestamp()
+    weekReport = (
+        LoginHistory.query.filter(LoginHistory.timestamp > weekParams)
+        .order_by(LoginHistory.timestamp)
+        .all()
+    )
 
-    weekParams = {
-        "date": (today - datetime.timedelta(days=7)).strftime("%m-%d-%y"),
-    }
-    weekReport = fractalRunSQL(command, weekParams)
+    monthParams = (today - datetime.timedelta(days=30)).timestamp()
+    monthReport = (
+        LoginHistory.query.filter(LoginHistory.timestamp > monthParams)
+        .order_by(LoginHistory.timestamp)
+        .all()
+    )
 
-    monthParams = {
-        "date": (today - datetime.timedelta(days=30)).strftime("%m-%d-%y"),
-    }
-    monthReport = fractalRunSQL(command, monthParams)
-
-    dayMins = totalMinutes(dayReport["rows"]) if dayReport["rows"] else 0
-    weekMins = totalMinutes(weekReport["rows"]) if weekReport["rows"] else 0
-    monthMins = totalMinutes(monthReport["rows"]) if monthReport["rows"] else 0
+    dayMins = totalMinutes(dayReport) if dayReport else 0
+    weekMins = totalMinutes(weekReport) if weekReport else 0
+    monthMins = totalMinutes(monthReport) if monthReport else 0
 
     return {"day": dayMins, "week": weekMins, "month": monthMins}
 
 
 def signupsHelper():
     today = dt.now()
-    command = text(
-        """
-            SELECT COUNT(created)
-            FROM users
-            WHERE created > :timestamp
-        """
-    )
 
-    dayParams = {
-        "timestamp": dt.combine(today.date(), dt.min.time()).timestamp(),
-    }
-    dayOutput = fractalRunSQL(command, dayParams)
-    dayCount = dayOutput["rows"][0]["count"] if dayOutput["rows"] else 0
+    dayParams = dt.combine(today.date(), dt.min.time()).timestamp()
+    dayCount = User.query.filter(User.created_timestamp > dayParams).count()
 
-    weekParams = {
-        "timestamp": (today - datetime.timedelta(days=7)).timestamp(),
-    }
-    weekOutput = fractalRunSQL(command, weekParams)
-    weekCount = weekOutput["rows"][0]["count"] if weekOutput["rows"] else 0
+    weekParams = ((today - datetime.timedelta(days=7)).timestamp(),)
+    weekCount = User.query.filter(User.created_timestamp > weekParams).count()
 
-    monthParams = {"timestamp": (today - datetime.timedelta(days=30)).timestamp()}
-    monthOutput = fractalRunSQL(command, monthParams)
-    monthCount = monthOutput["rows"][0]["count"] if monthOutput["rows"] else 0
+    monthParams = (today - datetime.timedelta(days=30)).timestamp()
+    monthCount = User.query.filter(User.created_timestamp > monthParams).count()
 
     return {"day": dayCount, "week": weekCount, "month": monthCount}
 
 
 def loginActivityHelper():
-    output = fractalSQLSelect("login_history", {})
-    if output["rows"]:
-        activities = output["rows"]
-        activities.reverse()
-        return activities
-    else:
-        return {}
+    activities = LoginHistory.query.order_by(LoginHistory.timestamp.desc()).all()
+    activities = [login_history_schema.dump(activity) for activity in activities]
+    return activities
 
 
 def fetchUsersHelper():
-    output = fractalSQLSelect("users", {})
-    if output["rows"]:
-        return output["rows"]
-    else:
-        return {}
+    users = User.query.all()
+    users = [user_schema.dump(user) for user in users]
+    return users
 
 
 def fetchVMsHelper():
-    output = fractalSQLSelect("v_ms", {})
-    if output["rows"]:
-        return output["rows"]
-    else:
-        return {}
-
-
-def fetchCustomersHelper():
-    output = fractalSQLSelect("customers", {})
-    if output["rows"]:
-        return output["rows"]
-    else:
-        return {}
+    vms = UserVM.query.all()
+    vms = [vm_schema.dump(vm) for vm in vms]
+    return vms
 
 
 def fetchDisksHelper():
-    # TODO: delete branch from disks and fix this command
-    command = text(
-        """
-        SELECT disks.*, disk_settings.using_stun, disk_settings.branch as settings_branch
-        FROM disks
-        LEFT JOIN disk_settings ON disks.disk_name = disk_settings.disk_name
-        """
-    )
-    output = fractalRunSQL(command, {})
-    if output["rows"]:
-        return output["rows"]
-    else:
-        return {}
+    disks = OSDisk.query.all()
+    disks = [disk_schema.dump(disk) for disk in disks]
+    return disks

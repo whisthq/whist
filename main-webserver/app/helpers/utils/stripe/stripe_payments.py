@@ -1,45 +1,33 @@
 from app import *
 
+from app.models.public import *
+from app.models.logs import *
+
 
 def stripeChargeHourly(username):
 
     # Check to see if the user is a current customer
+    customer = User.query.get(username)
 
-    output = fractalSQLSelect(table_name="customers", params={"username": username})
-
-    customer = None
-    if output["success"] and output["rows"]:
-        customer = output["rows"][0]
-    else:
+    if not customer:
         return
 
     # Check to see if user is an hourly plan subscriber
 
     stripe.api_key = STRIPE_SECRET
-    subscription_id = customer["subscription"]
+    subscription_id = customer.stripe_customer_id
 
     try:
         payload = stripe.Subscription.retrieve(subscription_id)
 
         if HOURLY_PLAN_ID == payload["items"]["data"][0]["plan"]["id"]:
-            command = text(
-                """
-                SELECT *
-                FROM login_history
-                WHERE "username" = :username
-                ORDER BY timestamp DESC LIMIT 1
-                """
+            user_activity = (
+                LoginHistory.query.filter_by(user_id=username)
+                .order_by(LoginHistory.timestamp.desc())
+                .first()
             )
 
-            params = {"username": username}
-
-            output = fractalRunSQL(command, params)
-
-            user_activity = None
-            if output["success"] and output["rows"]:
-                user_activity = output["rows"][0]
-
-            if user_activity["action"] != "logon":
+            if user_activity.action != "logon":
                 fractalLog(
                     function="stripeChargeHourly",
                     label=str(username),

@@ -1,17 +1,20 @@
 from app import *
 
+from app.models.logs import *
+
 
 def bookmarkHelper(connection_id):
-    output = fractalSQLInsert(
-        table_name="bookmarked_logs", params={"connection_id": connection_id}
-    )
 
-    return {"status": SUCCESS} if output["success"] else {"status": BAD_REQUEST}
+    log = ProtocolLog.query.filter_by(connection_id=str(connection_id)).first()
+    log.bookmarked = True
+    db.session.commit()
+
+    return {"status": SUCCESS}
 
 
 def unbookmarkHelper(connection_id):
-    output = fractalSQLDelete(
-        table_name="bookmarked_logs", params={"connection_id": connection_id}
-    )
+    log = ProtocolLog.query.filter_by(connection_id=str(connection_id)).first()
+    log.bookmarked = False
+    db.session.commit()
 
-    return {"status": SUCCESS} if output["success"] else {"status": BAD_REQUEST}
+    return {"status": SUCCESS}

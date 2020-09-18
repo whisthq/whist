@@ -32,17 +32,26 @@ args = parser.add_argument(
 args = parser.parse_args()
 
 env_to_app_name = {
-    "staging": "cube-celery-staging",
     "production": "main-webserver",
-    "reorganization": "cube-celery-staging4",
+    "staging": "staging-webserver",
 }
 app_name = env_to_app_name.get(args.env, args.env)
-heroku_proc = subprocess.run(
-    ["heroku", "config", "--json", "--app", app_name],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE,
-    shell=True,
-)
+
+if str(sys.platform).startswith("win"):
+    heroku_proc = subprocess.run(
+        ["heroku", "config", "--json", "--app", app_name],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+    )
+else:
+    heroku_proc = subprocess.run(
+        ["heroku config --json --app " + app_name],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+    )
+
 if heroku_proc.returncode != 0:
     print(heroku_proc.stderr.decode("utf-8"))
     sys.exit(heroku_proc.returncode)
@@ -53,9 +62,9 @@ env_config = json.loads(heroku_proc.stdout.decode("utf-8"))
 # ```
 # ag "getenv\(.+?\)" --only-matching --nogroup --nofilename | sort | uniq
 # ```
+
 useful_env_vars = [
     "CONFIG_DB_URL",
-    "CONFIG_SECRET_KEY",
     "DASHBOARD_PASSWORD",
     "DASHBOARD_USERNAME",
     "PROD_DB_URL",
@@ -65,6 +74,8 @@ useful_env_vars = [
 ]
 
 useful_config = {k: env_config.get(k) for k in useful_env_vars}
+useful_config["HOT_RELOAD"] = "true"
+
 try:
     with open(args.base_config) as f:
         base_config = json.load(f)

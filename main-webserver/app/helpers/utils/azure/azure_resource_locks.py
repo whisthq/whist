@@ -1,6 +1,8 @@
 from app import *
 from app.helpers.utils.azure.azure_general import *
 
+from app.models.hardware import *
+
 
 def lockVMAndUpdate(vm_name, state, lock, temporary_lock, resource_group=VM_GROUP):
     """Changes the state, lock, and temporary lock of a VM
@@ -39,24 +41,18 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock, resource_group=VM_GROU
         ),
     )
 
-    output = fractalSQLUpdate(
-        table_name=resourceGroupToTable(resource_group),
-        conditional_params={"vm_name": vm_name},
-        new_params=new_params,
-    )
+    vm = UserVM.query.filter_by(vm_id=vm_name)
+    fractalSQLCommit(db, lambda _, x: x.update(new_params), vm)
 
 
 def checkLock(vm_name, resource_group=None):
     resource_group = VM_GROUP if not resource_group else resource_group
 
-    output = fractalSQLSelect(
-        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-    )
-
+    vm = UserVM.query.get(vm_name)
     locked = False
 
-    if output["success"] and output["rows"]:
-        locked = output["rows"][0]["lock"]
+    if vm:
+        locked = vm.lock
 
     return locked
 
@@ -75,13 +71,11 @@ def spinLock(vm_name, resource_group=VM_GROUP, s=None):
     # Check if VM is currently locked
     vm_name = vm_name.split("/")[-1]
 
-    output = fractalSQLSelect(
-        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-    )
+    vm = UserVM.query.get(vm_name)
 
     username = None
-    if output["success"] and output["rows"]:
-        username = output["rows"][0]["username"]
+    if vm:
+        username = vm.user_id
 
     else:
         fractalLog(

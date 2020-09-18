@@ -1,9 +1,6 @@
 import os
 
 from tests import *
-from dotenv import *
-
-load_dotenv(find_dotenv())
 
 # parallelizes tests
 def pytest_collection_modifyitems(config, items):

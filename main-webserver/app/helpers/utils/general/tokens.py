@@ -2,16 +2,20 @@ import hashlib
 from app.imports import *
 from app.helpers.utils.general.sql_commands import *
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
+from app.constants.bad_words import *
+
+from app.models.public import *
+
 
 def generatePrivateKey():
     return secrets.token_hex(16)
 
 
 def generateUniquePromoCode():
-    output = fractalSQLSelect("users", {})
+    users = User.query.all()
     old_codes = []
-    if output["rows"]:
-        old_codes = [user["code"] for user in output["rows"]]
+    if users:
+        old_codes = [user.referral_code for user in users]
     new_code = generatePromoCode()
     while new_code in old_codes:
         new_code = generatePromoCode()
@@ -26,7 +30,7 @@ def getAccessTokens(username):
 
 
 def generateToken(username):
-    token = jwt.encode({"email": username}, SECRET_KEY)
+    token = jwt.encode({"email": username}, JWT_SECRET_KEY)
     if len(token) > 15:
         token = token[-15:]
     else:

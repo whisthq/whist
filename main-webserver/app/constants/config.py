@@ -1,17 +1,16 @@
 import os
-import sqlalchemy as db
-import jwt
+import sqlalchemy
 
 from sqlalchemy.orm import sessionmaker
 
-config_engine = db.create_engine(
+config_engine = sqlalchemy.create_engine(
     os.getenv("CONFIG_DB_URL"), echo=False, pool_pre_ping=True
 )
 ConfigSession = sessionmaker(bind=config_engine, autocommit=False)
 
 
 def getEnvVar(key):
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "true":
+    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE":
         env = "production"
     else:
         env = "staging"
@@ -36,8 +35,7 @@ def getEnvVar(key):
     session.commit()
     session.close()
 
-    encoded = output[1]
-    return jwt.decode(encoded, os.getenv("CONFIG_SECRET_KEY"))["value"]
+    return output[1]
 
 
 DATABASE_URL = (
@@ -60,7 +58,7 @@ AWS_SECRET_KEY = getEnvVar("AWS_SECRET_KEY")
 ENDPOINT_SECRET = getEnvVar("ENDPOINT_SECRET")
 DASHBOARD_USERNAME = getEnvVar("DASHBOARD_USERNAME")
 DASHBOARD_PASSWORD = getEnvVar("DASHBOARD_PASSWORD")
-SECRET_KEY = getEnvVar("SECRET_KEY")
+SHA_SECRET_KEY = getEnvVar("SHA_SECRET_KEY")
 ADMIN_PASSWORD = getEnvVar("ADMIN_PASSWORD")
 SENDGRID_API_KEY = getEnvVar("SENDGRID_API_KEY")
 FRONTEND_URL = getEnvVar("FRONTEND_URL")

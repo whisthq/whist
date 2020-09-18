@@ -13,7 +13,7 @@ output = fractalRunSQL(
 
 for user in output["rows"]:
     # decrypt current password
-    password = jwt.decode(user["password"], os.getenv("SECRET_KEY"))
+    password = jwt.decode(user["password"], os.getenv("SHA_SECRET_KEY"))
 
     # hash plaintext password
     hashed_password = hash_value(password["pwd"])
