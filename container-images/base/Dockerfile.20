@@ -9,11 +9,13 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
-# Install systemd
+# Install systemd and apt-utils
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
+    apt-utils=2.0.2ubuntu0.1 \
     systemd=245.4-4ubuntu3.2 \
     systemd-sysv=245.4-4ubuntu3.2 \
+    && apt-get upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -49,16 +51,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     python3=3.8.2-0ubuntu2 \
     sudo=1.8.31-1ubuntu1 \
     vim=2:8.1.2269-1ubuntu5 \
-    apt-utils=2.0.2ubuntu0.1 \
+    && apt-get upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-
 # Install Google Chrome dependencies explicitly
-
-
-## HERE
-
 RUN apt-get update && apt-get install --no-install-recommends -y \
     libappindicator3-1=12.10.1+20.04.20200408.1-0ubuntu1 \
     libatk-bridge2.0-0=2.34.2-0ubuntu2~20.04.1 \
@@ -76,31 +73,30 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libxi6=2:1.7.10-0ubuntu1 \
     fonts-liberation=1:1.07.4-11 \
     xdg-utils=1.1.3-2ubuntu1 \
+    && apt-get upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-
-
-
-
-
 
 # Install Google Chrome
 RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && sed -i '3 s/^/# /' /etc/apt/sources.list \
     && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable=85.0.4183.102-1 \
+    && apt-get upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-
-# Avoids interactive installation for tzdata
-# Uses UTC
+# Install time while avoiding interactive installation for tzdata, uses UTC
 ENV LOCAL="yes"
+
+## HERE
+
+
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    tzdata=2020a-0ubuntu0.18.04 \
+    tzdata=2020a-0ubuntu0.20.04 \
     keyboard-configuration=1.178ubuntu2 \
     ufw=0.36-6 \
+    && apt-get upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
