@@ -19,7 +19,7 @@ def loginHelper(email, password):
 
     Returns:
     json: Metadata about the user
-   """
+    """
 
     # First, check if username is valid
 
@@ -69,7 +69,7 @@ def registerHelper(username, password, name, reason_for_signup):
 
     Returns:
     json: Metadata about the user
-   """
+    """
 
     # First, generate a user ID
 
@@ -153,7 +153,7 @@ def verifyHelper(username, provided_user_id):
 
     Returns:
     json: Success/failure of email verification
-   """
+    """
 
     # Select the user's ID
 
@@ -201,7 +201,7 @@ def deleteHelper(username):
 
     Returns:
     json: Success/failure of deletion
-   """
+    """
 
     user = User.query.get(username)
 

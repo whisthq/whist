@@ -137,7 +137,9 @@ def chargeHelper(token, email, code, plan):
             db.session.commit()
 
             fractalLog(
-                function="chargeHelper", label=email, logs="Customer added successful",
+                function="chargeHelper",
+                label=email,
+                logs="Customer added successful",
             )
 
     except Exception as e:
@@ -425,7 +427,8 @@ def removeProductHelper(email, productName):
 
 def addCardHelper(custId, sourceId):
     stripe.Customer.create_source(
-        custId, source=sourceId,
+        custId,
+        source=sourceId,
     )
 
     return (
@@ -436,7 +439,8 @@ def addCardHelper(custId, sourceId):
 
 def deleteCardHelper(custId, cardId):
     stripe.Customer.delete_source(
-        custId, cardId,
+        custId,
+        cardId,
     )
 
     return (

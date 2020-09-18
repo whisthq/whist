@@ -45,7 +45,10 @@ def hash_value(value):
 
 def check_value(hashed_value, raw_value):
     dk = hashlib.pbkdf2_hmac(
-        "sha256", raw_value.encode("utf-8"), SHA_SECRET_KEY.encode("utf-8"), 100000,
+        "sha256",
+        raw_value.encode("utf-8"),
+        SHA_SECRET_KEY.encode("utf-8"),
+        100000,
     )
     hr = binascii.hexlify(dk).decode("utf-8")
     return hashed_value == hr
@@ -84,7 +87,11 @@ def migrate_users():
             VALUES(:user_id, :name, :password, :using_google_login, :release_stage, :stripe_customer_id, :created_timestamp, :reason_for_signup, :referral_code, :credits_outstanding, :token, :verified)
         """
 
-        if row["password"] and row["username"] and not row["username"] in already_migrated_users:
+        if (
+            row["password"]
+            and row["username"]
+            and not row["username"] in already_migrated_users
+        ):
 
             password = jwt.decode(row["password"], SECRET_KEY)
 

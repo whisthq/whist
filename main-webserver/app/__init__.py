@@ -50,7 +50,12 @@ def fractalPreProcess(f):
                 }
                 body = str(body)
 
-            logger.info("{}\n{}\r\n".format(request.method + " " + request.url, body,))
+            logger.info(
+                "{}\n{}\r\n".format(
+                    request.method + " " + request.url,
+                    body,
+                )
+            )
 
         return f(*args, **kwargs)
 

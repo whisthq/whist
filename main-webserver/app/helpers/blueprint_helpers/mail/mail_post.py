@@ -27,7 +27,9 @@ def forgotPasswordHelper(username):
             to_emails=[username],
             subject="Reset Your Password",
             html_content=render_template(
-                "on_password_forget.html", url=FRONTEND_URL, token=token,
+                "on_password_forget.html",
+                url=FRONTEND_URL,
+                token=token,
             ),
         )
         try:
@@ -234,6 +236,7 @@ def computerReadyHelper(user, date, code, location):
 
     return jsonify({"status": SUCCESS}), SUCCESS
 
+
 def joinWaitlistHelper(email, name, date):
     title = "Congrats! You're on the waitlist."
 
@@ -241,9 +244,7 @@ def joinWaitlistHelper(email, name, date):
         from_email="support@fractalcomputers.com",
         to_emails=email,
         subject=title,
-        html_content=render_template(
-            "join_waitlist.html", name=name, date=date
-        ),
+        html_content=render_template("join_waitlist.html", name=name, date=date),
     )
 
     try:

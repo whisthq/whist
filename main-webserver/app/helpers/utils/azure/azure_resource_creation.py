@@ -41,7 +41,10 @@ def createNic(vm_name, location, tries, resource_group=None):
 
         # Create Subnet
         async_subnet_creation = network_client.subnets.create_or_update(
-            resource_group, vnet_name, subnet_name, {"address_prefix": "10.0.0.0/24"},
+            resource_group,
+            vnet_name,
+            subnet_name,
+            {"address_prefix": "10.0.0.0/24"},
         )
         subnet_info = async_subnet_creation.result()
 
@@ -106,7 +109,7 @@ def createVMParameters(
 
     Returns:
     json: Parameters that will be used in Azure sdk
-   """
+    """
 
     # Operating system parameters
 
@@ -148,9 +151,18 @@ def createVMParameters(
                     "sku": vm_reference["sku"],
                     "version": vm_reference["version"],
                 },
-                "os_disk": {"os_type": operating_system, "create_option": "FromImage",},
+                "os_disk": {
+                    "os_type": operating_system,
+                    "create_option": "FromImage",
+                },
             },
-            "network_profile": {"network_interfaces": [{"id": nic_id,}]},
+            "network_profile": {
+                "network_interfaces": [
+                    {
+                        "id": nic_id,
+                    }
+                ]
+            },
         },
         "vm_name": vm_name,
     }

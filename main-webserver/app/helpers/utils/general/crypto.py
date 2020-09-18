@@ -12,7 +12,10 @@ def hash_value(value):
 
 def check_value(hashed_value, raw_value):
     dk = hashlib.pbkdf2_hmac(
-        "sha256", raw_value.encode("utf-8"), SHA_SECRET_KEY.encode("utf-8"), 100000,
+        "sha256",
+        raw_value.encode("utf-8"),
+        SHA_SECRET_KEY.encode("utf-8"),
+        100000,
     )
     hr = binascii.hexlify(dk).decode("utf-8")
     return hashed_value == hr

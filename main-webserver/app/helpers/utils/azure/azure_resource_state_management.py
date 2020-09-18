@@ -150,7 +150,10 @@ def sendVMStartCommand(
             # VM is receive connections, remove permanent lock
 
             lockVMAndUpdate(
-                vm_name, "RUNNING_AVAILABLE", False, temporary_lock=2,
+                vm_name,
+                "RUNNING_AVAILABLE",
+                False,
+                temporary_lock=2,
             )
         return 1
     except Exception as e:
@@ -172,7 +175,11 @@ def sendVMStartCommand(
 
 
 def fractalVMStart(
-    vm_name, needs_restart=False, needs_winlogon=True, resource_group=VM_GROUP, s=None,
+    vm_name,
+    needs_restart=False,
+    needs_winlogon=True,
+    resource_group=VM_GROUP,
+    s=None,
 ):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary
     (big brain thoughts from Ming)
@@ -239,7 +246,10 @@ def fractalVMStart(
 
         if "running" in vm_state.statuses[1].code:
             lockVMAndUpdate(
-                vm_name, "RUNNING_AVAILABLE", False, temporary_lock=None,
+                vm_name,
+                "RUNNING_AVAILABLE",
+                False,
+                temporary_lock=None,
             )
             started = True
             return 1
@@ -266,7 +276,10 @@ def fractalVMStart(
 
             if "running" in vm_state.statuses[1].code:
                 lockVMAndUpdate(
-                    vm_name, "RUNNING_AVAILABLE", False, temporary_lock=None,
+                    vm_name,
+                    "RUNNING_AVAILABLE",
+                    False,
+                    temporary_lock=None,
                 )
                 started = True
                 return 1

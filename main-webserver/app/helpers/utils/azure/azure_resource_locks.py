@@ -37,7 +37,9 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock, resource_group=VM_GROU
         function="lockVMAndUpdate",
         label=getVMUser(vm_name, resource_group),
         logs="State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
-            state=state, lock=str(lock), temporary_lock=str(temporary_lock),
+            state=state,
+            lock=str(lock),
+            temporary_lock=str(temporary_lock),
         ),
     )
 

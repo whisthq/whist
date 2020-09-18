@@ -97,7 +97,8 @@ def createVM(
     async_vm_creation.wait()
 
     self.update_state(
-        state="PENDING", meta={"msg": "VM {} created successfully".format(vm_name)},
+        state="PENDING",
+        meta={"msg": "VM {} created successfully".format(vm_name)},
     )
 
     time.sleep(30)
@@ -229,7 +230,9 @@ def createVM(
 
     else:
         fractalLog(
-            function="createVM", label=str(vm_name), logs="SQL insertion unsuccessful",
+            function="createVM",
+            label=str(vm_name),
+            logs="SQL insertion unsuccessful",
         )
 
         self.update_state(
