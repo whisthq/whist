@@ -107,6 +107,7 @@ RUN useradd --create-home fractal \
 
 #HERE
 
+SHELL ["/bin/bash", "-c"]
 
 
 
