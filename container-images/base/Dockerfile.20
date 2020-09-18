@@ -112,7 +112,7 @@ RUN useradd --create-home fractal \
 
 
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
-    lsb \
+    lsb-core \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
