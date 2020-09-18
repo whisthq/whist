@@ -13,7 +13,6 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 RUN apt-get update && apt-get install --no-install-recommends -y \
     systemd=237-3ubuntu10.42 \
     systemd-sysv=237-3ubuntu10.42 \
-    && apt-get upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -52,7 +51,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     python3.7=3.7.5-2~18.04 \
     sudo=1.8.21p2-3ubuntu1.2 \
     vim=2:8.0.1453-1ubuntu1.3 \
-    && apt-get upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -72,7 +70,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libxcomposite1=1:0.4.4-2 \
     libxcursor1=1:1.1.15-1 \
     libxi6=2:1.7.9-1 \
-    && apt-get upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -81,9 +78,18 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && sed -i '3 s/^/# /' /etc/apt/sources.list \
     && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable=85.0.4183.102-1 \
-    && apt-get upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+
+
+
+
+# HERE
+RUN apt-get upgrade
+
+
+
 
 # Install time while avoiding interactive installation for tzdata, uses UTC
 ENV LOCAL="yes"
