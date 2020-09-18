@@ -126,6 +126,11 @@ thead tr th {
     font-weight: bold;
 }
 
+.bottomThree {
+    font-size: 16px;
+    font-weight: bold;
+}
+
 .rankingColumn {
     padding-left: 50px !important;
     font-size: 25px;
@@ -155,7 +160,8 @@ thead tr th {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    padding: 40px;
+    padding: 20px;
+    margin: 0px;
     margin-bottom: 30px;
     border-radius: 5px;
     border: none;

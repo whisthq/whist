@@ -1,10 +1,8 @@
-import React, { useContext } from "react"
+import React from "react"
 
-import ScreenContext from "shared/context/screenContext"
 import CountdownTimer from "pages/landing/components/countdown"
 
 function Header(props: any) {
-    const { width } = useContext(ScreenContext)
     return (
         <div
             style={{

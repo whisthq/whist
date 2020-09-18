@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react"
 import { connect } from "react-redux"
-import { Table } from "react-bootstrap"
+import { Table, Row, Col } from "react-bootstrap"
 
 import Countdown from "pages/landing/components/countdown"
 import ScreenContext from "shared/context/screenContext"
@@ -12,7 +12,6 @@ const Leaderboard = (props: {
     user: { email: any; ranking: number }
 }) => {
     const { width } = useContext(ScreenContext)
-
     const [topSix, setTopSix]: any[] = useState([])
 
     useEffect(() => {
@@ -35,30 +34,96 @@ const Leaderboard = (props: {
                         </div>
                     </td>
                     <td className="nameColumn">
-                        <div style={{ position: "relative", top: 7 }}>
+                        <div
+                            style={{
+                                position: "relative",
+                                top: idx <= 3 ? 7 : 0,
+                            }}
+                        >
                             {name}
                         </div>
                     </td>
                     <td>
-                        <div style={{ position: "relative", top: 7 }}>
+                        <div
+                            style={{
+                                position: "relative",
+                                top: idx <= 3 ? 7 : 0,
+                            }}
+                        >
                             {referrals}
                         </div>
                     </td>
                     <td className="pointsColumn">
-                        <div style={{ position: "relative", top: 7 }}>
+                        <div
+                            style={{
+                                position: "relative",
+                                top: idx <= 3 ? 7 : 0,
+                            }}
+                        >
                             {points}
                         </div>
                     </td>
                 </tr>
             )
         } else {
+            const barWidth =
+                Math.round(
+                    Math.max((points * 100) / props.waitlist[0].points, 5)
+                ) + "%"
+
             return (
-                <div style={{ display: "flex", color: "white" }}>
-                    <div>{idx}</div>
-                    <div>
-                        <div>{name}</div>
-                        <div>{points}</div>
-                    </div>
+                <div
+                    style={{
+                        color: "white",
+                        background: userRow ? "#5b47d4" : "rgba(91,71,212,0.4)",
+                        borderRadius: 5,
+                        padding: "20px 25px",
+                        marginBottom: 15,
+                    }}
+                >
+                    <Row style={{ width: "100%" }}>
+                        <Col xs={2}>
+                            <div
+                                style={{
+                                    fontSize: idx <= 3 ? 25 : 16,
+                                    fontWeight: "bold",
+                                    color: "white",
+                                }}
+                            >
+                                {idx}
+                            </div>
+                        </Col>
+                        <Col
+                            xs={6}
+                            style={{ fontWeight: userRow ? "bold" : "normal" }}
+                        >
+                            {name}
+                        </Col>
+                        <Col xs={4} style={{ paddingRight: 0 }}>
+                            <div
+                                style={{
+                                    fontSize: 16,
+                                    textAlign: "right",
+                                }}
+                            >
+                                <strong>{points}</strong> pts
+                            </div>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col xs={2}></Col>
+                        <Col xs={10} style={{ paddingLeft: 10 }}>
+                            <div
+                                style={{
+                                    height: 4,
+                                    borderRadius: 2,
+                                    width: barWidth,
+                                    background:
+                                        "linear-gradient(90.15deg, #93F1D9 0%, #6AEEF0 100%)",
+                                }}
+                            ></div>
+                        </Col>
+                    </Row>
                 </div>
             )
         }
@@ -170,13 +235,13 @@ const Leaderboard = (props: {
             </div>
             <div
                 style={{
-                    overflowY: "scroll",
-                    maxHeight: 550,
+                    overflowY: width > 720 ? "scroll" : "auto",
+                    maxHeight: width > 720 ? 550 : "none",
                     width: "100%",
                     borderRadius: 5,
                     boxShadow: "0px 4px 30px rgba(0, 0, 0, 0.1)",
                     zIndex: 2,
-                    paddingTop: 20,
+                    paddingTop: width > 720 ? 0 : 20,
                 }}
             >
                 {width > 720 ? (
@@ -192,7 +257,9 @@ const Leaderboard = (props: {
                         <tbody>{getRows()}</tbody>
                     </Table>
                 ) : (
-                    <div style={{ marginBottom: 30 }}>{getRows()}</div>
+                    <div style={{ marginBottom: 30, marginTop: 20 }}>
+                        {getRows()}
+                    </div>
                 )}
             </div>
         </div>

@@ -22,7 +22,7 @@ function LeaderboardView(props: any) {
                 marginBottom: 50,
                 background: "#0f1726",
                 paddingTop: 75,
-                paddingBottom: 175,
+                paddingBottom: width > 720 ? 175 : 50,
                 position: "relative",
             }}
         >
@@ -60,7 +60,14 @@ function LeaderboardView(props: any) {
                     maxHeight: 150,
                 }}
             />
-            <div style={{ zIndex: 2, width: "100%" }}>
+            <div
+                style={{
+                    zIndex: 2,
+                    width: "100%",
+                    paddingLeft: 15,
+                    paddingRight: 15,
+                }}
+            >
                 <Row>
                     <Col
                         md={8}
@@ -71,7 +78,13 @@ function LeaderboardView(props: any) {
                     >
                         <Leaderboard />
                     </Col>
-                    <Col md={4}>
+                    <Col
+                        md={4}
+                        style={{
+                            paddingRight: width > 720 ? 40 : 0,
+                            paddingLeft: 0,
+                        }}
+                    >
                         <Actions />
                     </Col>
                 </Row>

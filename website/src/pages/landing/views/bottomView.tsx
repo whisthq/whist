@@ -16,7 +16,7 @@ function BottomView(props: any) {
             <div
                 style={{
                     borderRadius: 5,
-                    padding: "60px 100px",
+                    padding: "60px 30px",
                     background: "rgba(91,71,212,0.08)",
                 }}
             >

@@ -97,6 +97,7 @@ function WaitlistForm(props: any) {
                     maxWidth: "100%",
                     margin: "auto",
                     marginTop: 20,
+                    marginBottom: 0,
                     display: width > 720 ? "flex" : "block",
                     justifyContent: "space-between",
                     zIndex: 100,

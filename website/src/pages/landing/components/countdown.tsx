@@ -35,7 +35,6 @@ function CountdownTimer(props: any) {
         minutes: number,
         seconds: number
     ): any => {
-        var screen_width = width ? width : 0
         return (
             <div
                 style={{

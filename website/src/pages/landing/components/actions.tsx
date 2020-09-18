@@ -1,17 +1,21 @@
-import React, { useState } from "react"
+import React, { useState, useContext } from "react"
 import { connect } from "react-redux"
 import { Button, Modal } from "react-bootstrap"
 import { CopyToClipboard } from "react-copy-to-clipboard"
 
 import GoogleButton from "pages/auth/googleButton"
 
+import ScreenContext from "shared/context/screenContext"
+
 const ReferAction = (props: { onClick: any }) => {
+    const { width } = useContext(ScreenContext)
+
     return (
         <Button className="action" onClick={props.onClick}>
             <div
                 style={{
                     color: "white",
-                    fontSize: "23px",
+                    fontSize: width > 720 ? 22 : 16,
                 }}
             >
                 Refer a Friend

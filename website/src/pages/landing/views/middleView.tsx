@@ -4,7 +4,7 @@ import { Row, Col, Button } from "react-bootstrap"
 import ScreenContext from "shared/context/screenContext"
 
 import Testimonial from "pages/landing/components/testimonial"
-import Wireframe from "assets/largeGraphics/wireframe.svg"
+import Wireframe from "assets/gifs/blenderDemo.gif"
 
 import "styles/landing.css"
 
@@ -21,8 +21,12 @@ function MiddleView(props: any) {
         <div style={{ position: "relative" }}>
             <div style={{ position: "relative", background: "white" }}>
                 <Row style={{ paddingTop: 50, paddingRight: 50 }}>
-                    <Col md={7}>
-                        <img src={Wireframe} alt="" style={{ width: "100%" }} />
+                    <Col md={7} xs={12}>
+                        <img
+                            src={Wireframe}
+                            alt=""
+                            style={{ width: width > 720 ? "95%" : "100%" }}
+                        />
                     </Col>
                     <Col md={5} style={{ paddingLeft: 45 }}>
                         <h2
@@ -37,8 +41,9 @@ function MiddleView(props: any) {
                         <p style={{ marginTop: 40 }}>
                             Fractal is like Google Stadia for creative and
                             productivity apps. With Fractal, you can use VSCode
-                            on an iPad or 3D animation software on a Chromebook
-                            while consuming 10x less RAM and processing power.
+                            on an iPad or 3D animation software on a Chromebook,
+                            all while consuming 10x less RAM and processing
+                            power.
                         </p>
                         <Button className="access-button" onClick={scrollToTop}>
                             REQUEST ACCESS
@@ -46,9 +51,14 @@ function MiddleView(props: any) {
                     </Col>
                 </Row>
             </div>
-            <div style={{ padding: 30, marginTop: width > 720 ? 100 : 40 }}>
+            <div
+                style={{
+                    padding: 30,
+                    marginTop: width > 720 ? 100 : 40,
+                }}
+            >
                 <Row>
-                    <Col md={6} style={{ paddingLeft: width > 720 ? 0 : 15 }}>
+                    <Col md={6} style={{ paddingLeft: 15 }}>
                         <div
                             style={{
                                 padding: "50px 35px",
@@ -98,7 +108,7 @@ function MiddleView(props: any) {
                             </div>
                         </div>
                         <Testimonial
-                            text="F*CKING AMAZING ... tried Minecraft VR - it was buttery smooth with almost no detectable latency. Never thought it would work this well."
+                            text="F*ING AMAZING ... tried Minecraft VR - it was buttery smooth with almost no detectable latency. Never thought it would work this well."
                             title="Sean S."
                             subtitle="Designer + VR user"
                         />
