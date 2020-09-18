@@ -43,7 +43,7 @@ RUN apt-get update && apt-get clean && apt-get install --no-install-recommends -
     libxcb-dri3-0=1.13-1 \
     wget=1.19.4-1ubuntu2.2 \
     python=2.7.15~rc1-1 \
-    python3.7=3.7.3-2~18.04.1 \
+    python3.7=3.7.5-2~18.04 \
     sudo=1.8.21p2-3ubuntu1.2 \
     vim=2:8.0.1453-1ubuntu1.3 \
     apt-utils=1.6.12ubuntu0.1 \
