@@ -9,9 +9,8 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
-# Install systemd and apt-utils
+# Install systemd
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    apt-utils=1.6.12ubuntu0.1 \
     systemd=237-3ubuntu10.42 \
     systemd-sysv=237-3ubuntu10.42 \
     && apt-get upgrade \
@@ -38,6 +37,7 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
 
 # Install basic dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    apt-utils=1.6.12ubuntu0.1 \
     x11vnc=0.9.13-3 \
     xvfb=2:1.19.6-1ubuntu4.6 \
     fluxbox=1.3.5-2build1 \
