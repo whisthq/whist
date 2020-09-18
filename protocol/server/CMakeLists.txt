@@ -9,13 +9,6 @@ add_executable(FractalServer
         network.c
         )
 
-# copy the sentry shared library to the build folder after the build
-add_custom_command(
-        TARGET FractalServer POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/sentry-native/${CMAKE_SHARED_LIBRARY_PREFIX}sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
-        ${CMAKE_SOURCE_DIR}/server/build${arch})
-
 set_target_properties(FractalServer PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/server/build${arch}
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/server/build${arch})
