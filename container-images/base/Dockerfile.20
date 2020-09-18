@@ -110,6 +110,8 @@ RUN useradd --create-home fractal \
 #ufw
 #keyboard-configuration
 
+RUN sudo dpkg --configure -a
+
 
 
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
