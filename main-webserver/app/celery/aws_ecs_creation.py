@@ -209,7 +209,7 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
         self.update_state(
             state="FAILURE",
             meta={
-                "msg": "Error inserting VM {cli} and disk into SQL".format(
+                "msg": "Error inserting Container {cli} into SQL".format(
                     cli=ecs_client.tasks[0]
                 )
             },
