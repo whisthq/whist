@@ -12,7 +12,13 @@ function Header(props: any) {
                 padding: 30,
             }}
         >
-            <div className="logo" style={{ marginBottom: 20 }}>
+            <div
+                className="logo"
+                style={{
+                    marginBottom: 20,
+                    color: props.color ? props.color : "white",
+                }}
+            >
                 Fractal
             </div>
             <div>

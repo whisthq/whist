@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useContext } from "react"
 import { Row, Col, Button, FormControl } from "react-bootstrap"
 import { connect } from "react-redux"
 import { Link } from "react-router-dom"
@@ -10,8 +10,12 @@ import "styles/application.css"
 
 import PaintingSky from "assets/largeGraphics/paintingSky.svg"
 
+import ScreenContext from "shared/context/screenContext"
+import Header from "shared/components/header"
+
 function Application(props: any) {
     const { user } = props
+    const { width } = useContext(ScreenContext)
 
     const [form, setForm] = useState("")
 
@@ -31,30 +35,34 @@ function Application(props: any) {
 
     return (
         <div>
+            <Header color="#111111" />
             <Row style={{ width: "100%", margin: 0, maxWidth: "none" }}>
                 <Col md={7}>
                     <div
                         style={{
-                            padding: 50,
-                            paddingTop: 100,
+                            padding: 15,
+                            paddingTop: width > 720 ? 100 : 25,
                         }}
                     >
                         <h2>
-                            Congrats, Ming! You're <br />
+                            Congrats, {user.name}! You're <br />
                             <span
                                 style={{
                                     color: "#00d4ff",
-                                    fontSize: "calc(140px + 2.2vw)",
+                                    fontSize:
+                                        width > 720
+                                            ? "calc(140px + 2.2vw)"
+                                            : 50,
                                 }}
                             >
-                                No. 1,902
+                                No. {user.ranking}
                             </span>{" "}
                             <br />
                             on the waitlist.
                         </h2>
                         <p style={{ marginTop: 50 }}>
-                            You’re registered as ming@fractalcomputers.com. When
-                            the countdown reaches zero, we'll invite people to
+                            You’re registered as {user.email}. When the
+                            countdown reaches zero, we'll invite people to
                             receive 1:1 onboarding. You can signficantly
                             increase your chances of being selected by{" "}
                             <strong>
@@ -82,9 +90,18 @@ function Application(props: any) {
                                 }}
                             />
                         </div>
-                        <div style={{ display: "flex", marginTop: 25 }}>
+                        <div
+                            style={{
+                                display: width > 720 ? "flex" : "block",
+                                marginTop: 25,
+                                maxWidth: "100%",
+                            }}
+                        >
                             <Button
-                                style={{ marginRight: 25 }}
+                                style={{
+                                    marginRight: width > 720 ? 25 : 0,
+                                    marginBottom: 10,
+                                }}
                                 className="application-button"
                                 onClick={submitForm}
                             >
@@ -101,16 +118,22 @@ function Application(props: any) {
                         </div>
                     </div>
                 </Col>
-                <Col
-                    md={5}
-                    style={{ textAlign: "right", margin: 0, padding: 0 }}
-                >
-                    <img
-                        src={PaintingSky}
-                        alt=""
-                        style={{ width: "100%", maxWidth: 900 }}
-                    />
-                </Col>
+                {width > 720 && (
+                    <Col
+                        md={5}
+                        style={{
+                            textAlign: "right",
+                            margin: 0,
+                            padding: 0,
+                        }}
+                    >
+                        <img
+                            src={PaintingSky}
+                            alt=""
+                            style={{ width: "100%", maxWidth: 900 }}
+                        />
+                    </Col>
+                )}
             </Row>
         </div>
     )
