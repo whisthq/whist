@@ -12,10 +12,6 @@ class Typeform extends Component {
         this.state = { feedback: "", step: 1 };
     }
 
-    componentDidMount() {
-        this.setState({ step: 1 });
-    }
-
     componentDidUpdate(prevProps) {
         if (this.props.resetFeedback) {
             this.setState({ feedback: "" });
@@ -80,21 +76,22 @@ class Typeform extends Component {
     };
 
     NextStep = (evt) => {
-        console.log(evt.key);
-        if (evt.key === "A") {
+        if (evt.key.toUpperCase() === "A") {
             this.setState({ step: 2.1 });
-        } else if (evt.key === "B") {
+        } else if (evt.key.toUpperCase() === "B") {
             this.setState({ step: 2.2 });
-        } else if (evt.eky === "C") {
+        } else if (evt.eky.toUpperCase() === "C") {
             this.props.dispatch(askFeedback(false));
         }
     };
 
     render() {
-        if (this.state.step === 1 && this.props.askFeedback) {
+        // if (this.state.step === 1 && this.props.askFeedback) {
+        if (this.state.step === 1) {
             return (
                 <div
-                    onKeyDown={this.NextStep}
+                    tabIndex="0"
+                    onKeyDown={(evt) => this.NextStep(evt)}
                     style={{
                         position: "absolute",
                         top: 0,
