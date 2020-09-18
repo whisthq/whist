@@ -108,7 +108,7 @@ int parseArgs(int argc, char *argv[]) {
     bool ip_set = false;
     char *endptr;
 
-    for(unsigned int i = 0; i < USHRT_MAX; i++) {
+    for (unsigned int i = 0; i < USHRT_MAX; i++) {
         port_mappings[i] = i;
     }
 
@@ -173,10 +173,11 @@ int parseArgs(int argc, char *argv[]) {
                 char c = ',';
                 unsigned short origin_port;
                 unsigned short destination_port;
-                const char* str = optarg;
-                while(c == ',') {
+                const char *str = optarg;
+                while (c == ',') {
                     int bytes_read;
-                    int args_read = sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c, &bytes_read);
+                    int args_read = sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c,
+                                           &bytes_read);
                     // If we read port arguments, then map them
                     if (args_read >= 2) {
                         port_mappings[origin_port] = destination_port;
@@ -188,8 +189,7 @@ int parseArgs(int argc, char *argv[]) {
                     // Progress the string forwards
                     str += bytes_read;
                 }
-                }
-                break;
+            } break;
             case 'x':
                 running_ci = 1;
                 break;
