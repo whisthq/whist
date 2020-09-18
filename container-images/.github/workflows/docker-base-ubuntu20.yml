@@ -27,7 +27,7 @@ jobs:
           path: base/setup-scripts     
 
       - name: test
-        run: apt-get install lsb-release --no-install-recommend -y
+        run: apt-get install lsb-release --no-install-recommends -y
 
       - name: Build the Ubuntu 20.04 Base Image
         run: cd base && docker build . --file Dockerfile.20 --tag my-image-name:$(date +%s)
