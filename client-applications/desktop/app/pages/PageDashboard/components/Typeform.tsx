@@ -80,7 +80,7 @@ class Typeform extends Component {
             this.setState({ step: 2.1 });
         } else if (evt.key.toUpperCase() === "B") {
             this.setState({ step: 2.2 });
-        } else if (evt.eky.toUpperCase() === "C") {
+        } else if (evt.key.toUpperCase() === "C") {
             this.props.dispatch(askFeedback(false));
         }
     };
