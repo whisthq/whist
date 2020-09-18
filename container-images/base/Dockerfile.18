@@ -96,10 +96,10 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
 # Install time while avoiding interactive installation for tzdata, uses UTC
 ENV LOCAL="yes"
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    liblocale-gettext-perl=1.07-3build2 \
+    iptables=1.6.1-2ubuntu2 \
     tzdata=2020a-0ubuntu0.18.04 \
-    liblocale-gettext-perl= \
     keyboard-configuration=1.178ubuntu2.9 \
-    iptables= \
     ufw=0.36-0ubuntu0.18.04.1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
