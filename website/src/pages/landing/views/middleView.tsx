@@ -31,7 +31,7 @@ function MiddleView(props: any) {
                         md={7}
                         xs={12}
                         style={{
-                            paddingRight: 50,
+                            paddingRight: width > 720 ? 50 : 0,
                         }}
                     >
                         <img
@@ -39,12 +39,12 @@ function MiddleView(props: any) {
                             alt=""
                             style={{
                                 width: "100%",
-                                borderRadius: 10,
+                                borderRadius: 5,
                                 boxShadow: "0px 4px 30px rgba(0, 0, 0, 0.15)",
                             }}
                         />
                     </Col>
-                    <Col md={5} style={{ paddingLeft: 45 }}>
+                    <Col md={5} style={{ paddingLeft: width > 720 ? 45 : 15 }}>
                         <h2
                             style={{
                                 fontWeight: "bold",
@@ -71,6 +71,7 @@ function MiddleView(props: any) {
                 style={{
                     padding: 30,
                     marginTop: width > 720 ? 100 : 40,
+                    paddingRight: width > 720 ? 45 : 30,
                 }}
             >
                 <Row>

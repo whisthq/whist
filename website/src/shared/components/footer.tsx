@@ -125,6 +125,7 @@ function Footer(props: any) {
                                         href="https://medium.com/@fractal"
                                         className="page-link"
                                         target="_blank"
+                                        rel="noopener noreferrer"
                                     >
                                         Blog
                                     </a>
@@ -136,6 +137,7 @@ function Footer(props: any) {
                                         href="https://discord.gg/eG88g6k"
                                         className="page-link"
                                         target="_blank"
+                                        rel="noopener noreferrer"
                                     >
                                         Discord
                                     </a>

@@ -1,9 +1,13 @@
-import React from "react"
+import React, { useContext } from "react"
 import { Button } from "react-bootstrap"
+
+import ScreenContext from "shared/context/screenContext"
 
 import "styles/landing.css"
 
 function BottomView(props: any) {
+    const { width } = useContext(ScreenContext)
+
     const scrollToTop = () => {
         window.scrollTo({
             top: 0,
@@ -12,7 +16,7 @@ function BottomView(props: any) {
     }
 
     return (
-        <div style={{ padding: 30 }}>
+        <div style={{ padding: 30, paddingRight: width > 720 ? 45 : 30 }}>
             <div
                 style={{
                     borderRadius: 5,
