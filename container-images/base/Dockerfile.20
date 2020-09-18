@@ -36,13 +36,6 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/systemd-update-utmp*
 
 # Install basic dependencies
-
-
-
-
-## HERE
-
-
 RUN apt-get update && apt-get install --no-install-recommends -y \
     x11vnc=0.9.16-3 \
     xvfb=2:1.20.8-2ubuntu2.4 \
@@ -62,6 +55,29 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 
 # Install Google Chrome dependencies explicitly
+
+
+## HERE
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libappindicator3-1=12.10.1+18.04.20180322.1-0ubuntu1 \
+    libatk-bridge2.0-0=2.26.2-1 \
+    libatk1.0-0=2.28.1-1 \
+    libatspi2.0-0=2.28.0-1 \
+    libcups2=2.2.7-1ubuntu2.8 \
+    libgdk-pixbuf2.0-0=2.36.11-2 \
+    libgtk-3-0=3.22.30-1ubuntu1 \
+    libnspr4=2:4.25-1 \
+    libnss3=2:3.49.1-1ubuntu1.5 \
+    libpango-1.0-0=1.44.7-2ubuntu4 \
+    libpangocairo-1.0-0=1.44.7-2ubuntu4 \
+    libxcomposite1=1:0.4.5-1 \
+    libxcursor1=1:1.2.0-2 \
+    libxi6=2:1.7.10-0ubuntu1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
 
 
 
