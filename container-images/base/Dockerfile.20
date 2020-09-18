@@ -12,7 +12,7 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 # Install systemd
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
-    systemd=2245.4-4ubuntu3.2 \
+    systemd=245.4-4ubuntu3.2 \
     systemd-sysv=245.4-4ubuntu3.2 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -40,7 +40,8 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
 
 
 
-# here
+## HERE
+
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
     x11vnc=0.9.16-3 \
@@ -49,13 +50,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     wmctrl=1.07-7build1 \
     gnupg2=2.2.4-1ubuntu1.3 \
     libgbm1=20.0.4-2ubuntu1 \
-    libxcb-dri3-0=1.13-1 \
-    wget=1.19.4-1ubuntu2.2 \
+    libxcb-dri3-0=1.14-2 \
+    wget=1.20.3-1ubuntu1 \
     python=2.7.15~rc1-1 \
-    python3=3.6.5-3 \
-    sudo=1.8.21p2-3ubuntu1.2 \
-    vim=2:8.0.1453-1ubuntu1.3 \
-    apt-utils=1.6.12ubuntu0.1 \
+    python3=3.8.2-0ubuntu2 \
+    sudo=1.8.31-1ubuntu1 \
+    vim=2:8.1.2269-1ubuntu5 \
+    apt-utils=2.0.2ubuntu0.1 \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable=85.0.4183.102-1 \
@@ -65,10 +66,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Avoids interactive installation for tzdata
 # Uses UTC
 ENV LOCAL="yes"
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     tzdata=2020a-0ubuntu0.18.04 \
     keyboard-configuration=1.178ubuntu2 \
-    ufw=0.35-5 \
+    ufw=0.36-6 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

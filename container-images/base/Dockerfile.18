@@ -97,8 +97,8 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
 ENV LOCAL="yes"
 RUN apt-get update && apt-get install --no-install-recommends -y \
     tzdata=2020a-0ubuntu0.18.04 \
-    keyboard-configuration=1.178ubuntu2 \
-    ufw=0.35-5 \
+    keyboard-configuration=1.178ubuntu2.9 \
+    ufw=0.36-0ubuntu0.18.04.1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
