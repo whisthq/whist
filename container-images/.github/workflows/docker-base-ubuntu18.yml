@@ -27,6 +27,6 @@ jobs:
           path: base/setup-scripts     
 
       - name: Build the Ubuntu 18.04 Base Image
-        run: cd base && docker build . --file Dockerfile.18 --tag my-image-name:$(date +%s)
+        run: cd base && docker build . --file Dockerfile.18 --tag base-ubuntu18.04:$(date +%s)
 
       # TODO: Actually write tests for the base image and application images, integrated with protocol for streaming  
