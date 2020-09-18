@@ -70,7 +70,7 @@ void OpenWindow() {
 }
 
 // Log into the desktop, and block until the login process finishes
-bool InitDesktop() {
+bool InitDesktop(input_device_t* input_device) {
     DesktopContext lock_screen;
 
     OpenWindow();
@@ -90,7 +90,7 @@ bool InitDesktop() {
 
         enum FractalKeycode keycodes[] = {FK_SPACE, FK_BACKSPACE, FK_BACKSPACE};
 
-        EnterWinString(keycodes, 3);
+        InputKeycodes(input_device, keycodes, 3);
 
         Sleep(500);
 
@@ -98,7 +98,7 @@ bool InitDesktop() {
                                            FK_R, FK_D, FK_1, FK_2,      FK_3,     FK_4,
                                            FK_5, FK_6, FK_7, FK_PERIOD, FK_ENTER, FK_ENTER};
 
-        EnterWinString(keycodes2, 18);
+        InputKeycodes(input_device, keycodes2, 18);
 
         Sleep(1000);
 

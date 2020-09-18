@@ -942,8 +942,13 @@ int main() {
     }
 #endif
 
+    input_device = CreateInputDevice();
+    if (!input_device) {
+        LOG_WARNING("Failed to create input device for playback.");
+    }
+
 #ifdef _WIN32
-    if (!InitDesktop()) {
+    if (!InitDesktop(input_device)) {
         LOG_WARNING("Could not winlogon!\n");
         destroyLogger();
         return 0;
@@ -978,11 +983,6 @@ int main() {
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", NULL);
         SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", NULL);
         LOG_INFO("Sending video and audio...");
-
-        input_device = CreateInputDevice();
-        if (!input_device) {
-            LOG_WARNING("Failed to create input device for playback.");
-        }
 
         clock totaltime;
         StartTimer(&totaltime);

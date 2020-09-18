@@ -52,26 +52,27 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"height", required_argument, NULL, 'h'},
                                      {"bitrate", required_argument, NULL, 'b'},
                                      {"codec", required_argument, NULL, 'c'},
-                                     {"private-key", optional_argument, NULL, 'k'},
-                                     {"user", optional_argument, NULL, 'u'},
-                                     {"environment", optional_argument, NULL, 'e'},
-                                     {"connection-method", optional_argument, NULL, 'z'},
-                                     {"ports", optional_argument, NULL, 'p'},
-                                     {"use_ci", optional_argument, NULL, 'x'},
-                                     {"name", optional_argument, NULL, 'n'},
+                                     {"private-key", required_argument, NULL, 'k'},
+                                     {"user", required_argument, NULL, 'u'},
+                                     {"environment", required_argument, NULL, 'e'},
+                                     {"connection-method", required_argument, NULL, 'z'},
+                                     {"ports", required_argument, NULL, 'p'},
+                                     {"use_ci", no_argument, NULL, 'x'},
+                                     {"name", required_argument, NULL, 'n'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
 
-#define OPTION_STRING "w:h:b:sc:kp::z::u::e::n::"
+#define OPTION_STRING "w:h:b:c:p:ku:e:z:n:"
 
 int parseArgs(int argc, char *argv[]) {
-    char *usage =
+    // todo: replace `desktop` with argv[0]
+    const char *usage =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "Try 'desktop --help' for more information.\n";
-    char *usage_details =
+    const char *usage_details =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
@@ -86,14 +87,14 @@ int parseArgs(int argc, char *argv[]) {
         "                                  specified: h264 (default) or h265\n"
         "  -k, --private-key=PK          pass in the RSA Private Key as a "
         "                                  hexadecimal string\n"
-        "  -u, --user                     Tell fractal the users email. Optional defaults to None"
-        "  -e, --environment              The environment the protocol is running \n"
+        "  -u, --user=EMAIL              Tell fractal the users email. Optional defaults to None"
+        "  -e, --environment=ENV         The environment the protocol is running \n"
         "                                 in. e.g master, staging, dev. Optional defaults to dev"
-        "  -p, --ports                   Pass in custom port:port mappings, comma-separated\n"
+        "  -p, --ports=PORTS             Pass in custom port:port mappings, comma-separated\n"
         "  -x, --use_ci                  launch the protocol in CI mode\n"
-        "  -z, --connection_method       which connection method to try first,\n"
+        "  -z, --connection_method=CM    which connection method to try first,\n"
         "                                  either STUN or DIRECT\n"
-        "  -n, --name=NAME       		 Name of the interface\n"
+        "  -n, --name=NAME       		     Set the window title (default: Fractal)\n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
@@ -114,7 +115,7 @@ int parseArgs(int argc, char *argv[]) {
 
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
-        if (opt != -1 && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
+        if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
             printf("Option passed into %c is too long! Length of %zd when max is %d", opt,
                    strlen(optarg), FRACTAL_ENVIRONMENT_MAXLEN);
             return -1;
@@ -163,6 +164,10 @@ int parseArgs(int argc, char *argv[]) {
                     return -1;
                 }
                 break;
+            case 'k':
+                running_ci = 1;
+                break;
+
             case 'u':
                 strcpy(user_email, optarg);
                 break;
@@ -214,6 +219,13 @@ int parseArgs(int argc, char *argv[]) {
             case FRACTAL_GETOPT_VERSION_CHAR:
                 printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
                 return 1;
+            default:
+                if (opt != -1) {
+                    // illegal option
+                    printf("%s", usage);
+                    return -1;
+                }
+                break;
         }
         if (opt == -1) {
             if (optind < argc && !ip_set) {
