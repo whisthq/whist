@@ -2,6 +2,8 @@ from app import *
 from app.helpers.utils.azure.azure_general import *
 from app.helpers.utils.azure.azure_helpers.azure_resource_modification_helpers import *
 
+from app.models.hardware import *
+
 
 def attachDiskToVM(disk_name, vm_name, resource_group=VM_GROUP):
     """Creates a network id
@@ -44,16 +46,17 @@ def attachDiskToVM(disk_name, vm_name, resource_group=VM_GROUP):
             ),
         )
 
-        output = fractalSQLSelect(table_name="disks", params={"disk_name": disk_name})
+        disk = OSDisk.query.get(disk_name)
 
         username = None
-        if output["success"] and output["rows"]:
-            username = output["rows"][0]["username"]
+        if disk:
+            username = disk.user_id
 
-        fractalSQLUpdate(
-            table_name=resourceGroupToTable(resource_group),
-            conditional_params={"vm_name": vm_name},
-            new_params={"disk_name": disk_name, "username": str(username)},
+        vm = UserVM.query.filter_by(vm_id=vm_name)
+        fractalSQLCommit(
+            db,
+            lambda _, x: x.update({"disk_name": disk_name, "user_id": str(username)}),
+            vm,
         )
 
         return 1

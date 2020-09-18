@@ -1,5 +1,7 @@
 from app import *
 
+from app.models.logs import *
+
 
 @celery_instance.task(bind=True)
 def deleteLogsFromS3(sender, connection_id):
@@ -43,18 +45,16 @@ def deleteLogsFromS3(sender, connection_id):
                 level=logging.ERROR,
             )
 
-    output = fractalSQLSelect(
-        table_name="logs", params={"connection_id": connection_id}
-    )
+    logs = ProtocolLog.query.filter_by(connection_id=connection_id).first()
 
-    if output["success"] and output["rows"]:
-        logs = output["rows"][0]
-        if logs["server_logs"]:
-            S3Delete(logs_found["server_logs"])
+    if logs:
+        if logs.server_logs:
+            S3Delete(logs.server_logs)
 
-        if logs_found["client_logs"]:
-            S3Delete(logs_found["client_logs"])
+        if logs.client_logs:
+            S3Delete(logs.client_logs)
 
-        fractalSQLDelete(table_name="logs", params={"connection_id": connection_id})
+        db.session.delete(logs)
+        db.session.commit()
 
     return {"status": SUCCESS}

@@ -22,11 +22,8 @@ def devHelper(vm_name, dev):
         ),
     )
 
-    output = fractalSQLUpdate(
-        table_name="v_ms",
-        conditional_params={"vm_name": vm_name},
-        new_params={"dev": dev},
-    )
+    vm = UserVM.query.filter_by(vm_id=vm_name)
+    fractalSQLCommit(db, lambda _, x: x.update({"has_dedicated_vm": dev}), vm)
 
     if output["success"]:
         return {"status": SUCCESS}
@@ -46,31 +43,26 @@ def pingHelper(available, vm_ip, version=None):
 
     # Retrieve VM data based on VM IP
 
-    vm_info = None
+    vm_info = UserVM.query.filter_by(ip=vm_ip).first()
     username = None
 
-    output = fractalSQLSelect(table_name="v_ms", params={"ip": vm_ip})
-
-    if output["success"] and output["rows"]:
-        vm_info = output["rows"][0]
-        username = vm_info["username"]
+    if vm_info:
+        username = vm_info.user_id
     else:
         return {"status": BAD_REQUEST}
 
-    fractalSQLUpdate(
-        table_name="v_ms",
-        conditional_params={"vm_name": vm_info["vm_name"]},
-        new_params={"ready_to_connect": dateToUnix(getToday())},
+    fractalLog(function="", label="", logs=str(username))
+
+    disk = OSDisk.query.filter_by(user_id=username).first()
+
+    fractalSQLCommit(
+        db, fractalSQLUpdate, disk, {"last_pinged": dateToUnix(getToday())}
     )
 
     # Update disk version
 
     if version:
-        fractalSQLUpdate(
-            table_name="disks",
-            conditional_params={"disk_name": vm_info["disk_name"]},
-            new_params={"version": version},
-        )
+        fractalSQLCommit(db, fractalSQLUpdate, disk, {"version": version})
 
     # Define states where we don't change the VM state
 
@@ -78,7 +70,7 @@ def pingHelper(available, vm_ip, version=None):
 
     # Detect and handle disconnect event
 
-    if vm_info["state"] == "RUNNING_UNAVAILABLE" and available:
+    if vm_info.state == "RUNNING_UNAVAILABLE" and available:
 
         # Add pending charge if the user is an hourly subscriber
 
@@ -86,14 +78,11 @@ def pingHelper(available, vm_ip, version=None):
 
         # Add logoff event to timetable
 
-        fractalSQLInsert(
-            table_name="login_history",
-            params={
-                "username": username,
-                "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
-                "action": "logoff",
-            },
+        log = LoginHistory(
+            user_id=username, action="logoff", timestamp=dateToUnix(getToday()),
         )
+
+        fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
         fractalLog(
             function="pingHelper",
@@ -105,18 +94,15 @@ def pingHelper(available, vm_ip, version=None):
 
     # Detect and handle logon event
 
-    if vm_info["state"] == "RUNNING_AVAILABLE" and not available:
+    if vm_info.state == "RUNNING_AVAILABLE" and not available:
 
         # Add logon event to timetable
 
-        fractalSQLInsert(
-            table_name="login_history",
-            params={
-                "username": username,
-                "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
-                "action": "logon",
-            },
+        log = LoginHistory(
+            user_id=username, action="logon", timestamp=dateToUnix(getToday()),
         )
+
+        fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
         fractalLog(
             function="pingHelper",
@@ -128,17 +114,17 @@ def pingHelper(available, vm_ip, version=None):
 
     # Change VM states accordingly
 
-    if not vm_info["state"] in intermediate_states and not available:
+    if not vm_info.state in intermediate_states and not available:
         lockVMAndUpdate(
-            vm_name=vm_info["vm_name"],
+            vm_name=vm_info.vm_id,
             state="RUNNING_UNAVAILABLE",
             lock=True,
             temporary_lock=0,
         )
 
-    if not vm_info["state"] in intermediate_states and available:
+    if not vm_info.state in intermediate_states and available:
         lockVMAndUpdate(
-            vm_name=vm_info["vm_name"],
+            vm_name=vm_info.vm_id,
             state="RUNNING_AVAILABLE",
             lock=False,
             temporary_lock=None,

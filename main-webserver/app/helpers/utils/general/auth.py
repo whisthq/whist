@@ -1,5 +1,12 @@
 from app.imports import *
-from app.helpers.utils.general.sql_commands import *
+
+from app.helpers.utils.general.logs import *
+
+from app.models.public import *
+from app.models.hardware import *
+
+from app.serializers.public import *
+from app.serializers.hardware import *
 
 
 def fractalAuth(f):
@@ -16,21 +23,27 @@ def fractalAuth(f):
                     username = body["email"]
                 elif "vm_name" in body.keys():
                     vm_name = body["vm_name"]
-                    output = fractalSQLSelect(
-                        table_name="v_ms", params={"vm_name": vm_name}
-                    )
-                    if output["success"] and output["rows"]:
-                        username = output["rows"][0]["username"]
+
+                    vm = UserVM.query.get(vm_name).first()
+
+                    if vm:
+                        username = vm.user_id
                 elif "disk_name" in body.keys():
                     disk_name = body["disk_name"]
-                    output = fractalSQLSelect(
-                        table_name="disks", params={"disk_name": disk_name}
-                    )
-                    if output["success"] and output["rows"]:
-                        username = output["rows"][0]["username"]
+
+                    disk = OSDisk.query.get(disk_name)
+
+                    if disk:
+                        username = disk.user_id
             elif request.method == "GET":
                 username = request.args.get("username")
         except Exception as e:
+            fractalLog(
+                function="",
+                label="",
+                logs="Bearer error: {error}".format(error=str(e)),
+                level=logging.ERROR,
+            )
             return (
                 jsonify(
                     {"error": "No username provided, cannot authorize Bearer token."}
@@ -66,10 +79,6 @@ def fractalAuth(f):
         return f(*args, **kwargs)
 
     return wrapper
-
-
-from app.imports import *
-from app.helpers.utils.general.sql_commands import *
 
 
 def adminRequired(f):

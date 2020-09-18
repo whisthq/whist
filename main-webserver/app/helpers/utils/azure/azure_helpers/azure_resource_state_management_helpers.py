@@ -95,20 +95,17 @@ def boot_if_necessary(vm_name, needs_restart, resource_group=VM_GROUP, s=None):
 
 
 def checkFirstTime(disk_name):
-    output = fractalSQLSelect("disks", params={"disk_name": disk_name})
+    disk = OSDisk.query.get(disk_name)
 
-    if output["success"] and output["rows"]:
-        return output["rows"][0]["first_time"]
+    if disk:
+        return disk.first_time
 
     return False
 
 
 def changeFirstTime(disk_name, first_time=False):
-    fractalSQLUpdate(
-        table_name="disks",
-        conditional_params={"disk_name": disk_name},
-        new_params={"first_time": first_time},
-    )
+    disk = OSDisk.query.filter_by(disk_id=disk_name)
+    fractalSQLCommit(db, lambda _, x: x.update({"first_time": first_time}), disk)
 
 
 def waitForWinlogon(vm_name, resource_group=VM_GROUP, s=None):
@@ -122,24 +119,10 @@ def waitForWinlogon(vm_name, resource_group=VM_GROUP, s=None):
     """
 
     # Check if a VM has winlogon'ed within the last 10 seconds
-
     def checkWinlogon(vm_name, resource_group):
-        output = fractalSQLSelect(
-            table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-        )
+        vm = UserVM.query.get(vm_name)
 
-        has_winlogoned = False
-        last_winlogon_timestamp = 0
-
-        if output["success"] and output["rows"]:
-            if not output["rows"][0]["ready_to_connect"]:
-                return False
-            else:
-                has_winlogoned = (
-                    dateToUnix(getToday()) - output["rows"][0]["ready_to_connect"] < 8
-                )
-                last_winlogon_timestamp = output["rows"][0]["ready_to_connect"]
-        else:
+        if not vm:
             fractalLog(
                 function="waitForWinlogon",
                 label=getVMUser(vm_name),
@@ -150,6 +133,12 @@ def waitForWinlogon(vm_name, resource_group=VM_GROUP, s=None):
             )
 
             return False
+
+        if not vm.ready_to_connect:
+            return False
+        else:
+            has_winlogoned = dateToUnix(getToday()) - vm.ready_to_connect < 8
+            last_winlogon_timestamp = vm.ready_to_connect
 
         if has_winlogoned:
             fractalLog(
@@ -165,14 +154,12 @@ def waitForWinlogon(vm_name, resource_group=VM_GROUP, s=None):
             num_queries = 0
 
             while num_queries < 5:
-                output = fractalSQLSelect(
-                    table_name=resourceGroupToTable(resource_group),
-                    params={"vm_name": vm_name},
-                )
-                if output["success"] and output["rows"]:
-                    if not output["rows"][0]["ready_to_connect"]:
+                vm = UserVM.query.get(vm_name)
+
+                if vm:
+                    if not vm.ready_to_connect:
                         return False
-                    if output["rows"][0]["ready_to_connect"] > last_winlogon_timestamp:
+                    if vm.ready_to_connect > last_winlogon_timestamp:
                         fractalLog(
                             function="waitForWinlogon",
                             label=getVMUser(vm_name),
@@ -211,14 +198,15 @@ def waitForWinlogon(vm_name, resource_group=VM_GROUP, s=None):
     # Check if a VM is a dev machine
 
     def checkDev(vm_name, resource_group):
-        output = fractalSQLSelect(
-            table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-        )
+        vm = UserVM.query.get(vm_name)
+        if not vm:
+            return False
 
-        if output["success"] and output["rows"]:
-            return output["rows"][0]["dev"]
+        disk = OSDisk.query.get(vm.disk_id)
+        if not disk:
+            return False
 
-        return False
+        return disk.has_dedicated_vm
 
     if s:
         s.update_state(
@@ -314,7 +302,7 @@ def waitForWinlogon(vm_name, resource_group=VM_GROUP, s=None):
     return True
 
 
-def installApplications(vm_name, apps):
+def installApplications(vm_name, apps, os):
     _, compute_client, _ = createClients()
     try:
         for app in apps:
@@ -325,11 +313,16 @@ def installApplications(vm_name, apps):
                     app=app["app_name"], vm_name=vm_name
                 ),
             )
-            install_command = fetchInstallCommand(app["app_name"])
+            command = InstallCommand.query.filter_by(app_name=app.app_id).first()
+            if os == "Windows":
+                install_command = command.windows_install_command
+            else:
+                install_command = command.linux_install_command
 
+            # TODO: for linux, should not be RunPowerShellScript
             run_command_parameters = {
                 "command_id": "RunPowerShellScript",
-                "script": [install_command["command"]],
+                "script": [install_command],
             }
 
             poller = compute_client.virtual_machines.run_command(

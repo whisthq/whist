@@ -3,6 +3,9 @@ from app.helpers.utils.azure.azure_general import *
 from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_locks import *
 
+from app.models.hardware import *
+from app.serializers.hardware import *
+
 
 @celery_instance.task(bind=True)
 def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
@@ -118,9 +121,8 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
         )
         async_vm_delete.wait()
 
-        fractalSQLDelete(
-            table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-        )
+        vm = UserVM.query.get(vm_name)
+        fractalSQLCommit(db, lambda db, x: db.session.delete(x), vm)
 
         fractalLog(
             function="deleteVM",
@@ -220,11 +222,8 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
                 logs="OS disk {disk_name} deleted".format(disk_name=os_disk_name),
             )
 
-            fractalSQLDelete(table_name="disks", params={"disk_name": os_disk_name})
-
-            fractalSQLDelete(
-                table_name="disk_settings", params={"disk_name": os_disk_name}
-            )
+            disk = OSDisk.query.get(os_disk_name)
+            fractalSQLCommit(db, lambda db, x: db.session.delete(x), disk)
 
         except Exception as e:
             fractalLog(
@@ -255,9 +254,7 @@ def deleteDisk(self, disk_name, resource_group=VM_GROUP):
     fractalLog(
         function="deleteDisk",
         label=str(disk_name),
-        logs="Sending Azure command to delete disk {disk_name}".format(
-            disk_name=disk_name
-        ),
+        logs="Starting to delete disk {disk_name}".format(disk_name=disk_name),
     )
 
     try:
@@ -271,23 +268,49 @@ def deleteDisk(self, disk_name, resource_group=VM_GROUP):
             level=logging.ERROR,
         )
 
-        fractalSQLDelete(table_name="disks", params={"disk_name": disk_name})
+        disk = OSDisk.query.get(disk_name)
+        fractalSQLCommit(db, lambda db, x: db.session.delete(x), disk)
 
         return {"status": SUCCESS}
 
     if not vm_name:
+        fractalLog(
+            function="deleteDisk",
+            label=str(disk_name),
+            logs="Sending Azure command to delete disk {disk_name}".format(
+                disk_name=disk_name
+            ),
+        )
+
         async_disk_deletion = compute_client.disks.delete(resource_group, disk_name)
         async_disk_deletion.wait()
-
-        fractalSQLDelete(table_name="disks", params={"disk_name": disk_name})
 
         fractalLog(
             function="deleteDisk",
             label=str(disk_name),
-            logs="Disk {disk_name} successfully deleted. Goodbye {disk_name}!".format(
+            logs="Disk {disk_name} successfully removed from Azure".format(
                 disk_name=disk_name
             ),
         )
+
+        try:
+            disk = OSDisk.query.get(disk_name)
+            fractalSQLCommit(db, lambda db, x: db.session.delete(x), disk)
+
+            fractalLog(
+                function="deleteDisk",
+                label=str(disk_name),
+                logs="Disk {disk_name} successfully deleted. Goodbye {disk_name}!".format(
+                    disk_name=disk_name
+                ),
+            )
+        except Exception as e:
+            fractalLog(
+                function="deleteDisk",
+                label=str(disk_name),
+                logs="Excepting error: {error}".format(error=str(e)),
+                level=logging.ERROR,
+            )
 
     else:
         fractalLog(
@@ -298,11 +321,18 @@ def deleteDisk(self, disk_name, resource_group=VM_GROUP):
             ),
             level=logging.WARNING,
         )
+        try:
+            disk = OSDisk.query.filter_by(disk_id=disk_name)
+            fractalSQLCommit(
+                db, lambda _, x: x.update({"state": "TO_BE_DELETED"}), disk
+            )
 
-        fractalSQLUpdate(
-            table_name="disks",
-            conditional_params={"disk_name": disk_name},
-            new_params={"state": "TO_BE_DELETED"},
-        )
+        except Exception as e:
+            fractalLog(
+                function="deleteDisk",
+                label=str(disk_name),
+                logs="Excepting error: {error}".format(error=str(e)),
+                level=logging.ERROR,
+            )
 
     return {"status": SUCCESS}

@@ -3,6 +3,9 @@ from app.helpers.utils.general.analytics import *
 from app.helpers.utils.general.logs import *
 from app.helpers.utils.general.sql_commands import *
 
+from app.models.logs import *
+from app.serializers.logs import *
+
 
 def regionReportHelper(timescale):
     command = text("")
@@ -10,7 +13,7 @@ def regionReportHelper(timescale):
         command = text(
             """
         SELECT timestamp, users_online, eastus_unavailable, northcentralus_unavailable, southcentralus_unavailable
-        FROM status_report
+        FROM logs.monitor_logs
         ORDER BY timestamp DESC
         LIMIT 24
         """
@@ -19,7 +22,7 @@ def regionReportHelper(timescale):
         command = text(
             """
         SELECT date_trunc('day', to_timestamp("timestamp")) as "timestamp", SUM(users_online) as "users_online", SUM(eastus_unavailable) as "eastus_unavailable", SUM(northcentralus_unavailable) as "northcentralus_unavailable", SUM(southcentralus_unavailable) as "southcentralus_unavailable"
-        FROM status_report
+        FROM logs.monitor_logs
         GROUP BY 1
         ORDER BY date_trunc('day', to_timestamp("timestamp")) DESC
         LIMIT 7
@@ -29,7 +32,7 @@ def regionReportHelper(timescale):
         command = text(
             """
         SELECT date_trunc('day', to_timestamp("timestamp")) as "timestamp", SUM(users_online) as "users_online", SUM(eastus_unavailable) as "eastus_unavailable", SUM(northcentralus_unavailable) as "northcentralus_unavailable", SUM(southcentralus_unavailable) as "southcentralus_unavailable"
-        FROM status_report
+        FROM logs.monitor_logs
         GROUP BY 1
         ORDER BY date_trunc('day', to_timestamp("timestamp")) DESC
         LIMIT 30
@@ -49,53 +52,49 @@ def regionReportHelper(timescale):
 
 
 def userReportHelper(username, timescale=None, start_date=None):
+    login_history_schema = LoginHistorySchema()
+
     today = dt.now()
-    command = text(
-        """
-        SELECT *
-        FROM login_history
-        WHERE "username" = :username AND timestamp > :date AND is_user = true
-        ORDER BY timestamp ASC
-        """
-    )
-    params = {}
+
+    date = 0
 
     if timescale:
         if timescale == "day":
             return []
         elif timescale == "week":
             lastWeek = today - datetime.timedelta(days=7)
-            params = {
-                "username": username,
-                "date": lastWeek.strftime("%m-%d-%y"),
-            }
+            date = int(dt.timestamp(lastWeek))
         elif timescale == "month":
             lastMonth = today - datetime.timedelta(days=30)
-            params = {
-                "username": username,
-                "date": lastMonth.strftime("%m-%d-%y"),
-            }
+            date = int(dt.timestamp(lastMonth))
         elif timescale == "beginningMonth":
             beginning_month = dt.strptime(
                 "{year}-{month}-{day}".format(
                     year=today.year, month=today.month, day="1"
                 ),
                 "%Y-%m-%d",
-            ).strftime("%m-%d-%y")
-            params = {
-                "username": username,
-                "date": beginning_month,
-            }
+            )
+
+            date = int(dt.timestamp(beginning_month))
 
     if start_date:
-        params = {
-            "username": username,
-            "date": unixToDate(start_date).strftime("%m-%d-%y"),
-        }
+        date = start_date
 
-    report = fractalRunSQL(command, params)
-    output = []
-    if report["success"] and report["rows"]:
-        output = loginsToMinutes(report["rows"])
+    user = User.query.get(username)
+    if not user:
+        return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
 
-    return output
+    histories = (
+        LoginHistory.query.filter(
+            (LoginHistory.user_id == username) & (LoginHistory.timestamp > date)
+        )
+        .order_by(LoginHistory.timestamp)
+        .all()
+    )
+
+    # import and use serializers
+    histories = [login_history_schema.dump(history) for history in histories]
+
+    output = loginsToMinutes(histories)
+
+    return jsonify(output), SUCCESS

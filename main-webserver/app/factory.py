@@ -17,7 +17,7 @@ def create_app(app_name=PKG_NAME, **kwargs):
         dsn="https://3d228295baab4919a7e4fa8163c72098@o400459.ingest.sentry.io/5394545",
         integrations=[FlaskIntegration(), CeleryIntegration()],
         environment=env,
-        release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT"),
+        release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),
     )
 
     template_dir = os.path.dirname(os.path.realpath(__file__))
@@ -26,10 +26,6 @@ def create_app(app_name=PKG_NAME, **kwargs):
     app = Flask(app_name, template_folder=template_dir)
 
     jwtManager = JWTManager(app)
-
-    log = logging.getLogger("werkzeug")
-    log.disabled = True
-    app.logger.disabled = True
 
     if kwargs.get("celery"):
         init_celery(kwargs.get("celery"), app)

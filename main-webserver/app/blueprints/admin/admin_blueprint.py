@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.general.auth import *
 from app.helpers.blueprint_helpers.admin.admin_post import *
 
 admin_bp = Blueprint("admin_bp", __name__)

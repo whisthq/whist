@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.general.auth import *
 from app.helpers.blueprint_helpers.admin.report_get import *
 from app.helpers.blueprint_helpers.admin.report_post import *
 
@@ -33,7 +34,7 @@ def report_get(action, **kwargs):
         output = fetchVMsHelper()
         return jsonify(output), SUCCESS
     elif action == "fetchCustomers":
-        output = fetchCustomersHelper()
+        output = fetchUsersHelper()
         return jsonify(output), SUCCESS
     elif action == "fetchDisks":
         output = fetchDisksHelper()
@@ -59,10 +60,8 @@ def userReport(**kwargs):
     body = request.get_json()
     output = {}
     if body["timescale"]:
-        output = userReportHelper(body["username"], timescale=body["timescale"])
+        return userReportHelper(body["username"], timescale=body["timescale"])
     elif body["start_date"]:
-        output = userReportHelper(body["username"], start_date=body["start_date"])
+        return userReportHelper(body["username"], start_date=body["start_date"])
     else:
         return jsonify({}), BAD_REQUEST
-
-    return jsonify(output), SUCCESS
