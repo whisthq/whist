@@ -30,8 +30,6 @@ def input_token():
 
 @pytest.fixture
 def admin_token():
-    print(os.environ)
-    sys.stdout.flush()
     resp = requests.post(
         (SERVER_URL + "/admin/login"),
         json=dict(
