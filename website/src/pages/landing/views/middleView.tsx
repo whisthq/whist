@@ -20,12 +20,28 @@ function MiddleView(props: any) {
     return (
         <div style={{ position: "relative" }}>
             <div style={{ position: "relative", background: "white" }}>
-                <Row style={{ paddingTop: 50, paddingRight: 50 }}>
-                    <Col md={7} xs={12}>
+                <Row
+                    style={{
+                        paddingTop: 50,
+                        paddingRight: 50,
+                        paddingLeft: 30,
+                    }}
+                >
+                    <Col
+                        md={7}
+                        xs={12}
+                        style={{
+                            paddingRight: 50,
+                        }}
+                    >
                         <img
                             src={Wireframe}
                             alt=""
-                            style={{ width: width > 720 ? "95%" : "100%" }}
+                            style={{
+                                width: "100%",
+                                borderRadius: 10,
+                                boxShadow: "0px 4px 30px rgba(0, 0, 0, 0.15)",
+                            }}
                         />
                     </Col>
                     <Col md={5} style={{ paddingLeft: 45 }}>

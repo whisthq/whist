@@ -16,6 +16,7 @@ import TopView from "pages/landing/views/topView"
 import MiddleView from "pages/landing/views/middleView"
 import LeaderboardView from "pages/landing/views/leaderboardView"
 import BottomView from "pages/landing/views/bottomView"
+import Footer from "shared/components/footer"
 
 function Landing(props: any) {
     const { dispatch, user } = props
@@ -113,6 +114,7 @@ function Landing(props: any) {
             <MiddleView />
             <LeaderboardView />
             <BottomView />
+            <Footer />
         </div>
     )
 }

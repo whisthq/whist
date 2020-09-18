@@ -25,6 +25,9 @@ import "bootstrap/dist/css/bootstrap.min.css"
 import Landing from "pages/landing/landing"
 import Auth from "pages/auth/auth"
 import Application from "pages/application/application"
+import TermsOfService from "pages/legal/tos"
+import Cookies from "pages/legal/cookies"
+import Privacy from "pages/legal/privacy"
 
 Sentry.init({
     dsn:
@@ -64,6 +67,13 @@ ReactDOM.render(
                             exact
                             path="/application"
                             component={Application}
+                        />
+                        <Route exact path="/cookies" component={Cookies} />
+                        <Route exact path="/privacy" component={Privacy} />
+                        <Route
+                            exact
+                            path="/termsofservice"
+                            component={TermsOfService}
                         />
                     </ScreenProvider>
                 </PersistGate>
