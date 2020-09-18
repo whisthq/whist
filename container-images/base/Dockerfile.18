@@ -11,8 +11,8 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
-    systemd=237-3ubuntu10.38 \
-    systemd-sysv=237-3ubuntu10.38 \
+    systemd=237-3ubuntu10.42 \
+    systemd-sysv=237-3ubuntu10.42 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
