@@ -38,7 +38,7 @@ RUN apt-get update && apt-get clean && apt-get install --no-install-recommends -
     wmctrl=1.07-7build1 \
     ca-certificates=20190110~18.04.1 \
     wget=1.19.4-1ubuntu2.2 \
-    gnupg2=2.2.4-1ubuntu1.2 \
+    gnupg2=2.2.4-1ubuntu1.3 \
     libgbm1=19.2.8-0ubuntu0~18.04.2 \
     libxcb-dri3-0=1.13-1 \
     wget=1.19.4-1ubuntu2.2 \
