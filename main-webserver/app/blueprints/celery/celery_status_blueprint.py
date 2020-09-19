@@ -9,10 +9,7 @@ def celery_status(task_id, **kwargs):
     try:
         result = celery_instance.AsyncResult(task_id)
         if result.status == "SUCCESS":
-            response = {
-                "state": result.status,
-                "output": result.result,
-            }
+            response = {"state": result.status, "output": result.result}
             return make_response(jsonify(response), 200)
         else:
             output = result.info

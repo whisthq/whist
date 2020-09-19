@@ -70,10 +70,7 @@ def azure_disk_post(action, **kwargs):
     elif action == "attach":
         # Find a VM to attach disk to
 
-        disk_name, resource_group = (
-            kwargs["body"]["disk_name"],
-            kwargs["body"]["resource_group"],
-        )
+        disk_name, resource_group = (kwargs["body"]["disk_name"], kwargs["body"]["resource_group"])
 
         if not checkResourceGroup(resource_group):
             return jsonify({"ID": None}), BAD_REQUEST
@@ -85,9 +82,7 @@ def azure_disk_post(action, **kwargs):
             vm_name = kwargs["body"]["vm_name"]
             if vm_name:
                 attach_to_specific_vm = True
-                task = swapSpecificDisk.apply_async(
-                    [vm_name, disk_name, resource_group]
-                )
+                task = swapSpecificDisk.apply_async([vm_name, disk_name, resource_group])
 
         if not attach_to_specific_vm:
             task = automaticAttachDisk.apply_async([disk_name, resource_group])
@@ -101,25 +96,17 @@ def azure_disk_post(action, **kwargs):
         # Create a blank, default disk
 
         disk_size, username = kwargs["body"]["disk_size"], kwargs["body"]["username"]
-        location, resource_group = (
-            kwargs["body"]["location"],
-            kwargs["body"]["resource_group"],
-        )
+        location, resource_group = (kwargs["body"]["location"], kwargs["body"]["resource_group"])
         operating_system = kwargs["body"]["operating_system"]
 
-        output = createHelper(
-            disk_size, username, location, resource_group, operating_system
-        )
+        output = createHelper(disk_size, username, location, resource_group, operating_system)
 
         return jsonify({"ID": output["ID"]}), output["status"]
 
     elif action == "stun":
         # Toggle whether a disk uses the STUN server
 
-        using_stun, disk_name = (
-            kwargs["body"]["using_stun"],
-            kwargs["body"]["disk_name"],
-        )
+        using_stun, disk_name = (kwargs["body"]["using_stun"], kwargs["body"]["disk_name"])
 
         output = stunHelper(using_stun, disk_name)
 

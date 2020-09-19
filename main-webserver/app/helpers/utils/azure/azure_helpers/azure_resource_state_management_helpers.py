@@ -52,10 +52,7 @@ def boot_if_necessary(vm_name, needs_restart, resource_group=VM_GROUP, s=None):
         )
 
         if s:
-            s.update_state(
-                state="PENDING",
-                meta={"msg": "Your cloud PC was started successfully."},
-            )
+            s.update_state(state="PENDING", meta={"msg": "Your cloud PC was started successfully."})
 
         return 1
 
@@ -71,23 +68,18 @@ def boot_if_necessary(vm_name, needs_restart, resource_group=VM_GROUP, s=None):
         fractalLog(
             function="sendVMStartCommand",
             label="VM {vm_name}".format(vm_name=vm_name),
-            logs="Detected that VM {vm_name} needs to be restarted".format(
-                vm_name=vm_name
-            ),
+            logs="Detected that VM {vm_name} needs to be restarted".format(vm_name=vm_name),
         )
 
         lockVMAndUpdate(vm_name, "RESTARTING", True, temporary_lock=10)
 
-        async_vm_restart = compute_client.virtual_machines.restart(
-            resource_group, vm_name
-        )
+        async_vm_restart = compute_client.virtual_machines.restart(resource_group, vm_name)
 
         async_vm_restart.wait()
 
         if s:
             s.update_state(
-                state="PENDING",
-                meta={"msg": "Your cloud PC was restarted successfully."},
+                state="PENDING", meta={"msg": "Your cloud PC was restarted successfully."}
             )
 
         return 1
@@ -211,17 +203,13 @@ def waitForWinlogon(vm_name, resource_group=VM_GROUP, s=None):
     if s:
         s.update_state(
             state="PENDING",
-            meta={
-                "msg": "Logging you into your cloud PC. This should take less than two minutes."
-            },
+            meta={"msg": "Logging you into your cloud PC. This should take less than two minutes."},
         )
 
     fractalLog(
         function="waitForWinlogon",
         label=getVMUser(vm_name),
-        logs="Checking to see if VM {vm_name} has a recent winlogon event".format(
-            vm_name=vm_name
-        ),
+        logs="Checking to see if VM {vm_name} has a recent winlogon event".format(vm_name=vm_name),
     )
 
     has_winlogoned = checkWinlogon(vm_name, resource_group)
@@ -237,9 +225,7 @@ def waitForWinlogon(vm_name, resource_group=VM_GROUP, s=None):
         fractalLog(
             function="waitForWinlogon",
             label=getVMUser(vm_name),
-            logs="VM {vm_name} has not winlogoned yet. Waiting...".format(
-                vm_name=vm_name
-            ),
+            logs="VM {vm_name} has not winlogoned yet. Waiting...".format(vm_name=vm_name),
         )
 
     # Return success if a winlogon has been detected within the last 10 seconds

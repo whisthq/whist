@@ -1,10 +1,10 @@
-# This workflow will lint with Python Black and commit to the same branch
+# This workflow will check if the code is linted with Python Black
 
 name: Python Black Linting
 
 on:
   pull_request:
-    branches: [master, staging]
+    branches: [ master, staging ]
 
 jobs:
   lint:
@@ -26,12 +26,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install black
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        
-    - name: Format with Python Black
-      run: black .
-      
-    - name: Commit linted files
+              
+    - name: Check if code is linted with Python Black
       run: |
-        git config --local user.email "linter@fractalcomputers.com"
-        git config --local user.name "Fractal Linter"
-        git diff-index --quiet HEAD || (echo "To pass this check please lint the code with Python Black" && false)
+        result=$(black . --check) # black --check returns 0 if the code is already linted
+        if [ "$result" -ne "0" ]; then        
+          (echo "To pass this check please lint the code with Python Black" && false)
+        else
+          (echo "Code is linted with Python Black" && true)
+        fi

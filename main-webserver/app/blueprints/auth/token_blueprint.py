@@ -37,7 +37,4 @@ def validateToken(**kwargs):
 @fractalPreProcess
 def my_expired_token_callback(expired_token, **kwargs):
     token_type = expired_token["type"]
-    return (
-        jsonify({"status": 401, "msg": "The {} token has expired".format(token_type)}),
-        401,
-    )
+    return (jsonify({"status": 401, "msg": "The {} token has expired".format(token_type)}), 401)

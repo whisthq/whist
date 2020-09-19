@@ -32,31 +32,23 @@ def createNic(vm_name, location, tries, resource_group=None):
         async_vnet_creation = network_client.virtual_networks.create_or_update(
             resource_group,
             vnet_name,
-            {
-                "location": location,
-                "address_space": {"address_prefixes": ["10.0.0.0/16"]},
-            },
+            {"location": location, "address_space": {"address_prefixes": ["10.0.0.0/16"]}},
         )
         async_vnet_creation.wait()
 
         # Create Subnet
         async_subnet_creation = network_client.subnets.create_or_update(
-            resource_group, vnet_name, subnet_name, {"address_prefix": "10.0.0.0/24"},
+            resource_group, vnet_name, subnet_name, {"address_prefix": "10.0.0.0/24"}
         )
         subnet_info = async_subnet_creation.result()
 
         # Create public IP address
-        public_ip_addess_params = {
-            "location": location,
-            "public_ip_allocation_method": "Static",
-        }
+        public_ip_addess_params = {"location": location, "public_ip_allocation_method": "Static"}
         creation_result = network_client.public_ip_addresses.create_or_update(
             resource_group, ip_name, public_ip_addess_params
         )
 
-        public_ip_address = network_client.public_ip_addresses.get(
-            resource_group, ip_name
-        )
+        public_ip_address = network_client.public_ip_addresses.get(resource_group, ip_name)
 
         # Create NIC
         async_nic_creation = network_client.network_interfaces.create_or_update(
@@ -80,9 +72,7 @@ def createNic(vm_name, location, tries, resource_group=None):
             fractalLog(
                 function="createNic",
                 label=str(vm_name),
-                logs="NIC creation encountered a retryable error: {error}".format(
-                    error=str(e)
-                ),
+                logs="NIC creation encountered a retryable error: {error}".format(error=str(e)),
             )
 
             time.sleep(3)
@@ -106,7 +96,7 @@ def createVMParameters(
 
     Returns:
     json: Parameters that will be used in Azure sdk
-   """
+    """
 
     # Operating system parameters
 
@@ -148,9 +138,9 @@ def createVMParameters(
                     "sku": vm_reference["sku"],
                     "version": vm_reference["version"],
                 },
-                "os_disk": {"os_type": operating_system, "create_option": "FromImage",},
+                "os_disk": {"os_type": operating_system, "create_option": "FromImage"},
             },
-            "network_profile": {"network_interfaces": [{"id": nic_id,}]},
+            "network_profile": {"network_interfaces": [{"id": nic_id}]},
         },
         "vm_name": vm_name,
     }
