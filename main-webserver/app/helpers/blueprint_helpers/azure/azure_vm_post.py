@@ -17,9 +17,7 @@ def devHelper(vm_name, dev):
     fractalLog(
         function="pingHelper",
         label=getVMUser(vm_name),
-        logs="Setting VM {vm_name} dev mode to {dev}".format(
-            vm_name=str(vm_name), dev=str(dev)
-        ),
+        logs="Setting VM {vm_name} dev mode to {dev}".format(vm_name=str(vm_name), dev=str(dev)),
     )
 
     vm = UserVM.query.filter_by(vm_id=vm_name)
@@ -55,9 +53,7 @@ def pingHelper(available, vm_ip, version=None):
 
     disk = OSDisk.query.filter_by(user_id=username).first()
 
-    fractalSQLCommit(
-        db, fractalSQLUpdate, disk, {"last_pinged": dateToUnix(getToday())}
-    )
+    fractalSQLCommit(db, fractalSQLUpdate, disk, {"last_pinged": dateToUnix(getToday())})
 
     # Update disk version
 
@@ -89,9 +85,7 @@ def pingHelper(available, vm_ip, version=None):
         fractalLog(
             function="pingHelper",
             label=str(username),
-            logs="{username} just disconnected from their cloud PC".format(
-                username=username
-            ),
+            logs="{username} just disconnected from their cloud PC".format(username=username),
         )
 
     # Detect and handle logon event
@@ -111,9 +105,7 @@ def pingHelper(available, vm_ip, version=None):
         fractalLog(
             function="pingHelper",
             label=str(username),
-            logs="{username} just connected to their cloud PC".format(
-                username=username
-            ),
+            logs="{username} just connected to their cloud PC".format(username=username),
         )
 
     # Change VM states accordingly

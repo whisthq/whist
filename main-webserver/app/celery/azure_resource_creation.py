@@ -67,9 +67,7 @@ def createVM(
     if not nic:
         self.update_state(
             state="FAILURE",
-            meta={
-                "msg": "NIC failed to create for VM {vm_name}".format(vm_name=vm_name)
-            },
+            meta={"msg": "NIC failed to create for VM {vm_name}".format(vm_name=vm_name)},
         )
 
         return
@@ -237,11 +235,7 @@ def createVM(
 
         self.update_state(
             state="FAILURE",
-            meta={
-                "msg": "Error inserting VM {vm_name} and disk into SQL".format(
-                    vm_name=vm_name
-                )
-            },
+            meta={"msg": "Error inserting VM {vm_name} and disk into SQL".format(vm_name=vm_name)},
         )
 
         return None
@@ -317,9 +311,7 @@ def cloneDisk(
         fractalLog(
             function="cloneDisk",
             label=str(username),
-            logs="Sending Azure command to create disk {disk_name}".format(
-                disk_name=disk_name
-            ),
+            logs="Sending Azure command to create disk {disk_name}".format(disk_name=disk_name),
         )
 
         async_disk_creation = compute_client.disks.create_or_update(
@@ -434,9 +426,7 @@ def createDisk(
     fractalLog(
         function="createDisk",
         label=str(username),
-        logs="{disk_name} was created successfully as a secondary disk".format(
-            disk_name=disk_name
-        ),
+        logs="{disk_name} was created successfully as a secondary disk".format(disk_name=disk_name),
     )
 
     return {"status": 200, "disk_name": disk_name}

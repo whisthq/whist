@@ -33,12 +33,8 @@ def analyticsLogsHelper(body):
                 },
                 "output": [
                     {
-                        "time": transformed_df.iloc[
-                            i, transformed_df.columns.get_loc("time")
-                        ],
-                        "value": transformed_df.iloc[
-                            i, transformed_df.columns.get_loc("contents")
-                        ]
+                        "time": transformed_df.iloc[i, transformed_df.columns.get_loc("time")],
+                        "value": transformed_df.iloc[i, transformed_df.columns.get_loc("contents")]
                         * scale,
                     }
                     for i in range(0, transformed_df.shape[0])
@@ -60,9 +56,7 @@ def analyticsLogsHelper(body):
     try:
         df = pd.read_csv(body["filename"], sep="|", header=None, error_bad_lines=False)
         df.columns = ["time", "level", "file", "location", "contents"]
-        r = df.time.apply(
-            lambda x: ":".join(str(x).split(":")[:-1]) + "." + str(x).split(":")[-1]
-        )
+        r = df.time.apply(lambda x: ":".join(str(x).split(":")[:-1]) + "." + str(x).split(":")[-1])
         df.time = pd.to_datetime(r, errors="coerce")
         cleaned_df = df[df.time.notnull()]
     except Exception as e:

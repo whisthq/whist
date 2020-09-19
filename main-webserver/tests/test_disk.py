@@ -151,9 +151,7 @@ def test_disk_attach(input_token, admin_token):
             fractalLog(
                 function="test_disk_attach",
                 label="azure_disk/attach",
-                logs="Running powershell script on {disk_name}".format(
-                    disk_name=disk_name
-                ),
+                logs="Running powershell script on {disk_name}".format(disk_name=disk_name),
             )
 
             resp = runPowershell(

@@ -177,6 +177,4 @@ def planChangeMail(username, newPlan):
             logs="Sent plan changed email to {}".format(username),
         )
     except Exception as e:
-        fractalLog(
-            function="planChangeMail", label="Mail", logs=e.message, level=logging.ERROR
-        )
+        fractalLog(function="planChangeMail", label="Mail", logs=e.message, level=logging.ERROR)

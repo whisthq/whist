@@ -14,9 +14,7 @@ def forgotPasswordHelper(username):
         token = jwt.encode(
             {
                 "sub": username,
-                "exp": (dt.now() + timedelta(minutes=10))
-                .replace(tzinfo=timezone.utc)
-                .timestamp(),
+                "exp": (dt.now() + timedelta(minutes=10)).replace(tzinfo=timezone.utc).timestamp(),
             },
             os.getenv("SECRET_KEY"),
         )
@@ -171,9 +169,7 @@ def trialStartHelper(user, location, code):
     internal_message = SendGridMail(
         from_email="noreply@fractalcomputers.com",
         to_emails=["pipitone@fractalcomputers.com", "support@fractalcomputers.com"],
-        subject="[FREE TRIAL START] A new user, "
-        + user
-        + ", just signed up for the free trial.",
+        subject="[FREE TRIAL START] A new user, " + user + ", just signed up for the free trial.",
         html_content="<div>No action needed from our part at this point.</div>",
     )
     try:

@@ -57,9 +57,7 @@ def createNic(vm_name, location, tries, resource_group=None):
             resource_group, ip_name, public_ip_addess_params
         )
 
-        public_ip_address = network_client.public_ip_addresses.get(
-            resource_group, ip_name
-        )
+        public_ip_address = network_client.public_ip_addresses.get(resource_group, ip_name)
 
         # Create NIC
         async_nic_creation = network_client.network_interfaces.create_or_update(
@@ -83,9 +81,7 @@ def createNic(vm_name, location, tries, resource_group=None):
             fractalLog(
                 function="createNic",
                 label=str(vm_name),
-                logs="NIC creation encountered a retryable error: {error}".format(
-                    error=str(e)
-                ),
+                logs="NIC creation encountered a retryable error: {error}".format(error=str(e)),
             )
 
             time.sleep(3)

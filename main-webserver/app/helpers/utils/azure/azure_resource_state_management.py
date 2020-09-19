@@ -7,9 +7,7 @@ from app.models.hardware import *
 from app.serializers.hardware import *
 
 
-def sendVMStartCommand(
-    vm_name, needs_restart, needs_winlogon, resource_group=VM_GROUP, s=None
-):
+def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, resource_group=VM_GROUP, s=None):
     """Starts a VM
 
     Args:
@@ -78,9 +76,7 @@ def sendVMStartCommand(
 
             # Power Azure VM on if it's not currently running
 
-            boot_if_necessary(
-                vm_name, needs_restart, resource_group=resource_group, s=s
-            )
+            boot_if_necessary(vm_name, needs_restart, resource_group=resource_group, s=s)
 
             # If a Windows VM, wait for a winlogon ping, which indicates that the server-side protocol is running
 
@@ -221,10 +217,7 @@ def fractalVMStart(
             )
 
         while (
-            sendVMStartCommand(
-                vm_name, needs_restart, needs_winlogon, resource_group, s=s
-            )
-            < 0
+            sendVMStartCommand(vm_name, needs_restart, needs_winlogon, resource_group, s=s) < 0
             and start_command_tries < 2
         ):
             time.sleep(5)

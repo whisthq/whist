@@ -25,9 +25,7 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
     fractalLog(
         function="deleteVM",
         label=str(vm_name),
-        logs="Beginning to delete VM {vm_name}. Goodbye, {vm_name}!".format(
-            vm_name=vm_name
-        ),
+        logs="Beginning to delete VM {vm_name}. Goodbye, {vm_name}!".format(vm_name=vm_name),
     )
 
     lockVMAndUpdate(vm_name=vm_name, state="DELETING", lock=True, temporary_lock=10)
@@ -48,9 +46,7 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
 
     # step 1, deallocate the VM
     try:
-        async_vm_deallocate = compute_client.virtual_machines.deallocate(
-            resource_group, vm_name
-        )
+        async_vm_deallocate = compute_client.virtual_machines.deallocate(resource_group, vm_name)
         async_vm_deallocate.wait()
 
         fractalLog(
@@ -64,9 +60,7 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
         fractalLog(
             function="deleteVM",
             label=str(vm_name),
-            logs="Error deallocating VM {vm_name}: {error}".format(
-                vm_name=vm_name, error=str(e)
-            ),
+            logs="Error deallocating VM {vm_name}: {error}".format(vm_name=vm_name, error=str(e)),
             level=logging.ERROR,
         )
         hr = -1
@@ -107,18 +101,14 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
         fractalLog(
             function="deleteVM",
             label=str(vm_name),
-            logs="Error detaching IP {ip_name}: {error}".format(
-                ip_name=ip_name, error=str(e)
-            ),
+            logs="Error detaching IP {ip_name}: {error}".format(ip_name=ip_name, error=str(e)),
             level=logging.ERROR,
         )
         hr = -1
 
     # step 3, delete the VM
     try:
-        async_vm_delete = compute_client.virtual_machines.delete(
-            resource_group, vm_name
-        )
+        async_vm_delete = compute_client.virtual_machines.delete(resource_group, vm_name)
         async_vm_delete.wait()
 
         vm = UserVM.query.get(vm_name)
@@ -134,18 +124,14 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
         fractalLog(
             function="deleteVM",
             label=str(vm_name),
-            logs="Error deleting VM {vm_name}: {error}".format(
-                vm_name=vm_name, error=str(e)
-            ),
+            logs="Error deleting VM {vm_name}: {error}".format(vm_name=vm_name, error=str(e)),
             level=logging.ERROR,
         )
         hr = -1
 
     # step 4, delete the IP
     try:
-        async_ip_delete = network_client.public_ip_addresses.delete(
-            resource_group, ip_name
-        )
+        async_ip_delete = network_client.public_ip_addresses.delete(resource_group, ip_name)
         async_ip_delete.wait()
 
         fractalLog(
@@ -157,18 +143,14 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
         fractalLog(
             function="deleteVM",
             label=str(vm_name),
-            logs="Error deleting IP {ip_name}: {error}".format(
-                ip_name=ip_name, error=str(e)
-            ),
+            logs="Error deleting IP {ip_name}: {error}".format(ip_name=ip_name, error=str(e)),
             level=logging.ERROR,
         )
         hr = -1
 
     # step 4, delete the NIC
     try:
-        async_nic_delete = network_client.network_interfaces.delete(
-            resource_group, nic_name
-        )
+        async_nic_delete = network_client.network_interfaces.delete(resource_group, nic_name)
         async_nic_delete.wait()
 
         fractalLog(
@@ -180,18 +162,14 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
         fractalLog(
             function="deleteVM",
             label=str(vm_name),
-            logs="Error deleting Nic {nic_name}: {error}".format(
-                nic_name=nic_name, error=str(e)
-            ),
+            logs="Error deleting Nic {nic_name}: {error}".format(nic_name=nic_name, error=str(e)),
             level=logging.ERROR,
         )
         hr = -1
 
     # step 5, delete the Vnet
     try:
-        async_vnet_delete = network_client.virtual_networks.delete(
-            resource_group, vnet_name
-        )
+        async_vnet_delete = network_client.virtual_networks.delete(resource_group, vnet_name)
         async_vnet_delete.wait()
 
         fractalLog(
@@ -277,9 +255,7 @@ def deleteDisk(self, disk_name, resource_group=VM_GROUP):
         fractalLog(
             function="deleteDisk",
             label=str(disk_name),
-            logs="Sending Azure command to delete disk {disk_name}".format(
-                disk_name=disk_name
-            ),
+            logs="Sending Azure command to delete disk {disk_name}".format(disk_name=disk_name),
         )
 
         async_disk_deletion = compute_client.disks.delete(resource_group, disk_name)
@@ -288,9 +264,7 @@ def deleteDisk(self, disk_name, resource_group=VM_GROUP):
         fractalLog(
             function="deleteDisk",
             label=str(disk_name),
-            logs="Disk {disk_name} successfully removed from Azure".format(
-                disk_name=disk_name
-            ),
+            logs="Disk {disk_name} successfully removed from Azure".format(disk_name=disk_name),
         )
 
         try:
@@ -323,9 +297,7 @@ def deleteDisk(self, disk_name, resource_group=VM_GROUP):
         )
         try:
             disk = OSDisk.query.filter_by(disk_id=disk_name)
-            fractalSQLCommit(
-                db, lambda _, x: x.update({"state": "TO_BE_DELETED"}), disk
-            )
+            fractalSQLCommit(db, lambda _, x: x.update({"state": "TO_BE_DELETED"}), disk)
 
         except Exception as e:
             fractalLog(

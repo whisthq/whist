@@ -26,17 +26,11 @@ class OSDisk(db.Model):
     location = db.Column(db.String(250), nullable=False)
     os = db.Column(db.String(250), nullable=False)
     disk_size = db.Column(db.Integer, nullable=False)
-    allow_autoupdate = db.Column(
-        db.Boolean, nullable=False, server_default=expression.true()
-    )
-    has_dedicated_vm = db.Column(
-        db.Boolean, nullable=False, server_default=expression.false()
-    )
+    allow_autoupdate = db.Column(db.Boolean, nullable=False, server_default=expression.true())
+    has_dedicated_vm = db.Column(db.Boolean, nullable=False, server_default=expression.false())
     version = db.Column(db.String(250))
     rsa_private_key = db.Column(db.String(250))
-    using_stun = db.Column(
-        db.Boolean, nullable=False, server_default=expression.false()
-    )
+    using_stun = db.Column(db.Boolean, nullable=False, server_default=expression.false())
     ssh_password = db.Column(db.String(250))
     state = db.Column(db.String(250))
     user_id = db.Column(db.ForeignKey("users.user_id"))

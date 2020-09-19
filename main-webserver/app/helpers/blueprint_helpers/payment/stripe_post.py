@@ -20,9 +20,7 @@ def chargeHelper(token, email, code, plan):
     fractalLog(
         function="chargeHelper",
         label=email,
-        logs="Signing {} up for plan {}, with code {}, token{}".format(
-            email, plan, code, token
-        ),
+        logs="Signing {} up for plan {}, with code {}, token{}".format(email, plan, code, token),
     )
 
     PLAN_ID = MONTHLY_PLAN_ID
@@ -73,10 +71,7 @@ def chargeHelper(token, email, code, plan):
         taxRate = []
         logger = logging.getLogger(__name__)
         for tax in taxRates:
-            if (
-                tax["jurisdiction"].strip().lower()
-                == STATE_LIST[purchaseState].strip().lower()
-            ):
+            if tax["jurisdiction"].strip().lower() == STATE_LIST[purchaseState].strip().lower():
                 taxRate = [tax["id"]]
 
         if customer_exists:
@@ -147,9 +142,7 @@ def chargeHelper(token, email, code, plan):
         fractalLog(
             function="chargeHelper",
             label=email,
-            logs="Stripe charge encountered a critical error: {error}".format(
-                error=track
-            ),
+            logs="Stripe charge encountered a critical error: {error}".format(error=track),
             level=logging.CRITICAL,
         )
         return jsonify({"status": CONFLICT, "error": str(e)}), CONFLICT
@@ -167,9 +160,7 @@ def retrieveStripeHelper(email):
 
     if not customer:
         return (
-            jsonify(
-                {"status": PAYMENT_REQUIRED, "error": "No such user for that email!"}
-            ),
+            jsonify({"status": PAYMENT_REQUIRED, "error": "No such user for that email!"}),
             PAYMENT_REQUIRED,
         )
 
@@ -179,9 +170,7 @@ def retrieveStripeHelper(email):
     if customer["stripe_customer_id"]:
         try:
             payload = stripe.Customer.retrieve(customer["stripe_customer_id"])
-            subscription = stripe.Subscription.list(
-                customer=customer["stripe_customer_id"]
-            )
+            subscription = stripe.Subscription.list(customer=customer["stripe_customer_id"])
             if subscription and subscription["data"]:
                 subscription = subscription["data"][0]
                 cards = payload["sources"]["data"]
@@ -242,9 +231,7 @@ def cancelStripeHelper(email):
     if not customer:
         return jsonify({"status": PAYMENT_REQUIRED}), PAYMENT_REQUIRED
 
-    subscription = stripe.Subscription.list(customer=customer.stripe_customer_id)[
-        "data"
-    ]
+    subscription = stripe.Subscription.list(customer=customer.stripe_customer_id)["data"]
 
     if len(subscription) == 0:
         return (
@@ -519,9 +506,7 @@ def updateHelper(username, new_plan_type):
     customer = User.query.get(username)
     if not customer:
         return (
-            jsonify(
-                {"status": NOT_ACCEPTABLE, "error": "No user with such email exists"}
-            ),
+            jsonify({"status": NOT_ACCEPTABLE, "error": "No user with such email exists"}),
             NOT_ACCEPTABLE,
         )
 
@@ -531,18 +516,14 @@ def updateHelper(username, new_plan_type):
             NOT_ACCEPTABLE,
         )
 
-    subscriptions = stripe.Subscription.list(customer=customer.stripe_customer_id)[
-        "data"
-    ]
+    subscriptions = stripe.Subscription.list(customer=customer.stripe_customer_id)["data"]
     if not subscriptions:
         return (
             jsonify({"status": NOT_ACCEPTABLE, "error": "User is not on any plan"}),
             NOT_ACCEPTABLE,
         )
 
-    stripe.SubscriptionItem.modify(
-        subscriptions[0]["items"]["data"][0]["id"], plan=new_plan_id
-    )
+    stripe.SubscriptionItem.modify(subscriptions[0]["items"]["data"][0]["id"], plan=new_plan_id)
     planChangeMail(username, new_plan_type)
     return jsonify({"status": SUCCESS}), SUCCESS
 

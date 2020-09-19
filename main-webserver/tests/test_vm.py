@@ -58,9 +58,7 @@ def test_vm_create(input_token):
             logs="Starting to create a VM in {region}".format(region=region),
         )
 
-        resp = createVM(
-            "Standard_NV6_Promo", region, "Linux", RESOURCE_GROUP, input_token
-        )
+        resp = createVM("Standard_NV6_Promo", region, "Linux", RESOURCE_GROUP, input_token)
 
         task = queryStatus(resp, timeout=12.5)
 

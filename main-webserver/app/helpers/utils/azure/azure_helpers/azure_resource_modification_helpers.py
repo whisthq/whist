@@ -83,9 +83,7 @@ def attachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
     fractalLog(
         function="attachSecondaryDisk",
         label=getVMUser(vm_name),
-        logs="Running disk partition powershell script on {disk_name}".format(
-            disk_name=disk_name
-        ),
+        logs="Running disk partition powershell script on {disk_name}".format(disk_name=disk_name),
     )
 
     command = """
@@ -119,9 +117,7 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
     fractalLog(
         function="attachSecondaryDisks",
         label=getVMUser(vm_name),
-        logs="Looking for any secondary disks associated with VM {vm_name}".format(
-            vm_name=vm_name
-        ),
+        logs="Looking for any secondary disks associated with VM {vm_name}".format(vm_name=vm_name),
     )
 
     secondary_disks = SecondaryDisk.query.filter_by(user_id=username).all()
@@ -153,9 +149,7 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
         )
 
         for secondary_disk in secondary_disks:
-            attachSecondaryDisk(
-                secondary_disk.disk_id, vm_name, resource_group=resource_group, s=s
-            )
+            attachSecondaryDisk(secondary_disk.disk_id, vm_name, resource_group=resource_group, s=s)
 
         # Lock immediately
         lockVMAndUpdate(
@@ -175,9 +169,7 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
         )
 
 
-def claimAvailableVM(
-    username, disk_name, location, resource_group, os_type="Windows", s=None
-):
+def claimAvailableVM(username, disk_name, location, resource_group, os_type="Windows", s=None):
     # available_vm = UserVM.query.filter_by(user_id=username).first()
 
     # if available_vm:
@@ -203,15 +195,12 @@ def claimAvailableVM(
                 UserVM.location == location,
             )
             .filter(
-                (UserVM.temporary_lock <= dateToUnix(getToday()))
-                | (UserVM.temporary_lock == None)
+                (UserVM.temporary_lock <= dateToUnix(getToday())) | (UserVM.temporary_lock == None)
             )
             .first()
         )
 
-        fractalLog(
-            function="claimAvailableVM", label=str(username), logs=str(available_vm)
-        )
+        fractalLog(function="claimAvailableVM", label=str(username), logs=str(available_vm))
 
         if available_vm:
             fractalLog(

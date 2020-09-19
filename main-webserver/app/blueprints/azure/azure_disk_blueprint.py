@@ -85,9 +85,7 @@ def azure_disk_post(action, **kwargs):
             vm_name = kwargs["body"]["vm_name"]
             if vm_name:
                 attach_to_specific_vm = True
-                task = swapSpecificDisk.apply_async(
-                    [vm_name, disk_name, resource_group]
-                )
+                task = swapSpecificDisk.apply_async([vm_name, disk_name, resource_group])
 
         if not attach_to_specific_vm:
             task = automaticAttachDisk.apply_async([disk_name, resource_group])
@@ -107,9 +105,7 @@ def azure_disk_post(action, **kwargs):
         )
         operating_system = kwargs["body"]["operating_system"]
 
-        output = createHelper(
-            disk_size, username, location, resource_group, operating_system
-        )
+        output = createHelper(disk_size, username, location, resource_group, operating_system)
 
         return jsonify({"ID": output["ID"]}), output["status"]
 

@@ -111,9 +111,7 @@ def spinLock(vm_name, resource_group=VM_GROUP, s=None):
         if s:
             s.update_state(
                 state="PENDING",
-                meta={
-                    "msg": "Cloud PC is downloading an update. This could take a few minutes."
-                },
+                meta={"msg": "Cloud PC is downloading an update. This could take a few minutes."},
             )
 
     while locked:

@@ -3,9 +3,7 @@ import sqlalchemy
 
 from sqlalchemy.orm import sessionmaker
 
-config_engine = sqlalchemy.create_engine(
-    os.getenv("CONFIG_DB_URL"), echo=False, pool_pre_ping=True
-)
+config_engine = sqlalchemy.create_engine(os.getenv("CONFIG_DB_URL"), echo=False, pool_pre_ping=True)
 ConfigSession = sessionmaker(bind=config_engine, autocommit=False)
 
 
@@ -44,11 +42,7 @@ DATABASE_URL = (
     else os.getenv("STAGING_DB_URL")
 )
 
-VM_GROUP = (
-    "Fractal"
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE"
-    else "FractalStaging"
-)
+VM_GROUP = "Fractal" if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE" else "FractalStaging"
 
 STRIPE_SECRET = getEnvVar("STRIPE_SECRET")
 
