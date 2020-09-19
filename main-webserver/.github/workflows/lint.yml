@@ -29,7 +29,7 @@ jobs:
               
     - name: Check if code is linted with Python Black
       run: |
-        result=$(black . --check) # black --check returns 0 if the code is already linted
+        result=$(black . --skip-string-normalization --check) # black --check returns 0 if the code is already linted
         if [ "$result" -ne "0" ]; then        
           (echo "To pass this check please lint the code with Python Black" && false)
         else
