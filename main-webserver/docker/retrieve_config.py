@@ -20,9 +20,7 @@ parser.add_argument(
     "--base-config",
     help="path to base config to override the remote config with, or None for no override."
     + " This file is expected to contain overrides such as pointing to a local Redis server.",
-    default=os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "dev-base-config.json"
-    ),
+    default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "dev-base-config.json"),
 )
 args = parser.add_argument(
     "--out",
@@ -31,10 +29,7 @@ args = parser.add_argument(
 )
 args = parser.parse_args()
 
-env_to_app_name = {
-    "production": "main-webserver",
-    "staging": "staging-webserver",
-}
+env_to_app_name = {"production": "main-webserver", "staging": "staging-webserver"}
 app_name = env_to_app_name.get(args.env, args.env)
 
 if str(sys.platform).startswith("win"):

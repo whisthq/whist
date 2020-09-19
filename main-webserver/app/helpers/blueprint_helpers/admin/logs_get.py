@@ -21,19 +21,13 @@ def logsHelper(connection_id, username, bookmarked):
         return {"logs": logs, "connection_ids": connection_ids, "status": SUCCESS}
     if connection_id:
         logs = (
-            ProtocolLog.filter_by(connection_id=connection_id)
-            .order_by(ProtocolLog.timestamp)
-            .all()
+            ProtocolLog.filter_by(connection_id=connection_id).order_by(ProtocolLog.timestamp).all()
         )
         logs = [log_schema.dump(log) for log in logs]
 
         return {"logs": logs, "status": SUCCESS}
     elif username:
-        logs = (
-            ProtocolLog.query.filer_by(user_id=username)
-            .order_by(ProtocolLog.timestamp)
-            .all()
-        )
+        logs = ProtocolLog.query.filer_by(user_id=username).order_by(ProtocolLog.timestamp).all()
         logs = [log_schema.dump(log) for log in logs]
 
         return {"logs": logs, "status": SUCCESS}

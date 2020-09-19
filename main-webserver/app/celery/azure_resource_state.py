@@ -119,9 +119,7 @@ def deallocateVM(self, vm_name, resource_group=VM_GROUP):
 
     _, compute_client, _ = createClients()
 
-    async_vm_deallocate = compute_client.virtual_machines.deallocate(
-        resource_group, vm_name
-    )
+    async_vm_deallocate = compute_client.virtual_machines.deallocate(resource_group, vm_name)
     async_vm_deallocate.wait()
 
     vm = UserVM.query.get(vm_name)

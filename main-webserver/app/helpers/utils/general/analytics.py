@@ -45,9 +45,7 @@ def loginsToMinutes(report):
                     deltaTime = lateTime - earlyTime
                     minutesOnline += deltaTime.seconds / 60
         else:
-            if (
-                report[index - 1]["action"] == "logon"
-            ):  # User session continued to next day
+            if report[index - 1]["action"] == "logon":  # User session continued to next day
                 midnight = dt.combine(lateTime.date(), dt.min.time())
                 deltaTime = midnight - earlyTime
                 minutesOnline += deltaTime.seconds / 60
@@ -60,9 +58,7 @@ def loginsToMinutes(report):
                     }
                 )
             minutesOnline = 0
-            if (
-                report[index - 1]["action"] == "logon"
-            ):  # User session continued to next day
+            if report[index - 1]["action"] == "logon":  # User session continued to next day
                 midnight = dt.combine(lateTime.date(), dt.min.time())
                 deltaTime = lateTime - midnight
                 minutesOnline += deltaTime.seconds / 60
@@ -99,10 +95,7 @@ def extractFeature(feature_name, cleaned_df, scale):
         feature_std = np.std(transformed_df["contents"])
         feature_median = np.median(transformed_df["contents"])
         feature_mean = np.mean(transformed_df["contents"])
-        feature_range = [
-            min(transformed_df["contents"]),
-            max(transformed_df["contents"]),
-        ]
+        feature_range = [min(transformed_df["contents"]), max(transformed_df["contents"])]
 
         return {
             "summary_statistics": {
@@ -113,12 +106,8 @@ def extractFeature(feature_name, cleaned_df, scale):
             },
             "output": [
                 {
-                    "time": transformed_df.iloc[
-                        i, transformed_df.columns.get_loc("time")
-                    ],
-                    "value": transformed_df.iloc[
-                        i, transformed_df.columns.get_loc("contents")
-                    ]
+                    "time": transformed_df.iloc[i, transformed_df.columns.get_loc("time")],
+                    "value": transformed_df.iloc[i, transformed_df.columns.get_loc("contents")]
                     * scale,
                 }
                 for i in range(0, transformed_df.shape[0])

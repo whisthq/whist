@@ -18,10 +18,10 @@ def createClients():
     Returns:
     ResourceManagementClient, ComputeManagementClient, NetworkManagementClient
 
-   """
+    """
     subscription_id = AZURE_SUBSCRIPTION_ID
     credentials = ServicePrincipalCredentials(
-        client_id=AZURE_CLIENT_ID, secret=AZURE_CLIENT_SECRET, tenant=AZURE_TENANT_ID,
+        client_id=AZURE_CLIENT_ID, secret=AZURE_CLIENT_SECRET, tenant=AZURE_TENANT_ID
     )
     r = ResourceManagementClient(credentials, subscription_id)
     c = ComputeManagementClient(credentials, subscription_id)
@@ -73,7 +73,7 @@ def createVMInstance(vm_name, resource_group=VM_GROUP):
 
     Returns:
     VirtualMachine: The instance view of the virtual machine
-   """
+    """
 
     _, compute_client, _ = createClients()
     try:
@@ -165,8 +165,7 @@ def checkResourceGroup(resource_group):
         function="checkResourceGroup",
         label="None",
         logs="Checking to see if {resource_group} is allowed where USE_PRODUCTION_KEYS is {server_type}".format(
-            resource_group=resource_group,
-            server_type=str(os.getenv("USE_PRODUCTION_KEYS")),
+            resource_group=resource_group, server_type=str(os.getenv("USE_PRODUCTION_KEYS"))
         ),
     )
 
@@ -176,7 +175,7 @@ def checkResourceGroup(resource_group):
             function="checkResourceGroup",
             label="None",
             logs="The production resource group is {resource_group}, valid resource group is {valid_resource_group}".format(
-                resource_group=VM_GROUP, valid_resource_group=str(valid_resource_group),
+                resource_group=VM_GROUP, valid_resource_group=str(valid_resource_group)
             ),
         )
 

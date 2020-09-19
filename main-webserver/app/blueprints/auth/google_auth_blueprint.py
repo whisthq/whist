@@ -19,10 +19,7 @@ def google_auth_post(action, **kwargs):
 
         return jsonify(output), output["status"]
     elif action == "reason":
-        username, reason_for_signup = (
-            kwargs["body"]["username"],
-            kwargs["body"]["reason"],
-        )
+        username, reason_for_signup = (kwargs["body"]["username"], kwargs["body"]["reason"])
 
         output = reasonHelper(username, reason_for_signup)
 

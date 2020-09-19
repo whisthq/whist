@@ -6,10 +6,7 @@ def validateTokenHelper(token):
     if token:
         payload = jwt.decode(token, JWT_SECRET_KEY)
         if payload["exp"] < dt.now().replace(tzinfo=timezone.utc).timestamp():
-            return (
-                jsonify({"status": UNAUTHORIZED, "error": "Expired token"}),
-                UNAUTHORIZED,
-            )
+            return (jsonify({"status": UNAUTHORIZED, "error": "Expired token"}), UNAUTHORIZED)
         else:
             return jsonify({"status": SUCCESS}), SUCCESS
     else:

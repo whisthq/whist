@@ -19,10 +19,7 @@ def analyticsLogsHelper(body):
             feature_std = np.std(transformed_df["contents"])
             feature_median = np.median(transformed_df["contents"])
             feature_mean = np.mean(transformed_df["contents"])
-            feature_range = [
-                min(transformed_df["contents"]),
-                max(transformed_df["contents"]),
-            ]
+            feature_range = [min(transformed_df["contents"]), max(transformed_df["contents"])]
 
             return {
                 "summary_statistics": {
@@ -33,12 +30,8 @@ def analyticsLogsHelper(body):
                 },
                 "output": [
                     {
-                        "time": transformed_df.iloc[
-                            i, transformed_df.columns.get_loc("time")
-                        ],
-                        "value": transformed_df.iloc[
-                            i, transformed_df.columns.get_loc("contents")
-                        ]
+                        "time": transformed_df.iloc[i, transformed_df.columns.get_loc("time")],
+                        "value": transformed_df.iloc[i, transformed_df.columns.get_loc("contents")]
                         * scale,
                     }
                     for i in range(0, transformed_df.shape[0])
@@ -60,17 +53,12 @@ def analyticsLogsHelper(body):
     try:
         df = pd.read_csv(body["filename"], sep="|", header=None, error_bad_lines=False)
         df.columns = ["time", "level", "file", "location", "contents"]
-        r = df.time.apply(
-            lambda x: ":".join(str(x).split(":")[:-1]) + "." + str(x).split(":")[-1]
-        )
+        r = df.time.apply(lambda x: ":".join(str(x).split(":")[:-1]) + "." + str(x).split(":")[-1])
         df.time = pd.to_datetime(r, errors="coerce")
         cleaned_df = df[df.time.notnull()]
     except Exception as e:
         print("Error reading {filename}".format(filename=body["filename"]))
-        return (
-            jsonify({}),
-            400,
-        )
+        return (jsonify({}), 400)
 
     # Get number of errors
     error_df = cleaned_df[cleaned_df.level.str.contains("ERROR", na=False, regex=False)]

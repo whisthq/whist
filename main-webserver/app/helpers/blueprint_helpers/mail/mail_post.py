@@ -14,9 +14,7 @@ def forgotPasswordHelper(username):
         token = jwt.encode(
             {
                 "sub": username,
-                "exp": (dt.now() + timedelta(minutes=10))
-                .replace(tzinfo=timezone.utc)
-                .timestamp(),
+                "exp": (dt.now() + timedelta(minutes=10)).replace(tzinfo=timezone.utc).timestamp(),
             },
             os.getenv("SECRET_KEY"),
         )
@@ -26,9 +24,7 @@ def forgotPasswordHelper(username):
             from_email="noreply@fractalcomputers.com",
             to_emails=[username],
             subject="Reset Your Password",
-            html_content=render_template(
-                "on_password_forget.html", url=FRONTEND_URL, token=token,
-            ),
+            html_content=render_template("on_password_forget.html", url=FRONTEND_URL, token=token),
         )
         try:
             sg = SendGridAPIClient(SENDGRID_API_KEY)
@@ -169,9 +165,7 @@ def trialStartHelper(user, location, code):
     internal_message = SendGridMail(
         from_email="noreply@fractalcomputers.com",
         to_emails=["pipitone@fractalcomputers.com", "support@fractalcomputers.com"],
-        subject="[FREE TRIAL START] A new user, "
-        + user
-        + ", just signed up for the free trial.",
+        subject="[FREE TRIAL START] A new user, " + user + ", just signed up for the free trial.",
         html_content="<div>No action needed from our part at this point.</div>",
     )
     try:
@@ -234,6 +228,7 @@ def computerReadyHelper(user, date, code, location):
 
     return jsonify({"status": SUCCESS}), SUCCESS
 
+
 def joinWaitlistHelper(email, name, date):
     title = "Congrats! You're on the waitlist."
 
@@ -241,9 +236,7 @@ def joinWaitlistHelper(email, name, date):
         from_email="support@fractalcomputers.com",
         to_emails=email,
         subject=title,
-        html_content=render_template(
-            "join_waitlist.html", name=name, date=date
-        ),
+        html_content=render_template("join_waitlist.html", name=name, date=date),
     )
 
     try:
