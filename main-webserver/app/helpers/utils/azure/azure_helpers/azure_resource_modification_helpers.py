@@ -207,10 +207,7 @@ def claimAvailableVM(username, disk_name, location, resource_group, os_type="Win
                 function="claimAvailableVM",
                 label=str(username),
                 logs="Found a {location} VM with state {state} to attach {disk_name} to: VM {vm_name}".format(
-                    location=location,
-                    state=state,
-                    disk_name=disk_name,
-                    vm_name=available_vm.vm_id,
+                    location=location, state=state, disk_name=disk_name, vm_name=available_vm.vm_id
                 ),
             )
 

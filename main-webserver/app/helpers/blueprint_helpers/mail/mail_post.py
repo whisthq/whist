@@ -24,11 +24,7 @@ def forgotPasswordHelper(username):
             from_email="noreply@fractalcomputers.com",
             to_emails=[username],
             subject="Reset Your Password",
-            html_content=render_template(
-                "on_password_forget.html",
-                url=FRONTEND_URL,
-                token=token,
-            ),
+            html_content=render_template("on_password_forget.html", url=FRONTEND_URL, token=token),
         )
         try:
             sg = SendGridAPIClient(SENDGRID_API_KEY)

@@ -6,8 +6,7 @@ from tests import *
 
 def fetchCurrentVMs(admin_token):
     return requests.get(
-        (SERVER_URL + "/report/fetchVMs"),
-        headers={"Authorization": "Bearer " + admin_token},
+        (SERVER_URL + "/report/fetchVMs"), headers={"Authorization": "Bearer " + admin_token}
     ).json()
 
 
@@ -32,11 +31,7 @@ def getVm(vm_name):
 def deleteVM(vm_name, delete_disk, resource_group, input_token):
     return requests.post(
         (SERVER_URL + "/azure_vm/delete"),
-        json={
-            "vm_name": vm_name,
-            "delete_disk": delete_disk,
-            "resource_group": resource_group,
-        },
+        json={"vm_name": vm_name, "delete_disk": delete_disk, "resource_group": resource_group},
         headers={"Authorization": "Bearer " + input_token},
     )
 
@@ -44,10 +39,6 @@ def deleteVM(vm_name, delete_disk, resource_group, input_token):
 def runPowershell(vm_name, command, resource_group, input_token):
     return requests.post(
         (SERVER_URL + "/azure_vm/command"),
-        json={
-            "vm_name": vm_name,
-            "command": command,
-            "resource_group": resource_group,
-        },
+        json={"vm_name": vm_name, "command": command, "resource_group": resource_group},
         headers={"Authorization": "Bearer " + input_token},
     )

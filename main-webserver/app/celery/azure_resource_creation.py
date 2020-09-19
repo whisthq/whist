@@ -14,12 +14,7 @@ os_disk_schema = OSDiskSchema()
 
 @celery_instance.task(bind=True)
 def createVM(
-    self,
-    vm_size,
-    location,
-    operating_system,
-    admin_password=None,
-    resource_group=VM_GROUP,
+    self, vm_size, location, operating_system, admin_password=None, resource_group=VM_GROUP
 ):
     """Creates a Windows/Linux VM of size vm_size in Azure region location
 
@@ -56,8 +51,7 @@ def createVM(
     vm_name = createVMName()
 
     self.update_state(
-        state="PENDING",
-        meta={"msg": "Creating NIC for VM {vm_name}".format(vm_name=vm_name)},
+        state="PENDING", meta={"msg": "Creating NIC for VM {vm_name}".format(vm_name=vm_name)}
     )
 
     # Create network resources
@@ -73,12 +67,7 @@ def createVM(
         return
 
     vm_parameters = createVMParameters(
-        vm_name,
-        nic.id,
-        vm_size,
-        location,
-        operating_system,
-        admin_password=admin_password,
+        vm_name, nic.id, vm_size, location, operating_system, admin_password=admin_password
     )
 
     self.update_state(
@@ -94,10 +83,7 @@ def createVM(
 
     async_vm_creation.wait()
 
-    self.update_state(
-        state="PENDING",
-        meta={"msg": "VM {} created successfully".format(vm_name)},
-    )
+    self.update_state(state="PENDING", meta={"msg": "VM {} created successfully".format(vm_name)})
 
     time.sleep(30)
 
@@ -159,9 +145,7 @@ def createVM(
         # Install NVIDIA GRID driver
 
         fractalLog(
-            function="createVM",
-            label=str(vm_name),
-            logs="Started to install NVIDIA extension",
+            function="createVM", label=str(vm_name), logs="Started to install NVIDIA extension"
         )
 
         extension_parameters = (
@@ -185,31 +169,19 @@ def createVM(
         time.sleep(30)
 
         self.update_state(
-            state="PENDING",
-            meta={"msg": "VM {} installing NVIDIA extension".format(vm_name)},
+            state="PENDING", meta={"msg": "VM {} installing NVIDIA extension".format(vm_name)}
         )
 
         async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(
-            resource_group,
-            vm_name,
-            extension_parameters["vm_extension_name"],
-            extension_parameters,
+            resource_group, vm_name, extension_parameters["vm_extension_name"], extension_parameters
         )
 
         async_vm_extension.wait()
 
-        fractalLog(
-            function="createVM",
-            label=str(vm_name),
-            logs="NVIDIA extension done installing",
-        )
+        fractalLog(function="createVM", label=str(vm_name), logs="NVIDIA extension done installing")
 
         lockVMAndUpdate(
-            vm_name,
-            "RUNNING_AVAILABLE",
-            False,
-            temporary_lock=None,
-            resource_group=resource_group,
+            vm_name, "RUNNING_AVAILABLE", False, temporary_lock=None, resource_group=resource_group
         )
 
         fractalLog(
@@ -227,11 +199,7 @@ def createVM(
         return vm
 
     else:
-        fractalLog(
-            function="createVM",
-            label=str(vm_name),
-            logs="SQL insertion unsuccessful",
-        )
+        fractalLog(function="createVM", label=str(vm_name), logs="SQL insertion unsuccessful")
 
         self.update_state(
             state="FAILURE",
@@ -242,15 +210,7 @@ def createVM(
 
 
 @celery_instance.task(bind=True)
-def cloneDisk(
-    self,
-    username,
-    location,
-    operating_system,
-    branch,
-    apps=[],
-    resource_group=VM_GROUP,
-):
+def cloneDisk(self, username, location, operating_system, branch, apps=[], resource_group=VM_GROUP):
     """Clones a Windows/Linux Fractal disk
 
     Args:
@@ -373,12 +333,7 @@ def cloneDisk(
 
 @celery_instance.task(bind=True)
 def createDisk(
-    self,
-    disk_size,
-    username,
-    location,
-    resource_group=VM_GROUP,
-    operating_system="Windows",
+    self, disk_size, username, location, resource_group=VM_GROUP, operating_system="Windows"
 ):
     """Creates an empty Windows Azure managed disk
 

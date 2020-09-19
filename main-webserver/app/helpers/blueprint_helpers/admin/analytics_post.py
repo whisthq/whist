@@ -19,10 +19,7 @@ def analyticsLogsHelper(body):
             feature_std = np.std(transformed_df["contents"])
             feature_median = np.median(transformed_df["contents"])
             feature_mean = np.mean(transformed_df["contents"])
-            feature_range = [
-                min(transformed_df["contents"]),
-                max(transformed_df["contents"]),
-            ]
+            feature_range = [min(transformed_df["contents"]), max(transformed_df["contents"])]
 
             return {
                 "summary_statistics": {
@@ -61,10 +58,7 @@ def analyticsLogsHelper(body):
         cleaned_df = df[df.time.notnull()]
     except Exception as e:
         print("Error reading {filename}".format(filename=body["filename"]))
-        return (
-            jsonify({}),
-            400,
-        )
+        return (jsonify({}), 400)
 
     # Get number of errors
     error_df = cleaned_df[cleaned_df.level.str.contains("ERROR", na=False, regex=False)]

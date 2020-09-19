@@ -86,9 +86,7 @@ def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
         }
         # use method create_or_update to update network interface configuration.
         async_ip_detach = network_client.network_interfaces.create_or_update(
-            resource_group_name=resource_group,
-            network_interface_name=nic_name,
-            parameters=params,
+            resource_group_name=resource_group, network_interface_name=nic_name, parameters=params
         )
         async_ip_detach.wait()
 

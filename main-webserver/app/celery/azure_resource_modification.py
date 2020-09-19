@@ -81,10 +81,7 @@ def deployArtifact(self, vm_name, artifact_name, run_id, resource_group=VM_GROUP
         )
 
         command = file.read().replace("ARTIFACT_NAME", artifact_name).replace("RUN_ID", str(run_id))
-        run_command_parameters = {
-            "command_id": "RunPowerShellScript",
-            "script": [command],
-        }
+        run_command_parameters = {"command_id": "RunPowerShellScript", "script": [command]}
 
         poller = compute_client.virtual_machines.run_command(
             resource_group, vm_name, run_command_parameters
@@ -133,10 +130,7 @@ def runPowershell(self, vm_name, command, resource_group=VM_GROUP):
             logs="Starting to run Powershell on VM {vm_name}".format(vm_name=vm_name),
         )
 
-        run_command_parameters = {
-            "command_id": "RunPowerShellScript",
-            "script": [command],
-        }
+        run_command_parameters = {"command_id": "RunPowerShellScript", "script": [command]}
 
         poller = compute_client.virtual_machines.run_command(
             resource_group, vm_name, run_command_parameters
@@ -345,9 +339,7 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
         disk_attached = False
         while not disk_attached:
             fractalLog(
-                function="automaticAttachDisk",
-                label=str(username),
-                logs="DISKNO T ATTACHED",
+                function="automaticAttachDisk", label=str(username), logs="DISKNO T ATTACHED"
             )
             vm = claimAvailableVM(username, disk_name, location, resource_group, os_type, s=self)
             if vm:
@@ -370,8 +362,7 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                     > 0
                 ):
                     self.update_state(
-                        state="PENDING",
-                        meta={"msg": "Data successfully uploaded to cloud PC."},
+                        state="PENDING", meta={"msg": "Data successfully uploaded to cloud PC."}
                     )
 
                     attachSecondaryDisks(username, vm_name, resource_group, s=self)
@@ -435,7 +426,6 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                 time.sleep(30)
 
     self.update_state(
-        state="FAILURE",
-        meta={"msg": "Cloud PC could not be started. Please contact support."},
+        state="FAILURE", meta={"msg": "Cloud PC could not be started. Please contact support."}
     )
     return None

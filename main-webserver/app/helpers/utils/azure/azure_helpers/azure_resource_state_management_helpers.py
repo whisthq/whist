@@ -52,10 +52,7 @@ def boot_if_necessary(vm_name, needs_restart, resource_group=VM_GROUP, s=None):
         )
 
         if s:
-            s.update_state(
-                state="PENDING",
-                meta={"msg": "Your cloud PC was started successfully."},
-            )
+            s.update_state(state="PENDING", meta={"msg": "Your cloud PC was started successfully."})
 
         return 1
 
@@ -82,8 +79,7 @@ def boot_if_necessary(vm_name, needs_restart, resource_group=VM_GROUP, s=None):
 
         if s:
             s.update_state(
-                state="PENDING",
-                meta={"msg": "Your cloud PC was restarted successfully."},
+                state="PENDING", meta={"msg": "Your cloud PC was restarted successfully."}
             )
 
         return 1

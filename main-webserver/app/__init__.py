@@ -48,12 +48,7 @@ def fractalPreProcess(f):
                 body = {k: str(v)[0 : min(len(str(v)), 500)] for k, v in dict(body).items()}
                 body = str(body)
 
-            logger.info(
-                "{}\n{}\r\n".format(
-                    request.method + " " + request.url,
-                    body,
-                )
-            )
+            logger.info("{}\n{}\r\n".format(request.method + " " + request.url, body))
 
         return f(*args, **kwargs)
 

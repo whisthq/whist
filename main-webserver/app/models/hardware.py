@@ -36,9 +36,7 @@ class OSDisk(db.Model):
     user_id = db.Column(db.ForeignKey("users.user_id"))
     last_pinged = db.Column(db.Integer)
     branch = db.Column(
-        db.String(250),
-        nullable=False,
-        server_default=text("'master'::character varying"),
+        db.String(250), nullable=False, server_default=text("'master'::character varying")
     )
     first_time = db.Column(db.Boolean, server_default=expression.true())
 

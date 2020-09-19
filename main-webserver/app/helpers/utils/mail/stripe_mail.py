@@ -35,9 +35,7 @@ def chargeFailedMail(username, custId):
         sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
         fractalLog(
-            function="chargeFailedMail",
-            label=username,
-            logs="Sent charge failed email to support",
+            function="chargeFailedMail", label=username, logs="Sent charge failed email to support"
         )
     except Exception as e:
         fractalLog(
@@ -65,10 +63,7 @@ def chargeSuccessMail(username, custId):
         )
     except Exception as e:
         fractalLog(
-            function="chargeSuccessMail",
-            label="Stripe",
-            logs=e.message,
-            level=logging.ERROR,
+            function="chargeSuccessMail", label="Stripe", logs=e.message, level=logging.ERROR
         )
 
 
@@ -88,17 +83,10 @@ def trialEndingMail(user):
         sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
         fractalLog(
-            function="trialEndingMail",
-            label="Stripe",
-            logs="Sent trial ending email to customer",
+            function="trialEndingMail", label="Stripe", logs="Sent trial ending email to customer"
         )
     except Exception as e:
-        fractalLog(
-            function="trialEndingMail",
-            label="Stripe",
-            logs=e.message,
-            level=logging.ERROR,
-        )
+        fractalLog(function="trialEndingMail", label="Stripe", logs=e.message, level=logging.ERROR)
 
 
 def trialEndedMail(username):
@@ -117,12 +105,7 @@ def trialEndedMail(username):
             logs="Sent trial ended email to {}".format(username),
         )
     except Exception as e:
-        fractalLog(
-            function="trialEndedMail",
-            label="Stripe",
-            logs=e.message,
-            level=logging.ERROR,
-        )
+        fractalLog(function="trialEndedMail", label="Stripe", logs=e.message, level=logging.ERROR)
 
 
 def creditAppliedMail(username):
@@ -150,12 +133,7 @@ def creditAppliedMail(username):
             logs="Sent credit applied email to {}".format(username),
         )
     except Exception as e:
-        fractalLog(
-            function="creditAppliedMail",
-            label="Mail",
-            logs=e.message,
-            level=logging.ERROR,
-        )
+        fractalLog(function="creditAppliedMail", label="Mail", logs=e.message, level=logging.ERROR)
         return 1
 
     return 0

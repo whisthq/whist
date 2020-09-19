@@ -26,9 +26,7 @@ def test_delete_disk_initial(input_token, admin_token):
             )
 
             resp = deleteDisk(
-                disk_name=disk["disk_id"],
-                resource_group=RESOURCE_GROUP,
-                input_token=input_token,
+                disk_name=disk["disk_id"], resource_group=RESOURCE_GROUP, input_token=input_token
             )
 
             task = queryStatus(resp, timeout=5)
@@ -132,9 +130,7 @@ def test_disk_attach(input_token, admin_token):
             )
 
             resp = attachDisk(
-                disk_name=disk_name,
-                resource_group=RESOURCE_GROUP,
-                input_token=input_token,
+                disk_name=disk_name, resource_group=RESOURCE_GROUP, input_token=input_token
             )
 
             task = queryStatus(resp, timeout=8)
@@ -190,10 +186,7 @@ def test_disk_create(input_token):
     )
 
     resp = createDisk(
-        location=region,
-        disk_size=127,
-        resource_group=RESOURCE_GROUP,
-        input_token=input_token,
+        location=region, disk_size=127, resource_group=RESOURCE_GROUP, input_token=input_token
     )
 
     task = queryStatus(resp, timeout=1.2)

@@ -43,10 +43,7 @@ def chargeHelper(token, email, code, plan):
     else:
         return (
             jsonify(
-                {
-                    "status": CONFLICT,
-                    "error": "Cannot apply subscription to nonexistant user!",
-                }
+                {"status": CONFLICT, "error": "Cannot apply subscription to nonexistant user!"}
             ),
             CONFLICT,
         )
@@ -59,10 +56,7 @@ def chargeHelper(token, email, code, plan):
         except IndexError:
             return (
                 jsonify(
-                    {
-                        "status": "NOT_ACCEPTABLE",
-                        "error": "Zip code does not exist in the US!",
-                    }
+                    {"status": "NOT_ACCEPTABLE", "error": "Zip code does not exist in the US!"}
                 ),
                 NOT_ACCEPTABLE,
             )
@@ -94,11 +88,7 @@ def chargeHelper(token, email, code, plan):
                 stripe.SubscriptionItem.modify(
                     subscriptions[0]["items"]["data"][0]["id"], plan=PLAN_ID
                 )
-                fractalLog(
-                    function="chargeHelper",
-                    label=email,
-                    logs="Customer updated successful",
-                )
+                fractalLog(function="chargeHelper", label=email, logs="Customer updated successful")
         else:
             new_customer = stripe.Customer.create(email=email, source=token)
             customer_id = new_customer["id"]
@@ -131,11 +121,7 @@ def chargeHelper(token, email, code, plan):
             user.credits_outstanding = 0
             db.session.commit()
 
-            fractalLog(
-                function="chargeHelper",
-                label=email,
-                logs="Customer added successful",
-            )
+            fractalLog(function="chargeHelper", label=email, logs="Customer added successful")
 
     except Exception as e:
         track = traceback.format_exc()
@@ -205,10 +191,7 @@ def retrieveStripeHelper(email):
             )
         except Exception as e:
             fractalLog(
-                function="retrieveStripeHelper",
-                label=email,
-                logs=str(e),
-                level=logging.ERROR,
+                function="retrieveStripeHelper", label=email, logs=str(e), level=logging.ERROR
             )
 
     return (
@@ -235,12 +218,7 @@ def cancelStripeHelper(email):
 
     if len(subscription) == 0:
         return (
-            jsonify(
-                {
-                    "status": NOT_ACCEPTABLE,
-                    "error": "Customer does not have a subscription!",
-                }
-            ),
+            jsonify({"status": NOT_ACCEPTABLE, "error": "Customer does not have a subscription!"}),
             NOT_ACCEPTABLE,
         )
 
@@ -252,12 +230,7 @@ def cancelStripeHelper(email):
             logs="Cancel stripe subscription for {}".format(email),
         )
     except Exception as e:
-        fractalLog(
-            function="cancelStripeHelper",
-            label=email,
-            logs=str(e),
-            level=logging.ERROR,
-        )
+        fractalLog(function="cancelStripeHelper", label=email, logs=str(e), level=logging.ERROR)
         pass
     return jsonify({"status": SUCCESS}), SUCCESS
 
@@ -303,19 +276,13 @@ def addProductHelper(email, productName):
     """
     customer = User.query.get(email)
     if not customer:
-        return (
-            jsonify({"status": "Customer with this email does not exist!"}),
-            BAD_REQUEST,
-        )
+        return (jsonify({"status": "Customer with this email does not exist!"}), BAD_REQUEST)
 
     customer_id = None
     if customers.stripe_customer_id:
         customer_id = customers.stripe_customer_id
     else:
-        return (
-            jsonify({"status": "Customer does not have a Stripe ID!"}),
-            BAD_REQUEST,
-        )
+        return (jsonify({"status": "Customer does not have a Stripe ID!"}), BAD_REQUEST)
 
     PLAN_ID = None
     if productName == "256disk":
@@ -324,10 +291,7 @@ def addProductHelper(email, productName):
         PLAN_ID = MEDIUMDISK_PLAN_ID
 
     if PLAN_ID is None:
-        return (
-            jsonify({"status": "Invalid product"}),
-            BAD_REQUEST,
-        )
+        return (jsonify({"status": "Invalid product"}), BAD_REQUEST)
 
     subscription = stripe.Subscription.list(customer=customer_id)["data"][0]
 
@@ -343,10 +307,7 @@ def addProductHelper(email, productName):
             subscriptionItem["id"], quantity=subscriptionItem["quantity"] + 1
         )
 
-    return (
-        jsonify({"status": "Product added to subscription successfully"}),
-        SUCCESS,
-    )
+    return (jsonify({"status": "Product added to subscription successfully"}), SUCCESS)
 
 
 def removeProductHelper(email, productName):
@@ -361,19 +322,13 @@ def removeProductHelper(email, productName):
     """
     customer = User.query.get(email)
     if not customer:
-        return (
-            jsonify({"status": "Customer with this email does not exist!"}),
-            BAD_REQUEST,
-        )
+        return (jsonify({"status": "Customer with this email does not exist!"}), BAD_REQUEST)
 
     customer_id = None
     if customers.stripe_customer_id:
         customer_id = customers.stripe_customer_id
     else:
-        return (
-            jsonify({"status": "Customer does not have a Stripe ID!"}),
-            BAD_REQUEST,
-        )
+        return (jsonify({"status": "Customer does not have a Stripe ID!"}), BAD_REQUEST)
 
     PLAN_ID = None
     if productName == "256disk":
@@ -382,10 +337,7 @@ def removeProductHelper(email, productName):
         PLAN_ID = MEDIUMDISK_PLAN_ID
 
     if PLAN_ID is None:
-        return (
-            jsonify({"status": "Invalid product"}),
-            BAD_REQUEST,
-        )
+        return (jsonify({"status": "Invalid product"}), BAD_REQUEST)
 
     subscription = stripe.Subscription.list(customer=customer_id)["data"][0]
     subscriptionItem = None
@@ -394,10 +346,7 @@ def removeProductHelper(email, productName):
             subscriptionItem = stripe.SubscriptionItem.retrieve(item["id"])
 
     if subscriptionItem is None:
-        return (
-            jsonify({"status": "Product already not in subscription"}),
-            SUCCESS,
-        )
+        return (jsonify({"status": "Product already not in subscription"}), SUCCESS)
     else:
         if subscriptionItem["quantity"] == 1:
             stripe.SubscriptionItem.delete(subscriptionItem["id"])
@@ -406,34 +355,19 @@ def removeProductHelper(email, productName):
                 subscriptionItem["id"], quantity=subscriptionItem["quantity"] - 1
             )
 
-    return (
-        jsonify({"status": "Product removed from subscription successfully"}),
-        SUCCESS,
-    )
+    return (jsonify({"status": "Product removed from subscription successfully"}), SUCCESS)
 
 
 def addCardHelper(custId, sourceId):
-    stripe.Customer.create_source(
-        custId,
-        source=sourceId,
-    )
+    stripe.Customer.create_source(custId, source=sourceId)
 
-    return (
-        jsonify({"status": "Card updated for customer successfully"}),
-        SUCCESS,
-    )
+    return (jsonify({"status": "Card updated for customer successfully"}), SUCCESS)
 
 
 def deleteCardHelper(custId, cardId):
-    stripe.Customer.delete_source(
-        custId,
-        cardId,
-    )
+    stripe.Customer.delete_source(custId, cardId)
 
-    return (
-        jsonify({"status": "Card removed for customer successfully"}),
-        SUCCESS,
-    )
+    return (jsonify({"status": "Card removed for customer successfully"}), SUCCESS)
 
 
 def webhookHelper(event):
@@ -498,10 +432,7 @@ def updateHelper(username, new_plan_type):
     elif new_plan_type == "Unlimited":
         new_plan_id = UNLIMITED_PLAN_ID
     else:
-        return (
-            jsonify({"status": NOT_ACCEPTABLE, "error": "Invalid plan type"}),
-            NOT_ACCEPTABLE,
-        )
+        return (jsonify({"status": NOT_ACCEPTABLE, "error": "Invalid plan type"}), NOT_ACCEPTABLE)
 
     customer = User.query.get(username)
     if not customer:

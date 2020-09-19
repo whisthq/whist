@@ -29,10 +29,7 @@ args = parser.add_argument(
 )
 args = parser.parse_args()
 
-env_to_app_name = {
-    "production": "main-webserver",
-    "staging": "staging-webserver",
-}
+env_to_app_name = {"production": "main-webserver", "staging": "staging-webserver"}
 app_name = env_to_app_name.get(args.env, args.env)
 
 if str(sys.platform).startswith("win"):

@@ -23,8 +23,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, resource_group=VM
 
         if s:
             s.update_state(
-                state="PENDING",
-                meta={"msg": "Cloud PC started executing boot request."},
+                state="PENDING", meta={"msg": "Cloud PC started executing boot request."}
             )
 
         # Fetch the name of the disk currently attached to the VM
@@ -41,8 +40,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, resource_group=VM
                 function="sendVMStartCommand",
                 label=vm_name,
                 logs="Could not find a VM named {vm_name} in table {table_name}".format(
-                    vm_name=vm_name,
-                    table_name=str(resourceGroupToTable(resource_group)),
+                    vm_name=vm_name, table_name=str(resourceGroupToTable(resource_group))
                 ),
                 level=logging.ERROR,
             )
@@ -70,8 +68,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, resource_group=VM
 
             if s:
                 s.update_state(
-                    state="PENDING",
-                    meta={"msg": "Cloud PC still executing boot request."},
+                    state="PENDING", meta={"msg": "Cloud PC still executing boot request."}
                 )
 
             # Power Azure VM on if it's not currently running
@@ -113,8 +110,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, resource_group=VM
 
                 if s:
                     s.update_state(
-                        state="PENDING",
-                        meta={"msg": "Logged into your cloud PC successfully."},
+                        state="PENDING", meta={"msg": "Logged into your cloud PC successfully."}
                     )
 
             # Finally, run app installation scripts if the disk has not been set up yet
@@ -145,12 +141,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, resource_group=VM
 
             # VM is receive connections, remove permanent lock
 
-            lockVMAndUpdate(
-                vm_name,
-                "RUNNING_AVAILABLE",
-                False,
-                temporary_lock=2,
-            )
+            lockVMAndUpdate(vm_name, "RUNNING_AVAILABLE", False, temporary_lock=2)
         return 1
     except Exception as e:
         fractalLog(
@@ -171,11 +162,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, resource_group=VM
 
 
 def fractalVMStart(
-    vm_name,
-    needs_restart=False,
-    needs_winlogon=True,
-    resource_group=VM_GROUP,
-    s=None,
+    vm_name, needs_restart=False, needs_winlogon=True, resource_group=VM_GROUP, s=None
 ):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary
     (big brain thoughts from Ming)
@@ -212,8 +199,7 @@ def fractalVMStart(
 
         if s:
             s.update_state(
-                state="PENDING",
-                meta={"msg": "Cloud PC successfully received boot request."},
+                state="PENDING", meta={"msg": "Cloud PC successfully received boot request."}
             )
 
         while (
@@ -238,12 +224,7 @@ def fractalVMStart(
         # Success! VM is running and ready to use
 
         if "running" in vm_state.statuses[1].code:
-            lockVMAndUpdate(
-                vm_name,
-                "RUNNING_AVAILABLE",
-                False,
-                temporary_lock=None,
-            )
+            lockVMAndUpdate(vm_name, "RUNNING_AVAILABLE", False, temporary_lock=None)
             started = True
             return 1
 
@@ -268,12 +249,7 @@ def fractalVMStart(
             # Success! VM is running and ready to use
 
             if "running" in vm_state.statuses[1].code:
-                lockVMAndUpdate(
-                    vm_name,
-                    "RUNNING_AVAILABLE",
-                    False,
-                    temporary_lock=None,
-                )
+                lockVMAndUpdate(vm_name, "RUNNING_AVAILABLE", False, temporary_lock=None)
                 started = True
                 return 1
 

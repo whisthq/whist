@@ -95,10 +95,7 @@ def extractFeature(feature_name, cleaned_df, scale):
         feature_std = np.std(transformed_df["contents"])
         feature_median = np.median(transformed_df["contents"])
         feature_mean = np.mean(transformed_df["contents"])
-        feature_range = [
-            min(transformed_df["contents"]),
-            max(transformed_df["contents"]),
-        ]
+        feature_range = [min(transformed_df["contents"]), max(transformed_df["contents"])]
 
         return {
             "summary_statistics": {
