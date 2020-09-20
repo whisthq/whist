@@ -43,7 +43,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install Pulse Audio & XDummy dependencies explicitly, needs to be before installing/updating Python
-RUN apt-get update && apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libunwind8=1.2.1-8 \
     xserver-xorg-core-hwe-18.04=2:1.20.8-2ubuntu2.2~18.04.3 \
     libgstreamer-plugins-base1.0-0=1.14.5-0ubuntu1~18.04.1 \
