@@ -42,6 +42,22 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# Install Pulse Audio dependencies explicitly, needs to be before installing/updating Python
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libgstreamer-plugins-base1.0-0=1.14.5-0ubuntu1~18.04.1 \
+    libgstreamer1.0-0=1.14.5-0ubuntu1~18.04.1 \
+    liborc-0.4-0=1:0.4.28-1 \
+    libpulse0=1:11.1-1ubuntu7.10 \
+    libsnapd-glib1=1.49-0ubuntu0.18.04.2 \
+    libsndfile1=1.0.28-4ubuntu0.18.04.1 \
+    libsoxr0=0.1.2-3 \
+    libspeexdsp1=1.2~rc1.2-1ubuntu2 \
+    libwebrtc-audio-processing1=0.3-1 \
+    libasound2-plugins=1.1.1-1ubuntu1 \
+    pulseaudio-utils=1:11.1-1ubuntu7.10 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install basic dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
     apt-utils=1.6.12ubuntu0.1 \
@@ -113,37 +129,10 @@ RUN useradd --create-home fractal \
 #HERE
 
 
-# Install Pulse Audio dependencies explicitly
-# RUN apt-get update && apt-get install --no-install-recommends -y \
-#     libgstreamer-plugins-base1.0-0=1.14.5-0ubuntu1~18.04.1 \
-#     libgstreamer1.0-0=1.14.5-0ubuntu1~18.04.1 \
-#     liborc-0.4-0=1:0.4.28-1 \
-#     libpulse0=1:11.1-1ubuntu7.10 \
-#     libsnapd-glib1=1.49-0ubuntu0.18.04.2 \
-#     libsndfile1=1.0.28-4ubuntu0.18.04.1 \
-#     libsoxr0=0.1.2-3 \
-#     libspeexdsp1=1.2~rc1.2-1ubuntu2 \
-#     libwebrtc-audio-processing1=0.3-1 \
-#     libasound2-plugins=1.1.1-1ubuntu1 \
-#     pulseaudio-utils=1:11.1-1ubuntu7.10 \
-#     && apt-get clean \
-#     && rm -rf /var/lib/apt/lists/*
 
 
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    libgstreamer-plugins-base1.0-0 \
-    libgstreamer1.0-0 \
-    liborc-0.4-0 \
-    libpulse0 \
-    libsnapd-glib1 \
-    libsndfile1 \
-    libsoxr0 \
-    libspeexdsp1 \
-    libwebrtc-audio-processing1 \
-    libasound2-plugins \
-    pulseaudio-utils \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+
+
 
 
 
