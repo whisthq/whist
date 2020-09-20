@@ -145,31 +145,38 @@ RUN /bin/bash -c "source utils.sh && Update-Linux"
 
 RUN /bin/bash -c "source utils.sh && Install-VirtualDisplay-NoGnome"
 
-
-
-
-####### HERE
-
 RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \
     && Install-GoogleChrome"
 
-
 RUN /bin/bash -c "source utils.sh \
     && Install-CustomX11Configuration"
+
 RUN /bin/bash -c "source utils.sh \
     && Set-FractalDirectory \
     && Install-FractalServer dev"
+
 RUN /bin/bash -c "source utils.sh \
     && Install-FractalAutoUpdate master"
+
 RUN /bin/bash -c "source utils.sh \
     && Install-FractalLinuxInputDriver"
+
 RUN /bin/bash -c "source utils.sh \
     && Install-Unison \
     && Enable-SSHKey"
-RUN /bin/bash -c " source utils.sh \
-    && Disable-Shutdown"
+
+
+
+
+
+
+####### HERE
+
+
+
+
 RUN /bin/bash -c " source utils.sh && Add-AutoLogin"
 RUN /bin/bash -c " source utils.sh \
     Install-FractalServer \
