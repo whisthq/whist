@@ -191,11 +191,11 @@ WORKDIR /
 
 #From protocol/server/linux-server-setup.sh
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    x11-xserver-utils \
     libxtst-dev \
     libxdamage-dev \
-    libasound2-dev \
     xclip \
-    x11-xserver-utils \
+    libasound2-dev=1.1.3-5 \
     ffmpeg=7:3.4.8-0ubuntu0.2 \ 
     libavcodec-dev=7:3.4.8-0ubuntu0.2 \
     libavdevice-dev=7:3.4.8-0ubuntu0.2 \
