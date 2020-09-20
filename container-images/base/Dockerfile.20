@@ -70,7 +70,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     gnupg2=2.2.19-3ubuntu2 \
     libgbm1=20.0.4-2ubuntu1 \
     libxcb-dri3-0=1.14-2 \
-    python3=3.8.2-0ubuntu2 \
     sudo=1.8.31-1ubuntu1 \
     vim=2:8.1.2269-1ubuntu5 \
     && apt-get clean \
@@ -184,6 +183,10 @@ WORKDIR /
 
 
 
+RUN apt-get update && apt-get install --no-install-recommends -y \ 
+    python3=3.8.2-0ubuntu2 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 
 #From protocol/server/linux-server-setup.sh
