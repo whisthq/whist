@@ -34,6 +34,14 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/plymouth* \
     /lib/systemd/system/systemd-update-utmp*
 
+# These packages need to be installed before installing/updating Python
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    lsb-release=9.20170808ubuntu1 \
+    ufw=0.35-5 \
+    keyboard-configuration=1.178ubuntu2 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # Install basic dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
     apt-utils=1.6.12ubuntu0.1 \
@@ -81,9 +89,6 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade all previously installed packages, if needed
-RUN apt-get upgrade
-
 # Install time while avoiding interactive installation for tzdata, uses UTC
 ENV LOCAL="yes"
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -106,14 +111,25 @@ RUN useradd --create-home fractal \
 
 
 #HERE
-#ufw
-#keyboard-configuration
 
 
-RUN apt-get update && apt-get install --no-install-recommends -y \ 
-    lsb-release=9.20170808ubuntu1 \
+# Install Pulse Audio dependencies explicitly
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libgstreamer-plugins-base1.0-0=1.14.5-0ubuntu1~18.04.1 \
+    libgstreamer1.0-0=1.14.5-0ubuntu1~18.04.1 \
+    liborc-0.4-0=1:0.4.28-1 \
+    libpulse0=1:11.1-1ubuntu7.10 \
+    libsnapd-glib1=1.49-0ubuntu0.18.04.2 \
+    libsndfile1=1.0.28-4ubuntu0.18.04.1 \
+    libsoxr0=0.1.2-3 \
+    libspeexdsp1=1.2~rc1.2-1ubuntu2 \
+    libwebrtc-audio-processing1=0.3-1 \
+    libasound2-plugins=1.1.1-1ubuntu1 \
+    pulseaudio-utils=1:11.1-1ubuntu7.10 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+
 
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
     pulseaudio=1:11.1-1ubuntu7.10 \
@@ -124,9 +140,6 @@ RUN adduser root pulse-access \
     && adduser fractal pulse-access
 
 
-
-# Upgrade all previously installed packages, if needed
-RUN apt-get upgrade
 
 
 

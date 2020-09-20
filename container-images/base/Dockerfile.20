@@ -16,20 +16,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-
-
-# TESTESTSTSTSTST
-
-RUN apt-get update && apt-get install -y \
-    lsb-release \
-    ufw \
-    keyboard-configuration \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-
-
-
 # Clean systemd install
 WORKDIR /lib/systemd/system/sysinit.target.wants/
 
@@ -47,6 +33,14 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/anaconda.target.wants/* \
     /lib/systemd/system/plymouth* \
     /lib/systemd/system/systemd-update-utmp*
+
+# These packages need to be installed before installing/updating Python
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    lsb-release=11.1.0ubuntu2 \
+    ufw=0.36-6 \
+    keyboard-configuration=1.194ubuntu3 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install basic dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -95,9 +89,6 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade all previously installed packages, if needed
-RUN apt-get upgrade
-
 # Install time while avoiding interactive installation for tzdata, uses UTC
 ENV LOCAL="yes"
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -121,17 +112,26 @@ RUN useradd --create-home fractal \
 
 
 ## HERE
-#ufw
-#keyboard-configuration
-
-#ufw=0.36-0ubuntu0.18.04.1
-#keyboard-configuration=1.178ubuntu2.9
 
 
-RUN apt-get update && apt-get install --no-install-recommends -y \ 
-    lsb-release=11.1.0ubuntu2 \
+# Install Pulse Audio dependencies explicitly
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libgstreamer-plugins-base1.0-0=1.16.2-4 \
+    libgstreamer1.0-0=1.16.2-2 \
+    liborc-0.4-0=1:0.4.31-1 \
+    libpulse0=1:13.99.1-1ubuntu3.6 \
+    libsnapd-glib1=1.57-0ubuntu3 \
+    libsndfile1=1.0.28-7 \
+    libsoxr0=0.1.3-2build1 \
+    libspeexdsp1=1.2~rc1.2-1.1ubuntu1 \
+    libwebrtc-audio-processing1=0.3.1-0ubuntu3 \
+    libasound2-plugins=1.2.2-1ubuntu1 \
+    pulseaudio-utils=1:13.99.1-1ubuntu3.6 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+
+
 
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
     pulseaudio=1:13.99.1-1ubuntu3.2 \
@@ -143,9 +143,10 @@ RUN adduser root pulse-access \
 
 
 
+# check for packages to upgrade in here and fix the version numbers, also in dockerfile18
 
-# Upgrade all previously installed packages, if needed
-RUN apt-get upgrade
+
+
 
 
 
