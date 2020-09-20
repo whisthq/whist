@@ -44,15 +44,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     lsb-release=9.20170808ubuntu1 \
     ufw=0.35-5 \
     keyboard-configuration=1.178ubuntu2 \
-    libxtst-dev \
-    libxdamage-dev \
-    libasound2-dev \
-    xclip \
-    x11-xserver-utils \
+    libxtst-dev=2:1.2.3-1 \
+    libxdamage-dev=1:1.1.4-3 \
+    libasound2-dev=1.1.3-5 \
+    xclip=0.12+svn84-4build1 \
+    x11-xserver-utils=7.7+7build1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-
 
 ####
 
@@ -205,6 +203,26 @@ WORKDIR /
 
 
 
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libavcodec58=7:3.4.8 \
+    libavcodec-extra57=7:3.4.8 \
+    libavdevice57=7:3.4.8 \
+    libavfilter7=7:3.4.8 \
+    libavfilter-extra6=7:3.4.8 \
+    libavformat57=7:3.4.8 \
+    libavresample3=7:3.4.8 \
+    libavutil55=7:3.4.8 \
+    libpostproc54=7:3.4.8 \
+    libswresample2=7:3.4.8 \
+    libswscale4=7:3.4.8 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
+
+
+
+
 #From protocol/server/linux-server-setup.sh
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ffmpeg=7:3.4.8-0ubuntu0.2 \ 
@@ -218,7 +236,8 @@ COPY entry.sh /home/fractal
 COPY display-service-envs /home/fractal
 COPY fractal-input.rules home/fractal
 
-RUN apt-get install --no-install-recommends -y openssh-server=1:7.6p1-4ubuntu0.3 \
+RUN apt-get install --no-install-recommends -y \ 
+    openssh-server=1:7.6p1-4ubuntu0.3 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
