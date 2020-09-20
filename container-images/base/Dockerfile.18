@@ -75,6 +75,8 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     libgbm1=19.2.8-0ubuntu0~18.04.2 \
     libxcb-dri3-0=1.13-1 \
     wget=1.19.4-1ubuntu2.2 \
+    python=2.7.15~rc1-1 \
+    python3.7=3.7.5-2~18.04 \
     sudo=1.8.21p2-3ubuntu1.2 \
     vim=2:8.0.1453-1ubuntu1.3 \
     libcurl4=7.58.0-2ubuntu3.10 \
@@ -179,9 +181,11 @@ WORKDIR /
 ####### HERE
 
 
-# remove python install, prob need to reorder some stuff now
-#     python=2.7.15~rc1-1 \
-#    python3.7=3.7.5-2~18.04 \
+    # libxtst-dev=2:1.2.3-1 \
+    # libxdamage-dev=1:1.1.4-3 \
+    # libasound2-dev=1.1.3-5 \
+    # xclip=0.12+svn84-4build1 \
+    # x11-xserver-utils=7.7+7build1 \
 
 
 
@@ -193,12 +197,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libx11-dev=2:1.6.4-3ubuntu0.3 \
 
 
-    libxtst-dev=2:1.2.3-1 \
-    
-    libxdamage-dev=1:1.1.4-3 \
-    libasound2-dev=1.1.3-5 \
-    xclip=0.12+svn84-4build1 \
-    x11-xserver-utils=7.7+7build1 \
+    libxtst-dev \
+    libxdamage-dev \
+    libasound2-dev \
+    xclip \
+    x11-xserver-utils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
