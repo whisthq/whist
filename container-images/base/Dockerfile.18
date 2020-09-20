@@ -209,7 +209,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libavcodec57=7:3.4.8-0ubuntu0.2 \
     libavcodec-extra57=7:3.4.8-0ubuntu0.2 \
     libavdevice57=7:3.4.8-0ubuntu0.2 \
-    libavfilter7=7:3.4.8-0ubuntu0.2 \
+    libavfilter6=7:3.4.8-0ubuntu0.2 \
     libavfilter-extra6=7:3.4.8-0ubuntu0.2 \
     libavformat57=7:3.4.8-0ubuntu0.2 \
     libavresample3=7:3.4.8-0ubuntu0.2 \
