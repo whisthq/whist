@@ -132,6 +132,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN adduser root pulse-access \
     && adduser fractal pulse-access
 
+# Install all required components for Fractal to perform well, split into steps for caching
+WORKDIR /setup-scripts/linux
+
+RUN /bin/bash -c "source utils.sh && Update-Linux"
+
 
 
 
@@ -140,21 +145,6 @@ RUN adduser root pulse-access \
 ####### HERE
 
 
-
-# Install XDummy Dependencies explicitly
-
-
-# check for packages to upgrade in here and fix the version numbers, also in dockerfile18
-
-
-
-
-
-
-# Install all required components for Fractal to perform well
-# Split into multiple steps for caching
-WORKDIR /setup-scripts/linux
-RUN /bin/bash -c "source utils.sh && Update-Linux"
 RUN /bin/bash -c "source utils.sh && Install-VirtualDisplay-NoGnome"
 RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
@@ -182,6 +172,7 @@ WORKDIR /
 
 
 
+# check for packages to upgrade in here and fix the version numbers, also in dockerfile18
 
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
     python3=3.8.2-0ubuntu2 \
