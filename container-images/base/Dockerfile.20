@@ -145,7 +145,7 @@ RUN /bin/bash -c "source utils.sh && Update-Linux"
 ####### HERE
 
 
-RUN /bin/bash -c "source utils.sh && Install-VirtualDisplay-NoGnome"
+RUN /bin/bash -c "source utils.sh && apt-get update && Install-VirtualDisplay-NoGnome"
 RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \
