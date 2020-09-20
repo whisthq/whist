@@ -123,6 +123,17 @@ RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \ 
     && echo 'fractal:password1234567.' | chpasswd
 
+# Install Pulse Audio
+RUN apt-get update && apt-get install --no-install-recommends -y \ 
+    pulseaudio=1:13.99.1-1ubuntu3.6 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Give access to Pulse Audio virtual sound card
+RUN adduser root pulse-access \
+    && adduser fractal pulse-access
+
+
 
 
 
@@ -131,14 +142,7 @@ RUN useradd --create-home fractal \
 
 
 
-RUN apt-get update && apt-get install --no-install-recommends -y \ 
-    pulseaudio=1:13.99.1-1ubuntu3.6 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN adduser root pulse-access \
-    && adduser fractal pulse-access
-
+# Install XDummy Dependencies explicitly
 
 
 # check for packages to upgrade in here and fix the version numbers, also in dockerfile18
@@ -150,34 +154,37 @@ RUN adduser root pulse-access \
 
 # Install all required components for Fractal to perform well
 # Split into multiple steps for caching
-RUN /bin/bash -c "source utils.sh \ 
-    && Update-Linux \
-    && Set-Time \
-    && Install-VirtualDisplay-NoGnome"
-RUN /bin/bash -c "source utils.sh \ 
+WORKDIR /setup-scripts/linux
+RUN /bin/bash -c "source utils.sh && Update-Linux"
+RUN /bin/bash -c "source utils.sh && Install-VirtualDisplay-NoGnome"
+RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \
     && Install-GoogleChrome"
-RUN /bin/bash -c "source utils.sh \ 
-    && Install-NvidiaTeslaPublicDrivers \
-    && Disable-TCC \
-    && Set-OptimalGPUSettings"
-RUN /bin/bash -c "source utils.sh \ 
+RUN /bin/bash -c "source utils.sh \
     && Install-CustomX11Configuration"
-RUN /bin/bash -c "source utils.sh \ 
+RUN /bin/bash -c "source utils.sh \
     && Set-FractalDirectory \
-    && Install-FractalServer master"
-RUN /bin/bash -c "source utils.sh \ 
-    && Install-FractalExitScript \
-    && Install-FractalAutoUpdate master \
-    && Install-FractalLinuxInputDriver \
-    && Install-FractalWallpaper "
-RUN /bin/bash -c "source utils.sh \ 
+    && Install-FractalServer dev"
+RUN /bin/bash -c "source utils.sh \
+    && Install-FractalAutoUpdate master"
+RUN /bin/bash -c "source utils.sh \
+    && Install-FractalLinuxInputDriver"
+RUN /bin/bash -c "source utils.sh \
     && Install-Unison \
-    && Enable-SSHKey \
-    && Disable-Shutdown \
-    && Add-AutoLogin \ 
-    && Disable-AutomaticLockScreen "
+    && Enable-SSHKey"
+RUN /bin/bash -c " source utils.sh \
+    && Disable-Shutdown"
+RUN /bin/bash -c " source utils.sh && Add-AutoLogin"
+RUN /bin/bash -c " source utils.sh \
+    Install-FractalServer \
+    Install-CustomGDMConfiguration"
+WORKDIR /
+
+
+
+
+
 
 #From protocol/server/linux-server-setup.sh
 RUN apt-get install --no-install-recommends -y \ 
