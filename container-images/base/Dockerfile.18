@@ -206,17 +206,17 @@ WORKDIR /
 
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    libavcodec58=7:3.4.8 \
-    libavcodec-extra57=7:3.4.8 \
-    libavdevice57=7:3.4.8 \
-    libavfilter7=7:3.4.8 \
-    libavfilter-extra6=7:3.4.8 \
-    libavformat57=7:3.4.8 \
-    libavresample3=7:3.4.8 \
-    libavutil55=7:3.4.8 \
-    libpostproc54=7:3.4.8 \
-    libswresample2=7:3.4.8 \
-    libswscale4=7:3.4.8 \
+    libavcodec57=7:3.4.8-0ubuntu0.2 \
+    libavcodec-extra57=7:3.4.8-0ubuntu0.2 \
+    libavdevice57=7:3.4.8-0ubuntu0.2 \
+    libavfilter7=7:3.4.8-0ubuntu0.2 \
+    libavfilter-extra6=7:3.4.8-0ubuntu0.2 \
+    libavformat57=7:3.4.8-0ubuntu0.2 \
+    libavresample3=7:3.4.8-0ubuntu0.2 \
+    libavutil55=7:3.4.8-0ubuntu0.2 \
+    libpostproc54=7:3.4.8-0ubuntu0.2 \
+    libswresample2=7:3.4.8-0ubuntu0.2 \
+    libswscale4=7:3.4.8-0ubuntu0.2 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
