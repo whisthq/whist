@@ -125,28 +125,28 @@ RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \
     && echo 'fractal:password1234567.' | chpasswd
 
-
-
-
-#HERE
-
-
-
-
-
-
-
-
-
+# Install Pulse Audio
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
     pulseaudio=1:11.1-1ubuntu7.10 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Give access to Pulse Audio virtual sound card
 RUN adduser root pulse-access \
     && adduser fractal pulse-access
 
 
+
+
+
+# HER
+
+# Install XDummy Dependencies explicitly
+
+RUN apt-get update && apt-get install --no-install-recommends -y \ 
+    xserver-xorg-core-hwe-18.04=2:1.20.8-2ubuntu2.2~18.04.3 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 
 
