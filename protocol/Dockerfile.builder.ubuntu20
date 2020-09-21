@@ -35,8 +35,7 @@ RUN usermod -aG sudo $uname
 RUN echo "${uname}:password" | chpasswd
 RUN apt-get install curl git -y
 
-RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.sh >>/dev/null 2>&1
-RUN /bin/bash -c "source utils.sh && Set-FractalDirectory && Install-FractalServer"
+RUN apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y
 WORKDIR /workdir
 
 
