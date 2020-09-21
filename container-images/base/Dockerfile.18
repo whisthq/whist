@@ -188,7 +188,6 @@ RUN adduser root pulse-access \
 WORKDIR /setup-scripts/linux
 
 RUN /bin/bash -c "source utils.sh \
-    && Install-7Zip \
     && Install-Curl \
     && Install-GoogleChrome"
 
@@ -255,18 +254,7 @@ RUN chown -vR fractal:fractal /home/fractal
 RUN chown root:root /run/user
 RUN chmod +x /home/fractal/entry.sh
 
-
-
-
-
-
-
-## CLEANED UP TO HERE, BUT WORKS BELOW
-
-
-
-
-###### Set up nvidia inside container
+# Set Nvidia inside Docker
 LABEL com.nvidia.volumes.needed="nvidia_driver"
 
 RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
@@ -280,11 +268,24 @@ ENV PATH /usr/local/nvidia/bin:${PATH}
 ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
 
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install --no-install-recommends -y "linux-headers-$(uname -r)" \
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    "linux-headers-$(uname -r)" \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 ENV distribution $(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+
+
+
+
+
+
+
+## CLEANED UP TO HERE, BUT WORKS BELOW
+
+
+
+
 
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
 RUN mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc/apt/preferences.d/cuda-repository-pin-600
