@@ -160,7 +160,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && sed -i '3 s/^/# /' /etc/apt/sources.list \
-    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable=85.0.4183.102-1 \
+    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable=85.0.4183.121-1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
