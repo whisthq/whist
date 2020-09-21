@@ -34,11 +34,7 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/plymouth* \
     /lib/systemd/system/systemd-update-utmp*
 
-
-
-#### HERE
-
-
+# Install X Server dependencies and basic Ubuntu packages
 # These packages need to be installed before installing/updating Python
 RUN apt-get update && apt-get install --no-install-recommends -y \
     lsb-release=9.20170808ubuntu1 \
@@ -51,41 +47,39 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libasound2-dev=1.1.3-5 \
     xclip=0.12+svn84-4build1 \
     x11-xserver-utils=7.7+7build1 \
+    xserver-xorg-video-dummy=1:0.3.8-1build1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-####
-
-
+# Install FFmpeg and Libav dependencies explicitly
+# These packages need to be installed before installing/updating Python
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    libmp3lame0 \
-    libopus0 \
-    libsnappy1v5 \
-    libspeex1 \
-    libtheora0 \
-    libtwolame0 \
-    libwebp6 \
-    libwebpmux3 \
-    libavc1394-0 \
-    libcaca0 \
-    libcdio-cdda2 \
-    libcdio-paranoia2 \
-    libdc1394-22 \
-    libiec61883-0 \
-    libraw1394-11 \
-    libxv1 \
-    librubberband2 \
-    libtesseract4 \
-    libzmq5 \
-    libopenmpt0 \
-    libvdpau1 \
+    libmp3lame0=3.100-2 \
+    libopus0=1.1.2-1ubuntu1 \
+    libsnappy1v5=1.1.7-1 \
+    libspeex1=1.2~rc1.2-1ubuntu2 \
+    libtheora0=1.1.1+dfsg.1-14 \
+    libtwolame0=0.3.13-3 \
+    libwebp6=0.6.1-2 \
+    libwebpmux3=0.6.1-2 \
+    libavc1394-0=0.5.4-4build1 \
+    libcaca0=0.99.beta19-2ubuntu0.18.04.1 \
+    libcdio-cdda2=10.2+0.94+2-2build1 \
+    libcdio-paranoia2=10.2+0.94+2-2build1 \
+    libdc1394-22=2.2.5-1 \
+    libiec61883-0=1.2.0-2 \
+    libraw1394-11=2.1.2-1 \
+    libxv1=2:1.0.11-1 \
+    librubberband2=1.8.1-7ubuntu2 \
+    libtesseract4=4.00~git2288-10f4998a-2 \
+    libzmq5=4.2.5-1ubuntu0.2 \
+    libopenmpt0=0.3.6-1 \
+    libvdpau1=1.1.1-3ubuntu1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-
-
-
-# Install Pulse Audio & XDummy dependencies explicitly, needs to be before installing/updating Python
+# Install Pulse Audio & XDummy dependencies explicitly
+# These packages need to be installed before installing/updating Python
 RUN apt-get update && apt-get install --no-install-recommends -y \
     libunwind8=1.2.1-8 \
     xserver-xorg-core-hwe-18.04=2:1.20.8-2ubuntu2.2~18.04.3 \
@@ -105,13 +99,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-
-
-
-
-
-
-# Install basic dependencies
+# Install general Ubuntu packages
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     apt-utils=1.6.12ubuntu0.1 \
     x11vnc=0.9.13-3 \
@@ -123,7 +111,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     gnupg2=2.2.4-1ubuntu1.3 \
     libgbm1=19.2.8-0ubuntu0~18.04.2 \
     libxcb-dri3-0=1.13-1 \
-    wget=1.19.4-1ubuntu2.2 \
     python=2.7.15~rc1-1 \
     python3.7=3.7.5-2~18.04 \
     sudo=1.8.21p2-3ubuntu1.2 \
@@ -159,7 +146,7 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install time while avoiding interactive installation for tzdata, uses UTC
+# Install time while avoiding interactive installation for tzdata - uses UTC
 ENV LOCAL="yes"
 RUN apt-get update && apt-get install --no-install-recommends -y \
     tzdata=2020a-0ubuntu0.18.04 \
@@ -192,8 +179,6 @@ WORKDIR /setup-scripts/linux
 
 RUN /bin/bash -c "source utils.sh && Update-Linux"
 
-RUN /bin/bash -c "source utils.sh && Install-VirtualDisplay-NoGnome"
-
 RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \
@@ -224,9 +209,7 @@ RUN /bin/bash -c " source utils.sh \
 
 WORKDIR /
 
-
-
-
+# Install FFmpeg dependencies explicitly
 RUN apt-get update && apt-get install --no-install-recommends -y \
     libavcodec57=7:3.4.8-0ubuntu0.2 \
     libavdevice57=7:3.4.8-0ubuntu0.2 \
@@ -240,7 +223,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-#From protocol/server/linux-server-setup.sh
+# Install FFmpeg, taken from protocol/server/linux-server-setup.sh
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ffmpeg=7:3.4.8-0ubuntu0.2 \ 
     libavcodec-dev=7:3.4.8-0ubuntu0.2 \
@@ -249,32 +232,33 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install FractalServer scripts and kernel module input rules
 COPY entry.sh /home/fractal
 COPY display-service-envs /home/fractal
 COPY fractal-input.rules home/fractal
 
-
-
-
-
-
-#### HERE ######
-
-## SSH
+# Install and enable OpenSSH
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
     openssh-server=1:7.6p1-4ubuntu0.3 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 RUN systemctl enable ssh
-###
 
-
-
-
-RUN chown -v -R fractal:fractal /home/fractal
+# Set appropriate user permissions for Fractal
+RUN chown -vR fractal:fractal /home/fractal
 RUN chown root:root /run/user
 RUN chmod +x /home/fractal/entry.sh
+
+
+
+
+
+
+
+## CLEANED UP TO HERE, BUT WORKS BELOW
+
+
 
 
 ###### Set up nvidia inside container
@@ -290,22 +274,23 @@ RUN mkdir -p /opt/nvidia/lib && \
 ENV PATH /usr/local/nvidia/bin:${PATH}
 ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
 
-
-
-
-
-
-############ HERE
-
-
-
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install --no-install-recommends -y "linux-headers-$(uname -r)" \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 ENV distribution $(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
-RUN wget "https://developer.download.nvidia.com/compute/cuda/repos/'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin"
+
+
+
+
+
+############ WORKS UP TO HERE
+
+
+
+
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
 RUN mv "cuda-'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin" /etc/apt/preferences.d/cuda-repository-pin-600
 RUN apt-key adv --fetch-keys "https://developer.download.nvidia.com/compute/cuda/repos/'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub"
 RUN echo "deb http://developer.download.nvidia.com/compute/cuda/repos/'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 /" | tee /etc/apt/sources.list.d/cuda.list
@@ -336,7 +321,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install some useful utilities for debugging/testing
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     tmux=2.6-3 \
     xserver-xorg-video-dummy=1:0.3.8-1build1 \
     mesa-utils=8.4.0-1 \
