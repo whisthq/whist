@@ -99,12 +99,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-
-
-## HERE TEMP
-
-
-
 # Install Nvidia CUDA Drivers dependencies explicitly
 # These packages need to be installed before installing/updating Python
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -114,7 +108,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libjansson4=2.11-1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
 
 # Install general Ubuntu packages
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
@@ -137,7 +130,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /var/lib/apt/lists/*
 
 # Install Google Chrome dependencies explicitly
-RUN apt-get update && apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libappindicator3-1=12.10.1+18.04.20180322.1-0ubuntu1 \
     libatk-bridge2.0-0=2.26.2-1 \
     libatk1.0-0=2.28.1-1 \
