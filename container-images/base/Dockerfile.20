@@ -186,19 +186,6 @@ WORKDIR /setup-scripts/linux
 
 RUN /bin/bash -c "source utils.sh && Update-Linux"
 
-
-
-
-
-
-####### HERE
-
-
-
-
-
-
-
 RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \
@@ -254,8 +241,18 @@ COPY entry.sh /home/fractal
 COPY display-service-envs /home/fractal
 COPY fractal-input.rules home/fractal
 
+
+
+
+####### HERE
+
+
+
+
 # Install and enable OpenSSH
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
+    openssh-client=1:8.2p1-4ubuntu0.1 \
+    openssh-sftp-server=1:8.2p1-4ubuntu0.1 \
     openssh-server=1:8.2p1-4ubuntu0.1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -304,7 +301,11 @@ RUN mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc
 RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub
 RUN echo deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 / | tee /etc/apt/sources.list.d/cuda.list
 # hadolint ignore=DL3008
-RUN apt-get -y update && apt-get install --no-install-recommends -y \ 
+RUN apt-get -y update && apt-get install --no-install-recommends -y \
+    nvidia-dkms-450=450.51.06 \
+    nvidia-driver-450=450.51.06 \
+    nvidia-settings=450.51.06 \
+    cuda-drivers-450=450.51.06-1 \
     cuda-drivers \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
