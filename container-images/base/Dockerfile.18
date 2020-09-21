@@ -188,8 +188,10 @@ RUN adduser root pulse-access \
 WORKDIR /setup-scripts/linux
 
 RUN /bin/bash -c "source utils.sh \
-    && Install-Curl \
-    && Install-GoogleChrome"
+    && Update-Linux
+
+RUN /bin/bash -c "source utils.sh \
+    && Install-Curl
 
 RUN /bin/bash -c "source utils.sh \
     && Install-CustomX11Configuration"
