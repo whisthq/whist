@@ -187,8 +187,6 @@ RUN adduser root pulse-access \
 # Install all required components for Fractal to perform well, split into steps for caching
 WORKDIR /setup-scripts/linux
 
-RUN /bin/bash -c "source utils.sh && Update-Linux"
-
 RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \

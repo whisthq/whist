@@ -195,8 +195,6 @@ RUN adduser root pulse-access \
 # Install all required components for Fractal to perform well, split into steps for caching
 WORKDIR /setup-scripts/linux
 
-RUN /bin/bash -c "source utils.sh && Update-Linux"
-
 RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \
@@ -310,6 +308,7 @@ RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/
 RUN echo deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 / | tee /etc/apt/sources.list.d/cuda.list
 # hadolint ignore=DL3008
 RUN apt-get -y update && apt-get install --no-install-recommends -y \
+    dkms \
     nvidia-dkms-450 \
     nvidia-driver-450 \
     nvidia-settings \
