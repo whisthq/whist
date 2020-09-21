@@ -2,9 +2,10 @@
 
 git_hash=$(git rev-parse --short HEAD)
 if [[ $3 == mount ]]; then
-    mount_protocol='--mount type=bind,source=$(cd base/protocol/server/build64;pwd),destination=/usr/share/protocol/bin'
+    mount_protocol="--mount type=bind,source=$(cd base/protocol/server/build64;pwd),destination=/usr/share/fractal/bin"
+    echo $mount_protocol
 else
-    mount_protocol=''
+    mount_protocol=""
 fi
 
 runcontainer (){
@@ -32,12 +33,12 @@ runcontainer (){
             --cap-add CAP_NET_BIND_SERVICE \
             --cap-add CAP_SYS_CHROOT \
             --cap-add CAP_SETFCAP \
-	        --cap-add SYS_NICE \
-         $mount_protocol \
-        -p 32262:32262 \
-        -p 32263:32263/udp \
-        -p 32273:32273 \
-        fractal/$1:$git_hash.$2
+	    --cap-add SYS_NICE \
+            $mount_protocol \
+            -p 32262:32262 \
+            -p 32263:32263/udp \
+            -p 32273:32273 \
+            fractal/$1:$git_hash.$2
 # capabilities not enabled by default: CAP_NICE
 }
 
