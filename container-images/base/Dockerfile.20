@@ -207,9 +207,6 @@ RUN /bin/bash -c "source utils.sh \
 
 RUN /bin/bash -c "source utils.sh \
     && Install-FractalAutoUpdate master"
-
-RUN /bin/bash -c "source utils.sh \
-    && Install-FractalLinuxInputDriver"
     
 RUN /bin/bash -c "source utils.sh \
     && Install-Unison \
