@@ -290,8 +290,17 @@ RUN mkdir -p /opt/nvidia/lib && \
 ENV PATH /usr/local/nvidia/bin:${PATH}
 ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
 
+
+
+
+
+
+############ HERE
+
+
+
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install --no-install-recommends -y "linux-headers-$(uname -r)"= \
+RUN apt-get update && apt-get install --no-install-recommends -y "linux-headers-$(uname -r)" \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
