@@ -493,7 +493,7 @@ typedef enum FractalServerMessageType {
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
-typedef struct __attribute__ ((aligned (8))) FractalDiscoveryReplyMessage {
+typedef struct FractalDiscoveryReplyMessage {
     int client_id;
     int UDP_port;
     int TCP_port;
@@ -511,7 +511,7 @@ typedef struct PeerUpdateMessage {
     RGB_Color color;
 } PeerUpdateMessage;
 
-typedef struct __attribute__ ((aligned (8))) FractalServerMessage {
+typedef struct FractalServerMessage {
     FractalServerMessageType type;  ///< Input message type.
     union {
         int ping_id;
