@@ -493,7 +493,7 @@ typedef enum FractalServerMessageType {
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
-typedef struct FractalDiscoveryReplyMessage {
+typedef struct __attribute__ ((aligned (8))) FractalDiscoveryReplyMessage {
     int client_id;
     int UDP_port;
     int TCP_port;
@@ -503,7 +503,7 @@ typedef struct FractalDiscoveryReplyMessage {
     char username[50];
 } FractalDiscoveryReplyMessage;
 
-typedef struct __attribute__ ((aligned (8))) PeerUpdateMessage {
+typedef struct PeerUpdateMessage {
     int peer_id;
     int x;
     int y;

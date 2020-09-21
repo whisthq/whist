@@ -164,10 +164,6 @@ int parseArgs(int argc, char *argv[]) {
                     return -1;
                 }
                 break;
-            case 'k':
-                running_ci = 1;
-                break;
-
             case 'u':
                 strcpy(user_email, optarg);
                 break;
