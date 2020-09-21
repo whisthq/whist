@@ -8,19 +8,21 @@ Our webservers and CD pipeline are hosted on Heroku. Our production database is 
 
 Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?cols=core_host%2Ccore_service&from_ts=1593977274176&index=&live=true&messageDisplay=inline&stream_sort=desc&to_ts=1593978174176).
 
-### Coding Philosophy
+#### Coding Philosophy
 
 Before contributing to this project, please read our in-depth coding philosophy document [here](https://www.notion.so/fractalcomputers/Code-Philosophy-Webserver-backend-d036205444464f8b8a61dc36eeae7dbb).
 
-## Getting Started
+## Development
 
-### Local Setup
+### Getting Started
+
+#### Local Setup
 
 Docker is being leveraged to create a partial-stack deployment of the `main-webserver` components, `web` and `celery`. To do so, it packages the application into an image with all necessary dependencies and then launches the application with the appropriate configurations, depending on if it's `web` or `celery` using `stem-cell.sh`. 
 
 Currently, the full environment is only partially replicated, so `retrieve_config.py` exists for collecting the appropriate environment variables needed to connect to the non-replicated portions of the environment. They are pulled from Heroku.
 
-#### 1. Retrieve Environment Variables
+##### 1. Retrieve Environment Variables
 
 First, ensure that the CLI tool `heroku`, and then type `heroku login` to log in (if you're not already logged in). Next, use `retrieve_config.py`. It provides a `-h` help menu for understanding parameters. Then, run:
 
@@ -34,7 +36,7 @@ py retrieve_config.py staging
 
 You can review `dev-base-config.json` to see which values will be overriden for local development. For example, the `REDIS_URL` will be changed to use the local Docker version.
 
-#### 2. Spin Up Local Servers
+##### 2. Spin Up Local Servers
 
 Use `docker-compose` to run the stack locally. First, `cd` into the `docker/` folder. Then, run the `up` command. If you are on Windows, you should run this from a command prompt in Administrator mode.
 
@@ -48,19 +50,19 @@ Review `docker-compose.yml` to see which ports the various services are hosted o
 
 By default, hot-reloading of the Flask web server and Celery task queue is enabled. To disable, set `HOT_RELOAD=false` in your Docker `.env` file.
 
-### Helper Software Setup
+#### Helper Software Setup
 
 We recommend that you download several softwares to help you code and test:
 
-#### Postman
+##### Postman
 
 We use Postman to send API requests to our server, to store our API endpoints, and to generate documentation. Our Postman team link is [here](https://fractalcomputers.postman.co/). If you are not part of the team, contact @mingy98. To better understand how Postman works, refer to our wiki [here](https://www.notion.so/fractalcomputers/Postman-API-Documentation-602cc6df23e04cd0a026340c406bd663).
 
-#### TablePlus
+##### TablePlus
 
 We use TablePlus to visualize, search, and modify our SQL database. For instructions on how to set up TablePlus, refer to our wiki [here](https://www.notion.so/fractalcomputers/Using-TablePlus-to-Access-our-PostgresSQL-Database-d5badb38eb3841deb56a84698ccd20f5).
 
-### Heroku Setup
+#### Heroku Setup
 
 For continuous integration and delivery, we leverage Heroku pipelines, which provides us with automated PR testing, isolation of environment variables, promotion/rollbacks, and auto-deploys from Github. Contributors should NOT push code to Heroku; only codeowners are expected to do this. Instead, contributors should PR their changes into the appropriate Github branch (most often `master`).
 
