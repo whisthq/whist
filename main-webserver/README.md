@@ -8,6 +8,10 @@ Our webservers and CD pipeline are hosted on Heroku. Our production database is 
 
 Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?cols=core_host%2Ccore_service&from_ts=1593977274176&index=&live=true&messageDisplay=inline&stream_sort=desc&to_ts=1593978174176).
 
+### Coding Philosophy
+
+Before contributing to this project, please read our in-depth coding philosophy document [here](https://www.notion.so/fractalcomputers/Code-Philosophy-Webserver-backend-d036205444464f8b8a61dc36eeae7dbb).
+
 ## Getting Started
 
 ### Local Setup
@@ -86,9 +90,7 @@ ext install ms-python.python
 
 6. Now open/create a Python file, write some code and save it to see the magic happen!
 
-## Coding Philosophy
 
-Please read our in-depth guide on our coding philosophy for this repo [here](https://www.notion.so/fractalcomputers/Code-Philosophy-Webserver-backend-d036205444464f8b8a61dc36eeae7dbb).
 
 ## Testing
 
