@@ -503,7 +503,7 @@ typedef struct FractalDiscoveryReplyMessage {
     char username[50];
 } FractalDiscoveryReplyMessage;
 
-typedef struct PeerUpdateMessage {
+typedef struct __attribute__ ((aligned (8))) PeerUpdateMessage {
     int peer_id;
     int x;
     int y;
@@ -511,7 +511,7 @@ typedef struct PeerUpdateMessage {
     RGB_Color color;
 } PeerUpdateMessage;
 
-typedef struct FractalServerMessage {
+typedef struct __attribute__ ((aligned (8))) FractalServerMessage {
     FractalServerMessageType type;  ///< Input message type.
     union {
         int ping_id;
