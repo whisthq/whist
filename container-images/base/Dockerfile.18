@@ -292,7 +292,8 @@ RUN mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc
 RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub
 RUN echo deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 / | tee /etc/apt/sources.list.d/cuda.list
 # hadolint ignore=DL3008
-RUN apt-get -y update && apt-get install --no-install-recommends -y \ 
+RUN apt-get -y update && apt-get install --no-install-recommends -y \
+    cuda-drivers-450=450.51.06-1 \
     cuda-drivers \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
