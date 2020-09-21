@@ -23,10 +23,10 @@ def registerGoogleUser(username, name, token, reason_for_signup=None):
     promo_code = generateUniquePromoCode()
     username_subsq = generate_subsequence_for_word(username)
     for result in username_subsq:
-        username_encoding = result.lower().encode('utf-8')
+        username_encoding = result.lower().encode("utf-8")
         if hashlib.md5(username_encoding).hexdigest() in BAD_WORDS_HASHED:
             return {"status": FAILURE, "error": "Try using a different username"}
-    
+
     new_user = User(
         user_id=username,
         referral_code=promo_code,
