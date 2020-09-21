@@ -289,6 +289,11 @@ RUN echo deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os
 
 # hadolint ignore=DL3008
 RUN apt-get -y update && apt-get install --no-install-recommends -y \
+    dkms \
+    pkg-config \
+    screen-resolution-extra \
+    libgtk2.0-0 \
+    libjansson4 \
     nvidia-dkms-450 \
     nvidia-driver-450 \
     nvidia-settings \
