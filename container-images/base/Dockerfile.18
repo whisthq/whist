@@ -107,14 +107,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 
 
-## SSH
-RUN apt-get install --no-install-recommends -y \ 
-    openssh-server=1:7.6p1-4ubuntu0.3 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
-RUN systemctl enable ssh
-###
 
 
 
@@ -267,6 +260,14 @@ COPY fractal-input.rules home/fractal
 
 #### HERE ######
 
+## SSH
+RUN apt-get update && apt-get install --no-install-recommends -y \ 
+    openssh-server=1:7.6p1-4ubuntu0.3 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN systemctl enable ssh
+###
 
 
 
@@ -290,7 +291,7 @@ ENV PATH /usr/local/nvidia/bin:${PATH}
 ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
 
 # hadolint ignore=DL3008
-RUN apt-get --no-install-recommends -y install "linux-headers-$(uname -r)"= \
+RUN apt-get update && apt-get install --no-install-recommends -y "linux-headers-$(uname -r)"= \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -300,8 +301,8 @@ RUN mv "cuda-'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin" 
 RUN apt-key adv --fetch-keys "https://developer.download.nvidia.com/compute/cuda/repos/'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub"
 RUN echo "deb http://developer.download.nvidia.com/compute/cuda/repos/'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 /" | tee /etc/apt/sources.list.d/cuda.list
 # hadolint ignore=DL3008
-RUN apt-get -y update \
-    && apt-get --no-install-recommends -y install cuda-drivers \
+RUN apt-get -y update && apt-get install --no-install-recommends -y \ 
+    cuda-drivers \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -317,7 +318,7 @@ RUN systemctl enable fractal-update-nvidia-busid
 ENV DISPLAY :10
 
 # Install libraries for (limited) hardware acceleration
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     vainfo=2.1.0+ds1-1 \
     vdpauinfo=1.0-3 \
     vdpau-va-driver=0.7.4-6ubuntu1 \
