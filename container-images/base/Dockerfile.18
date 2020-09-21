@@ -106,6 +106,9 @@ RUN chown -v -R fractal:fractal /home/fractal
 RUN chown root:root /run/user
 RUN chmod +x /home/fractal/entry.sh
 
+ADD fractal-entrypoint.service /etc/systemd/system
+ADD fractal-display.service /etc/systemd/system
+ADD fractal-protocol.service /etc/systemd/system
 
 ###### Set up nvidia inside container
 LABEL com.nvidia.volumes.needed="nvidia_driver"
@@ -163,6 +166,7 @@ ADD fractal-audio.service /etc/systemd/system
 RUN systemctl enable fractal-audio
 
 
+
 ADD fractal-setup.sh /
 RUN chmod +x /fractal-setup.sh
 
@@ -178,5 +182,14 @@ RUN systemctl mask systemd-hostnamed
 RUN systemctl mask acpid
 RUN systemctl mask NetworkManager-wait-online
 RUN systemctl mask nvidia-persistenced
+
+# set up protocol symlink
+RUN sudo rm /usr/share/fractal/FractalServer.sh /usr/share/fractal/FractalServer
+RUN sudo mkdir /usr/share/fractal/bin
+RUN sudo ln -s /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
+
+# grab protocol
+ADD protocol/server/build64/libsentry.so /usr/share/fractal/bin/libsentry.so
+ADD protocol/server/build64/FractalServer /usr/share/fractal/bin/FractalServer
 
 CMD ["/lib/systemd/systemd"]

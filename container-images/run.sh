@@ -1,5 +1,13 @@
 #!/bin/bash
 
+git_hash=$(git rev-parse --short HEAD)
+if [[ $3 == mount ]]; then
+    mount_protocol="--mount type=bind,source=$(cd base/protocol/server/build64;pwd),destination=/usr/share/fractal/bin"
+    echo $mount_protocol
+else
+    mount_protocol=""
+fi
+
 runcontainer (){
     docker run -it -d \
 	    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
@@ -26,13 +34,15 @@ runcontainer (){
             --cap-add CAP_SYS_CHROOT \
             --cap-add CAP_SETFCAP \
 	    --cap-add SYS_NICE \
-            --mount type=bind,source=$(cd $3;pwd),destination=/protocol -p 32262:32262 -p 32263:32263/udp -p 32273:32273 $1-systemd-$2
-
+            $mount_protocol \
+            -p 32262:32262 \
+            -p 32263:32263/udp \
+            -p 32273:32273 \
+            fractal/$1:$git_hash.$2
 # capabilities not enabled by default: CAP_NICE
 }
 
-docker build -f $1/Dockerfile.$2 $1 -t $1-systemd-$2
-container_id=$(runcontainer $1 $2 $3)
+container_id=$(runcontainer $1 $2)
 
 echo "Running container with IP: $container_id"
 ipaddr=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $container_id)
