@@ -101,7 +101,7 @@ def test_endpoint(action, **kwargs):
 
 @aws_container_bp.route("/container/protocol_info")
 @fractalPreProcess
-def aws_container_info(action, **kwargs):
+def aws_container_info(**kwargs):
     address = kwargs.pop("received_from")
     info, status = protocol_info(address)
 
