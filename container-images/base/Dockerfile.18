@@ -288,9 +288,9 @@ ENV distribution $(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
 
 
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
-RUN mv "cuda-'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin" /etc/apt/preferences.d/cuda-repository-pin-600
-RUN apt-key adv --fetch-keys "https://developer.download.nvidia.com/compute/cuda/repos/'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub"
-RUN echo "deb http://developer.download.nvidia.com/compute/cuda/repos/'$'(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 /" | tee /etc/apt/sources.list.d/cuda.list
+RUN mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc/apt/preferences.d/cuda-repository-pin-600
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub
+RUN echo deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 / | tee /etc/apt/sources.list.d/cuda.list
 # hadolint ignore=DL3008
 RUN apt-get -y update && apt-get install --no-install-recommends -y \ 
     cuda-drivers \
@@ -320,7 +320,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Install some useful utilities for debugging/testing
 RUN apt-get update && apt-get install --no-install-recommends -y \
     tmux=2.6-3 \
-    xserver-xorg-video-dummy=1:0.3.8-1build1 \
     mesa-utils=8.4.0-1 \
     glmark2=2014.03+git20150611.fa71af2d-0ubuntu4 \
     mpv=0.27.2-1ubuntu1 \

@@ -229,8 +229,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libavresample4=7:4.2.4-1ubuntu0.1 \
     libavutil56=7:4.2.4-1ubuntu0.1 \
     libpostproc55=7:4.2.4-1ubuntu0.1 \
-    libswresample2=7:4.2.4-1ubuntu0.1 \
-    libswscale4=7:4.2.4-1ubuntu0.1 \
+    libswresample3=7:4.2.4-1ubuntu0.1 \
+    libswscale5=7:4.2.4-1ubuntu0.1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -270,28 +270,104 @@ RUN chmod +x /home/fractal/entry.sh
 
 
 
-#### FROM PHIL 1/2 on this file: I think this new service for Nvidia needs to be added here, but not certain
-#### It apparently needs to run before X so it might need to be even before (?)
-COPY fractal-update-nvidia-busid.service /etc/systemd/system
-####
+###### Set up nvidia inside container
+LABEL com.nvidia.volumes.needed="nvidia_driver"
 
+RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
+    echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+
+RUN mkdir -p /opt/nvidia/lib && \
+    ln -s /usr/local/nvidia/lib /opt/nvidia/lib/i386-linux-gnu && \
+    ln -s /usr/local/nvidia/lib64 /opt/nvidia/lib/x86_64-linux-gnu
+
+ENV PATH /usr/local/nvidia/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install --no-install-recommends -y "linux-headers-$(uname -r)" \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV distribution $(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+
+
+
+
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
+RUN mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc/apt/preferences.d/cuda-repository-pin-600
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub
+RUN echo deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 / | tee /etc/apt/sources.list.d/cuda.list
+# hadolint ignore=DL3008
+RUN apt-get -y update && apt-get install --no-install-recommends -y \ 
+    cuda-drivers \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
+
+# Set up service (that starts before X) to fix the NVIDIA GPU bus ID
+COPY setup-scripts/linux/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/
+COPY fractal-update-nvidia-busid.service /etc/systemd/system/
+COPY setup-scripts/linux/update-nvidia-busid.sh /usr/share/fractal/
+RUN systemctl enable fractal-update-nvidia-busid
+
+# Set display environment variable to our nvidia-powered display
+ENV DISPLAY :10
+
+# Install libraries for (limited) hardware acceleration
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    vainfo=2.6.0+ds1-1 \
+    vdpauinfo=1.0-3build1 \
+    vdpau-va-driver=0.7.4-6ubuntu1 \
+    libvdpau-va-gl1=0.4.2-1build1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# Package: mesa-vdpau-drivers (20.0.4-2ubuntu1)
+
+
+# Install some useful utilities for debugging/testing
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    tmux=2.6-3 \
+    mesa-utils=8.4.0-1 \
+    glmark2=2014.03+git20150611.fa71af2d-0ubuntu4 \
+    mpv=0.27.2-1ubuntu1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install firefox nightly (for testing only)
+# RUN sudo add-apt-repository ppa:ubuntu-mozilla-daily/ppa
+# RUN sudo apt update
+# RUN sudo apt install firefox-trunk
+
+
+# Install fractal services
 COPY fractal-entrypoint.service /etc/systemd/system
+RUN systemctl enable fractal-entrypoint
 COPY fractal-display.service /etc/systemd/system
-# RUN chmod u+x /etc/systemd/system/bootstrap-service.service
+RUN systemctl enable fractal-display
+COPY fractal-protocol.service /etc/systemd/system
+RUN systemctl enable fractal-protocol
+COPY fractal-audio.service /etc/systemd/system
+RUN systemctl enable fractal-audio
+
+
+COPY fractal-setup.sh /
+RUN chmod +x /fractal-setup.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
 
-RUN systemctl set-default multi-user.target
-ENV init /lib/systemd/systemd
+#As opposed to graphical.target, which is the default
+#RUN systemctl set-default multi-user.target
+ENV init /sbin/init
 
-
-#### FROM PHIL 2/2 on this file: running the new service from above!
-RUN systemctl enable fractal-update-nvidia-busid
-####
-
-RUN systemctl enable fractal-entrypoint
-RUN systemctl enable fractal-display
-
-# USER fractal
+# Disable some extra systemd services
+RUN systemctl mask plymouth
+RUN systemctl mask systemd-hostnamed
+RUN systemctl mask acpid
+RUN systemctl mask NetworkManager-wait-online
+RUN systemctl mask nvidia-persistenced
 
 CMD ["/lib/systemd/systemd"]
+
