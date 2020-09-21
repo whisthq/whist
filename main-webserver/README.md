@@ -2,7 +2,7 @@
 
 [![Heroku CI Status](https://heroku-cibadge.herokuapp.com/last.svg)](https://dashboard.heroku.com/pipelines/22da0c0d-7555-4647-8765-031c14b8398f/tests)
 
-This repository contains the code for our webserver, which is our REST API and provides back-end support for our user interfaces, our internal tools, and our container/virtual machine management.
+This repository contains the code for our webserver, which is our REST API and provides backend support for our user interfaces, our internal tools, and our container/virtual machine management.
 
 Our webservers and CD pipeline are hosted on Heroku. Our production database is attached as an Heroku Add-On PostgresSQL to the associated webserver in Heroku, `main-webserver`, and has automated backups in place daily at 2 AM PST. See [here](https://devcenter.heroku.com/articles/heroku-postgres-backups#creating-a-backup) for further information.
 
@@ -12,22 +12,19 @@ Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?c
 
 ### Local Setup
 
-Docker is being leveraged to create a partial-stack (TBD on full) deployment of the `main-webserver` components, `web` and `celery`. To do so, it packages the application into an image with all necessary dependencies and then launches the application with the appropriate configurations, depending on if it's `web` or `celery` using `stem-cell.sh`.
+Docker is being leveraged to create a partial-stack deployment of the `main-webserver` components, `web` and `celery`. To do so, it packages the application into an image with all necessary dependencies and then launches the application with the appropriate configurations, depending on if it's `web` or `celery` using `stem-cell.sh`. 
 
-Currently, the full environment is only partially replicated, so `retrieve_config.py` exists for collecting the appropriate environment variables needed to connect to the non-replicated portions of the environment (they are pulled from Heroku).
+Currently, the full environment is only partially replicated, so `retrieve_config.py` exists for collecting the appropriate environment variables needed to connect to the non-replicated portions of the environment. They are pulled from Heroku.
 
 #### 1. Retrieve Environment Variables
 
-
-First, ensure that the CLI tool `heroku`, and then type `heroku login` to log in (if you're not already logged in). Next, use `retrieve_config.py`. It provides a `-h` help menu for understanding parameters. On Mac/Linux, run
-
-```sh
-./retrieve_config.py staging
-```
-
-On Windows, run
+First, ensure that the CLI tool `heroku`, and then type `heroku login` to log in (if you're not already logged in). Next, use `retrieve_config.py`. It provides a `-h` help menu for understanding parameters. 
 
 ```sh
+# MacOS/Linux
+python retrieve_config.py staging
+
+# Windows
 py retrieve_config.py staging
 ```
 
