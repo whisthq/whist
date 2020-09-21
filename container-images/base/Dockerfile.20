@@ -105,6 +105,25 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+
+
+
+## HERE TEMP
+
+
+# Install Nvidia CUDA Drivers dependencies explicitly
+# These packages need to be installed before installing/updating Python
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    pkg-config=0.29.1-0ubuntu4 \
+    screen-resolution-extra=0.18build1 \
+    libgtk2.0-0=2.24.32-4ubuntu4 \
+    libjansson4=2.12-1build1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
+
+
 # Install general Ubuntu packages
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     apt-utils=2.0.2ubuntu0.1 \
@@ -242,14 +261,6 @@ COPY entry.sh /home/fractal
 COPY display-service-envs /home/fractal
 COPY fractal-input.rules home/fractal
 
-
-
-
-####### HERE
-
-
-
-
 # Install and enable OpenSSH
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
     openssh-client=1:8.2p1-4ubuntu0.1 \
@@ -269,7 +280,10 @@ RUN chmod +x /home/fractal/entry.sh
 
 
 
-############ MAYBE WORKS UP TO HERE
+
+
+
+## CLEANED UP TO HERE, BUT WORKS BELOW
 
 
 
@@ -295,6 +309,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y "linux-headers-
 ENV distribution $(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
 
 
+############ WORKS UP TO HERE
+
 
 
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
@@ -303,9 +319,9 @@ RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/
 RUN echo deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 / | tee /etc/apt/sources.list.d/cuda.list
 # hadolint ignore=DL3008
 RUN apt-get -y update && apt-get install --no-install-recommends -y \
-    nvidia-dkms-450=450.51.06 \
-    nvidia-driver-450=450.51.06 \
-    nvidia-settings=450.51.06 \
+    nvidia-dkms-450 \
+    nvidia-driver-450 \
+    nvidia-settings \
     cuda-drivers-450=450.51.06-1 \
     cuda-drivers \
     && apt-get clean \

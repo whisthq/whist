@@ -99,6 +99,23 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+
+
+## HERE TEMP
+
+
+
+# Install Nvidia CUDA Drivers dependencies explicitly
+# These packages need to be installed before installing/updating Python
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    pkg-config=0.29.1-0ubuntu2 \
+    screen-resolution-extra=0.17.3 \
+    libgtk2.0-0=2.24.32-1ubuntu1 \
+    libjansson4=2.11-1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
 # Install general Ubuntu packages
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     apt-utils=1.6.12ubuntu0.1 \
@@ -290,10 +307,6 @@ RUN echo deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os
 # hadolint ignore=DL3008
 RUN apt-get -y update && apt-get install --no-install-recommends -y \
     dkms \
-    pkg-config \
-    screen-resolution-extra \
-    libgtk2.0-0 \
-    libjansson4 \
     nvidia-dkms-450 \
     nvidia-driver-450 \
     nvidia-settings \
