@@ -68,6 +68,16 @@ For continuous integration and delivery, we leverage Heroku pipelines, which pro
 
 While our Heroku pipeline should not be modified without codeowner permission, it is helpful to understand how it works by consulting our wiki [here](https://www.notion.so/fractalcomputers/Heroku-CI-CD-Pipeline-Webservers-f8ef5b43edc84c969cf005fcac4641ba).
 
+## Testing
+
+**Pytest**
+
+We have pytest tests in the `/tests` folder. To run tests, just run `pytest -o log_cli=true -s` in a terminal. To run tests in parallel, run `pytest -o log_cli=true -s -n <num>`, with `<num>` as the # of workers in parallel.
+
+If tests are failing when you run the command above locally, make sure that the docker-compose stack is running. Start it if it's not. If the docker-compose stack has crashed, there's a good chance you haven't set the correct environment variables, especially if your terminal displays `AttributeError: 'NoneType' object has no attribute 'upper'`. Be sure that environment variables such as `DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD`, and `USE_PRODUCTION_KEYS` are set to the correct values. The username and password should match the values stored in the relevant configuration database. You can define the environment variables in a `.env` file inside of the repository root, or the `docker` or `tests` subdirectories, or you can set them directly in your shell.
+
+To get an idea of what environment variables you might be missing, try running `git grep 'os\.getenv'` in the repository root.
+
 ## Styling
 
 To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python Black](https://github.com/psf/black) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Python Black support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Python Black.
@@ -91,17 +101,3 @@ ext install ms-python.python
 5. Search for “Python formatting provider” and select “Black”.
 
 6. Now open/create a Python file, write some code and save it to see the magic happen!
-
-
-
-## Testing
-
-**Pytest**
-NOTE: Currently in the process of being fixed. Skip for now.
-
-We have pytest tests in the `/tests` folder. To run tests, just run `pytest -o log_cli=true -s` in terminal. To run tests in parallel, run `pytest -o log_cli=true -s -n <num>`, with `<num>` as the # of workers in parallel.
-
-If tests are failing when you run the command above locally, make sure that the docker-compose stack is running. Start it if it's not. If the docker-compose stack has crashed, there's a good chance you haven't set the correct environment variables, especially if your terminal displays `AttributeError: 'NoneType' object has no attribute 'upper'`. Be sure that environment variables such as `DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD`, and `USE_PRODUCTION_KEYS` are set to the correct values. The username and password should match the values stored in the relevant configuration database. You can define the environment variables in a `.env` file inside of the repository root, or the `docker` or `tests` subdirectories, or you can set them in your shell.
-
-To get an idea of what environment variables you might be missing, try running `git grep 'os\.getenv'` in the repository root.
-
