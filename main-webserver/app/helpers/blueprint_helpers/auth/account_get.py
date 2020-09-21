@@ -19,7 +19,7 @@ def codeHelper(username):
 
     Returns:
     json: The user's promo code
-   """
+    """
 
     # Query database for user
 
@@ -63,7 +63,7 @@ def disksHelper(username, main):
 
     Returns:
     json: Fetched disks
-   """
+    """
 
     # Send SQL disk select command
 
@@ -112,7 +112,7 @@ def verifiedHelper(username):
 
     Returns:
     json: Whether the email is verified
-   """
+    """
 
     # Query database for user
 

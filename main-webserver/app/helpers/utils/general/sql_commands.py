@@ -34,9 +34,7 @@ def fractalSQLCommit(db, f=None, *args):
         fractalLog(
             function="fractalSQLCommit",
             label="None",
-            logs="SQL commit successful after {num_tries} tries".format(
-                num_tries=attempts
-            ),
+            logs="SQL commit successful after {num_tries} tries".format(num_tries=attempts),
         )
 
     return commit_successful
