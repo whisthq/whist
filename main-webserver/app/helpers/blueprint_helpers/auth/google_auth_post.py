@@ -50,8 +50,6 @@ def loginHelper(code, clientApp):
 
     username, name = userObj["email"], userObj["name"]
     token = generateToken(username)
-    if token == None:
-        return {"status": FAILURE, "error": "Try using a different username"}
     access_token, refresh_token = getAccessTokens(username)
 
     user = User.query.get(username)

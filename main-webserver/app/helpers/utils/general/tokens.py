@@ -29,12 +29,6 @@ def getAccessTokens(username):
 
 
 def generateToken(username):
-    username_subsq = generate_subsequence_for_word(username)
-    for result in username_subsq:
-    	username_encoding = result.lower().encode('utf-8')
-        if hashlib.md5(username_encoding).hexdigest() in BAD_WORDS_HASHED:
-	    return None
-
     token = jwt.encode({"email": username}, JWT_SECRET_KEY)
     if len(token) > 15:
         token = token[-15:]
@@ -53,12 +47,12 @@ def generatePromoCode():
         c2 = "".join([random.choice(upperCase) for _ in range(0, 3)]) + "-" + c1
         c2_subsq = generate_subsequence_for_word(c2)
         for result in c2_subsq:
-                c2_encoding = result.lower().encode('utf-8')
-                if hashlib.md5(c2_encoding).hexdigest() not in BAD_WORDS_HASHED:
-                        allowed = True
-                else:
-                        allowed = False
-                        break
+            c2_encoding = result.lower().encode("utf-8")
+            if hashlib.md5(c2_encoding).hexdigest() not in BAD_WORDS_HASHED:
+                allowed = True
+            else:
+                allowed = False
+                break
     return c2
 
 
