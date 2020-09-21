@@ -23,3 +23,5 @@ ubuntu-bionic-18.04-cloudimg-console.log
 
 # MacOS
 .DS_Store
+app/.DS_Store
+docker/.DS_Store
