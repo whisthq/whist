@@ -3,7 +3,7 @@ from app.imports import *
 from app.helpers.utils.general.sql_commands import *
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
 from app.constants.bad_words import *
-
+from app.constants.generate_subsequences_for_words import generate_subsequence_for_word
 from app.models.public import *
 
 
@@ -23,13 +23,18 @@ def generateUniquePromoCode():
 
 
 def getAccessTokens(username):
-    # access_token = create_access_token(identity = username, expires_delta = datetime.timedelta(seconds=5))
     access_token = create_access_token(identity=username, expires_delta=False)
     refresh_token = create_refresh_token(identity=username, expires_delta=False)
     return (access_token, refresh_token)
 
 
 def generateToken(username):
+    username_subsq = generate_subsequence_for_word(username)
+    for result in username_subsq:
+    	username_encoding = result.lower().encode('utf-8')
+        if hashlib.md5(username_encoding).hexdigest() in BAD_WORDS_HASHED:
+	    return None
+
     token = jwt.encode({"email": username}, JWT_SECRET_KEY)
     if len(token) > 15:
         token = token[-15:]

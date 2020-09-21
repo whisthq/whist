@@ -42,8 +42,10 @@ def loginHelper(code, clientApp):
     userObj = getGoogleTokens(code, clientApp)
 
     username, name = userObj["email"], userObj["name"]
-
     token = generateToken(username)
+    if token == None:
+        return {"status": FORBIDDEN, "error": "Try with a different username"}
+
     access_token, refresh_token = getAccessTokens(username)
 
     user = User.query.get(username)
