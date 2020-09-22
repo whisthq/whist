@@ -57,7 +57,7 @@ ADD setup-scripts /setup-scripts
 
 RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \
-    && echo 'fractal:b-7XEg*K!Eryn!9-' | chpasswd
+    && echo 'fractal:dX6-gkE%Gx42gapUaR+T*^$4fhm3Pv7c' | chpasswd
 
 RUN apt-get install lsb-release -y && apt-get clean
 RUN apt-get install -y pulseaudio
