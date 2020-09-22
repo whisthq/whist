@@ -3,10 +3,10 @@ import createSagaMiddleware from "redux-saga";
 import { createHashHistory } from "history";
 import { routerMiddleware, routerActions } from "connected-react-router";
 import { createLogger } from "redux-logger";
-import createRootReducer from "reducers/index";
-import * as counterActions from "actions/counter";
-import { counterStateType } from "reducers/types";
-import rootSaga from "sagas/index";
+import createRootReducer from "store/reducers/index";
+import * as counterActions from "store/actions/counter_actions";
+import { counterStateType } from "store/reducers/types";
+import rootSaga from "store/sagas/index";
 
 declare global {
     interface Window {
@@ -76,9 +76,9 @@ const configureStore = (initialState?: counterStateType) => {
 
     if (module.hot) {
         module.hot.accept(
-            "../reducers",
+            "./reducers",
             // eslint-disable-next-line global-require
-            () => store.replaceReducer(require("../reducers").default)
+            () => store.replaceReducer(require("./reducers").default)
         );
     }
 

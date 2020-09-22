@@ -1,9 +1,9 @@
 import { createStore, applyMiddleware } from "redux";
 import createSagaMiddleware from "redux-saga";
 import { createHashHistory } from "history";
-import createRootReducer from "reducers/index";
-import { Store, counterStateType } from "reducers/types";
-import rootSaga from "sagas/index";
+import createRootReducer from "store/reducers/index";
+import { Store, counterStateType } from "store/reducers/types";
+import rootSaga from "store/sagas/index";
 
 const history = createHashHistory();
 const rootReducer = createRootReducer(history);

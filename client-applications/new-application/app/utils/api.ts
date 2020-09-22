@@ -1,4 +1,4 @@
-export async function apiPost(endpoint, body, token) {
+export async function apiPost(endpoint: any, body: any, token: any) {
     try {
         const response = await fetch(endpoint, {
             method: "POST",
@@ -17,7 +17,7 @@ export async function apiPost(endpoint, body, token) {
     }
 }
 
-export async function apiGet(endpoint, token) {
+export async function apiGet(endpoint: any, token: any) {
     try {
         const response = await fetch(endpoint, {
             method: "GET",
