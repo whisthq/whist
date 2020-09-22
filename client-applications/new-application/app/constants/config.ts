@@ -13,7 +13,7 @@ const production = {
 
 const staging = {
     url: {
-        PRIMARY_SERVER: "https://cube-celery-staging.herokuapp.com"
+        PRIMARY_SERVER: "https://staging-webserver.fractalcomputers.com"
     },
     stripe: {
         PUBLIC_KEY: "pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb"

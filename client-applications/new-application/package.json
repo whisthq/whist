@@ -2,7 +2,7 @@
     "author": {
         "email": "support@fractalcomputers.com",
         "name": "Fractal Computers, Inc.",
-        "url": "https://www.fractalcomputers.com"
+        "url": "https://www.tryfractal.com"
     },
     "browserslist": [
         "extends browserslist-config-erb"
