@@ -5,6 +5,7 @@ export const DELETE_USER = "DELETE_USER"
 export const UPDATE_UNSORTED_LEADERBOARD = "UPDATE_UNSORTED_LEADERBOARD"
 export const UPDATE_CLICKS = "UPDATE_CLICKS"
 export const SET_CLOSING_DATE = "SET_CLOSING_DATE"
+export const REFER_EMAIL = "REFER_EMAIL"
 
 export function insertWaitlistAction(
     email: string,
@@ -64,5 +65,20 @@ export function setClosingDateAction(closingDate: any) {
     return {
         type: SET_CLOSING_DATE,
         closingDate,
+    }
+}
+
+export const referEmailAction = (
+    email: string,
+    name: string,
+    code: string,
+    recipient: string
+) => {
+    return {
+        type: REFER_EMAIL,
+        email,
+        name,
+        code,
+        recipient,
     }
 }

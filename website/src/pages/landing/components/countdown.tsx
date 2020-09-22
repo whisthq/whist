@@ -11,6 +11,7 @@ import { setClosingDateAction } from "store/actions/auth/waitlist"
 
 const CountdownTimer = (props: any) => {
     const { width } = useContext(MainContext)
+    const { dispatch } = props
 
     const [closingDate, changeClosingDate] = useState(() => {
         return Date.now()
@@ -19,9 +20,9 @@ const CountdownTimer = (props: any) => {
     useEffect(() => {
         getCloseDate().then((closingDate) => {
             changeClosingDate(closingDate)
-            props.dispatch(setClosingDateAction(closingDate))
+            dispatch(setClosingDateAction(closingDate))
         })
-    }, [])
+    }, [dispatch])
 
     async function getCloseDate() {
         const closingDate = await db

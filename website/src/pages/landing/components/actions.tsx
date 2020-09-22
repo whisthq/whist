@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react"
 import { connect } from "react-redux"
-import { Button, Modal } from "react-bootstrap"
+import { Button, Modal, Alert } from "react-bootstrap"
 import { CopyToClipboard } from "react-copy-to-clipboard"
 
 import GoogleButton from "pages/auth/googleButton"
@@ -11,7 +11,7 @@ import { db } from "shared/utils/firebase"
 import { REFERRAL_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "constants/config"
-import { updateClicks } from "store/actions/auth/waitlist"
+import { updateClicks, referEmailAction } from "store/actions/auth/waitlist"
 
 const CustomAction = (props: {
     onClick: any
@@ -59,7 +59,7 @@ const CustomAction = (props: {
 
 const Actions = (props: {
     dispatch: any
-    user: { email: string; referralCode: string }
+    user: { email: string; name: string; referralCode: string }
     loggedIn: any
     unsortedLeaderboard: any
     clicks: any
@@ -67,6 +67,9 @@ const Actions = (props: {
     const { dispatch, user, loggedIn, unsortedLeaderboard, clicks } = props
 
     const [showModal, setShowModal] = useState(false)
+    const [showEmailSentAlert, setShowEmailSentAlert] = useState(false)
+    const [recipientEmail, setRecipientEmail] = useState("")
+    const [sentEmail, setSentEmail] = useState("")
     const [warning, setWarning] = useState("")
 
     const handleOpenModal = () => setShowModal(true)
@@ -118,6 +121,26 @@ const Actions = (props: {
         }
     }
 
+    const updateRecipientEmail = (evt: any) => {
+        evt.persist()
+        setRecipientEmail(evt.target.value)
+    }
+
+    const sendReferralEmail = () => {
+        if (user.email && recipientEmail) {
+            dispatch(
+                referEmailAction(
+                    user.email,
+                    user.name,
+                    user.referralCode,
+                    recipientEmail
+                )
+            )
+            setSentEmail(recipientEmail)
+            setShowEmailSentAlert(true)
+        }
+    }
+
     const renderActions = () => {
         if (user && user.email) {
             return (
@@ -156,7 +179,7 @@ const Actions = (props: {
         >
             {renderActions()}
 
-            <Modal show={showModal} onHide={handleCloseModal}>
+            <Modal size="lg" show={showModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
                     <Modal.Title>Refer a Friend</Modal.Title>
                 </Modal.Header>
@@ -166,12 +189,13 @@ const Actions = (props: {
                         them your referral code. Once they join and enter your
                         referral code, you'll receive {REFERRAL_POINTS} points!
                     </div>
-                    <br />
                     <div
                         style={{
                             display: "flex",
                             flexDirection: "row",
                             alignItems: "center",
+                            marginTop: "25px",
+                            marginBottom: "25px",
                         }}
                     >
                         <div className="code-container">
@@ -187,9 +211,42 @@ const Actions = (props: {
                             <Button className="modal-button">Copy Code</Button>
                         </CopyToClipboard>
                     </div>
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                        }}
+                    >
+                        <input
+                            type="text"
+                            placeholder="Friend's Email Address"
+                            onChange={updateRecipientEmail}
+                            className="code-container"
+                        />
+                        <Button
+                            className="modal-button"
+                            onClick={sendReferralEmail}
+                        >
+                            Send Invite Email
+                        </Button>
+                    </div>
+                    {showEmailSentAlert && (
+                        <Alert
+                            variant="success"
+                            onClose={() => setShowEmailSentAlert(false)}
+                            dismissible
+                        >
+                            Your email to <b>{sentEmail}</b> has been sent!
+                        </Alert>
+                    )}
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button className="modal-button" onClick={handleCloseModal}>
+                    <Button
+                        className="modal-button"
+                        onClick={handleCloseModal}
+                        style={{ width: "100px" }}
+                    >
                         Got it
                     </Button>
                 </Modal.Footer>
