@@ -1,12 +1,11 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
-import { history } from "store/configureStore";
-
-import styles from "pages/login/login.css";
+// import { history } from "store/configureStore";
+import styles from "styles/login.css";
 import Titlebar from "react-electron-titlebar";
-import Background from "resources/images/background.jpg";
-import Logo from "resources/images/logo.svg";
-import UpdateScreen from "pages/dashboard/components/update.tsx";
+import Background from "assets/images/background.jpg";
+import Logo from "assets/images/logo.svg";
+import UpdateScreen from "pages/dashboard/components/update";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -17,76 +16,62 @@ import {
 
 import { FaGoogle } from "react-icons/fa";
 
-import { loginUser, setOS, loginFailed, googleLogin } from "actions/counter";
+import {
+    loginUser,
+    setOS,
+    loginFailed,
+    googleLogin,
+} from "store/actions/counter_actions";
 
-import { GOOGLE_CLIENT_ID } from "constants/config.ts";
+import { GOOGLE_CLIENT_ID } from "constants/config";
 
-class Login extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            username: "",
-            password: "",
-            loggingIn: false,
-            warning: false,
-            version: "1.0.0",
-            rememberMe: false,
-            live: true,
-            update_ping_received: false,
-            needs_autoupdate: false,
-        };
-    }
+// import "styles/login.css";
 
-    CloseWindow = () => {
-        const { remote } = require("electron");
-        const win = remote.getCurrentWindow();
+const Login = (props: any) => {
+    const { dispatch, public_ip, os, warning } = props;
 
-        win.close();
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [loggingIn, setLoggingIn] = useState(false);
+    const [version, setVersion] = useState("1.0.0");
+    const [rememberMe, setRememberMe] = useState(false);
+    const live = useState(true);
+    const [updatePingReceived, setUpdatePingReceived] = useState(false);
+    const [needsAutoupdate, setNeedsAutoupdate] = useState(false);
+    const [fetchedCredentials, setFetchedCredentials] = useState(false);
+
+    const updateUsername = (evt: any) => {
+        setUsername(evt.target.value);
     };
 
-    MinimizeWindow = () => {
-        const { remote } = require("electron");
-        const win = remote.getCurrentWindow();
-
-        win.minimize();
+    const updatePassword = (evt: any) => {
+        setPassword(evt.target.value);
     };
 
-    UpdateUsername = (evt: any) => {
-        this.setState({
-            username: evt.target.value,
-        });
-    };
-
-    UpdatePassword = (evt: any) => {
-        this.setState({
-            password: evt.target.value,
-        });
-    };
-
-    LoginUser = () => {
+    const handleLoginUser = () => {
         const storage = require("electron-json-storage");
-        this.props.dispatch(loginFailed(false));
-        this.setState({ loggingIn: true });
-        if (this.state.rememberMe) {
+        dispatch(loginFailed(false));
+        setLoggingIn(true);
+        if (rememberMe) {
             storage.set("credentials", {
-                username: this.state.username,
-                password: this.state.password,
+                username: username,
+                password: password,
             });
         } else {
             storage.set("credentials", { username: "", password: "" });
         }
-        this.props.dispatch(
-            loginUser(this.state.username.trim(), this.state.password)
-        );
+        setUsername(username);
+        setPassword(password);
+        dispatch(loginUser(username.trim(), password));
     };
 
-    LoginKeyPress = (event: any) => {
+    const loginKeyPress = (event: any) => {
         if (event.key === "Enter") {
-            this.LoginUser();
+            handleLoginUser();
         }
     };
 
-    GoogleLogin = () => {
+    const handleGoogleLogin = () => {
         const { BrowserWindow } = require("electron").remote;
 
         const authWindow = new BrowserWindow({
@@ -100,230 +85,217 @@ class Login extends Component {
         authWindow.loadURL(authUrl, { userAgent: "Chrome" });
         authWindow.show();
 
-        authWindow.webContents.on("page-title-updated", (event, newUrl) => {
+        authWindow.webContents.on("page-title-updated", () => {
             const pageTitle = authWindow.getTitle();
             if (pageTitle.includes("Success")) {
                 const codeRegexp = new RegExp(
                     "^(?:Success code=)(.+?)(?:&.+)$"
                 );
                 const code = pageTitle.match(codeRegexp)[1];
-                this.setState({ loggingIn: true });
-                this.props.dispatch(googleLogin(code));
+                setLoggingIn(true);
+                dispatch(googleLogin(code));
             }
         });
     };
 
-    ForgotPassword = () => {
+    const forgotPassword = () => {
         const { shell } = require("electron");
         shell.openExternal("https://www.fractalcomputers.com/reset");
     };
 
-    SignUp = () => {
+    const signUp = () => {
         const { shell } = require("electron");
         shell.openExternal("https://www.fractalcomputers.com/auth");
     };
 
-    CloseWindow = () => {
-        const { remote } = require("electron");
-        const win = remote.getCurrentWindow();
-
-        win.close();
+    const changeRememberMe = (event: any) => {
+        setRememberMe(event.target.checked);
     };
 
-    MinimizeWindow = () => {
-        const { remote } = require("electron");
-        const win = remote.getCurrentWindow();
-
-        win.minimize();
-    };
-
-    changeRememberMe = (event: any) => {
-        const { target } = event;
-        if (target.checked) {
-            this.setState({ rememberMe: true });
-        } else {
-            this.setState({ rememberMe: false });
-        }
-    };
-
-    componentDidMount() {
+    useEffect(() => {
+        console.log("username");
+        console.log(username);
+        console.log(loggingIn);
         const ipc = require("electron").ipcRenderer;
         const storage = require("electron-json-storage");
 
-        ipc.on("update", (event, update) => {
-            component.setState({
-                update_ping_received: true,
-                needs_autoupdate: update,
-            });
+        ipc.on("update", (_: any, update: any) => {
+            console.log("received update");
+            console.log(update);
+            setUpdatePingReceived(true);
+            setNeedsAutoupdate(update);
         });
-
-        let component = this;
 
         const appVersion = require("../../package.json").version;
         const os = require("os");
-        this.props.dispatch(setOS(os.platform()));
-        this.setState({ version: appVersion });
+        dispatch(setOS(os.platform()));
+        setVersion(appVersion);
 
-        storage.get("credentials", function (error, data) {
+        storage.get("credentials", (error: any, data: any) => {
             if (error) throw error;
 
             if (data && Object.keys(data).length > 0) {
-                if (
-                    data.username != "" &&
-                    data.password != "" &&
-                    component.state.live
-                ) {
-                    component.setState(
-                        {
-                            username: data.username,
-                            password: data.password,
-                            loggingIn: true,
-                            warning: false,
-                        },
-                        function () {
-                            const sleep = (milliseconds) => {
-                                return new Promise((resolve) =>
-                                    setTimeout(resolve, milliseconds)
-                                );
-                            };
-
-                            const wait_for_autoupdate = async () => {
-                                await sleep(2000);
-                            };
-
-                            while (!component.state.update_ping_received) {
-                                wait_for_autoupdate();
-                            }
-
-                            if (
-                                component.state.update_ping_received &&
-                                !component.state.needs_autoupdate
-                            ) {
-                                wait_for_autoupdate();
-                                component.props.dispatch(
-                                    loginUser(
-                                        component.state.username,
-                                        component.state.password
-                                    )
-                                );
-                            }
-                        }
-                    );
+                if (data.username != "" && data.password != "" && live) {
+                    setUsername(data.username);
+                    setPassword(data.password);
+                    setLoggingIn(true);
+                    setFetchedCredentials(true);
+                    console.log("set loggingin to true");
                 }
             }
         });
 
-        if (
-            this.props.username &&
-            this.props.public_ip &&
-            component.state.live
-        ) {
-            history.push("/dashboard");
-        }
-    }
+        // if (username && public_ip && live) {
+        //     history.push("/dashboard");
+        // }
+    }, []);
 
-    render() {
-        return (
+    useEffect(() => {
+        console.log("in useeffect2");
+        console.log(updatePingReceived);
+        console.log(fetchedCredentials);
+        if (
+            updatePingReceived &&
+            fetchedCredentials &&
+            !needsAutoupdate &&
+            username &&
+            password
+        ) {
+            dispatch(loginUser(username, password));
+        }
+    }, [updatePingReceived, fetchedCredentials]);
+
+    return (
+        <div
+            className={styles.container}
+            data-tid="container"
+            style={{ backgroundImage: `url(${Background})` }}
+        >
+            <UpdateScreen />
             <div
-                className={styles.container}
-                data-tid="container"
-                style={{ backgroundImage: `url(${Background})` }}
+                style={{
+                    position: "absolute",
+                    bottom: 15,
+                    right: 15,
+                    fontSize: 11,
+                    color: "#D1D1D1",
+                }}
             >
-                <UpdateScreen />
-                <div
-                    style={{
-                        position: "absolute",
-                        bottom: 15,
-                        right: 15,
-                        fontSize: 11,
-                        color: "#D1D1D1",
-                    }}
-                >
-                    Version: {this.state.version}
+                Version: {version}
+            </div>
+            {os === "win32" ? (
+                <div>
+                    <Titlebar backgroundColor="#000000" />
                 </div>
-                {this.props.os === "win32" ? (
-                    <div>
-                        <Titlebar backgroundColor="#000000" />
-                    </div>
-                ) : (
-                    <div className={styles.macTitleBar} />
-                )}
-                {this.state.live ? (
-                    <div className={styles.removeDrag}>
-                        <div className={styles.landingHeader}>
-                            <div className={styles.landingHeaderLeft}>
-                                <img src={Logo} width="18" height="18" />
-                                <span className={styles.logoTitle}>
-                                    Fractal
-                                </span>
-                            </div>
-                            <div className={styles.landingHeaderRight}>
-                                <span
-                                    id="forgotButton"
-                                    onClick={this.ForgotPassword}
-                                >
-                                    Forgot Password?
-                                </span>
-                                <button
-                                    type="button"
-                                    className={styles.signupButton}
-                                    style={{ borderRadius: 5, marginLeft: 15 }}
-                                    id="signup-button"
-                                    onClick={this.SignUp}
-                                >
-                                    Sign Up
-                                </button>
-                            </div>
+            ) : (
+                <div className={styles.macTitleBar} />
+            )}
+            {live ? (
+                <div className={styles.removeDrag}>
+                    <div className={styles.landingHeader}>
+                        <div className={styles.landingHeaderLeft}>
+                            <img src={Logo} width="18" height="18" />
+                            <span className={styles.logoTitle}>Fractal</span>
                         </div>
-                        <div
-                            style={{ marginTop: this.props.warning ? 10 : 60 }}
-                        >
-                            <div className={styles.loginContainer}>
-                                <div>
-                                    <FontAwesomeIcon
-                                        icon={faUser}
+                        <div className={styles.landingHeaderRight}>
+                            <span id="forgotButton" onClick={forgotPassword}>
+                                Forgot Password?
+                            </span>
+                            <button
+                                type="button"
+                                className={styles.signupButton}
+                                style={{ borderRadius: 5, marginLeft: 15 }}
+                                id="signup-button"
+                                onClick={signUp}
+                            >
+                                Sign Up
+                            </button>
+                        </div>
+                    </div>
+                    <div style={{ marginTop: warning ? 10 : 60 }}>
+                        <div className={styles.loginContainer}>
+                            <div>
+                                <FontAwesomeIcon
+                                    icon={faUser}
+                                    style={{
+                                        color: "white",
+                                        fontSize: 12,
+                                    }}
+                                    className={styles.inputIcon}
+                                />
+                                <input
+                                    onKeyPress={loginKeyPress}
+                                    onChange={updateUsername}
+                                    type="text"
+                                    className={styles.inputBox}
+                                    style={{ borderRadius: 5 }}
+                                    placeholder={
+                                        username ? username : "Username"
+                                    }
+                                    id="username"
+                                />
+                            </div>
+                            <div>
+                                <FontAwesomeIcon
+                                    icon={faLock}
+                                    style={{
+                                        color: "white",
+                                        fontSize: 12,
+                                    }}
+                                    className={styles.inputIcon}
+                                />
+                                <input
+                                    onKeyPress={loginKeyPress}
+                                    onChange={updatePassword}
+                                    type="password"
+                                    className={styles.inputBox}
+                                    style={{ borderRadius: 5 }}
+                                    placeholder={
+                                        password ? "•••••••••" : "Password"
+                                    }
+                                    id="password"
+                                />
+                            </div>
+                            <div style={{ marginBottom: 20 }}>
+                                {loggingIn && !warning ? (
+                                    <button
+                                        type="button"
+                                        className={styles.loginButton}
+                                        id="login-button"
                                         style={{
-                                            color: "white",
-                                            fontSize: 12,
+                                            opacity: 0.6,
+                                            textAlign: "center",
                                         }}
-                                        className={styles.inputIcon}
-                                    />
-                                    <input
-                                        onKeyPress={this.LoginKeyPress}
-                                        onChange={this.UpdateUsername}
-                                        type="text"
-                                        className={styles.inputBox}
-                                        style={{ borderRadius: 5 }}
-                                        placeholder="Username"
-                                        id="username"
-                                    />
-                                </div>
-                                <div>
-                                    <FontAwesomeIcon
-                                        icon={faLock}
-                                        style={{
-                                            color: "white",
-                                            fontSize: 12,
-                                        }}
-                                        className={styles.inputIcon}
-                                    />
-                                    <input
-                                        onKeyPress={this.LoginKeyPress}
-                                        onChange={this.UpdatePassword}
-                                        type="password"
-                                        className={styles.inputBox}
-                                        style={{ borderRadius: 5 }}
-                                        placeholder="Password"
-                                        id="password"
-                                    />
-                                </div>
+                                    >
+                                        <FontAwesomeIcon
+                                            icon={faCircleNotch}
+                                            spin
+                                            style={{
+                                                color: "white",
+                                                width: 12,
+                                                marginRight: 5,
+                                                position: "relative",
+                                                top: 0.5,
+                                            }}
+                                        />{" "}
+                                        Processing
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleLoginUser}
+                                        type="button"
+                                        className={styles.loginButton}
+                                        id="login-button"
+                                    >
+                                        START
+                                    </button>
+                                )}
                                 <div style={{ marginBottom: 20 }}>
-                                    {this.state.loggingIn &&
-                                    !this.props.warning ? (
+                                    {loggingIn && !warning ? (
                                         <button
                                             type="button"
-                                            className={styles.loginButton}
-                                            id="login-button"
+                                            className={styles.googleButton}
+                                            id="google-button"
                                             style={{
                                                 opacity: 0.6,
                                                 textAlign: "center",
@@ -344,142 +316,98 @@ class Login extends Component {
                                         </button>
                                     ) : (
                                         <button
-                                            onClick={() => this.LoginUser()}
+                                            onClick={handleGoogleLogin}
                                             type="button"
-                                            className={styles.loginButton}
-                                            id="login-button"
+                                            className={styles.googleButton}
+                                            id="google-button"
                                         >
-                                            START
+                                            <FaGoogle
+                                                style={{
+                                                    fontSize: 16,
+                                                    marginRight: 10,
+                                                    position: "relative",
+                                                    top: 3,
+                                                }}
+                                            />
+                                            Login with Google
                                         </button>
                                     )}
-                                    <div style={{ marginBottom: 20 }}>
-                                        {this.state.loggingIn &&
-                                        !this.props.warning ? (
-                                            <button
-                                                type="button"
-                                                className={styles.googleButton}
-                                                id="google-button"
-                                                style={{
-                                                    opacity: 0.6,
-                                                    textAlign: "center",
-                                                }}
-                                            >
-                                                <FontAwesomeIcon
-                                                    icon={faCircleNotch}
-                                                    spin
-                                                    style={{
-                                                        color: "white",
-                                                        width: 12,
-                                                        marginRight: 5,
-                                                        position: "relative",
-                                                        top: 0.5,
-                                                    }}
-                                                />{" "}
-                                                Processing
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() =>
-                                                    this.GoogleLogin()
-                                                }
-                                                type="button"
-                                                className={styles.googleButton}
-                                                id="google-button"
-                                            >
-                                                <FaGoogle
-                                                    style={{
-                                                        fontSize: 16,
-                                                        marginRight: 10,
-                                                        position: "relative",
-                                                        top: 3,
-                                                    }}
-                                                />
-                                                Login with Google
-                                            </button>
-                                        )}
-                                    </div>
                                 </div>
-                                {this.props.warning && (
-                                    <div
-                                        style={{
-                                            textAlign: "center",
-                                            fontSize: 12,
-                                            color: "#f9000b",
-                                            background:
-                                                "rgba(253, 240, 241, 0.9)",
-                                            width: "100%",
-                                            padding: 15,
-                                            borderRadius: 2,
-                                            margin: "auto",
-                                            marginBottom: 30,
-                                            width: 265,
-                                        }}
-                                    >
-                                        <div>
-                                            Invalid credentials. If you lost
-                                            your password, you can reset it on
-                                            the&nbsp;
-                                            <div
-                                                onClick={this.ForgotPassword}
-                                                className={
-                                                    styles.pointerOnHover
-                                                }
-                                                style={{
-                                                    display: "inline",
-                                                    fontWeight: "bold",
-                                                    textDecoration: "underline",
-                                                }}
-                                            >
-                                                website
-                                            </div>
-                                            .
-                                        </div>
-                                    </div>
-                                )}
+                            </div>
+                            {warning && (
                                 <div
                                     style={{
-                                        marginTop: 25,
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        alignItems: "center",
+                                        textAlign: "center",
+                                        fontSize: 12,
+                                        color: "#f9000b",
+                                        background: "rgba(253, 240, 241, 0.9)",
+                                        width: "100%",
+                                        padding: 15,
+                                        borderRadius: 2,
+                                        margin: "auto",
+                                        marginBottom: 30,
+                                        // width: 265,
                                     }}
                                 >
-                                    <label className={styles.termsContainer}>
-                                        <input
-                                            type="checkbox"
-                                            onChange={this.changeRememberMe}
-                                            onKeyPress={this.LoginKeyPress}
-                                        />
-                                        <span className={styles.checkmark} />
-                                    </label>
-
-                                    <div style={{ fontSize: 12 }}>
-                                        Remember Me
+                                    <div>
+                                        Invalid credentials. If you lost your
+                                        password, you can reset it on the&nbsp;
+                                        <div
+                                            onClick={forgotPassword}
+                                            className={styles.pointerOnHover}
+                                            style={{
+                                                display: "inline",
+                                                fontWeight: "bold",
+                                                textDecoration: "underline",
+                                            }}
+                                        >
+                                            website
+                                        </div>
+                                        .
                                     </div>
                                 </div>
+                            )}
+                            <div
+                                style={{
+                                    marginTop: 25,
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                }}
+                            >
+                                <label className={styles.termsContainer}>
+                                    <input
+                                        type="checkbox"
+                                        onChange={changeRememberMe}
+                                        onKeyPress={loginKeyPress}
+                                    />
+                                    <span className={styles.checkmark} />
+                                </label>
+
+                                <div style={{ fontSize: 12 }}>Remember Me</div>
                             </div>
                         </div>
                     </div>
-                ) : (
-                    <div
-                        style={{
-                            lineHeight: 1.5,
-                            margin: "150px auto",
-                            maxWidth: 400,
-                        }}
-                    >
-                        {" "}
-                        We are currently pushing out a critical Linux update.
-                        Your app will be back online very soon. We apologize for
-                        the inconvenience!
-                    </div>
-                )}
-            </div>
-        );
-    }
-}
+                </div>
+            ) : (
+                <div
+                    style={{
+                        lineHeight: 1.5,
+                        margin: "150px auto",
+                        maxWidth: 400,
+                    }}
+                >
+                    {" "}
+                    We are currently pushing out a critical Linux update. Your
+                    app will be back online very soon. We apologize for the
+                    inconvenience!
+                </div>
+            )}
+        </div>
+    );
+};
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
     return {
         username: state.counter.username,
         public_ip: state.counter.public_ip,

@@ -12,6 +12,8 @@ import path from "path";
 import { app, BrowserWindow } from "electron";
 import { autoUpdater } from "electron-updater";
 
+console.log("entereing main dev");
+
 let updating = false;
 let mainWindow: BrowserWindow | null = null;
 
@@ -43,6 +45,7 @@ const installExtensions = async () => {
 };
 
 const createWindow = async () => {
+    console.log("creating window");
     const os = require("os");
     if (os.platform() === "win32") {
         mainWindow = new BrowserWindow({
@@ -85,17 +88,19 @@ const createWindow = async () => {
             icon: path.join(__dirname, "/build/icon.png"),
         });
     }
-
+    console.log("done creating window");
     console.log(path.join(__dirname, "/build/icon.png"));
     mainWindow.loadURL(`file://${__dirname}/app.html`);
 
     // @TODO: Use 'ready-to-show' event
     //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
     mainWindow.webContents.on("did-frame-finish-load", () => {
+        console.log("frame finished loading");
         if (
             process.env.NODE_ENV === "development" ||
             process.env.DEBUG_PROD === "true"
         ) {
+            console.log("devtools");
             mainWindow.webContents.openDevTools();
         }
         if (!mainWindow) {
@@ -104,6 +109,7 @@ const createWindow = async () => {
         if (process.env.START_MINIMIZED) {
             mainWindow.minimize();
         } else {
+            console.log("showing and focusing");
             mainWindow.show();
             mainWindow.focus();
             mainWindow.webContents.send("update", updating);
@@ -111,6 +117,7 @@ const createWindow = async () => {
     });
 
     mainWindow.on("closed", () => {
+        console.log("mainwindow closed");
         mainWindow = null;
     });
 

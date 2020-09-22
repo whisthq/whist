@@ -10,6 +10,7 @@
         "mime": "^1.4.1",
         "minimist": "^0.2.1",
         "qs": "^6.0.4",
+        "react-scripts": "^3.4.3",
         "request": "^2.68.0",
         "speedtest.net": "^0.1.0",
         "tunnel-agent": "^0.6.0"
