@@ -7,9 +7,10 @@ from app import (
     logging,
     db,
 )
-from app.models.hardware import UserContainer, ClusterInfo
+from app.models.hardware import UserContainer, ClusterInfo, SortedClusters
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 import time
+from json import loads
 
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
@@ -51,11 +52,7 @@ base_task = {
             "cpu": 0,
             "environment": [],
             "mountPoints": [
-                {
-                    "readOnly": True,
-                    "containerPath": "/sys/fs/cgroup",
-                    "sourceVolume": "cgroup",
-                }
+                {"readOnly": True, "containerPath": "/sys/fs/cgroup", "sourceVolume": "cgroup",}
             ],
             "dockerSecurityOptions": ["label:seccomp:unconfined"],
             "memory": 2048,
@@ -101,7 +98,17 @@ def preprocess_task_info(taskinfo):
 
 
 @celery_instance.task(bind=True)
-def create_new_container(self, username, cluster_name, region_name, task_definition_arn, use_launch_type, network_configuration=None, taskinfo=None):
+def create_new_container(
+    self,
+    username,
+    cluster_name,
+    region_name,
+    task_definition_arn,
+    use_launch_type,
+    auto_assign=True,
+    network_configuration=None,
+    taskinfo=None,
+):
     """
 
     Args:
@@ -119,8 +126,14 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
         label="None",
         logs="Creating new container on ECS with info {}".format(taskinfo),
     )
-    
+
     ecs_client = ECSClient(launch_type='EC2', region_name=region_name)
+    if auto_assign:
+        all_clusters = list(SortedClusters.query.all())
+        if len(all_clusters) == 0:
+            cluster_name = loads(create_new_cluster(self))['cluster']
+        else:
+            cluster_name = all_clusters[0]['cluster']
     cluster_info = ClusterInfo.query.get(cluster_name)
     if not cluster_info:
         fractalSQLCommit(db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster_name))
@@ -133,10 +146,7 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
             level=logging.ERROR,
         )
         self.update_state(
-            state="FAILURE",
-            meta={
-                "msg": f"Cluster status is {cluster_info.status}",
-            },
+            state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}",},
         )
 
     if taskinfo:
@@ -154,7 +164,9 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
     ecs_client.set_cluster(cluster_name)
     ecs_client.set_task_definition_arn(task_definition_arn)
     if network_configuration:
-        ecs_client.run_task(use_launch_type=use_launch_type, networkConfiguration=network_configuration)
+        ecs_client.run_task(
+            use_launch_type=use_launch_type, networkConfiguration=network_configuration
+        )
     else:
         ecs_client.run_task(use_launch_type=use_launch_type)
     self.update_state(
@@ -209,16 +221,12 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
         self.update_state(
             state="FAILURE",
             meta={
-                "msg": "Error inserting Container {cli} into SQL".format(
-                    cli=ecs_client.tasks[0]
-                )
+                "msg": "Error inserting Container {cli} into SQL".format(cli=ecs_client.tasks[0])
             },
         )
         return
 
-    cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[
-        ecs_client.cluster
-    ]
+    cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[ecs_client.cluster]
     cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
     if cluster_sql:
         fractalLog(
@@ -235,11 +243,7 @@ def create_new_container(self, username, cluster_name, region_name, task_definit
         )
         self.update_state(
             state="FAILURE",
-            meta={
-                "msg": "Error updating cluster {} in SQL".format(
-                    cluster=cluster_name
-                )
-            },
+            meta={"msg": "Error updating cluster {} in SQL".format(cluster=cluster_name)},
         )
         return None
 
@@ -344,30 +348,31 @@ def send_commands(self, cluster, region_name, commands, containers=None):
                 level=logging.ERROR,
             )
             self.update_state(
-                state="FAILURE",
-                meta={
-                    "msg": f"Cluster status is {cluster_info.status}",
-                },
+                state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}",},
             )
         containers = containers or ecs_client.get_containers_in_cluster(cluster=cluster)
         if containers:
             fractalLog(
                 function="send_command",
                 label="None",
-                logs="Sending commands {} to containers {} in cluster {}".format(commands, containers, cluster),
+                logs="Sending commands {} to containers {} in cluster {}".format(
+                    commands, containers, cluster
+                ),
             )
             self.update_state(
                 state="PENDING",
                 meta={
-                    "msg":"Sending commands {} to containers {} in cluster {}".format(commands, containers, cluster)
+                    "msg": "Sending commands {} to containers {} in cluster {}".format(
+                        commands, containers, cluster
+                    )
                 },
             )
-            command_id = ecs_client.exec_commands_on_containers(cluster, containers, commands)['Command']['CommandId']
+            command_id = ecs_client.exec_commands_on_containers(cluster, containers, commands)[
+                'Command'
+            ]['CommandId']
             ecs_client.spin_til_command_executed(command_id)
             fractalLog(
-                function="send_command",
-                label="None",
-                logs="Commands sent!",
+                function="send_command", label="None", logs="Commands sent!",
             )
         else:
             fractalLog(
@@ -378,9 +383,7 @@ def send_commands(self, cluster, region_name, commands, containers=None):
             )
             self.update_state(
                 state="FAILURE",
-                meta={
-                    "msg": "No containers in cluster {} to send commands to".format(cluster)
-                },
+                meta={"msg": "No containers in cluster {} to send commands to".format(cluster)},
             )
     except Exception as error:
         fractalLog(
@@ -392,5 +395,3 @@ def send_commands(self, cluster, region_name, commands, containers=None):
         self.update_state(
             state="FAILURE", meta={"msg": f"Encountered error: {error}"},
         )
-
-    
