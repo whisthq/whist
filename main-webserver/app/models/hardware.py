@@ -55,6 +55,20 @@ class ClusterInfo(db.Model):
     status = db.Column(db.String(250), nullable=False)
 
 
+class SortedClusters(db.Model):
+    __tablename__ = "cluster_sorted"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+    cluster = db.Column(db.String(250), primary_key=True, unique=True)
+    avgCPURemainingPerContainer = db.Column(db.Float, nullable=False, default=1024.0)
+    avgMemoryRemainingPerContainer = db.Column(db.Float, nullable=False, default=2000.0)
+    pendingTasksCount = db.Column(db.Integer, nullable=False, default=0)
+    runningTasksCount = db.Column(db.Integer, nullable=False, default=0)
+    registeredContainerInstancesCount = db.Column(db.Integer, nullable=False, default=0)
+    minContainers = db.Column(db.Integer, nullable=False, default=0)
+    maxContainers = db.Column(db.Integer, nullable=False, default=0)
+    status = db.Column(db.String(250), nullable=False)
+
+
 class OSDisk(db.Model):
     __tablename__ = "os_disks"
     __table_args__ = {"schema": "hardware", "extend_existing": True}
