@@ -1,6 +1,16 @@
 import os
+import pytest
+import requests
 
-from tests import *
+from app import app as _app
+from app.helpers.utils.general.logs import fractalLog
+from tests.constants.resources import SERVER_URL
+
+
+@pytest.fixture
+def app():
+    return _app
+
 
 # parallelizes tests
 def pytest_collection_modifyitems(config, items):

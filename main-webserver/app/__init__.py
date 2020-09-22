@@ -1,3 +1,5 @@
+from tests.client import FractalClient
+
 from .factory import *
 from .helpers.utils.aws.base_ecs_client import *
 from .helpers.utils.general.logs import *
@@ -62,6 +64,7 @@ celery_instance = make_celery()
 app, jwtManager = create_app(celery=celery_instance)
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.test_client_class = FractalClient
 
 db = SQLAlchemy(app, engine_options={"pool_pre_ping": True})
 ma = Marshmallow(app)

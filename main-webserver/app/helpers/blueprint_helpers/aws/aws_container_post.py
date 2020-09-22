@@ -12,6 +12,12 @@ from app.models.logs import LoginHistory
 from app.helpers.utils.stripe.stripe_payments import stripeChargeHourly
 
 
+class BadAppError(Exception):
+    """Raised when `preprocess_task_info` doesn't recognized an input."""
+
+    pass
+
+
 def pingHelper(available, container_ip, version=None):
     """Stores ping timestamps in the v_ms table and tracks number of hours used
 
@@ -110,6 +116,29 @@ def pingHelper(available, container_ip, version=None):
         )
 
     return {"status": SUCCESS}
+
+
+def preprocess_task_info(app):
+    """Maps names of applications to ECS task definitions.
+
+    Arguments:
+        app: The name of the application for which to generate a task
+            definition.
+
+    Returns:
+        A  triple containing arguments two through four of the
+            create_new_container celery task.
+    """
+
+    # TODO: Don't just hard-code the cluster, region, and task definition ARN
+    return (
+        "cluster_eqbpomqrnp",
+        "us-east-1",
+        (
+            "arn:aws:ecs:us-east-1:747391415460:task-definition/roshan-task-"
+            "definition-test-0:5"
+        ),
+    )
 
 
 def set_stun(user_id, container_id, using_stun):
