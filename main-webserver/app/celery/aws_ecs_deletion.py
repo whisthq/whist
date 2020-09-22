@@ -10,6 +10,7 @@ from app import (
     fractalSQLCommit,
 )
 import time
+import traceback
 from app.helpers.utils.aws.aws_resource_locks import lockContainerAndUpdate, spinLock
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.serializers.hardware import UserContainer, ClusterInfo
@@ -115,20 +116,23 @@ def delete_cluster(self, cluster, region_name):
                 state="PENDING",
                 meta={
                     "msg": "Terminating containers in {}".format(
-                        cluster=cluster,
+                        cluster,
                     )
                 },
             )
             cluster_info = ClusterInfo.query.filter_by(cluster=cluster)
             fractalSQLCommit(db, lambda _, x: x.update({'status': 'INACTIVE'}), cluster_info)
-            time.sleep(30)
+            ecs_client.spin_til_no_containers(cluster)
             ecs_client.ecs_client.delete_cluster(cluster=cluster)
-            fractalSQLCommit(db, lambda db, x: db.session.delete(x), cluster)
+            cluster_info = ClusterInfo.query.get(cluster)
+            fractalSQLCommit(db, lambda db, x: db.session.delete(x), cluster_info)
     except Exception as error:
+        traceback_str = ''.join(traceback.format_tb(error.__traceback__))
+        print(traceback_str)
         fractalLog(
             function="delete_cluster",
             label="None",
-            logs=f"Encountered error: {error}",
+            logs=f"Encountered error: {error}, Traceback: {traceback_str}",
             level=logging.ERROR,
         )
         self.update_state(

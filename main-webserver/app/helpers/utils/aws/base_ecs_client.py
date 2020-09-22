@@ -576,7 +576,7 @@ class ECSClient:
         auto_scaling_group_name=None,
         min_size=0,
         max_size=10,
-        subnet_ids=None,
+        availability_zones=None,
     ):
         """
         Args:
@@ -588,11 +588,11 @@ class ECSClient:
         Returns:
              str: name of auto scaling group created
         """
-        subnet_ids = subnet_ids or self.pick_subnets()
-        if isinstance(subnet_ids, str):
-            subnet_ids = [subnet_ids]
-        if not isinstance(subnet_ids, list):
-            raise Exception("subnet_ids should be a list of strs")
+        availability_zones = availability_zones or [self.region_name + 'a']
+        if isinstance(availability_zones, str):
+            availability_zones = [availability_zones]
+        if not isinstance(availability_zones, list):
+            raise Exception("availability_zones should be a list of strs")
         auto_scaling_group_name = auto_scaling_group_name or self.generate_name(
             'auto_scaling_group'
         )
@@ -601,7 +601,7 @@ class ECSClient:
             LaunchConfigurationName=launch_config_name,
             MaxSize=max_size,
             MinSize=min_size,
-            VPCZoneIdentifier=', '.join(subnet_ids),
+            AvailabilityZones=availability_zones,
         )
         return auto_scaling_group_name
 
@@ -844,11 +844,12 @@ class ECSClient:
 
     def create_auto_scaling_cluster(
         self,
+        cluster_name=None,
         instance_type='t2.small',
         ami='ami-04cfcf6827bb29439',
         min_size=0,
         max_size=10,
-        subnet_ids=None,
+        availability_zones=None,
     ):
         """
         Creates launch configuration, auto scaling group, capacity provider, and cluster
@@ -863,13 +864,13 @@ class ECSClient:
             (str, str, str, str): cluster name, launch configuration name, auto scaling group name, capacity provider name
         """
         cluster_name, launch_config_name = self.create_launch_configuration(
-            instance_type=instance_type, ami=ami
+            instance_type=instance_type, ami=ami, cluster_name=cluster_name
         )
         auto_scaling_group_name = self.create_auto_scaling_group(
             launch_config_name=launch_config_name,
             min_size=min_size,
             max_size=max_size,
-            subnet_ids=subnet_ids,
+            availability_zones=availability_zones,
         )
         capacity_provider_name = self.create_capacity_provider(
             auto_scaling_group_name=auto_scaling_group_name

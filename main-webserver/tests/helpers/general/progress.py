@@ -72,7 +72,7 @@ def queryStatus(resp, timeout=10):
             ),
         }
     else:
-        return {"status": 1, "output": "SUCCESS detected"}
+        return {"status": 1, "output": "SUCCESS detected", "result": returned_json["output"]}
 
 
 def fractalJobRunner(f, initial_list, multithreading=ALLOW_MULTITHREADING):
