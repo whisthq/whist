@@ -1,9 +1,9 @@
-import { AUTH_DEFAULT } from "store/reducers/states"
+import { MAIN_DEFAULT } from "store/reducers/states"
 
 import * as WaitlistAction from "store/actions/auth/waitlist"
-import * as LoginAction from "store/actions/auth/login_actions"
+import * as LoginAction from "store/actions/auth/login"
 
-export default function (state = AUTH_DEFAULT, action: any) {
+export default (state = MAIN_DEFAULT, action: any) => {
     switch (action.type) {
         case WaitlistAction.UPDATE_WAITLIST:
             return {

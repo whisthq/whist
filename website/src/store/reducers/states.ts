@@ -1,4 +1,4 @@
-export const AUTH_DEFAULT = {
+export const MAIN_DEFAULT = {
     user: {
         email: null,
         name: null,

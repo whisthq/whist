@@ -127,12 +127,12 @@ const Actions = (props: { user: { email: any }; loggedIn: any }) => {
     )
 }
 
-function mapStateToProps(state: {
-    AuthReducer: { user: any; logged_in: any }
-}) {
+const mapStateToProps = (state: {
+    MainReducer: { user: any; logged_in: boolean }
+}) => {
     return {
-        user: state.AuthReducer.user,
-        loggedIn: state.AuthReducer.logged_in,
+        user: state.MainReducer.user,
+        loggedIn: state.MainReducer.logged_in,
     }
 }
 

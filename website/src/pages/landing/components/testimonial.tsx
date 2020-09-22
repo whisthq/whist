@@ -2,7 +2,7 @@ import React from "react"
 
 import "styles/landing.css"
 
-function Testimonial(props: any) {
+const Testimonial = (props: any) => {
     return (
         <div
             style={{
