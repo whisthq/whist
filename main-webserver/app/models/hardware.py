@@ -73,6 +73,7 @@ class AppsToInstall(db.Model):
     user_id = db.Column(db.String(250), primary_key=True, nullable=False)
     app_id = db.Column(db.String(250), nullable=False, index=True)
 
+
 class SupportedAppImages(db.Model):
     __tablename__ = "supported_app_images"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
