@@ -208,7 +208,7 @@ const Actions = (props: {
                                 user.referralCode
                             }
                         >
-                            <Button className="modal-button">Copy Code</Button>
+                            <Button className="modal-button">Copy Link</Button>
                         </CopyToClipboard>
                     </div>
                     <div

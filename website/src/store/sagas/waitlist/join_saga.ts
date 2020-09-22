@@ -6,13 +6,11 @@ import * as WaitlistAction from "store/actions/auth/waitlist"
 
 import moment from "moment"
 
+const JOIN_EMAIL_ENABLED = false
+
 function* insertWaitlist(action: any) {
     const date = moment(action.closingDate).format("MMMM Do, YYYY")
-    console.log("in saga")
-    console.log(action.email)
-    console.log(action.name)
-    console.log(date)
-    if (action.email) {
+    if (action.email && JOIN_EMAIL_ENABLED) {
         yield call(
             apiPost,
             config.url.PRIMARY_SERVER + "/mail/joinWaitlist",
