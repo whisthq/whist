@@ -27,5 +27,9 @@ def mail(action, **kwargs):
 
     elif action == "computerReady":
         return computerReadyHelper(body["username"], body["date"], body["code"], body["location"])
+
     elif action == "joinWaitlist":
         return joinWaitlistHelper(body["email"], body["name"], body["date"])
+
+    elif action == "waitlistReferral":
+        return waitlistReferralHelper(body["email"], body["name"], body["code"], body["recipient"])

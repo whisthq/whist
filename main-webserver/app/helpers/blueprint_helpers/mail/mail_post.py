@@ -252,3 +252,28 @@ def joinWaitlistHelper(email, name, date):
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
     return jsonify({"status": SUCCESS}), SUCCESS
+
+
+def waitlistReferralHelper(email, name, code, recipient):
+    title = name + " has invited you to join Fractal's waitlist!"
+
+    message = SendGridMail(
+        from_email=email,
+        to_emails=recipient,
+        subject=title,
+        html_content=render_template("on_waitlist_referral.html", email=email, code=code),
+    )
+
+    try:
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+    except Exception as e:
+        fractalLog(
+            function="waitlistReferralHelper",
+            label=email,
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
+        )
+        return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
+
+    return jsonify({"status": SUCCESS}), SUCCESS
