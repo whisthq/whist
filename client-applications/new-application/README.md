@@ -3,6 +3,7 @@
 ![Electron CI](https://github.com/fractalcomputers/client-applications/workflows/Electron%20CI/badge.svg)
 
 This folder contains the code for the Fractal desktop applications running on Windows, MacOS and Linux Ubuntu. The applications are built with cross-platform compatibility using ElectronJS. This repository contains all the directions for building the applications locally and for publishing them for production on each of the following OSes:
+
 -   Windows 10
 -   MacOS 10.10+
 -   Linux Ubuntu 18.04+
@@ -15,7 +16,7 @@ If you are still experiencing issues with starting the dev environment, you migh
 
 To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `yarn cross-env PORT={number} yarn dev`. This will start the Electron application, but will not fetch the Fractal protocol, which means you can only use this to test the application itself, unless you manually cloned and built the protocol yourself. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below. 
 
-This repository has continuous integration through GitHub Actions, which you can learn more about under [CI](#CI).
+This repository has continuous integration through GitHub Actions, which you can learn more about under [Continuous Integration](#Continuous Integration).
 
 ## Packaging and Publishing
 
@@ -67,23 +68,25 @@ If you're ready to publish an update to production, as part of our [Release Sche
 
 First, go to `node_modules/builder-util-runtime/out/httpExecutor.js`, and change the timeout on Line 319 from `60 * 1000` to `60 * 1000 * 1000`. This is necessary to avoid timeout errors for connection in the production application.
 
-## CI
+## Continous Integration
 
-This repository has basic continuous integration through GitHub Actions. For every commit to `dev`, `staging`, or `master`, and for every PR that is opened, CI will attempt to build the bundled application on Windows-64bit, macOS-64bit, and Linux-64bit. It will upload these builds to the GitHub Releases tab with a version identifier corresponding to the current git ref (eg. branch) and the current date.
+This repository has basic continuous integration through GitHub Actions. For every PR to `dev`, `staging`, or `master`, GitHub Actions will attempt to build the bundled application on Windows-64bit, macOS-64bit, and Linux-64bit. It will upload these builds to the GitHub Releases tab with a version identifier corresponding to the current git ref (eg. branch) and the current date.
 
 New builds from the `dev` will also be pushed out on the `testing` channel.
 
 Moreover, new builds from [fractalcomputers/protocol](https://github.com/fractalcomputers/protocol) will trigger builds in this repository on their corresponding branch (or on `dev` if there is no appropriate corresponding branch). Similarly, new protocol builds on `dev` will also trigger a new build to be sent out on the `testing` channel.
 
-Additionally, [style](#styling) checks will be run by CI. You should make sure that all tests pass under the Actions tab.
+Additionally, [style](#Styling) checks will be run to verify that you formatted your code via Prettier. You should make sure that all tests pass under the Actions tab.
 
 ## Styling
 
-To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. You may find a variety of tutorial online for your personal setup. You can always run Prettier via the command-line by running `yarn format`. 
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Prettier.
+
+You can always run Prettier directly from a terminal by typing `yarn format`, or you can install it directly within your IDE by via the following instructions:
 
 ### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 
-Launch VS Code Quick Open (Ctrl+P), paste the following command, and press enter.
+Launch VS Code Quick Open (Ctrl+P/Cmd+P), paste the following command, and press enter.
 
 ```
 ext install esbenp.prettier-vscode
