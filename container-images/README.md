@@ -14,15 +14,16 @@ This repository contains the Docker images containerizing the various applicatio
 
 To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfiles under `/base/`, unless your fixes are application-specific, in which case you should contribute to the relevant Dockerfile for the application. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of possible security attacks possible. Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master` once deployed to production.
 
-You can run the base image via the `run.sh` script. It takes in a few parameters, `APP`, which determines the name of the folder/app to build, `VERSION==18|20` which specificies the Ubuntu version, anad `PROTOCOL` which specifies the local Fractal protocol directory.
+First, initialize the submodules with `git submodule update --init --recursive`. Then, you can build the container image with the `build.sh` script. It takes in a few parameters, `APP`, which determines the name of the folder/app to build, and `VERSION==18|20` which specificies the Ubuntu version.
 
 ```
 # Usage
-run.sh APP VERSION PROTOCOL
+build.sh APP VERSION
 
 # Example
-run.sh base 18 ../protocol
+build.sh base 18
 ```
+After calling `build.sh`, you can publish to ECR (after having set up the `aws` CLI beforehand) using `push.sh APP VERSION`, or else run the container locally using `run.sh APP VERSION [MOUNT?]`. If the optional third argument is the word `mount`, then the container will mount the subrepository, so you can dev on the protocol without rebuilding the container each time.
 
 For more details on how to build and develop the base container image, see `/base/README.md`. 
 
