@@ -352,25 +352,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-
-
-
-
-
-
-############ WORKS UP TO HERE
-
-
-
-
-
-
-############ WORKS UP TO HERE
-
-
-
-
-
 # Install Firefox nightly (for testing only)
 # RUN add-apt-repository ppa:ubuntu-mozilla-daily/ppa
 # RUN apt-get update && apt-get install firefox-trunk
