@@ -23,10 +23,11 @@ def input_token():
     print(os.getenv("DASHBOARD_PASSWORD"))
     sys.stdout.flush()
     resp = requests.post(
-        (SERVER_URL + "/admin/login"),
-        json=dict(
-            username=os.getenv("DASHBOARD_USERNAME"), password=os.getenv("DASHBOARD_PASSWORD")
-        ),
+        (SERVER_URL + "/account/login"),
+	json=dict(
+            username=os.getenv("DASHBOARD_USERNAME"),
+            password=os.getenv("DASHBOARD_PASSWORD"),
+        ),        
     )
 
     return resp.json()["access_token"]
@@ -34,6 +35,12 @@ def input_token():
 
 @pytest.fixture
 def admin_token():
+    print(os.environ)
+    sys.stdout.flush()
+    print('server_url', SERVER_URL)
+    print(os.getenv("DASHBOARD_USERNAME"))
+    print(os.getenv("DASHBOARD_PASSWORD"))
+    sys.stdout.flush()
     resp = requests.post(
         (SERVER_URL + "/admin/login"),
         json=dict(
