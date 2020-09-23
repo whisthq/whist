@@ -10,7 +10,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
 # Install systemd
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
     systemd=245.4-4ubuntu3.2 \
@@ -39,7 +39,7 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
 
 # Install some useful utilities and their dependencies for debugging/testing
 # These packages need to be installed before installing/updating Python
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
     liblua5.2-0=5.2.4-1.1build3 \
@@ -57,7 +57,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Install X Server dependencies and basic Ubuntu packages
 # These packages need to be installed before installing/updating Python
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
     lsb-release=11.1.0ubuntu2 \
@@ -78,7 +78,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Install FFmpeg and Libav dependencies explicitly
 # These packages need to be installed before installing/updating Python
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
     libmp3lame0=3.100-3 \
@@ -114,7 +114,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Install Pulse Audio & XDummy dependencies explicitly
 # These packages need to be installed before installing/updating Python
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
     libunwind8=1.2.1-9build1 \
@@ -138,7 +138,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Install Nvidia CUDA Drivers dependencies explicitly
 # These packages need to be installed before installing/updating Python
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
     pkg-config=0.29.1-0ubuntu4 \
@@ -150,7 +150,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install general Ubuntu packages
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     apt-utils=2.0.2ubuntu0.1 \
@@ -173,7 +173,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /var/lib/apt/lists/*
 
 # Install Google Chrome dependencies explicitly
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libappindicator3-1=12.10.1+20.04.20200408.1-0ubuntu1 \
@@ -197,7 +197,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /var/lib/apt/lists/*
 
 # Install Google Chrome
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
@@ -208,7 +208,7 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && rm -rf /var/lib/apt/lists/*
 
 # Install time while avoiding interactive installation for tzdata - uses UTC
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 ENV LOCAL="yes"
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -225,13 +225,13 @@ COPY setup-scripts /setup-scripts
 
 # Create fractal user
 RUN useradd --create-home fractal \
-    && usermod -aG sudo fractal \ 
+    && usermod -aG sudo fractal \
     && echo 'fractal:dX6-gkE%Gx42gapUaR+T*^.4fhm3Pv7c' | chpasswd
 
 # Install Pulse Audio
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
-RUN apt-get update && apt-get install --no-install-recommends -y \ 
+RUN apt-get update && apt-get install --no-install-recommends -y \
     pulseaudio=1:13.99.1-1ubuntu3.6 \
     && apt-get autoremove -y \
     && apt-get clean \
@@ -256,14 +256,14 @@ RUN /bin/bash -c "source utils.sh \
     && Install-Unison \
     && Enable-SSHKey"
 
-RUN /bin/bash -c " source utils.sh \ 
+RUN /bin/bash -c " source utils.sh \
     && Add-AutoLogin \
     && Install-FractalServer"
-    
+
 WORKDIR /
 
 # Install FFmpeg dependencies explicitly
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
     libavcodec58=7:4.2.4-1ubuntu0.1 \
@@ -280,10 +280,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install FFmpeg, taken from protocol/server/linux-server-setup.sh
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    ffmpeg=7:4.2.4-1ubuntu0.1 \ 
+    ffmpeg=7:4.2.4-1ubuntu0.1 \
     libavcodec-dev=7:4.2.4-1ubuntu0.1 \
     libavdevice-dev=7:4.2.4-1ubuntu0.1 \
     libx11-dev=2:1.6.9-2ubuntu1.1 \
@@ -297,9 +297,9 @@ COPY display-service-envs /home/fractal
 COPY fractal-input.rules home/fractal
 
 # Install and enable OpenSSH
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
-RUN apt-get update && apt-get install --no-install-recommends -y \ 
+RUN apt-get update && apt-get install --no-install-recommends -y \
     openssh-client=1:8.2p1-4ubuntu0.1 \
     openssh-sftp-server=1:8.2p1-4ubuntu0.1 \
     openssh-server=1:8.2p1-4ubuntu0.1 \
@@ -355,7 +355,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-    
+
 ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
 # Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID
@@ -369,7 +369,7 @@ RUN systemctl enable fractal-update-nvidia-busid
 ENV DISPLAY :10
 
 # Install libraries for (limited) hardware acceleration
-# Note that all installations need to be prefixed by an `apt-get update` to 
+# Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
     vainfo=2.6.0+ds1-1 \
