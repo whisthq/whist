@@ -64,5 +64,3 @@ You can run the base image via the `run.sh` script. It takes in a few parameters
 ../run.sh base 18 ../protocol
 ```
 
-
-
