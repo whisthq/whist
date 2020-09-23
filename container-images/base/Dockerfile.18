@@ -323,7 +323,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     vdpauinfo=1.0-3 \
     mesa-vdpau-drivers=20.0.8-0ubuntu1~18.04.1 \
     vdpau-va-driver=0.7.4-6ubuntu1 \
-    vdpau-driver-all=1.1.1-3ubuntu1 \
     libvdpau-va-gl1=0.4.2-1build1 \
     && apt-get autoremove -y \
     && apt-get clean \
