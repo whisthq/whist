@@ -35,6 +35,22 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/plymouth* \
     /lib/systemd/system/systemd-update-utmp*
 
+# Install some useful utilities and their dependencies for debugging/testing
+# These packages need to be installed before installing/updating Python
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    liblua5.2-0=5.2.4-1.1build3 \
+    libsmbclient=2:4.11.6+dfsg-0ubuntu1.4 \
+    libuchardet0=0.0.6-3build1 \
+    libevent-2.1-7=2.1.11-stable-1 \
+    libutempter0=1.1.6-4 \
+    tmux=3.0a-2ubuntu0.1 \
+    mesa-utils=8.4.0-1build1 \
+    glmark2=2014.03+git20150611.fa71af2d-0ubuntu7 \
+    mpv=0.32.0-1ubuntu1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install X Server dependencies and basic Ubuntu packages
 # These packages need to be installed before installing/updating Python
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -347,28 +363,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 
 
-# Install some useful utilities for debugging/testing
-# RUN apt-get update && apt-get install --no-install-recommends -y \
-#     tmux=2.6-3 \
-#     mesa-utils=8.4.0-1 \
-#     glmark2=2014.03+git20150611.fa71af2d-0ubuntu4 \
-#     mpv=0.27.2-1ubuntu1 \
-#     && apt-get autoremove \
-#     && apt-get clean \
-#     && rm -rf /var/lib/apt/lists/*
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    liblua5.2-0=5.2.4-1.1build3 \
-    libsmbclient=2:4.11.6+dfsg-0ubuntu1.4 \
-    libuchardet0=0.0.6-3build1 \
-    libevent-2.1-7=2.1.11-stable-1 \
-    libutempter0=1.1.6-4 \
-    tmux=3.0a-2ubuntu0.1 \
-    mesa-utils=8.4.0-1build1 \
-    glmark2=2014.03+git20150611.fa71af2d-0ubuntu7 \
-    mpv=0.32.0-1ubuntu1 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 
 ############ WORKS UP TO HERE
