@@ -56,7 +56,7 @@ int last_played_id = -1;
 
 bool triggered = false;
 
-static int decoder_frequency = 48000;  // Hertz
+int decoder_frequency = 48000;  // Hertz
 
 clock test_timer;
 double test_time;
@@ -143,10 +143,6 @@ void updateAudio() {
 #if LOG_AUDIO
     // mprintf("Queue: %d", SDL_GetQueuedAudioSize(AudioData.dev));
 #endif
-    if (audio_frequency > 128000) { 
-        audio_frequency = 128000;
-    }
-
     if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
         LOG_INFO("Updating audio frequency to %d!", audio_frequency);
         decoder_frequency = audio_frequency;
@@ -319,9 +315,6 @@ void updateAudio() {
 }
 
 int32_t ReceiveAudio(FractalPacket* packet) {
-    if (audio_frequency == 128000) {
-        return 0;
-    }
     if (packet->index >= MAX_NUM_AUDIO_INDICES) {
         LOG_WARNING("Packet Index too large!");
         return -1;
