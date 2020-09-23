@@ -36,7 +36,7 @@ jobs:
           path: base/protocol
 
       - name: Build the Fractal protocol
-        run: cd base/protocol && cmake . && make -j
+      run: cd base/protocol && ./linux-server-setup && cmake . && make -j
 
       - name: Build the Ubuntu 20.04 Base Image
         run: cd base && docker build . --file Dockerfile.20 --tag base-ubuntu20.04:$(date +%s)
