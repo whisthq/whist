@@ -287,12 +287,16 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 ENV distribution $(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
 
+# hadolint ignore=SC1091,SC2046,SC2086
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
 
+# hadolint ignore=SC1091,SC2046,SC2086
 RUN mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc/apt/preferences.d/cuda-repository-pin-600
 
+# hadolint ignore=SC1091,SC2046,SC2086
 RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub
 
+# hadolint ignore=SC1091,SC2046,SC2086
 RUN echo deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 / | tee /etc/apt/sources.list.d/cuda.list
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -345,7 +349,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 
 
-# Install some useful utilities for debugging/testing
+
+# Install some useful utilities and their dependencies for debugging/testing
 # RUN apt-get update && apt-get install --no-install-recommends -y \
 #     tmux=2.6-3 \
 #     mesa-utils=8.4.0-1 \
@@ -356,13 +361,21 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 #     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    tmux \
-    mesa-utils \
-    glmark2 \
-    mpv \
+    liblua5.2-0=5.2.4-1.1build1 \
+    libsmbclient=2:4.7.6+dfsg~ubuntu-0ubuntu2.19 \
+    libevent-2.1-6=2.1.8-stable-4build1 \
+    libutempter0=1.1.6-3 \
+    tmux=2.6-3ubuntu0.2 \
+    mesa-utils=8.4.0-1 \
+    glmark2=2014.03+git20150611.fa71af2d-0ubuntu4 \
+    mpv=0.27.2-1ubuntu1 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+
+############ WORKS UP TO HERE
+
 
 
 
@@ -371,25 +384,27 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # RUN add-apt-repository ppa:ubuntu-mozilla-daily/ppa
 # RUN apt-get update && apt-get install firefox-trunk
 
-
-# Install fractal services
+# Install Fractal services
 COPY fractal-entrypoint.service /etc/systemd/system
 RUN systemctl enable fractal-entrypoint
+
 COPY fractal-display.service /etc/systemd/system
 RUN systemctl enable fractal-display
+
 COPY fractal-protocol.service /etc/systemd/system
 RUN systemctl enable fractal-protocol
+
 COPY fractal-audio.service /etc/systemd/system
 RUN systemctl enable fractal-audio
 
-
+# Set fractal-setup script
 COPY fractal-setup.sh /
 RUN chmod +x /fractal-setup.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
 
-#As opposed to graphical.target, which is the default
-#RUN systemctl set-default multi-user.target
+# As opposed to graphical.target, which is the default
+# RUN systemctl set-default multi-user.target
 ENV init /sbin/init
 
 # Disable some extra systemd services
@@ -399,12 +414,12 @@ RUN systemctl mask acpid
 RUN systemctl mask NetworkManager-wait-online
 RUN systemctl mask nvidia-persistenced
 
-# set up protocol symlink
+# Set up Fractal Protocol symlink
 RUN rm /usr/share/fractal/FractalServer.sh /usr/share/fractal/FractalServer
 RUN mkdir /usr/share/fractal/bin
 RUN ln -s /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 
-# grab protocol
+# Grab pre-compiled Fractal Protocol
 COPY protocol/server/build64/libsentry.so /usr/share/fractal/bin/libsentry.so
 COPY protocol/server/build64/FractalServer /usr/share/fractal/bin/FractalServer
 
