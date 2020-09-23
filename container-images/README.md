@@ -4,7 +4,7 @@
 |:--:|:--:|
 |![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|
 
-This repository contains the Docker images containerizing the various applications that Fractal streams or is planning to stream from containers via our streaming technology. The base image running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders.
+This repository contains the Docker images containerizing the various applications that Fractal streams or is planning to stream from containers via our streaming technology. The base images running the containerized Fractal protocol are under the `/base/` subfolder, and are used as a starter images for the application Dockerfiles which are in each of their respective application-type subfolders.
 
 **Supported Applications**
 
@@ -12,22 +12,9 @@ This repository contains the Docker images containerizing the various applicatio
 
 ## Development
 
-To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfiles under `/base/`, unless your fixes are application-specific, in which case you should contribute to the relevant Dockerfile for the application. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of possible security attacks possible. Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master` once deployed to production.
+To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfiles under `/base/`, unless your fixes are application-specific, in which case you should contribute to the relevant Dockerfile for the application. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of possible security attacks possible. Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master` once deployed to production. The `master` branch is going to automatically deploy to production via AWS ECR (this is a current TODO), and must not be pushed to unless thorough testing has been performed.
 
-First, initialize the submodules with `git submodule update --init --recursive`. Then, you can build the container image with the `build.sh` script. It takes in a few parameters, `APP`, which determines the name of the folder/app to build, and `VERSION==18|20` which specificies the Ubuntu version.
-
-```
-# Usage
-build.sh APP VERSION
-
-# Example
-build.sh base 18
-```
-After calling `build.sh`, you can publish to ECR (after having set up the `aws` CLI beforehand) using `push.sh APP VERSION`, or else run the container locally using `run.sh APP VERSION [MOUNT?]`. If the optional third argument is the word `mount`, then the container will mount the subrepository, so you can dev on the protocol without rebuilding the container each time.
-
-For more details on how to build and develop the base container image, see `/base/README.md`. 
-
-We have basic continuous integration set for each container image through GitHub Actions. At every PR to `master` or `dev`, the Docker images will be built to ensure they work, and the status badges are listed in the respective subfolders' READMEs. You should make sure that your code passes all tests under the Actions tab, and that you add to the continuous integration if you add support for new applications and generate new Dockerfiles.
+For general development, refer to the `/base` subfolder README, and to your specific applications' subfolder README for application-specific development. See below for our continous integration process.
 
 ## Styling
 
@@ -35,9 +22,15 @@ We use [Hadolint](https://github.com/hadolint/hadolint) to format the Dockerfile
 
 We also have [pre-commit hooks](https://pre-commit.com/) with Hadolint support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Hadolint.Dockerfile improvements will be printed to the terminal for all Dockerfiles specified under `args` in `.pre-commit-config.yaml`. If you need/want to add other Dockerfiles, you need to specify them there.
 
-## Publishing
+## Continous Integration & Publishing
 
-We store our production container images on AWS Elastic Container Registry (ECR) and deploy them on AWS Elastic Container Service (ECS). To push to the AWS container registry, a `container-admin` AWS IAM user has been created with the following credentials:
+We store our production container images on AWS Elastic Container Registry (ECR) and deploy them on AWS Elastic Container Service (ECS). We are currently building a true continuous delivery process, where at every PR to `master`, the images get built by GitHub Actions and then pushed to ECR automatically if all builds and tests pass, at which point the webserver will automatically pick new images for production deployment.
+
+Currently, at every PR to `master` or `dev`, the Docker base images will be built on GitHub Actions and status checks will be reported. For every new application that you add support for, you should create a new `docker-[YOUR APP]-ubuntu[18||20].yml` file to test that it properly build and then uploads to ECR automatically. You can follow the format of `docker-base-ubuntu20.yml` as needed.
+
+### Pushing to ECR manually
+
+To push to the AWS container registry, a `container-admin` AWS IAM user has been created with the following credentials:
 
 - Access Key ID: `AKIA24A776SSFXQ6HLAK`
 - Secret Key: `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`
