@@ -145,6 +145,7 @@ void updateAudio() {
     // mprintf("Queue: %d", SDL_GetQueuedAudioSize(AudioData.dev));
 #endif
     if (audio_frequency > MAX_FREQ) {
+        LOG_ERROR("Frequency received was too large: %d, silencing audio now.", audio_frequency);
         audio_frequency = MAX_FREQ;
     }
 
