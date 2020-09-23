@@ -181,7 +181,7 @@ COPY setup-scripts /setup-scripts
 # Create fractal user
 RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \
-    && echo 'fractal:dX6-gkE%Gx42gapUaR+T*^.4fhm3Pv7c' | chpasswd
+    && echo 'fractal:dX6-gkE%Gx42gapUaR+T*^$4fhm3Pv7c' | chpasswd
 
 # Install Pulse Audio
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
