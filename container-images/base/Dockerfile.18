@@ -45,6 +45,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libevent-2.1-6=2.1.8-stable-4build1 \
     libutempter0=1.1.6-3 \
     tmux=2.6-3ubuntu0.2 \
+    less=487-0.1 \
     mesa-utils=8.4.0-1 \
     glmark2=2014.03+git20150611.fa71af2d-0ubuntu4 \
     mpv=0.27.2-1ubuntu1 \
