@@ -13,7 +13,7 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 RUN apt-get update && apt-get install --no-install-recommends -y \
     systemd=237-3ubuntu10.42 \
     systemd-sysv=237-3ubuntu10.42 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -50,7 +50,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     x11-xserver-utils=7.7+7build1 \
     xserver-xorg-video-dummy=1:0.3.8-1build1 \
     dkms=2.3-3ubuntu9.7 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -78,7 +78,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libzmq5=4.2.5-1ubuntu0.2 \
     libopenmpt0=0.3.6-1 \
     libvdpau1=1.1.1-3ubuntu1 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -100,7 +100,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     pulseaudio-utils=1:11.1-1ubuntu7.10 \
     libltdl7=2.4.6-2 \
     libtdb1=1.3.15-2 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -132,7 +132,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     sudo=1.8.21p2-3ubuntu1.2 \
     vim=2:8.0.1453-1ubuntu1.3 \
     libcurl4=7.58.0-2ubuntu3.10 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -152,7 +152,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     libxcomposite1=1:0.4.4-2 \
     libxcursor1=1:1.1.15-1 \
     libxi6=2:1.7.9-1 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -161,6 +161,7 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && sed -i '3 s/^/# /' /etc/apt/sources.list \
     && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable=85.0.4183.121-1 \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -168,7 +169,7 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
 ENV LOCAL="yes"
 RUN apt-get update && apt-get install --no-install-recommends -y \
     tzdata=2020a-0ubuntu0.18.04 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -181,12 +182,12 @@ COPY setup-scripts /setup-scripts
 # Create fractal user
 RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \
-    && echo 'fractal:dX6-gkE%Gx42gapUaR+T*^$4fhm3Pv7c' | chpasswd
+    && echo 'fractal:dX6-gkE%Gx42gapUaR+T*^.4fhm3Pv7c' | chpasswd
 
 # Install Pulse Audio
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
     pulseaudio=1:11.1-1ubuntu7.10 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -226,7 +227,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libpostproc54=7:3.4.8-0ubuntu0.2 \
     libswresample2=7:3.4.8-0ubuntu0.2 \
     libswscale4=7:3.4.8-0ubuntu0.2 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -236,7 +237,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libavcodec-dev=7:3.4.8-0ubuntu0.2 \
     libavdevice-dev=7:3.4.8-0ubuntu0.2 \
     libx11-dev=2:1.6.4-3ubuntu0.3 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -248,7 +249,7 @@ COPY fractal-input.rules home/fractal
 # Install and enable OpenSSH
 RUN apt-get update && apt-get install --no-install-recommends -y \ 
     openssh-server=1:7.6p1-4ubuntu0.3 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -280,7 +281,7 @@ ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRAR
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install --no-install-recommends -y \
     "linux-headers-$(uname -r)" \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -300,7 +301,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     nvidia-settings=450.51.06-0ubuntu1 \
     cuda-drivers-450=450.51.06-1 \
     cuda-drivers=450.51.06-1 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -324,7 +325,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     vdpau-va-driver=0.7.4-6ubuntu1 \
     vdpau-driver-all=1.1.1-3ubuntu1 \
     libvdpau-va-gl1=0.4.2-1build1 \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -354,12 +355,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 #     && apt-get autoremove \
 #     && apt-get clean \
 #     && rm -rf /var/lib/apt/lists/*
+
 RUN apt-get update && apt-get install --no-install-recommends -y \
     tmux \
     mesa-utils \
     glmark2 \
     mpv \
-    && apt-get autoremove \
+    && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -399,12 +401,12 @@ RUN systemctl mask NetworkManager-wait-online
 RUN systemctl mask nvidia-persistenced
 
 # set up protocol symlink
-RUN sudo rm /usr/share/fractal/FractalServer.sh /usr/share/fractal/FractalServer
-RUN sudo mkdir /usr/share/fractal/bin
-RUN sudo ln -s /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
+RUN rm /usr/share/fractal/FractalServer.sh /usr/share/fractal/FractalServer
+RUN mkdir /usr/share/fractal/bin
+RUN ln -s /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 
 # grab protocol
-ADD protocol/server/build64/libsentry.so /usr/share/fractal/bin/libsentry.so
-ADD protocol/server/build64/FractalServer /usr/share/fractal/bin/FractalServer
+COPY protocol/server/build64/libsentry.so /usr/share/fractal/bin/libsentry.so
+COPY protocol/server/build64/FractalServer /usr/share/fractal/bin/FractalServer
 
 CMD ["/lib/systemd/systemd"]
