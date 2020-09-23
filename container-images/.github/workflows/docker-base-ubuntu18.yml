@@ -36,7 +36,7 @@ jobs:
           path: base/protocol
   
       - name: Build the Fractal protocol
-        run: cd base/protocol && ./linux-server-setup && cmake . && make -j
+        run: cd base/protocol && ./server/linux-server-setup && cmake . && make -j
 
       - name: Build the Ubuntu 18.04 Base Image
         run: cd base && docker build . --file Dockerfile.18 --tag base-ubuntu18.04:$(date +%s)
