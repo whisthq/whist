@@ -1,6 +1,6 @@
-# This workflow installs cloud.ps1, on Windows, and cloud-0.sh & cloud-1.sh, on Linux, to test VM scripts installation
+# This workflow builds and pushes container images to ECR
 
-name: Install CI
+name: Build Container Images
 
 on:
   push:
