@@ -1,5 +1,4 @@
 import os
-import sys
 from tests import *
 
 # parallelizes tests
@@ -16,12 +15,6 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture
 def input_token():
-    print(os.environ)
-    sys.stdout.flush()
-    print('server_url', SERVER_URL)
-    print(os.getenv("DASHBOARD_USERNAME"))
-    print(os.getenv("DASHBOARD_PASSWORD"))
-    sys.stdout.flush()
     resp = requests.post(
         (SERVER_URL + "/account/login"),
 	json=dict(
@@ -29,19 +22,12 @@ def input_token():
             password=os.getenv("DASHBOARD_PASSWORD"),
         ),        
     )
-    print(resp.status_code)
-    sys.stdout.flush()
+
     return resp.json()["access_token"]
 
 
 @pytest.fixture
 def admin_token():
-    print(os.environ)
-    sys.stdout.flush()
-    print('server_url', SERVER_URL)
-    print(os.getenv("DASHBOARD_USERNAME"))
-    print(os.getenv("DASHBOARD_PASSWORD"))
-    sys.stdout.flush()
     resp = requests.post(
         (SERVER_URL + "/admin/login"),
         json=dict(
