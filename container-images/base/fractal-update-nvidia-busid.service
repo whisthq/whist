@@ -1,0 +1,18 @@
+# Update Nvidia BUSID before X starts
+
+[Unit]
+Description=Update Nvidia BUSID in /usr/share/X11/xorg.conf.d/01-nvidia.conf before X starts
+DefaultDependencies=yes
+After=syslog.target
+Before=display-manager.service multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/share/fractal/update-nvidia-busid.sh
+RemainAfterExit=true
+StandardOutput=journal+console
+StandardError=journal+console
+SyslogIdentifier=update-nvidia-bus-id
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,426 @@
+FROM ubuntu:20.04
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+ENV container docker
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
+
+# Install systemd
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    systemd=245.4-4ubuntu3.2 \
+    systemd-sysv=245.4-4ubuntu3.2 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Clean systemd install
+WORKDIR /lib/systemd/system/sysinit.target.wants/
+
+# hadolint ignore=SC2010
+RUN ls | grep -v systemd-tmpfiles-setup | xargs rm -f "$1"
+
+WORKDIR /
+
+RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
+    /etc/systemd/system/*.wants/* \
+    /lib/systemd/system/local-fs.target.wants/* \
+    /lib/systemd/system/sockets.target.wants/*udev* \
+    /lib/systemd/system/sockets.target.wants/*initctl* \
+    /lib/systemd/system/basic.target.wants/* \
+    /lib/systemd/system/anaconda.target.wants/* \
+    /lib/systemd/system/plymouth* \
+    /lib/systemd/system/systemd-update-utmp*
+
+# Install some useful utilities and their dependencies for debugging/testing
+# These packages need to be installed before installing/updating Python
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    liblua5.2-0=5.2.4-1.1build3 \
+    libsmbclient=2:4.11.6+dfsg-0ubuntu1.4 \
+    libuchardet0=0.0.6-3build1 \
+    libevent-2.1-7=2.1.11-stable-1 \
+    libutempter0=1.1.6-4 \
+    tmux=3.0a-2ubuntu0.1 \
+    mesa-utils=8.4.0-1build1 \
+    glmark2=2014.03+git20150611.fa71af2d-0ubuntu7 \
+    mpv=0.32.0-1ubuntu1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install X Server dependencies and basic Ubuntu packages
+# These packages need to be installed before installing/updating Python
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    lsb-release=11.1.0ubuntu2 \
+    ufw=0.36-6 \
+    keyboard-configuration=1.194ubuntu3 \
+    libxtst-dev=2:1.2.3-1 \
+    libxdamage-dev=1:1.1.5-2 \
+    libasound2-data=1.2.2-2.1ubuntu2 \
+    libasound2=1.2.2-2.1ubuntu2 \
+    libasound2-dev=1.2.2-2.1ubuntu2 \
+    xclip=0.13-1 \
+    x11-xserver-utils=7.7+8 \
+    xserver-xorg-video-dummy=1:0.3.8-1build3 \
+    dkms=2.8.1-5ubuntu1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install FFmpeg and Libav dependencies explicitly
+# These packages need to be installed before installing/updating Python
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libmp3lame0=3.100-3 \
+    libopus0=1.3.1-0ubuntu1 \
+    libsnappy1v5=1.1.8-1build1 \
+    libspeex1=1.2~rc1.2-1.1ubuntu1 \
+    libtheora0=1.1.1+dfsg.1-15ubuntu2 \
+    libtwolame0=0.4.0-2 \
+    libwebp6=0.6.1-2 \
+    libwebpmux3=0.6.1-2 \
+    libavc1394-0=0.5.4-5 \
+    libcaca0=0.99.beta19-2.1ubuntu1 \
+    libcdio-cdda2=10.2+2.0.0-1 \
+    libcdio-paranoia2=10.2+2.0.0-1 \
+    libdc1394-22=2.2.5-2.1 \
+    libiec61883-0=1.2.0-3 \
+    libraw1394-11=2.1.2-1 \
+    libxv1=2:1.0.11-1 \
+    librubberband2=1.8.2-1build1 \
+    libtesseract4=4.1.1-2build2 \
+    libzmq5=4.3.2-2ubuntu1 \
+    libopenmpt0=0.4.11-1build1 \
+    libvdpau1=1.3-1ubuntu2 \
+    libvpx6=1.8.2-1build1 \
+    libwavpack1=5.2.0-1 \
+    libx265-179=3.2.1-1build1 \
+    libxcb-shape0=1.14-2 \
+    libxcb-xfixes0=1.14-2 \
+    ocl-icd-libopencl1=2.2.11-1ubuntu1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Pulse Audio & XDummy dependencies explicitly
+# These packages need to be installed before installing/updating Python
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libunwind8=1.2.1-9build1 \
+    xserver-xorg-core-hwe-18.04=3:14.5 \
+    libgstreamer-plugins-base1.0-0=1.16.2-4 \
+    libgstreamer1.0-0=1.16.2-2 \
+    liborc-0.4-0=1:0.4.31-1 \
+    libpulse0=1:13.99.1-1ubuntu3.6 \
+    libsnapd-glib1=1.57-0ubuntu3 \
+    libsndfile1=1.0.28-7 \
+    libsoxr0=0.1.3-2build1 \
+    libspeexdsp1=1.2~rc1.2-1.1ubuntu1 \
+    libwebrtc-audio-processing1=0.3.1-0ubuntu3 \
+    libasound2-plugins=1.2.2-1ubuntu1 \
+    pulseaudio-utils=1:13.99.1-1ubuntu3.6 \
+    libltdl7=2.4.6-14 \
+    libtdb1=1.4.2-3build1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Nvidia CUDA Drivers dependencies explicitly
+# These packages need to be installed before installing/updating Python
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    pkg-config=0.29.1-0ubuntu4 \
+    screen-resolution-extra=0.18build1 \
+    libgtk2.0-0=2.24.32-4ubuntu4 \
+    libjansson4=2.12-1build1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install general Ubuntu packages
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    apt-utils=2.0.2ubuntu0.1 \
+    x11vnc=0.9.16-3 \
+    xvfb=2:1.20.8-2ubuntu2.4 \
+    fluxbox=1.3.5-2build2 \
+    wmctrl=1.07-7build1 \
+    ca-certificates=20190110ubuntu1.1 \
+    wget=1.20.3-1ubuntu1 \
+    gnupg2=2.2.19-3ubuntu2 \
+    libfido2-1=1.3.1-1ubuntu2 \
+    libgbm1=20.0.8-0ubuntu1~20.04.1 \
+    libxcb-dri3-0=1.14-2 \
+    python3.8=3.8.2-1ubuntu1.2 \
+    sudo=1.8.31-1ubuntu1.1 \
+    vim=2:8.1.2269-1ubuntu5 \
+    libcurl4=7.68.0-1ubuntu2.2 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Google Chrome dependencies explicitly
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    libappindicator3-1=12.10.1+20.04.20200408.1-0ubuntu1 \
+    libatk-bridge2.0-0=2.34.2-0ubuntu2~20.04.1 \
+    libatk1.0-0=2.35.1-1ubuntu2 \
+    libatspi2.0-0=2.36.0-2 \
+    libcups2=2.3.1-9ubuntu1.1 \
+    libgdk-pixbuf2.0-0=2.40.0+dfsg-3 \
+    libgtk-3-0=3.24.20-0ubuntu1 \
+    libnspr4=2:4.25-1 \
+    libnss3=2:3.49.1-1ubuntu1.5 \
+    libpango-1.0-0=1.44.7-2ubuntu4 \
+    libpangocairo-1.0-0=1.44.7-2ubuntu4 \
+    libxcomposite1=1:0.4.5-1 \
+    libxcursor1=1:1.2.0-2 \
+    libxi6=2:1.7.10-0ubuntu1 \
+    fonts-liberation=1:1.07.4-11 \
+    xdg-utils=1.1.3-2ubuntu1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Google Chrome
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+    && sed -i '3 s/^/# /' /etc/apt/sources.list \
+    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable=85.0.4183.121-1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install time while avoiding interactive installation for tzdata - uses UTC
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+ENV LOCAL="yes"
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    tzdata=2020a-0ubuntu0.20.04 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
+RUN echo "Set disable_coredump false" >> /etc/sudo.conf
+
+# Use local setup-scripts repository for development
+COPY setup-scripts /setup-scripts
+
+# Create fractal user
+RUN useradd --create-home fractal \
+    && usermod -aG sudo fractal \
+    && echo 'fractal:dX6-gkE%Gx42gapUaR+T*^.4fhm3Pv7c' | chpasswd
+
+# Install Pulse Audio
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    pulseaudio=1:13.99.1-1ubuntu3.6 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Give access to Pulse Audio virtual sound card
+RUN adduser root pulse-access \
+    && adduser fractal pulse-access
+
+# Install all required components for Fractal to perform well, split into steps for caching
+WORKDIR /setup-scripts/linux
+
+RUN /bin/bash -c "source utils.sh \
+    && Install-CustomX11Configuration"
+
+RUN /bin/bash -c "source utils.sh \
+    && Set-FractalDirectory \
+    && Install-FractalServer dev \
+    && Install-FractalAutoUpdate master"
+
+RUN /bin/bash -c "source utils.sh \
+    && Install-Unison \
+    && Enable-SSHKey"
+
+RUN /bin/bash -c " source utils.sh \
+    && Add-AutoLogin \
+    && Install-FractalServer"
+
+WORKDIR /
+
+# Install FFmpeg dependencies explicitly
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libavcodec58=7:4.2.4-1ubuntu0.1 \
+    libavdevice58=7:4.2.4-1ubuntu0.1 \
+    libavfilter7=7:4.2.4-1ubuntu0.1 \
+    libavformat58=7:4.2.4-1ubuntu0.1 \
+    libavresample4=7:4.2.4-1ubuntu0.1 \
+    libavutil56=7:4.2.4-1ubuntu0.1 \
+    libpostproc55=7:4.2.4-1ubuntu0.1 \
+    libswresample3=7:4.2.4-1ubuntu0.1 \
+    libswscale5=7:4.2.4-1ubuntu0.1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install FFmpeg, taken from protocol/server/linux-server-setup.sh
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    ffmpeg=7:4.2.4-1ubuntu0.1 \
+    libavcodec-dev=7:4.2.4-1ubuntu0.1 \
+    libavdevice-dev=7:4.2.4-1ubuntu0.1 \
+    libx11-dev=2:1.6.9-2ubuntu1.1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install FractalServer scripts and kernel module input rules
+COPY entry.sh /home/fractal
+COPY display-service-envs /home/fractal
+COPY fractal-input.rules home/fractal
+
+# Install and enable OpenSSH
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    openssh-client=1:8.2p1-4ubuntu0.1 \
+    openssh-sftp-server=1:8.2p1-4ubuntu0.1 \
+    openssh-server=1:8.2p1-4ubuntu0.1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN systemctl enable ssh
+
+# Set appropriate user permissions for Fractal
+RUN chown -vR fractal:fractal /home/fractal
+RUN chown root:root /run/user
+RUN chmod +x /home/fractal/entry.sh
+
+# Set up Nvidia inside Docker
+LABEL com.nvidia.volumes.needed="nvidia_driver"
+
+RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
+    echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+
+RUN mkdir -p /opt/nvidia/lib && \
+    ln -s /usr/local/nvidia/lib /opt/nvidia/lib/i386-linux-gnu && \
+    ln -s /usr/local/nvidia/lib64 /opt/nvidia/lib/x86_64-linux-gnu
+
+ENV PATH /usr/local/nvidia/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    "linux-headers-$(uname -r)" \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# hadolint ignore=SC1091,SC2046,SC2086
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
+
+# hadolint ignore=SC1091,SC2046,SC2086
+RUN mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc/apt/preferences.d/cuda-repository-pin-600
+
+# hadolint ignore=SC1091,SC2046,SC2086
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub
+
+# hadolint ignore=SC1091,SC2046,SC2086
+RUN echo deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 / | tee /etc/apt/sources.list.d/cuda.list
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    nvidia-dkms-450=450.51.06-0ubuntu1 \
+    nvidia-driver-450=450.51.06-0ubuntu1 \
+    nvidia-settings=450.51.06-0ubuntu1 \
+    cuda-drivers-450=450.51.06-1 \
+    cuda-drivers=450.51.06-1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
+
+# Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID
+COPY setup-scripts/linux/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/
+COPY fractal-update-nvidia-busid.service /etc/systemd/system/
+COPY setup-scripts/linux/update-nvidia-busid.sh /usr/share/fractal/
+
+RUN systemctl enable fractal-update-nvidia-busid
+
+# Set display environment variable to our Nvidia-powered display
+ENV DISPLAY :10
+
+# Install libraries for (limited) hardware acceleration
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    vainfo=2.6.0+ds1-1 \
+    vdpauinfo=1.0-3build1 \
+    mesa-vdpau-drivers=20.0.8-0ubuntu1~20.04.1 \
+    libvdpau-va-gl1=0.4.2-1build2 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Firefox nightly (for testing only)
+# RUN add-apt-repository ppa:ubuntu-mozilla-daily/ppa
+# RUN apt-get update && apt-get install firefox-trunk
+
+# Install Fractal services
+COPY fractal-entrypoint.service /etc/systemd/system
+RUN systemctl enable fractal-entrypoint
+
+COPY fractal-display.service /etc/systemd/system
+RUN systemctl enable fractal-display
+
+COPY fractal-protocol.service /etc/systemd/system
+RUN systemctl enable fractal-protocol
+
+COPY fractal-audio.service /etc/systemd/system
+RUN systemctl enable fractal-audio
+
+# Set fractal-setup script
+COPY fractal-setup.sh /
+RUN chmod +x /fractal-setup.sh
+
+VOLUME [ "/sys/fs/cgroup" ]
+
+# As opposed to graphical.target, which is the default
+# RUN systemctl set-default multi-user.target
+ENV init /sbin/init
+
+# Disable some extra systemd services
+RUN systemctl mask plymouth
+RUN systemctl mask systemd-hostnamed
+RUN systemctl mask acpid
+RUN systemctl mask NetworkManager-wait-online
+RUN systemctl mask nvidia-persistenced
+
+# Set up Fractal Protocol symlink
+RUN rm /usr/share/fractal/FractalServer.sh /usr/share/fractal/FractalServer
+RUN mkdir /usr/share/fractal/bin
+RUN ln -s /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
+
+# Grab pre-compiled Fractal Protocol
+COPY protocol/server/build64/libsentry.so /usr/share/fractal/bin/libsentry.so
+COPY protocol/server/build64/FractalServer /usr/share/fractal/bin/FractalServer
+
+CMD ["/lib/systemd/systemd"]

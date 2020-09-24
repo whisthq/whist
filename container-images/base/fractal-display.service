@@ -1,0 +1,12 @@
+[Unit]
+Description=Display and protocol entrypoint, runs as user fractal
+After=fractal-entrypoint.service
+Requires=fractal-entrypoint.service
+
+[Service]
+User=root
+EnvironmentFile=/home/fractal/display-service-envs
+ExecStart=/usr/bin/Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile ${xorg_log_file_nvidia} -config ${xorg_config_file_nvidia} -nolisten tcp :${display_num_nvidia} vt${tty_number}
+
+[Install]
+WantedBy=multi-user.target

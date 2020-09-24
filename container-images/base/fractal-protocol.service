@@ -1,0 +1,16 @@
+[Unit]
+Description=Fractal Service
+After=fractal-display.service fractal-audio.service
+Requires=fractal-display.service
+
+[Service]
+WorkingDirectory=/usr/share/fractal
+Type=simple
+Environment=DISPLAY=:10
+Environment=XAUTHORITY=/home/fractal/.Xauthority
+ExecStart=/usr/share/fractal/FractalServer
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
