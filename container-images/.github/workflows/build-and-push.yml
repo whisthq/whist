@@ -4,11 +4,14 @@ name: Install CI
 
 on:
   push:
-    branches: [ master, dev ]
+    branches: [ master , dev ]
 
 env:
   apps: ('base')
   version: '18'
+  AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_DEFAULT_REGION: 'us-east-1'
 
 jobs:
   # Linux scripts
