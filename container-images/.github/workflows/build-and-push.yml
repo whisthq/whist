@@ -36,7 +36,8 @@ jobs:
       - name: Run build dockerfile
         run: for i in "${apps[@]}"
              do
-                ./buil
+                ./build.sh $i $version
+                ./push.sh $i $version
 
              done
         working-directory: linux
