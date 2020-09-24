@@ -8,6 +8,7 @@ import shutil
 import requests
 
 from pathlib import Path
+
 from typing import List, Dict
 
 # this is pygithub, use pip install PyGithub (i.e. not github.py, not github3)
@@ -34,11 +35,13 @@ def get_release(repo, desired_release):
         valid_releases = []
 
         valid_release = lambda version_id, release_title : version_id and version_id.group(1) == desired_branch
-
-        return max(
-            release for release in all_releases if valid_release(version_id_re.match(release_title), release.title), 
-            key=lambda r: release.published_at
-        )
+        try:
+            return max(
+                (release for release in all_releases if valid_release(version_id_re.match(release_title), release.title)), 
+                key=lambda r: release.published_at
+            )
+        except ValueError:
+            pass # we will print that we failed to find anything below, value error should raise on empty generator
     else:
         for release in all_releases:
             if release.title == desired_release:
@@ -71,7 +74,7 @@ def get_assets_for_platforms(release, platforms):
             # Compare against lowercase for caller ease of use since the OS and flavor
             # identifiers are not dependent on case
             asset_name = asset.name.lower()
-            if (os.lower() in asset_name and flavor.lower() in asset_name:
+            if os.lower() in asset_name and flavor.lower() in asset_name:
                 print(f"Selected {asset.name} for {os} {flavor}")
 
                 matched_assets[platform] = asset
@@ -152,7 +155,7 @@ if __name__ == "__main__":
             r.raise_for_status()
 
             print(f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes", flush=True)
-            
+
             with open(out_path, "wb") as out:
                 shutil.copyfileobj(r.raw, out)
             
