@@ -483,7 +483,7 @@ jobs:
               sudo apt-get install valgrind pulseaudio jackd2 alsa-utils dbus-x11 libavcodec-dev libavdevice-dev libx11-dev libxtst-dev xclip x11-xserver-utils libasound2-dev libxdamage-dev -y || true
               chmod +x FractalClient
               sleep 1
-              xvfb-run ./FractalClient -k $SERVER_VM_IP | tee log.txt
+              xvfb-run ./FractalClient --use_ci $SERVER_VM_IP | tee log.txt
             log_location: log.txt
             log_artifact_name: linux_client_test_logs
           - os: windows-2016
@@ -491,7 +491,7 @@ jobs:
             test_predicate: "!contains(needs.params.outputs.should_test_windows, 'false')"
             test_script:
               | # `cd .` is to avoid fast-fail behavior in the shell by return 0 if the fractal command fails
-              .\FractalClient -k $Env:SERVER_VM_IP || cd .
+              .\FractalClient --use_ci $Env:SERVER_VM_IP || cd .
               cat log.txt
             log_location: log.txt
             log_artifact_name: Windows-64bit_client_test_logs
@@ -501,7 +501,7 @@ jobs:
             test_script: |
               sleep 5
               chmod +x FractalClient
-              ./FractalClient -k $SERVER_VM_IP | tee log.txt
+              ./FractalClient --use_ci $SERVER_VM_IP | tee log.txt
             log_location: log.txt
             log_artifact_name: macOS-64bit_client_test_logs
     steps:

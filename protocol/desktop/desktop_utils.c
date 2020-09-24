@@ -42,6 +42,8 @@ extern bool using_stun;
 extern mouse_motion_accumulation mouse_state;
 extern volatile SDL_Window *window;
 
+extern unsigned short port_mappings[USHRT_MAX];
+
 // standard for POSIX programs
 #define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
 #define FRACTAL_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
@@ -50,11 +52,12 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"height", required_argument, NULL, 'h'},
                                      {"bitrate", required_argument, NULL, 'b'},
                                      {"codec", required_argument, NULL, 'c'},
-                                     {"private-key", required_argument, NULL, 'p'},
-                                     {"use-ci", no_argument, NULL, 'k'},
+                                     {"private-key", required_argument, NULL, 'k'},
                                      {"user", required_argument, NULL, 'u'},
                                      {"environment", required_argument, NULL, 'e'},
                                      {"connection-method", required_argument, NULL, 'z'},
+                                     {"ports", required_argument, NULL, 'p'},
+                                     {"use_ci", no_argument, NULL, 'x'},
                                      {"name", required_argument, NULL, 'n'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
@@ -82,16 +85,16 @@ int parseArgs(int argc, char *argv[]) {
         "  -b, --bitrate=BITRATE         set the maximum bitrate to use\n"
         "  -c, --codec=CODEC             launch the protocol using the codec\n"
         "                                  specified: h264 (default) or h265\n"
-        "  -p, --private-key=PK          pass in the RSA Private Key as a\n"
+        "  -k, --private-key=PK          pass in the RSA Private Key as a "
         "                                  hexadecimal string\n"
-        "  -k, --use-ci                  launch the protocol in CI mode\n"
-        "  -u, --user=EMAIL              set the user's email address\n"
-        "                                  (default: None)\n"
-        "  -e, --environment=ENV         set the protocol run environment:\n"
-        "                                  master, staging, or dev (default)\n"
-        "  -z, --connection-method=CM    which connection method to try first:\n"
-        "                                  STUN or DIRECT\n"
-        "  -n, --name=NAME               set the window title (default: Fractal)\n"
+        "  -u, --user=EMAIL              Tell fractal the users email. Optional defaults to None"
+        "  -e, --environment=ENV         The environment the protocol is running \n"
+        "                                 in. e.g master, staging, dev. Optional defaults to dev"
+        "  -p, --ports=PORTS             Pass in custom port:port mappings, comma-separated\n"
+        "  -x, --use_ci                  launch the protocol in CI mode\n"
+        "  -z, --connection_method=CM    which connection method to try first,\n"
+        "                                  either STUN or DIRECT\n"
+        "  -n, --name=NAME               Set the window title (default: Fractal)\n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
@@ -105,6 +108,11 @@ int parseArgs(int argc, char *argv[]) {
     long int ret;
     bool ip_set = false;
     char *endptr;
+
+    for (unsigned int i = 0; i < USHRT_MAX; i++) {
+        port_mappings[i] = i;
+    }
+
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
         if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
@@ -149,22 +157,42 @@ int parseArgs(int argc, char *argv[]) {
                     return -1;
                 }
                 break;
-            case 'p':
+            case 'k':
                 if (!read_hexadecimal_private_key(optarg, (char *)aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
                     printf("%s", usage);
                     return -1;
                 }
                 break;
-            case 'k':
-                running_ci = 1;
-                break;
-
             case 'u':
                 strcpy(user_email, optarg);
                 break;
             case 'e':
                 strcpy(sentry_environment, optarg);
+                break;
+            case 'p': {
+                char c = ',';
+                unsigned short origin_port;
+                unsigned short destination_port;
+                const char *str = optarg;
+                while (c == ',') {
+                    int bytes_read;
+                    int args_read = sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c,
+                                           &bytes_read);
+                    // If we read port arguments, then map them
+                    if (args_read >= 2) {
+                        port_mappings[origin_port] = destination_port;
+                    }
+                    // if %c was the end of the string, exit
+                    if (args_read < 3) {
+                        break;
+                    }
+                    // Progress the string forwards
+                    str += bytes_read;
+                }
+            } break;
+            case 'x':
+                running_ci = 1;
                 break;
             case 'z':
                 if (!strcmp(optarg, "STUN")) {
