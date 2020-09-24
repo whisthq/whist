@@ -1,32 +1,32 @@
-import React, { Fragment } from "react";
-import { render } from "react-dom";
-import { Provider } from "react-redux";
-import { ConnectedRouter } from "connected-react-router";
-import { AppContainer as ReactHotAppContainer } from "react-hot-loader";
-import { configureStore, history } from "./store/configureStore";
-import { Switch, Route } from "react-router";
+import React, { Fragment } from 'react'
+import { render } from 'react-dom'
+import { Provider } from 'react-redux'
+import { ConnectedRouter } from 'connected-react-router'
+import { AppContainer as ReactHotAppContainer } from 'react-hot-loader'
+import { configureStore, history } from './store/configureStore'
+import { Switch, Route } from 'react-router'
 
-import Login from "pages/login/login";
-import Dashboard from "pages/dashboard/dashboard";
+import Loading from 'pages/loading/loading'
+import Dashboard from 'pages/dashboard/dashboard'
 
-import "./app.global.css";
+import './app.global.css'
 
-const store = configureStore();
+const store = configureStore()
 
-const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer;
+const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer
 
-document.addEventListener("DOMContentLoaded", () =>
+document.addEventListener('DOMContentLoaded', () =>
     render(
         <AppContainer>
             <Provider store={store}>
                 <ConnectedRouter history={history}>
                     <Switch>
                         <Route path="/dashboard" component={Dashboard} />
-                        <Route path="/" component={Login} />
+                        <Route path="/" component={Loading} />
                     </Switch>
                 </ConnectedRouter>
             </Provider>
         </AppContainer>,
-        document.getElementById("root")
+        document.getElementById('root')
     )
-);
+)
