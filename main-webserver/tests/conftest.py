@@ -17,10 +17,10 @@ def pytest_collection_modifyitems(config, items):
 def input_token():
     resp = requests.post(
         (SERVER_URL + "/account/login"),
-	json=dict(
+        json=dict(
             username=os.getenv("DASHBOARD_USERNAME"),
             password=os.getenv("DASHBOARD_PASSWORD"),
-        ),        
+        ),
     )
 
     return resp.json()["access_token"]
