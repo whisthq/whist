@@ -82,6 +82,8 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
+unsigned short port_mappings[USHRT_MAX];
+
 /*
 ============================
 Private Custom Types
@@ -1060,6 +1062,11 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
 
 int CreateTCPContext(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
                      int stun_timeout_ms, bool using_stun, char *aes_private_key) {
+    if ((int)((unsigned short)port) != port) {
+        LOG_ERROR("Port invalid: %d", port);
+    }
+    port = port_mappings[port];
+
     if (context == NULL) {
         LOG_ERROR("Context is NULL");
         return -1;
@@ -1399,6 +1406,11 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
 
 int CreateUDPContext(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
                      int stun_timeout_ms, bool using_stun, char *aes_private_key) {
+    if ((int)((unsigned short)port) != port) {
+        LOG_ERROR("Port invalid: %d", port);
+    }
+    port = port_mappings[port];
+
     if (context == NULL) {
         LOG_ERROR("Context is NULL");
         return -1;
