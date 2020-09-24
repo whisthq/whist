@@ -94,7 +94,7 @@ int parseArgs(int argc, char *argv[]) {
         "  -x, --use_ci                  launch the protocol in CI mode\n"
         "  -z, --connection_method=CM    which connection method to try first,\n"
         "                                  either STUN or DIRECT\n"
-        "  -n, --name=NAME       		     Set the window title (default: Fractal)\n"
+        "  -n, --name=NAME               Set the window title (default: Fractal)\n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
