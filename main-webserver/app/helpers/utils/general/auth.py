@@ -45,9 +45,7 @@ def fractalAuth(f):
                 level=logging.ERROR,
             )
             return (
-                jsonify(
-                    {"error": "No username provided, cannot authorize Bearer token."}
-                ),
+                jsonify({"error": "No username provided, cannot authorize Bearer token."}),
                 UNAUTHORIZED,
             )
 

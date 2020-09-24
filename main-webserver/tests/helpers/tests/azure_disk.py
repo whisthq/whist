@@ -3,8 +3,7 @@ from tests import *
 
 def fetchCurrentDisks(admin_token):
     return requests.get(
-        (SERVER_URL + "/report/fetchDisks"),
-        headers={"Authorization": "Bearer " + admin_token},
+        (SERVER_URL + "/report/fetchDisks"), headers={"Authorization": "Bearer " + admin_token}
     ).json()
 
 
@@ -34,11 +33,7 @@ def cloneDisk(location, vm_size, operating_system, apps, resource_group, input_t
 def attachDisk(disk_name, resource_group, vm_name=None, input_token=None):
     return requests.post(
         (SERVER_URL + "/azure_disk/attach"),
-        json={
-            "disk_name": disk_name,
-            "resource_group": resource_group,
-            "vm_name": vm_name,
-        },
+        json={"disk_name": disk_name, "resource_group": resource_group, "vm_name": vm_name},
         headers={"Authorization": "Bearer " + input_token},
     )
 

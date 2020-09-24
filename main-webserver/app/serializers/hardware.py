@@ -27,3 +27,8 @@ class InstallCommandSchema(ma.SQLAlchemyAutoSchema):
 class AppsToInstallSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = AppsToInstall
+
+
+class SupportedAppImagesSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = SupportedAppImages

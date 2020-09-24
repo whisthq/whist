@@ -69,9 +69,7 @@ def userReportHelper(username, timescale=None, start_date=None):
             date = int(dt.timestamp(lastMonth))
         elif timescale == "beginningMonth":
             beginning_month = dt.strptime(
-                "{year}-{month}-{day}".format(
-                    year=today.year, month=today.month, day="1"
-                ),
+                "{year}-{month}-{day}".format(year=today.year, month=today.month, day="1"),
                 "%Y-%m-%d",
             )
 
