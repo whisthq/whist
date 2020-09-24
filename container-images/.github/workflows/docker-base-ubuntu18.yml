@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-          fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
           repository: fractalcomputers/setup-scripts
           token: ${{ secrets.CI_PAT }} # `CI_PAT` is a secret that contains the fractal-github user Personal Access Token
           path: base/setup-scripts     
@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-          fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
           repository: fractalcomputers/protocol
           token: ${{ secrets.CI_PAT }} # `CI_PAT` is a secret that contains the fractal-github user Personal Access Token
           path: base/protocol
