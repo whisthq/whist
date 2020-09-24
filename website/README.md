@@ -45,16 +45,16 @@ The website is divided into pages, where each page is defined as a component wit
 
 ### Components
 
-We choose to use functional React components instead of class components because of their simplicity and readability. In addition, we use arrow functions because they make our code more concise. For instance, whereas a traditional class component may look like 
+We choose to use functional React components instead of class components because of their simplicity and readability. For instance, whereas a traditional class component may look like 
 
 ```
 export default class ExampleComponent<MyProps, MyState> extends React.Component
 ```
 
-a functional component using arrow functions looks like
+a functional component looks like
 
 ```
-const ExampleComponent = (props: any) => {}
+function ExampleComponent(props: any) 
 ```
 
 For consistency, the use of functional React components is enforced across the repo.

@@ -11,15 +11,24 @@ import {
 
 import "styles/shared.css"
 
-import ScreenContext from "shared/context/screenContext"
+import MainContext from "shared/context/mainContext"
 
 const Footer = (props: any) => {
-    const { width } = useContext(ScreenContext)
+    const { width } = useContext(MainContext)
     return (
-        <div>
-            <div className="footer">
+        <div
+            style={{ background: "#333333", color: "white", paddingBottom: 40 }}
+        >
+            <div
+                className="footer"
+                style={{
+                    maxWidth: 1600,
+                    margin: "auto",
+                    paddingLeft: 50,
+                    paddingRight: 50,
+                }}
+            >
                 <div
-                    className="fractal-container"
                     style={{
                         display: width > 720 ? "flex" : "block",
                         justifyContent: "space-between",
@@ -29,8 +38,8 @@ const Footer = (props: any) => {
                         <Col xs={12} style={{ maxWidth: 350 }}>
                             <div className="title">Fractal</div>
                             <div className="text">
-                                Fractal uses the cloud to transform your laptop
-                                into a graphics workstation.
+                                Fractal uses cloud streaming to supercharge your
+                                laptop's laggy applications.
                             </div>
                             <div
                                 style={{
@@ -104,8 +113,7 @@ const Footer = (props: any) => {
                     </Row>
                     <Row
                         style={{
-                            width: width > 700 ? 350 : "100%",
-                            paddingRight: width > 720 ? 30 : 15,
+                            width: width > 700 ? 300 : "100%",
                             textAlign: "left",
                             paddingTop: width > 720 ? 0 : 40,
                         }}
@@ -119,7 +127,18 @@ const Footer = (props: any) => {
                             }}
                         >
                             <div className="section-name">RESOURCES</div>
-                            <div style={{ fontSize: 13 }}>
+                            <div style={{ fontSize: 13, outline: "none" }}>
+                                <div>
+                                    <HashLink
+                                        to="/about#top"
+                                        className="page-link"
+                                        style={{ outline: "none" }}
+                                    >
+                                        About
+                                    </HashLink>
+                                </div>
+                            </div>
+                            <div style={{ fontSize: 13, outline: "none" }}>
                                 <div>
                                     <a
                                         href="https://medium.com/@fractal"
@@ -193,13 +212,12 @@ const Footer = (props: any) => {
                             width: "100%",
                             display: "flex",
                             justifyContent: "space-between",
-                            paddingRight: 30,
                         }}
                     >
                         <div
                             style={{
                                 margin: 0,
-                                color: "#555555",
+                                color: "#cccccc",
                                 overflow: "hidden",
                                 fontSize: width > 700 ? 14 : 12,
                             }}
@@ -211,20 +229,20 @@ const Footer = (props: any) => {
                             <div
                                 style={{
                                     margin: 0,
-                                    color: "#555555",
+                                    color: "#cccccc",
                                     overflow: "hidden",
                                 }}
                             >
                                 <HashLink
                                     to="/termsofservice#top"
-                                    style={{ color: "#555555" }}
+                                    style={{ color: "#cccccc" }}
                                 >
                                     Terms of Service
                                 </HashLink>{" "}
                                 &amp;{" "}
                                 <HashLink
                                     to="/privacy#top"
-                                    style={{ color: "#555555" }}
+                                    style={{ color: "#cccccc" }}
                                 >
                                     Privacy Policy
                                 </HashLink>

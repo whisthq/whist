@@ -1,13 +1,15 @@
-import React, { useEffect, useCallback } from "react"
+import React, { useEffect, useCallback, useContext } from "react"
 import { connect } from "react-redux"
-import * as firebase from "firebase"
 
 import { db } from "shared/utils/firebase"
+import MainContext from "shared/context/mainContext"
 
 import {
     updateUserAction,
     updateWaitlistAction,
 } from "store/actions/auth/waitlist"
+
+import { getSortedLeaderboard } from "shared/utils/points"
 
 import "styles/landing.css"
 import "styles/shared.css"
@@ -19,11 +21,21 @@ import BottomView from "pages/landing/views/bottomView"
 import Footer from "shared/components/footer"
 
 const Landing = (props: any) => {
-    const { dispatch, user } = props
+    const { setReferralCode, setAppHighlight } = useContext(MainContext)
+    const { dispatch, user, match } = props
 
-    // Gets user's ranking from the waitlist
+    const apps = ["Photoshop", "Blender", "Figma", "VSCode", "Chrome", "Maya"]
+    const appsLowercase = [
+        "photoshop",
+        "blender",
+        "figma",
+        "vscode",
+        "chrome",
+        "maya",
+    ]
+
     const getRanking = useCallback(
-        (waitlist: any[]) => {
+        (waitlist: any) => {
             for (var i = 0; i < waitlist.length; i++) {
                 if (waitlist[i].email === user.email) {
                     return i + 1
@@ -35,95 +47,54 @@ const Landing = (props: any) => {
     )
 
     useEffect(() => {
-        var unsubscribe: any
-
-        // Bubbles user up the leaderboard according to new points
-        const updateRanking = (
-            userData: firebase.firestore.DocumentData | undefined,
-            waitlist: any[]
-        ) => {
-            if (userData) {
-                for (
-                    let currRanking = user.ranking - 1;
-                    currRanking > 0 &&
-                    userData.points >= waitlist[currRanking - 1].points;
-                    currRanking--
+        db.collection("metadata")
+            .doc("waitlist")
+            .onSnapshot(function (snapshot) {
+                console.log("leaderboard update detected")
+                getSortedLeaderboard(snapshot.data()).then(function (
+                    sortedLeaderboard
                 ) {
-                    if (userData.email > waitlist[currRanking - 1].email) {
-                        return currRanking + 1
+                    dispatch(updateWaitlistAction(sortedLeaderboard))
+                    if (user && user.email) {
+                        const ranking = getRanking(sortedLeaderboard)
+                        if (ranking !== user.ranking) {
+                            dispatch(updateUserAction(user.points, ranking))
+                        }
                     }
-                }
+                })
+            })
+    }, [user, dispatch, getRanking])
+
+    useEffect(() => {
+        const firstParam = match.params.first
+        const secondParam = match.params.second
+        const idx = appsLowercase.indexOf(firstParam)
+        if (idx !== -1) {
+            setAppHighlight(apps[idx])
+            if (secondParam) {
+                setReferralCode(secondParam)
             }
-            return -1
+        } else if (firstParam) {
+            setReferralCode(firstParam)
         }
-
-        getWaitlist()
-            .then((waitlist) => {
-                dispatch(updateWaitlistAction(waitlist))
-                if (user.email) {
-                    const ranking = getRanking(waitlist)
-                    if (ranking !== user.ranking) {
-                        dispatch(updateUserAction(user.points, ranking))
-                    }
-                }
-                return waitlist
-            })
-            .then((waitlist) => {
-                if (user && user.email) {
-                    // Open a listener to update the user in real time
-                    unsubscribe = db
-                        .collection("waitlist")
-                        .doc(user.email)
-                        .onSnapshot(
-                            (doc: any) => {
-                                const userData = doc.data()
-                                const ranking = updateRanking(
-                                    userData,
-                                    waitlist
-                                )
-                                if (
-                                    userData &&
-                                    userData.points !== user.points &&
-                                    ranking !== -1
-                                ) {
-                                    dispatch(
-                                        updateUserAction(
-                                            userData.points,
-                                            ranking
-                                        )
-                                    )
-                                }
-                            },
-                            (err: Error) => console.log(err)
-                        )
-                }
-            })
-        return unsubscribe
-    }, [dispatch, user, getRanking])
-
-    const getWaitlist = async () => {
-        const waitlist = await db
-            .collection("waitlist")
-            .orderBy("points", "desc")
-            .orderBy("email")
-            .get()
-        return waitlist.docs.map((doc: any) => doc.data())
-    }
+    }, [match, apps, appsLowercase, setAppHighlight, setReferralCode])
 
     return (
-        <div style={{ paddingBottom: 100 }}>
-            <TopView />
-            <MiddleView />
-            <LeaderboardView />
-            <BottomView />
+        <div>
+            <div className="fractalContainer">
+                <TopView />
+                <MiddleView />
+                <LeaderboardView />
+                <BottomView />
+            </div>
             <Footer />
         </div>
     )
 }
 
-const mapStateToProps = (state: { MainReducer: { user: any } }) => {
+const mapStateToProps = (state: { AuthReducer: { user: any } }) => {
     return {
-        user: state.MainReducer.user,
+        user: state.AuthReducer.user,
     }
 }
 

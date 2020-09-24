@@ -1,9 +1,9 @@
 import React, { useContext } from "react"
 
-import ScreenContext from "shared/context/screenContext"
+import MainContext from "shared/context/mainContext"
 
-const TermsOfService = (props: any) => {
-    const { width } = useContext(ScreenContext)
+function TermsOfService(props: any) {
+    const { width } = useContext(MainContext)
     return (
         <div style={{ overflowX: "hidden" }} id="top">
             <div

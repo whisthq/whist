@@ -1,6 +1,9 @@
 @import url("https://fonts.googleapis.com/css?family=Maven+Pro|Kalam&display=swap");
+@randomMargin: `Math.round(Math.random() * 100)`;
 
-body {
+body,
+html,
+#root {
     overflow-x: hidden;
     margin: 0px !important;
     width: 100vw !important;
@@ -13,18 +16,18 @@ html {
 }
 
 h1 {
-    font-size: calc(32px + 2.2vw) !important;
+    font-size: 80px !important;
     font-weight: bold !important;
 }
 
 h2 {
-    font-size: calc(30px + 1.1vw) !important;
+    font-size: 40px !important;
     font-weight: bold !important;
     letter-spacing: 1.2px !important;
 }
 
 p {
-    font-size: calc(14px + 0.25vw);
+    font-size: 18px;
     letter-spacing: 1px;
     line-height: 1.6;
 }
@@ -36,9 +39,13 @@ p {
     letter-spacing: 6px;
 }
 
+button {
+    outline: none !important;
+}
+
 @media only screen and (max-width: 720px) {
     h1 {
-        font-size: 38px;
+        font-size: 45px !important;
     }
 
     h2 {
@@ -50,6 +57,10 @@ p {
         position: relative;
         top: 6px;
     }
+
+    p {
+        font-size: 16px;
+    }
 }
 
 a {
@@ -58,44 +69,45 @@ a {
 
 .footer {
     width: 100%;
-    background-color: white;
     padding-top: 60px;
     font-size: 14px;
     margin: auto;
     max-width: 1920px;
-    padding: 30px;
-    padding-top: 60px;
 }
 
 .footer .title {
     font-weight: bold;
     margin-bottom: 10px;
-    font-size: 25px;
+    font-size: 22px;
     text-align: left;
+    letter-spacing: 6px;
 }
 
 .footer .text {
     margin-top: 10px;
-    color: #555555;
+    color: #efefef;
     text-decoration: none;
     margin-bottom: 4px;
     line-height: 1.7;
     text-align: left;
+    letter-spacing: 1.8px;
 }
 
 .page-link {
-    color: #555555 !important;
+    color: #efefef !important;
     border: none !important;
     text-decoration: none !important;
     margin-bottom: 0px !important;
     padding-left: 0px !important;
     font-size: 14px !important;
     padding-bottom: 0px !important;
+    background: none !important;
 }
 
 .page-link:hover {
-    color: #111111 !important;
+    color: #93f1d9 !important;
     background: none !important;
+    outline: none !important;
 }
 
 .section-name {
@@ -115,7 +127,7 @@ a {
 }
 
 .icon-box {
-    background-color: #ebebeb;
+    background-color: #111111;
     width: 40px;
     height: 40px;
     position: relative;
@@ -129,4 +141,114 @@ a {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+}
+
+.bounce {
+    animation: bounce 5s infinite;
+    -webkit-animation: bounce 5s infinite;
+    -moz-animation: bounce 5s infinite;
+    -o-animation: bounce 5s infinite;
+}
+
+@-webkit-keyframes bounce {
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        -webkit-transform: translateY(0);
+    }
+    30% {
+        -webkit-transform: translateY(-5px);
+    }
+    60% {
+        -webkit-transform: translateY(-8px);
+    }
+}
+
+@-moz-keyframes bounce {
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        -moz-transform: translateY(0);
+    }
+    30% {
+        -moz-transform: translateY(-5px);
+    }
+    60% {
+        -moz-transform: translateY(-8px);
+    }
+}
+
+@-o-keyframes bounce {
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        -o-transform: translateY(0);
+    }
+    30% {
+        -o-transform: translateY(-5px);
+    }
+    60% {
+        -o-transform: translateY(-8px);
+    }
+}
+@keyframes bounce {
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-5px);
+    }
+    60% {
+        transform: translateY(-8px);
+    }
+}
+
+.fractalContainer {
+    padding-bottom: 60px;
+    max-width: 1600px;
+    margin: auto;
+    padding-left: 50px;
+    padding-right: 50px;
+    overflow-x: hidden;
+}
+
+.white-button {
+    font-weight: bold;
+    padding: 15px 50px;
+    font-size: 18px;
+    outline: none !important;
+    letter-spacing: 1.1px;
+    border: solid 0.8px #cccccc;
+    background: white;
+    color: #111111;
+}
+
+.white-button:hover {
+    background: #93f1d9;
+    border: solid 0.8px #93f1d9;
+    color: #111111;
+}
+
+.header-link {
+    outline: none !important;
+    text-decoration: none !important;
+    margin-right: 30px;
+    color: black;
+    top: 3px;
+    position: relative;
+    letter-spacing: 1.2px;
+}
+
+.header-link:hover {
+    color: #3930b8 !important;
 }

@@ -1,28 +1,70 @@
-import React from "react"
+import React, { useContext } from "react"
+import { Link } from "react-router-dom"
 
-import CountdownTimer from "pages/landing/components/countdown"
+import Countdown from "pages/landing/components/countdown"
+import MainContext from "shared/context/mainContext"
 
-const Header = (props: any) => {
+function Header(props: any) {
+    const { width } = useContext(MainContext)
+
     return (
         <div
             style={{
                 display: "flex",
                 justifyContent: "space-between",
                 width: "100%",
-                padding: 30,
+                paddingBottom: 0,
+                paddingTop: 25,
+                borderBottom: "solid 1px #DFDFDF",
             }}
         >
             <div
-                className="logo"
                 style={{
-                    marginBottom: 20,
-                    color: props.color ? props.color : "white",
+                    display: "flex",
                 }}
             >
-                Fractal
+                <Link
+                    to="/"
+                    style={{
+                        outline: "none",
+                        textDecoration: "none",
+                        marginRight: 100,
+                    }}
+                >
+                    <div
+                        className="logo"
+                        style={{
+                            marginBottom: 20,
+                            color: props.color ? props.color : "white",
+                        }}
+                    >
+                        Fractal
+                    </div>
+                </Link>
+                {width > 720 ? (
+                    <div style={{ display: "flex" }}>
+                        <Link to="/about" className="header-link">
+                            About
+                        </Link>
+                        <a
+                            href="mailto: support@fractalcomputers.com"
+                            className="header-link"
+                        >
+                            Support
+                        </a>
+                        <a
+                            href="mailto: careers@fractalcomputers.com"
+                            className="header-link"
+                        >
+                            Careers
+                        </a>
+                    </div>
+                ) : (
+                    <div></div>
+                )}
             </div>
-            <div>
-                <CountdownTimer type="small" />
+            <div style={{ opacity: width > 720 ? 1.0 : 0.0 }}>
+                <Countdown type="small" />
             </div>
         </div>
     )

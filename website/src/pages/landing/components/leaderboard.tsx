@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from "react"
 import { connect } from "react-redux"
-import { Table, Row, Col } from "react-bootstrap"
+import { Row, Col } from "react-bootstrap"
+import { FaCrown } from "react-icons/fa"
 
 import Countdown from "pages/landing/components/countdown"
-import ScreenContext from "shared/context/screenContext"
+import CountdownTimer from "pages/landing/components/countdown"
+import MainContext from "shared/context/mainContext"
 
 import "styles/landing.css"
 
@@ -11,7 +13,7 @@ const Leaderboard = (props: {
     waitlist: any[]
     user: { email: any; ranking: number }
 }) => {
-    const { width } = useContext(ScreenContext)
+    const { width } = useContext(MainContext)
     const [topSix, setTopSix]: any[] = useState([])
 
     useEffect(() => {
@@ -25,111 +27,94 @@ const Leaderboard = (props: {
         referrals: number,
         points: number
     ): any => {
-        if (width > 720) {
-            return (
-                <tr className={userRow ? "userRow" : ""}>
-                    <td className="rankingColumn">
-                        <div className={idx <= 3 ? "topThree" : "bottomThree"}>
+        const barWidth =
+            props.waitlist && props.waitlist.length > 0 && props.waitlist[0]
+                ? Math.round(
+                      Math.max((points * 100) / props.waitlist[0].points, 5)
+                  )
+                : 0
+
+        return (
+            <div
+                style={{
+                    color: "#111111",
+                    background: userRow
+                        ? "#3930b8"
+                        : "rgba(213, 225, 245, 0.2)",
+                    padding: "20px 25px",
+                    marginBottom: 2,
+                }}
+            >
+                <Row style={{ width: "100%" }}>
+                    <Col xs={2}>
+                        <div
+                            style={{
+                                fontSize: 18,
+                                fontWeight: "bold",
+                                color: userRow ? "white" : "#111111",
+                                position: "relative",
+                                top: 10,
+                            }}
+                        >
                             {idx}
                         </div>
-                    </td>
-                    <td className="nameColumn">
+                    </Col>
+                    <Col
+                        xs={6}
+                        style={{
+                            fontWeight: "bold",
+                            color: userRow ? "white" : "#111111",
+                            fontSize: 18,
+                            display: "flex",
+                        }}
+                    >
+                        {idx === 1 && (
+                            <FaCrown
+                                style={{
+                                    marginRight: 15,
+                                    position: "relative",
+                                    top: 4,
+                                    color: "#3930b8",
+                                }}
+                            />
+                        )}
+                        {name}
+                    </Col>
+                    <Col xs={4} style={{ paddingRight: 0 }}>
                         <div
                             style={{
-                                position: "relative",
-                                top: idx <= 3 ? 7 : 0,
+                                fontSize: 16,
+                                textAlign: "right",
+                                color: userRow ? "white" : "#111111",
                             }}
                         >
-                            {name}
+                            <strong>{points}</strong> pts
                         </div>
-                    </td>
-                    <td>
+                    </Col>
+                </Row>
+                <Row style={{ paddingTop: idx = 3 ? 20 : 0 }}>
+                    <Col xs={2}></Col>
+                    <Col xs={8} style={{ paddingLeft: 10, display: "flex" }}>
                         <div
                             style={{
-                                position: "relative",
-                                top: idx <= 3 ? 7 : 0,
+                                height: 5,
+                                width: barWidth.toString() + "%",
+                                background: "#93F1D9",
                             }}
-                        >
-                            {referrals}
-                        </div>
-                    </td>
-                    <td className="pointsColumn">
+                        ></div>
                         <div
                             style={{
-                                position: "relative",
-                                top: idx <= 3 ? 7 : 0,
+                                height: 5,
+                                width: (100 - barWidth).toString() + "%",
+                                background: "#e6e8fc",
                             }}
-                        >
-                            {points}
-                        </div>
-                    </td>
-                </tr>
-            )
-        } else {
-            const barWidth =
-                Math.round(
-                    Math.max((points * 100) / props.waitlist[0].points, 5)
-                ) + "%"
-
-            return (
-                <div
-                    style={{
-                        color: "white",
-                        background: userRow ? "#5b47d4" : "rgba(91,71,212,0.4)",
-                        borderRadius: 5,
-                        padding: "20px 25px",
-                        marginBottom: 15,
-                    }}
-                >
-                    <Row style={{ width: "100%" }}>
-                        <Col xs={2}>
-                            <div
-                                style={{
-                                    fontSize: idx <= 3 ? 25 : 16,
-                                    fontWeight: "bold",
-                                    color: "white",
-                                }}
-                            >
-                                {idx}
-                            </div>
-                        </Col>
-                        <Col
-                            xs={6}
-                            style={{ fontWeight: userRow ? "bold" : "normal" }}
-                        >
-                            {name}
-                        </Col>
-                        <Col xs={4} style={{ paddingRight: 0 }}>
-                            <div
-                                style={{
-                                    fontSize: 16,
-                                    textAlign: "right",
-                                }}
-                            >
-                                <strong>{points}</strong> pts
-                            </div>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col xs={2}></Col>
-                        <Col xs={10} style={{ paddingLeft: 10 }}>
-                            <div
-                                style={{
-                                    height: 4,
-                                    borderRadius: 2,
-                                    width: barWidth,
-                                    background:
-                                        "linear-gradient(90.15deg, #93F1D9 0%, #6AEEF0 100%)",
-                                }}
-                            ></div>
-                        </Col>
-                    </Row>
-                </div>
-            )
-        }
+                        ></div>
+                    </Col>
+                </Row>
+            </div>
+        )
     }
 
-    // Renders correct leaderboard rows based on whether user is on waitlist and their ranking
     const getRows = () => {
         const topThree = topSix.slice(0, 3)
         if (!props.waitlist) {
@@ -211,54 +196,50 @@ const Leaderboard = (props: {
 
     return (
         <div className="leaderboard-container">
-            <div
-                style={{
-                    width: "100%",
-                    display: width > 720 ? "flex" : "block",
-                    justifyContent: "space-between",
-                }}
-            >
-                <h1
-                    style={{
-                        fontWeight: "bold",
-                        color: "white",
-                        marginBottom: "30px",
-                        fontSize: "40px",
-                    }}
-                >
-                    Leaderboard
-                </h1>
-                <div
-                    style={{ position: "relative", top: width > 720 ? 25 : 0 }}
-                >
+            {/* <Row>
+                <Col style={{ textAlign: "right" }}>
                     <Countdown type="small" />
-                </div>
-            </div>
+                </Col>
+            </Row> */}
             <div
                 style={{
-                    overflowY: width > 720 ? "scroll" : "auto",
-                    maxHeight: width > 720 ? 550 : "none",
                     width: "100%",
-                    borderRadius: 5,
-                    boxShadow: "0px 4px 30px rgba(0, 0, 0, 0.1)",
                     zIndex: 2,
                     paddingTop: width > 720 ? 0 : 20,
                 }}
             >
                 {width > 720 ? (
-                    <Table>
-                        <thead>
-                            <tr>
-                                <th style={{ paddingLeft: 50 }}></th>
-                                <th>Name</th>
-                                <th>Referrals</th>
-                                <th>Points</th>
-                            </tr>
-                        </thead>
-                        <tbody>{getRows()}</tbody>
-                    </Table>
+                    <div
+                        style={{
+                            width: "100%",
+                            marginTop: 50,
+                            paddingRight: 40,
+                        }}
+                    >
+                        <div
+                            style={{
+                                color: "#111111",
+                                background: "rgba(213, 225, 245, 0.2)",
+                                padding: "10px 25px",
+                                marginBottom: 2,
+                            }}
+                        >
+                            <Countdown />
+                        </div>
+                        {getRows()}
+                    </div>
                 ) : (
                     <div style={{ marginBottom: 30, marginTop: 20 }}>
+                        <div
+                            style={{
+                                color: "#111111",
+                                background: "rgba(213, 225, 245, 0.2)",
+                                padding: "30px 15px",
+                                marginBottom: 2,
+                            }}
+                        >
+                            <CountdownTimer type="small" />
+                        </div>
                         {getRows()}
                     </div>
                 )}
@@ -268,11 +249,11 @@ const Leaderboard = (props: {
 }
 
 const mapStateToProps = (state: {
-    MainReducer: { user: any; waitlist: any[] }
+    AuthReducer: { user: any; waitlist: any[] }
 }) => {
     return {
-        user: state.MainReducer.user,
-        waitlist: state.MainReducer.waitlist,
+        user: state.AuthReducer.user,
+        waitlist: state.AuthReducer.waitlist ? state.AuthReducer.waitlist : [],
     }
 }
 

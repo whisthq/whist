@@ -5,7 +5,7 @@ import { applyMiddleware, createStore } from "redux"
 import createSagaMiddleware from "redux-saga"
 import { persistStore, persistReducer } from "redux-persist"
 import { routerMiddleware } from "connected-react-router"
-import { Route } from "react-router-dom"
+import { Route, Switch } from "react-router-dom"
 import { Router } from "react-router"
 import { PersistGate } from "redux-persist/integration/react"
 import { composeWithDevTools } from "redux-devtools-extension"
@@ -14,7 +14,7 @@ import storage from "redux-persist/lib/storage"
 import * as Sentry from "@sentry/react"
 
 import history from "shared/utils/history"
-import { ScreenProvider } from "shared/context/screenContext"
+import { MainProvider } from "shared/context/mainContext"
 import { config } from "constants/config"
 import rootReducer from "store/reducers/root"
 import * as serviceWorker from "serviceWorker"
@@ -23,8 +23,8 @@ import "styles/shared.css"
 import "bootstrap/dist/css/bootstrap.min.css"
 
 import Landing from "pages/landing/landing"
-import Auth from "pages/auth/auth"
 import Application from "pages/application/application"
+import About from "pages/about/about"
 import TermsOfService from "pages/legal/tos"
 import Cookies from "pages/legal/cookies"
 import Privacy from "pages/legal/privacy"
@@ -60,22 +60,28 @@ ReactDOM.render(
         <Router history={history}>
             <Provider store={store}>
                 <PersistGate loading={null} persistor={persistor}>
-                    <ScreenProvider>
-                        <Route exact path="/" component={Landing} />
-                        <Route exact path="/auth" component={Auth} />
-                        <Route
-                            exact
-                            path="/application"
-                            component={Application}
-                        />
-                        <Route exact path="/cookies" component={Cookies} />
-                        <Route exact path="/privacy" component={Privacy} />
-                        <Route
-                            exact
-                            path="/termsofservice"
-                            component={TermsOfService}
-                        />
-                    </ScreenProvider>
+                    <MainProvider>
+                        <Switch>
+                            <Route exact path="/about" component={About} />
+                            <Route
+                                exact
+                                path="/application"
+                                component={Application}
+                            />
+                            <Route exact path="/cookies" component={Cookies} />
+                            <Route exact path="/privacy" component={Privacy} />
+                            <Route
+                                exact
+                                path="/termsofservice"
+                                component={TermsOfService}
+                            />
+                            <Route
+                                exact
+                                path="/:first?/:second?"
+                                component={Landing}
+                            />
+                        </Switch>
+                    </MainProvider>
                 </PersistGate>
             </Provider>
         </Router>

@@ -1,10 +1,10 @@
 import React, { useContext } from "react"
 import { HashLink } from "react-router-hash-link"
 
-import ScreenContext from "shared/context/screenContext"
+import MainContext from "shared/context/mainContext"
 
-const Privacy = (props: any) => {
-    const { width } = useContext(ScreenContext)
+function Privacy(props: any) {
+    const { width } = useContext(MainContext)
     return (
         <div style={{ overflowX: "hidden" }} id="top">
             <div

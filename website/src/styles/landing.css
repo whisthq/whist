@@ -13,37 +13,40 @@ Button {
 }
 
 select {
-    width: 200px;
-    background: #1c2a45;
-    color: #cccccc;
-    border-radius: 5px;
-    padding: 20px 20px;
+    width: 33.4%;
+    background: rgba(217, 227, 252, 0.2);
+    color: #111111;
+    border-radius: 0px;
+    padding: 30px 20px;
     border: none;
     outline: none;
     font-family: "Maven Pro" !important;
+    margin-top: 0px !important;
 }
 
 .waitlist-form {
-    border-radius: 5px;
-    background-color: #1c2a45;
+    background-color: rgba(217, 227, 252, 0.2);
     border: none;
-    padding: 0px 20px;
+    padding: 10px 20px;
     outline: none;
     margin: 0px;
+    width: 33.4%;
+    color: #111111;
+    margin-top: 0px !important;
 }
 
 .waitlist-button {
     width: 100%;
     border: none;
     outline: none;
-    padding: 15px 20px;
-    border-radius: 5px;
-    background: #00d4ff !important;
-    color: white;
+    padding: 24px 20px;
+    background: #3930b8 !important;
+    color: #111111;
     font-weight: bold;
     text-transform: uppercase;
     height: 100%;
     z-index: 101 !important;
+    border-radius: 0px;
 }
 
 @media only screen and (max-width: 720px) {
@@ -53,9 +56,14 @@ select {
     }
 
     .waitlist-form {
-        margin-top: 15px;
+        margin-top: 0px;
         padding-top: 20px;
         padding-bottom: 20px;
+        width: 100%;
+    }
+
+    .waitlist-button {
+        border-radius: "0px 5px 5px 0px" !important;
     }
 }
 
@@ -69,11 +77,11 @@ option,
 }
 
 option {
-    color: #000000;
+    color: #111111;
 }
 
 ::placeholder {
-    color: #cccccc;
+    color: #bbbbbb;
 }
 
 option {
@@ -82,7 +90,7 @@ option {
 
 .banner-background {
     width: 100%;
-    background: #0f1726;
+    background: white;
 }
 
 .white-background-curved {
@@ -93,7 +101,7 @@ option {
 .table {
     width: 100%;
     margin: auto;
-    background-color: #26274b;
+    background-color: #3930b8;
     color: #efefef;
     border-collapse: collapse;
     text-align: left;
@@ -138,7 +146,6 @@ thead tr th {
 }
 
 .nameColumn {
-    color: white;
     padding-right: 70px !important;
 }
 
@@ -148,45 +155,41 @@ thead tr th {
 }
 
 .userRow {
-    background-color: #5b47d4;
+    background-color: #3930b8;
     border-radius: 5px;
     font-weight: bold;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    color: white;
+}
+
+.otherUserRow {
+    background: rgba(213, 225, 245, 0.2);
+    margin-bottom: 15px;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
 }
 
 .action {
-    background-color: #26274b !important;
+    background-color: white !important;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    padding: 20px;
+    padding: 30px 40px;
     margin: 0px;
     margin-bottom: 30px;
     border-radius: 5px;
     border: none;
-    font-weight: bold;
+    color: #111111 !important;
 }
 
 .action:hover {
     cursor: pointer;
-}
-
-.access-button {
-    margin-top: 30px;
-    background: #1c2a45 !important;
-    font-weight: bold;
-    border: none;
-    padding: 15px 50px;
-    font-size: calc(14px + 0.25vw);
-    outline: none !important;
-    border: none;
-    letter-spacing: 1.1px;
-}
-
-.access-button:hover {
-    background: #00d4ff !important;
-    outline: none !important;
 }
 
 .modal-header {
@@ -209,32 +212,18 @@ thead tr th {
 }
 
 .modal-button {
-    background: #1c2a45 !important;
+    background: #3930b8 !important;
     outline: none !important;
     border: none;
     padding: 10px 15px;
 }
 
 .modal-button:hover {
-    background: #00d4ff !important;
+    background: #93f1d9 !important;
     outline: none !important;
+    color: black;
 }
 
 .leaderboard-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.leaderboard-container ::-webkit-scrollbar {
-    width: 0px;
-}
-
-.leaderboard-container ::-webkit-scrollbar-track {
-    background: #00d4ff;
-    opacity: 0.1;
-}
-
-.leaderboard-container ::-webkit-scrollbar-thumb {
-    background: #00d4ff;
+    width: "100%";
 }

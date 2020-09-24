@@ -3,7 +3,7 @@ import { Button } from "react-bootstrap"
 import { connect } from "react-redux"
 import firebase from "firebase"
 
-import { logout } from "store/actions/auth/login"
+import { logout } from "store/actions/auth/login_actions"
 
 import "styles/auth.css"
 

@@ -10,37 +10,36 @@ import "styles/application.css"
 
 import PaintingSky from "assets/largeGraphics/paintingSky.svg"
 
-import ScreenContext from "shared/context/screenContext"
+import MainContext from "shared/context/mainContext"
 import Header from "shared/components/header"
 
-const Application = (props: any) => {
+function Application(props: any) {
     const { user } = props
-    const { width } = useContext(ScreenContext)
+    const { width } = useContext(MainContext)
 
     const [form, setForm] = useState("")
 
-    const changeForm = (evt: any) => {
+    function changeForm(evt: any) {
         evt.persist()
         setForm(evt.target.value)
     }
 
-    const submitForm = () => {
-        db.collection("waitlist")
+    function submitForm() {
+        db.collection("essays")
             .doc(user.email)
-            .update({
-                form: form,
+            .set({
+                essay: form,
             })
             .then(() => history.push("/"))
     }
 
     return (
-        <div>
+        <div className="fractalContainer">
             <Header color="#111111" />
             <Row style={{ width: "100%", margin: 0, maxWidth: "none" }}>
                 <Col md={7}>
                     <div
                         style={{
-                            padding: 15,
                             paddingTop: width > 720 ? 100 : 25,
                         }}
                     >
@@ -108,12 +107,9 @@ const Application = (props: any) => {
                                 Submit Application
                             </Button>
                             <Link to="/">
-                                <Button
-                                    className="application-button"
-                                    style={{ backgroundColor: "#322FA8" }}
-                                >
+                                <button className="white-button">
                                     Back to Home
-                                </Button>
+                                </button>
                             </Link>
                         </div>
                     </div>
@@ -139,9 +135,9 @@ const Application = (props: any) => {
     )
 }
 
-const mapStateToProps = (state: { MainReducer: { user: any } }) => {
+function mapStateToProps(state: { AuthReducer: { user: any } }) {
     return {
-        user: state.MainReducer.user,
+        user: state.AuthReducer.user,
     }
 }
 

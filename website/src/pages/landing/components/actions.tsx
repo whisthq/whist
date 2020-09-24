@@ -5,28 +5,30 @@ import { CopyToClipboard } from "react-copy-to-clipboard"
 
 import GoogleButton from "pages/auth/googleButton"
 
-import ScreenContext from "shared/context/screenContext"
+import MainContext from "shared/context/mainContext"
+import { config } from "constants/config"
 
 const ReferAction = (props: { onClick: any }) => {
-    const { width } = useContext(ScreenContext)
+    const { width } = useContext(MainContext)
 
     return (
         <Button className="action" onClick={props.onClick}>
             <div
                 style={{
-                    color: "white",
                     fontSize: width > 720 ? 22 : 16,
                 }}
             >
                 Refer a Friend
             </div>
-            <div style={{ color: "#00D4FF" }}> +100 points</div>
+            <div style={{ color: "#3930b8", fontWeight: "bold" }}>
+                +100 points
+            </div>
         </Button>
     )
 }
 
 const JoinWaitlistAction = () => {
-    const { width } = useContext(ScreenContext)
+    const { width } = useContext(MainContext)
 
     const scrollToTop = () => {
         window.scrollTo({
@@ -39,18 +41,23 @@ const JoinWaitlistAction = () => {
         <Button onClick={scrollToTop} className="action">
             <div
                 style={{
-                    color: "white",
                     fontSize: width > 720 ? 22 : 16,
                 }}
             >
                 Join Waitlist
             </div>
-            <div style={{ color: "#00D4FF" }}> +100 points</div>
+            <div style={{ color: "#3930b8", fontWeight: "bold" }}>
+                {" "}
+                +100 points
+            </div>
         </Button>
     )
 }
 
-const Actions = (props: { user: { email: any }; loggedIn: any }) => {
+const Actions = (props: {
+    user: { email: string; referralCode: string }
+    loggedIn: any
+}) => {
     const [showModal, setShowModal] = useState(false)
 
     const handleOpenModal = () => setShowModal(true)
@@ -79,18 +86,9 @@ const Actions = (props: { user: { email: any }; loggedIn: any }) => {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "flex-start",
+                marginTop: 50,
             }}
         >
-            <h1
-                style={{
-                    fontWeight: "bold",
-                    color: "white",
-                    marginBottom: "30px",
-                    fontSize: "40px",
-                }}
-            >
-                Actions
-            </h1>
             {renderActions()}
 
             <Modal show={showModal} onHide={handleCloseModal}>
@@ -111,8 +109,18 @@ const Actions = (props: { user: { email: any }; loggedIn: any }) => {
                             alignItems: "center",
                         }}
                     >
-                        <div className="code-container">KG7GSJ2</div>
-                        <CopyToClipboard text="KG7GSJ2">
+                        <div className="code-container">
+                            {config.url.FRONTEND_URL +
+                                "/" +
+                                props.user.referralCode}
+                        </div>
+                        <CopyToClipboard
+                            text={
+                                config.url.FRONTEND_URL +
+                                "/" +
+                                props.user.referralCode
+                            }
+                        >
                             <Button className="modal-button">Copy Code</Button>
                         </CopyToClipboard>
                     </div>
@@ -127,12 +135,12 @@ const Actions = (props: { user: { email: any }; loggedIn: any }) => {
     )
 }
 
-const mapStateToProps = (state: {
-    MainReducer: { user: any; logged_in: boolean }
-}) => {
+function mapStateToProps(state: {
+    AuthReducer: { user: any; logged_in: any }
+}) {
     return {
-        user: state.MainReducer.user,
-        loggedIn: state.MainReducer.logged_in,
+        user: state.AuthReducer.user,
+        loggedIn: state.AuthReducer.logged_in,
     }
 }
 

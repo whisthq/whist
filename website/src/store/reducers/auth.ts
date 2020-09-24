@@ -1,9 +1,9 @@
-import { MAIN_DEFAULT } from "store/reducers/states"
+import { AUTH_DEFAULT } from "store/reducers/states"
 
 import * as WaitlistAction from "store/actions/auth/waitlist"
-import * as LoginAction from "store/actions/auth/login"
+import * as LoginAction from "store/actions/auth/login_actions"
 
-export default (state = MAIN_DEFAULT, action: any) => {
+export default function (state = AUTH_DEFAULT, action: any) {
     switch (action.type) {
         case WaitlistAction.UPDATE_WAITLIST:
             return {
@@ -20,12 +20,14 @@ export default (state = MAIN_DEFAULT, action: any) => {
                           name: action.name,
                           points: action.points,
                           ranking: action.ranking,
+                          referralCode: action.referralCode,
                       }
                     : {
                           email: action.email,
                           name: action.name,
                           points: action.points,
                           ranking: action.ranking,
+                          referralCode: action.referralCode,
                       },
             }
         case WaitlistAction.UPDATE_USER:
@@ -37,13 +39,18 @@ export default (state = MAIN_DEFAULT, action: any) => {
                     ranking: action.ranking,
                 },
             }
+        case WaitlistAction.DELETE_USER:
+            return {
+                ...state,
+                user: AUTH_DEFAULT.user,
+            }
         case LoginAction.GOOGLE_LOGIN:
             return {
                 ...state,
                 logged_in: true,
                 user: {
                     ...state.user,
-                    google_auth_email: action.email,
+                    googleAuthEmail: action.email,
                     points: action.points,
                 },
             }

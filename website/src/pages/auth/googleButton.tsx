@@ -3,19 +3,19 @@ import { Button } from "react-bootstrap"
 import { connect } from "react-redux"
 import firebase from "firebase"
 import { db } from "shared/utils/firebase"
-import { SIGNUP_POINTS } from "shared/utils/points"
-import { googleLogin } from "store/actions/auth/login"
+import { SIGNUP_POINTS, getUnsortedLeaderboard } from "shared/utils/points"
+import { googleLogin } from "store/actions/auth/login_actions"
 
-import ScreenContext from "shared/context/screenContext"
+import MainContext from "shared/context/mainContext"
 
 import "styles/landing.css"
 
 const GoogleButton = (props: any) => {
-    const { width } = useContext(ScreenContext)
-    const { user } = props
+    const { width } = useContext(MainContext)
+    const { dispatch, user } = props
 
     const handleGoogleLogin = () => {
-        if (user.google_auth_email) {
+        if (user.googleAuthEmail) {
             console.log("User already linked google account")
         } else {
             const provider = new firebase.auth.GoogleAuthProvider()
@@ -23,15 +23,34 @@ const GoogleButton = (props: any) => {
             firebase
                 .auth()
                 .signInWithPopup(provider)
-                .then((result) => {
+                .then(async function (result) {
+                    const email = user.email
                     if (result && result.user && result.user.email) {
-                        const email = result.user.email
-                        const newPoints = user.points + SIGNUP_POINTS
-                        props.dispatch(googleLogin(email, newPoints))
-                        db.collection("waitlist").doc(user.email).update({
-                            google_auth_email: email,
-                            points: newPoints,
+                        const unsortedLeaderboard = await getUnsortedLeaderboard()
+
+                        unsortedLeaderboard[email] = {
+                            referrals: unsortedLeaderboard[email].referrals,
+                            points:
+                                unsortedLeaderboard[email].points +
+                                SIGNUP_POINTS,
+                            name: unsortedLeaderboard[email].name,
+                            email: email,
+                            referralCode: unsortedLeaderboard[email]
+                                .referralCode
+                                ? unsortedLeaderboard[email].referralCode
+                                : null,
+                            googleAuthEmail: result.user.email,
+                        }
+                        db.collection("metadata").doc("waitlist").update({
+                            leaderboard: unsortedLeaderboard,
                         })
+                        dispatch(
+                            googleLogin(
+                                result.user.email,
+                                unsortedLeaderboard[email].points +
+                                    SIGNUP_POINTS
+                            )
+                        )
                     }
                 })
                 .catch((e) => console.log(e))
@@ -42,20 +61,23 @@ const GoogleButton = (props: any) => {
         <Button onClick={handleGoogleLogin} className="action">
             <div
                 style={{
-                    color: "white",
+                    color: "#111111",
                     fontSize: width > 720 ? 22 : 16,
                 }}
             >
                 Sign in with Google
             </div>
-            <div style={{ color: "#00D4FF" }}> +100 points</div>
+            <div style={{ color: "#3930b8", fontWeight: "bold" }}>
+                {" "}
+                +100 points
+            </div>
         </Button>
     )
 }
 
-const mapStateToProps = (state: { MainReducer: { user: any } }) => {
+function mapStateToProps(state: { AuthReducer: { user: any } }) {
     return {
-        user: state.MainReducer.user,
+        user: state.AuthReducer.user,
     }
 }
 
