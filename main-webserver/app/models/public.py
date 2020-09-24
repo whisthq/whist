@@ -1,5 +1,11 @@
-from app.imports import *
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import text
+from sqlalchemy.types import Text
+
 from app import db
+
+# I don't know why this import is necessary and UserContainer is not. -O
+from .logs import LoginHistory
 
 
 class User(db.Model):
@@ -17,3 +23,14 @@ class User(db.Model):
     credits_outstanding = db.Column(db.Integer, default=text("0"))
     using_google_login = db.Column(db.Boolean, default=text("false"))
     verified = db.Column(db.Boolean, default=text("false"))
+
+    # Setting passive_deletes causes SQLAlchemy to defer to the database to
+    # handle, e.g., cascade deletes. Setting the value to "all" may work as
+    # well. See
+    # https://docs.sqlalchemy.org/en/13/orm/relationship_api.html#sqlalchemy.orm.relationship.params.passive_deletes
+    containers = relationship(
+        "UserContainer", back_populates="user", lazy="dynamic", passive_deletes=True
+    )
+    history = relationship(
+        LoginHistory, back_populates="user", lazy="dynamic", passive_deletes=True
+    )
