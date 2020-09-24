@@ -32,13 +32,13 @@ def get_release(repo, desired_release):
 
     if "latest:" in desired_release:
         desired_branch = desired_release.split(":")[1]
-        valid_releases = []
 
         valid_release = lambda version_id, release_title : version_id and version_id.group(1) == desired_branch
+
         try:
             return max(
-                (release for release in all_releases if valid_release(version_id_re.match(release_title), release.title)), 
-                key=lambda r: release.published_at
+                (release for release in all_releases if valid_release(version_id_re.match(release.title), release.title)), 
+                key=lambda release: release.published_at
             )
         except ValueError:
             pass # we will print that we failed to find anything below, value error should raise on empty generator
@@ -74,6 +74,7 @@ def get_assets_for_platforms(release, platforms):
             # Compare against lowercase for caller ease of use since the OS and flavor
             # identifiers are not dependent on case
             asset_name = asset.name.lower()
+
             if os.lower() in asset_name and flavor.lower() in asset_name:
                 print(f"Selected {asset.name} for {os} {flavor}")
 
