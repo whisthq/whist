@@ -13,8 +13,11 @@ const DEFAULT = {
     ipInfo: {},
     computers: [],
     fetchStatus: false,
-    disk: '',
-    vm: '',
+    container_id: '',
+    cluster: '',
+    port_32262: '',
+    port_32263: '',
+    port_32273: '',
     attachState: 'NOT_REQUESTED',
     access_token: '',
     refresh_token: '',
@@ -25,6 +28,7 @@ const DEFAULT = {
     restart_attempts: 0,
     location: '',
     status_message: 'Boot request sent to server',
+    percent_loaded: 0,
     update_found: false,
     ready_to_connect: false,
     versions: {},
@@ -45,8 +49,11 @@ export default function counter(
         window: any
         payload: any
         status: any
-        disk: any
-        vm: any
+        container_id: any
+        cluster: any
+        port_32262: any
+        port_32263: any
+        port_32273: any
         location: any
         state: any
         access_token: any
@@ -54,6 +61,7 @@ export default function counter(
         account_locked: any
         code: any
         status_message: any
+        percent_loaded: any
         update: any
         versions: any
     }
@@ -126,8 +134,11 @@ export default function counter(
         case MainAction.STORE_RESOURCES:
             return {
                 ...state,
-                disk: action.disk,
-                vm: action.vm,
+                container_id: action.container_id,
+                cluster: action.cluster,
+                port_32262: action.port_32262,
+                port_32263: action.port_32263,
+                port_32273: action.port_32273,
                 location: action.location,
             }
         case MainAction.ATTACH_DISK:
@@ -161,6 +172,11 @@ export default function counter(
             return {
                 ...state,
                 status_message: action.status_message,
+            }
+        case MainAction.CHANGE_PERCENT_LOADED:
+            return {
+                ...state,
+                percent_loaded: action.percent_loaded,
             }
         case MainAction.UPDATE_FOUND:
             return {

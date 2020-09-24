@@ -72,9 +72,16 @@ function* fetchContainer(action) {
         `${config.url.PRIMARY_SERVER}/dummy`,
         state.counter.access_token
     )
-    const id = json ? json.id : ''
+    console.log(json)
 
-    console.log(json.state)
+    const id = json.ID
+    console.log(id)
+    var { json, response } = yield call(
+        apiGet,
+        `${config.url.PRIMARY_SERVER}/status/` + id,
+        state.counter.access_token
+    )
+    console.log(json)
     while (json.state !== 'SUCCESS' && json.state !== 'FAILURE') {
         var { json, response } = yield call(
             apiGet,
@@ -84,37 +91,59 @@ function* fetchContainer(action) {
 
         if (response && response.status && response.status === 500) {
             const warning =
-                'Unexpectedly lost connection with server. Please close the app and log back in.'
+                `(${moment().format('hh:mm:ss')}) ` +
+                'Unexpectedly lost connection with server. Please close the app and try again.'
+            yield put(Action.changePercentLoaded(0))
             yield put(Action.changeStatusMessage(warning))
         }
-        if (json) {
-            console.log(json)
-        }
 
-        if (json && json.meta && json.state === 'PENDING') {
-            var message = json.meta['msg']
-            yield put(Action.changeStatusMessage(message))
+        if (json && json.state === 'PENDING' && json.output) {
+            var message = json.output.msg
+            var percent = json.output.progress
+            if (message && percent) {
+                yield put(Action.changePercentLoaded(percent))
+                yield put(Action.changeStatusMessage(message))
+            }
         }
 
         yield delay(5000)
     }
     if (json && json.state && json.state === 'SUCCESS') {
-        // if (json.output && json.output.ip) {
-        //     yield put(Action.storeIP(json.output.ip));
-        //     yield put(
-        //         Action.storeResources(
-        //             json.output.disk_name,
-        //             json.output.vm_name,
-        //             json.output.location
-        //         )
-        //     );
-        // }
-        console.log('SUCCESS')
+        if (json.output) {
+            // const container_id = json.output.container_id
+            // const cluster = json.output.cluster
+            // const ip = json.output.ip
+            // const port_32262 = json.output.port_32262
+            // const port_32263 = json.output.port_32263
+            // const port_32273 = json.output.port_32273
+            // const location = json.output.location
+            const container_id = 'container_id'
+            const cluster = 'cluster'
+            const ip = 'ip'
+            const port_32262 = 'port_32262'
+            const port_32263 = 'port_32263'
+            const port_32273 = 'port_32273'
+            const location = 'location'
+            yield put(Action.storeIP(ip))
+            yield put(
+                Action.storeResources(
+                    container_id,
+                    cluster,
+                    port_32262,
+                    port_32263,
+                    port_32273,
+                    location
+                )
+            )
+        }
+
+        yield put(Action.changePercentLoaded(100))
+        yield put(Action.changeStatusMessage('SUCCESS.'))
     } else {
-        var message =
+        var warning =
             `(${moment().format('hh:mm:ss')}) ` +
-            `Unexpectedly lost connection with server. Trying again.`
-        yield put(Action.changeStatusMessage(message))
+            `Unexpectedly lost connection with server. Please close the app and try again.`
+        yield put(Action.changeStatusMessage(warning))
         // yield put(Action.attachDisk());
     }
 }

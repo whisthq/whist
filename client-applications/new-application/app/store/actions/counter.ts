@@ -31,6 +31,7 @@ export const RESTART_PC = 'RESTART_PC'
 export const VM_RESTARTED = 'VM_RESTARTED'
 export const SEND_LOGS = 'SEND_LOGS'
 export const CHANGE_STATUS_MESSAGE = 'CHANGE_STATUS_MESSAGE'
+export const CHANGE_PERCENT_LOADED = 'CHANGE_PERCENT_LOADED'
 export const UPDATE_FOUND = 'UPDATE_FOUND'
 export const READY_TO_CONNECT = 'READY_TO_CONNECT'
 export const GET_VERSION = 'GET_VERSION'
@@ -186,12 +187,21 @@ export function fetchDiskStatus(status: boolean) {
     }
 }
 
-export function storeResources(disk: string, vm: string, location: string) {
-    console.log(`${disk} ${vm} ${location}`)
+export function storeResources(
+    container_id: string,
+    cluster: string,
+    port_32262: string,
+    port_32263: string,
+    port_32273: string,
+    location: string
+) {
     return {
         type: STORE_RESOURCES,
-        disk,
-        vm,
+        container_id,
+        cluster,
+        port_32262,
+        port_32263,
+        port_32273,
         location,
     }
 }
@@ -268,6 +278,13 @@ export function changeStatusMessage(status_message: string) {
     return {
         type: CHANGE_STATUS_MESSAGE,
         status_message,
+    }
+}
+
+export function changePercentLoaded(percent_loaded: number) {
+    return {
+        type: CHANGE_PERCENT_LOADED,
+        percent_loaded,
     }
 }
 

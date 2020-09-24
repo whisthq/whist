@@ -9,40 +9,22 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons'
 import { fetchContainer } from 'store/actions/counter'
 
 const UpdateScreen = (props: any) => {
-    const { os, dispatch } = props
+    const { os, dispatch, percentLoaded, status } = props
 
-    const [percentageLeft, setPercentageLeft] = useState(300)
-    const [percentageDownloaded, setPercentageDownloaded] = useState(0)
-    const [downloadSpeed, setDownloadSpeed] = useState('0')
-    const [downloadError, setDownloadError] = useState('')
+    const [percentLoadedWidth, setPercentLoadedWidth] = useState(0)
+    const [percentLeftWidth, setPercentLeftWidth] = useState(300)
 
     useEffect(() => {
-        const ipc = require('electron').ipcRenderer
-
         dispatch(fetchContainer())
-
-        ipc.on('percent', (_: any, percent: any) => {
-            percent = percent * 3
-            setPercentageLeft(300 - percent)
-            setPercentageDownloaded(percent)
-        })
-
-        ipc.on('download-speed', (_: any, speed: any) => {
-            setDownloadSpeed((speed / 1000000).toFixed(2))
-        })
-
-        ipc.on('transferred', (_: any, transferred: any) => {
-            setTransferred((transferred / 1000000).toFixed(2))
-        })
-
-        ipc.on('total', (_: any, total: any) => {
-            setTotal((total / 1000000).toFixed(2))
-        })
-
-        ipc.on('error', (_: any, error: any) => {
-            setDownloadError(error)
-        })
     }, [])
+
+    useEffect(() => {
+        if (percentLoadedWidth < percentLoaded * 3) {
+            const newWidth = percentLoadedWidth + 2
+            setPercentLoadedWidth(newWidth)
+            setPercentLeftWidth(300 - newWidth)
+        }
+    }, [percentLoaded, percentLoadedWidth])
 
     return (
         <div
@@ -87,7 +69,7 @@ const UpdateScreen = (props: any) => {
                     >
                         <div
                             style={{
-                                width: `${percentageDownloaded}px`,
+                                width: `${percentLoadedWidth}px`,
                                 height: 6,
                                 background:
                                     'linear-gradient(258.54deg, #5ec3eb 0%, #d023eb 100%)',
@@ -95,23 +77,23 @@ const UpdateScreen = (props: any) => {
                         ></div>
                         <div
                             style={{
-                                width: `${percentageLeft}px`,
+                                width: `${percentLeftWidth}px`,
                                 height: 6,
                                 background: '#111111',
                             }}
                         ></div>
                     </div>
-                    {downloadError === '' ? (
-                        <div
-                            style={{
-                                marginTop: 10,
-                                fontSize: 14,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
-                            <div style={{ color: '#D6D6D6' }}>
+                    <div
+                        style={{
+                            marginTop: 10,
+                            fontSize: 14,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <div style={{ color: '#D6D6D6' }}>
+                            {status != 'SUCCESS.' && (
                                 <FontAwesomeIcon
                                     icon={faCircleNotch}
                                     spin
@@ -120,25 +102,11 @@ const UpdateScreen = (props: any) => {
                                         marginRight: 4,
                                         width: 12,
                                     }}
-                                />{' '}
-                                Downloading Update ({downloadSpeed} Mbps)
-                            </div>
+                                />
+                            )}{' '}
+                            {status}
                         </div>
-                    ) : (
-                        <div
-                            style={{
-                                marginTop: 10,
-                                fontSize: 14,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
-                            <div style={{ color: '#D6D6D6' }}>
-                                {downloadError}
-                            </div>
-                        </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -148,6 +116,8 @@ const UpdateScreen = (props: any) => {
 function mapStateToProps(state: any) {
     return {
         os: state.counter.os,
+        percentLoaded: state.counter.percent_loaded,
+        status: state.counter.status_message,
     }
 }
 
