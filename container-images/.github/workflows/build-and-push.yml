@@ -1,0 +1,83 @@
+# This workflow installs cloud.ps1, on Windows, and cloud-0.sh & cloud-1.sh, on Linux, to test VM scripts installation
+
+name: Install CI
+
+on:
+  push:
+    branches: [ master, dev ]
+
+env:
+  apps: ('base')
+  version: '18'
+
+jobs:
+  # Linux scripts
+  build-and-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout Git repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
+
+      - name: Setup fractal user
+        run: |
+          sudo useradd fractal || echo "fractal user already exists"
+          echo 'fractal:password1234567.' | sudo chpasswd && echo "Set password"
+          sudo mkhomedir_helper fractal
+          echo $HOME
+
+      - name: Run build dockerfile
+        run: for i in "${apps[@]}"
+             do
+                ./buil
+
+             done
+        working-directory: linux
+        env:
+          LOCAL: yes
+          FRACTAL_GITHUB_ACTION: yes
+          
+      - name: Run cloud-1.sh
+        run: ./cloud-1.sh
+        working-directory: linux
+        env:
+          LOCAL: yes
+          FRACTAL_GITHUB_ACTION: yes
+
+  # Windows scripts
+  setup-windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Checkout Git repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
+
+      - name: Create Fractal user
+        run: |
+          $pass = (ConvertTo-SecureString "password1234567." -AsPlainText -Force)
+          New-LocalUser -FullName "Fractal" -Name "Fractal" -Password $pass -Description "Fractal Account"
+          Add-LocalGroupMember -Group "Administrators" -Member "Fractal"
+          $credentials = New-Object System.Management.Automation.PSCredential "Fractal", $pass
+          Start-Process powershell.exe -Credential $credentials
+
+      - name: Run cloud.ps1
+        run: ./cloud.ps1
+        working-directory: windows
+        env:
+          LOCAL: yes
+          NO_UPDATE: yes
+          QUIET: yes
