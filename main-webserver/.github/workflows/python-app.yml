@@ -1,4 +1,4 @@
-# This workflow will install Python dependencies and run tests with pytest, all on Python 3.6
+# This workflow will install Python dependencies -- tests are run on HerokuCI, all on Python 3.6
 
 name: Python Webserver CI
 
@@ -21,7 +21,3 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      # TODO: write unit tests
-      # - name: Test with pytest
-      #   run: |
-      #     pytest
