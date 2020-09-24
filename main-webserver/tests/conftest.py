@@ -31,7 +31,8 @@ def input_token():
             password=os.getenv("DASHBOARD_PASSWORD"),
         ),        
     )
-
+    print(resp.status_code)
+    sys.stdout.flush()
     return resp.json()["access_token"]
 
 
