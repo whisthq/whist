@@ -17,4 +17,4 @@ SERVER_URL = (
     "http://127.0.0.1:7730"
     if not os.getenv("CI") and not os.getenv("CI") == "true"
     else MAIN_WEBSERVER
-))
+)
