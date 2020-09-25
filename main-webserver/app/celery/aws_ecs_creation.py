@@ -15,79 +15,61 @@ from json import loads
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
-base_task = {
-    "executionRoleArn": "arn:aws:iam::747391415460:role/ecsTaskExecutionRole",
-    "containerDefinitions": [
-        {
-            "portMappings": [
-                {"hostPort": 32262, "protocol": "tcp", "containerPort": 32262},
-                {"hostPort": 32263, "protocol": "udp", "containerPort": 32263},
-                {"hostPort": 32273, "protocol": "tcp", "containerPort": 32273},
-            ],
-            "linuxParameters": {
-                "capabilities": {
-                    "add": [
-                        "SETPCAP",
-                        "MKNOD",
-                        "AUDIT_WRITE",
-                        "CHOWN",
-                        "NET_RAW",
-                        "DAC_OVERRIDE",
-                        "FOWNER",
-                        "FSETID",
-                        "KILL",
-                        "SETGID",
-                        "SETUID",
-                        "NET_BIND_SERVICE",
-                        "SYS_CHROOT",
-                        "SETFCAP",
-                    ],
-                    "drop": ["ALL"],
-                },
-                "tmpfs": [
-                    {"containerPath": "/run", "size": 50},
-                    {"containerPath": "/run/lock", "size": 50},
+
+def build_base_from_image(image):
+    base_task = {
+        "executionRoleArn": "arn:aws:iam::747391415460:role/ecsTaskExecutionRole",
+        "containerDefinitions": [
+            {
+                "portMappings": [
+                    {"hostPort": 0, "protocol": "tcp", "containerPort": 32262},
+                    {"hostPort": 0, "protocol": "udp", "containerPort": 32263},
+                    {"hostPort": 0, "protocol": "tcp", "containerPort": 32273},
                 ],
-            },
-            "cpu": 0,
-            "environment": [],
-            "mountPoints": [
-                {
-                    "readOnly": True,
-                    "containerPath": "/sys/fs/cgroup",
-                    "sourceVolume": "cgroup",
-                }
-            ],
-            "dockerSecurityOptions": ["label:seccomp:unconfined"],
-            "memory": 2048,
-            "volumesFrom": [],
-            "image": "747391415460.dkr.ecr.us-east-1.amazonaws.com/roshan-test:latest",
-            "name": "roshan-test-container-0",
-        }
-    ],
-    "placementConstraints": [],
-    "taskRoleArn": "arn:aws:iam::747391415460:role/ecsTaskExecutionRole",
-    "family": "roshan-task-definition-test-0",
-    #   "requiresAttributes": [
-    #     {
-    #       "name": "com.amazonaws.ecs.capability.ecr-auth"
-    #     },
-    #     {
-    #       "name": "com.amazonaws.ecs.capability.selinux"
-    #     },
-    #     {
-    #       "name": "com.amazonaws.ecs.capability.task-iam-role"
-    #     },
-    #     {
-    #       "name": "com.amazonaws.ecs.capability.docker-remote-api.1.22"
-    #     },
-    #     {
-    #       "name": "ecs.capability.execution-role-ecr-pull"
-    #     }
-    #   ],
-    "requiresCompatibilities": ["EC2"],
-    "volumes": [{"name": "cgroup", "host": {"sourcePath": "/sys/fs/cgroup"},}],
-}
+                "linuxParameters": {
+                    "capabilities": {
+                        "add": [
+                            "SETPCAP",
+                            "MKNOD",
+                            "AUDIT_WRITE",
+                            "CHOWN",
+                            "NET_RAW",
+                            "DAC_OVERRIDE",
+                            "FOWNER",
+                            "FSETID",
+                            "KILL",
+                            "SETGID",
+                            "SETUID",
+                            "NET_BIND_SERVICE",
+                            "SYS_CHROOT",
+                            "SETFCAP",
+                        ],
+                        "drop": ["ALL"],
+                    },
+                    "tmpfs": [
+                        {"containerPath": "/run", "size": 50},
+                        {"containerPath": "/run/lock", "size": 50},
+                    ],
+                },
+                "cpu": 0,
+                "environment": [],
+                "mountPoints": [
+                    {"readOnly": True, "containerPath": "/sys/fs/cgroup", "sourceVolume": "cgroup",}
+                ],
+                "dockerSecurityOptions": ["label:seccomp:unconfined"],
+                "memory": 2048,
+                "volumesFrom": [],
+                "image": image,
+                "name": "roshan-test-container-0",
+            }
+        ],
+        "placementConstraints": [],
+        "taskRoleArn": "arn:aws:iam::747391415460:role/ecsTaskExecutionRole",
+        "family": "roshan-task-definition-test-0",
+        "requiresCompatibilities": ["EC2"],
+        "volumes": [{"name": "cgroup", "host": {"sourcePath": "/sys/fs/cgroup"},}],
+    }
+    return base_task
 
 
 @celery_instance.task(bind=True)
@@ -123,14 +105,12 @@ def create_new_container(
     if auto_assign:
         all_clusters = list(SortedClusters.query.all())
         if len(all_clusters) == 0:
-            cluster_name = loads(create_new_cluster(self))["cluster"]
+            cluster_name = loads(create_new_cluster())["cluster"]
         else:
             cluster_name = all_clusters[0]["cluster"]
     cluster_info = ClusterInfo.query.get(cluster_name)
     if not cluster_info:
-        fractalSQLCommit(
-            db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster_name)
-        )
+        fractalSQLCommit(db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster_name))
         cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
     elif cluster_info.status == "INACTIVE" or cluster_info.status == "DEPROVISIONING":
         fractalLog(
@@ -145,9 +125,7 @@ def create_new_container(
 
     ecs_client.set_cluster(cluster_name)
     ecs_client.set_task_definition_arn(task_definition_arn)
-    ecs_client.run_task(
-        use_launch_type, **{k: v for k, v in kwargs.items() if v is not None}
-    )
+    ecs_client.run_task(use_launch_type, **{k: v for k, v in kwargs.items() if v is not None})
 
     self.update_state(
         state="PENDING", meta={"msg": message},
@@ -200,16 +178,12 @@ def create_new_container(
         self.update_state(
             state="FAILURE",
             meta={
-                "msg": "Error inserting Container {cli} into SQL".format(
-                    cli=ecs_client.tasks[0]
-                )
+                "msg": "Error inserting Container {cli} into SQL".format(cli=ecs_client.tasks[0])
             },
         )
         return
 
-    cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[
-        ecs_client.cluster
-    ]
+    cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[ecs_client.cluster]
     cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
     if cluster_sql:
         fractalLog(
@@ -226,9 +200,7 @@ def create_new_container(
         )
         self.update_state(
             state="FAILURE",
-            meta={
-                "msg": "Error updating cluster {} in SQL".format(cluster=cluster_name)
-            },
+            meta={"msg": "Error updating container {} in SQL".format(ecs_client.tasks[0])},
         )
         return None
 
@@ -300,8 +272,8 @@ def create_new_cluster(
             self.update_state(
                 state="FAILURE",
                 meta={
-                    "msg": "Error inserting VM {cli} and disk into SQL".format(
-                        cli=ecs_client.tasks[0]
+                    "msg": "Error inserting cluster {cli} and disk into SQL".format(
+                        cli=cluster_name
                     )
                 },
             )
@@ -324,13 +296,9 @@ def send_commands(self, cluster, region_name, commands, containers=None):
         ecs_client = ECSClient(region_name=region_name)
         cluster_info = ClusterInfo.query.get(cluster)
         if not cluster_info:
-            fractalSQLCommit(
-                db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster)
-            )
+            fractalSQLCommit(db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster))
             cluster_info = ClusterInfo.query.filter_by(cluster=cluster).first()
-        elif (
-            cluster_info.status == "INACTIVE" or cluster_info.status == "DEPROVISIONING"
-        ):
+        elif cluster_info.status == "INACTIVE" or cluster_info.status == "DEPROVISIONING":
             fractalLog(
                 function="send_command",
                 label=cluster,
@@ -338,8 +306,7 @@ def send_commands(self, cluster, region_name, commands, containers=None):
                 level=logging.ERROR,
             )
             self.update_state(
-                state="FAILURE",
-                meta={"msg": f"Cluster status is {cluster_info.status}",},
+                state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}",},
             )
         containers = containers or ecs_client.get_containers_in_cluster(cluster=cluster)
         if containers:
@@ -358,9 +325,9 @@ def send_commands(self, cluster, region_name, commands, containers=None):
                     )
                 },
             )
-            command_id = ecs_client.exec_commands_on_containers(
-                cluster, containers, commands
-            )["Command"]["CommandId"]
+            command_id = ecs_client.exec_commands_on_containers(cluster, containers, commands)[
+                "Command"
+            ]["CommandId"]
             ecs_client.spin_til_command_executed(command_id)
             fractalLog(
                 function="send_command", label="None", logs="Commands sent!",
@@ -374,11 +341,7 @@ def send_commands(self, cluster, region_name, commands, containers=None):
             )
             self.update_state(
                 state="FAILURE",
-                meta={
-                    "msg": "No containers in cluster {} to send commands to".format(
-                        cluster
-                    )
-                },
+                meta={"msg": "No containers in cluster {} to send commands to".format(cluster)},
             )
     except Exception as error:
         fractalLog(
