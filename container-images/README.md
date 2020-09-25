@@ -10,6 +10,33 @@ This repository contains the Docker images containerizing the various applicatio
 
 - None yet
 
+## Usage
+
+When git cloning, ensure that all git submodules are pulled as follows:
+
+```
+git clone --recurse-submodules --branch $your-container-images-branch https://github.com/fractalcomputers/container-images ~/container-images
+cd ~/container-images
+```
+
+Or, if you have sshkeys,
+
+```
+git clone --recurse-submodules --branch $your-container-images-branch git@github.com:fractalcomputers/container-images.git ~/container-images
+```
+
+Then, setup on your EC2 instance with the setup scripts:
+
+```
+./setup.sh
+```
+
+Which will begin installing all dependencies and configuration. It will also ask if you want to connect your EC2 instance to an ECS cluster, which you may respond yes or no to. After the setup scripts run, you must `sudo reboot` for docker to work currently. After rebooting, you may finally run
+
+```
+./build.sh base 18 && ./run.sh base 18
+```
+
 ## Development
 
 To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfiles under `/base/`, unless your fixes are application-specific, in which case you should contribute to the relevant Dockerfile for the application. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of possible security attacks possible. Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master` once deployed to production.
