@@ -1,12 +1,21 @@
-from app import *
-from app.helpers.utils.general.auth import *
-from app.helpers.blueprint_helpers.azure.azure_vm_get import *
-from app.helpers.blueprint_helpers.azure.azure_vm_post import *
+import os
 
-from app.celery.azure_resource_creation import *
-from app.celery.azure_resource_deletion import *
-from app.celery.azure_resource_state import *
-from app.celery.azure_resource_modification import *
+from flask import Blueprint
+from flask.json import jsonify
+from flask_jwt_extended import get_jwt_identity, jwt_required
+
+from app import fractalPreProcess
+from app.celery.azure_resource_creation import createVM
+from app.celery.azure_resource_deletion import deleteVM
+from app.celery.azure_resource_modification import runPowershell
+from app.celery.azure_resource_state import deallocateVM, pingHelper, restartVM
+from app.celery.azure_resource_state import startVM
+from app.constants.config import VM_GROUP
+from app.constants.http_codes import ACCEPTED, BAD_REQUEST
+from app.helpers.blueprint_helpers.azure.azure_vm_get import ipHelper
+from app.helpers.blueprint_helpers.azure.azure_vm_get import protocolInfoHelper
+from app.helpers.blueprint_helpers.azure.azure_vm_post import devHelper
+from app.helpers.utils.general.auth import adminRequired, fractalAuth
 
 azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 
@@ -25,9 +34,9 @@ def vm_ping(**kwargs):
     if "version" in kwargs["body"].keys():
         version = kwargs["body"]["version"]
 
-    output = pingHelper(available, vm_ip, version)
+    task = pingHelper.delay(available, vm_ip, version)
 
-    return jsonify(output), output["status"]
+    return jsonify({"ID": task.id}), ACCEPTED
 
 
 @azure_vm_bp.route("/vm/restart", methods=["POST"])
