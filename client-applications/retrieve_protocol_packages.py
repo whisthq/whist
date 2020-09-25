@@ -18,45 +18,61 @@ from github.GitRelease import GitRelease
 from github.GitReleaseAsset import GitReleaseAsset
 
 default_protocol_dir = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), 
-    "protocol-packages"
+    os.path.dirname(os.path.realpath(__file__)), "protocol-packages"
 )
 
 """ repo: Repository, desired_release: str -> GitRelease """
+
+
 def get_release(repo, desired_release):
     all_releases = repo.get_releases()
 
-    print(f"Looking for '{desired_release}' in {all_releases.totalCount} releases", flush=True)
+    print(
+        f"Looking for '{desired_release}' in {all_releases.totalCount} releases",
+        flush=True,
+    )
 
     version_id_re = re.compile(r"(\S+)-(\d{8})\.(\d+)")  # BRANCH-YYYYMMDD.#
 
     if "latest:" in desired_release:
         desired_branch = desired_release.split(":")[1]
 
-        valid_release = lambda version_id, release_title : version_id and version_id.group(1) == desired_branch
+        valid_release = (
+            lambda version_id, release_title: version_id
+            and version_id.group(1) == desired_branch
+        )
 
         try:
             return max(
-                (release for release in all_releases if valid_release(version_id_re.match(release.title), release.title)), 
-                key=lambda release: release.published_at
+                (
+                    release
+                    for release in all_releases
+                    if valid_release(version_id_re.match(release.title), release.title)
+                ),
+                key=lambda release: release.published_at,
             )
         except ValueError:
-            pass # we will print that we failed to find anything below, value error should raise on empty generator
+            pass  # we will print that we failed to find anything below, value error should raise on empty generator
     else:
         for release in all_releases:
             if release.title == desired_release:
                 return release
-            
+
             version_id = version_id_re.match(release.title)
             if version_id and version_id.group() == desired_release:
                 return release
 
-    all_release_names = "\n".join(list(map(lambda release: release.title, all_releases)))
+    all_release_names = "\n".join(
+        list(map(lambda release: release.title, all_releases))
+    )
     raise Exception(
         f"Unable to find a release for '{desired_release}' in {len(all_release_names)} releases: {all_release_names}"
     )
 
+
 """ release: GitRelease, platforms: List[str] -> Dict[str, GitReleaseAsset] """
+
+
 def get_assets_for_platforms(release, platforms):
     matched_assets = {}
 
@@ -66,7 +82,9 @@ def get_assets_for_platforms(release, platforms):
         # Trim to support ", " space delimation in addition to "," delimation
         os, flavor = platform.strip().split(":")
 
-        print(f"Looking for {os} {flavor} in {all_assets.totalCount} assets", flush=True)
+        print(
+            f"Looking for {os} {flavor} in {all_assets.totalCount} assets", flush=True
+        )
 
         for asset in all_assets:
             # Asset IDs are expected to be in the form `protocol_dev-20200715.2_Windows-64bit_client.tar.gz`
@@ -80,8 +98,9 @@ def get_assets_for_platforms(release, platforms):
 
                 matched_assets[platform] = asset
                 break
-    
+
     return matched_assets
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -111,7 +130,7 @@ if __name__ == "__main__":
         "--wipe-old",
         help="delete older protocol packages in the specified out_dir",
         action="store_true",
-        default=False
+        default=False,
     )
     args = parser.parse_args()
 
@@ -134,12 +153,15 @@ if __name__ == "__main__":
     assets = get_assets_for_platforms(release, platforms)
 
     if len(assets) != len(platforms):
-        print(f"WARNING: Only matched {len(assets)} of {len(platforms)} requested platforms", flush=True)
-    
+        print(
+            f"WARNING: Only matched {len(assets)} of {len(platforms)} requested platforms",
+            flush=True,
+        )
+
     if args.wipe_old:
         print(f"Clearing out all files currently in '{args.out_dir}'", flush=True)
         shutil.rmtree(args.out_dir, ignore_errors=True)
-    
+
     Path(args.out_dir).mkdir(parents=True, exist_ok=True)
 
     for platform, asset in assets.items():
@@ -155,9 +177,12 @@ if __name__ == "__main__":
         ) as r:
             r.raise_for_status()
 
-            print(f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes", flush=True)
+            print(
+                f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes",
+                flush=True,
+            )
 
             with open(out_path, "wb") as out:
                 shutil.copyfileobj(r.raw, out)
-            
+
         print(f"Saved '{out_path}'", flush=True)
