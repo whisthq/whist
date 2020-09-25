@@ -1,159 +1,157 @@
-import React, { useState, useEffect } from "react";
-import { connect } from "react-redux";
+import React, { useState, useEffect } from 'react'
+import { connect } from 'react-redux'
 // import { history } from "store/configureStore";
-import styles from "styles/login.css";
-import Titlebar from "react-electron-titlebar";
-import Background from "assets/images/background.jpg";
-import Logo from "assets/images/logo.svg";
-import UpdateScreen from "pages/dashboard/components/update";
+import styles from 'styles/login.css'
+import Titlebar from 'react-electron-titlebar'
+import Background from 'assets/images/background.jpg'
+import Logo from 'assets/images/logo.svg'
+import UpdateScreen from 'pages/dashboard/components/update'
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
     faCircleNotch,
     faUser,
     faLock,
-} from "@fortawesome/free-solid-svg-icons";
+} from '@fortawesome/free-solid-svg-icons'
 
-import { FaGoogle } from "react-icons/fa";
+import { FaGoogle } from 'react-icons/fa'
 
 import {
     loginUser,
     setOS,
     loginFailed,
     googleLogin,
-} from "store/actions/counter_actions";
+} from 'store/actions/counter'
 
-import { GOOGLE_CLIENT_ID } from "constants/config";
+import { GOOGLE_CLIENT_ID } from 'constants/config'
 
 // import "styles/login.css";
 
 const Login = (props: any) => {
-    const { dispatch, public_ip, os, warning } = props;
+    const { dispatch, public_ip, os, warning } = props
 
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [loggingIn, setLoggingIn] = useState(false);
-    const [version, setVersion] = useState("1.0.0");
-    const [rememberMe, setRememberMe] = useState(false);
-    const live = useState(true);
-    const [updatePingReceived, setUpdatePingReceived] = useState(false);
-    const [needsAutoupdate, setNeedsAutoupdate] = useState(false);
-    const [fetchedCredentials, setFetchedCredentials] = useState(false);
+    const [username, setUsername] = useState('')
+    const [password, setPassword] = useState('')
+    const [loggingIn, setLoggingIn] = useState(false)
+    const [version, setVersion] = useState('1.0.0')
+    const [rememberMe, setRememberMe] = useState(false)
+    const live = useState(true)
+    const [updatePingReceived, setUpdatePingReceived] = useState(false)
+    const [needsAutoupdate, setNeedsAutoupdate] = useState(false)
+    const [fetchedCredentials, setFetchedCredentials] = useState(false)
 
     const updateUsername = (evt: any) => {
-        setUsername(evt.target.value);
-    };
+        setUsername(evt.target.value)
+    }
 
     const updatePassword = (evt: any) => {
-        setPassword(evt.target.value);
-    };
+        setPassword(evt.target.value)
+    }
 
     const handleLoginUser = () => {
-        const storage = require("electron-json-storage");
-        dispatch(loginFailed(false));
-        setLoggingIn(true);
+        const storage = require('electron-json-storage')
+        dispatch(loginFailed(false))
+        setLoggingIn(true)
         if (rememberMe) {
-            storage.set("credentials", {
+            storage.set('credentials', {
                 username: username,
                 password: password,
-            });
+            })
         } else {
-            storage.set("credentials", { username: "", password: "" });
+            storage.set('credentials', { username: '', password: '' })
         }
-        setUsername(username);
-        setPassword(password);
-        dispatch(loginUser(username.trim(), password));
-    };
+        setUsername(username)
+        setPassword(password)
+        dispatch(loginUser(username.trim(), password))
+    }
 
     const loginKeyPress = (event: any) => {
-        if (event.key === "Enter") {
-            handleLoginUser();
+        if (event.key === 'Enter') {
+            handleLoginUser()
         }
-    };
+    }
 
     const handleGoogleLogin = () => {
-        const { BrowserWindow } = require("electron").remote;
+        const { BrowserWindow } = require('electron').remote
 
         const authWindow = new BrowserWindow({
             width: 800,
             height: 600,
             show: false,
-            "node-integration": false,
-            "web-security": false,
-        });
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=urn:ietf:wg:oauth:2.0:oob:auto&client_id=${GOOGLE_CLIENT_ID}&origin=https%3A//fractalcomputers.com`;
-        authWindow.loadURL(authUrl, { userAgent: "Chrome" });
-        authWindow.show();
+            'node-integration': false,
+            'web-security': false,
+        })
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=urn:ietf:wg:oauth:2.0:oob:auto&client_id=${GOOGLE_CLIENT_ID}&origin=https%3A//fractalcomputers.com`
+        authWindow.loadURL(authUrl, { userAgent: 'Chrome' })
+        authWindow.show()
 
-        authWindow.webContents.on("page-title-updated", () => {
-            const pageTitle = authWindow.getTitle();
-            if (pageTitle.includes("Success")) {
-                const codeRegexp = new RegExp(
-                    "^(?:Success code=)(.+?)(?:&.+)$"
-                );
-                const code = pageTitle.match(codeRegexp)[1];
-                setLoggingIn(true);
-                dispatch(googleLogin(code));
+        authWindow.webContents.on('page-title-updated', () => {
+            const pageTitle = authWindow.getTitle()
+            if (pageTitle.includes('Success')) {
+                const codeRegexp = new RegExp('^(?:Success code=)(.+?)(?:&.+)$')
+                const code = pageTitle.match(codeRegexp)[1]
+                setLoggingIn(true)
+                dispatch(googleLogin(code))
             }
-        });
-    };
+        })
+    }
 
     const forgotPassword = () => {
-        const { shell } = require("electron");
-        shell.openExternal("https://www.fractalcomputers.com/reset");
-    };
+        const { shell } = require('electron')
+        shell.openExternal('https://www.fractalcomputers.com/reset')
+    }
 
     const signUp = () => {
-        const { shell } = require("electron");
-        shell.openExternal("https://www.fractalcomputers.com/auth");
-    };
+        const { shell } = require('electron')
+        shell.openExternal('https://www.fractalcomputers.com/auth')
+    }
 
     const changeRememberMe = (event: any) => {
-        setRememberMe(event.target.checked);
-    };
+        setRememberMe(event.target.checked)
+    }
 
     useEffect(() => {
-        console.log("username");
-        console.log(username);
-        console.log(loggingIn);
-        const ipc = require("electron").ipcRenderer;
-        const storage = require("electron-json-storage");
+        console.log('username')
+        console.log(username)
+        console.log(loggingIn)
+        const ipc = require('electron').ipcRenderer
+        const storage = require('electron-json-storage')
 
-        ipc.on("update", (_: any, update: any) => {
-            console.log("received update");
-            console.log(update);
-            setUpdatePingReceived(true);
-            setNeedsAutoupdate(update);
-        });
+        ipc.on('update', (_: any, update: any) => {
+            console.log('received update')
+            console.log(update)
+            setUpdatePingReceived(true)
+            setNeedsAutoupdate(update)
+        })
 
-        const appVersion = require("../../package.json").version;
-        const os = require("os");
-        dispatch(setOS(os.platform()));
-        setVersion(appVersion);
+        const appVersion = require('../../package.json').version
+        const os = require('os')
+        dispatch(setOS(os.platform()))
+        setVersion(appVersion)
 
-        storage.get("credentials", (error: any, data: any) => {
-            if (error) throw error;
+        storage.get('credentials', (error: any, data: any) => {
+            if (error) throw error
 
             if (data && Object.keys(data).length > 0) {
-                if (data.username != "" && data.password != "" && live) {
-                    setUsername(data.username);
-                    setPassword(data.password);
-                    setLoggingIn(true);
-                    setFetchedCredentials(true);
-                    console.log("set loggingin to true");
+                if (data.username != '' && data.password != '' && live) {
+                    setUsername(data.username)
+                    setPassword(data.password)
+                    setLoggingIn(true)
+                    setFetchedCredentials(true)
+                    console.log('set loggingin to true')
                 }
             }
-        });
+        })
 
         // if (username && public_ip && live) {
         //     history.push("/dashboard");
         // }
-    }, []);
+    }, [])
 
     useEffect(() => {
-        console.log("in useeffect2");
-        console.log(updatePingReceived);
-        console.log(fetchedCredentials);
+        console.log('in useeffect2')
+        console.log(updatePingReceived)
+        console.log(fetchedCredentials)
         if (
             updatePingReceived &&
             fetchedCredentials &&
@@ -161,9 +159,9 @@ const Login = (props: any) => {
             username &&
             password
         ) {
-            dispatch(loginUser(username, password));
+            dispatch(loginUser(username, password))
         }
-    }, [updatePingReceived, fetchedCredentials]);
+    }, [updatePingReceived, fetchedCredentials])
 
     return (
         <div
@@ -174,16 +172,16 @@ const Login = (props: any) => {
             <UpdateScreen />
             <div
                 style={{
-                    position: "absolute",
+                    position: 'absolute',
                     bottom: 15,
                     right: 15,
                     fontSize: 11,
-                    color: "#D1D1D1",
+                    color: '#D1D1D1',
                 }}
             >
                 Version: {version}
             </div>
-            {os === "win32" ? (
+            {os === 'win32' ? (
                 <div>
                     <Titlebar backgroundColor="#000000" />
                 </div>
@@ -218,7 +216,7 @@ const Login = (props: any) => {
                                 <FontAwesomeIcon
                                     icon={faUser}
                                     style={{
-                                        color: "white",
+                                        color: 'white',
                                         fontSize: 12,
                                     }}
                                     className={styles.inputIcon}
@@ -230,7 +228,7 @@ const Login = (props: any) => {
                                     className={styles.inputBox}
                                     style={{ borderRadius: 5 }}
                                     placeholder={
-                                        username ? username : "Username"
+                                        username ? username : 'Username'
                                     }
                                     id="username"
                                 />
@@ -239,7 +237,7 @@ const Login = (props: any) => {
                                 <FontAwesomeIcon
                                     icon={faLock}
                                     style={{
-                                        color: "white",
+                                        color: 'white',
                                         fontSize: 12,
                                     }}
                                     className={styles.inputIcon}
@@ -251,7 +249,7 @@ const Login = (props: any) => {
                                     className={styles.inputBox}
                                     style={{ borderRadius: 5 }}
                                     placeholder={
-                                        password ? "•••••••••" : "Password"
+                                        password ? '•••••••••' : 'Password'
                                     }
                                     id="password"
                                 />
@@ -264,20 +262,20 @@ const Login = (props: any) => {
                                         id="login-button"
                                         style={{
                                             opacity: 0.6,
-                                            textAlign: "center",
+                                            textAlign: 'center',
                                         }}
                                     >
                                         <FontAwesomeIcon
                                             icon={faCircleNotch}
                                             spin
                                             style={{
-                                                color: "white",
+                                                color: 'white',
                                                 width: 12,
                                                 marginRight: 5,
-                                                position: "relative",
+                                                position: 'relative',
                                                 top: 0.5,
                                             }}
-                                        />{" "}
+                                        />{' '}
                                         Processing
                                     </button>
                                 ) : (
@@ -298,20 +296,20 @@ const Login = (props: any) => {
                                             id="google-button"
                                             style={{
                                                 opacity: 0.6,
-                                                textAlign: "center",
+                                                textAlign: 'center',
                                             }}
                                         >
                                             <FontAwesomeIcon
                                                 icon={faCircleNotch}
                                                 spin
                                                 style={{
-                                                    color: "white",
+                                                    color: 'white',
                                                     width: 12,
                                                     marginRight: 5,
-                                                    position: "relative",
+                                                    position: 'relative',
                                                     top: 0.5,
                                                 }}
-                                            />{" "}
+                                            />{' '}
                                             Processing
                                         </button>
                                     ) : (
@@ -325,7 +323,7 @@ const Login = (props: any) => {
                                                 style={{
                                                     fontSize: 16,
                                                     marginRight: 10,
-                                                    position: "relative",
+                                                    position: 'relative',
                                                     top: 3,
                                                 }}
                                             />
@@ -337,14 +335,14 @@ const Login = (props: any) => {
                             {warning && (
                                 <div
                                     style={{
-                                        textAlign: "center",
+                                        textAlign: 'center',
                                         fontSize: 12,
-                                        color: "#f9000b",
-                                        background: "rgba(253, 240, 241, 0.9)",
-                                        width: "100%",
+                                        color: '#f9000b',
+                                        background: 'rgba(253, 240, 241, 0.9)',
+                                        width: '100%',
                                         padding: 15,
                                         borderRadius: 2,
-                                        margin: "auto",
+                                        margin: 'auto',
                                         marginBottom: 30,
                                         // width: 265,
                                     }}
@@ -356,9 +354,9 @@ const Login = (props: any) => {
                                             onClick={forgotPassword}
                                             className={styles.pointerOnHover}
                                             style={{
-                                                display: "inline",
-                                                fontWeight: "bold",
-                                                textDecoration: "underline",
+                                                display: 'inline',
+                                                fontWeight: 'bold',
+                                                textDecoration: 'underline',
                                             }}
                                         >
                                             website
@@ -370,9 +368,9 @@ const Login = (props: any) => {
                             <div
                                 style={{
                                     marginTop: 25,
-                                    display: "flex",
-                                    justifyContent: "center",
-                                    alignItems: "center",
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
                                 }}
                             >
                                 <label className={styles.termsContainer}>
@@ -393,19 +391,19 @@ const Login = (props: any) => {
                 <div
                     style={{
                         lineHeight: 1.5,
-                        margin: "150px auto",
+                        margin: '150px auto',
                         maxWidth: 400,
                     }}
                 >
-                    {" "}
+                    {' '}
                     We are currently pushing out a critical Linux update. Your
                     app will be back online very soon. We apologize for the
                     inconvenience!
                 </div>
             )}
         </div>
-    );
-};
+    )
+}
 
 function mapStateToProps(state: any) {
     return {
@@ -413,7 +411,7 @@ function mapStateToProps(state: any) {
         public_ip: state.counter.public_ip,
         warning: state.counter.warning,
         os: state.counter.os,
-    };
+    }
 }
 
-export default connect(mapStateToProps)(Login);
+export default connect(mapStateToProps)(Login)
