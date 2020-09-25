@@ -16,9 +16,10 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture
 def input_token():
     resp = requests.post(
-        (SERVER_URL + "/admin/login"),
+        (SERVER_URL + "/account/login"),
         json=dict(
-            username=os.getenv("DASHBOARD_USERNAME"), password=os.getenv("DASHBOARD_PASSWORD")
+            username=os.getenv("DASHBOARD_USERNAME"),
+            password=os.getenv("DASHBOARD_PASSWORD"),
         ),
     )
 

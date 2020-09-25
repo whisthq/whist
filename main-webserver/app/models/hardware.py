@@ -72,3 +72,12 @@ class AppsToInstall(db.Model):
     disk_id = db.Column(db.String(250), primary_key=True, nullable=False)
     user_id = db.Column(db.String(250), primary_key=True, nullable=False)
     app_id = db.Column(db.String(250), nullable=False, index=True)
+
+
+class SupportedAppImages(db.Model):
+    __tablename__ = "supported_app_images"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+
+    app_id = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
+    logo_url = db.Column(db.String(250), nullable=False)
+    task_definition = db.Column(db.String(250), nullable=False)
