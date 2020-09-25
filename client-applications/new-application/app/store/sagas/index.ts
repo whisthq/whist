@@ -119,6 +119,7 @@ function* fetchContainer(action: any) {
             // const port_32263 = json.output.port_32263
             // const port_32273 = json.output.port_32273
             // const location = json.output.location
+
             const container_id = 'container_id' // TODO
             const cluster = 'cluster' // TODO
             const ip = '34.206.64.200'
@@ -126,7 +127,14 @@ function* fetchContainer(action: any) {
             const port_32263 = '32778'
             const port_32273 = '32779'
             const location = 'location' // TODO
+
+            const width = 200
+            const height = 200
+
+            yield put(Action.storeDimensions(width, height))
+
             yield put(Action.storeIP(ip))
+
             yield put(
                 Action.storeResources(
                     container_id,

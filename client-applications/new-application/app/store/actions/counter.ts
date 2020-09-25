@@ -36,6 +36,8 @@ export const UPDATE_FOUND = 'UPDATE_FOUND'
 export const READY_TO_CONNECT = 'READY_TO_CONNECT'
 export const GET_VERSION = 'GET_VERSION'
 export const SET_VERSION = 'SET_VERSION'
+export const STORE_DIMENSIONS = 'STORE_DIMENSIONS'
+export const STORE_CODEC = 'STORE_CODEC'
 
 export function loginUser(username: any, password: any) {
     return {
@@ -312,5 +314,20 @@ export function setVersion(versions: any) {
     return {
         type: SET_VERSION,
         versions,
+    }
+}
+
+export function storeDimensions(width: number, height: number) {
+    return {
+        type: STORE_DIMENSIONS,
+        width,
+        height,
+    }
+}
+
+export function storeCodec(codec: string) {
+    return {
+        type: STORE_CODEC,
+        codec
     }
 }

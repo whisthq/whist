@@ -9,83 +9,98 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons'
 import { fetchContainer } from 'store/actions/counter'
 
 const UpdateScreen = (props: any) => {
-    const { os, dispatch, percentLoaded, status } = props
+    const { 
+        os, 
+        dispatch, 
+        percentLoaded, 
+        status, 
+        container_id,
+        port_32262,
+        port_32263,
+        port_32273,
+        width, // for the screen
+        height, // for the screen
+        ip,
+        codec } = props
 
-    const [percentLoadedWidth, setPercentLoadedWidth] = useState(0)
-    const [percentLeftWidth, setPercentLeftWidth] = useState(300)
-
-    const [launched, setLaunched] = useState(false)
+    // figure out how to use useEffect
+    // note to future developers: setting state inside useffect when you rely on 
+    // change for those variables to trigger runs forever and is bad
+    // use two variables for that or instead do something like this below
+    var percentLoadedWidth = 3 * percentLoaded
+    var percentLeftWidth = 300 - 3 * percentLoaded
 
     useEffect(() => {
         dispatch(fetchContainer())
     }, [])
 
     useEffect(() => {
-        console.log(percentLoadedWidth < percentLoaded * 3)
-        if (percentLoadedWidth < percentLoaded * 3) {
-            const newWidth = percentLoadedWidth + 2
-            setPercentLoadedWidth(newWidth)
-            setPercentLeftWidth(300 - newWidth)
+        console.log('container id has appeared!')
+        if (container_id) {
+            LaunchProtocol()
         }
-        // launch if we are done loading
-        if (percentLoaded >= 100 && !launched) {
-            setLaunched(true)
+    }, [container_id])
 
-            console.log('signal launch!')
-            var child = require('child_process').spawn
-            var appRootDir = require('electron').remote.app.getAppPath()
-            var executable = ''
-            var path = ''
+    const LaunchProtocol = () => {
+        var child = require('child_process').spawn
+        var appRootDir = require('electron').remote.app.getAppPath()
+        var executable = ''
+        var path = ''
 
-            const os = require('os')
+        const os = require('os')
 
-            if (os.platform() === 'darwin') {
-                console.log('darwin found')
-                path = appRootDir + '/protocol-build/desktop/'
-                //path = path.replace('/Resources/app.asar', '')
-                //path = path.replace('/desktop/app', '/desktop')
-                executable = './FractalClient'
-            } else {
-                console.log('darwin not found, found ' + os.platform())
+        if (os.platform() === 'darwin') {
+            console.log('darwin found')
+            path = appRootDir + '/protocol-build/desktop/'
+            path = path.replace('/app', '')
+            executable = './FractalClient'
+
+        } else if (os.platform() === 'linux') {
+            console.log('linux found')
+            path = process.cwd() + '/protocol-build'
+            path = path.replace('/release', '')
+            executable = './FractalClient'
+
+        } else if (os.platform() === 'win32') {
+            console.log('windows found')
+            path = process.cwd() + '\\protocol-build\\desktop'
+            executable = 'FractalClient.exe'
+
+        } else {
+            console.log(`no suitable os found, instead got ${os.platform()}`)
+        }
+
+        var port_info = `32262:${port_32262},32263:${port_32263},32273:${port_32273}`
+        var parameters = [
+            '-w',
+            width,
+            '-h',
+            height,
+            '-p',
+            port_info,
+            '-c',
+            codec,
+            ip,
+        ]
+        console.log(`your executable path should be: ${path}`)
+
+        // Starts the protocol
+        const protocol1 = child(executable, parameters, {
+            cwd: path,
+            detached: true,
+            stdio: 'ignore',
+            // optional:
+            env: {
+                PATH: process.env.PATH
             }
+        })
+        protocol1.on('close', (code: any) => {
+            console.log('the protocol has been closed!')
+        })
+        console.log('spawn completed!')
 
-            var screenWidth = 200
-            var screenHeight = 200
-            var mystery = '32262:32780,32263:32778,32273:32779'
-            var ip = '34.206.64.200'
-
-            // ./desktop -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
-            var parameters = [
-                '-w',
-                screenWidth,
-                '-h',
-                screenHeight,
-                //'-p',
-                //mystery,
-                ip,
-            ]
-            console.log('params set gonna try now on path (cwd) ' + path)
-            //console.log('PATH is ' + process.env.PATH)
-
-            // Starts the protocol
-            const protocol1 = child(executable, parameters, {
-                cwd: path,
-                detached: true,
-                stdio: 'ignore',
-                env: {
-                    PATH: process.env.PATH,
-                }, // https://maxschmitt.me/posts/error-spawn-node-enoent-node-js-child-process/
-            })
-            /*
-            
-            */
-            protocol1.on('close', (code: any) => {
-                console.log('closed the protocol')
-            })
-
-            console.log('child created!')
-        }
-    }, [launched, percentLoaded, percentLoadedWidth])
+        // TODO (adriano) graceful exit vs non graceful exit code
+    }
 
     return (
         <div
@@ -179,7 +194,14 @@ function mapStateToProps(state: any) {
         os: state.counter.os,
         percentLoaded: state.counter.percent_loaded,
         status: state.counter.status_message,
-        // todo perhaps add launched
+        container_id: state.counter.container_id,
+        cluster: state.counter.cluster,
+        port_32262: state.counter.port_32262,
+        port_32263: state.counter.port_32263,
+        port_32273: state.counter.port_32273,
+        location: state.counter.location,
+        ip: state.counter.ip,
+        codec: state.counter.codec,
     }
 }
 
