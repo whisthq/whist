@@ -1,5 +1,8 @@
 """Tests for the /container/stun endpoint."""
 
+import uuid
+
+from app.constants.http_codes import NOT_FOUND, SUCCESS
 from app.helpers.blueprint_helpers.aws.aws_container_post import set_stun
 
 
@@ -53,3 +56,36 @@ def test_successful(client, monkeypatch):
     response = client.container_stun(container_id="mycontainerid123", stun=True)
 
     assert response.status_code == code
+
+
+def test_no_container():
+    result = set_stun(
+        f"test-user-{uuid.uuid4()}", f"test-container-{uuid.uuid4()}", True
+    )
+
+    assert result == NOT_FOUND
+
+
+def test_bad_user(container):
+    with container() as c:
+        result = set_stun(f"test-user-{uuid.uuid4()}", c.container_id, True)
+
+        assert result == NOT_FOUND
+
+
+def test_set_stun(container):
+    with container() as c:
+        result_0 = set_stun(c.user_id, c.container_id, True)
+
+        assert result_0 == SUCCESS
+        assert c.using_stun
+
+        result_1 = set_stun(c.user_id, c.container_id, False)
+
+        assert result_1 == SUCCESS
+        assert not c.using_stun
+
+        result_2 = set_stun(c.user_id, c.container_id, True)
+
+        assert result_2 == SUCCESS
+        assert c.using_stun
