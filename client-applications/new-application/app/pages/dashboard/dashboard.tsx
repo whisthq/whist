@@ -1,28 +1,28 @@
-import React from "react";
-import { connect } from "react-redux";
-import { history } from "store/configureStore";
-import styles from "styles/dashboard.css";
+import React from 'react'
+import { connect } from 'react-redux'
+import { history } from 'store/configureStore'
+import styles from 'styles/dashboard.css'
 
-import { logout } from "store/actions/counter_actions";
+import { logout } from 'store/actions/counter'
 
 const Dashboard = (props: any) => {
-    const { dispatch } = props;
+    const { dispatch } = props
 
     const handleSignout = () => {
-        const storage = require("electron-json-storage");
-        storage.set("credentials", { username: "", password: "" });
-        dispatch(logout());
-        history.push("/");
-    };
+        const storage = require('electron-json-storage')
+        storage.set('credentials', { username: '', password: '' })
+        dispatch(logout())
+        history.push('/')
+    }
 
     return (
         <div
             style={{
                 marginTop: 200,
-                textAlign: "center",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
             }}
         >
             New dashboard here!
@@ -32,17 +32,17 @@ const Dashboard = (props: any) => {
                 className={styles.signoutButton}
                 id="signout-button"
                 style={{
-                    textAlign: "center",
+                    textAlign: 'center',
                 }}
             >
                 SIGN OUT
             </button>
         </div>
-    );
-};
+    )
+}
 
 const mapStateToProps = () => {
-    return {};
-};
+    return {}
+}
 
-export default connect(mapStateToProps)(Dashboard);
+export default connect(mapStateToProps)(Dashboard)
