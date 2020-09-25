@@ -88,9 +88,9 @@ const UpdateScreen = (props: any) => {
             detached: true,
             stdio: 'ignore',
             // optional:
-            env: {
-                PATH: process.env.PATH,
-            },
+            //env: {
+            //    PATH: process.env.PATH,
+            //},
         })
         protocol1.on('close', (code: any) => {
             console.log('the protocol has been closed!')
