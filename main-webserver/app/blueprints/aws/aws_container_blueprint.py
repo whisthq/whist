@@ -7,11 +7,11 @@ from app import fractalPreProcess
 from app.celery.aws_ecs_creation import create_new_cluster
 from app.celery.aws_ecs_creation import create_new_container, send_commands
 from app.celery.aws_ecs_deletion import delete_cluster, deleteContainer
+from app.celery.aws_ecs_status import pingHelper
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_get import protocol_info
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
-    pingHelper,
     preprocess_task_info,
     set_stun,
 )
@@ -82,8 +82,6 @@ def test_endpoint(action, **kwargs):
 
         return jsonify({"ID": task.id}), ACCEPTED
 
-        return jsonify({"ID": task.id}), ACCEPTED
-
     if action == "send_commands":
         cluster, region_name, commands, containers = (
             kwargs["body"]["cluster"],
@@ -125,7 +123,7 @@ def aws_container_ping(**kwargs):
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
         # Update container status.
-        status = pingHelper(available, address)
+        status = pingHelper.delay(available, address)
         response = jsonify(status), status["status"]
 
     return response

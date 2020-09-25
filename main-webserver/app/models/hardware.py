@@ -1,8 +1,8 @@
 from sqlalchemy import Index
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression, text
 
 from app import db
-from app.models.public import User
 
 
 class UserVM(db.Model):
@@ -30,11 +30,13 @@ class UserContainer(db.Model):
     state = db.Column(db.String(250), nullable=False)
     lock = db.Column(db.Boolean, nullable=False, default=False)
     user_id = db.Column(db.ForeignKey("users.user_id"))
+    user = relationship("User", back_populates="containers")
     port_32262 = db.Column(db.Integer, nullable=False)
     port_32263 = db.Column(db.Integer, nullable=False)
     port_32273 = db.Column(db.Integer, nullable=False)
     last_pinged = db.Column(db.Integer)
     cluster = db.Column(db.ForeignKey("hardware.cluster_info.cluster"))
+    parent_cluster = relationship("ClusterInfo", back_populates="containers")
     using_stun = db.Column(db.Boolean, nullable=False, default=False)
     branch = db.Column(db.String(250), nullable=False, default="master")
     allow_autoupdate = db.Column(db.Boolean, nullable=False, default=True)
@@ -45,14 +47,20 @@ class ClusterInfo(db.Model):
     __tablename__ = "cluster_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     cluster = db.Column(db.String(250), primary_key=True, unique=True)
-    avgCPURemainingPerContainer = db.Column(db.Float, nullable=False, default=1024.0)
-    avgMemoryRemainingPerContainer = db.Column(db.Float, nullable=False, default=2000.0)
+    maxCPURemainingPerInstance = db.Column(db.Float, nullable=False, default=1024.0)
+    maxMemoryRemainingPerInstance = db.Column(db.Float, nullable=False, default=2000.0)
     pendingTasksCount = db.Column(db.Integer, nullable=False, default=0)
     runningTasksCount = db.Column(db.Integer, nullable=False, default=0)
     registeredContainerInstancesCount = db.Column(db.Integer, nullable=False, default=0)
     minContainers = db.Column(db.Integer, nullable=False, default=0)
     maxContainers = db.Column(db.Integer, nullable=False, default=0)
     status = db.Column(db.String(250), nullable=False)
+    containers = relationship(
+        "UserContainer",
+        back_populates="parent_cluster",
+        lazy="dynamic",
+        passive_deletes=True,
+    )
 
 
 class SortedClusters(db.Model):

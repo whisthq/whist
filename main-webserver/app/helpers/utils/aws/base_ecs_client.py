@@ -386,8 +386,8 @@ class ECSClient:
                 'registeredContainerInstancesCount': cluster_info[
                     'registeredContainerInstancesCount'
                 ],
-                'avgCPURemainingPerContainer': total_resources['CPU'],
-                'avgMemoryRemainingPerContainer': total_resources['MEMORY'],
+                'maxCPURemainingPerInstance': total_resources['CPU'],
+                'maxMemoryRemainingPerInstance': total_resources['MEMORY'],
                 'minContainers': auto_scaling_group_info['MinSize'],
                 'maxContainers': auto_scaling_group_info['MaxSize'],
             }
