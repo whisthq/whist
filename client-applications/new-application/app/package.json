@@ -24,5 +24,5 @@
         "electron-rebuild": "node -r ../internals/scripts/BabelRegister.js ../internals/scripts/ElectronRebuild.js",
         "postinstall": "yarn electron-rebuild"
     },
-    "version": "3.0.3"
+    "version": "0.0.0-SNAPSHOT-cef0f6c-dirty"
 }

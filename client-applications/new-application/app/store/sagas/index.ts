@@ -65,7 +65,7 @@ function* getPromoCode(action: any) {
     }
 }
 
-function* fetchContainer(action) {
+function* fetchContainer(action: any) {
     const state = yield select()
     var { json, response } = yield call(
         apiGet,
@@ -108,6 +108,8 @@ function* fetchContainer(action) {
 
         yield delay(5000)
     }
+    // testing will be:
+    // ./desktop -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
     if (json && json.state && json.state === 'SUCCESS') {
         if (json.output) {
             // const container_id = json.output.container_id
@@ -117,13 +119,13 @@ function* fetchContainer(action) {
             // const port_32263 = json.output.port_32263
             // const port_32273 = json.output.port_32273
             // const location = json.output.location
-            const container_id = 'container_id'
-            const cluster = 'cluster'
-            const ip = 'ip'
-            const port_32262 = 'port_32262'
-            const port_32263 = 'port_32263'
-            const port_32273 = 'port_32273'
-            const location = 'location'
+            const container_id = 'container_id' // TODO
+            const cluster = 'cluster' // TODO
+            const ip = '34.206.64.200'
+            const port_32262 = '32780'
+            const port_32263 = '32778'
+            const port_32273 = '32779'
+            const location = 'location' // TODO
             yield put(Action.storeIP(ip))
             yield put(
                 Action.storeResources(
