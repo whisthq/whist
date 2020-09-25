@@ -1,7 +1,6 @@
 from app import *
 from app.helpers.utils.general.tokens import *
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
-from app.constants.bad_words import *
 from app.constants.generate_subsequences_for_words import generate_subsequence_for_word
 from app.models.public import *
 from app.models.hardware import *

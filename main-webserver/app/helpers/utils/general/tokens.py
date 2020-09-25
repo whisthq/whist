@@ -2,7 +2,6 @@ import hashlib
 from app.imports import *
 from app.helpers.utils.general.sql_commands import *
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
-from app.constants.bad_words import *
 from app.constants.generate_subsequences_for_words import generate_subsequence_for_word
 from app.models.public import *
 
