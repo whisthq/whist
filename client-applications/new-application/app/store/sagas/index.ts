@@ -108,32 +108,53 @@ function* fetchContainer(action: any) {
 
         yield delay(5000)
     }
-    // testing will be:
-    // ./desktop -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
+    // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
     if (json && json.state && json.state === 'SUCCESS') {
         if (json.output) {
-            // const container_id = json.output.container_id
-            // const cluster = json.output.cluster
-            // const ip = json.output.ip
-            // const port_32262 = json.output.port_32262
-            // const port_32263 = json.output.port_32263
-            // const port_32273 = json.output.port_32273
-            // const location = json.output.location
+            // TODO (adriano) these should be removed once we are ready to plug and play
+            const test_container_id = 'container_id' // TODO
+            const test_cluster = 'cluster' // TODO
+            const test_ip = '34.206.64.200'
+            const test_port_32262 = '32780'
+            const test_port_32263 = '32778'
+            const test_port_32273 = '32779'
+            const test_location = 'location' // TODO
 
-            const container_id = 'container_id' // TODO
-            const cluster = 'cluster' // TODO
-            const ip = '34.206.64.200'
-            const port_32262 = '32780'
-            const port_32263 = '32778'
-            const port_32273 = '32779'
-            const location = 'location' // TODO
+            const test_width = 200
+            const test_height = 200
+            const test_codec = 'h264'
 
-            const width = 200
-            const height = 200
+            // TODO (adriano) add a signaling param or something to say that it's the 'test'
+            // or it's the actual thing
+            const container_id = json.output.container_id
+                ? json.output.container_id
+                : test_container_id
+            const cluster = json.output.cluster
+                ? json.output.cluster
+                : test_cluster
+            const ip = json.output.ip ? json.output.ip : test_ip
+            const port_32262 = json.output.port_32262
+                ? json.output.port_32262
+                : test_port_32262
+            const port_32263 = json.output.port_32263
+                ? json.output.port_32263
+                : test_port_32263
+            const port_32273 = json.output.port_32273
+                ? json.output.port_32273
+                : test_port_32273
+            const location = json.output.location
+                ? json.output.location
+                : test_location
+
+            const width = test_width
+            const height = test_height
+            const codec = test_codec
 
             yield put(Action.storeDimensions(width, height))
 
             yield put(Action.storeIP(ip))
+
+            yield put(Action.storeCodec(codec))
 
             yield put(
                 Action.storeResources(

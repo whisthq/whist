@@ -328,6 +328,6 @@ export function storeDimensions(width: number, height: number) {
 export function storeCodec(codec: string) {
     return {
         type: STORE_CODEC,
-        codec
+        codec,
     }
 }

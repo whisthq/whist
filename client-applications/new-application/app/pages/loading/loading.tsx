@@ -9,11 +9,11 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons'
 import { fetchContainer } from 'store/actions/counter'
 
 const UpdateScreen = (props: any) => {
-    const { 
-        os, 
-        dispatch, 
-        percentLoaded, 
-        status, 
+    const {
+        os,
+        dispatch,
+        percentLoaded,
+        status,
         container_id,
         port_32262,
         port_32263,
@@ -21,10 +21,11 @@ const UpdateScreen = (props: any) => {
         width, // for the screen
         height, // for the screen
         ip,
-        codec } = props
+        codec,
+    } = props
 
     // figure out how to use useEffect
-    // note to future developers: setting state inside useffect when you rely on 
+    // note to future developers: setting state inside useffect when you rely on
     // change for those variables to trigger runs forever and is bad
     // use two variables for that or instead do something like this below
     var percentLoadedWidth = 3 * percentLoaded
@@ -54,18 +55,15 @@ const UpdateScreen = (props: any) => {
             path = appRootDir + '/protocol-build/desktop/'
             path = path.replace('/app', '')
             executable = './FractalClient'
-
         } else if (os.platform() === 'linux') {
             console.log('linux found')
             path = process.cwd() + '/protocol-build'
             path = path.replace('/release', '')
             executable = './FractalClient'
-
         } else if (os.platform() === 'win32') {
             console.log('windows found')
             path = process.cwd() + '\\protocol-build\\desktop'
             executable = 'FractalClient.exe'
-
         } else {
             console.log(`no suitable os found, instead got ${os.platform()}`)
         }
@@ -91,8 +89,8 @@ const UpdateScreen = (props: any) => {
             stdio: 'ignore',
             // optional:
             env: {
-                PATH: process.env.PATH
-            }
+                PATH: process.env.PATH,
+            },
         })
         protocol1.on('close', (code: any) => {
             console.log('the protocol has been closed!')
@@ -100,6 +98,7 @@ const UpdateScreen = (props: any) => {
         console.log('spawn completed!')
 
         // TODO (adriano) graceful exit vs non graceful exit code
+        // this should be done AFTER the endpoint to connect to EXISTS
     }
 
     return (

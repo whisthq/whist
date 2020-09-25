@@ -34,7 +34,7 @@ const DEFAULT = {
     versions: {},
     width: 200,
     height: 200,
-    codec: "h264",
+    codec: 'h264',
 }
 
 // TODO (adriano) maybe typechecking here? (i.e. put the types you expect properly)
@@ -209,7 +209,7 @@ export default function counter(
         case MainAction.STORE_CODEC:
             return {
                 ...state,
-                codec: action.codec
+                codec: action.codec,
             }
         default:
             return state
