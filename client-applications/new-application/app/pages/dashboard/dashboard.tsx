@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { history } from 'store/configureStore'
 import styles from 'styles/dashboard.css'
 
-import { logout } from 'store/actions/counter'
+import { logout } from 'store/actions/main'
 
 const Dashboard = (props: any) => {
     const { dispatch } = props

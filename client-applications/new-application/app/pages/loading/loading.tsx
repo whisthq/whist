@@ -6,7 +6,7 @@ import Logo from 'assets/images/logo.svg'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons'
 
-import { fetchContainer } from 'store/actions/counter'
+import { fetchContainer } from 'store/actions/main'
 
 const UpdateScreen = (props: any) => {
     const { os, dispatch, percentLoaded, status } = props
@@ -20,7 +20,7 @@ const UpdateScreen = (props: any) => {
 
     useEffect(() => {
         if (percentLoadedWidth < percentLoaded * 3) {
-            const newWidth = percentLoadedWidth + 2
+            const newWidth = percentLoadedWidth + 3
             setPercentLoadedWidth(newWidth)
             setPercentLeftWidth(300 - newWidth)
         }
@@ -93,7 +93,7 @@ const UpdateScreen = (props: any) => {
                         }}
                     >
                         <div style={{ color: '#D6D6D6' }}>
-                            {status != 'SUCCESS.' && (
+                            {status != 'Successfully created container.' && (
                                 <FontAwesomeIcon
                                     icon={faCircleNotch}
                                     spin
@@ -115,9 +115,9 @@ const UpdateScreen = (props: any) => {
 
 function mapStateToProps(state: any) {
     return {
-        os: state.counter.os,
-        percentLoaded: state.counter.percent_loaded,
-        status: state.counter.status_message,
+        os: state.MainReducer.os,
+        percentLoaded: state.MainReducer.percent_loaded,
+        status: state.MainReducer.status_message,
     }
 }
 

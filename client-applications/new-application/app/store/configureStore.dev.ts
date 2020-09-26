@@ -4,8 +4,8 @@ import { createHashHistory } from 'history'
 import { routerMiddleware, routerActions } from 'connected-react-router'
 import { createLogger } from 'redux-logger'
 import createRootReducer from 'store/reducers/index'
-import * as counterActions from 'store/actions/counter'
-import { counterStateType } from 'store/reducers/types'
+import * as MainActions from 'store/actions/main'
+import { mainStateType } from 'store/reducers/types'
 import rootSaga from 'store/sagas/index'
 
 declare global {
@@ -26,7 +26,7 @@ const history = createHashHistory()
 
 const rootReducer = createRootReducer(history)
 
-const configureStore = (initialState?: counterStateType) => {
+const configureStore = (initialState?: mainStateType) => {
     // Redux Configuration
     const middleware = []
     const enhancers = []
@@ -52,7 +52,7 @@ const configureStore = (initialState?: counterStateType) => {
 
     // Redux DevTools Configuration
     const actionCreators = {
-        ...counterActions,
+        ...MainActions,
         ...routerActions,
     }
     // If Redux DevTools Extension is installed use it, otherwise use Redux compose

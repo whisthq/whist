@@ -16,19 +16,14 @@ import {
 
 import { FaGoogle } from 'react-icons/fa'
 
-import {
-    loginUser,
-    setOS,
-    loginFailed,
-    googleLogin,
-} from 'store/actions/counter'
+import { loginUser, setOS, loginFailed, googleLogin } from 'store/actions/main'
 
 import { GOOGLE_CLIENT_ID } from 'constants/config'
 
 // import "styles/login.css";
 
 const Login = (props: any) => {
-    const { dispatch, public_ip, os, warning } = props
+    const { dispatch, os, warning } = props
 
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
@@ -407,10 +402,9 @@ const Login = (props: any) => {
 
 function mapStateToProps(state: any) {
     return {
-        username: state.counter.username,
-        public_ip: state.counter.public_ip,
-        warning: state.counter.warning,
-        os: state.counter.os,
+        username: state.MainReducer.username,
+        warning: state.MainReducer.warning,
+        os: state.MainReducer.os,
     }
 }
 

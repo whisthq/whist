@@ -1,6 +1,6 @@
 import { put, takeEvery, all, call, select, delay } from 'redux-saga/effects'
 import { apiPost, apiGet } from 'utils/api'
-import * as Action from 'store/actions/counter'
+import * as Action from 'store/actions/main'
 import { history } from 'store/configureStore'
 
 import { config } from 'constants/config'
@@ -20,12 +20,10 @@ function* loginUser(action: any) {
 
         if (json && json.verified) {
             yield put(Action.storeUsername(action.username))
-            yield put(Action.storeIsUser(json.is_user))
             yield put(Action.storeJWT(json.access_token, json.refresh_token))
-            yield put(Action.fetchDisk(action.username))
             yield call(fetchPaymentInfo, action)
             yield call(getPromoCode, action)
-            history.push('/dashboard')
+            history.push('/loading')
         } else {
             yield put(Action.loginFailed(true))
         }
@@ -42,7 +40,7 @@ function* fetchPaymentInfo(action: any) {
         {
             username: action.username,
         },
-        state.counter.access_token
+        state.MainReducer.access_token
     )
 
     if (json && json.account_locked) {
@@ -55,7 +53,7 @@ function* getPromoCode(action: any) {
     const { json } = yield call(
         apiGet,
         `${config.url.PRIMARY_SERVER}/account/code?username=${action.username}`,
-        state.counter.access_token
+        state.MainReducer.access_token
     )
 
     console.log(json)
@@ -65,28 +63,35 @@ function* getPromoCode(action: any) {
     }
 }
 
-function* fetchContainer(action) {
+function* fetchContainer(action: any) {
     const state = yield select()
+    // const username = 'fractal-admin@gmail.com'
+    // const app = 'test'
+    // var { json, response } = yield call(
+    //     apiPost,
+    //     `${config.url.PRIMARY_SERVER}/container/create`,
+    //     { username: username, app: app },
+    //     state.MainReducer.access_token
+    // )
     var { json, response } = yield call(
         apiGet,
         `${config.url.PRIMARY_SERVER}/dummy`,
-        state.counter.access_token
+        state.MainReducer.access_token
     )
-    console.log(json)
 
     const id = json.ID
     console.log(id)
     var { json, response } = yield call(
         apiGet,
         `${config.url.PRIMARY_SERVER}/status/` + id,
-        state.counter.access_token
+        state.MainReducer.access_token
     )
     console.log(json)
     while (json.state !== 'SUCCESS' && json.state !== 'FAILURE') {
         var { json, response } = yield call(
             apiGet,
             `${config.url.PRIMARY_SERVER}/status/` + id,
-            state.counter.access_token
+            state.MainReducer.access_token
         )
 
         if (response && response.status && response.status === 500) {
@@ -98,6 +103,7 @@ function* fetchContainer(action) {
         }
 
         if (json && json.state === 'PENDING' && json.output) {
+            // NOTE: actual container/create endpoint does not currently return progress
             var message = json.output.msg
             var percent = json.output.progress
             if (message && percent) {
@@ -135,16 +141,73 @@ function* fetchContainer(action) {
                     location
                 )
             )
+            // yield put(Action.deleteContainer(username, container_id))
         }
 
         yield put(Action.changePercentLoaded(100))
-        yield put(Action.changeStatusMessage('SUCCESS.'))
+        yield put(Action.changeStatusMessage('Successfully created container.'))
     } else {
         var warning =
             `(${moment().format('hh:mm:ss')}) ` +
             `Unexpectedly lost connection with server. Please close the app and try again.`
         yield put(Action.changeStatusMessage(warning))
-        // yield put(Action.attachDisk());
+    }
+}
+
+function* deleteContainer(action: any) {
+    const state = yield select()
+    var { json, response } = yield call(
+        apiPost,
+        `${config.url.PRIMARY_SERVER}/container/delete`,
+        { username: action.username, container_id: action.container_id },
+        state.MainReducer.access_token
+    )
+    const id = json.id
+    console.log('DELETING CONTAINER')
+    console.log(action.username)
+    console.log(action.container_id)
+    console.log(json)
+    var { json, response } = yield call(
+        apiGet,
+        `${config.url.PRIMARY_SERVER}/status/` + id,
+        state.MainReducer.access_token
+    )
+
+    while (json.state !== 'SUCCESS' && json.state !== 'FAILURE') {
+        var { json, response } = yield call(
+            apiGet,
+            `${config.url.PRIMARY_SERVER}/status/` + id,
+            state.MainReducer.access_token
+        )
+
+        if (response && response.status && response.status === 500) {
+            const warning =
+                `(${moment().format('hh:mm:ss')}) ` +
+                'Unexpectedly lost connection with server. Please close the app and try again.'
+            yield put(Action.changePercentLoaded(0))
+            yield put(Action.changeStatusMessage(warning))
+        }
+
+        if (json && json.state === 'PENDING' && json.output) {
+            var message = json.output.msg
+            if (message) {
+                yield put(Action.changeStatusMessage(message))
+            }
+        }
+
+        yield delay(5000)
+    }
+
+    if (json && json.state && json.state === 'SUCCESS') {
+        yield put(Action.changeStatusMessage('Successfully deleted container'))
+    } else {
+        var warning =
+            `(${moment().format('hh:mm:ss')}) ` +
+            `Unexpectedly lost connection with server. Please close the app and try again.`
+        if (json.output && json.output.msg) {
+            warning = json.output.msg
+        }
+        yield put(Action.changeStatusMessage(warning))
     }
 }
 
@@ -152,5 +215,6 @@ export default function* rootSaga() {
     yield all([
         takeEvery(Action.LOGIN_USER, loginUser),
         takeEvery(Action.FETCH_CONTAINER, fetchContainer),
+        takeEvery(Action.DELETE_CONTAINER, deleteContainer),
     ])
 }
