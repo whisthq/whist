@@ -42,6 +42,8 @@ extern bool using_stun;
 extern mouse_motion_accumulation mouse_state;
 extern volatile SDL_Window *window;
 
+extern unsigned short port_mappings[USHRT_MAX];
+
 // standard for POSIX programs
 #define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
 #define FRACTAL_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
@@ -106,6 +108,10 @@ int parseArgs(int argc, char *argv[]) {
     long int ret;
     bool ip_set = false;
     char *endptr;
+
+    for (unsigned int i = 0; i < USHRT_MAX; i++) {
+	port_mappings[i] = i;
+    }
 
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);

@@ -82,6 +82,8 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
+unsigned short port_mappings[USHRT_MAX];
+
 /*
 ============================
 Private Custom Types
