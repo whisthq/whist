@@ -240,8 +240,7 @@ const TopView = (props: any) => {
                             textAlign: "left",
                         }}
                     >
-                        Fractal uses cloud streaming to supercharge your
-                        laptop's laggy applications. Join our waitlist before
+                        Fractal supercharges your applications by streaming them from the cloud. Join our waitlist before
                         the countdown ends for access.
                     </p>
                     <div style={{ marginTop: 50, zIndex: 100 }}>
