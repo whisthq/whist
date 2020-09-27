@@ -110,7 +110,7 @@ int parseArgs(int argc, char *argv[]) {
     char *endptr;
 
     for (unsigned int i = 0; i < USHRT_MAX; i++) {
-	port_mappings[i] = i;
+        port_mappings[i] = i;
     }
 
     while (true) {
@@ -170,9 +170,9 @@ int parseArgs(int argc, char *argv[]) {
             case 'e':
                 strcpy(sentry_environment, optarg);
                 break;
-	    case 'p':
-		LOG_WARNING("Argument -p or --ports not actually implemented yet!");
-		break;
+            case 'p':
+                LOG_WARNING("Argument -p or --ports not actually implemented yet!");
+                break;
             case 'x':
                 running_ci = 1;
                 break;
