@@ -54,6 +54,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"user", required_argument, NULL, 'u'},
                                      {"environment", required_argument, NULL, 'e'},
                                      {"connection-method", required_argument, NULL, 'z'},
+                                     {"ports", required_argument, NULL, 'p'},
                                      {"use_ci", no_argument, NULL, 'x'},
                                      {"name", required_argument, NULL, 'n'},
                                      // these are standard for POSIX programs
@@ -87,6 +88,7 @@ int parseArgs(int argc, char *argv[]) {
         "  -u, --user=EMAIL              Tell fractal the users email. Optional defaults to None"
         "  -e, --environment=ENV         The environment the protocol is running \n"
         "                                 in. e.g master, staging, dev. Optional defaults to dev"
+        "  -p, --ports=PORTS             Pass in custom port:port mappings, comma-separated\n"
         "  -x, --use_ci                  launch the protocol in CI mode\n"
         "  -z, --connection_method=CM    which connection method to try first,\n"
         "                                  either STUN or DIRECT\n"
@@ -104,6 +106,7 @@ int parseArgs(int argc, char *argv[]) {
     long int ret;
     bool ip_set = false;
     char *endptr;
+
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
         if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
@@ -161,6 +164,9 @@ int parseArgs(int argc, char *argv[]) {
             case 'e':
                 strcpy(sentry_environment, optarg);
                 break;
+	    case 'p':
+		LOG_WARNING("Argument -p or --ports not actually implemented yet!");
+		break;
             case 'x':
                 running_ci = 1;
                 break;
