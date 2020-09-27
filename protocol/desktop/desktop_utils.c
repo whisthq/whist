@@ -170,9 +170,35 @@ int parseArgs(int argc, char *argv[]) {
             case 'e':
                 strcpy(sentry_environment, optarg);
                 break;
-            case 'p':
-                LOG_WARNING("Argument -p or --ports not actually implemented yet!");
-                break;
+            case 'p': {
+                char c = ',';
+                unsigned short origin_port;
+                unsigned short destination_port;
+                const char *str = optarg;
+                while (c == ',') {
+                    int bytes_read;
+                    int args_read = sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c,
+                                           &bytes_read);
+                    // If we read port arguments, then map them
+                    if (args_read >= 2) {
+                        LOG_INFO("Mapping port: origin=%hu, destination=%hu", origin_port,
+                                 destination_port);
+                        port_mappings[origin_port] = destination_port;
+                    } else {
+                        char invalid_s[13];
+                        unsigned short invalid_s_len = (unsigned short)min(bytes_read, 12);
+                        strncpy(invalid_s, str, invalid_s_len);
+                        invalid_s[invalid_s_len] = '\0';
+                        LOG_WARNING("Unable to parse the parse mapping \"%s\"", invalid_s);
+                    }
+                    // if %c was the end of the string, exit
+                    if (args_read < 3) {
+                        break;
+                    }
+                    // Progress the string forwards
+                    str += bytes_read;
+                }
+            } break;
             case 'x':
                 running_ci = 1;
                 break;
