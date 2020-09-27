@@ -171,6 +171,7 @@ int parseArgs(int argc, char *argv[]) {
                 strcpy(sentry_environment, optarg);
                 break;
             case 'p': {
+                LOG_INFO("Hitting the case 'p' in parsing arguments.");
                 char c = ',';
                 unsigned short origin_port;
                 unsigned short destination_port;
@@ -189,7 +190,8 @@ int parseArgs(int argc, char *argv[]) {
                         unsigned short invalid_s_len = (unsigned short)min(bytes_read, 12);
                         strncpy(invalid_s, str, invalid_s_len);
                         invalid_s[invalid_s_len] = '\0';
-                        LOG_WARNING("Unable to parse the parse mapping \"%s\"", invalid_s);
+                        LOG_ERROR("Unable to parse the parse mapping \"%s\"", invalid_s);
+                        break;
                     }
                     // if %c was the end of the string, exit
                     if (args_read < 3) {
