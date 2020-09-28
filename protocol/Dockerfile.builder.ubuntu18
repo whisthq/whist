@@ -16,14 +16,8 @@ RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
 RUN apt-get update && apt-get clean
 RUN apt-get install libssl-dev
 RUN dpkg --configure -a && apt-get install -f
-RUN apt-get install make gcc g++ -y
-# RUN cmake --version
-RUN apt-get install cmake -y
-# RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3.tar.gz
-# RUN tar -zxvf cmake-3.17.3.tar.gz
-# RUN cd cmake-3.17.3 && ./bootstrap && make && make install
-RUN apt-get install cppcheck -y
-RUN apt-get install sudo
+RUN apt-get install -y make gcc g++
+RUN apt-get install -y cmake cppcheck sudo
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 ADD desktop/linux-client-setup.sh /
@@ -34,5 +28,6 @@ RUN useradd -u ${uid} -g fractal ${uname}
 RUN usermod -aG sudo $uname
 RUN echo "${uname}:password" | chpasswd
 RUN apt-get install curl git -y
+
 RUN apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y
 WORKDIR /workdir

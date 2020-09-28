@@ -12,18 +12,12 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 RUN apt-get update && apt-get clean && apt-get install -y wget apt-utils
 RUN apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget -y
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
-RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
+RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
 RUN apt-get update && apt-get clean
 RUN apt-get install libssl-dev
 RUN dpkg --configure -a && apt-get install -f
-RUN apt-get install make gcc g++ -y
-# RUN cmake --version
-# RUN apt-get install cmake -y
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3.tar.gz
-RUN tar -zxvf cmake-3.17.3.tar.gz
-RUN cd cmake-3.17.3 && ./bootstrap && make && make install
-RUN apt-get install cppcheck -y
-RUN apt-get install sudo
+RUN apt-get install -y make gcc g++
+RUN apt-get install -y cmake cppcheck sudo
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 ADD desktop/linux-client-setup.sh /
