@@ -353,6 +353,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     nvidia-dkms-450=450.51.06-0ubuntu1 \
     nvidia-driver-450=450.51.06-0ubuntu1 \
     nvidia-settings=450.51.06-0ubuntu1 \
+    nvidia-modprobe=450.51.06-0ubuntu1 \
     cuda-drivers-450=450.51.06-1 \
     cuda-drivers=450.51.06-1 \
     && apt-get autoremove -y \
