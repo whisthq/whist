@@ -1,6 +1,6 @@
 import { takeEvery, all, call } from "redux-saga/effects"
 import { apiPost } from "utils/Api"
-import { config } from "utils/constants"
+import { config } from "constants/config"
 
 import * as WaitlistAction from "store/actions/auth/waitlist"
 
