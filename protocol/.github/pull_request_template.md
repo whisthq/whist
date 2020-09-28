@@ -33,10 +33,13 @@ Please give instructions for other people to test, e.g.:
 - [ ] Ming
 - [ ] Nicholas
 - [ ] Roshan
-- [ ] Hamish
-- [ ] Isabelle
+- [ ] Owen
+- [ ] Cidney
+- [ ] Savvy
 - [ ] Jonathan
-- [ ] Sean
+- [ ] Tina
+- [ ] Leor
+- [ ] Eric
 - [ ] Gavin
 
 ## Checklist

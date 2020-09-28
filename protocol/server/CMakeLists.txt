@@ -2,6 +2,9 @@
 ################## FractalServer ##################
 ]]
 
+set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH $ORIGIN)
 add_executable(FractalServer
         client.c
         main.c
@@ -39,7 +42,6 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(FractalServer
 #            Threads::Threads
             ${CMAKE_DL_LIBS}
-            sentry
             )
 endif ()
 
@@ -58,6 +60,7 @@ target_link_libraries(FractalServer
         fractalUtils
         ${STATIC_SDL2}
         ${LIBMFX}
+        sentry
         )
 
 #[[

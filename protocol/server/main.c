@@ -942,10 +942,15 @@ int main() {
     }
 #endif
 
-    update_webserver_parameters();
+update_webserver_parameters();
 
 #ifdef _WIN32
-    if (!InitDesktop(get_vm_password())) {
+    if (!InitDesktop(input_device, get_vm_password())) {
+    input_device = CreateInputDevice();
+    if (!input_device) {
+        LOG_WARNING("Failed to create input device for playback.");
+    }
+
         LOG_WARNING("Could not winlogon!\n");
         destroyLogger();
         return 0;
@@ -980,11 +985,6 @@ int main() {
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", NULL);
         SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", NULL);
         LOG_INFO("Sending video and audio...");
-
-        input_device = CreateInputDevice();
-        if (!input_device) {
-            LOG_WARNING("Failed to create input device for playback.");
-        }
 
         clock totaltime;
         StartTimer(&totaltime);

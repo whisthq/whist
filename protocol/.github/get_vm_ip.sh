@@ -5,7 +5,7 @@
 
 vm_name=$1
 
-web_server=${web_server:-https://cube-celery-staging4.herokuapp.com/}
+web_server=${web_server:-https://staging-webserver.fractalcomputers.com/}
 
 # get named params
 while [ $# -gt 0 ]; do

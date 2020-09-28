@@ -70,7 +70,7 @@ void OpenWindow() {
 }
 
 // Log into the desktop, and block until the login process finishes
-bool InitDesktop(char* vm_password) {
+bool InitDesktop(input_device_t* input_device, char* vm_password) {
     DesktopContext lock_screen;
 
     OpenWindow();
@@ -92,7 +92,7 @@ bool InitDesktop(char* vm_password) {
 
         FractalKeycode keycodes[] = {FK_SPACE, FK_BACKSPACE, FK_BACKSPACE};
 
-        EnterWinString(keycodes, 3);
+        InputKeycodes(input_device, keycodes, 3);
 
         Sleep(500);
 

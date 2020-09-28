@@ -2,6 +2,13 @@
 ################## FractalClient ##################
 ]]
 
+# Add rpath to look for shared libraries on linux
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH $ORIGIN)
+endif()
+
 add_executable(FractalClient
         main.c
         audio.c
