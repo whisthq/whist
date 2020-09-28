@@ -906,12 +906,8 @@ int MultithreadedWaitForClient(void* opaque) {
 }
 
 int main() {
-    // int d = 0;
-    // int e = 0;
-    // LOG_INFO("d starts at %d, e starts at %d", d, e);
-    // dxgi_cuda_transfer_data(&d, &e);
-    // LOG_INFO("d set to %d, e set to %d", d, e);
-    // return 0;
+    init_default_port_mappings();
+
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);

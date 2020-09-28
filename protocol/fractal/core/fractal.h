@@ -86,8 +86,8 @@ Defines
 #define BASE_UDP_PORT 32263
 #define BASE_TCP_PORT (BASE_UDP_PORT + MAX_NUM_CLIENTS)
 
-#define PRODUCTION_HOST "main-webserver.fractalcomputers.com"
-#define STAGING_HOST "staging-webserver.fractalcomputers.com"
+#define PRODUCTION_HOST "main-webserver.tryfractal.com"
+#define STAGING_HOST "staging-webserver.tryfractal.com"
 
 #define USING_AUDIO_ENCODE_DECODE true
 #define USING_FFMPEG_IFRAME_FLAG false

@@ -484,6 +484,8 @@ int syncKeyboardState(void) {
 }
 
 int main(int argc, char* argv[]) {
+    init_default_port_mappings();
+
     if (parseArgs(argc, argv) != 0) {
         return -1;
     }
