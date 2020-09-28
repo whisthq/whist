@@ -32,8 +32,12 @@ const DEFAULT = {
     update_found: false,
     ready_to_connect: false,
     versions: {},
+    width: 200,
+    height: 200,
+    codec: 'h264',
 }
 
+// TODO (adriano) maybe typechecking here? (i.e. put the types you expect properly)
 export default function counter(
     state = DEFAULT,
     action: {
@@ -64,6 +68,9 @@ export default function counter(
         percent_loaded: any
         update: any
         versions: any
+        width: any
+        height: any
+        codec: any
     }
 ) {
     switch (action.type) {
@@ -192,6 +199,17 @@ export default function counter(
             return {
                 ...state,
                 versions: action.versions,
+            }
+        case MainAction.STORE_DIMENSIONS:
+            return {
+                ...state,
+                width: action.width,
+                height: action.height,
+            }
+        case MainAction.STORE_CODEC:
+            return {
+                ...state,
+                codec: action.codec,
             }
         default:
             return state
