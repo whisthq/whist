@@ -38,6 +38,7 @@ class Login extends Component {
             rememberMe: false,
             update_ping_received: false,
             needs_autoupdate: false,
+            maintenance: true,
         };
     }
 
@@ -179,6 +180,49 @@ class Login extends Component {
     }
 
     render() {
+        if (this.state.maintenance) {
+            return (
+                <div
+                    className={styles.container}
+                    data-tid="container"
+                    style={{ backgroundImage: `url(${Background})` }}
+                >
+                    <UpdateScreen />
+                    <div
+                        style={{
+                            position: "absolute",
+                            bottom: 15,
+                            right: 15,
+                            fontSize: 11,
+                            color: "#D1D1D1",
+                        }}
+                    >
+                        Version: {this.state.version}
+                    </div>
+                    {this.props.os === "win32" ? (
+                        <div>
+                            <Titlebar backgroundColor="#000000" />
+                        </div>
+                    ) : (
+                        <div className={styles.macTitleBar} />
+                    )}
+                    <div
+                        style={{
+                            margin: "auto",
+                            marginTop: 250,
+                            color: "white",
+                            width: 600,
+                            lineHeight: 1.5,
+                        }}
+                    >
+                        Fractal is undergoing a major update, and is currently
+                        in maintenance mode. If you need support or would like
+                        to access your account, please contact{" "}
+                        <strong>support@fractalcomputers.com</strong>.
+                    </div>
+                </div>
+            );
+        }
         return (
             <div
                 className={styles.container}
