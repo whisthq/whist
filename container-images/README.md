@@ -10,6 +10,33 @@ This repository contains the Docker images containerizing the various applicatio
 
 - None yet
 
+## Usage
+
+When git cloning, ensure that all git submodules are pulled as follows:
+
+```
+git clone --recurse-submodules --branch $your-container-images-branch https://github.com/fractalcomputers/container-images ~/container-images
+cd ~/container-images
+```
+
+Or, if you have sshkeys,
+
+```
+git clone --recurse-submodules --branch $your-container-images-branch git@github.com:fractalcomputers/container-images.git ~/container-images
+```
+
+Then, setup on your EC2 instance with the setup scripts:
+
+```
+./setup.sh
+```
+
+Which will begin installing all dependencies and configuration. It will also ask if you want to connect your EC2 instance to an ECS cluster, which you may respond yes or no to. After the setup scripts run, you must `sudo reboot` for docker to work currently. After rebooting, you may finally run
+
+```
+./build.sh base 18 && ./run.sh base 18
+```
+
 ## Development
 
 To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfiles under `/base/`, unless your fixes are application-specific, in which case you should contribute to the relevant Dockerfile for the application. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of possible security attacks possible. Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master` once deployed to production. The `master` branch is going to automatically deploy to production via AWS ECR (this is a current TODO), and must not be pushed to unless thorough testing has been performed.
@@ -18,7 +45,7 @@ For general development, refer to the `/base` subfolder README, and to your spec
 
 ## Styling
 
-We use [Hadolint](https://github.com/hadolint/hadolint) to format the Dockerfiles in this project. Your first need to install Hadolint via your local package manager, i.e. `brew install hadolint`, and have the Docker daemon running before linting a specific file by running `hadolint <file-path>`. 
+We use [Hadolint](https://github.com/hadolint/hadolint) to format the Dockerfiles in this project. Your first need to install Hadolint via your local package manager, i.e. `brew install hadolint`, and have the Docker daemon running before linting a specific file by running `hadolint <file-path>`.
 
 We also have [pre-commit hooks](https://pre-commit.com/) with Hadolint support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Hadolint.Dockerfile improvements will be printed to the terminal for all Dockerfiles specified under `args` in `.pre-commit-config.yaml`. If you need/want to add other Dockerfiles, you need to specify them there. If you have issues with Hadolint tracking non-Docker files, you can commit with `git commit -m [MESSAGE] --no-verify` to skip the pre-commit hook.
 

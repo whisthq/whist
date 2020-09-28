@@ -51,11 +51,15 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     mesa-utils=8.4.0-1build1 \
     glmark2=2014.03+git20150611.fa71af2d-0ubuntu7 \
     mpv=0.32.0-1ubuntu1 \
+    libgimp2.0=2.10.18-1 \
+    gimp=2.10.18-1 \
+    psmisc=23.3-1 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install X Server dependencies and basic Ubuntu packages
+
+# Install X Server and window manager dependencies and basic Ubuntu packages
 # These packages need to be installed before installing/updating Python
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
@@ -70,11 +74,19 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libasound2-dev=1.2.2-2.1ubuntu2 \
     xclip=0.13-1 \
     x11-xserver-utils=7.7+8 \
+    parcellite=1.2.1-3 \
+    gtk-chtheme=0.3.1-6.1 \
     xserver-xorg-video-dummy=1:0.3.8-1build3 \
     dkms=2.8.1-5ubuntu1 \
+    i3=4.17.1-1 \
+    lxappearance=0.6.3-1 \
+    xinit=1.4.1-0ubuntu2 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Note: qt4-qtconfig has not been ported to Ubuntu 20, so we can't install it.
+
 
 # Install FFmpeg and Libav dependencies explicitly
 # These packages need to be installed before installing/updating Python
@@ -164,8 +176,9 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     libfido2-1=1.3.1-1ubuntu2 \
     libgbm1=20.0.8-0ubuntu1~20.04.1 \
     libxcb-dri3-0=1.14-2 \
-    python3.8=3.8.2-1ubuntu1.2 \
+#    python3.8=3.8.2-1ubuntu1.2 \
     sudo=1.8.31-1ubuntu1.1 \
+    less=551-1ubuntu0.1 \
     vim=2:8.1.2269-1ubuntu5 \
     libcurl4=7.68.0-1ubuntu2.2 \
     && apt-get autoremove -y \
@@ -350,6 +363,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     nvidia-dkms-450=450.51.06-0ubuntu1 \
     nvidia-driver-450=450.51.06-0ubuntu1 \
     nvidia-settings=450.51.06-0ubuntu1 \
+    nvidia-modprobe=450.51.06-0ubuntu1 \
     cuda-drivers-450=450.51.06-1 \
     cuda-drivers=450.51.06-1 \
     && apt-get autoremove -y \
@@ -379,6 +393,14 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Set up window manager running on X server, with GTK/QT themes
+COPY i3config /root/.config/i3/config
+COPY gtk-3-settings.ini /etc/gtk-3.0/settings.ini
+COPY .gtkrc-2.0 /root/.gtkrc-2.0
+COPY qt4-settings.conf /root/.config/Trolltech.conf
+COPY .xinitrc /root/.xinitrc
+
 
 # Install Firefox nightly (for testing only)
 # RUN add-apt-repository ppa:ubuntu-mozilla-daily/ppa
@@ -413,6 +435,9 @@ RUN systemctl mask systemd-hostnamed
 RUN systemctl mask acpid
 RUN systemctl mask NetworkManager-wait-online
 RUN systemctl mask nvidia-persistenced
+
+# Ubuntu 20-specific systemd fix (pre-systemd 246)
+COPY systemd-logind-override-ubuntu20.conf /etc/systemd/system/systemd-logind.service.d/override.conf
 
 # Set up Fractal Protocol symlink
 RUN rm /usr/share/fractal/FractalServer.sh /usr/share/fractal/FractalServer
