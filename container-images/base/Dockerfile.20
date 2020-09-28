@@ -436,6 +436,9 @@ RUN systemctl mask acpid
 RUN systemctl mask NetworkManager-wait-online
 RUN systemctl mask nvidia-persistenced
 
+# Ubuntu 20-specific systemd fix (pre-systemd 246)
+COPY systemd-logind-override-ubuntu20.conf /etc/systemd/system/systemd-logind.service.d/override.conf
+
 # Set up Fractal Protocol symlink
 RUN rm /usr/share/fractal/FractalServer.sh /usr/share/fractal/FractalServer
 RUN mkdir /usr/share/fractal/bin
