@@ -230,6 +230,15 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Ubuntu 20-specific fixes
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    locales=2.31-0ubuntu9.1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+RUN update-locale
+
+
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
