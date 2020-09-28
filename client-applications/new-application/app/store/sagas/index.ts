@@ -152,15 +152,7 @@ function* fetchContainer(action: any) {
                 ? json.output.location
                 : test_location
 
-            const width = test_width
-            const height = test_height
-            const codec = test_codec
-
-            yield put(Action.storeDimensions(width, height))
-
             yield put(Action.storeIP(ip))
-
-            yield put(Action.storeCodec(codec))
 
             yield put(
                 Action.storeResources(
@@ -195,9 +187,6 @@ function* deleteContainer(action: any) {
     )
     const id = json.id
     console.log('DELETING CONTAINER')
-    console.log(action.username)
-    console.log(action.container_id)
-    console.log(json)
     var { json, response } = yield call(
         apiGet,
         `${config.url.PRIMARY_SERVER}/status/` + id,

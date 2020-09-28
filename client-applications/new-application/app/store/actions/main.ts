@@ -132,11 +132,3 @@ export function deleteContainer(username: string, container_id: string) {
         container_id,
     }
 }
-
-export function storeDimensions(width: number, height: number) {
-    return {
-        type: STORE_DIMENSIONS,
-        width,
-        height,
-    }
-}
