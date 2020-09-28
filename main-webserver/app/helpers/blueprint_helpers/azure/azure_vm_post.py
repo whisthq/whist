@@ -20,9 +20,7 @@ def devHelper(vm_name, dev):
     fractalLog(
         function="pingHelper",
         label=getVMUser(vm_name),
-        logs="Setting VM {vm_name} dev mode to {dev}".format(
-            vm_name=str(vm_name), dev=str(dev)
-        ),
+        logs="Setting VM {vm_name} dev mode to {dev}".format(vm_name=str(vm_name), dev=str(dev)),
     )
 
     vm = UserVM.query.filter_by(vm_id=vm_name)

@@ -14,9 +14,7 @@ def forgotPasswordHelper(username):
         token = jwt.encode(
             {
                 "sub": username,
-                "exp": (dt.now() + timedelta(minutes=10))
-                .replace(tzinfo=timezone.utc)
-                .timestamp(),
+                "exp": (dt.now() + timedelta(minutes=10)).replace(tzinfo=timezone.utc).timestamp(),
             },
             os.getenv("SECRET_KEY"),
         )
@@ -26,9 +24,7 @@ def forgotPasswordHelper(username):
             from_email="noreply@fractalcomputers.com",
             to_emails=[username],
             subject="Reset Your Password",
-            html_content=render_template(
-                "on_password_forget.html", url=FRONTEND_URL, token=token,
-            ),
+            html_content=render_template("on_password_forget.html", url=FRONTEND_URL, token=token),
         )
         try:
             sg = SendGridAPIClient(SENDGRID_API_KEY)
@@ -169,9 +165,7 @@ def trialStartHelper(user, location, code):
     internal_message = SendGridMail(
         from_email="noreply@fractalcomputers.com",
         to_emails=["pipitone@fractalcomputers.com", "support@fractalcomputers.com"],
-        subject="[FREE TRIAL START] A new user, "
-        + user
-        + ", just signed up for the free trial.",
+        subject="[FREE TRIAL START] A new user, " + user + ", just signed up for the free trial.",
         html_content="<div>No action needed from our part at this point.</div>",
     )
     try:
@@ -234,6 +228,7 @@ def computerReadyHelper(user, date, code, location):
 
     return jsonify({"status": SUCCESS}), SUCCESS
 
+
 def joinWaitlistHelper(email, name, date):
     title = "Congrats! You're on the waitlist."
 
@@ -241,9 +236,7 @@ def joinWaitlistHelper(email, name, date):
         from_email="support@fractalcomputers.com",
         to_emails=email,
         subject=title,
-        html_content=render_template(
-            "join_waitlist.html", name=name, date=date
-        ),
+        html_content=render_template("join_waitlist.html", name=name, date=date),
     )
 
     try:
@@ -252,6 +245,31 @@ def joinWaitlistHelper(email, name, date):
     except Exception as e:
         fractalLog(
             function="joinWaitlistHelper",
+            label=email,
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
+        )
+        return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
+
+    return jsonify({"status": SUCCESS}), SUCCESS
+
+
+def waitlistReferralHelper(email, name, code, recipient):
+    title = name + " has invited you to join Fractal's waitlist!"
+
+    message = SendGridMail(
+        from_email=email,
+        to_emails=recipient,
+        subject=title,
+        html_content=render_template("on_waitlist_referral.html", email=email, code=code),
+    )
+
+    try:
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+    except Exception as e:
+        fractalLog(
+            function="waitlistReferralHelper",
             label=email,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,

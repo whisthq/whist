@@ -25,14 +25,10 @@ NEW_DATABASE_URL = "postgres://pvcmguzmacvzqo:bc1746f2cfd9d888b2ae1a16d9c5dc4e7d
 SECRET_KEY = "philis@littlec@n@di@n6969"
 SHA_SECRET_KEY = "ASDF89!#3q4;kaSJF!!ljsa4598@Az)00o!?"
 
-old_engine = db.create_engine(
-    OLD_DATABASE_URL, echo=False, pool_pre_ping=True, pool_recycle=3600
-)
+old_engine = db.create_engine(OLD_DATABASE_URL, echo=False, pool_pre_ping=True, pool_recycle=3600)
 old_session = sessionmaker(bind=old_engine, autocommit=False)
 
-new_engine = db.create_engine(
-    NEW_DATABASE_URL, echo=False, pool_pre_ping=True, pool_recycle=3600
-)
+new_engine = db.create_engine(NEW_DATABASE_URL, echo=False, pool_pre_ping=True, pool_recycle=3600)
 new_session = sessionmaker(bind=new_engine, autocommit=False)
 
 
@@ -45,7 +41,7 @@ def hash_value(value):
 
 def check_value(hashed_value, raw_value):
     dk = hashlib.pbkdf2_hmac(
-        "sha256", raw_value.encode("utf-8"), SHA_SECRET_KEY.encode("utf-8"), 100000,
+        "sha256", raw_value.encode("utf-8"), SHA_SECRET_KEY.encode("utf-8"), 100000
     )
     hr = binascii.hexlify(dk).decode("utf-8")
     return hashed_value == hr
@@ -94,9 +90,7 @@ def migrate_users():
                 "user_id": row["username"],
                 "name": row["name"],
                 "password": hashed_password,
-                "using_google_login": row["google_login"]
-                if row["google_login"]
-                else False,
+                "using_google_login": row["google_login"] if row["google_login"] else False,
                 "release_stage": 50,
                 "created_timestamp": 0,
                 "reason_for_signup": row["reason_for_signup"],
@@ -348,10 +342,7 @@ def migrate_release_groups():
 
         print("Migrating {stage}".format(stage=row["branch"]))
 
-        params = {
-            "release_stage": row["version"],
-            "branch": row["branch"],
-        }
+        params = {"release_stage": row["version"], "branch": row["branch"]}
 
         session.execute(command, params)
 
@@ -401,9 +392,7 @@ def migrate_protocol_logs():
 
             print("Migrating {id}".format(id=row["connection_id"]))
 
-            timestamp = int(
-                dt.timestamp(dt.strptime(row["last_updated"], "%m/%d/%Y, %H:%M"))
-            )
+            timestamp = int(dt.timestamp(dt.strptime(row["last_updated"], "%m/%d/%Y, %H:%M")))
             version = None
             if row["version"] != "NONE":
                 version = row["version"]

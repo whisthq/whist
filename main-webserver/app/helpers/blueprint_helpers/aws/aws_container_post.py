@@ -27,10 +27,7 @@ def preprocess_task_info(app):
     return (
         "cluster_eqbpomqrnp",
         "us-east-1",
-        (
-            "arn:aws:ecs:us-east-1:747391415460:task-definition/roshan-task-"
-            "definition-test-0:5"
-        ),
+        ("arn:aws:ecs:us-east-1:747391415460:task-definition/roshan-task-" "definition-test-0:5"),
     )
 
 

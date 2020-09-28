@@ -11,14 +11,19 @@ venv/
 __pycache__/
 
 # Heroku
-herokulogs.txtgg
+herokulogs.txt
 
 # Vagrant
 .vagrant
-*.box
 ubuntu-bionic-18.04-cloudimg-console.log
+*.box
 
 .idea/*
 # VS Code
 .vscode/*
 .vscode
+
+# MacOS
+.DS_Store
+app/.DS_Store
+docker/.DS_Store

@@ -44,11 +44,7 @@ def queryStatus(resp, timeout=10):
 
     # Wait for job to finish
 
-    while (
-        status == "PENDING"
-        or status == "STARTED"
-        and seconds_elapsed < total_timeout_seconds
-    ):
+    while status == "PENDING" or status == "STARTED" and seconds_elapsed < total_timeout_seconds:
         returned_json = getStatus(status_id)
         if not returned_json:
             return {"status": -3, "output": "No status ID provided"}

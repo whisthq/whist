@@ -29,9 +29,7 @@ def test_no_stun(client):
 def test_no_username(client):
     client.login("new-email@fractalcomputers.com", "new-email-password")
 
-    response = client.container_stun(
-        container_id="mycontainerid123", stun=True, omit_username=True
-    )
+    response = client.container_stun(container_id="mycontainerid123", stun=True, omit_username=True)
 
     assert response.status_code == 401
 
@@ -59,9 +57,7 @@ def test_successful(client, monkeypatch):
 
 
 def test_no_container():
-    result = set_stun(
-        f"test-user-{uuid.uuid4()}", f"test-container-{uuid.uuid4()}", True
-    )
+    result = set_stun(f"test-user-{uuid.uuid4()}", f"test-container-{uuid.uuid4()}", True)
 
     assert result == NOT_FOUND
 

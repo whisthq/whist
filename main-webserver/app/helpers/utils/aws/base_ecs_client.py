@@ -114,7 +114,7 @@ class ECSClient:
         self.set_cluster(cluster_name=base_cluster)
 
         if not self.mock:
-            self.role_name = 'role_name_oqursxkjhh'
+            self.role_name = "role_name_oqursxkjhh"
             ## Create role and instance profile that allows containers to use SSM, S3, and EC2
             # self.role_name = self.generate_name('role_name')
             # print(self.role_name)
@@ -162,7 +162,7 @@ class ECSClient:
             #     PolicyArn='arn:aws:iam::aws:policy/AmazonECS_FullAccess',
             #     RoleName=self.role_name,
             # )
-            self.instance_profile = self.generate_name('instance_profile')
+            self.instance_profile = self.generate_name("instance_profile")
             self.iam_client.create_instance_profile(InstanceProfileName=self.instance_profile)
             self.iam_client.add_role_to_instance_profile(
                 InstanceProfileName=self.instance_profile, RoleName=self.role_name
@@ -182,11 +182,11 @@ class ECSClient:
             aws_access_key_id=(self.key_id if len(self.key_id) > 0 else None),
             aws_secret_access_key=(self.access_key if len(self.access_key) > 0 else None),
             region_name=(self.region_name if len(self.region_name) > 0 else None),
-            **kwargs
+            **kwargs,
         )
         return clients
 
-    def generate_name(self, starter_name=''):
+    def generate_name(self, starter_name=""):
         """
         Helper function for generating a name with a random UUID
         Args:
@@ -195,7 +195,7 @@ class ECSClient:
             str: the generated name
         """
         letters = string.ascii_lowercase
-        return starter_name + '_' + ''.join(random.choice(letters) for i in range(10))
+        return starter_name + "_" + "".join(random.choice(letters) for i in range(10))
 
     def create_cluster(self, capacity_providers, cluster_name=None):
         """
@@ -213,7 +213,7 @@ class ECSClient:
             clusterName=cluster_name,
             capacityProviders=capacity_providers,
             defaultCapacityProviderStrategy=[
-                {'capacityProvider': capacity_provider, 'weight': 1, 'base': 0,}
+                {"capacityProvider": capacity_provider, "weight": 1, "base": 0,}
                 for capacity_provider in capacity_providers
             ],
         )
@@ -227,7 +227,7 @@ class ECSClient:
             cluster_name (Optional[str]): name of cluster to set task's compute cluster to
         """
         self.cluster = (
-            check_str_param(cluster_name, 'cluster_name')
+            check_str_param(cluster_name, "cluster_name")
             if cluster_name
             else self.ecs_client.list_clusters()["clusterArns"][0]
         )
@@ -244,9 +244,9 @@ class ECSClient:
                 if next_token
                 else self.ecs_client.list_clusters()
             )
-            clusters.extend(clusters_response['clusterArns'])
+            clusters.extend(clusters_response["clusterArns"])
             next_token = (
-                clusters_response['nextToken'] if 'nextToken' in clusters_response else None
+                clusters_response["nextToken"] if "nextToken" in clusters_response else None
             )
             if not next_token:
                 break
@@ -259,21 +259,21 @@ class ECSClient:
         Returns:
             List[Dict]: each dict contains details about an auto scaling group in the cluster
         """
-        capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])['clusters'][0][
-            'capacityProviders'
+        capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0][
+            "capacityProviders"
         ]
         capacity_providers_info = self.ecs_client.describe_capacity_providers(
             capacityProviders=capacity_providers
-        )['capacityProviders']
+        )["capacityProviders"]
         auto_scaling_groups = list(
             map(
-                lambda cp: cp['autoScalingGroupProvider']['autoScalingGroupArn'].split('/')[-1],
+                lambda cp: cp["autoScalingGroupProvider"]["autoScalingGroupArn"].split("/")[-1],
                 capacity_providers_info,
             )
         )
         return self.auto_scaling_client.describe_auto_scaling_groups(
             AutoScalingGroupNames=auto_scaling_groups
-        )['AutoScalingGroups']
+        )["AutoScalingGroups"]
 
     def get_container_instance_ips(self, cluster, containers):
         """
@@ -287,8 +287,8 @@ class ECSClient:
         ec2_info = self.ec2_client.describe_instances(InstanceIds=ec2_ids)
         return list(
             map(
-                lambda info: info.get('PublicIpAddress', -1),
-                ec2_info['Reservations'][0]['Instances'],
+                lambda info: info.get("PublicIpAddress", -1),
+                ec2_info["Reservations"][0]["Instances"],
             )
         )
 
@@ -302,8 +302,8 @@ class ECSClient:
         """
         full_containers_info = self.ecs_client.describe_container_instances(
             cluster=cluster, containerInstances=containers
-        )['containerInstances']
-        return list(map(lambda info: info['ec2InstanceId'], full_containers_info))
+        )["containerInstances"]
+        return list(map(lambda info: info["ec2InstanceId"], full_containers_info))
 
     def get_containers_in_cluster(self, cluster):
         """
@@ -312,7 +312,7 @@ class ECSClient:
         Returns:
             List[str]: the ARNs of the containers in the cluster
         """
-        return self.ecs_client.list_container_instances(cluster=cluster)['containerInstanceArns']
+        return self.ecs_client.list_container_instances(cluster=cluster)["containerInstanceArns"]
 
     def terminate_containers_in_cluster(self, cluster):
         """
@@ -335,10 +335,10 @@ class ECSClient:
         """
         resp = self.ssm_client.send_command(
             DocumentName="AWS-RunShellScript",  # One of AWS' preconfigured documents
-            Parameters={'commands': commands},
+            Parameters={"commands": commands},
             InstanceIds=self.get_container_instance_ids(cluster, containers),
             OutputS3Region=self.region_name,
-            OutputS3BucketName='fractal-container-outputs',
+            OutputS3BucketName="fractal-container-outputs",
         )
         return resp
 
@@ -364,32 +364,32 @@ class ECSClient:
         """
         clusters, clusters_usage = clusters or self.get_all_clusters(), {}
         for cluster in clusters:
-            cluster_info = self.ecs_client.describe_clusters(clusters=[cluster])['clusters'][0]
+            cluster_info = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0]
             containers = self.get_containers_in_cluster(cluster)
             auto_scaling_group_info = self.describe_auto_scaling_groups_in_cluster(cluster)[0]
             total_resources = defaultdict(int)
             for container in containers:
                 instance_info = self.ecs_client.describe_container_instances(
                     cluster=cluster, containerInstances=[container]
-                )['containerInstances'][0]
-                for resource in instance_info['remainingResources']:
-                    if resource['name'] == 'CPU' or resource['name'] == 'MEMORY':
-                        total_resources[resource['name']] += resource['integerValue']
+                )["containerInstances"][0]
+                for resource in instance_info["remainingResources"]:
+                    if resource["name"] == "CPU" or resource["name"] == "MEMORY":
+                        total_resources[resource["name"]] += resource["integerValue"]
 
             for resource in total_resources.keys():
                 total_resources[resource] /= len(containers)
 
-            clusters_usage[cluster_info['clusterName']] = {
-                'status': cluster_info['status'],
-                'pendingTasksCount': cluster_info['pendingTasksCount'],
-                'runningTasksCount': cluster_info['runningTasksCount'],
-                'registeredContainerInstancesCount': cluster_info[
-                    'registeredContainerInstancesCount'
+            clusters_usage[cluster_info["clusterName"]] = {
+                "status": cluster_info["status"],
+                "pendingTasksCount": cluster_info["pendingTasksCount"],
+                "runningTasksCount": cluster_info["runningTasksCount"],
+                "registeredContainerInstancesCount": cluster_info[
+                    "registeredContainerInstancesCount"
                 ],
-                'maxCPURemainingPerInstance': total_resources['CPU'],
-                'maxMemoryRemainingPerInstance': total_resources['MEMORY'],
-                'minContainers': auto_scaling_group_info['MinSize'],
-                'maxContainers': auto_scaling_group_info['MaxSize'],
+                "maxCPURemainingPerInstance": total_resources["CPU"],
+                "maxMemoryRemainingPerInstance": total_resources["MEMORY"],
+                "minContainers": auto_scaling_group_info["MinSize"],
+                "maxContainers": auto_scaling_group_info["MaxSize"],
             }
 
         pprint(clusters_usage)
@@ -503,18 +503,18 @@ class ECSClient:
             **kwargs: Any add'l params you want the task to have
         """
         task_args = {
-            'taskDefinition': self.task_definition_arn,
-            'cluster': self.cluster,
+            "taskDefinition": self.task_definition_arn,
+            "cluster": self.cluster,
         }
         if use_launch_type:
-            task_args['launchType'] = self.launch_type
+            task_args["launchType"] = self.launch_type
         taskdict = self.ecs_client.run_task(**task_args, **kwargs)
         task = taskdict["tasks"][0]
         running_task_arn = task["taskArn"]
         self.tasks.append(running_task_arn)
         self.tasks_done.append(False)
         self.offset += 1
-    
+
     def stop_task(self, reason="user stopped", offset=0):
         self.ecs_client.stop_task(
             cluster=self.cluster, task=(self.tasks[offset]), reason=reason,
@@ -522,8 +522,8 @@ class ECSClient:
 
     def create_launch_configuration(
         self,
-        instance_type='t2.small',
-        ami='ami-04cfcf6827bb29439',
+        instance_type="t2.small",
+        ami="ami-04cfcf6827bb29439",
         launch_config_name=None,
         cluster_name=None,
     ):
@@ -536,7 +536,7 @@ class ECSClient:
         Returns:
              (str, str): name of cluster for launch configuration, name of launch configuration created
         """
-        cluster_name = cluster_name or self.generate_name('cluster')
+        cluster_name = cluster_name or self.generate_name("cluster")
 
         # Initial data/scripts to be run on all container instances
         userdata = """
@@ -560,7 +560,7 @@ class ECSClient:
             cluster_name
         )
 
-        launch_config_name = launch_config_name or self.generate_name('launch_configuration')
+        launch_config_name = launch_config_name or self.generate_name("launch_configuration")
         response = self.auto_scaling_client.create_launch_configuration(
             LaunchConfigurationName=launch_config_name,
             ImageId=ami,
@@ -588,13 +588,13 @@ class ECSClient:
         Returns:
              str: name of auto scaling group created
         """
-        availability_zones = availability_zones or [self.region_name + 'a']
+        availability_zones = availability_zones or [self.region_name + "a"]
         if isinstance(availability_zones, str):
             availability_zones = [availability_zones]
         if not isinstance(availability_zones, list):
             raise Exception("availability_zones should be a list of strs")
         auto_scaling_group_name = auto_scaling_group_name or self.generate_name(
-            'auto_scaling_group'
+            "auto_scaling_group"
         )
         response = self.auto_scaling_client.create_auto_scaling_group(
             AutoScalingGroupName=auto_scaling_group_name,
@@ -616,37 +616,37 @@ class ECSClient:
         auto_scaling_group_info = self.auto_scaling_client.describe_auto_scaling_groups(
             AutoScalingGroupNames=[auto_scaling_group_name]
         )
-        auto_scaling_group_arn = auto_scaling_group_info['AutoScalingGroups'][0][
-            'AutoScalingGroupARN'
+        auto_scaling_group_arn = auto_scaling_group_info["AutoScalingGroups"][0][
+            "AutoScalingGroupARN"
         ]
-        capacity_provider_name = capacity_provider_name or self.generate_name('capacity_provider')
+        capacity_provider_name = capacity_provider_name or self.generate_name("capacity_provider")
         response = self.ecs_client.create_capacity_provider(
             name=capacity_provider_name,
             autoScalingGroupProvider={
-                'autoScalingGroupArn': auto_scaling_group_arn,
-                'managedScaling': {
-                    'maximumScalingStepSize': 1000,
-                    'minimumScalingStepSize': 1,
-                    'status': 'ENABLED',
-                    'targetCapacity': 100,
+                "autoScalingGroupArn": auto_scaling_group_arn,
+                "managedScaling": {
+                    "maximumScalingStepSize": 1000,
+                    "minimumScalingStepSize": 1,
+                    "status": "ENABLED",
+                    "targetCapacity": 100,
                 },
             },
         )
         return capacity_provider_name
 
     def get_task_network_info(self, task_info, desired_detail):
-        for attachment in task_info['attachments']:
-            if attachment['type'] == 'ElasticNetworkInterface':
-                for detail in attachment['details']:
-                    print(detail['name'])
-                    if detail['name'] == desired_detail:
-                        return detail['value']
-    
+        for attachment in task_info["attachments"]:
+            if attachment["type"] == "ElasticNetworkInterface":
+                for detail in attachment["details"]:
+                    print(detail["name"])
+                    if detail["name"] == desired_detail:
+                        return detail["value"]
+
     def get_task_binding_info(self, task_info):
         network_binding_map = {}
-        for container in task_info['containers']:
-            for network_binding in container['networkBindings']:
-                network_binding_map[network_binding['containerPort']] = network_binding['hostPort']
+        for container in task_info["containers"]:
+            for network_binding in container["networkBindings"]:
+                network_binding_map[network_binding["containerPort"]] = network_binding["hostPort"]
         return network_binding_map
 
     def get_task_ip_ports(self, offset=0):
@@ -656,11 +656,11 @@ class ECSClient:
         resp = response["tasks"][offset]
         if resp["lastStatus"] == "RUNNING" or resp["lastStatus"] == "STOPPED":
             container_info = self.ecs_client.describe_container_instances(
-                cluster=self.cluster, containerInstances=[resp['containerInstanceArn']]
+                cluster=self.cluster, containerInstances=[resp["containerInstanceArn"]]
             )
-            ec2_id = container_info['containerInstances'][0]['ec2InstanceId']
+            ec2_id = container_info["containerInstances"][0]["ec2InstanceId"]
             ec2_info = self.ec2_client.describe_instances(InstanceIds=[ec2_id])
-            public_ip = ec2_info['Reservations'][0]['Instances'][0].get('PublicIpAddress', -1)
+            public_ip = ec2_info["Reservations"][0]["Instances"][0].get("PublicIpAddress", -1)
             self.task_ips[offset] = public_ip
 
             network_binding_map = self.get_task_binding_info(resp)
@@ -671,11 +671,11 @@ class ECSClient:
 
     def pick_subnets(self):
         subnet_info = self.ec2_client.describe_subnets()
-        for subnet in subnet_info['Subnets']:
-            if subnet['MapPublicIpOnLaunch']:
-                if self.vpc is None or self.vpc == subnet['VpcId']:
-                    self.subnet = subnet['SubnetId']
-                    self.vpc = subnet['VpcId']
+        for subnet in subnet_info["Subnets"]:
+            if subnet["MapPublicIpOnLaunch"]:
+                if self.vpc is None or self.vpc == subnet["VpcId"]:
+                    self.subnet = subnet["SubnetId"]
+                    self.vpc = subnet["VpcId"]
                     break
 
         return [self.subnet]
@@ -683,10 +683,10 @@ class ECSClient:
     def pick_security_groups(self):
         id_list = []
         security_group_info = self.ec2_client.describe_security_groups()
-        for security_group in security_group_info['SecurityGroups']:
-            if security_group['Description'] == 'default VPC security group':
-                if self.vpc is None or self.vpc == security_group['VpcId']:
-                    id_list.append(security_group['GroupId'])
+        for security_group in security_group_info["SecurityGroups"]:
+            if security_group["Description"] == "default VPC security group":
+                if self.vpc is None or self.vpc == security_group["VpcId"]:
+                    id_list.append(security_group["GroupId"])
         self.security_groups = id_list
         return id_list
 
@@ -706,29 +706,28 @@ class ECSClient:
         return networkConfiguration
 
     def get_vpc(self):
-        container_arns = self.ecs_client.list_container_instances(
-            cluster=self.cluster
-        )['containerInstanceArns']
+        container_arns = self.ecs_client.list_container_instances(cluster=self.cluster)[
+            "containerInstanceArns"
+        ]
         # First try to get VPC from containers running on the cluster
         if container_arns:
             container = self.ecs_client.describe_container_instances(
-                cluster=self.cluster,
-                containerInstances=container_arns,
-            )['containerInstances'][0]
-            attributes = container['attributes']
+                cluster=self.cluster, containerInstances=container_arns,
+            )["containerInstances"][0]
+            attributes = container["attributes"]
             for attribute in attributes:
-                if attribute['name']=='ecs.vpc-id':
-                    self.vpc = attribute['value']
+                if attribute["name"] == "ecs.vpc-id":
+                    self.vpc = attribute["value"]
                     return self.vpc
         else:
             auto_scaling_groups = self.describe_auto_scaling_groups_in_cluster(self.cluster)
             if not auto_scaling_groups:
-                raise Exception('Cluster has no instances and no autoscaling group!')
-            if 'VPCZoneIdentifier' not in auto_scaling_groups[0]:
-                raise Exception('Cluster autoscaling group has no VPC Zone Identifier!')
-            subnet_ids = auto_scaling_groups[0]['VPCZoneIdentifier'].split(', ')
+                raise Exception("Cluster has no instances and no autoscaling group!")
+            if "VPCZoneIdentifier" not in auto_scaling_groups[0]:
+                raise Exception("Cluster autoscaling group has no VPC Zone Identifier!")
+            subnet_ids = auto_scaling_groups[0]["VPCZoneIdentifier"].split(", ")
             self.subnet = subnet_ids[0]
-            self.vpc = self.ec2_client.describe_subnets(SubnetIds=subnet_ids)['Subnets'][0]['VpcId']
+            self.vpc = self.ec2_client.describe_subnets(SubnetIds=subnet_ids)["Subnets"][0]["VpcId"]
             return self.vpc
 
     def check_if_done(self, offset=0):
@@ -811,10 +810,10 @@ class ECSClient:
             bool: True if the command executed successfully
         """
         while True:
-            status = self.ssm_client.list_commands(CommandId=command_id)['Commands'][0]['Status']
-            if status == 'Success':
+            status = self.ssm_client.list_commands(CommandId=command_id)["Commands"][0]["Status"]
+            if status == "Success":
                 return True
-            elif status == 'Pending' or status == 'InProgress':
+            elif status == "Pending" or status == "InProgress":
                 time.sleep(time_delay)
             else:
                 return False
@@ -845,8 +844,8 @@ class ECSClient:
     def create_auto_scaling_cluster(
         self,
         cluster_name=None,
-        instance_type='t2.small',
-        ami='ami-04cfcf6827bb29439',
+        instance_type="t2.small",
+        ami="ami-04cfcf6827bb29439",
         min_size=0,
         max_size=10,
         availability_zones=None,
@@ -880,12 +879,12 @@ class ECSClient:
 
 
 if __name__ == "__main__":
-    testclient = ECSClient(base_cluster='cluster_eqbpomqrnp')
+    testclient = ECSClient(base_cluster="cluster_eqbpomqrnp")
     pprint(
         testclient.ecs_client.describe_container_instances(
             cluster=testclient.cluster,
             containerInstances=testclient.ecs_client.list_container_instances(
                 cluster=testclient.cluster
-            )['containerInstanceArns'],
+            )["containerInstanceArns"],
         )
     )

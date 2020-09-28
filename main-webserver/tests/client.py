@@ -30,9 +30,7 @@ class BaseClient(FlaskClient):
         return self._username
 
     def login(self, username, password):
-        response = self.post(
-            "/account/login", json=dict(username=username, password=password),
-        )
+        response = self.post("/account/login", json=dict(username=username, password=password),)
         token = response.json.pop("access_token", None)
 
         if not token:

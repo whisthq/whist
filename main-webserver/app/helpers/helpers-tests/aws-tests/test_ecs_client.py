@@ -34,15 +34,9 @@ def test_network_build():
 
 def test_partial_works():
     basedict = {
-        "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(
-            747391415460
-        ),
+        "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(747391415460),
         "containerDefinitions": [
-            {
-                "cpu": 0,
-                "environment": [{"name": "TEST", "value": "end"}],
-                "image": "httpd:2.4",
-            }
+            {"cpu": 0, "environment": [{"name": "TEST", "value": "end"}], "image": "httpd:2.4",}
         ],
         "placementConstraints": [],
         "memory": "512",
@@ -66,9 +60,7 @@ def test_partial_works():
 
 def test_full_base_config():
     basedict = {
-        "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(
-            747391415460
-        ),
+        "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(747391415460),
         "containerDefinitions": [
             {
                 "cpu": 0,
@@ -145,9 +137,7 @@ def test_cluster_with_auto_scaling_group():
 
     # test running task on newly created cluster
     time.sleep(10)
-    testclient.set_and_register_task(
-        ["echo start"], ["/bin/bash", "-c"], family="multimessage"
-    )
+    testclient.set_and_register_task(["echo start"], ["/bin/bash", "-c"], family="multimessage")
     testclient.run_task(use_launch_type=False)
     testclient.spin_til_running(time_delay=2)
 
@@ -227,9 +217,9 @@ def test_command():
     testclient.set_and_register_task(
         ["echoes"], [""], family=" ",
     )
-    taskdef = ecs_client.describe_task_definition(
-        taskDefinition=testclient.task_definition_arn
-    )["taskDefinition"]
+    taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
+        "taskDefinition"
+    ]
     assert taskdef["containerDefinitions"][0]["command"][0] == "echoes"
 
 
@@ -271,9 +261,9 @@ def test_entry():
     testclient.set_and_register_task(
         [" "], ["entries"], family=" ",
     )
-    taskdef = ecs_client.describe_task_definition(
-        taskDefinition=testclient.task_definition_arn
-    )["taskDefinition"]
+    taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
+        "taskDefinition"
+    ]
     assert taskdef["containerDefinitions"][0]["entryPoint"][0] == "entries"
 
 
@@ -296,9 +286,9 @@ def test_family():
     testclient.set_and_register_task(
         ["echoes"], [""], family="basefam",
     )
-    taskdef = ecs_client.describe_task_definition(
-        taskDefinition=testclient.task_definition_arn
-    )["taskDefinition"]
+    taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
+        "taskDefinition"
+    ]
     assert taskdef["family"] == "basefam"
     logger = taskdef["containerDefinitions"][0]["logConfiguration"]["options"]
     assert "basefam" in logger["awslogs-group"]
@@ -323,9 +313,9 @@ def test_region():
     testclient.set_and_register_task(
         ["echoes"], [""], family="basefam",
     )
-    taskdef = ecs_client.describe_task_definition(
-        taskDefinition=testclient.task_definition_arn
-    )["taskDefinition"]
+    taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
+        "taskDefinition"
+    ]
     assert taskdef["family"] == "basefam"
     logger = taskdef["containerDefinitions"][0]["logConfiguration"]["options"]
     assert "us-east-1" in logger["awslogs-region"]

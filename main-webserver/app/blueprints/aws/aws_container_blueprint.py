@@ -30,9 +30,7 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["ami"],
             kwargs["body"]["region_name"],
         )
-        task = create_new_cluster.apply_async(
-            [cluster_name, instance_type, ami, region_name]
-        )
+        task = create_new_cluster.apply_async([cluster_name, instance_type, ami, region_name])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST

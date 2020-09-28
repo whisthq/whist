@@ -148,9 +148,7 @@ def spinLock(container_name, s=None):
         if s:
             s.update_state(
                 state="PENDING",
-                meta={
-                    "msg": "Cloud PC is downloading an update. This could take a few minutes."
-                },
+                meta={"msg": "Cloud PC is downloading an update. This could take a few minutes."},
             )
 
     while locked:

@@ -56,10 +56,7 @@ class ClusterInfo(db.Model):
     maxContainers = db.Column(db.Integer, nullable=False, default=0)
     status = db.Column(db.String(250), nullable=False)
     containers = relationship(
-        "UserContainer",
-        back_populates="parent_cluster",
-        lazy="dynamic",
-        passive_deletes=True,
+        "UserContainer", back_populates="parent_cluster", lazy="dynamic", passive_deletes=True,
     )
 
 
@@ -85,25 +82,17 @@ class OSDisk(db.Model):
     location = db.Column(db.String(250), nullable=False)
     os = db.Column(db.String(250), nullable=False)
     disk_size = db.Column(db.Integer, nullable=False)
-    allow_autoupdate = db.Column(
-        db.Boolean, nullable=False, server_default=expression.true()
-    )
-    has_dedicated_vm = db.Column(
-        db.Boolean, nullable=False, server_default=expression.false()
-    )
+    allow_autoupdate = db.Column(db.Boolean, nullable=False, server_default=expression.true())
+    has_dedicated_vm = db.Column(db.Boolean, nullable=False, server_default=expression.false())
     version = db.Column(db.String(250))
     rsa_private_key = db.Column(db.String(250))
-    using_stun = db.Column(
-        db.Boolean, nullable=False, server_default=expression.false()
-    )
+    using_stun = db.Column(db.Boolean, nullable=False, server_default=expression.false())
     ssh_password = db.Column(db.String(250))
     state = db.Column(db.String(250))
     user_id = db.Column(db.ForeignKey("users.user_id"))
     last_pinged = db.Column(db.Integer)
     branch = db.Column(
-        db.String(250),
-        nullable=False,
-        server_default=text("'master'::character varying"),
+        db.String(250), nullable=False, server_default=text("'master'::character varying")
     )
     first_time = db.Column(db.Boolean, server_default=expression.true())
 
@@ -139,3 +128,12 @@ class AppsToInstall(db.Model):
     disk_id = db.Column(db.String(250), primary_key=True, nullable=False)
     user_id = db.Column(db.String(250), primary_key=True, nullable=False)
     app_id = db.Column(db.String(250), nullable=False, index=True)
+
+
+class SupportedAppImages(db.Model):
+    __tablename__ = "supported_app_images"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+
+    app_id = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
+    logo_url = db.Column(db.String(250), nullable=False)
+    task_definition = db.Column(db.String(250), nullable=False)

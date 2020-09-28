@@ -72,9 +72,7 @@ def vm_post(action, **kwargs):
         resource_group = kwargs["body"]["resource_group"]
 
         operating_system = (
-            "Windows"
-            if kwargs["body"]["operating_system"].upper() == "WINDOWS"
-            else "Linux"
+            "Windows" if kwargs["body"]["operating_system"].upper() == "WINDOWS" else "Linux"
         )
 
         admin_password = None

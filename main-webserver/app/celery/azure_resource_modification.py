@@ -80,15 +80,8 @@ def deployArtifact(self, vm_name, artifact_name, run_id, resource_group=VM_GROUP
             logs="Starting to run deploy artifact script",
         )
 
-        command = (
-            file.read()
-            .replace("ARTIFACT_NAME", artifact_name)
-            .replace("RUN_ID", str(run_id))
-        )
-        run_command_parameters = {
-            "command_id": "RunPowerShellScript",
-            "script": [command],
-        }
+        command = file.read().replace("ARTIFACT_NAME", artifact_name).replace("RUN_ID", str(run_id))
+        run_command_parameters = {"command_id": "RunPowerShellScript", "script": [command]}
 
         poller = compute_client.virtual_machines.run_command(
             resource_group, vm_name, run_command_parameters
@@ -137,10 +130,7 @@ def runPowershell(self, vm_name, command, resource_group=VM_GROUP):
             logs="Starting to run Powershell on VM {vm_name}".format(vm_name=vm_name),
         )
 
-        run_command_parameters = {
-            "command_id": "RunPowerShellScript",
-            "script": [command],
-        }
+        run_command_parameters = {"command_id": "RunPowerShellScript", "script": [command]}
 
         poller = compute_client.virtual_machines.run_command(
             resource_group, vm_name, run_command_parameters
@@ -240,21 +230,15 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
     fractalLog(
         function="automaticAttachDisk",
         label=str(username),
-        logs="Starting to automatically attach disk {disk_name}".format(
-            disk_name=disk_name
-        ),
+        logs="Starting to automatically attach disk {disk_name}".format(disk_name=disk_name),
     )
 
     if vm_attached:
-        fractalLog(
-            function="automaticAttachDisk", label=str(username), logs="ALREADY ATTACHED"
-        )
+        fractalLog(function="automaticAttachDisk", label=str(username), logs="ALREADY ATTACHED")
 
         self.update_state(
             state="PENDING",
-            meta={
-                "msg": "Boot request received successfully. Preparing your cloud PC."
-            },
+            meta={"msg": "Boot request received successfully. Preparing your cloud PC."},
         )
 
         vm_name = vm_name.split("/")[-1]
@@ -277,9 +261,7 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                 fractalLog(
                     function="automaticAttachDisk",
                     label=str(username),
-                    logs="Updating database and starting VM {vm_name}".format(
-                        vm_name=vm_name
-                    ),
+                    logs="Updating database and starting VM {vm_name}".format(vm_name=vm_name),
                 )
 
                 unlocked = True
@@ -302,9 +284,7 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
 
                 self.update_state(
                     state="PENDING",
-                    meta={
-                        "msg": "Database updated. Sending signal to boot your cloud PC."
-                    },
+                    meta={"msg": "Database updated. Sending signal to boot your cloud PC."},
                 )
 
                 if (
@@ -316,15 +296,11 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                     )
                     > 0
                 ):
-                    self.update_state(
-                        state="PENDING", meta={"msg": "Cloud PC is ready to use."}
-                    )
+                    self.update_state(state="PENDING", meta={"msg": "Cloud PC is ready to use."})
                 else:
                     self.update_state(
                         state="FAILURE",
-                        meta={
-                            "msg": "Cloud PC could not be started. Please contact support."
-                        },
+                        meta={"msg": "Cloud PC could not be started. Please contact support."},
                     )
 
                 attachSecondaryDisks(username, vm_name, resource_group, s=self)
@@ -363,13 +339,9 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
         disk_attached = False
         while not disk_attached:
             fractalLog(
-                function="automaticAttachDisk",
-                label=str(username),
-                logs="DISKNO T ATTACHED",
+                function="automaticAttachDisk", label=str(username), logs="DISKNO T ATTACHED"
             )
-            vm = claimAvailableVM(
-                username, disk_name, location, resource_group, os_type, s=self
-            )
+            vm = claimAvailableVM(username, disk_name, location, resource_group, os_type, s=self)
             if vm:
                 # try:
                 vm_name = vm["vm_id"]
@@ -380,22 +352,17 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                     if disk.name != disk_name:
                         self.update_state(
                             state="PENDING",
-                            meta={
-                                "msg": "Making sure that you have a stable connection."
-                            },
+                            meta={"msg": "Making sure that you have a stable connection."},
                         )
 
                         detachSecondaryDisk(disk.name, vm_name, resource_group)
 
                 if (
-                    swapDiskAndUpdate(
-                        disk_name, vm_name, needs_winlogon, resource_group, s=self
-                    )
+                    swapDiskAndUpdate(disk_name, vm_name, needs_winlogon, resource_group, s=self)
                     > 0
                 ):
                     self.update_state(
-                        state="PENDING",
-                        meta={"msg": "Data successfully uploaded to cloud PC."},
+                        state="PENDING", meta={"msg": "Data successfully uploaded to cloud PC."}
                     )
 
                     attachSecondaryDisks(username, vm_name, resource_group, s=self)
@@ -448,9 +415,7 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
             else:
                 self.update_state(
                     state="PENDING",
-                    meta={
-                        "msg": "Running performance tests. This could take a few extra minutes."
-                    },
+                    meta={"msg": "Running performance tests. This could take a few extra minutes."},
                 )
                 fractalLog(
                     function="automaticAttachDisk",
@@ -461,7 +426,6 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
                 time.sleep(30)
 
     self.update_state(
-        state="FAILURE",
-        meta={"msg": "Cloud PC could not be started. Please contact support."},
+        state="FAILURE", meta={"msg": "Cloud PC could not be started. Please contact support."}
     )
     return None

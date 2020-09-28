@@ -83,19 +83,13 @@ def test_ping_helper(available, container, final_state, initial_state, no_stripe
 
         history = c.user.history
 
-        if (
-            initial_state == "RUNNING_AVAILABLE"
-            and final_state == "RUNNING_UNAVAILABLE"
-        ):
+        if initial_state == "RUNNING_AVAILABLE" and final_state == "RUNNING_UNAVAILABLE":
             # Make sure the login was recorded in the database.
             login = history.first()
 
             assert login
             assert login.action == "logon"
-        elif (
-            initial_state == "RUNNING_UNAVAILABLE"
-            and final_state == "RUNNING_AVAILABLE"
-        ):
+        elif initial_state == "RUNNING_UNAVAILABLE" and final_state == "RUNNING_AVAILABLE":
             # Make sure the logout was recorded in the database.
             logout = history.first()
 

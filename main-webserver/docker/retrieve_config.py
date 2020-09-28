@@ -20,9 +20,7 @@ parser.add_argument(
     "--base-config",
     help="path to base config to override the remote config with, or None for no override."
     + " This file is expected to contain overrides such as pointing to a local Redis server.",
-    default=os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "dev-base-config.json"
-    ),
+    default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "dev-base-config.json"),
 )
 args = parser.add_argument(
     "--out",
@@ -31,18 +29,24 @@ args = parser.add_argument(
 )
 args = parser.parse_args()
 
-env_to_app_name = {
-    "main-like": "main-like-webserver",
-    "production": "main-webserver",
-    "staging": "staging-webserver",
-}
+env_to_app_name = {"production": "main-webserver", "staging": "staging-webserver"}
 app_name = env_to_app_name.get(args.env, args.env)
-heroku_proc = subprocess.run(
-    ["heroku", "config", "--json", "--app", app_name],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE,
-    shell=True,
-)
+
+if str(sys.platform).startswith("win"):
+    heroku_proc = subprocess.run(
+        ["heroku", "config", "--json", "--app", app_name],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+    )
+else:
+    heroku_proc = subprocess.run(
+        ["heroku config --json --app " + app_name],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+    )
+
 if heroku_proc.returncode != 0:
     print(heroku_proc.stderr.decode("utf-8"))
     sys.exit(heroku_proc.returncode)
@@ -53,6 +57,7 @@ env_config = json.loads(heroku_proc.stdout.decode("utf-8"))
 # ```
 # ag "getenv\(.+?\)" --only-matching --nogroup --nofilename | sort | uniq
 # ```
+
 useful_env_vars = [
     "CONFIG_DB_URL",
     "DASHBOARD_PASSWORD",

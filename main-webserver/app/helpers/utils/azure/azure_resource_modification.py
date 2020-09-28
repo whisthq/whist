@@ -54,9 +54,7 @@ def attachDiskToVM(disk_name, vm_name, resource_group=VM_GROUP):
 
         vm = UserVM.query.filter_by(vm_id=vm_name)
         fractalSQLCommit(
-            db,
-            lambda _, x: x.update({"disk_name": disk_name, "user_id": str(username)}),
-            vm,
+            db, lambda _, x: x.update({"disk_name": disk_name, "user_id": str(username)}), vm
         )
 
         return 1

@@ -43,7 +43,7 @@ def deleteContainer(self, user_id, container_name):
                 )
             },
         )
-        return {'status': UNAUTHORIZED}
+        return {"status": UNAUTHORIZED}
     fractalLog(
         function="deleteContainer",
         label=str(container_name),
@@ -60,14 +60,14 @@ def deleteContainer(self, user_id, container_name):
     ecs_client.add_task(container_name)
     try:
         if not ecs_client.check_if_done(offset=0):
-            ecs_client.stop_task(reason='API triggered task stoppage', offset=0)
+            ecs_client.stop_task(reason="API triggered task stoppage", offset=0)
             self.update_state(
-            state="PENDING",
-            meta={
-                "msg": "Container {container_name} begun stoppage".format(
-                    container_name=container_name,
-                )
-            },
+                state="PENDING",
+                meta={
+                    "msg": "Container {container_name} begun stoppage".format(
+                        container_name=container_name,
+                    )
+                },
             )
             ecs_client.spin_til_done(offset=0)
         fractalSQLCommit(db, lambda db, x: db.session.delete(x), container)
@@ -86,7 +86,7 @@ def deleteContainer(self, user_id, container_name):
                 )
             },
         )
-        return {'status': INTERNAL_SERVER_ERROR}
+        return {"status": INTERNAL_SERVER_ERROR}
     return {"status": SUCCESS}
 
 
@@ -94,7 +94,9 @@ def deleteContainer(self, user_id, container_name):
 def delete_cluster(self, cluster, region_name):
     try:
         ecs_client = ECSClient(region_name=region_name)
-        running_tasks = ecs_client.ecs_client.list_tasks(cluster=cluster, desiredStatus='RUNNING')['taskArns']
+        running_tasks = ecs_client.ecs_client.list_tasks(cluster=cluster, desiredStatus="RUNNING")[
+            "taskArns"
+        ]
         if running_tasks:
             fractalLog(
                 function="delete_cluster",
@@ -109,25 +111,22 @@ def delete_cluster(self, cluster, region_name):
             fractalLog(
                 function="delete_cluster",
                 label=cluster,
-                logs="Deleting cluster {} in region {} and all associated instances".format(cluster, region_name),
+                logs="Deleting cluster {} in region {} and all associated instances".format(
+                    cluster, region_name
+                ),
             )
             ecs_client.terminate_containers_in_cluster(cluster)
             self.update_state(
-                state="PENDING",
-                meta={
-                    "msg": "Terminating containers in {}".format(
-                        cluster,
-                    )
-                },
+                state="PENDING", meta={"msg": "Terminating containers in {}".format(cluster,)},
             )
             cluster_info = ClusterInfo.query.filter_by(cluster=cluster)
-            fractalSQLCommit(db, lambda _, x: x.update({'status': 'INACTIVE'}), cluster_info)
+            fractalSQLCommit(db, lambda _, x: x.update({"status": "INACTIVE"}), cluster_info)
             ecs_client.spin_til_no_containers(cluster)
             ecs_client.ecs_client.delete_cluster(cluster=cluster)
             cluster_info = ClusterInfo.query.get(cluster)
             fractalSQLCommit(db, lambda db, x: db.session.delete(x), cluster_info)
     except Exception as error:
-        traceback_str = ''.join(traceback.format_tb(error.__traceback__))
+        traceback_str = "".join(traceback.format_tb(error.__traceback__))
         print(traceback_str)
         fractalLog(
             function="delete_cluster",

@@ -127,9 +127,7 @@ def deallocateVM(self, vm_name, resource_group=VM_GROUP):
 
     _, compute_client, _ = createClients()
 
-    async_vm_deallocate = compute_client.virtual_machines.deallocate(
-        resource_group, vm_name
-    )
+    async_vm_deallocate = compute_client.virtual_machines.deallocate(resource_group, vm_name)
     async_vm_deallocate.wait()
 
     vm = UserVM.query.get(vm_name)
@@ -170,9 +168,7 @@ def pingHelper(available, vm_ip, version=None):
 
     disk = OSDisk.query.filter_by(user_id=username).first()
 
-    fractalSQLCommit(
-        db, fractalSQLUpdate, disk, {"last_pinged": dateToUnix(getToday())}
-    )
+    fractalSQLCommit(db, fractalSQLUpdate, disk, {"last_pinged": dateToUnix(getToday())})
 
     # Update disk version
 
@@ -193,18 +189,14 @@ def pingHelper(available, vm_ip, version=None):
 
         # Add logoff event to timetable
 
-        log = LoginHistory(
-            user_id=username, action="logoff", timestamp=dateToUnix(getToday()),
-        )
+        log = LoginHistory(user_id=username, action="logoff", timestamp=dateToUnix(getToday()),)
 
         fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
         fractalLog(
             function="pingHelper",
             label=str(username),
-            logs="{username} just disconnected from their cloud PC".format(
-                username=username
-            ),
+            logs="{username} just disconnected from their cloud PC".format(username=username),
         )
 
     # Detect and handle logon event
@@ -213,36 +205,26 @@ def pingHelper(available, vm_ip, version=None):
 
         # Add logon event to timetable
 
-        log = LoginHistory(
-            user_id=username, action="logon", timestamp=dateToUnix(getToday()),
-        )
+        log = LoginHistory(user_id=username, action="logon", timestamp=dateToUnix(getToday()),)
 
         fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
         fractalLog(
             function="pingHelper",
             label=str(username),
-            logs="{username} just connected to their cloud PC".format(
-                username=username
-            ),
+            logs="{username} just connected to their cloud PC".format(username=username),
         )
 
     # Change VM states accordingly
 
     if vm_info.state not in intermediate_states and not available:
         lockVMAndUpdate(
-            vm_name=vm_info.vm_id,
-            state="RUNNING_UNAVAILABLE",
-            lock=True,
-            temporary_lock=0,
+            vm_name=vm_info.vm_id, state="RUNNING_UNAVAILABLE", lock=True, temporary_lock=0,
         )
 
     if vm_info.state not in intermediate_states and available:
         lockVMAndUpdate(
-            vm_name=vm_info.vm_id,
-            state="RUNNING_AVAILABLE",
-            lock=False,
-            temporary_lock=None,
+            vm_name=vm_info.vm_id, state="RUNNING_AVAILABLE", lock=False, temporary_lock=None,
         )
 
     return {"status": SUCCESS}

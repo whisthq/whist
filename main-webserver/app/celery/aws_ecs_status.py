@@ -31,9 +31,7 @@ def pingHelper(available, container_ip, version=None):
     else:
         raise Exception(f"No container with IP {container_ip}")
 
-    fractalSQLCommit(
-        db, fractalSQLUpdate, container_info, {"last_pinged": dateToUnix(getToday())}
-    )
+    fractalSQLCommit(db, fractalSQLUpdate, container_info, {"last_pinged": dateToUnix(getToday())})
 
     # Update container_info version
 
@@ -54,18 +52,14 @@ def pingHelper(available, container_ip, version=None):
 
         # Add logoff event to timetable
 
-        log = LoginHistory(
-            user_id=username, action="logoff", timestamp=dateToUnix(getToday()),
-        )
+        log = LoginHistory(user_id=username, action="logoff", timestamp=dateToUnix(getToday()),)
 
         fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
         fractalLog(
             function="pingHelper",
             label=str(username),
-            logs="{username} just disconnected from their cloud PC".format(
-                username=username
-            ),
+            logs="{username} just disconnected from their cloud PC".format(username=username),
         )
 
     # Detect and handle logon event
@@ -74,18 +68,14 @@ def pingHelper(available, container_ip, version=None):
 
         # Add logon event to timetable
 
-        log = LoginHistory(
-            user_id=username, action="logon", timestamp=dateToUnix(getToday()),
-        )
+        log = LoginHistory(user_id=username, action="logon", timestamp=dateToUnix(getToday()),)
 
         fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
         fractalLog(
             function="pingHelper",
             label=str(username),
-            logs="{username} just connected to their cloud PC".format(
-                username=username
-            ),
+            logs="{username} just connected to their cloud PC".format(username=username),
         )
 
     # Change Container states accordingly
