@@ -192,7 +192,7 @@ Public Function Implementations
 @brief                          Initialize default port mappings (i.e. the identity)
 */
 void init_default_port_mappings() {
-    for(int i = 0; i < USHRT_MAX; i++) {
+    for (int i = 0; i < USHRT_MAX; i++) {
         port_mappings[i] = i;
     }
 }
