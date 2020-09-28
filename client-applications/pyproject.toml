@@ -2,7 +2,6 @@
 name = "fractal-client-apps-scripts"
 version = "0.0.0"
 description = "Scripts to assist with development of the Fractal Client Apps"
-authors = ["Alex Wendland <me@alexwendland.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.6"

@@ -1,0 +1,15 @@
+.signoutButton {
+    font-family: 'Maven Pro';
+    font-weight: bold;
+    border-radius: 4px;
+    padding: 12px 30px;
+    border: none;
+    color: white;
+    background: rgba(66, 175, 235);
+    margin-top: 50px;
+    width: 300px;
+}
+
+.signoutButton:hover {
+    cursor: pointer;
+}

@@ -115,7 +115,7 @@ class Dashboard extends Component {
                 <UpdateScreen />
                 {this.props.os === "win32" ? (
                     <div style={{ marginBottom: 20 }}>
-                        {this.state.showTitlebar ? (
+                        {this.state.showTitlebar && (
                             <div
                                 style={{
                                     backgroundColor: "#EEEEEE",
@@ -126,9 +126,7 @@ class Dashboard extends Component {
                                     right: 125,
                                     zIndex: 100,
                                 }}
-                            ></div>
-                        ) : (
-                            <div></div>
+                            />
                         )}
                         <div
                             style={{
@@ -145,9 +143,7 @@ class Dashboard extends Component {
                 ) : (
                     <div className={styles.macTitleBar} />
                 )}
-                {this.state.isLoading ? (
-                    <div></div>
-                ) : (
+                {!this.state.isLoading && (
                     <div>
                         <Typeform />
                         <div className={styles.removeDrag}>
@@ -485,7 +481,7 @@ class Dashboard extends Component {
                                         default="main"
                                     />
                                 </div>
-                                {this.props.currentWindow === "main" ? (
+                                {this.props.currentWindow === "main" && (
                                     <div
                                         className={styles.statBox}
                                         style={{
@@ -532,8 +528,6 @@ class Dashboard extends Component {
                                             />
                                         </div>
                                     </div>
-                                ) : (
-                                    <div></div>
                                 )}
                             </div>
                         </div>

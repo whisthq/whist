@@ -139,6 +139,7 @@
         "ky-universal": "^0.6.0",
         "local-ip-url": "^1.0.2",
         "network-speed": "^2.0.6",
+        "node-forge": "^0.10.0",
         "prettier": "^2.0.5",
         "prop-types": "^15.6.0",
         "react": "^16.12.0",

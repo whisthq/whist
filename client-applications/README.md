@@ -1,6 +1,6 @@
 # Fractal Client Applications
 
-This repository contains the Fractal client applications, which users download to their local device to connect to their Fractal computer (cloud or peer-to-peer streaming). Each subfolder contains the appropriate code for its platform, each with a proper README with information on how to develop or build each application. The web client will be part of the `fractalcomputers/website` repository and is not build in this repository.
+This repository contains the Fractal client applications, which users download to their local device to connect stream applications via Fractal to their Fractal. Each subfolder contains the appropriate code for its platform, each with a proper README with information on how to develop or build each application. The web client will be part of the `fractalcomputers/website` repository and is not built in this repository.
 
 ## Supported Applications
 
@@ -19,4 +19,6 @@ The following platforms have yet to be supported:
 
 ## More Details
 
-See [desktop/README.md](desktop/README.md) for additional details.
+See [desktop/README.md](desktop/README.md) for details on contributing to the desktop applications project.
+
+See [mobile/README.md](mobile/README.md) for details on contributing to the mobile applications project.

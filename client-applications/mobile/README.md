@@ -1,6 +1,13 @@
 # Fractal Mobile Applications
 
-This repository contains the code for the Fractal mobile applications, which run on Android, including Chromebooks, and iOS, including iPads. The application will be developped in React Native to ensure cross-platform compatibility.
+This repository contains the code for the Fractal mobile applications running on Android/Chromebooks and iOS/iPads. This repository contains all the directions for building the applications locally and for publishing them for production on each of the following OSes:
+
+- Android/ChromeOS
+    - x86_64
+    - x86
+    - arm64-v8a
+    - armeabi-v7a
+- iOS/iPadOS
 
 ## Running locally
 
@@ -19,5 +26,3 @@ This repository contains the code for the Fractal mobile applications, which run
 7. Once the device is booted up, return to the Expo page running on localhost (from step 2) and select the "Start Android emulator" option.
 
 8. You should see this React Native app appear on the screen of the emulated device!
-
-
