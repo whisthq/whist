@@ -109,10 +109,6 @@ int parseArgs(int argc, char *argv[]) {
     bool ip_set = false;
     char *endptr;
 
-    for (unsigned int i = 0; i < USHRT_MAX; i++) {
-        port_mappings[i] = i;
-    }
-
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
         if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
@@ -181,7 +177,16 @@ int parseArgs(int argc, char *argv[]) {
                                            &bytes_read);
                     // If we read port arguments, then map them
                     if (args_read >= 2) {
+                        LOG_INFO("Mapping port: origin=%hu, destination=%hu", origin_port,
+                                 destination_port);
                         port_mappings[origin_port] = destination_port;
+                    } else {
+                        char invalid_s[13];
+                        unsigned short invalid_s_len = (unsigned short)min(bytes_read, 12);
+                        strncpy(invalid_s, str, invalid_s_len);
+                        invalid_s[invalid_s_len] = '\0';
+                        LOG_ERROR("Unable to parse the parse mapping \"%s\"", invalid_s);
+                        break;
                     }
                     // if %c was the end of the string, exit
                     if (args_read < 3) {

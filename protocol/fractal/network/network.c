@@ -188,6 +188,15 @@ Public Function Implementations
 ============================
 */
 
+/*
+@brief                          Initialize default port mappings (i.e. the identity)
+*/
+void init_default_port_mappings() {
+    for (int i = 0; i < USHRT_MAX; i++) {
+        port_mappings[i] = i;
+    }
+}
+
 int GetLastNetworkError() {
 #if defined(_WIN32)
     return WSAGetLastError();
@@ -1454,6 +1463,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
     set_timeout(Socket, 250);
 
     host = gethostbyname(host_s);
+
     if (host == NULL) {
         LOG_ERROR("Error %d: Could not resolve host %s", h_errno, host_s);
         return false;
