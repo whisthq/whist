@@ -51,11 +51,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     mesa-utils=8.4.0-1build1 \
     glmark2=2014.03+git20150611.fa71af2d-0ubuntu7 \
     mpv=0.32.0-1ubuntu1 \
-    psmisc=23.1-1ubuntu0.1 \
-    gimp=2.8.22-1 \
+    libgimp2.0=2.10.18-1 \
+    gimp=2.10.18-1 \
+    psmisc=23.3-1 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
 
 # Install X Server and window manager dependencies and basic Ubuntu packages
 # These packages need to be installed before installing/updating Python
@@ -72,17 +74,19 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libasound2-dev=1.2.2-2.1ubuntu2 \
     xclip=0.13-1 \
     x11-xserver-utils=7.7+8 \
-    parcellite=1.2.1-2 \
-    gtk-chtheme=0.3.1-5ubuntu2 \
-    qt4-qtconfig=4:4.8.7+dfsg-7ubuntu1 \
+    parcellite=1.2.1-3 \
+    gtk-chtheme=0.3.1-6.1 \
     xserver-xorg-video-dummy=1:0.3.8-1build3 \
     dkms=2.8.1-5ubuntu1 \
-    i3=4.14.1-1 \
+    i3=4.17.1-1 \
     lxappearance=0.6.3-1 \
-    xinit=1.3.4-3ubuntu3 \
+    xinit=1.4.1-0ubuntu2 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Note: qt4-qtconfig has not been ported to Ubuntu 20, so we can't install it.
+
 
 # Install FFmpeg and Libav dependencies explicitly
 # These packages need to be installed before installing/updating Python
@@ -172,7 +176,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     libfido2-1=1.3.1-1ubuntu2 \
     libgbm1=20.0.8-0ubuntu1~20.04.1 \
     libxcb-dri3-0=1.14-2 \
-    python3.8=3.8.2-1ubuntu1.2 \
+#    python3.8=3.8.2-1ubuntu1.2 \
     sudo=1.8.31-1ubuntu1.1 \
     less=551-1ubuntu0.1 \
     vim=2:8.1.2269-1ubuntu5 \
