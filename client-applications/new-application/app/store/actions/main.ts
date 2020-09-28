@@ -13,6 +13,7 @@ export const STORE_PROMO_CODE = 'STORE_PROMO_CODE'
 export const CHANGE_STATUS_MESSAGE = 'CHANGE_STATUS_MESSAGE'
 export const CHANGE_PERCENT_LOADED = 'CHANGE_PERCENT_LOADED'
 export const DELETE_CONTAINER = 'DELETE_CONTAINER'
+export const STORE_DIMENSIONS = 'STORE_DIMENSIONS'
 
 export function loginUser(username: any, password: any) {
     return {
@@ -129,5 +130,13 @@ export function deleteContainer(username: string, container_id: string) {
         type: DELETE_CONTAINER,
         username,
         container_id,
+    }
+}
+
+export function storeDimensions(width: number, height: number) {
+    return {
+        type: STORE_DIMENSIONS,
+        width,
+        height,
     }
 }
