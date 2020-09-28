@@ -1,6 +1,6 @@
 # This workflow builds and pushes container images to ECR
 
-name: Build Container Images
+name: Build & Publish Container Images
 
 on:
   push:
@@ -36,11 +36,12 @@ jobs:
           echo $HOME
 
       - name: Run build dockerfile
-        run: for i in "${apps[@]}"
-             do
-                ./build.sh $i $version
-                ./push.sh $i $version
-             done
+        run: |
+          for i in "${apps[@]}"
+           do
+              ./build.sh $i $version
+              ./push.sh $i $version
+           done
         working-directory: linux
         env:
           LOCAL: yes
