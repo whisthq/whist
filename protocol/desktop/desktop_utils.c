@@ -109,10 +109,6 @@ int parseArgs(int argc, char *argv[]) {
     bool ip_set = false;
     char *endptr;
 
-    for (unsigned int i = 0; i < USHRT_MAX; i++) {
-        port_mappings[i] = i;
-    }
-
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
         if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
@@ -171,7 +167,6 @@ int parseArgs(int argc, char *argv[]) {
                 strcpy(sentry_environment, optarg);
                 break;
             case 'p': {
-                LOG_INFO("Hitting the case 'p' in parsing arguments.");
                 char c = ',';
                 unsigned short origin_port;
                 unsigned short destination_port;
