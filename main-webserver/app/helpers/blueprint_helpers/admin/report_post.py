@@ -6,49 +6,53 @@ from app.helpers.utils.general.sql_commands import *
 from app.models.logs import *
 from app.serializers.logs import *
 
-
+# this is being @deprecated
 def regionReportHelper(timescale):
-    command = text("")
-    if timescale == "day":
-        command = text(
-            """
-        SELECT timestamp, users_online, eastus_unavailable, northcentralus_unavailable, southcentralus_unavailable
-        FROM logs.monitor_logs
-        ORDER BY timestamp DESC
-        LIMIT 24
-        """
-        )
-    elif timescale == "week":
-        command = text(
-            """
-        SELECT date_trunc('day', to_timestamp("timestamp")) as "timestamp", SUM(users_online) as "users_online", SUM(eastus_unavailable) as "eastus_unavailable", SUM(northcentralus_unavailable) as "northcentralus_unavailable", SUM(southcentralus_unavailable) as "southcentralus_unavailable"
-        FROM logs.monitor_logs
-        GROUP BY 1
-        ORDER BY date_trunc('day', to_timestamp("timestamp")) DESC
-        LIMIT 7
-        """
-        )
-    elif timescale == "month":
-        command = text(
-            """
-        SELECT date_trunc('day', to_timestamp("timestamp")) as "timestamp", SUM(users_online) as "users_online", SUM(eastus_unavailable) as "eastus_unavailable", SUM(northcentralus_unavailable) as "northcentralus_unavailable", SUM(southcentralus_unavailable) as "southcentralus_unavailable"
-        FROM logs.monitor_logs
-        GROUP BY 1
-        ORDER BY date_trunc('day', to_timestamp("timestamp")) DESC
-        LIMIT 30
-        """
-        )
-    params = {}
+    """
+    Queries from when we directly queried:
+    (note that the actual implementation yields some extra columns; this is fine)
+    
+    SELECT timestamp, users_online, eastus_unavailable, northcentralus_unavailable, southcentralus_unavailable
+    FROM logs.monitor_logs
+    ORDER BY timestamp DESC
+    LIMIT 24
 
-    output = fractalRunSQL(command, params)
-    if output["rows"]:
-        report = output["rows"]
-        if timescale == "week" or timescale == "month":
-            for row in report:
-                row["timestamp"] = int(row["timestamp"].timestamp())
-        return report
-    else:
-        return {}
+    SELECT date_trunc('day', to_timestamp("timestamp")) as "timestamp", SUM(users_online) as "users_online", SUM(eastus_unavailable) as "eastus_unavailable", SUM(northcentralus_unavailable) as "northcentralus_unavailable", SUM(southcentralus_unavailable) as "southcentralus_unavailable"
+    FROM logs.monitor_logs
+    GROUP BY 1
+    ORDER BY date_trunc('day', to_timestamp("timestamp")) DESC
+    LIMIT 7
+
+    SELECT date_trunc('day', to_timestamp("timestamp")) as "timestamp", SUM(users_online) as "users_online", SUM(eastus_unavailable) as "eastus_unavailable", SUM(northcentralus_unavailable) as "northcentralus_unavailable", SUM(southcentralus_unavailable) as "southcentralus_unavailable"
+    FROM logs.monitor_logs
+    GROUP BY 1
+    ORDER BY date_trunc('day', to_timestamp("timestamp")) DESC
+    LIMIT 30
+    """
+    monitor_log_schema = MonitorLogSchema()
+    
+    # TODO (adriano) not urgent; works, but not exactly the original
+    # did it this way because you can't construct a query since it's like already a BaseQuery or something
+    output = None
+    if timescale == "day":
+        output = (MonitorLog.query
+        .order_by(MonitorLog.timestamp.desc())
+        .limit(24)
+        .all())
+    elif timescale == "week":
+        output = (MonitorLog.query
+        .order_by(MonitorLog.timestamp.desc())
+        .limit(24 * 7)
+        .all())
+    elif timescale == "month":
+        output = (MonitorLog.query
+        .order_by(MonitorLog.timestamp.desc())
+        .limit(24 * 7 * 30)
+        .all())
+    
+    output = [monitor_log_schema.dump(element) for element in output]
+
+    return output
 
 
 def userReportHelper(username, timescale=None, start_date=None):
