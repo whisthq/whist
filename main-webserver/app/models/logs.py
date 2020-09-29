@@ -8,6 +8,7 @@ class ProtocolLog(db.Model):
 
     user_id = db.Column(db.ForeignKey("users.user_id"))
     server_logs = db.Column(db.String(250))
+    # must be unique below
     connection_id = db.Column(db.String(250), nullable=False, primary_key=True)
     bookmarked = db.Column(db.Boolean, nullable=False)
     timestamp = db.Column(db.Integer)
