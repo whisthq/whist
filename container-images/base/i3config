@@ -72,3 +72,7 @@ bindsym Mod1+space focus mode_toggle
 
 # focus the parent container
 bindsym Mod1+a focus parent
+
+# get rid of titlebars for maximized windows
+default_border pixel
+default_floating_border normal
