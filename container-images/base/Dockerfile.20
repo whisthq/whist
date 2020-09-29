@@ -254,6 +254,12 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN adduser root pulse-access \
     && adduser fractal pulse-access
 
+# Prevent pulseaudio from running as user (breaking sound for non-root users)
+RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service
+RUN systemctl mask pulseaudio
+RUN chmod -x /usr/bin/start-pulseaudio-x11
+COPY pulse-client.conf /etc/pulse/client.conf
+
 # Install all required components for Fractal to perform well, split into steps for caching
 WORKDIR /setup-scripts/linux
 
