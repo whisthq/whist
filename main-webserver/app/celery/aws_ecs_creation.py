@@ -191,7 +191,7 @@ def create_new_container(
             label=str(ecs_client.tasks[0]),
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
-        return ecs_client.tasks[0]
+        return container
     else:
         fractalLog(
             function="create_new_container",
