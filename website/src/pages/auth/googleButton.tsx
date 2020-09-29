@@ -3,7 +3,7 @@ import { Button } from "react-bootstrap"
 import { connect } from "react-redux"
 import firebase from "firebase"
 import { db } from "shared/utils/firebase"
-import { SIGNUP_POINTS, getUnsortedLeaderboard } from "shared/utils/points"
+import { SIGNUP_POINTS } from "shared/utils/points"
 import { googleLogin } from "store/actions/auth/login_actions"
 
 import MainContext from "shared/context/mainContext"
@@ -12,7 +12,7 @@ import "styles/landing.css"
 
 const GoogleButton = (props: any) => {
     const { width } = useContext(MainContext)
-    const { dispatch, user } = props
+    const { dispatch, user, unsortedLeaderboard } = props
 
     const handleGoogleLogin = () => {
         if (user.googleAuthEmail) {
@@ -26,8 +26,6 @@ const GoogleButton = (props: any) => {
                 .then(async function (result) {
                     const email = user.email
                     if (result && result.user && result.user.email) {
-                        const unsortedLeaderboard = await getUnsortedLeaderboard()
-
                         unsortedLeaderboard[email] = {
                             referrals: unsortedLeaderboard[email].referrals,
                             points:
@@ -61,8 +59,8 @@ const GoogleButton = (props: any) => {
         <Button onClick={handleGoogleLogin} className="action">
             <div
                 style={{
-                    color: "#111111",
-                    fontSize: width > 720 ? 22 : 16,
+                    fontSize: width > 720 ? 20 : 16,
+                    fontWeight: "bold",
                 }}
             >
                 Sign in with Google
@@ -75,9 +73,14 @@ const GoogleButton = (props: any) => {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
+function mapStateToProps(state: {
+    AuthReducer: { user: any; unsortedLeaderboard: any }
+}) {
     return {
         user: state.AuthReducer.user,
+        unsortedLeaderboard: state.AuthReducer.unsortedLeaderboard
+            ? state.AuthReducer.unsortedLeaderboard
+            : null,
     }
 }
 

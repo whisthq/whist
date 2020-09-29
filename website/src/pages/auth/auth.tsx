@@ -28,7 +28,7 @@ const Auth = (props: {
 function mapStateToProps(state: any) {
     return {
         reducer: state.AuthReducer,
-        loggedIn: state.AuthReducer.logged_in,
+        loggedIn: state.AuthReducer.loggedIn,
         email: state.AuthReducer.user.email,
         name: state.AuthReducer.user.name,
     }

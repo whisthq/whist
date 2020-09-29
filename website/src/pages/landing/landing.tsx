@@ -7,6 +7,7 @@ import MainContext from "shared/context/mainContext"
 import {
     updateUserAction,
     updateWaitlistAction,
+    updateUnsortedLeaderboardAction,
 } from "store/actions/auth/waitlist"
 
 import { getSortedLeaderboard } from "shared/utils/points"
@@ -50,18 +51,24 @@ const Landing = (props: any) => {
         db.collection("metadata")
             .doc("waitlist")
             .onSnapshot(function (snapshot) {
-                console.log("leaderboard update detected")
-                getSortedLeaderboard(snapshot.data()).then(function (
-                    sortedLeaderboard
-                ) {
-                    dispatch(updateWaitlistAction(sortedLeaderboard))
-                    if (user && user.email) {
-                        const ranking = getRanking(sortedLeaderboard)
-                        if (ranking !== user.ranking) {
-                            dispatch(updateUserAction(user.points, ranking))
+                const document = snapshot.data()
+                if (document) {
+                    const unsortedLeaderboard = document.leaderboard
+                    dispatch(
+                        updateUnsortedLeaderboardAction(unsortedLeaderboard)
+                    )
+                    getSortedLeaderboard(document).then(function (
+                        sortedLeaderboard
+                    ) {
+                        dispatch(updateWaitlistAction(sortedLeaderboard))
+                        if (user && user.email) {
+                            const ranking = getRanking(sortedLeaderboard)
+                            if (ranking !== user.ranking) {
+                                dispatch(updateUserAction(user.points, ranking))
+                            }
                         }
-                    }
-                })
+                    })
+                }
             })
     }, [user, dispatch, getRanking])
 

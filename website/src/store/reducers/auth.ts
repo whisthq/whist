@@ -47,7 +47,7 @@ export default function (state = AUTH_DEFAULT, action: any) {
         case LoginAction.GOOGLE_LOGIN:
             return {
                 ...state,
-                logged_in: true,
+                loggedIn: true,
                 user: {
                     ...state.user,
                     googleAuthEmail: action.email,
@@ -57,7 +57,7 @@ export default function (state = AUTH_DEFAULT, action: any) {
         case LoginAction.LOGOUT:
             return {
                 ...state,
-                logged_in: false,
+                loggedIn: false,
                 user: {
                     email: null,
                     name: null,
@@ -65,6 +65,11 @@ export default function (state = AUTH_DEFAULT, action: any) {
                     points: 0,
                     ranking: 0,
                 },
+            }
+        case WaitlistAction.UPDATE_UNSORTED_LEADERBOARD:
+            return {
+                ...state,
+                unsortedLeaderboard: action.unsortedLeaderboard,
             }
         default:
             return state

@@ -68,9 +68,9 @@ const MiddleView = (props: any) => {
                 >
                     <Testimonial
                         invert
-                        text="F*ING AMAZING ... tried Steam - it was buttery smooth with almost no detectable latency. Never thought it would work this well."
+                        text="AMAZING ... tried Figma - it was buttery smooth with almost no detectable latency. Never thought it would work this well."
                         name="Sean S."
-                        job="Gamer"
+                        job="Graphic Designer"
                     />
                 </Col>
             </Row>

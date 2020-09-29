@@ -7,6 +7,7 @@ export const AUTH_DEFAULT = {
         ranking: 0,
         googleAuthEmail: null,
     },
-    logged_in: false,
+    loggedIn: false,
     waitlist: [],
+    unsortedLeaderboard: null,
 }
