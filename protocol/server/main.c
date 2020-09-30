@@ -672,7 +672,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     clock timer;
     StartTimer(&timer);
     do {
-        packet = ReadTCPPacket(context);
+        packet = ReadTCPPacket(context, true);
         SDL_Delay(5);
     } while (packet == NULL && GetTimer(timer) < 3.0);
     if (packet == NULL) {
