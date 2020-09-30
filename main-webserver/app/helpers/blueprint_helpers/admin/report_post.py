@@ -84,7 +84,10 @@ def userReportHelper(username, timescale=None, start_date=None):
 
     user = User.query.get(username)
     if not user:
+        # FIXME somehow we keep getting here
         return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
+
+    
 
     histories = (
         LoginHistory.query.filter(

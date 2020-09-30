@@ -28,33 +28,35 @@ def totalUsageHelper():
     today = dt.now()
 
     dayParams = dt.combine(today.date(), dt.min.time()).timestamp()
-    dayReport = (
+    dayReport = login_history_schema.dump(
         LoginHistory.query.filter(LoginHistory.timestamp > dayParams)
         .order_by(LoginHistory.timestamp)
         .all()
     )
 
     weekParams = (today - datetime.timedelta(days=7)).timestamp()
-    weekReport = (
+    weekReport = login_history_schema.dump(
         LoginHistory.query.filter(LoginHistory.timestamp > weekParams)
         .order_by(LoginHistory.timestamp)
         .all()
     )
-
+    
     monthParams = (today - datetime.timedelta(days=30)).timestamp()
-    monthReport = (
+    monthReport = login_history_schema.dump(
         LoginHistory.query.filter(LoginHistory.timestamp > monthParams)
         .order_by(LoginHistory.timestamp)
         .all()
     )
 
+    # FIXME why is this empty?!? this doesn't work
+    
     dayMins = totalMinutes(dayReport) if dayReport else 0
     weekMins = totalMinutes(weekReport) if weekReport else 0
     monthMins = totalMinutes(monthReport) if monthReport else 0
 
     return {"day": dayMins, "week": weekMins, "month": monthMins}
 
-
+# FIXME
 def signupsHelper():
     today = dt.now()
 

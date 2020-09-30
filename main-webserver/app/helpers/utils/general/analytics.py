@@ -1,9 +1,11 @@
+from app import fractalLog
 from app.imports import *
 from app.helpers.utils.general.time import *
 
 
 def totalMinutes(report):
-    # TODO - need to adapt this to new output
+    # FIXME
+    # sorted for each user by time in descending (i.e. now and back in time)
     reportByUser = {}
     for entry in report:
         if entry.user_id in reportByUser:
@@ -13,12 +15,14 @@ def totalMinutes(report):
     totalMinutes = 0
     for userReport in reportByUser.values():
         userMinutes = loginsToMinutes(userReport)
+
         for userMinutesEntry in userMinutes:
             totalMinutes += userMinutesEntry["minutes"]
     return totalMinutes
 
 
 def loginsToMinutes(report):
+    # FIXME need to check if the format works
     """Turns an array of login history to an array of time online per day
 
     Args:
