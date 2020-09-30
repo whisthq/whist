@@ -153,7 +153,7 @@ void update() {
         }
 
         // Receive tcp buffer, if a full packet has been received
-        FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
+        FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext, true);
         if (tcp_packet) {
             handleServerMessage((FractalServerMessage*)tcp_packet->data,
                                 (size_t)tcp_packet->payload_size);

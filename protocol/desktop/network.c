@@ -62,7 +62,7 @@ int discoverPorts(bool *using_stun) {
     clock timer;
     StartTimer(&timer);
     do {
-        packet = ReadTCPPacket(&context);
+        packet = ReadTCPPacket(&context, true);
         SDL_Delay(5);
     } while (packet == NULL && GetTimer(timer) < 5.0);
 
