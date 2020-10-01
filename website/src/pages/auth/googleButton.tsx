@@ -1,5 +1,4 @@
 import React, { useContext } from "react"
-import { Button } from "react-bootstrap"
 import { connect } from "react-redux"
 import firebase from "firebase"
 import { db } from "shared/utils/firebase"
@@ -56,7 +55,7 @@ const GoogleButton = (props: any) => {
     }
 
     return (
-        <Button onClick={handleGoogleLogin} className="action">
+        <button onClick={handleGoogleLogin} className="action">
             <div
                 style={{
                     fontSize: width > 720 ? 20 : 16,
@@ -65,11 +64,8 @@ const GoogleButton = (props: any) => {
             >
                 Sign in with Google
             </div>
-            <div style={{ color: "#3930b8", fontWeight: "bold" }}>
-                {" "}
-                +100 points
-            </div>
-        </Button>
+            <div className="points">+100 points</div>
+        </button>
     )
 }
 

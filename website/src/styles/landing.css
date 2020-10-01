@@ -9,7 +9,7 @@ div,
 html,
 input,
 Button {
-    font-family: "Maven Pro" !important;
+    font-family: "Maven Pro", sans-serif !important;
 }
 
 select {
@@ -173,8 +173,7 @@ thead tr th {
 }
 
 .action {
-    background-color: white !important;
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
+    background-color: white;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -183,13 +182,24 @@ thead tr th {
     padding: 30px 40px;
     margin: 0px;
     margin-bottom: 30px;
-    border-radius: 5px;
-    border: none;
     color: #111111 !important;
+    font-weight: bold;
+    outline: none !important;
+    letter-spacing: 1.1px;
+    border: solid 0.8px #cccccc;
 }
 
 .action:hover {
-    cursor: pointer;
+    background: #93f1d9;
+    border: solid 0.8px #93f1d9;
+}
+
+.action:hover .points {
+    color: #111111;
+}
+
+.points {
+    color: rgb(57, 48, 184);
 }
 
 .modal-header {

@@ -23,7 +23,7 @@ import {
 import "styles/landing.css"
 
 function WaitlistForm(props: any) {
-    const { dispatch, user, waitlist } = props
+    const { dispatch, user, waitlist, isAction } = props
     const { width, referralCode } = useContext(MainContext)
 
     const [email, setEmail] = useState("")
@@ -130,7 +130,7 @@ function WaitlistForm(props: any) {
     }
 
     return (
-        <div>
+        <div style={{ width: isAction ? "100%" : "" }}>
             {user && user.email ? (
                 <div>
                     <button
@@ -144,7 +144,22 @@ function WaitlistForm(props: any) {
             ) : (
                 <Popup
                     trigger={
-                        <button className="white-button">JOIN WAITLIST</button>
+                        isAction ? (
+                            <button className="action">
+                                <div
+                                    style={{
+                                        fontSize: width > 720 ? 20 : 16,
+                                    }}
+                                >
+                                    Join Waitlist
+                                </div>
+                                <div className="points"> +100 points</div>
+                            </button>
+                        ) : (
+                            <button className="white-button">
+                                JOIN WAITLIST
+                            </button>
+                        )
                     }
                     modal
                     contentStyle={{

@@ -4,6 +4,7 @@ import { Button, Modal } from "react-bootstrap"
 import { CopyToClipboard } from "react-copy-to-clipboard"
 
 import GoogleButton from "pages/auth/googleButton"
+import WaitlistForm from "shared/components/waitlistForm"
 
 import { db } from "shared/utils/firebase"
 
@@ -11,50 +12,20 @@ import MainContext from "shared/context/mainContext"
 import { config } from "constants/config"
 
 const CustomAction = (props: { onClick: any; text: any; points: number }) => {
+    const { onClick, text, points } = props
     const { width } = useContext(MainContext)
 
     return (
-        <Button className="action" onClick={props.onClick}>
+        <button className="action" onClick={onClick}>
             <div
                 style={{
                     fontSize: width > 720 ? 20 : 16,
-                    fontWeight: "bold",
                 }}
             >
-                {props.text}
+                {text}
             </div>
-            <div style={{ color: "#3930b8", fontWeight: "bold" }}>
-                +{props.points.toString()} points
-            </div>
-        </Button>
-    )
-}
-
-const JoinWaitlistAction = () => {
-    const { width } = useContext(MainContext)
-
-    const scrollToTop = () => {
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth",
-        })
-    }
-
-    return (
-        <Button onClick={scrollToTop} className="action">
-            <div
-                style={{
-                    fontSize: width > 720 ? 20 : 16,
-                    fontWeight: "bold",
-                }}
-            >
-                Join Waitlist
-            </div>
-            <div style={{ color: "#3930b8", fontWeight: "bold" }}>
-                {" "}
-                +100 points
-            </div>
-        </Button>
+            <div className="points">+{points.toString()} points</div>
+        </button>
     )
 }
 
@@ -63,7 +34,7 @@ const Actions = (props: {
     loggedIn: any
     unsortedLeaderboard: any
 }) => {
-    const { user, unsortedLeaderboard } = props
+    const { user, loggedIn, unsortedLeaderboard } = props
 
     const [showModal, setShowModal] = useState(false)
 
@@ -99,10 +70,10 @@ const Actions = (props: {
     }
 
     const renderActions = () => {
-        if (props.user && props.user.email) {
+        if (user && user.email) {
             return (
                 <div style={{ width: "100%" }}>
-                    {!props.loggedIn && <GoogleButton />}
+                    {!loggedIn && <GoogleButton />}
                     <CustomAction
                         onClick={handleOpenModal}
                         text="Refer a Friend"
@@ -120,7 +91,7 @@ const Actions = (props: {
                 </div>
             )
         } else {
-            return <JoinWaitlistAction />
+            return <WaitlistForm isAction />
         }
     }
 
@@ -154,15 +125,13 @@ const Actions = (props: {
                         }}
                     >
                         <div className="code-container">
-                            {config.url.FRONTEND_URL +
-                                "/" +
-                                props.user.referralCode}
+                            {config.url.FRONTEND_URL + "/" + user.referralCode}
                         </div>
                         <CopyToClipboard
                             text={
                                 config.url.FRONTEND_URL +
                                 "/" +
-                                props.user.referralCode
+                                user.referralCode
                             }
                         >
                             <Button className="modal-button">Copy Code</Button>
