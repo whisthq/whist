@@ -161,7 +161,7 @@ int handleKeyUpDown(SDL_Event *event) {
 
     //LOG_INFO("Scancode: %d", event->key.keysym.scancode);
     //LOG_INFO("Keycode: %d %d", keycode, is_pressed);
-    LOG_INFO("%s %s", (is_pressed ? "Pressed" : "Released"), SDL_GetKeyName(event->key.keysym.sym));
+    //LOG_INFO("%s %s", (is_pressed ? "Pressed" : "Released"), SDL_GetKeyName(event->key.keysym.sym));
 
     // Keep memory of alt/ctrl/lgui/rgui status
     if (keycode == FK_LALT) {
