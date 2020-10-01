@@ -76,4 +76,4 @@ bindsym Mod1+a focus parent
 # get rid of titlebars for maximized windows
 default_border pixel
 default_floating_border normal
-hide_edge_borders smart
+hide_edge_borders both
