@@ -3,7 +3,15 @@
 #define KeyUp(input_device, sdl_keycode) EmitKeyEvent(input_device, sdl_keycode, 0)
 #define KeyDown(input_device, sdl_keycode) EmitKeyEvent(input_device, sdl_keycode, 1)
 
+unsigned int last_keyboard_id = 0;
+
 void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fmsg) {
+    if (fmsg->id <= last_keyboard_id) {
+        // Ignore Old FractalClientMessage
+        return;
+    }
+    last_keyboard_id = fmsg->id;
+
     if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
         LOG_WARNING(
             "updateKeyboardState requires fmsg.type to be "
@@ -60,6 +68,12 @@ void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fms
 }
 
 bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
+    if (fmsg->id <= last_keyboard_id) {
+        // Ignore Old FractalClientMessage
+        return true;
+    }
+    last_keyboard_id = fmsg->id;
+
     int ret = 0;
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
