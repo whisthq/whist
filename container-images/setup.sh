@@ -26,7 +26,7 @@ sudo apt-get update && apt-get install --no-install-recommends -y \
     nvidia-settings=450.80.02-0ubuntu1 \
     nvidia-modprobe=450.80.02-0ubuntu1 \
     cuda-drivers-450=450.80.02-1 \
-    cuda-drivers=450.80.02-1 \
+    cuda-drivers=450.80.02-1
 sudo apt-mark hold nvidia-driver
 sudo apt-mark hold nvidia-settings
 sudo apt-mark hold nvidia-modprobe
