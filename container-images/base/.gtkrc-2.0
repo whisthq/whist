@@ -1,6 +1,3 @@
 # -- THEME AUTO-WRITTEN DO NOT EDIT
-include "/usr/share/themes/Mist/gtk-2.0/gtkrc"
-
-include "/root/.gtkrc.mine"
-
+include "/usr/share/themes/Materia-dark/gtk-2.0/gtkrc"
 # -- THEME AUTO-WRITTEN DO NOT EDIT

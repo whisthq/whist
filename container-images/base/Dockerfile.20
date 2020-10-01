@@ -81,6 +81,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     i3=4.17.1-1 \
     lxappearance=0.6.3-1 \
     xinit=1.4.1-0ubuntu2 \
+    materia-gtk-theme=20200320-0ubuntu1 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -404,7 +405,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 COPY i3config /root/.config/i3/config
 COPY gtk-3-settings.ini /etc/gtk-3.0/settings.ini
 COPY .gtkrc-2.0 /root/.gtkrc-2.0
+COPY --chown=fractal .gtkrc-2.0 /home/fractal/.gtkrc-2.0
 COPY qt4-settings.conf /root/.config/Trolltech.conf
+COPY --chown=fractal qt4-settings.conf /home/fractal/.config/Trolltech.conf
 COPY .xinitrc /root/.xinitrc
 
 
