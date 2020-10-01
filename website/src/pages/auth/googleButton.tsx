@@ -1,6 +1,6 @@
 import React, { useContext } from "react"
 import { connect } from "react-redux"
-import firebase from "firebase"
+import firebase from "firebase/app"
 import { db } from "shared/utils/firebase"
 import { SIGNUP_POINTS } from "shared/utils/points"
 import { googleLogin } from "store/actions/auth/login_actions"

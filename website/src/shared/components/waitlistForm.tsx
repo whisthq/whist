@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react"
+import React, { useState, useContext } from "react"
 import { connect } from "react-redux"
 import { Button } from "react-bootstrap"
 import Popup from "reactjs-popup"
@@ -30,10 +30,6 @@ function WaitlistForm(props: any) {
     const [name, setName] = useState("")
     const [country, setCountry] = useState("United States")
     const [processing, setProcessing] = useState(false)
-
-    useEffect(() => {
-        console.log("Use Effect waitlist")
-    }, [])
 
     function updateEmail(evt: any) {
         evt.persist()
@@ -79,6 +75,7 @@ function WaitlistForm(props: any) {
 
             if (referrer) {
                 unsortedLeaderboard[referrer] = {
+                    ...unsortedLeaderboard[referrer],
                     referrals: unsortedLeaderboard[referrer].referrals + 1,
                     points:
                         unsortedLeaderboard[referrer].points + REFERRAL_POINTS,
@@ -97,6 +94,7 @@ function WaitlistForm(props: any) {
                 name: name,
                 email: email,
                 referralCode: newReferralCode,
+                country: country,
             }
 
             db.collection("metadata")
