@@ -20,12 +20,13 @@ sudo mv cuda-$distribution.pin /etc/apt/preferences.d/cuda-repository-pin-600
 sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64/7fa2af80.pub
 echo "deb http://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
 sudo apt-get update
-sudo apt-get -y install nvidia-dkms-450=450.51.06-0ubuntu1 \
-    nvidia-driver-450=450.51.06-0ubuntu1 \
-    nvidia-settings=450.51.06-0ubuntu1 \
-    nvidia-modprobe=450.51.06-0ubuntu1 \
-    cuda-drivers-450=450.51.06-1 \
-    cuda-drivers=450.51.06-1
+sudo apt-get update && apt-get install --no-install-recommends -y \
+    nvidia-dkms-450=450.80.02-0ubuntu1 \
+    nvidia-driver-450=450.80.02-0ubuntu1 \
+    nvidia-settings=450.80.02-0ubuntu1 \
+    nvidia-modprobe=450.80.02-0ubuntu1 \
+    cuda-drivers-450=450.80.02-1 \
+    cuda-drivers=450.80.02-1 \
 sudo apt-mark hold nvidia-driver
 sudo apt-mark hold nvidia-settings
 sudo apt-mark hold nvidia-modprobe
