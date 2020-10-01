@@ -1,4 +1,5 @@
-@import url("https://fonts.googleapis.com/css?family=Maven+Pro|Kalam&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Kalam&family=Maven+Pro:wght@400;700&display=swap");
+
 @randomMargin: `Math.round(Math.random() * 100)`;
 
 body,
