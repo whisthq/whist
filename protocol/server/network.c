@@ -187,9 +187,9 @@ int tryGetNextMessageTCP(int client_id, FractalClientMessage **fcmsg, size_t *fc
 
     // Check if 20ms has passed since last TCP recvp, since each TCP recvp read takes 8ms
     bool should_recvp = false;
-    if (!has_read || GetTimer(last_tcp_read)*1000.0 > 20.0) {
-	should_recvp = true;
-	StartTimer(&last_tcp_read);
+    if (!has_read || GetTimer(last_tcp_read) * 1000.0 > 20.0) {
+        should_recvp = true;
+        StartTimer(&last_tcp_read);
         has_read = true;
     }
 
