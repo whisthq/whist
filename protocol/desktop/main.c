@@ -441,9 +441,8 @@ int ReceivePackets(void* opaque) {
 }
 
 int syncKeyboardState(void) {
+    // Set keyboard state initialized to null
     FractalClientMessage fmsg = {0};
-
-    SDL_Delay(5);
 
     fmsg.type = MESSAGE_KEYBOARD_STATE;
 
@@ -460,8 +459,10 @@ int syncKeyboardState(void) {
     // current layout rather than the scancode for the physical key.
     for (int i = 0; i < fmsg.num_keycodes; i++) {
         if (state[i]) {
-            fmsg.keyboard_state[SDL_GetScancodeFromName(
-                SDL_GetKeyName(SDL_GetKeyFromScancode(i)))] = 1;
+            int scancode = SDL_GetScancodeFromName(SDL_GetKeyName(SDL_GetKeyFromScancode(i)));
+            if (0 <= scancode && scancode < (int)sizeof(fmsg.keyboard_state)) {
+                fmsg.keyboard_state[scancode] = 1;
+            }
         }
     }
 

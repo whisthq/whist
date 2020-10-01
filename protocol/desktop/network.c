@@ -182,6 +182,11 @@ int sendServerQuitMessages(int num_messages) {
 // FractalClientMessage packets are needed, then this will have to be
 // implemented)
 int SendFmsg(FractalClientMessage *fmsg) {
+    // Shouldn't overflow, will take 50 days at 1000 fmsg/second to overflow
+    static unsigned int fmsg_id = 0;
+    fmsg->id = fmsg_id;
+    fmsg_id++;
+
     if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_TIME) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
     } else {
