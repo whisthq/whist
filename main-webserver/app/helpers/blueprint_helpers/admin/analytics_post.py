@@ -57,7 +57,12 @@ def analyticsLogsHelper(body):
         df.time = pd.to_datetime(r, errors="coerce")
         cleaned_df = df[df.time.notnull()]
     except Exception as e:
-        print("Error reading {filename}".format(filename=body["filename"]))
+        fractalLog(
+            function="analyticsLogsHelper",
+            label="",
+            logs="Error reading {filename}".format(filename=body["filename"]),
+            level=logging.ERROR,
+        )
         return (jsonify({}), 400)
 
     # Get number of errors
