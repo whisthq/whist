@@ -167,17 +167,18 @@ const UpdateScreen = (props: any) => {
                         }}
                     >
                         <div style={{ color: '#D6D6D6' }}>
-                            {status != 'Successfully created container.' && (
-                                <FontAwesomeIcon
-                                    icon={faCircleNotch}
-                                    spin
-                                    style={{
-                                        color: '#5EC4EB',
-                                        marginRight: 4,
-                                        width: 12,
-                                    }}
-                                />
-                            )}{' '}
+                            {status != 'Successfully created container.' &&
+                                status != 'Successfully deleted container.' && (
+                                    <FontAwesomeIcon
+                                        icon={faCircleNotch}
+                                        spin
+                                        style={{
+                                            color: '#5EC4EB',
+                                            marginRight: 4,
+                                            width: 12,
+                                        }}
+                                    />
+                                )}{' '}
                             {status}
                         </div>
                     </div>

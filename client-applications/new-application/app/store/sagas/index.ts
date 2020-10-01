@@ -65,19 +65,19 @@ function* getPromoCode(action: any) {
 
 function* fetchContainer(action: any) {
     const state = yield select()
-    // const username = 'fractal-admin@gmail.com'
-    // const app = 'test'
-    // var { json, response } = yield call(
-    //     apiPost,
-    //     `${config.url.PRIMARY_SERVER}/container/create`,
-    //     { username: username, app: app },
-    //     state.MainReducer.access_token
-    // )
+    const username = 'fractal-admin@gmail.com'
+    const app = 'test'
     var { json, response } = yield call(
-        apiGet,
-        `${config.url.PRIMARY_SERVER}/dummy`,
+        apiPost,
+        `${config.url.PRIMARY_SERVER}/container/create`,
+        { username: username, app: app },
         state.MainReducer.access_token
     )
+    // var { json, response } = yield call(
+    //     apiGet,
+    //     `${config.url.PRIMARY_SERVER}/dummy`,
+    //     state.MainReducer.access_token
+    // )
 
     const id = json.ID
     console.log(id)
@@ -86,13 +86,13 @@ function* fetchContainer(action: any) {
         `${config.url.PRIMARY_SERVER}/status/` + id,
         state.MainReducer.access_token
     )
-    console.log(json)
     while (json.state !== 'SUCCESS' && json.state !== 'FAILURE') {
         var { json, response } = yield call(
             apiGet,
             `${config.url.PRIMARY_SERVER}/status/` + id,
             state.MainReducer.access_token
         )
+        console.log(json)
 
         if (response && response.status && response.status === 500) {
             const warning =
@@ -105,9 +105,9 @@ function* fetchContainer(action: any) {
         if (json && json.state === 'PENDING' && json.output) {
             // NOTE: actual container/create endpoint does not currently return progress
             var message = json.output.msg
-            var percent = json.output.progress
-            if (message && percent) {
-                yield put(Action.changePercentLoaded(percent))
+            // var percent = json.output.progress
+            if (message) {
+                yield put(Action.changePercentLoaded(50))
                 yield put(Action.changeStatusMessage(message))
             }
         }
@@ -117,6 +117,8 @@ function* fetchContainer(action: any) {
     // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
     if (json && json.state && json.state === 'SUCCESS') {
         if (json.output) {
+            console.log('IN SUCCESS')
+            console.log(json.output)
             // TODO (adriano) these should be removed once we are ready to plug and play
             const test_container_id = 'container_id' // TODO
             const test_cluster = 'cluster' // TODO
@@ -128,7 +130,7 @@ function* fetchContainer(action: any) {
 
             const test_width = 200
             const test_height = 200
-            const test_codec = 'h264'
+            // const test_codec = 'h264'
 
             // TODO (adriano) add a signaling param or something to say that it's the 'test'
             // or it's the actual thing
@@ -152,8 +154,21 @@ function* fetchContainer(action: any) {
                 ? json.output.location
                 : test_location
 
+<<<<<<< HEAD
             yield put(Action.storeIP(ip))
 
+=======
+            const width = test_width
+            const height = test_height
+            // const codec = test_codec
+
+            yield put(Action.storeDimensions(width, height))
+
+            yield put(Action.storeIP(ip))
+
+            // yield put(Action.storeCodec(codec))
+
+>>>>>>> 30738948faa97c309fccce5ed5aa533bb8dfe36c
             yield put(
                 Action.storeResources(
                     container_id,
@@ -164,7 +179,7 @@ function* fetchContainer(action: any) {
                     location
                 )
             )
-            // yield put(Action.deleteContainer(username, container_id))
+            yield put(Action.deleteContainer(username, container_id))
         }
 
         yield put(Action.changePercentLoaded(100))
@@ -185,8 +200,10 @@ function* deleteContainer(action: any) {
         { username: action.username, container_id: action.container_id },
         state.MainReducer.access_token
     )
-    const id = json.id
+    yield put(Action.changePercentLoaded(0))
+    yield put(Action.changeStatusMessage('Began deleting container.'))
     console.log('DELETING CONTAINER')
+    const id = json.ID
     var { json, response } = yield call(
         apiGet,
         `${config.url.PRIMARY_SERVER}/status/` + id,
@@ -211,6 +228,7 @@ function* deleteContainer(action: any) {
         if (json && json.state === 'PENDING' && json.output) {
             var message = json.output.msg
             if (message) {
+                yield put(Action.changePercentLoaded(50))
                 yield put(Action.changeStatusMessage(message))
             }
         }
@@ -219,7 +237,8 @@ function* deleteContainer(action: any) {
     }
 
     if (json && json.state && json.state === 'SUCCESS') {
-        yield put(Action.changeStatusMessage('Successfully deleted container'))
+        yield put(Action.changePercentLoaded(100))
+        yield put(Action.changeStatusMessage('Successfully deleted container.'))
     } else {
         var warning =
             `(${moment().format('hh:mm:ss')}) ` +
