@@ -588,7 +588,7 @@ FractalPacket *ReadTCPPacket(SocketContext *context, bool should_recvp) {
 
     int len = TCP_SEGMENT_SIZE;
 
-    while(should_recvp && len == TCP_SEGMENT_SIZE) {
+    while (should_recvp && len == TCP_SEGMENT_SIZE) {
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
         len = recvp(context, encrypted_packet_buffer + reading_packet_len,
@@ -606,7 +606,7 @@ FractalPacket *ReadTCPPacket(SocketContext *context, bool should_recvp) {
         }
 
         // If the previous recvp was maxed out, ie == TCP_SEGMENT_SIZE,
-	// then try pulling some more from recvp
+        // then try pulling some more from recvp
     };
 
     if ((unsigned long)reading_packet_len >= sizeof(int)) {
