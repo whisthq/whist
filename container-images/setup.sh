@@ -25,12 +25,9 @@ sudo apt-get update && sudo apt-get install --no-install-recommends -y \
     nvidia-driver-450=450.80.02-0ubuntu1 \
     nvidia-settings=450.80.02-0ubuntu1 \
     nvidia-modprobe=450.80.02-0ubuntu1 \
-    cuda-drivers-450=450.80.02-1 \
-    cuda-drivers=450.80.02-1
-sudo apt-mark hold nvidia-driver
+    cuda-drivers-450=450.80.02-1
 sudo apt-mark hold nvidia-settings
 sudo apt-mark hold nvidia-modprobe
-sudo apt-mark hold cuda-drivers
 export PATH=/usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
