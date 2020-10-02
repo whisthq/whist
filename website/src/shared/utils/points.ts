@@ -2,7 +2,7 @@ import { db } from "shared/utils/firebase"
 
 export const INITIAL_POINTS = 50
 export const SIGNUP_POINTS = 100
-export const REFERRAL_POINTS = 100
+export const REFERRAL_POINTS = 300
 
 export function sortLeaderboard(leaderboard: any) {
     var leaderboard_as_list = []

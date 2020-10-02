@@ -1,12 +1,14 @@
 .application-form ::placeholder {
-    color: #c4c6d8;
+    color: #9eb1e6;
 }
 
 .application-button {
     font-weight: bold;
     border: none;
+    background: #3930b8;
     padding: 15px 50px;
-    font-size: calc(14px + 0.25vw);
+    font-size: 18px;
     outline: none !important;
     border: none;
+    border-radius: 0px;
 }

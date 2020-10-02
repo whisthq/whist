@@ -8,8 +8,6 @@ import { db } from "shared/utils/firebase"
 
 import "styles/application.css"
 
-import PaintingSky from "assets/largeGraphics/paintingSky.svg"
-
 import MainContext from "shared/context/mainContext"
 import Header from "shared/components/header"
 
@@ -17,18 +15,32 @@ function Application(props: any) {
     const { user } = props
     const { width } = useContext(MainContext)
 
-    const [form, setForm] = useState("")
+    const [devices, setDevices] = useState("")
+    const [apps, setApps] = useState("")
+    const [source, setSource] = useState("")
 
-    function changeForm(evt: any) {
+    function changeDevices(evt: any) {
         evt.persist()
-        setForm(evt.target.value)
+        setDevices(evt.target.value)
+    }
+
+    function changeApps(evt: any) {
+        evt.persist()
+        setApps(evt.target.value)
+    }
+
+    function changeSource(evt: any) {
+        evt.persist()
+        setSource(evt.target.value)
     }
 
     function submitForm() {
         db.collection("essays")
             .doc(user.email)
             .set({
-                essay: form,
+                devices: devices,
+                apps: apps,
+                source: source,
             })
             .then(() => history.push("/"))
     }
@@ -37,7 +49,7 @@ function Application(props: any) {
         <div className="fractalContainer">
             <Header color="#111111" />
             <Row style={{ width: "100%", margin: 0, maxWidth: "none" }}>
-                <Col md={7}>
+                <Col md={12}>
                     <div
                         style={{
                             paddingTop: width > 720 ? 100 : 25,
@@ -47,7 +59,7 @@ function Application(props: any) {
                             Congrats, {user.name}! You're <br />
                             <span
                                 style={{
-                                    color: "#00d4ff",
+                                    color: "#3930b8",
                                     fontSize:
                                         width > 720
                                             ? "calc(140px + 2.2vw)"
@@ -61,13 +73,11 @@ function Application(props: any) {
                         </h2>
                         <p style={{ marginTop: 50 }}>
                             You’re registered as {user.email}. When the
-                            countdown reaches zero, we'll invite people to
-                            receive 1:1 onboarding. You can signficantly
-                            increase your chances of being selected by{" "}
-                            <strong>
-                                telling us why you should be selected
-                            </strong>{" "}
-                            below, or by{" "}
+                            countdown reaches zero, we'll invite people to try
+                            Fractal. You can signficantly increase your chances
+                            of being selected by{" "}
+                            <strong>filling out the form below</strong> below
+                            and by{" "}
                             <strong>
                                 referring friends and racking up points
                             </strong>
@@ -76,15 +86,43 @@ function Application(props: any) {
                         <div className="application-form">
                             <FormControl
                                 as="textarea"
-                                onChange={changeForm}
-                                rows={8}
-                                placeholder="Tell us why you're excited to try Fractal!"
+                                onChange={changeApps}
+                                rows={3}
+                                placeholder="Tell us why you're excited to try Fractal! What are the top three apps you'd like us to stream to you (e.g. Chrome, Figma, Blender, Steam, etc.)?"
                                 style={{
                                     resize: "none",
                                     outline: "none",
-                                    background: "rgba(213, 217, 253, 0.4)",
+                                    background: "rgba(213, 217, 253, 0.2)",
                                     border: "none",
-                                    marginTop: 50,
+                                    marginTop: 25,
+                                    padding: "20px 30px",
+                                }}
+                            />
+                            <FormControl
+                                as="textarea"
+                                onChange={changeDevices}
+                                rows={3}
+                                placeholder="What devices would you use Fractal on (e.g. Windows PC, Mac, Chromebook, tablet, etc.)?"
+                                style={{
+                                    resize: "none",
+                                    outline: "none",
+                                    background: "rgba(213, 217, 253, 0.2)",
+                                    border: "none",
+                                    marginTop: 25,
+                                    padding: "20px 30px",
+                                }}
+                            />
+                            <FormControl
+                                as="textarea"
+                                onChange={changeSource}
+                                rows={3}
+                                placeholder="How did you hear about us? Please be as specific as possible! (For instance, if you found us through a Google search, what keywords were you searching for?)"
+                                style={{
+                                    resize: "none",
+                                    outline: "none",
+                                    background: "rgba(213, 217, 253, 0.2)",
+                                    border: "none",
+                                    marginTop: 25,
                                     padding: "20px 30px",
                                 }}
                             />
@@ -114,22 +152,6 @@ function Application(props: any) {
                         </div>
                     </div>
                 </Col>
-                {width > 720 && (
-                    <Col
-                        md={5}
-                        style={{
-                            textAlign: "right",
-                            margin: 0,
-                            padding: 0,
-                        }}
-                    >
-                        <img
-                            src={PaintingSky}
-                            alt=""
-                            style={{ width: "100%", maxWidth: 900 }}
-                        />
-                    </Col>
-                )}
             </Row>
         </div>
     )

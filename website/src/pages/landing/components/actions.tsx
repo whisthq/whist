@@ -8,6 +8,7 @@ import WaitlistForm from "shared/components/waitlistForm"
 
 import { db } from "shared/utils/firebase"
 
+import { REFERRAL_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "constants/config"
 
@@ -77,7 +78,7 @@ const Actions = (props: {
                     <CustomAction
                         onClick={handleOpenModal}
                         text="Refer a Friend"
-                        points={100}
+                        points={REFERRAL_POINTS}
                     />
                     <CustomAction
                         onClick={increasePoints}
