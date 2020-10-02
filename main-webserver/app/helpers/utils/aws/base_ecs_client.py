@@ -355,7 +355,7 @@ class ECSClient:
 
     def get_clusters_usage(self, clusters=None):
         """
-        Gets usage info of clusters, including status, pending tasks, running tasks, 
+        Gets usage info of clusters, including status, pending tasks, running tasks,
         container instances, container usage, min containers, and max containers
         Args:
             clusters (Optional[List[str]]): the clusters to get the usage info for, defaults to all clusters associated with AWS account

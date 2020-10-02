@@ -9,8 +9,8 @@ from app.models.logs import *
 class ProtocolLogSchema(ma.SQLAlchemySchema):
     class Meta:
         model = ProtocolLog
-    
-    user_id = ma.auto_field() # important!
+
+    user_id = ma.auto_field()  # important!
     server_logs = ma.auto_field()
     connection_id = ma.auto_field()
     bookmarked = ma.auto_field()
@@ -29,6 +29,6 @@ class LoginHistorySchema(ma.SQLAlchemySchema):
     class Meta:
         model = LoginHistory
 
-    user_id = ma.auto_field() # important!
+    user_id = ma.auto_field()  # important!
     action = ma.auto_field()
     timestamp = ma.auto_field()

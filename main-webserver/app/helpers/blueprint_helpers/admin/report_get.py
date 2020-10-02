@@ -40,7 +40,7 @@ def totalUsageHelper():
         .order_by(LoginHistory.timestamp)
         .all()
     )
-    
+
     monthParams = (today - datetime.timedelta(days=30)).timestamp()
     monthReport = login_history_schema.dump(
         LoginHistory.query.filter(LoginHistory.timestamp > monthParams)
@@ -49,12 +49,13 @@ def totalUsageHelper():
     )
 
     # FIXME why is this empty?!? this doesn't work
-    
+
     dayMins = totalMinutes(dayReport) if dayReport else 0
     weekMins = totalMinutes(weekReport) if weekReport else 0
     monthMins = totalMinutes(monthReport) if monthReport else 0
 
     return {"day": dayMins, "week": weekMins, "month": monthMins}
+
 
 # FIXME
 def signupsHelper():
