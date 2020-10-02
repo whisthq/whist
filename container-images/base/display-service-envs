@@ -4,4 +4,4 @@ display_num_nvidia=10
 display_num_dummy=11
 xorg_log_file_nvidia=/home/fractal/10.log
 xorg_log_file_dummy=/home/fractal/11.log
-tty_number=10
+tty_number=0
