@@ -28,6 +28,7 @@ def registerGoogleUser(username, name, token, reason_for_signup=None):
 
     new_user = User(
         user_id=username,
+        password="",
         referral_code=promo_code,
         name=name,
         reason_for_signup=reason_for_signup,
@@ -67,12 +68,12 @@ def loginHelper(code, clientApp):
         else:
             return {"status": FORBIDDEN, "error": "Try using non-Google login"}
 
-    if clientApp:
-        return {"status": UNAUTHORIZED, "error": "User has not registered"}
+    # if clientApp:
+    #     return {"status": UNAUTHORIZED, "error": "User has not registered"}
 
     output = registerGoogleUser(username, name, token)
 
-    if output["success"]:
+    if output["status"] == SUCCESS:
         status = 200
     else:
         status = 500

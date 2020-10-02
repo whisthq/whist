@@ -75,7 +75,7 @@ def genHaiku(n):
 def getGoogleTokens(code, clientApp):
     if clientApp:
         client_secret = "secrets/google_client_secret_desktop.json"
-        redirect_uri = "urn:ietf:wg:oauth:2.0:oob:auto"
+        redirect_uri = "com.tryfractal.app:/oauth2Callback"
     else:
         client_secret = "secrets/google_client_secret.json"
         redirect_uri = "postmessage"
