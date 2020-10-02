@@ -39,4 +39,6 @@ export const config =
     process.env.NODE_ENV === 'development' ? development : development
 
 export const GOOGLE_CLIENT_ID =
-    '581514545734-gml44hupfv9shlj68703s67crnbgjuoe.apps.googleusercontent.com'
+    '581514545734-4t3fd64bus687mcd3s7te11bv8hs532h.apps.googleusercontent.com'
+
+export const GOOGLE_REDIRECT_URI = `com.tryfractal.app:/oauth2Callback`

@@ -42,15 +42,17 @@ default_channel_s3_buckets = {
     ),
 }
 
+
 def str2bool(v):
     if isinstance(v, bool):
-       return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return v
+    if v.lower() in ("yes", "true", "t", "y", "1"):
         return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+    elif v.lower() in ("no", "false", "f", "n", "0"):
         return False
     else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+        raise argparse.ArgumentTypeError("Boolean value expected.")
+
 
 def select_protocol_binary(platform: str, protocol_id: str, protocol_dir: Path) -> Path:
     valid_protocols = protocol_dir.glob(f"*{platform}*.*")
@@ -140,7 +142,6 @@ def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) ->
     tmp_icon.unlink()
 
 
-
 def prep_linux(protocol_dir: Path) -> None:
     client = protocol_dir / "FractalClient"
     client.chmod(
@@ -165,7 +166,7 @@ def prep_windows(protocol_dir: Path) -> None:
         stream=True,
     ) as r:
         r.raise_for_status()
-        with open(rcedit_path, 'wb') as f:
+        with open(rcedit_path, "wb") as f:
             shutil.copyfileobj(r.raw, f)
     rcedit_cmd = [
         str(rcedit_path),
@@ -175,7 +176,7 @@ def prep_windows(protocol_dir: Path) -> None:
     ]
     print("Updating FractalClient icon using `%s`" % " ".join(rcedit_cmd))
     subprocess.run(rcedit_cmd, check=True)
-    #remove incremental link and debug symbols files
+    # remove incremental link and debug symbols files
     run_cmd(["rm", str(protocol_dir / "FractalClient.ilk")])
     run_cmd(["rm", str(protocol_dir / "FractalClient.pdb")])
 
@@ -219,7 +220,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--push-new-update",
         type=str2bool,
-        nargs='?', # zero or one argument
+        nargs="?",  # zero or one argument
         help="push the release to the auto update system (see --update-channel to define target)",
         const=True,
         default=False,
@@ -284,7 +285,10 @@ if __name__ == "__main__":
     # failure can be triggered if the unpacking failed or the release was zipped up
     # in an unexpected manner. 1 file for linux and mac, 3 for windows debug builds (which are what we currently build)
     # : .exe, .ilk .pdb
-    if len(list(protocol_dir.glob("FractalClient*"))) != 1 and len(list(protocol_dir.glob("FractalClient*"))) != 3:
+    if (
+        len(list(protocol_dir.glob("FractalClient*"))) != 1
+        and len(list(protocol_dir.glob("FractalClient*"))) != 3
+    ):
         print(list(protocol_dir.glob("FractalClient*")))
         raise Exception(
             f"The unpacked protocol does not match the expected format in '{protocol_dir}'"

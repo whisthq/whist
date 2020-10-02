@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 // import { history } from "store/configureStore";
 import styles from 'styles/login.css'
 import Titlebar from 'react-electron-titlebar'
+import { parse } from 'url'
 import Background from 'assets/images/background.jpg'
 import Logo from 'assets/images/logo.svg'
 import UpdateScreen from 'pages/dashboard/components/update'
@@ -18,7 +19,7 @@ import { FaGoogle } from 'react-icons/fa'
 
 import { loginUser, setOS, loginFailed, googleLogin } from 'store/actions/main'
 
-import { GOOGLE_CLIENT_ID } from 'constants/config'
+import { GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI } from 'constants/config'
 
 // import "styles/login.css";
 
@@ -35,6 +36,8 @@ const Login = (props: any) => {
     const [needsAutoupdate, setNeedsAutoupdate] = useState(false)
     const [fetchedCredentials, setFetchedCredentials] = useState(false)
 
+    const storage = require('electron-json-storage')
+
     const updateUsername = (evt: any) => {
         setUsername(evt.target.value)
     }
@@ -44,7 +47,6 @@ const Login = (props: any) => {
     }
 
     const handleLoginUser = () => {
-        const storage = require('electron-json-storage')
         dispatch(loginFailed(false))
         setLoggingIn(true)
         if (rememberMe) {
@@ -76,19 +78,34 @@ const Login = (props: any) => {
             'node-integration': false,
             'web-security': false,
         })
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=urn:ietf:wg:oauth:2.0:oob:auto&client_id=${GOOGLE_CLIENT_ID}&origin=https%3A//fractalcomputers.com`
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=${GOOGLE_REDIRECT_URI}&client_id=${GOOGLE_CLIENT_ID}`
         authWindow.loadURL(authUrl, { userAgent: 'Chrome' })
         authWindow.show()
 
-        authWindow.webContents.on('page-title-updated', () => {
-            const pageTitle = authWindow.getTitle()
-            if (pageTitle.includes('Success')) {
-                const codeRegexp = new RegExp('^(?:Success code=)(.+?)(?:&.+)$')
-                const code = pageTitle.match(codeRegexp)[1]
-                setLoggingIn(true)
-                dispatch(googleLogin(code))
+        const handleNavigation = (url: any) => {
+            const query = parse(url, true).query
+            if (query) {
+                if (query.error) {
+                    dispatch(loginFailed(true))
+                } else if (query.code) {
+                    authWindow.removeAllListeners('closed')
+                    setImmediate(() => authWindow.close())
+                    setLoggingIn(true)
+                    dispatch(googleLogin(query.code))
+                }
             }
+        }
+
+        authWindow.webContents.on('will-navigate', (_: any, url: any) => {
+            handleNavigation(url)
         })
+
+        authWindow.webContents.on(
+            'did-get-redirect-request',
+            (_: any, oldUrl: any, newUrl: any) => {
+                handleNavigation(newUrl)
+            }
+        )
     }
 
     const forgotPassword = () => {
@@ -128,7 +145,7 @@ const Login = (props: any) => {
             if (error) throw error
 
             if (data && Object.keys(data).length > 0) {
-                if (data.username != '' && data.password != '' && live) {
+                if (data.username && data.password && live) {
                     setUsername(data.username)
                     setPassword(data.password)
                     setLoggingIn(true)

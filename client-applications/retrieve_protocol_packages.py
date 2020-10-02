@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
 import re
 import json
 import shutil
 import requests
+
+from os.path import join, realpath, dirname
+from os import getenv, environ
 
 from pathlib import Path
 
@@ -17,8 +19,8 @@ from github.Repository import Repository
 from github.GitRelease import GitRelease
 from github.GitReleaseAsset import GitReleaseAsset
 
-default_protocol_dir = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "protocol-packages"
+default_protocol_dir = join(
+    dirname(realpath(__file__)), "protocol-packages"
 )
 
 """ repo: Repository, desired_release: str -> GitRelease """
@@ -32,7 +34,8 @@ def get_release(repo, desired_release):
         flush=True,
     )
 
-    version_id_re = re.compile(r"(\S+)-(\d{8})\.(\d+)")  # BRANCH-YYYYMMDD.#
+    # BRANCH-YYYYMMDD.v+ (example dev-20200930.123)
+    version_id_re = re.compile(r"(\S+)-(\d{8})\.(\d+)")  
 
     if "latest:" in desired_release:
         desired_branch = desired_release.split(":")[1]
@@ -52,7 +55,7 @@ def get_release(repo, desired_release):
                 key=lambda release: release.published_at,
             )
         except ValueError:
-            pass  # we will print that we failed to find anything below, value error should raise on empty generator
+            pass  # printed below
     else:
         for release in all_releases:
             if release.title == desired_release:
@@ -136,11 +139,17 @@ if __name__ == "__main__":
 
     # This should be passed as an env var so that won't be saved
     # in the bash history file (which would happen if it was a CLI arg)
-    github_token = os.getenv("GITHUB_TOKEN")
+    github_token = getenv("GITHUB_TOKEN")
     if not github_token:
         raise Exception(
+            (
             "GITHUB_TOKEN was not found in the env vars %s"
-            % json.dumps(dict(os.environ), indent=2)
+            % json.dumps(dict(environ), indent=2)
+            + "\n"
+            + "\nPlease go to https://github.com/settings/tokens and create a token."
+            + "\nThen run export GITHUB_TOKEN=your_github_token. You can check it's there with echo $GITHUB_TOKEN."
+            + "\n"
+            )
         )
     github_client = Github(github_token)
 
@@ -165,24 +174,30 @@ if __name__ == "__main__":
     Path(args.out_dir).mkdir(parents=True, exist_ok=True)
 
     for platform, asset in assets.items():
-        out_path = os.path.join(args.out_dir, asset.name)
+        os, flavor = platform.strip().split(":")
+
+        out_path = join(args.out_dir, asset.name)
 
         print(f"Downloading {asset.url}", flush=True)
 
         with requests.get(
             asset.url,
-            auth=requests.auth.HTTPBasicAuth(github_token, ""),
+            auth=(github_token, ""),
             headers={"Accept": "application/octet-stream"},
             stream=True,
         ) as r:
-            r.raise_for_status()
+            
+            try:
+                r.raise_for_status()
+                print(
+                        f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes",
+                        flush=True,
+                    )
+                
+                with open(out_path, "wb") as out:
+                    shutil.copyfileobj(r.raw, out)
 
-            print(
-                f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes",
-                flush=True,
-            )
+                print(f"Saved '{out_path}'", flush=True)
 
-            with open(out_path, "wb") as out:
-                shutil.copyfileobj(r.raw, out)
-
-        print(f"Saved '{out_path}'", flush=True)
+            except Exception as e:
+                print(f"Failed to download.\n{str(e)}")

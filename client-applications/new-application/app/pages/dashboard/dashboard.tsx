@@ -6,7 +6,7 @@ import styles from 'styles/dashboard.css'
 import { logout } from 'store/actions/main'
 
 const Dashboard = (props: any) => {
-    const { dispatch } = props
+    const { dispatch, username } = props
 
     const handleSignout = () => {
         const storage = require('electron-json-storage')
@@ -26,6 +26,7 @@ const Dashboard = (props: any) => {
             }}
         >
             New dashboard here!
+            <div>Username: {username}</div>
             <button
                 type="button"
                 onClick={handleSignout}
@@ -41,8 +42,8 @@ const Dashboard = (props: any) => {
     )
 }
 
-const mapStateToProps = () => {
-    return {}
+const mapStateToProps = (state: any) => {
+    return { username: state.MainReducer.username }
 }
 
 export default connect(mapStateToProps)(Dashboard)

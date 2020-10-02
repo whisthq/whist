@@ -32,6 +32,36 @@ function* loginUser(action: any) {
     }
 }
 
+function* googleLogin(action) {
+    yield select()
+
+    if (action.code) {
+        const { json } = yield call(
+            apiPost,
+            `${config.url.PRIMARY_SERVER}/google/login`,
+            {
+                code: action.code,
+                clientApp: true,
+            }
+        )
+        if (json) {
+            if (json.status === 200) {
+                yield put(Action.storeUsername(json.username))
+                yield put(
+                    Action.storeJWT(json.access_token, json.refresh_token)
+                )
+                yield call(fetchPaymentInfo, { username: json.username })
+                yield call(getPromoCode, { username: json.username })
+                history.push('/loading')
+            } else {
+                yield put(Action.loginFailed(true))
+            }
+        }
+    } else {
+        yield put(Action.loginFailed(true))
+    }
+}
+
 function* fetchPaymentInfo(action: any) {
     const state = yield select()
     const { json } = yield call(
@@ -65,7 +95,7 @@ function* getPromoCode(action: any) {
 
 function* fetchContainer(action: any) {
     const state = yield select()
-    const username = 'fractal-admin@gmail.com'
+    const username = state.MainReducer.username
     const app = 'test'
     var { json, response } = yield call(
         apiPost,
@@ -248,6 +278,7 @@ function* deleteContainer(action: any) {
 export default function* rootSaga() {
     yield all([
         takeEvery(Action.LOGIN_USER, loginUser),
+        takeEvery(Action.GOOGLE_LOGIN, googleLogin),
         takeEvery(Action.FETCH_CONTAINER, fetchContainer),
         takeEvery(Action.DELETE_CONTAINER, deleteContainer),
     ])

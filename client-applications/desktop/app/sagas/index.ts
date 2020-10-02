@@ -27,7 +27,7 @@ function* loginUser(action) {
             `${config.url.PRIMARY_SERVER}/account/login`,
             {
                 username: action.username,
-                password: action.password
+                password: action.password,
             }
         );
 
@@ -56,7 +56,7 @@ function* googleLogin(action) {
             `${config.url.PRIMARY_SERVER}/google/login`,
             {
                 code: action.code,
-                clientApp: true
+                clientApp: true,
             }
         );
         if (json) {
@@ -90,7 +90,7 @@ function* getPromoCode(action) {
         state.counter.access_token
     );
 
-    console.log(json)
+    console.log(json);
 
     if (json && json.status === 200) {
         yield put(Action.storePromoCode(json.code));
@@ -103,7 +103,7 @@ function* fetchPaymentInfo(action) {
         apiPost,
         `${config.url.PRIMARY_SERVER}/stripe/retrieve`,
         {
-            username: action.username
+            username: action.username,
         },
         state.counter.access_token
     );
@@ -149,7 +149,7 @@ function* sendFeedback(action) {
         {
             username: state.counter.username,
             feedback: action.feedback,
-            type: action.feedback_type
+            type: action.feedback_type,
         },
         state.counter.access_token
     );
@@ -181,7 +181,7 @@ function* storeIPInfo(action) {
         `${config.url.PRIMARY_SERVER}/account/checkComputer`,
         {
             id: action.id,
-            username: state.counter.username
+            username: state.counter.username,
         },
         state.counter.access_token
     );
@@ -202,7 +202,7 @@ function* storeIPInfo(action) {
                     id: action.id,
                     username: state.counter.username,
                     location,
-                    nickname: json.computers[0].nickname
+                    nickname: json.computers[0].nickname,
                 },
                 state.counter.access_token
             );
@@ -218,9 +218,9 @@ function* attachDisk(action) {
         `${config.url.PRIMARY_SERVER}/disk/attach`,
         {
             disk_name: state.counter.disk,
-            resource_group: config.azure.RESOURCE_GROUP
+            resource_group: config.azure.RESOURCE_GROUP,
         },
-        state.counter.access_token,
+        state.counter.access_token
     );
 
     if (response.status === 401 || response.status === 422) {
@@ -307,7 +307,7 @@ function* restartPC(action) {
         `${config.url.PRIMARY_SERVER}/vm/restart`,
         {
             vm_name: state.counter.vm,
-            resource_group: config.azure.RESOURCE_GROUP
+            resource_group: config.azure.RESOURCE_GROUP,
         },
         state.counter.access_token
     );
@@ -356,7 +356,7 @@ function* sendLogs(action) {
             connection_id: action.connection_id,
             logs: action.logs,
             sender: "client",
-            vm_ip: public_ip
+            vm_ip: public_ip,
         }
     );
 }
@@ -373,6 +373,6 @@ export default function* rootSaga() {
         takeEvery(Action.FETCH_VM, fetchVM),
         takeEvery(Action.RESTART_PC, restartPC),
         takeEvery(Action.GET_VERSION, getVersion),
-        takeEvery(Action.SEND_LOGS, sendLogs)
+        takeEvery(Action.SEND_LOGS, sendLogs),
     ]);
 }

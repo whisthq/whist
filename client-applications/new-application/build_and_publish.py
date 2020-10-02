@@ -37,9 +37,7 @@ default_channel_s3_buckets = {
         "Linux-64bit": "fractal-linux-applications-release",
         "macOS-64bit": "fractal-mac-applications-release",
     },
-    "noupdates": defaultdict(
-        lambda: "fractal: THIS IS AN INVALID S3 BUCKET - NO UPDATES WILL OCCUR"
-    ),
+    "noupdates": defaultdict(lambda: "fractal: fractal-applications-testing"),
 }
 
 
@@ -144,7 +142,7 @@ def prep_windows(protocol_dir: Path) -> None:
         stream=True,
     ) as r:
         r.raise_for_status()
-        with open(rcedit_path, 'wb') as f:
+        with open(rcedit_path, "wb") as f:
             shutil.copyfileobj(r.raw, f)
     rcedit_cmd = [
         str(rcedit_path),
@@ -258,7 +256,10 @@ if __name__ == "__main__":
     # failure can be triggered if the unpacking failed or the release was zipped up
     # in an unexpected manner. 1 file for linux and mac, 3 for windows debug builds (which are what we currently build)
     # : .exe, .ilk .pdb
-    if len(list(protocol_dir.glob("FractalClient*"))) != 1 and len(list(protocol_dir.glob("FractalClient*"))) != 3:
+    if (
+        len(list(protocol_dir.glob("FractalClient*"))) != 1
+        and len(list(protocol_dir.glob("FractalClient*"))) != 3
+    ):
         print(list(protocol_dir.glob("FractalClient*")))
         raise Exception(
             f"The unpacked protocol does not match the expected format in '{protocol_dir}'"
@@ -343,14 +344,23 @@ if __name__ == "__main__":
     # Step: Package & Publish
     # #####
 
-    yarn_cmd = shutil.which("yarn")
-    if not yarn_cmd:
-        raise Exception(
-            "`yarn` must be installed in order to build and package the application"
+    print(
+        (
+            f"Your binaries are now installed. Check the codesign log"
+            + " above to see where it was installed to. You will now need to run"
+            + " 'yarn' and perhaps 'yarn add chokidar react-scripts' (since they are"
+            + " native dependencies. You can test with 'yarn dev'."
         )
-    run_cmd([yarn_cmd], cwd=desktop_dir)  # Ensure that all dependencies are installed
-    package_script = "package:publish" if args.push_new_update else "package"
-    run_cmd([yarn_cmd, package_script], cwd=desktop_dir)
+    )
+
+    # yarn_cmd = shutil.which("yarn")
+    # if not yarn_cmd:
+    #    raise Exception(
+    #        "`yarn` must be installed in order to build and package the application"
+    #    )
+    # run_cmd([yarn_cmd], cwd=desktop_dir)  # Ensure that all dependencies are installed
+    # package_script = "package:publish" if args.push_new_update else "package"
+    # run_cmd([yarn_cmd, package_script], cwd=desktop_dir)
 
     # #####
     # Step: Cleanup
