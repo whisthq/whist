@@ -154,10 +154,6 @@ function* fetchContainer(action: any) {
                 ? json.output.location
                 : test_location
 
-<<<<<<< HEAD
-            yield put(Action.storeIP(ip))
-
-=======
             const width = test_width
             const height = test_height
             // const codec = test_codec
@@ -168,7 +164,6 @@ function* fetchContainer(action: any) {
 
             // yield put(Action.storeCodec(codec))
 
->>>>>>> 30738948faa97c309fccce5ed5aa533bb8dfe36c
             yield put(
                 Action.storeResources(
                     container_id,
