@@ -155,7 +155,7 @@ const Login = (props: any) => {
             }
         })
 
-        // if (username && public_ip && live) {
+        // if (username && publicIP && live) {
         //     history.push("/dashboard");
         // }
     }, [])
@@ -420,7 +420,7 @@ const Login = (props: any) => {
 function mapStateToProps(state: any) {
     return {
         username: state.MainReducer.username,
-        warning: state.MainReducer.warning,
+        loginWarning: state.MainReducer.loginWarning,
         os: state.MainReducer.os,
     }
 }

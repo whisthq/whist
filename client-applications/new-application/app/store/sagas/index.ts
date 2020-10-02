@@ -20,7 +20,7 @@ function* loginUser(action: any) {
 
         if (json && json.verified) {
             yield put(Action.storeUsername(action.username))
-            yield put(Action.storeJWT(json.access_token, json.refresh_token))
+            yield put(Action.storeJWT(json.accessToken, json.refreshToken))
             yield call(fetchPaymentInfo, action)
             yield call(getPromoCode, action)
             history.push('/loading')
@@ -47,9 +47,7 @@ function* googleLogin(action) {
         if (json) {
             if (json.status === 200) {
                 yield put(Action.storeUsername(json.username))
-                yield put(
-                    Action.storeJWT(json.access_token, json.refresh_token)
-                )
+                yield put(Action.storeJWT(json.accessToken, json.refreshToken))
                 yield call(fetchPaymentInfo, { username: json.username })
                 yield call(getPromoCode, { username: json.username })
                 history.push('/loading')
@@ -58,7 +56,7 @@ function* googleLogin(action) {
             }
         }
     } else {
-        yield put(Action.loginFailed(true))
+        yield put(Action.updateAuth({ loginWarning: true }))
     }
 }
 
@@ -70,11 +68,11 @@ function* fetchPaymentInfo(action: any) {
         {
             username: action.username,
         },
-        state.MainReducer.access_token
+        state.MainReducer.accessToken
     )
 
-    if (json && json.account_locked) {
-        yield put(Action.storePaymentInfo(json.account_locked))
+    if (json && json.accountLocked) {
+        yield put(Action.updatePayment({ accountLocked: json.accountLocked }))
     }
 }
 
@@ -83,13 +81,13 @@ function* getPromoCode(action: any) {
     const { json } = yield call(
         apiGet,
         `${config.url.PRIMARY_SERVER}/account/code?username=${action.username}`,
-        state.MainReducer.access_token
+        state.MainReducer.accessToken
     )
 
     console.log(json)
 
     if (json && json.status === 200) {
-        yield put(Action.storePromoCode(json.code))
+        yield put(Action.updatePayment({ promoCode: json.code }))
     }
 }
 
@@ -101,12 +99,12 @@ function* fetchContainer(action: any) {
         apiPost,
         `${config.url.PRIMARY_SERVER}/container/create`,
         { username: username, app: app },
-        state.MainReducer.access_token
+        state.MainReducer.accessToken
     )
     // var { json, response } = yield call(
     //     apiGet,
     //     `${config.url.PRIMARY_SERVER}/dummy`,
-    //     state.MainReducer.access_token
+    //     state.MainReducer.accessToken
     // )
 
     const id = json.ID
@@ -114,13 +112,13 @@ function* fetchContainer(action: any) {
     var { json, response } = yield call(
         apiGet,
         `${config.url.PRIMARY_SERVER}/status/` + id,
-        state.MainReducer.access_token
+        state.MainReducer.accessToken
     )
     while (json.state !== 'SUCCESS' && json.state !== 'FAILURE') {
         var { json, response } = yield call(
             apiGet,
             `${config.url.PRIMARY_SERVER}/status/` + id,
-            state.MainReducer.access_token
+            state.MainReducer.accessToken
         )
         console.log(json)
 
@@ -153,9 +151,9 @@ function* fetchContainer(action: any) {
             const test_container_id = 'container_id' // TODO
             const test_cluster = 'cluster' // TODO
             const test_ip = '34.206.64.200'
-            const test_port_32262 = '32780'
-            const test_port_32263 = '32778'
-            const test_port_32273 = '32779'
+            const test_port32262 = '32780'
+            const test_port32263 = '32778'
+            const test_port32273 = '32779'
             const test_location = 'location' // TODO
 
             const test_width = 200
@@ -171,15 +169,15 @@ function* fetchContainer(action: any) {
                 ? json.output.cluster
                 : test_cluster
             const ip = json.output.ip ? json.output.ip : test_ip
-            const port_32262 = json.output.port_32262
-                ? json.output.port_32262
-                : test_port_32262
-            const port_32263 = json.output.port_32263
-                ? json.output.port_32263
-                : test_port_32263
-            const port_32273 = json.output.port_32273
-                ? json.output.port_32273
-                : test_port_32273
+            const port32262 = json.output.port32262
+                ? json.output.port32262
+                : test_port32262
+            const port32263 = json.output.port32263
+                ? json.output.port32263
+                : test_port32263
+            const port32273 = json.output.port32273
+                ? json.output.port32273
+                : test_port32273
             const location = json.output.location
                 ? json.output.location
                 : test_location
@@ -198,9 +196,9 @@ function* fetchContainer(action: any) {
                 Action.storeResources(
                     container_id,
                     cluster,
-                    port_32262,
-                    port_32263,
-                    port_32273,
+                    port32262,
+                    port32263,
+                    port32273,
                     location
                 )
             )
@@ -223,7 +221,7 @@ function* deleteContainer(action: any) {
         apiPost,
         `${config.url.PRIMARY_SERVER}/container/delete`,
         { username: action.username, container_id: action.container_id },
-        state.MainReducer.access_token
+        state.MainReducer.accessToken
     )
     yield put(Action.changePercentLoaded(0))
     yield put(Action.changeStatusMessage('Began deleting container.'))
@@ -232,14 +230,14 @@ function* deleteContainer(action: any) {
     var { json, response } = yield call(
         apiGet,
         `${config.url.PRIMARY_SERVER}/status/` + id,
-        state.MainReducer.access_token
+        state.MainReducer.accessToken
     )
 
     while (json.state !== 'SUCCESS' && json.state !== 'FAILURE') {
         var { json, response } = yield call(
             apiGet,
             `${config.url.PRIMARY_SERVER}/status/` + id,
-            state.MainReducer.access_token
+            state.MainReducer.accessToken
         )
 
         if (response && response.status && response.status === 500) {
