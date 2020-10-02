@@ -1,6 +1,18 @@
-@import url("https://fonts.googleapis.com/css2?family=Kalam&family=Maven+Pro:wght@400;700&display=swap");
-
 @randomMargin: `Math.round(Math.random() * 100)`;
+
+@font-face {
+    font-family: "Maven Pro";
+    src: url("../assets/fonts/MavenPro-Regular.ttf");
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Maven Pro";
+    src: url("../assets/fonts/MavenPro-Medium.ttf");
+    font-weight: bold;
+    font-style: normal;
+}
 
 body,
 html,
