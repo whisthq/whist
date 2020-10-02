@@ -66,7 +66,7 @@ export default function counter(
             return {
                 ...state,
                 username: action.username,
-                password: action.password
+                password: action.password,
             };
         case MainAction.STORE_IP:
             return {
