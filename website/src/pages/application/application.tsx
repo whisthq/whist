@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react"
 import { Row, Col, Button, FormControl } from "react-bootstrap"
 import { connect } from "react-redux"
-import { Link } from "react-router-dom"
+import { HashLink } from "react-router-hash-link"
 
 import history from "shared/utils/history"
 import { db } from "shared/utils/firebase"
@@ -144,11 +144,11 @@ function Application(props: any) {
                             >
                                 Submit Application
                             </Button>
-                            <Link to="/">
+                            <HashLink to="/#leaderboard">
                                 <button className="white-button">
                                     Back to Home
                                 </button>
-                            </Link>
+                            </HashLink>
                         </div>
                     </div>
                 </Col>

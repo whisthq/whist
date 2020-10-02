@@ -74,7 +74,7 @@ const MiddleView = (props: any) => {
                     />
                 </Col>
             </Row>
-            <Row style={{ marginTop: width > 720 ? 125 : 50 }}>
+            <Row style={{ marginTop: width > 720 ? 125 : 50 }} id="leaderboard">
                 <Col md={9}>
                     <h1>How can I get access?</h1>
                     <p style={{ marginTop: 30 }}>
