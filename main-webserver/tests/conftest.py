@@ -4,11 +4,13 @@ import requests
 
 from app import app as _app
 from app.helpers.utils.general.logs import fractalLog
+from tests.client import FractalClient
 from tests.constants.resources import SERVER_URL
 
 
 @pytest.fixture
 def app():
+    _app.test_client_class = FractalClient
     return _app
 
 

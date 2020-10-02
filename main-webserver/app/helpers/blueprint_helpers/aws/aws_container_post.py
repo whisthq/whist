@@ -25,9 +25,9 @@ def preprocess_task_info(app):
 
     # TODO: Don't just hard-code the cluster, region, and task definition ARN
     return (
-        "cluster_eqbpomqrnp",
+        "arn:aws:ecs:us-east-1:747391415460:task-definition/roshan-task-definition-test-0:7",
         "us-east-1",
-        ("arn:aws:ecs:us-east-1:747391415460:task-definition/roshan-task-" "definition-test-0:5"),
+        "owen-dev-cluster",
     )
 
 

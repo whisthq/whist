@@ -1,16 +1,17 @@
-from app import (
-    ECSClient,
-    celery_instance,
-    fractalLog,
-    fractalSQLCommit,
-    fractalSQLUpdate,
-    logging,
-    db,
-)
+import json
+import time
+
+import logging
+
+from celery.exceptions import Ignore
+
+from app import celery_instance, db
+from app.helpers.utils.aws.base_ecs_client import ECSClient
+from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.sql_commands import fractalSQLCommit
+from app.helpers.utils.general.sql_commands import fractalSQLUpdate
 from app.models.hardware import UserContainer, ClusterInfo, SortedClusters
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
-import time
-from json import loads
 
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
@@ -54,7 +55,7 @@ def build_base_from_image(image):
                 "cpu": 0,
                 "environment": [],
                 "mountPoints": [
-                    {"readOnly": True, "containerPath": "/sys/fs/cgroup", "sourceVolume": "cgroup",}
+                    {"readOnly": True, "containerPath": "/sys/fs/cgroup", "sourceVolume": "cgroup"}
                 ],
                 "dockerSecurityOptions": ["label:seccomp:unconfined"],
                 "memory": 2048,
@@ -67,7 +68,7 @@ def build_base_from_image(image):
         "taskRoleArn": "arn:aws:iam::747391415460:role/ecsTaskExecutionRole",
         "family": "roshan-task-definition-test-0",
         "requiresCompatibilities": ["EC2"],
-        "volumes": [{"name": "cgroup", "host": {"sourcePath": "/sys/fs/cgroup"},}],
+        "volumes": [{"name": "cgroup", "host": {"sourcePath": "/sys/fs/cgroup"}}],
     }
     return base_task
 
@@ -76,21 +77,20 @@ def build_base_from_image(image):
 def create_new_container(
     self,
     username,
-    cluster_name,
-    region_name,
     task_definition_arn,
+    region_name,
+    cluster_name=None,
     use_launch_type=False,
-    auto_assign=True,
     network_configuration=None,
 ):
     """Create a new ECS container running a particular task.
 
     Arguments:
         username: The username of the user who owns the container.
-        cluster_name: The name of the cluster on which to run the container.
+        task_definition_arn: The task definition to use identified by its ARN.
         region_name: The name of the region containing the cluster on which to
             run the container.
-        task_definition_arn: The task definition to use identified by its ARN.
+        cluster_name: The name of the cluster on which to run the container.
         use_launch_type: A boolean indicating whether or not to use the
             ECSClient's launch type or the cluster's default launch type.
         network_configuration: The network configuration to use for the
@@ -98,21 +98,20 @@ def create_new_container(
     """
 
     kwargs = {"networkConfiguration": network_configuration}
-    message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
-    fractalLog(function="create_new_container", label="None", logs=message)
 
-    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-    if auto_assign:
+    if not cluster_name:
         all_clusters = list(SortedClusters.query.all())
+
         if len(all_clusters) == 0:
-            cluster_name = loads(create_new_cluster())["cluster"]
+            cluster_name = json.loads(create_new_cluster())["cluster"]
         else:
-            cluster_name = all_clusters[0]["cluster"]
+            cluster_name = all_clusters[0].cluster
+
     cluster_info = ClusterInfo.query.get(cluster_name)
-    if not cluster_info:
-        fractalSQLCommit(db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster_name))
-        cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
-    elif cluster_info.status == "INACTIVE" or cluster_info.status == "DEPROVISIONING":
+
+    assert cluster_info
+
+    if cluster_info.status == "INACTIVE" or cluster_info.status == "DEPROVISIONING":
         fractalLog(
             function="create_new_container",
             label=cluster_name,
@@ -120,8 +119,14 @@ def create_new_container(
             level=logging.ERROR,
         )
         self.update_state(
-            state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}",},
+            state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.staatus}"}
         )
+        raise Ignore
+
+    message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
+    fractalLog(function="create_new_container", label="None", logs=message)
+
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
     ecs_client.set_cluster(cluster_name)
     ecs_client.set_task_definition_arn(task_definition_arn)
@@ -141,10 +146,8 @@ def create_new_container(
             logs="Error generating task with running IP",
             level=logging.ERROR,
         )
-        self.update_state(
-            state="FAILURE", meta={"msg": "Error generating task with running IP"},
-        )
-        return
+        self.update_state(state="FAILURE", meta={"msg": "Error generating task with running IP"})
+        raise Ignore
 
     container = UserContainer(
         container_id=ecs_client.tasks[0],
@@ -177,11 +180,9 @@ def create_new_container(
         )
         self.update_state(
             state="FAILURE",
-            meta={
-                "msg": "Error inserting Container {cli} into SQL".format(cli=ecs_client.tasks[0])
-            },
+            meta={"msg": "Error inserting Container {} into SQL".format(ecs_client.taasks[0])},
         )
-        return
+        raise Ignore
 
     cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[ecs_client.cluster]
     cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
@@ -200,9 +201,9 @@ def create_new_container(
         )
         self.update_state(
             state="FAILURE",
-            meta={"msg": "Error updating container {} in SQL".format(ecs_client.tasks[0])},
+            meta={"msg": "Error updating container {} in SQL.".format(ecs_client.tasks[0])},
         )
-        return None
+        raise Ignore
 
 
 @celery_instance.task(bind=True)
@@ -306,7 +307,7 @@ def send_commands(self, cluster, region_name, commands, containers=None):
                 level=logging.ERROR,
             )
             self.update_state(
-                state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}",},
+                state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}"},
             )
         containers = containers or ecs_client.get_containers_in_cluster(cluster=cluster)
         if containers:

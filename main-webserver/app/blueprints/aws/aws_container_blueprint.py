@@ -68,9 +68,9 @@ def test_endpoint(action, **kwargs):
         task = create_new_container.apply_async(
             [
                 username,
-                cluster_name,
-                region_name,
                 task_definition_arn,
+                region_name,
+                cluster_name,
                 use_launch_type,
                 network_configuration,
             ]

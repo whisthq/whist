@@ -66,8 +66,8 @@ class SortedClusters(db.Model):
     __tablename__ = "cluster_sorted"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     cluster = db.Column(db.String(250), primary_key=True, unique=True)
-    maxCPURemainingPerContainer = db.Column(db.Float, nullable=False, default=1024.0)
-    maxMemoryRemainingPerContainer = db.Column(db.Float, nullable=False, default=2000.0)
+    maxCPURemainingPerInstance = db.Column(db.Float, nullable=False, default=1024.0)
+    maxMemoryRemainingPerInstance = db.Column(db.Float, nullable=False, default=2000.0)
     pendingTasksCount = db.Column(db.Integer, nullable=False, default=0)
     runningTasksCount = db.Column(db.Integer, nullable=False, default=0)
     registeredContainerInstancesCount = db.Column(db.Integer, nullable=False, default=0)
