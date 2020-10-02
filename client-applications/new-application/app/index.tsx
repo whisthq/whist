@@ -6,6 +6,7 @@ import { AppContainer as ReactHotAppContainer } from 'react-hot-loader'
 import { configureStore, history } from './store/configureStore'
 import { Switch, Route } from 'react-router'
 
+import Login from 'pages/login/login'
 import Loading from 'pages/loading/loading'
 import Dashboard from 'pages/dashboard/dashboard'
 
@@ -22,7 +23,8 @@ document.addEventListener('DOMContentLoaded', () =>
                 <ConnectedRouter history={history}>
                     <Switch>
                         <Route path="/dashboard" component={Dashboard} />
-                        <Route path="/" component={Loading} />
+                        <Route path="/loading" component={Loading} />
+                        <Route path="/" component={Login} />
                     </Switch>
                 </ConnectedRouter>
             </Provider>
