@@ -18,7 +18,7 @@ def protocol_info(address):
             {
                 "allow_autoupdate": container.allow_autoupdate,
                 "branch": container.branch,
-                "secret_key": "TODO",
+                "secret_key": container.secret_key.hex(),
                 "using_stun": container.using_stun,
             },
             SUCCESS,

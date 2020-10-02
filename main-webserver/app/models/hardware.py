@@ -1,5 +1,6 @@
 from sqlalchemy import Index
 from sqlalchemy.orm import relationship
+from sqlalchemy.schema import FetchedValue
 from sqlalchemy.sql import expression, text
 
 from app import db
@@ -41,6 +42,7 @@ class UserContainer(db.Model):
     branch = db.Column(db.String(250), nullable=False, default="master")
     allow_autoupdate = db.Column(db.Boolean, nullable=False, default=True)
     temporary_lock = db.Column(db.Integer)
+    secret_key = db.Column(db.LargeBinary(), server_default=FetchedValue())
 
 
 class ClusterInfo(db.Model):

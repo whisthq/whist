@@ -27,3 +27,22 @@ def test_successful(client, monkeypatch):
     response = client.container_info()
 
     assert response.status_code == 200
+
+
+def test_no_container():
+    response, status = protocol_info("x.x.x.x")
+
+    assert not response
+    assert status == 404
+
+
+def test_protocol_info(container):
+    with container() as c:
+        response, status = protocol_info(c.ip)
+
+        assert status == 200
+        assert response.pop("allow_autoupdate") == c.allow_autoupdate
+        assert response.pop("branch") == c.branch
+        assert response.pop("secret_key") == c.secret_key.hex()
+        assert response.pop("using_stun") == c.using_stun
+        assert not response  # The dictionary should be empty now.
