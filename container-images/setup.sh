@@ -20,8 +20,11 @@ sudo mv cuda-$distribution.pin /etc/apt/preferences.d/cuda-repository-pin-600
 sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64/7fa2af80.pub
 echo "deb http://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
 sudo apt-get update
+sudo apt-mark unhold nvidia-dkms-450
+sudo apt-mark unhold nvidia-driver-450
 sudo apt-mark unhold nvidia-settings
 sudo apt-mark unhold nvidia-modprobe
+sudo apt-mark unhold cuda-drivers-450
 sudo apt-mark unhold cuda-drivers
 sudo apt-get update && sudo apt-get install -y --no-install-recommends --allow-downgrades \
     nvidia-dkms-450=450.80.02-0ubuntu1 \
@@ -30,8 +33,11 @@ sudo apt-get update && sudo apt-get install -y --no-install-recommends --allow-d
     nvidia-modprobe=450.80.02-0ubuntu1 \
     cuda-drivers-450=450.80.02-1 \
     cuda-drivers=450.80.02-1
+sudo apt-mark hold nvidia-dkms-450
+sudo apt-mark hold nvidia-driver-450
 sudo apt-mark hold nvidia-settings
 sudo apt-mark hold nvidia-modprobe
+sudo apt-mark hold cuda-drivers-450
 sudo apt-mark hold cuda-drivers
 export PATH=/usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
