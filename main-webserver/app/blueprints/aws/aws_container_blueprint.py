@@ -16,6 +16,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     set_stun,
 )
 from app.helpers.utils.general.auth import fractalAuth
+from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -60,11 +61,12 @@ def test_endpoint(action, **kwargs):
         ) = (
             kwargs["body"]["username"],
             kwargs["body"]["cluster_name"],
-            kwargs["body"]["region_name"],
+            kwargs["body"].get("region_name", None),
             kwargs["body"]["task_definition_arn"],
             kwargs["body"]["use_launch_type"],
             kwargs["body"]["network_configuration"],
         )
+        region_name = region_name if region_name else get_loc_from_ip(kwargs['received_from'])
         task = create_new_container.apply_async(
             [
                 username,
@@ -98,8 +100,12 @@ def test_endpoint(action, **kwargs):
 @aws_container_bp.route("/container/protocol_info")
 @fractalPreProcess
 def aws_container_info(**kwargs):
+    body = kwargs.pop("body")
     address = kwargs.pop("received_from")
-    info, status = protocol_info(address)
+    port_32262 = body.pop("port_32262")
+    port_32263 = body.pop("port_32263")
+    port_32273 = body.pop("port_32273")
+    info, status = protocol_info(address, port_32262, port_32263, port_32273)
 
     if info:
         response = jsonify(info), status
@@ -117,11 +123,14 @@ def aws_container_ping(**kwargs):
 
     try:
         available = body.pop("available")
+        port_32262 = body.pop("port_32262")
+        port_32263 = body.pop("port_32263")
+        port_32273 = body.pop("port_32273")
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
         # Update container status.
-        status = pingHelper.delay(available, address)
+        status = pingHelper.delay(available, address, port_32262, port_32263, port_32273)
         response = jsonify(status), status["status"]
 
     return response
