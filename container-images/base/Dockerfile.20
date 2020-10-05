@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     systemd-sysv \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    && rm -rf /tmp/* /var/tmp/*
 
 # Clean systemd install
 WORKDIR /lib/systemd/system/sysinit.target.wants/
@@ -55,8 +55,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     gimp \
     psmisc \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 
 # Install X Server and window manager dependencies and basic Ubuntu packages
@@ -84,7 +84,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     materia-gtk-theme \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    && rm -rf /tmp/* /var/tmp/*
 
 # Note: qt4-qtconfig has not been ported to Ubuntu 20, so we can't install it.
 
@@ -122,8 +122,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libxcb-xfixes0 \
     ocl-icd-libopencl1 \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # Install Pulse Audio & XDummy dependencies explicitly
 # These packages need to be installed before installing/updating Python
@@ -146,8 +146,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libltdl7 \
     libtdb1 \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # Install Nvidia CUDA Drivers dependencies explicitly
 # These packages need to be installed before installing/updating Python
@@ -159,8 +159,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libgtk2.0-0 \
     libjansson4 \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # Install general Ubuntu packages
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -185,8 +185,8 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     curl \
     git \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # Install Google Chrome dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -209,8 +209,8 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     fonts-liberation \
     xdg-utils \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # Install Google Chrome
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -220,8 +220,8 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && sed -i '3 s/^/# /' /etc/apt/sources.list \
     && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # Install time while avoiding interactive installation for tzdata - uses UTC
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -230,8 +230,8 @@ ENV LOCAL="yes"
 RUN apt-get update && apt-get install --no-install-recommends -y \
     tzdata \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
@@ -250,8 +250,8 @@ RUN useradd --create-home fractal \
 RUN apt-get update && apt-get install --no-install-recommends -y \
     pulseaudio \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # Give access to Pulse Audio virtual sound card
 RUN adduser root pulse-access \
@@ -298,8 +298,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libswresample3 \
     libswscale5 \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # Install FFmpeg, taken from protocol/server/linux-server-setup.sh
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -310,8 +310,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libavdevice-dev \
     libx11-dev \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # Install FractalServer scripts and kernel module input rules
 COPY entry.sh /home/fractal
@@ -326,8 +326,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     openssh-sftp-server \
     openssh-server \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 RUN systemctl enable ssh
 
@@ -353,8 +353,8 @@ ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRAR
 RUN apt-get update && apt-get install --no-install-recommends -y \
     "linux-headers-$(uname -r)" \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # hadolint ignore=SC1091,SC2046,SC2086
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
@@ -376,8 +376,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     cuda-drivers-450=450.80.02-1 \
     cuda-drivers=450.80.02-1 \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
@@ -400,8 +400,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     mesa-vdpau-drivers \
     libvdpau-va-gl1 \
     && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
+
 
 # Set up window manager running on X server, with GTK/QT themes
 COPY i3config /root/.config/i3/config
