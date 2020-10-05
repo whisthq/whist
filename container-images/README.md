@@ -1,8 +1,8 @@
 # Fractal Container Images
 
-| Base Ubuntu 18.04 | Base Ubuntu 20.04
-|:--:|:--:|
-|![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|
+| Base Ubuntu 20.04
+|:--:|
+|![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|
 
 This repository contains the Docker images containerizing the various applications that Fractal streams or is planning to stream from containers via our streaming technology. The base images running the containerized Fractal protocol are under the `/base/` subfolder, and are used as a starter images for the application Dockerfiles which are in each of their respective application-type subfolders.
 
