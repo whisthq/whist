@@ -25,7 +25,7 @@ def preprocess_task_info(app):
 
     # TODO: Don't just hard-code the cluster, region, and task definition ARN
     return (
-        "arn:aws:ecs:us-east-1:747391415460:task-definition/roshan-task-definition-test-0:7",
+        "arn:aws:ecs:us-east-1:747391415460:task-definition/fractal-browsers-chrome:5",
         "us-east-1",
         "owen-dev-cluster",
     )
