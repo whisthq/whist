@@ -433,7 +433,7 @@ int ReceivePackets(void* opaque) {
                  lastrecv * MS_IN_SECOND);
     }
 
-    SDL_Delay(5);
+    SDL_Delay(50);
 
     destroyUpdate();
 
