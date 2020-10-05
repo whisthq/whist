@@ -234,8 +234,8 @@ int32_t SendVideo(void* opaque) {
                     update_encoder = false;
                 }
             } else {
-                current_bitrate = (int)(STARTING_BITRATE);
                 LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate, max_mbps);
+                current_bitrate = (int)(max_mbps*1024*1024);
                 pending_encoder = true;
                 encoder_finished = false;
                 encoder_factory_server_w = device->width;
@@ -966,7 +966,7 @@ int main() {
         StartTimer(&startup_time);
 
         running = true;
-        max_mbps = STARTING_BITRATE;
+        max_mbps = STARTING_BITRATE / 1024.0 / 1024.0;
         wants_iframe = false;
         update_encoder = false;
 
