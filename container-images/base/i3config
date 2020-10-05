@@ -77,3 +77,14 @@ bindsym Mod1+a focus parent
 default_border pixel
 default_floating_border normal
 hide_edge_borders both
+
+# Make borders for floating windows look more modern
+# class                 border  backgr. text    indicator child_border
+client.focused          #656864 #656864 #ffffff #000000   #656864
+client.focused_inactive #9da09c #9da09c #ffffff #000000   #9da09c
+client.unfocused        #9da09c #9da09c #888888 #000000   #9da09c
+client.urgent           #2f343a #900000 #ffffff #000000   #900000
+client.placeholder      #000000 #0c0c0c #ffffff #000000   #0c0c0c
+client.background       #ffffff
+
+font pango:Ubuntu 9

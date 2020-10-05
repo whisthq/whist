@@ -82,6 +82,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     lxappearance \
     xinit \
     materia-gtk-theme \
+    yaru-theme-gtk \
+    gtk2-engines-murrine \
+    gtk2-engines-pixbuf \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -403,7 +406,17 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean
 
 
+
 # Set up window manager running on X server, with GTK/QT themes
+RUN git clone https://github.com/vinceliuice/Layan-gtk-theme
+RUN cd Layan-gtk-theme && /bin/bash install.sh && cd
+RUN git clone https://github.com/vinceliuice/Orchis-theme
+RUN cd Orchis-theme && /bin/bash install.sh && cd
+RUN git clone https://github.com/vinceliuice/Matcha-gtk-theme
+RUN cd Matcha-gtk-theme && /bin/bash install.sh && cd
+RUN git clone https://github.com/vinceliuice/vimix-gtk-themes
+RUN cd vimix-gtk-themes && /bin/bash install.sh && cd
+
 COPY i3config /root/.config/i3/config
 COPY gtk-3-settings.ini /etc/gtk-3.0/settings.ini
 COPY .gtkrc-2.0 /root/.gtkrc-2.0
@@ -411,6 +424,10 @@ COPY --chown=fractal .gtkrc-2.0 /home/fractal/.gtkrc-2.0
 COPY qt4-settings.conf /root/.config/Trolltech.conf
 COPY --chown=fractal qt4-settings.conf /home/fractal/.config/Trolltech.conf
 COPY .xinitrc /root/.xinitrc
+
+# We set the gimp GTK theme to the system's for testing
+COPY gimprc /home/fractal/.config/GIMP/2.10/gimprc
+COPY gimprc /root/.config/GIMP/2.10/gimprc
 
 
 # Install Firefox nightly (for testing only)

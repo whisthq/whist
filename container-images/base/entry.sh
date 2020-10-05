@@ -16,9 +16,9 @@ ln -sf /home/fractal/fractal-input.rules /etc/udev/rules.d/90-fractal-input.rule
 # Also, create the device /dev/dri/card0 which is needed for GPU accel
 # Note that this CANNOT be done in the Dockerfile because it affects /dev/ so we have
 # to do it here.
-# Note that we always use /dev/tty0 even though the minor number below (i.e.
+# Note that we always use /dev/tty10 even though the minor number below (i.e.
 # the number after 4 may change)
-sudo mknod -m 620 /dev/tty0 c 4 10k
+sudo mknod -m 620 /dev/tty10 c 4 10
 sudo mkdir /dev/dri
 sudo mknod -m 660 /dev/dri/card0 c 226 0
 
