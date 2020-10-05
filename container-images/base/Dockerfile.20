@@ -58,7 +58,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean
 
 
-
 # Install X Server and window manager dependencies and basic Ubuntu packages
 # These packages need to be installed before installing/updating Python
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -127,7 +126,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean
 
-
 # Install Pulse Audio & XDummy dependencies explicitly
 # These packages need to be installed before installing/updating Python
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -151,7 +149,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean
 
-
 # Install Nvidia CUDA Drivers dependencies explicitly
 # These packages need to be installed before installing/updating Python
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -163,7 +160,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libjansson4 \
     && apt-get autoremove -y \
     && apt-get clean
-
 
 # Install general Ubuntu packages
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -190,7 +186,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get autoremove -y \
     && apt-get clean
 
-
 # Install Google Chrome dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
@@ -214,7 +209,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get autoremove -y \
     && apt-get clean
 
-
 # Install Google Chrome
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
@@ -225,7 +219,6 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && apt-get autoremove -y \
     && apt-get clean
 
-
 # Install time while avoiding interactive installation for tzdata - uses UTC
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
@@ -234,7 +227,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     tzdata \
     && apt-get autoremove -y \
     && apt-get clean
-
 
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
@@ -254,7 +246,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     pulseaudio \
     && apt-get autoremove -y \
     && apt-get clean
-
 
 # Give access to Pulse Audio virtual sound card
 RUN adduser root pulse-access \
@@ -303,7 +294,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean
 
-
 # Install FFmpeg, taken from protocol/server/linux-server-setup.sh
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
@@ -314,7 +304,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libx11-dev \
     && apt-get autoremove -y \
     && apt-get clean
-
 
 # Install FractalServer scripts and kernel module input rules
 COPY entry.sh /home/fractal
@@ -330,7 +319,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     openssh-server \
     && apt-get autoremove -y \
     && apt-get clean
-
 
 RUN systemctl enable ssh
 
@@ -358,7 +346,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean
 
-
 # hadolint ignore=SC1091,SC2046,SC2086
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
 
@@ -380,7 +367,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     cuda-drivers=450.80.02-1 \
     && apt-get autoremove -y \
     && apt-get clean
-
 
 ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
@@ -404,7 +390,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libvdpau-va-gl1 \
     && apt-get autoremove -y \
     && apt-get clean
-
 
 
 # Set up window manager running on X server, with GTK/QT themes
