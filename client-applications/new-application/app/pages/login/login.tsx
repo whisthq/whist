@@ -176,11 +176,7 @@ const Login = (props: any) => {
     }, [updatePingReceived, fetchedCredentials])
 
     return (
-        <div
-            className={styles.container}
-            data-tid="container"
-            style={{ backgroundImage: `url(${Background})` }}
-        >
+        <div className={styles.container} data-tid="container">
             <UpdateScreen />
             <div
                 style={{
@@ -201,20 +197,15 @@ const Login = (props: any) => {
                 <div className={styles.macTitleBar} />
             )}
             {live ? (
-                <div className={styles.removeDrag}>
+                <div>
                     <div className={styles.landingHeader}>
                         <div className={styles.landingHeaderLeft}>
-                            <img src={Logo} width="18" height="18" />
                             <span className={styles.logoTitle}>Fractal</span>
                         </div>
                         <div className={styles.landingHeaderRight}>
-                            <span id="forgotButton" onClick={forgotPassword}>
-                                Forgot Password?
-                            </span>
                             <button
                                 type="button"
                                 className={styles.signupButton}
-                                style={{ borderRadius: 5, marginLeft: 15 }}
                                 id="signup-button"
                                 onClick={signUp}
                             >
@@ -222,13 +213,16 @@ const Login = (props: any) => {
                             </button>
                         </div>
                     </div>
-                    <div style={{ marginTop: warning ? 10 : 60 }}>
+                    <div style={{ marginTop: warning ? 0 : 50 }}>
                         <div className={styles.loginContainer}>
+                            <div className={styles.welcomeBack}>
+                                Welcome Back!
+                            </div>
                             <div>
                                 <FontAwesomeIcon
                                     icon={faUser}
                                     style={{
-                                        color: 'white',
+                                        color: '#555555',
                                         fontSize: 12,
                                     }}
                                     className={styles.inputIcon}
@@ -238,18 +232,18 @@ const Login = (props: any) => {
                                     onChange={updateUsername}
                                     type="text"
                                     className={styles.inputBox}
-                                    style={{ borderRadius: 5 }}
-                                    placeholder={
-                                        username ? username : 'Username'
-                                    }
+                                    placeholder={username ? username : ''}
                                     id="username"
                                 />
+                            </div>
+                            <div className={styles.labelContainer}>
+                                USERNAME
                             </div>
                             <div>
                                 <FontAwesomeIcon
                                     icon={faLock}
                                     style={{
-                                        color: 'white',
+                                        color: '#555555',
                                         fontSize: 12,
                                     }}
                                     className={styles.inputIcon}
@@ -259,12 +253,18 @@ const Login = (props: any) => {
                                     onChange={updatePassword}
                                     type="password"
                                     className={styles.inputBox}
-                                    style={{ borderRadius: 5 }}
-                                    placeholder={
-                                        password ? '•••••••••' : 'Password'
-                                    }
+                                    placeholder={password ? '•••••••••' : ''}
                                     id="password"
                                 />
+                            </div>
+                            <div className={styles.labelContainer}>
+                                PASSWORD
+                                <span
+                                    className={styles.forgotButton}
+                                    onClick={forgotPassword}
+                                >
+                                    FORGOT PASSWORD?
+                                </span>
                             </div>
                             <div style={{ marginBottom: 20 }}>
                                 {loggingIn && !warning ? (
@@ -281,7 +281,7 @@ const Login = (props: any) => {
                                             icon={faCircleNotch}
                                             spin
                                             style={{
-                                                color: 'white',
+                                                color: '#555555',
                                                 width: 12,
                                                 marginRight: 5,
                                                 position: 'relative',
@@ -297,7 +297,7 @@ const Login = (props: any) => {
                                         className={styles.loginButton}
                                         id="login-button"
                                     >
-                                        START
+                                        LOG IN
                                     </button>
                                 )}
                                 <div style={{ marginBottom: 20 }}>
@@ -394,7 +394,9 @@ const Login = (props: any) => {
                                     <span className={styles.checkmark} />
                                 </label>
 
-                                <div style={{ fontSize: 12 }}>Remember Me</div>
+                                <div style={{ fontSize: 12, color: '#555555' }}>
+                                    Remember Me
+                                </div>
                             </div>
                         </div>
                     </div>

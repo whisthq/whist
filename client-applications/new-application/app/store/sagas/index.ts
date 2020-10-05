@@ -50,7 +50,7 @@ function* googleLogin(action) {
                 yield put(Action.storeJWT(json.accessToken, json.refreshToken))
                 yield call(fetchPaymentInfo, { username: json.username })
                 yield call(getPromoCode, { username: json.username })
-                history.push('/loading')
+                history.push('/dashboard')
             } else {
                 yield put(Action.loginFailed(true))
             }

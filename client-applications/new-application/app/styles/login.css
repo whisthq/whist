@@ -12,6 +12,7 @@ button {
 }
 
 .container {
+    background: white;
     position: absolute;
     text-align: center;
     width: 100vw;
@@ -54,6 +55,7 @@ button {
 }
 
 .logoTitle {
+    color: black;
     font-family: 'Maven Pro';
     position: relative;
     bottom: 2px;
@@ -65,21 +67,16 @@ button {
 .loginButton,
 .googleButton {
     font-family: 'Maven Pro';
-    border: none;
-    border: solid 2px #5ec4eb;
-    background: none;
+    border: solid 0.8px #cccccc;
+    background: white;
     font-weight: bold;
-    border-radius: 4px;
     padding: 12px 30px;
-    color: #5ec4eb;
-    font-weight: 'bold';
+    color: black;
     margin-left: 10px;
+    font-size: 15px;
 }
 
 .loginButton {
-    border: none;
-    color: white;
-    background: rgba(66, 175, 235, 0.8);
     margin-left: 0px;
     width: 300px;
 }
@@ -95,38 +92,66 @@ button {
 }
 
 .signupButton:hover,
-.loginButton:hover,
+.loginButton:hover {
+    background: #93f1d9;
+    border: solid 0.8px #93f1d9;
+    cursor: pointer;
+}
+
 .googleButton:hover {
     cursor: pointer;
 }
 
 .loginContainer {
     text-align: center;
-    margin-top: 50px;
+}
+
+.welcomeBack {
+    font-weight: bold;
+    font-size: 25px;
+    color: black;
+    margin-bottom: 20px;
 }
 
 .inputBox {
-    width: 200px;
-    background-color: rgba(77, 77, 92, 0.6);
-    padding: 20px 50px;
-    border-radius: 30px;
-    margin-bottom: 20px;
+    width: 240px;
+    background: white;
+    padding: 10px 30px;
     border: none;
+    border-bottom: solid 0.8px #555555;
     outline: none !important;
-    color: white;
+    color: #555555;
     font-family: 'Maven Pro';
+    font-size: 15px;
+    margin-bottom: 10px;
 }
 
 input.inputBox::placeholder {
-    color: white;
+    color: #555555;
 }
 
 .inputIcon {
     position: absolute;
-    margin-top: 22px;
-    margin-left: 20px;
+    margin-top: 13px;
+    margin-left: 7px;
     width: 12px;
     height: 12px;
+}
+
+.labelContainer {
+    margin: auto;
+    margin-bottom: 20px;
+    width: 300px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #555555;
+    align-items: flex-start;
+}
+
+.usernameLabel {
+    align-items: flex-start;
 }
 
 .bottomBox {
@@ -159,36 +184,17 @@ input.inputBox::placeholder {
     color: #d3d3d3;
 }
 
-#forgotButton {
-    margin-left: 10px;
-}
-
-#forgotButton:hover {
+.forgotButton:hover {
     cursor: pointer;
-    color: #5ec4eb;
 }
 
 .rememberMeContainer {
     margin-top: 20px;
     color: white;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .rememberMe {
-    margin-right: 5px;
-    position: relative;
-    top: 3px;
-}
-
-.rememberMeContainer {
-    margin-top: 20px;
-    color: white;
-    font-size: 12px;
-}
-
-#remember-me {
-    background-color: rgba(0, 0, 0, 0);
-    border: solid 1px white;
     margin-right: 5px;
     position: relative;
     top: 3px;
@@ -227,8 +233,8 @@ input.inputBox::placeholder {
     left: 0;
     height: 12px;
     width: 12px;
-    background-color: #eee;
-    border-radius: 2px;
+    background-color: white;
+    border: solid 0.8px #cccccc;
 }
 
 /* On mouse-over, add a grey background color */
@@ -273,4 +279,10 @@ input.inputBox::placeholder {
 
 .removeDrag {
     -webkit-app-region: no-drag;
+}
+
+.loadingBar {
+    height: 6px;
+    background: #93f1d9;
+    border-radius: 5px;
 }

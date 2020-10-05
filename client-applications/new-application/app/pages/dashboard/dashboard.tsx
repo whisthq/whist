@@ -16,15 +16,7 @@ const Dashboard = (props: any) => {
     }
 
     return (
-        <div
-            style={{
-                marginTop: 200,
-                textAlign: 'center',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-            }}
-        >
+        <div className={styles.dashboardContainer}>
             New dashboard here!
             <div>Username: {username}</div>
             <button
