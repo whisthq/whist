@@ -54,6 +54,8 @@ sudo apt-get install -y kitware-archive-keyring
 sudo rm /etc/apt/trusted.gpg.d/kitware.gpg
 sudo apt-get install -y cmake
 
+sudo apt autoremove
+
 echo
 echo "Would you like to setup ECS? (y/n)"
 read -p "Would you like to setup ECS? " -n 1 -r
