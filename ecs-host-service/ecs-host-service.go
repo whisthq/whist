@@ -34,7 +34,12 @@ func main() {
 				}
 				break loop
 			case event := <-events:
-				fmt.Printf("%s %s %s\n", event.Type, event.ID, event.Action)
+				if event.Action == "stop" {
+					fmt.Printf("%s %s %s\n", event.Type, event.ID, event.Action)
+				}
+				if event.Action == "start" {
+					fmt.Printf("%s %s %s\n", event.Type, event.ID, event.Action)
+				}
 			}
 		}
 }
