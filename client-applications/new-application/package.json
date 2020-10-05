@@ -157,6 +157,7 @@
         "react-router": "^5.1.2",
         "react-router-dom": "^5.1.2",
         "react-scripts": "^3.4.3",
+        "react-spring": "^8.0.27",
         "react-tabs": "^3.1.0",
         "react-toggle": "^4.1.1",
         "react-toggle-button": "^2.2.0",

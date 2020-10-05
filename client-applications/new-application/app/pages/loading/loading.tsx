@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { connect } from 'react-redux'
+import { useSpring, animated } from 'react-spring'
 import styles from 'styles/login.css'
 import Titlebar from 'react-electron-titlebar'
 import Logo from 'assets/images/logo.svg'
@@ -28,8 +29,9 @@ const UpdateScreen = (props: any) => {
     // note to future developers: setting state inside useffect when you rely on
     // change for those variables to trigger runs forever and is bad
     // use two variables for that or instead do something like this below
-    var percentLoadedWidth = 3 * percentLoaded
-    var percentLeftWidth = 300 - 3 * percentLoaded
+    var percentLoadedWidth = 5 * percentLoaded
+
+    const loadingBar = useSpring({ width: percentLoadedWidth })
 
     useEffect(() => {
         dispatch(fetchContainer())
@@ -108,7 +110,6 @@ const UpdateScreen = (props: any) => {
                 left: 0,
                 width: 1000,
                 height: 680,
-                backgroundColor: '#0B172B',
                 zIndex: 1000,
             }}
         >
@@ -136,26 +137,17 @@ const UpdateScreen = (props: any) => {
                 >
                     <div
                         style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            padding: '2px',
+                            borderRadius: '5px',
+                            width: '500px',
+                            margin: 'auto',
+                            border: 'solid 0.8px #555555',
                         }}
                     >
-                        <div
-                            style={{
-                                width: `${percentLoadedWidth}px`,
-                                height: 6,
-                                background:
-                                    'linear-gradient(258.54deg, #5ec3eb 0%, #d023eb 100%)',
-                            }}
-                        ></div>
-                        <div
-                            style={{
-                                width: `${percentLeftWidth}px`,
-                                height: 6,
-                                background: '#111111',
-                            }}
-                        ></div>
+                        <animated.div
+                            style={loadingBar}
+                            className={styles.loadingBar}
+                        ></animated.div>
                     </div>
                     <div
                         style={{
@@ -166,7 +158,7 @@ const UpdateScreen = (props: any) => {
                             justifyContent: 'center',
                         }}
                     >
-                        <div style={{ color: '#D6D6D6' }}>
+                        <div style={{ color: '#555555' }}>
                             {status != 'Successfully created container.' &&
                                 status != 'Successfully deleted container.' && (
                                     <FontAwesomeIcon

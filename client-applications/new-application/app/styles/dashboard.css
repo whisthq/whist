@@ -1,15 +1,26 @@
+.dashboardContainer {
+    background: white;
+    margin-top: 200px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .signoutButton {
     font-family: 'Maven Pro';
     font-weight: bold;
-    border-radius: 4px;
     padding: 12px 30px;
-    border: none;
-    color: white;
-    background: rgba(66, 175, 235);
     margin-top: 50px;
     width: 300px;
+    border: solid 0.8px #cccccc;
+    background: white;
+    color: black;
+    font-size: 15px;
 }
 
 .signoutButton:hover {
+    background: #93f1d9;
+    border: solid 0.8px #93f1d9;
     cursor: pointer;
 }
