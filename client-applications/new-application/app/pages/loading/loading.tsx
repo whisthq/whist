@@ -7,7 +7,7 @@ import Logo from 'assets/images/logo.svg'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons'
 
-import { fetchContainer } from 'store/actions/main'
+import { fetchContainer } from 'store/actions/sideEffects'
 
 const UpdateScreen = (props: any) => {
     const {
