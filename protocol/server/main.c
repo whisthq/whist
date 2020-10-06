@@ -1074,9 +1074,22 @@ int main() {
             }
 
             if (GetTimer(last_exit_check) > 15.0 / MS_IN_SECOND) {
+		bool exiting = false;
 // Exit file seen, time to exit
 #ifdef _WIN32
                 if (PathFileExistsA("C:\\Program Files\\Fractal\\Exit\\exit")) {
+                    DeleteFileA("C:\\Program Files\\Fractal\\Exit\\exit");
+		    exiting = true;
+                }
+#else
+		FILE* exit_file = fopen("/usr/share/fractal/exit", "r");
+		if (exit_file) {
+		    fclose(exit_file);
+		    remove("/usr/share/fractal/exit");
+		    exiting = true;
+		}
+#endif
+		if (exiting) {
                     LOG_INFO("Exiting due to button press...");
                     FractalServerMessage fmsg_response = {0};
                     fmsg_response.type = SMESSAGE_QUIT;
@@ -1094,12 +1107,8 @@ int main() {
                     }
                     // Give a bit of time to make sure no one is touching it
                     SDL_Delay(50);
-                    DeleteFileA("C:\\Program Files\\Fractal\\Exit\\exit");
-                    connected = false;
-                }
-#else
-// TODO: Filesystem for Unix
-#endif
+		    connected = false;
+		}
                 StartTimer(&last_exit_check);
             }
 
