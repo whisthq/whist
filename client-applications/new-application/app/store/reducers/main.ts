@@ -1,4 +1,4 @@
-import * as MainAction from 'store/actions/main'
+import * as MainAction from 'store/actions/pure'
 import { DEFAULT } from 'store/reducers/states'
 
 export default function MainReducer(state = DEFAULT, action: any) {

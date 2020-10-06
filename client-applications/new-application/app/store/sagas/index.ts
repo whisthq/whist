@@ -1,6 +1,6 @@
 import { put, takeEvery, all, call, select, delay } from 'redux-saga/effects'
 import { apiPost, apiGet } from 'utils/api'
-import * as Action from 'store/actions/main'
+import * as Action from 'store/actions/pure'
 import * as SideEffect from 'store/actions/sideEffects'
 import { history } from 'store/configureStore'
 
