@@ -1,6 +1,7 @@
 # Go parameters
 GOCMD        = go
 GOBUILD      = $(GOCMD) build
+GORUN        = $(GOCMD) run
 GOCLEAN      = $(GOCMD) clean
 GOTEST       = $(GOCMD) test
 GOGET        = $(GOCMD) get
@@ -12,14 +13,17 @@ all: deps build
 
 build:
 	$(info building in $(BUILD_FOLDER)...)
-	$(GOBUILD) -o $(BUILD_FOLDER)/$(BINARY_NAME) -v
+	$(GOBUILD) -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
+
 clean:
 	$(GOCLEAN)
 	rm -rf $(BUILD_FOLDER)
 
-run: build
+run:
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME)...)
-	@$(BUILD_FOLDER)/$(BINARY_NAME)
+	@$(GORUN) ecs-host-service.go
 
 deps:
 	$(GOGET) github.com/docker/docker@v19.03.13
+
+.PHONY: build clean run deps
