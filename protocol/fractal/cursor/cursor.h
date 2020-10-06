@@ -29,8 +29,8 @@ Defines
 ============================
 */
 
-#define MAX_CURSOR_WIDTH 32
-#define MAX_CURSOR_HEIGHT 32
+#define MAX_CURSOR_WIDTH 40
+#define MAX_CURSOR_HEIGHT 40
 
 /*
 ============================
