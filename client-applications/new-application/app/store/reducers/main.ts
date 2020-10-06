@@ -6,15 +6,11 @@ export default function MainReducer(state = DEFAULT, action: any) {
         case MainAction.RESET_STATE:
             return DEFAULT
         case MainAction.UPDATE_AUTH:
-            console.log('UPDATE AUTH')
-            console.log(action.body)
             return {
                 ...state,
                 auth: Object.assign(state.auth, action.body),
             }
         case MainAction.UPDATE_CLIENT:
-            console.log('UpDATE CLIENT')
-            console.log(action.body)
             return {
                 ...state,
                 client: Object.assign(state.client, action.body),
