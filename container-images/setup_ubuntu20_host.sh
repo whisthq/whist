@@ -4,7 +4,8 @@ set -Eeuo pipefail
 echo "================================================"
 echo "Replacing potentially outdated docker runtime..."
 echo "================================================"
-sudo apt-get remove docker docker-engine docker.io containerd runc
+# Allow failure with ||:
+sudo apt-get remove docker docker-engine docker.io containerd runc ||:
 sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl wget gnupg-agent software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
