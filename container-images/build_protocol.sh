@@ -1,4 +1,5 @@
 #!/bin/bash
+set -Eeuo pipefail
 
 git_hash=$(git rev-parse --short HEAD)
 
