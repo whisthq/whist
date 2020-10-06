@@ -8,7 +8,6 @@ on:
 
 env:
   apps: ('base')
-  version: '18'
   AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_DEFAULT_REGION: 'us-east-1'
@@ -37,10 +36,11 @@ jobs:
 
       - name: Run build dockerfile
         run: |
-          for i in "${apps[@]}"
+          for app in "${apps[@]}"
            do
-              ./build.sh $i $version
-              ./push.sh $i $version
+              ./build_protocol.sh
+              ./build_container_image.sh $app
+              ./push_container_image.sh $app
            done
         working-directory: linux
         env:
