@@ -16,7 +16,8 @@ sudo add-apt-repository \
 sudo apt-get update -y
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 
-sudo groupadd docker
+# Docker group might already exist, so we allow failure with "||:"
+sudo groupadd docker ||:
 sudo usermod -aG docker $USER
 
 
@@ -110,8 +111,9 @@ ECS_AVAILABLE_LOGGING_DRIVERS=["json-file","awslogs"]
 ECS_LOGLEVEL=info
 EOF
 
-  sudo docker stop ecs-agent
-  sudo docker rm ecs-agent
+  # the "||:" line endings indicate that failures are allowed/expected
+  sudo docker stop ecs-agent ||:
+  sudo docker rm ecs-agent ||:
   sudo docker run --name ecs-agent \
   --detach=true \
   --restart=on-failure:10 \
