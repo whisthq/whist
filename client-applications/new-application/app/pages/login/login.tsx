@@ -17,7 +17,8 @@ import {
 
 import { FaGoogle } from 'react-icons/fa'
 
-import { loginUser, setOS, loginFailed, googleLogin } from 'store/actions/main'
+import { updateClient } from 'store/actions/main'
+import { googleLogin, loginUser } from 'store/actions/sideEffects'
 
 import { GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI } from 'constants/config'
 
@@ -47,7 +48,7 @@ const Login = (props: any) => {
     }
 
     const handleLoginUser = () => {
-        dispatch(loginFailed(false))
+        // dispatch(loginFailed(false))
         setLoggingIn(true)
         if (rememberMe) {
             storage.set('credentials', {
@@ -86,7 +87,7 @@ const Login = (props: any) => {
             const query = parse(url, true).query
             if (query) {
                 if (query.error) {
-                    dispatch(loginFailed(true))
+                    // dispatch(loginFailed(true))
                 } else if (query.code) {
                     authWindow.removeAllListeners('closed')
                     setImmediate(() => authWindow.close())
@@ -138,7 +139,7 @@ const Login = (props: any) => {
 
         const appVersion = require('../../package.json').version
         const os = require('os')
-        dispatch(setOS(os.platform()))
+        dispatch(updateClient({ os: os.platform() }))
         setVersion(appVersion)
 
         storage.get('credentials', (error: any, data: any) => {
@@ -155,15 +156,12 @@ const Login = (props: any) => {
             }
         })
 
-        // if (username && public_ip && live) {
+        // if (username && publicIP && live) {
         //     history.push("/dashboard");
         // }
     }, [])
 
     useEffect(() => {
-        console.log('in useeffect2')
-        console.log(updatePingReceived)
-        console.log(fetchedCredentials)
         if (
             updatePingReceived &&
             fetchedCredentials &&
@@ -421,9 +419,9 @@ const Login = (props: any) => {
 
 function mapStateToProps(state: any) {
     return {
-        username: state.MainReducer.username,
-        warning: state.MainReducer.warning,
-        os: state.MainReducer.os,
+        username: state.MainReducer.auth.username,
+        loginWarning: state.MainReducer.auth.loginWarning,
+        os: state.MainReducer.client.os,
     }
 }
 
