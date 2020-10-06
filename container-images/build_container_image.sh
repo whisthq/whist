@@ -1,7 +1,7 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-git_hash=$(git rev-parse --short HEAD)
+local_tag=current-build
 
 # build container with protocol inside it
-docker build -f $1/Dockerfile.20 $1 -t fractal/$1:$git_hash.20
+docker build -f $1/Dockerfile.20 $1 -t fractal/$1:$local_tag

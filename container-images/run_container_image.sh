@@ -1,13 +1,14 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-git_hash=$(git rev-parse --short HEAD)
 if [[ ${2:-''} == mount ]]; then
     mount_protocol="--mount type=bind,source=$(cd base/protocol/server/build64;pwd),destination=/usr/share/fractal/bin"
     echo $mount_protocol
 else
     mount_protocol=""
 fi
+
+local_tag=current-build
 
 runcontainer (){
     docker run -it -d \
@@ -39,11 +40,11 @@ runcontainer (){
             -p 32262:32262 \
             -p 32263:32263/udp \
             -p 32273:32273 \
-            fractal/$1:$git_hash.20
+            fractal/$1:$local_tag
 # capabilities not enabled by default: CAP_NICE
 }
 
-container_id=$(runcontainer $1 20)
+container_id=$(runcontainer $1)
 
 echo "Running container with ID: $container_id"
 ipaddr=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $container_id)
