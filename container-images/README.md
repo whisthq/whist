@@ -14,14 +14,13 @@ This repository contains the Docker images containerizing the various applicatio
 
 - First, create an EC2 Instance (Which will later be linked with ECS)
 - You need to create a Ubuntu 20.04 instance on a g3s.xlarge instance type
-- Also, make sure to add more storage space (the default 8g is not enough to build the protocol and the base image!)
-- When making the EC2 instance, on “Step 3: Configure Instance Details”, go to “IAM role”, and select “ecsInstanceRole”.
+- Also, make sure to add more storage space (the default 8g is not enough to build the protocol and the base image!). 32 is plenty, 16 should be enough as well.
 - Also, make sure that it is part of the security group “fractal-containerized-protocol-group”, on us-east-2, or “container-testing”, on us-east-1, on “Step 6: Configure Security Group”
 
 Then, run the following commands on the host:
 
 ```
-curl https://raw.githubusercontent.com/fractalcomputers/container-images/djsavvy/refactor-VM-setup/setup_ubuntu20_host.sh?token=AGNK4MEANFGVT2R6UF626YC7QU76S > setup_host.sh
+curl https://raw.githubusercontent.com/fractalcomputers/container-images/dev/setup_ubuntu20_host.sh?token=AGNK4MB42ISOR6INPEWBXUC7QW43Q > setup_host.sh
 chmod +x setup_host.sh
 ./setup_host.sh
 sudo reboot
