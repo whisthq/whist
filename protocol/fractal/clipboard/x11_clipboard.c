@@ -13,6 +13,11 @@ and it returns a CLIPBOARD_FILES type, then GET_CLIPBOARD will be filled with
 symlinks to the clipboard files. When SetClipboard(cb) is called and is given a
 clipboard with a CLIPBOARD_FILES type, then the clipboard will be set to
 whatever files are in the SET_CLIPBOARD directory.
+
+TODO:
+    1. server to host works but host to server does not work
+    2. new clipboard text does not clear out old clipboard text, just overwrites up to length
+    3. file/image warnings on copying text
 */
 
 #include <X11/Xatom.h>
@@ -187,7 +192,8 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         LOG_INFO("Setting clipboard to text!");
 
         // Open up xclip
-        inp = popen(CLOSE_FDS "xclip -i -selection clipboard", "w");
+        // inp = popen(CLOSE_FDS "xclip -i -selection clipboard", "w");
+        inp = popen("xclip -i -selection clipboard", "w"); // NOTE THE REMOVAL OF CLOSE_FDS
 
         // Write text data
         fwrite(cb->data, 1, cb->size, inp);
