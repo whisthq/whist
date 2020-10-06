@@ -1,6 +1,9 @@
 #!/bin/bash
 set -Eeuo pipefail
 
+echo "================================================"
+echo "Replacing potentially outdated docker runtime..."
+echo "================================================"
 sudo apt-get remove docker docker-engine docker.io containerd runc
 sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl wget gnupg-agent software-properties-common
@@ -14,6 +17,10 @@ sudo apt-get update -y
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 sudo usermod -aG docker $USER
 
+
+echo "================================================"
+echo "Installing nvidia drivers..."
+echo "================================================"
 sudo apt-get install -y linux-headers-$(uname -r)
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
 wget https://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64/cuda-$distribution.pin
@@ -34,13 +41,21 @@ sudo apt-get update && sudo apt-get install -y --no-install-recommends --allow-d
     nvidia-modprobe=450.80.02-0ubuntu1 \
     cuda-drivers-450=450.80.02-1 \
     cuda-drivers=450.80.02-1
-sudo apt-mark hold nvidia-dkms-450
-sudo apt-mark hold nvidia-driver-450
-sudo apt-mark hold nvidia-settings
-sudo apt-mark hold nvidia-modprobe
-sudo apt-mark hold cuda-drivers-450
-sudo apt-mark hold cuda-drivers
+sudo apt-mark hold \
+    nvidia-dkms-450 \
+    nvidia-driver-450 \
+    nvidia-settings \
+    nvidia-modprobe \
+    cuda-drivers-450 \
+    cuda-drivers
 export PATH=/usr/local/cuda-11.0/bin${PATH:+:${PATH}}
+
+
+echo "================================================"
+echo "Installing nvidia-docker..."
+echo "Note that (as of 10/5/20) the URLs may still say 18.04. This is because"
+echo "NVIDIA has redirected the corresponding 20.04 URLs to the 18.04 versions."
+echo "================================================"
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
@@ -48,6 +63,10 @@ sudo apt-get update
 sudo apt-get install -y nvidia-docker2
 sudo systemctl restart docker
 
+
+echo "================================================"
+echo "Installing cmake..."
+echo "================================================"
 wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
 sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
 sudo apt-get update
@@ -55,7 +74,12 @@ sudo apt-get install -y kitware-archive-keyring
 sudo rm /etc/apt/trusted.gpg.d/kitware.gpg
 sudo apt-get install -y cmake
 
+
+echo "================================================"
+echo "Cleaning up the image a bit..."
+echo "================================================"
 sudo apt autoremove
+
 
 echo
 echo "Would you like to setup ECS? (y/n)"
@@ -100,4 +124,3 @@ fi
 echo
 echo 'Install complete. Please "sudo reboot" before continuing'
 echo
-
