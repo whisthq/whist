@@ -22,7 +22,6 @@ const UpdateScreen = (props: any) => {
         width, // for the screen
         height, // for the screen
         ip,
-        codec,
     } = props
 
     // figure out how to use useEffect
@@ -70,17 +69,7 @@ const UpdateScreen = (props: any) => {
         }
 
         var port_info = `32262:${port32262},32263:${port32263},32273:${port32273}`
-        var parameters = [
-            '-w',
-            width,
-            '-h',
-            height,
-            '-p',
-            port_info,
-            '-c',
-            codec,
-            ip,
-        ]
+        var parameters = ['-w', width, '-h', height, '-p', port_info, ip]
         console.log(`your executable path should be: ${path}`)
 
         // Starts the protocol
@@ -182,17 +171,16 @@ const UpdateScreen = (props: any) => {
 
 function mapStateToProps(state: any) {
     return {
-        os: state.MainReducer.os,
-        percentLoaded: state.MainReducer.percentLoaded,
-        status: state.MainReducer.statusMessage,
-        container_id: state.MainReducer.container_id,
-        cluster: state.MainReducer.cluster,
-        port32262: state.MainReducer.port32262,
-        port32263: state.MainReducer.port32263,
-        port32273: state.MainReducer.port32273,
-        location: state.MainReducer.location,
-        ip: state.MainReducer.ip,
-        codec: state.MainReducer.codec,
+        os: state.MainReducer.client.os,
+        percentLoaded: state.MainReducer.loading.percentLoaded,
+        status: state.MainReducer.loading.statusMessage,
+        container_id: state.MainReducer.container.ontainer_id,
+        cluster: state.MainReducer.container.cluster,
+        port32262: state.MainReducer.container.port32262,
+        port32263: state.MainReducer.container.port32263,
+        port32273: state.MainReducer.container.port32273,
+        location: state.MainReducer.container.location,
+        ip: state.MainReducer.publicIP,
     }
 }
 

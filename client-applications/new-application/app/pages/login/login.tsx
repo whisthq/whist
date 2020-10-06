@@ -17,6 +17,7 @@ import {
 
 import { FaGoogle } from 'react-icons/fa'
 
+import { updateClient } from 'store/actions/main'
 import { googleLogin, loginUser } from 'store/actions/sideEffects'
 
 import { GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI } from 'constants/config'
@@ -138,7 +139,7 @@ const Login = (props: any) => {
 
         const appVersion = require('../../package.json').version
         const os = require('os')
-        // dispatch(setOS(os.platform()))
+        dispatch(updateClient({ os: os.platform() }))
         setVersion(appVersion)
 
         storage.get('credentials', (error: any, data: any) => {
@@ -161,9 +162,6 @@ const Login = (props: any) => {
     }, [])
 
     useEffect(() => {
-        console.log('in useeffect2')
-        console.log(updatePingReceived)
-        console.log(fetchedCredentials)
         if (
             updatePingReceived &&
             fetchedCredentials &&
@@ -421,9 +419,9 @@ const Login = (props: any) => {
 
 function mapStateToProps(state: any) {
     return {
-        username: state.MainReducer.username,
-        loginWarning: state.MainReducer.loginWarning,
-        os: state.MainReducer.os,
+        username: state.MainReducer.auth.username,
+        loginWarning: state.MainReducer.auth.loginWarning,
+        os: state.MainReducer.client.os,
     }
 }
 

@@ -19,12 +19,14 @@ function* loginUser(action: any) {
             }
         )
 
+        console.log(json)
+
         if (json && json.verified) {
             yield put(
                 Action.updateAuth({
-                    accessToken: json.accessToken,
-                    refreshToken: json.refreshToken,
-                    username: json.username,
+                    accessToken: json.access_token,
+                    refreshToken: json.refresh_token,
+                    username: action.username,
                 })
             )
             yield call(fetchPaymentInfo, action)
@@ -79,7 +81,7 @@ function* fetchPaymentInfo(action: any) {
         {
             username: action.username,
         },
-        state.MainReducer.accessToken
+        state.MainReducer.auth.accessToken
     )
 
     if (json && json.accountLocked) {
@@ -92,7 +94,7 @@ function* getPromoCode(action: any) {
     const { json } = yield call(
         apiGet,
         `${config.url.PRIMARY_SERVER}/account/code?username=${action.username}`,
-        state.MainReducer.accessToken
+        state.MainReducer.auth.accessToken
     )
 
     console.log(json)
@@ -104,31 +106,32 @@ function* getPromoCode(action: any) {
 
 function* fetchContainer(action: any) {
     const state = yield select()
-    const username = state.MainReducer.username
+    const username = state.MainReducer.auth.username
     const app = 'test'
+    console.log(username)
     var { json, response } = yield call(
         apiPost,
         `${config.url.PRIMARY_SERVER}/container/create`,
         { username: username, app: app },
-        state.MainReducer.accessToken
+        state.MainReducer.auth.accessToken
     )
     // var { json, response } = yield call(
     //     apiGet,
     //     `${config.url.PRIMARY_SERVER}/dummy`,
-    //     state.MainReducer.accessToken
+    //     state.MainReducer.auth.accessToken
     // )
 
     const id = json.ID
     var { json, response } = yield call(
         apiGet,
         `${config.url.PRIMARY_SERVER}/status/` + id,
-        state.MainReducer.accessToken
+        state.MainReducer.auth.accessToken
     )
     while (json.state !== 'SUCCESS' && json.state !== 'FAILURE') {
         var { json, response } = yield call(
             apiGet,
             `${config.url.PRIMARY_SERVER}/status/` + id,
-            state.MainReducer.accessToken
+            state.MainReducer.auth.accessToken
         )
         console.log(json)
 
@@ -240,7 +243,7 @@ function* deleteContainer(action: any) {
         apiPost,
         `${config.url.PRIMARY_SERVER}/container/delete`,
         { username: action.username, container_id: action.container_id },
-        state.MainReducer.accessToken
+        state.MainReducer.auth.accessToken
     )
     yield put(
         Action.updateLoading({
@@ -253,14 +256,14 @@ function* deleteContainer(action: any) {
     var { json, response } = yield call(
         apiGet,
         `${config.url.PRIMARY_SERVER}/status/` + id,
-        state.MainReducer.accessToken
+        state.MainReducer.auth.accessToken
     )
 
     while (json.state !== 'SUCCESS' && json.state !== 'FAILURE') {
         var { json, response } = yield call(
             apiGet,
             `${config.url.PRIMARY_SERVER}/status/` + id,
-            state.MainReducer.accessToken
+            state.MainReducer.auth.accessToken
         )
 
         if (response && response.status && response.status === 500) {

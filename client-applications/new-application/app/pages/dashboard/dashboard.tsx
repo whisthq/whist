@@ -35,7 +35,7 @@ const Dashboard = (props: any) => {
 }
 
 const mapStateToProps = (state: any) => {
-    return { username: state.MainReducer.username }
+    return { username: state.MainReducer.auth.username }
 }
 
 export default connect(mapStateToProps)(Dashboard)
