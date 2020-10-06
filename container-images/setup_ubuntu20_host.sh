@@ -1,6 +1,13 @@
 #!/bin/bash
 set -Eeuo pipefail
 
+# If we run this script as root, then the "ubuntu"/default user will not be
+# added to the "docker" group, only root will.
+if [ "$EUID" -eq 0 ]
+    then echo "Do not run this script as root!"
+    exit
+fi
+
 echo "================================================"
 echo "Replacing potentially outdated docker runtime..."
 echo "================================================"
