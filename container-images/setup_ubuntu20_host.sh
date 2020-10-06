@@ -19,7 +19,7 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 
 # Docker group might already exist, so we allow failure with "||:"
 sudo groupadd docker ||:
-sudo usermod -aG docker $USER
+sudo gpasswd -a $USER docker
 
 
 echo "================================================"
