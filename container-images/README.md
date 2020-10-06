@@ -28,13 +28,13 @@ git clone --recurse-submodules --branch $your-container-images-branch git@github
 Then, setup on your EC2 instance with the setup scripts:
 
 ```
-./setup.sh
+./setup_ubuntu20_host.sh
 ```
 
 Which will begin installing all dependencies and configuration. It will also ask if you want to connect your EC2 instance to an ECS cluster, which you may respond yes or no to. After the setup scripts run, you must `sudo reboot` for docker to work currently. After rebooting, you may finally run
 
 ```
-./build.sh base 18 && ./run.sh base 18
+./build_protocol.sh && ./build_container_image.sh base && ./run_container_image.sh base
 ```
 
 ## Development
@@ -68,7 +68,8 @@ To publish, you first need to tag your Dockerfile before logging in and pushing 
 
 ```
 # Tag
-docker tag base-systemd-18:latest .dkr.ecr.us-east-2.amazonaws.com/fractal-containers:latest
+(NOTE [savvy]: This seems out of date, even after replacing 18 with 20? I thought we used commits, not tags? TODO)
+docker tag base-systemd-20:latest .dkr.ecr.us-east-2.amazonaws.com/fractal-containers:latest
 
 # Login
 aws ecr get-login-password  --region us-east-2 | docker login --username AWS --password-stdin 747391415460.dkr.ecr.us-east-2.amazonaws.com
