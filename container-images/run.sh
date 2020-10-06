@@ -44,9 +44,9 @@ runcontainer (){
 
 container_id=$(runcontainer $1 20)
 
-echo "Running container with IP: $container_id"
+echo "Running container with ID: $container_id"
 ipaddr=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $container_id)
-echo "Container is running with IP address $ipaddr"
+echo "Container is running with local IP address $ipaddr"
 docker exec -it $container_id /bin/bash
 docker kill $container_id
 docker rm $container_id
