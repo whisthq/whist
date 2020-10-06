@@ -1,10 +1,8 @@
 export const DEFAULT = {
     auth: {
         username: null,
-        accessToken:
-            'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDEwNzM1MjksIm5iZiI6MTYwMTA3MzUyOSwianRpIjoiMTc3MjBiNmMtMTNjOS00OWE0LWI1ZDItZTZhMjU2Y2Y5OTQ0IiwiaWRlbnRpdHkiOiJmcmFjdGFsLWFkbWluQGdtYWlsLmNvbSIsImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyJ9.Fghwlh8_BaSiz1iVAxprbhRW2B_0aeydDZSHjN2ecqs',
-        refreshToken:
-            'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDEwNzM1MjksIm5iZiI6MTYwMTA3MzUyOSwianRpIjoiOWFmMmFiMmItMDk0OC00YTc3LTg1MjMtYTdhYTJmZGE3NmJhIiwiaWRlbnRpdHkiOiJmcmFjdGFsLWFkbWluQGdtYWlsLmNvbSIsInR5cGUiOiJyZWZyZXNoIn0.Ov_fWVh5020bjyO9YoA9bbftWJNvBzvTg00LUEf4rw4',
+        accessToken: null,
+        refreshToken: null,
         loginWarning: false,
     },
     container: {
