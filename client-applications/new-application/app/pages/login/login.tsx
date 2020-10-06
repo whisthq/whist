@@ -197,7 +197,7 @@ const Login = (props: any) => {
                 <div className={styles.macTitleBar} />
             )}
             {live ? (
-                <div>
+                <div className={styles.removeDrag}>
                     <div className={styles.landingHeader}>
                         <div className={styles.landingHeaderLeft}>
                             <span className={styles.logoTitle}>Fractal</span>
