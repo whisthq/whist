@@ -2,7 +2,7 @@ from app.constants.http_codes import NOT_FOUND, SUCCESS
 from app.models.hardware import UserContainer
 
 
-def protocol_info(address, port_32262, port_32263, port_32273):
+def protocol_info(address, port):
     """Returns information, which is consumed by the protocol, to the client.
 
     Arguments:
@@ -11,9 +11,7 @@ def protocol_info(address, port_32262, port_32263, port_32273):
     """
 
     response = None, NOT_FOUND
-    container = UserContainer.query.filter_by(
-        ip=address, port_32262=port_32262, port_32263=port_32263, port_32273=port_32273
-    ).first()
+    container = UserContainer.query.filter_by(ip=address, port_32262=port).first()
 
     if container:
         response = (

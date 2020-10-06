@@ -11,12 +11,10 @@ from app.models.logs import LoginHistory
 
 
 @celery_instance.task
-def pingHelper(available, container_ip, port_32262, port_32263, port_32273, version=None):
+def pingHelper(available, container_ip, port_32262, version=None):
     """Stores ping timestamps in the v_ms table and tracks number of hours used
 
     Args:
-        port_32273(int): the port corresponding to port 32273
-        port_32263(int): the port corresponding to port 32263
         port_32262(int): the port corresponding to port 32262
         available (bool): True if Container is not being used, False otherwise
         container_ip (str): Container IP address
@@ -27,9 +25,7 @@ def pingHelper(available, container_ip, port_32262, port_32263, port_32273, vers
 
     # Retrieve Container data based on Container IP
 
-    container_info = UserContainer.query.filter_by(
-        ip=container_ip, port_32262=port_32262, port_32263=port_32263, port_32273=port_32273
-    ).first()
+    container_info = UserContainer.query.filter_by(ip=container_ip, port_32262=port_32262).first()
 
     if container_info:
         username = container_info.user_id

@@ -66,7 +66,7 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["use_launch_type"],
             kwargs["body"]["network_configuration"],
         )
-        region_name = region_name if region_name else get_loc_from_ip(kwargs['received_from'])
+        region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
         task = create_new_container.apply_async(
             [
                 username,
@@ -102,10 +102,8 @@ def test_endpoint(action, **kwargs):
 def aws_container_info(**kwargs):
     body = kwargs.pop("body")
     address = kwargs.pop("received_from")
-    port_32262 = body.pop("port_32262")
-    port_32263 = body.pop("port_32263")
-    port_32273 = body.pop("port_32273")
-    info, status = protocol_info(address, port_32262, port_32263, port_32273)
+    port_32262 = body.pop("port")
+    info, status = protocol_info(address, port_32262)
 
     if info:
         response = jsonify(info), status
@@ -123,14 +121,12 @@ def aws_container_ping(**kwargs):
 
     try:
         available = body.pop("available")
-        port_32262 = body.pop("port_32262")
-        port_32263 = body.pop("port_32263")
-        port_32273 = body.pop("port_32273")
+        port_32262 = body.pop("port")
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
         # Update container status.
-        status = pingHelper.delay(available, address, port_32262, port_32263, port_32273)
+        status = pingHelper.delay(available, address, port_32262)
         response = jsonify(status), status["status"]
 
     return response
