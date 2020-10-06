@@ -17,7 +17,7 @@ import {
 
 import { FaGoogle } from 'react-icons/fa'
 
-import { updateClient } from 'store/actions/main'
+import { updateClient } from 'store/actions/pure'
 import { googleLogin, loginUser } from 'store/actions/sideEffects'
 
 import { GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI } from 'constants/config'
@@ -124,15 +124,10 @@ const Login = (props: any) => {
     }
 
     useEffect(() => {
-        console.log('username')
-        console.log(username)
-        console.log(loggingIn)
         const ipc = require('electron').ipcRenderer
         const storage = require('electron-json-storage')
 
         ipc.on('update', (_: any, update: any) => {
-            console.log('received update')
-            console.log(update)
             setUpdatePingReceived(true)
             setNeedsAutoupdate(update)
         })

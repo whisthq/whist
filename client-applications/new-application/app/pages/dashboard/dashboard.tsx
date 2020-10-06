@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { history } from 'store/configureStore'
 import styles from 'styles/dashboard.css'
 
-import { resetState } from 'store/actions/main'
+import { resetState } from 'store/actions/pure'
 
 const Dashboard = (props: any) => {
     const { dispatch, username } = props
@@ -11,7 +11,7 @@ const Dashboard = (props: any) => {
     const handleSignout = () => {
         const storage = require('electron-json-storage')
         storage.set('credentials', { username: '', password: '' })
-        dispatch(restState())
+        dispatch(resetState())
         history.push('/')
     }
 
