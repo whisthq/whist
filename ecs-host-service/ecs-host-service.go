@@ -92,6 +92,9 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, p
 	// Write the tty assignment to a file
 	writeAssignmentToFile(datadir+"tty", fmt.Sprintf("%d\n", assigned_tty))
 
+	// Indicate that we are ready for the container to read the data back
+	writeAssignmentToFile(datadir+".ready", " ")
+
 	return nil
 }
 
@@ -104,11 +107,6 @@ func containerStopHandler(ctx context.Context, cli *client.Client, id string, po
 		panic(err)
 	}
 
-	// Delete the tty assignment file and mark it as unused
-	if err := os.Remove(datadir + "tty"); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to delete container-specific tty assignment file %s\n", datadir+"tty")
-		panic(err)
-	}
 	for tty := range ttyState {
 		if ttyState[tty] == id {
 			ttyState[tty] = ""
