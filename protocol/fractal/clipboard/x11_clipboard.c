@@ -186,15 +186,12 @@ void unsafe_SetClipboard(ClipboardData* cb) {
     // folders should not be symlinks, simply assume that they will never be
     // symlinks
     //
+    // TODO: set up image and file clipboard, likely using fork/exec instead of popen
 
     if (cb->type == CLIPBOARD_TEXT) {
         LOG_INFO("Setting clipboard to text!");
 
-        // Open up xclip
-        //inp = popen("xclip -i -selection clipboard", "w");
-        //system("echo hello | xclip -i -selection clipboard");
-
-        // spawn a child process to set clipboard via xclip
+        // Spawn a child process to set clipboard via xclip
         pid_t pid = -1;
         int pipefd[2];
 
@@ -202,6 +199,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         pid = fork();
         if (pid == -1) {
             LOG_ERROR("clipboard fork failed errno %d", errno);
+            return;
         } else if (pid == 0) { // in child
             close(pipefd[1]);
             dup2(pipefd[0], STDIN_FILENO);
@@ -211,22 +209,20 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         } else { // in parent
             close(pipefd[0]);
             inp = fdopen(pipefd[1], "w");
-            if (inp == NULL) LOG_ERROR("clipboard fdopen parent write end failed errno %d", errno);
+            if (inp == NULL) {
+                LOG_ERROR("clipboard fdopen parent write end failed errno %d", errno)
+                return;
+            }
 
+            // Write text data to xclip
             size_t wr;
-            LOG_INFO("last character of clipboard data is %d", cb->data[cb->size-1]);
             if ((wr = fwrite(cb->data, 1, cb->size, inp)) < (size_t)cb->size) {
-                LOG_ERROR("clipboard fwrite wrote %d < cb->size %d", wr, cb->size);
+                LOG_WARNING("clipboard fwrite wrote %d < cb->size %d", wr, cb->size);
             }
             fclose(inp);
             close(pipefd[1]);
         }
 
-        // Write text data
-        // fwrite(cb->data, 1, cb->size, inp);
-
-        // Close pipe
-        // pclose(inp);
     } else if (cb->type == CLIPBOARD_IMAGE) {
         LOG_INFO("Setting clipboard to image!");
 
