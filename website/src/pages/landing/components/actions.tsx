@@ -10,7 +10,7 @@ import { db } from "shared/utils/firebase"
 
 import { REFERRAL_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
-import { config } from "constants/config"
+import { config } from "shared/constants/config"
 
 const CustomAction = (props: { onClick: any; text: any; points: number }) => {
     const { onClick, text, points } = props

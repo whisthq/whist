@@ -2,20 +2,22 @@ const development = {
     url: {
         PRIMARY_SERVER: "http://localhost:7300",
         FRONTEND_URL: "http://localhost:3000",
+        GRAPHQL_SERVER: "https://staging-database.tryfractal.com"
     },
-    stripe: {
-        PUBLIC_KEY: "pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb",
+    keys: {
+        STRIPE_PUBLIC_KEY: "pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb",
     },
     sentry_env: "development",
 }
 
 const production = {
     url: {
-        PRIMARY_SERVER: "https://main-webserver.fractalcomputers.com",
+        PRIMARY_SERVER: "https://main-webserver.tryfractal.com",
         FRONTEND_URL: "https://tryfractal.com",
+        GRAPHQL_SERVER: "https://prod-database.tryfractal.com"
     },
-    stripe: {
-        PUBLIC_KEY: "pk_live_XLjiiZB93KN0EjY8hwCxvKmB00whKEIj3U",
+    keys: {
+        STRIPE_PUBLIC_KEY: "pk_live_XLjiiZB93KN0EjY8hwCxvKmB00whKEIj3U",
     },
     sentry_env: "production",
 }

@@ -15,7 +15,7 @@ import * as Sentry from "@sentry/react"
 
 import history from "shared/utils/history"
 import { MainProvider } from "shared/context/mainContext"
-import { config } from "constants/config"
+import { config } from "shared/constants/config"
 import rootReducer from "store/reducers/root"
 import * as serviceWorker from "serviceWorker"
 
