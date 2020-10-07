@@ -81,6 +81,18 @@ button {
     width: 300px;
 }
 
+.processingButton {
+    font-family: 'Maven Pro';
+    font-weight: bold;
+    padding: 12px 30px;
+    font-size: 15px;
+    color: black;
+    margin-left: 0px;
+    width: 300px;
+    background: #93f1d9;
+    border: solid 0.8px #93f1d9;
+}
+
 .googleButton {
     border: none;
     color: white;
@@ -285,4 +297,53 @@ input.inputBox::placeholder {
     height: 6px;
     background: #93f1d9;
     border-radius: 5px;
+}
+
+.figma {
+    position: absolute;
+    left: 10px;
+    top: 80px;
+    height: 170px;
+}
+
+.chrome {
+    position: absolute;
+    left: 120px;
+    top: 270px;
+    height: 180px;
+}
+
+.vscode {
+    position: absolute;
+    left: -10px;
+    top: 500px;
+    height: 120px;
+}
+
+.blender {
+    position: absolute;
+    left: 820px;
+    top: 80px;
+    height: 170px;
+}
+
+.slack {
+    position: absolute;
+    left: 720px;
+    top: 220px;
+    height: 160px;
+}
+
+.photoshop {
+    position: absolute;
+    left: 670px;
+    top: 420px;
+    height: 110px;
+}
+
+.maya {
+    position: absolute;
+    left: 730px;
+    top: 560px;
+    height: 160px;
 }

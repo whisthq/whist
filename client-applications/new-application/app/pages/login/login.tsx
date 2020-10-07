@@ -4,8 +4,13 @@ import { connect } from 'react-redux'
 import styles from 'styles/login.css'
 import Titlebar from 'react-electron-titlebar'
 import { parse } from 'url'
-import Background from 'assets/images/background.jpg'
-import Logo from 'assets/images/logo.svg'
+import Blender from 'assets/images/login/blender.svg'
+import Chrome from 'assets/images/login/chrome.svg'
+import Figma from 'assets/images/login/figma.svg'
+import Maya from 'assets/images/login/maya.svg'
+import Photoshop from 'assets/images/login/photoshop.svg'
+import Slack from 'assets/images/login/slack.svg'
+import VSCode from 'assets/images/login/vscode.svg'
 import UpdateScreen from 'pages/dashboard/components/update'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -208,6 +213,13 @@ const Login = (props: any) => {
                     </div>
                     <div style={{ marginTop: warning ? 0 : 50 }}>
                         <div className={styles.loginContainer}>
+                            <img src={Figma} className={styles.figma} />
+                            <img src={Chrome} className={styles.chrome} />
+                            <img src={VSCode} className={styles.vscode} />
+                            <img src={Blender} className={styles.blender} />
+                            <img src={Slack} className={styles.slack} />
+                            <img src={Photoshop} className={styles.photoshop} />
+                            <img src={Maya} className={styles.maya} />
                             <div className={styles.welcomeBack}>
                                 Welcome Back!
                             </div>
@@ -263,7 +275,7 @@ const Login = (props: any) => {
                                 {loggingIn && !warning ? (
                                     <button
                                         type="button"
-                                        className={styles.loginButton}
+                                        className={styles.processingButton}
                                         id="login-button"
                                         style={{
                                             opacity: 0.6,

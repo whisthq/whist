@@ -25,7 +25,7 @@ const staging = {
 
 const development = {
     url: {
-        PRIMARY_SERVER: 'http://127.0.0.1:7730',
+        PRIMARY_SERVER: 'http://main-webserver-br-dev.herokuapp.com/',
     },
     stripe: {
         PUBLIC_KEY: 'pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb',
