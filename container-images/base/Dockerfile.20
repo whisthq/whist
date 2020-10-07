@@ -176,7 +176,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     libfido2-1 \
     libgbm1 \
     libxcb-dri3-0 \
-#    python3.8 \
+    #    python3.8 \
     sudo \
     less \
     vim \
@@ -186,36 +186,34 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get autoremove -y \
     && apt-get clean
 
-# Install Google Chrome dependencies explicitly
+# Install xterm dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    libappindicator3-1 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libatspi2.0-0 \
-    libcups2 \
-    libgdk-pixbuf2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxi6 \
-    fonts-liberation \
-    xdg-utils \
+    libc6 \
+    libfontconfig1 \
+    libfreetype6 \
+    libice6 \
+    libtinfo6 \
+    libutempter0 \
+    libx11-6 \
+    libxaw7 \
+    libxext6 \
+    libxft2 \
+    libxinerama1 \
+    libxmu6 \
+    libxpm4 \
+    libxt6 \
+    xbitmaps \
+    x11-utils \
     && apt-get autoremove -y \
     && apt-get clean
 
-# Install Google Chrome
+# Install xterm
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
-RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
-    && sed -i '3 s/^/# /' /etc/apt/sources.list \
-    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    xterm \
     && apt-get autoremove -y \
     && apt-get clean
 
@@ -460,5 +458,6 @@ RUN ln -s /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 # Grab pre-compiled Fractal Protocol
 COPY protocol/server/build64/libsentry.so /usr/share/fractal/bin/libsentry.so
 COPY protocol/server/build64/FractalServer /usr/share/fractal/bin/FractalServer
+
 
 CMD ["/lib/systemd/systemd"]
