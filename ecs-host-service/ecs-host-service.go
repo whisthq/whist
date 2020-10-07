@@ -66,6 +66,8 @@ func writeAssignmentToFile(filename, data string) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Couldn't write to file %s", filename)
 		panic(err)
+	} else {
+		fmt.Printf("Wrote data %s to file %s\n", data, filename)
 	}
 }
 
@@ -76,6 +78,8 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create container-specific directory %s\n", datadir)
 		panic(err)
+	} else {
+		fmt.Printf("Created container-specific directory %s\n", datadir)
 	}
 
 	c, err := cli.ContainerInspect(ctx, id)
