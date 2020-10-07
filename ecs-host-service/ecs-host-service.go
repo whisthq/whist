@@ -114,7 +114,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 	return nil
 }
 
-func containerStopHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) error {
+func containerDieHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) error {
 	// Delete the container-specific data directory we used
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.RemoveAll(datadir)
@@ -166,13 +166,13 @@ loop:
 			}
 			break loop
 		case event := <-events:
-			if event.Action == "stop" {
-				containerStopHandler(ctx, cli, event.ID, &ttyState)
+			if event.Action == "die" {
+				containerDieHandler(ctx, cli, event.ID, &ttyState)
 			}
 			if event.Action == "start" {
 				containerStartHandler(ctx, cli, event.ID, &ttyState)
 			}
-			if event.Action == "stop" || event.Action == "start" {
+			if event.Action == "die" || event.Action == "start" {
 				fmt.Printf("%s %s %s\n", event.Type, event.ID, event.Action)
 				for tty, id := range ttyState {
 					if id != "" {
