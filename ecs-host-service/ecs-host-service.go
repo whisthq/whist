@@ -11,12 +11,12 @@ import (
 	"github.com/docker/docker/client"
 )
 
-func containerStartHandler(ctx context.Context, cli *client.Client, id string, portMap map[string]map[string]string, ttyState *[64]string) error {
-
+func containerStartHandler(ctx context.Context, cli *client.Client, id string, portMap map[string]map[string]string, ttyState *[256]string) error {
 	// Assign an unused tty
 	for tty := range ttyState {
 		if ttyState[tty] == "" {
 			ttyState[tty] = id
+
 			// write to fs to add pair (tty, id)
 			break
 		}
@@ -25,7 +25,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, p
 	return nil
 }
 
-func containerStopHandler(ctx context.Context, cli *client.Client, id string, portMap map[string]map[string]string, ttyState *[64]string) error {
+func containerStopHandler(ctx context.Context, cli *client.Client, id string, portMap map[string]map[string]string, ttyState *[256]string) error {
 	for tty := range ttyState {
 		if ttyState[tty] == id {
 			ttyState[tty] = ""
@@ -55,7 +55,8 @@ func main() {
 
 	// reserve the first 10 TTYs for the host system
 	const r = "reserved"
-	ttyState := [64]string{r, r, r, r, r, r, r, r, r, r}
+	ttyState := [256]string{r, r, r, r, r, r, r, r, r, r}
+
 loop:
 	for {
 		select {
