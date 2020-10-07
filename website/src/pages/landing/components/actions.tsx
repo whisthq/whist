@@ -115,7 +115,7 @@ const Actions = (props: {
                     <div>
                         Want to move up the waitlist? Refer a friend by sending
                         them your referral code. Once they join and enter your
-                        referral code, you'll receive 100 points!
+                        referral code, you'll receive 300 points!
                     </div>
                     <br />
                     <div

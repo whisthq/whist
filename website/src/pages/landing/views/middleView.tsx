@@ -39,7 +39,7 @@ const MiddleView = (props: any) => {
                     <Testimonial
                         invert
                         text="Woah! What you've developed is something I've been dreaming of for years now... this is a MASSIVE game changer for people that do the kind of work that I do."
-                        name="Brian H."
+                        name="Bert K."
                         job="Animator + Graphics Designer"
                     />
                 </Col>
@@ -54,7 +54,7 @@ const MiddleView = (props: any) => {
                     <Testimonial
                         title="Fractal helps Jonathan run Google Chrome with less RAM."
                         text="[Fractal] is an immense project with a fantastic amount of potential. Now my computer doesn't slow down when I have too many apps open."
-                        name="Jonathan O."
+                        name="Christina I."
                         job="Software Developer"
                     />
                 </Col>
@@ -69,8 +69,8 @@ const MiddleView = (props: any) => {
                     <Testimonial
                         invert
                         text="AMAZING ... tried Figma - it was buttery smooth with almost no detectable latency. Never thought it would work this well."
-                        name="Sean S."
-                        job="Graphic Designer"
+                        name="Ananya P."
+                        job="Graphics Designer"
                     />
                 </Col>
             </Row>
