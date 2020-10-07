@@ -9,6 +9,7 @@ import Tina from "assets/teamPhotos/tina.svg"
 import Savvy from "assets/teamPhotos/savvy.svg"
 import Owen from "assets/teamPhotos/owen.svg"
 import Cidney from "assets/teamPhotos/cidney.svg"
+import Suriya from "assets/teamPhotos/suriya.svg"
 
 export const teamData = [
     {
@@ -77,4 +78,9 @@ export const teamData = [
         text:
             "Cidney studies EECS at UC Berkeley. She specializes in full stack development, and loves hiking, cooking, and playing ultimate frisbee outside of work.",
     },
+    {
+        image: Suriya,
+        name: "Suriya Kandaswamy",
+        text: "Prior to Fractal, Suriya worked at a few startups and BCG. She studied Computer Science at Harvard, where she was on teaching staff for the intro systems course and did her senior thesis on sports analytics, using graph theory to characterize professional soccer team strategy."
+    }
 ]
