@@ -12,16 +12,6 @@ import (
 )
 
 func containerStartHandler(ctx context.Context, cli *client.Client, id string, portMap map[string]map[string]string, ttyState *[64]string) error {
-	// c, err := cli.ContainerInspect(ctx, id)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// for containerPort, hosts := range c.NetworkSettings.Ports {
-	// 	for _, host := range hosts {
-	// 		portMap[id][containerPort.Port()] = host.HostPort
-	// 	}
-	// }
 
 	for tty := range ttyState {
 		if ttyState[tty] == "" {
