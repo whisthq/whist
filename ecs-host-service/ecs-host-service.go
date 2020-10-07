@@ -13,6 +13,7 @@ import (
 
 func containerStartHandler(ctx context.Context, cli *client.Client, id string, portMap map[string]map[string]string, ttyState *[64]string) error {
 
+	// Assign an unused tty
 	for tty := range ttyState {
 		if ttyState[tty] == "" {
 			ttyState[tty] = id
@@ -51,6 +52,8 @@ func main() {
 
 	events, errs := cli.Events(context.Background(), eventOptions)
 	portMap := make(map[string]map[string]string)
+
+	// reserve the first 10 TTYs for the host system
 	const r = "reserved"
 	ttyState := [64]string{r, r, r, r, r, r, r, r, r, r}
 loop:
