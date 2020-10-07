@@ -122,7 +122,8 @@ ClipboardData* unsafe_GetClipboard() {
     } else if (clipboardHasString) {
         // get the string
         const char* clipboard_string = ClipboardGetString();
-        int data_size = strlen(clipboard_string) + 1;  // for null terminator
+        // int data_size = strlen(clipboard_string) + 1;  // for null terminator
+        int data_size = strlen(clipboard_string);
         // copy the data
         if ((unsigned long)data_size < sizeof(clipboard_buf)) {
             cb->size = data_size;

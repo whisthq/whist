@@ -192,14 +192,42 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         LOG_INFO("Setting clipboard to text!");
 
         // Open up xclip
-        // inp = popen(CLOSE_FDS "xclip -i -selection clipboard", "w");
-        inp = popen("xclip -i -selection clipboard", "w"); // NOTE THE REMOVAL OF CLOSE_FDS
+        //inp = popen("xclip -i -selection clipboard", "w");
+        //system("echo hello | xclip -i -selection clipboard");
+
+        // spawn a child process to set clipboard via xclip
+        pid_t pid = -1;
+        int pipefd[2];
+
+        pipe(pipefd);
+        pid = fork();
+        if (pid == -1) {
+            LOG_ERROR("clipboard fork failed errno %d", errno);
+        } else if (pid == 0) { // in child
+            close(pipefd[1]);
+            dup2(pipefd[0], STDIN_FILENO);
+            execlp("/usr/bin/xclip", "xclip", "-i", "-selection", "clipboard", (char*)NULL);
+            LOG_ERROR("clipboard xclip exec failed");
+            _exit(0); // should only reach here if exec failed
+        } else { // in parent
+            close(pipefd[0]);
+            inp = fdopen(pipefd[1], "w");
+            if (inp == NULL) LOG_ERROR("clipboard fdopen parent write end failed errno %d", errno);
+
+            size_t wr;
+            LOG_INFO("last character of clipboard data is %d", cb->data[cb->size-1]);
+            if ((wr = fwrite(cb->data, 1, cb->size, inp)) < cb->size) {
+                LOG_ERROR("clipboard fwrite wrote %d < cb->size %d", wr, cb->size);
+            }
+            fclose(inp);
+            close(pipefd[1]);
+        }
 
         // Write text data
-        fwrite(cb->data, 1, cb->size, inp);
+        // fwrite(cb->data, 1, cb->size, inp);
 
         // Close pipe
-        pclose(inp);
+        // pclose(inp);
     } else if (cb->type == CLIPBOARD_IMAGE) {
         LOG_INFO("Setting clipboard to image!");
 
