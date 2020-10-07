@@ -114,7 +114,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 	}
 
 	// Write the tty assignment to a file
-	writeAssignmentToFile(datadir+"tty", fmt.Sprintf("%d\n", assigned_tty))
+	writeAssignmentToFile(datadir+"tty", fmt.Sprintf("%d", assigned_tty))
 
 	// Indicate that we are ready for the container to read the data back
 	writeAssignmentToFile(datadir+".ready", " ")
