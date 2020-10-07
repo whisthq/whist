@@ -67,7 +67,7 @@ func writeAssignmentToFile(filename, data string) {
 	}
 }
 
-func containerStartHandler(ctx context.Context, cli *client.Client, id string, portMap map[string]map[string]string, ttyState *[256]string) error {
+func containerStartHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) error {
 	// Create a container-specific directory to store mappings
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.Mkdir(datadir, 0644|os.ModeSticky)
@@ -98,7 +98,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, p
 	return nil
 }
 
-func containerStopHandler(ctx context.Context, cli *client.Client, id string, portMap map[string]map[string]string, ttyState *[256]string) error {
+func containerStopHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) error {
 	// Delete the container-specific data directory we used
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.RemoveAll(datadir)
@@ -112,7 +112,6 @@ func containerStopHandler(ctx context.Context, cli *client.Client, id string, po
 			ttyState[tty] = ""
 		}
 	}
-	// delete(portMap, id)
 	return nil
 }
 
@@ -137,7 +136,6 @@ func main() {
 	}
 
 	events, errs := cli.Events(context.Background(), eventOptions)
-	portMap := make(map[string]map[string]string)
 
 	// reserve the first 10 TTYs for the host system
 	const r = "reserved"
@@ -153,10 +151,10 @@ loop:
 			break loop
 		case event := <-events:
 			if event.Action == "stop" {
-				containerStopHandler(ctx, cli, event.ID, portMap, &ttyState)
+				containerStopHandler(ctx, cli, event.ID, &ttyState)
 			}
 			if event.Action == "start" {
-				containerStartHandler(ctx, cli, event.ID, portMap, &ttyState)
+				containerStartHandler(ctx, cli, event.ID, &ttyState)
 			}
 			if event.Action == "stop" || event.Action == "start" {
 				fmt.Printf("%s %s %s\n", event.Type, event.ID, event.Action)
