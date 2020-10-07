@@ -51,6 +51,8 @@ func uninitializeFilesystem() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to delete directory %s\n", resourceMappingDirectory)
 		panic(err)
+	} else {
+		fmt.Printf("Successfully deleted directory %s\n", resourceMappingDirectory)
 	}
 }
 
@@ -125,6 +127,8 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string, tty
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to delete container-specific directory %s\n", datadir)
 		panic(err)
+	} else {
+		fmt.Printf("Successfully deleted container-specific directory %s\n", datadir)
 	}
 
 	for tty := range ttyState {
