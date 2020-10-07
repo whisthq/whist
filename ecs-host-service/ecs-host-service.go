@@ -53,6 +53,14 @@ func uninitializeFilesystem() {
 }
 
 func containerStartHandler(ctx context.Context, cli *client.Client, id string, portMap map[string]map[string]string, ttyState *[256]string) error {
+	// Create a container-specific directory to store mappings
+	datadir := resourceMappingDirectory + "/" + id
+	err := os.Mkdir(datadir, 0644|os.ModeSticky)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create container-specific directory %s", datadir)
+		panic(err)
+	}
+
 	// Assign an unused tty
 	for tty := range ttyState {
 		if ttyState[tty] == "" {
@@ -67,6 +75,14 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, p
 }
 
 func containerStopHandler(ctx context.Context, cli *client.Client, id string, portMap map[string]map[string]string, ttyState *[256]string) error {
+	// Delete the container-specific data directory we used
+	datadir := resourceMappingDirectory + "/" + id
+	err := os.RemoveAll(datadir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to delete container-specific directory %s", datadir)
+		panic(err)
+	}
+
 	for tty := range ttyState {
 		if ttyState[tty] == id {
 			ttyState[tty] = ""
