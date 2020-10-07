@@ -172,8 +172,17 @@ void unsafe_SetClipboard(ClipboardData* cb) {
     // check the type of the data
     switch (cb->type) {
         case CLIPBOARD_TEXT:
-            LOG_INFO("SetClipboard to Text: %s", cb->data);
-            ClipboardSetString(cb->data);
+            // Since Objective-C clipboard string pasting does not take
+            //   string size as an argument, and pastes until null character,
+            //   must malloc string to end with null character to be pasted.
+            //   This means null characters cannot be within the string being
+            //   pasted.
+            char* string_data = malloc(cb->size + 1);
+            memset(string_data, 0, cb->size + 1);
+            memcpy(string_data, cb->data, cb->size);
+            LOG_INFO("SetClipboard to Text: %s", string_data);
+            ClipboardSetString(string_data);
+            free(string_data);
             break;
         case CLIPBOARD_IMAGE:
             LOG_INFO("SetClipboard to Image with size %d", cb->size);

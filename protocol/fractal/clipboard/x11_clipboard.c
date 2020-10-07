@@ -13,12 +13,6 @@ and it returns a CLIPBOARD_FILES type, then GET_CLIPBOARD will be filled with
 symlinks to the clipboard files. When SetClipboard(cb) is called and is given a
 clipboard with a CLIPBOARD_FILES type, then the clipboard will be set to
 whatever files are in the SET_CLIPBOARD directory.
-
-TODO:
-    1. server to host works but host to server does not work (DONE)
-    2. new clipboard text does not clear out old clipboard text (turns out to be some unison command text), just overwrites up to length
-    3. file/image warnings on copying text
-    4. host clipboard doesn't work when connected to client (DONE)
 */
 
 #include <X11/Xatom.h>
@@ -113,7 +107,7 @@ bool get_clipboard_string(ClipboardData* cb) {
         cb->type = CLIPBOARD_TEXT;
         return true;
     } else {  // request failed, e.g. owner can't convert to the target format
-        LOG_WARNING("Can't convert clipboard image to target format");
+        LOG_WARNING("Can't convert clipboard string to target format");
         return false;
     }
 }
