@@ -76,6 +76,22 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 		panic(err)
 	}
 
+	c, err := cli.ContainerInspect(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+
+	// Keep track of port mapping
+	// We only need to keep track of the mapping of the container's tcp 32262 on the host
+	host_port, exists := c.NetworkSettings.Ports["32262/tcp"]
+	if !exists {
+		panic(fmt.Sprintf("Could not find mapping for port 32262/tcp for container %s", id))
+	}
+	if len(host_port) != 1 {
+		panic(fmt.Sprintf("The host_port mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", host_port))
+	}
+	writeAssignmentToFile(datadir+"host_port_for_my_32262_tcp", host_port[0].HostPort)
+
 	// Assign an unused tty
 	assigned_tty := -1
 	for tty := range ttyState {
