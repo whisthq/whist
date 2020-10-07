@@ -19,9 +19,11 @@ clean:
 	$(GOCLEAN)
 	rm -rf $(BUILD_FOLDER)
 
-run:
+run: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME)...)
-	@$(GORUN) ecs-host-service.go
+# we run the built binary instead of using `go run` because otherwise signal
+# handling for Ctrl+C does not work
+	sudo env PATH=$PATH $(BUILD_FOLDER)/$(BINARY_NAME)
 
 deps:
 	$(GOGET) github.com/docker/docker@v19.03.13

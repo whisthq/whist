@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
@@ -138,6 +140,16 @@ func main() {
 	// still clean up
 	initializeFilesystem()
 	defer uninitializeFilesystem()
+
+	// Register a signal handler for Ctrl-C so that we still cleanup if Ctrl-C is pressed
+	sig_chan := make(chan os.Signal, 2)
+	signal.Notify(sig_chan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sig_chan
+		fmt.Println("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and exiting...")
+		uninitializeFilesystem()
+		os.Exit(1)
+	}()
 
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
