@@ -29,7 +29,7 @@ func checkRunningPermissions() {
 // Create the directory used to store the container resource allocations (e.g.
 // TTYs) on disk
 func initializeFilesystem() {
-	fmt.Println("Initializing filesystem in %s", resourceMappingDirectory)
+	fmt.Printf("Initializing filesystem in %s\n", resourceMappingDirectory)
 
 	// check if resource mapping directory already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
