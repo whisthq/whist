@@ -80,6 +80,7 @@ Defines
 */
 
 #define NUM_KEYCODES 265
+#define DEFAULT_DPI 96
 
 #define MAX_NUM_CLIENTS 10
 #define PORT_DISCOVERY 32262

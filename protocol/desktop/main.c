@@ -106,7 +106,6 @@ char filename[300];
 char username[50];
 
 #define MS_IN_SECOND 1000
-#define WINDOWS_DEFAULT_DPI 96.0
 #define BYTES_IN_KILOBYTE 1024.0
 
 // UPDATER CODE - HANDLES ALL PERIODIC UPDATES
@@ -187,7 +186,7 @@ void update() {
         fmsg.dimensions.height = (int)output_height;
         fmsg.dimensions.codec_type = (CodecType)output_codec_type;
         fmsg.dimensions.dpi =
-            (int)(WINDOWS_DEFAULT_DPI * output_width / get_virtual_screen_width());
+            (int)(DEFAULT_DPI * output_width / get_virtual_screen_width());
         SendFmsg(&fmsg);
         UpdateData.tried_to_update_dimension = true;
     }
