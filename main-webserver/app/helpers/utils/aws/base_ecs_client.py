@@ -209,7 +209,7 @@ class ECSClient:
         if not isinstance(capacity_providers, list):
             raise Exception("capacity_providers must be a list of strs")
         cluster_name = cluster_name or self.generate_name("cluster")
-        self.ecs_client.create_cluster(
+        resp = self.ecs_client.create_cluster(
             clusterName=cluster_name,
             capacityProviders=capacity_providers,
             defaultCapacityProviderStrategy=[
@@ -217,6 +217,7 @@ class ECSClient:
                 for capacity_provider in capacity_providers
             ],
         )
+        print(resp)
         self.set_cluster(cluster_name)
         return cluster_name
 
@@ -603,6 +604,7 @@ class ECSClient:
             MinSize=min_size,
             AvailabilityZones=availability_zones,
         )
+
         return auto_scaling_group_name
 
     def create_capacity_provider(self, auto_scaling_group_name, capacity_provider_name=None):
@@ -628,7 +630,7 @@ class ECSClient:
                     "maximumScalingStepSize": 1000,
                     "minimumScalingStepSize": 1,
                     "status": "ENABLED",
-                    "targetCapacity": 100,
+                    "targetCapacity": 70,
                 },
             },
         )

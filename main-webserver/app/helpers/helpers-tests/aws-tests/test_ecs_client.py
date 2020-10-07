@@ -128,6 +128,7 @@ def test_cluster_with_auto_scaling_group():
     testclient.create_cluster(
         capacity_providers=[capacity_provider_name], cluster_name=cluster_name
     )
+    print(cluster_name)
     assert testclient.cluster == cluster_name
     clusters_def = testclient.ecs_client.describe_clusters(clusters=[cluster_name])
     assert len(clusters_def["clusters"]) > 0
@@ -136,7 +137,7 @@ def test_cluster_with_auto_scaling_group():
     assert cluster["capacityProviders"] == [capacity_provider_name]
 
     # test running task on newly created cluster
-    time.sleep(10)
+    time.sleep(90)
     testclient.set_and_register_task(["echo start"], ["/bin/bash", "-c"], family="multimessage")
     testclient.run_task(use_launch_type=False)
     testclient.spin_til_running(time_delay=2)

@@ -98,6 +98,9 @@ def create_new_container(
     """
 
     kwargs = {"networkConfiguration": network_configuration}
+    message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
+    fractalLog(function="create_new_container", label="None", logs=message)
+    base_len = 3
 
     if not cluster_name:
         all_clusters = list(SortedClusters.query.all())
@@ -105,7 +108,10 @@ def create_new_container(
         if len(all_clusters) == 0:
             cluster_name = json.loads(create_new_cluster())["cluster"]
         else:
-            cluster_name = all_clusters[0].cluster
+            cluster_name = all_clusters[0]["cluster"]
+        if len(all_clusters)<base_len:
+            for i in range(base_len-len(all_clusters)):
+                _ = create_new_cluster.apply_async()
 
     cluster_info = ClusterInfo.query.get(cluster_name)
 
