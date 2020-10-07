@@ -71,7 +71,7 @@ func writeAssignmentToFile(filename, data string) {
 	}
 }
 
-func containerStartHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) error {
+func containerStartHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) {
 	// Create a container-specific directory to store mappings
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.Mkdir(datadir, 0644|os.ModeSticky)
@@ -116,11 +116,9 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 
 	// Indicate that we are ready for the container to read the data back
 	writeAssignmentToFile(datadir+".ready", " ")
-
-	return nil
 }
 
-func containerDieHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) error {
+func containerDieHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) {
 	// Delete the container-specific data directory we used
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.RemoveAll(datadir)
@@ -134,7 +132,6 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string, tty
 			ttyState[tty] = ""
 		}
 	}
-	return nil
 }
 
 func main() {
