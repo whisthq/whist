@@ -15,9 +15,10 @@ clipboard with a CLIPBOARD_FILES type, then the clipboard will be set to
 whatever files are in the SET_CLIPBOARD directory.
 
 TODO:
-    1. server to host works but host to server does not work
-    2. new clipboard text does not clear out old clipboard text, just overwrites up to length
+    1. server to host works but host to server does not work (DONE)
+    2. new clipboard text does not clear out old clipboard text (turns out to be some unison command text), just overwrites up to length
     3. file/image warnings on copying text
+    4. host clipboard doesn't work when connected to client (DONE)
 */
 
 #include <X11/Xatom.h>
@@ -56,6 +57,10 @@ static Window window;
 
 static Atom clipboard;
 static Atom incr_id;
+
+// if true, means peer has sent clipboard data and we have just added to our clipboard - ignore next clipboard change
+// if false, can listen for clipboard changes as normal
+static bool just_received = false;
 
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
 bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
@@ -216,7 +221,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
 
             size_t wr;
             LOG_INFO("last character of clipboard data is %d", cb->data[cb->size-1]);
-            if ((wr = fwrite(cb->data, 1, cb->size, inp)) < cb->size) {
+            if ((wr = fwrite(cb->data, 1, cb->size, inp)) < (size_t)cb->size) {
                 LOG_ERROR("clipboard fwrite wrote %d < cb->size %d", wr, cb->size);
             }
             fclose(inp);
@@ -287,11 +292,9 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         }
     }
 
-    // We make sure that pending clipboard updates are wiped out, because we
-    // just recently updated the clipboard hasClipboardUpdated() is going to
-    // return true right now:
-    unsafe_hasClipboardUpdated();
-    // hasClipboardUpdated() should return false after this
+    // Set the just_received flag to true in order to prevent hasUpdated from returning true
+    //      just after we've called xclip to set the clipboard
+    just_received = true;
     return;
 }
 
@@ -317,7 +320,7 @@ bool unsafe_hasClipboardUpdated() {
     // then we return "true". Otherwise, return "false".
     //
 
-    static bool first = true;
+    static bool first = true; // static, so only sets to true on first call
     int event_base, error_base;
     XEvent event;
     assert(XFixesQueryExtension(display, &event_base, &error_base));
@@ -330,8 +333,19 @@ bool unsafe_hasClipboardUpdated() {
     while (XPending(display)) {
         XNextEvent(display, &event);
         if (event.type == event_base + XFixesSelectionNotify &&
-            ((XFixesSelectionNotifyEvent*)&event)->selection == clipboard)
+            ((XFixesSelectionNotifyEvent*)&event)->selection == clipboard) {
+            if (just_received) {
+                // if we have just received and set clipboard from a peer, we don't want
+                //  to issue that clipboard activity as a clipboard update to be sent
+                //  back to the peer
+                // Note: We don't just call unsafe_hasClipboardUpdated after setting the clipboard to
+                //  wipe the changes because it appears to be asynchronous, and the flag is thus
+                //  more effective
+                just_received = false;
+                return false;
+            }
             return true;
+        }
     }
     return false;
 }
