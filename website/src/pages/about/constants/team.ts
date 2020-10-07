@@ -33,7 +33,7 @@ export const teamData = [
         image: Roshan,
         name: "Roshan Padaki",
         text:
-            "Prior to Fractal, Roshan researched performance lower bounds for matching algorithms in dynamic matching markets and developed methods for reducing dimensionality and sampling parameters in Bayesian deep learning. He studied mathematics at Harvard.",
+            "While studying Math at Harvard, Roshan applied his interest in the intersections between math, computer science, and economics to evaluating Uber-style matching algorithms, detecting money laundering from financial data, and reducing parameter dimensionality for deep bayesian and recurrent neural networks.",
     },
     {
         image: Adriano,
