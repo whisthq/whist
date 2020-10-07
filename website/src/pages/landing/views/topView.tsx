@@ -93,10 +93,6 @@ const TopView = (props: any) => {
         setCurrentIndex(idx)
     }
 
-    const appClicked = (app:any) => {
-        setAppHighlight(app)
-    }
-
     const renderLogos = () => {
         let idx = -1
         if (appHighlight) {
@@ -106,7 +102,7 @@ const TopView = (props: any) => {
                     if (app.name !== appHighlight) {
                         idx += idx === 2 ? 2 : 1
                         return (
-                            <div onClick={()=>appClicked(app.name)}>
+                            <div onClick={()=>setAppHighlight(app.name)}>
                             <FloatingLogo
                                 textIndex={idx}
                                 boxShadow={
@@ -128,7 +124,6 @@ const TopView = (props: any) => {
                     }
                 })
                 .concat(
-                    <div onClick={()=>appClicked(appImages[idx].name)}>
                     <FloatingLogo
                         textIndex={appHighlightIndex}
                         currentIndex={appHighlightIndex}
@@ -150,13 +145,12 @@ const TopView = (props: any) => {
                         animationDelay="1.5s"
                         app={appHighlight}
                     />
-                    </div>
                 )
         } else {
             return appImages.map((app: any, _: any) => {
                 idx += 1
                 return (
-                    <div onClick={()=>appClicked(appImages[idx].name)}>
+                    <div onClick={()=>setAppHighlight(app.name)}>
                     <FloatingLogo
                         textIndex={idx}
                         currentIndex={currentIndex}
