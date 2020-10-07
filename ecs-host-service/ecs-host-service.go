@@ -52,6 +52,21 @@ func uninitializeFilesystem() {
 	}
 }
 
+func writeAssignmentToFile(filename, data string) {
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644|os.ModeSticky)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to create file %s to store assingment for container", filename)
+		panic(err)
+	}
+	defer file.Sync()
+	defer file.Close()
+	_, err = file.WriteString(data)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't write to file %s", filename)
+		panic(err)
+	}
+}
+
 func containerStartHandler(ctx context.Context, cli *client.Client, id string, portMap map[string]map[string]string, ttyState *[256]string) error {
 	// Create a container-specific directory to store mappings
 	datadir := resourceMappingDirectory + id + "/"
@@ -75,18 +90,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, p
 	}
 
 	// Write the tty assignment to a file
-	tty_file, err := os.OpenFile(datadir+"tty", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644|os.ModeSticky)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to create file to store tty assignment for container %s\n", id)
-		panic(err)
-	}
-	defer tty_file.Sync()
-	defer tty_file.Close()
-	_, err = tty_file.WriteString(fmt.Sprintf("%d\n", assigned_tty))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't write to the tty assignment file for container %s\n", id)
-		panic(err)
-	}
+	writeAssignmentToFile(datadir+"tty", fmt.Sprintf("%d\n", assigned_tty))
 
 	return nil
 }
