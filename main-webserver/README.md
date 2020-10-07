@@ -68,6 +68,10 @@ For continuous integration and delivery, we leverage Heroku pipelines, which pro
 
 While our Heroku pipeline should not be modified without codeowner permission, it is helpful to understand how it works by consulting our wiki [here](https://www.notion.so/fractalcomputers/Heroku-CI-CD-Pipeline-Webservers-f8ef5b43edc84c969cf005fcac4641ba).
 
+### GraphQL
+
+We leverage Hasura GraphQL (hosted on Heroku) to enable real-time database access and serverless database retrieval. For pure SQL requests, we encourage using GraphQL instead of writing your own server endpoint to minimize the amount of code we write and because GraphQL is has a lot of really nice built-in features. GraphQL is already set up, but here's a setup doc for reference: https://hasura.io/docs/1.0/graphql/core/deployment/deployment-guides/heroku.html#deploying-using-an-existing-postgres-db.
+
 ## Testing
 
 **Pytest**
