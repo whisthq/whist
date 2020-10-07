@@ -4,7 +4,17 @@ This repository contains the Fractal ECS host service, which is installed on AWS
 
 ## Development
 
-__Design Decision__: This service will not restart on crash/panic, since that could lead to an inconsistency between the actually running containers and the data left on the filesystem. Instead, we note that if the service crashes no new containers will be able to report themselves to the webserver, so there will be no new connections to the host, and once all running containers are disconnected, the instance will be spun down. 
+### Building 
+
+To build the service, first install Go via your local package manager, i.e. `brew install go`, and then run `make`. This will build the service under directory `/build` as `ecs_host_service`.
+
+### Running
+
+You can run the service via `./ecs_host_service` from the `/build` subfolder. Note that the service must be run as root.
+
+### Design Decisions
+
+- This service will not restart on crash/panic, since that could lead to an inconsistency between the actually running containers and the data left on the filesystem. Instead, we note that if the service crashes no new containers will be able to report themselves to the webserver, so there will be no new connections to the host, and once all running containers are disconnected, the instance will be spun down. 
 
 ## Publishing
 
