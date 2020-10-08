@@ -3,16 +3,12 @@ import { connect } from 'react-redux'
 import { useSpring, animated } from 'react-spring'
 import styles from 'styles/login.css'
 import Titlebar from 'react-electron-titlebar'
-import Logo from 'assets/images/logo.svg'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons'
-
-import { fetchContainer } from 'store/actions/sideEffects'
 
 const UpdateScreen = (props: any) => {
     const {
         os,
-        dispatch,
         percentLoaded,
         status,
         container_id,
@@ -31,10 +27,6 @@ const UpdateScreen = (props: any) => {
     var percentLoadedWidth = 5 * percentLoaded
 
     const loadingBar = useSpring({ width: percentLoadedWidth })
-
-    useEffect(() => {
-        dispatch(fetchContainer())
-    }, [])
 
     useEffect(() => {
         if (container_id) {
@@ -111,7 +103,6 @@ const UpdateScreen = (props: any) => {
             )}
             <div className={styles.landingHeader}>
                 <div className={styles.landingHeaderLeft}>
-                    <img src={Logo} width="20" height="20" />
                     <span className={styles.logoTitle}>Fractal</span>
                 </div>
             </div>

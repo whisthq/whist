@@ -165,22 +165,16 @@
     height: 100px;
 }
 
-.modalButtonsContainer {
+.modalButton {
     position: absolute;
     right: 40px;
     bottom: 40px;
-    margin-top: 30px;
-    display: flex;
-    flex-direction: column;
-    width: 200px;
-}
-
-.modalButton {
     text-align: center;
     padding: 10px 30px;
     border: solid 0.8px #cccccc;
     color: black;
     font-weight: bold;
+    width: 200px;
 }
 
 .appLink {

@@ -19,9 +19,10 @@ export function googleLogin(code: any) {
     }
 }
 
-export function fetchContainer() {
+export function fetchContainer(app: string) {
     return {
         type: FETCH_CONTAINER,
+        app,
     }
 }
 

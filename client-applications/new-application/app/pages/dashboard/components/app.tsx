@@ -5,8 +5,10 @@ import styles from 'styles/dashboard.css'
 
 import Expand from 'assets/images/expand.svg'
 
+import { fetchContainer } from 'store/actions/sideEffects'
+
 const App = (props: any) => {
-    const { app } = props
+    const { dispatch, app } = props
 
     const [showModal, setShowModal] = useState(false)
 
@@ -16,6 +18,10 @@ const App = (props: any) => {
     const handleLinkClick = () => {
         const { shell } = require('electron')
         shell.openExternal(app.link)
+    }
+
+    const handleLaunch = () => {
+        dispatch(fetchContainer(app.name))
     }
 
     return (
@@ -33,7 +39,9 @@ const App = (props: any) => {
                 <div className={styles.appName}>{app.name}</div>
                 <div className={styles.appDescription}>{app.description}</div>
                 <div style={{ display: 'flex', flexDirection: 'row' }}>
-                    <div className={styles.launchButton}>LAUNCH</div>
+                    <div className={styles.launchButton} onClick={handleLaunch}>
+                        LAUNCH
+                    </div>
                     <div
                         className={styles.expandButton}
                         onClick={handleOpenModal}
@@ -93,15 +101,12 @@ const App = (props: any) => {
                     >
                         {app.longDescription}
                     </div>
-                    <div className={styles.modalButtonsContainer}>
-                        <button className={styles.modalButton}>LAUNCH</button>
-                        <button
-                            className={styles.modalButton}
-                            style={{ marginTop: '10px' }}
-                        >
-                            SAVE
-                        </button>
-                    </div>
+                    <button
+                        className={styles.modalButton}
+                        onClick={handleLaunch}
+                    >
+                        LAUNCH
+                    </button>
                 </Modal.Body>
             </Modal>
         </div>

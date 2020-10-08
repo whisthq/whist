@@ -7,10 +7,10 @@ export const UPDATE_LOADING = 'UPDATE_LOADING'
 export const RESET_STATE = 'RESET_STATE'
 
 export function updateAuth(body: {
-    username: string
-    accessToken: string
-    refreshToken: string
-    loginWarning: boolean
+    username?: string
+    accessToken?: string
+    refreshToken?: string
+    loginWarning?: boolean
 }) {
     return {
         type: UPDATE_AUTH,
@@ -41,8 +41,8 @@ export function updateClient(body: { os: string }) {
 }
 
 export function updatePayment(body: {
-    accountLocked: boolean
-    promoCode: string
+    accountLocked?: boolean
+    promoCode?: string
 }) {
     return {
         type: UPDATE_PAYMENT,
@@ -52,7 +52,7 @@ export function updatePayment(body: {
 
 export function updateLoading(body: {
     statusMessage: string
-    percentLoaded: number
+    percentLoaded?: number
 }) {
     return {
         type: UPDATE_LOADING,

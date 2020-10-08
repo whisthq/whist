@@ -40,7 +40,7 @@ function* loginUser(action: any) {
     }
 }
 
-function* googleLogin(action) {
+function* googleLogin(action: any) {
     yield select()
 
     if (action.code) {
@@ -56,16 +56,16 @@ function* googleLogin(action) {
             if (json.status === 200) {
                 yield put(
                     Action.updateAuth({
-                        accessToken: json.accessToken,
-                        refreshToken: json.refreshToken,
+                        accessToken: json.access_token,
+                        refreshToken: json.refresh_token,
                         username: json.username,
                     })
                 )
                 yield call(fetchPaymentInfo, { username: json.username })
                 yield call(getPromoCode, { username: json.username })
-                history.push('/loading')
+                history.push('/dashboard')
             } else {
-                yield put(Action.updateAuth(true))
+                yield put(Action.updateAuth({ loginWarning: true }))
             }
         }
     } else {
@@ -105,10 +105,12 @@ function* getPromoCode(action: any) {
 }
 
 function* fetchContainer(action: any) {
+    history.push('/loading')
     const state = yield select()
     const username = state.MainReducer.auth.username
-    const app = 'test'
+    const app = action.app
     console.log(username)
+    console.log(app)
     var { json, response } = yield call(
         apiPost,
         `${config.url.PRIMARY_SERVER}/container/create`,
@@ -206,9 +208,9 @@ function* fetchContainer(action: any) {
                 Action.updateContainer({
                     container_id: container_id,
                     cluster: cluster,
-                    port32262: port_32262,
-                    port32263: port_32263,
-                    port32273: port_32273,
+                    port32262: port32262,
+                    port32263: port32263,
+                    port32273: port32273,
                     location: location,
                     publicIP: ip,
                 })

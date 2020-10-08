@@ -38,10 +38,6 @@ const NavBar = (props: any) => {
         top: top,
     })
 
-    useEffect(() => {
-        console.log(top)
-    }, [top])
-
     const handleSignout = () => {
         const storage = require('electron-json-storage')
         storage.set('credentials', { username: '', password: '' })
