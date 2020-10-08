@@ -16,9 +16,6 @@ import "styles/about.css"
 
 const About = (props: any) => {
     const { width } = useContext(MainContext)
-    useEffect(() => {
-        debugLog("hi")
-    }, [])
     let teamCards = []
     let shuffledTeamData = teamData
         .map((a) => ({ sort: Math.random(), value: a }))
