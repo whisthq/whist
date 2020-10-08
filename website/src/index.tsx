@@ -12,6 +12,8 @@ import { composeWithDevTools } from "redux-devtools-extension"
 import ReduxPromise from "redux-promise"
 import storage from "redux-persist/lib/storage"
 import * as Sentry from "@sentry/react"
+import { ApolloProvider } from "@apollo/react-hooks"
+import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client"
 
 import history from "shared/utils/history"
 import { MainProvider } from "shared/context/mainContext"
@@ -55,33 +57,52 @@ const store = createStore(
 
 const persistor = persistStore(store)
 
+// Set up Apollo GraphQL provider
+
+const apolloClient = new ApolloClient({
+    link: new HttpLink({
+        uri: config.url.GRAPHQL_SERVER,
+    }),
+    cache: new InMemoryCache(),
+})
+
 ReactDOM.render(
     <React.StrictMode>
         <Router history={history}>
             <Provider store={store}>
                 <PersistGate loading={null} persistor={persistor}>
-                    <MainProvider>
-                        <Switch>
-                            <Route exact path="/about" component={About} />
-                            <Route
-                                exact
-                                path="/application"
-                                component={Application}
-                            />
-                            <Route exact path="/cookies" component={Cookies} />
-                            <Route exact path="/privacy" component={Privacy} />
-                            <Route
-                                exact
-                                path="/termsofservice"
-                                component={TermsOfService}
-                            />
-                            <Route
-                                exact
-                                path="/:first?/:second?"
-                                component={Landing}
-                            />
-                        </Switch>
-                    </MainProvider>
+                    <ApolloProvider client={apolloClient}>
+                        <MainProvider>
+                            <Switch>
+                                <Route exact path="/about" component={About} />
+                                <Route
+                                    exact
+                                    path="/application"
+                                    component={Application}
+                                />
+                                <Route
+                                    exact
+                                    path="/cookies"
+                                    component={Cookies}
+                                />
+                                <Route
+                                    exact
+                                    path="/privacy"
+                                    component={Privacy}
+                                />
+                                <Route
+                                    exact
+                                    path="/termsofservice"
+                                    component={TermsOfService}
+                                />
+                                <Route
+                                    exact
+                                    path="/:first?/:second?"
+                                    component={Landing}
+                                />
+                            </Switch>
+                        </MainProvider>
+                    </ApolloProvider>
                 </PersistGate>
             </Provider>
         </Router>
