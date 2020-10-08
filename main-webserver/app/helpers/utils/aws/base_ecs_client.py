@@ -424,7 +424,7 @@ class ECSClient:
         """
         fmtstr = family + str(self.offset + 1)
         if port_mappings is None:
-            port_mappings = [{"hostPort": 0, "protocol": "tcp", "containerPort": 8080}]
+            port_mappings = [{"hostPort": 8080, "protocol": "tcp", "containerPort": 8080}]
         base_log_config = {
             "logDriver": "awslogs",
             "options": {
