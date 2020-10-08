@@ -10,7 +10,7 @@
 // To learn more about the benefits of this model and instructions on how to
 // opt-in, read https://bit.ly/CRA-PWA
 
-import {debug_log} from "shared/utils/logging"
+var debug_log = require('shared/utils/logging.ts').debug_log;
 
 const isLocalhost = Boolean(
     window.location.hostname === "localhost" ||

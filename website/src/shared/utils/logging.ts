@@ -1,7 +1,7 @@
-DEBUG = false; // set to false to disable debugging
-function debug_log() {
-    if ( DEBUG ) {
-        console.log.apply(this, arguments);
-    } 
-    //DO NOTHING IF NOT 
+var debug_log = function debug_log(callback:any){
+    if(process.env.NODE_ENV === 'development'){
+        console.log(callback);
+    }
 }
+
+export {}

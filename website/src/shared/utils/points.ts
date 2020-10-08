@@ -1,5 +1,6 @@
-import {debug_log} from "shared/utils/logging"
 import { db } from "shared/utils/firebase"
+
+var debug_log = require('shared/utils/logging.ts').debug_log;
 
 export const INITIAL_POINTS = 50
 export const SIGNUP_POINTS = 100

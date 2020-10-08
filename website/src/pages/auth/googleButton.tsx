@@ -6,8 +6,9 @@ import { SIGNUP_POINTS } from "shared/utils/points"
 import { googleLogin } from "store/actions/auth/login_actions"
 
 import MainContext from "shared/context/mainContext"
-import {debug_log} from "shared/utils/logging"
 import "styles/landing.css"
+
+var debug_log = require('shared/utils/logging.ts').debug_log;
 
 const GoogleButton = (props: any) => {
     const { width } = useContext(MainContext)
