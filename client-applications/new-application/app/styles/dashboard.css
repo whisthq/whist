@@ -10,17 +10,184 @@
 .signoutButton {
     font-family: 'Maven Pro';
     font-weight: bold;
-    padding: 12px 30px;
-    margin-top: 50px;
-    width: 300px;
+    padding: 10px 25px;
+    margin-top: 33vh;
+    width: 100%;
     border: solid 0.8px #cccccc;
     background: white;
     color: black;
-    font-size: 15px;
+    font-size: 13px;
 }
 
-.signoutButton:hover {
+.signoutButton:hover,
+.launchButton:hover,
+.expandButton:hover,
+.modalButton:hover {
     background: #93f1d9;
     border: solid 0.8px #93f1d9;
+    cursor: pointer;
+}
+
+.navBar {
+    position: relative;
+    top: -22px;
+    left: 0px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    border-right: solid 0.8px #cccccc;
+    padding: 20px 25px;
+    text-align: left;
+}
+
+.logoTitle {
+    color: black;
+    font-family: 'Maven Pro';
+    position: absolute;
+    top: 42px;
+    left: 25px;
+    font-size: 20px;
+}
+
+.navTitle {
+    font-size: 15px;
+    color: #999999;
+    margin-top: 30px;
+}
+
+.selectedNavTitle {
+    font-size: 17px;
+    color: black;
+    text-transform: uppercase;
+    margin-top: 30px;
+}
+
+.navTitle:hover,
+.selectedNavTitle:hover {
+    cursor: pointer;
+}
+
+.macTitleBar {
+    -webkit-app-region: drag;
+    margin-top: 22px;
+}
+
+.removeDrag {
+    -webkit-app-region: no-drag;
+}
+
+.discover {
+    flex: 1;
+}
+
+.carouselRow {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.select {
+    height: 38px;
+    width: 7px;
+    background: #1c2a45;
+    position: absolute;
+    right: 0px;
+}
+
+.row {
+    flex-wrap: nowrap;
+    margin: 0;
+}
+
+.appContainer {
+    width: 250px;
+    height: 170px;
+    border: solid 0.8px #cccccc;
+    display: flex;
+    flex-direction: row;
+    padding: 12px;
+}
+
+.appContainer:hover {
+    cursor: pointer;
+}
+
+.appImage {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    max-width: 70px;
+    max-height: 85px;
+}
+
+.appText {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 12px 0px 12px 12px;
+}
+
+.appName {
+    font-size: 15px;
+    font-weight: bolder;
+    text-transform: uppercase;
+}
+
+.appDescription {
+    font-size: 11px;
+}
+
+.launchButton {
+    font-size: 13px;
+    border: solid 0.8px #cccccc;
+    padding: 10px 20px;
+}
+
+.expandButton {
+    border: solid 0.8px #cccccc;
+    border-left: none;
+    padding: 6px 10px 9px 10px;
+}
+
+.launchButton:hover {
+    border-right: solid 0.8px #cccccc;
+}
+
+.expandButton:hover {
+    border-left: none;
+}
+
+.modalAppImage {
+    height: 100px;
+}
+
+.modalButtonsContainer {
+    position: absolute;
+    right: 40px;
+    bottom: 40px;
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+}
+
+.modalButton {
+    text-align: center;
+    padding: 10px 30px;
+    border: solid 0.8px #cccccc;
+    color: black;
+    font-weight: bold;
+}
+
+.appLink {
+    color: #5ec4eb;
+    margin-left: 30px;
+}
+
+.appLink:hover {
     cursor: pointer;
 }

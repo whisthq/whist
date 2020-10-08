@@ -57,9 +57,9 @@ button {
 .logoTitle {
     color: black;
     font-family: 'Maven Pro';
-    position: relative;
-    bottom: 2px;
-    left: 12px;
+    position: absolute;
+    top: 42px;
+    left: 42px;
     font-size: 20px;
 }
 
@@ -126,7 +126,7 @@ button {
 }
 
 .inputBox {
-    width: 240px;
+    width: 300px;
     background: white;
     padding: 10px 30px;
     border: none;
