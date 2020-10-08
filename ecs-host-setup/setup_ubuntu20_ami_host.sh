@@ -76,18 +76,32 @@ sudo apt-get install -y nvidia-docker2
 sudo systemctl enable docker
 sudo systemctl restart docker
 
+# Create directories for ECS agent
+mkdir -p /var/log/ecs /var/lib/ecs/{data,gpu} /etc/ecs
+
+# Install jq to build JSON
+sudo apt install -y jq
+
+# Create list of GPU devices as 
+DEVICES=""
+for DEVICE_INDEX in {0..64}
+do
+  DEVICE_PATH="/dev/nvidia${DEVICE_INDEX}"
+  if [ -e "$DEVICE_PATH" ]; then
+    DEVICES="${DEVICES} --device ${DEVICE_PATH}:${DEVICE_PATH} "
+  fi
+done
+DEVICE_MOUNTS=`printf "$DEVICES"`
 
 echo "================================================"
 echo "Cleaning up the image a bit..."
 echo "================================================"
 sudo apt autoremove
 
-
 echo "================================================"
 echo "Installing AWS CLI..."
 echo "================================================"
 sudo apt-get install awscli
-
 
 echo
 echo "Would you like to setup ECS? (y/n)"
@@ -107,29 +121,67 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 
   sudo mkdir -p /etc/ecs && sudo touch /etc/ecs/ecs.config
   cat << EOF | sudo tee /etc/ecs/ecs.config
+ECS_CLUSTER=default
 ECS_DATADIR=/data
 ECS_ENABLE_TASK_IAM_ROLE=true
 ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
 ECS_LOGFILE=/log/ecs-agent.log
-ECS_AVAILABLE_LOGGING_DRIVERS=["json-file","awslogs"]
+ECS_AVAILABLE_LOGGING_DRIVERS=["syslog", "json-file", "journald", "awslogs"]
 ECS_LOGLEVEL=info
+ECS_ENABLE_GPU_SUPPORT=true
+ECS_NVIDIA_RUNTIME=nvidia
 EOF
 
-  # the "||:" line endings indicate that failures are allowed/expected
-  sudo docker stop ecs-agent ||:
-  sudo docker rm ecs-agent ||:
-  sudo docker run --name ecs-agent \
-  --detach=true \
-  --restart=on-failure:10 \
-  --volume=/var/run:/var/run \
-  --volume=/var/log/ecs/:/log \
-  --volume=/var/lib/ecs/data:/data \
-  --volume=/etc/ecs:/etc/ecs \
-  --net=host \
-  --env-file=/etc/ecs/ecs.config \
-  amazon/amazon-ecs-agent:latest
+  # Write systemd unit file for ECS Agent
+  cat << EOF > /etc/systemd/system/docker-container@ecs-agent.service
+[Unit]
+Description=Docker Container %I
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStartPre=-/usr/bin/docker rm -f %i
+ExecStart=/usr/bin/docker run --name %i \
+--init \
+--restart=on-failure:10 \
+--volume=/var/run:/var/run \
+--volume=/var/log/ecs/:/log \
+--volume=/var/lib/ecs/data:/data \
+--volume=/etc/ecs:/etc/ecs \
+--volume=/sbin:/host/sbin \
+--volume=/lib:/lib \
+--volume=/lib64:/lib64 \
+--volume=/usr/lib:/usr/lib \
+--volume=/usr/lib64:/usr/lib64 \
+--volume=/proc:/host/proc \
+--volume=/sys/fs/cgroup:/sys/fs/cgroup \
+--net=host \
+--env-file=/etc/ecs/ecs.config \
+--cap-add=sys_admin \
+--cap-add=net_admin \
+--volume=/var/lib/nvidia-docker/volumes/nvidia_driver/latest:/usr/local/nvidia \
+--device /dev/nvidiactl:/dev/nvidiactl \
+${DEVICE_MOUNTS} \
+--device /dev/nvidia-uvm:/dev/nvidia-uvm \
+--volume=/var/lib/ecs/gpu:/var/lib/ecs/gpu \
+amazon/amazon-ecs-agent:latest
+ExecStop=/usr/bin/docker stop %i
+
+[Install]
+WantedBy=default.target
+EOF
+
+  # Reload daemon files
+  sudo /bin/systemctl daemon-reload
+
+  # Enabling ECS Agent
+  sudo systemctl enable docker-container@ecs-agent.service
+
+  sudo rm -rf /var/lib/cloud/instances/
+  sudo rm -f /var/lib/ecs/data/*
 fi
 
 echo
-echo 'Install complete. Please "sudo reboot" before continuing'
+echo 'Install complete. Make sure you do not reboot when creating AMI (check NO REBOOT)'
 echo
