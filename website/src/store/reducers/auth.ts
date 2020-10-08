@@ -71,6 +71,14 @@ export default function (state = AUTH_DEFAULT, action: any) {
                 ...state,
                 unsortedLeaderboard: action.unsortedLeaderboard,
             }
+        case WaitlistAction.UPDATE_CLICKS:
+            return {
+                ...state,
+                clicks: {
+                    number: action.clicks,
+                    lastClicked: new Date().getTime() / 1000,
+                },
+            }
         default:
             return state
     }

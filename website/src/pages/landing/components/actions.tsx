@@ -11,6 +11,7 @@ import { db } from "shared/utils/firebase"
 import { REFERRAL_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "constants/config"
+import { updateClicks } from "store/actions/auth/waitlist"
 
 const CustomAction = (props: {
     onClick: any
@@ -57,15 +58,15 @@ const CustomAction = (props: {
 }
 
 const Actions = (props: {
+    dispatch: any
     user: { email: string; referralCode: string }
     loggedIn: any
     unsortedLeaderboard: any
+    clicks: any
 }) => {
-    const { user, loggedIn, unsortedLeaderboard } = props
+    const { dispatch, user, loggedIn, unsortedLeaderboard, clicks } = props
 
     const [showModal, setShowModal] = useState(false)
-    const [clicks, setClicks] = useState(0)
-    const [lastClicked, setLastClicked] = useState(0)
     const [warning, setWarning] = useState("")
 
     const handleOpenModal = () => setShowModal(true)
@@ -76,9 +77,9 @@ const Actions = (props: {
             var allowClick = true
             const currentTime = new Date().getTime() / 1000
 
-            if (clicks > 50) {
-                if (currentTime - lastClicked > 60 * 60 * 3) {
-                    setClicks(0)
+            if (clicks.number > 50) {
+                if (currentTime - clicks.lastClicked > 60 * 60 * 3) {
+                    dispatch(updateClicks(0))
                 } else {
                     allowClick = false
                     setWarning(
@@ -88,8 +89,7 @@ const Actions = (props: {
             }
 
             if (allowClick) {
-                setClicks(clicks + 1)
-                setLastClicked(currentTime)
+                dispatch(updateClicks(clicks.number + 1))
 
                 const email = user.email
 
@@ -199,12 +199,23 @@ const Actions = (props: {
 }
 
 function mapStateToProps(state: {
-    AuthReducer: { user: any; loggedIn: any; unsortedLeaderboard: any }
+    AuthReducer: {
+        user: any
+        loggedIn: any
+        unsortedLeaderboard: any
+        clicks: number
+    }
 }) {
     return {
         user: state.AuthReducer.user,
         loggedIn: state.AuthReducer.loggedIn,
         unsortedLeaderboard: state.AuthReducer.unsortedLeaderboard,
+        clicks: state.AuthReducer.clicks
+            ? state.AuthReducer.clicks
+            : {
+                  number: 0,
+                  lastClicked: 0,
+              },
     }
 }
 
