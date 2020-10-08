@@ -133,7 +133,7 @@ ECS_NVIDIA_RUNTIME=nvidia
 EOF
 
   # Write systemd unit file for ECS Agent
-  cat << EOF > /etc/systemd/system/docker-container@ecs-agent.service
+  sudo cat << EOF > /etc/systemd/system/docker-container@ecs-agent.service
 [Unit]
 Description=Docker Container %I
 Requires=docker.service
