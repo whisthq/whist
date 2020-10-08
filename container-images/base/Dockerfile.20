@@ -229,9 +229,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
-# Use local setup-scripts repository for development
-COPY setup-scripts /setup-scripts
-
 # Create fractal user
 RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \
@@ -256,25 +253,47 @@ RUN chmod -x /usr/bin/start-pulseaudio-x11
 COPY pulse-client.conf /etc/pulse/client.conf
 
 # Install all required components for Fractal to perform well, split into steps for caching
-WORKDIR /setup-scripts/linux
 
-RUN /bin/bash -c "source utils.sh \
-    && Install-CustomX11Configuration"
+# Install Custom X11 Configurations
+RUN sudo cp 01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf \
+    sudo cp 02-fractal-dummy.conf /usr/share/X11/xorg.conf.d/02-fractal-dummy.conf \
+    if [ -f /etc/X11/xorg.conf ]; then \
+      echo "/etc/X11/xorg.conf found, moving to /etc/X11/xorg.conf.old. Fractal .conf files will be stored in /usr/share/X11/xorg.conf.d" \
+      sudo mv /etc/X11/xorg.conf /etc/X11/xorg.conf.old \
+   fi
 
-RUN /bin/bash -c "source utils.sh \
-    && Set-FractalDirectory \
-    && Install-FractalServer dev \
-    && Install-FractalAutoUpdate master"
+# Creating Fractal Directory and Subdirectories in /usr/share
+RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fractal/sync
 
-RUN /bin/bash -c "source utils.sh \
-    && Install-Unison \
-    && Enable-SSHKey"
+RUN systemctl --user is-active fractal && systemctl --user stop fractal \
+    sudo wget -qO /usr/share/fractal/FractalServer "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/FractalServer" \
+    sudo wget -qO /usr/share/fractal/FractalServer.sh "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/FractalServer.sh" \
+    sudo chgrp fractal -R /usr/share/fractal \
+    sudo chmod g+rw -R /usr/share/fractal \
+    sudo chmod g+x /usr/share/fractal/FractalServer \
+    sudo chmod g+x /usr/share/fractal/FractalServer.sh \ 
+    sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y \
+    echo "Downloading Fractal FFmpeg .so from AWS S3 and Moving to /usr/share/fractal/" \
+    sudo wget -qO shared-libs.tar.gz "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz" \
+    tar -xvf shared-libs.tar.gz \
+    sudo mv share/64/Linux/* /usr/share/fractal/ \
+    # symlink Fractal FFmpeg .so libs to system libs location for standard Linux system runtime library loading
+    sudo ln -sf /usr/share/fractal/libavcodec.so /usr/local/lib/libavcodec-fractal.so \
+    sudo ln -sf /usr/share/fractal/libavdevice.so /usr/local/lib/libavdevice-fractal.so \
+    sudo ln -sf /usr/share/fractal/libavfilter.so /usr/local/lib/libavfilter-fractal.so \
+    sudo ln -sf /usr/share/fractal/libavformat.so /usr/local/lib/libavformat-fractal.so \
+    sudo ln -sf /usr/share/fractal/libavutil.so /usr/local/lib/libavutil-fractal.so \
+    sudo ln -sf /usr/share/fractal/libpostproc.so /usr/local/lib/libpostproc-fractal.so \
+    sudo ln -sf /usr/share/fractal/libswresample.so /usr/local/lib/libswresample-fractal.so \
+    sudo ln -sf /usr/share/fractal/libswscale.so /usr/local/lib/libswscale-fractal.so \
+    echo "Cleaning Up Downloaded Tar" \
+    rm -rf shared-libs.tar.gz \
+    rm -rf share
 
-RUN /bin/bash -c " source utils.sh \
-    && Add-AutoLogin \
-    && Install-FractalServer"
-
-WORKDIR /
+RUN echo "Downloading Fractal Auto-update Script" \
+    ls -al /usr/share/fractal \
+    echo "Downloading update.sh from https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/update.sh" \
+    sudo wget -qO /usr/share/fractal/update.sh "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/update.sh" \
 
 # Install FFmpeg dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -369,9 +388,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
 # Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID
-COPY setup-scripts/linux/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/
+COPY 01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/
 COPY fractal-update-nvidia-busid.service /etc/systemd/system/
-COPY setup-scripts/linux/update-nvidia-busid.sh /usr/share/fractal/
+COPY update-nvidia-busid.sh /usr/share/fractal/
 
 RUN systemctl enable fractal-update-nvidia-busid
 

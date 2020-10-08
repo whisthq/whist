@@ -15,13 +15,13 @@ This subfolders conforms to the **Styling** and **Continous Integration** practi
 
 ## Development
 
-This repository calls the Fractal [setup-scripts](https://github.com/fractalcomputers/setup-scripts) repository as a Git submodule for some of the Bash functions needed to set up Fractal. New functions you make should be added to that repository so they can be easily reused across the Fractal organization. Before using these functions in this project, you need to update the Git submodule linked by running:
+This repository calls the Fractal [protocol](https://github.com/fractalcomputers/protocol) repository as a Git submodule for some of the Bash functions needed to set up Fractal. New functions you make should be added to that repository so they can be easily reused across the Fractal organization. Before using these functions in this project, you need to update the Git submodule linked by running:
 
 ```
-git submodule update --init --recursive && cd setup-scripts && git pull origin master && cd ..
+git submodule update --init --recursive && cd protocol && git pull origin master && cd ..
 ```
 
-If you get access denied issues, you need to set-up your local SSH key with your GitHub account, which you can do by following this [tutorial](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent). After running this command, you will have latest the setup-scripts code locally and can call the files as normal.
+If you get access denied issues, you need to set-up your local SSH key with your GitHub account, which you can do by following this [tutorial](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent). After running this command, you will have latest the protocol code locally and can call the files as normal.
 
 Any services needed for the containers to function properly should be developed and hosted as part of this project. For any details on continuous integration and styling, refer to the outer README of this project.
 

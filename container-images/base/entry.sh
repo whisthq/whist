@@ -1,7 +1,5 @@
 #!/bin/bash
-# Amazon linux doesn't have this
-# echo "Setting up Fractal Firewall"
-# source /setup-scripts/linux/utils.sh && Enable-FractalFirewallRule
+# Amazon Linux doesn't have the need for a Fractal firewall rule
 # yes | ufw allow 5900;
 
 # Allow for ssh login
@@ -22,7 +20,7 @@ sudo mknod -m 620 /dev/tty10 c 4 10
 sudo mkdir /dev/dri
 sudo mknod -m 660 /dev/dri/card0 c 226 0
 
-# This from setup-scripts install fractal service
+# This install fractal service
 echo "Start Pam Systemd Process for User fractal"
 export FRACTAL_UID=`id -u fractal`
 install -d -o fractal /run/user/$FRACTAL_UID
