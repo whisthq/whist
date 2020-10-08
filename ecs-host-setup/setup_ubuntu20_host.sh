@@ -28,6 +28,11 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 sudo groupadd docker ||:
 sudo gpasswd -a $USER docker
 
+echo "================================================"
+echo "Configuring docker daemon..."
+echo "================================================"
+sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
+sudo cp docker-daemon-config/seccomp-filter.json /etc/docker/seccomp-filter.json
 
 echo "================================================"
 echo "Installing nvidia drivers..."
@@ -81,54 +86,6 @@ echo "================================================"
 echo "Cleaning up the image a bit..."
 echo "================================================"
 sudo apt autoremove
-
-
-echo "================================================"
-echo "Installing AWS CLI..."
-echo "================================================"
-sudo apt-get install awscli
-
-
-echo
-echo "Would you like to setup ECS? (y/n)"
-read -p "Would you like to setup ECS? " -n 1 -r
-echo
-
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-
-  sudo sh -c "echo 'net.ipv4.conf.all.route_localnet = 1' >> /etc/sysctl.conf"
-  sudo sysctl -p /etc/sysctl.conf
-  echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
-  echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
-  sudo apt-get install -y iptables-persistent
-  sudo iptables -t nat -A PREROUTING -p tcp -d 169.254.170.2 --dport 80 -j DNAT --to-destination 127.0.0.1:51679
-  sudo iptables -t nat -A OUTPUT -d 169.254.170.2 -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 51679
-  sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
-
-  sudo mkdir -p /etc/ecs && sudo touch /etc/ecs/ecs.config
-  cat << EOF | sudo tee /etc/ecs/ecs.config
-ECS_DATADIR=/data
-ECS_ENABLE_TASK_IAM_ROLE=true
-ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
-ECS_LOGFILE=/log/ecs-agent.log
-ECS_AVAILABLE_LOGGING_DRIVERS=["json-file","awslogs"]
-ECS_LOGLEVEL=info
-EOF
-
-  # the "||:" line endings indicate that failures are allowed/expected
-  sudo docker stop ecs-agent ||:
-  sudo docker rm ecs-agent ||:
-  sudo docker run --name ecs-agent \
-  --detach=true \
-  --restart=on-failure:10 \
-  --volume=/var/run:/var/run \
-  --volume=/var/log/ecs/:/log \
-  --volume=/var/lib/ecs/data:/data \
-  --volume=/etc/ecs:/etc/ecs \
-  --net=host \
-  --env-file=/etc/ecs/ecs.config \
-  amazon/amazon-ecs-agent:latest
-fi
 
 echo
 echo 'Install complete. Please "sudo reboot" before continuing'
