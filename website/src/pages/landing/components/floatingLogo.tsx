@@ -47,6 +47,7 @@ function FloatingLogo(props: any) {
                     width: size,
                     height: size,
                     position: "absolute",
+                    zIndex: -1,
                     top: props.top,
                     left: props.left,
                     background:

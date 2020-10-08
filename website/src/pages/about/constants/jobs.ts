@@ -71,4 +71,4 @@ export const jobData = [
             "Preference for 1+ year of experience in systems computer science.",
         ],
     },
-];
+]
