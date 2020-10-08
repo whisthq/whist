@@ -6,7 +6,7 @@ import * as LoginAction from "store/actions/auth/login_actions"
 function* googleLogin(action: any) {
     // More to be added later
     if (action.email) {
-        console.log(action.email)
+        // console.log(action.email)
     }
 }
 

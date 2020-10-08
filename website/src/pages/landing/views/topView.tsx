@@ -23,7 +23,7 @@ import PhotoshopColor from "assets/largeGraphics/photoshopColor.svg"
 import "styles/landing.css"
 
 const TopView = (props: any) => {
-    const { width, appHighlight } = useContext(MainContext)
+    const { width, appHighlight, setAppHighlight } = useContext(MainContext)
 
     const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -102,6 +102,7 @@ const TopView = (props: any) => {
                     if (app.name !== appHighlight) {
                         idx += idx === 2 ? 2 : 1
                         return (
+                            <div onClick={()=>setAppHighlight(app.name)}>
                             <FloatingLogo
                                 textIndex={idx}
                                 boxShadow={
@@ -116,6 +117,7 @@ const TopView = (props: any) => {
                                 animationDelay={0.5 * idx + "s"}
                                 app={app.name}
                             />
+                            </div>
                         )
                     } else {
                         return <></>
@@ -148,6 +150,7 @@ const TopView = (props: any) => {
             return appImages.map((app: any, _: any) => {
                 idx += 1
                 return (
+                    <div onClick={()=>setAppHighlight(app.name)}>
                     <FloatingLogo
                         textIndex={idx}
                         currentIndex={currentIndex}
@@ -161,6 +164,7 @@ const TopView = (props: any) => {
                         animationDelay={0.5 * idx + "s"}
                         app={app.name}
                     />
+                    </div>
                 )
             })
         }

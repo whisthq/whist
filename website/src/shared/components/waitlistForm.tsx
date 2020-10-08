@@ -143,7 +143,13 @@ function WaitlistForm(props: any) {
                 <Popup
                     trigger={
                         isAction ? (
-                            <button className="action">
+                            <button
+                                className="action"
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                }}
+                            >
                                 <div
                                     style={{
                                         fontSize: width > 720 ? 20 : 16,
