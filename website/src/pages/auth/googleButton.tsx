@@ -6,7 +6,7 @@ import { SIGNUP_POINTS } from "shared/utils/points"
 import { googleLogin } from "store/actions/auth/login_actions"
 
 import MainContext from "shared/context/mainContext"
-
+import {debug_log} from "shared/utils/logging"
 import "styles/landing.css"
 
 const GoogleButton = (props: any) => {
@@ -15,7 +15,7 @@ const GoogleButton = (props: any) => {
 
     const handleGoogleLogin = () => {
         if (user.googleAuthEmail) {
-            console.log("User already linked google account")
+            debug_log("User already linked google account")
         } else {
             const provider = new firebase.auth.GoogleAuthProvider()
 
@@ -50,7 +50,7 @@ const GoogleButton = (props: any) => {
                         )
                     }
                 })
-                .catch((e) => console.log(e))
+                .catch((e) => debug_log(e))
         }
     }
 

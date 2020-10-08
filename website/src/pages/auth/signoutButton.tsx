@@ -2,7 +2,7 @@ import React from "react"
 import { Button } from "react-bootstrap"
 import { connect } from "react-redux"
 import firebase from "firebase"
-
+import {debug_log} from "shared/utils/logging"
 import { logout } from "store/actions/auth/login_actions"
 
 import "styles/auth.css"
@@ -13,7 +13,7 @@ const SignoutButton = (props: any) => {
             .auth()
             .signOut()
             .then(() => {
-                console.log("signed out")
+                debug_log("signed out")
                 props.dispatch(logout())
             })
     }

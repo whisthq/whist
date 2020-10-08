@@ -1,3 +1,4 @@
+import {debug_log} from "shared/utils/logging"
 import { db } from "shared/utils/firebase"
 
 export const INITIAL_POINTS = 50
@@ -47,7 +48,7 @@ export async function getUnsortedLeaderboard(document?: any) {
 // function checkName(name: string, waitlist: any) {
 //     for (var i = 0; i < waitlist.length; i++) {
 //         if (waitlist[i].name === name) {
-//             console.log(waitlist[i])
+//             debug_log(waitlist[i])
 //             return [i, true]
 //         }
 //     }
