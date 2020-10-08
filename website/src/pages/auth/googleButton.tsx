@@ -55,7 +55,16 @@ const GoogleButton = (props: any) => {
     }
 
     return (
-        <button onClick={handleGoogleLogin} className="action">
+        <button
+            onClick={handleGoogleLogin}
+            className="action"
+            style={{
+                display: "flex",
+                justifyContent: "space-between",
+                flexDirection: "row",
+                width: "100%",
+            }}
+        >
             <div
                 style={{
                     fontSize: width > 720 ? 20 : 16,

@@ -23,7 +23,7 @@ import PhotoshopColor from "assets/largeGraphics/photoshopColor.svg"
 import "styles/landing.css"
 
 const TopView = (props: any) => {
-    const { width, appHighlight } = useContext(MainContext)
+    const { width, appHighlight, setAppHighlight } = useContext(MainContext)
 
     const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -102,20 +102,24 @@ const TopView = (props: any) => {
                     if (app.name !== appHighlight) {
                         idx += idx === 2 ? 2 : 1
                         return (
-                            <FloatingLogo
-                                textIndex={idx}
-                                boxShadow={
-                                    "0px 4px 20px rgba(" + app.rgb + ", 0.2)"
-                                }
-                                width={width}
-                                top={tops[idx]}
-                                left={lefts[idx]}
-                                colorImage={app.colorImage}
-                                noColorImage={app.noColorImage}
-                                background={"rgba(" + app.rgb + ", 0.1)"}
-                                animationDelay={0.5 * idx + "s"}
-                                app={app.name}
-                            />
+                            <div onClick={() => setAppHighlight(app.name)}>
+                                <FloatingLogo
+                                    textIndex={idx}
+                                    boxShadow={
+                                        "0px 4px 20px rgba(" +
+                                        app.rgb +
+                                        ", 0.2)"
+                                    }
+                                    width={width}
+                                    top={tops[idx]}
+                                    left={lefts[idx]}
+                                    colorImage={app.colorImage}
+                                    noColorImage={app.noColorImage}
+                                    background={"rgba(" + app.rgb + ", 0.1)"}
+                                    animationDelay={0.5 * idx + "s"}
+                                    app={app.name}
+                                />
+                            </div>
                         )
                     } else {
                         return <></>
@@ -148,19 +152,23 @@ const TopView = (props: any) => {
             return appImages.map((app: any, _: any) => {
                 idx += 1
                 return (
-                    <FloatingLogo
-                        textIndex={idx}
-                        currentIndex={currentIndex}
-                        boxShadow={"0px 4px 20px rgba(" + app.rgb + ", 0.2)"}
-                        width={width}
-                        top={tops[idx]}
-                        left={lefts[idx]}
-                        colorImage={app.colorImage}
-                        noColorImage={app.noColorImage}
-                        background={"rgba(" + app.rgb + ", 0.1)"}
-                        animationDelay={0.5 * idx + "s"}
-                        app={app.name}
-                    />
+                    <div onClick={() => setAppHighlight(app.name)}>
+                        <FloatingLogo
+                            textIndex={idx}
+                            currentIndex={currentIndex}
+                            boxShadow={
+                                "0px 4px 20px rgba(" + app.rgb + ", 0.2)"
+                            }
+                            width={width}
+                            top={tops[idx]}
+                            left={lefts[idx]}
+                            colorImage={app.colorImage}
+                            noColorImage={app.noColorImage}
+                            background={"rgba(" + app.rgb + ", 0.1)"}
+                            animationDelay={0.5 * idx + "s"}
+                            app={app.name}
+                        />
+                    </div>
                 )
             })
         }
@@ -240,8 +248,9 @@ const TopView = (props: any) => {
                             textAlign: "left",
                         }}
                     >
-                        Fractal supercharges your applications by streaming them from the cloud. Join our waitlist before
-                        the countdown ends for access.
+                        Fractal supercharges your applications by streaming them
+                        from the cloud. Join our waitlist before the countdown
+                        ends for access.
                     </p>
                     <div style={{ marginTop: 50, zIndex: 100 }}>
                         <WaitlistForm />

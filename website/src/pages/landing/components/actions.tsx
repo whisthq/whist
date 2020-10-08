@@ -11,62 +11,110 @@ import { db } from "shared/utils/firebase"
 import { REFERRAL_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "constants/config"
+import { updateClicks } from "store/actions/auth/waitlist"
 
-const CustomAction = (props: { onClick: any; text: any; points: number }) => {
-    const { onClick, text, points } = props
+const CustomAction = (props: {
+    onClick: any
+    text: any
+    points: number
+    warning?: string
+}) => {
+    const { onClick, text, points, warning } = props
     const { width } = useContext(MainContext)
 
     return (
         <button className="action" onClick={onClick}>
             <div
                 style={{
-                    fontSize: width > 720 ? 20 : 16,
+                    display: "flex",
+                    flexDirection: "row",
+                    width: "100%",
+                    justifyContent: "space-between",
                 }}
             >
-                {text}
+                <div
+                    style={{
+                        fontSize: width > 720 ? 20 : 16,
+                    }}
+                >
+                    {text}
+                </div>
+                <div className="points">+{points.toString()} points</div>
             </div>
-            <div className="points">+{points.toString()} points</div>
+            {warning && warning !== "" && (
+                <div
+                    style={{
+                        width: "100%",
+                        fontWeight: "normal",
+                        fontSize: 12,
+                        textAlign: "left",
+                    }}
+                >
+                    {warning}
+                </div>
+            )}
         </button>
     )
 }
 
 const Actions = (props: {
+    dispatch: any
     user: { email: string; referralCode: string }
     loggedIn: any
     unsortedLeaderboard: any
+    clicks: any
 }) => {
-    const { user, loggedIn, unsortedLeaderboard } = props
+    const { dispatch, user, loggedIn, unsortedLeaderboard, clicks } = props
 
     const [showModal, setShowModal] = useState(false)
+    const [warning, setWarning] = useState("")
 
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
 
     const increasePoints = () => {
         if (user) {
-            const email = user.email
+            var allowClick = true
+            const currentTime = new Date().getTime() / 1000
 
-            const hasClicked = unsortedLeaderboard[email].hasOwnProperty(
-                "clicks"
-            )
-
-            if (!hasClicked) {
-                unsortedLeaderboard[email] = {
-                    ...unsortedLeaderboard[email],
-                    clicks: 1,
-                    points: unsortedLeaderboard[email].points + 1,
-                }
-            } else {
-                unsortedLeaderboard[email] = {
-                    ...unsortedLeaderboard[email],
-                    clicks: unsortedLeaderboard[email].clicks + 1,
-                    points: unsortedLeaderboard[email].points + 1,
+            if (clicks.number > 50) {
+                if (currentTime - clicks.lastClicked > 60 * 60 * 3) {
+                    dispatch(updateClicks(0))
+                } else {
+                    allowClick = false
+                    setWarning(
+                        "Max clicks reached! Clicking will reset in 3 hours."
+                    )
                 }
             }
 
-            db.collection("metadata").doc("waitlist").update({
-                leaderboard: unsortedLeaderboard,
-            })
+            if (allowClick) {
+                dispatch(updateClicks(clicks.number + 1))
+
+                const email = user.email
+
+                const hasClicked = unsortedLeaderboard[email].hasOwnProperty(
+                    "clicks"
+                )
+
+                if (!hasClicked) {
+                    unsortedLeaderboard[email] = {
+                        ...unsortedLeaderboard[email],
+                        clicks: 1,
+                        points: unsortedLeaderboard[email].points + 1,
+                    }
+                } else {
+                    unsortedLeaderboard[email] = {
+                        ...unsortedLeaderboard[email],
+                        clicks: unsortedLeaderboard[email].clicks + 1,
+                        points: unsortedLeaderboard[email].points + 1,
+                    }
+                }
+
+                db.collection("metadata").doc("waitlist").update({
+                    leaderboard: unsortedLeaderboard,
+                })
+            }
         }
     }
 
@@ -88,6 +136,7 @@ const Actions = (props: {
                             </div>
                         }
                         points={1}
+                        warning={warning}
                     />
                 </div>
             )
@@ -115,7 +164,7 @@ const Actions = (props: {
                     <div>
                         Want to move up the waitlist? Refer a friend by sending
                         them your referral code. Once they join and enter your
-                        referral code, you'll receive 100 points!
+                        referral code, you'll receive 300 points!
                     </div>
                     <br />
                     <div
@@ -150,12 +199,23 @@ const Actions = (props: {
 }
 
 function mapStateToProps(state: {
-    AuthReducer: { user: any; loggedIn: any; unsortedLeaderboard: any }
+    AuthReducer: {
+        user: any
+        loggedIn: any
+        unsortedLeaderboard: any
+        clicks: number
+    }
 }) {
     return {
         user: state.AuthReducer.user,
         loggedIn: state.AuthReducer.loggedIn,
         unsortedLeaderboard: state.AuthReducer.unsortedLeaderboard,
+        clicks: state.AuthReducer.clicks
+            ? state.AuthReducer.clicks
+            : {
+                  number: 0,
+                  lastClicked: 0,
+              },
     }
 }
 

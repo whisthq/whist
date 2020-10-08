@@ -38,7 +38,8 @@ const Footer = (props: any) => {
                         <Col xs={12} style={{ maxWidth: 350 }}>
                             <div className="title">Fractal</div>
                             <div className="text">
-                                Fractal supercharges your applications by streaming them from the cloud.
+                                Fractal supercharges your applications by
+                                streaming them from the cloud.
                             </div>
                             <div
                                 style={{
@@ -48,7 +49,7 @@ const Footer = (props: any) => {
                                 }}
                             >
                                 <a
-                                    href="https://twitter.com/fractalcomputer"
+                                    href="https://twitter.com/tryfractal"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     style={{
@@ -72,7 +73,7 @@ const Footer = (props: any) => {
                                     </div>
                                 </a>
                                 <a
-                                    href="https://www.linkedin.com/company/fractalcomputers"
+                                    href="https://www.linkedin.com/company/fractal"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     style={{
@@ -84,7 +85,7 @@ const Footer = (props: any) => {
                                     </div>
                                 </a>
                                 <a
-                                    href="https://www.instagram.com/fractalcomputer/"
+                                    href="https://www.instagram.com/tryfractal"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     style={{
@@ -96,7 +97,7 @@ const Footer = (props: any) => {
                                     </div>
                                 </a>
                                 <a
-                                    href="https://www.facebook.com/fractalcomputer"
+                                    href="https://www.facebook.com/tryfractal"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     style={{
@@ -173,7 +174,7 @@ const Footer = (props: any) => {
                             <div className="section-name">CONTACT</div>
                             <div>
                                 <a
-                                    href="mailto: sales@fractalcomputers.com"
+                                    href="mailto: sales@tryfractal.com"
                                     className="page-link"
                                 >
                                     Sales
@@ -181,7 +182,7 @@ const Footer = (props: any) => {
                             </div>
                             <div>
                                 <a
-                                    href="mailto: support@fractalcomputers.com"
+                                    href="mailto: support@tryfractal.com"
                                     className="page-link"
                                 >
                                     Support
@@ -189,7 +190,7 @@ const Footer = (props: any) => {
                             </div>
                             <div>
                                 <a
-                                    href="mailto: careers@fractalcomputers.com"
+                                    href="mailto: careers@tryfractal.com"
                                     className="page-link"
                                 >
                                     Careers

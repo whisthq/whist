@@ -9,6 +9,7 @@ import Tina from "assets/teamPhotos/tina.svg"
 import Savvy from "assets/teamPhotos/savvy.svg"
 import Owen from "assets/teamPhotos/owen.svg"
 import Cidney from "assets/teamPhotos/cidney.svg"
+import Suriya from "assets/teamPhotos/suriya.svg"
 
 export const teamData = [
     {
@@ -33,7 +34,7 @@ export const teamData = [
         image: Roshan,
         name: "Roshan Padaki",
         text:
-            "Prior to Fractal, Roshan researched performance lower bounds for matching algorithms in dynamic matching markets and developed methods for reducing dimensionality and sampling parameters in Bayesian deep learning. He studied mathematics at Harvard.",
+            "While studying Math at Harvard, Roshan applied his interest in the intersections between math, computer science, and economics to evaluating Uber-style matching algorithms, detecting money laundering from financial data, and reducing parameter dimensionality for deep bayesian and recurrent neural networks.",
     },
     {
         image: Adriano,
@@ -76,5 +77,11 @@ export const teamData = [
         name: "Cidney Weng",
         text:
             "Cidney studies EECS at UC Berkeley. She specializes in full stack development, and loves hiking, cooking, and playing ultimate frisbee outside of work.",
+    },
+    {
+        image: Suriya,
+        name: "Suriya Kandaswamy",
+        text:
+            "Prior to Fractal, Suriya worked at a few startups and BCG. She studied Computer Science at Harvard, where she was on teaching staff for the intro systems course and did her senior thesis on sports analytics, using graph theory to characterize professional soccer team strategy.",
     },
 ]
