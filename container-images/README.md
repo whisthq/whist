@@ -10,33 +10,6 @@ This repository contains the Docker images containerizing the various applicatio
 
 - None yet
 
-## TLDR:
-
-- First, create an EC2 Instance (Which will later be linked with ECS)
-- You need to create a Ubuntu 20.04 instance on a g3s.xlarge instance type
-- Also, make sure to add more storage space (the default 8g is not enough to build the protocol and the base image!). 32 is plenty, 16 should be enough as well.
-- Also, make sure that it is part of the security group “fractal-containerized-protocol-group”, on us-east-2, or “container-testing”, on us-east-1, on “Step 6: Configure Security Group”
-
-Then, run the following commands on the host:
-
-```
-curl https://raw.githubusercontent.com/fractalcomputers/container-images/dev/setup_ubuntu20_host.sh?token=AGNK4MB42ISOR6INPEWBXUC7QW43Q > setup_host.sh
-chmod +x setup_host.sh
-./setup_host.sh
-sudo reboot
-git clone https://github.com/fractalcomputers/container-images
-cd container-images/
-git checkout djsavvy/refactor-VM-setup
-git submodule init
-git submodule update
-cd base/protocol/
-git checkout djsavvy/remove-18-build
-cd ../..
-./build_protocol.sh && ./build_container_image.sh base && ./run_container_image.sh base
-```
-
-Now from a fractal client, try connecting to the IP given by `curl ipinfo.io` inside the container.
-
 
 ## More detailed Usage
 When git cloning, ensure that all git submodules are pulled as follows:
@@ -52,7 +25,7 @@ Or, if you have sshkeys,
 git clone --recurse-submodules --branch $your-container-images-branch git@github.com:fractalcomputers/container-images.git ~/container-images
 ```
 
-Then, setup on your EC2 instance with the setup scripts:
+Then, setup on your EC2 instance with the setup script from the [ecs-host-setup repo](https://github.com/fractalcomputers/ecs-host-service/):
 
 ```
 ./setup_ubuntu20_host.sh
