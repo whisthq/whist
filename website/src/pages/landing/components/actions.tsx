@@ -12,20 +12,46 @@ import { REFERRAL_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "constants/config"
 
-const CustomAction = (props: { onClick: any; text: any; points: number }) => {
-    const { onClick, text, points } = props
+const CustomAction = (props: {
+    onClick: any
+    text: any
+    points: number
+    warning?: string
+}) => {
+    const { onClick, text, points, warning } = props
     const { width } = useContext(MainContext)
 
     return (
         <button className="action" onClick={onClick}>
             <div
                 style={{
-                    fontSize: width > 720 ? 20 : 16,
+                    display: "flex",
+                    flexDirection: "row",
+                    width: "100%",
+                    justifyContent: "space-between",
                 }}
             >
-                {text}
+                <div
+                    style={{
+                        fontSize: width > 720 ? 20 : 16,
+                    }}
+                >
+                    {text}
+                </div>
+                <div className="points">+{points.toString()} points</div>
             </div>
-            <div className="points">+{points.toString()} points</div>
+            {warning && warning !== "" && (
+                <div
+                    style={{
+                        width: "100%",
+                        fontWeight: "normal",
+                        fontSize: 12,
+                        textAlign: "left",
+                    }}
+                >
+                    {warning}
+                </div>
+            )}
         </button>
     )
 }
@@ -38,35 +64,57 @@ const Actions = (props: {
     const { user, loggedIn, unsortedLeaderboard } = props
 
     const [showModal, setShowModal] = useState(false)
+    const [clicks, setClicks] = useState(0)
+    const [lastClicked, setLastClicked] = useState(0)
+    const [warning, setWarning] = useState("")
 
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
 
     const increasePoints = () => {
         if (user) {
-            const email = user.email
+            var allowClick = true
+            const currentTime = new Date().getTime() / 1000
 
-            const hasClicked = unsortedLeaderboard[email].hasOwnProperty(
-                "clicks"
-            )
-
-            if (!hasClicked) {
-                unsortedLeaderboard[email] = {
-                    ...unsortedLeaderboard[email],
-                    clicks: 1,
-                    points: unsortedLeaderboard[email].points + 1,
-                }
-            } else {
-                unsortedLeaderboard[email] = {
-                    ...unsortedLeaderboard[email],
-                    clicks: unsortedLeaderboard[email].clicks + 1,
-                    points: unsortedLeaderboard[email].points + 1,
+            if (clicks > 50) {
+                if (currentTime - lastClicked > 60 * 60 * 3) {
+                    setClicks(0)
+                } else {
+                    allowClick = false
+                    setWarning(
+                        "Max clicks reached! Clicking will reset in 3 hours."
+                    )
                 }
             }
 
-            db.collection("metadata").doc("waitlist").update({
-                leaderboard: unsortedLeaderboard,
-            })
+            if (allowClick) {
+                setClicks(clicks + 1)
+                setLastClicked(currentTime)
+
+                const email = user.email
+
+                const hasClicked = unsortedLeaderboard[email].hasOwnProperty(
+                    "clicks"
+                )
+
+                if (!hasClicked) {
+                    unsortedLeaderboard[email] = {
+                        ...unsortedLeaderboard[email],
+                        clicks: 1,
+                        points: unsortedLeaderboard[email].points + 1,
+                    }
+                } else {
+                    unsortedLeaderboard[email] = {
+                        ...unsortedLeaderboard[email],
+                        clicks: unsortedLeaderboard[email].clicks + 1,
+                        points: unsortedLeaderboard[email].points + 1,
+                    }
+                }
+
+                db.collection("metadata").doc("waitlist").update({
+                    leaderboard: unsortedLeaderboard,
+                })
+            }
         }
     }
 
@@ -88,6 +136,7 @@ const Actions = (props: {
                             </div>
                         }
                         points={1}
+                        warning={warning}
                     />
                 </div>
             )
