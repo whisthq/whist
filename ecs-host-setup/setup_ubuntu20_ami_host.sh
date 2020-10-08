@@ -77,7 +77,7 @@ sudo systemctl enable docker
 sudo systemctl restart docker
 
 # Create directories for ECS agent
-mkdir -p /var/log/ecs /var/lib/ecs/{data,gpu} /etc/ecs
+sudo mkdir -p /var/log/ecs /var/lib/ecs/{data,gpu} /etc/ecs
 
 # Install jq to build JSON
 sudo apt install -y jq
