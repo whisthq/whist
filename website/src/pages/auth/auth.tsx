@@ -1,11 +1,11 @@
 import React, { useEffect } from "react"
 import { connect } from "react-redux"
+import { debugLog } from 'shared/utils/logging'
 import "styles/auth.css"
+
 
 import GoogleButton from "pages/auth/googleButton"
 import SignoutButton from "pages/auth/signoutButton"
-
-var debug_log = require('shared/utils/logging.ts').debug_log;
 
 const Auth = (props: {
     dispatch: (arg0: { type: string; email?: string }) => void
@@ -13,7 +13,7 @@ const Auth = (props: {
     email: React.ReactNode
 }) => {
     useEffect(() => {
-        debug_log(props)
+        debugLog(props)
     }, [props])
 
     return (

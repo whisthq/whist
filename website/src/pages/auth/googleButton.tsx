@@ -4,11 +4,10 @@ import firebase from "firebase/app"
 import { db } from "shared/utils/firebase"
 import { SIGNUP_POINTS } from "shared/utils/points"
 import { googleLogin } from "store/actions/auth/login_actions"
+import { debugLog } from 'shared/utils/logging'
 
 import MainContext from "shared/context/mainContext"
 import "styles/landing.css"
-
-var debug_log = require('shared/utils/logging.ts').debug_log;
 
 const GoogleButton = (props: any) => {
     const { width } = useContext(MainContext)
@@ -16,7 +15,7 @@ const GoogleButton = (props: any) => {
 
     const handleGoogleLogin = () => {
         if (user.googleAuthEmail) {
-            debug_log("User already linked google account")
+            debugLog("User already linked google account")
         } else {
             const provider = new firebase.auth.GoogleAuthProvider()
 
@@ -51,7 +50,7 @@ const GoogleButton = (props: any) => {
                         )
                     }
                 })
-                .catch((e) => debug_log(e))
+                .catch((e) => debugLog(e))
         }
     }
 

@@ -1,6 +1,5 @@
 import { db } from "shared/utils/firebase"
-
-var debug_log = require('shared/utils/logging.ts').debug_log;
+import { debugLog } from 'shared/utils/logging'
 
 export const INITIAL_POINTS = 50
 export const SIGNUP_POINTS = 100
@@ -49,7 +48,7 @@ export async function getUnsortedLeaderboard(document?: any) {
 // function checkName(name: string, waitlist: any) {
 //     for (var i = 0; i < waitlist.length; i++) {
 //         if (waitlist[i].name === name) {
-//             debug_log(waitlist[i])
+//             debugLog(waitlist[i])
 //             return [i, true]
 //         }
 //     }
