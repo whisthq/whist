@@ -83,9 +83,15 @@ sudo systemctl restart docker
 
 
 echo "================================================"
+echo "Installing AWS CLI..."
+echo "================================================"
+sudo apt install awscli
+
+echo "================================================"
 echo "Cleaning up the image a bit..."
 echo "================================================"
 sudo apt autoremove
+
 
 echo
 echo 'Install complete. Please "sudo reboot" before continuing'
