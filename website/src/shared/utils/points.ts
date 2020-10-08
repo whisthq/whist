@@ -1,5 +1,5 @@
 import { db } from "shared/utils/firebase"
-import { debugLog } from 'shared/utils/logging'
+import { debugLog } from "shared/utils/logging"
 
 export const INITIAL_POINTS = 50
 export const SIGNUP_POINTS = 100
