@@ -81,7 +81,6 @@ export const teamData = [
     {
         image: Suriya,
         name: "Suriya Kandaswamy",
-        text:
-            "Prior to Fractal, Suriya worked at a few startups and BCG. She studied Computer Science at Harvard, where she was on teaching staff for the intro systems course and did her senior thesis on sports analytics, using graph theory to characterize professional soccer team strategy.",
-    },
+        text: "Prior to Fractal, Suriya worked at a few startups and BCG. She studied Computer Science at Harvard, where she was on teaching staff for the intro systems course and did her senior thesis on sports analytics, using graph theory to characterize professional soccer team strategy."
+    }
 ]
