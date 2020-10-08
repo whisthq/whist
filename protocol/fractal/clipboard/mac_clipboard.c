@@ -54,6 +54,7 @@ bool unsafe_hasClipboardUpdated() {
         clipboardHasFiles = ClipboardHasFiles();
         hasUpdated = (clipboardHasImage || clipboardHasString ||
                       clipboardHasFiles);  // should be always set to true in here
+        LOG_INFO("has clipboard updated - image: %d string: %d files: %d", clipboardHasImage, clipboardHasString, clipboardHasFiles);
         last_clipboard_sequence_number = new_clipboard_sequence_number;
     }
     return hasUpdated;
@@ -170,8 +171,11 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         return;
     }
     // check the type of the data
+    // Because we are declaring variables within each `case`, make sure each one is
+    //  scoped properly using brackets:
+    //  https://stackoverflow.com/questions/92396/why-cant-variables-be-declared-in-a-switch-statement
     switch (cb->type) {
-        case CLIPBOARD_TEXT:
+        case CLIPBOARD_TEXT: {
             // Since Objective-C clipboard string pasting does not take
             //   string size as an argument, and pastes until null character,
             //   must malloc string to end with null character to be pasted.
@@ -184,22 +188,13 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             ClipboardSetString(string_data);
             free(string_data);
             break;
-        case CLIPBOARD_IMAGE:
+        }
+        case CLIPBOARD_IMAGE: {
             LOG_INFO("SetClipboard to Image with size %d", cb->size);
-            // fix the CGImage header back
-            const size_t header_size = 14;
-            const size_t offset_to_pixel_array = 54;
-            char* data = malloc(cb->size + header_size);
-            *((char*)(&data[0])) = 'B';
-            *((char*)(&data[1])) = 'M';
-            *((int*)(&data[2])) = cb->size + header_size;
-            *((int*)(&data[10])) = offset_to_pixel_array;
-            memcpy(data + header_size, cb->data, cb->size);
-            // set the image and free the temp data
-            ClipboardSetImage(data, cb->size + 14);
-            free(data);
+            ClipboardSetImage(cb->data, cb->size);
             break;
-        case CLIPBOARD_FILES:
+        }
+        case CLIPBOARD_FILES: {
             LOG_INFO("SetClipboard to Files");
 
             // allocate memory to store filenames in clipboard
@@ -221,9 +216,11 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             }
 
             break;
-        default:
+        }
+        default: {
             LOG_INFO("No clipboard data to set!");
             break;
+        }
     }
 
     // Update the status so that this specific update doesn't count
