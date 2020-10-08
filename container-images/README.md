@@ -25,7 +25,7 @@ Or, if you have sshkeys,
 git clone --recurse-submodules --branch $your-container-images-branch git@github.com:fractalcomputers/container-images.git ~/container-images
 ```
 
-Then, setup on your EC2 instance with the setup script from the [ecs-host-setup repo](https://github.com/fractalcomputers/ecs-host-service/):
+Then, setup on your EC2 instance with the setup script from the [ecs-host-setup repo](https://github.com/fractalcomputers/ecs-host-setup/):
 
 ```
 ./setup_ubuntu20_host.sh
