@@ -2,11 +2,9 @@
 
 This repository contains the scripts to set up an AWS EC2 host machine to host Fractal containers. The `setup_ubuntu20_host.sh` script is intended for setting up a general host for development, while the `setup_ubuntu20_ami_host.sh` script sets up an EC2 host and stores it as an AMI (Amazon Machine Image) for programmatic deployment. To use either of the scripts:
 
-- First, create an EC2 Instance (which will later be linked with ECS), you need to create a Ubuntu 20.04 instance on a g3s.xlarge instance type
-- Also, make sure to add more storage space (the default 8g is not enough to build the protocol and the base image!). 32 is plenty, 16 should be enough as well.
-- Also, make sure that it is part of the security group “fractal-containerized-protocol-group”, on us-east-2, or “container-testing”, on us-east-1, on “Step 6: Configure Security Group”
+First, create an Ubuntu 20.04 g3s.xlarge EC2 instance (which will later be linked with ECS) - the **g3** instance type is required for GPU compatibility with our containers and streaming technology. Make sure to select 32GB of storage space, as the default 8GB is not enough to build the protocol and the base image, and to add your EC2 insance to the the **fractal-containerized-protocol-group** if on AWS region **us-east-2**, or **container-testing** if on AWS region **us-east-1**.
 
-Then, run the following commands on the host:
+Then, run the following commands on the EC2 instance, via AWS Session Manager (SSM):
 
 ```
 curl https://raw.githubusercontent.com/fractalcomputers/ecs-host-setup/master/setup_ubuntu20_host.sh?token=AGNK4MEXEJSKU5TOI3U7HAS7RBVWI > setup_host.sh
@@ -24,6 +22,4 @@ cd ../..
 ./build_protocol.sh && ./build_container_image.sh base && ./run_container_image.sh base
 ```
 
-Now from a fractal client, try connecting to the IP given by `curl ipinfo.io` inside the container.
-
-
+Now, from a Fractal client, try connecting to the IP given by running `curl ipinfo.io` inside the container. You should be all set!
