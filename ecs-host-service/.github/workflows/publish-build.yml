@@ -37,5 +37,5 @@ jobs:
     - name: Notify Slack
       run: |
         curl -X POST \
-        --data-urlencode "payload={\"channel\": \"#general\", \"username\": \"fractal-bot\", \"text\": \"`ecs-host-service` build uploaded to S3!\", \"icon_emoji\": \":fractal:\"}" \
+        --data-urlencode "payload={\"channel\": \"#general\", \"username\": \"Fractal Bot\", \"text\": \"`ecs-host-service` build uploaded to S3!\", \"icon_emoji\": \":fractal:\"}" \
         https://hooks.slack.com/services/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
