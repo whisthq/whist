@@ -20,6 +20,8 @@ This service will not restart on crash/panic, since that could lead to an incons
 
 We never use `os.exit()` or any of the `log.fatal()` variants, since we want to send out a message to our webserver and/or Sentry upon the death of this service (this is done with a `defer`red function call, which runs after `panic`s but not after `exit`s).
 
+For more details, see the comments at the beginning of `main()` and `shutdownHostService()`.
+
 ## Publishing
 
 TBD

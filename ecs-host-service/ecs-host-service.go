@@ -41,6 +41,16 @@ func startDockerDaemon() {
 	}
 }
 
+func shutdownHostService() {
+	// Catch any panics in the main goroutine. Note that besides the host machine
+	// itself shutting down, this method should be the _only_ way that this host
+	// service exits. In particular, we use panic() as a control flow primitive
+	// --- panics in main() or its child functions will be recovered here and
+	// used as signals to exit. Therefore, panics should only be used/bubble up
+	// to main() in the case of an irrecoverable failure that mandates that the
+	// host machine accept no new connections.
+}
+
 // Create the directory used to store the container resource allocations (e.g.
 // TTYs) on disk
 func initializeFilesystem() {
@@ -176,6 +186,14 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string, tty
 }
 
 func main() {
+	// This needs to be the first statement in main(). This deferred function
+	// allows us to catch any panics in the main goroutine and therefore execute
+	// code on shutdown of the host service. In particular, we want to send a
+	// message to Sentry and/or the fractal webserver upon our death.
+	defer shutdownHostService()
+
+	// After the above defer, this needs to be the next line of code that runs,
+	// since the following operations will require root permissions.
 	checkRunningPermissions()
 
 	// Note that we defer uninitialization so that in case of panic elsewhere, we
