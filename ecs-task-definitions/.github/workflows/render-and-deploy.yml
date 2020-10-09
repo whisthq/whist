@@ -1,0 +1,47 @@
+name: Render and Deploy ECS Task Definition(s)
+
+# Publish on updates to the master branch
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+    render-and-deploy:
+        name: Build and publish to AWS S3
+        runs-on: ubuntu-latest
+        strategy:
+          matrix:
+            task-definitions: [ fractal-base.json, fractal-browsers-chrome.json ]
+            images: [ fractal/base, fractal/browsers/chrome ]
+            aws-region: [ us-east-1 ]
+
+      - name: Checkout git repository
+        uses: actions/checkout@v2    
+
+      - name: Retrieve container-images master git hash as env variable
+        run: echo "CONTAINERS_GITHUB_SHA=$(git ls-remote https://github.com/fractalcomputers/container-images | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
+
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ECS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ matrix.aws-region }}
+
+      - name: Render Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ matrix.task-definitions }}
+          container-name: fractal
+          image: ${{ matrix.images }}:$CONTAINERS_GITHUB_SHA
+
+      - name: Deploy to Amazon ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ matrix.task-definitions }}
+
+      - name: Notify Slack
+        run: |
+            curl -X POST \
+            --data-urlencode "payload={\"channel\": \"#general\", \"username\": \"Fractal Bot\", \"text\": \"Task Definitions rendered and deployed to production via ECS upload.\", \"icon_emoji\": \":fractal:\"}" \
+            https://hooks.slack.com/services/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
