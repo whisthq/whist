@@ -262,7 +262,7 @@ COPY 02-fractal-dummy.conf /usr/share/X11/xorg.conf.d/02-fractal-dummy.conf
 RUN if [ -f "/etc/X11/xorg.conf" ]; then sudo mv /etc/X11/xorg.conf /etc/X11/xorg.conf.old ; fi
 
 # Creating Fractal Directory and Subdirectories in /usr/share
-RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fractal/sync
+RUN mkdir -p /usr/share/fractal /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fractal/sync
 
 COPY FractalServer.sh /usr/share/fractal/FractalServer.sh
 
@@ -270,12 +270,9 @@ COPY FractalServer.sh /usr/share/fractal/FractalServer.sh
 
 
 
-
-
-RUN sudo chgrp fractal -R /usr/share/fractal \
-    sudo chmod g+rw -R /usr/share/fractal \
-    sudo chmod g+x /usr/share/fractal/FractalServer \
-    sudo chmod g+x /usr/share/fractal/FractalServer.sh 
+RUN chgrp fractal -R /usr/share/fractal \
+    chmod g+rw -R /usr/share/fractal \
+    chmod g+x /usr/share/fractal/FractalServer.sh 
 
 
 RUN sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y \
@@ -286,14 +283,14 @@ RUN sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xc
 
 
 # symlink Fractal FFmpeg .so libs to system libs location for standard Linux system runtime library loading
-RUN sudo ln -sf /usr/share/fractal/libavcodec.so /usr/local/lib/libavcodec-fractal.so \
-    sudo ln -sf /usr/share/fractal/libavdevice.so /usr/local/lib/libavdevice-fractal.so \
-    sudo ln -sf /usr/share/fractal/libavfilter.so /usr/local/lib/libavfilter-fractal.so \
-    sudo ln -sf /usr/share/fractal/libavformat.so /usr/local/lib/libavformat-fractal.so \
-    sudo ln -sf /usr/share/fractal/libavutil.so /usr/local/lib/libavutil-fractal.so \
-    sudo ln -sf /usr/share/fractal/libpostproc.so /usr/local/lib/libpostproc-fractal.so \
-    sudo ln -sf /usr/share/fractal/libswresample.so /usr/local/lib/libswresample-fractal.so \
-    sudo ln -sf /usr/share/fractal/libswscale.so /usr/local/lib/libswscale-fractal.so \
+RUN ln -sf /usr/share/fractal/libavcodec.so /usr/local/lib/libavcodec-fractal.so \
+    ln -sf /usr/share/fractal/libavdevice.so /usr/local/lib/libavdevice-fractal.so \
+    ln -sf /usr/share/fractal/libavfilter.so /usr/local/lib/libavfilter-fractal.so \
+    ln -sf /usr/share/fractal/libavformat.so /usr/local/lib/libavformat-fractal.so \
+    ln -sf /usr/share/fractal/libavutil.so /usr/local/lib/libavutil-fractal.so \
+    ln -sf /usr/share/fractal/libpostproc.so /usr/local/lib/libpostproc-fractal.so \
+    ln -sf /usr/share/fractal/libswresample.so /usr/local/lib/libswresample-fractal.so \
+    ln -sf /usr/share/fractal/libswscale.so /usr/local/lib/libswscale-fractal.so \
     rm -rf shared-libs.tar.gz \
     rm -rf share
 
