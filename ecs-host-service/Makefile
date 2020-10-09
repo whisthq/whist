@@ -7,7 +7,7 @@ GOTEST       = $(GOCMD) test
 GOGET        = $(GOCMD) get
 
 BUILD_FOLDER = build
-BINARY_NAME  = ecs_host_service
+BINARY_NAME  = ecs-host-service
 
 all: deps build
 
