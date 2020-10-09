@@ -1,4 +1,4 @@
-name: Render and Deploy ECS Task Definition(s)
+name: Render and Deploy ECS Task Definitions
 
 # Publish on updates to the master branch
 on:
