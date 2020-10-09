@@ -26,7 +26,7 @@ func checkRunningPermissions() {
 	log.Println("Checking permissions...")
 
 	if os.Geteuid() != 0 {
-		log.Fatal("This service needs to run as root!")
+		log.Panic("This service needs to run as root!")
 	}
 }
 
@@ -50,22 +50,22 @@ func initializeFilesystem() {
 	// we don't know why it's there or if it's valid
 	if _, err := os.Lstat(resourceMappingDirectory); !os.IsNotExist(err) {
 		if err == nil {
-			log.Fatalf("Directory %s already exists!", resourceMappingDirectory)
+			log.Panicf("Directory %s already exists!", resourceMappingDirectory)
 		} else {
-			log.Fatalf("Could not make directory %s because of error %v", resourceMappingDirectory, err)
+			log.Panicf("Could not make directory %s because of error %v", resourceMappingDirectory, err)
 		}
 	}
 
 	err := os.MkdirAll(resourceMappingDirectory, 0644|os.ModeSticky)
 	if err != nil {
-		log.Fatalf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
+		log.Panicf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
 	}
 }
 
 func uninitializeFilesystem() {
 	err := os.RemoveAll(resourceMappingDirectory)
 	if err != nil {
-		log.Fatalf("Failed to delete directory %s: error: %v\n", resourceMappingDirectory, err)
+		log.Panicf("Failed to delete directory %s: error: %v\n", resourceMappingDirectory, err)
 	} else {
 		log.Printf("Successfully deleted directory %s\n", resourceMappingDirectory)
 	}
