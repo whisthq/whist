@@ -188,9 +188,9 @@ func main() {
 	signal.Notify(sig_chan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-sig_chan
-		log.Println("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and exiting...")
+		log.Println("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and panicking...")
 		uninitializeFilesystem()
-		os.Exit(0)
+		log.Panic("Got a Ctrl+C: already uninitialized filesystem, looking to exit")
 	}()
 
 	ctx := context.Background()
