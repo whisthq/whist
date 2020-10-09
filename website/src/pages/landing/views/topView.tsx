@@ -23,7 +23,7 @@ import PhotoshopColor from "assets/largeGraphics/photoshopColor.svg"
 import "styles/landing.css"
 
 const TopView = (props: any) => {
-    const { width, appHighlight, setAppHighlight } = useContext(MainContext)
+    const { width, appHighlight } = useContext(MainContext)
 
     const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -95,6 +95,7 @@ const TopView = (props: any) => {
 
     const renderLogos = () => {
         let idx = -1
+
         if (appHighlight) {
             const appHighlightIndex = apps.indexOf(appHighlight + ",")
             return appImages
@@ -102,24 +103,20 @@ const TopView = (props: any) => {
                     if (app.name !== appHighlight) {
                         idx += idx === 2 ? 2 : 1
                         return (
-                            <div onClick={() => setAppHighlight(app.name)}>
-                                <FloatingLogo
-                                    textIndex={idx}
-                                    boxShadow={
-                                        "0px 4px 20px rgba(" +
-                                        app.rgb +
-                                        ", 0.2)"
-                                    }
-                                    width={width}
-                                    top={tops[idx]}
-                                    left={lefts[idx]}
-                                    colorImage={app.colorImage}
-                                    noColorImage={app.noColorImage}
-                                    background={"rgba(" + app.rgb + ", 0.1)"}
-                                    animationDelay={0.5 * idx + "s"}
-                                    app={app.name}
-                                />
-                            </div>
+                            <FloatingLogo
+                                textIndex={idx}
+                                boxShadow={
+                                    "0px 4px 20px rgba(" + app.rgb + ", 0.2)"
+                                }
+                                width={width}
+                                top={tops[idx]}
+                                left={lefts[idx]}
+                                colorImage={app.colorImage}
+                                noColorImage={app.noColorImage}
+                                background={"rgba(" + app.rgb + ", 0.1)"}
+                                animationDelay={0.5 * idx + "s"}
+                                app={app.name}
+                            />
                         )
                     } else {
                         return <></>
@@ -152,23 +149,19 @@ const TopView = (props: any) => {
             return appImages.map((app: any, _: any) => {
                 idx += 1
                 return (
-                    <div onClick={() => setAppHighlight(app.name)}>
-                        <FloatingLogo
-                            textIndex={idx}
-                            currentIndex={currentIndex}
-                            boxShadow={
-                                "0px 4px 20px rgba(" + app.rgb + ", 0.2)"
-                            }
-                            width={width}
-                            top={tops[idx]}
-                            left={lefts[idx]}
-                            colorImage={app.colorImage}
-                            noColorImage={app.noColorImage}
-                            background={"rgba(" + app.rgb + ", 0.1)"}
-                            animationDelay={0.5 * idx + "s"}
-                            app={app.name}
-                        />
-                    </div>
+                    <FloatingLogo
+                        textIndex={idx}
+                        currentIndex={currentIndex}
+                        boxShadow={"0px 4px 20px rgba(" + app.rgb + ", 0.2)"}
+                        width={width}
+                        top={tops[idx]}
+                        left={lefts[idx]}
+                        colorImage={app.colorImage}
+                        noColorImage={app.noColorImage}
+                        background={"rgba(" + app.rgb + ", 0.1)"}
+                        animationDelay={0.5 * idx + "s"}
+                        app={app.name}
+                    />
                 )
             })
         }
@@ -180,7 +173,6 @@ const TopView = (props: any) => {
             style={{
                 width: "100%",
                 position: "relative",
-                zIndex: 1,
                 paddingBottom: width > 720 ? 0 : 70,
             }}
         >
@@ -201,12 +193,12 @@ const TopView = (props: any) => {
                         paddingLeft: 0,
                         position: "relative",
                         paddingRight: 0,
+                        zIndex: 1,
                     }}
                 >
                     <div
                         style={{
                             fontFamily: "Maven Pro",
-                            zIndex: 100,
                             fontSize: width > 720 ? 80 : 50,
                             fontWeight: "bold",
                             color: "black",
@@ -233,12 +225,11 @@ const TopView = (props: any) => {
                             fontWeight: "bold",
                             display: "inline-block",
                             paddingBottom: 20,
-                            zIndex: 100,
                             lineHeight: width > 720 ? 1.0 : 0.6,
                             marginBottom: 40,
                         }}
                     >
-                        just <span style={{ color: "#111111" }}>faster</span>.
+                        just faster.
                     </div>
                     <p
                         style={{
@@ -252,7 +243,7 @@ const TopView = (props: any) => {
                         from the cloud. Join our waitlist before the countdown
                         ends for access.
                     </p>
-                    <div style={{ marginTop: 50, zIndex: 100 }}>
+                    <div style={{ marginTop: 50 }}>
                         <WaitlistForm />
                     </div>
                 </Col>
@@ -265,6 +256,7 @@ const TopView = (props: any) => {
                         paddingRight: 0,
                         paddingTop: 30,
                         position: "relative",
+                        zIndex: 0,
                         top: width > 720 ? 0 : 20,
                     }}
                 >
