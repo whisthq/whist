@@ -14,10 +14,12 @@ jobs:
     name: Build and publish to AWS S3
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout git repository
-      uses: actions/checkout@v2
-      with:
-        submodules: recursive
+      - name: Checkout Git repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          token: ${{ secrets.CI_PAT }} # `CI_PAT` is a secret that contains the fractal-github user Personal Access Token
+          submodules: recursive
     - name: Build protocol
       run: ./build_protocol.sh
     - name: Build container images
