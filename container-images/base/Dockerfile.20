@@ -264,14 +264,14 @@ RUN if [ -f "/etc/X11/xorg.conf" ]; then sudo mv /etc/X11/xorg.conf /etc/X11/xor
 # Creating Fractal Directory and Subdirectories in /usr/share
 RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fractal/sync
 
+COPY FractalServer.sh /usr/share/fractal/FractalServer.sh
 
 
 
 
 
-RUN sudo wget -qO /usr/share/fractal/FractalServer "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/FractalServer" \
-    sudo wget -qO /usr/share/fractal/FractalServer.sh "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/FractalServer.sh"
-    
+
+
 RUN sudo chgrp fractal -R /usr/share/fractal \
     sudo chmod g+rw -R /usr/share/fractal \
     sudo chmod g+x /usr/share/fractal/FractalServer \
