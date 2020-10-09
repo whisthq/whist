@@ -67,7 +67,6 @@ sudo apt-mark hold \
     cuda-drivers
 export PATH=/usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
-
 echo "================================================"
 echo "Installing nvidia-docker..."
 echo "Note that (as of 10/5/20) the URLs may still say 18.04. This is because"
@@ -81,7 +80,6 @@ sudo apt-get install -y nvidia-docker2
 sudo systemctl enable docker
 sudo systemctl restart docker
 
-
 echo "================================================"
 echo "Installing AWS CLI..."
 echo "================================================"
@@ -91,7 +89,6 @@ echo "================================================"
 echo "Cleaning up the image a bit..."
 echo "================================================"
 sudo apt autoremove
-
 
 echo
 echo 'Install complete. Please "sudo reboot" before continuing'
