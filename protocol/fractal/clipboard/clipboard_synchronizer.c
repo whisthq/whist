@@ -155,7 +155,6 @@ int UpdateClipboardThread(void* opaque) {
             if (GetTimer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
                 SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * GetTimer(clipboard_time)), 1));
             }
-            continue;
         }
 
         LOG_INFO("Updated clipboard!");
