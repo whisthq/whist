@@ -9,6 +9,9 @@ Type=exec
 Environment=DISPLAY=:10
 Environment=XAUTHORITY=/home/fractal/.Xauthority
 ExecStart=/bin/sh -c /usr/share/fractal/start-fractal-server.sh
+CPUAffinity=1-3
+LimitMEMLOCK=infinity
+LimitRTPRIO=99
 
 [Install]
 WantedBy=default.target
