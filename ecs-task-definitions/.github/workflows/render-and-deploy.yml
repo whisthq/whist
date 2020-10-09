@@ -41,9 +41,13 @@ jobs:
           task-definition: ${{ matrix.task-definitions }}
 
     notify-slack:
+        name: Notify Slack
         needs: [ render-and-deploy ]
+        if: success()
+        runs-on: ubuntu-latest
+        steps: 
 
-      - name: Notify Slack
+        - name: Notify Slack
         run: |
             curl -X POST \
             --data-urlencode "payload={\"channel\": \"#general\", \"username\": \"Fractal Bot\", \"text\": \"Task Definitions rendered and deployed to production via ECS upload.\", \"icon_emoji\": \":fractal:\"}" \
