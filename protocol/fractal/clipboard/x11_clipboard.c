@@ -30,6 +30,7 @@ whatever files are in the SET_CLIPBOARD directory.
 
 #include "../core/fractal.h"
 #include "clipboard.h"
+#include "../utils/png.h"
 
 #define CLOSE_FDS \
     "for fd in $(ls /proc/$$/fd); do\
@@ -55,20 +56,6 @@ static Atom incr_id;
 // if true, means peer has sent clipboard data and we have just added to our clipboard - ignore next clipboard change
 // if false, can listen for clipboard changes as normal
 static bool just_received = false;
-// supported clipboard image types
-static const char* const supported_clipboard_image_types[] = { // list this in order of perceived commonality
-    "image/png",
-    "image/bmp",
-    "image/jpeg",
-    "image/gif",
-    "image/tiff",
-    "image/vnd.microsoft.icon",
-    "image/svg+xml",
-    "image/ico",
-    "image/icon",
-    "image/webp",
-    0
-};
 
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
 bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
@@ -76,27 +63,24 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
 void unsafe_initClipboard() { StartTrackingClipboardUpdates(); }
 
 bool get_clipboard_picture(ClipboardData* cb) {
+    /*
+    Assume that clipboard stores pictures in png format when getting
+    */
     Atom target_atom;
     Atom property_atom = XInternAtom(display, "XSEL_DATA", False);
 
-    // iterate through possible image types - if image type is found, then take clipboard
-    //  content as image
-    const char* const* target_string = supported_clipboard_image_types;
-    while (*target_string != 0) {
-        target_atom = XInternAtom(display, *target_string, False);
-        if (clipboard_has_target(property_atom, target_atom)) {
-            if (!get_clipboard_data(property_atom, cb, 0)) {
-                LOG_WARNING("Failed to get clipboard data");
-                return false;
-            }
-
-            LOG_INFO("image type %s content_size: %d", target_string, cb->size);
-
-            cb->type = CLIPBOARD_IMAGE;
-            return true;
+    target_atom = XInternAtom(display, "image/png", False);
+    if (clipboard_has_target(property_atom, target_atom)) {
+        // is PNG
+        if (!get_clipboard_data(property_atom, cb, 0)) {
+            LOG_WARNING("Failed to get clipboard data");
+            return false;
         }
-        target_string = target_string + 1;
+        cb->type = CLIPBOARD_IMAGE;
+        return true;
     }
+
+    cb->type = CLIPBOARD_IMAGE;
 
     LOG_WARNING("Can't convert clipboard image to target format");
     return false;
@@ -194,7 +178,6 @@ void unsafe_SetClipboard(ClipboardData* cb) {
     // folders should not be symlinks, simply assume that they will never be
     // symlinks
     //
-    // TODO: set up image and file clipboard, likely using fork/exec instead of popen
 
     if (cb->type == CLIPBOARD_TEXT) {
         LOG_INFO("Setting clipboard to text!");
@@ -246,6 +229,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         } else if (pid == 0) { // in child
             close(pipefd[1]);
             dup2(pipefd[0], STDIN_FILENO);
+            // images are transmitted over the network as png, so assume the received image is in png format
             execlp("/usr/bin/xclip", "xclip", "-i", "-selection", "clipboard", "-t", "image/png", (char*)NULL);
             LOG_ERROR("clipboard xclip exec failed");
             _exit(0); // should only reach here if exec failed
@@ -258,16 +242,6 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             }
 
             size_t wr;
-            // Write file header
-            char* file_buf = malloc(14);
-            *((char*)(&file_buf[0])) = 'B';
-            *((char*)(&file_buf[1])) = 'M';
-            *((int*)(&file_buf[2])) = cb->size + 14;
-            *((int*)(&file_buf[10])) = 54;
-            if ((wr = fwrite(file_buf, 1, 14, inp)) < 14) {
-                LOG_WARNING("clipboard did not write full file header, only wrote %d bytes", wr);
-            }
-
             // Write file data to xclip
             if ((wr = fwrite(cb->data, 1, cb->size, inp)) < (size_t)cb->size) {
                 LOG_WARNING("clipboard fwrite wrote %d < cb->size %d", wr, cb->size);

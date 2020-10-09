@@ -146,13 +146,8 @@ ClipboardData* unsafe_GetClipboard() {
         // copy the data
         if ((unsigned long)clipboard_image->size < sizeof(clipboard_buf)) {
             cb->size = clipboard_image->size;
-            memcpy(cb->data, clipboard_image->data + 14, clipboard_image->size);
+            memcpy(cb->data, clipboard_image->data, clipboard_image->size);
             // dimensions for sanity check
-            LOG_INFO("Width: %d", (*(int*)&cb->data[4]));
-            LOG_INFO("Height: %d", (*(int*)&cb->data[8]));
-            // data type and length
-            cb->type = CLIPBOARD_IMAGE;
-            LOG_INFO("OSX Image! Size: %d", cb->size);
             // now that the image is in Clipboard struct, we can free this
             // struct
             free(clipboard_image);
