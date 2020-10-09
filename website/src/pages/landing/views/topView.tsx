@@ -108,7 +108,6 @@ const TopView = (props: any) => {
                                 boxShadow={
                                     "0px 4px 20px rgba(" + app.rgb + ", 0.2)"
                                 }
-                                clickToHighlight={true}
                                 width={width}
                                 top={tops[idx]}
                                 left={lefts[idx]}
@@ -132,7 +131,6 @@ const TopView = (props: any) => {
                             appImages[appHighlightIndex].rgb +
                             ", 0.2)"
                         }
-                        clickToHighlight={false}
                         width={width}
                         top={tops[3]}
                         left={lefts[3]}
@@ -155,7 +153,6 @@ const TopView = (props: any) => {
                         textIndex={idx}
                         currentIndex={currentIndex}
                         boxShadow={"0px 4px 20px rgba(" + app.rgb + ", 0.2)"}
-                        clickToHighlight={true}
                         width={width}
                         top={tops[idx]}
                         left={lefts[idx]}
