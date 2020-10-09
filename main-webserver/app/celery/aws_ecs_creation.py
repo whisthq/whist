@@ -109,8 +109,8 @@ def create_new_container(
             cluster_name = json.loads(create_new_cluster())["cluster"]
         else:
             cluster_name = all_clusters[0]["cluster"]
-        if len(all_clusters)<base_len:
-            for i in range(base_len-len(all_clusters)):
+        if len(all_clusters) < base_len:
+            for i in range(base_len - len(all_clusters)):
                 _ = create_new_cluster.apply_async()
 
     cluster_info = ClusterInfo.query.get(cluster_name)
