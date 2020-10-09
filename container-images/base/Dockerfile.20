@@ -254,10 +254,8 @@ COPY pulse-client.conf /etc/pulse/client.conf
 
 # Creating Fractal Directory and Subdirectories in /usr/share
 RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fractal/sync
-COPY FractalServer.sh /usr/share/fractal/FractalServer.sh
 RUN chgrp fractal -R /usr/share/fractal
 RUN chmod g+rw -R /usr/share/fractal
-RUN chmod g+x /usr/share/fractal/FractalServer.sh 
 
 # echo "Downloading Fractal FFmpeg .so from AWS S3 and Moving to /usr/share/fractal/" 
 RUN sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y
@@ -458,7 +456,6 @@ RUN systemctl mask nvidia-persistenced
 COPY systemd-logind-override-ubuntu20.conf /etc/systemd/system/systemd-logind.service.d/override.conf
 
 # Set up Fractal Protocol symlink
-RUN rm /usr/share/fractal/FractalServer.sh /usr/share/fractal/FractalServer
 RUN mkdir /usr/share/fractal/bin
 RUN ln -s /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 
