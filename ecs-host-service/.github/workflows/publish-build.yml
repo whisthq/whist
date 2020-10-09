@@ -1,0 +1,22 @@
+name: Publish builds
+
+# Publish on update to master branch
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  s3-publish:
+    name: Build and publish to AWS S3
+    runs-on: ubuntu-latest 
+    steps:
+    - name: Checkout git repository
+      uses: actions/checkout@v2
+    - name: Setup Go environment
+      uses: actions/setup-go@v2.1.3
+    - name: Print AWS CLI version
+      run: aws --version
+    - name: Install Go dependencies
+      run: make deps
+    - name: Build Go project
+      run: make build
