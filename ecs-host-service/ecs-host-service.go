@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,86 +22,93 @@ const resourceMappingDirectory = "/fractal/containerResourceMappings/"
 // now, we just want to run as root, but this service could be assigned its own
 // user in the future
 func checkRunningPermissions() {
-	fmt.Println("Checking permissions...")
+	log.Println("Checking permissions...")
 
 	if os.Geteuid() != 0 {
-		panic("This service needs to run as root!")
+		log.Fatal("This service needs to run as root!")
 	}
 }
 
 // Create the directory used to store the container resource allocations (e.g.
 // TTYs) on disk
 func initializeFilesystem() {
-	fmt.Printf("Initializing filesystem in %s\n", resourceMappingDirectory)
+	log.Printf("Initializing filesystem in %s\n", resourceMappingDirectory)
 
 	// check if resource mapping directory already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
 	if _, err := os.Lstat(resourceMappingDirectory); !os.IsNotExist(err) {
-		panic(fmt.Sprintf("%s already exists! Bailing out...\n", resourceMappingDirectory))
+		if err == nil {
+			log.Fatalf("Directory %s already exists!", resourceMappingDirectory)
+		} else {
+			log.Fatalf("Could not make directory %s because of error %v", resourceMappingDirectory, err)
+		}
 	}
 
 	err := os.MkdirAll(resourceMappingDirectory, 0644|os.ModeSticky)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create directory %s\n", resourceMappingDirectory)
-		panic(err)
+		log.Fatalf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
 	}
 }
 
 func uninitializeFilesystem() {
 	err := os.RemoveAll(resourceMappingDirectory)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to delete directory %s\n", resourceMappingDirectory)
-		panic(err)
+		log.Fatalf("Failed to delete directory %s: error: %v\n", resourceMappingDirectory, err)
 	} else {
-		fmt.Printf("Successfully deleted directory %s\n", resourceMappingDirectory)
+		log.Printf("Successfully deleted directory %s\n", resourceMappingDirectory)
 	}
 }
 
 func writeAssignmentToFile(filename, data string) error {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644|os.ModeSticky)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to create file %s to store assignment for container", filename)
+		err := fmt.Errorf("Unable to create file %s to store resource assignment. Error: %v", filename, err)
 		return err
 	}
 	defer file.Sync()
 	defer file.Close()
+
 	_, err = file.WriteString(data)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't write to file %s", filename)
+		err := fmt.Errorf("Couldn't write assignment with data %s to file %s. Error: %v", data, filename, err)
 		return err
 	} else {
-		fmt.Printf("Wrote data %s to file %s\n", data, filename)
+		log.Printf("Wrote data \"%s\" to file %s\n", data, filename)
 		return nil
 	}
 }
 
-func containerStartHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) {
+func containerStartHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) error {
 	// Create a container-specific directory to store mappings
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.Mkdir(datadir, 0644|os.ModeSticky)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create container-specific directory %s\n", datadir)
-		panic(err)
+		err := fmt.Errorf("Failed to create container-specific directory %s. Error: %v\n", datadir, err)
+		return err
 	} else {
-		fmt.Printf("Created container-specific directory %s\n", datadir)
+		log.Printf("Created container-specific directory %s\n", datadir)
 	}
 
 	c, err := cli.ContainerInspect(ctx, id)
 	if err != nil {
-		panic(err)
+		err := fmt.Errorf("Error running ContainerInspect on container %s: %v\n", id, err)
+		return err
 	}
 
 	// Keep track of port mapping
 	// We only need to keep track of the mapping of the container's tcp 32262 on the host
 	host_port, exists := c.NetworkSettings.Ports["32262/tcp"]
 	if !exists {
-		panic(fmt.Sprintf("Could not find mapping for port 32262/tcp for container %s", id))
+		err := fmt.Errorf("Could not find mapping for port 32262/tcp for container %s", id)
+		return err
 	}
 	if len(host_port) != 1 {
-		panic(fmt.Sprintf("The host_port mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", host_port))
+		err := fmt.Errorf("The host_port mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", id, host_port)
+		return err
 	}
 	err = writeAssignmentToFile(datadir+"host_port_for_my_32262_tcp", host_port[0].HostPort)
 	if err != nil {
+		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
 		return err
 	}
 
@@ -114,29 +122,34 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 		}
 	}
 	if assigned_tty == -1 {
-		panic(fmt.Sprintf("Was not able to assign an free tty to container id %s\n", id))
+		err := fmt.Errorf("Was not able to assign an free tty to container id %s\n", id)
+		return err
 	}
 
 	// Write the tty assignment to a file
 	err = writeAssignmentToFile(datadir+"tty", fmt.Sprintf("%d", assigned_tty))
 	if err != nil {
+		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
 		return err
 	}
 
 	// Indicate that we are ready for the container to read the data back
-	err = writeAssignmentToFile(datadir+".ready", " ")
+	err = writeAssignmentToFile(datadir+".ready", ".ready")
 	if err != nil {
+		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
 		return err
 	}
+
+	return nil
 }
 
-func containerDieHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) {
+func containerDieHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) error {
 	// Delete the container-specific data directory we used
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.RemoveAll(datadir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to delete container-specific directory %s\n", datadir)
-		panic(err)
+		err := fmt.Errorf("Failed to delete container-specific directory %s\n", datadir)
+		return err
 	} else {
 		fmt.Printf("Successfully deleted container-specific directory %s\n", datadir)
 	}
@@ -146,6 +159,8 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string, tty
 			ttyState[tty] = ""
 		}
 	}
+
+	return nil
 }
 
 func main() {
@@ -161,15 +176,15 @@ func main() {
 	signal.Notify(sig_chan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-sig_chan
-		fmt.Println("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and exiting...")
+		log.Println("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and exiting...")
 		uninitializeFilesystem()
-		os.Exit(1)
+		os.Exit(0)
 	}()
 
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
 	filters := filters.NewArgs()
@@ -189,22 +204,23 @@ loop:
 		select {
 		case err := <-errs:
 			if err != nil && err != io.EOF {
-				panic(err)
+				log.Panic(err)
 			}
 			break loop
 		case event := <-events:
+			if event.Action == "die" || event.Action == "start" {
+				log.Printf("Event: %s for %s %s\n", event.Action, event.Type, event.ID)
+			}
 			if event.Action == "die" {
-				containerDieHandler(ctx, cli, event.ID, &ttyState)
+				err := containerDieHandler(ctx, cli, event.ID, &ttyState)
+				if err != nil {
+					log.Panic(err)
+				}
 			}
 			if event.Action == "start" {
-				containerStartHandler(ctx, cli, event.ID, &ttyState)
-			}
-			if event.Action == "die" || event.Action == "start" {
-				fmt.Printf("%s %s %s\n", event.Type, event.ID, event.Action)
-				for tty, id := range ttyState {
-					if id != "" {
-						fmt.Printf(" %2d | %s\n", tty, id)
-					}
+				err := containerStartHandler(ctx, cli, event.ID, &ttyState)
+				if err != nil {
+					log.Panic(err)
 				}
 			}
 		}
