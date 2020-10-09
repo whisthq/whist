@@ -79,6 +79,11 @@ export default function (state = AUTH_DEFAULT, action: any) {
                     lastClicked: new Date().getTime() / 1000,
                 },
             }
+        case WaitlistAction.SET_CLOSING_DATE:
+            return {
+                ...state,
+                closing_date: action.closingDate,
+            }
         default:
             return state
     }

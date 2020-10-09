@@ -6,6 +6,7 @@ export const AUTH_DEFAULT = {
         points: 0,
         ranking: 0,
         googleAuthEmail: null,
+        referralCode: null,
     },
     loggedIn: false,
     waitlist: [],
@@ -14,4 +15,5 @@ export const AUTH_DEFAULT = {
         number: 0,
         lastClicked: 0,
     },
+    closing_date: null,
 }
