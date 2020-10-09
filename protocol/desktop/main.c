@@ -124,7 +124,7 @@ void initUpdate() {
     ping_id = 1;
     ping_failures = -2;
 
-    initClipboardSynchronizer((char*)server_ip);
+    initClipboardSynchronizer();
 }
 
 void destroyUpdate() { destroyClipboardSynchronizer(); }
