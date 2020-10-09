@@ -200,7 +200,10 @@ static int handleClipboardMessage(FractalClientMessage *fmsg, int client_id, boo
     if (!is_controlling) return 0;
     // Update clipboard with message
     LOG_INFO("Received Clipboard Data! %d", fmsg->clipboard.type);
-    SetClipboard(&fmsg->clipboard);
+    if (!ClipboardSynchronizerSetClipboard(&fmsg->clipboard)) {
+        LOG_ERROR("Failed to set local clipboard from client message.");
+        return -1;
+    }
     return 0;
 }
 

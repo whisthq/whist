@@ -66,8 +66,6 @@ void initClipboardSynchronizer() {
 
     connected = true;
 
-    // server_ip = server_ip_local;
-
     pending_clipboard_push = false;
     updating_clipboard = false;
     pending_update_clipboard = false;

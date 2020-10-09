@@ -991,7 +991,7 @@ int main() {
 
         LOG_INFO("Receiving packets...");
 
-        initClipboard();
+        initClipboardSynchronizer();
 
         clock ack_timer;
         StartTimer(&ack_timer);
@@ -1017,9 +1017,10 @@ int main() {
 
             // If they clipboard as updated, we should send it over to the
             // client
-            if (hasClipboardUpdated()) {
+            ClipboardData* cb = ClipboardSynchronizerGetNewClipboard();
+            if (cb) {
                 LOG_INFO("Received clipboard trigger! Sending to client");
-                ClipboardData* cb = GetClipboard();
+                // ClipboardData* cb = GetClipboard();
                 FractalServerMessage* fmsg_response =
                     malloc(sizeof(FractalServerMessage) + cb->size);
                 fmsg_response->type = SMESSAGE_CLIPBOARD;
