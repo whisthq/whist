@@ -4,6 +4,7 @@ name: Push images
 on:
     push:
         branches: [master]
+    workflow_dispatch:
 
 env:
     aws-regions: us-east-1
