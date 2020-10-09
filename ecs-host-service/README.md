@@ -18,6 +18,8 @@ You can run by running `make run`. Note that the service must be run as root, wh
 
 This service will not restart on crash/panic, since that could lead to an inconsistency between the actually running containers and the data left on the filesystem. Instead, we note that if the service crashes no new containers will be able to report themselves to the webserver, so there will be no new connections to the host, and once all running containers are disconnected, the instance will be spun down.
 
+We never use `os.exit()` or any of the `log.fatal()` variants, since we want to send out a message to our webserver and/or Sentry upon the death of this service (this is done with a `defer`red function call, which runs after `panic`s but not after `exit`s).
+
 ## Publishing
 
 TBD
