@@ -45,19 +45,23 @@ func startDockerDaemon() {
 func shutdownHostService() {
 	log.Println("Beginning host shutdown procedure.")
 
-	// Catch any panics in the main goroutine. Note that besides the host machine
-	// itself shutting down, this method should be the _only_ way that this host
-	// service exits. In particular, we use panic() as a control flow primitive
-	// --- panics in main() or its child functions will be recovered here and
-	// used as signals to exit. Therefore, panics should only be used/bubble up
-	// to main() in the case of an irrecoverable failure that mandates that the
-	// host machine accept no new connections.
+	// Catch any panics in the calling goroutine. Note that besides the host
+	// machine itself shutting down, this method should be the _only_ way that
+	// this host service exits. In particular, we use panic() as a control flow
+	// primitive --- panics in main(), its child functions, or any other calling
+	// goroutines (such as the Ctrl+C signal handler) will be recovered here and
+	// used as signals to exit. Therefore, panics should only be used	in the case
+	// of an irrecoverable failure that mandates that the host machine accept no
+	// new connections.
 	r := recover()
 	log.Println("shutdownHostService(): Caught panic", r)
 	log.Println("Printing stack trace: ")
 	debug.PrintStack()
 
 	// TODO: actually send a message to sentry/the webserver
+
+	log.Println("Exiting...")
+	os.Exit(0)
 }
 
 // Create the directory used to store the container resource allocations (e.g.
@@ -216,6 +220,7 @@ func main() {
 	sig_chan := make(chan os.Signal, 2)
 	signal.Notify(sig_chan, os.Interrupt, syscall.SIGTERM)
 	go func() {
+		defer shutdownHostService()
 		<-sig_chan
 		log.Println("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and panicking...")
 		uninitializeFilesystem()
