@@ -217,7 +217,6 @@ class ECSClient:
                 for capacity_provider in capacity_providers
             ],
         )
-        print(resp)
         self.set_cluster(cluster_name)
         return cluster_name
 
@@ -315,7 +314,17 @@ class ECSClient:
         """
         return self.ecs_client.list_container_instances(cluster=cluster)["containerInstanceArns"]
 
-    def set_containers_to_draining(self, containers, cluster = None):
+    def get_container_for_tasks(self, task_arns=None, cluster=None):
+        if task_arns is None:
+            task_arns = self.tasks
+        if cluster is None:
+            cluster = self.cluster
+        resp = self.ecs_client.describe_tasks(cluster=cluster, tasks=task_arns)
+
+        container_arns = [task["containerInstanceArn"] for task in resp["tasks"]]
+        return container_arns
+
+    def set_containers_to_draining(self, containers, cluster=None):
         """
         sets input list of containers to draining
         Args:
@@ -328,9 +337,7 @@ class ECSClient:
         if cluster is None:
             cluster = self.cluster
         resp = self.ecs_client.update_container_instances_state(
-            cluster=cluster,
-            containerInstances=containers,
-            status='DRAINING'
+            cluster=cluster, containerInstances=containers, status="DRAINING"
         )
         return resp
 

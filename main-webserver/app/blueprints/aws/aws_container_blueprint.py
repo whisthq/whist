@@ -1,22 +1,19 @@
 from flask import Blueprint
 from flask.json import jsonify
-from flask_jwt_extended import jwt_required
 
 from app import fractalPreProcess
-
-from app.celery.aws_ecs_creation import create_new_cluster
-from app.celery.aws_ecs_creation import create_new_container, send_commands
-from app.celery.aws_ecs_deletion import delete_cluster, deleteContainer
+from app.celery.aws_ecs_creation import (create_new_cluster,
+                                         create_new_container, send_commands)
+from app.celery.aws_ecs_deletion import (delete_cluster, deleteContainer,
+                                         drainContainer)
 from app.celery.aws_ecs_status import pingHelper
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_get import protocol_info
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
-    BadAppError,
-    preprocess_task_info,
-    set_stun,
-)
+    BadAppError, preprocess_task_info, set_stun)
 from app.helpers.utils.general.auth import fractalAuth
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
+from flask_jwt_extended import jwt_required
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -169,6 +166,16 @@ def aws_container_post(action, **kwargs):
             else:
                 # Delete the container
                 task = deleteContainer.delay(user, container)
+                response = jsonify({"ID": task.id}), ACCEPTED
+
+        elif action == "drain":
+            try:
+                container = body.pop("container_id")
+            except KeyError:
+                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+            else:
+                # Delete the container
+                task = drainContainer.delay(user, container)
                 response = jsonify({"ID": task.id}), ACCEPTED
 
         elif action == "restart":
