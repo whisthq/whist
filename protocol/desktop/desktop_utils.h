@@ -60,14 +60,12 @@ int configureCache(void);
 
 int configureSSHKeys(void);
 
-int sendTimeToServer(void);
-
 /**
- * Used to tell the server the user, which is used for sentry
+ * Used to tell the server the user, which is used for sentry, along with other init information
  * @param email user email
- * @return 0 for success, 1 for failure
+ * @return 0 for success, -1 for failure
  */
-int sendEmailToServer(char* email);
+int sendInitToServer(char* email);
 
 int updateMouseMotion();
 

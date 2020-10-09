@@ -385,22 +385,14 @@ int configureCache(void) {
     return 0;
 }
 
-int sendTimeToServer(void) {
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_TIME;
-    if (GetTimeData(&(fmsg.time_data)) != 0) {
+int sendInitToServer(char* email) {
+    struct FractalClientMessage fmsg = {0};
+    fmsg.type = CMESSAGE_INIT;
+    strcpy(fmsg.init.user_email, email);
+    if (GetTimeData(&(fmsg.init.time_data)) != 0) {
         LOG_ERROR("Failed to get time data.");
         return -1;
     }
-    SendFmsg(&fmsg);
-
-    return 0;
-}
-
-int sendEmailToServer(char *email) {
-    struct FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_USER_EMAIL;
-    strcpy(fmsg.user_email, email);
 
     if (SendFmsg(&fmsg) != 0) {
         return -1;

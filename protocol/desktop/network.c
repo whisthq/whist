@@ -182,7 +182,7 @@ int sendServerQuitMessages(int num_messages) {
 // FractalClientMessage packets are needed, then this will have to be
 // implemented)
 int SendFmsg(FractalClientMessage *fmsg) {
-    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_TIME) {
+    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == CMESSAGE_INIT) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
     } else {
         if ((size_t)GetFmsgSize(fmsg) > MAX_PACKET_SIZE) {
@@ -197,3 +197,4 @@ int SendFmsg(FractalClientMessage *fmsg) {
                              sent_packet_id, -1, NULL, NULL);
     }
 }
+

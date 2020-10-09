@@ -421,10 +421,10 @@ typedef enum FractalClientMessageType {
     MESSAGE_AUDIO_NACK = 111,
     CMESSAGE_CLIPBOARD = 112,
     MESSAGE_IFRAME_REQUEST = 113,
-    MESSAGE_TIME = 114,
     CMESSAGE_INTERACTION_MODE = 115,
     MESSAGE_DISCOVERY_REQUEST = 116,
-    MESSAGE_USER_EMAIL = 117,
+    CMESSAGE_INIT = 118,
+
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
 
@@ -471,12 +471,14 @@ typedef struct FractalClientMessage {
             char keyboard_state[NUM_KEYCODES];
         };
 
+        // MESSAGE_INIT
+        struct {
+            FractalTimeData time_data;
+            char user_email[USER_EMAIL_MAXLEN];
+        } init;
+
         // MESSAGE_IFRAME_REQUEST
         bool reinitialize_encoder;
-
-        FractalTimeData time_data;
-
-        char user_email[USER_EMAIL_MAXLEN];
     };
 
     // CMESSAGE_CLIPBOARD
