@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 
 	"github.com/docker/docker/api/types"
@@ -42,6 +43,8 @@ func startDockerDaemon() {
 }
 
 func shutdownHostService() {
+	log.Println("Beginning host shutdown procedure.")
+
 	// Catch any panics in the main goroutine. Note that besides the host machine
 	// itself shutting down, this method should be the _only_ way that this host
 	// service exits. In particular, we use panic() as a control flow primitive
@@ -49,6 +52,12 @@ func shutdownHostService() {
 	// used as signals to exit. Therefore, panics should only be used/bubble up
 	// to main() in the case of an irrecoverable failure that mandates that the
 	// host machine accept no new connections.
+	r := recover()
+	log.Println("shutdownHostService(): Caught panic", r)
+	log.Println("Printing stack trace: ")
+	debug.PrintStack()
+
+	// TODO: actually send a message to sentry/the webserver
 }
 
 // Create the directory used to store the container resource allocations (e.g.
@@ -69,6 +78,8 @@ func initializeFilesystem() {
 	err := os.MkdirAll(resourceMappingDirectory, 0644|os.ModeSticky)
 	if err != nil {
 		log.Panicf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
+	} else {
+		log.Printf("Successfully created directory %s\n", resourceMappingDirectory)
 	}
 }
 
@@ -173,7 +184,7 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string, tty
 		err := fmt.Errorf("Failed to delete container-specific directory %s\n", datadir)
 		return err
 	} else {
-		fmt.Printf("Successfully deleted container-specific directory %s\n", datadir)
+		log.Printf("Successfully deleted container-specific directory %s\n", datadir)
 	}
 
 	for tty := range ttyState {
@@ -279,6 +290,4 @@ func main() {
 			}
 		}
 	}
-	// Should be unreachable!
-	log.Println("Reached the end of main()...")
 }
