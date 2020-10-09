@@ -40,6 +40,9 @@ jobs:
         with:
           task-definition: ${{ matrix.task-definitions }}
 
+    notify-slack:
+        needs: [ render-and-deploy ]
+
       - name: Notify Slack
         run: |
             curl -X POST \
