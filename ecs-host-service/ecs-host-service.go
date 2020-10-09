@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 
@@ -26,6 +27,17 @@ func checkRunningPermissions() {
 
 	if os.Geteuid() != 0 {
 		log.Fatal("This service needs to run as root!")
+	}
+}
+
+func startDockerDaemon() {
+	log.Println("Starting docker daemon ourselves...")
+	cmd := exec.Command("/usr/bin/systemctl", "start", "docker")
+	err := cmd.Run()
+	if err != nil {
+		log.Panicf("Unable to start Docker daemon. Error: %v", err)
+	} else {
+		log.Println("Successfully started the Docker daemon ourselves.")
 	}
 }
 
@@ -193,20 +205,44 @@ func main() {
 		Filters: filters,
 	}
 
-	events, errs := cli.Events(context.Background(), eventOptions)
-
 	// reserve the first 10 TTYs for the host system
 	const r = "reserved"
 	ttyState := [256]string{r, r, r, r, r, r, r, r, r, r}
 
-loop:
+	// In the following loop, this var determines whether to re-initialize the
+	// event stream. This is necessary because the Docker event stream needs to
+	// be reopened after any error is sent over the error channel.
+	needToReinitializeEventStream := false
+	events, errs := cli.Events(context.Background(), eventOptions)
+	log.Println("Initialized event stream...")
+
 	for {
+		if needToReinitializeEventStream {
+			events, errs = cli.Events(context.Background(), eventOptions)
+			needToReinitializeEventStream = false
+			log.Println("Re-initialized event stream...")
+		}
+
 		select {
 		case err := <-errs:
-			if err != nil && err != io.EOF {
+			needToReinitializeEventStream = true
+			switch {
+			case err == nil:
+				log.Println("We got a nil error over the Docker event stream. This might indicate an error inside the docker go library. Ignoring it and proceeding normally...")
+				continue
+			case err == io.EOF:
+				log.Panic("Docker event stream has been completely read.")
+				break
+			case client.IsErrConnectionFailed(err):
+				// This means "Cannot connect to the Docker daemon..."
+				log.Printf("Got error \"%v\". Trying to start Docker daemon ourselves...", err)
+				startDockerDaemon()
+				continue
+			default:
+				err := fmt.Errorf("Got an unknown error from the Docker event stream: %v", err)
 				log.Panic(err)
 			}
-			break loop
+
 		case event := <-events:
 			if event.Action == "die" || event.Action == "start" {
 				log.Printf("Event: %s for %s %s\n", event.Action, event.Type, event.ID)
@@ -225,4 +261,6 @@ loop:
 			}
 		}
 	}
+	// Should be unreachable!
+	log.Println("Reached the end of main()...")
 }
