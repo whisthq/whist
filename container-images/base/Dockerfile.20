@@ -252,33 +252,18 @@ RUN systemctl mask pulseaudio
 RUN chmod -x /usr/bin/start-pulseaudio-x11
 COPY pulse-client.conf /etc/pulse/client.conf
 
-# Install all required components for Fractal to perform well, split into steps for caching
-
-# Install Custom X11 Configurations
-COPY 01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
-COPY 02-fractal-dummy.conf /usr/share/X11/xorg.conf.d/02-fractal-dummy.conf
-
-# echo "/etc/X11/xorg.conf found, moving to /etc/X11/xorg.conf.old. Fractal .conf files will be stored in /usr/share/X11/xorg.conf.d" \
-RUN if [ -f "/etc/X11/xorg.conf" ]; then sudo mv /etc/X11/xorg.conf /etc/X11/xorg.conf.old ; fi
-
 # Creating Fractal Directory and Subdirectories in /usr/share
 RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fractal/sync
-
 COPY FractalServer.sh /usr/share/fractal/FractalServer.sh
-
 RUN chgrp fractal -R /usr/share/fractal
 RUN chmod g+rw -R /usr/share/fractal
 RUN chmod g+x /usr/share/fractal/FractalServer.sh 
-
-
-
 
 # echo "Downloading Fractal FFmpeg .so from AWS S3 and Moving to /usr/share/fractal/" 
 RUN sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y
 RUN wget -qO shared-libs.tar.gz "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz"
 RUN tar -xvf shared-libs.tar.gz
 RUN sudo mv share/64/Linux/* /usr/share/fractal/
-
 
 # symlink Fractal FFmpeg .so libs to system libs location for standard Linux system runtime library loading
 RUN ln -sf /usr/share/fractal/libavcodec.so /usr/local/lib/libavcodec-fractal.so \
@@ -389,9 +374,12 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
 # Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID
-COPY 01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/
+COPY 01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
+COPY 02-fractal-dummy.conf /usr/share/X11/xorg.conf.d/02-fractal-dummy.conf
 COPY fractal-update-nvidia-busid.service /etc/systemd/system/
 COPY update-nvidia-busid.sh /usr/share/fractal/
+
+
 
 RUN systemctl enable fractal-update-nvidia-busid
 
@@ -431,7 +419,6 @@ COPY .xinitrc /root/.xinitrc
 # We set the gimp GTK theme to the system's for testing
 COPY gimprc /home/fractal/.config/GIMP/2.10/gimprc
 COPY gimprc /root/.config/GIMP/2.10/gimprc
-
 
 # Install Firefox nightly (for testing only)
 # RUN add-apt-repository ppa:ubuntu-mozilla-daily/ppa
@@ -478,6 +465,5 @@ RUN ln -s /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 # Grab pre-compiled Fractal Protocol
 COPY protocol/server/build64/libsentry.so /usr/share/fractal/bin/libsentry.so
 COPY protocol/server/build64/FractalServer /usr/share/fractal/bin/FractalServer
-
 
 CMD ["/lib/systemd/systemd"]
