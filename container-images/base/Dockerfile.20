@@ -255,15 +255,19 @@ COPY pulse-client.conf /etc/pulse/client.conf
 # Install all required components for Fractal to perform well, split into steps for caching
 
 # Install Custom X11 Configurations
-RUN sudo cp 01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf \
-    sudo cp 02-fractal-dummy.conf /usr/share/X11/xorg.conf.d/02-fractal-dummy.conf \
-    if [ -f /etc/X11/xorg.conf ]; then \
-      echo "/etc/X11/xorg.conf found, moving to /etc/X11/xorg.conf.old. Fractal .conf files will be stored in /usr/share/X11/xorg.conf.d" \
-      sudo mv /etc/X11/xorg.conf /etc/X11/xorg.conf.old \
-   fi
+COPY 01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
+COPY 02-fractal-dummy.conf /usr/share/X11/xorg.conf.d/02-fractal-dummy.conf
+
+# echo "/etc/X11/xorg.conf found, moving to /etc/X11/xorg.conf.old. Fractal .conf files will be stored in /usr/share/X11/xorg.conf.d" \
+RUN if [ -f "/etc/X11/xorg.conf" ]; then sudo mv /etc/X11/xorg.conf /etc/X11/xorg.conf.old ; fi
 
 # Creating Fractal Directory and Subdirectories in /usr/share
 RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fractal/sync
+
+
+
+
+
 
 RUN systemctl --user is-active fractal && systemctl --user stop fractal \
     sudo wget -qO /usr/share/fractal/FractalServer "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/FractalServer" \
