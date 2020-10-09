@@ -262,7 +262,7 @@ COPY 02-fractal-dummy.conf /usr/share/X11/xorg.conf.d/02-fractal-dummy.conf
 RUN if [ -f "/etc/X11/xorg.conf" ]; then sudo mv /etc/X11/xorg.conf /etc/X11/xorg.conf.old ; fi
 
 # Creating Fractal Directory and Subdirectories in /usr/share
-RUN mkdir -p /usr/share/fractal /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fractal/sync
+RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fractal/sync
 
 COPY FractalServer.sh /usr/share/fractal/FractalServer.sh
 
@@ -270,9 +270,9 @@ COPY FractalServer.sh /usr/share/fractal/FractalServer.sh
 
 
 
-RUN chgrp fractal -R /usr/share/fractal \
-    chmod g+rw -R /usr/share/fractal \
-    chmod g+x /usr/share/fractal/FractalServer.sh 
+RUN chgrp fractal -R /usr/share/fractal
+RUN chmod g+rw -R /usr/share/fractal
+RUN chmod g+x /usr/share/fractal/FractalServer.sh 
 
 
 RUN sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y \
