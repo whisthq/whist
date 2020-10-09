@@ -315,6 +315,25 @@ class ECSClient:
         """
         return self.ecs_client.list_container_instances(cluster=cluster)["containerInstanceArns"]
 
+    def set_containers_to_draining(self, containers, cluster = None):
+        """
+        sets input list of containers to draining
+        Args:
+            containers (list[str]): the ARNs of the containers you want to drain
+            cluster (optional[str]): the cluster on which the containers are, defaults to the overall client's cluster.
+
+        Returns: the json returned by the API
+
+        """
+        if cluster is None:
+            cluster = self.cluster
+        resp = self.ecs_client.update_container_instances_state(
+            cluster=cluster,
+            containerInstances=containers,
+            status='DRAINING'
+        )
+        return resp
+
     def terminate_containers_in_cluster(self, cluster):
         """
         Terminates all of the containers in the cluster. They will eventually be cleaned up automatically.
