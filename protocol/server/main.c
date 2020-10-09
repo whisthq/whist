@@ -733,6 +733,9 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     clients[*client_id].username = username;
     LOG_INFO("Found ID for client. (ID: %d)", *client_id);
 
+    // TODO: Should check for is_controlling, but happens after this function call
+    handleClientMessage(fcmsg, *client_id, true);
+
     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
 
     FractalServerMessage* fsmsg = malloc(fsmsg_size);

@@ -83,7 +83,7 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_contr
             return handleInteractionModeMessage(fmsg, client_id, is_controlling);
         case CMESSAGE_QUIT:
             return handleQuitMessage(fmsg, client_id, is_controlling);
-        case CMESSAGE_INIT:
+        case MESSAGE_DISCOVERY_REQUEST:
             return handleInitMessage(fmsg, client_id, is_controlling);
         case MESSAGE_MOUSE_INACTIVE:
             return handleMouseInactiveMessage(fmsg, client_id, is_controlling);
@@ -355,12 +355,13 @@ static int handleQuitMessage(FractalClientMessage *fmsg, int client_id, bool is_
     return ret;
 }
 
-static int handleInitMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+static int handleInitMessage(FractalClientMessage* cfmsg, int client_id, bool is_controlling) {
     client_id;
-    if (!is_controlling) return 0;
     LOG_INFO("Receiving a message time packet");
 
-    FractalTimeData time_data = fmsg->init.time_data;
+    FractalDiscoveryRequestMessage fmsg = cfmsg->discoveryRequest;
+
+    FractalTimeData time_data = fmsg.time_data;
 
     // Handle time
 #ifdef _WIN32
@@ -384,10 +385,10 @@ static int handleInitMessage(FractalClientMessage *fmsg, int client_id, bool is_
     // Handle init email email
     if (client_id == host_id) {
         sentry_value_t user = sentry_value_new_object();
-        sentry_value_set_by_key(user, "email", sentry_value_new_string(fmsg->init.user_email));
+        sentry_value_set_by_key(user, "email", sentry_value_new_string(fmsg.user_email));
         sentry_set_user(user);
     } else {
-        sentry_send_bread_crumb("info", "non host email: %s", fmsg->init.user_email);
+        sentry_send_bread_crumb("info", "non host email: %s", fmsg.user_email);
     }
 
     return 0;

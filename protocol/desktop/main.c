@@ -593,10 +593,6 @@ int main(int argc, char* argv[]) {
 
         StartTimer(&window_resize_timer);
 
-        if (sendInitToServer(user_email) != 0) {
-            LOG_ERROR("Failed to send user email to server");
-        }
-
         // Timer used in CI mode to exit after 1 min
         clock ci_timer;
         StartTimer(&ci_timer);

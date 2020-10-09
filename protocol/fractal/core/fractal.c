@@ -437,7 +437,7 @@ char* get_access_token() {
 }
 
 int GetFmsgSize(FractalClientMessage* fmsg) {
-    if (fmsg->type == MESSAGE_KEYBOARD_STATE || fmsg->type == CMESSAGE_INIT) {
+    if (fmsg->type == MESSAGE_KEYBOARD_STATE || fmsg->type == MESSAGE_DISCOVERY_REQUEST) {
         return sizeof(*fmsg);
     } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
         return sizeof(*fmsg) + fmsg->clipboard.size;

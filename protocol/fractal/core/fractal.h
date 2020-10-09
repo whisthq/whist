@@ -394,6 +394,9 @@ typedef struct FractalMouseMotionMessage {
 
 typedef struct FractalDiscoveryRequestMessage {
     int username;
+    unsigned short port_mapping;
+    FractalTimeData time_data;
+    char user_email[USER_EMAIL_MAXLEN];
 } FractalDiscoveryRequestMessage;
 
 typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
@@ -423,7 +426,6 @@ typedef enum FractalClientMessageType {
     MESSAGE_IFRAME_REQUEST = 113,
     CMESSAGE_INTERACTION_MODE = 115,
     MESSAGE_DISCOVERY_REQUEST = 116,
-    CMESSAGE_INIT = 118,
 
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
@@ -471,12 +473,6 @@ typedef struct FractalClientMessage {
             char keyboard_state[NUM_KEYCODES];
         };
 
-        // MESSAGE_INIT
-        struct {
-            FractalTimeData time_data;
-            char user_email[USER_EMAIL_MAXLEN];
-        } init;
-
         // MESSAGE_IFRAME_REQUEST
         bool reinitialize_encoder;
     };
@@ -490,7 +486,6 @@ typedef enum FractalServerMessageType {
     MESSAGE_PONG = 1,
     MESSAGE_AUDIO_FREQUENCY = 2,
     SMESSAGE_CLIPBOARD = 3,
-    MESSAGE_INIT = 4,
     MESSAGE_DISCOVERY_REPLY = 5,
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;

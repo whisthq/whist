@@ -16,8 +16,11 @@ TODO
 #include "network.h"
 #include "desktop_utils.h"
 
-// Data
+// Init information
 extern volatile int audio_frequency;
+extern char user_email[USER_EMAIL_MAXLEN];
+
+// Data
 extern volatile char aes_private_key[16];
 extern char filename[300];
 extern char username[50];
@@ -50,6 +53,8 @@ int discoverPorts(bool *using_stun) {
     FractalClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_DISCOVERY_REQUEST;
     fcmsg.discoveryRequest.username = uid;
+
+    prepareInitToServer(&fcmsg.discoveryRequest, user_email);
 
     if (SendTCPPacket(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg)) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
@@ -182,7 +187,7 @@ int sendServerQuitMessages(int num_messages) {
 // FractalClientMessage packets are needed, then this will have to be
 // implemented)
 int SendFmsg(FractalClientMessage *fmsg) {
-    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == CMESSAGE_INIT) {
+    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_DISCOVERY_REQUEST) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
     } else {
         if ((size_t)GetFmsgSize(fmsg) > MAX_PACKET_SIZE) {

@@ -65,7 +65,7 @@ int configureSSHKeys(void);
  * @param email user email
  * @return 0 for success, -1 for failure
  */
-int sendInitToServer(char* email);
+int prepareInitToServer(FractalDiscoveryRequestMessage* fmsg, char* email);
 
 int updateMouseMotion();
 
