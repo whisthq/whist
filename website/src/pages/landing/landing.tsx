@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback, useContext } from "react"
 import { connect } from "react-redux"
+import { gql, useQuery } from "@apollo/client"
 
 import { db } from "shared/utils/firebase"
 import MainContext from "shared/context/mainContext"
@@ -21,9 +22,22 @@ import LeaderboardView from "pages/landing/views/leaderboardView"
 import BottomView from "pages/landing/views/bottomView"
 import Footer from "shared/components/footer"
 
+const EXAMPLE_QUERY = gql`
+    query getWaitlist {
+        waitlist {
+            name
+            points
+            referral_code
+            referrals
+            user_id
+        }
+    }
+`
+
 const Landing = (props: any) => {
     const { setReferralCode, setAppHighlight } = useContext(MainContext)
     const { dispatch, user, match } = props
+    const { data } = useQuery(EXAMPLE_QUERY)
 
     const apps = ["Photoshop", "Blender", "Figma", "VSCode", "Chrome", "Maya"]
     const appsLowercase = [

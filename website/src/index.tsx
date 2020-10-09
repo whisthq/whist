@@ -13,7 +13,9 @@ import ReduxPromise from "redux-promise"
 import storage from "redux-persist/lib/storage"
 import * as Sentry from "@sentry/react"
 import { ApolloProvider } from "@apollo/react-hooks"
-import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client"
+import { ApolloClient, InMemoryCache, HttpLink, split } from "@apollo/client"
+import { getMainDefinition } from "@apollo/client/utilities"
+import { WebSocketLink } from "@apollo/client/link/ws"
 
 import history from "shared/utils/history"
 import { MainProvider } from "shared/context/mainContext"
@@ -59,10 +61,34 @@ const persistor = persistStore(store)
 
 // Set up Apollo GraphQL provider
 
+const httpLink = new HttpLink({
+    uri: config.url.GRAPHQL_HTTP_URL,
+    headers: {
+        "x-hasura-admin-secret": "WhFpeU$YnKxGsa8L",
+    },
+})
+
+const wsLink = new WebSocketLink({
+    uri: config.url.GRAPHQL_WS_URL,
+    options: {
+        reconnect: true,
+    },
+})
+
+const splitLink = split(
+    ({ query }) => {
+        const definition = getMainDefinition(query)
+        return (
+            definition.kind === "OperationDefinition" &&
+            definition.operation === "subscription"
+        )
+    },
+    wsLink,
+    httpLink
+)
+
 const apolloClient = new ApolloClient({
-    link: new HttpLink({
-        uri: config.url.GRAPHQL_SERVER,
-    }),
+    link: splitLink,
     cache: new InMemoryCache(),
 })
 
