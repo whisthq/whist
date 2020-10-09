@@ -1,0 +1,9 @@
+[Unit]
+Description=Fractal entrypoint service, runs as root
+
+[Service]
+Type=oneshot
+ExecStart=/home/fractal/entry.sh
+
+[Install]
+WantedBy=multi-user.target
