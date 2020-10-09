@@ -56,20 +56,21 @@ func uninitializeFilesystem() {
 	}
 }
 
-func writeAssignmentToFile(filename, data string) {
+func writeAssignmentToFile(filename, data string) error {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644|os.ModeSticky)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to create file %s to store assingment for container", filename)
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Unable to create file %s to store assignment for container", filename)
+		return err
 	}
 	defer file.Sync()
 	defer file.Close()
 	_, err = file.WriteString(data)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Couldn't write to file %s", filename)
-		panic(err)
+		return err
 	} else {
 		fmt.Printf("Wrote data %s to file %s\n", data, filename)
+		return nil
 	}
 }
 
@@ -98,7 +99,10 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 	if len(host_port) != 1 {
 		panic(fmt.Sprintf("The host_port mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", host_port))
 	}
-	writeAssignmentToFile(datadir+"host_port_for_my_32262_tcp", host_port[0].HostPort)
+	err = writeAssignmentToFile(datadir+"host_port_for_my_32262_tcp", host_port[0].HostPort)
+	if err != nil {
+		return err
+	}
 
 	// Assign an unused tty
 	assigned_tty := -1
@@ -114,10 +118,16 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 	}
 
 	// Write the tty assignment to a file
-	writeAssignmentToFile(datadir+"tty", fmt.Sprintf("%d", assigned_tty))
+	err = writeAssignmentToFile(datadir+"tty", fmt.Sprintf("%d", assigned_tty))
+	if err != nil {
+		return err
+	}
 
 	// Indicate that we are ready for the container to read the data back
-	writeAssignmentToFile(datadir+".ready", " ")
+	err = writeAssignmentToFile(datadir+".ready", " ")
+	if err != nil {
+		return err
+	}
 }
 
 func containerDieHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) {
