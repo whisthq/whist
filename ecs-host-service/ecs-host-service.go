@@ -60,7 +60,7 @@ func shutdownHostService() {
 
 	// TODO: actually send a message to sentry/the webserver
 
-	log.Println("Exiting...")
+	log.Println("Finished host service shutdown procedure. Finally exiting...")
 	os.Exit(0)
 }
 
@@ -222,7 +222,7 @@ func main() {
 	go func() {
 		defer shutdownHostService()
 		<-sig_chan
-		log.Println("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and panicking...")
+		log.Println("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and panicking to initiate host shutdown process...")
 		uninitializeFilesystem()
 		log.Panic("Got a Ctrl+C: already uninitialized filesystem, looking to exit")
 	}()
@@ -230,6 +230,7 @@ func main() {
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
+		err := fmt.Errorf("Error creating new Docker client: %v", err)
 		log.Panic(err)
 	}
 
@@ -284,13 +285,13 @@ func main() {
 			if event.Action == "die" {
 				err := containerDieHandler(ctx, cli, event.ID, &ttyState)
 				if err != nil {
-					log.Panic(err)
+					log.Printf("Error processing event %s for %s %s: %v", event.Action, event.Type, event.ID, err)
 				}
 			}
 			if event.Action == "start" {
 				err := containerStartHandler(ctx, cli, event.ID, &ttyState)
 				if err != nil {
-					log.Panic(err)
+					log.Printf("Error processing event %s for %s %s: %v", event.Action, event.Type, event.ID, err)
 				}
 			}
 		}
