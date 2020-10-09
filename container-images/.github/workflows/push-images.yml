@@ -2,30 +2,30 @@ name: Push images
 
 # Publish on update to master branch
 on:
-  push:
-    branches: [ master ]
+    push:
+        branches: [master]
 
 env:
-  aws-regions: us-east-1
-  apps: base browsers/chrome
+    aws-regions: us-east-1
+    apps: base browsers/chrome
 
 jobs:
-  ecr-push:
-    name: Build and publish to AWS S3
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Git repository
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-          token: ${{ secrets.CI_PAT }} # `CI_PAT` is a secret that contains the fractal-github user Personal Access Token
-          submodules: recursive
-    - name: Build protocol
-      run: ./build_protocol.sh
-    - name: Build container images
-      run: for app in ${{ env.apps }}; do ./build_container_image.sh app; done;
-    - name: Notify Slack
-      run: |
-        curl -X POST \
-        --data-urlencode "payload={\"channel\": \"#general\", \"username\": \"Fractal Bot\", \"text\": \"Container images builds (NOT YET) pushed to production via Docker push to ECR.\", \"icon_emoji\": \":fractal:\"}" \
-        https://hooks.slack.com/services/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
+    ecr-push:
+        name: Build and publish to AWS S3
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  token: ${{ secrets.CI_PAT }} # `CI_PAT` is a secret that contains the fractal-github user Personal Access Token
+                  submodules: recursive
+            - name: Build protocol
+              run: ./build_protocol.sh
+            - name: Build container images
+              run: for app in ${{ env.apps }}; do ./build_container_image.sh app; done;
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#general\", \"username\": \"Fractal Bot\", \"text\": \"Container images builds (NOT YET) pushed to production via Docker push to ECR.\", \"icon_emoji\": \":fractal:\"}" \
+                  https://hooks.slack.com/services/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
