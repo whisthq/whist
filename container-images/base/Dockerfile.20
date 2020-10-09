@@ -266,18 +266,17 @@ RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fracta
 
 COPY FractalServer.sh /usr/share/fractal/FractalServer.sh
 
-
-
-
-
 RUN chgrp fractal -R /usr/share/fractal
 RUN chmod g+rw -R /usr/share/fractal
 RUN chmod g+x /usr/share/fractal/FractalServer.sh 
 
 
+
+
+
 RUN sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y \
     echo "Downloading Fractal FFmpeg .so from AWS S3 and Moving to /usr/share/fractal/" \
-    sudo wget -qO shared-libs.tar.gz "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz" \
+    sudo wget -q shared-libs.tar.gz "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz" \
     tar -xvf shared-libs.tar.gz \
     sudo mv share/64/Linux/* /usr/share/fractal/
 
@@ -300,7 +299,7 @@ RUN ln -sf /usr/share/fractal/libavcodec.so /usr/local/lib/libavcodec-fractal.so
 RUN echo "Downloading Fractal Auto-update Script" \
     ls -al /usr/share/fractal \
     echo "Downloading update.sh from https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/update.sh" \
-    sudo wget -qO /usr/share/fractal/update.sh "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/update.sh"
+    sudo wget -q /usr/share/fractal/update.sh "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/update.sh"
 
 # Install FFmpeg dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
