@@ -1,3 +1,0 @@
-# SLACK Container Image
-
-TBD.
