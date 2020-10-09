@@ -102,7 +102,6 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard() {
     if (pending_clipboard_push) {
         pending_clipboard_push = false;
         return clipboard;
-        // return true;
     }
 
     // If the clipboard has updated since we last checked, or a previous
@@ -119,13 +118,11 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard() {
             updating_clipboard = true;
             updating_set_clipboard = false;
             updating_get_clipboard = true;
-            // clipboard = GetClipboard();
             SDL_SemPost(clipboard_semaphore);
         }
     }
 
     return NULL;
-    // return false;
 }
 
 int UpdateClipboardThread(void* opaque) {
@@ -149,21 +146,17 @@ int UpdateClipboardThread(void* opaque) {
             pending_clipboard_push = true;
             updating_get_clipboard = false;
         } else {
+            clock clipboard_time;
+            StartTimer(&clipboard_time);
+
+            // If it hasn't been 500ms yet, then wait 500ms to prevent too much
+            // spam
+            const int spam_time_ms = 500;
+            if (GetTimer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
+                SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * GetTimer(clipboard_time)), 1));
+            }
             continue;
         }
-        //  else {
-        //     clock clipboard_time;
-        //     StartTimer(&clipboard_time);
-
-        //     // pending_clipboard_push = true;
-
-        //     // If it hasn't been 500ms yet, then wait 500ms to prevent too much
-        //     // spam
-        //     const int spam_time_ms = 500;
-        //     if (GetTimer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
-        //         SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * GetTimer(clipboard_time)), 1));
-        //     }
-        // }
 
         LOG_INFO("Updated clipboard!");
         updating_clipboard = false;

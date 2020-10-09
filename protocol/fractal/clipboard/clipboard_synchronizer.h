@@ -51,8 +51,6 @@ Public Functions
 /**
  * @brief                          Initialize the Update Clipboard Helper
  *
- * @param server_ip			           The IP of the server to synchronize the
- *                                 clipboard with
  */
 void initClipboardSynchronizer();
 
