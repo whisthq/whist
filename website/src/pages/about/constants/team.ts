@@ -34,7 +34,7 @@ export const teamData = [
         image: Roshan,
         name: "Roshan Padaki",
         text:
-            "Prior to Fractal, Roshan researched performance lower bounds for matching algorithms in dynamic matching markets and developed methods for reducing dimensionality and sampling parameters in Bayesian deep learning. He studied mathematics at Harvard.",
+            "While studying Math at Harvard, Roshan applied his interest in the intersections between math, computer science, and economics to evaluating Uber-style matching algorithms, detecting money laundering from financial data, and reducing parameter dimensionality for deep bayesian and recurrent neural networks.",
     },
     {
         image: Adriano,
@@ -81,6 +81,7 @@ export const teamData = [
     {
         image: Suriya,
         name: "Suriya Kandaswamy",
-        text: "Prior to Fractal, Suriya worked at a few startups and BCG. She studied Computer Science at Harvard, where she was on teaching staff for the intro systems course and did her senior thesis on sports analytics, using graph theory to characterize professional soccer team strategy."
-    }
+        text:
+            "Prior to Fractal, Suriya worked at a few startups and BCG. She studied Computer Science at Harvard, where she was on teaching staff for the intro systems course and did her senior thesis on sports analytics, using graph theory to characterize professional soccer team strategy.",
+    },
 ]

@@ -7,13 +7,6 @@
     font-style: normal;
 }
 
-@font-face {
-    font-family: "Maven Pro";
-    src: url("../assets/fonts/MavenPro-Medium.ttf");
-    font-weight: bold;
-    font-style: normal;
-}
-
 body,
 html,
 #root {

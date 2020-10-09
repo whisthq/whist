@@ -3,6 +3,7 @@ export const UPDATE_WAITLIST = "UPDATE_WAITLIST"
 export const UPDATE_USER = "UPDATE_USER"
 export const DELETE_USER = "DELETE_USER"
 export const UPDATE_UNSORTED_LEADERBOARD = "UPDATE_UNSORTED_LEADERBOARD"
+export const UPDATE_CLICKS = "UPDATE_CLICKS"
 
 export function insertWaitlistAction(
     email: string,
@@ -46,5 +47,12 @@ export function updateUnsortedLeaderboardAction(unsortedLeaderboard: any) {
     return {
         type: UPDATE_UNSORTED_LEADERBOARD,
         unsortedLeaderboard,
+    }
+}
+
+export function updateClicks(clicks: number) {
+    return {
+        type: UPDATE_CLICKS,
+        clicks,
     }
 }

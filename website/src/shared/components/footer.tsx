@@ -38,7 +38,8 @@ const Footer = (props: any) => {
                         <Col xs={12} style={{ maxWidth: 350 }}>
                             <div className="title">Fractal</div>
                             <div className="text">
-                                Fractal supercharges your applications by streaming them from the cloud.
+                                Fractal supercharges your applications by
+                                streaming them from the cloud.
                             </div>
                             <div
                                 style={{
