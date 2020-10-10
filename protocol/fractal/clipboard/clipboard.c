@@ -14,7 +14,7 @@ ClipboardData* GetClipboard() {
         return NULL;
     }
 
-    if (SDL_TryLockMutex(mutex) == 0) {
+    if (SDL_LockMutex(mutex) == 0) {
         ClipboardData* cb = unsafe_GetClipboard();
         SDL_UnlockMutex(mutex);
         return cb;
@@ -30,7 +30,7 @@ void SetClipboard(ClipboardData* cb) {
         return;
     }
 
-    if (SDL_TryLockMutex(mutex) == 0) {
+    if (SDL_LockMutex(mutex) == 0) {
         unsafe_SetClipboard(cb);
         SDL_UnlockMutex(mutex);
     } else {
@@ -49,7 +49,7 @@ bool hasClipboardUpdated() {
         SDL_UnlockMutex(mutex);
         return has_clipboard_updated;
     } else {
-        LOG_WARNING("Could not check hasClipboardUpdated, clipboard is busy!");
+        // LOG_WARNING("Could not check hasClipboardUpdated, clipboard is busy!");
         return false;
     }
 }
