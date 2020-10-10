@@ -24,7 +24,7 @@ jobs:
             - name: Build protocol
               run: ./build_protocol.sh
             - name: Build container images
-              run: for app in ${{ env.apps }}; do ./build_container_image.sh app; done;
+              run: for app in ${{ env.apps }}; do ./build_container_image.sh $app; done;
             - name: Notify Slack
               run: |
                   curl -X POST \
