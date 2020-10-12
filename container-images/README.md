@@ -109,26 +109,3 @@ We also have [pre-commit hooks](https://pre-commit.com/) with Hadolint support i
 We store our production container images on AWS Elastic Container Registry (ECR) and deploy them on AWS Elastic Container Service (ECS). We are currently building a true continuous delivery process, where at every PR to `master`, the images get built by GitHub Actions and then pushed to ECR automatically if all builds and tests pass, at which point the webserver will automatically pick new images for production deployment.
 
 Currently, at every PR to `master` or `dev`, the Docker base images will be built on GitHub Actions and status checks will be reported. For every new application that you add support for, you should create a new `docker-[YOUR APP]-ubuntu[18||20].yml` file to test that it properly build and then uploads to ECR automatically. You can follow the format of `docker-base-ubuntu20.yml` as needed.
-
-### Pushing to ECR manually (this is outdated; we have a script documented above for this)
-
-To push to the AWS container registry, a `container-admin` AWS IAM user has been created with the following credentials:
-
--   Access Key ID: `AKIA24A776SSFXQ6HLAK`
--   Secret Key: `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`
--   Console login link: `https://747391415460.signin.aws.amazon.com/console`
--   Console password: `qxQ!McAhFu0)`
-
-To publish, you first need to tag your Dockerfile before logging in and pushing the image to the repository:
-
-```
-# Tag
-(NOTE [savvy]: This seems out of date, even after replacing 18 with 20? I thought we used commits, not tags? TODO)
-docker tag base-systemd-20:latest .dkr.ecr.us-east-2.amazonaws.com/fractal-containers:latest
-
-# Login
-aws ecr get-login-password  --region us-east-2 | docker login --username AWS --password-stdin 747391415460.dkr.ecr.us-east-2.amazonaws.com
-
-# Push
-docker push 747391415460.dkr.ecr.us-east-2.amazonaws.com/fractal-containers:latest
-```
