@@ -292,7 +292,10 @@ void unsafe_SetClipboard(ClipboardData* cb) {
 
     // Set the just_received flag to true in order to prevent hasUpdated from returning true
     //      just after we've called xclip to set the clipboard
-    just_received = true;
+    // This should only be done if the clipboard contains valid contents to update xclip
+    if (cb->type != CLIPBOARD_NONE) {
+        just_received = true;
+    }
     return;
 }
 
