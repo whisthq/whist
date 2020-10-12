@@ -60,6 +60,9 @@ func shutdownHostService() {
 	log.Println("Printing stack trace: ")
 	debug.PrintStack()
 
+	// TODO: Send Death Notice to Sentry/Webserver
+	// sentry.CaptureMessage("MESSAGE GOES HERE")
+
 	// Flush buffered Sentry events before the program terminates.
 	defer sentry.Flush(2 * time.Second)
 
