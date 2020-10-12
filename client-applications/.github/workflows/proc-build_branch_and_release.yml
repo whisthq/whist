@@ -197,7 +197,7 @@ jobs:
         env:
           # This can't be secrets.GITHUB_TOKEN because it needs to access another repo and the default token
           # is only scoped to this repo
-          GITHUB_TOKEN: ${{ secrets.CI_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
       
       # Prepare macOS for notarizing the application
 
@@ -215,8 +215,8 @@ jobs:
       # Build the bundle application
       - name: Build the bundled application
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
         run: |
           poetry run python ./desktop/build_and_publish.py --set-version ${{ needs.params.outputs.version_id }}  --update-channel ${{ needs.params.outputs.update_channel }} --push-new-update ${{ needs.params.outputs.should_update }}|| true
           ls ${{ github.workspace }}/desktop/ || true
