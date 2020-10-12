@@ -84,23 +84,23 @@ else()
 endif()
 
 # download unison binary from AWS S3
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    MESSAGE(STATUS "Downloading binaries from AWS S3")
-    execute_process(COMMAND CMD /C "download-binaries.bat"
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE download_res)
-    if (NOT ${download_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to binaries from AWS S3: exitcode: ${download_res}")
-    endif()
-else()
-    MESSAGE(STATUS "Downloading binaries from AWS S3")
-    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE download)
-    if (NOT ${download} EQUAL "0")
-        message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${download}")
-    endif()
-endif()
+# if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+#     MESSAGE(STATUS "Downloading binaries from AWS S3")
+#     execute_process(COMMAND CMD /C "download-binaries.bat"
+#                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#                     RESULT_VARIABLE download_res)
+#     if (NOT ${download_res} EQUAL "0")
+#         message(FATAL_ERROR "Failed to binaries from AWS S3: exitcode: ${download_res}")
+#     endif()
+# else()
+#     MESSAGE(STATUS "Downloading binaries from AWS S3")
+#     execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh
+#                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#                     RESULT_VARIABLE download)
+#     if (NOT ${download} EQUAL "0")
+#         message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${download}")
+#     endif()
+# endif()
 
 # FFmpeg: using our provided libs on mac and windows and system on linux.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
