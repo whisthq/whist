@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
           repository: fractalcomputers/setup-scripts
-          token: ${{ secrets.CI_PAT }} # `CI_PAT` is a secret that contains the fractal-github user Personal Access Token
+          token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
           path: base/setup-scripts
 
       - name: Checkout protocol repository
@@ -32,7 +32,7 @@ jobs:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
           repository: fractalcomputers/protocol
-          token: ${{ secrets.CI_PAT }} # `CI_PAT` is a secret that contains the fractal-github user Personal Access Token
+          token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
           path: base/protocol
 
       - name: Build the Fractal protocol dev branch
