@@ -9,7 +9,6 @@ export const AUTH_DEFAULT = {
     },
     loggedIn: false,
     waitlist: [],
-    unsortedLeaderboard: null,
     clicks: {
         number: 0,
         lastClicked: 0,

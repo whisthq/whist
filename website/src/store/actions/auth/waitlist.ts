@@ -43,13 +43,6 @@ export function deleteUserAction() {
     }
 }
 
-export function updateUnsortedLeaderboardAction(unsortedLeaderboard: any) {
-    return {
-        type: UPDATE_UNSORTED_LEADERBOARD,
-        unsortedLeaderboard,
-    }
-}
-
 export function updateClicks(clicks: number) {
     return {
         type: UPDATE_CLICKS,

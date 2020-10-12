@@ -66,11 +66,6 @@ export default function (state = AUTH_DEFAULT, action: any) {
                     ranking: 0,
                 },
             }
-        case WaitlistAction.UPDATE_UNSORTED_LEADERBOARD:
-            return {
-                ...state,
-                unsortedLeaderboard: action.unsortedLeaderboard,
-            }
         case WaitlistAction.UPDATE_CLICKS:
             return {
                 ...state,

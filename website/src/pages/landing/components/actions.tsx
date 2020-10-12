@@ -2,12 +2,12 @@ import React, { useState, useContext } from "react"
 import { connect } from "react-redux"
 import { Button, Modal } from "react-bootstrap"
 import { CopyToClipboard } from "react-copy-to-clipboard"
+import { useMutation } from "@apollo/client"
 
 import GoogleButton from "pages/auth/googleButton"
 import WaitlistForm from "shared/components/waitlistForm"
 
-import { db } from "shared/utils/firebase"
-
+import { UPDATE_WAITLIST } from "shared/constants/graphql"
 import { REFERRAL_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "shared/constants/config"
@@ -59,15 +59,25 @@ const CustomAction = (props: {
 
 const Actions = (props: {
     dispatch: any
-    user: { email: string; referralCode: string }
+    user: {
+        email: string
+        referralCode: string
+        points: number
+        referrals: number
+    }
     loggedIn: any
-    unsortedLeaderboard: any
     clicks: any
 }) => {
-    const { dispatch, user, loggedIn, unsortedLeaderboard, clicks } = props
+    const { dispatch, user, loggedIn, clicks } = props
 
     const [showModal, setShowModal] = useState(false)
     const [warning, setWarning] = useState("")
+
+    const [updatePoints] = useMutation(UPDATE_WAITLIST, {
+        onError(err) {
+            console.log(err)
+        },
+    })
 
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
@@ -91,28 +101,12 @@ const Actions = (props: {
             if (allowClick) {
                 dispatch(updateClicks(clicks.number + 1))
 
-                const email = user.email
-
-                const hasClicked = unsortedLeaderboard[email].hasOwnProperty(
-                    "clicks"
-                )
-
-                if (!hasClicked) {
-                    unsortedLeaderboard[email] = {
-                        ...unsortedLeaderboard[email],
-                        clicks: 1,
-                        points: unsortedLeaderboard[email].points + 1,
-                    }
-                } else {
-                    unsortedLeaderboard[email] = {
-                        ...unsortedLeaderboard[email],
-                        clicks: unsortedLeaderboard[email].clicks + 1,
-                        points: unsortedLeaderboard[email].points + 1,
-                    }
-                }
-
-                db.collection("metadata").doc("waitlist").update({
-                    leaderboard: unsortedLeaderboard,
+                updatePoints({
+                    variables: {
+                        user_id: user.email,
+                        points: user.points + 1,
+                        referrals: user.referrals,
+                    },
                 })
             }
         }
@@ -202,14 +196,12 @@ function mapStateToProps(state: {
     AuthReducer: {
         user: any
         loggedIn: any
-        unsortedLeaderboard: any
         clicks: number
     }
 }) {
     return {
         user: state.AuthReducer.user,
         loggedIn: state.AuthReducer.loggedIn,
-        unsortedLeaderboard: state.AuthReducer.unsortedLeaderboard,
         clicks: state.AuthReducer.clicks
             ? state.AuthReducer.clicks
             : {

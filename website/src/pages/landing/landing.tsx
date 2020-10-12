@@ -1,17 +1,15 @@
 import React, { useEffect, useCallback, useContext } from "react"
 import { connect } from "react-redux"
-import { gql, useQuery } from "@apollo/client"
+import { useQuery, useMutation } from "@apollo/client"
 
 import { db } from "shared/utils/firebase"
 import MainContext from "shared/context/mainContext"
+import { GET_WAITLIST } from "pages/landing/constants/graphql"
 
 import {
     updateUserAction,
     updateWaitlistAction,
-    updateUnsortedLeaderboardAction,
 } from "store/actions/auth/waitlist"
-
-import { getSortedLeaderboard } from "shared/utils/points"
 
 import "styles/landing.css"
 import "styles/shared.css"
@@ -22,22 +20,10 @@ import LeaderboardView from "pages/landing/views/leaderboardView"
 import BottomView from "pages/landing/views/bottomView"
 import Footer from "shared/components/footer"
 
-const EXAMPLE_QUERY = gql`
-    query getWaitlist {
-        waitlist {
-            name
-            points
-            referral_code
-            referrals
-            user_id
-        }
-    }
-`
-
 const Landing = (props: any) => {
     const { setReferralCode, setAppHighlight } = useContext(MainContext)
     const { dispatch, user, match } = props
-    const { data } = useQuery(EXAMPLE_QUERY)
+    const { data } = useQuery(GET_WAITLIST)
 
     const apps = ["Photoshop", "Blender", "Figma", "VSCode", "Chrome", "Maya"]
     const appsLowercase = [
@@ -62,29 +48,17 @@ const Landing = (props: any) => {
     )
 
     useEffect(() => {
-        db.collection("metadata")
-            .doc("waitlist")
-            .onSnapshot(function (snapshot) {
-                const document = snapshot.data()
-                if (document) {
-                    const unsortedLeaderboard = document.leaderboard
-                    dispatch(
-                        updateUnsortedLeaderboardAction(unsortedLeaderboard)
-                    )
-                    getSortedLeaderboard(document).then(function (
-                        sortedLeaderboard
-                    ) {
-                        dispatch(updateWaitlistAction(sortedLeaderboard))
-                        if (user && user.email) {
-                            const ranking = getRanking(sortedLeaderboard)
-                            if (ranking !== user.ranking) {
-                                dispatch(updateUserAction(user.points, ranking))
-                            }
-                        }
-                    })
+        if (data) {
+            const waitlist = data.waitlist
+            dispatch(updateWaitlistAction(waitlist))
+            if (user && user.email) {
+                const ranking = getRanking(waitlist)
+                if (ranking !== user.ranking) {
+                    dispatch(updateUserAction(user.points, ranking))
                 }
-            })
-    }, [user, dispatch, getRanking])
+            }
+        }
+    }, [data, user, dispatch, getRanking])
 
     useEffect(() => {
         const firstParam = match.params.first

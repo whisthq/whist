@@ -196,11 +196,6 @@ const Leaderboard = (props: {
 
     return (
         <div className="leaderboard-container">
-            {/* <Row>
-                <Col style={{ textAlign: "right" }}>
-                    <Countdown type="small" />
-                </Col>
-            </Row> */}
             <div
                 style={{
                     width: "100%",

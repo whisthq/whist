@@ -1,7 +1,9 @@
-import React, { useContext } from "react"
+import React, { useContext, useCallback } from "react"
 import { connect } from "react-redux"
 import firebase from "firebase/app"
-import { db } from "shared/utils/firebase"
+import { useMutation } from "@apollo/client"
+
+import { UPDATE_WAITLIST } from "shared/constants/graphql"
 import { SIGNUP_POINTS } from "shared/utils/points"
 import { googleLogin } from "store/actions/auth/login_actions"
 
@@ -11,7 +13,23 @@ import "styles/landing.css"
 
 const GoogleButton = (props: any) => {
     const { width } = useContext(MainContext)
-    const { dispatch, user, unsortedLeaderboard } = props
+    const { dispatch, user } = props
+
+    const [updatePoints] = useMutation(UPDATE_WAITLIST, {
+        onError(err) {
+            console.log(err)
+        },
+    })
+
+    const updatePointsCallback = useCallback(() => {
+        updatePoints({
+            variables: {
+                user_id: user.email,
+                points: user.points + SIGNUP_POINTS,
+                referrals: user.referrals,
+            },
+        })
+    }, [])
 
     const handleGoogleLogin = () => {
         if (user.googleAuthEmail) {
@@ -23,29 +41,15 @@ const GoogleButton = (props: any) => {
                 .auth()
                 .signInWithPopup(provider)
                 .then(async function (result) {
-                    const email = user.email
                     if (result && result.user && result.user.email) {
-                        unsortedLeaderboard[email] = {
-                            referrals: unsortedLeaderboard[email].referrals,
-                            points:
-                                unsortedLeaderboard[email].points +
-                                SIGNUP_POINTS,
-                            name: unsortedLeaderboard[email].name,
-                            email: email,
-                            referralCode: unsortedLeaderboard[email]
-                                .referralCode
-                                ? unsortedLeaderboard[email].referralCode
-                                : null,
-                            googleAuthEmail: result.user.email,
-                        }
-                        db.collection("metadata").doc("waitlist").update({
-                            leaderboard: unsortedLeaderboard,
-                        })
+                        const email = user.email
+
+                        updatePointsCallback()
+
                         dispatch(
                             googleLogin(
                                 result.user.email,
-                                unsortedLeaderboard[email].points +
-                                    SIGNUP_POINTS
+                                user.points + SIGNUP_POINTS
                             )
                         )
                     }
@@ -78,14 +82,9 @@ const GoogleButton = (props: any) => {
     )
 }
 
-function mapStateToProps(state: {
-    AuthReducer: { user: any; unsortedLeaderboard: any }
-}) {
+function mapStateToProps(state: { AuthReducer: { user: any } }) {
     return {
         user: state.AuthReducer.user,
-        unsortedLeaderboard: state.AuthReducer.unsortedLeaderboard
-            ? state.AuthReducer.unsortedLeaderboard
-            : null,
     }
 }
 
