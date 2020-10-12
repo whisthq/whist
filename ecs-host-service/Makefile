@@ -21,8 +21,8 @@ clean:
 
 run: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME)...)
-# we run the built binary instead of using `go run` because otherwise signal
-# handling for Ctrl+C does not work
+	# we run the built binary instead of using `go run` because otherwise signal
+	# handling for Ctrl+C does not work
 	sudo env PATH=$PATH $(BUILD_FOLDER)/$(BINARY_NAME)
 
 deps:

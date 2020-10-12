@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 	"os"
 	"os/exec"
 	"os/signal"
 	"runtime/debug"
 	"syscall"
-
+	
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/getsentry/sentry-go"	
 )
 
 // The location on disk where we store the container resource allocations
@@ -58,7 +60,8 @@ func shutdownHostService() {
 	log.Println("Printing stack trace: ")
 	debug.PrintStack()
 
-	// TODO: actually send a message to sentry/the webserver
+	// Flush buffered Sentry events before the program terminates.
+	defer sentry.Flush(2 * time.Second)
 
 	log.Println("Finished host service shutdown procedure. Finally exiting...")
 	os.Exit(0)
@@ -210,6 +213,14 @@ func main() {
 	// After the above defer, this needs to be the next line of code that runs,
 	// since the following operations will require root permissions.
 	checkRunningPermissions()
+
+	// Initialize Sentry
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn: "https://5f2dd9674e2b4546b52c205d7382ac90@o400459.ingest.sentry.io/5461239",
+	})
+	if err != nil {
+		log.Fatalf("sentry.Init: %s", err)
+	}	
 
 	// Note that we defer uninitialization so that in case of panic elsewhere, we
 	// still clean up
