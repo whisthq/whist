@@ -112,10 +112,10 @@ func writeAssignmentToFile(filename, data string) error {
 	if err != nil {
 		err := fmt.Errorf("Couldn't write assignment with data %s to file %s. Error: %v", data, filename, err)
 		return err
-	} else {
-		log.Printf("Wrote data \"%s\" to file %s\n", data, filename)
-		return nil
 	}
+
+	log.Printf("Wrote data \"%s\" to file %s\n", data, filename)
+	return nil
 }
 
 func containerStartHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) error {
@@ -123,51 +123,50 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.Mkdir(datadir, 0644|os.ModeSticky)
 	if err != nil {
-		err := fmt.Errorf("Failed to create container-specific directory %s. Error: %v\n", datadir, err)
+		err := fmt.Errorf("Failed to create container-specific directory %s. Error: %v", datadir, err)
 		return err
-	} else {
-		log.Printf("Created container-specific directory %s\n", datadir)
 	}
+	log.Printf("Created container-specific directory %s\n", datadir)
 
 	c, err := cli.ContainerInspect(ctx, id)
 	if err != nil {
-		err := fmt.Errorf("Error running ContainerInspect on container %s: %v\n", id, err)
+		err := fmt.Errorf("Error running ContainerInspect on container %s: %v", id, err)
 		return err
 	}
 
 	// Keep track of port mapping
 	// We only need to keep track of the mapping of the container's tcp 32262 on the host
-	host_port, exists := c.NetworkSettings.Ports["32262/tcp"]
+	hostPort, exists := c.NetworkSettings.Ports["32262/tcp"]
 	if !exists {
 		err := fmt.Errorf("Could not find mapping for port 32262/tcp for container %s", id)
 		return err
 	}
-	if len(host_port) != 1 {
-		err := fmt.Errorf("The host_port mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", id, host_port)
+	if len(hostPort) != 1 {
+		err := fmt.Errorf("The hostPort mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", id, hostPort)
 		return err
 	}
-	err = writeAssignmentToFile(datadir+"host_port_for_my_32262_tcp", host_port[0].HostPort)
+	err = writeAssignmentToFile(datadir+"hostPort_for_my_32262_tcp", hostPort[0].HostPort)
 	if err != nil {
 		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
 		return err
 	}
 
 	// Assign an unused tty
-	assigned_tty := -1
+	assignedTty := -1
 	for tty := range ttyState {
 		if ttyState[tty] == "" {
-			assigned_tty = tty
-			ttyState[assigned_tty] = id
+			assignedTty = tty
+			ttyState[assignedTty] = id
 			break
 		}
 	}
-	if assigned_tty == -1 {
-		err := fmt.Errorf("Was not able to assign an free tty to container id %s\n", id)
+	if assignedTty == -1 {
+		err := fmt.Errorf("Was not able to assign an free tty to container id %s", id)
 		return err
 	}
 
 	// Write the tty assignment to a file
-	err = writeAssignmentToFile(datadir+"tty", fmt.Sprintf("%d", assigned_tty))
+	err = writeAssignmentToFile(datadir+"tty", fmt.Sprintf("%d", assignedTty))
 	if err != nil {
 		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
 		return err
@@ -188,11 +187,10 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string, tty
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.RemoveAll(datadir)
 	if err != nil {
-		err := fmt.Errorf("Failed to delete container-specific directory %s\n", datadir)
+		err := fmt.Errorf("Failed to delete container-specific directory %s", datadir)
 		return err
-	} else {
-		log.Printf("Successfully deleted container-specific directory %s\n", datadir)
 	}
+	log.Printf("Successfully deleted container-specific directory %s\n", datadir)
 
 	for tty := range ttyState {
 		if ttyState[tty] == id {
@@ -228,11 +226,11 @@ func main() {
 	defer uninitializeFilesystem()
 
 	// Register a signal handler for Ctrl-C so that we still cleanup if Ctrl-C is pressed
-	sig_chan := make(chan os.Signal, 2)
-	signal.Notify(sig_chan, os.Interrupt, syscall.SIGTERM)
+	sigChan := make(chan os.Signal, 2)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		defer shutdownHostService()
-		<-sig_chan
+		<-sigChan
 		log.Println("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and panicking to initiate host shutdown process...")
 		uninitializeFilesystem()
 		log.Panic("Got a Ctrl+C: already uninitialized filesystem, looking to exit")
