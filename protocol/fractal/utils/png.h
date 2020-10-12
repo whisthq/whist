@@ -32,7 +32,9 @@ Public Functions
 
 char* read_file(const char* filename, size_t* char_nb);
 
-int bmp_to_png(char* bmp, int size, AVPacket* pkt);
+int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt);
+
+int png_to_bmp_char(char* png, int size, AVPacket* pkt);
 
 int png_to_bmp(char* png, AVPacket* pkt);
 
