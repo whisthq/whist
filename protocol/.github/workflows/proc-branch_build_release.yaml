@@ -33,7 +33,7 @@ env:
   SERVER_VM_NAME: crimsonbonus543
   SERVER_VM_USER: Fractal
   SERVER_VM_IP: 20.185.40.33
-  WEBSERVER_BASE_URL: https://cube-celery-staging4.herokuapp.com
+  WEBSERVER_BASE_URL: https://main-webserver.fractalcomputers.com
 
 jobs:
   params:
@@ -461,7 +461,7 @@ jobs:
               sudo apt-get install valgrind pulseaudio jackd2 alsa-utils dbus-x11 libavcodec-dev libavdevice-dev libx11-dev libxtst-dev xclip x11-xserver-utils libasound2-dev libxdamage-dev -y || true
               chmod +x FractalClient
               sleep 1
-              xvfb-run ./FractalClient -k $SERVER_VM_IP | tee log.txt
+              xvfb-run ./FractalClient --use_ci $SERVER_VM_IP | tee log.txt
             log_location: log.txt
             log_artifact_name: linux_client_test_logs
           - os: windows-2016
@@ -469,7 +469,7 @@ jobs:
             test_predicate: "!contains(needs.params.outputs.should_test_windows, 'false')"
             test_script:
               | # `cd .` is to avoid fast-fail behavior in the shell by return 0 if the fractal command fails
-              .\FractalClient -k $Env:SERVER_VM_IP || cd .
+              .\FractalClient --use_ci $Env:SERVER_VM_IP || cd .
               cat log.txt
             log_location: log.txt
             log_artifact_name: Windows-64bit_client_test_logs
@@ -479,7 +479,7 @@ jobs:
             test_script: |
               sleep 5
               chmod +x FractalClient
-              ./FractalClient -k $SERVER_VM_IP | tee log.txt
+              ./FractalClient --use_ci $SERVER_VM_IP | tee log.txt
             log_location: log.txt
             log_artifact_name: macOS-64bit_client_test_logs
     steps:
@@ -721,4 +721,5 @@ jobs:
         run: |
           echo "base64 encoded PROC_BRANCH_BUILD_RELEASE_ID (pipe to `base64 -d` to decode): "
           echo "${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}" | base64
-          curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches  -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "${{ needs['create-release'].outputs.version_id }}", "should_test": "false", "should_release": "true"}}'
+          printf -v date '%(%Y.%-m.%-d)T'
+          curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches  -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "'$date'", "should_test": "false", "should_release": "true"}}'

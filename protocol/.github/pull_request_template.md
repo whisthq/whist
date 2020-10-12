@@ -2,6 +2,8 @@
 | ------ | ----------------- |
 | #nb    | Insert Title Here |
 
+If you would like to not build a release on every push to this PR, e.g you are still actively working on it, then put WIP in the title of the PR or put skip-ci in the commit message. 
+
 ## Description
 
 Give a brief description and context of what you are working on.
@@ -31,10 +33,13 @@ Please give instructions for other people to test, e.g.:
 - [ ] Ming
 - [ ] Nicholas
 - [ ] Roshan
-- [ ] Hamish
-- [ ] Isabelle
+- [ ] Owen
+- [ ] Cidney
+- [ ] Savvy
 - [ ] Jonathan
-- [ ] Sean
+- [ ] Tina
+- [ ] Leor
+- [ ] Eric
 - [ ] Gavin
 
 ## Checklist
