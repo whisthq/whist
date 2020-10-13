@@ -1150,6 +1150,7 @@ int main() {
         LOG_INFO("Disconnected");
 
         DestroyInputDevice(input_device);
+        destroyClipboardSynchronizer();
 
         SDL_WaitThread(send_video, NULL);
         SDL_WaitThread(send_audio, NULL);
