@@ -2,7 +2,7 @@ name: Sentry Release
 
 on:
   release:
-    types: [published]
+    types: [ published ]
 
 
 jobs:
