@@ -13,7 +13,6 @@ const SignoutButton = (props: any) => {
             .auth()
             .signOut()
             .then(() => {
-                console.log("signed out")
                 props.dispatch(logout())
             })
     }

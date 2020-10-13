@@ -38,14 +38,14 @@ const Landing = (props: any) => {
         "maya",
     ]
 
-    const getRanking = useCallback(
+    const getPointsandRanking = useCallback(
         (waitlist: any) => {
             for (var i = 0; i < waitlist.length; i++) {
                 if (waitlist[i].user_id === user.user_id) {
-                    return i + 1
+                    return { points: waitlist[i].points, ranking: i + 1 }
                 }
             }
-            return 0
+            return { points: 0, ranking: 0 }
         },
         [user]
     )
@@ -59,12 +59,14 @@ const Landing = (props: any) => {
             const waitlist = data.waitlist
             dispatch(updateWaitlistAction(waitlist))
             if (user && user.user_id) {
-                const ranking = getRanking(waitlist)
-                console.log("get ranking")
-                if (ranking !== user.ranking || user.ranking === 0) {
-                    dispatch(updateUserAction(user.points, ranking))
+                const { points, ranking } = getPointsandRanking(waitlist)
+                if (
+                    ranking !== user.ranking ||
+                    user.ranking === 0 ||
+                    user.points !== points
+                ) {
+                    dispatch(updateUserAction(points, ranking))
                     if (applicationRedirect) {
-                        console.log("pushing redirect")
                         history.push("/application")
                     }
                 }

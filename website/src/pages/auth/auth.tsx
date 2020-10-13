@@ -11,9 +11,7 @@ const Auth = (props: {
     loggedIn: any
     user_id: React.ReactNode
 }) => {
-    useEffect(() => {
-        console.log(props)
-    }, [props])
+    useEffect(() => {}, [props])
 
     return (
         <div className="auth-wrapper">

@@ -74,9 +74,7 @@ const Actions = (props: {
     const [warning, setWarning] = useState("")
 
     const [updatePoints] = useMutation(UPDATE_WAITLIST, {
-        onError(err) {
-            console.log(err)
-        },
+        onError(err) {},
     })
 
     const handleOpenModal = () => setShowModal(true)
@@ -87,27 +85,29 @@ const Actions = (props: {
             var allowClick = true
             const currentTime = new Date().getTime() / 1000
 
-            if (clicks.number > 50) {
-                if (currentTime - clicks.lastClicked > 60 * 60 * 3) {
-                    dispatch(updateClicks(0))
-                } else {
-                    allowClick = false
-                    setWarning(
-                        "Max clicks reached! Clicking will reset in 3 hours."
-                    )
+            if (currentTime - clicks.lastClicked > 2) {
+                if (clicks.number > 500) {
+                    if (currentTime - clicks.lastClicked > 60 * 60 * 3) {
+                        dispatch(updateClicks(0))
+                    } else {
+                        allowClick = false
+                        setWarning(
+                            "Max clicks reached! Clicking will reset in 3 hours."
+                        )
+                    }
                 }
-            }
 
-            if (allowClick) {
-                dispatch(updateClicks(clicks.number + 1))
+                if (allowClick) {
+                    dispatch(updateClicks(clicks.number + 1))
 
-                updatePoints({
-                    variables: {
-                        user_id: user.user_id,
-                        points: user.points + 1,
-                        referrals: user.referrals,
-                    },
-                })
+                    updatePoints({
+                        variables: {
+                            user_id: user.user_id,
+                            points: user.points + 1,
+                            referrals: user.referrals,
+                        },
+                    })
+                }
             }
         }
     }

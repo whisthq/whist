@@ -29,8 +29,6 @@ export default function (state = AUTH_DEFAULT, action: any) {
                       },
             }
         case WaitlistAction.UPDATE_USER:
-            console.log("update user reducer")
-            console.log(action)
             return {
                 ...state,
                 user: {

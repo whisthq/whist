@@ -61,8 +61,6 @@ const persistor = persistStore(store)
 
 // Set up Apollo GraphQL provider for https and wss (websocket)
 
-console.log(config)
-
 const httpLink = new HttpLink({
     uri: config.url.GRAPHQL_HTTP_URL,
     headers: {
