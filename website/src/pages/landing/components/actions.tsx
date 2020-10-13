@@ -85,8 +85,8 @@ const Actions = (props: {
             var allowClick = true
             const currentTime = new Date().getTime() / 1000
 
-            if (currentTime - clicks.lastClicked > 2) {
-                if (clicks.number > 500) {
+            if (currentTime - clicks.lastClicked > 1) {
+                if (clicks.number > 50) {
                     if (currentTime - clicks.lastClicked > 60 * 60 * 3) {
                         dispatch(updateClicks(0))
                     } else {

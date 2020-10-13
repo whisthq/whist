@@ -28,11 +28,16 @@ export function updateWaitlistAction(waitlist: any) {
     }
 }
 
-export function updateUserAction(points: any, ranking: number) {
+export function updateUserAction(
+    points: any,
+    ranking: number,
+    referralCode: string
+) {
     return {
         type: UPDATE_USER,
         points,
         ranking,
+        referralCode,
     }
 }
 

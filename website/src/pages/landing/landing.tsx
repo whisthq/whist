@@ -38,41 +38,53 @@ const Landing = (props: any) => {
         "maya",
     ]
 
-    const getPointsandRanking = useCallback(
+    const getUser = useCallback(
         (waitlist: any) => {
             for (var i = 0; i < waitlist.length; i++) {
                 if (waitlist[i].user_id === user.user_id) {
-                    return { points: waitlist[i].points, ranking: i + 1 }
+                    return {
+                        ...waitlist[i],
+                        ranking: i + 1,
+                        referralCode: waitlist[i].referral_code,
+                    }
                 }
             }
-            return { points: 0, ranking: 0 }
+            return null
         },
         [user]
     )
 
     useEffect(() => {
         dispatch(updateApplicationRedirect(false))
-    }, [])
+    }, [dispatch])
 
     useEffect(() => {
         if (data) {
             const waitlist = data.waitlist
             dispatch(updateWaitlistAction(waitlist))
             if (user && user.user_id) {
-                const { points, ranking } = getPointsandRanking(waitlist)
-                if (
-                    ranking !== user.ranking ||
-                    user.ranking === 0 ||
-                    user.points !== points
-                ) {
-                    dispatch(updateUserAction(points, ranking))
-                    if (applicationRedirect) {
-                        history.push("/application")
+                const newUser = getUser(waitlist)
+                if (newUser) {
+                    if (
+                        newUser.ranking !== user.ranking ||
+                        user.ranking === 0 ||
+                        user.points !== newUser.points
+                    ) {
+                        dispatch(
+                            updateUserAction(
+                                newUser.points,
+                                newUser.ranking,
+                                newUser.referralCode
+                            )
+                        )
+                        if (applicationRedirect) {
+                            history.push("/application")
+                        }
                     }
                 }
             }
         }
-    }, [data])
+    }, [data, user, dispatch, applicationRedirect, getUser])
 
     useEffect(() => {
         const firstParam = match.params.first

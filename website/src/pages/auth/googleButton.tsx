@@ -29,7 +29,7 @@ const GoogleButton = (props: any) => {
                 referrals: user.referrals,
             },
         })
-    }, [])
+    }, [updatePoints, user])
 
     const handleGoogleLogin = () => {
         if (user.googleAuthEmail) {
@@ -42,8 +42,6 @@ const GoogleButton = (props: any) => {
                 .signInWithPopup(provider)
                 .then(async function (result) {
                     if (result && result.user && result.user.email) {
-                        const email = user.user_id
-
                         updatePointsCallback()
 
                         dispatch(

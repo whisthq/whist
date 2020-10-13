@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react"
+import React, { useState, useContext } from "react"
 import { Row, Col, Button, FormControl } from "react-bootstrap"
 import { connect } from "react-redux"
 import { HashLink } from "react-router-hash-link"

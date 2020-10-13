@@ -55,8 +55,8 @@ function WaitlistForm(props: any) {
 
         for (var i = 0; i < waitlist.length; i++) {
             if (
-                waitlist[i].referralCode &&
-                waitlist[i].referralCode === referralCode
+                waitlist[i].referral_code &&
+                waitlist[i].referral_code === referralCode
             ) {
                 return waitlist[i]
             }
