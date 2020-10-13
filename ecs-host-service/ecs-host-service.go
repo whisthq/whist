@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"time"
 	"os"
 	"os/exec"
 	"os/signal"
 	"runtime/debug"
 	"syscall"
-	
+	"time"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/getsentry/sentry-go"	
+	"github.com/getsentry/sentry-go"
 )
 
 // The location on disk where we store the container resource allocations
@@ -45,7 +45,7 @@ func startDockerDaemon() {
 }
 
 func shutdownHostService() {
-	log.Println("Beginning host shutdown procedure.")
+	log.Println("Beginning host service shutdown procedure.")
 
 	// Catch any panics in the calling goroutine. Note that besides the host
 	// machine itself shutting down, this method should be the _only_ way that
@@ -221,7 +221,7 @@ func main() {
 	})
 	if err != nil {
 		log.Fatalf("sentry.Init: %s", err)
-	}	
+	}
 
 	// Note that we defer uninitialization so that in case of panic elsewhere, we
 	// still clean up
@@ -263,6 +263,7 @@ func main() {
 	events, errs := cli.Events(context.Background(), eventOptions)
 	log.Println("Initialized event stream...")
 
+eventLoop:
 	for {
 		if needToReinitializeEventStream {
 			events, errs = cli.Events(context.Background(), eventOptions)
@@ -279,7 +280,7 @@ func main() {
 				continue
 			case err == io.EOF:
 				log.Panic("Docker event stream has been completely read.")
-				break
+				break eventLoop
 			case client.IsErrConnectionFailed(err):
 				// This means "Cannot connect to the Docker daemon..."
 				log.Printf("Got error \"%v\". Trying to start Docker daemon ourselves...", err)
