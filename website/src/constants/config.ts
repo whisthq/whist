@@ -1,6 +1,6 @@
 const development = {
     url: {
-        PRIMARY_SERVER: "http://localhost:7300",
+        PRIMARY_SERVER: "http://localhost:7730",
         FRONTEND_URL: "http://localhost:3000",
     },
     stripe: {

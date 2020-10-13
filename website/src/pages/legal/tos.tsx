@@ -15,14 +15,14 @@ function TermsOfService(props: any) {
             >
                 <div style={{ fontSize: 40 }}>TERMS OF SERVICE</div>
                 <div style={{ color: "#555555", marginBottom: 40 }}>
-                    Last updated May 17th, 2020
+                    Last updated October 13th, 2020
                 </div>
                 <div>
                     <p>
                         PLEASE READ THESE TERMS OF SERVICE (COLLECTIVELY WITH
                         FRACTAL'S PRIVACY POLICY{" "}
-                        <a href="https://www.fractalcomputers.com/privacy">
-                            www.fractalcomputers.com/privacy
+                        <a href="https://www.tryfractal.com/privacy">
+                            www.tryfractal.com/privacy
                         </a>{" "}
                         AND{" "}
                         <a href="http://www.copyright.gov/legislation/dmca.pdf">
@@ -30,8 +30,8 @@ function TermsOfService(props: any) {
                         </a>
                         , THE "TERMS OF SERVICE ") FULLY AND CAREFULLY BEFORE
                         USING{" "}
-                        <a href="https://www.fractalcomputers.com">
-                            WWW.FRACTALCOMPUTERS.COM
+                        <a href="https://www.tryfractal.com">
+                            WWW.TRYFRACTAL.COM
                         </a>{" "}
                         (THE "SITE"), ANY DESKTOP OR MOBILE APPLICATIONS
                         PROVIDED BY FRACTAL (THE "APPLICATIONS") AND THE CLOUD
@@ -60,35 +60,31 @@ function TermsOfService(props: any) {
                         as of the date you accept these Terms of Service.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
-                        Acceptance of Terms of Service
+                        Acceptance Of Terms Of Service
                     </p>
-                    <ul>
-                        <li>
-                            By registering for and/or using the Services in any
-                            manner, including but not limited to visiting or
-                            browsing the Site and/or downloading the
-                            Applications, you agree to these Terms of Service
-                            and all other operating rules, policies and
-                            procedures that may be published from time to time
-                            on the Site by us, each of which is incorporated by
-                            reference and each of which may be updated from time
-                            to time without any notice.
-                        </li>
-                        <li>
-                            Certain of the Services may be subject to additional
-                            terms and conditions specified by us from time to
-                            time; your use of such Services is subject to those
-                            additional terms and conditions, which are
-                            incorporated into these Terms of Service by this
-                            reference.
-                        </li>
-                        <li>
-                            These Terms of Service apply to all users of the
-                            Services, including, without limitation, users who
-                            are contributors of content, information, and other
-                            materials or services, registered or otherwise.
-                        </li>
-                    </ul>
+                    <p>
+                        By registering for and/or using the Services in any
+                        manner, including but not limited to visiting or
+                        browsing the Site and/or downloading the Applications,
+                        you agree to these Terms of Service and all other
+                        operating rules, policies and procedures that may be
+                        published from time to time on the Site by us, each of
+                        which is incorporated by reference and each of which may
+                        be updated from time to time without any notice.
+                    </p>
+                    <p>
+                        Certain of the Services may be subject to additional
+                        terms and conditions specified by us from time to time;
+                        your use of such Services is subject to those additional
+                        terms and conditions, which are incorporated into these
+                        Terms of Service by this reference.
+                    </p>
+                    <p>
+                        These Terms of Service apply to all users of the
+                        Services, including, without limitation, users who are
+                        contributors of content, information, and other
+                        materials or services, registered or otherwise.
+                    </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
                         Eligibility
                     </p>
@@ -136,68 +132,99 @@ function TermsOfService(props: any) {
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>Product</p>
                     <p>
-                        Fractal is a provider of cloud-based personal computers
-                        ("Cloud Computers") and of peer-to-peer low-latency
-                        streaming technologies (“Streaming Technology”). A
-                        Fractal cloud computer is similar to a standard PC in
-                        that once your Fractal subscription is active, it allows
-                        you to install software for which you have a legitimate
-                        license. Fractal is not designed to support pirated or
-                        otherwise illegitimately obtained software. Unless
-                        indicated otherwise, your Fractal cloud computer runs on
-                        Windows 10 Professional or Linux Ubuntu 18.04, depending
-                        on which plan you select. In certain world regions,
-                        Windows 10 Professional may be replaced by Windows
-                        Server 2016, which is indicated to you before you select
-                        your cloud computer.
+                        Fractal is a provider of cloud-based applications
+                        ("Cloud Applications"). Cloud Applications are similar
+                        to a regular applications in that once your Fractal
+                        subscription is active, they can be interacted with as
+                        you normally would with a local version of the
+                        application, except that they are installed on remote
+                        machines and delivered to your local device via the
+                        Fractal streaming service. Unless indicated otherwise,
+                        your Fractal Cloud Applications run on Linux Ubuntu
+                        20.04. These applications are developed by third-parties
+                        and are serviced via Fractal in agreements with the
+                        applications Terms of Services. By using any application
+                        through Fractal, you consent to the Terms of Service and
+                        Privacy Policy of the application you use, in addition
+                        to Fractal's Terms of Service and Privacy Policy. We
+                        encourage you to review an application's Terms of
+                        Service and Privacy Policy before using it through
+                        Fractal. For applications which require a user license
+                        to use, this license will either be provided by us to
+                        you for the duration of your usage of the application,
+                        or you will be required to supply it yourself before
+                        being able to use the application via Fractal, either of
+                        which will be made clear to you before your usage of the
+                        application. Fractal does not support using
+                        license-requiring applications without a valid license
+                        and will immediately, without prenotice or refund,
+                        terminate any account which is found attempting to do so
+                        in any way whatsoever. Fractal also reserves the rights
+                        to terminate any account, without prenotice or refund,
+                        if it is found breaking the Terms of Service of a
+                        specific application serviced via Fractal as a Cloud
+                        Application.
                     </p>
                     <p>
-                        The Fractal Streaming Technology can be used to stream
-                        your own computer, provided that you have a legitimate
-                        license for it, to another of your devices over the
-                        Internet. The Fractal Streaming Technology cannot be
-                        used to stream your own computer to a third party or to
-                        a device which you do not own and cannot be used to
-                        stream pirated or otherwise illegitimately obtained
-                        software.
+                        Fractal is committed to our users' privacy and security,
+                        which why we do not store the data within your
+                        applications after you terminate a Fractal Session. A
+                        Fractal session (“Session”) occurs each time you use
+                        Fractal’s software to access a cloud-based application
+                        via Fractal. Each Session is standalone, meaning that
+                        the remote machine running the application(s) you are
+                        using during a Session will be permanently erased
+                        shortly after you terminate your Session. As such,
+                        Fractal offers multiple ways to effortlessly store your
+                        data with third-party cloud storage providers, provided
+                        that you have a valid account and subscription to one or
+                        many of those services. Fractal does not assume
+                        responsibility for any lost user data due to incorrect
+                        or forgotten saves, or data storage issues with
+                        third-party integrations.
                     </p>
                     <p>
-                        Your cloud computer and/or your personal computer
-                        streamed through Fractal can be accessed from any
-                        Internet-connected device (a “User Device”), provided
-                        that a Fractal local application has been developed for
-                        the device’s operating system.
+                        Exceptions to this rule might include application
+                        settings, plugins and third-party account integrations
+                        which you specify and install so to customize your
+                        Fractal experience for a specific Cloud Application.
+                        Fractal may store this data on your behalf to improve
+                        your experience.
+                    </p>
+                    <p>
+                        The Cloud Applications Fractal services can be accessed
+                        via Fractal from any Internet-connected device (a “User
+                        Device”), provided that a Fractal local or web
+                        application has been developed for the device’s
+                        operating system.
                     </p>
                     <p>
                         Given the nature of cloud-based personal computing, your
                         inputs (keystrokes, mouse/touchpad movements, etc.) are
                         sent from the User Device to Fractal’s data center
-                        infrastructure. The servers in Fractal’s data center
-                        infrastructure interpret these signals on your personal
-                        cloud computer, which allows for the Fractal local
-                        application to display the cloud computers. All
-                        communications between your User Device and your Fractal
-                        Cloud Computer, including audio and video components of
-                        the streaming, are fully AES encrypted, and Fractal does
-                        not observe directly any of your stream components.
+                        infrastructure, where Cloud Applications are hosted. The
+                        servers in Fractal’s data center infrastructure
+                        interpret these signals on your Cloud Applications,
+                        which allows for the Fractal applications to display the
+                        Cloud Applications. All communications between your User
+                        Device and your Fractal Cloud Applications, including
+                        input, audio and video components of the streaming, are
+                        fully AES encrypted, and Fractal does not observe
+                        directly any of your stream components.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
-                        Fractal Plans and Subscriptions
+                        Fractal Plans And Subscriptions
                     </p>
                     <p>
-                        A Fractal plan is your subscription to access your cloud
-                        computer or to license the Fractal Streaming Technology
-                        to stream your personal computer. Your subscription
-                        period will be calculated from the date on which your
-                        Fractal cloud computer is set up and available for use,
-                        or the date on which your Fractal streaming license is
-                        set delivered to you, whichever applies to your
-                        situation (the “Start Date”). You will receive an email
-                        informing you of that date when you sign up for our
-                        service. The subscription will continue from the Start
-                        Date for the term you selected (the “Subscription
-                        Period”) and will then automatically renew for
-                        successive periods equal to your then-current
+                        A Fractal plan is your subscription to access your Cloud
+                        Applications. Your subscription period will be
+                        calculated from the date on which your Fractal account
+                        is set up and available for use (the “Start Date”). You
+                        will receive an email informing you of that date when
+                        you sign up for our service. The subscription will
+                        continue from the Start Date for the term you selected
+                        (the “Subscription Period”) and will then automatically
+                        renew for successive periods equal to your then-current
                         subscription term, unless no later than the day
                         preceding the end of the then-current term you have
                         cancelled your subscription. The renewed subscription
@@ -229,13 +256,15 @@ function TermsOfService(props: any) {
                         If you selected a monthly plan, or a longer plan that
                         involves monthly payments, you will generally be charged
                         a full month at the time of purchase of your
-                        subscription. If you selected a plan with an hourly
-                        component, you will be charged the hourly component at
-                        the end of the time period, typically a month, based on
-                        your usage. If you use part of an hour, but not the full
-                        hour, you will be charged a full hour of usage.
-                        Subsequent monthly payments will be charged on or about
-                        the same date in every subsequent month of the
+                        subscription. If you selected a plan with a per-usage
+                        pricing component, you will be charged the usage unit
+                        times the usage you have made of the Services at the end
+                        of the time period, typically a month, based on your
+                        usage. If you use part of an usage unit, but not the
+                        full usage unit, say if you are billed hourly but only
+                        use part of an hour, you will be charged a full unit of
+                        usage. Subsequent monthly payments will be charged on or
+                        about the same date in every subsequent month of the
                         Subscription Period (or renewed Subscription Period). If
                         you selected a prepaid plan, you will generally be
                         charged the full amount of the plan at the time of
@@ -253,28 +282,17 @@ function TermsOfService(props: any) {
                         been rendered. If Fractal does not receive payment for
                         your Fractal plan on the day of renewal and you have not
                         cancelled your Fractal plan, your Services will be
-                        suspended, and your Fractal cloud computer data will be
-                        kept securely and privately for a maximum of 7 days
-                        after cancellation of your plan. You will be notified by
-                        email and given the opportunity to download your Fractal
-                        cloud computer data before it is erased. Your Fractal
-                        cloud computer data will be erased after this 7-day
-                        period unless you have made explicit request for it to
-                        be kept, for which you will continue to incur a monthly
-                        fee. If you were licensing the Fractal Streaming
-                        Technology, you will no longer be able to stream your
-                        personal computer, effective immediately from the date
-                        you default on your payment. If your Services are
-                        suspended, Fractal is not responsible for any refund of
-                        previous payments (nor is Fractal responsible for
-                        refunds of previous payments in other situations), and
-                        you are still responsible for the entire subscription
-                        fee outstanding, meaning you are still responsible for
-                        the entire subscription fee of the current subscription
-                        period, as defined in your Fractal plan. If Services are
-                        cancelled by Fractal because of a failure to pay, the
-                        entire remaining subscription fee for the subscription
-                        period will be payable to Fractal immediately.
+                        suspended. If your Services are suspended, Fractal is
+                        not responsible for any refund of previous payments (nor
+                        is Fractal responsible for refunds of previous payments
+                        in other situations), and you are still responsible for
+                        the entire subscription fee outstanding, meaning you are
+                        still responsible for the entire subscription fee of the
+                        current subscription period, as defined in your Fractal
+                        plan. If Services are cancelled by Fractal because of a
+                        failure to pay, the entire remaining subscription fee
+                        for the subscription period will be payable to Fractal
+                        immediately.
                     </p>
                     <p>
                         You may receive offers to purchase additional optional
@@ -297,15 +315,6 @@ function TermsOfService(props: any) {
                         the first day of the next Subscription Period after the
                         then-current Subscription Period.
                     </p>
-                    <p>
-                        Fractal reserves the right to permanently delete any
-                        user Data found on a server that is no longer subscribed
-                        to by a user 7 days after a user has cancelled their
-                        plan. You will receive one or many emails notifying you
-                        ahead of time that your data is scheduled for deletion,
-                        to provide you with the opportunity to download it
-                        locally.
-                    </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
                         Referral Programs
                     </p>
@@ -320,12 +329,12 @@ function TermsOfService(props: any) {
                     </p>
                     <p>
                         Many of the Services offered by Fractal allow you, the
-                        user, to download software, in order to use those
+                        user, to download software in order to use those
                         Services. Software includes, but is not limited to,
                         local desktop, tablet, and mobile applications that
-                        allow the user to access Fractal cloud-based personal
-                        computers from User Devices. Fractal may automatically
-                        update Fractal software on your device.
+                        allow the user to access Fractal Cloud Applications from
+                        User Devices. Fractal may automatically update Fractal
+                        software on your device.
                     </p>
                     <p>
                         Fractal software is licensed and not sold. If you comply
@@ -359,94 +368,42 @@ function TermsOfService(props: any) {
                         prosecution, to full extent of the applicable law in
                         your jurisdiction.
                     </p>
-                    <p>
-                        If you elect so, Fractal may download for you, on your
-                        Fractal cloud computer, a set of applications that you
-                        may request. Fractal will only download open-source
-                        applications, in accordance with the open-source license
-                        of these applications. Fractal can also download certain
-                        closed-source applications, provided that they do not
-                        require a license to be downloaded. You will be asked to
-                        provide a valid license for these applications to be
-                        able to use them, in accordance with the licensing
-                        policy of the software provider. This license belongs to
-                        you and in no way to Fractal, and remains yours should
-                        you stop using Fractal.
-                    </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
-                        Servers and Operating Systems
+                        Servers And Operating Systems
                     </p>
                     <p>
-                        Fractal may use any hardware/service providers it sees
-                        fit to deliver Fractal’s Services, and those
-                        hardware/service providers may change over time. A
-                        Fractal session (“Session”) occurs each time you use
-                        Fractal’s software to access a Fractal cloud computer.
-                        It is important to note that the User may be using
+                        Fractal may use any hardware and service providers it
+                        sees fit to deliver the Fractal Services, and those
+                        hardware and service providers may change over time. It
+                        is important to note that the User may be using
                         different computing infrastructure in different Sessions
                         and/or during a single Session. We will have sole
-                        discretion in deciding which hardware/service providers
-                        we will use in connection with our Services; the User
-                        acknowledges and agrees that they may not make any
-                        complaints or demands regarding Fractal’s choice in
-                        hardware/service providers.
+                        discretion in deciding which hardware and service
+                        providers we will use in connection with our Services;
+                        the User acknowledges and agrees that they may not make
+                        any complaints or demands regarding Fractal’s choice in
+                        hardware and service providers.
                     </p>
                     <p>
-                        Fractal cloud computers are collectively hosted on
-                        Microsoft Azure, Amazon Web Services or Google Cloud
-                        Platform, depending on the operating system and the
-                        world region. Fractal abides by the terms of services of
-                        the respective cloud providers for which it uses the
-                        cloud infrastructure to service Fractal cloud computers,
-                        and your agreement is the Fractal Terms of Services
-                        extends to the terms of service of the cloud provider
-                        from which the Fractal cloud computer you are using is
-                        being serviced. We encourage you to review the terms of
-                        service of the three cloud providers from which Fractal
-                        services cloud computers.
-                    </p>
-                    <p>
-                        Unless otherwise stated and as mentioned above, Fractal
-                        cloud computers run on Windows 10 Professional, Windows
-                        Server 2016 or Linux Ubuntu 18.04. When logging into a
-                        Fractal session and using a Fractal cloud computer, you
-                        obtain access to an appropriate Windows license (the
-                        “License”). If you are licensing the Fractal Streaming
-                        Technology to stream your own personal computer to
-                        another of your devices, you acknowledge that your
-                        computer must run Windows 10 Professional, Windows
-                        Server 2016 or Linux Ubuntu 18.04. The Fractal Streaming
-                        Technology might run on other operating systems, like
-                        other variants of the Windows operating system and/or
-                        other variants of the Linux operating system; Fractal
-                        makes no claim to support those operating systems. If
-                        you choose to run the Fractal Streaming Technology on
-                        other operating system than the officially supported
-                        ones to stream your personal computer, you may
-                        experience bugs and a reduced quality of experience.
-                        Fractal declines any responsibility for the quality of
-                        your experience using the Fractal Streaming Technology
-                        on an unofficially supported operating system.
-                    </p>
-                    <p>
-                        Windows Licenses are purchased and activated for the
-                        cloud computer you are using in accordance with{" "}
-                        <a href="https://www.microsoft.com/en-us/Useterms/Retail/Windows/10/UseTerms_Retail_Windows_10_English.htm">
-                            Microsoft’s licensing policy
-                        </a>
-                        . Each License is only activated on a single, specific
-                        Fractal cloud computer and will be your license for the
-                        duration of your Fractal Session. You do not own this
-                        License and have no claim to the License. Each License
-                        stays with the cloud computer it is activated for,
-                        meaning if you are using a different Fractal cloud
-                        computer across Sessions, you will be using different
-                        Licenses. All the rights associated with purchasing
-                        Licenses are assigned to Fractal and only allocated to
-                        you for the duration of your Fractal Session. Unless
-                        otherwise stated, we will pay for the License, and we
-                        will not ask you to refund the cost of the License
-                        during your Subscription Period.
+                        The Cloud Applications serviced by Fractal are
+                        collectively hosted on Microsoft Azure, Amazon Web
+                        Services and Google Cloud Platform, depending on the
+                        Cloud Applications and the world region you are
+                        accessing them from. Fractal abides by the Terms of
+                        Service of the respective cloud providers for which it
+                        uses the cloud infrastructure to service Cloud
+                        Applications, and your agreement in the Fractal Terms of
+                        Service extends to the Terms of Service of the cloud
+                        providers from which the Cloud Applications you are
+                        using are being serviced. We encourage you to review the
+                        Terms of Service of the three cloud providers from which
+                        Fractal services cloud-based applications. Other cloud
+                        providers may be added from time-to-time to enable
+                        Fractal to service more users. If this is the case, you
+                        will be notified ahead of time. By making continuous
+                        usage of the Fractal Services following the addition of
+                        a new cloud provider by Fractal, you express your
+                        agreement of their Terms of Service.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
                         Internet Access
@@ -472,26 +429,18 @@ function TermsOfService(props: any) {
                         for any costs payable to your Internet service provider.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
-                        Code of Conduct
+                        Code Of Conduct
                     </p>
                     <p>
                         The proper functioning of our Services requires that
                         Users use the Services in an appropriate and reasonable
-                        way. Most notably, Fractal may only be used as a
-                        personal computer, for the private use of the Fractal
-                        User, whether in the context of personal usage or that
-                        of a personal business computer. This excludes any
-                        business or professional purpose which exceeds a
-                        personal business computer, like running a server,
-                        selling access to your Fractal cloud computer, etc.
-                    </p>
-                    <p>
-                        In the case of the Fractal Streaming Technology, it may
-                        only be used to stream to one receiving User Device at a
-                        time. Modifying the system in any way to overcome this
-                        limitation is strictly prohibited and will result in
-                        immediate cancellation of your Fractal Plan without
-                        prenotice.
+                        way. Most notably, Fractal Cloud Applications may only
+                        be used as a personal applications, for the private use
+                        of the Fractal User, whether in the context of personal
+                        usage or that of personal business usage. This excludes
+                        any business or professional purpose which exceeds a
+                        personal business computing, like running a server,
+                        selling access to your Fractal Cloud Applications, etc.
                     </p>
                     <p>
                         Without limiting the above, you will not use Fractal’s
@@ -558,9 +507,9 @@ function TermsOfService(props: any) {
                         <li>
                             Reselling the Services or otherwise making the
                             Services available to a third party, including using
-                            Fractal cloud computers as a server or with Software
-                            that functions as a server, or using Fractal for
-                            commercial or business purposes;
+                            Fractal Cloud Applications as a server or with
+                            Software that functions as a server, or using
+                            Fractal for commercial or business purposes;
                         </li>
                         <li>
                             Hampering or attempting to hamper, in any way
@@ -614,7 +563,7 @@ function TermsOfService(props: any) {
                         content on your account.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
-                        Non-Fractal Provided Services and Applications
+                        Non-Fractal Provided Services And Applications
                     </p>
                     <p>
                         The Services may include software, applications,
@@ -622,26 +571,43 @@ function TermsOfService(props: any) {
                         operated by third-parties unaffiliated with Fractal (the
                         “Third-Party Applications”). We may also allow you to
                         purchase Third-Party Applications from our Websites.
-                        These Third-Party Applications may have their own terms
-                        of use, in which case you may be required to accept them
-                        in order to access the relevant Third-Party
+                        These Third-Party Applications may have their own Terms
+                        of Service, in which case you may be required to accept
+                        them in order to access the relevant Third-Party
                         Applications. We are not responsible for, and disclaim
                         all liability which may arise out of or in connection
-                        with, any Third-Party Applications.
+                        with, any Third-Party Applications. Cloud Applications
+                        are an example of Third-Party Applications for which you
+                        must accept the Terms of Service before usage. By using
+                        any Cloud Application through Fractal, you agree to that
+                        Third-Party Application's Terms of Service. We encourage
+                        you to review these Terms of Service frequently.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
-                        User’s data and content
+                        User’s Data And Content
                     </p>
                     <p>
-                        While using Fractal cloud computers, you will send us
-                        various files, content, emails, contacts, etc. (the
-                        “User Content”). The User Content belongs to the User
-                        and in no way to Fractal. Fractal is only granted the
-                        right to use the User Content to the extent required for
-                        the proper functioning of the Services. These limited
-                        rights include in particular, the right to host, save,
-                        and share the User Content, for the intended functioning
-                        of the User’s computer.
+                        While using Cloud Applications through Fractal, you will
+                        send us various files, content, emails, contacts, etc.
+                        (the “User Content”). The User Content belongs to the
+                        User and in no way to Fractal. Fractal is only granted
+                        the right to use the User Content to the extent required
+                        for the proper functioning of the Services. These
+                        limited rights include in particular, the right to
+                        temporarily host, save, and share the User Content, for
+                        the intended functioning of the User’s Cloud
+                        Applications. User Content is not stored by Fractal,
+                        with the exception of third-party authentication
+                        integrations, plugins and preferences you specifiy to us
+                        to improve your experience, and gets permanently deleted
+                        shortly after the end of a Fractal Session. It is the
+                        User's responsibility to save the User Content through
+                        one of the provided third-party storage solutions
+                        available for the User Content, either directly provided
+                        through the Cloud Application they are using or
+                        integrated within the Fractal Services by us.
+                        Third-Party storage solutions availability may vary
+                        depending on the Cloud Application you are using.
                     </p>
                     <p>
                         You acknowledge and agree that Fractal may remove User
@@ -649,43 +615,28 @@ function TermsOfService(props: any) {
                         these Terms or if we cancel or suspend our Services; we
                         are not liable for deletion of User Content or
                         accidental loss User Content. We strongly advise that
-                        Users backup User Content in other places. Some of our
-                        Services may allow you to share your User Content with
-                        third parties; Fractal is not liable for the sharing of
-                        any User Content with third parties.
-                    </p>
-                    <p>
-                        You acknowledge and agree that Fractal may, at times,
-                        need to access your Fractal cloud computer to monitor
-                        the quality of the Services, fix potential bugs and/or
-                        issues, etc. If Fractal needs to access your Fractal
-                        cloud computer, we will previously inform you and seek
-                        your consent. You must note that if you report to us a
-                        malfunctioning in the Services but do not give us
-                        consent to access your Fractal cloud computer, either
-                        directly or via screensharing, we may not be able to
-                        correct the issue. Fractal reserves the right to access
-                        your Fractal cloud computer without your consent in the
-                        rare event that doing so is essential to the integrity
-                        and well-being of the Services.
+                        Users backup User Content in many different places. Some
+                        of our Services may allow you to share your User Content
+                        with third parties; Fractal is not liable for the
+                        sharing of any User Content with third parties.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
                         Personal Data
                     </p>
                     <p>
                         In addition to the User Content saved on the User's
-                        cloud computer, Fractal collects certain personal data
-                        concerning the User. For example, Fractal will collect
-                        information such as your name, email address, phone
-                        number, payment information, physical address, date of
-                        birth, and data concerning your purchase of Services. In
-                        addition, Fractal will collect information related to
-                        how and when you use the Services, including any User
-                        Devices used to access the Services, solely with a view
-                        to performing or improving its Services, including
-                        adjusting the video streaming to the User's Internet
-                        connection and allocating its hardware resources based
-                        on its Users’ needs.
+                        Cloud Applications, Fractal collects certain personal
+                        data concerning the User. For example, Fractal will
+                        collect information such as your name, email address,
+                        phone number, payment information, physical address,
+                        date of birth, and data concerning your purchase of
+                        Services. In addition, Fractal will collect information
+                        related to how and when you use the Services, including
+                        any User Devices used to access the Services, solely
+                        with a view to performing or improving its Services,
+                        including adjusting the video streaming to the User's
+                        Internet connection and allocating its hardware
+                        resources based on its Users’ needs.
                     </p>
                     <p>
                         You hereby authorize Fractal to store, process and use
@@ -696,10 +647,10 @@ function TermsOfService(props: any) {
                     <p>
                         For the efficient and proper running of the Websites,
                         Fractal may use cookies, which are files used to
-                        identify the User each time he or she connects. Cookies
-                        are used to improve the personalized services offered
-                        and for statistical purposes. The User may object to the
-                        use of cookies, by changing his or her browser settings,
+                        identify the User each time they connect. Cookies are
+                        used to improve the personalized services offered and
+                        for statistical purposes. The User may object to the use
+                        of cookies, by changing his or her browser settings,
                         without relinquishing access to the service.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
@@ -755,7 +706,7 @@ function TermsOfService(props: any) {
                         and its affiliates.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
-                        Termination by us
+                        Termination By Us
                     </p>
                     <p>
                         We expect you to comply with these Terms. Fractal
@@ -763,28 +714,27 @@ function TermsOfService(props: any) {
                         notice, if you breach these Terms (including, in
                         particular, in the event of a payment default or a
                         violation of our Code of Conduct, which can be found
-                        above, in these Terms). If a breach has not been cured
+                        above in these Terms). If a breach has not been cured
                         within seven (7) days from an email notice from us, we
-                        may elect, to terminate your subscription, in which case
+                        may elect to terminate your subscription, in which case
                         you will receive an email and you will become
                         immediately liable for the price of all the Services
                         included in your then-current Subscription Period. If
                         you have selected a monthly plan, your plan will be
                         automatically suspended immediately without refund for
-                        the current billing period and your data will be kept
-                        for 7 days from the suspension date in accordance with
-                        our policy outlined above. If you have selected a longer
-                        prepaid plan, your plan will be automatically suspended
-                        immediately without refund for the entire period of your
-                        prepaid plan and your data will be kept for 7 days from
-                        the suspension date. Fractal takes the security of your
-                        data extremely seriously and is committed to keeping
-                        your data available for you to download for 7 days after
-                        suspension of your Services, even in the event of a
-                        termination by us.
+                        the current billing period and your Fractal Account data
+                        will be kept for internal reference. If you have
+                        selected a longer prepaid plan, your plan will be
+                        automatically suspended immediately without refund for
+                        the entire period of your prepaid plan and your Fractal
+                        Account data will be kept for internal reference. Your
+                        Cloud Applications data is not stored by Fractal between
+                        Fractal Sessions and therefore will not be kept
+                        following a termination, as outlined in the User’s Data
+                        And Content section above.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
-                        Termination by you
+                        Termination By You
                     </p>
                     <p>
                         You may decide to end your subscription at any time, by
@@ -800,19 +750,25 @@ function TermsOfService(props: any) {
                         Territories
                     </p>
                     <p>
-                        Fractal cloud computers are only supported in the
-                        regions and countries listed on our website. Fractal
-                        cloud computers might be accessible in the country or
+                        The Fractal Services are only supported in the regions
+                        and countries listed on our website at the time of
+                        signup. Because of the nature of the Internet, Fractal
+                        Cloud Applications might be accessible in the country or
                         region in which you are physically present at a specific
                         moment, even if this country or region is not part of
                         the officially supported regions on our website.
                         Furthermore, access from those other geographies may be
                         possible, but the distance between the User and the
                         Fractal data center infrastructure may cause diminished
-                        material quality of Services. Fractal does not
-                        intentionally impose any limitation on territorial
-                        availability, but local laws may impose restrictions
-                        which must be respected by the User.
+                        material quality of Services. Fractal only guarantees
+                        quality of service in officially supported regions;
+                        usage of the Fractal Services outside of those
+                        territories is not endorsed by Fractal and the User is
+                        reponsible to respect the local laws, privacy
+                        regulations and other restrictions which may be imposed
+                        upon them by local authorities. Fractal declines all
+                        liabilities for usage of our Services outside of
+                        officially-supported geographies.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
                         Copyright
@@ -830,10 +786,10 @@ function TermsOfService(props: any) {
                     </p>
                     <p>
                         Fractal Computers, Inc. <br />
-                        103 Greaton Road, Unit 2 <br />
-                        Boston, MA 02132 <br />
-                        <a href="mailto: support@fractalcomputers.com">
-                            support@fractalcomputers.com
+                        Six Landmark Square, 4th Floor <br />
+                        Stamford, CT 06901 <br />
+                        <a href="mailto: support@tryfractal.com">
+                            support@tryfractal.com
                         </a>{" "}
                         <br />
                     </p>
@@ -881,7 +837,7 @@ function TermsOfService(props: any) {
                         VIOLATION BY YOU OF ANY OF THESE TERMS.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
-                        Amendment of the Conditions
+                        Amendment Of The Conditions
                     </p>
                     <p>
                         Fractal may from time to time amend these Terms. In that
@@ -903,9 +859,8 @@ function TermsOfService(props: any) {
                     <p>
                         Fractal may contact the User by any useful means,
                         including by email or text message sent to the contact
-                        details provided by the User in his or her User Account,
-                        by the User's Fractal cloud computer or via the
-                        Websites.
+                        details provided by the User in their User Account or
+                        via the Websites.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
                         Miscellaneous
@@ -932,11 +887,11 @@ function TermsOfService(props: any) {
                         business associated with the Services.
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
-                        Applicable law; Disputes
+                        Applicable Law; Disputes
                     </p>
                     <p>
-                        These Terms will be governed by Massachusetts, U.S.A.
-                        law except for its conflicts of laws principles, unless
+                        These Terms will be governed by Connecticut, U.S.A. law
+                        except for its conflicts of laws principles, unless
                         otherwise required by a mandatory law of any other
                         jurisdiction.
                     </p>
@@ -949,8 +904,8 @@ function TermsOfService(props: any) {
                         To that effect, before filing a claim against us, you
                         agree to try to resolve the dispute informally by
                         opening a support ticket via email to{" "}
-                        <a href="mailto: support@fractalcomputers.com">
-                            support@fractalcomputers.com
+                        <a href="mailto: support@tryfractal.com">
+                            support@tryfractal.com
                         </a>
                         . We will try to resolve the dispute informally. If a
                         dispute is not resolved within fifteen days of
@@ -959,12 +914,12 @@ function TermsOfService(props: any) {
                     <p>
                         Any judicial proceeding to resolve claims relating to
                         these Terms or the Services shall be brought in the
-                        federal or state courts of Middlesex County,
-                        Massachusetts, subject to the mandatory arbitration
+                        federal or state courts of Fairfield County,
+                        Connecticut, subject to the mandatory arbitration
                         provisions below. By accepting these terms, you consent
                         to our choice of venue and submit to the jurisdiction of
-                        the federal and/or state courts of Middlesex County,
-                        Massachusetts (or other courts, if we so choose).
+                        the federal and/or state courts of Fairfield County,
+                        Connecticut (or other courts, if we so choose).
                     </p>
                     <p style={{ fontWeight: "bold", fontSize: 20 }}>
                         Mandatory Arbitration
@@ -978,18 +933,17 @@ function TermsOfService(props: any) {
                         Related Disputes. The AAA rules will govern payment of
                         all arbitration fees. The arbitration will be held in
                         the United States county where you live or work or in
-                        Middlesex County, Massachusetts, or any other location
-                        we agree upon. If the agreement to arbitrate is found
-                        not to apply to you or your claim, you agree to the
+                        Fairfield County, Connecticut, or any other location we
+                        agree upon. If the agreement to arbitrate is found not
+                        to apply to you or your claim, you agree to the
                         exclusive jurisdiction of the state and federal courts
-                        in Middlesex County, Massachusetts to resolve your
-                        claim.
+                        in Fairfield County, Connecticut to resolve your claim.
                     </p>
                     <p>
                         You can opt-out of the requirement to arbitrate by
                         emailing{" "}
-                        <a href="mailto: support@fractalcomputers.com">
-                            support@fractalcomputers.com
+                        <a href="mailto: support@tryfractal.com">
+                            support@tryfractal.com
                         </a>{" "}
                         with the subject line “Arbitration Opt-Out” within 30
                         days of the date you first register your account. You
@@ -1001,8 +955,8 @@ function TermsOfService(props: any) {
                     </p>
                     <p>
                         Notwithstanding the foregoing, either you or we may
-                        assert claims in small claims court in Middlesex County
-                        (MA) or any United States county where you live or work.
+                        assert claims in small claims court in Fairfield County
+                        (CT) or any United States county where you live or work.
                         Either party may bring a lawsuit solely for injunctive
                         relief to stop unauthorized use or abuse of the
                         Services, violation of these Terms, or intellectual
