@@ -2,60 +2,61 @@ name: Render and Deploy ECS Task Definitions
 
 # Publish on updates to the master branch
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+    push:
+        branches: [main]
+    workflow_dispatch:
 
 env:
-  task-definitions: fractal-base.json fractal-browsers-chrome.json
-  images: fractal/base fractal/browsers/chrome
+    task-definitions: fractal-base.json fractal-browsers-chrome.json
+    images: fractal/base fractal/browsers/chrome
 
 jobs:
-  render-and-deploy:
-    name: Build and publish to AWS S3
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        aws-region: [us-east-1, us-east-2, us-west-1, us-west-2, ca-central-1]
-        app: [fractal/base, fractal/browsers/chrome]
+    render-and-deploy:
+        name: Build and publish to AWS S3
+        runs-on: ubuntu-20.04
+        strategy:
+            matrix:
+                aws-region:
+                    [us-east-1, us-east-2, us-west-1, us-west-2, ca-central-1]
+                app: [fractal/base, fractal/browsers/chrome]
 
-    steps:
-      - name: Checkout git repository
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+        steps:
+            - name: Checkout git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
-      - name: Configure AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ECS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ matrix.aws-region }}
+            - name: Configure AWS CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ECS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ matrix.aws-region }}
 
-      - name: Retrieve container-images master git hash as env variable
-        run: echo "containers_gha_sha=$(git ls-remote https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractalcomputers/container-images | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
-      - name: Store taskdef json name as env variable
-        run: echo "taskdef_json=$(echo ${{ matrix.app }} | tr / -).json" >> $GITHUB_ENV
-      - name: Render Amazon ECS task Definitions
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          container-name: fractal
-          task-definition: ${{ env.taskdef_json }}
-          image: ${{ matrix.app }}:${{ env.containers_gha_sha }}
-      - name: Deploy to Amazon ECS service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ env.task-definitions }}
+            - name: Retrieve container-images master git hash as env variable
+              run: echo "containers_gha_sha=$(git ls-remote https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractalcomputers/container-images | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
+            - name: Store taskdef json name as env variable
+              run: echo "taskdef_json=$(echo ${{ matrix.app }} | tr / -).json" >> $GITHUB_ENV
+            - name: Render Amazon ECS task Definitions
+              uses: aws-actions/amazon-ecs-render-task-definition@v1
+              with:
+                  container-name: fractal-container
+                  task-definition: ${{ env.taskdef_json }}
+                  image: ${{ matrix.app }}:${{ env.containers_gha_sha }}
+            - name: Deploy to Amazon ECS service
+              uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+              with:
+                  task-definition: ${{ env.task-definitions }}
 
-  notify-slack:
-    name: Notify Slack
-    needs: [render-and-deploy]
-    if: success()
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Notify Slack
-        run: |
-          curl -X POST \
-          --data-urlencode "payload={\"channel\": \"#general\", \"username\": \"Fractal Bot\", \"text\": \"Task Definitions rendered and deployed to production via ECS upload.\", \"icon_emoji\": \":fractal:\"}" \
-          https://hooks.slack.com/services/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
+    notify-slack:
+        name: Notify Slack
+        needs: [render-and-deploy]
+        if: success()
+        runs-on: ubuntu-20.04
+        steps:
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#general\", \"username\": \"Fractal Bot\", \"text\": \"Task Definitions rendered and deployed to production via ECS upload.\", \"icon_emoji\": \":fractal:\"}" \
+                  https://hooks.slack.com/services/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
