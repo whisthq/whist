@@ -35,6 +35,7 @@ jobs:
             - name: Store taskdef json name as env variable
               run: echo "taskdef_json=$(echo ${{ matrix.app }} | tr / -).json" >> $GITHUB_ENV
             - name: Render Amazon ECS task Definitions
+              id: render-web-container
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
                   container-name: fractal-container
@@ -43,7 +44,7 @@ jobs:
             - name: Deploy to Amazon ECS service
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
-                  task-definition: ${{ env.taskdef_json }}
+                  task-definition: ${{ steps.render-web-container.outputs.task-definition }}
 
     notify-slack:
         name: Notify Slack
