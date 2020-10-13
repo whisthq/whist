@@ -1,5 +1,7 @@
 from app.constants.http_codes import NOT_FOUND, SUCCESS
+from app.constants.config import DASHBOARD_USERNAME
 from app.models.hardware import UserContainer
+from app.helpers.utils.general.tokens import getAccessTokens
 
 
 def protocol_info(address, port):
@@ -14,12 +16,15 @@ def protocol_info(address, port):
     container = UserContainer.query.filter_by(ip=address, port_32262=port).first()
 
     if container:
+        access_token, refresh_token = getAccessTokens(DASHBOARD_USERNAME + "@gmail.com")
         response = (
             {
                 "allow_autoupdate": container.allow_autoupdate,
                 "branch": container.branch,
-                "secret_key": container.secret_key.hex(),
+                "private_key": container.secret_key.hex(),
                 "using_stun": container.using_stun,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
             },
             SUCCESS,
         )

@@ -31,7 +31,7 @@ def pingHelper(available, container_ip, port_32262, version=None):
         username = container_info.user_id
     else:
         raise Exception(
-            f"No container with IP {container_ip} and ports {[port_32262, port_32263, port_32273]}"
+            f"No container with IP {container_ip} and ports {[port_32262]}"
         )
 
     fractalSQLCommit(db, fractalSQLUpdate, container_info, {"last_pinged": dateToUnix(getToday())})
