@@ -32,6 +32,8 @@ jobs:
 
             - name: Retrieve container-images master git hash as env variable
               run: echo "containers_gha_sha=$(git ls-remote https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractalcomputers/container-images | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
+            - name: Store AWS ECR base uri as env variable
+              run: echo "ecr_base_uri=$(aws ecr get-authorization-token --query authorizationData[0].proxyEndpoint --output text     | cut -c 9-)" >> $GITHUB_ENV
             - name: Store taskdef json name as env variable
               run: echo "taskdef_json=$(echo ${{ matrix.app }} | tr / -).json" >> $GITHUB_ENV
             - name: Render Amazon ECS task Definitions
@@ -40,7 +42,7 @@ jobs:
               with:
                   container-name: fractal-container
                   task-definition: ${{ env.taskdef_json }}
-                  image: ${{ matrix.app }}:${{ env.containers_gha_sha }}
+                  image: ${{ env.ecr_base_uri }}/${{ matrix.app }}:${{ env.containers_gha_sha }}
             - name: Deploy to Amazon ECS service
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
