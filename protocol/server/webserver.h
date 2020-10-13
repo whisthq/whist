@@ -7,13 +7,11 @@
 void update_webserver_parameters();
 
 /**
- * @brief                          Queries the webserver to ask if a VM is
- *                                 development VM
+ * @brief                          Queries the webserver to ask if the VM should autoupdate itself
  *
- * @returns                        True if a VM is a "development" VM (dev
- *                                 protocol branch), False otherwise
+ * @returns                        True if VM should autoupdate
  */
-bool is_dev_vm();
+bool allow_autoupdate();
 
 /**
  * @brief                          Queries the webserver to get the VM's aes

@@ -624,7 +624,7 @@ int32_t SendAudio(void* opaque) {
 void update() {
     update_webserver_parameters();
 
-    if (is_dev_vm()) {
+    if (allow_autoupdate()) {
         LOG_INFO("dev vm - not auto-updating");
         sentry_set_tag("environment", "dev");
     } else {
@@ -794,7 +794,7 @@ int MultithreadedWaitForClient(void* opaque) {
     clock last_update_timer;
     StartTimer(&last_update_timer);
 
-    char* host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
+    char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
 
     sendConnectionHistory(host, get_access_token());
     connection_id = rand();
@@ -967,7 +967,7 @@ int main() {
     update();
 
     while (true) {
-        char* host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
+        char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
         updateStatus(false, host, get_access_token());
 
         clock startup_time;

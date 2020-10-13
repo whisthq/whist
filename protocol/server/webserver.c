@@ -4,7 +4,7 @@
 
 static char aes_private_key[16];
 static char* branch = NULL;
-static bool is_dev;
+static bool is_autoupdate;
 static bool already_obtained_vm_type = false;
 static clock last_vm_info_check_time;
 static bool is_using_stun;
@@ -26,7 +26,7 @@ void update_webserver_parameters() {
 
     if (!already_obtained_vm_type) {
         // Set Default Values
-        is_dev = true;
+        is_autoupdate = true;
         memcpy(aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
         is_using_stun = false;
     }
@@ -70,7 +70,7 @@ void update_webserver_parameters() {
     }
 
     // Set Default Values
-    is_dev = true;
+    is_autoupdate = true;
     memcpy(aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
     is_using_stun = false;
 
@@ -82,7 +82,7 @@ void update_webserver_parameters() {
         return;
     }
 
-    kv_pair_t* dev_value = get_kv(&json, "dev");
+    kv_pair_t* dev_value = get_kv(&json, "allow_autoupdate");
     kv_pair_t* branch_value = get_kv(&json, "branch");
     kv_pair_t* private_key = get_kv(&json, "private_key");
     kv_pair_t* using_stun = get_kv(&json, "using_stun");
@@ -96,7 +96,7 @@ void update_webserver_parameters() {
             return;
         }
 
-        is_dev = dev_value->bool_value;
+        is_autoupdate = dev_value->bool_value;
 
         if (branch) {
             free(branch);
@@ -133,7 +133,7 @@ void update_webserver_parameters() {
     }
 
     free_json(json);
-    if (is_dev && !will_try_staging) {
+    if (is_autoupdate && !will_try_staging) {
         is_trying_staging_protocol_info = true;
         // This time trying the staging protocol info, if we haven't already
         update_webserver_parameters();
@@ -165,11 +165,11 @@ bool get_using_stun() {
     return is_using_stun;
 }
 
-bool is_dev_vm() {
+bool allow_autoupdate() {
     if (!already_obtained_vm_type) {
         LOG_ERROR("Webserver parameters not updated!");
     }
-    return is_dev;
+    return is_autoupdate;
 }
 
 char* get_access_token() {
