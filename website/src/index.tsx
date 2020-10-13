@@ -59,12 +59,14 @@ const store = createStore(
 
 const persistor = persistStore(store)
 
-// Set up Apollo GraphQL provider
+// Set up Apollo GraphQL provider for https and wss (websocket)
+
+console.log(config)
 
 const httpLink = new HttpLink({
     uri: config.url.GRAPHQL_HTTP_URL,
     headers: {
-        "x-hasura-admin-secret": "WhFpeU$YnKxGsa8L",
+        "x-hasura-access-key": config.keys.HASURA_ACCESS_KEY,
     },
 })
 
@@ -74,7 +76,7 @@ const wsLink = new WebSocketLink({
         reconnect: true,
         connectionParams: {
             headers: {
-                "x-hasura-access-key": "WhFpeU$YnKxGsa8L",
+                "x-hasura-admin-secret": config.keys.HASURA_ACCESS_KEY,
             },
         },
     },

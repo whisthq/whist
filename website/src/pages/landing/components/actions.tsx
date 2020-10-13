@@ -60,7 +60,7 @@ const CustomAction = (props: {
 const Actions = (props: {
     dispatch: any
     user: {
-        email: string
+        user_id: string
         referralCode: string
         points: number
         referrals: number
@@ -103,7 +103,7 @@ const Actions = (props: {
 
                 updatePoints({
                     variables: {
-                        user_id: user.email,
+                        user_id: user.user_id,
                         points: user.points + 1,
                         referrals: user.referrals,
                     },
@@ -113,7 +113,7 @@ const Actions = (props: {
     }
 
     const renderActions = () => {
-        if (user && user.email) {
+        if (user && user.user_id) {
             return (
                 <div style={{ width: "100%" }}>
                     {!loggedIn && <GoogleButton />}

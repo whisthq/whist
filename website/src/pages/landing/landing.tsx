@@ -1,20 +1,20 @@
 import React, { useEffect, useCallback, useContext } from "react"
 import { connect } from "react-redux"
-import { useQuery, useSubscription } from "@apollo/client"
+import { useSubscription } from "@apollo/client"
 
 import MainContext from "shared/context/mainContext"
-import {
-    GET_WAITLIST,
-    SUBSCRIBE_WAITLIST,
-} from "pages/landing/constants/graphql"
+import { SUBSCRIBE_WAITLIST } from "pages/landing/constants/graphql"
 
 import {
     updateUserAction,
     updateWaitlistAction,
+    updateApplicationRedirect,
 } from "store/actions/auth/waitlist"
 
 import "styles/landing.css"
 import "styles/shared.css"
+
+import history from "shared/utils/history"
 
 import TopView from "pages/landing/views/topView"
 import MiddleView from "pages/landing/views/middleView"
@@ -24,8 +24,7 @@ import Footer from "shared/components/footer"
 
 const Landing = (props: any) => {
     const { setReferralCode, setAppHighlight } = useContext(MainContext)
-    const { dispatch, user, match } = props
-    // const { data } = useQuery(GET_WAITLIST)
+    const { dispatch, user, match, applicationRedirect } = props
 
     const { data } = useSubscription(SUBSCRIBE_WAITLIST)
 
@@ -42,7 +41,7 @@ const Landing = (props: any) => {
     const getRanking = useCallback(
         (waitlist: any) => {
             for (var i = 0; i < waitlist.length; i++) {
-                if (waitlist[i].email === user.email) {
+                if (waitlist[i].user_id === user.user_id) {
                     return i + 1
                 }
             }
@@ -52,17 +51,26 @@ const Landing = (props: any) => {
     )
 
     useEffect(() => {
+        dispatch(updateApplicationRedirect(false))
+    }, [])
+
+    useEffect(() => {
         if (data) {
             const waitlist = data.waitlist
             dispatch(updateWaitlistAction(waitlist))
-            if (user && user.email) {
+            if (user && user.user_id) {
                 const ranking = getRanking(waitlist)
-                if (ranking !== user.ranking) {
+                console.log("get ranking")
+                if (ranking !== user.ranking || user.ranking === 0) {
                     dispatch(updateUserAction(user.points, ranking))
+                    if (applicationRedirect) {
+                        console.log("pushing redirect")
+                        history.push("/application")
+                    }
                 }
             }
         }
-    }, [data, user, dispatch, getRanking])
+    }, [data])
 
     useEffect(() => {
         const firstParam = match.params.first
@@ -91,9 +99,12 @@ const Landing = (props: any) => {
     )
 }
 
-const mapStateToProps = (state: { AuthReducer: { user: any } }) => {
+const mapStateToProps = (state: {
+    AuthReducer: { user: any; applicationRedirect: boolean }
+}) => {
     return {
         user: state.AuthReducer.user,
+        applicationRedirect: state.AuthReducer.applicationRedirect,
     }
 }
 

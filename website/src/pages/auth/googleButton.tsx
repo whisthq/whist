@@ -24,7 +24,7 @@ const GoogleButton = (props: any) => {
     const updatePointsCallback = useCallback(() => {
         updatePoints({
             variables: {
-                user_id: user.email,
+                user_id: user.user_id,
                 points: user.points + SIGNUP_POINTS,
                 referrals: user.referrals,
             },
@@ -42,7 +42,7 @@ const GoogleButton = (props: any) => {
                 .signInWithPopup(provider)
                 .then(async function (result) {
                     if (result && result.user && result.user.email) {
-                        const email = user.email
+                        const email = user.user_id
 
                         updatePointsCallback()
 

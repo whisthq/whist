@@ -8,12 +8,11 @@ import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 import { nanoid } from "nanoid"
 import { useMutation } from "@apollo/client"
 
-import history from "shared/utils/history"
-import { db } from "shared/utils/firebase"
 import MainContext from "shared/context/mainContext"
 import { INITIAL_POINTS, REFERRAL_POINTS } from "shared/utils/points"
 import { INSERT_WAITLIST } from "pages/landing/constants/graphql"
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
+import { updateApplicationRedirect } from "store/actions/auth/waitlist"
 
 import {
     insertWaitlistAction,
@@ -31,17 +30,9 @@ function WaitlistForm(props: any) {
     const [country, setCountry] = useState("United States")
     const [processing, setProcessing] = useState(false)
 
-    const [addWaitlist] = useMutation(INSERT_WAITLIST, {
-        onError(err) {
-            console.log(err)
-        },
-    })
+    const [addWaitlist] = useMutation(INSERT_WAITLIST)
 
-    const [updatePoints] = useMutation(UPDATE_WAITLIST, {
-        onError(err) {
-            console.log(err)
-        },
-    })
+    const [updatePoints] = useMutation(UPDATE_WAITLIST)
 
     function updateEmail(evt: any) {
         evt.persist()
@@ -102,13 +93,19 @@ function WaitlistForm(props: any) {
             if (referrer) {
                 updatePoints({
                     variables: {
-                        user_id: referrer.email,
+                        user_id: referrer.user_id,
                         points: referrer.points + REFERRAL_POINTS,
                     },
                     optimisticResponse: true,
                 })
                 newPoints = newPoints + REFERRAL_POINTS
             }
+
+            dispatch(
+                insertWaitlistAction(email, name, newPoints, newReferralCode)
+            )
+
+            dispatch(updateApplicationRedirect(true))
 
             addWaitlist({
                 variables: {
@@ -120,27 +117,23 @@ function WaitlistForm(props: any) {
                 },
             })
 
-            dispatch(
-                insertWaitlistAction(email, name, newPoints, newReferralCode, 0)
-            )
-
-            history.push("/application")
+            setProcessing(false)
         } else {
             dispatch(
                 insertWaitlistAction(
                     email,
                     currentUser.name,
                     currentUser.points,
-                    currentUser.referralCode,
-                    0
+                    currentUser.referralCode
                 )
             )
+            setProcessing(false)
         }
     }
 
     return (
         <div style={{ width: isAction ? "100%" : "" }}>
-            {user && user.email ? (
+            {user && user.user_id ? (
                 <div>
                     <button
                         className="white-button"

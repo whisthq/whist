@@ -4,21 +4,20 @@ export const UPDATE_USER = "UPDATE_USER"
 export const DELETE_USER = "DELETE_USER"
 export const UPDATE_UNSORTED_LEADERBOARD = "UPDATE_UNSORTED_LEADERBOARD"
 export const UPDATE_CLICKS = "UPDATE_CLICKS"
+export const UPDATE_APPLICATION_REDIRECT = "UPDATE_APPLICATION_REDIRECt"
 
 export function insertWaitlistAction(
-    email: string,
+    user_id: string,
     name: string,
     points: number,
-    referralCode: string,
-    ranking: number
+    referralCode: string
 ) {
     return {
         type: INSERT_WAITLIST,
-        email,
+        user_id,
         name,
         points,
         referralCode,
-        ranking,
     }
 }
 
@@ -47,5 +46,12 @@ export function updateClicks(clicks: number) {
     return {
         type: UPDATE_CLICKS,
         clicks,
+    }
+}
+
+export function updateApplicationRedirect(redirect: boolean) {
+    return {
+        type: UPDATE_APPLICATION_REDIRECT,
+        redirect,
     }
 }

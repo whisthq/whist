@@ -16,21 +16,21 @@ export default function (state = AUTH_DEFAULT, action: any) {
                 user: state.user
                     ? {
                           ...state.user,
-                          email: action.email,
+                          user_id: action.user_id,
                           name: action.name,
                           points: action.points,
-                          ranking: action.ranking,
                           referralCode: action.referralCode,
                       }
                     : {
-                          email: action.email,
+                          user_id: action.user_id,
                           name: action.name,
                           points: action.points,
-                          ranking: action.ranking,
                           referralCode: action.referralCode,
                       },
             }
         case WaitlistAction.UPDATE_USER:
+            console.log("update user reducer")
+            console.log(action)
             return {
                 ...state,
                 user: {
@@ -50,7 +50,7 @@ export default function (state = AUTH_DEFAULT, action: any) {
                 loggedIn: true,
                 user: {
                     ...state.user,
-                    googleAuthEmail: action.email,
+                    googleAuthEmail: action.user_id,
                     points: action.points,
                 },
             }
@@ -59,7 +59,7 @@ export default function (state = AUTH_DEFAULT, action: any) {
                 ...state,
                 loggedIn: false,
                 user: {
-                    email: null,
+                    user_id: null,
                     name: null,
                     referrals: 0,
                     points: 0,
@@ -73,6 +73,11 @@ export default function (state = AUTH_DEFAULT, action: any) {
                     number: action.clicks,
                     lastClicked: new Date().getTime() / 1000,
                 },
+            }
+        case WaitlistAction.UPDATE_APPLICATION_REDIRECT:
+            return {
+                ...state,
+                applicationRedirect: action.redirect,
             }
         default:
             return state

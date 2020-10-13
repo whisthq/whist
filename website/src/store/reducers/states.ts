@@ -1,6 +1,6 @@
 export const AUTH_DEFAULT = {
     user: {
-        email: null,
+        user_id: null,
         name: null,
         referrals: 0,
         points: 0,
@@ -8,6 +8,7 @@ export const AUTH_DEFAULT = {
         googleAuthEmail: null,
     },
     loggedIn: false,
+    applicationRedirect: false,
     waitlist: [],
     clicks: {
         number: 0,
