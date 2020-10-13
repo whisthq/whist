@@ -8,6 +8,24 @@ import { config } from 'constants/config'
 
 import moment from 'moment'
 
+function* refreshAccess() {
+    const state = yield select()
+    const { json } = yield call(
+        apiPost,
+        `${config.url.PRIMARY_SERVER}/token/refresh`,
+        {},
+        state.MainReducer.auth.refreshToken
+    )
+    if (json) {
+        yield put(
+            Action.updateAuth({
+                accessToken: json.access_token,
+                refreshToken: json.refresh_token,
+            })
+        )
+    }
+}
+
 function* loginUser(action: any) {
     if (action.username !== '' && action.password !== '') {
         const { json } = yield call(
@@ -317,11 +335,31 @@ function* deleteContainer(action: any) {
     }
 }
 
+function* submitFeedback(action: any) {
+    const state = yield select()
+    const { response } = yield call(
+        apiPost,
+        `${config.url.PRIMARY_SERVER}/mail/feedback`,
+        {
+            username: state.MainReducer.auth.username,
+            feedback: action.feedback,
+            type: action.feedback_type,
+        },
+        state.MainReducer.auth.accessToken
+    )
+
+    if (response.status === 401 || response.status === 422) {
+        yield call(refreshAccess)
+        yield call(submitFeedback, action)
+    }
+}
+
 export default function* rootSaga() {
     yield all([
         takeEvery(SideEffect.LOGIN_USER, loginUser),
         takeEvery(SideEffect.GOOGLE_LOGIN, googleLogin),
         takeEvery(SideEffect.FETCH_CONTAINER, fetchContainer),
         takeEvery(SideEffect.DELETE_CONTAINER, deleteContainer),
+        takeEvery(SideEffect.SUBMIT_FEEDBACK, submitFeedback),
     ])
 }

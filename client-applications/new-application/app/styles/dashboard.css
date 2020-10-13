@@ -7,7 +7,8 @@
     align-items: center;
 }
 
-.signoutButton {
+.signoutButton,
+.feedbackButton {
     font-family: 'Maven Pro';
     font-weight: bold;
     padding: 10px 25px;
@@ -19,10 +20,31 @@
     font-size: 13px;
 }
 
+.feedbackButton,
+.noFeedbackButton {
+    font-family: 'Maven Pro';
+    font-weight: bold;
+    padding: 10px 25px;
+    width: 150px;
+    border: solid 0.8px #cccccc;
+    background: white;
+    color: black;
+    font-size: 13px;
+    float: right;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.noFeedbackButton {
+    background: #eeeeee;
+    border: solid 0.8px #eeeeee;
+}
+
 .signoutButton:hover,
 .launchButton:hover,
 .expandButton:hover,
-.modalButton:hover {
+.modalButton:hover,
+.feedbackButton:hover {
     background: #93f1d9;
     border: solid 0.8px #93f1d9;
     cursor: pointer;
@@ -38,6 +60,7 @@
     border-right: solid 0.8px #cccccc;
     padding: 20px 25px;
     text-align: left;
+    min-width: 161px;
 }
 
 .logoTitle {
@@ -76,14 +99,16 @@
     -webkit-app-region: no-drag;
 }
 
-.discover {
+.page {
     flex: 1;
+    padding: 50px;
 }
 
 .carouselRow {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    margin-top: 30px;
 }
 
 .select {
@@ -102,7 +127,6 @@
 .appContainer {
     width: 250px;
     height: 170px;
-    border: solid 0.8px #cccccc;
     display: flex;
     flex-direction: row;
     padding: 12px;

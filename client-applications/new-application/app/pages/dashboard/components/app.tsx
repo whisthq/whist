@@ -113,6 +113,8 @@ const App = (props: any) => {
     )
 }
 
-const mapStateToProps = (state: any) => {}
+const mapStateToProps = (state: any) => {
+    return {}
+}
 
 export default connect(mapStateToProps)(App)

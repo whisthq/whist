@@ -25,18 +25,23 @@ const NavTitle = (props: {
 }
 
 const NavBar = (props: any) => {
-    const { dispatch } = props
+    const { dispatch, updateCurrentTab } = props
     const [currentTab, setCurrentTab] = useState('Discover')
     const top =
         currentTab == 'Discover'
             ? '35vh'
             : currentTab == 'Settings'
             ? '42vh'
-            : '49vh'
+            : '50vh'
 
     const selectedTab = useSpring({
         top: top,
     })
+
+    const updateTab = (tab: string) => {
+        setCurrentTab(tab)
+        updateCurrentTab(tab)
+    }
 
     const handleSignout = () => {
         const storage = require('electron-json-storage')
@@ -52,17 +57,17 @@ const NavBar = (props: any) => {
                 style={{ marginTop: '33vh' }}
                 selected={currentTab == 'Discover'}
                 text="Discover"
-                onClick={() => setCurrentTab('Discover')}
+                onClick={() => updateTab('Discover')}
             />
             <NavTitle
                 selected={currentTab == 'Settings'}
                 text="Settings"
-                onClick={() => setCurrentTab('Settings')}
+                onClick={() => updateTab('Settings')}
             />
             <NavTitle
                 selected={currentTab == 'Support'}
                 text="Support"
-                onClick={() => setCurrentTab('Support')}
+                onClick={() => updateTab('Support')}
             />
             <animated.div
                 style={selectedTab}

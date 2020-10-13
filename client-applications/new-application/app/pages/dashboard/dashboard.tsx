@@ -1,13 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import styles from 'styles/dashboard.css'
 import Titlebar from 'react-electron-titlebar'
 
 import NavBar from './components/navBar'
 import Discover from './pages/discover'
+import Settings from './pages/settings'
+import Support from './pages/support'
 
 const Dashboard = (props: any) => {
     const { dispatch, username, os } = props
+    const [currentTab, setCurrentTab] = useState('Discover')
 
     return (
         <>
@@ -22,8 +25,10 @@ const Dashboard = (props: any) => {
                 style={{ display: 'flex', flexDirection: 'row' }}
                 className={styles.removeDrag}
             >
-                <NavBar />
-                <Discover />
+                <NavBar updateCurrentTab={setCurrentTab} />
+                {currentTab === 'Discover' && <Discover />}
+                {currentTab === 'Settings' && <Settings />}
+                {currentTab === 'Support' && <Support />}
             </div>
         </>
     )
