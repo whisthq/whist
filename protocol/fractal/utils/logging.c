@@ -708,8 +708,7 @@ void saveConnectionID(int connection_id_int) {
 
 // The first time this is called will include the initial log messages,
 // before the first connection, if they haven't been overwritten.
-int sendConnectionHistory() {
-    char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
+int sendConnectionHistory(char* host, char* access_token) {
     // This is for HTTP request, not filesystem
     char *request_path = "/logs/insert";
 
@@ -791,7 +790,7 @@ int sendConnectionHistory() {
                         connection_id_data, get_version(), logs);
 
                 LOG_INFO("Sending logs to webserver...");
-                SendJSONPost(host, request_path, json, get_access_token());
+                SendJSONPost(host, request_path, json, access_token);
 
                 freopen(connection_id_filename, "wb", connection_id_file);
             }
@@ -809,12 +808,12 @@ int sendConnectionHistory() {
 
 typedef struct update_status_data {
     bool is_connected;
+    char* host;
+    char* access_token;
 } update_status_data_t;
 
 int32_t MultithreadedUpdateStatus(void *data) {
-    update_status_data_t *d = data;
-
-    char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
+    update_status_data_t* d = data;
 
     char json[1000];
     snprintf(json, sizeof(json),
@@ -823,16 +822,18 @@ int32_t MultithreadedUpdateStatus(void *data) {
             \"available\" : %s\n\
 }",
              get_version(), d->is_connected ? "false" : "true");
-    SendJSONPost(host, "/vm/ping", json, get_access_token());
+    SendJSONPost(d->host, "/vm/ping", json, d->access_token);
 
     free(d);
     return 0;
 }
 
-void updateStatus(bool is_connected) {
+void updateStatus(bool is_connected, char* host, char* access_token) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
+    d->host = host;
+    d->access_token = access_token;
     SDL_Thread *update_status = SDL_CreateThread(MultithreadedUpdateStatus, "UpdateStatus", d);
     SDL_DetachThread(update_status);
 }

@@ -5,6 +5,7 @@
 #include "../fractal/utils/aes.h"
 
 #include "client.h"
+#include "webserver.h"
 
 #define UDP_CONNECTION_WAIT 1000
 #define TCP_CONNECTION_WAIT 1000

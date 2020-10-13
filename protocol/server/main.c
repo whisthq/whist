@@ -42,6 +42,7 @@ its threads.
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
+#include "webserver.h"
 
 #ifdef _WIN32
 #include "../fractal/utils/windows_utils.h"
@@ -792,7 +793,9 @@ int MultithreadedWaitForClient(void* opaque) {
     clock last_update_timer;
     StartTimer(&last_update_timer);
 
-    sendConnectionHistory();
+    char* host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
+
+    sendConnectionHistory(host, get_access_token());
     connection_id = rand();
     startConnectionLog();
     bool have_sent_logs = true;
@@ -811,7 +814,7 @@ int MultithreadedWaitForClient(void* opaque) {
         LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
                  have_sent_logs ? "yes" : "no");
         if (saved_num_active_clients == 0 && !have_sent_logs) {
-            sendConnectionHistory();
+            sendConnectionHistory(host, get_access_token());
             have_sent_logs = true;
         } else if (saved_num_active_clients > 0 && have_sent_logs) {
             have_sent_logs = false;
@@ -963,7 +966,8 @@ int main() {
     update();
 
     while (true) {
-        updateStatus(false);
+        char* host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
+        updateStatus(false, host, get_access_token());
 
         clock startup_time;
         StartTimer(&startup_time);
@@ -1014,7 +1018,7 @@ int main() {
                         }
                     }
                 }
-                updateStatus(num_controlling_clients > 0);
+                updateStatus(num_controlling_clients > 0, host, get_access_token());
                 StartTimer(&ack_timer);
             }
 

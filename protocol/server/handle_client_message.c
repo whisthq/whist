@@ -391,6 +391,8 @@ static int handleInitMessage(FractalClientMessage* cfmsg, int client_id, bool is
         sentry_send_bread_crumb("info", "non host email: %s", fmsg.user_email);
     }
 
+    // Handle port mapping
+
     return 0;
 }
 

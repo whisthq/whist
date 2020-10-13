@@ -158,7 +158,7 @@ void destroyLogger();
  * @returns                         0: success -1: failure to send file,
  *                                  sent cache instead   -2: outright failure
  */
-int sendConnectionHistory();
+int sendConnectionHistory(char* host, char* access_token);
 
 /**
  * @brief                          Set the logger to categorize all logs from now
@@ -182,7 +182,7 @@ void saveConnectionID(int connection_id);
  *                                 Pass true if connected to a client and false
  *                                 otherwise
  */
-void updateStatus(bool is_connected);
+void updateStatus(bool is_connected, char* host, char* access_token);
 
 /**
  * @brief                          Get the current server's version number
