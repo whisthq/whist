@@ -52,6 +52,32 @@ const Login = (props: any) => {
         setPassword(evt.target.value)
     }
 
+    const setAWSRegion = () => {
+        const { spawn } = require('child_process')
+        const regions = spawn('./awsping', ['-verbose', '1'])
+        regions.stdout.setEncoding('utf8')
+
+        regions.stdout.on('data', (data: any) => {
+            console.log('AWS DATA')
+            console.log(data)
+            // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
+            const line = data.split(/\r?\n/)[1].replace(/  +/g, ' ')
+            const items = line.split(' ')
+            // In case data is split and sent separately, only use closest AWS region which has index of 0
+            if (items[1] == '0') {
+                const region = items[2]
+                console.log(region)
+                dispatch(updateClient({ region: region }))
+            } else {
+                console.log('late packet')
+            }
+        })
+
+        regions.on('close', () => {
+            console.log('child process exited')
+        })
+    }
+
     const handleLoginUser = () => {
         // dispatch(loginFailed(false))
         setLoggingIn(true)
@@ -66,6 +92,7 @@ const Login = (props: any) => {
         setUsername(username)
         setPassword(password)
         dispatch(loginUser(username.trim(), password))
+        setAWSRegion()
     }
 
     const loginKeyPress = (event: any) => {
@@ -112,6 +139,7 @@ const Login = (props: any) => {
                 handleNavigation(newUrl)
             }
         )
+        setAWSRegion()
     }
 
     const forgotPassword = () => {

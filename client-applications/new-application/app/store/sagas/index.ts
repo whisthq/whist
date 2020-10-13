@@ -126,13 +126,15 @@ function* fetchContainer(action: any) {
     history.push('/loading')
     const state = yield select()
     const username = state.MainReducer.auth.username
+    const region = state.MainReducer.client.region
     const app = action.app
     console.log(username)
+    console.log(region)
     console.log(app)
     var { json, response } = yield call(
         apiPost,
         `${config.url.PRIMARY_SERVER}/container/create`,
-        { username: username, app: app },
+        { username: username, region: region, app: app },
         state.MainReducer.auth.accessToken
     )
     // var { json, response } = yield call(

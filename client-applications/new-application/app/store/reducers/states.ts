@@ -16,6 +16,7 @@ export const DEFAULT = {
     },
     client: {
         os: null,
+        region: null,
     },
     payment: {
         accountLocked: false,

@@ -33,7 +33,7 @@ export function updateContainer(body: {
     }
 }
 
-export function updateClient(body: { os: string }) {
+export function updateClient(body: { os?: string; region?: string }) {
     return {
         type: UPDATE_CLIENT,
         body,
