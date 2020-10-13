@@ -4,6 +4,7 @@ name: Render and Deploy ECS Task Definitions
 on:
   push:
     branches: [master]
+  workflow_dispatch:
 
 env:
   task-definitions: fractal-base.json fractal-browsers-chrome.json
