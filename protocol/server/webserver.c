@@ -11,6 +11,8 @@ static bool is_using_stun;
 static char* access_token = NULL;
 bool is_trying_staging_protocol_info = false;
 
+extern volatile int primary_port_mapping;
+
 void update_webserver_parameters() {
     if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 30.0) {
         return;
@@ -34,8 +36,19 @@ void update_webserver_parameters() {
 
     LOG_INFO("GETTING JSON");
 
-    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/vm/protocol_info", buf,
-                     len)) {
+    char msg[1024];
+    sprintf(msg,
+        "{\n"
+        "    \"port\": %d\n"
+        "}\n",
+        primary_port_mapping
+    );
+
+    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST,
+                    "/vm/protocol_info",
+                    buf, len,
+                    msg
+    )) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;

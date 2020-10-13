@@ -28,6 +28,7 @@ extern int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 extern volatile double max_mbps;
 extern volatile int client_width;
 extern volatile int client_height;
+extern volatile int primary_port_mapping;
 extern volatile bool update_device;
 extern volatile CodecType client_codec_type;
 
@@ -392,6 +393,7 @@ static int handleInitMessage(FractalClientMessage* cfmsg, int client_id, bool is
     }
 
     // Handle port mapping
+    primary_port_mapping = fmsg.port_mapping;
 
     return 0;
 }
