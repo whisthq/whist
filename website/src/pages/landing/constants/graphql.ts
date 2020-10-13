@@ -42,3 +42,15 @@ export const INSERT_WAITLIST = gql`
         }
     }
 `
+
+export const SUBSCRIBE_WAITLIST = gql`
+    subscription SubscribeWaitlist {
+        waitlist(order_by: { points: desc }) {
+            name
+            points
+            user_id
+            referrals
+            referral_code
+        }
+    }
+`

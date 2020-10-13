@@ -1,10 +1,12 @@
 import React, { useEffect, useCallback, useContext } from "react"
 import { connect } from "react-redux"
-import { useQuery, useMutation } from "@apollo/client"
+import { useQuery, useSubscription } from "@apollo/client"
 
-import { db } from "shared/utils/firebase"
 import MainContext from "shared/context/mainContext"
-import { GET_WAITLIST } from "pages/landing/constants/graphql"
+import {
+    GET_WAITLIST,
+    SUBSCRIBE_WAITLIST,
+} from "pages/landing/constants/graphql"
 
 import {
     updateUserAction,
@@ -23,7 +25,9 @@ import Footer from "shared/components/footer"
 const Landing = (props: any) => {
     const { setReferralCode, setAppHighlight } = useContext(MainContext)
     const { dispatch, user, match } = props
-    const { data } = useQuery(GET_WAITLIST)
+    // const { data } = useQuery(GET_WAITLIST)
+
+    const { data } = useSubscription(SUBSCRIBE_WAITLIST)
 
     const apps = ["Photoshop", "Blender", "Figma", "VSCode", "Chrome", "Maya"]
     const appsLowercase = [

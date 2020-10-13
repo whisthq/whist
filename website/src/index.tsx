@@ -72,6 +72,11 @@ const wsLink = new WebSocketLink({
     uri: config.url.GRAPHQL_WS_URL,
     options: {
         reconnect: true,
+        connectionParams: {
+            headers: {
+                "x-hasura-access-key": "WhFpeU$YnKxGsa8L",
+            },
+        },
     },
 })
 
