@@ -29,8 +29,6 @@ export default function (state = AUTH_DEFAULT, action: any) {
                       },
             }
         case WaitlistAction.UPDATE_USER:
-            console.log("update user reducer")
-            console.log(action)
             return {
                 ...state,
                 user: {
@@ -79,6 +77,10 @@ export default function (state = AUTH_DEFAULT, action: any) {
             return {
                 ...state,
                 applicationRedirect: action.redirect,
+        case WaitlistAction.SET_CLOSING_DATE:
+            return {
+                ...state,
+                closing_date: action.closingDate,
             }
         default:
             return state

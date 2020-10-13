@@ -5,12 +5,15 @@ export const DELETE_USER = "DELETE_USER"
 export const UPDATE_UNSORTED_LEADERBOARD = "UPDATE_UNSORTED_LEADERBOARD"
 export const UPDATE_CLICKS = "UPDATE_CLICKS"
 export const UPDATE_APPLICATION_REDIRECT = "UPDATE_APPLICATION_REDIRECt"
+export const SET_CLOSING_DATE = "SET_CLOSING_DATE"
+export const REFER_EMAIL = "REFER_EMAIL"
 
 export function insertWaitlistAction(
     user_id: string,
     name: string,
     points: number,
     referralCode: string
+    closingDate: number
 ) {
     return {
         type: INSERT_WAITLIST,
@@ -18,6 +21,7 @@ export function insertWaitlistAction(
         name,
         points,
         referralCode,
+        closingDate,
     }
 }
 
@@ -58,5 +62,27 @@ export function updateApplicationRedirect(redirect: boolean) {
     return {
         type: UPDATE_APPLICATION_REDIRECT,
         redirect,
+    }
+}
+
+export function setClosingDateAction(closingDate: any) {
+    return {
+        type: SET_CLOSING_DATE,
+        closingDate,
+    }
+}
+
+export const referEmailAction = (
+    email: string,
+    name: string,
+    code: string,
+    recipient: string
+) => {
+    return {
+        type: REFER_EMAIL,
+        email,
+        name,
+        code,
+        recipient,
     }
 }

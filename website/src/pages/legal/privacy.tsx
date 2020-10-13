@@ -16,7 +16,7 @@ function Privacy(props: any) {
             >
                 <div style={{ fontSize: 40 }}>PRIVACY POLICY</div>
                 <div style={{ color: "#555555", marginBottom: 40 }}>
-                    Last updated May 17th, 2020
+                    Last updated October 8th, 2020
                 </div>
 
                 <p>
@@ -24,17 +24,13 @@ function Privacy(props: any) {
                     Fractal Computers, Inc., doing business as Fractal
                     (“Fractal”, “we”, “us”, or “our”). When you visit our
                     website,{" "}
-                    <a href="https://www.fractalcomputers.com">
-                        www.fractalcomputers.com
-                    </a>
-                    , and use our services, you trust us with your personal
+                    <a href="https://www.tryfractal.com">www.tryfractal.com</a>,
+                    and use our services, you trust us with your personal
                     information. We want you to know that we are committed to
                     protecting your personal information and your right to
                     privacy. This privacy policy explains what happens to the
                     personal information we collect through our website (such as{" "}
-                    <a href="https://www.fractalcomputers.com">
-                        www.fractalcomputers.com
-                    </a>
+                    <a href="https://www.tryfractal.com">www.tryfractal.com</a>
                     ), and/or any related services, sales, marketing or events
                     (we refer to them collectively in this privacy policy as the
                     "Services"). This policy will also identify your rights
@@ -42,8 +38,8 @@ function Privacy(props: any) {
                     questions or concerns about our policy, or our practices
                     with regards to your personal information, please contact us
                     at{" "}
-                    <a href="mailto: support@fractalcomputers.com">
-                        support@fractalcomputers.com
+                    <a href="mailto: support@tryfractal.com">
+                        support@tryfractal.com
                     </a>
                     . We encourage you to read through this important
                     information. If there are any terms in this privacy policy
@@ -64,7 +60,7 @@ function Privacy(props: any) {
                     <li>How Do We Keep Your Information Safe?</li>
                     <li>Do We Collect Information From Minors?</li>
                     <li>
-                        Advertising and Analytics Services Provided by Others
+                        Advertising And Analytics Services Provided By Others
                     </li>
                     <li>What Are Your Privacy Rights?</li>
                     <li>Controls For Do-not-track Features</li>
@@ -91,7 +87,7 @@ function Privacy(props: any) {
                     automatically.
                 </p>
                 <p style={{ fontWeight: "bold" }}>
-                    Personal information you disclose to us
+                    Personal Information You Disclose To Us
                 </p>
                 <p>
                     <u>Summary:</u> We collect personal information that you
@@ -103,9 +99,9 @@ function Privacy(props: any) {
                     We also collect personal information that you provide when
                     you register your interest in our services and products,
                     when you register your interest in information and
-                    promotional offers regarding our services or when you
-                    register to participate in activities related to the service
-                    or when you contact us.
+                    promotional offers regarding our services, when you register
+                    to participate in activities related to the service, or when
+                    you contact us.
                 </p>
                 <p>
                     The personal information that we collect depends on the type
@@ -113,7 +109,7 @@ function Privacy(props: any) {
                     make and the products and features you use. We collect
                     personal information, including but not limited to: publicly
                     available personal information, personal information
-                    provided by you, credentials, payment.
+                    provided by you, credentials, and payment details.
                 </p>
                 <div style={{ paddingLeft: 20 }}>
                     <p style={{ fontWeight: "bold" }}>
@@ -126,11 +122,12 @@ function Privacy(props: any) {
                         residence; country of residence and other similar data.
                     </p>
                     <p style={{ fontWeight: "bold" }}>
-                        Personal Information Provided by You
+                        Personal Information Provided By You
                     </p>
                     <p>
-                        We collect app usage data; app usage location; data
-                        collected from surveys; and other similar data.
+                        We collect application usage data; application usage
+                        location; data collected from surveys; and other similar
+                        data.
                     </p>
                     <p style={{ fontWeight: "bold" }}>Credentials</p>
                     <p>
@@ -158,10 +155,10 @@ function Privacy(props: any) {
                     <p>
                         We may provide you with the option to register using
                         social media account details, like your Facebook,
-                        Twitter or other social media account. If you choose to
-                        register in this way, we will collect the Information
-                        described in the section called "HOW DO WE HANDLE YOUR
-                        SOCIAL LOGINS" below.
+                        Google, Twitter or other social media account. If you
+                        choose to register in this way, we will collect the
+                        Information described in the section called "HOW DO WE
+                        HANDLE YOUR SOCIAL LOGINS" below.
                     </p>
                     <p>
                         All personal information that you provide to us must be
@@ -172,7 +169,7 @@ function Privacy(props: any) {
                     </p>
                 </div>
                 <p style={{ fontWeight: "bold" }}>
-                    Information automatically collected
+                    Information Automatically Collected
                 </p>
                 <p>
                     <u>Summary:</u> Some information — such as IP address and/or
@@ -185,13 +182,14 @@ function Privacy(props: any) {
                     collect some information to maintain the security and
                     operation of our Services, generate internal analytics and
                     comply with reporting requirements. The information
-                    collected for these purposes include your device and usage
-                    information, IP address, browser and device characteristics,
-                    operating system, language preferences, referring URLs,
-                    device name, country, location, information about how and
-                    when you use our Services and other technical information
-                    However, this information is not connected to your name or
-                    other personal identifiers (like your contact details).
+                    collected for these purposes may include your device and
+                    usage information, IP address, browser and device
+                    characteristics, operating system, hardware specifications,
+                    language preferences, referring URLs, device name, country,
+                    location, information about how and when you use our
+                    Services and other technical information. However, this
+                    information is not connected to your name or other personal
+                    identifiers (like your contact details).
                 </p>
                 <div style={{ paddingLeft: 20 }}>
                     <p style={{ fontWeight: "bold" }}>Online Identifiers</p>
@@ -209,7 +207,7 @@ function Privacy(props: any) {
                 </p>
                 <p>
                     <u>Summary:</u> We process your information with your
-                    consent, to advance our legitimate business interests in
+                    consent to advance our legitimate business interests in
                     compliance with our legal obligations. We use personal
                     information collected via our Services for a variety of
                     business purposes described below. We process your personal
@@ -222,7 +220,7 @@ function Privacy(props: any) {
                 </p>
                 <div style={{ paddingLeft: 20 }}>
                     <p style={{ fontWeight: "bold" }}>
-                        We use the information we collect or receive:
+                        We Use The Information We Collect Or Receive:
                     </p>
                     <p>
                         To facilitate account creation and logon process. If you
@@ -241,12 +239,12 @@ function Privacy(props: any) {
                         for our marketing purposes, if this is in accordance
                         with your marketing preferences. You can opt-out of our
                         marketing emails at any time (see the "What Are Your
-                        Privacy Rights" below).
+                        Privacy Rights" section below).
                     </p>
                     <p>
                         To send administrative information to you. We may use
                         your personal information to send you information about
-                        our product, service and new features or information
+                        our product, service and new features, or information
                         about changes to our terms, conditions, and policies.
                     </p>
                     <p>
@@ -258,10 +256,10 @@ function Privacy(props: any) {
                         To post testimonials. We post testimonials on our
                         Services that may contain personal information. Prior to
                         posting a testimonial, we will seek your consent to use
-                        your name and testimonial. If you wish to update, or
+                        your name and testimonial. If you wish to update or
                         delete your testimonial, please contact us at{" "}
-                        <a href="mailto: support@fractalcomputers.com">
-                            support@fractalcomputers.com
+                        <a href="mailto: support@tryfractal.com">
+                            support@tryfractal.com
                         </a>{" "}
                         and be sure to include your name, testimonial location,
                         and contact information.
@@ -273,7 +271,7 @@ function Privacy(props: any) {
                         competitions.
                     </p>
                     <p>
-                        To request Feedback. We may use your information to
+                        To request feedback. We may use your information to
                         request feedback and to contact you about your use of
                         our Services.
                     </p>
@@ -284,7 +282,8 @@ function Privacy(props: any) {
                     </p>
                     <p>
                         To enforce our terms, conditions and policies for
-                        Business Purposes, Legal Reasons and Contractual.
+                        Business Purposes, Legal Reasons and Contractual
+                        Reasons.
                     </p>
                     <p>
                         To respond to legal requests and prevent harm. If we
@@ -304,14 +303,14 @@ function Privacy(props: any) {
                         For other Business Purposes. We may use your information
                         for other Business Purposes, such as data analysis,
                         identifying usage trends, determining the effectiveness
-                        of our promotional campaigns and to evaluate and improve
-                        our Services, products, marketing and your experience.
-                        We may use and store this information. In either case,
-                        this information will exist in aggregated and anonymized
-                        form so that it is not associated with individual end
-                        users and does not include personal information. We will
-                        not use identifiable personal information without your
-                        consent.
+                        of our promotional campaigns, and to evaluate and
+                        improve our Services, products, marketing and your
+                        experience. We may use and store this information. In
+                        either case, this information will exist in aggregated
+                        and anonymized form so that it is not associated with
+                        individual end users and does not include personal
+                        information. We will not use identifiable personal
+                        information without your consent.
                     </p>
                 </div>
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
@@ -324,8 +323,8 @@ function Privacy(props: any) {
                 </p>
                 <div style={{ paddingLeft: 20 }}>
                     <p style={{ fontWeight: "bold" }}>
-                        We may process or share data based on the following
-                        legal basis:
+                        We May Process Or Share Data Based On The Following
+                        Legal Basis:
                     </p>
                     <p>
                         <u>Consent:</u> We may process your data if you have
@@ -412,19 +411,19 @@ function Privacy(props: any) {
                     web beacons and pixels) to access or store information.
                     Specific information about how we use such technologies and
                     how you can refuse certain cookies is set out in our{" "}
-                    <HashLink to="/cookie#top">Cookie Policy</HashLink>. Our
-                    Services are currently not officially offered in the
-                    European Union, but they may be accessible from that area;
-                    we take no responsibility for access from the European Union
-                    region with regards to cookies and other tracking
-                    technologies, as defined in the GDPR.
+                    <HashLink to="/cookies#top">Cookie Policy</HashLink>. Our
+                    Services are not officially offered in the European Union,
+                    but they may be accessible from that area; we take no
+                    responsibility for access from the European Union region
+                    with regards to cookies and other tracking technologies, as
+                    defined in the GDPR.
                 </p>
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     5. How Do We Handle Your Social Logins?
                 </p>
                 <p>
                     <u>Summary:</u> If you choose to register or log in to our
-                    services using a social media account, we may have access to
+                    Services using a social media account, we may have access to
                     certain information about you.
                 </p>
                 <p>
@@ -432,9 +431,9 @@ function Privacy(props: any) {
                     using your third party social media account details (like
                     your Facebook or Twitter logins). Where you choose to do
                     this, we will receive your profile information from your
-                    social media provider. The profile Information we receive
+                    social media provider. The profile information we receive
                     may vary depending on the social media provider concerned,
-                    but will often include your name, e-mail address, friends
+                    but will often include your name, email address, friends
                     list, profile picture and other information you chose to
                     make public.
                 </p>
@@ -447,7 +446,7 @@ function Privacy(props: any) {
                     media provider. We recommend that you review their privacy
                     policy to understand how they collect, use and share your
                     personal information, and how you can set your privacy
-                    preferences on their sites and apps.
+                    preferences on their sites and applications.
                 </p>
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     6. How Long Do We Keep Your Information?
@@ -496,25 +495,25 @@ function Privacy(props: any) {
                 </p>
                 <p>
                     <u>Summary:</u> We do not knowingly collect data from, or
-                    market, to children under 18 years of age.
+                    market to, children under 18 years of age.
                 </p>
                 <p>
                     By using the Services, you represent that you are at least
-                    18 or that you are the parent or guardian of such a minor
-                    and consent to such minor dependent’s use of the Services.
-                    If we learn that personal information from users less than
-                    18 years of age has been collected, we will deactivate the
-                    account and take reasonable measures to promptly delete such
-                    data from our records. If you become aware of any data we
-                    have collected from children under age 18, please contact us
-                    at{" "}
-                    <a href="mailto: support@fractalcomputers.com">
-                        support@fractalcomputers.com
+                    18 years old or that you are the parent or guardian of such
+                    a minor and consent to such minor dependent’s use of the
+                    Services. If we learn that personal information from users
+                    less than 18 years of age has been collected, we will
+                    deactivate the account and take reasonable measures to
+                    promptly delete such data from our records. If you become
+                    aware of any data we have collected from children under age
+                    18, please contact us at{" "}
+                    <a href="mailto: support@tryfractal.com">
+                        support@tryfractal.com
                     </a>
                     .
                 </p>
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
-                    9. Advertising and Analytics Services Provided by Others
+                    9. Advertising And Analytics Services Provided By Others
                 </p>
                 <p>
                     <u>Summary:</u> We may work with, and share non-personal
@@ -544,7 +543,7 @@ function Privacy(props: any) {
                     de-identified demographic or other data linked to
                     information you voluntarily provide to us (e.g., an email
                     address) in a hashed, non-human readable form. For more
-                    information about interest-based ads, or to opt out of
+                    information about interest-based ads, or to opt-out of
                     having your web browsing information used for behavioral
                     advertising purposes, please visit{" "}
                     <a href="https://www.aboutads.info/choices">
@@ -570,8 +569,8 @@ function Privacy(props: any) {
                     </a>
                     . If you have questions or comments about your privacy
                     rights, you may email us at{" "}
-                    <a href="mailto: support@fractalcomputers.com">
-                        support@fractalcomputers.com
+                    <a href="mailto: support@tryfractal.com">
+                        support@tryfractal.com
                     </a>
                     .
                 </p>
@@ -584,8 +583,8 @@ function Privacy(props: any) {
                     <p>
                         Log into your account settings and update your user
                         account, or contact us at{" "}
-                        <a href="mailto: support@fractalcomputers.com">
-                            support@fractalcomputers.com
+                        <a href="mailto: support@tryfractal.com">
+                            support@tryfractal.com
                         </a>
                         .
                     </p>
@@ -595,21 +594,21 @@ function Privacy(props: any) {
                         our active databases. However, some information may be
                         retained in our files to prevent fraud, troubleshoot
                         problems, assist with any investigations, enforce our{" "}
-                        <a href="https://www.fractalcomputers.com/termsofservice">
+                        <a href="https://www.tryfractal.com/termsofservice">
                             Terms of Service
                         </a>{" "}
                         and/or comply with legal requirements.
                     </p>
                     <p>
                         <p style={{ fontWeight: "bold" }}>
-                            Cookies and Similar Technologies
+                            Cookies And Similar Technologies
                         </p>
                         Most Web browsers are set to accept cookies by default.
                         You may be able to configure your browser to remove and
                         reject cookies. Removing or rejecting cookies may reduce
                         the effectiveness of certain features of our Services.
                         To opt-out of interest-based advertising by advertisers
-                        on our Services visit{" "}
+                        on our Services, visit{" "}
                         <a href="https://www.aboutads.info/choices">
                             www.aboutads.info/choices
                         </a>
@@ -617,7 +616,7 @@ function Privacy(props: any) {
                     </p>
                     <p>
                         <p style={{ fontWeight: "bold" }}>
-                            Opting Out of Email Marketing
+                            Opting Out Of Email Marketing
                         </p>
                         You can unsubscribe from our marketing email list at any
                         time by clicking on the unsubscribe link in the emails
@@ -631,8 +630,8 @@ function Privacy(props: any) {
                         Note your preferences when you register an account with
                         the site, access your account settings and update
                         preferences, or contact us by email at{" "}
-                        <a href="mailto: support@fractalcomputers.com">
-                            support@fractalcomputers.com
+                        <a href="mailto: support@tryfractal.com">
+                            support@tryfractal.com
                         </a>
                         .
                     </p>
@@ -717,15 +716,15 @@ function Privacy(props: any) {
                 <p>
                     If you have questions or comments about this policy, you may
                     email us at{" "}
-                    <a href="mailto: support@fractalcomputers.com">
-                        support@fractalcomputers.com
+                    <a href="mailto: support@tryfractal.com">
+                        support@tryfractal.com
                     </a>{" "}
                     or by post to:
                 </p>
                 <p>
                     Fractal Computers, Inc. <br />
-                    103 Greaton Road, Unit 2 <br />
-                    Boston, MA 02132 <br />
+                    Six Landmark Square, 4th Floor <br />
+                    Stamford, CT 06901 <br />
                     United States <br />
                 </p>
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
