@@ -152,8 +152,10 @@ ClipboardData* unsafe_GetClipboard() {
             // struct
             free(clipboard_image);
         } else {
-            LOG_WARNING("Could not copy, clipboard too large! %d bytes", cb->size);
+            LOG_WARNING("Could not copy, clipboard too large! %d bytes", clipboard_image->size);
         }
+
+        cb->type = CLIPBOARD_IMAGE;
     } else {
         LOG_INFO("Nothing in the clipboard!");
     }
