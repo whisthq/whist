@@ -141,7 +141,8 @@ def create_new_container(
     ecs_client.run_task(use_launch_type, **{k: v for k, v in kwargs.items() if v is not None})
 
     self.update_state(
-        state="PENDING", meta={"msg": message},
+        state="PENDING",
+        meta={"msg": message},
     )
     ecs_client.spin_til_running(time_delay=2)
     curr_ip = ecs_client.task_ips.get(0, -1)
@@ -296,7 +297,8 @@ def create_new_cluster(
             level=logging.ERROR,
         )
         self.update_state(
-            state="FAILURE", meta={"msg": f"Encountered error: {error}"},
+            state="FAILURE",
+            meta={"msg": f"Encountered error: {error}"},
         )
 
 
@@ -316,7 +318,8 @@ def send_commands(self, cluster, region_name, commands, containers=None):
                 level=logging.ERROR,
             )
             self.update_state(
-                state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}"},
+                state="FAILURE",
+                meta={"msg": f"Cluster status is {cluster_info.status}"},
             )
         containers = containers or ecs_client.get_containers_in_cluster(cluster=cluster)
         if containers:
@@ -340,7 +343,9 @@ def send_commands(self, cluster, region_name, commands, containers=None):
             ]["CommandId"]
             ecs_client.spin_til_command_executed(command_id)
             fractalLog(
-                function="send_command", label="None", logs="Commands sent!",
+                function="send_command",
+                label="None",
+                logs="Commands sent!",
             )
         else:
             fractalLog(
@@ -361,5 +366,6 @@ def send_commands(self, cluster, region_name, commands, containers=None):
             level=logging.ERROR,
         )
         self.update_state(
-            state="FAILURE", meta={"msg": f"Encountered error: {error}"},
+            state="FAILURE",
+            meta={"msg": f"Encountered error: {error}"},
         )

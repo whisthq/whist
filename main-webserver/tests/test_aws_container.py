@@ -148,7 +148,9 @@ def test_delete_container(input_token, admin_token):
     )
 
     resp = deleteContainer(
-        user_id="test-user@test.com", container_name=pytest.container_name, input_token=input_token,
+        user_id="test-user@test.com",
+        container_name=pytest.container_name,
+        input_token=input_token,
     )
 
     task = queryStatus(resp, timeout=10)
@@ -183,7 +185,9 @@ def test_delete_cluster(input_token, admin_token):
     )
 
     resp = deleteCluster(
-        cluster=pytest.cluster_name, region_name="us-east-1", input_token=input_token,
+        cluster=pytest.cluster_name,
+        region_name="us-east-1",
+        input_token=input_token,
     )
 
     task = queryStatus(resp, timeout=10)

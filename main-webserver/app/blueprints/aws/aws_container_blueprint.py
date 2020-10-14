@@ -2,14 +2,16 @@ from flask import Blueprint
 from flask.json import jsonify
 
 from app import fractalPreProcess
-from app.celery.aws_ecs_creation import (create_new_cluster,
-                                         create_new_container, send_commands)
-from app.celery.aws_ecs_deletion import (delete_cluster, deleteContainer,
-                                         drainContainer)
+from app.celery.aws_ecs_creation import create_new_cluster, create_new_container, send_commands
+from app.celery.aws_ecs_deletion import delete_cluster, deleteContainer, drainContainer
 from app.celery.aws_ecs_status import pingHelper
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
-    BadAppError, preprocess_task_info, protocol_info, set_stun)
+    BadAppError,
+    preprocess_task_info,
+    protocol_info,
+    set_stun,
+)
 
 from app.helpers.utils.general.auth import fractalAuth
 from app.helpers.utils.locations.location_helper import get_loc_from_ip

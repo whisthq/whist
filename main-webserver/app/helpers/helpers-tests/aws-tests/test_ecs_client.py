@@ -5,14 +5,17 @@ import pytest
 from utils.aws.base_ecs_client import ECSClient, boto3
 from moto import mock_ecs, mock_logs, mock_autoscaling, mock_ec2, mock_iam
 
+
 @pytest.mark.skipif(
     "AWS_TEXT_VPC" not in os.environ,
-     reason="Skipping this test til default clients/test cluster are set up",
+    reason="Skipping this test til default clients/test cluster are set up",
 )
 def test_setup_vpc():
     testclient = ECSClient()
     testclient.set_and_register_task(
-        ["echo start"], ["/bin/bash", "-c"], family="multimessage",
+        ["echo start"],
+        ["/bin/bash", "-c"],
+        family="multimessage",
     )
     testclient.get_vpc()
     networkConfiguration = {
@@ -24,28 +27,36 @@ def test_setup_vpc():
     testclient.run_task(networkConfiguration=networkConfiguration)
     testclient.spin_til_done(time_delay=2)
 
+
 @pytest.mark.skipif(
     "AWS_TEXT_VPC" not in os.environ,
-     reason="Skipping this test til default clients/test cluster are set up",
+    reason="Skipping this test til default clients/test cluster are set up",
 )
 def test_network_build():
     testclient = ECSClient()
     testclient.set_and_register_task(
-        ["echo start"], ["/bin/bash", "-c"], family="multimessage",
+        ["echo start"],
+        ["/bin/bash", "-c"],
+        family="multimessage",
     )
     testclient.run_task(networkConfiguration=testclient.build_network_config())
     testclient.spin_til_running(time_delay=2)
-    assert '.' in testclient.task_ips.get(0, '-1')
+    assert "." in testclient.task_ips.get(0, "-1")
+
 
 @pytest.mark.skipif(
     "AWS_TEXT_VPC" not in os.environ,
-     reason="Skipping this test til default clients/test cluster are set up",
+    reason="Skipping this test til default clients/test cluster are set up",
 )
 def test_partial_works():
     basedict = {
         "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(747391415460),
         "containerDefinitions": [
-            {"cpu": 0, "environment": [{"name": "TEST", "value": "end"}], "image": "httpd:2.4",}
+            {
+                "cpu": 0,
+                "environment": [{"name": "TEST", "value": "end"}],
+                "image": "httpd:2.4",
+            }
         ],
         "placementConstraints": [],
         "memory": "512",
@@ -58,17 +69,22 @@ def test_partial_works():
     )
     networkConfiguration = {
         "awsvpcConfiguration": {
-            "subnets": ["subnet-0dc1b0c43c4d47945",],
-            "securityGroups": ["sg-036ebf091f469a23e",],
+            "subnets": [
+                "subnet-0dc1b0c43c4d47945",
+            ],
+            "securityGroups": [
+                "sg-036ebf091f469a23e",
+            ],
         }
     }
     testclient.run_task(networkConfiguration=networkConfiguration)
     testclient.spin_til_running(time_delay=2)
-    assert '.' in testclient.task_ips.get(0, '-1')
+    assert "." in testclient.task_ips.get(0, "-1")
+
 
 @pytest.mark.skipif(
     "AWS_TEXT_VPC" not in os.environ,
-     reason="Skipping this test til default clients/test cluster are set up",
+    reason="Skipping this test til default clients/test cluster are set up",
 )
 def test_full_base_config():
     basedict = {
@@ -91,13 +107,17 @@ def test_full_base_config():
     testclient.set_and_register_task(family="multimessage", basedict=basedict)
     networkConfiguration = {
         "awsvpcConfiguration": {
-            "subnets": ["subnet-0dc1b0c43c4d47945",],
-            "securityGroups": ["sg-036ebf091f469a23e",],
+            "subnets": [
+                "subnet-0dc1b0c43c4d47945",
+            ],
+            "securityGroups": [
+                "sg-036ebf091f469a23e",
+            ],
         }
     }
     testclient.run_task(networkConfiguration=networkConfiguration)
     testclient.spin_til_running(time_delay=2)
-    assert '.' in testclient.task_ips.get(0, '-1')
+    assert "." in testclient.task_ips.get(0, "-1")
 
 
 # @pytest.mark.skipif(
@@ -175,24 +195,31 @@ def test_cluster_with_auto_scaling_group():
     testclient.spin_til_no_containers(cluster_name)
     testclient.ecs_client.delete_cluster(cluster=cluster_name)
 
+
 @pytest.mark.skipif(
     "AWS_TEXT_VPC" not in os.environ,
-     reason="Skipping this test til default clients/test cluster are set up",
+    reason="Skipping this test til default clients/test cluster are set up",
 )
 def test_basic_ecs_client():
     testclient = ECSClient(launch_type="EC2")
     testclient.set_and_register_task(
-        ["echo start"], ["/bin/bash", "-c"], family="multimessage",
+        ["echo start"],
+        ["/bin/bash", "-c"],
+        family="multimessage",
     )
     networkConfiguration = {
         "awsvpcConfiguration": {
-            "subnets": ["subnet-0dc1b0c43c4d47945",],
-            "securityGroups": ["sg-036ebf091f469a23e",],
+            "subnets": [
+                "subnet-0dc1b0c43c4d47945",
+            ],
+            "securityGroups": [
+                "sg-036ebf091f469a23e",
+            ],
         }
     }
     testclient.run_task()
     testclient.spin_til_running(time_delay=2)
-    assert '.' in testclient.task_ips.get(0, '-1')
+    assert "." in testclient.task_ips.get(0, "-1")
 
 
 @mock_ecs
@@ -231,7 +258,9 @@ def test_command():
         mock=True,
     )
     testclient.set_and_register_task(
-        ["echoes"], [""], family=" ",
+        ["echoes"],
+        [""],
+        family=" ",
     )
     taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
         "taskDefinition"
@@ -275,7 +304,9 @@ def test_entry():
         mock=True,
     )
     testclient.set_and_register_task(
-        [" "], ["entries"], family=" ",
+        [" "],
+        ["entries"],
+        family=" ",
     )
     taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
         "taskDefinition"
@@ -300,7 +331,9 @@ def test_family():
         mock=True,
     )
     testclient.set_and_register_task(
-        ["echoes"], [""], family="basefam",
+        ["echoes"],
+        [""],
+        family="basefam",
     )
     taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
         "taskDefinition"
@@ -327,7 +360,9 @@ def test_region():
         mock=True,
     )
     testclient.set_and_register_task(
-        ["echoes"], [""], family="basefam",
+        ["echoes"],
+        [""],
+        family="basefam",
     )
     taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
         "taskDefinition"

@@ -53,7 +53,11 @@ def pingHelper(available, container_ip, port_32262, version=None):
 
         # Add logoff event to timetable
 
-        log = LoginHistory(user_id=username, action="logoff", timestamp=dateToUnix(getToday()),)
+        log = LoginHistory(
+            user_id=username,
+            action="logoff",
+            timestamp=dateToUnix(getToday()),
+        )
 
         fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
@@ -69,7 +73,11 @@ def pingHelper(available, container_ip, port_32262, version=None):
 
         # Add logon event to timetable
 
-        log = LoginHistory(user_id=username, action="logon", timestamp=dateToUnix(getToday()),)
+        log = LoginHistory(
+            user_id=username,
+            action="logon",
+            timestamp=dateToUnix(getToday()),
+        )
 
         fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
