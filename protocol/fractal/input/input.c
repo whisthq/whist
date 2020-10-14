@@ -5,9 +5,7 @@
 
 unsigned int last_input_fmsg_id = 0;
 
-void ResetInput() {
-    last_input_fmsg_id = 0;
-}
+void ResetInput() { last_input_fmsg_id = 0; }
 
 void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fmsg) {
     if (fmsg->id <= last_input_fmsg_id) {
