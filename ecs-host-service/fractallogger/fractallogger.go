@@ -1,11 +1,15 @@
 package fractallogger
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"runtime"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -68,6 +72,61 @@ func InitializeSentry() error {
 
 func FlushSentry() {
 	sentry.Flush(5 * time.Second)
+}
+
+// The following functions are useful for getting system information that we
+// will pass to the Webserver
+
+// Get the number of logical CPUs on the host
+func GetNumLogicalCPUs() (string, error) {
+	return fmt.Sprint(runtime.NumCPU()), nil
+}
+
+// Get the total memory of the host in KB. This function can be memoized
+// because the total memory will not change over time.
+var GetTotalMemoryInKB = memoizeString(func() (string, error) {
+	return calculateMemoryStatInKB("MemTotal")
+})
+
+// Get the amount of currently free memory in the host in KB. This is a lower
+// bound for how much more memory we can theoretically use, since some cached
+// files can be evicted to free up some more memory.
+var GetFreeMemoryInKB = func() (string, error) {
+	return calculateMemoryStatInKB("MemFree")
+}
+
+// Get the amount of currently available memory in the host in KB. This is a
+// hard upper bound for how much more memory we can use before we start
+// swapping or crash. We should stay well below this number because performance
+// will suffer long before we get here.
+var GetAvailableMemoryInKB = func() (string, error) {
+	return calculateMemoryStatInKB("MemAvailable")
+}
+
+// This is a helper function for us to read memory info from the host
+func calculateMemoryStatInKB(field string) (string, error) {
+	const meminfoPath = "/proc/meminfo"
+	file, err := os.Open(meminfoPath)
+	if err != nil {
+		return "", MakeError("Unable to open file %s: Error: %v", meminfoPath, err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(line, field) {
+			line = strings.TrimPrefix(line, field+":")
+			line = strings.TrimSpace(line)
+			line = strings.TrimSuffix(line, "kB")
+			line = strings.TrimSpace(line)
+			return line, nil
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", MakeError("Error scanning %s: %v", meminfoPath, err)
+	}
+	return "", MakeError("Could not find field %s in file %s", field, meminfoPath)
 }
 
 // All of these have signature (func() (string, error))
