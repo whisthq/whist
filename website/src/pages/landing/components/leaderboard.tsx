@@ -11,7 +11,7 @@ import "styles/landing.css"
 
 const Leaderboard = (props: {
     waitlist: any[]
-    user: { email: any; ranking: number }
+    user: { user_id: any; ranking: number }
 }) => {
     const { width } = useContext(MainContext)
     const [topSix, setTopSix]: any[] = useState([])
@@ -119,7 +119,7 @@ const Leaderboard = (props: {
         const topThree = topSix.slice(0, 3)
         if (!props.waitlist) {
             return <tr>No data to show.</tr>
-        } else if (!props.user.email || props.user.ranking <= 5) {
+        } else if (!props.user.user_id || props.user.ranking <= 5) {
             const bottomThree = topSix.slice(3, 6)
             return topThree
                 .map((user: any, idx: number) => {
@@ -196,11 +196,6 @@ const Leaderboard = (props: {
 
     return (
         <div className="leaderboard-container">
-            {/* <Row>
-                <Col style={{ textAlign: "right" }}>
-                    <Countdown type="small" />
-                </Col>
-            </Row> */}
             <div
                 style={{
                     width: "100%",

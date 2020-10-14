@@ -1,6 +1,8 @@
+import { config } from "shared/constants/config"
+
 export async function apiPost(endpoint: any, body: any, token: any) {
     try {
-        const response = await fetch(endpoint, {
+        const response = await fetch(config.url.WEBSERVER_URL + endpoint, {
             method: "POST",
             mode: "cors",
             headers: {

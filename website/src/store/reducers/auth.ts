@@ -16,17 +16,15 @@ export default function (state = AUTH_DEFAULT, action: any) {
                 user: state.user
                     ? {
                           ...state.user,
-                          email: action.email,
+                          user_id: action.user_id,
                           name: action.name,
                           points: action.points,
-                          ranking: action.ranking,
                           referralCode: action.referralCode,
                       }
                     : {
-                          email: action.email,
+                          user_id: action.user_id,
                           name: action.name,
                           points: action.points,
-                          ranking: action.ranking,
                           referralCode: action.referralCode,
                       },
             }
@@ -37,6 +35,7 @@ export default function (state = AUTH_DEFAULT, action: any) {
                     ...state.user,
                     points: action.points,
                     ranking: action.ranking,
+                    referralCode: action.referralCode,
                 },
             }
         case WaitlistAction.DELETE_USER:
@@ -50,7 +49,7 @@ export default function (state = AUTH_DEFAULT, action: any) {
                 loggedIn: true,
                 user: {
                     ...state.user,
-                    googleAuthEmail: action.email,
+                    googleAuthEmail: action.user_id,
                     points: action.points,
                 },
             }
@@ -59,17 +58,12 @@ export default function (state = AUTH_DEFAULT, action: any) {
                 ...state,
                 loggedIn: false,
                 user: {
-                    email: null,
+                    user_id: null,
                     name: null,
                     referrals: 0,
                     points: 0,
                     ranking: 0,
                 },
-            }
-        case WaitlistAction.UPDATE_UNSORTED_LEADERBOARD:
-            return {
-                ...state,
-                unsortedLeaderboard: action.unsortedLeaderboard,
             }
         case WaitlistAction.UPDATE_CLICKS:
             return {
@@ -78,6 +72,11 @@ export default function (state = AUTH_DEFAULT, action: any) {
                     number: action.clicks,
                     lastClicked: new Date().getTime() / 1000,
                 },
+            }
+        case WaitlistAction.UPDATE_APPLICATION_REDIRECT:
+            return {
+                ...state,
+                applicationRedirect: action.redirect,
             }
         case WaitlistAction.SET_CLOSING_DATE:
             return {

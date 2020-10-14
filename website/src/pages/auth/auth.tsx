@@ -1,16 +1,15 @@
 import React, { useEffect } from "react"
 import { connect } from "react-redux"
-import { debugLog } from 'shared/utils/logging'
+import { debugLog } from "shared/utils/logging"
 import "styles/auth.css"
-
 
 import GoogleButton from "pages/auth/googleButton"
 import SignoutButton from "pages/auth/signoutButton"
 
 const Auth = (props: {
-    dispatch: (arg0: { type: string; email?: string }) => void
+    dispatch: (arg0: { type: string; user_id?: string }) => void
     loggedIn: any
-    email: React.ReactNode
+    user_id: React.ReactNode
 }) => {
     useEffect(() => {
         debugLog(props)
@@ -19,7 +18,7 @@ const Auth = (props: {
     return (
         <div className="auth-wrapper">
             <div>Logged in: {JSON.stringify(props.loggedIn)}</div>
-            <div>email: {props.email}</div>
+            <div>email: {props.user_id}</div>
             <GoogleButton />
             <SignoutButton />
         </div>
@@ -30,7 +29,7 @@ function mapStateToProps(state: any) {
     return {
         reducer: state.AuthReducer,
         loggedIn: state.AuthReducer.loggedIn,
-        email: state.AuthReducer.user.email,
+        user_id: state.AuthReducer.user.user_id,
         name: state.AuthReducer.user.name,
     }
 }
