@@ -61,7 +61,7 @@ func shutdownHostService() {
 	// of an irrecoverable failure that mandates that the host machine accept no
 	// new connections.
 	r := recover()
-	logger.Errorf("shutdownHostService(): Caught panic", r)
+	logger.Errorf("shutdownHostService(): Caught panic: %v", r)
 	logger.PrintStackTrace()
 
 	// TODO: Send Death Notice to Sentry/Webserver
@@ -106,17 +106,27 @@ func uninitializeFilesystem() {
 	}
 }
 
-func writeAssignmentToFile(filename, data string) error {
+func writeAssignmentToFile(filename, data string) (err error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644|os.ModeSticky)
 	if err != nil {
 		return logger.MakeError("Unable to create file %s to store resource assignment. Error: %v", filename, err)
 	}
-	defer file.Sync()
-	defer file.Close()
-
+	// Instead of deferring the close() and sync() of the file, as is
+	// conventional, we do it at the end of the function to avoid some annoying
+	// linter errors
 	_, err = file.WriteString(data)
 	if err != nil {
 		return logger.MakeError("Couldn't write assignment with data %s to file %s. Error: %v", data, filename, err)
+	}
+
+	err = file.Sync()
+	if err != nil {
+		return logger.MakeError("Couldn't sync file %s. Error: %v", filename, err)
+	}
+
+	err = file.Close()
+	if err != nil {
+		return logger.MakeError("Couldn't close file %s. Error: %v", filename, err)
 	}
 
 	logger.Info("Wrote data \"%s\" to file %s\n", data, filename)
