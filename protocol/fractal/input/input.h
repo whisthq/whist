@@ -32,6 +32,11 @@ Public Functions
 */
 
 /**
+ * @brief                          Initialize the input system. Should be used prior to every new client connection that will send inputs
+ */
+void ResetInput();
+
+/**
  * @brief                          Replayed a received user action on a server,
  *                                 by sending it to the OS
  *
