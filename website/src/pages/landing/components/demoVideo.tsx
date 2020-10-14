@@ -6,7 +6,7 @@ import ReactPlayer from "react-player"
 export const DEMO_URL = "https://www.youtube.com/watch?v=PhhC_N6Bm_s"
 
 // must have url= passed in as a url
-function DemoVideo(props: any) {
+const DemoVideo = (props: any) => {
     return <ReactPlayer url={props.url ? props.url : DEMO_URL} controls />
 }
 
