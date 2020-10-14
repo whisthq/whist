@@ -12,7 +12,7 @@ export function insertWaitlistAction(
     user_id: string,
     name: string,
     points: number,
-    referralCode: string
+    referralCode: string,
     closingDate: number
 ) {
     return {
@@ -73,14 +73,14 @@ export function setClosingDateAction(closingDate: any) {
 }
 
 export const referEmailAction = (
-    email: string,
+    user_id: string,
     name: string,
     code: string,
     recipient: string
 ) => {
     return {
         type: REFER_EMAIL,
-        email,
+        user_id,
         name,
         code,
         recipient,

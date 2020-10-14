@@ -10,7 +10,7 @@ import WaitlistForm from "shared/components/waitlistForm"
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
 import { REFERRAL_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
-import { config } from "constants/config"
+import { config } from "shared/constants/config"
 import { updateClicks, referEmailAction } from "store/actions/auth/waitlist"
 
 const CustomAction = (props: {
@@ -64,6 +64,7 @@ const Actions = (props: {
         referralCode: string
         points: number
         referrals: number
+        name: string
     }
     loggedIn: any
     clicks: any
@@ -86,12 +87,13 @@ const Actions = (props: {
     const increasePoints = () => {
         if (user) {
             var allowClick = true
+            var clickReset = false
             const currentTime = new Date().getTime() / 1000
 
             if (currentTime - clicks.lastClicked > 1) {
                 if (clicks.number > 50) {
                     if (currentTime - clicks.lastClicked > 60 * 60 * 3) {
-                        dispatch(updateClicks(0))
+                        clickReset = true
                     } else {
                         allowClick = false
                         setWarning(
@@ -101,7 +103,11 @@ const Actions = (props: {
                 }
 
                 if (allowClick) {
-                    dispatch(updateClicks(clicks.number + 1))
+                    if (clickReset) {
+                        dispatch(updateClicks(1))
+                    } else {
+                        dispatch(updateClicks(clicks.number + 1))
+                    }
 
                     updatePoints({
                         variables: {
@@ -121,10 +127,10 @@ const Actions = (props: {
     }
 
     const sendReferralEmail = () => {
-        if (user.email && recipientEmail) {
+        if (user.user_id && recipientEmail) {
             dispatch(
                 referEmailAction(
-                    user.email,
+                    user.user_id,
                     user.name,
                     user.referralCode,
                     recipientEmail

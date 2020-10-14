@@ -77,6 +77,7 @@ export default function (state = AUTH_DEFAULT, action: any) {
             return {
                 ...state,
                 applicationRedirect: action.redirect,
+            }
         case WaitlistAction.SET_CLOSING_DATE:
             return {
                 ...state,

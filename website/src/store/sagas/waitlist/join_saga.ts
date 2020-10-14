@@ -1,6 +1,6 @@
 import { takeEvery, all, call } from "redux-saga/effects"
-import { apiPost } from "utils/Api"
-import { config } from "constants/config"
+
+import { apiPost } from "shared/utils/api"
 
 import * as WaitlistAction from "store/actions/auth/waitlist"
 
@@ -10,12 +10,12 @@ const JOIN_EMAIL_ENABLED = false
 
 function* insertWaitlist(action: any) {
     const date = moment(action.closingDate).format("MMMM Do, YYYY")
-    if (action.email && JOIN_EMAIL_ENABLED) {
+    if (action.user_id && JOIN_EMAIL_ENABLED) {
         yield call(
             apiPost,
-            config.url.PRIMARY_SERVER + "/mail/joinWaitlist",
+            "/mail/joinWaitlist",
             {
-                email: action.email,
+                email: action.user_id,
                 name: action.name,
                 date: date,
             },
@@ -25,18 +25,21 @@ function* insertWaitlist(action: any) {
 }
 
 function* referEmail(action: any) {
-    if (action.email) {
-        yield call(
+    console.log("referral saga")
+    console.log(action)
+    if (action.user_id) {
+        const { json } = yield call(
             apiPost,
-            config.url.PRIMARY_SERVER + "/mail/waitlistReferral",
+            "/mail/waitlistReferral",
             {
-                email: action.email,
+                email: action.user_id,
                 name: action.name,
                 code: action.code,
                 recipient: action.recipient,
             },
             ""
         )
+        console.log(json)
     }
 }
 

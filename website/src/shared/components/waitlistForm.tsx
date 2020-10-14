@@ -102,7 +102,13 @@ function WaitlistForm(props: any) {
             }
 
             dispatch(
-                insertWaitlistAction(email, name, newPoints, newReferralCode)
+                insertWaitlistAction(
+                    email,
+                    name,
+                    newPoints,
+                    newReferralCode,
+                    closingDate
+                )
             )
 
             dispatch(updateApplicationRedirect(true))
@@ -124,7 +130,8 @@ function WaitlistForm(props: any) {
                     email,
                     currentUser.name,
                     currentUser.points,
-                    currentUser.referralCode
+                    currentUser.referralCode,
+                    closingDate
                 )
             )
             setProcessing(false)
