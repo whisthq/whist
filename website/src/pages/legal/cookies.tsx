@@ -16,16 +16,14 @@ function Cookies(props: any) {
             >
                 <div style={{ fontSize: 40 }}>COOKIE POLICY</div>
                 <div style={{ color: "#555555", marginBottom: 40 }}>
-                    Last updated May 17th, 2020
+                    Last updated October 8th, 2020
                 </div>
                 <p>
                     Fractal Computers, Inc. (“we” or “us” or “our”) may use
                     cookies and other tracking technologies when you visit our
                     website,{" "}
-                    <HashLink to="/privacy#top">
-                        www.fractalcomputers.com
-                    </HashLink>
-                    , including any other media form, media channel, mobile
+                    <HashLink to="/privacy#top">www.tryfractal.com</HashLink>,
+                    including any other media form, media channel, mobile
                     website, or mobile application related or connected thereto
                     (collectively, the “Site”) to help customize the Site and
                     improve your experience.
@@ -122,7 +120,7 @@ function Cookies(props: any) {
                         when logged in.
                     </p>
                     <p style={{ fontWeight: "bold" }}>
-                        Email and Newsletter Cookies
+                        Email And Newsletter Cookies
                     </p>
                     <p>
                         This Site offers newsletter or email subscription
@@ -197,8 +195,8 @@ function Cookies(props: any) {
                 <p>
                     If you are looking for more information, you can contact us
                     via email at{" "}
-                    <a href="mailto: support@fractalcomputers.com">
-                        support@fractalcomputers.com
+                    <a href="mailto: support@tryfractal.com">
+                        support@tryfractal.com
                     </a>
                     .
                 </p>

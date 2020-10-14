@@ -1,5 +1,6 @@
-import React, { useContext } from "react"
+import React, { useContext, useEffect } from "react"
 import { Row, Col, Carousel } from "react-bootstrap"
+import { debugLog } from 'shared/utils/logging'
 
 import InvestorBox from "pages/about/components/investorBox"
 import EmployeeBox from "pages/about/components/employeeBox"
@@ -15,7 +16,6 @@ import "styles/about.css"
 
 const About = (props: any) => {
     const { width } = useContext(MainContext)
-
     let teamCards = []
     let shuffledTeamData = teamData
         .map((a) => ({ sort: Math.random(), value: a }))
@@ -37,7 +37,6 @@ const About = (props: any) => {
             </Carousel.Item>
         )
     }
-
     return (
         <div>
             <div

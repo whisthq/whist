@@ -6,15 +6,14 @@ import { CountryDropdown } from "react-country-region-selector"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 import { nanoid } from "nanoid"
+import { useMutation } from "@apollo/client"
 
-import history from "shared/utils/history"
-import { db } from "shared/utils/firebase"
 import MainContext from "shared/context/mainContext"
-import {
-    INITIAL_POINTS,
-    REFERRAL_POINTS,
-    getUnsortedLeaderboard,
-} from "shared/utils/points"
+import { INITIAL_POINTS, REFERRAL_POINTS } from "shared/utils/points"
+import { INSERT_WAITLIST } from "pages/landing/constants/graphql"
+import { UPDATE_WAITLIST } from "shared/constants/graphql"
+import { updateApplicationRedirect } from "store/actions/auth/waitlist"
+
 import {
     insertWaitlistAction,
     deleteUserAction,
@@ -30,6 +29,10 @@ function WaitlistForm(props: any) {
     const [name, setName] = useState("")
     const [country, setCountry] = useState("United States")
     const [processing, setProcessing] = useState(false)
+
+    const [addWaitlist] = useMutation(INSERT_WAITLIST)
+
+    const [updatePoints] = useMutation(UPDATE_WAITLIST)
 
     function updateEmail(evt: any) {
         evt.persist()
@@ -52,10 +55,24 @@ function WaitlistForm(props: any) {
 
         for (var i = 0; i < waitlist.length; i++) {
             if (
-                waitlist[i].referralCode &&
-                waitlist[i].referralCode === referralCode
+                waitlist[i].referral_code &&
+                waitlist[i].referral_code === referralCode
             ) {
-                return waitlist[i].email
+                return waitlist[i]
+            }
+        }
+
+        return null
+    }
+
+    function getWaitlistUser() {
+        if (!email) {
+            return null
+        }
+
+        for (var i = 0; i < waitlist.length; i++) {
+            if (waitlist[i].user_id && waitlist[i].user_id === email) {
+                return waitlist[i]
             }
         }
 
@@ -65,73 +82,65 @@ function WaitlistForm(props: any) {
     async function insertWaitlist() {
         setProcessing(true)
 
-        const unsortedLeaderboard = await getUnsortedLeaderboard()
-        const exists = unsortedLeaderboard.hasOwnProperty(email)
+        const currentUser = getWaitlistUser()
+
         var newPoints: number = INITIAL_POINTS
         var newReferralCode = nanoid(8)
 
-        if (!exists) {
+        if (!currentUser) {
             var referrer = getReferrer()
 
             if (referrer) {
-                unsortedLeaderboard[referrer] = {
-                    ...unsortedLeaderboard[referrer],
-                    referrals: unsortedLeaderboard[referrer].referrals + 1,
-                    points:
-                        unsortedLeaderboard[referrer].points + REFERRAL_POINTS,
-                    name: unsortedLeaderboard[referrer].name,
-                    email: referrer,
-                    referralCode: unsortedLeaderboard[referrer].referralCode
-                        ? unsortedLeaderboard[referrer].referralCode
-                        : null,
-                }
+                updatePoints({
+                    variables: {
+                        user_id: referrer.user_id,
+                        points: referrer.points + REFERRAL_POINTS,
+                    },
+                    optimisticResponse: true,
+                })
                 newPoints = newPoints + REFERRAL_POINTS
             }
 
-            unsortedLeaderboard[email] = {
-                referrals: 0,
-                points: newPoints,
-                name: name,
-                email: email,
-                referralCode: newReferralCode,
-                country: country,
-            }
-
-            db.collection("metadata")
-                .doc("waitlist")
-                .update({
-                    leaderboard: unsortedLeaderboard,
-                })
-                .then(() =>
-                    dispatch(
-                        insertWaitlistAction(
-                            email,
-                            name,
-                            newPoints,
-                            unsortedLeaderboard[email].referralCode,
-                            0,
-                            closingDate
-                        )
-                    )
+            dispatch(
+                insertWaitlistAction(
+                    email,
+                    name,
+                    newPoints,
+                    newReferralCode,
+                    closingDate
                 )
-                .then(() => history.push("/application"))
+            )
+
+            dispatch(updateApplicationRedirect(true))
+
+            addWaitlist({
+                variables: {
+                    user_id: email,
+                    name: name,
+                    points: newPoints,
+                    referral_code: newReferralCode,
+                    referrals: 0,
+                },
+            })
+
+            setProcessing(false)
         } else {
             dispatch(
                 insertWaitlistAction(
                     email,
-                    unsortedLeaderboard[email].name,
-                    unsortedLeaderboard[email].points,
-                    unsortedLeaderboard[email].referralCode,
-                    0,
+                    currentUser.name,
+                    currentUser.points,
+                    currentUser.referralCode,
                     closingDate
                 )
             )
+            setProcessing(false)
         }
     }
 
     return (
         <div style={{ width: isAction ? "100%" : "" }}>
-            {user && user.email ? (
+            {user && user.user_id ? (
                 <div>
                     <button
                         className="white-button"

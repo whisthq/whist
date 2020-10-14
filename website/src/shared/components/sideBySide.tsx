@@ -8,8 +8,14 @@ import Gaming from "assets/largeGraphics/gaming.svg"
 import Graphics from "assets/largeGraphics/graphics.svg"
 import Productivity from "assets/largeGraphics/productivity.svg"
 
+import { Link } from "react-router-dom"
+
+import DemoVideo from "pages/landing/components/demoVideo"
+
 function SideBySide(props: any) {
     const { appHighlight } = useContext(MainContext)
+
+    const videoCases: Set<string> = new Set(["DemoVideo"])
 
     const yourApps = appHighlight ? appHighlight : "your apps"
     const yourApplications = appHighlight ? appHighlight : "your applications"
@@ -46,12 +52,27 @@ function SideBySide(props: any) {
                 </div>
             </div>
         ),
+        DemoVideo: (
+            <div>
+                <div>
+                    Curious to see what using fractal feels like? Watch the demo
+                    to see how running on Fractal compares to running natively
+                    on various apps.
+                </div>
+                <div style={{ marginTop: 20 }}>
+                    Our home-grown streaming technology allows you to run laggy
+                    applications fast on the cloud while controlling them
+                    locally.
+                </div>
+            </div>
+        ),
     }
 
     const images: any = {
         Productivity: Productivity,
         Gaming: Gaming,
         Graphics: Graphics,
+        DemoVideo: Graphics, // hopefully a good background
     }
 
     const headers: any = {
@@ -59,6 +80,7 @@ function SideBySide(props: any) {
             "Give " + yourApps + " more RAM and blazing-fast Internet.",
         Gaming: "How It Works",
         Graphics: "No GPU? No problem.",
+        DemoVideo: "Watch It In Action",
     }
 
     return (
@@ -76,28 +98,35 @@ function SideBySide(props: any) {
                     }}
                 >
                     <div style={{ position: "relative" }}>
-                        <img
-                            style={{
-                                width: "100%",
-                                margin: "auto",
-                                borderRadius: 3,
-                                boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.2)",
-                            }}
-                            src={images[props.case]}
-                            alt=""
-                        />
+                        {videoCases.has(props.case) ? (
+                            <div style={{position: "relative", zIndex: 2}}>
+                                <DemoVideo />
+                            </div>
+                        ) : (
+                            <img
+                                style={{
+                                    zIndex: 0, // before the pretty grey box
+                                    width: "100%",
+                                    margin: "auto",
+                                    borderRadius: 3,
+                                    boxShadow:
+                                        "0px 4px 20px rgba(0, 0, 0, 0.2)",
+                                }}
+                                src={images[props.case]}
+                                alt=""
+                            />
+                        )}
                         <div
                             style={{
                                 position: "absolute",
-                                zIndex: 0,
+                                zIndex: 1,
                                 height: props.width > 720 ? "100%" : "50%",
                                 width: "100%",
                                 maxWidth: 800,
                                 left: props.reverse ? -50 : 50,
                                 top: 50,
                                 background: "rgba(213, 225, 245, 0.2)",
-                            }}
-                        ></div>
+                            }}/>
                     </div>
                 </Col>
                 <Col md={{ span: 6, order: props.reverse ? 1 : 2 }}>

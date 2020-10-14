@@ -2,7 +2,7 @@ import firebase from "firebase/app"
 import "firebase/auth"
 import "firebase/firestore"
 
-import { config } from "constants/config"
+import { config } from "shared/constants/config"
 
 var firebaseConfig =
     config.sentry_env === "development"

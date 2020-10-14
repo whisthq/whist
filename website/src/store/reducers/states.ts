@@ -1,6 +1,6 @@
 export const AUTH_DEFAULT = {
     user: {
-        email: null,
+        user_id: null,
         name: null,
         referrals: 0,
         points: 0,
@@ -9,8 +9,8 @@ export const AUTH_DEFAULT = {
         referralCode: null,
     },
     loggedIn: false,
+    applicationRedirect: false,
     waitlist: [],
-    unsortedLeaderboard: null,
     clicks: {
         number: 0,
         lastClicked: 0,
