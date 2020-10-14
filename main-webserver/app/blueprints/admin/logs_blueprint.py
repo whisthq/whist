@@ -2,8 +2,8 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from app import fractalPreProcess
-from app.celery.aws_s3_modification import uploadLogsToS3
 from app.celery.aws_s3_deletion import deleteLogsFromS3
+from app.celery.aws_s3_modification import uploadLogsToS3
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST
 from app.helpers.blueprint_helpers.admin.logs_get import logsHelper
 from app.helpers.blueprint_helpers.admin.logs_post import (

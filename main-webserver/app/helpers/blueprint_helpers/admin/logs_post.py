@@ -1,6 +1,5 @@
-from app import *
-
-from app.models.logs import *
+from app.constants.http_codes import SUCCESS
+from app.models import db, ProtocolLog
 
 
 def bookmarkHelper(connection_id):
