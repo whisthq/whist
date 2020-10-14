@@ -57,6 +57,15 @@ char* read_file(const char* filename, size_t* char_nb) {
 int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     /*
         Converts a bmp array into a png image format, stored within pkt
+
+        Arguments:
+            bmp (unsigned char*): BMP byte file representation (includes header)
+            size (unsigned int): size of BMP file
+            pkt (AVPacket*): AVPacket into which the converted PNG will be stored
+
+        Return:
+            ret (int): 0 on success, other integer on failure
+            => ARG `pkt` is loaded with output PNG data array
     */
 
     // Read BMP file header contents
@@ -217,6 +226,10 @@ int read_char_open(AVFormatContext** pctx, const char* data, int data_size) {
 
 int load_png(uint8_t* data[4], int linesize[4], int* w, int* h,
              enum AVPixelFormat* pix_fmt, char* png_data, int size) {
+    /*
+        Loads PNG pixel data into `data[0]` given PNG file byte data in `png_data`
+    */
+
     AVFormatContext* format_ctx = NULL;
     AVCodec* codec = NULL;
     AVCodecContext* codec_ctx = NULL;
@@ -290,6 +303,10 @@ end:
 
 int load_png_file(uint8_t* data[4], int linesize[4], unsigned int* w, unsigned int* h,
                   enum AVPixelFormat* pix_fmt, char* png_filename) {
+    /*
+        Loads PNG pixel data into `data[0]` given PNG filename in `png_filename`
+    */
+
     AVFormatContext* format_ctx = NULL;
     AVCodec* codec = NULL;
     AVCodecContext* codec_ctx = NULL;
