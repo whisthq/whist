@@ -293,8 +293,10 @@ ClipboardData* unsafe_GetClipboard() {
                 
                 // convert BMP to PNG
                 AVPacket packet;
-                if (bmp_to_png((unsigned char*)bmp_data, (unsigned)(cb->size + 14), &packet) != 0)
+                if (bmp_to_png((unsigned char*)bmp_data, (unsigned)(cb->size + 14), &packet) != 0) {
                     LOG_ERROR("clipboard bmp to png conversion failed");
+                    break;
+                }
                 free(bmp_data);
 
                 // copy converted PNG data to clipboard struct
@@ -464,33 +466,12 @@ void unsafe_SetClipboard(ClipboardData* cb) {
                 AVPacket pkt;
                 if (png_to_bmp_char(cb->data, cb->size, &pkt) != 0) {
                     LOG_ERROR("Clipboard image png -> bmp conversion failed");
+                    break;
                 }
+                int w = *((int*)&pkt.data[18]);
+                int h = *((int*)&pkt.data[22]);
                 memcpy(cb->data, pkt.data + 14, pkt.size - 14);
                 cb->size = pkt.size - 14;
-                /*
-                if ((*(int*)&cb->data[8]) < 0) {
-                    LOG_INFO("Original Height: %d", (*(int*)&cb->data[8]));
-                    (*(int*)&cb->data[8]) = -(*(int*)&cb->data[8]);
-                    int height = (*(int*)&cb->data[8]);
-                    // row_size = 4 * floor( (bits_per_pixel * image_width + 31)/32 )
-                    int row_size =
-                        (((*(short*)&cb->data[14]) * (*(int*)&cb->data[4]) + 31) / 32) * 4;
-                    char* buf = cb->data + cb->size - row_size * height;
-                    char* tmp = malloc(row_size);
-                    LOG_INFO("Width: %d", (*(int*)&cb->data[4]));
-                    LOG_INFO("Height: %d", (*(int*)&cb->data[8]));
-                    LOG_INFO("Bits per pixel: %d", (*(short*)&cb->data[14]));
-                    LOG_INFO("Row Size: %d", row_size);
-                    LOG_INFO("OFFSET: %d", (int)(buf - cb->data));
-                    LOG_INFO("Header Size: %d", (*(int*)&cb->data[0]));
-                    for (int i = 0; i < height / 2; i++) {
-                        memcpy(tmp, buf + row_size * i, row_size);
-                        memcpy(buf + row_size * i, buf + row_size * (height - 1 - i), row_size);
-                        memcpy(buf + row_size * (height - 1 - i), tmp, row_size);
-                    }
-                    free(tmp);
-                }
-                */
                 cf_type = CF_DIB;
                 hMem = getGlobalAlloc(cb->data, cb->size);
             }
