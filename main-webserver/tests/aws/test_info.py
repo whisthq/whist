@@ -1,6 +1,6 @@
 """Tests for the /container/protocol_info endpoint."""
 
-from app.helpers.blueprint_helpers.aws.aws_container_get import protocol_info
+from app.helpers.blueprint_helpers.aws.aws_container_post import protocol_info
 
 
 def not_found(*args, **kwargs):
@@ -30,7 +30,7 @@ def test_successful(client, monkeypatch):
 
 
 def test_no_container():
-    response, status = protocol_info("x.x.x.x")
+    response, status = protocol_info("x.x.x.x", 0)
 
     assert not response
     assert status == 404
@@ -38,7 +38,7 @@ def test_no_container():
 
 def test_protocol_info(container):
     with container() as c:
-        response, status = protocol_info(c.ip)
+        response, status = protocol_info(c.ip, c.port_32262)
 
         assert status == 200
         assert response.pop("allow_autoupdate") == c.allow_autoupdate

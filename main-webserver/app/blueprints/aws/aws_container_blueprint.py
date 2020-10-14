@@ -9,10 +9,10 @@ from app.celery.aws_ecs_creation import create_new_container, send_commands
 from app.celery.aws_ecs_deletion import delete_cluster, deleteContainer
 from app.celery.aws_ecs_status import pingHelper
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
-from app.helpers.blueprint_helpers.aws.aws_container_get import protocol_info
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
     preprocess_task_info,
+    protocol_info,
     set_stun,
 )
 from app.helpers.utils.general.auth import fractalAuth
@@ -97,18 +97,23 @@ def test_endpoint(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
 
-@aws_container_bp.route("/container/protocol_info")
+@aws_container_bp.route("/container/protocol_info", methods=("POST",))
 @fractalPreProcess
 def aws_container_info(**kwargs):
     body = kwargs.pop("body")
     address = kwargs.pop("received_from")
-    port_32262 = body.pop("port")
-    info, status = protocol_info(address, port_32262)
 
-    if info:
-        response = jsonify(info), status
+    try:
+        port = body.pop("port")
+    except KeyError:
+        response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
-        response = jsonify({"status": status}), status
+        info, status = protocol_info(address, port)
+
+        if info:
+            response = jsonify(info), status
+        else:
+            response = jsonify({"status": status}), status
 
     return response
 
@@ -121,12 +126,12 @@ def aws_container_ping(**kwargs):
 
     try:
         available = body.pop("available")
-        port_32262 = body.pop("port")
+        port = body.pop("port")
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
         # Update container status.
-        status = pingHelper.delay(available, address, port_32262)
+        status = pingHelper.delay(available, address, port)
         response = jsonify(status), status["status"]
 
     return response

@@ -19,10 +19,18 @@ def no_stripe(monkeypatch):
     )
 
 
-def test_bad_request(client):
+def test_no_availability(client):
     client.login("new-email@fractalcomputers.com", "new-email-password")
 
     response = client.container_ping(omit_available=True)
+
+    assert response.status_code == 400
+
+
+def test_no_port(client):
+    client.login("new-email@fractalcomputers.com", "new-email-password")
+
+    response = client.container_ping(omit_port=True)
 
     assert response.status_code == 400
 
@@ -33,7 +41,7 @@ def test_not_found(client, monkeypatch):
     monkeypatch.setattr(pingHelper, "apply_async", status(code))
     client.login("new-email@fractalcomputers.com", "new-email-password")
 
-    response = client.container_ping(available=True)
+    response = client.container_ping(available=True, port=0)
 
     assert response.status_code == code
 
@@ -44,7 +52,7 @@ def test_successful(client, monkeypatch):
     monkeypatch.setattr(pingHelper, "apply_async", status(code))
     client.login("new-email@fractalcomputers.com", "new-email-password")
 
-    response = client.container_ping(available=True)
+    response = client.container_ping(available=True, port=0)
 
     assert response.status_code == code
 
@@ -52,7 +60,7 @@ def test_successful(client, monkeypatch):
 def test_no_container(container, no_stripe):
     with container("RUNNING_AVAILABLE"):
         with pytest.raises(Exception):
-            pingHelper(True, "x.x.x.x")
+            pingHelper(True, "x.x.x.x", 0)
 
 
 @pytest.mark.parametrize(
@@ -70,7 +78,7 @@ def test_no_container(container, no_stripe):
 )
 def test_ping_helper(available, container, final_state, initial_state, no_stripe):
     with container(initial_state) as c:
-        result = pingHelper(available, c.ip)
+        result = pingHelper(available, c.ip, c.port_32262)
 
         assert "status" in result
         assert result["status"] == SUCCESS
