@@ -249,6 +249,9 @@ int handleMouseButtonUpDown(SDL_Event *event) {
     // Record if left / right / middle button
     fmsg.mouseButton.button = event->button.button;
     fmsg.mouseButton.pressed = event->button.type == SDL_MOUSEBUTTONDOWN;
+    if (fmsg.mouseButton.button == MOUSE_L) {
+        SDL_CaptureMouse(fmsg.mouseButton.pressed);
+    }
     SendFmsg(&fmsg);
 
     return 0;
