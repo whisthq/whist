@@ -54,7 +54,7 @@ const Login = (props: any) => {
 
     const setAWSRegion = () => {
         const { spawn } = require('child_process')
-        const regions = spawn('./awsping', ['-verbose', '1'])
+        const regions = spawn('./awsping', ['-verbose', '1']) // ping via TCP
         regions.stdout.setEncoding('utf8')
 
         regions.stdout.on('data', (data: any) => {
