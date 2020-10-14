@@ -1,4 +1,4 @@
-package fractalLogger
+package fractallogger
 
 import (
 	"fmt"
@@ -6,19 +6,23 @@ import (
 	"runtime/debug"
 )
 
+// Create an error from format string and args
 func MakeError(format string, v ...interface{}) error {
 	return fmt.Errorf(format, v...)
 }
 
+// Create string from format string and args
 func Sprintf(format string, v ...interface{}) string {
 	return fmt.Sprintf(format, v...)
 }
 
+// Log an error
 func Error(err error) {
 	errstr := fmt.Sprintf("ERROR: %v", err)
 	log.Println(errstr)
 }
 
+// Panic on an error
 func Panic(err error) {
 	log.Panic(err)
 }

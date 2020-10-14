@@ -15,7 +15,7 @@ import (
 	// forget to send a message via sentry.  For the same reason, we make sure
 	// not to import the fmt package either, instead separating required
 	// functionality in this impoted package as well.
-	logger "github.com/fractalcomputers/ecs-host-service/fractalLogger"
+	logger "github.com/fractalcomputers/ecs-host-service/fractallogger"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
