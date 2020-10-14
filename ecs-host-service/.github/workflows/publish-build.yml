@@ -4,6 +4,8 @@ name: Publish builds
 on:
     push:
         branches: [master]
+        paths-ignore:
+        - '**/README.md'
 
 env:
     binary-location: build
