@@ -235,7 +235,7 @@ int32_t SendVideo(void* opaque) {
                 }
             } else {
                 LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate, max_mbps);
-                current_bitrate = (int)(max_mbps*1024*1024);
+                current_bitrate = (int)(max_mbps * 1024 * 1024);
                 pending_encoder = true;
                 encoder_finished = false;
                 encoder_factory_server_w = device->width;
