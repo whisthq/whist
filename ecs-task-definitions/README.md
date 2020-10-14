@@ -6,4 +6,5 @@ You can retrieve the JSON of a task definition directly in the AWS console when 
 
 **Currently supported applications**
 
-- None yet
+- Base Ubuntu 20.04 Image
+- Google Chrome
