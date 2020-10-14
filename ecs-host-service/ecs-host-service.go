@@ -2,7 +2,8 @@ package main
 
 import (
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
-	// that we never forget to send a message via sentry.
+	// that we never forget to send a message via sentry. Instead, use the
+	// fractallogger package imported below as `logger`
 
 	"context"
 	"io"
