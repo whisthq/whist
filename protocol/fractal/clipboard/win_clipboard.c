@@ -305,6 +305,9 @@ ClipboardData* unsafe_GetClipboard() {
                 cb->type = CLIPBOARD_IMAGE;
                 break;
             case CF_HDROP:
+                LOG_WARNING("GetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
+                return cb;
+                /*
                 LOG_INFO("Hdrop! Size: %d", cb->size);
                 DROPFILES drop;
                 memcpy(&drop, cb->data, sizeof(DROPFILES));
@@ -414,6 +417,7 @@ ClipboardData* unsafe_GetClipboard() {
                 cb->size = 0;
 
                 break;
+                */
             default:
                 LOG_WARNING("Clipboard type unknown: %d", cf_type);
                 cb->type = CLIPBOARD_NONE;
@@ -464,12 +468,14 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             LOG_INFO("SetClipboard to Image with size %d", cb->size);
             if (cb->size > 0) {
                 AVPacket pkt;
-                if (png_to_bmp_char(cb->data, cb->size, &pkt) != 0) {
+                if (png_char_to_bmp(cb->data, cb->size, &pkt) != 0) {
                     LOG_ERROR("Clipboard image png -> bmp conversion failed");
-                    break;
+                    return;
+                } 
+                if (pkt.size - 14 > sizeof(clipboard_buf)) {
+                    LOG_WARNING("Could not copy, clipboard too large! %d bytes", pkt.size - 14);
+                    return;
                 }
-                int w = *((int*)&pkt.data[18]);
-                int h = *((int*)&pkt.data[22]);
                 memcpy(cb->data, pkt.data + 14, pkt.size - 14);
                 cb->size = pkt.size - 14;
                 cf_type = CF_DIB;
@@ -479,6 +485,10 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         case CLIPBOARD_FILES:
             LOG_INFO("SetClipboard to Files");
 
+            LOG_WARNING("SetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
+            return;
+
+            /*
             WCHAR first_file_path[MAX_PATH] = L"";
             wcscat(first_file_path, LSET_CLIPBOARD);
             wcscat(first_file_path, L"\\*");
@@ -539,6 +549,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             hMem = getGlobalAlloc(drop, total_len);
 
             break;
+            */
         default:
             LOG_WARNING("Unknown clipboard type!");
             break;
