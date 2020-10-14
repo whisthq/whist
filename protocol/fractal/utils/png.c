@@ -2,6 +2,7 @@
 
 #include <libavdevice/avdevice.h>
 #include <libavutil/imgutils.h>
+#include <libswscale/swscale.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -52,110 +53,73 @@ char* read_file(const char* filename, size_t* char_nb) {
 
     return code;
 }
-/*
-int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
-    unsigned int w, h;
-    static const unsigned MINHEADER = 54;
-    if ((unsigned int)size < MINHEADER) return -1;
-    if (bmp[0] != 'B' || bmp[1] != 'M') return -1;
-    unsigned pixeloffset = bmp[10] + 256 * bmp[11];
-    w = bmp[18] + bmp[19] * 256;
-    h = bmp[22] + bmp[23] * 256;
-    if (bmp[28] != 24 && bmp[28] != 32) return -1;
-    unsigned numChannels = bmp[28] / 8;
-    unsigned scanlineBytes = w * numChannels;
-    if (scanlineBytes % 4 != 0) scanlineBytes = (scanlineBytes / 4) * 4 + 4;
 
-    unsigned dataSize = scanlineBytes * h;
-    if ((unsigned int)size < dataSize + pixeloffset) return -1;
-    char* data = bmp + pixeloffset;
-    int ret;
-    AVFrame* frame;
-    AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_PNG);
-    if (!codec) {
-        LOG_ERROR("Codec not found");
-        exit(1);
-    }
-    AVCodecContext* c = avcodec_alloc_context3(codec);
-    if (!c) {
-        LOG_ERROR("Could not allocate video codec context");
-        exit(1);
-    }
-
-    c->bit_rate = 400000;
-    c->width = (int)w;
-    c->height = (int)h;
-    c->time_base = (AVRational){1, 25};
-    c->color_range = AVCOL_RANGE_MPEG;
-    c->pix_fmt = AV_PIX_FMT_RGB24;
-
-    if (avcodec_open2(c, codec, NULL) < 0) {
-        LOG_ERROR("Could not open codec");
-        exit(1);
-    }
-
-    frame = av_frame_alloc();
-    if (!frame) {
-        LOG_ERROR("Could not allocate video frame");
-        exit(1);
-    }
-    frame->format = c->pix_fmt;
-    frame->width = c->width;
-    frame->height = c->height;
-
-    ret = av_image_alloc(frame->data, frame->linesize, c->width, c->height, c->pix_fmt, 32);
-    if (ret < 0) {
-        LOG_ERROR("Could not allocate raw picture buffer");
-        exit(1);
-    }
-
-    av_init_packet(pkt);
-    pkt->data = NULL;
-    pkt->size = 0;
-    int offset, offset_base;
-    for (int y = 0; y < c->height; y++) {
-        for (int x = 0; x < c->width; x++) {
-            offset = (y * c->width + x) * 3;
-            offset_base = ((c->height - y - 1) * c->width + x) * 3;
-            frame->data[0][offset] = data[offset_base + 2];
-            frame->data[0][offset + 1] = data[offset_base + 1];
-            frame->data[0][offset + 2] = data[offset_base + 0];
-        }
-    }
-
-    frame->pts = 1;
-     //ret = avcodec_encode_video2(c, pkt, frame, &got_output);
-    avcodec_send_frame(c, frame);
-    ret = avcodec_receive_packet(c, pkt);
-    if (ret < 0) {
-        LOG_ERROR("Error encoding frame");
-        exit(1);
-    }
-    avcodec_close(c);
-    av_free(c);
-    av_freep(&frame->data[0]);
-    av_frame_free(&frame);
-    return 0;
-}*/
 int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
-    unsigned int w, h;
+    /*
+    Converts a bmp array into a png image format, stored within pkt
+    */
+
+    // Read BMP file header contents
+    int w, h;
     static const unsigned MINHEADER = 54;
     if (size < MINHEADER) return -1;
     if (bmp[0] != 'B' || bmp[1] != 'M') return -1;
     printf("File bit size = %d\n", bmp[28]);
-    unsigned pixeloffset = bmp[10] + 256 * bmp[11];
-    w = bmp[18] + bmp[19] * 256;
-    h = bmp[22] + bmp[23] * 256;
+    unsigned pixeloffset = *((int*)(&bmp[10]));
+    w = *((int*)(&bmp[18]));
+    h = *((int*)(&bmp[22]));
     if (bmp[28] != 24 && bmp[28] != 32) return -1;
     unsigned numChannels = bmp[28] / 8;
     unsigned scanlineBytes = w * numChannels;
     if (scanlineBytes % 4 != 0) scanlineBytes = (scanlineBytes / 4) * 4 + 4;
 
-    unsigned dataSize = scanlineBytes * h;
-    if (size < dataSize + pixeloffset) return -1;
-    unsigned char* data = bmp + pixeloffset;
-    int ret;
-    AVFrame* frame;
+    // BMP pixel arrays are always multiples of 4. Images with widths that are not multiples
+    //  of 4 are always padded at the end of each row. orig_bmp_w is the padded width of each
+    //  BMP row in the original image.
+    int orig_bmp_w = w % 4 == 0 ? w : (w / 4) * 4 + 4;
+
+    // Depending on numChannels, we could be dealing with BGR24 or BGR32 in the BMP, but
+    //  always save to PNG RGBA
+    enum AVPixelFormat bmp_format = numChannels == 3 ? AV_PIX_FMT_BGR24 : AV_PIX_FMT_BGR32;
+    enum AVPixelFormat png_format = AV_PIX_FMT_RGBA;
+
+    // BMP files are stored with each row left to right, but rows are then stored bottom to top.
+    //  This means that rows must be reversed into a new buffer before being passed on for conversion.
+    uint8_t* bmp_original_buffer = (uint8_t*)(bmp + pixeloffset);
+    int bmp_bytes = av_image_get_buffer_size(bmp_format, w, h, numChannels * 8);
+    uint8_t* bmp_buffer = (uint8_t*)av_malloc(bmp_bytes);
+    for (int y = 0; y < h; y++) {
+        memcpy(
+            bmp_buffer + w * (h - y - 1) * numChannels, 
+            bmp_original_buffer + orig_bmp_w * y * numChannels, 
+            w * numChannels
+        );
+    }
+
+    // Create a new buffer for the PNG image
+    int png_bytes = av_image_get_buffer_size(png_format, w, h, 32);
+    uint8_t* png_buffer = (uint8_t*)av_malloc(png_bytes);
+
+    // Create and fill the frames for both the original BMP image and the new PNG image
+    AVFrame* bmp_frame = av_frame_alloc();
+    bmp_frame->format = bmp_format;
+    bmp_frame->width = w;
+    bmp_frame->height = h;
+    AVFrame* png_frame = av_frame_alloc();
+    png_frame->format = png_format;
+    png_frame->width = w;
+    png_frame->height = h;
+
+    av_image_fill_arrays(bmp_frame->data, bmp_frame->linesize, bmp_buffer, bmp_format, w, h, 1);
+    av_image_fill_arrays(png_frame->data, png_frame->linesize, png_buffer, png_format, w, h, 1);
+
+    // Convert the BMP image into the PNG image
+    struct SwsContext* conversionContext =
+        sws_getContext(w, h, bmp_format, w, h, png_format, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+    sws_scale(conversionContext, bmp_frame->data, bmp_frame->linesize, 0, h, png_frame->data,
+              png_frame->linesize);
+
+    // Encode the PNG image frame into an actual PNG image 
     AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_PNG);
     if (!codec) {
         printf("Codec not found\n");
@@ -168,59 +132,33 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     }
 
     c->bit_rate = 400000;
-    c->width = (int)w;
-    c->height = (int)h;
+    c->width = w;
+    c->height = h;
     c->time_base = (AVRational){1, 25};
     c->color_range = AVCOL_RANGE_MPEG;
-    c->pix_fmt = AV_PIX_FMT_RGB24;
+    c->pix_fmt = png_format;
 
     if (avcodec_open2(c, codec, NULL) < 0) {
         printf("Could not open codec\n");
         exit(1);
     }
 
-    frame = av_frame_alloc();
-    if (!frame) {
-        printf("Could not allocate video frame\n");
-        exit(1);
-    }
-    frame->format = c->pix_fmt;
-    frame->width = c->width;
-    frame->height = c->height;
-
-    ret = av_image_alloc(frame->data, frame->linesize, c->width, c->height, c->pix_fmt, 32);
-    if (ret < 0) {
-        printf("Could not allocate raw picture buffer\n");
-        exit(1);
-    }
-
     av_init_packet(pkt);
     pkt->data = NULL;
     pkt->size = 0;
-    int offset, offset_base;
-    for (int y = 0; y < c->height; y++) {
-        for (int x = 0; x < c->width; x++) {
-            offset = (y * c->width + x) * 3;
-            offset_base = ((c->height - y - 1) * c->width + x) * 3;
-            frame->data[0][offset] = data[offset_base + 2];
-            frame->data[0][offset + 1] = data[offset_base + 1];
-            frame->data[0][offset + 2] = data[offset_base + 0];
-        }
-    }
 
-    frame->pts = 1;
-
-    // ret = avcodec_encode_video2(c, pkt, frame, &got_output);
-    avcodec_send_frame(c, frame);
-    ret = avcodec_receive_packet(c, pkt);
-    if (ret < 0) {
+    avcodec_send_frame(c, png_frame);
+    if (avcodec_receive_packet(c, pkt) < 0) {
         printf("Error encoding frame\n");
         exit(1);
     }
+
     avcodec_close(c);
     av_free(c);
-    av_freep(&frame->data[0]);
-    av_frame_free(&frame);
+    av_free(bmp_buffer);
+    av_free(png_buffer);
+    av_frame_free(&bmp_frame);
+    av_frame_free(&png_frame);
     return 0;
 }
 

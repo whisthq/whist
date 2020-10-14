@@ -287,6 +287,7 @@ ClipboardData* unsafe_GetClipboard() {
                 *((char*)(&bmp_data[0])) = 'B';
                 *((char*)(&bmp_data[1])) = 'M';
                 *((int*)(&bmp_data[2])) = cb->size + 14;
+                *((int*)(&bmp_data[6])) = 0;
                 *((int*)(&bmp_data[10])) = 54;
                 memcpy(bmp_data + 14, cb->data, cb->size);
                 
@@ -294,7 +295,7 @@ ClipboardData* unsafe_GetClipboard() {
                 AVPacket packet;
                 if (bmp_to_png((unsigned char*)bmp_data, (unsigned)(cb->size + 14), &packet) != 0)
                     LOG_ERROR("clipboard bmp to png conversion failed");
-                free(bmp_data)
+                free(bmp_data);
 
                 // copy converted PNG data to clipboard struct
                 memcpy(cb->data, packet.data, packet.size);
@@ -462,10 +463,11 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             if (cb->size > 0) {
                 AVPacket pkt;
                 if (png_to_bmp_char(cb->data, cb->size, &pkt) != 0) {
-                    LOG_ERROR("Clipboard image conversion failed");
+                    LOG_ERROR("Clipboard image png -> bmp conversion failed");
                 }
-                memcpy(cb->data, pkt.data, pkt.size);
-                cb->size = pkt.size;
+                memcpy(cb->data, pkt.data + 14, pkt.size - 14);
+                cb->size = pkt.size - 14;
+                /*
                 if ((*(int*)&cb->data[8]) < 0) {
                     LOG_INFO("Original Height: %d", (*(int*)&cb->data[8]));
                     (*(int*)&cb->data[8]) = -(*(int*)&cb->data[8]);
@@ -488,6 +490,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
                     }
                     free(tmp);
                 }
+                */
                 cf_type = CF_DIB;
                 hMem = getGlobalAlloc(cb->data, cb->size);
             }
