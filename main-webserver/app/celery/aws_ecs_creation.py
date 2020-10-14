@@ -1,4 +1,5 @@
 import json
+import os
 import time
 
 import logging
@@ -97,6 +98,7 @@ def create_new_container(
             clusters using awsvpc networking.
     """
 
+    aeskey = os.urandom(8).hex()
     kwargs = {"networkConfiguration": network_configuration}
     message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
     fractalLog(function="create_new_container", label="None", logs=message)
@@ -109,8 +111,8 @@ def create_new_container(
             cluster_name = json.loads(create_new_cluster())["cluster"]
         else:
             cluster_name = all_clusters[0]["cluster"]
-        if len(all_clusters)<base_len:
-            for i in range(base_len-len(all_clusters)):
+        if len(all_clusters) < base_len:
+            for i in range(base_len - len(all_clusters)):
                 _ = create_new_cluster.apply_async()
 
     cluster_info = ClusterInfo.query.get(cluster_name)
@@ -167,6 +169,7 @@ def create_new_container(
         location=ecs_client.region_name,
         os="Linux",
         lock=False,
+        secret_key=aeskey,
     )
     container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
     if container_sql:

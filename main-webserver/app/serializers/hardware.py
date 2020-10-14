@@ -1,8 +1,6 @@
 from app import ma
 from app.models.hardware import *
 
-from .fields import Bytes
-
 
 class UserVMSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
@@ -20,8 +18,6 @@ class UserContainerSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = UserContainer
         include_fk = True
-
-    secret_key = Bytes()
 
 
 class ClusterInfoSchema(ma.SQLAlchemyAutoSchema):

@@ -31,6 +31,31 @@ def preprocess_task_info(app):
     )
 
 
+def protocol_info(address, port):
+    """Returns information, which is consumed by the protocol, to the client.
+
+    Arguments:
+        address: The IP address of the container whose information should be
+            returned.
+    """
+
+    response = None, NOT_FOUND
+    container = UserContainer.query.filter_by(ip=address, port_32262=port).first()
+
+    if container:
+        response = (
+            {
+                "allow_autoupdate": container.allow_autoupdate,
+                "branch": container.branch,
+                "secret_key": container.secret_key,
+                "using_stun": container.using_stun,
+            },
+            SUCCESS,
+        )
+
+    return response
+
+
 def set_stun(user_id, container_id, using_stun):
     """Updates whether or not the specified container should use STUN.
 

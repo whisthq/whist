@@ -53,11 +53,14 @@ class FractalClient(BaseClient):
 
         return self.post("/container/delete", environ_base=self.session, json=body)
 
-    def container_info(self):
-        return self.get("/container/protocol_info")
+    def container_info(self, port=None, **kwargs):
+        data = dict(port=port)
+        body = omit_items(data, **kwargs)
 
-    def container_ping(self, available=None, **kwargs):
-        data = dict(available=available, username=self.username)
+        return self.post("/container/protocol_info", json=body)
+
+    def container_ping(self, available=None, port=None, **kwargs):
+        data = dict(available=available, port=port, username=self.username)
         body = omit_items(data, **kwargs)
 
         return self.post("/container/ping", environ_base=self.session, json=body)
