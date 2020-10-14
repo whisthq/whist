@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 	"runtime/debug"
+	"time"
+
+	"github.com/getsentry/sentry-go"
 )
 
 // Create an error from format string and args
@@ -50,4 +53,15 @@ func Infof(format string, v ...interface{}) {
 func PrintStackTrace() {
 	Info("Printing stack trace: ")
 	debug.PrintStack()
+}
+
+func InitializeSentry() error {
+	return sentry.Init(sentry.ClientOptions{
+		Dsn:   "https://5f2dd9674e2b4546b52c205d7382ac90@o400459.ingest.sentry.io/5461239",
+		Debug: true,
+	})
+}
+
+func FlushSentry() {
+	sentry.Flush(5 * time.Second)
 }

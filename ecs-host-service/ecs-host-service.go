@@ -3,13 +3,13 @@ package main
 import (
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
 	// that we never forget to send a message via sentry.
+
 	"context"
 	"io"
 	"os"
 	"os/exec"
 	"os/signal"
 	"syscall"
-	"time"
 
 	// We use this package instead of the standard library log so that we never
 	// forget to send a message via sentry.  For the same reason, we make sure
@@ -21,7 +21,6 @@ import (
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/getsentry/sentry-go"
 )
 
 // The location on disk where we store the container resource allocations
@@ -68,7 +67,7 @@ func shutdownHostService() {
 	// sentry.CaptureMessage("MESSAGE GOES HERE")
 
 	// Flush buffered Sentry events before the program terminates.
-	sentry.Flush(5 * time.Second)
+	logger.FlushSentry()
 
 	logger.Info("Finished host service shutdown procedure. Finally exiting...")
 	os.Exit(0)
@@ -222,10 +221,7 @@ func main() {
 	checkRunningPermissions()
 
 	// Initialize Sentry
-	err := sentry.Init(sentry.ClientOptions{
-		Dsn:   "https://5f2dd9674e2b4546b52c205d7382ac90@o400459.ingest.sentry.io/5461239",
-		Debug: true,
-	})
+	err := logger.InitializeSentry()
 	if err != nil {
 		logger.Panicf("Unable to initialize sentry. Error: %s", err)
 	}
