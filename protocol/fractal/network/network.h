@@ -324,7 +324,7 @@ int Ack(SocketContext* context);
  * @returns                        A pointer to the FractalPacket on success,
  *                                 NULL on failure
  */
-FractalPacket* ReadTCPPacket(SocketContext* context);
+FractalPacket* ReadTCPPacket(SocketContext* context, bool should_recvp);
 FractalPacket* ReadUDPPacket(SocketContext* context);
 
 /**
