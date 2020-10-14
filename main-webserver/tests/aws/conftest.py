@@ -1,5 +1,6 @@
 """Test fixtures for code that needs access to AWS."""
 
+import os
 import uuid
 
 from contextlib import contextmanager
@@ -63,6 +64,7 @@ def container(cluster, region, user):
             port_32263=32263,
             port_32273=32273,
             cluster=cluster.cluster,
+            secret_key=os.urandom(8).hex(),
         )
 
         db.session.add(c)

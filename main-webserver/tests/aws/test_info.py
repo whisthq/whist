@@ -43,6 +43,6 @@ def test_protocol_info(container):
         assert status == 200
         assert response.pop("allow_autoupdate") == c.allow_autoupdate
         assert response.pop("branch") == c.branch
-        assert response.pop("secret_key") == c.secret_key.hex()
+        assert response.pop("secret_key") == c.secret_key
         assert response.pop("using_stun") == c.using_stun
         assert not response  # The dictionary should be empty now.

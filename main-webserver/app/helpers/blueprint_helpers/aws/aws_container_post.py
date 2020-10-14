@@ -47,7 +47,7 @@ def protocol_info(address, port):
             {
                 "allow_autoupdate": container.allow_autoupdate,
                 "branch": container.branch,
-                "secret_key": container.secret_key.hex(),
+                "secret_key": container.secret_key,
                 "using_stun": container.using_stun,
             },
             SUCCESS,
