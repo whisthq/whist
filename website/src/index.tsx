@@ -13,10 +13,14 @@ import ReduxPromise from "redux-promise"
 import storage from "redux-persist/lib/storage"
 import rootSaga from "store/sagas"
 import * as Sentry from "@sentry/react"
+import { ApolloProvider } from "@apollo/react-hooks"
+import { ApolloClient, InMemoryCache, HttpLink, split } from "@apollo/client"
+import { getMainDefinition } from "@apollo/client/utilities"
+import { WebSocketLink } from "@apollo/client/link/ws"
 
 import history from "shared/utils/history"
 import { MainProvider } from "shared/context/mainContext"
-import { config } from "constants/config"
+import { config } from "shared/constants/config"
 import rootReducer from "store/reducers/root"
 import * as serviceWorker from "serviceWorker"
 
@@ -58,33 +62,81 @@ const persistor = persistStore(store)
 
 sagaMiddleware.run(rootSaga)
 
+// Set up Apollo GraphQL provider for https and wss (websocket)
+
+const httpLink = new HttpLink({
+    uri: config.url.GRAPHQL_HTTP_URL,
+    headers: {
+        "x-hasura-access-key": config.keys.HASURA_ACCESS_KEY,
+    },
+})
+
+const wsLink = new WebSocketLink({
+    uri: config.url.GRAPHQL_WS_URL,
+    options: {
+        reconnect: true,
+        connectionParams: {
+            headers: {
+                "x-hasura-admin-secret": config.keys.HASURA_ACCESS_KEY,
+            },
+        },
+    },
+})
+
+const splitLink = split(
+    ({ query }) => {
+        const definition = getMainDefinition(query)
+        return (
+            definition.kind === "OperationDefinition" &&
+            definition.operation === "subscription"
+        )
+    },
+    wsLink,
+    httpLink
+)
+
+const apolloClient = new ApolloClient({
+    link: splitLink,
+    cache: new InMemoryCache(),
+})
+
 ReactDOM.render(
     <React.StrictMode>
         <Router history={history}>
             <Provider store={store}>
                 <PersistGate loading={null} persistor={persistor}>
-                    <MainProvider>
-                        <Switch>
-                            <Route exact path="/about" component={About} />
-                            <Route
-                                exact
-                                path="/application"
-                                component={Application}
-                            />
-                            <Route exact path="/cookies" component={Cookies} />
-                            <Route exact path="/privacy" component={Privacy} />
-                            <Route
-                                exact
-                                path="/termsofservice"
-                                component={TermsOfService}
-                            />
-                            <Route
-                                exact
-                                path="/:first?/:second?"
-                                component={Landing}
-                            />
-                        </Switch>
-                    </MainProvider>
+                    <ApolloProvider client={apolloClient}>
+                        <MainProvider>
+                            <Switch>
+                                <Route exact path="/about" component={About} />
+                                <Route
+                                    exact
+                                    path="/application"
+                                    component={Application}
+                                />
+                                <Route
+                                    exact
+                                    path="/cookies"
+                                    component={Cookies}
+                                />
+                                <Route
+                                    exact
+                                    path="/privacy"
+                                    component={Privacy}
+                                />
+                                <Route
+                                    exact
+                                    path="/termsofservice"
+                                    component={TermsOfService}
+                                />
+                                <Route
+                                    exact
+                                    path="/:first?/:second?"
+                                    component={Landing}
+                                />
+                            </Switch>
+                        </MainProvider>
+                    </ApolloProvider>
                 </PersistGate>
             </Provider>
         </Router>

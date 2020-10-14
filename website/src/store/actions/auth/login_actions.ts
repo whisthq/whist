@@ -2,10 +2,10 @@ export const GOOGLE_LOGIN = "GOOGLE_LOGIN"
 export const SET_EMAIL = "SET_EMAIL"
 export const LOGOUT = "LOGOUT"
 
-export function googleLogin(email: string, points: number) {
+export function googleLogin(user_id: string, points: number) {
     return {
         type: GOOGLE_LOGIN,
-        email,
+        user_id,
         points,
     }
 }

@@ -2,15 +2,15 @@ import React, { useState, useContext } from "react"
 import { connect } from "react-redux"
 import { Button, Modal, Alert } from "react-bootstrap"
 import { CopyToClipboard } from "react-copy-to-clipboard"
+import { useMutation } from "@apollo/client"
 
 import GoogleButton from "pages/auth/googleButton"
 import WaitlistForm from "shared/components/waitlistForm"
 
-import { db } from "shared/utils/firebase"
-
+import { UPDATE_WAITLIST } from "shared/constants/graphql"
 import { REFERRAL_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
-import { config } from "constants/config"
+import { config } from "shared/constants/config"
 import { updateClicks, referEmailAction } from "store/actions/auth/waitlist"
 
 const CustomAction = (props: {
@@ -59,12 +59,17 @@ const CustomAction = (props: {
 
 const Actions = (props: {
     dispatch: any
-    user: { email: string; name: string; referralCode: string }
+    user: {
+        user_id: string
+        referralCode: string
+        points: number
+        referrals: number
+        name: string
+    }
     loggedIn: any
-    unsortedLeaderboard: any
     clicks: any
 }) => {
-    const { dispatch, user, loggedIn, unsortedLeaderboard, clicks } = props
+    const { dispatch, user, loggedIn, clicks } = props
 
     const [showModal, setShowModal] = useState(false)
     const [showEmailSentAlert, setShowEmailSentAlert] = useState(false)
@@ -72,51 +77,46 @@ const Actions = (props: {
     const [sentEmail, setSentEmail] = useState("")
     const [warning, setWarning] = useState("")
 
+    const [updatePoints] = useMutation(UPDATE_WAITLIST, {
+        onError(err) {},
+    })
+
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
 
     const increasePoints = () => {
         if (user) {
             var allowClick = true
+            var clickReset = false
             const currentTime = new Date().getTime() / 1000
 
-            if (clicks.number > 50) {
-                if (currentTime - clicks.lastClicked > 60 * 60 * 3) {
-                    dispatch(updateClicks(0))
-                } else {
-                    allowClick = false
-                    setWarning(
-                        "Max clicks reached! Clicking will reset in 3 hours."
-                    )
-                }
-            }
-
-            if (allowClick) {
-                dispatch(updateClicks(clicks.number + 1))
-
-                const email = user.email
-
-                const hasClicked = unsortedLeaderboard[email].hasOwnProperty(
-                    "clicks"
-                )
-
-                if (!hasClicked) {
-                    unsortedLeaderboard[email] = {
-                        ...unsortedLeaderboard[email],
-                        clicks: 1,
-                        points: unsortedLeaderboard[email].points + 1,
-                    }
-                } else {
-                    unsortedLeaderboard[email] = {
-                        ...unsortedLeaderboard[email],
-                        clicks: unsortedLeaderboard[email].clicks + 1,
-                        points: unsortedLeaderboard[email].points + 1,
+            if (currentTime - clicks.lastClicked > 1) {
+                if (clicks.number > 50) {
+                    if (currentTime - clicks.lastClicked > 60 * 60 * 3) {
+                        clickReset = true
+                    } else {
+                        allowClick = false
+                        setWarning(
+                            "Max clicks reached! Clicking will reset in 3 hours."
+                        )
                     }
                 }
 
-                db.collection("metadata").doc("waitlist").update({
-                    leaderboard: unsortedLeaderboard,
-                })
+                if (allowClick) {
+                    if (clickReset) {
+                        dispatch(updateClicks(1))
+                    } else {
+                        dispatch(updateClicks(clicks.number + 1))
+                    }
+
+                    updatePoints({
+                        variables: {
+                            user_id: user.user_id,
+                            points: user.points + 1,
+                            referrals: user.referrals,
+                        },
+                    })
+                }
             }
         }
     }
@@ -127,10 +127,10 @@ const Actions = (props: {
     }
 
     const sendReferralEmail = () => {
-        if (user.email && recipientEmail) {
+        if (user.user_id && recipientEmail) {
             dispatch(
                 referEmailAction(
-                    user.email,
+                    user.user_id,
                     user.name,
                     user.referralCode,
                     recipientEmail
@@ -142,7 +142,7 @@ const Actions = (props: {
     }
 
     const renderActions = () => {
-        if (user && user.email) {
+        if (user && user.user_id) {
             return (
                 <div style={{ width: "100%" }}>
                     {!loggedIn && <GoogleButton />}
@@ -259,14 +259,12 @@ function mapStateToProps(state: {
     AuthReducer: {
         user: any
         loggedIn: any
-        unsortedLeaderboard: any
         clicks: number
     }
 }) {
     return {
         user: state.AuthReducer.user,
         loggedIn: state.AuthReducer.loggedIn,
-        unsortedLeaderboard: state.AuthReducer.unsortedLeaderboard,
         clicks: state.AuthReducer.clicks
             ? state.AuthReducer.clicks
             : {
