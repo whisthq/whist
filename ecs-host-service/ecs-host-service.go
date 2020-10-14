@@ -1,16 +1,21 @@
 package main
 
 import (
+	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
+	// that we never forget to send a message via sentry.
 	"context"
-	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"os/signal"
-	"runtime/debug"
 	"syscall"
 	"time"
+
+	// We use this package instead of the standard library log so that we never
+	// forget to send a message via sentry.  For the same reason, we make sure
+	// not to import the fmt package either, instead separating required
+	// functionality in this impoted package as well.
+	logger "github.com/fractalcomputers/ecs-host-service/fractalLogger"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
@@ -26,26 +31,26 @@ const resourceMappingDirectory = "/fractal/containerResourceMappings/"
 // now, we just want to run as root, but this service could be assigned its own
 // user in the future
 func checkRunningPermissions() {
-	log.Println("Checking permissions...")
+	logger.Info("Checking permissions...")
 
 	if os.Geteuid() != 0 {
-		log.Panic("This service needs to run as root!")
+		logger.Panicf("This service needs to run as root!")
 	}
 }
 
 func startDockerDaemon() {
-	log.Println("Starting docker daemon ourselves...")
+	logger.Info("Starting docker daemon ourselves...")
 	cmd := exec.Command("/usr/bin/systemctl", "start", "docker")
 	err := cmd.Run()
 	if err != nil {
-		log.Panicf("Unable to start Docker daemon. Error: %v", err)
+		logger.Panicf("Unable to start Docker daemon. Error: %v", err)
 	} else {
-		log.Println("Successfully started the Docker daemon ourselves.")
+		logger.Info("Successfully started the Docker daemon ourselves.")
 	}
 }
 
 func shutdownHostService() {
-	log.Println("Beginning host service shutdown procedure.")
+	logger.Info("Beginning host service shutdown procedure.")
 
 	// Catch any panics in the calling goroutine. Note that besides the host
 	// machine itself shutting down, this method should be the _only_ way that
@@ -56,68 +61,65 @@ func shutdownHostService() {
 	// of an irrecoverable failure that mandates that the host machine accept no
 	// new connections.
 	r := recover()
-	log.Println("shutdownHostService(): Caught panic", r)
-	log.Println("Printing stack trace: ")
-	debug.PrintStack()
+	logger.Errorf("shutdownHostService(): Caught panic", r)
+	logger.PrintStackTrace()
 
 	// TODO: Send Death Notice to Sentry/Webserver
 	// sentry.CaptureMessage("MESSAGE GOES HERE")
 
 	// Flush buffered Sentry events before the program terminates.
-	defer sentry.Flush(2 * time.Second)
+	sentry.Flush(5 * time.Second)
 
-	log.Println("Finished host service shutdown procedure. Finally exiting...")
+	logger.Info("Finished host service shutdown procedure. Finally exiting...")
 	os.Exit(0)
 }
 
 // Create the directory used to store the container resource allocations (e.g.
 // TTYs) on disk
 func initializeFilesystem() {
-	log.Printf("Initializing filesystem in %s\n", resourceMappingDirectory)
+	logger.Info("Initializing filesystem in %s\n", resourceMappingDirectory)
 
 	// check if resource mapping directory already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
 	if _, err := os.Lstat(resourceMappingDirectory); !os.IsNotExist(err) {
 		if err == nil {
-			log.Panicf("Directory %s already exists!", resourceMappingDirectory)
+			logger.Panicf("Directory %s already exists!", resourceMappingDirectory)
 		} else {
-			log.Panicf("Could not make directory %s because of error %v", resourceMappingDirectory, err)
+			logger.Panicf("Could not make directory %s because of error %v", resourceMappingDirectory, err)
 		}
 	}
 
 	err := os.MkdirAll(resourceMappingDirectory, 0644|os.ModeSticky)
 	if err != nil {
-		log.Panicf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
+		logger.Panicf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
 	} else {
-		log.Printf("Successfully created directory %s\n", resourceMappingDirectory)
+		logger.Infof("Successfully created directory %s\n", resourceMappingDirectory)
 	}
 }
 
 func uninitializeFilesystem() {
 	err := os.RemoveAll(resourceMappingDirectory)
 	if err != nil {
-		log.Panicf("Failed to delete directory %s: error: %v\n", resourceMappingDirectory, err)
+		logger.Panicf("Failed to delete directory %s: error: %v\n", resourceMappingDirectory, err)
 	} else {
-		log.Printf("Successfully deleted directory %s\n", resourceMappingDirectory)
+		logger.Infof("Successfully deleted directory %s\n", resourceMappingDirectory)
 	}
 }
 
 func writeAssignmentToFile(filename, data string) error {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644|os.ModeSticky)
 	if err != nil {
-		err := fmt.Errorf("Unable to create file %s to store resource assignment. Error: %v", filename, err)
-		return err
+		return logger.MakeError("Unable to create file %s to store resource assignment. Error: %v", filename, err)
 	}
 	defer file.Sync()
 	defer file.Close()
 
 	_, err = file.WriteString(data)
 	if err != nil {
-		err := fmt.Errorf("Couldn't write assignment with data %s to file %s. Error: %v", data, filename, err)
-		return err
+		return logger.MakeError("Couldn't write assignment with data %s to file %s. Error: %v", data, filename, err)
 	}
 
-	log.Printf("Wrote data \"%s\" to file %s\n", data, filename)
+	logger.Info("Wrote data \"%s\" to file %s\n", data, filename)
 	return nil
 }
 
@@ -126,27 +128,23 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.Mkdir(datadir, 0644|os.ModeSticky)
 	if err != nil {
-		err := fmt.Errorf("Failed to create container-specific directory %s. Error: %v", datadir, err)
-		return err
+		return logger.MakeError("Failed to create container-specific directory %s. Error: %v", datadir, err)
 	}
-	log.Printf("Created container-specific directory %s\n", datadir)
+	logger.Info("Created container-specific directory %s\n", datadir)
 
 	c, err := cli.ContainerInspect(ctx, id)
 	if err != nil {
-		err := fmt.Errorf("Error running ContainerInspect on container %s: %v", id, err)
-		return err
+		return logger.MakeError("Error running ContainerInspect on container %s: %v", id, err)
 	}
 
 	// Keep track of port mapping
 	// We only need to keep track of the mapping of the container's tcp 32262 on the host
 	hostPort, exists := c.NetworkSettings.Ports["32262/tcp"]
 	if !exists {
-		err := fmt.Errorf("Could not find mapping for port 32262/tcp for container %s", id)
-		return err
+		return logger.MakeError("Could not find mapping for port 32262/tcp for container %s", id)
 	}
 	if len(hostPort) != 1 {
-		err := fmt.Errorf("The hostPort mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", id, hostPort)
-		return err
+		return logger.MakeError("The hostPort mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", id, hostPort)
 	}
 	err = writeAssignmentToFile(datadir+"hostPort_for_my_32262_tcp", hostPort[0].HostPort)
 	if err != nil {
@@ -164,12 +162,11 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 		}
 	}
 	if assignedTty == -1 {
-		err := fmt.Errorf("Was not able to assign an free tty to container id %s", id)
-		return err
+		return logger.MakeError("Was not able to assign an free tty to container id %s", id)
 	}
 
 	// Write the tty assignment to a file
-	err = writeAssignmentToFile(datadir+"tty", fmt.Sprintf("%d", assignedTty))
+	err = writeAssignmentToFile(datadir+"tty", logger.Sprintf("%d", assignedTty))
 	if err != nil {
 		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
 		return err
@@ -190,10 +187,9 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string, tty
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.RemoveAll(datadir)
 	if err != nil {
-		err := fmt.Errorf("Failed to delete container-specific directory %s", datadir)
-		return err
+		return logger.MakeError("Failed to delete container-specific directory %s", datadir)
 	}
-	log.Printf("Successfully deleted container-specific directory %s\n", datadir)
+	logger.Info("Successfully deleted container-specific directory %s\n", datadir)
 
 	for tty := range ttyState {
 		if ttyState[tty] == id {
@@ -217,11 +213,13 @@ func main() {
 
 	// Initialize Sentry
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn: "https://5f2dd9674e2b4546b52c205d7382ac90@o400459.ingest.sentry.io/5461239",
+		Dsn:   "https://5f2dd9674e2b4546b52c205d7382ac90@o400459.ingest.sentry.io/5461239",
+		Debug: true,
 	})
 	if err != nil {
-		log.Fatalf("sentry.Init: %s", err)
+		logger.Panicf("Unable to initialize sentry. Error: %s", err)
 	}
+	// We flush Sentry's queue in shutdownHostService(), so we don't need to defer it here
 
 	// Note that we defer uninitialization so that in case of panic elsewhere, we
 	// still clean up
@@ -234,16 +232,15 @@ func main() {
 	go func() {
 		defer shutdownHostService()
 		<-sigChan
-		log.Println("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and panicking to initiate host shutdown process...")
+		logger.Info("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and panicking to initiate host shutdown process...")
 		uninitializeFilesystem()
-		log.Panic("Got a Ctrl+C: already uninitialized filesystem, looking to exit")
+		logger.Panicf("Got a Ctrl+C: already uninitialized filesystem, looking to exit")
 	}()
 
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		err := fmt.Errorf("Error creating new Docker client: %v", err)
-		log.Panic(err)
+		logger.Panicf("Error creating new Docker client: %v", err)
 	}
 
 	filters := filters.NewArgs()
@@ -261,14 +258,14 @@ func main() {
 	// be reopened after any error is sent over the error channel.
 	needToReinitializeEventStream := false
 	events, errs := cli.Events(context.Background(), eventOptions)
-	log.Println("Initialized event stream...")
+	logger.Info("Initialized event stream...")
 
 eventLoop:
 	for {
 		if needToReinitializeEventStream {
 			events, errs = cli.Events(context.Background(), eventOptions)
 			needToReinitializeEventStream = false
-			log.Println("Re-initialized event stream...")
+			logger.Info("Re-initialized event stream...")
 		}
 
 		select {
@@ -276,35 +273,34 @@ eventLoop:
 			needToReinitializeEventStream = true
 			switch {
 			case err == nil:
-				log.Println("We got a nil error over the Docker event stream. This might indicate an error inside the docker go library. Ignoring it and proceeding normally...")
+				logger.Info("We got a nil error over the Docker event stream. This might indicate an error inside the docker go library. Ignoring it and proceeding normally...")
 				continue
 			case err == io.EOF:
-				log.Panic("Docker event stream has been completely read.")
+				logger.Panicf("Docker event stream has been completely read.")
 				break eventLoop
 			case client.IsErrConnectionFailed(err):
 				// This means "Cannot connect to the Docker daemon..."
-				log.Printf("Got error \"%v\". Trying to start Docker daemon ourselves...", err)
+				logger.Info("Got error \"%v\". Trying to start Docker daemon ourselves...", err)
 				startDockerDaemon()
 				continue
 			default:
-				err := fmt.Errorf("Got an unknown error from the Docker event stream: %v", err)
-				log.Panic(err)
+				logger.Panicf("Got an unknown error from the Docker event stream: %v", err)
 			}
 
 		case event := <-events:
 			if event.Action == "die" || event.Action == "start" {
-				log.Printf("Event: %s for %s %s\n", event.Action, event.Type, event.ID)
+				logger.Info("Event: %s for %s %s\n", event.Action, event.Type, event.ID)
 			}
 			if event.Action == "die" {
 				err := containerDieHandler(ctx, cli, event.ID, &ttyState)
 				if err != nil {
-					log.Printf("Error processing event %s for %s %s: %v", event.Action, event.Type, event.ID, err)
+					logger.Errorf("Error processing event %s for %s %s: %v", event.Action, event.Type, event.ID, err)
 				}
 			}
 			if event.Action == "start" {
 				err := containerStartHandler(ctx, cli, event.ID, &ttyState)
 				if err != nil {
-					log.Printf("Error processing event %s for %s %s: %v", event.Action, event.Type, event.ID, err)
+					logger.Errorf("Error processing event %s for %s %s: %v", event.Action, event.Type, event.ID, err)
 				}
 			}
 		}
