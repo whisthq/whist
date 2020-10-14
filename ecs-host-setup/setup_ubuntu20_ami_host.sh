@@ -89,6 +89,8 @@ sudo systemctl enable docker-container@ecs-agent.service
 sudo rm -rf /var/lib/cloud/instances/
 sudo rm -f /var/lib/ecs/data/*
 
+sudo cp userdata-boostrap.sh /home/ubuntu/userdata-bootstrap.sh
+
 echo
 echo 'Install complete. Make sure you do not reboot when creating AMI (check NO REBOOT)'
 echo
