@@ -882,6 +882,11 @@ int MultithreadedWaitForClient(void* opaque) {
         //     num_controlling_clients++;
         // }
 
+	if (clients[client_id].is_controlling) {
+	    // Reset input system when a new input controller arrives
+	    ResetInput();
+	}
+
         StartTimer(&(clients[client_id].last_ping));
 
         clients[client_id].is_active = true;
