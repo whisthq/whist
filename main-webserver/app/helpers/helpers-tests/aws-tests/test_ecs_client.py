@@ -37,7 +37,10 @@ def test_network_build():
     testclient.spin_til_running(time_delay=2)
     assert '.' in testclient.task_ips.get(0, '-1')
 
-
+@pytest.mark.skipif(
+    "AWS_TEXT_VPC" not in os.environ,
+     reason="Skipping this test til default clients/test cluster are set up",
+)
 def test_partial_works():
     basedict = {
         "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(747391415460),
@@ -63,7 +66,10 @@ def test_partial_works():
     testclient.spin_til_running(time_delay=2)
     assert '.' in testclient.task_ips.get(0, '-1')
 
-
+@pytest.mark.skipif(
+    "AWS_TEXT_VPC" not in os.environ,
+     reason="Skipping this test til default clients/test cluster are set up",
+)
 def test_full_base_config():
     basedict = {
         "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(747391415460),
@@ -169,7 +175,10 @@ def test_cluster_with_auto_scaling_group():
     testclient.spin_til_no_containers(cluster_name)
     testclient.ecs_client.delete_cluster(cluster=cluster_name)
 
-
+@pytest.mark.skipif(
+    "AWS_TEXT_VPC" not in os.environ,
+     reason="Skipping this test til default clients/test cluster are set up",
+)
 def test_basic_ecs_client():
     testclient = ECSClient(launch_type="EC2")
     testclient.set_and_register_task(
