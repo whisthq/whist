@@ -248,6 +248,7 @@ int SendClipboardPackets(void* opaque) {
     Obtain updated clipboard and send clipboard TCP packet to server
     */
 
+    opaque;
     LOG_INFO("SendClipboardPackets running on Thread %p", SDL_GetThreadID(NULL));
 
     clock clipboard_time;

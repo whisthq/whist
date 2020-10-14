@@ -64,6 +64,10 @@ bool isClipboardSynchronizing() { return updating_clipboard; }
 bool pendingUpdateClipboard() { return pending_update_clipboard; }
 
 void initClipboardSynchronizer() {
+    /*
+        Initialize the clipboard and the synchronizer thread
+    */
+
     initClipboard();
 
     connected = true;
@@ -80,11 +84,25 @@ void initClipboardSynchronizer() {
 }
 
 void destroyClipboardSynchronizer() {
+    /*
+        Destroy the clipboard synchronizer
+    */
+
     connected = false;
     SDL_SemPost(clipboard_semaphore);
 }
 
 bool ClipboardSynchronizerSetClipboard(ClipboardData* cb) {
+    /*
+        When called, signal that the clipboard can be set to the given contents
+
+        Arguments:
+            cb (ClipboardData*): pointer to the clipboard to load
+
+        Returns:
+            updatable (bool): whether the clipboard can be set right now
+    */
+
     if (updating_clipboard) {
         LOG_INFO("Tried to SetClipboard, but clipboard is updating");
         return false;
@@ -101,6 +119,14 @@ bool ClipboardSynchronizerSetClipboard(ClipboardData* cb) {
 }
 
 ClipboardData* ClipboardSynchronizerGetNewClipboard() {
+    /*
+        When called, return the current clipboard if a new clipboard activity
+        has registered.
+
+        Returns:
+            cb (ClipboardData*): pointer to the current clipboard
+    */
+
     if (pending_clipboard_push) {
         pending_clipboard_push = false;
         return clipboard;
@@ -128,6 +154,10 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard() {
 }
 
 int UpdateClipboardThread(void* opaque) {
+    /*
+        Thread to get and set clipboard as signals are received.
+    */
+
     UNUSED(opaque);
 
     while (connected) {

@@ -155,7 +155,10 @@ ClipboardData* unsafe_GetClipboard() {
     ClipboardData* cb = (ClipboardData*)cb_buf;
     cb->type = CLIPBOARD_NONE;
     cb->size = 0;
-    get_clipboard_files(cb) || get_clipboard_picture(cb) || get_clipboard_string(cb);
+
+    // NOT IMPLEMENTING CLIPBOARD FILES RIGHT NOW
+    // get_clipboard_files(cb) || get_clipboard_picture(cb) || get_clipboard_string(cb);
+    get_clipboard_picture(cb) || get_clipboard_string(cb);
 
     // Essentially just cb_buf, we expect that the user of GetClipboard
     // will malloc his own version if he wants to save multiple clipboards
@@ -253,6 +256,9 @@ void unsafe_SetClipboard(ClipboardData* cb) {
     } else if (cb->type == CLIPBOARD_FILES) {
         LOG_INFO("Setting clipboard to Files");
 
+        LOG_WARNING("SetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
+        return;
+        /*
         struct dirent* de;
         DIR* dr = opendir(SET_CLIPBOARD);
 
@@ -288,6 +294,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             // Close the file descriptor
             pclose(inp);
         }
+        */
     }
 
     // Set the just_received flag to true in order to prevent hasUpdated from returning true

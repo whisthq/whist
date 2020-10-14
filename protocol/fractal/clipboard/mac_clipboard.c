@@ -71,6 +71,8 @@ ClipboardData* unsafe_GetClipboard() {
     // true
     if (clipboardHasFiles) {
         LOG_INFO("Getting files from clipboard");
+        LOG_WARNING("GetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
+        return cb;
 
         // allocate memory for filenames and paths
         OSXFilenames* filenames[MAX_URLS];
@@ -193,7 +195,10 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         }
         case CLIPBOARD_FILES: {
             LOG_INFO("SetClipboard to Files");
+            LOG_WARNING("SetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
+            return;
 
+            /*
             // allocate memory to store filenames in clipboard
             char* filenames[MAX_URLS];
             for (size_t i = 0; i < MAX_URLS; i++) {
@@ -213,6 +218,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             }
 
             break;
+            */
         }
         default: {
             LOG_INFO("No clipboard data to set!");

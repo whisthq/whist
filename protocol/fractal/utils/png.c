@@ -90,8 +90,8 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     uint8_t* bmp_buffer = (uint8_t*)av_malloc(bmp_bytes);
     for (int y = 0; y < h; y++) {
         memcpy(
-            bmp_buffer + w * (h - y - 1) * numChannels, 
-            bmp_original_buffer + orig_bmp_w * y * numChannels, 
+            bmp_buffer + w * (h - y - 1) * numChannels,
+            bmp_original_buffer + orig_bmp_w * y * numChannels,
             w * numChannels
         );
     }
@@ -116,10 +116,10 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     // Convert the BMP image into the PNG image
     struct SwsContext* conversionContext =
         sws_getContext(w, h, bmp_format, w, h, png_format, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-    sws_scale(conversionContext, bmp_frame->data, bmp_frame->linesize, 0, h, png_frame->data,
+    sws_scale(conversionContext, (const uint8_t* const*)bmp_frame->data, bmp_frame->linesize, 0, h, png_frame->data,
               png_frame->linesize);
 
-    // Encode the PNG image frame into an actual PNG image 
+    // Encode the PNG image frame into an actual PNG image
     AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_PNG);
     if (!codec) {
         av_free(bmp_buffer);
@@ -218,20 +218,29 @@ int read_char_open(AVFormatContext** pctx, const char* data, int data_size) {
 int load_png(uint8_t* data[4], int linesize[4], int* w, int* h,
              enum AVPixelFormat* pix_fmt, char* png_data, int size) {
     AVFormatContext* format_ctx = NULL;
-    AVCodec* codec;
-    AVCodecContext* codec_ctx;
+    AVCodec* codec = NULL;
+    AVCodecContext* codec_ctx = NULL;
     AVFrame* frame;
-    int frame_decoded, ret = 0;
+    int ret = 0;
     AVPacket pkt;
 
     if ((ret = read_char_open(&format_ctx, png_data, size)) < 0) {
         return ret;
     }
 
-    codec_ctx = format_ctx->streams[0]->codec;
-    codec = avcodec_find_decoder(codec_ctx->codec_id);
+    codec = avcodec_find_decoder(format_ctx->streams[0]->codecpar->codec_id);
     if (!codec) {
         ret = AVERROR(EINVAL);
+        goto end;
+    }
+
+    codec_ctx = avcodec_alloc_context3(codec);
+    if (!codec_ctx) {
+        ret = AVERROR(EINVAL);
+        goto end;
+    }
+
+    if ((ret = avcodec_parameters_to_context(codec_ctx, format_ctx->streams[0]->codecpar)) < 0) {
         goto end;
     }
 
@@ -249,9 +258,14 @@ int load_png(uint8_t* data[4], int linesize[4], int* w, int* h,
         goto end;
     }
 
-    ret = avcodec_decode_video2(codec_ctx, frame, &frame_decoded, &pkt);
+    ret = avcodec_send_packet(codec_ctx, &pkt);
 
-    if (ret < 0 || !frame_decoded) {
+    if (ret < 0) {
+        goto end;
+    }
+    ret = avcodec_receive_frame(codec_ctx, frame);
+
+    if (ret < 0) {
         goto end;
     }
     ret = 0;
@@ -268,6 +282,7 @@ int load_png(uint8_t* data[4], int linesize[4], int* w, int* h,
 
 end:
     avcodec_close(codec_ctx);
+    avcodec_free_context(&codec_ctx);
     avformat_close_input(&format_ctx);
     av_freep(&frame);
     return ret;
@@ -377,7 +392,7 @@ end:
     return ret;
 }
 
-int png_data_to_bmp_data(uint8_t* png_buffer, AVPacket* pkt, int* width, int* height, enum AVPixelFormat* png_format, enum AVPixelFormat* bmp_format) { 
+int png_data_to_bmp_data(uint8_t* png_buffer, AVPacket* pkt, int* width, int* height, enum AVPixelFormat* png_format, enum AVPixelFormat* bmp_format) {
     /*
         Convert PNG byte data into BMP byte data
 
@@ -392,13 +407,13 @@ int png_data_to_bmp_data(uint8_t* png_buffer, AVPacket* pkt, int* width, int* he
         Returns:
             ret (int): 0 on success, other integer on failure
             => ARG `pkt` is loaded with output BMP data array
-    */ 
+    */
 
-    // Create an empty BMP buffer based on image size. 
+    // Create an empty BMP buffer based on image size.
     //  Note that align is 1 (not 4 or 32) because ffmpeg handles image encoding later on
     int bmp_bytes = av_image_get_buffer_size(*bmp_format, *width, *height, 1);
     uint8_t* bmp_buffer = (uint8_t*)av_malloc(bmp_bytes);
-    
+
     // Create and fill the frames for both the original PNG image and the new BMP images
     AVFrame* png_frame = av_frame_alloc();
     png_frame->format = *png_format;
@@ -417,7 +432,7 @@ int png_data_to_bmp_data(uint8_t* png_buffer, AVPacket* pkt, int* width, int* he
     // Convert the PNG pixel array to the BMP pixel array
     struct SwsContext* conversionContext = sws_getContext(
         *width, *height, *png_format, *width, *height, *bmp_format, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-    sws_scale(conversionContext, png_frame->data, png_frame->linesize, 0, *height, bmp_frame->data,
+    sws_scale(conversionContext, (const uint8_t* const*)png_frame->data, png_frame->linesize, 0, *height, bmp_frame->data,
               bmp_frame->linesize);
 
     // Encode the BMP image frame into an actual BMP image
@@ -474,7 +489,7 @@ int png_data_to_bmp_data(uint8_t* png_buffer, AVPacket* pkt, int* width, int* he
 }
 
 int png_char_to_bmp(char* png, int size, AVPacket* pkt) {
-    /* 
+    /*
         Convert a PNG byte array into a BMP byte array
 
         Arguments:
@@ -484,7 +499,7 @@ int png_char_to_bmp(char* png, int size, AVPacket* pkt) {
 
         Returns:
             ret (int): 0 on success, other integer on failure
-            => ARG `pkt` is loaded with output BMP data array 
+            => ARG `pkt` is loaded with output BMP data array
     */
 
     uint8_t* input[4];
@@ -507,7 +522,7 @@ int png_file_to_bmp(char* png, AVPacket* pkt) {
         Legacy: this is used only for the loading screen and thus is written in the old
         conversion form instead of using ffmpeg libraries. If this function needs to be
         used for other uses in the future, UPDATE IT to use png_data_to_bmp_data.
-        
+
         Arguments:
             png (char*): filename where the PNG image can be found
             pkt (AVPacket*): the AVPacket into which the converted BMP byte array will be placed
