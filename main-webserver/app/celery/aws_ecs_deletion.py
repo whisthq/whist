@@ -1,3 +1,6 @@
+import time
+import traceback
+
 from app import (
     INTERNAL_SERVER_ERROR,
     REQUEST_TIMEOUT,
@@ -6,14 +9,12 @@ from app import (
     celery_instance,
     db,
     fractalLog,
-    logging,
     fractalSQLCommit,
+    logging,
 )
-import time
-import traceback
 from app.helpers.utils.aws.aws_resource_locks import lockContainerAndUpdate, spinLock
 from app.helpers.utils.aws.base_ecs_client import ECSClient
-from app.serializers.hardware import UserContainer, ClusterInfo
+from app.serializers.hardware import ClusterInfo, UserContainer
 
 
 @celery_instance.task(bind=True)
@@ -74,6 +75,48 @@ def deleteContainer(self, user_id, container_name):
     except Exception as e:
         fractalLog(
             function="deleteContainer",
+            label=str(container_name),
+            logs="ran into deletion error {}".format(e),
+        )
+
+        self.update_state(
+            state="FAILURE",
+            meta={
+                "msg": "Error stopping Container {container_name}".format(
+                    container_name=container_name
+                )
+            },
+        )
+        return {"status": INTERNAL_SERVER_ERROR}
+    return {"status": SUCCESS}
+
+
+@celery_instance.task(bind=True)
+def drainContainer(self, container_name):
+    if spinLock(container_name) < 0:
+        return {"status": REQUEST_TIMEOUT}
+    container = UserContainer.query.get(container_name)
+    fractalLog(
+        function="deleteContainer",
+        label=str(container_name),
+        logs="Beginning to drain Container {container_name}. Goodbye, {container_name}!".format(
+            container_name=container_name
+        ),
+    )
+
+    lockContainerAndUpdate(
+        container_name=container_name, state="DRAINING", lock=True, temporary_lock=10
+    )
+    container_cluster = container.cluster
+    ecs_client = ECSClient(base_cluster=container_cluster, grab_logs=False)
+    try:
+        container_arn = ecs_client.get_container_for_tasks(
+            [container_name], cluster=container_cluster
+        )
+        ecs_client.set_containers_to_draining([container_arn], cluster=container_cluster)
+    except Exception as e:
+        fractalLog(
+            function="drainContainer",
             label=str(container_name),
             logs="ran into deletion error {}".format(e),
         )
