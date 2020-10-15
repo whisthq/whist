@@ -229,9 +229,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
-# Use local setup-scripts repository for development
-COPY setup-scripts /setup-scripts
-
 # Create fractal user
 RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \
@@ -255,26 +252,32 @@ RUN systemctl mask pulseaudio
 RUN chmod -x /usr/bin/start-pulseaudio-x11
 COPY pulse-client.conf /etc/pulse/client.conf
 
-# Install all required components for Fractal to perform well, split into steps for caching
-WORKDIR /setup-scripts/linux
+# Creating Fractal Directory and Subdirectories in /usr/share
+RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fractal/sync
+RUN chgrp fractal -R /usr/share/fractal
+RUN chmod g+rw -R /usr/share/fractal
 
-RUN /bin/bash -c "source utils.sh \
-    && Install-CustomX11Configuration"
+# echo "Downloading Fractal FFmpeg .so from AWS S3 and Moving to /usr/share/fractal/" 
+RUN sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y
+RUN wget -qO shared-libs.tar.gz "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz"
+RUN tar -xvf shared-libs.tar.gz
+RUN sudo mv share/64/Linux/* /usr/share/fractal/
 
-RUN /bin/bash -c "source utils.sh \
-    && Set-FractalDirectory \
-    && Install-FractalServer dev \
-    && Install-FractalAutoUpdate master"
+# symlink Fractal FFmpeg .so libs to system libs location for standard Linux system runtime library loading
+RUN ln -sf /usr/share/fractal/libavcodec.so /usr/local/lib/libavcodec-fractal.so \
+    ln -sf /usr/share/fractal/libavdevice.so /usr/local/lib/libavdevice-fractal.so \
+    ln -sf /usr/share/fractal/libavfilter.so /usr/local/lib/libavfilter-fractal.so \
+    ln -sf /usr/share/fractal/libavformat.so /usr/local/lib/libavformat-fractal.so \
+    ln -sf /usr/share/fractal/libavutil.so /usr/local/lib/libavutil-fractal.so \
+    ln -sf /usr/share/fractal/libpostproc.so /usr/local/lib/libpostproc-fractal.so \
+    ln -sf /usr/share/fractal/libswresample.so /usr/local/lib/libswresample-fractal.so \
+    ln -sf /usr/share/fractal/libswscale.so /usr/local/lib/libswscale-fractal.so \
+    rm -rf shared-libs.tar.gz \
+    rm -rf share
 
-RUN /bin/bash -c "source utils.sh \
-    && Install-Unison \
-    && Enable-SSHKey"
-
-RUN /bin/bash -c " source utils.sh \
-    && Add-AutoLogin \
-    && Install-FractalServer"
-
-WORKDIR /
+# echo "Downloading Fractal Auto-update Script"
+RUN ls -al /usr/share/fractal
+RUN sudo wget -qO /usr/share/fractal/update.sh "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/update.sh"
 
 # Install FFmpeg dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -369,9 +372,12 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
 # Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID
-COPY setup-scripts/linux/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/
+COPY 01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
+COPY 02-fractal-dummy.conf /usr/share/X11/xorg.conf.d/02-fractal-dummy.conf
 COPY fractal-update-nvidia-busid.service /etc/systemd/system/
-COPY setup-scripts/linux/update-nvidia-busid.sh /usr/share/fractal/
+COPY update-nvidia-busid.sh /usr/share/fractal/
+
+
 
 RUN systemctl enable fractal-update-nvidia-busid
 
@@ -412,7 +418,6 @@ COPY .xinitrc /root/.xinitrc
 COPY gimprc /home/fractal/.config/GIMP/2.10/gimprc
 COPY gimprc /root/.config/GIMP/2.10/gimprc
 
-
 # Install Firefox nightly (for testing only)
 # RUN add-apt-repository ppa:ubuntu-mozilla-daily/ppa
 # RUN apt-get update && apt-get install firefox-trunk
@@ -451,13 +456,11 @@ RUN systemctl mask nvidia-persistenced
 COPY systemd-logind-override-ubuntu20.conf /etc/systemd/system/systemd-logind.service.d/override.conf
 
 # Set up Fractal Protocol symlink
-RUN rm /usr/share/fractal/FractalServer.sh /usr/share/fractal/FractalServer
 RUN mkdir /usr/share/fractal/bin
 RUN ln -s /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 
 # Grab pre-compiled Fractal Protocol
 COPY protocol/server/build64/libsentry.so /usr/share/fractal/bin/libsentry.so
 COPY protocol/server/build64/FractalServer /usr/share/fractal/bin/FractalServer
-
 
 CMD ["/lib/systemd/systemd"]

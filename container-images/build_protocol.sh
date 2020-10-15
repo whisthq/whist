@@ -13,5 +13,6 @@ base/protocol/docker-run-builder-shell.sh \
     cd base/protocol && \
     git clean -dfx && \
     cmake . && \
+    make clang-format && \
     make -j \
 '''
