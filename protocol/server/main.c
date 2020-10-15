@@ -943,13 +943,15 @@ int main() {
     }
 #endif
 
+    update_webserver_parameters();
+
     input_device = CreateInputDevice();
     if (!input_device) {
         LOG_WARNING("Failed to create input device for playback.");
     }
 
 #ifdef _WIN32
-    if (!InitDesktop(input_device)) {
+    if (!InitDesktop(input_device, get_vm_password())) {
         LOG_WARNING("Could not winlogon!\n");
         destroyLogger();
         return 0;
