@@ -1,6 +1,5 @@
-import React, { useContext, useEffect } from "react"
+import React, { useContext } from "react"
 import { Row, Col, Carousel } from "react-bootstrap"
-import { debugLog } from 'shared/utils/logging'
 
 import InvestorBox from "pages/about/components/investorBox"
 import EmployeeBox from "pages/about/components/employeeBox"
