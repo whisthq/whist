@@ -153,7 +153,7 @@ void update() {
         }
 
         // Receive tcp buffer, if a full packet has been received
-        FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
+        FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext, true);
         if (tcp_packet) {
             handleServerMessage((FractalServerMessage*)tcp_packet->data,
                                 (size_t)tcp_packet->payload_size);
@@ -433,7 +433,7 @@ int ReceivePackets(void* opaque) {
                  lastrecv * MS_IN_SECOND);
     }
 
-    SDL_Delay(5);
+    SDL_Delay(50);
 
     destroyUpdate();
 
@@ -441,9 +441,8 @@ int ReceivePackets(void* opaque) {
 }
 
 int syncKeyboardState(void) {
+    // Set keyboard state initialized to null
     FractalClientMessage fmsg = {0};
-
-    SDL_Delay(5);
 
     fmsg.type = MESSAGE_KEYBOARD_STATE;
 
@@ -460,8 +459,10 @@ int syncKeyboardState(void) {
     // current layout rather than the scancode for the physical key.
     for (int i = 0; i < fmsg.num_keycodes; i++) {
         if (state[i]) {
-            fmsg.keyboard_state[SDL_GetScancodeFromName(
-                SDL_GetKeyName(SDL_GetKeyFromScancode(i)))] = 1;
+            int scancode = SDL_GetScancodeFromName(SDL_GetKeyName(SDL_GetKeyFromScancode(i)));
+            if (0 <= scancode && scancode < (int)sizeof(fmsg.keyboard_state)) {
+                fmsg.keyboard_state[scancode] = 1;
+            }
         }
     }
 

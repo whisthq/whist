@@ -238,8 +238,8 @@ int32_t SendVideo(void* opaque) {
                     update_encoder = false;
                 }
             } else {
-                current_bitrate = (int)(STARTING_BITRATE);
                 LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate, max_mbps);
+                current_bitrate = (int)(max_mbps * 1024 * 1024);
                 pending_encoder = true;
                 encoder_finished = false;
                 encoder_factory_server_w = device->width;
@@ -674,7 +674,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     clock timer;
     StartTimer(&timer);
     do {
-        packet = ReadTCPPacket(context);
+        packet = ReadTCPPacket(context, true);
         SDL_Delay(5);
     } while (packet == NULL && GetTimer(timer) < 3.0);
     if (packet == NULL) {
@@ -889,6 +889,11 @@ int MultithreadedWaitForClient(void* opaque) {
         //     num_controlling_clients++;
         // }
 
+        if (clients[client_id].is_controlling) {
+            // Reset input system when a new input controller arrives
+            ResetInput();
+        }
+
         StartTimer(&(clients[client_id].last_ping));
 
         clients[client_id].is_active = true;
@@ -1063,7 +1068,7 @@ int main(int argc, char* argv[]) {
         StartTimer(&startup_time);
 
         running = true;
-        max_mbps = STARTING_BITRATE;
+        max_mbps = STARTING_BITRATE / 1024.0 / 1024.0;
         wants_iframe = false;
         update_encoder = false;
 
