@@ -61,9 +61,6 @@ func shutdownHostService() {
 	logger.Errorf("shutdownHostService(): Caught panic: %v", r)
 	logger.PrintStackTrace()
 
-	// TODO: Send Death Notice to Sentry/Webserver
-	// sentry.CaptureMessage("MESSAGE GOES HERE")
-
 	// Flush buffered Sentry events before the program terminates.
 	logger.Info("Flushing sentry...")
 	logger.FlushSentry()
