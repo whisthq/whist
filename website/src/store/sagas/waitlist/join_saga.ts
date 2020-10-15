@@ -26,7 +26,7 @@ function* insertWaitlist(action: any) {
 
 function* referEmail(action: any) {
     if (action.user_id) {
-        const { json } = yield call(
+        yield call(
             apiPost,
             "/mail/waitlistReferral",
             {

@@ -8,8 +8,6 @@ import Gaming from "assets/largeGraphics/gaming.svg"
 import Graphics from "assets/largeGraphics/graphics.svg"
 import Productivity from "assets/largeGraphics/productivity.svg"
 
-import { Link } from "react-router-dom"
-
 import DemoVideo from "pages/landing/components/demoVideo"
 
 function SideBySide(props: any) {
@@ -99,7 +97,7 @@ function SideBySide(props: any) {
                 >
                     <div style={{ position: "relative" }}>
                         {videoCases.has(props.case) ? (
-                            <div style={{position: "relative", zIndex: 2}}>
+                            <div style={{ position: "relative", zIndex: 2 }}>
                                 <DemoVideo />
                             </div>
                         ) : (
@@ -126,7 +124,8 @@ function SideBySide(props: any) {
                                 left: props.reverse ? -50 : 50,
                                 top: 50,
                                 background: "rgba(213, 225, 245, 0.2)",
-                            }}/>
+                            }}
+                        />
                     </div>
                 </Col>
                 <Col md={{ span: 6, order: props.reverse ? 1 : 2 }}>
