@@ -71,9 +71,18 @@ func PrintStackTrace() {
 }
 
 func InitializeSentry() error {
+	strProd := os.Getenv("USE_PROD_SENTRY")
+	useProdSentry := (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true")
+	if useProdSentry {
+		log.Print("Using production sentry configuration: Debug: false")
+	} else {
+		log.Print("Using debug sentry configuration: Debug: true. Printing sentry events instead")
+	}
+
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:   "https://5f2dd9674e2b4546b52c205d7382ac90@o400459.ingest.sentry.io/5461239",
-		Debug: true,
+		Dsn:     "https://5f2dd9674e2b4546b52c205d7382ac90@o400459.ingest.sentry.io/5461239",
+		Release: "0.1",
+		Debug:   !useProdSentry,
 	})
 	if err != nil {
 		return MakeError("Error calling Sentry.init: %v", err)
