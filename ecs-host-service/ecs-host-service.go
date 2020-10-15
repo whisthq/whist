@@ -68,6 +68,7 @@ func shutdownHostService() {
 	// sentry.CaptureMessage("MESSAGE GOES HERE")
 
 	// Flush buffered Sentry events before the program terminates.
+	logger.Info("Flushing sentry...")
 	logger.FlushSentry()
 
 	logger.Info("Finished host service shutdown procedure. Finally exiting...")
