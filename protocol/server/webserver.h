@@ -14,14 +14,6 @@ void update_webserver_parameters();
 bool allow_autoupdate();
 
 /**
- * @brief                          Queries the webserver to get the VM's aes
- * private key
- *
- * @returns                        The VM's 16-byte aes private key
- */
-char* get_private_key();
-
-/**
  * @brief                          Queries the webserver to get the using_stun
  * status
  *

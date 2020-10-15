@@ -13,7 +13,6 @@ add_executable(FractalClient
         main.c
         audio.c
         desktop_utils.c
-        fractalgetopt.c
         network.c
         sdl_event_handler.c
         sdl_utils.c

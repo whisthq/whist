@@ -19,6 +19,10 @@
 
 #ifndef FRACTAL_GETOPT_H
 
+// standard for POSIX programs
+#define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
+#define FRACTAL_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
+
 #ifndef __need_getopt
 #define FRACTAL_GETOPT_H 1
 #endif

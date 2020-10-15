@@ -22,7 +22,7 @@ TODO
 #include "desktop_utils.h"
 #include "network.h"
 #include "../fractal/utils/logging.h"
-#include "fractalgetopt.h"
+#include "../fractal/core/fractalgetopt.h"
 
 extern volatile char aes_private_key[16];
 extern volatile char *server_ip;
@@ -44,10 +44,6 @@ extern volatile SDL_Window *window;
 
 extern unsigned short port_mappings[USHRT_MAX];
 
-// standard for POSIX programs
-#define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
-#define FRACTAL_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
-
 const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"height", required_argument, NULL, 'h'},
                                      {"bitrate", required_argument, NULL, 'b'},
@@ -65,10 +61,10 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
 
-#define OPTION_STRING "w:h:b:c:p:ku:e:z:n:"
+#define OPTION_STRING "w:h:b:c:k:ue:z:p:xn:"
 
 int parseArgs(int argc, char *argv[]) {
-    // todo: replace `desktop` with argv[0]
+    // TODO: replace `desktop` with argv[0]
     const char *usage =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "Try 'desktop --help' for more information.\n";

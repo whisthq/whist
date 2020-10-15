@@ -2,7 +2,6 @@
 #include "../fractal/utils/json.h"
 #include "webserver.h"
 
-static char aes_private_key[16];
 static char* branch = NULL;
 static bool is_autoupdate;
 static bool already_obtained_vm_type = false;
@@ -27,7 +26,6 @@ void update_webserver_parameters() {
     if (!already_obtained_vm_type) {
         // Set Default Values
         is_autoupdate = true;
-        memcpy(aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
         is_using_stun = false;
     }
 
@@ -71,7 +69,6 @@ void update_webserver_parameters() {
 
     // Set Default Values
     is_autoupdate = true;
-    memcpy(aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
     is_using_stun = false;
 
     json_t json;
@@ -84,7 +81,6 @@ void update_webserver_parameters() {
 
     kv_pair_t* dev_value = get_kv(&json, "allow_autoupdate");
     kv_pair_t* branch_value = get_kv(&json, "branch");
-    kv_pair_t* private_key = get_kv(&json, "private_key");
     kv_pair_t* using_stun = get_kv(&json, "using_stun");
     kv_pair_t* access_token_value = get_kv(&json, "access_token");
 
@@ -111,11 +107,6 @@ void update_webserver_parameters() {
 
         LOG_INFO("Is Dev? %s", dev_value->bool_value ? "true" : "false");
         LOG_INFO("Branch: %s", branch);
-
-        if (private_key && private_key->type == JSON_BOOL) {
-            LOG_INFO("Private Key: %s", private_key->str_value);
-            read_hexadecimal_private_key(private_key->str_value, aes_private_key);
-        }
 
         if (using_stun && using_stun->type == JSON_BOOL) {
             LOG_INFO("Using Stun: %s", using_stun->bool_value ? "Yes" : "No");
@@ -149,13 +140,6 @@ char* get_branch() {
         LOG_ERROR("Webserver parameters not updated!");
     }
     return branch;
-}
-
-char* get_private_key() {
-    if (!already_obtained_vm_type) {
-        LOG_ERROR("Webserver parameters not updated!");
-    }
-    return aes_private_key;
 }
 
 bool get_using_stun() {

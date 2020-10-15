@@ -28,6 +28,8 @@ its threads.
 #include <unistd.h>
 #endif
 
+#include "../fractal/utils/logging.h"
+#include "../fractal/core/fractalgetopt.h"
 #include "../fractal/audio/audiocapture.h"
 #include "../fractal/audio/audioencode.h"
 #include "../fractal/core/fractal.h"
@@ -645,7 +647,7 @@ void update() {
                  "update.bat\"",
                  get_branch()
 #else
-                 "TODO: Linux command?"
+                 " " // TODO: Linux Autoupdate
 #endif
         );
 
@@ -658,13 +660,11 @@ void update() {
 #ifdef _WIN32
             cmd
 #else
-            "TODO: Linux command?"
+            " " // TODO: Linux Autoupdate
 #endif
             ,
             NULL);
     }
-
-    memcpy(aes_private_key, get_private_key(), sizeof(aes_private_key));
 }
 
 #include <time.h>
@@ -912,7 +912,96 @@ int MultithreadedWaitForClient(void* opaque) {
     return 0;
 }
 
-int main() {
+
+
+const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k'},
+                                     {"identifier", required_argument, NULL, 'i'},
+                                     // these are standard for POSIX programs
+                                     {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
+                                     {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
+                                     // end with NULL-termination
+                                     {0, 0, 0, 0}};
+
+#define OPTION_STRING "k:i:"
+
+int parse_args(int argc, char* argv[]) {
+    // TODO: replace `server` with argv[0]
+    const char *usage =
+        "Usage: server [OPTION]... IP_ADDRESS\n"
+        "Try 'server --help' for more information.\n";
+    const char *usage_details =
+        "Usage: server [OPTION]... IP_ADDRESS\n"
+        "\n"
+        "All arguments to both long and short options are mandatory.\n"
+        "  -k, --private-key=PK          pass in the RSA Private Key as a "
+        "                                  hexadecimal string\n"
+        "  -i, --identifier=ID           pass in the unique identifier for this server, as a string\n"
+        "      --help     display this help and exit\n"
+        "      --version  output version information and exit\n";
+
+    memcpy((char *)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+
+    int opt;
+
+    while (true) {
+        opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
+        if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
+            printf("Option passed into %c is too long! Length of %zd when max is %d", opt,
+                   strlen(optarg), FRACTAL_ENVIRONMENT_MAXLEN);
+            return -1;
+        }
+        errno = 0;
+        switch (opt) {
+            case 'k':
+                if (!read_hexadecimal_private_key(optarg, (char *)aes_private_key)) {
+                    printf("Invalid hexadecimal string: %s\n", optarg);
+                    printf("%s", usage);
+                    return -1;
+                }
+                break;
+            case 'i':
+                printf("ID: %s", optarg);
+                exit(-1);
+                break;
+            case FRACTAL_GETOPT_HELP_CHAR:
+                printf("%s", usage_details);
+                return 1;
+            case FRACTAL_GETOPT_VERSION_CHAR:
+                printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
+                return 1;
+            default:
+                if (opt != -1) {
+                    // illegal option
+                    printf("%s", usage);
+                    return -1;
+                }
+                break;
+        }
+        if (opt == -1) {
+            bool can_accept_nonoption_args = false;
+            if (optind < argc && can_accept_nonoption_args) {
+                // there's a valid non-option arg
+                // Do stuff with argv[optind]
+                ++optind;
+            } else if (optind < argc && !can_accept_nonoption_args) {
+                // incorrect usage
+                printf("%s", usage);
+                return -1;
+            } else {
+                // we're done
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int main(int argc, char* argv[]) {
+    if (parse_args(argc, argv) == -1) {
+        exit(-1);
+    }
+
     init_default_port_mappings();
 
 #if defined(_WIN32)
