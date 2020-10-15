@@ -82,7 +82,7 @@ Once an image with tag `current-build` has been built locally via `build_contain
 
 As usual, `APP` is the path to the app folder. Meanwhile, `MOUNT` is an optional argument specifying whether to facilitate server protocol development by mounting and live-updating the `base/protocol` submodule. If `MOUNT=mount`, then the submodule is mounted; else, it is not.
 
-### Running Remote Images
+### Running Remote-Pushed Images
 
 If an image has been pushed to ECR and you wish to test, first ensure the AWS CLI is configured as in [Pushing Images](#pushing-images). Retrieve the tag you wish to run, either from ECR itself, or by grabbing the relevant (full) git commit hash from this repository. Then, run
 
@@ -90,7 +90,7 @@ If an image has been pushed to ECR and you wish to test, first ensure the AWS CL
 ./run_remote_container_image.sh APP TAG [REGION] [MOUNT]
 ```
 
-As above, `APP` is self-explanatory, `REGION` optionally specifies the AWS region, with a default of `us-east-1`, and `MOUNT=mount` mounts the submodule. Here `TAG` is the full git commit hash to run.
+As above, `APP` is self-explanatory, `REGION` optionally specifies the ECR region to pull from, with a default of `us-east-1`, and `MOUNT=mount` mounts the submodule. Here `TAG` is the full git commit hash to run.
 
 ## Development
 
