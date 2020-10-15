@@ -12,4 +12,4 @@ aws ecr get-login-password --region $region | docker login --username AWS --pass
 
 docker pull $image
 
-exec ./run_container_image.sh $image $mount
+./run_container_image.sh $image $mount

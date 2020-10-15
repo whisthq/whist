@@ -6,9 +6,19 @@
 rm /var/run/nologin
 # echo $SSH_PUBLIC_KEY_AWS > ~/.ssh/authorized_keys
 
-rm /etc/udev/rules.d/90-fractal-input.rules
 ln -sf /home/fractal/fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
-# echo "Entry.sh handing off to bootstrap.sh" 
+
+# begin wait loop to get tty number and port map
+CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
+FRACTAL_MAPPINGS_DIR=/fractal/containerResourceMappings
+
+# wait for files to exist
+until [ -f $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/.ready ]
+do
+	sleep 0.1
+done
+
+ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/tty)
 
 # Create a tty within the container so we don't have to hook it up to one of the host's
 # Also, create the device /dev/dri/card0 which is needed for GPU accel
@@ -16,7 +26,7 @@ ln -sf /home/fractal/fractal-input.rules /etc/udev/rules.d/90-fractal-input.rule
 # to do it here.
 # Note that we always use /dev/tty10 even though the minor number below (i.e.
 # the number after 4 may change)
-sudo mknod -m 620 /dev/tty10 c 4 10
+sudo mknod -m 620 /dev/tty10 c 4 $ASSIGNED_TTY
 sudo mkdir /dev/dri
 sudo mknod -m 660 /dev/dri/card0 c 226 0
 

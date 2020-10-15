@@ -14,7 +14,7 @@ env:
 jobs:
     ecr-push:
         name: Build and push to AWS ECR
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git repository
               uses: actions/checkout@v2

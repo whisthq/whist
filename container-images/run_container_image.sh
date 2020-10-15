@@ -12,6 +12,7 @@ fi
 runcontainer() {
     docker run -it -d \
 	    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+	    -v /fractal:/fractal:ro \
         $mount_protocol \
 	    --tmpfs /run \
 	    --tmpfs /run/lock \
@@ -19,7 +20,6 @@ runcontainer() {
 	    -e NVIDIA_CONTAINER_CAPABILITIES=all \
 	    -e NVIDIA_VISIBLE_DEVICES=all \
 	    --shm-size=8g \
-	    --security-opt seccomp=unconfined \
         --cap-drop ALL \
         --cap-add CAP_SETPCAP \
         --cap-add CAP_MKNOD \
