@@ -432,6 +432,7 @@ typedef enum FractalClientMessageType {
 
 typedef struct FractalClientMessage {
     FractalClientMessageType type;  ///< Input message type.
+    unsigned int id;
     union {
         FractalKeyboardMessage keyboard;                  ///< Keyboard message.
         FractalMouseButtonMessage mouseButton;            ///< Mouse button message.
