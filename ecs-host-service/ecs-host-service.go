@@ -31,15 +31,12 @@ const resourceMappingDirectory = "/fractal/containerResourceMappings/"
 // now, we just want to run as root, but this service could be assigned its own
 // user in the future
 func checkRunningPermissions() {
-	logger.Info("Checking permissions...")
-
 	if os.Geteuid() != 0 {
 		logger.Panicf("This service needs to run as root!")
 	}
 }
 
 func startDockerDaemon() {
-	logger.Info("Starting docker daemon ourselves...")
 	cmd := exec.Command("/usr/bin/systemctl", "start", "docker")
 	err := cmd.Run()
 	if err != nil {
@@ -78,8 +75,6 @@ func shutdownHostService() {
 // Create the directory used to store the container resource allocations (e.g.
 // TTYs) on disk
 func initializeFilesystem() {
-	logger.Info("Initializing filesystem in %s\n", resourceMappingDirectory)
-
 	// check if resource mapping directory already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
 	if _, err := os.Lstat(resourceMappingDirectory); !os.IsNotExist(err) {
@@ -93,8 +88,6 @@ func initializeFilesystem() {
 	err := os.MkdirAll(resourceMappingDirectory, 0644|os.ModeSticky)
 	if err != nil {
 		logger.Panicf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
-	} else {
-		logger.Infof("Successfully created directory %s\n", resourceMappingDirectory)
 	}
 }
 
@@ -221,6 +214,18 @@ func main() {
 	// Initialize Sentry. We do this right after the above defer so that we can
 	// capture and log the potential error of starting the service as a non-root
 	// user.
+	//
+	// Note that according to the Sentry Go documentation, if we run
+	// sentry.CaptureMessage or sentry.CaptureError on separate goroutines, they
+	// can overwrite each other's tags. The thread-safe solution is to use
+	// goroutine-local hubs, but the way to do that would be to use contexts and
+	// add an additional argument to each logging method taking in the current
+	// context. This seems like a lot of work, so we just use a set of global
+	// tags instead, initializing them in InitializeSentry() and not touching
+	// them afterwards. Any container-specific information (which is what I
+	// imagine we would use local tags for) we just add in the text of the
+	// respective error message sent to Sentry. Alternatively, we might just be
+	// able to use sentry.WithScope()
 	err := logger.InitializeSentry()
 	if err != nil {
 		logger.Panicf("Unable to initialize sentry. Error: %s", err)
@@ -241,6 +246,7 @@ func main() {
 	sigChan := make(chan os.Signal, 2)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
+		// See our note about Sentry and goroutines above.
 		defer shutdownHostService()
 		<-sigChan
 		logger.Info("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and panicking to initiate host shutdown process...")

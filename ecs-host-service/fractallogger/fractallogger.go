@@ -32,10 +32,14 @@ func Error(err error) {
 	sentry.CaptureException(err)
 }
 
-// Panic on an error and send it to sentry
+// Panic on an error. We do not send it to Sentry (to save on Sentry logging
+// costs), since we do that when we recover from the panic in
+// shutdownHostService(). Note that there are two types of panics that we are
+// unable to send to Sentry using our current approach: panics in a goroutine
+// that didn't `defer shutdownHostService()` as soon as it started, and panics
+// caused by incorrect initialization of Sentry in the first place.
 func Panic(err error) {
 	log.Panic(err)
-	sentry.CaptureException(err)
 }
 
 // Log some info and send it to sentry as well
@@ -68,7 +72,7 @@ func PrintStackTrace() {
 
 func InitializeSentry() error {
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:   "https//5f2dd9674e2b4546b52c205d7382ac90@o400459.ingest.sentry.io/5461239",
+		Dsn:   "https://5f2dd9674e2b4546b52c205d7382ac90@o400459.ingest.sentry.io/5461239",
 		Debug: true,
 	})
 	if err != nil {
