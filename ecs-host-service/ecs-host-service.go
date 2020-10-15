@@ -218,16 +218,19 @@ func main() {
 	// message to Sentry and/or the fractal webserver upon our death.
 	defer shutdownHostService()
 
-	// After the above defer, this needs to be the next line of code that runs,
-	// since the following operations will require root permissions.
-	checkRunningPermissions()
-
-	// Initialize Sentry
+	// Initialize Sentry. We do this right after the above defer so that we can
+	// capture and log the potential error of starting the service as a non-root
+	// user.
 	err := logger.InitializeSentry()
 	if err != nil {
 		logger.Panicf("Unable to initialize sentry. Error: %s", err)
 	}
 	// We flush Sentry's queue in shutdownHostService(), so we don't need to defer it here
+
+	// After the above defer and initialization of Sentry, this needs to be the
+	// next line of code that runs, since the following operations will require
+	// root permissions.
+	checkRunningPermissions()
 
 	// Note that we defer uninitialization so that in case of panic elsewhere, we
 	// still clean up
