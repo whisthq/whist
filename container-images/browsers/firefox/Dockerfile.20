@@ -1,0 +1,55 @@
+FROM fractal/base:current-build
+
+# Install firefox dependencies explicitly
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    libatk1.0-0 \
+    libc6 \
+    libcairo-gobject2 \
+    libcairo2 \
+    libdbus-1-3 \
+    libdbus-glib-1-2 \
+    libffi7 \
+    libfontconfig1 \
+    libfreetype6 \
+    libgcc-s1 \
+    libgdk-pixbuf2.0-0 \
+    libglib2.0-0 \
+    libgtk-3-0 \
+    libharfbuzz0b \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libpangoft2-1.0-0 \
+    libstdc++6 \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcb-shm0 \
+    libxcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxi6 \
+    libxrender1 \
+    libxt6 \
+    lsb-release \
+    libcanberra0 \
+    libdbusmenu-glib4 \
+    libdbusmenu-gtk3-4 \
+    xul-ext-ubufox \
+    fonts-lyx \
+    && apt-get autoremove -y \
+    && apt-get clean
+
+# Install Google Chrome
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    firefox \
+    && apt-get autoremove -y \
+    && apt-get clean
+
+# Application startup script
+COPY .xinitrc /root/.xinitrc
