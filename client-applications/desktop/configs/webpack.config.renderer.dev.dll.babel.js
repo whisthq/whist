@@ -2,16 +2,17 @@
  * Builds the DLL for development electron renderer process
  */
 
-import webpack from "webpack";
-import path from "path";
-import merge from "webpack-merge";
-import baseConfig from "./webpack.config.base";
-import { dependencies } from "../package.json";
-import CheckNodeEnv from "../internals/scripts/CheckNodeEnv";
+import webpack from "webpack"
+import path from "path"
+import merge from "webpack-merge"
+import baseConfig from "./webpack.config.base"
+import { dependencies } from "../package.json"
+import CheckNodeEnv from "../internals/scripts/CheckNodeEnv"
+import dotenv from "dotenv"
 
-CheckNodeEnv("development");
+CheckNodeEnv("development")
 
-const dist = path.join(__dirname, "..", "dll");
+const dist = path.join(__dirname, "..", "dll")
 
 export default merge.smart(baseConfig, {
     context: path.join(__dirname, ".."),
@@ -55,8 +56,10 @@ export default merge.smart(baseConfig, {
          * NODE_ENV should be production so that modules do not perform certain
          * development checks
          */
+
         new webpack.EnvironmentPlugin({
             NODE_ENV: "development",
+            ...dotenv.config().parsed,
         }),
 
         new webpack.LoaderOptionsPlugin({
@@ -69,4 +72,4 @@ export default merge.smart(baseConfig, {
             },
         }),
     ],
-});
+})

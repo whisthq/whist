@@ -29,7 +29,7 @@ platform_map_no_size = {
 default_channel_s3_buckets = {
     "testing": {
         "Windows-64bit": "fractal-applications-testing",
-        "Linux-64bit": "fractal-linux-applications-testing",
+        "Linux-64bit": "fractal-linux-applications-testing",  # TODO as of 2020-07-18 this bucket does not exist!
         "macOS-64bit": "fractal-mac-application-testing",
     },
     "production": {
@@ -37,21 +37,8 @@ default_channel_s3_buckets = {
         "Linux-64bit": "fractal-linux-applications-release",
         "macOS-64bit": "fractal-mac-applications-release",
     },
-    "noupdates": defaultdict(
-        lambda: "fractal: THIS IS AN INVALID S3 BUCKET - NO UPDATES WILL OCCUR"
-    ),
+    "noupdates": defaultdict(lambda: "fractal: fractal-applications-testing"),
 }
-
-
-def str2bool(v):
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ("yes", "true", "t", "y", "1"):
-        return True
-    elif v.lower() in ("no", "false", "f", "n", "0"):
-        return False
-    else:
-        raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
 def select_protocol_binary(platform: str, protocol_id: str, protocol_dir: Path) -> Path:
@@ -108,18 +95,6 @@ def prep_unix(protocol_dir: Path) -> None:  # Shared by Linux and macOS
 
 def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) -> None:
     client = protocol_dir / "FractalClient"
-
-    # Anything codesigned must not have extra file attributes (it's unclear where these
-    # attributes are coming from but they always appear to to occur, except for when the
-    # protocol is built locally). This fix is from https://stackoverflow.com/a/39667628
-    # code signing must go before adding the icon as xattr -c removes the icon
-    # run_cmd(["xattr", "-c", str(client)])
-    # codesign the FractalClient executable
-    run_cmd(["codesign", "-s", codesign_identity, str(client)])
-
-    # strip debug symbols from protocol
-    run_cmd(["strip", "-S", str(client)])
-
     # Add logo to the FractalClient executable
     # TODO The "sips" command appears to do nothing. Test that icons are successfully
     # added without it and then feel free to remove it.
@@ -132,14 +107,17 @@ def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) ->
         run_cmd(  # extract the icon to its own resource file
             ["DeRez", "-only", "icns", str(src_icon)], stdout=f
         )
-    run_cmd(["ls", str(tmp_icon)])
-    run_cmd(["ls", str(desktop_dir / "build")])
     run_cmd(  # append this resource to the file you want to icon-ize
         ["Rez", "-append", str(tmp_icon), "-o", str(client)]
     )
-
     run_cmd(["SetFile", "-a", "C", str(client)])  # use the resource to set the icon
     tmp_icon.unlink()
+    # Anything codesigned must not have extra file attributes (it's unclear where these
+    # attributes are coming from but they always appear to to occur, except for when the
+    # protocol is built locally). This fix is from https://stackoverflow.com/a/39667628
+    run_cmd(["xattr", "-c", str(client)])
+    # codesign the FractalClient executable
+    run_cmd(["codesign", "-s", codesign_identity, str(client)])
 
 
 def prep_linux(protocol_dir: Path) -> None:
@@ -151,8 +129,6 @@ def prep_linux(protocol_dir: Path) -> None:
     unison.chmod(
         unison.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )  # this long chain is equivalent to "chmod +x"
-    # strip debug symbols from the client
-    run_cmd(["strip", "--strip-debug", str(client)])
 
 
 def prep_windows(protocol_dir: Path) -> None:
@@ -176,9 +152,6 @@ def prep_windows(protocol_dir: Path) -> None:
     ]
     print("Updating FractalClient icon using `%s`" % " ".join(rcedit_cmd))
     subprocess.run(rcedit_cmd, check=True)
-    # remove incremental link and debug symbols files
-    run_cmd(["rm", str(protocol_dir / "FractalClient.ilk")])
-    run_cmd(["rm", str(protocol_dir / "FractalClient.pdb")])
 
 
 def package_via_yarn(desktop_dir):
@@ -219,10 +192,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--push-new-update",
-        type=str2bool,
-        nargs="?",  # zero or one argument
         help="push the release to the auto update system (see --update-channel to define target)",
-        const=True,
+        action="store_true",
         default=False,
     )
     parser.add_argument(
@@ -373,14 +344,23 @@ if __name__ == "__main__":
     # Step: Package & Publish
     # #####
 
-    yarn_cmd = shutil.which("yarn")
-    if not yarn_cmd:
-        raise Exception(
-            "`yarn` must be installed in order to build and package the application"
+    print(
+        (
+            f"Your binaries are now installed. Check the codesign log"
+            + " above to see where it was installed to. You will now need to run"
+            + " 'yarn' and perhaps 'yarn add chokidar react-scripts' (since they are"
+            + " native dependencies. You can test with 'yarn dev'."
         )
-    run_cmd([yarn_cmd], cwd=desktop_dir)  # Ensure that all dependencies are installed
-    package_script = "package-ci" if args.push_new_update else "package"
-    run_cmd([yarn_cmd, package_script], cwd=desktop_dir)
+    )
+
+    # yarn_cmd = shutil.which("yarn")
+    # if not yarn_cmd:
+    #    raise Exception(
+    #        "`yarn` must be installed in order to build and package the application"
+    #    )
+    # run_cmd([yarn_cmd], cwd=desktop_dir)  # Ensure that all dependencies are installed
+    # package_script = "package:publish" if args.push_new_update else "package"
+    # run_cmd([yarn_cmd, package_script], cwd=desktop_dir)
 
     # #####
     # Step: Cleanup

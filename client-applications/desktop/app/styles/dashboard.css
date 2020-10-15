@@ -1,0 +1,225 @@
+.dashboardContainer {
+    background: white;
+    margin-top: 200px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.signoutButton,
+.feedbackButton {
+    font-family: "Maven Pro";
+    font-weight: bold;
+    padding: 10px 25px;
+    margin-top: 33vh;
+    width: 100%;
+    border: solid 0.8px #cccccc;
+    background: white;
+    color: black;
+    font-size: 13px;
+}
+
+.feedbackButton,
+.noFeedbackButton {
+    font-family: "Maven Pro";
+    font-weight: bold;
+    padding: 10px 25px;
+    width: 150px;
+    border: solid 0.8px #cccccc;
+    background: white;
+    color: black;
+    font-size: 13px;
+    float: right;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.noFeedbackButton {
+    background: #eeeeee;
+    border: solid 0.8px #eeeeee;
+}
+
+.signoutButton:hover,
+.launchButton:hover,
+.expandButton:hover,
+.modalButton:hover,
+.feedbackButton:hover {
+    background: #93f1d9;
+    border: solid 0.8px #93f1d9;
+    cursor: pointer;
+}
+
+.navBar {
+    position: relative;
+    top: -22px;
+    left: 0px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 25px;
+    text-align: left;
+    min-width: 161px;
+}
+
+.logoTitle {
+    color: black;
+    font-family: "Maven Pro";
+    position: absolute;
+    top: 42px;
+    left: 25px;
+    font-size: 20px;
+}
+
+.navTitle {
+    font-size: 15px;
+    color: #999999;
+    margin-top: 30px;
+}
+
+.selectedNavTitle {
+    font-size: 17px;
+    color: black;
+    text-transform: uppercase;
+    margin-top: 30px;
+}
+
+.navTitle:hover,
+.selectedNavTitle:hover {
+    cursor: pointer;
+}
+
+.macTitleBar {
+    -webkit-app-region: drag;
+    margin-top: 22px;
+}
+
+.removeDrag {
+    -webkit-app-region: no-drag;
+}
+
+.page {
+    flex: 1;
+    padding: 50px;
+}
+
+.carouselRow {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+.select {
+    height: 38px;
+    width: 7px;
+    background: #1c2a45;
+    position: absolute;
+    right: 0px;
+}
+
+.row {
+    flex-wrap: nowrap;
+    margin: 0;
+}
+
+.appContainer {
+    width: 230px;
+    height: 170px;
+    display: flex;
+    flex-direction: row;
+    padding: 12px;
+}
+
+.appContainer:hover {
+    cursor: pointer;
+}
+
+.appImage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 30px;
+    height: 30px;
+}
+
+.appText {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0px 0px 12px 12px;
+}
+
+.appName {
+    font-size: 15px;
+    font-weight: bolder;
+    text-transform: uppercase;
+}
+
+.appDescription {
+    font-size: 11px;
+    margin-top: 10px;
+}
+
+.launchButton {
+    font-size: 13px;
+    padding: 10px 20px;
+    width: 80%;
+    color: #111111;
+    background: rgba(147, 241, 217, 0.25);
+    font-weight: bold;
+}
+
+.expandButton {
+    background: rgba(147, 241, 217, 0.25);
+    border-left: none;
+    padding: 6px 10px 9px 10px;
+    width: 20%;
+}
+
+.expandButton:hover {
+    border-left: none;
+}
+
+.modalAppImage {
+    height: 100px;
+}
+
+.modalButton {
+    position: absolute;
+    right: 40px;
+    bottom: 40px;
+    text-align: center;
+    padding: 10px 30px;
+    border: solid 0.8px #cccccc;
+    color: black;
+    font-weight: bold;
+    width: 200px;
+}
+
+.appLink {
+    color: #5ec4eb;
+    margin-left: 30px;
+}
+
+.appLink:hover {
+    cursor: pointer;
+}
+
+.container {
+    background: white;
+    position: absolute;
+    text-align: center;
+    width: 100vw;
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-family: "Maven Pro";
+    margin: 0px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    -webkit-app-region: drag;
+    user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
+}

@@ -8,12 +8,12 @@ export async function apiPost(endpoint, body, token) {
                 Authorization: "Bearer " + token,
             },
             body: JSON.stringify(body),
-        });
-        const json = await response.json();
-        return { json, response };
+        })
+        const json = await response.json()
+        return { json, response }
     } catch (err) {
-        console.log(err);
-        return err;
+        console.log(err)
+        return err
     }
 }
 
@@ -26,11 +26,11 @@ export async function apiGet(endpoint, token) {
                 "Content-Type": "application/json",
                 Authorization: "Bearer " + token,
             },
-        });
-        const json = await response.json();
-        return { json, response };
+        })
+        const json = await response.json()
+        return { json, response }
     } catch (err) {
-        console.log(err);
-        return err;
+        console.log(err)
+        return err
     }
 }

@@ -9,7 +9,7 @@ This repository contains the code for the Fractal mobile applications running on
     - armeabi-v7a
 - iOS/iPadOS
 
-## Running locally
+## Starting Development
 
 1. We will be using Expo to run locally on Android emulators. To do this, make sure you have `npm` and Node installed, and type `npm install -g expo-cli` in your terminal.
 
@@ -26,3 +26,36 @@ This repository contains the code for the Fractal mobile applications running on
 7. Once the device is booted up, return to the Expo page running on localhost (from step 2) and select the "Start Android emulator" option.
 
 8. You should see this React Native app appear on the screen of the emulated device!
+
+## Packaging and Publishing
+
+TBD
+
+## Continous Integration
+
+TBD
+
+## Styling
+
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Prettier.
+
+You can always run Prettier directly from a terminal by typing `yarn format`, or you can install it directly within your IDE by via the following instructions:
+
+### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+
+Launch VS Code Quick Open (Ctrl+P/Cmd+P), paste the following command, and press enter.
+
+```
+ext install esbenp.prettier-vscode
+```
+
+To ensure that this extension is used over other extensions you may have installed, be sure to set it as the default formatter in your VS Code settings. This setting can be set for all languages or by a specific language.
+
+```
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
+```

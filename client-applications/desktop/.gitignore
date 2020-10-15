@@ -10,9 +10,6 @@ ssh_host_ecdsa_key.pub
 sshkey.pub
 sshkey
 
-# .env for MacOS notarizing credentials
-*.env
-
 # Logs
 logs
 *.log
@@ -49,8 +46,13 @@ node_modules
 .vscode
 .vs
 
+# Env
+.env
+
 # Yarn
 .yarnclean
+yarn.lock
+app/yarn.lock
 
 # App packaged
 release
@@ -72,3 +74,7 @@ npm-debug.log.*
 *.css.d.ts
 *.sass.d.ts
 *.scss.d.ts
+package-lock.json
+
+# AWS ping
+awsping.darwin.amd64.tgz

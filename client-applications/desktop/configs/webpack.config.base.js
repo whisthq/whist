@@ -2,9 +2,10 @@
  * Base webpack config used across other specific configs
  */
 
-import path from "path";
-import webpack from "webpack";
-import { dependencies as externals } from "../app/package.json";
+import path from "path"
+import webpack from "webpack"
+import { dependencies as externals } from "../app/package.json"
+import dotenv from "dotenv"
 
 export default {
     externals: [
@@ -44,10 +45,11 @@ export default {
     plugins: [
         new webpack.EnvironmentPlugin({
             NODE_ENV: "production",
+            ...dotenv.config().parsed,
         }),
 
         new webpack.IgnorePlugin(/osx-temperature-sensor/),
 
         new webpack.NamedModulesPlugin(),
     ],
-};
+}

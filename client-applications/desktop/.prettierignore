@@ -1,9 +1,5 @@
 # GitHub
-.github
+.github/
+
+# Markdown
 README.md
-
-# Yarn
-node_modules/
-
-# macOS
-.DS_Store

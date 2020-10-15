@@ -1,9 +1,0 @@
-# GitHub
-.github
-README.md
-
-# Yarn
-node_modules/
-
-# macOS
-.DS_Store

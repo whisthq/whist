@@ -9,7 +9,7 @@ const production = {
     azure: {
         RESOURCE_GROUP: "Fractal",
     },
-};
+}
 
 const staging = {
     url: {
@@ -21,11 +21,11 @@ const staging = {
     azure: {
         RESOURCE_GROUP: "Fractal",
     },
-};
+}
 
 const development = {
     url: {
-        PRIMARY_SERVER: "http://localhost:7730",
+        PRIMARY_SERVER: "http://main-webserver-pr-193.herokuapp.com/",
     },
     stripe: {
         PUBLIC_KEY: "pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb",
@@ -33,10 +33,12 @@ const development = {
     azure: {
         RESOURCE_GROUP: "FractalStaging",
     },
-};
+}
 
 export const config =
-    process.env.NODE_ENV === "development" ? production : production;
+    process.env.NODE_ENV === "development" ? development : development
 
 export const GOOGLE_CLIENT_ID =
-    "581514545734-gml44hupfv9shlj68703s67crnbgjuoe.apps.googleusercontent.com";
+    "581514545734-4t3fd64bus687mcd3s7te11bv8hs532h.apps.googleusercontent.com"
+
+export const GOOGLE_REDIRECT_URI = `com.tryfractal.app:/oauth2Callback`

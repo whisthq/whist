@@ -4,7 +4,7 @@ name: Yarn Lint
 
 on:
   pull_request:
-    branches: [ master, staging ]
+    branches: [ master, dev ]
 
 jobs:
   yarn-lint:

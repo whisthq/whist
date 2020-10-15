@@ -1,8 +1,8 @@
 {
     "author": {
-        "email": "support@fractalcomputers.com",
+        "email": "support@tryfractal.com",
         "name": "Fractal Computers, Inc.",
-        "url": "https://www.fractalcomputers.com"
+        "url": "https://www.tryfractal.com"
     },
     "browserslist": [
         "extends browserslist-config-erb"
@@ -94,26 +94,26 @@
     },
     "contributors": [
         {
-            "email": "phil@fractalcomputers.com",
+            "email": "phil@tryfractal.com",
             "name": "Philippe Noel"
         },
         {
-            "email": "ming@fractalcomputers.com",
+            "email": "ming@tryfractal.com",
             "name": "Ming Ying"
         }
     ],
     "dependencies": {
+        "3": "^2.1.0",
+        "-": "^0.0.1",
         "@fortawesome/fontawesome-free": "^5.12.1",
         "@fortawesome/fontawesome-svg-core": "^1.2.27",
         "@fortawesome/free-solid-svg-icons": "^5.12.1",
         "@fortawesome/react-fontawesome": "^0.1.8",
         "@hot-loader/react-dom": "^16.11.0",
-        "@sentry/electron": "^2.0.0",
         "@typeform/embed": "^0.16.0",
         "app-root-dir": "^1.0.2",
         "app-root-path": "^3.0.0",
-        "bl": "^2.2.1",
-        "chokidar": "3",
+        "bootstrap": "^4.5.2",
         "connected-react-router": "^6.6.1",
         "core-js": "^3",
         "devtron": "^1.4.0",
@@ -134,16 +134,19 @@
         "history": "^4.10.1",
         "immutable": "^4.0.0-rc.12",
         "iplocation": "^7.0.0",
+        "jquery": "^3.5.1",
         "json5": "^2.1.3",
         "ky": "^0.19.1",
         "ky-universal": "^0.6.0",
         "local-ip-url": "^1.0.2",
+        "minimist": "^0.2.1",
         "network-speed": "^2.0.6",
         "node-forge": "^0.10.0",
+        "popper.js": "^1.16.1",
         "prettier": "^2.0.5",
         "prop-types": "^15.6.0",
         "react": "^16.12.0",
-        "react-bootstrap": "^1.0.1",
+        "react-bootstrap": "^1.3.0",
         "react-detect-offline": "^2.4.0",
         "react-dom": "^16.12.0",
         "react-electron-titlebar": "^1.0.9",
@@ -157,7 +160,9 @@
         "react-redux": "^7.2.0",
         "react-router": "^5.1.2",
         "react-router-dom": "^5.1.2",
+        "react-spring": "^8.0.27",
         "react-tabs": "^3.1.0",
+        "react-textarea-autosize": "^8.2.0",
         "react-toggle": "^4.1.1",
         "react-toggle-button": "^2.2.0",
         "react-typeform-embed": "^0.2.1",
@@ -226,7 +231,7 @@
         "cross-spawn": "^7.0.1",
         "css-loader": "^3.4.2",
         "detect-port": "^1.3.0",
-        "electron": "^8.5.2",
+        "electron": "^8.2.3",
         "electron-builder": "^22.4.0",
         "electron-devtools-installer": "^3.0.0",
         "electron-notarize": "^0.3.0",
@@ -241,7 +246,7 @@
         "eslint-plugin-compat": "^3.5.1",
         "eslint-plugin-import": "^2.20.0",
         "eslint-plugin-jest": "^23.6.0",
-        "eslint-plugin-jsx-a11y": "6.2.3",
+        "eslint-plugin-jsx-a11y": "^6.3.0",
         "eslint-plugin-prettier": "^3.1.2",
         "eslint-plugin-promise": "^4.2.1",
         "eslint-plugin-react": "^7.18.0",
@@ -270,7 +275,7 @@
         "testcafe": "^1.8.0",
         "testcafe-browser-provider-electron": "0.0.15-alpha.1",
         "testcafe-react-selectors": "^4.0.0",
-        "typed-css-modules-webpack-plugin": "^0.1.2",
+        "typed-css-modules-webpack-plugin": "^0.2.0",
         "typescript": "^3.7.5",
         "url-loader": "^4.1.0",
         "webpack": "^4.41.5",
