@@ -170,9 +170,9 @@ def container(cluster, user):
             os="Linux",
             state=initial_state,
             user_id=user.user_id,
-            port_32262=32262,
-            port_32263=32263,
-            port_32273=32273,
+            port_32262=randbits(16),
+            port_32263=randbits(16),
+            port_32273=randbits(16),
             cluster=cluster.cluster,
             secret_key=os.urandom(8).hex(),
         )
