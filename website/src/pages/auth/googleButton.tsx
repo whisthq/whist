@@ -6,7 +6,7 @@ import { useMutation } from "@apollo/client"
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
 import { SIGNUP_POINTS } from "shared/utils/points"
 import { googleLogin } from "store/actions/auth/login_actions"
-import { debugLog } from 'shared/utils/logging'
+import { debugLog } from "shared/utils/logging"
 
 import MainContext from "shared/context/mainContext"
 import "styles/landing.css"
