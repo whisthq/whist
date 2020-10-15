@@ -12,7 +12,9 @@ This will build the service under directory `/build` as `ecs-host-service`.
 
 ### Running
 
-You can run by running `make run`. Note that the service must be run as root, which the makefile automatically does.
+You can run locally by running `make run`. Note that the service must be run as root, which the makefile automatically does.
+
+If you want to test the service with our production Sentry configuration, use the command `make runprod`. Note that this will count against our logging quotas!
 
 ### Design Decisions
 
