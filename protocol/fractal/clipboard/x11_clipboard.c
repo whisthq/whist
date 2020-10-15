@@ -328,6 +328,8 @@ bool unsafe_hasClipboardUpdated() {
     // then we return "true". Otherwise, return "false".
     //
 
+    if (!display) return false;
+
     static bool first = true; // static, so only sets to true on first call
     int event_base, error_base;
     XEvent event;
