@@ -17,7 +17,7 @@ RUN apt-get update && apt-get clean
 RUN apt-get install libssl-dev
 RUN dpkg --configure -a && apt-get install -f
 RUN apt-get install -y make gcc g++
-RUN apt-get install -y cmake cppcheck sudo
+RUN apt-get install -y cmake cppcheck sudo clang-format
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 ADD desktop/linux-client-setup.sh /
