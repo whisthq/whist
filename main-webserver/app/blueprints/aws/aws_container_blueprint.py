@@ -8,6 +8,7 @@ from app.celery.aws_ecs_status import pingHelper
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
+    modify_region,
     preprocess_task_info,
     protocol_info,
     set_stun,
@@ -66,6 +67,7 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["network_configuration"],
         )
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
+        task_definition_arn = modify_region(task_definition_arn, region_name)
         task = create_new_container.apply_async(
             [
                 username,
@@ -101,18 +103,19 @@ def test_endpoint(action, **kwargs):
 def aws_container_info(**kwargs):
     body = kwargs.pop("body")
     address = kwargs.pop("received_from")
-
     try:
-        port = body.pop("port")
+        identifier = body.pop("identifier")
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+        return response
     else:
-        info, status = protocol_info(address, port)
+        private_key = body.pop("private_key")
+        info, status = protocol_info(address, identifier, private_key)
 
-        if info:
-            response = jsonify(info), status
-        else:
-            response = jsonify({"status": status}), status
+    if info is not None:
+        response = jsonify(info), status
+    else:
+        response = jsonify({"status": status}), status
 
     return response
 
@@ -125,12 +128,13 @@ def aws_container_ping(**kwargs):
 
     try:
         available = body.pop("available")
-        port = body.pop("port")
+        identifier = body.pop("identifier")
+        private_key = body.pop("private_key")
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
         # Update container status.
-        status = pingHelper.delay(available, address, port)
+        status = pingHelper.delay(available, address, identifier, private_key)
         response = jsonify(status), status["status"]
 
     return response
@@ -146,6 +150,7 @@ def aws_container_post(action, **kwargs):
 
     try:
         user = body.pop("username")
+
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
@@ -153,16 +158,18 @@ def aws_container_post(action, **kwargs):
             # Access required keys.
             try:
                 app = body.pop("app")
+                region = body.pop("region")
             except KeyError:
                 response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
             else:
                 # Create a container.
                 try:
-                    task_info = preprocess_task_info(app)
+                    task_arn, _, sample_cluster = preprocess_task_info(app)
+                    task_arn = modify_region(task_arn, region)
                 except BadAppError:
                     response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
                 else:
-                    task = create_new_container.delay(user, *task_info)
+                    task = create_new_container.delay(user, task_arn, region)
                     response = jsonify({"ID": task.id}), ACCEPTED
 
         elif action == "delete":

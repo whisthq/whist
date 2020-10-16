@@ -1,5 +1,5 @@
 from app import celery_instance, db
-from app.constants.http_codes import SUCCESS
+from app.constants.http_codes import SUCCESS, UNAUTHORIZED
 from app.helpers.utils.aws.aws_resource_locks import lockContainerAndUpdate
 from app.helpers.utils.general.logs import fractalLog
 from app.helpers.utils.general.sql_commands import fractalSQLCommit
@@ -11,7 +11,7 @@ from app.models.logs import LoginHistory
 
 
 @celery_instance.task
-def pingHelper(available, container_ip, port_32262, version=None):
+def pingHelper(available, container_ip, port_32262, aeskey, version=None):
     """Stores ping timestamps in the v_ms table and tracks number of hours used
 
     Args:
@@ -30,7 +30,17 @@ def pingHelper(available, container_ip, port_32262, version=None):
     if container_info:
         username = container_info.user_id
     else:
-        raise Exception(f"No container with IP {container_ip} and ports {[port_32262]}")
+        raise Exception(
+            f"No container with IP {container_ip} and ports {[port_32262]}"
+        )
+    if container_info.secret_key != aeskey:
+        fractalLog(
+            function="pingHelper",
+            label=str(container_info.container_name),
+            logs=f"{container_info.container_name} just tried to ping with the wrong AES key, using\
+{aeskey} when {container_info.secret_key} was expected",
+        )
+        return {'status':UNAUTHORIZED}
 
     fractalSQLCommit(db, fractalSQLUpdate, container_info, {"last_pinged": dateToUnix(getToday())})
 

@@ -1,7 +1,7 @@
 from sqlalchemy.exc import DBAPIError
 
 from app import db
-from app.constants.http_codes import NOT_FOUND, BAD_REQUEST, SUCCESS
+from app.constants.http_codes import NOT_FOUND, BAD_REQUEST, SUCCESS, UNAUTHORIZED
 from app.models.hardware import UserContainer
 
 
@@ -24,14 +24,22 @@ def preprocess_task_info(app):
     """
 
     # TODO: Don't just hard-code the cluster, region, and task definition ARN
+    base_str = "arn:aws:ecs:us-east-1:747391415460:task-definition/{}"
+
     return (
-        "arn:aws:ecs:us-east-1:747391415460:task-definition/fractal-browsers-chrome:5",
+        base_str.format(app),
         "us-east-1",
         "owen-dev-cluster",
     )
 
 
-def protocol_info(address, port):
+def modify_region(task_arn, new_region):
+    task_arn_lst = task_arn.split(":")
+    task_arn_lst[3] = new_region
+    return ":".join(task_arn_lst)
+
+
+def protocol_info(address, port, aeskey):
     """Returns information, which is consumed by the protocol, to the client.
 
     Arguments:
@@ -41,6 +49,9 @@ def protocol_info(address, port):
 
     response = None, NOT_FOUND
     container = UserContainer.query.filter_by(ip=address, port_32262=port).first()
+    if container.secret_key != aeskey:
+        print(aeskey, container.secret_key)
+        return None, UNAUTHORIZED
 
     if container:
         response = (
@@ -54,6 +65,8 @@ def protocol_info(address, port):
         )
 
     return response
+
+
 
 
 def set_stun(user_id, container_id, using_stun):

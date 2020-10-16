@@ -97,9 +97,16 @@ def create_new_container(
         network_configuration: The network configuration to use for the
             clusters using awsvpc networking.
     """
-
     aeskey = os.urandom(8).hex()
-    kwargs = {"networkConfiguration": network_configuration}
+    container_overrides = {
+        "containerOverrides": [
+            {
+                "name": "fractal-container",
+                "environment": [{"name": "FRACTAL_AES_KEY", "value": aeskey},],
+            },
+        ],
+    }
+    kwargs = {"networkConfiguration": network_configuration, "overrides": container_overrides}
     message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
     fractalLog(function="create_new_container", label="None", logs=message)
     base_len = 3
