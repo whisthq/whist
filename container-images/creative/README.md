@@ -8,4 +8,6 @@ This subfolder contains the list of creative (2D, 3D, video) applications that F
 - Autodesk Maya
 - Unity
 - Lightworks
-- Figma 
+- Figma
+- Blockbench
+- TextureLab

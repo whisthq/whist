@@ -2,7 +2,6 @@
 
 i3 &
 
-
 # exec gimp
 exec runuser --login fractal -c \
         'DISPLAY=:10 \
@@ -12,4 +11,3 @@ exec runuser --login fractal -c \
         PATH=/usr/local/cuda-11.0/bin:/usr/local/nvidia/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
         DEBIAN_FRONTEND=noninteractive \
         /usr/lib/slack/slack'
-
