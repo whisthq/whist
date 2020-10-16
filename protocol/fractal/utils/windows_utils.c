@@ -118,7 +118,7 @@ bool InitDesktop(input_device_t* input_device, char* vm_password) {
         }
 
         // Type in the password
-        InputKeycodes(password_keycodes, password_len);
+        InputKeycodes(input_device, password_keycodes, password_len);
 
         free(password_keycodes);
 
