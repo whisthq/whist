@@ -118,7 +118,7 @@ bool InitDesktop(input_device_t* input_device, char* vm_password) {
         }
 
         // Type in the password
-        EnterWinString(password_keycodes, password_len);
+        InputKeycodes(password_keycodes, password_len);
 
         free(password_keycodes);
 
@@ -126,7 +126,7 @@ bool InitDesktop(input_device_t* input_device, char* vm_password) {
 
         FractalKeycode keycodes[] = {FK_ENTER, FK_ENTER};
 
-        EnterWinString(keycodes, 2);
+        InputKeycodes(keycodes, 2);
 
         Sleep(1000);
 
