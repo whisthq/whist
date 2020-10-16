@@ -1070,7 +1070,7 @@ int main(int argc, char* argv[]) {
 
     while (true) {
         char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
-        updateServerStatus(false, host, get_access_token());
+        updateServerStatus(false, host, get_access_token(), identifier, aes_private_key);
 
         clock startup_time;
         StartTimer(&startup_time);
@@ -1121,7 +1121,8 @@ int main(int argc, char* argv[]) {
                         }
                     }
                 }
-                updateServerStatus(num_controlling_clients > 0, host, get_access_token());
+                updateServerStatus(num_controlling_clients > 0, host, get_access_token(),
+                                   identifier, aes_private_key);
                 StartTimer(&ack_timer);
             }
 

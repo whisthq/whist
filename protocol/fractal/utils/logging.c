@@ -810,6 +810,8 @@ typedef struct update_status_data {
     bool is_connected;
     char *host;
     char *access_token;
+    char *identifier;
+    char *aes_private_key;
 } update_status_data_t;
 
 int32_t MultithreadedUpdateServerStatus(void *data) {
@@ -819,21 +821,26 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
     snprintf(json, sizeof(json),
              "{\n\
             \"version\" : \"%s\",\n\
-            \"available\" : %s\n\
+            \"available\" : %s,\n\
+            \"identifier\" : %s,\n\
+            \"private_key\" : %s\n\
 }",
-             get_version(), d->is_connected ? "false" : "true");
+             get_version(), d->is_connected ? "false" : "true", d->identifier, d->aes_private_key);
     SendJSONPost(d->host, "/vm/ping", json, d->access_token);
 
     free(d);
     return 0;
 }
 
-void updateServerStatus(bool is_connected, char *host, char *access_token) {
+void updateServerStatus(bool is_connected, char *host, char *access_token, char *identifier,
+                        char *aes_private_key) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
     d->host = host;
     d->access_token = access_token;
+    d->identifier = identifier;
+    d->aes_private_key = aes_private_key;
     SDL_Thread *update_status =
         SDL_CreateThread(MultithreadedUpdateServerStatus, "UpdateServerStatus", d);
     SDL_DetachThread(update_status);

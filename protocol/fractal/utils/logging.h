@@ -182,7 +182,8 @@ void saveConnectionID(int connection_id);
  *                                 Pass true if connected to a client and false
  *                                 otherwise
  */
-void updateServerStatus(bool is_connected, char* host, char* access_token);
+void updateServerStatus(bool is_connected, char* host, char* access_token, char* identifier,
+                        char* aes_private_key);
 
 /**
  * @brief                          Get the current server's version number
