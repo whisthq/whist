@@ -9,6 +9,7 @@ import { deleteContainer } from "store/actions/sideEffects"
 
 const UpdateScreen = (props: any) => {
     const {
+        dispatch,
         os,
         username,
         percentLoaded,
@@ -80,7 +81,7 @@ const UpdateScreen = (props: any) => {
         })
         protocol1.on("close", (code: any) => {
             console.log("the protocol has been closed!")
-            deleteContainer(username, container_id)
+            dispatch(deleteContainer(username, container_id))
         })
         console.log("spawn completed!")
 
