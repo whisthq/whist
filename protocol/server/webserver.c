@@ -41,7 +41,7 @@ void update_webserver_parameters() {
             "}\n",
             primary_port_mapping);
 
-    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/vm/protocol_info", buf,
+    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/container/protocol_info", buf,
                      len, msg)) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
@@ -69,7 +69,7 @@ void update_webserver_parameters() {
 
     json_t json;
     if (!parse_json(json_str, &json)) {
-        LOG_ERROR("Failed to parse JSON from /vm/protocol_info");
+        LOG_ERROR("Failed to parse JSON from /protocol/protocol_info");
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;

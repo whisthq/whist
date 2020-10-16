@@ -826,7 +826,7 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
             \"private_key\" : %s\n\
 }",
              get_version(), d->is_connected ? "false" : "true", d->identifier, d->aes_private_key);
-    SendJSONPost(d->host, "/vm/ping", json, d->access_token);
+    SendJSONPost(d->host, "/container/ping", json, d->access_token);
 
     free(d);
     return 0;
