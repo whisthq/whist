@@ -44,4 +44,4 @@ const production: any = {
 }
 
 export const config: any =
-    process.env.NODE_ENV === "development" ? staging : production
+    process.env.NODE_ENV === "development" ? staging : staging

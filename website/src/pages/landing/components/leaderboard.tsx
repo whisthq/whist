@@ -251,7 +251,6 @@ const mapStateToProps = (state: {
         waitlistData: any
     }
 }) => {
-    console.log(state)
     return {
         user: state.AuthReducer.user,
         waitlist: state.WaitlistReducer.waitlistData.waitlist,
