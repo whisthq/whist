@@ -67,8 +67,6 @@ def protocol_info(address, port, aeskey):
     return response
 
 
-
-
 def set_stun(user_id, container_id, using_stun):
     """Updates whether or not the specified container should use STUN.
 

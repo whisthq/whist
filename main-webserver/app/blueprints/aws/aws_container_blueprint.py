@@ -25,13 +25,17 @@ aws_container_bp = Blueprint("aws_container_bp", __name__)
 @fractalPreProcess
 def test_endpoint(action, **kwargs):
     if action == "create_cluster":
-        cluster_name, instance_type, ami, region_name = (
+        cluster_name, instance_type, ami, region_name, max_containers, min_containers = (
             kwargs["body"]["cluster_name"],
             kwargs["body"]["instance_type"],
             kwargs["body"]["ami"],
             kwargs["body"]["region_name"],
+            kwargs["body"]["max_containers"],
+            kwargs["body"]["min_containers"],
         )
-        task = create_new_cluster.apply_async([cluster_name, instance_type, ami, region_name])
+        task = create_new_cluster.apply_async(
+            [cluster_name, instance_type, ami, region_name, min_containers, max_containers]
+        )
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
@@ -69,15 +73,26 @@ def test_endpoint(action, **kwargs):
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
         task_definition_arn = modify_region(task_definition_arn, region_name)
         task = create_new_container.apply_async(
-            [
-                username,
-                task_definition_arn,
-                region_name,
-                cluster_name,
-                use_launch_type,
-                network_configuration,
-            ]
+            [username, task_definition_arn],
+            {
+                "cluster_name": cluster_name,
+                "region_name": region_name,
+                "use_launch_type": use_launch_type,
+                "network_configuration": network_configuration,
+            },
         )
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
+
+    if action == "delete_container":
+        user_id, container_name = (
+            kwargs["body"]["user_id"],
+            kwargs["body"]["container_name"],
+        )
+        task = deleteContainer.apply_async([user_id, container_name])
+
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
 

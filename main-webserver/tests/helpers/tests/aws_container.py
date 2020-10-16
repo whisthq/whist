@@ -1,7 +1,15 @@
 from tests import *
 
 
-def createCluster(cluster_name, instance_type, ami, region_name, input_token):
+def createCluster(
+    cluster_name,
+    instance_type,
+    ami,
+    region_name,
+    max_containers=10,
+    min_containers=0,
+    input_token=None,
+):
     return requests.post(
         (SERVER_URL + "/aws_container/create_cluster"),
         json={
@@ -9,6 +17,8 @@ def createCluster(cluster_name, instance_type, ami, region_name, input_token):
             "instance_type": instance_type,
             "ami": ami,
             "region_name": region_name,
+            "max_containers": max_containers,
+            "min_containers": min_containers,
         },
         headers={"Authorization": "Bearer " + input_token},
     )

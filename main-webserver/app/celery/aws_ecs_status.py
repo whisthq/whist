@@ -30,9 +30,7 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
     if container_info:
         username = container_info.user_id
     else:
-        raise Exception(
-            f"No container with IP {container_ip} and ports {[port_32262]}"
-        )
+        raise Exception(f"No container with IP {container_ip} and ports {[port_32262]}")
     if container_info.secret_key != aeskey:
         fractalLog(
             function="pingHelper",
@@ -40,7 +38,7 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
             logs=f"{container_info.container_name} just tried to ping with the wrong AES key, using\
 {aeskey} when {container_info.secret_key} was expected",
         )
-        return {'status':UNAUTHORIZED}
+        return {"status": UNAUTHORIZED}
 
     fractalSQLCommit(db, fractalSQLUpdate, container_info, {"last_pinged": dateToUnix(getToday())})
 

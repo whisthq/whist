@@ -79,8 +79,8 @@ def create_new_container(
     self,
     username,
     task_definition_arn,
-    region_name,
     cluster_name=None,
+    region_name="us-east-1",
     use_launch_type=False,
     network_configuration=None,
 ):
@@ -97,36 +97,55 @@ def create_new_container(
         network_configuration: The network configuration to use for the
             clusters using awsvpc networking.
     """
+    message = f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in {region_name}"
     aeskey = os.urandom(8).hex()
     container_overrides = {
         "containerOverrides": [
             {
                 "name": "fractal-container",
-                "environment": [{"name": "FRACTAL_AES_KEY", "value": aeskey},],
+                "environment": [
+                    {"name": "FRACTAL_AES_KEY", "value": aeskey},
+                ],
             },
         ],
     }
     kwargs = {"networkConfiguration": network_configuration, "overrides": container_overrides}
-    message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
     fractalLog(function="create_new_container", label="None", logs=message)
     base_len = 3
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
     if not cluster_name:
         all_clusters = list(SortedClusters.query.all())
+        all_clusters = [cluster for cluster in all_clusters if "cluster_" in cluster.cluster]
+        print(all_clusters)
 
         if len(all_clusters) == 0:
-            cluster_name = json.loads(create_new_cluster())["cluster"]
+            fractalLog(
+                function="create_new_container",
+                label=None,
+                logs=f"No available clusters found. Creating new cluster...",
+            )
+            cluster_name = create_new_cluster.delay(region_name=region_name).get(
+                disable_sync_subtasks=False
+            )["cluster"]
+            time.sleep(10)
         else:
-            cluster_name = all_clusters[0]["cluster"]
-        if len(all_clusters) < base_len:
-            for i in range(base_len - len(all_clusters)):
-                _ = create_new_cluster.apply_async()
+            cluster_name = all_clusters[0].cluster
+            if len(all_clusters) < base_len:
+                for i in range(base_len - len(all_clusters)):
+                    create_new_cluster.delay(region_name=region_name)
 
-    cluster_info = ClusterInfo.query.get(cluster_name)
+    fractalLog(
+        function="create_new_container",
+        label=cluster_name,
+        logs=f"Container will be deployed to cluster {cluster_name}",
+    )
 
-    assert cluster_info
-
-    if cluster_info.status == "INACTIVE" or cluster_info.status == "DEPROVISIONING":
+    cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
+    if not cluster_info:
+        fractalSQLCommit(db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster_name))
+        cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
+    elif cluster_info.status == "INACTIVE" or cluster_info.status == "DEPROVISIONING":
         fractalLog(
             function="create_new_container",
             label=cluster_name,
@@ -201,7 +220,8 @@ def create_new_container(
         )
         raise Ignore
 
-    cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[ecs_client.cluster]
+    cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
+    cluster_usage["cluster"] = cluster_name
     cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
     if cluster_sql:
         fractalLog(
@@ -227,8 +247,8 @@ def create_new_container(
 def create_new_cluster(
     self,
     cluster_name=None,
-    instance_type="t2.small",
-    ami="ami-026f9e275180a6982",
+    instance_type="g3s.xlarge",
+    ami="ami-0decb4a089d867dc1",
     region_name="us-east-1",
     min_size=0,
     max_size=10,
@@ -270,8 +290,10 @@ def create_new_cluster(
             max_size=max_size,
             availability_zones=availability_zones,
         )
-        nclust = ClusterInfo(cluster=cluster_name)
-        cluster_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), nclust)
+
+        cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
+        cluster_usage_info = ClusterInfo(cluster=cluster_name, **cluster_usage)
+        cluster_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), cluster_usage_info)
         if cluster_sql:
             cluster = ClusterInfo.query.get(cluster_name)
             cluster = user_cluster_schema.dump(cluster)

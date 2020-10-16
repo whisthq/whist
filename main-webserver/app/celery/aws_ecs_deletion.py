@@ -10,6 +10,7 @@ from app import (
     db,
     fractalLog,
     fractalSQLCommit,
+    fractalSQLUpdate,
     logging,
 )
 from app.helpers.utils.aws.aws_resource_locks import lockContainerAndUpdate, spinLock
@@ -74,13 +75,41 @@ def deleteContainer(self, user_id, container_name):
             )
             ecs_client.spin_til_done(offset=0)
         fractalSQLCommit(db, lambda db, x: db.session.delete(x), container)
+
+        cluster_info = ClusterInfo.query.get(container_cluster)
+        if not cluster_info:
+            fractalSQLCommit(
+                db, lambda db, x: db.session.add(x), ClusterInfo(cluster=container_cluster)
+            )
+            cluster_info = ClusterInfo.query.filter_by(cluster=container_cluster).first()
+        cluster_usage = ecs_client.get_clusters_usage(clusters=[container_cluster])[
+            container_cluster
+        ]
+        cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
+        if cluster_sql:
+            fractalLog(
+                function="deleteContainer",
+                label=container_name,
+                logs=f"Removed task from cluster {container_cluster} and updated cluster info",
+            )
+            return {"status": SUCCESS}
+        else:
+            fractalLog(
+                function="deleteContainer",
+                label=container_name,
+                logs="SQL insertion unsuccessful",
+            )
+            self.update_state(
+                state="FAILURE",
+                meta={"msg": "Error updating cluster {} in SQL".format(cluster=container_cluster)},
+            )
+            return None
     except Exception as e:
         fractalLog(
             function="deleteContainer",
             label=str(container_name),
             logs="ran into deletion error {}".format(e),
         )
-
         self.update_state(
             state="FAILURE",
             meta={

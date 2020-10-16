@@ -18,12 +18,8 @@ def app():
 def input_token():
     resp = requests.post(
         (SERVER_URL + "/account/login"),
-        json=dict(
-            username=os.getenv("DASHBOARD_USERNAME"),
-            password=os.getenv("DASHBOARD_PASSWORD"),
-        ),
+        json=dict(username="fractal-admin@gmail.com", password="!!fractal-admin-password!!"),
     )
-
     return resp.json()["access_token"]
 
 

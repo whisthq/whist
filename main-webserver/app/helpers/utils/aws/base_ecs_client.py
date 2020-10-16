@@ -114,10 +114,10 @@ class ECSClient:
         self.set_cluster(cluster_name=base_cluster)
 
         if not self.mock:
-            self.role_name = "role_name_oqursxkjhh"
+            self.role_name = "autoscaling_role"
+            # self.role_name = 'role_name_oqursxkjhh'
             ## Create role and instance profile that allows containers to use SSM, S3, and EC2
             # self.role_name = self.generate_name('role_name')
-            # print(self.role_name)
             # assume_role_policy_document = {
             #     "Version": "2012-10-17",
             #     "Statement": [
@@ -162,11 +162,13 @@ class ECSClient:
             #     PolicyArn='arn:aws:iam::aws:policy/AmazonECS_FullAccess',
             #     RoleName=self.role_name,
             # )
-            self.instance_profile = self.generate_name("instance_profile")
-            self.iam_client.create_instance_profile(InstanceProfileName=self.instance_profile)
-            self.iam_client.add_role_to_instance_profile(
-                InstanceProfileName=self.instance_profile, RoleName=self.role_name
-            )
+            self.instance_profile = "auto_scaling_instance_profile"
+            # self.instance_profile = self.generate_name('instance_profile')
+            # print(self.instance_profile)
+            # self.iam_client.create_instance_profile(InstanceProfileName=self.instance_profile)
+            # self.iam_client.add_role_to_instance_profile(
+            #     InstanceProfileName=self.instance_profile, RoleName=self.role_name
+            # )
 
     def make_client(self, client_type, **kwargs):
         """
@@ -398,17 +400,16 @@ class ECSClient:
             cluster_info = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0]
             containers = self.get_containers_in_cluster(cluster)
             auto_scaling_group_info = self.describe_auto_scaling_groups_in_cluster(cluster)[0]
-            total_resources = defaultdict(int)
+            max_resources = defaultdict(int)
             for container in containers:
                 instance_info = self.ecs_client.describe_container_instances(
                     cluster=cluster, containerInstances=[container]
                 )["containerInstances"][0]
                 for resource in instance_info["remainingResources"]:
                     if resource["name"] == "CPU" or resource["name"] == "MEMORY":
-                        total_resources[resource["name"]] += resource["integerValue"]
-
-            for resource in total_resources.keys():
-                total_resources[resource] /= len(containers)
+                        max_resources[resource["name"]] = max(
+                            max_resources[resource["name"]], resource["integerValue"]
+                        )
 
             clusters_usage[cluster_info["clusterName"]] = {
                 "status": cluster_info["status"],
@@ -417,8 +418,8 @@ class ECSClient:
                 "registeredContainerInstancesCount": cluster_info[
                     "registeredContainerInstancesCount"
                 ],
-                "maxCPURemainingPerInstance": total_resources["CPU"],
-                "maxMemoryRemainingPerInstance": total_resources["MEMORY"],
+                "maxCPURemainingPerInstance": max_resources["CPU"],
+                "maxMemoryRemainingPerInstance": max_resources["MEMORY"],
                 "minContainers": auto_scaling_group_info["MinSize"],
                 "maxContainers": auto_scaling_group_info["MaxSize"],
             }
@@ -533,13 +534,11 @@ class ECSClient:
         Args:
             **kwargs: Any add'l params you want the task to have
         """
-        task_args = {
-            "taskDefinition": self.task_definition_arn,
-            "cluster": self.cluster,
-        }
+        task_args = {"taskDefinition": self.task_definition_arn, "cluster": self.cluster}
         if use_launch_type:
             task_args["launchType"] = self.launch_type
         taskdict = self.ecs_client.run_task(**task_args, **kwargs)
+        print(taskdict)
         task = taskdict["tasks"][0]
         running_task_arn = task["taskArn"]
         self.tasks.append(running_task_arn)
@@ -555,10 +554,11 @@ class ECSClient:
 
     def create_launch_configuration(
         self,
-        instance_type="t2.small",
-        ami="ami-04cfcf6827bb29439",
+        instance_type="g3s.xlarge",
+        ami="ami-0decb4a089d867dc1",
         launch_config_name=None,
         cluster_name=None,
+        key_name="auto-scaling-key",
     ):
         """
         Args:
@@ -572,26 +572,49 @@ class ECSClient:
         cluster_name = cluster_name or self.generate_name("cluster")
 
         # Initial data/scripts to be run on all container instances
-        userdata = """
-            #!/bin/bash
-            # Install Docker
-            sudo yum update -y
-            sudo amazon-linux-extras install docker sudo service docker start sudo usermod -a -G docker ec2-user
+        userdata = """\
+#!/bin/bash
 
-            # Write ECS config file
-            cat << EOF > /etc/ecs/ecs.config
-            ECS_DATADIR=/data
-            ECS_ENABLE_TASK_IAM_ROLE=true
-            ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
-            ECS_LOGFILE=/log/ecs-agent.log
-            ECS_AVAILABLE_LOGGING_DRIVERS=["json-file","awslogs"]
-            ECS_LOGLEVEL=info
-            ECS_CLUSTER={}
-            ECS_SELINUX_CAPABLE=true
-            EOF
-        """.format(
+# Build array of GPU IDs
+DRIVER_VERSION=$(modinfo nvidia --field version)
+IFS=\"\\n\"
+IDS=()
+for x in `nvidia-smi -L`; do
+  IDS+=$(echo \"$x\" | cut -f6 -d \" \" | cut -c 1-40)
+done
+
+# Convert GPU IDs to JSON Array
+ID_JSON=$(printf '%s\n' \"${{IDS[@]}}\" | jq -R . | jq -s -c .)
+
+# Create JSON GPU Object and populate nvidia-gpu-info.json 
+echo \"{{\\\"DriverVersion\\\":\\\"${{DRIVER_VERSION}}\\\",\\\"GPUIDs\\\":${{ID_JSON}}}}\" > /var/lib/ecs/gpu/nvidia-gpu-info.json
+
+#Create ECS config
+cat << EOF > /etc/ecs/ecs.config
+ECS_CLUSTER={}
+ECS_DATADIR=/data
+ECS_ENABLE_TASK_IAM_ROLE=true
+ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
+ECS_LOGFILE=/log/ecs-agent.log
+ECS_AVAILABLE_LOGGING_DRIVERS=[\"syslog\", \"json-file\", \"journald\", \"awslogs\"]
+ECS_LOGLEVEL=info
+ECS_ENABLE_GPU_SUPPORT=true
+ECS_NVIDIA_RUNTIME=nvidia
+ECS_SELINUX_CAPABLE=true
+EOF
+
+systemctl stop docker-container@ecs-agent.service
+rm -f /var/lib/ecs/data/*
+systemctl start docker-container@ecs-agent.service
+
+cd /home/ubuntu
+chmod +x userdata-bootstrap.sh
+./userdata-bootstrap.sh
+""".format(
             cluster_name
         )
+
+        print(userdata)
 
         launch_config_name = launch_config_name or self.generate_name("launch_configuration")
         response = self.auto_scaling_client.create_launch_configuration(
@@ -600,6 +623,7 @@ class ECSClient:
             InstanceType=instance_type,
             IamInstanceProfile=self.instance_profile,
             UserData=userdata,
+            KeyName=key_name,
         )
         return cluster_name, launch_config_name
 
@@ -621,7 +645,7 @@ class ECSClient:
         Returns:
              str: name of auto scaling group created
         """
-        availability_zones = availability_zones or [self.region_name + "a"]
+        availability_zones = availability_zones or [self.region_name + "b"]
         if isinstance(availability_zones, str):
             availability_zones = [availability_zones]
         if not isinstance(availability_zones, list):
@@ -679,6 +703,7 @@ class ECSClient:
     def get_task_binding_info(self, task_info):
         network_binding_map = {}
         for container in task_info["containers"]:
+            print(container)
             for network_binding in container["networkBindings"]:
                 network_binding_map[network_binding["containerPort"]] = network_binding["hostPort"]
         return network_binding_map
@@ -914,12 +939,55 @@ class ECSClient:
 
 
 if __name__ == "__main__":
-    testclient = ECSClient(base_cluster="cluster_eqbpomqrnp")
-    pprint(
-        testclient.ecs_client.describe_container_instances(
-            cluster=testclient.cluster,
-            containerInstances=testclient.ecs_client.list_container_instances(
-                cluster=testclient.cluster
-            )["containerInstanceArns"],
-        )
-    )
+    # testclient = ECSClient(base_cluster='cluster_eqbpomqrnp')
+    # pprint(
+    #     testclient.ecs_client.describe_container_instances(
+    #         cluster=testclient.cluster,
+    #         containerInstances=testclient.ecs_client.list_container_instances(
+    #             cluster=testclient.cluster
+    #         )['containerInstanceArns'],
+    #     )
+    # )
+
+    testclient = ECSClient(region_name="us-east-1")
+    # instance_profiles = testclient.iam_client.list_instance_profiles()['InstanceProfiles']
+    # for instance_profile in instance_profiles:
+    #     if 'instance_profile_' in instance_profile['InstanceProfileName']:
+    #         print(instance_profile['InstanceProfileName'])
+    #         for role in instance_profile['Roles']:
+    #             testclient.iam_client.remove_role_from_instance_profile(RoleName=role['RoleName'], InstanceProfileName=instance_profile['InstanceProfileName'])
+    #         testclient.iam_client.delete_instance_profile(InstanceProfileName=instance_profile['InstanceProfileName'])
+
+    clusters = testclient.ecs_client.list_clusters()["clusterArns"]
+    clusters_info = testclient.ecs_client.describe_clusters(clusters=clusters)["clusters"]
+    for cluster_info in clusters_info:
+        print(cluster_info)
+        if (
+            "cluster_" in cluster_info["clusterName"]
+            and not cluster_info["registeredContainerInstancesCount"]
+            and not cluster_info["pendingTasksCount"]
+        ):
+            testclient.ecs_client.delete_cluster(cluster=cluster_info["clusterName"])
+
+    auto_scaling_instances = testclient.auto_scaling_client.describe_auto_scaling_instances()[
+        "AutoScalingInstances"
+    ]
+    for auto_scaling_instance in auto_scaling_instances:
+        print(auto_scaling_instance)
+        try:
+            testclient.auto_scaling_client.terminate_instance_in_auto_scaling_group(
+                InstanceId=auto_scaling_instance["InstanceId"], ShouldDecrementDesiredCapacity=False
+            )
+        except:
+            continue
+    auto_scaling_groups = testclient.auto_scaling_client.describe_auto_scaling_groups()[
+        "AutoScalingGroups"
+    ]
+    for auto_scaling_group in auto_scaling_groups:
+        print(auto_scaling_group)
+        try:
+            testclient.auto_scaling_client.delete_auto_scaling_group(
+                AutoScalingGroupName=auto_scaling_group["AutoScalingGroupName"]
+            )
+        except:
+            continue

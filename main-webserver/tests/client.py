@@ -44,7 +44,7 @@ class BaseClient(FlaskClient):
 
 
 class FractalClient(BaseClient):
-    def container_create(self, app=None, region='us-east-1', **kwargs):
+    def container_create(self, app=None, region="us-east-1", **kwargs):
         data = dict(app=app, username=self.username, region=region)
         body = omit_items(data, **kwargs)
 
