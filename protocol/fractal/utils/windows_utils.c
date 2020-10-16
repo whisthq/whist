@@ -90,9 +90,9 @@ bool InitDesktop(input_device_t* input_device, char* vm_password) {
 
         // Setup typing area (Unknown true use?)
 
-        FractalKeycode keycodes[] = {FK_SPACE, FK_BACKSPACE, FK_BACKSPACE};
+        FractalKeycode keycodes1[] = {FK_SPACE, FK_BACKSPACE, FK_BACKSPACE};
 
-        InputKeycodes(input_device, keycodes, 3);
+        InputKeycodes(input_device, keycodes1, 3);
 
         Sleep(500);
 
@@ -124,9 +124,9 @@ bool InitDesktop(input_device_t* input_device, char* vm_password) {
 
         // Hit enter
 
-        FractalKeycode keycodes[] = {FK_ENTER, FK_ENTER};
+        FractalKeycode keycodes2[] = {FK_ENTER, FK_ENTER};
 
-        InputKeycodes(keycodes, 2);
+        InputKeycodes(input_device, keycodes2, 2);
 
         Sleep(1000);
 
