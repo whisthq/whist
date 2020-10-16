@@ -99,7 +99,7 @@ bool InitDesktop(input_device_t* input_device, char* vm_password) {
         // Type the vm password
 
         // Translate vm_password into keycodes
-        int password_len = strlen(vm_password);
+        int password_len = (int)strlen(vm_password);
         FractalKeycode* password_keycodes = malloc(password_len);
 
         for (int i = 0; i < password_len; i++) {
