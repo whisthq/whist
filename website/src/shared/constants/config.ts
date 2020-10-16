@@ -17,7 +17,7 @@ const environment: any = {
     staging: {
         url: {
             WEBSERVER_URL: "https://staging-webserver.tryfractal.com",
-            FRONTEND_URL: "http://localhost:3000",
+            FRONTEND_URL: "https://tryfractal-staging.netlify.app",
             GRAPHQL_HTTP_URL:
                 "https://staging-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://staging-database.tryfractal.com/v1/graphql",
