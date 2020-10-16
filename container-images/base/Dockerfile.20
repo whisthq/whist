@@ -373,9 +373,9 @@ ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
 # Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID
 COPY 01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
-COPY 02-fractal-dummy.conf /usr/share/X11/xorg.conf.d/02-fractal-dummy.conf
 COPY fractal-update-nvidia-busid.service /etc/systemd/system/
 COPY update-nvidia-busid.sh /usr/share/fractal/
+RUN chmod +x /usr/share/fractal/update-nvidia-busid.sh 
 
 
 

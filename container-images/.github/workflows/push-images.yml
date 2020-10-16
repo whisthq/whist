@@ -9,7 +9,7 @@ on:
 env:
     aws-regions: us-east-1
     aws-placeholder-region: us-east-1
-    apps: base browsers/chrome
+    apps: base browsers/chrome browsers/firefox productivity/slack creative/blender
 
 jobs:
     ecr-push:
