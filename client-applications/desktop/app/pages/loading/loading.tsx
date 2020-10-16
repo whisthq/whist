@@ -64,9 +64,7 @@ const UpdateScreen = (props: any) => {
         }
 
         var port_info = `32262:${port32262},32263:${port32263},32273:${port32273}`
-        console.log(port_info)
         var parameters = ["-w", 800, "-h", 600, "-p", port_info, ip]
-        console.log(parameters)
         console.log(`your executable path should be: ${path}`)
 
         // Starts the protocol

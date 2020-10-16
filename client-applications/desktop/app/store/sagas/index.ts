@@ -157,8 +157,6 @@ function* fetchContainer(action: any) {
         }
 
         if (json && json.state === "PENDING" && json.output) {
-            console.log(json)
-            console.log(json.output)
             // NOTE: actual container/create endpoint does not currently return progress
             var message = json.output.msg
             // var percent = json.output.progress
@@ -176,9 +174,6 @@ function* fetchContainer(action: any) {
     }
     // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
     if (json && json.state && json.state === "SUCCESS") {
-        console.log("success")
-        console.log(json)
-        console.log(json.output)
         if (json.output) {
             // TODO (adriano) these should be removed once we are ready to plug and play
             const test_container_id = "container_id" // TODO
@@ -214,8 +209,6 @@ function* fetchContainer(action: any) {
             const location = json.output.location
                 ? json.output.location
                 : test_location
-
-            console.log(port32262)
 
             yield put(
                 Action.updateContainer({

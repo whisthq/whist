@@ -1,6 +1,7 @@
 const staging: any = {
     url: {
-        WEBSERVER_URL: " http://127.0.0.1:7730",
+        WEBSERVER_URL: " https://staging-webserver.tryfractal.com",
+        //WEBSERVER_URL: " http://127.0.0.1:7730",
         FRONTEND_URL: "http://localhost:3000",
         GRAPHQL_HTTP_URL: "https://staging-database.tryfractal.com/v1/graphql",
         GRAPHQL_WS_URL: "wss://staging-database.tryfractal.com/v1/graphql",
