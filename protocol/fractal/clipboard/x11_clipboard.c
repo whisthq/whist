@@ -185,73 +185,26 @@ void unsafe_SetClipboard(ClipboardData* cb) {
     if (cb->type == CLIPBOARD_TEXT) {
         LOG_INFO("Setting clipboard to text!");
 
-        // Spawn a child process to set clipboard via xclip
-        pid_t pid = -1;
-        int pipefd[2];
+        // Open up xclip
+        inp = popen("xclip -i -selection clipboard", "w");
 
-        pipe(pipefd);
-        pid = fork();
-        if (pid == -1) {
-            LOG_ERROR("clipboard fork failed errno %d", errno);
-            return;
-        } else if (pid == 0) { // in child
-            close(pipefd[1]);
-            dup2(pipefd[0], STDIN_FILENO);
-            execlp("/usr/bin/xclip", "xclip", "-i", "-selection", "clipboard", (char*)NULL);
-            LOG_ERROR("clipboard xclip exec failed");
-            _exit(0); // should only reach here if exec failed
-        } else { // in parent
-            close(pipefd[0]);
-            inp = fdopen(pipefd[1], "w");
-            if (inp == NULL) {
-                LOG_ERROR("clipboard fdopen parent write end failed errno %d", errno);
-                return;
-            }
+        // Write text data
+        fwrite(cb->data, 1, cb->size, inp);
 
-            // Write text data to xclip
-            size_t wr;
-            if ((wr = fwrite(cb->data, 1, cb->size, inp)) < (size_t)cb->size) {
-                LOG_WARNING("clipboard fwrite wrote %d < cb->size %d", wr, cb->size);
-            }
-            fclose(inp);
-            close(pipefd[1]);
-        }
+        // Close pipe
+        pclose(inp);
 
     } else if (cb->type == CLIPBOARD_IMAGE) {
         LOG_INFO("Setting clipboard to image!");
 
-        // Spawn a child process to set clipboard via xclip
-        pid_t pid = -1;
-        int pipefd[2];
+        // Open up xclip
+        inp = popen("xclip -i -selection clipboard -t image/png", "w");
 
-        pipe(pipefd);
-        pid = fork();
-        if (pid == -1) {
-            LOG_ERROR("clipboard fork failed errno %d", errno);
-            return;
-        } else if (pid == 0) { // in child
-            close(pipefd[1]);
-            dup2(pipefd[0], STDIN_FILENO);
-            // images are transmitted over the network as png, so assume the received image is in png format
-            execlp("/usr/bin/xclip", "xclip", "-i", "-selection", "clipboard", "-t", "image/png", (char*)NULL);
-            LOG_ERROR("clipboard xclip exec failed");
-            _exit(0); // should only reach here if exec failed
-        } else { // in parent
-            close(pipefd[0]);
-            inp = fdopen(pipefd[1], "w");
-            if (inp == NULL) {
-                LOG_ERROR("clipboard fdopen parent write end failed errno %d", errno);
-                return;
-            }
+        // Write text data
+        fwrite(cb->data, 1, cb->size, inp);
 
-            size_t wr;
-            // Write file data to xclip
-            if ((wr = fwrite(cb->data, 1, cb->size, inp)) < (size_t)cb->size) {
-                LOG_WARNING("clipboard fwrite wrote %d < cb->size %d", wr, cb->size);
-            }
-            fclose(inp);
-            close(pipefd[1]);
-        }
+        // Close pipe
+        pclose(inp);
 
     } else if (cb->type == CLIPBOARD_FILES) {
         LOG_INFO("Setting clipboard to Files");

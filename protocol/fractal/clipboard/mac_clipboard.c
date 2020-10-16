@@ -54,7 +54,6 @@ bool unsafe_hasClipboardUpdated() {
         clipboardHasFiles = ClipboardHasFiles();
         hasUpdated = (clipboardHasImage || clipboardHasString ||
                       clipboardHasFiles);  // should be always set to true in here
-        LOG_INFO("has clipboard updated - image: %d string: %d files: %d", clipboardHasImage, clipboardHasString, clipboardHasFiles);
         last_clipboard_sequence_number = new_clipboard_sequence_number;
     }
     return hasUpdated;
@@ -132,8 +131,6 @@ ClipboardData* unsafe_GetClipboard() {
             cb->size = data_size;
             memcpy(cb->data, clipboard_string, data_size);
             cb->type = CLIPBOARD_TEXT;
-            LOG_INFO("CLIPBOARD STRING: %s", cb->data);
-            LOG_INFO("Len %d, Strlen %d", cb->size, strlen(cb->data));
         } else {
             LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
         }
