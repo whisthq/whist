@@ -812,8 +812,8 @@ typedef struct update_status_data {
     char *access_token;
 } update_status_data_t;
 
-int32_t MultithreadedUpdateStatus(void *data) {
-    update_status_data_t* d = data;
+int32_t MultithreadedUpdateServerStatus(void *data) {
+    update_status_data_t *d = data;
 
     char json[1000];
     snprintf(json, sizeof(json),
@@ -828,12 +828,13 @@ int32_t MultithreadedUpdateStatus(void *data) {
     return 0;
 }
 
-void updateStatus(bool is_connected, char* host, char* access_token) {
+void updateServerStatus(bool is_connected, char *host, char *access_token) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
     d->host = host;
     d->access_token = access_token;
-    SDL_Thread *update_status = SDL_CreateThread(MultithreadedUpdateStatus, "UpdateStatus", d);
+    SDL_Thread *update_status =
+        SDL_CreateThread(MultithreadedUpdateServerStatus, "UpdateServerStatus", d);
     SDL_DetachThread(update_status);
 }
