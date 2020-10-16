@@ -5,11 +5,7 @@ import { useSubscription } from "@apollo/client"
 import MainContext from "shared/context/mainContext"
 import { SUBSCRIBE_WAITLIST } from "pages/landing/constants/graphql"
 
-import {
-    updateUserAction,
-    updateWaitlistAction,
-    updateApplicationRedirect,
-} from "store/actions/auth/waitlist"
+import * as PureWaitlistAction from "store/actions/waitlist/pure"
 
 import "styles/landing.css"
 import "styles/shared.css"
@@ -24,7 +20,7 @@ import Footer from "shared/components/footer"
 
 const Landing = (props: any) => {
     const { setReferralCode, setAppHighlight } = useContext(MainContext)
-    const { dispatch, user, match, applicationRedirect } = props
+    const { dispatch, user, waitlistUser, match, applicationRedirect } = props
 
     const { data } = useSubscription(SUBSCRIBE_WAITLIST)
 
@@ -55,28 +51,34 @@ const Landing = (props: any) => {
     )
 
     useEffect(() => {
-        dispatch(updateApplicationRedirect(false))
+        dispatch(
+            PureWaitlistAction.updateNavigation({ applicationRedirect: false })
+        )
     }, [dispatch])
 
     useEffect(() => {
         if (data) {
             const waitlist = data.waitlist
-            dispatch(updateWaitlistAction(waitlist))
+            dispatch(
+                PureWaitlistAction.updateWaitlistData({ waitlist: waitlist })
+            )
+
             if (user && user.user_id) {
                 const newUser = getUser(waitlist)
                 if (newUser) {
                     if (
                         newUser.ranking !== user.ranking ||
-                        user.ranking === 0 ||
-                        user.points !== newUser.points
+                        waitlistUser.ranking === 0 ||
+                        waitlistUser.points !== newUser.points
                     ) {
                         dispatch(
-                            updateUserAction(
-                                newUser.points,
-                                newUser.ranking,
-                                newUser.referralCode
-                            )
+                            PureWaitlistAction.updateWaitlistUser({
+                                points: newUser.points,
+                                ranking: newUser.ranking,
+                                referralCode: newUser.referralCode,
+                            })
                         )
+
                         if (applicationRedirect) {
                             history.push("/application")
                         }
@@ -84,7 +86,15 @@ const Landing = (props: any) => {
                 }
             }
         }
-    }, [data, user, dispatch, applicationRedirect, getUser])
+    }, [
+        data,
+        user,
+        dispatch,
+        applicationRedirect,
+        getUser,
+        waitlistUser.points,
+        waitlistUser.ranking,
+    ])
 
     useEffect(() => {
         const firstParam = match.params.first
@@ -114,11 +124,14 @@ const Landing = (props: any) => {
 }
 
 const mapStateToProps = (state: {
-    AuthReducer: { user: any; applicationRedirect: boolean }
+    AuthReducer: { user: any }
+    WaitlistReducer: { navigation: any; waitlistUser: any }
 }) => {
     return {
         user: state.AuthReducer.user,
-        applicationRedirect: state.AuthReducer.applicationRedirect,
+        waitlistUser: state.WaitlistReducer.waitlistUser,
+        applicationRedirect:
+            state.WaitlistReducer.navigation.applicationRedirect,
     }
 }
 

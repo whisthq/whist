@@ -12,17 +12,15 @@ import MainContext from "shared/context/mainContext"
 import { INITIAL_POINTS, REFERRAL_POINTS } from "shared/utils/points"
 import { INSERT_WAITLIST } from "pages/landing/constants/graphql"
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
-import { updateApplicationRedirect } from "store/actions/auth/waitlist"
 
-import {
-    insertWaitlistAction,
-    deleteUserAction,
-} from "store/actions/auth/waitlist"
+import * as PureAuthAction from "store/actions/auth/pure"
+import * as PureWaitlistAction from "store/actions/waitlist/pure"
+import * as SharedAction from "store/actions/shared"
 
 import "styles/landing.css"
 
 function WaitlistForm(props: any) {
-    const { dispatch, user, waitlist, isAction, closingDate } = props
+    const { dispatch, user, waitlist, isAction } = props
     const { width, referralCode } = useContext(MainContext)
 
     const [email, setEmail] = useState("")
@@ -101,17 +99,18 @@ function WaitlistForm(props: any) {
                 newPoints = newPoints + REFERRAL_POINTS
             }
 
+            dispatch(PureAuthAction.updateUser({ user_id: email, name: name }))
             dispatch(
-                insertWaitlistAction(
-                    email,
-                    name,
-                    newPoints,
-                    newReferralCode,
-                    closingDate
-                )
+                PureWaitlistAction.updateWaitlistUser({
+                    points: newPoints,
+                    referralCode: newReferralCode,
+                })
             )
-
-            dispatch(updateApplicationRedirect(true))
+            dispatch(
+                PureWaitlistAction.updateNavigation({
+                    applicationRedirect: true,
+                })
+            )
 
             addWaitlist({
                 variables: {
@@ -126,14 +125,18 @@ function WaitlistForm(props: any) {
             setProcessing(false)
         } else {
             dispatch(
-                insertWaitlistAction(
-                    email,
-                    currentUser.name,
-                    currentUser.points,
-                    currentUser.referralCode,
-                    closingDate
-                )
+                PureAuthAction.updateUser({
+                    user_id: email,
+                    name: currentUser.name,
+                })
             )
+            dispatch(
+                PureWaitlistAction.updateWaitlistUser({
+                    points: currentUser.points,
+                    referralCode: currentUser.referralCode,
+                })
+            )
+
             setProcessing(false)
         }
     }
@@ -145,7 +148,7 @@ function WaitlistForm(props: any) {
                     <button
                         className="white-button"
                         style={{ textTransform: "uppercase" }}
-                        onClick={() => dispatch(deleteUserAction())}
+                        onClick={() => dispatch(SharedAction.resetState())}
                     >
                         LOGOUT AS {user.name}
                     </button>
@@ -272,12 +275,16 @@ function WaitlistForm(props: any) {
 }
 
 function mapStateToProps(state: {
-    AuthReducer: { user: any; waitlist: any; closing_date: any }
+    AuthReducer: { user: any }
+    WaitlistReducer: {
+        waitlistUser: any
+        waitlist: any[]
+        waitlistData: any
+    }
 }) {
     return {
         user: state.AuthReducer.user,
-        waitlist: state.AuthReducer.waitlist,
-        closingDate: state.AuthReducer.closing_date,
+        waitlist: state.WaitlistReducer.waitlistData.waitlist,
     }
 }
 

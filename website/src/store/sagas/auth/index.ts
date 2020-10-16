@@ -1,6 +1,6 @@
 import { put, takeEvery, all, call, select } from "redux-saga/effects"
 
-import * as LoginAction from "store/actions/auth/login_actions"
+import * as Action from "store/actions/auth/pure"
 
 // eslint-disable-next-line require-yield
 function* googleLogin(action: any) {
@@ -10,5 +10,5 @@ function* googleLogin(action: any) {
 }
 
 export default function* () {
-    yield all([takeEvery(LoginAction.GOOGLE_LOGIN, googleLogin)])
+    // yield all([takeEvery(Action.GOOGLE_LOGIN, googleLogin)])
 }
