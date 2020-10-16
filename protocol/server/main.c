@@ -234,8 +234,8 @@ int32_t SendVideo(void* opaque) {
                     update_encoder = false;
                 }
             } else {
-                current_bitrate = (int)(STARTING_BITRATE);
                 LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate, max_mbps);
+                current_bitrate = (int)(max_mbps * 1024 * 1024);
                 pending_encoder = true;
                 encoder_finished = false;
                 encoder_factory_server_w = device->width;
@@ -882,6 +882,11 @@ int MultithreadedManageClients(void* opaque) {
         //     num_controlling_clients++;
         // }
 
+        if (clients[client_id].is_controlling) {
+            // Reset input system when a new input controller arrives
+            ResetInput();
+        }
+
         StartTimer(&(clients[client_id].last_ping));
 
         clients[client_id].is_active = true;
@@ -938,13 +943,15 @@ int main() {
     }
 #endif
 
+    update_webserver_parameters();
+
     input_device = CreateInputDevice();
     if (!input_device) {
         LOG_WARNING("Failed to create input device for playback.");
     }
 
 #ifdef _WIN32
-    if (!InitDesktop(input_device)) {
+    if (!InitDesktop(input_device, get_vm_password())) {
         LOG_WARNING("Could not winlogon!\n");
         destroyLogger();
         return 0;

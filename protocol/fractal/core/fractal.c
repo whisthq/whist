@@ -279,6 +279,7 @@ static bool already_obtained_vm_type = false;
 static clock last_vm_info_check_time;
 static bool is_using_stun;
 static char* access_token = NULL;
+static char* vm_password = NULL;
 bool is_trying_staging_protocol_info = false;
 
 void update_webserver_parameters() {
@@ -344,6 +345,7 @@ void update_webserver_parameters() {
     kv_pair_t* private_key = get_kv(&json, "private_key");
     kv_pair_t* using_stun = get_kv(&json, "using_stun");
     kv_pair_t* access_token_value = get_kv(&json, "access_token");
+    kv_pair_t* vm_password_value = get_kv(&json, "vm_password");
 
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {
@@ -384,6 +386,10 @@ void update_webserver_parameters() {
                 free(access_token);
             }
             access_token = clone(access_token_value->str_value);
+        }
+
+        if (vm_password_value && vm_password_value->type == JSON_STRING) {
+            vm_password = clone(vm_password_value->str_value);
         }
     } else {
         LOG_WARNING("COULD NOT GET JSON PARAMETERS FROM: %s", json_str);
@@ -434,6 +440,16 @@ char* get_access_token() {
         LOG_ERROR("Webserver parameters not updated!");
     }
     return access_token;
+}
+
+char* get_vm_password() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    if (!vm_password) {
+        return "password1234567.";
+    }
+    return vm_password;
 }
 
 int GetFmsgSize(FractalClientMessage* fmsg) {
