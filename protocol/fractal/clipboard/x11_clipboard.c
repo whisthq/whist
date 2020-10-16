@@ -53,10 +53,6 @@ static Window window;
 static Atom clipboard;
 static Atom incr_id;
 
-// if true, means peer has sent clipboard data and we have just added to our clipboard - ignore next clipboard change
-// if false, can listen for clipboard changes as normal
-static bool just_received = false;
-
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
 bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
 
@@ -250,12 +246,9 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         */
     }
 
-    // Set the just_received flag to true in order to prevent hasUpdated from returning true
+    // Empty call of unsafe_hasClipboardUpdated() in order to prevent hasUpdated from returning true
     //      just after we've called xclip to set the clipboard
-    // This should only be done if the clipboard contains valid contents to update xclip
-    if (cb->type != CLIPBOARD_NONE) {
-        just_received = true;
-    }
+    unsafe_hasClipboardUpdated();
     return;
 }
 
@@ -297,16 +290,6 @@ bool unsafe_hasClipboardUpdated() {
         XNextEvent(display, &event);
         if (event.type == event_base + XFixesSelectionNotify &&
             ((XFixesSelectionNotifyEvent*)&event)->selection == clipboard) {
-            if (just_received) {
-                // if we have just received and set clipboard from a peer, we don't want
-                //  to issue that clipboard activity as a clipboard update to be sent
-                //  back to the peer
-                // Note: We don't just call unsafe_hasClipboardUpdated after setting the clipboard to
-                //  wipe the changes because it appears to be asynchronous, and the flag is thus
-                //  more effective
-                just_received = false;
-                return false;
-            }
             return true;
         }
     }

@@ -132,6 +132,11 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard() {
         return clipboard;
     }
 
+    if (updating_clipboard) {
+        LOG_INFO("Tried to GetClipboard, but clipboard is updating");
+        return NULL;
+    }
+
     // If the clipboard has updated since we last checked, or a previous
     // clipboard update is still pending, then we try to update the clipboard
     if (hasClipboardUpdated() || pendingUpdateClipboard()) {
