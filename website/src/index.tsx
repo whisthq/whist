@@ -18,6 +18,7 @@ import { ApolloClient, InMemoryCache, HttpLink, split } from "@apollo/client"
 import { getMainDefinition } from "@apollo/client/utilities"
 import { WebSocketLink } from "@apollo/client/link/ws"
 
+import { debugLog } from "shared/utils/logging"
 import history from "shared/utils/history"
 import { MainProvider } from "shared/context/mainContext"
 import { config } from "shared/constants/config"
@@ -64,8 +65,8 @@ sagaMiddleware.run(rootSaga)
 
 // Set up Apollo GraphQL provider for https and wss (websocket)
 
-console.log("config")
-console.log(config)
+debugLog("config")
+debugLog(config)
 
 const httpLink = new HttpLink({
     uri: config.url.GRAPHQL_HTTP_URL,

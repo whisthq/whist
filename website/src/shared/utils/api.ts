@@ -1,4 +1,5 @@
 import { config } from "shared/constants/config"
+import { debugLog } from "shared/utils/logging"
 
 export async function apiPost(endpoint: any, body: any, token: any) {
     try {
@@ -14,7 +15,7 @@ export async function apiPost(endpoint: any, body: any, token: any) {
         const json = await response.json()
         return { json, response }
     } catch (err) {
-        console.log(err)
+        debugLog(err)
         return err
     }
 }
