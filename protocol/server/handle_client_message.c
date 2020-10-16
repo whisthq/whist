@@ -8,6 +8,7 @@
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
+#include "webserver.h"
 
 #ifdef _WIN32
 #include "../fractal/utils/windows_utils.h"
@@ -376,7 +377,7 @@ static int handleInitMessage(FractalClientMessage *cfmsg, int client_id, bool is
 #else
     if (time_data.use_linux_name) {
         LOG_INFO("Setting time from IANA time zone %s", time_data.win_tz_name);
-        SetTimezoneFromIANAName(time_data.win_tz_name, "");
+        SetTimezoneFromIANAName(time_data.win_tz_name, get_vm_password());
     } else {
         LOG_INFO("Setting time from UTC offset %d", time_data.win_tz_name);
         SetTimezoneFromUtc(time_data.UTC_Offset, time_data.DST_flag);
