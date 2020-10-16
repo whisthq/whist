@@ -554,11 +554,11 @@ class ECSClient:
 
     def create_launch_configuration(
         self,
-        instance_type="g3s.xlarge",
-        ami="ami-0decb4a089d867dc1",
+        instance_type='g3s.xlarge',
+        ami='ami-0c82e2febb87e6d1c',
         launch_config_name=None,
         cluster_name=None,
-        key_name="auto-scaling-key",
+        key_name='auto-scaling-key'
     ):
         """
         Args:
@@ -608,13 +608,10 @@ rm -f /var/lib/ecs/data/*
 systemctl start docker-container@ecs-agent.service
 
 cd /home/ubuntu
+echo export USE_PROD_SENTRY=1 >> /etc/bash.bashrc
 chmod +x userdata-bootstrap.sh
 ./userdata-bootstrap.sh
-""".format(
-            cluster_name
-        )
-
-        print(userdata)
+""".format(cluster_name)
 
         launch_config_name = launch_config_name or self.generate_name("launch_configuration")
         response = self.auto_scaling_client.create_launch_configuration(
@@ -949,7 +946,7 @@ if __name__ == "__main__":
     #     )
     # )
 
-    testclient = ECSClient(region_name="us-east-1")
+    testclient = ECSClient(region_name='us-east-1')
     # instance_profiles = testclient.iam_client.list_instance_profiles()['InstanceProfiles']
     # for instance_profile in instance_profiles:
     #     if 'instance_profile_' in instance_profile['InstanceProfileName']:

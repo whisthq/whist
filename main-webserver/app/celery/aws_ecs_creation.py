@@ -17,6 +17,14 @@ from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
+# all amis support ecs-host-service
+region_to_ami = {
+    'us-east-1': 'ami-0c82e2febb87e6d1c',
+    'us-east-2': 'ami-0e060b3855ff4b3a5',
+    'us-west-1': 'ami-0381c3215c671199b',
+    'us-west-2': 'ami-0aa7ccf369518c789',
+    'ca-central-1': 'ami-0d08fca67385a13bc',
+}
 
 def build_base_from_image(image):
     base_task = {
@@ -79,9 +87,9 @@ def create_new_container(
     self,
     username,
     task_definition_arn,
-    cluster_name=None,
-    region_name="us-east-1",
     use_launch_type=False,
+    cluster_name=None,
+    region_name='us-east-1',
     network_configuration=None,
 ):
     """Create a new ECS container running a particular task.
@@ -134,7 +142,6 @@ def create_new_container(
             if len(all_clusters) < base_len:
                 for i in range(base_len - len(all_clusters)):
                     create_new_cluster.delay(region_name=region_name)
-
     fractalLog(
         function="create_new_container",
         label=cluster_name,
@@ -266,7 +273,6 @@ def create_new_cluster(
     Returns:
         user_cluster_schema: information on cluster created
     """
-
     fractalLog(
         function="create_new_cluster",
         label="None",

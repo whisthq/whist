@@ -29,7 +29,7 @@ def preprocess_task_info(app):
     return (
         base_str.format(app),
         "us-east-1",
-        "owen-dev-cluster",
+        "demo-cluster",
     )
 
 

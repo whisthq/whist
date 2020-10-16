@@ -30,6 +30,16 @@ def generate_name(starter_name=""):
 pytest.cluster_name = generate_name("cluster")
 pytest.container_name = None
 
+@pytest.mark.container_serial
+def check_test_database(input_token, admin_token):
+    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE" or RESOURCE_GROUP != "FractalStaging":
+        fractalLog(
+            function="test_aws_container",
+            label=None,
+            logs="Not using staging database or resource group! Forcefully stopping tests.",
+            level=logging.WARNING,
+        )
+        assert False
 
 @pytest.mark.container_serial
 def check_test_database(input_token, admin_token):
@@ -73,7 +83,6 @@ def test_create_cluster(
             level=logging.ERROR,
         )
         assert False
-
     if not ClusterInfo.query.get(cluster_name):
         fractalLog(
             function="test_create_cluster",
@@ -83,7 +92,6 @@ def test_create_cluster(
         )
         assert False
     assert True
-
 
 @pytest.mark.container_serial
 def test_create_container(input_token, admin_token, cluster_name=pytest.cluster_name):
@@ -121,9 +129,7 @@ def test_create_container(input_token, admin_token, cluster_name=pytest.cluster_
             level=logging.ERROR,
         )
         assert False
-
     pytest.container_name = task["result"]["container_id"]
-    print(pytest.container_name)
     if not UserContainer.query.get(pytest.container_name):
         fractalLog(
             function="test_create_container",
@@ -136,7 +142,6 @@ def test_create_container(input_token, admin_token, cluster_name=pytest.cluster_
     assert True
     return task["result"]
 
-
 @pytest.mark.container_serial
 def test_send_commands(input_token, admin_token):
     fractalLog(
@@ -147,8 +152,8 @@ def test_send_commands(input_token, admin_token):
 
     resp = sendCommands(
         cluster=pytest.cluster_name,
-        region_name="us-east-1",
-        commands=["echo test_send_commands"],
+        region_name='us-east-1',
+        commands=['echo test_send_commands'],
         input_token=input_token,
     )
 
@@ -164,7 +169,6 @@ def test_send_commands(input_token, admin_token):
         assert False
 
     assert True
-
 
 @pytest.mark.container_serial
 def test_delete_container(input_token, admin_token, container_name=pytest.container_name):
@@ -229,7 +233,6 @@ def test_delete_cluster(input_token, admin_token, cluster=pytest.cluster_name):
             level=logging.ERROR,
         )
         assert False
-
     if ClusterInfo.query.get(cluster):
         fractalLog(
             function="test_delete_cluster",
@@ -316,8 +319,6 @@ def test_cluster_assignment(input_token, admin_token):
             or old_info.maxMemoryRemainingPerInstance > 8500
         ):
             assert container_cluster == new_container_cluster
-            print(old_info.__dict__)
-            print(container_cluster_info.__dict__)
             assert (
                 container_cluster_info.maxMemoryRemainingPerInstance
                 <= old_info.maxMemoryRemainingPerInstance
@@ -334,7 +335,6 @@ def test_cluster_assignment(input_token, admin_token):
             break
 
         container_cluster = new_container_cluster
-
     first_cluster_info = ClusterInfo.query.get(first_cluster)
     old_first_cluster_info = copy.copy(first_cluster_info)
     container_to_delete = clusters_to_containers[first_cluster].pop()

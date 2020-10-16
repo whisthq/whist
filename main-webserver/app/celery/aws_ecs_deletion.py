@@ -12,6 +12,8 @@ from app import (
     fractalSQLCommit,
     fractalSQLUpdate,
     logging,
+    fractalSQLUpdate,
+    logging,
 )
 from app.helpers.utils.aws.aws_resource_locks import lockContainerAndUpdate, spinLock
 from app.helpers.utils.aws.base_ecs_client import ECSClient
