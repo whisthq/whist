@@ -1498,7 +1498,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
              "Host: %s\r\n"
              "Content-Type: application/json\r\n"
              "Content-Length: %d\r\n"
-             "%s" // Potentially an Authorization: Bearer, but potentially an empty string
+             "%s"  // Potentially an Authorization: Bearer, but potentially an empty string
              "\r\n"
              "%s"
              "\r\n",
@@ -1535,7 +1535,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
 }
 
 // send JSON get to query the database for VM details
-bool SendJSONGet(char* host_s, char* path, char* json_res, size_t json_res_size, char* json_obj) {
+bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size, char *json_obj) {
     // environment variables
     SOCKET Socket;  // socket to send/receive POST request
     struct hostent *host;
@@ -1574,11 +1574,12 @@ bool SendJSONGet(char* host_s, char* path, char* json_res, size_t json_res_size,
     // the user first, we create the POST request message
     char *message = malloc(250);
     sprintf(message,
-        "GET %s HTTP/1.0\r\n"
-        "Host: %s\r\n"
-        "\r\n"
-        "%s"
-        "\r\n", path, host_s, json_obj);
+            "GET %s HTTP/1.0\r\n"
+            "Host: %s\r\n"
+            "\r\n"
+            "%s"
+            "\r\n",
+            path, host_s, json_obj);
     LOG_INFO("%s", message);
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {

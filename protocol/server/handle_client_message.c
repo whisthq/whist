@@ -356,7 +356,7 @@ static int handleQuitMessage(FractalClientMessage *fmsg, int client_id, bool is_
     return ret;
 }
 
-static int handleInitMessage(FractalClientMessage* cfmsg, int client_id, bool is_controlling) {
+static int handleInitMessage(FractalClientMessage *cfmsg, int client_id, bool is_controlling) {
     client_id;
     LOG_INFO("Receiving a message time packet");
 

@@ -381,7 +381,7 @@ int configureCache(void) {
     return 0;
 }
 
-int prepareInitToServer(FractalDiscoveryRequestMessage* fmsg, char* email) {
+int prepareInitToServer(FractalDiscoveryRequestMessage *fmsg, char *email) {
     // Copy email
     strcpy(fmsg->user_email, email);
     // Copy time

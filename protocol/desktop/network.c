@@ -207,4 +207,3 @@ int SendFmsg(FractalClientMessage *fmsg) {
                              sent_packet_id, -1, NULL, NULL);
     }
 }
-

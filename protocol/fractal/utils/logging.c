@@ -708,7 +708,7 @@ void saveConnectionID(int connection_id_int) {
 
 // The first time this is called will include the initial log messages,
 // before the first connection, if they haven't been overwritten.
-int sendConnectionHistory(char* host, char* access_token) {
+int sendConnectionHistory(char *host, char *access_token) {
     // This is for HTTP request, not filesystem
     char *request_path = "/logs/insert";
 
@@ -808,8 +808,8 @@ int sendConnectionHistory(char* host, char* access_token) {
 
 typedef struct update_status_data {
     bool is_connected;
-    char* host;
-    char* access_token;
+    char *host;
+    char *access_token;
 } update_status_data_t;
 
 int32_t MultithreadedUpdateStatus(void *data) {

@@ -36,17 +36,13 @@ void update_webserver_parameters() {
 
     char msg[1024];
     sprintf(msg,
-        "{\n"
-        "    \"port\": %d\n"
-        "}\n",
-        primary_port_mapping
-    );
+            "{\n"
+            "    \"port\": %d\n"
+            "}\n",
+            primary_port_mapping);
 
-    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST,
-                    "/vm/protocol_info",
-                    buf, len,
-                    msg
-    )) {
+    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/vm/protocol_info", buf,
+                     len, msg)) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;

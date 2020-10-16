@@ -69,6 +69,7 @@ its threads.
 extern Client clients[MAX_NUM_CLIENTS];
 
 char aes_private_key[16];
+char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 volatile int connection_id;
 volatile int primary_port_mapping;
 volatile bool connected;
@@ -647,7 +648,7 @@ void update() {
                  "update.bat\"",
                  get_branch()
 #else
-                 " " // TODO: Linux Autoupdate
+                 " "  // TODO: Linux Autoupdate
 #endif
         );
 
@@ -660,7 +661,7 @@ void update() {
 #ifdef _WIN32
             cmd
 #else
-            " " // TODO: Linux Autoupdate
+            " "       // TODO: Linux Autoupdate
 #endif
             ,
             NULL);
@@ -917,8 +918,6 @@ int MultithreadedWaitForClient(void* opaque) {
     return 0;
 }
 
-
-
 const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k'},
                                      {"identifier", required_argument, NULL, 'i'},
                                      // these are standard for POSIX programs
@@ -931,20 +930,21 @@ const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k
 
 int parse_args(int argc, char* argv[]) {
     // TODO: replace `server` with argv[0]
-    const char *usage =
+    const char* usage =
         "Usage: server [OPTION]... IP_ADDRESS\n"
         "Try 'server --help' for more information.\n";
-    const char *usage_details =
+    const char* usage_details =
         "Usage: server [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
         "  -k, --private-key=PK          pass in the RSA Private Key as a "
         "                                  hexadecimal string\n"
-        "  -i, --identifier=ID           pass in the unique identifier for this server, as a string\n"
+        "  -i, --identifier=ID           pass in the unique identifier for this server, as a "
+        "string\n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
-    memcpy((char *)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+    memcpy((char*)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
 
     int opt;
 
@@ -958,15 +958,21 @@ int parse_args(int argc, char* argv[]) {
         errno = 0;
         switch (opt) {
             case 'k':
-                if (!read_hexadecimal_private_key(optarg, (char *)aes_private_key)) {
+                if (!read_hexadecimal_private_key(optarg, (char*)aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
                     printf("%s", usage);
                     return -1;
                 }
                 break;
             case 'i':
-                printf("ID: %s", optarg);
-                exit(-1);
+                printf("Identifier passed in: %s", optarg);
+                if (strlen(optarg) > FRACTAL_IDENTIFIER_MAXLEN) {
+                    printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
+                           strlen(optarg), FRACTAL_IDENTIFIER_MAXLEN);
+                    return -1;
+                }
+                strncpy(identifier, optarg, FRACTAL_IDENTIFIER_MAXLEN);
+                identifier[FRACTAL_IDENTIFIER_MAXLEN] = 0;
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);

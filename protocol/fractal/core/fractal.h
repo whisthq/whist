@@ -128,6 +128,7 @@ Defines
 // variable
 #define USER_EMAIL_MAXLEN 200
 #define FRACTAL_ENVIRONMENT_MAXLEN 100
+#define FRACTAL_IDENTIFIER_MAXLEN 31
 
 /*
 ============================
