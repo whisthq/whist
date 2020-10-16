@@ -152,6 +152,8 @@ bool allow_autoupdate() {
     return is_autoupdate;
 }
 
+char* get_vm_password() { return "password1234567."; }
+
 char* get_access_token() {
     if (!already_obtained_vm_type) {
         LOG_ERROR("Webserver parameters not updated!");
