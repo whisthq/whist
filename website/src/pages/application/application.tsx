@@ -12,7 +12,7 @@ import MainContext from "shared/context/mainContext"
 import Header from "shared/components/header"
 
 function Application(props: any) {
-    const { user } = props
+    const { user, waitlistUser } = props
     const { width } = useContext(MainContext)
 
     const [devices, setDevices] = useState("")
@@ -36,7 +36,7 @@ function Application(props: any) {
 
     function submitForm() {
         db.collection("essays")
-            .doc(user.email)
+            .doc(user.user_id)
             .set({
                 devices: devices,
                 apps: apps,
@@ -66,13 +66,13 @@ function Application(props: any) {
                                             : 50,
                                 }}
                             >
-                                No. {user.ranking}
+                                No. {waitlistUser.ranking}
                             </span>{" "}
                             <br />
                             on the waitlist.
                         </h2>
                         <p style={{ marginTop: 50 }}>
-                            You’re registered as {user.email}. When the
+                            You’re registered as {user.user_id}. When the
                             countdown reaches zero, we'll invite people to try
                             Fractal. You can signficantly increase your chances
                             of being selected by{" "}
@@ -157,9 +157,13 @@ function Application(props: any) {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
+function mapStateToProps(state: {
+    AuthReducer: { user: any }
+    WaitlistReducer: { waitlistUser: any }
+}) {
     return {
         user: state.AuthReducer.user,
+        waitlistUser: state.WaitlistReducer.waitlistUser,
     }
 }
 

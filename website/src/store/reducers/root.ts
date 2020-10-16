@@ -1,8 +1,11 @@
-import AuthReducer from "store/reducers/auth"
+import AuthReducer from "store/reducers/auth/reducer"
+import WaitlistReducer from "store/reducers/waitlist/reducer"
+
 import { combineReducers } from "redux"
 
 const reducers = combineReducers({
     AuthReducer: AuthReducer,
+    WaitlistReducer: WaitlistReducer,
 })
 
 const rootReducer = (state: any, action: any) => {

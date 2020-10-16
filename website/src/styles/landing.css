@@ -215,6 +215,16 @@ thead tr th {
     background: rgba(172, 207, 231, 0.2);
     border-radius: 5px;
     padding: 10px 15px;
+    border: none;
+    outline: none;
+    color: black;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modal-content {
+    padding: 20px;
 }
 
 .modal-button {
@@ -222,6 +232,7 @@ thead tr th {
     outline: none !important;
     border: none;
     padding: 10px 15px;
+    width: 200px;
 }
 
 .modal-button:hover {
@@ -232,4 +243,9 @@ thead tr th {
 
 .leaderboard-container {
     width: "100%";
+}
+
+.alert-success {
+    margin-top: 25px;
+    border: none;
 }

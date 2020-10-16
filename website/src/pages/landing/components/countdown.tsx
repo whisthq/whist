@@ -7,18 +7,26 @@ import { db } from "shared/utils/firebase"
 
 import "styles/landing.css"
 
+import * as PureWaitlistAction from "store/actions/waitlist/pure"
+
 const CountdownTimer = (props: any) => {
     const { width } = useContext(MainContext)
+    const { dispatch } = props
 
     const [closingDate, changeClosingDate] = useState(() => {
         return Date.now()
     })
 
     useEffect(() => {
-        getCloseDate().then(function (closingDate) {
+        getCloseDate().then((closingDate) => {
             changeClosingDate(closingDate)
+            dispatch(
+                PureWaitlistAction.updateWaitlistData({
+                    closingDate: closingDate,
+                })
+            )
         })
-    }, [])
+    }, [dispatch])
 
     async function getCloseDate() {
         const closingDate = await db
@@ -157,7 +165,7 @@ const CountdownTimer = (props: any) => {
     }
 }
 
-const mapStateToProps = () => {
+function mapStateToProps() {
     return {}
 }
 

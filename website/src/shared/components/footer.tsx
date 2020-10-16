@@ -153,7 +153,7 @@ const Footer = (props: any) => {
                             <div style={{ fontSize: 13 }}>
                                 <div>
                                     <a
-                                        href="https://discord.gg/eG88g6k"
+                                        href="https://discord.gg/PDNpHjy"
                                         className="page-link"
                                         target="_blank"
                                         rel="noopener noreferrer"

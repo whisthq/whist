@@ -1,36 +1,33 @@
 import React, { useEffect } from "react"
 import { connect } from "react-redux"
-
+import { debugLog } from "shared/utils/logging"
 import "styles/auth.css"
 
 import GoogleButton from "pages/auth/googleButton"
 import SignoutButton from "pages/auth/signoutButton"
 
 const Auth = (props: {
-    dispatch: (arg0: { type: string; email?: string }) => void
-    loggedIn: any
-    email: React.ReactNode
+    dispatch: any
+    user: {
+        user_id: string
+    }
 }) => {
     useEffect(() => {
-        console.log(props)
+        debugLog(props)
     }, [props])
 
     return (
         <div className="auth-wrapper">
-            <div>Logged in: {JSON.stringify(props.loggedIn)}</div>
-            <div>email: {props.email}</div>
+            <div>email: {props.user.user_id}</div>
             <GoogleButton />
             <SignoutButton />
         </div>
     )
 }
 
-function mapStateToProps(state: any) {
+function mapStateToProps(state: { AuthReducer: { user: any } }) {
     return {
-        reducer: state.AuthReducer,
-        loggedIn: state.AuthReducer.loggedIn,
-        email: state.AuthReducer.user.email,
-        name: state.AuthReducer.user.name,
+        user: state.AuthReducer.user,
     }
 }
 

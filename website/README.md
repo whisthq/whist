@@ -13,6 +13,8 @@ If you need to update dependencies, you can run `npm upgrade`, followed by `npm 
 
 Basic continuous integration is set up for this project. For every push or PR, basic NodeJS tests will be compiled and run within GitHub Actions. This will also attempt to format the code via Prettier and inform you if your code is not properly formatted. You should make sure that every pull request to `master` passes the build in GitHub Actions, and that you pre-formatted the code via Prettier beforehand.
 
+To ensure that no lingering `console.log()` statements make it to production and can be inspected by users, please use `debugLog()` to print to the console. This custom logging function gets automatically hidden in production.
+
 ## Styling
 
 To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Prettier.
@@ -70,7 +72,7 @@ For consistency, we enforce all folder, variable, and file names to start with l
 
 ### Warnings
 
-To minimize the risk of bugs, we enforce that all PR's be warning-free. You can see warnings in the terminal where the website is running locally; if a PR has warnings, the CI will fail.
+To minimize the risk of bugs, we enforce that all PR's be warning-free. You can see warnings in the terminal where the website is running locally; if a PR has warnings, the CI will fail. Note that the Netlify deploys will fail due to warnings, to enforce this design philosophy.
 
 ### State Management
 

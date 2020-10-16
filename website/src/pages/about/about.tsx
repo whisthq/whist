@@ -15,7 +15,6 @@ import "styles/about.css"
 
 const About = (props: any) => {
     const { width } = useContext(MainContext)
-
     let teamCards = []
     let shuffledTeamData = teamData
         .map((a) => ({ sort: Math.random(), value: a }))
@@ -37,7 +36,6 @@ const About = (props: any) => {
             </Carousel.Item>
         )
     }
-
     return (
         <div>
             <div

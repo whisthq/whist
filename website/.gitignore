@@ -21,6 +21,7 @@ scripts/__pycache__
 scripts/.ipynb_checkpoints
 
 # misc
+.env
 .DS_Store
 .env.local
 .env.development.local

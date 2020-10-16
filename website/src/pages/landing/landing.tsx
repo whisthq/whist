@@ -1,19 +1,16 @@
 import React, { useEffect, useCallback, useContext } from "react"
 import { connect } from "react-redux"
+import { useSubscription } from "@apollo/client"
 
-import { db } from "shared/utils/firebase"
 import MainContext from "shared/context/mainContext"
+import { SUBSCRIBE_WAITLIST } from "pages/landing/constants/graphql"
 
-import {
-    updateUserAction,
-    updateWaitlistAction,
-    updateUnsortedLeaderboardAction,
-} from "store/actions/auth/waitlist"
-
-import { getSortedLeaderboard } from "shared/utils/points"
+import * as PureWaitlistAction from "store/actions/waitlist/pure"
 
 import "styles/landing.css"
 import "styles/shared.css"
+
+import history from "shared/utils/history"
 
 import TopView from "pages/landing/views/topView"
 import MiddleView from "pages/landing/views/middleView"
@@ -23,7 +20,9 @@ import Footer from "shared/components/footer"
 
 const Landing = (props: any) => {
     const { setReferralCode, setAppHighlight } = useContext(MainContext)
-    const { dispatch, user, match } = props
+    const { dispatch, user, waitlistUser, match, applicationRedirect } = props
+
+    const { data } = useSubscription(SUBSCRIBE_WAITLIST)
 
     const apps = ["Photoshop", "Blender", "Figma", "VSCode", "Chrome", "Maya"]
     const appsLowercase = [
@@ -35,42 +34,67 @@ const Landing = (props: any) => {
         "maya",
     ]
 
-    const getRanking = useCallback(
+    const getUser = useCallback(
         (waitlist: any) => {
             for (var i = 0; i < waitlist.length; i++) {
-                if (waitlist[i].email === user.email) {
-                    return i + 1
+                if (waitlist[i].user_id === user.user_id) {
+                    return {
+                        ...waitlist[i],
+                        ranking: i + 1,
+                        referralCode: waitlist[i].referral_code,
+                    }
                 }
             }
-            return 0
+            return null
         },
         [user]
     )
 
     useEffect(() => {
-        db.collection("metadata")
-            .doc("waitlist")
-            .onSnapshot(function (snapshot) {
-                const document = snapshot.data()
-                if (document) {
-                    const unsortedLeaderboard = document.leaderboard
-                    dispatch(
-                        updateUnsortedLeaderboardAction(unsortedLeaderboard)
-                    )
-                    getSortedLeaderboard(document).then(function (
-                        sortedLeaderboard
+        dispatch(
+            PureWaitlistAction.updateNavigation({ applicationRedirect: false })
+        )
+    }, [dispatch])
+
+    useEffect(() => {
+        if (data) {
+            const waitlist = data.waitlist
+            dispatch(
+                PureWaitlistAction.updateWaitlistData({ waitlist: waitlist })
+            )
+
+            if (user && user.user_id) {
+                const newUser = getUser(waitlist)
+                if (newUser) {
+                    if (
+                        newUser.ranking !== user.ranking ||
+                        waitlistUser.ranking === 0 ||
+                        waitlistUser.points !== newUser.points
                     ) {
-                        dispatch(updateWaitlistAction(sortedLeaderboard))
-                        if (user && user.email) {
-                            const ranking = getRanking(sortedLeaderboard)
-                            if (ranking !== user.ranking) {
-                                dispatch(updateUserAction(user.points, ranking))
-                            }
+                        dispatch(
+                            PureWaitlistAction.updateWaitlistUser({
+                                points: newUser.points,
+                                ranking: newUser.ranking,
+                                referralCode: newUser.referralCode,
+                            })
+                        )
+
+                        if (applicationRedirect) {
+                            history.push("/application")
                         }
-                    })
+                    }
                 }
-            })
-    }, [user, dispatch, getRanking])
+            }
+        }
+    }, [
+        data,
+        user,
+        dispatch,
+        applicationRedirect,
+        getUser,
+        waitlistUser.points,
+        waitlistUser.ranking,
+    ])
 
     useEffect(() => {
         const firstParam = match.params.first
@@ -99,9 +123,15 @@ const Landing = (props: any) => {
     )
 }
 
-const mapStateToProps = (state: { AuthReducer: { user: any } }) => {
+const mapStateToProps = (state: {
+    AuthReducer: { user: any }
+    WaitlistReducer: { navigation: any; waitlistUser: any }
+}) => {
     return {
         user: state.AuthReducer.user,
+        waitlistUser: state.WaitlistReducer.waitlistUser,
+        applicationRedirect:
+            state.WaitlistReducer.navigation.applicationRedirect,
     }
 }
 

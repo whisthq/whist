@@ -11,7 +11,8 @@ import "styles/landing.css"
 
 const Leaderboard = (props: {
     waitlist: any[]
-    user: { email: any; ranking: number }
+    waitlistUser: any
+    user: { user_id: any; ranking: number }
 }) => {
     const { width } = useContext(MainContext)
     const [topSix, setTopSix]: any[] = useState([])
@@ -119,13 +120,13 @@ const Leaderboard = (props: {
         const topThree = topSix.slice(0, 3)
         if (!props.waitlist) {
             return <tr>No data to show.</tr>
-        } else if (!props.user.email || props.user.ranking <= 5) {
+        } else if (!props.user.user_id || props.waitlistUser.ranking <= 5) {
             const bottomThree = topSix.slice(3, 6)
             return topThree
                 .map((user: any, idx: number) => {
                     return renderRow(
                         idx + 1,
-                        idx + 1 === props.user.ranking,
+                        idx + 1 === props.waitlistUser.ranking,
                         user.name,
                         user.referrals,
                         user.points
@@ -135,14 +136,14 @@ const Leaderboard = (props: {
                     bottomThree.map((user: any, idx: number) => {
                         return renderRow(
                             idx + 4,
-                            idx + 4 === props.user.ranking,
+                            idx + 4 === props.waitlistUser.ranking,
                             user.name,
                             user.referrals,
                             user.points
                         )
                     })
                 )
-        } else if (props.user.ranking === props.waitlist.length) {
+        } else if (props.waitlistUser.ranking === props.waitlist.length) {
             const bottomThree = props.waitlist.slice(-3)
             return topThree
                 .map((user: any, idx: number) => {
@@ -157,7 +158,7 @@ const Leaderboard = (props: {
                 .concat(
                     bottomThree.map((user: any, idx: number) => {
                         return renderRow(
-                            props.user.ranking - 2 + idx,
+                            props.waitlistUser.ranking - 2 + idx,
                             idx === 2,
                             user.name,
                             user.referrals,
@@ -167,8 +168,8 @@ const Leaderboard = (props: {
                 )
         } else {
             const bottomThree = props.waitlist.slice(
-                props.user.ranking - 2,
-                props.user.ranking + 1
+                props.waitlistUser.ranking - 2,
+                props.waitlistUser.ranking + 1
             )
             return topThree
                 .map((user: any, idx: number) => {
@@ -183,7 +184,7 @@ const Leaderboard = (props: {
                 .concat(
                     bottomThree.map((user: any, idx: number) => {
                         return renderRow(
-                            props.user.ranking - 1 + idx,
+                            props.waitlistUser.ranking - 1 + idx,
                             idx === 1,
                             user.name,
                             user.referrals,
@@ -196,11 +197,6 @@ const Leaderboard = (props: {
 
     return (
         <div className="leaderboard-container">
-            {/* <Row>
-                <Col style={{ textAlign: "right" }}>
-                    <Countdown type="small" />
-                </Col>
-            </Row> */}
             <div
                 style={{
                     width: "100%",
@@ -249,11 +245,16 @@ const Leaderboard = (props: {
 }
 
 const mapStateToProps = (state: {
-    AuthReducer: { user: any; waitlist: any[] }
+    AuthReducer: { user: any }
+    WaitlistReducer: {
+        waitlistUser: any
+        waitlistData: any
+    }
 }) => {
     return {
         user: state.AuthReducer.user,
-        waitlist: state.AuthReducer.waitlist ? state.AuthReducer.waitlist : [],
+        waitlist: state.WaitlistReducer.waitlistData.waitlist,
+        waitlistUser: state.WaitlistReducer.waitlistUser,
     }
 }
 
