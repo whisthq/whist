@@ -6,10 +6,13 @@ import (
 	// fractallogger package imported below as `logger`
 
 	"context"
+	"encoding/binary"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	// We use this package instead of the standard library log so that we never
@@ -97,7 +100,34 @@ func uninitializeFilesystem() {
 	}
 }
 
-func writeAssignmentToFile(filename, data string) (err error) {
+// We create a 48-bit protocol ID using the combination of (host IP address, host port
+// mapping to 32262/tcp). This can be used to uniquely identify a running
+// Fractal container at any given time (but not across history).
+//
+// The first 32 bits are the host IP in big-endian order, and the last 16 bits form the host port (also in big-endian)
+func computeProtocolID(hostPort string) (uint64, error) {
+	publicIPv4str, err := logger.GetAwsPublicIpv4()
+	if err != nil {
+		return 0, err
+	}
+	ip := net.ParseIP(publicIPv4str).To4()
+	if ip == nil {
+		return 0, logger.MakeError("computeProtocolID(): the public IPv4 %s in invalid.", publicIPv4str)
+	}
+
+	port64, err := strconv.ParseUint(hostPort, 10, 16)
+	if err != nil {
+		return 0, logger.MakeError("Provided hostPort %s did not parse into a 16 bit unsigned int.", hostPort)
+	}
+
+	port16 := uint16(port64)
+	portBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(portBytes, port16)
+	bytes := append([]byte{0, 0}, ip[0], ip[1], ip[2], ip[3], portBytes[0], portBytes[1])
+	return binary.BigEndian.Uint64(bytes), nil
+}
+
+func writeAssignmentToFile(filename, data string) error {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644|os.ModeSticky)
 	if err != nil {
 		return logger.MakeError("Unable to create file %s to store resource assignment. Error: %v", filename, err)
@@ -163,11 +193,22 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 		}
 	}
 	if assignedTty == -1 {
-		return logger.MakeError("Was not able to assign an free tty to container id %s", id)
+		return logger.MakeError("Was not able to assign a free tty to container id %s", id)
 	}
 
 	// Write the tty assignment to a file
 	err = writeAssignmentToFile(datadir+"tty", logger.Sprintf("%d", assignedTty))
+	if err != nil {
+		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
+		return err
+	}
+
+	// Create protocol ID file (unique identifier for duration of container's lifetime)
+	protoID, err := computeProtocolID(hostPort[0].HostPort)
+	if err != nil {
+		return logger.MakeError("Could not compute protocol ID for container %s. Error: %v", id, err)
+	}
+	err = writeAssignmentToFile(datadir+"protocolID", logger.Sprintf("%d", protoID))
 	if err != nil {
 		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
 		return err
