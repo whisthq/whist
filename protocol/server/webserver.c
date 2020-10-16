@@ -41,8 +41,8 @@ void update_webserver_parameters() {
             "}\n",
             primary_port_mapping);
 
-    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/container/protocol_info", buf,
-                     len, msg)) {
+    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/container/protocol_info",
+                     buf, len, msg)) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;
