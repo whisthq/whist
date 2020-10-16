@@ -7,14 +7,26 @@ on:
     workflow_dispatch:
 
 env:
-    aws-regions: us-east-1
     aws-placeholder-region: us-east-1
-    apps: base browsers/chrome browsers/firefox productivity/slack creative/blender
+    aws-regions:
+      - us-east-1
+      - us-east-2
+      - us-west-1
+      - us-west-2
+      - ca-central-1
+    apps:
+      - base
+      - browsers/chrome
+      - browsers/firefox
+      - productivity/slack
+      - creative/blender
+      - creative/blockbench
 
 jobs:
     ecr-push:
         name: Build and push to AWS ECR
         runs-on: ubuntu-20.04
+        
         steps:
             - name: Checkout Git repository
               uses: actions/checkout@v2
@@ -22,20 +34,24 @@ jobs:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
+
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
               with:
                   aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.aws-placeholder-region }}
+
             - name: Build protocol
               run: ./build_protocol.sh
+
             - name: Build container images
               run: |
                   for app in ${{ env.apps }}
                   do
                     ./build_container_image.sh $app
                   done
+
             - name: Push container images
               run: |
                   for region in ${{ env.aws-regions }}
@@ -45,6 +61,7 @@ jobs:
                       ./push_container_image.sh $app $region
                     done
                   done
+
             - name: Notify Slack
               run: |
                   curl -X POST \

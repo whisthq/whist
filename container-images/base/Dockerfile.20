@@ -418,10 +418,6 @@ COPY .xinitrc /root/.xinitrc
 COPY gimprc /home/fractal/.config/GIMP/2.10/gimprc
 COPY gimprc /root/.config/GIMP/2.10/gimprc
 
-# Install Firefox nightly (for testing only)
-# RUN add-apt-repository ppa:ubuntu-mozilla-daily/ppa
-# RUN apt-get update && apt-get install firefox-trunk
-
 # Install Fractal services
 COPY fractal-entrypoint.service /etc/systemd/system
 RUN systemctl enable fractal-entrypoint

@@ -1,6 +1,6 @@
 # Workflow to build Docker images for basic testing
 
-name: Docker Image CI - Ubuntu 20.04
+name: Dockerfiles Building
 
 on:
   pull_request:
@@ -15,15 +15,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-      - name: Checkout protocol repository
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-          repository: fractalcomputers/protocol
           token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-          path: base/protocol
+          submodules: recursive
 
       - name: Build the Fractal protocol dev branch
         run: cd base/protocol && git checkout dev && server/linux-server-setup.sh && cmake . && make -j
@@ -31,4 +24,17 @@ jobs:
       - name: Build the Ubuntu 20.04 Base Image
         run: cd base && docker build . --file Dockerfile.20 --tag base-ubuntu20.04:$(date +%s)
 
-      # TODO: Actually write tests for the base image and application images, integrated with protocol for streaming
+      - name: Build the Ubuntu 20.04 Google Chrome Image
+        run: cd browsers/chrome && docker build . --file Dockerfile.20 --tag chrome-ubuntu20.04:$(date +%s)
+
+      - name: Build the Ubuntu 20.04 Mozilla Firefox Image
+        run: cd browsers/firefox && docker build . --file Dockerfile.20 --tag firefox-ubuntu20.04:$(date +%s)
+
+      - name: Build the Ubuntu 20.04 Slack Image
+        run: cd productivity/slack && docker build . --file Dockerfile.20 --tag slack-ubuntu20.04:$(date +%s)
+
+      - name: Build the Ubuntu 20.04 Blender Image
+        run: cd creative/blender && docker build . --file Dockerfile.20 --tag blender-ubuntu20.04:$(date +%s)
+
+      - name: Build the Ubuntu 20.04 Blockbench Image
+        run: cd creative/blockbench && docker build . --file Dockerfile.20 --tag blockbench-ubuntu20.04:$(date +%s)

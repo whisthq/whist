@@ -49,6 +49,7 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && sed -i '3 s/^/# /' /etc/apt/sources.list \
     && apt-get update && apt-get install --allow-downgrades -y google-chrome-stable 
 
+# Install Slack
 RUN wget https://downloads.slack-edge.com/linux_releases/slack-desktop-4.0.2-amd64.deb -O /tmp/slack-desktop-4.0.2-amd64.deb && \
     cd /tmp/ && \
     dpkg -i slack-desktop-4.0.2-amd64.deb && \
