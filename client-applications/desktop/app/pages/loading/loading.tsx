@@ -5,10 +5,12 @@ import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
+import { deleteContainer } from "store/actions/sideEffects"
 
 const UpdateScreen = (props: any) => {
     const {
         os,
+        username,
         percentLoaded,
         status,
         container_id,
@@ -61,7 +63,9 @@ const UpdateScreen = (props: any) => {
         }
 
         var port_info = `32262:${port32262},32263:${port32263},32273:${port32273}`
-        var parameters = ["-w", width, "-h", height, "-p", port_info, ip]
+        console.log(port_info)
+        var parameters = ["-w", 800, "-h", 600, "-p", port_info, ip]
+        console.log(parameters)
         console.log(`your executable path should be: ${path}`)
 
         // Starts the protocol
@@ -76,6 +80,7 @@ const UpdateScreen = (props: any) => {
         })
         protocol1.on("close", (code: any) => {
             console.log("the protocol has been closed!")
+            deleteContainer(username, container_id)
         })
         console.log("spawn completed!")
 
@@ -161,17 +166,19 @@ const UpdateScreen = (props: any) => {
 }
 
 function mapStateToProps(state: any) {
+    console.log(state)
     return {
         os: state.MainReducer.client.os,
+        username: state.MainReducer.auth.username,
         percentLoaded: state.MainReducer.loading.percentLoaded,
         status: state.MainReducer.loading.statusMessage,
-        container_id: state.MainReducer.container.ontainer_id,
+        container_id: state.MainReducer.container.container_id,
         cluster: state.MainReducer.container.cluster,
         port32262: state.MainReducer.container.port32262,
         port32263: state.MainReducer.container.port32263,
         port32273: state.MainReducer.container.port32273,
         location: state.MainReducer.container.location,
-        ip: state.MainReducer.publicIP,
+        ip: state.MainReducer.container.publicIP,
     }
 }
 

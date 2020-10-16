@@ -156,6 +156,8 @@ function* fetchContainer(action: any) {
         }
 
         if (json && json.state === "PENDING" && json.output) {
+            console.log(json)
+            console.log(json.output)
             // NOTE: actual container/create endpoint does not currently return progress
             var message = json.output.msg
             // var percent = json.output.progress
@@ -173,6 +175,9 @@ function* fetchContainer(action: any) {
     }
     // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
     if (json && json.state && json.state === "SUCCESS") {
+        console.log("success")
+        console.log(json)
+        console.log(json.output)
         if (json.output) {
             // TODO (adriano) these should be removed once we are ready to plug and play
             const test_container_id = "container_id" // TODO
@@ -197,17 +202,19 @@ function* fetchContainer(action: any) {
                 : test_cluster
             const ip = json.output.ip ? json.output.ip : test_ip
             const port32262 = json.output.port_32262
-                ? json.output.port32262
+                ? json.output.port_32262
                 : test_port32262
             const port32263 = json.output.port_32263
-                ? json.output.port32263
+                ? json.output.port_32263
                 : test_port32263
             const port32273 = json.output.port_32273
-                ? json.output.port32273
+                ? json.output.port_32273
                 : test_port32273
             const location = json.output.location
                 ? json.output.location
                 : test_location
+
+            console.log(port32262)
 
             yield put(
                 Action.updateContainer({
@@ -220,10 +227,6 @@ function* fetchContainer(action: any) {
                     publicIP: ip,
                 })
             )
-            yield call(deleteContainer, {
-                username: username,
-                container_id: container_id,
-            })
         }
 
         yield put(
@@ -245,12 +248,13 @@ function* fetchContainer(action: any) {
 }
 
 function* deleteContainer(action: any) {
+    console.log("deleting container!")
     const state = yield select()
     var { json, response } = yield call(
         apiPost,
         `/container/delete`,
         { username: action.username, container_id: action.container_id },
-        state.MainReducer.auth.accesToken
+        state.MainReducer.auth.accessToken
     )
     yield put(
         Action.updateLoading({
