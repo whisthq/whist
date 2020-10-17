@@ -163,7 +163,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 		}
 	}
 	if assignedTty == -1 {
-		return logger.MakeError("Was not able to assign an free tty to container id %s", id)
+		return logger.MakeError("Was not able to assign a free tty to container id %s", id)
 	}
 
 	// Write the tty assignment to a file
