@@ -36,9 +36,9 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && apt-get update && apt-get install --allow-downgrades -y google-chrome-stable
 
 ENV NOTION_VERSION 2.0.8
-ENV ELECTRON_VERSION v8.0.0
+ENV ELECTRON_VERSION v6.1.12
 
-RUN wget -qO "/usr/bin/electron-$ELECTRON_VERSION-linux-x64.zip" "https://npm.taobao.org/mirrors/electron/8.0.0/electron-$ELECTRON_VERSION-linux-x64.zip" 
+RUN wget -qO "/usr/bin/electron-$ELECTRON_VERSION-linux-x64.zip" "https://github.com/electron/electron/releases/download/$ELECTRON_VERSION/electron-$ELECTRON_VERSION-linux-x64.zip" 
 RUN wget -qO "/usr/bin/notion-$NOTION_VERSION.dmg" "https://desktop-release.notion-static.com/Notion-$NOTION_VERSION.dmg"
 RUN dmg2img  "/usr/bin/notion-$NOTION_VERSION.dmg" "/usr/bin/notion-$NOTION_VERSION.img"
 
@@ -58,8 +58,8 @@ RUN rm -rf release/* \
 RUN set +x
 RUN tar xf "release/notion-$NOTION_VERSION.tar.xz" -C tmp
 RUN mv "tmp/notion-$NOTION_VERSION" /opt/notion
-RUN cp -r /opt/notion /usr/bin/notion
-RUN chmod +x /usr/bin/notion/notion
+COPY run-notion.sh /usr/bin/notion
+RUN chmod +x /usr/bin/notion
 
 COPY .xinitrc /root/.xinitrc
 
