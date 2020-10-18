@@ -69,7 +69,7 @@ void update_webserver_parameters() {
 
     json_t json;
     if (!parse_json(json_str, &json)) {
-        LOG_ERROR("Failed to parse JSON from /protocol/protocol_info");
+        LOG_ERROR("Failed to parse JSON from /container/protocol_info");
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;
