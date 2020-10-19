@@ -24,19 +24,15 @@ def preprocess_task_info(app):
     """
 
     # TODO: Don't just hard-code the cluster, region, and task definition ARN
-    base_str = "arn:aws:ecs:us-east-1:747391415460:task-definition/{}"
+    app_to_name = {
+        "Google Chrome": "fractal-browsers-chrome"
+    }
 
     return (
-        base_str.format(app),
+        app_to_name[app],
         "us-east-1",
         "demo-cluster",
     )
-
-
-def modify_region(task_arn, new_region):
-    task_arn_lst = task_arn.split(":")
-    task_arn_lst[3] = new_region
-    return ":".join(task_arn_lst)
 
 
 def protocol_info(address, port, aeskey):

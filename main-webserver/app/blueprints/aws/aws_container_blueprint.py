@@ -8,7 +8,6 @@ from app.celery.aws_ecs_status import pingHelper
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
-    modify_region,
     preprocess_task_info,
     protocol_info,
     set_stun,
@@ -71,7 +70,6 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["network_configuration"],
         )
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
-        task_definition_arn = modify_region(task_definition_arn, region_name)
         task = create_new_container.apply_async(
             [username, task_definition_arn],
             {
@@ -192,11 +190,10 @@ def aws_container_post(action, **kwargs):
                 # Create a container.
                 try:
                     task_arn, _, sample_cluster = preprocess_task_info(app)
-                    task_arn = modify_region(task_arn, region)
                 except BadAppError:
                     response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
                 else:
-                    task = create_new_container.delay(user, task_arn, region)
+                    task = create_new_container.delay(user, task_arn, region, cluster_name=sample_cluster)
                     response = jsonify({"ID": task.id}), ACCEPTED
 
         elif action == "delete":
