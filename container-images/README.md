@@ -16,19 +16,9 @@ for containerizing the various applications that Fractal streams or is planning 
 
 ## Development
 
+To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfiles under `/base/`, unless your fixes are application-specific, in which case you should contribute to the relevant Dockerfile for the application. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of possible security attacks possible. Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master` once deployed to production. The `master` branch gets automatically deploy to production via AWS ECR, and must not be pushed to unless thorough testing has been performed.
 
-
-
-
-To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfiles under `/base/`, unless your fixes are application-specific, in which case you should contribute to the relevant Dockerfile for the application. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of possible security attacks possible. Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master` once deployed to production. The `master` branch is going to automatically deploy to production via AWS ECR (this is a current TODO), and must not be pushed to unless thorough testing has been performed.
-
-For general development, refer to the `/base` subfolder README, and to your specific applications' subfolder README for application-specific development. See below for our continous integration process.
-
-
-
-
-
-## More detailed Usage
+### Getting Started
 
 When git cloning, ensure that all git submodules are pulled as follows:
 
@@ -43,13 +33,13 @@ Or, if you have sshkeys,
 git clone --recurse-submodules --branch $your-container-images-branch git@github.com:fractalcomputers/container-images.git ~/container-images
 ```
 
-Then, setup on your EC2 instance with the setup script from the [ecs-host-setup repo](https://github.com/fractalcomputers/ecs-host-setup/):
+Then, setup on your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractalcomputers/ecs-host-setup/) repository: 
 
 ```
 ./setup_ubuntu20_host.sh
 ```
 
-Which will begin installing all dependencies and configuration. It will also ask if you want to connect your EC2 instance to an ECS cluster, which you may respond yes or no to. After the setup scripts run, you must `sudo reboot` for docker to work currently. After rebooting, you may finally run
+This will begin installing all dependencies and configurations required to run our container images on an AWS EC2 host. It will also ask if you want to connect your EC2 instance to an ECS cluster, which is optional for development. After the setup scripts run, you must `sudo reboot` for Docker to work properly. After rebooting, you may finally build the protocol and the base image by running:
 
 ```
 ./build_protocol.sh && ./build_container_image.sh base && ./run_local_container_image.sh base
@@ -57,19 +47,26 @@ Which will begin installing all dependencies and configuration. It will also ask
 
 ### Building Images
 
-To simply build the protocol in the `base/protocol` subrepository inside an Ubuntu 20 container, call
+To simply build the protocol in the `base/protocol` subrepository inside an Ubuntu 20 container, run:
 
 ```
 ./build_protocol.sh
 ```
 
-To build a container image, call
+To build a specific application's container image, run:
 
 ```
-./build_container_image.sh APP
+./build_container_image.sh [APP]
 ```
 
-This takes a single argument, `APP`, which is the path to the target folder whose app container you wish to build. For example, the base container is built with `./build_container_image.sh base` and the chrome container is built with `./build_container_image.sh browsers/chrome`, since the relevant dockerfile is `browsers/chrome/Dockerfile.20`. This scripts names the built image as `fractal/$APP`, with a tag of `current-build`.
+This takes a single argument, `APP`, which is the path to the target folder whose application container you wish to build. For example, the base container is built with `./build_container_image.sh base` and the chrome container is built with `./build_container_image.sh browsers/chrome`, since the relevant dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `fractal/$APP`, with a tag of `current-build`.
+
+
+
+
+
+
+
 
 ### Pushing Images
 
