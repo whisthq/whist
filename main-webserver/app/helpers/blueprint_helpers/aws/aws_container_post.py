@@ -27,7 +27,7 @@ def preprocess_task_info(app):
     app_to_name = {"Google Chrome": "fractal-browsers-chrome"}
 
     return (
-        app_to_name[app],
+        (app_to_name[app] if app in app_to_name else app),
         "us-east-1",
         "demo-cluster",
     )
