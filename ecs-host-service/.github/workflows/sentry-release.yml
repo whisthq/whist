@@ -11,10 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v2
-        with:
-          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+      - name: Checkout Git repository
+        uses: actions/checkout@v2
 
       - name: Create a Sentry.io release
         uses: tclindner/sentry-releases-action@v1.2.0
