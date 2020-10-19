@@ -17,11 +17,11 @@ const App = (props: any) => {
 
     const handleLinkClick = () => {
         const { shell } = require("electron")
-        shell.openExternal(app.link)
+        shell.openExternal(app.url)
     }
 
     const handleLaunch = () => {
-        dispatch(fetchContainer(app.name))
+        dispatch(fetchContainer(app.app_id))
     }
 
     return (
@@ -33,10 +33,10 @@ const App = (props: any) => {
                 }}
                 onClick={handleOpenModal}
             >
-                <img src={app.image} className={styles.appImage} />
+                <img src={app.logo_url} className={styles.appImage} />
             </div>
             <div className={styles.appText} onClick={handleOpenModal}>
-                <div className={styles.appName}>{app.name}</div>
+                <div className={styles.appName}>{app.app_id}</div>
                 <div className={styles.appDescription}>{app.description}</div>
                 <div style={{ display: "flex", flexDirection: "row" }}>
                     <div className={styles.launchButton} onClick={handleLaunch}>
@@ -67,12 +67,12 @@ const App = (props: any) => {
                             style={{ minWidth: "120px", paddingRight: "20px" }}
                         >
                             <img
-                                src={app.image}
+                                src={app.logo_url}
                                 className={styles.modalAppImage}
                             />
                         </div>
                         <div>
-                            <h1>{app.name}</h1>
+                            <h1>{app.app_id}</h1>
                             <div
                                 style={{
                                     display: "flex",
@@ -87,7 +87,7 @@ const App = (props: any) => {
                                     className={styles.appLink}
                                     onClick={handleLinkClick}
                                 >
-                                    {app.link}
+                                    {app.url}
                                 </span>
                             </div>
                         </div>
@@ -99,7 +99,7 @@ const App = (props: any) => {
                             marginBottom: "50px",
                         }}
                     >
-                        {app.longDescription}
+                        {app.long_description}
                     </div>
                     <button
                         className={styles.modalButton}
