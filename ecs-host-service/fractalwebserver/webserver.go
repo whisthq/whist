@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -57,9 +58,21 @@ func InitializeHeartbeat() error {
 
 	authToken = resp.AuthToken
 
-	sendHeartbeat()
+	go heartbeatGoroutine()
 
 	return nil
+}
+
+// Instead of running exactly every minute, we choose a random time in the
+// range [55, 65] seconds to prevent waves of hosts repeatedly crowding the
+// webserver. Note also that we don't have to do any error handling here
+// because sendHeartbeat() does not return or panic.
+func heartbeatGoroutine() {
+	for {
+		sendHeartbeat()
+		sleepTime := 65000 - rand.Intn(10001)
+		time.Sleep(time.Duration(sleepTime) * time.Millisecond)
+	}
 }
 
 // Talk to the auth endpoint for the host service startup (to authenticate all
@@ -105,8 +118,12 @@ func handshake() (handshakeResponse, error) {
 	return resp, nil
 }
 
-// This function intentionally does not panic or return an error/value. See the
-// comment below for more explanation.
+// We send a heartbeat. Note that the heartbeat number 0 is the initialization
+// message of the host service to the webserver.  This function intentionally
+// does not panic or return an error/value. Instead, we let the webserver deal
+// with malformed heartbeats by potentially choosing to mark the instance as
+// draining. This also simplifies our logging/error handling since we can just
+// ignore errors in the heartbeat goroutine.
 func sendHeartbeat() {
 	// Prepare the body
 

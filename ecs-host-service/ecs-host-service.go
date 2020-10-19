@@ -7,10 +7,12 @@ import (
 
 	"context"
 	"io"
+	"math/rand"
 	"os"
 	"os/exec"
 	"os/signal"
 	"syscall"
+	"time"
 
 	// We use this package instead of the standard library log so that we never
 	// forget to send a message via sentry.  For the same reason, we make sure
@@ -235,6 +237,8 @@ func main() {
 	// next line of code that runs, since the following operations will require
 	// root permissions.
 	checkRunningPermissions()
+
+	rand.Seed(time.Now().UnixNano())
 
 	// Note that we defer uninitialization so that in case of panic elsewhere, we
 	// still clean up
