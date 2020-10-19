@@ -1,6 +1,7 @@
 package fractalwebserver
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -23,7 +24,7 @@ const heartbeatEndpoint = "/host-service/heartbeat"
 const webserverHost = stagingHost
 
 type handshakeRequest struct {
-	instanceID string
+	InstanceID string
 }
 
 type handshakeResponse struct {
@@ -55,9 +56,14 @@ func handshake() (handshakeResponse, error) {
 		return resp, logger.MakeError("fractalwebserver::handshake(): Couldn't get AWS instanceID. Error: %v", err)
 	}
 
-	requestURL := webserverHost + authEndpoint + "/" + instanceID
-	logger.Infof("fractalwebserver::handshake(): Sending a POST request with empty body to URL %s", requestURL)
-	httpResp, err := http.Post(requestURL, "application/json", nil)
+	requestURL := webserverHost + authEndpoint
+	requestBody, err := json.Marshal(handshakeRequest{instanceID})
+	if err != nil {
+		return resp, logger.MakeError("fractalwebserver::handshake(): Could not marshal the handshakeRequest object. Error: %v", err)
+	}
+
+	logger.Infof("fractalwebserver::handshake(): Sending a POST request with body %s to URL %s", requestBody, requestURL)
+	httpResp, err := http.Post(requestURL, "application/json", bytes.NewReader(requestBody))
 	if err != nil {
 		return resp, logger.MakeError("fractalwebserver::handshake(): Got back an error from the webserver at URL %s. Error:  %v", requestURL, err)
 	}
