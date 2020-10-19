@@ -252,7 +252,7 @@ int SendClipboardPackets(void* opaque) {
     LOG_INFO("SendClipboardPackets running on Thread %p", SDL_GetThreadID(NULL));
 
     clock clipboard_time;
-    while(run_send_clipboard_packets) {
+    while (run_send_clipboard_packets) {
         StartTimer(&clipboard_time);
         ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
         if (clipboard) {

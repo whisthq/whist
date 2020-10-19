@@ -273,14 +273,14 @@ ClipboardData* unsafe_GetClipboard() {
             case CF_TEXT:
                 // Read the contents of lptstr which just a pointer to the
                 // string.
-                cb->size = (int) strlen(cb->data); // keep null character out
+                cb->size = (int)strlen(cb->data);  // keep null character out
                 LOG_INFO("CLIPBOARD STRING Received! Size: %d", cb->size);
                 cb->type = CLIPBOARD_TEXT;
                 break;
             case CF_DIB:
                 LOG_INFO("Clipboard bitmap received! Size: %d", cb->size);
 
-                // windows clipboard saves bitmap data without header - 
+                // windows clipboard saves bitmap data without header -
                 //      add BMP header and then convert from bmp to png
                 //      before saving to clipboard data to be sent to peer
                 char* bmp_data = malloc(cb->size + 14);
@@ -290,7 +290,7 @@ ClipboardData* unsafe_GetClipboard() {
                 *((int*)(&bmp_data[6])) = 0;
                 *((int*)(&bmp_data[10])) = 54;
                 memcpy(bmp_data + 14, cb->data, cb->size);
-                
+
                 // convert BMP to PNG
                 AVPacket packet;
                 if (bmp_to_png((unsigned char*)bmp_data, (unsigned)(cb->size + 14), &packet) != 0) {
@@ -471,7 +471,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
                 if (png_char_to_bmp(cb->data, cb->size, &pkt) != 0) {
                     LOG_ERROR("Clipboard image png -> bmp conversion failed");
                     return;
-                } 
+                }
                 if (pkt.size - 14 > sizeof(clipboard_buf)) {
                     LOG_WARNING("Could not copy, clipboard too large! %d bytes", pkt.size - 14);
                     return;

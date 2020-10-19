@@ -277,7 +277,7 @@ bool unsafe_hasClipboardUpdated() {
 
     if (!display) return false;
 
-    static bool first = true; // static, so only sets to true on first call
+    static bool first = true;  // static, so only sets to true on first call
     int event_base, error_base;
     XEvent event;
     assert(XFixesQueryExtension(display, &event_base, &error_base));

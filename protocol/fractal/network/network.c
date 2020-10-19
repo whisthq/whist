@@ -1604,7 +1604,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
 
     // now we send it
     if (sendto(Socket, message, (int)strlen(message), 0,
-        (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
+               (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
         // error sending, terminate
         LOG_WARNING("Sending POST message failed.");
         free(message);
@@ -1681,7 +1681,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     LOG_INFO("%s", message);
     // now we send it
     if (sendto(Socket, message, (int)strlen(message), 0,
-        (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
+               (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
         // error sending, terminate
         LOG_WARNING("Sending GET message failed.");
         free(message);
