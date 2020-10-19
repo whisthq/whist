@@ -45,6 +45,9 @@ type heartbeatRequest struct {
 
 var authToken string
 var numBeats uint64 = 0
+var httpClient = http.Client{
+	Timeout: 10 * time.Second,
+}
 
 func InitializeHeartbeat() error {
 	resp, err := handshake()
@@ -78,7 +81,7 @@ func handshake() (handshakeResponse, error) {
 	}
 
 	logger.Infof("handshake(): Sending a POST request with body %s to URL %s", requestBody, requestURL)
-	httpResp, err := http.Post(requestURL, "application/json", bytes.NewReader(requestBody))
+	httpResp, err := httpClient.Post(requestURL, "application/json", bytes.NewReader(requestBody))
 	if err != nil {
 		return resp, logger.MakeError("handshake(): Got back an error from the webserver at URL %s. Error:  %v", requestURL, err)
 	}
@@ -133,7 +136,7 @@ func sendHeartbeat() {
 	}
 
 	logger.Infof("Sending a heartbeat with body %s to URL %s", requestBody, requestURL)
-	_, err = http.Post(requestURL, "application/json", bytes.NewReader(requestBody))
+	_, err = httpClient.Post(requestURL, "application/json", bytes.NewReader(requestBody))
 	if err != nil {
 		logger.Errorf("Error sending heartbeat: %s", err)
 	}
