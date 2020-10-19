@@ -1,4 +1,4 @@
-Module Structure
+#Module Structure
 At the module level, the code is separated between blueprints, models/ serializers, Celery tasks, and helpers. Code should only ever live in one of these, and each of these (besides models/serializers, which are only tested at the integration test level) should have their own unit tests with the other modules (as necessary) mocked out as well as integration tests.
 
 Every module should be installable via pip install -e . from its base directory, to enable easy testing/mocking. This is trivial, but does require that any package/module have an init.py at its top level (and a setup.py for modules you'll be installing, atm primarily helpers).
@@ -31,3 +31,15 @@ We leverage flask-sqlalchemy as our object-relational mapping (ORM), which helps
 Files in these directories are named after the DB schemata which they're representing in the ORM.
 
 Models should exactly mimic the DB tables they're based on (down to column names, constraints, and foreign/primary keys), and one model should exist for every DB table. Serializers should use the pattern already shown in the serializers files and are a convenient tool to json-ify SQLAlchemy objects (e.g. rows).
+
+
+# Most important code:
+
+##Container creation flow:
+
+This goes from app\blueprints\aws\aws_container_blueprint.py to app\celery\aws_ecs_creation.py through app\helpers\blueprint_helpers\aws\aws_container_post.py
+and uses app\helpers\utils\aws\base_ecs_client.py to handle ECS client operations.
+
+##Container status checking:
+This goes from app\blueprints\aws\aws_container_blueprint.py to app\celery\aws_ecs_status.py through app\helpers\blueprint_helpers\aws\aws_container_post.py
+.
