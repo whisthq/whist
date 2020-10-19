@@ -128,6 +128,27 @@ an indefinitely blocking socket
 void set_timeout(SOCKET s, int timeout_ms);
 
 /*
+@brief                          Perform socket syscalls and set fds to
+                                use flag FD_CLOEXEC
+
+@returns                        The socket file descriptor, -1 on failure
+*/
+SOCKET socketp_tcp();
+SOCKET socketp_udp();
+
+/*
+@brief                          Perform accept syscall and set fd to use flag
+                                FD_CLOEXEC
+
+@param sock_fd                  The socket file descriptor
+@param sock_addr                The socket address
+@param sock_len                 The size of the socket address
+
+@returns                        The new socket file descriptor, -1 on failure
+*/
+SOCKET acceptp(int sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
+
+/*
 @brief                          This will send or receive data over a socket
 
 @param s                        The SOCKET to be used
@@ -450,6 +471,53 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
     return 0;
 }
 
+SOCKET socketp_tcp() {
+    // Create socket
+    int sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock_fd <= 0) { // Windows & Unix cases
+        LOG_WARNING("Could not create socket %d\n", GetLastNetworkError());
+        return -1;
+    }
+
+    // Set socket to close on child exec
+    if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
+    return sock_fd;
+}
+
+SOCKET socketp_udp() {
+    // Create socket
+    int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    // Set socket to close on child exec
+    if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
+    return sock_fd;
+}
+
+SOCKET acceptp(int sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) {
+    // Accept connection from client
+    SOCKET new_socket = accept(sock_fd, sock_addr, sock_len);
+    if (new_socket < 0) {
+        LOG_WARNING("Did not receive response from client! %d\n", GetLastNetworkError());
+        return -1;
+    }
+
+    // Set socket to close on child exec
+    if (fcntl(new_socket, F_SETFD, fcntl(new_socket, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
+    return new_socket;
+}
+
 int recvp(SocketContext *context, void *buf, int len) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -659,15 +727,7 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
 
     // Create TCP socket
     LOG_INFO("Creating TCP Socket");
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
-        return -1;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((context->s = socketp_tcp()) < 0) {
         return -1;
     }
 
@@ -734,15 +794,7 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     LOG_INFO("Accepting TCP Connection");
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
-    if ((new_socket = accept(context->s, (struct sockaddr *)(&context->addr), &slen)) < 0) {
-        LOG_WARNING("Did not receive response from client! %d\n", GetLastNetworkError());
-        closesocket(context->s);
-        return -1;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(new_socket, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((new_socket = acceptp(context->s, (struct sockaddr*)(&context->addr), &slen)) < 0) {
         return -1;
     }
 
@@ -776,25 +828,15 @@ int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     int opt;
 
     // Create TCP socket
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
-        return -1;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((context->s = socketp_tcp()) < 0) {
         return -1;
     }
 
     set_timeout(context->s, stun_timeout_ms);
 
-    SOCKET udp_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-    // Set socket to close on child exec
-    if (fcntl(udp_s, F_SETFD, fcntl(udp_s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    // Create UDP socket
+    SOCKET udp_s = socketp_udp();
+    if (udp_s < 0) {
         return -1;
     }
 
@@ -873,11 +915,7 @@ int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     closesocket(context->s);
 
     // Create TCP socket
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-    // Set socket to close on child exec
-    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((context->s = socketp_tcp()) < 0) {
         return -1;
     }
 
@@ -928,15 +966,7 @@ int CreateTCPClientContext(SocketContext *context, char *destination, int port,
     context->is_tcp = true;
 
     // Create TCP socket
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
-        return -1;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((context->s = socketp_tcp()) < 0) {
         return -1;
     }
 
@@ -986,26 +1016,15 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
     int opt;
 
     // Create TCP socket
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
-        return -1;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((context->s = socketp_tcp()) < 0) {
         return -1;
     }
 
     set_timeout(context->s, stun_timeout_ms);
 
-    // Tell the STUN to use TCP
-    SOCKET udp_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-    // Set socket to close on child exec
-    if (fcntl(udp_s, F_SETFD, fcntl(udp_s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    // Tell the STUN to use UDP
+    SOCKET udp_s = socketp_udp();
+    if (udp_s < 0) {
         return -1;
     }
 
@@ -1096,15 +1115,8 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
 
     closesocket(context->s);
 
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
-        return -1;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    // Create TCP socket
+    if ((context->s = socketp_tcp()) < 0) {
         return -1;
     }
 
@@ -1191,15 +1203,7 @@ int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeou
 
     context->is_tcp = false;
     // Create UDP socket
-    context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
-        return -1;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((context->s = socketp_udp()) < 0) {
         return -1;
     }
 
@@ -1249,15 +1253,7 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     context->is_tcp = false;
 
     // Create UDP socket
-    context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
-        return -1;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((context->s = socketp_udp()) < 0) {
         return -1;
     }
 
@@ -1372,15 +1368,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     context->is_tcp = false;
 
     // Create UDP socket
-    context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
-        return -1;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((context->s = socketp_udp()) < 0) {
         return -1;
     }
 
@@ -1422,15 +1410,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
     context->is_tcp = false;
 
     // Create UDP socket
-    context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
-        return -1;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((context->s = socketp_udp()) < 0) {
         return -1;
     }
 
@@ -1549,17 +1529,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
     struct sockaddr_in webserver_socketAddress;  // address of the web server socket
 
     // Creating our TCP socket to connect to the web server
-    Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (Socket < 0)  // Windows & Unix cases
-    {
-        // if can't create socket, return
-        LOG_WARNING("Could not create socket.");
-        return false;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(Socket, F_SETFD, fcntl(Socket, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((Socket = socketp_tcp()) < 0) {
         return -1;
     }
 
@@ -1645,17 +1615,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     struct sockaddr_in webserver_socketAddress;  // address of the web server socket
 
     // Creating our TCP socket to connect to the web server
-    Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (Socket < 0)  // Windows & Unix cases
-    {
-        // if can't create socket, return
-        LOG_WARNING("Could not create socket.");
-        return false;
-    }
-
-    // Set socket to close on child exec
-    if (fcntl(Socket, F_SETFD, fcntl(Socket, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+    if ((Socket = socketp_tcp()) < 0) {
         return -1;
     }
 
