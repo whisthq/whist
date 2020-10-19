@@ -90,17 +90,17 @@ bool InitDesktop(input_device_t* input_device, char* vm_password) {
 
         // Setup typing area (Unknown true use?)
 
-        FractalKeycode keycodes[] = {FK_SPACE, FK_BACKSPACE, FK_BACKSPACE};
+        FractalKeycode keycodes1[] = {FK_SPACE, FK_BACKSPACE, FK_BACKSPACE};
 
-        InputKeycodes(input_device, keycodes, 3);
+        InputKeycodes(input_device, keycodes1, 3);
 
         Sleep(500);
 
         // Type the vm password
 
         // Translate vm_password into keycodes
-        int password_len = strlen(vm_password);
-        FractalKeycode password_keycodes = malloc(password_len);
+        int password_len = (int)strlen(vm_password);
+        FractalKeycode* password_keycodes = malloc(password_len);
 
         for (int i = 0; i < password_len; i++) {
             char c = vm_password[i];
@@ -118,15 +118,15 @@ bool InitDesktop(input_device_t* input_device, char* vm_password) {
         }
 
         // Type in the password
-        EnterWinString(password_keycodes, password_len);
+        InputKeycodes(input_device, password_keycodes, password_len);
 
         free(password_keycodes);
 
         // Hit enter
 
-        FractalKeycode keycodes[] = {FK_ENTER, FK_ENTER};
+        FractalKeycode keycodes2[] = {FK_ENTER, FK_ENTER};
 
-        EnterWinString(keycodes, 2);
+        InputKeycodes(input_device, keycodes2, 2);
 
         Sleep(1000);
 

@@ -416,7 +416,17 @@ int updateMouseMotion() {
         int x, y, x_nonrel, y_nonrel;
 
         x_nonrel = mouse_state.x_nonrel * MOUSE_SCALING_FACTOR / window_width;
+        if (x_nonrel < 0) {
+            x_nonrel = 0;
+        } else if (x_nonrel >= MOUSE_SCALING_FACTOR) {
+            x_nonrel = MOUSE_SCALING_FACTOR - 1;
+        }
         y_nonrel = mouse_state.y_nonrel * MOUSE_SCALING_FACTOR / window_height;
+        if (y_nonrel < 0) {
+            y_nonrel = 0;
+        } else if (y_nonrel >= MOUSE_SCALING_FACTOR) {
+            y_nonrel = MOUSE_SCALING_FACTOR - 1;
+        }
 
         if (mouse_state.is_relative) {
             x = mouse_state.x_rel;

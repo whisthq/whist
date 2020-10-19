@@ -117,7 +117,8 @@ static int handleUserInputMessage(FractalClientMessage *fmsg, int client_id, boo
         if (!ReplayUserInput(input_device, fmsg)) {
             LOG_WARNING("Failed to replay input!");
 #ifdef _WIN32
-            InitDesktop(input_device);
+            // TODO: Ensure that any password can be used here
+            InitDesktop(input_device, "password1234567.");
 #endif
         }
     }
