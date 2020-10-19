@@ -18,6 +18,8 @@ import (
 	// functionality in this impoted package as well.
 	logger "github.com/fractalcomputers/ecs-host-service/fractallogger"
 
+	webserver "github.com/fractalcomputers/ecs-host-service/fractalwebserver"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
@@ -250,6 +252,9 @@ func main() {
 		uninitializeFilesystem()
 		logger.Panicf("Got a Ctrl+C: already uninitialized filesystem, looking to exit")
 	}()
+
+	// Initialize webserver and hearbeat
+	webserver.Initialize()
 
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
