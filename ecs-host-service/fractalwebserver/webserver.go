@@ -34,14 +34,15 @@ type handshakeResponse struct {
 }
 
 type heartbeatRequest struct {
-	AuthToken       string
-	Timestamp       string
-	HeartbeatNumber uint64
-	InstanceID      string
-	InstanceType    string
-	TotalRAMinKB    string
-	FreeRAMinKB     string
-	AvailRAMinKB    string
+	AuthToken        string
+	Timestamp        string
+	HeartbeatNumber  uint64
+	InstanceID       string
+	InstanceType     string
+	TotalRAMinKB     string
+	FreeRAMinKB      string
+	AvailRAMinKB     string
+	IsDyingHeartbeat bool
 }
 
 var authToken string
@@ -69,10 +70,14 @@ func InitializeHeartbeat() error {
 // because sendHeartbeat() does not return or panic.
 func heartbeatGoroutine() {
 	for {
-		sendHeartbeat()
+		sendHeartbeat(false)
 		sleepTime := 65000 - rand.Intn(10001)
 		time.Sleep(time.Duration(sleepTime) * time.Millisecond)
 	}
+}
+
+func SendGracefulShutdownNotice() {
+	sendHeartbeat(true)
 }
 
 // Talk to the auth endpoint for the host service startup (to authenticate all
@@ -124,7 +129,7 @@ func handshake() (handshakeResponse, error) {
 // with malformed heartbeats by potentially choosing to mark the instance as
 // draining. This also simplifies our logging/error handling since we can just
 // ignore errors in the heartbeat goroutine.
-func sendHeartbeat() {
+func sendHeartbeat(isDying bool) {
 	// Prepare the body
 
 	// We ignore errors in these function calls because errors will just get
@@ -139,14 +144,15 @@ func sendHeartbeat() {
 
 	requestURL := webserverHost + heartbeatEndpoint
 	requestBody, err := json.Marshal(heartbeatRequest{
-		AuthToken:       authToken,
-		Timestamp:       logger.Sprintf("%s", time.Now()),
-		HeartbeatNumber: numBeats,
-		InstanceID:      instanceID,
-		InstanceType:    instanceType,
-		TotalRAMinKB:    totalRAM,
-		FreeRAMinKB:     freeRAM,
-		AvailRAMinKB:    availRAM,
+		AuthToken:        authToken,
+		Timestamp:        logger.Sprintf("%s", time.Now()),
+		HeartbeatNumber:  numBeats,
+		InstanceID:       instanceID,
+		InstanceType:     instanceType,
+		TotalRAMinKB:     totalRAM,
+		FreeRAMinKB:      freeRAM,
+		AvailRAMinKB:     availRAM,
+		IsDyingHeartbeat: isDying,
 	})
 	if err != nil {
 		logger.Errorf("Couldn't marshal requestBody into JSON. Error: %v", err)
