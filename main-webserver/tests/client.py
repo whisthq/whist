@@ -30,7 +30,10 @@ class BaseClient(FlaskClient):
         return self._username
 
     def login(self, username, password):
-        response = self.post("/account/login", json=dict(username=username, password=password),)
+        response = self.post(
+            "/account/login",
+            json=dict(username=username, password=password),
+        )
         token = response.json.pop("access_token", None)
 
         if not token:
@@ -54,7 +57,10 @@ class FractalClient(BaseClient):
         return self.post("/container/delete", environ_base=self.session, json=body)
 
     def container_info(self, port=None, aes_key=None, **kwargs):
-        data = dict(identifier=port, private_key=aes_key,)
+        data = dict(
+            identifier=port,
+            private_key=aes_key,
+        )
         body = omit_items(data, **kwargs)
 
         return self.post("/container/protocol_info", json=body)

@@ -189,7 +189,11 @@ def pingHelper(available, vm_ip, version=None):
 
         # Add logoff event to timetable
 
-        log = LoginHistory(user_id=username, action="logoff", timestamp=dateToUnix(getToday()),)
+        log = LoginHistory(
+            user_id=username,
+            action="logoff",
+            timestamp=dateToUnix(getToday()),
+        )
 
         fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
@@ -205,7 +209,11 @@ def pingHelper(available, vm_ip, version=None):
 
         # Add logon event to timetable
 
-        log = LoginHistory(user_id=username, action="logon", timestamp=dateToUnix(getToday()),)
+        log = LoginHistory(
+            user_id=username,
+            action="logon",
+            timestamp=dateToUnix(getToday()),
+        )
 
         fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
 
@@ -219,12 +227,18 @@ def pingHelper(available, vm_ip, version=None):
 
     if vm_info.state not in intermediate_states and not available:
         lockVMAndUpdate(
-            vm_name=vm_info.vm_id, state="RUNNING_UNAVAILABLE", lock=True, temporary_lock=0,
+            vm_name=vm_info.vm_id,
+            state="RUNNING_UNAVAILABLE",
+            lock=True,
+            temporary_lock=0,
         )
 
     if vm_info.state not in intermediate_states and available:
         lockVMAndUpdate(
-            vm_name=vm_info.vm_id, state="RUNNING_AVAILABLE", lock=False, temporary_lock=None,
+            vm_name=vm_info.vm_id,
+            state="RUNNING_AVAILABLE",
+            lock=False,
+            temporary_lock=None,
         )
 
     return {"status": SUCCESS}

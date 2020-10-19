@@ -15,7 +15,9 @@ def status(code):
 @pytest.fixture
 def no_stripe(monkeypatch):
     monkeypatch.setattr(
-        stripeChargeHourly, "__code__", (lambda _: None).__code__,
+        stripeChargeHourly,
+        "__code__",
+        (lambda _: None).__code__,
     )
 
 

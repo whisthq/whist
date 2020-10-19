@@ -24,9 +24,7 @@ def preprocess_task_info(app):
     """
 
     # TODO: Don't just hard-code the cluster, region, and task definition ARN
-    app_to_name = {
-        "Google Chrome": "fractal-browsers-chrome"
-    }
+    app_to_name = {"Google Chrome": "fractal-browsers-chrome"}
 
     return (
         app_to_name[app],

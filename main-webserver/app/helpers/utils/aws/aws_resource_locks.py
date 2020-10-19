@@ -39,7 +39,9 @@ def lockContainerAndUpdate(container_name, state, lock, temporary_lock):
         function="lockContainerAndUpdate",
         label=getContainerUser(container_name),
         logs="State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
-            state=state, lock=str(lock), temporary_lock=str(temporary_lock),
+            state=state,
+            lock=str(lock),
+            temporary_lock=str(temporary_lock),
         ),
     )
 
@@ -76,7 +78,9 @@ def lockClusterAndUpdate(cluster, status, lock, temporary_lock):
         function="lockContainerAndUpdate",
         label=getContainerUser(container_name),
         logs="State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
-            state=state, lock=str(lock), temporary_lock=str(temporary_lock),
+            state=state,
+            lock=str(lock),
+            temporary_lock=str(temporary_lock),
         ),
     )
 

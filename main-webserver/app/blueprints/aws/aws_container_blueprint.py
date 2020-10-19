@@ -193,7 +193,9 @@ def aws_container_post(action, **kwargs):
                 except BadAppError:
                     response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
                 else:
-                    task = create_new_container.delay(user, task_arn, region, cluster_name=sample_cluster)
+                    task = create_new_container.delay(
+                        user, task_arn, region, cluster_name=sample_cluster
+                    )
                     response = jsonify({"ID": task.id}), ACCEPTED
 
         elif action == "delete":
