@@ -15,9 +15,7 @@ def status(code):
 @pytest.fixture
 def no_stripe(monkeypatch):
     monkeypatch.setattr(
-        stripeChargeHourly,
-        "__code__",
-        (lambda _: None).__code__,
+        stripeChargeHourly, "__code__", (lambda _: None).__code__,
     )
 
 
@@ -32,7 +30,7 @@ def test_no_availability(client):
 def test_no_port(client):
     client.login("new-email@fractalcomputers.com", "new-email-password")
 
-    response = client.container_ping(omit_port=True)
+    response = client.container_ping(omit_identifier=True)
 
     assert response.status_code == 400
 
@@ -40,10 +38,10 @@ def test_no_port(client):
 def test_not_found(client, monkeypatch):
     code = 404
 
-    monkeypatch.setattr(pingHelper, "apply_async", status(code))
+    monkeypatch.setattr(pingHelper, "delay", status(code))
     client.login("new-email@fractalcomputers.com", "new-email-password")
 
-    response = client.container_ping(available=True, port=0)
+    response = client.container_ping(available=True, port=0, aes_key=0)
 
     assert response.status_code == code
 
@@ -51,10 +49,10 @@ def test_not_found(client, monkeypatch):
 def test_successful(client, monkeypatch):
     code = 200
 
-    monkeypatch.setattr(pingHelper, "apply_async", status(code))
+    monkeypatch.setattr(pingHelper, "delay", status(code))
     client.login("new-email@fractalcomputers.com", "new-email-password")
 
-    response = client.container_ping(available=True, port=0)
+    response = client.container_ping(available=True, port=0, aes_key=0)
 
     assert response.status_code == code
 
@@ -80,7 +78,7 @@ def test_no_container(container, no_stripe):
 )
 def test_ping_helper(available, container, final_state, initial_state, no_stripe):
     with container(initial_state) as c:
-        result = pingHelper(available, c.ip, c.port_32262)
+        result = pingHelper(available, c.ip, c.port_32262, c.secret_key)
 
         assert "status" in result
         assert result["status"] == SUCCESS

@@ -30,6 +30,7 @@ def generate_name(starter_name=""):
 pytest.cluster_name = generate_name("cluster")
 pytest.container_name = None
 
+
 @pytest.mark.container_serial
 def check_test_database(input_token, admin_token):
     if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE" or RESOURCE_GROUP != "FractalStaging":
@@ -40,6 +41,7 @@ def check_test_database(input_token, admin_token):
             level=logging.WARNING,
         )
         assert False
+
 
 @pytest.mark.container_serial
 def check_test_database(input_token, admin_token):
@@ -93,6 +95,7 @@ def test_create_cluster(
         assert False
     assert True
 
+
 @pytest.mark.container_serial
 def test_create_container(input_token, admin_token, cluster_name=pytest.cluster_name):
     cluster_name = cluster_name or pytest.cluster_name
@@ -142,6 +145,7 @@ def test_create_container(input_token, admin_token, cluster_name=pytest.cluster_
     assert True
     return task["result"]
 
+
 @pytest.mark.container_serial
 def test_send_commands(input_token, admin_token):
     fractalLog(
@@ -152,8 +156,8 @@ def test_send_commands(input_token, admin_token):
 
     resp = sendCommands(
         cluster=pytest.cluster_name,
-        region_name='us-east-1',
-        commands=['echo test_send_commands'],
+        region_name="us-east-1",
+        commands=["echo test_send_commands"],
         input_token=input_token,
     )
 
@@ -170,6 +174,7 @@ def test_send_commands(input_token, admin_token):
 
     assert True
 
+
 @pytest.mark.container_serial
 def test_delete_container(input_token, admin_token, container_name=pytest.container_name):
     container_name = container_name or pytest.container_name
@@ -180,9 +185,7 @@ def test_delete_container(input_token, admin_token, container_name=pytest.contai
     )
 
     resp = deleteContainer(
-        user_id="test-user@test.com",
-        container_name=container_name,
-        input_token=input_token,
+        user_id="test-user@test.com", container_name=pytest.container_name, input_token=input_token,
     )
 
     task = queryStatus(resp, timeout=10)
@@ -218,9 +221,7 @@ def test_delete_cluster(input_token, admin_token, cluster=pytest.cluster_name):
     )
 
     resp = deleteCluster(
-        cluster=cluster,
-        region_name="us-east-1",
-        input_token=input_token,
+        cluster=pytest.cluster_name, region_name="us-east-1", input_token=input_token,
     )
 
     task = queryStatus(resp, timeout=10)

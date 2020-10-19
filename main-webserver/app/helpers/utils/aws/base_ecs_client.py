@@ -215,11 +215,7 @@ class ECSClient:
             clusterName=cluster_name,
             capacityProviders=capacity_providers,
             defaultCapacityProviderStrategy=[
-                {
-                    "capacityProvider": capacity_provider,
-                    "weight": 1,
-                    "base": 0,
-                }
+                {"capacityProvider": capacity_provider, "weight": 1, "base": 0,}
                 for capacity_provider in capacity_providers
             ],
         )
@@ -547,18 +543,16 @@ class ECSClient:
 
     def stop_task(self, reason="user stopped", offset=0):
         self.ecs_client.stop_task(
-            cluster=self.cluster,
-            task=(self.tasks[offset]),
-            reason=reason,
+            cluster=self.cluster, task=(self.tasks[offset]), reason=reason,
         )
 
     def create_launch_configuration(
         self,
-        instance_type='g3s.xlarge',
-        ami='ami-0c82e2febb87e6d1c',
+        instance_type="g3s.xlarge",
+        ami="ami-0c82e2febb87e6d1c",
         launch_config_name=None,
         cluster_name=None,
-        key_name='auto-scaling-key'
+        key_name="auto-scaling-key",
     ):
         """
         Args:
@@ -611,7 +605,9 @@ cd /home/ubuntu
 echo export USE_PROD_SENTRY=1 >> /etc/bash.bashrc
 chmod +x userdata-bootstrap.sh
 ./userdata-bootstrap.sh
-""".format(cluster_name)
+""".format(
+            cluster_name
+        )
 
         launch_config_name = launch_config_name or self.generate_name("launch_configuration")
         response = self.auto_scaling_client.create_launch_configuration(
@@ -768,8 +764,7 @@ chmod +x userdata-bootstrap.sh
         # First try to get VPC from containers running on the cluster
         if container_arns:
             container = self.ecs_client.describe_container_instances(
-                cluster=self.cluster,
-                containerInstances=container_arns,
+                cluster=self.cluster, containerInstances=container_arns,
             )["containerInstances"][0]
             attributes = container["attributes"]
             for attribute in attributes:
@@ -946,7 +941,7 @@ if __name__ == "__main__":
     #     )
     # )
 
-    testclient = ECSClient(region_name='us-east-1')
+    testclient = ECSClient(region_name="us-east-1")
     # instance_profiles = testclient.iam_client.list_instance_profiles()['InstanceProfiles']
     # for instance_profile in instance_profiles:
     #     if 'instance_profile_' in instance_profile['InstanceProfileName']:

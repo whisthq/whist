@@ -27,10 +27,7 @@ def createCluster(
 def deleteCluster(cluster, region_name, input_token):
     return requests.post(
         (SERVER_URL + "/aws_container/delete_cluster"),
-        json={
-            "cluster": cluster,
-            "region_name": region_name,
-        },
+        json={"cluster": cluster, "region_name": region_name,},
         headers={"Authorization": "Bearer " + input_token},
     )
 
@@ -61,10 +58,7 @@ def createContainer(
 def deleteContainer(user_id, container_name, input_token):
     return requests.post(
         (SERVER_URL + "/aws_container/delete_container"),
-        json={
-            "user_id": user_id,
-            "container_name": container_name,
-        },
+        json={"user_id": user_id, "container_name": container_name,},
         headers={"Authorization": "Bearer " + input_token},
     )
 

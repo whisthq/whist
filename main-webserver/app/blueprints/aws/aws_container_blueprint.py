@@ -83,7 +83,7 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
-    
+
     if action == "delete_container":
         user_id, container_name = (
             kwargs["body"]["user_id"],

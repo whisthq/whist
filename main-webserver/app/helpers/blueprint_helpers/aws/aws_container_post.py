@@ -45,6 +45,10 @@ def protocol_info(address, port, aeskey):
 
     response = None, NOT_FOUND
     container = UserContainer.query.filter_by(ip=address, port_32262=port).first()
+    if container:
+        username = container.user_id
+    else:
+        return response
     if container.secret_key != aeskey:
         print(aeskey, container.secret_key)
         return None, UNAUTHORIZED

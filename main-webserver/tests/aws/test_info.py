@@ -30,7 +30,7 @@ def test_successful(client, monkeypatch):
 
 
 def test_no_container():
-    response, status = protocol_info("x.x.x.x", 0)
+    response, status = protocol_info("x.x.x.x", 0, 0)
 
     assert not response
     assert status == 404
@@ -38,7 +38,7 @@ def test_no_container():
 
 def test_protocol_info(container):
     with container() as c:
-        response, status = protocol_info(c.ip, c.port_32262)
+        response, status = protocol_info(c.ip, c.port_32262, c.secret_key)
 
         assert status == 200
         assert response.pop("allow_autoupdate") == c.allow_autoupdate
