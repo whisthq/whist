@@ -27,7 +27,7 @@ type handshakeRequest struct {
 }
 
 type handshakeResponse struct {
-	authToken string
+	AuthToken string
 }
 
 var authToken string
@@ -38,7 +38,7 @@ func Initialize() error {
 		return logger.MakeError("Error handshaking with webserver: %v", err)
 	}
 
-	authToken = resp.authToken
+	authToken = resp.AuthToken
 
 	return nil
 }
@@ -46,7 +46,7 @@ func Initialize() error {
 // Talk to the auth endpoint for the host service startup (to authenticate all
 // future requests). We currently send the EC2 instance ID in the request as a
 // (weak) layer of defense against unauthenticated/spoofed handshakes. We
-// expect back a JSON response containing a field called "authToken"
+// expect back a JSON response containing a field called "AuthToken"
 func handshake() (handshakeResponse, error) {
 	var resp handshakeResponse
 
