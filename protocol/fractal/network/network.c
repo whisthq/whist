@@ -214,7 +214,7 @@ Public Function Implementations
 @brief                          Initialize default port mappings (i.e. the identity)
 */
 void init_default_port_mappings() {
-    for (int i = 0; i < USHRT_MAX; i++) {
+    for (unsigned short i = 0; i < USHRT_MAX; i++) {
         port_mappings[i] = i;
     }
 }
@@ -480,14 +480,14 @@ SOCKET socketp_tcp() {
 
 #ifdef SOCK_CLOEXEC
     // Create socket
-    int sock_fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
+    SOCKET sock_fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
     if (sock_fd <= 0) {
         LOG_WARNING("Could not create socket %d\n", GetLastNetworkError());
         return -1;
     }
 #else
     // Create socket
-    int sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock_fd <= 0) {  // Windows & Unix cases
         LOG_WARNING("Could not create socket %d\n", GetLastNetworkError());
         return -1;
@@ -515,10 +515,10 @@ SOCKET socketp_udp() {
 
 #ifdef SOCK_CLOEXEC
     // Create socket
-    int sock_fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
+    SOCKET sock_fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
 #else
     // Create socket
-    int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    SOCKET sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
 #ifndef _WIN32
     // Set socket to close on child exec
