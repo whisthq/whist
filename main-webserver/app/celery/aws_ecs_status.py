@@ -31,6 +31,7 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
         username = container_info.user_id
     else:
         raise Exception(f"No container with IP {container_ip} and ports {[port_32262]}")
+
     if container_info.secret_key != aeskey:
         fractalLog(
             function="pingHelper",

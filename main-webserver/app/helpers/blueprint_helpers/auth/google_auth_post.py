@@ -1,7 +1,8 @@
+from better_profanity import profanity
+
 from app import *
 from app.helpers.utils.general.tokens import *
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
-from app.constants.generate_subsequences_for_words import generate_subsequence_for_word
 from app.models.public import *
 from app.models.hardware import *
 from app.serializers.public import *
@@ -20,11 +21,11 @@ def registerGoogleUser(username, name, token, reason_for_signup=None):
         int: 200 on success, 400 on fail
     """
     promo_code = generateUniquePromoCode()
-    username_subsq = generate_subsequence_for_word(username)
-    for result in username_subsq:
-        username_encoding = result.lower().encode("utf-8")
-        if hashlib.md5(username_encoding).hexdigest() in BAD_WORDS_HASHED:
-            return {"status": FAILURE, "error": "Try using a different username"}
+    username_encoding = username.lower().encode("utf-8")
+    if hashlib.md5(
+        username_encoding
+    ).hexdigest() in BAD_WORDS_HASHED or profanity.contains_profanity(username):
+        return {"status": FAILURE, "error": "Try using a different username"}
 
     new_user = User(
         user_id=username,
