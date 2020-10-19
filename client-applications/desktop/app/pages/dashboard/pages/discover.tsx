@@ -1,13 +1,22 @@
-import React, { useState } from "react"
-import { Row, Carousel } from "react-bootstrap"
+import React, { useEffect } from "react"
+import { Row } from "react-bootstrap"
 import { connect } from "react-redux"
+import { useQuery } from "@apollo/client"
+
 import styles from "styles/dashboard.css"
 
-import { featuredAppData } from "../constants/featuredApps"
+import { GET_FEATURED_APPS } from "pages/constants/graphql"
 
 import App from "../components/app"
 
 const Discover = (props: any) => {
+    const { data, error } = useQuery(GET_FEATURED_APPS)
+    const featuredAppData = data ? data.hardware_supported_app_images : []
+
+    useEffect(() => {
+        console.log(error)
+    }, [error])
+
     return (
         <div className={styles.page}>
             <h2>Featured Apps</h2>
@@ -18,8 +27,8 @@ const Discover = (props: any) => {
                     flexDirection: "row",
                 }}
             >
-                {featuredAppData.map((app) => (
-                    <App key={app.name} app={app} />
+                {featuredAppData.map((app: any) => (
+                    <App key={app.app_id} app={app} />
                 ))}
             </Row>
         </div>
