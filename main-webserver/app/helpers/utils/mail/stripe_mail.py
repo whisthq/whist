@@ -10,7 +10,7 @@ def chargeFailedMail(username, custId):
     )
     try:
         message = SendGridMail(
-            from_email="noreply@fractalcomputers.com",
+            from_email="noreply@tryfractal.com",
             to_emails=[username],
             subject="Your Payment is Overdue",
             html_content=render_template("charge_failed.html"),
@@ -26,8 +26,8 @@ def chargeFailedMail(username, custId):
         )
 
     message = SendGridMail(
-        from_email="noreply@fractalcomputers.com",
-        to_emails=["support@fractalcomputers.com"],
+        from_email="noreply@tryfractal.com",
+        to_emails=["support@tryfractal.com"],
         subject="Payment is overdue for " + username,
         html_content="<div>The charge has failed for account " + custId + "</div>",
     )
@@ -48,8 +48,8 @@ def chargeFailedMail(username, custId):
 
 def chargeSuccessMail(username, custId):
     message = SendGridMail(
-        from_email="noreply@fractalcomputers.com",
-        to_emails=["support@fractalcomputers.com"],
+        from_email="noreply@tryfractal.com",
+        to_emails=["support@tryfractal.com"],
         subject="Payment recieved from " + username,
         html_content="<div>The charge has succeeded for account " + custId + "</div>",
     )
@@ -74,7 +74,7 @@ def trialEndingMail(user):
         logs="Sending trial ending email to {}".format(user),
     )
     message = SendGridMail(
-        from_email="noreply@fractalcomputers.com",
+        from_email="noreply@tryfractal.com",
         to_emails=user,
         subject="Your Free Trial is Ending",
         html_content=render_template("trial_ending.html"),
@@ -91,7 +91,7 @@ def trialEndingMail(user):
 
 def trialEndedMail(username):
     message = SendGridMail(
-        from_email="noreply@fractalcomputers.com",
+        from_email="noreply@tryfractal.com",
         to_emails=username,
         subject="Your Free Trial has Ended",
         html_content=render_template("trial_ended.html"),
@@ -118,7 +118,7 @@ def creditAppliedMail(username):
         int: 0 for success, 1 for failure
     """
     internal_message = SendGridMail(
-        from_email="support@fractalcomputers.com",
+        from_email="support@tryfractal.com",
         to_emails=username,
         subject="Someone Applied Your Promo Code — Here's $35.00!",
         html_content=render_template("on_credit_applied.html"),
@@ -141,7 +141,7 @@ def creditAppliedMail(username):
 
 def planChangeMail(username, newPlan):
     message = SendGridMail(
-        from_email="noreply@fractalcomputers.com",
+        from_email="noreply@tryfractal.com",
         to_emails=username,
         subject="Your plan change was successful",
         html_content=render_template("plan_changed.html", plan=newPlan),

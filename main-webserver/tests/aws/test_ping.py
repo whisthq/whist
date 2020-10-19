@@ -22,7 +22,7 @@ def no_stripe(monkeypatch):
 
 
 def test_no_availability(client):
-    client.login("new-email@fractalcomputers.com", "new-email-password")
+    client.login("new-email@tryfractal.com", "new-email-password")
 
     response = client.container_ping(omit_available=True)
 
@@ -30,7 +30,7 @@ def test_no_availability(client):
 
 
 def test_no_port(client):
-    client.login("new-email@fractalcomputers.com", "new-email-password")
+    client.login("new-email@tryfractal.com", "new-email-password")
 
     response = client.container_ping(omit_identifier=True)
 
@@ -41,7 +41,7 @@ def test_not_found(client, monkeypatch):
     code = 404
 
     monkeypatch.setattr(pingHelper, "delay", status(code))
-    client.login("new-email@fractalcomputers.com", "new-email-password")
+    client.login("new-email@tryfractal.com", "new-email-password")
 
     response = client.container_ping(available=True, port=0, aes_key=0)
 
@@ -52,7 +52,7 @@ def test_successful(client, monkeypatch):
     code = 200
 
     monkeypatch.setattr(pingHelper, "delay", status(code))
-    client.login("new-email@fractalcomputers.com", "new-email-password")
+    client.login("new-email@tryfractal.com", "new-email-password")
 
     response = client.container_ping(available=True, port=0, aes_key=0)
 

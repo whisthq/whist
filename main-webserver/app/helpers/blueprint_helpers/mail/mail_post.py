@@ -21,7 +21,7 @@ def forgotPasswordHelper(username):
         timeIssued = dt.now().strftime("%m-%d-%Y, %H:%M:%S")
 
         message = SendGridMail(
-            from_email="noreply@fractalcomputers.com",
+            from_email="noreply@tryfractal.com",
             to_emails=[username],
             subject="Reset Your Password",
             html_content=render_template("on_password_forget.html", url=FRONTEND_URL, token=token),
@@ -47,8 +47,8 @@ def cancelHelper(user, feedback):
     title = "[CANCELLED PLAN + FEEDBACK] " + user + " has Just Cancelled Their Plan"
 
     internal_message = SendGridMail(
-        from_email="noreply@fractalcomputers.com",
-        to_emails=["pipitone@fractalcomputers.com", "support@fractalcomputers.com"],
+        from_email="noreply@tryfractal.com",
+        to_emails=["support@tryfractal.com"],
         subject=title,
         html_content=feedback,
     )
@@ -74,7 +74,7 @@ def verificationHelper(user, token):
     # url = "https://localhost:3000/verify?" + token
 
     internal_message = SendGridMail(
-        from_email="noreply@fractalcomputers.com",
+        from_email="noreply@tryfractal.com",
         to_emails=user,
         subject=title,
         html_content=render_template("on_email_verification.html", url=url),
@@ -123,8 +123,8 @@ def feedbackHelper(user, feedback, feedback_type):
     title = "[{}] Feedback from {}".format(feedback_type, user)
 
     message = SendGridMail(
-        from_email="noreply@fractalcomputers.com",
-        to_emails=["pipitone@fractalcomputers.com", "support@fractalcomputers.com"],
+        from_email="noreply@tryfractal.com",
+        to_emails=["support@tryfractal.com"],
         subject=title,
         html_content="<div>" + feedback + "</div>",
     )
@@ -145,7 +145,7 @@ def feedbackHelper(user, feedback, feedback_type):
 
 def trialStartHelper(user, location, code):
     message = SendGridMail(
-        from_email="pipitone@fractalcomputers.com",
+        from_email="noreply@tryfractal.com",
         to_emails=user,
         subject="Your Free Trial has Started",
         html_content=render_template("on_purchase.html", location=location, code=code),
@@ -163,8 +163,8 @@ def trialStartHelper(user, location, code):
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
     internal_message = SendGridMail(
-        from_email="noreply@fractalcomputers.com",
-        to_emails=["pipitone@fractalcomputers.com", "support@fractalcomputers.com"],
+        from_email="noreply@tryfractal.com",
+        to_emails=["support@tryfractal.com"],
         subject="[FREE TRIAL START] A new user, " + user + ", just signed up for the free trial.",
         html_content="<div>No action needed from our part at this point.</div>",
     )
@@ -184,10 +184,10 @@ def trialStartHelper(user, location, code):
 
 
 def computerReadyHelper(user, date, code, location):
-    title = "Your Cloud PC Is Ready!"
+    title = "Your Fractal Subscription Is Ready!"
 
     message = SendGridMail(
-        from_email="support@fractalcomputers.com",
+        from_email="support@tryfractal.com",
         to_emails=user,
         subject=title,
         html_content=render_template(
@@ -208,10 +208,10 @@ def computerReadyHelper(user, date, code, location):
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
     internal_message = SendGridMail(
-        from_email="noreply@fractalcomputers.com",
-        to_emails="support@fractalcomputers.com",
-        subject="[CLOUD PC CREATED] " + user + " has created a cloud PC",
-        html_content="<div>{} has created a cloud PC.</div>".format(user),
+        from_email="noreply@tryfractal.com",
+        to_emails="support@tryfractal.com",
+        subject="" + user + " has signed up for a Fractal paid plan.",
+        html_content="<div>{} has signed up for a Fractal paid plan.</div>".format(user),
     )
 
     try:
@@ -233,7 +233,7 @@ def joinWaitlistHelper(email, name, date):
     title = "Congrats! You're on the waitlist."
 
     internal_message = SendGridMail(
-        from_email="support@fractalcomputers.com",
+        from_email="support@tryfractal.com",
         to_emails=email,
         subject=title,
         html_content=render_template("join_waitlist.html", name=name, date=date),

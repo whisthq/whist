@@ -73,7 +73,7 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
         fractalLog(
             function="pingHelper",
             label=str(username),
-            logs="{username} just disconnected from their cloud PC".format(username=username),
+            logs="{username} just disconnected from Fractal".format(username=username),
         )
 
     # Detect and handle logon event
@@ -93,7 +93,7 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
         fractalLog(
             function="pingHelper",
             label=str(username),
-            logs="{username} just connected to their cloud PC".format(username=username),
+            logs="{username} just connected to Fractal".format(username=username),
         )
 
     # Change Container states accordingly

@@ -5,7 +5,7 @@ from app.helpers.utils.general.logs import *
 def signupMail(username, promo_code):
     try:
         internal_message = SendGridMail(
-            from_email="phil@fractalcomputers.com",
+            from_email="phil@tryfractal.com",
             to_emails=username,
             subject="Welcome to Fractal",
             html_content=render_template("on_signup.html", code=promo_code),

@@ -24,5 +24,4 @@ jobs:
           SENTRY_PROJECT: main-webserver
         with:
           tagName: ${{ github.sha }}
-          releaseNamePrefix: main-webserver@
           environment: "prod"

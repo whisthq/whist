@@ -10,7 +10,7 @@ Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?c
 
 #### Coding Philosophy
 
-Before contributing to this project, please read our in-depth coding philosophy document [here](https://www.notion.so/fractalcomputers/Code-Philosophy-Webserver-backend-d036205444464f8b8a61dc36eeae7dbb).
+Before contributing to this project, please read our in-depth coding philosophy document [here](https://www.notion.so/tryfractal/Code-Philosophy-Webserver-backend-d036205444464f8b8a61dc36eeae7dbb).
 
 ## Development
 
@@ -56,17 +56,17 @@ We recommend that you download several softwares to help you code and test:
 
 **Postman**
 
-We use Postman to send API requests to our server, to store our API endpoints, and to generate documentation. Our Postman team link is [here](https://fractalcomputers.postman.co/). If you are not part of the team, contact @mingy98. To better understand how Postman works, refer to our wiki [here](https://www.notion.so/fractalcomputers/Postman-API-Documentation-602cc6df23e04cd0a026340c406bd663).
+We use Postman to send API requests to our server, to store our API endpoints, and to generate documentation. Our Postman team link is [here](https://tryfractal.postman.co/). If you are not part of the team, contact @mingy98. To better understand how Postman works, refer to our wiki [here](https://www.notion.so/tryfractal/Postman-API-Documentation-602cc6df23e04cd0a026340c406bd663).
 
 **TablePlus**
 
-We use TablePlus to visualize, search, and modify our SQL database. For instructions on how to set up TablePlus, refer to our wiki [here](https://www.notion.so/fractalcomputers/Using-TablePlus-to-Access-our-PostgresSQL-Database-d5badb38eb3841deb56a84698ccd20f5).
+We use TablePlus to visualize, search, and modify our SQL database. For instructions on how to set up TablePlus, refer to our wiki [here](https://www.notion.so/tryfractal/Using-TablePlus-to-Access-our-PostgresSQL-Database-d5badb38eb3841deb56a84698ccd20f5).
 
 ### Heroku Setup
 
 For continuous integration and delivery, we leverage Heroku pipelines, which provides us with automated PR testing, isolation of environment variables, promotion/rollbacks, and auto-deploys from Github. Contributors should NOT push code to Heroku; only codeowners are expected to do this. Instead, contributors should PR their changes into the appropriate Github branch (most often `master`).
 
-While our Heroku pipeline should not be modified without codeowner permission, it is helpful to understand how it works by consulting our wiki [here](https://www.notion.so/fractalcomputers/Heroku-CI-CD-Pipeline-Webservers-f8ef5b43edc84c969cf005fcac4641ba).
+While our Heroku pipeline should not be modified without codeowner permission, it is helpful to understand how it works by consulting our wiki [here](https://www.notion.so/tryfractal/Heroku-CI-CD-Pipeline-Webservers-f8ef5b43edc84c969cf005fcac4641ba).
 
 ### GraphQL
 

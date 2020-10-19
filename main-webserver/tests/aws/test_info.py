@@ -13,7 +13,7 @@ def success(*args, **kwargs):
 
 def test_not_found(client, monkeypatch):
     monkeypatch.setattr(protocol_info, "__code__", not_found.__code__)
-    client.login("new-email@fractalcomputers.com", "new-email-password")
+    client.login("new-email@tryfractal.com", "new-email-password")
 
     response = client.container_info()
 
@@ -22,7 +22,7 @@ def test_not_found(client, monkeypatch):
 
 def test_successful(client, monkeypatch):
     monkeypatch.setattr(protocol_info, "__code__", success.__code__)
-    client.login("new-email@fractalcomputers.com", "new-email-password")
+    client.login("new-email@tryfractal.com", "new-email-password")
 
     response = client.container_info()
 

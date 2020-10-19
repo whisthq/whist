@@ -5,6 +5,7 @@ import hashlib
 def hash_bad_words():
     """Hashes all bad words from bad_words.py and returns
     a dictionary that contains all of these values
+
     Args:
         None
     """

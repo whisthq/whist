@@ -193,7 +193,7 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
         ):
             self.update_state(
                 state="FAILURE",
-                meta={"msg": "Cloud PC could not be started. Please contact support."},
+                meta={"msg": "Fractal could not start. Please contact support."},
             )
 
             return -1
@@ -238,7 +238,7 @@ def automaticAttachDisk(self, disk_name, resource_group=VM_GROUP):
 
         self.update_state(
             state="PENDING",
-            meta={"msg": "Boot request received successfully. Preparing your cloud PC."},
+            meta={"msg": "Boot request received successfully. Preparing to launch Fractal."},
         )
 
         vm_name = vm_name.split("/")[-1]

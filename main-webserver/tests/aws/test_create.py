@@ -18,7 +18,7 @@ def test_bad_app(client, monkeypatch):
     # top level of a module. I found this solution at:
     # https://stackoverflow.com/questions/28403380/py-tests-monkeypatch-setattr-not-working-in-some-cases
     monkeypatch.setattr(preprocess_task_info, "__code__", bad_app.__code__)
-    client.login("new-email@fractalcomputers.com", "new-email-password")
+    client.login("new-email@tryfractal.com", "new-email-password")
 
     response = client.container_create("Bad App")
 
@@ -26,7 +26,7 @@ def test_bad_app(client, monkeypatch):
 
 
 def test_no_username(client):
-    client.login("new-email@fractalcomputers.com", "new-email-password")
+    client.login("new-email@tryfractal.com", "new-email-password")
 
     response = client.container_create(omit_username=True)
 
@@ -34,7 +34,7 @@ def test_no_username(client):
 
 
 def test_no_app(client):
-    client.login("new-email@fractalcomputers.com", "new-email-password")
+    client.login("new-email@tryfractal.com", "new-email-password")
 
     response = client.container_create(omit_app=True)
 
@@ -43,7 +43,7 @@ def test_no_app(client):
 
 def test_successful(client, monkeypatch):
     monkeypatch.setattr(create_new_container, "apply_async", apply_async)
-    client.login("new-email@fractalcomputers.com", "new-email-password")
+    client.login("new-email@tryfractal.com", "new-email-password")
 
     response = client.container_create("Blender")
 

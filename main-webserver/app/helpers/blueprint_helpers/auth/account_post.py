@@ -116,8 +116,8 @@ def registerHelper(username, password, name, reason_for_signup):
 
     if status == SUCCESS:
         internal_message = SendGridMail(
-            from_email="support@fractalcomputers.com",
-            to_emails="support@fractalcomputers.com",
+            from_email="noreply@tryfractal.com",
+            to_emails="support@tryfractal.com",
             subject=username + " just created an account!",
             html_content="<p>Just letting you know that {0} created an account. Their reason for signup is: {1}. Have a great day.</p>".format(
                 name, reason_for_signup
