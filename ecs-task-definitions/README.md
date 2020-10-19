@@ -8,5 +8,6 @@ You can retrieve the JSON of a task definition directly in the AWS console when 
 
 - Base (Ubuntu 20.04)
 - Google Chrome
+- Mozilla Firefox
 - Blender
 - Slack
