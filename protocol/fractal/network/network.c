@@ -1587,12 +1587,12 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
     webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
 
     // connect to the web server before sending the POST request packet
-    // int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
-    //                              sizeof(webserver_socketAddress));
-    // if (connect_status < 0) {
-    //     LOG_WARNING("Could not connect to the webserver.");
-    //     return false;
-    // }
+    int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
+                                 sizeof(webserver_socketAddress));
+    if (connect_status < 0) {
+        LOG_WARNING("Could not connect to the webserver.");
+        return false;
+    }
 
     // now that we're connected, we can send the POST request to authenticate
     // the user first, we create the POST request message
@@ -1618,8 +1618,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
     LOG_INFO("POST Request: %s", message);
 
     // now we send it
-    if (sendto(Socket, message, (int)strlen(message), 0,
-               (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
+    if (send(Socket, message, (int)strlen(message), 0) < 0) {
         // error sending, terminate
         LOG_WARNING("Sending POST message failed.");
         free(message);
@@ -1672,12 +1671,12 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
 
     // connect to the web server before sending the POST request packet
-    // int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
-    //                              sizeof(webserver_socketAddress));
-    // if (connect_status < 0) {
-    //     LOG_WARNING("Could not connect to the webserver.");
-    //     return false;
-    // }
+    int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
+                                 sizeof(webserver_socketAddress));
+    if (connect_status < 0) {
+        LOG_WARNING("Could not connect to the webserver.");
+        return false;
+    }
 
     // now that we're connected, we can send the POST request to authenticate
     // the user first, we create the POST request message
@@ -1685,8 +1684,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
     LOG_INFO("%s", message);
     // now we send it
-    if (sendto(Socket, message, (int)strlen(message), 0,
-               (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
+    if (send(Socket, message, (int)strlen(message), 0) < 0) {
         // error sending, terminate
         LOG_WARNING("Sending GET message failed.");
         free(message);
