@@ -42,7 +42,8 @@ whatever files are in the SET_CLIPBOARD directory.
   esac \
 done; "
 
-#define MAX_CLIPBOARD_SIZE 10000000
+// TODO: standardize this across all clipboards
+#define MAX_CLIPBOARD_SIZE 9000000
 
 bool StartTrackingClipboardUpdates();
 

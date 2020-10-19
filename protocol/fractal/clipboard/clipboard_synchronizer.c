@@ -133,7 +133,6 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard() {
     }
 
     if (updating_clipboard) {
-        LOG_INFO("Tried to GetClipboard, but clipboard is updating");
         return NULL;
     }
 

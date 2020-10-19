@@ -72,6 +72,7 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #include "network.h"
 
 #include <stdio.h>
+#include <fcntl.h>
 
 #include "../utils/aes.h"
 
@@ -660,12 +661,25 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     LOG_INFO("Creating TCP Socket");
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
         return -1;
     }
+
+    // Set socket to close on child exec
+    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     set_timeout(context->s, stun_timeout_ms);
     // Server connection protocol
     context->is_server = true;
+
+    // Set socket to close on child exec
+    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
 
     // Reuse addr
     opt = 1;
@@ -758,12 +772,26 @@ int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     // Create TCP socket
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
         return -1;
     }
+
+    // Set socket to close on child exec
+    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     set_timeout(context->s, stun_timeout_ms);
 
     SOCKET udp_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    // Set socket to close on child exec
+    if (fcntl(udp_s, F_SETFD, fcntl(udp_s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     // cppcheck-suppress nullPointer
     sendto(udp_s, NULL, 0, 0, (struct sockaddr *)&stun_addr, sizeof(stun_addr));
     closesocket(udp_s);
@@ -780,11 +808,11 @@ int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_ti
 
     struct sockaddr_in origin_addr;
     // Connect over TCP to STUN
-    LOG_INFO("Connecting to STUN TCP...");
-    if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
-        LOG_WARNING("Could not connect to STUN Server over TCP");
-        return -1;
-    }
+    // LOG_INFO("Connecting to STUN TCP...");
+    // if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
+    //     LOG_WARNING("Could not connect to STUN Server over TCP");
+    //     return -1;
+    // }
 
     socklen_t slen = sizeof(origin_addr);
     if (getsockname(context->s, (struct sockaddr *)&origin_addr, &slen) < 0) {
@@ -840,8 +868,15 @@ int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_ti
 
     // Create TCP socket
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    // Set socket to close on child exec
+    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
         return -1;
     }
 
@@ -889,9 +924,16 @@ int CreateTCPClientContext(SocketContext *context, char *destination, int port,
     // Create TCP socket
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
         return -1;
     }
+
+    // Set socket to close on child exec
+    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     set_timeout(context->s, stun_timeout_ms);
 
     // Client connection protocol
@@ -940,13 +982,27 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
     // Create TCP socket
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
         return -1;
     }
+
+    // Set socket to close on child exec
+    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     set_timeout(context->s, stun_timeout_ms);
 
     // Tell the STUN to use TCP
     SOCKET udp_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    // Set socket to close on child exec
+    if (fcntl(udp_s, F_SETFD, fcntl(udp_s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     // cppcheck-suppress nullPointer
     sendto(udp_s, NULL, 0, 0, (struct sockaddr *)&stun_addr, sizeof(stun_addr));
     closesocket(udp_s);
@@ -961,10 +1017,10 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
     }
 
     // Connect to STUN server
-    if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
-        LOG_WARNING("Could not connect to STUN Server over TCP");
-        return -1;
-    }
+    // if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
+    //     LOG_WARNING("Could not connect to STUN Server over TCP");
+    //     return -1;
+    // }
 
     struct sockaddr_in origin_addr;
     socklen_t slen = sizeof(origin_addr);
@@ -1036,7 +1092,13 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
 
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
+        return -1;
+    }
+
+    // Set socket to close on child exec
+    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
         return -1;
     }
 
@@ -1128,6 +1190,13 @@ int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeou
         LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
+
+    // Set socket to close on child exec
+    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     set_timeout(context->s, stun_timeout_ms);
     // Server connection protocol
     context->is_server = true;
@@ -1179,6 +1248,13 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
         mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
+
+    // Set socket to close on child exec
+    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     set_timeout(context->s, stun_timeout_ms);
 
     // Server connection protocol
@@ -1295,6 +1371,13 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
         LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
+
+    // Set socket to close on child exec
+    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     set_timeout(context->s, stun_timeout_ms);
 
     // Client connection protocol
@@ -1338,6 +1421,13 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
         LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
+
+    // Set socket to close on child exec
+    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     set_timeout(context->s, stun_timeout_ms);
 
     // Client connection protocol
@@ -1460,6 +1550,13 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
         LOG_WARNING("Could not create socket.");
         return false;
     }
+
+    // Set socket to close on child exec
+    if (fcntl(Socket, F_SETFD, fcntl(Socket, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     set_timeout(Socket, 250);
 
     host = gethostbyname(host_s);
@@ -1475,12 +1572,12 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
     webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
 
     // connect to the web server before sending the POST request packet
-    int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
-                                 sizeof(webserver_socketAddress));
-    if (connect_status < 0) {
-        LOG_WARNING("Could not connect to the webserver.");
-        return false;
-    }
+    // int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
+    //                              sizeof(webserver_socketAddress));
+    // if (connect_status < 0) {
+    //     LOG_WARNING("Could not connect to the webserver.");
+    //     return false;
+    // }
 
     // now that we're connected, we can send the POST request to authenticate
     // the user first, we create the POST request message
@@ -1506,7 +1603,8 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
     LOG_INFO("POST Request: %s", message);
 
     // now we send it
-    if (send(Socket, message, (int)strlen(message), 0) < 0) {
+    if (sendto(Socket, message, (int)strlen(message), 0,
+        (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
         // error sending, terminate
         LOG_WARNING("Sending POST message failed.");
         free(message);
@@ -1548,6 +1646,13 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
         LOG_WARNING("Could not create socket.");
         return false;
     }
+
+    // Set socket to close on child exec
+    if (fcntl(Socket, F_SETFD, fcntl(Socket, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     set_timeout(Socket, 250);
 
     host = gethostbyname(host_s);
@@ -1562,12 +1667,12 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
 
     // connect to the web server before sending the POST request packet
-    int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
-                                 sizeof(webserver_socketAddress));
-    if (connect_status < 0) {
-        LOG_WARNING("Could not connect to the webserver.");
-        return false;
-    }
+    // int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
+    //                              sizeof(webserver_socketAddress));
+    // if (connect_status < 0) {
+    //     LOG_WARNING("Could not connect to the webserver.");
+    //     return false;
+    // }
 
     // now that we're connected, we can send the POST request to authenticate
     // the user first, we create the POST request message
@@ -1575,7 +1680,8 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
     LOG_INFO("%s", message);
     // now we send it
-    if (send(Socket, message, (int)strlen(message), 0) < 0) {
+    if (sendto(Socket, message, (int)strlen(message), 0,
+        (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
         // error sending, terminate
         LOG_WARNING("Sending GET message failed.");
         free(message);
