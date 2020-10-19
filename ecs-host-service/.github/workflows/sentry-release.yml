@@ -30,16 +30,16 @@ jobs:
         run: |
           # Install Sentry CLI
           curl -sL https://sentry.io/get-cli/ | bash
-                  
+
           # Create new Sentry release
           export SENTRY_RELEASE=$(sentry-cli releases propose-version)
           sentry-cli releases new -p $SENTRY_PROJECT $SENTRY_RELEASE
           sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
           sentry-cli releases finalize $SENTRY_RELEASE
-                  
+
           # Create new deploy for this Sentry release
           sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
-                  
+
       - name: Notify Slack
         run: |
           curl -X POST \
