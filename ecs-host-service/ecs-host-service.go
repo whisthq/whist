@@ -69,6 +69,9 @@ func shutdownHostService() {
 	logger.Info("Flushing sentry...")
 	logger.FlushSentry()
 
+	logger.Info("Sending final heartbeat...")
+	webserver.SendGracefulShutdownNotice()
+
 	logger.Info("Finished host service shutdown procedure. Finally exiting...")
 	os.Exit(0)
 }
