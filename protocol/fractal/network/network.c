@@ -783,12 +783,6 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     // Server connection protocol
     context->is_server = true;
 
-    // Set socket to close on child exec
-    if (fcntl(context->s, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
-        return -1;
-    }
-
     // Reuse addr
     opt = 1;
     if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) < 0) {
