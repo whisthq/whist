@@ -12,7 +12,7 @@ import MainContext from "shared/context/mainContext"
 import Header from "shared/components/header"
 
 function Application(props: any) {
-    const { user } = props
+    const { user, waitlistUser } = props
     const { width } = useContext(MainContext)
 
     const [devices, setDevices] = useState("")
@@ -66,7 +66,7 @@ function Application(props: any) {
                                             : 50,
                                 }}
                             >
-                                No. {user.ranking}
+                                No. {waitlistUser.ranking}
                             </span>{" "}
                             <br />
                             on the waitlist.
@@ -157,9 +157,13 @@ function Application(props: any) {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
+function mapStateToProps(state: {
+    AuthReducer: { user: any }
+    WaitlistReducer: { waitlistUser: any }
+}) {
     return {
         user: state.AuthReducer.user,
+        waitlistUser: state.WaitlistReducer.waitlistUser,
     }
 }
 

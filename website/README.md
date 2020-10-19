@@ -72,7 +72,7 @@ For consistency, we enforce all folder, variable, and file names to start with l
 
 ### Warnings
 
-To minimize the risk of bugs, we enforce that all PR's be warning-free. You can see warnings in the terminal where the website is running locally; if a PR has warnings, the CI will fail.
+To minimize the risk of bugs, we enforce that all PR's be warning-free. You can see warnings in the terminal where the website is running locally; if a PR has warnings, the CI will fail. Note that the Netlify deploys will fail due to warnings, to enforce this design philosophy.
 
 ### State Management
 

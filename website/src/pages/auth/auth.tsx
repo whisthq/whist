@@ -7,9 +7,10 @@ import GoogleButton from "pages/auth/googleButton"
 import SignoutButton from "pages/auth/signoutButton"
 
 const Auth = (props: {
-    dispatch: (arg0: { type: string; user_id?: string }) => void
-    loggedIn: any
-    user_id: React.ReactNode
+    dispatch: any
+    user: {
+        user_id: string
+    }
 }) => {
     useEffect(() => {
         debugLog(props)
@@ -17,20 +18,16 @@ const Auth = (props: {
 
     return (
         <div className="auth-wrapper">
-            <div>Logged in: {JSON.stringify(props.loggedIn)}</div>
-            <div>email: {props.user_id}</div>
+            <div>email: {props.user.user_id}</div>
             <GoogleButton />
             <SignoutButton />
         </div>
     )
 }
 
-function mapStateToProps(state: any) {
+function mapStateToProps(state: { AuthReducer: { user: any } }) {
     return {
-        reducer: state.AuthReducer,
-        loggedIn: state.AuthReducer.loggedIn,
-        user_id: state.AuthReducer.user.user_id,
-        name: state.AuthReducer.user.name,
+        user: state.AuthReducer.user,
     }
 }
 

@@ -1,7 +1,7 @@
 import { all } from "redux-saga/effects"
 
-import JoinSaga from "store/sagas/waitlist/join_saga"
+import WaitlistSaga from "store/sagas/waitlist"
 
 export default function* rootSaga() {
-    yield all([JoinSaga()])
+    yield all([WaitlistSaga()])
 }

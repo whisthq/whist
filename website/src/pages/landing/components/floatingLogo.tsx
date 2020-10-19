@@ -35,7 +35,11 @@ function FloatingLogo(props: any) {
             className="bounce"
             alt=""
             onClick={() => {
-                props.app && setAppHighlight(props.app)
+                if (props.app === appHighlight) {
+                    setAppHighlight("")
+                } else {
+                    props.app && setAppHighlight(props.app)
+                }
             }}
             style={{
                 borderRadius: 4,

@@ -4,6 +4,9 @@ import { Button, Modal, Alert } from "react-bootstrap"
 import { CopyToClipboard } from "react-copy-to-clipboard"
 import { useMutation } from "@apollo/client"
 
+import * as PureWaitlistAction from "store/actions/waitlist/pure"
+import * as SideEffectWaitlistAction from "store/actions/waitlist/sideEffects"
+
 import GoogleButton from "pages/auth/googleButton"
 import WaitlistForm from "shared/components/waitlistForm"
 
@@ -11,7 +14,6 @@ import { UPDATE_WAITLIST } from "shared/constants/graphql"
 import { REFERRAL_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "shared/constants/config"
-import { updateClicks, referEmailAction } from "store/actions/auth/waitlist"
 
 const CustomAction = (props: {
     onClick: any
@@ -66,10 +68,10 @@ const Actions = (props: {
         referrals: number
         name: string
     }
-    loggedIn: any
     clicks: any
+    waitlistUser: any
 }) => {
-    const { dispatch, user, loggedIn, clicks } = props
+    const { dispatch, user, clicks, waitlistUser } = props
 
     const [showModal, setShowModal] = useState(false)
     const [showEmailSentAlert, setShowEmailSentAlert] = useState(false)
@@ -104,16 +106,20 @@ const Actions = (props: {
 
                 if (allowClick) {
                     if (clickReset) {
-                        dispatch(updateClicks(1))
+                        dispatch(PureWaitlistAction.updateClicks({ number: 1 }))
                     } else {
-                        dispatch(updateClicks(clicks.number + 1))
+                        dispatch(
+                            PureWaitlistAction.updateClicks({
+                                number: clicks.number + 1,
+                            })
+                        )
                     }
 
                     updatePoints({
                         variables: {
                             user_id: user.user_id,
-                            points: user.points + 1,
-                            referrals: user.referrals,
+                            points: waitlistUser.points + 1,
+                            referrals: waitlistUser.referrals,
                         },
                     })
                 }
@@ -128,14 +134,7 @@ const Actions = (props: {
 
     const sendReferralEmail = () => {
         if (user.user_id && recipientEmail) {
-            dispatch(
-                referEmailAction(
-                    user.user_id,
-                    user.name,
-                    user.referralCode,
-                    recipientEmail
-                )
-            )
+            dispatch(SideEffectWaitlistAction.sendReferralEmail(recipientEmail))
             setSentEmail(recipientEmail)
             setShowEmailSentAlert(true)
         }
@@ -145,7 +144,7 @@ const Actions = (props: {
         if (user && user.user_id) {
             return (
                 <div style={{ width: "100%" }}>
-                    {!loggedIn && <GoogleButton />}
+                    {<GoogleButton />}
                     <CustomAction
                         onClick={handleOpenModal}
                         text="Refer a Friend"
@@ -199,13 +198,15 @@ const Actions = (props: {
                         }}
                     >
                         <div className="code-container">
-                            {config.url.FRONTEND_URL + "/" + user.referralCode}
+                            {config.url.FRONTEND_URL +
+                                "/" +
+                                waitlistUser.referralCode}
                         </div>
                         <CopyToClipboard
                             text={
                                 config.url.FRONTEND_URL +
                                 "/" +
-                                user.referralCode
+                                waitlistUser.referralCode
                             }
                         >
                             <Button className="modal-button">Copy Link</Button>
@@ -258,19 +259,16 @@ const Actions = (props: {
 function mapStateToProps(state: {
     AuthReducer: {
         user: any
-        loggedIn: any
-        clicks: number
+    }
+    WaitlistReducer: {
+        waitlistUser: any
+        clicks: any
     }
 }) {
     return {
         user: state.AuthReducer.user,
-        loggedIn: state.AuthReducer.loggedIn,
-        clicks: state.AuthReducer.clicks
-            ? state.AuthReducer.clicks
-            : {
-                  number: 0,
-                  lastClicked: 0,
-              },
+        waitlistUser: state.WaitlistReducer.waitlistUser,
+        clicks: state.WaitlistReducer.clicks,
     }
 }
 
