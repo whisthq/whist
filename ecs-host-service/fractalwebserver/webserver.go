@@ -112,10 +112,6 @@ func handshake() (handshakeResponse, error) {
 	logger.Infof("handshake(): got response code: %v", httpResp.StatusCode)
 	logger.Infof("handshake(): got response: %s", body)
 
-	// TODO: get rid of this testing
-	body, _ = json.Marshal(handshakeResponse{"testauthtoken"})
-	logger.Infof("testResponse: %s", body)
-
 	err = json.Unmarshal(body, &resp)
 	if err != nil {
 		return resp, logger.MakeError("handshake():: Unable to unmarshal JSON response from the webserver!. Response: %s Error: %s", body, err)
