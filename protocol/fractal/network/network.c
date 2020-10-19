@@ -740,6 +740,12 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
         return -1;
     }
 
+    // Set socket to close on child exec
+    if (fcntl(new_socket, F_SETFD, fcntl(context->s, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+
     LOG_INFO("PORT: %d", context->addr.sin_port);
 
     closesocket(context->s);
@@ -808,11 +814,11 @@ int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_ti
 
     struct sockaddr_in origin_addr;
     // Connect over TCP to STUN
-    // LOG_INFO("Connecting to STUN TCP...");
-    // if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
-    //     LOG_WARNING("Could not connect to STUN Server over TCP");
-    //     return -1;
-    // }
+    LOG_INFO("Connecting to STUN TCP...");
+    if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
+        LOG_WARNING("Could not connect to STUN Server over TCP");
+        return -1;
+    }
 
     socklen_t slen = sizeof(origin_addr);
     if (getsockname(context->s, (struct sockaddr *)&origin_addr, &slen) < 0) {
@@ -1017,10 +1023,10 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
     }
 
     // Connect to STUN server
-    // if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
-    //     LOG_WARNING("Could not connect to STUN Server over TCP");
-    //     return -1;
-    // }
+    if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
+        LOG_WARNING("Could not connect to STUN Server over TCP");
+        return -1;
+    }
 
     struct sockaddr_in origin_addr;
     socklen_t slen = sizeof(origin_addr);
@@ -1604,7 +1610,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
 
     // now we send it
     if (sendto(Socket, message, (int)strlen(message), 0,
-               (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
+        (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
         // error sending, terminate
         LOG_WARNING("Sending POST message failed.");
         free(message);
@@ -1681,7 +1687,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     LOG_INFO("%s", message);
     // now we send it
     if (sendto(Socket, message, (int)strlen(message), 0,
-               (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
+        (struct sockaddr *)&webserver_socketAddress, sizeof(webserver_socketAddress)) < 0) {
         // error sending, terminate
         LOG_WARNING("Sending GET message failed.");
         free(message);
