@@ -1,16 +1,15 @@
 # Fractal Base Container Image
 
-
-
-
-This subfolder contains the base container Dockerfile used to containerize specific applications and stream them via Fractal, alongside the Linux services they need to run properly. These container images are responsible for containerizing the Fractal Protocol and setting the core settings and structure needed to make Fractal run optimally on containers, before any application-specific configuration is required.
+This subfolder contains the base container Dockerfile that builds the core Fractal container running Fractal and general utilities and services that application-specific Dockerfiles can build upon. The base image runs **Ubuntu 20.04**.
 
 This subfolders conforms to the **Styling** and **Continous Integration** practices defined in the outer README.
 
-
-- Ubuntu 20.04
-
 ## Development
+
+
+
+
+
 
 This repository calls the Fractal [protocol](https://github.com/fractalcomputers/protocol) repository as a Git submodule for some of the Bash functions needed to set up Fractal. New functions you make should be added to that repository so they can be easily reused across the Fractal organization. Before using these functions in this project, you need to update the Git submodule linked by running:
 
@@ -36,7 +35,13 @@ The services `fractal-entrypoint.service`, `fractal-display.service`, and `fract
 
 `fractal-protocol.service` runs the protocol and configures some environment variables so it works correctly with the X Server.
 
+
+
+
+
+
 ### Useful Debugging Practices
+
 You can run `systemctl status` to see all the running services in the container. To be more precise, if you run it inside the container, you'll see all the services running in the container and the subprocesses they've started. If you run it outside the container on a Linux host machine, you'll see all the host services mixed in together with the container's services. 
 
 `journalctl -e` shows the end of the systemd logs (you can page further backwards by hitting `b`).
@@ -49,12 +54,4 @@ You can run `systemctl status` to see all the running services in the container.
 
 ## Running
 
-You can run the base image via the `run.sh` script. It takes in a few parameters, `APP`, which determines the name of the folder/app to build, `VERSION==18|20` which specificies the Ubuntu version, anad `PROTOCOL` which specifies the local Fractal protocol directory.
-
-```
-# Usage
-../run.sh APP VERSION PROTOCOL
-
-# Example
-../run.sh base 18 ../protocol
-```
+See **Running Local Images** and **Running Remote-Pushed Images** in the outer README.
