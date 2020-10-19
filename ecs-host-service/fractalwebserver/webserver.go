@@ -53,28 +53,28 @@ func handshake() (handshakeResponse, error) {
 
 	instanceID, err := logger.GetAwsInstanceId()
 	if err != nil {
-		return resp, logger.MakeError("fractalwebserver::handshake(): Couldn't get AWS instanceID. Error: %v", err)
+		return resp, logger.MakeError("handshake(): Couldn't get AWS instanceID. Error: %v", err)
 	}
 
 	requestURL := webserverHost + authEndpoint
 	requestBody, err := json.Marshal(handshakeRequest{instanceID})
 	if err != nil {
-		return resp, logger.MakeError("fractalwebserver::handshake(): Could not marshal the handshakeRequest object. Error: %v", err)
+		return resp, logger.MakeError("handshake(): Could not marshal the handshakeRequest object. Error: %v", err)
 	}
 
-	logger.Infof("fractalwebserver::handshake(): Sending a POST request with body %s to URL %s", requestBody, requestURL)
+	logger.Infof("handshake(): Sending a POST request with body %s to URL %s", requestBody, requestURL)
 	httpResp, err := http.Post(requestURL, "application/json", bytes.NewReader(requestBody))
 	if err != nil {
-		return resp, logger.MakeError("fractalwebserver::handshake(): Got back an error from the webserver at URL %s. Error:  %v", requestURL, err)
+		return resp, logger.MakeError("handshake(): Got back an error from the webserver at URL %s. Error:  %v", requestURL, err)
 	}
 
 	body, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
-		return resp, logger.MakeError("fractalwebserver::handshake():: Unable to read body of response from webserver. Error: %v", err)
+		return resp, logger.MakeError("handshake():: Unable to read body of response from webserver. Error: %v", err)
 	}
 
-	logger.Infof("fractalwebserver::handshake(): got response code: %v", httpResp.StatusCode)
-	logger.Infof("fractalwebserver::handshake(): got response: %s", body)
+	logger.Infof("handshake(): got response code: %v", httpResp.StatusCode)
+	logger.Infof("handshake(): got response: %s", body)
 
 	// TODO: get rid of this testing
 	body, err = json.Marshal(handshakeResponse{"testauthtoken"})
@@ -82,7 +82,7 @@ func handshake() (handshakeResponse, error) {
 
 	err = json.Unmarshal(body, &resp)
 	if err != nil {
-		return resp, logger.MakeError("fractalwebserver::handshake():: Unable to unmarshal JSON response from the webserver!. Response: %s Error: %s", body, err)
+		return resp, logger.MakeError("handshake():: Unable to unmarshal JSON response from the webserver!. Response: %s Error: %s", body, err)
 	}
 	return resp, nil
 }
