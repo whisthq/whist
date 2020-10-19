@@ -336,6 +336,9 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  * @param jsonObj                  A string consisting of the JSON-complient
  *                                 datastream to send to the webserver
  * @param access_token             The access token for authentication
+ * @param json_res                 The buffer in which to store the JSON
+ *                                 response
+ * @param json_res_size            The size of the response buffer
  *
  * @returns                        Will return false on failure, will return
  *                                 true on success Failure implies that the
@@ -343,7 +346,8 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendJSONPost(char* host_s, char* path, char* jsonObj, char* access_token);
+bool SendJSONPost(char* host_s, char* path, char* jsonObj, char* access_token, char* json_res,
+                  size_t json_res_size);
 
 /**
  * @brief                          Sends a JSON GET request to the Fractal
@@ -354,8 +358,6 @@ bool SendJSONPost(char* host_s, char* path, char* jsonObj, char* access_token);
  * @param json_res                 The buffer in which to store the JSON
  *                                 response
  * @param json_res_size            The size of the response buffer
- * @param json_obj                 A string consisting of the JSON-complient
- *                                 datastream to send to the webserver
  *
  * @returns                        Will return false on failure, will return
  *                                 true on success Failure implies that the
@@ -363,7 +365,7 @@ bool SendJSONPost(char* host_s, char* path, char* jsonObj, char* access_token);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendJSONGet(char* host_s, char* path, char* json_res, size_t json_res_size, char* json_obj);
+bool SendJSONGet(char* host_s, char* path, char* json_res, size_t json_res_size);
 
 int sendp(SocketContext* context, void* buf, int len);
 

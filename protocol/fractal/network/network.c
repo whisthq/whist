@@ -1446,7 +1446,8 @@ int CreateUDPContext(SocketContext *context, char *destination, int port, int re
 
 // send JSON post to query the database, authenticate the user and return the VM
 // IP
-bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
+bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token, char *json_res,
+                  size_t json_res_size) {
     // environment variables
     SOCKET Socket;  // socket to send/receive POST request
     struct hostent *host;
@@ -1535,7 +1536,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
 }
 
 // send JSON get to query the database for VM details
-bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size, char *json_obj) {
+bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size) {
     // environment variables
     SOCKET Socket;  // socket to send/receive POST request
     struct hostent *host;
@@ -1573,13 +1574,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size,
     // now that we're connected, we can send the POST request to authenticate
     // the user first, we create the POST request message
     char *message = malloc(250);
-    sprintf(message,
-            "GET %s HTTP/1.0\r\n"
-            "Host: %s\r\n"
-            "\r\n"
-            "%s"
-            "\r\n",
-            path, host_s, json_obj);
+    sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
     LOG_INFO("%s", message);
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {

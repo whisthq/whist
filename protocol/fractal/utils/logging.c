@@ -790,7 +790,7 @@ int sendConnectionHistory(char *host, char *access_token) {
                         connection_id_data, get_version(), logs);
 
                 LOG_INFO("Sending logs to webserver...");
-                SendJSONPost(host, request_path, json, access_token);
+                SendJSONPost(host, request_path, json, access_token, NULL, 0);
 
                 freopen(connection_id_filename, "wb", connection_id_file);
             }
@@ -826,7 +826,7 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
             \"private_key\" : %s\n\
 }",
              get_version(), d->is_connected ? "false" : "true", d->identifier, d->aes_private_key);
-    SendJSONPost(d->host, "/container/ping", json, d->access_token);
+    SendJSONPost(d->host, "/container/ping", json, d->access_token, NULL, 0);
 
     free(d);
     return 0;
