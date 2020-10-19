@@ -254,7 +254,7 @@ func main() {
 	}()
 
 	// Initialize webserver and hearbeat
-	err = webserver.Initialize()
+	err = webserver.InitializeHeartbeat()
 	if err != nil {
 		logger.Panicf("Unable to initialize webserver. Error: %s", err)
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	// We use this package instead of the standard library log so that we never
 	// forget to send a message via sentry.  For the same reason, we make sure
@@ -31,15 +32,29 @@ type handshakeResponse struct {
 	AuthToken string
 }
 
-var authToken string
+type heartbeatRequest struct {
+	AuthToken       string
+	Timestamp       string
+	HeartbeatNumber uint64
+	InstanceID      string
+	InstanceType    string
+	TotalRAMinKB    string
+	FreeRAMinKB     string
+	AvailRAMinKB    string
+}
 
-func Initialize() error {
+var authToken string
+var numBeats uint64 = 0
+
+func InitializeHeartbeat() error {
 	resp, err := handshake()
 	if err != nil {
 		return logger.MakeError("Error handshaking with webserver: %v", err)
 	}
 
 	authToken = resp.AuthToken
+
+	sendHeartbeat()
 
 	return nil
 }
@@ -77,7 +92,7 @@ func handshake() (handshakeResponse, error) {
 	logger.Infof("handshake(): got response: %s", body)
 
 	// TODO: get rid of this testing
-	body, err = json.Marshal(handshakeResponse{"testauthtoken"})
+	body, _ = json.Marshal(handshakeResponse{"testauthtoken"})
 	logger.Infof("testResponse: %s", body)
 
 	err = json.Unmarshal(body, &resp)
@@ -87,14 +102,41 @@ func handshake() (handshakeResponse, error) {
 	return resp, nil
 }
 
-func sendGET() {
+// This function intentionally does not panic or return an error/value. See the
+// comment below for more explanation.
+func sendHeartbeat() {
+	// Prepare the body
 
-}
+	// We ignore errors in these function calls because errors will just get
+	// passed on as an empty string or nil. It's not worth terminating the
+	// instance over a malformed heartbeat --- we can let the webserver decide if
+	// we want to mark the instance as draining.
+	instanceID, _ := logger.GetAwsInstanceId()
+	instanceType, _ := logger.GetAwsInstanceType()
+	totalRAM, _ := logger.GetTotalMemoryInKB()
+	freeRAM, _ := logger.GetFreeMemoryInKB()
+	availRAM, _ := logger.GetAvailableMemoryInKB()
 
-func sendPOST() {
+	requestURL := webserverHost + heartbeatEndpoint
+	requestBody, err := json.Marshal(heartbeatRequest{
+		AuthToken:       authToken,
+		Timestamp:       logger.Sprintf("%s", time.Now()),
+		HeartbeatNumber: numBeats,
+		InstanceID:      instanceID,
+		InstanceType:    instanceType,
+		TotalRAMinKB:    totalRAM,
+		FreeRAMinKB:     freeRAM,
+		AvailRAMinKB:    availRAM,
+	})
+	if err != nil {
+		logger.Errorf("Couldn't marshal requestBody into JSON. Error: %v", err)
+	}
 
-}
+	logger.Infof("Sending a heartbeat with body %s to URL %s", requestBody, requestURL)
+	_, err = http.Post(requestURL, "application/json", bytes.NewReader(requestBody))
+	if err != nil {
+		logger.Errorf("Error sending heartbeat: %s", err)
+	}
 
-func SendHeartbeatSendHeartbeat() {
-
+	numBeats += 1
 }
