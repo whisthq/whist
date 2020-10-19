@@ -254,7 +254,10 @@ func main() {
 	}()
 
 	// Initialize webserver and hearbeat
-	webserver.Initialize()
+	err = webserver.Initialize()
+	if err != nil {
+		logger.Panicf("Unable to initialize webserver. Error: %s", err)
+	}
 
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)

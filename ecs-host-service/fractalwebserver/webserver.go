@@ -1,6 +1,7 @@
 package fractalwebserver
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -29,8 +30,17 @@ type handshakeResponse struct {
 	authToken string
 }
 
-func Initialize() {
-	handshake()
+var authToken string
+
+func Initialize() error {
+	resp, err := handshake()
+	if err != nil {
+		return logger.MakeError("Error handshaking with webserver: %v", err)
+	}
+
+	authToken = resp.authToken
+
+	return nil
 }
 
 // Talk to the auth endpoint for the host service startup (to authenticate all
@@ -60,6 +70,10 @@ func handshake() (handshakeResponse, error) {
 	logger.Infof("fractalwebserver::handshake(): got response code: %v", httpResp.StatusCode)
 	logger.Infof("fractalwebserver::handshake(): got response: %s", body)
 
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		return resp, logger.MakeError("fractalwebserver::handshake():: Unable to unmarshal JSON response from the webserver!. Response: %s Error: %s", body, err)
+	}
 	return resp, nil
 }
 
