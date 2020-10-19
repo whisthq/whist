@@ -110,6 +110,10 @@ Defines
 #define FRACTAL_EINPROGRESS EINPROGRESS
 #endif
 
+// Note that both the Windows and Linux versions use 2 as the second argument
+// to indicate shutting down both ends of the socket
+#define FRACTAL_SHUTDOWN_SOCKET(s) shutdown(s, 2)
+
 /*
 ============================
 Constants

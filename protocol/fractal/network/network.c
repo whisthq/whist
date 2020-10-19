@@ -1519,6 +1519,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token, c
     if ((!json_res) || (json_res_size == 0)) {
         // don't care about the reply, so we might as well not make the system
         // call to get the data
+        FRACTAL_SHUTDOWN_SOCKET(Socket);
     } else {
         int len = recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
         if (len < 0) {
