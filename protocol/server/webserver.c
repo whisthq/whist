@@ -42,7 +42,7 @@ void update_webserver_parameters() {
             primary_port_mapping);
 
     if (!SendJSONPost(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/container/protocol_info",
-                      msg, "", buf, len)) {
+                      msg, NULL, buf, len)) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;

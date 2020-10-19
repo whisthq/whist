@@ -335,7 +335,8 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  * @param path                     The /path/to/the/endpoint
  * @param jsonObj                  A string consisting of the JSON-complient
  *                                 datastream to send to the webserver
- * @param access_token             The access token for authentication
+ * @param access_token             The access token for authentication.
+ *                                 This can be null for the first request.
  * @param json_res                 The buffer in which to store the JSON
  *                                 response
  * @param json_res_size            The size of the response buffer
