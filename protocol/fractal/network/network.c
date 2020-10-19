@@ -493,11 +493,14 @@ SOCKET socketp_tcp() {
         return -1;
     }
 
+#ifndef _WIN32
     // Set socket to close on child exec
+    // Not necessary for windows because CreateProcessA creates an independent process
     if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
         LOG_WARNING("Could not set fcntl to set socket to close on child exec");
         return -1;
     }
+#endif
 #endif
 
     return sock_fd;
@@ -517,11 +520,14 @@ SOCKET socketp_udp() {
     // Create socket
     int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
+#ifndef _WIN32
     // Set socket to close on child exec
+    // Not necessary for windows because CreateProcessA creates an independent process
     if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
         LOG_WARNING("Could not set fcntl to set socket to close on child exec");
         return -1;
     }
+#endif
 #endif
 
     return sock_fd;
@@ -547,11 +553,14 @@ SOCKET acceptp(int sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len) {
         return -1;
     }
 
+#ifndef _WIN32
     // Set socket to close on child exec
+    // Not necessary for windows because CreateProcessA creates an independent process
     if (fcntl(new_socket, F_SETFD, fcntl(new_socket, F_GETFD) | FD_CLOEXEC) < 0) {
         LOG_WARNING("Could not set fcntl to set socket to close on child exec");
         return -1;
     }
+#endif
 #endif
 
     return new_socket;
