@@ -1,14 +1,32 @@
 # Fractal Container Images
 
-| Base Ubuntu 20.04
+| Dockerfiles Building CI
 |:--:|
 |![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|
 
-This repository contains the Docker images containerizing the various applications that Fractal streams or is planning to stream from containers via our streaming technology. The base images running the containerized Fractal protocol are under the `/base/` subfolder, and are used as a starter images for the application Dockerfiles which are in each of their respective application-type subfolders.
+for containerizing the various applications that Fractal streams or is planning to stream from containers via our streaming technology. The base image running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter images for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs Ubuntu 20.04 and installs everything needed to interface with the drivers and the Fractal protocol.
 
 **Supported Applications**
 
--   None yet
+- Google Chrome
+- Mozilla Firefox
+- Blender
+- Blockbench
+- Slack
+
+## Development
+
+
+
+
+
+To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfiles under `/base/`, unless your fixes are application-specific, in which case you should contribute to the relevant Dockerfile for the application. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of possible security attacks possible. Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master` once deployed to production. The `master` branch is going to automatically deploy to production via AWS ECR (this is a current TODO), and must not be pushed to unless thorough testing has been performed.
+
+For general development, refer to the `/base` subfolder README, and to your specific applications' subfolder README for application-specific development. See below for our continous integration process.
+
+
+
+
 
 ## More detailed Usage
 
@@ -92,20 +110,20 @@ If an image has been pushed to ECR and you wish to test, first ensure the AWS CL
 
 As above, `APP` is self-explanatory, `REGION` optionally specifies the ECR region to pull from, with a default of `us-east-1`, and `MOUNT=mount` mounts the submodule. Here `TAG` is the full git commit hash to run.
 
-## Development
-
-To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfiles under `/base/`, unless your fixes are application-specific, in which case you should contribute to the relevant Dockerfile for the application. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of possible security attacks possible. Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master` once deployed to production. The `master` branch is going to automatically deploy to production via AWS ECR (this is a current TODO), and must not be pushed to unless thorough testing has been performed.
-
-For general development, refer to the `/base` subfolder README, and to your specific applications' subfolder README for application-specific development. See below for our continous integration process.
-
-## Styling
-
-We use [Hadolint](https://github.com/hadolint/hadolint) to format the Dockerfiles in this project. Your first need to install Hadolint via your local package manager, i.e. `brew install hadolint`, and have the Docker daemon running before linting a specific file by running `hadolint <file-path>`.
-
-We also have [pre-commit hooks](https://pre-commit.com/) with Hadolint support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Hadolint.Dockerfile improvements will be printed to the terminal for all Dockerfiles specified under `args` in `.pre-commit-config.yaml`. If you need/want to add other Dockerfiles, you need to specify them there. If you have issues with Hadolint tracking non-Docker files, you can commit with `git commit -m [MESSAGE] --no-verify` to skip the pre-commit hook.
 
 ## Continous Integration & Publishing
 
 We store our production container images on AWS Elastic Container Registry (ECR) and deploy them on AWS Elastic Container Service (ECS). We are currently building a true continuous delivery process, where at every PR to `master`, the images get built by GitHub Actions and then pushed to ECR automatically if all builds and tests pass, at which point the webserver will automatically pick new images for production deployment.
 
 Currently, at every PR to `master` or `dev`, the Docker base images will be built on GitHub Actions and status checks will be reported. For every new application that you add support for, you should create a new `docker-[YOUR APP]-ubuntu[18||20].yml` file to test that it properly build and then uploads to ECR automatically. You can follow the format of `docker-base-ubuntu20.yml` as needed.
+
+
+
+
+
+
+## Styling
+
+We use [Hadolint](https://github.com/hadolint/hadolint) to format the Dockerfiles in this project. Your first need to install Hadolint via your local package manager, i.e. `brew install hadolint`, and have the Docker daemon running before linting a specific file by running `hadolint <file-path>`.
+
+We also have [pre-commit hooks](https://pre-commit.com/) with Hadolint support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` in the project folder, to instantiate the hooks for Hadolint. Dockerfile improvements will be printed to the terminal for all Dockerfiles specified under `args` in `.pre-commit-config.yaml`. If you need/want to add other Dockerfiles, you need to specify them there. If you have issues with Hadolint tracking non-Docker files, you can commit with `git commit -m [MESSAGE] --no-verify` to skip the pre-commit hook for files you don't want to track.

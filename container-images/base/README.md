@@ -1,16 +1,13 @@
 # Fractal Base Container Image
 
-| Ubuntu 18.04 | Ubuntu 20.04
-|:--:|:--:|
-|![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|
 
-This subfolder contains the base container images used to containerize specific applications and stream them via Fractal, alongside the Linux services they need to run properly. These container images are responsible for containerizing the Fractal Protocol and setting the core settings and structure needed to make Fractal run optimally on containers, before any application-specific configuration is required.
+
+
+This subfolder contains the base container Dockerfile used to containerize specific applications and stream them via Fractal, alongside the Linux services they need to run properly. These container images are responsible for containerizing the Fractal Protocol and setting the core settings and structure needed to make Fractal run optimally on containers, before any application-specific configuration is required.
 
 This subfolders conforms to the **Styling** and **Continous Integration** practices defined in the outer README.
 
-**Container Operating Systems Supported**
 
-- Ubuntu 18.04
 - Ubuntu 20.04
 
 ## Development
