@@ -9,21 +9,30 @@ on:
 jobs:
   createSentryRelease:
     runs-on: ubuntu-latest
-    
+    env:
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: fractalcomputers
+      SENTRY_PROJECT: ecs-host-service
+      SENTRY_DEPLOY_ENVIRONMENT: prod
+
     steps:
       - name: Checkout Git repository
         uses: actions/checkout@v2
 
-      - name: Create a Sentry.io release
-        uses: tclindner/sentry-releases-action@v1.2.0
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: fractalcomputers
-          SENTRY_PROJECT: ecs-host-service
-        with:
-          tagName: ${{ github.sha }}
-          environment: "prod"
-          
+      - name: Create new Sentry release
+        run: |
+          # Install Sentry CLI
+          curl -sL https://sentry.io/get-cli/ | bash
+                  
+          # Create new Sentry release
+          export SENTRY_RELEASE=$(sentry-cli releases propose-version)
+          sentry-cli releases new -p $SENTRY_PROJECT $SENTRY_RELEASE
+          sentry-cli releases set-commits --auto $SENTRY_RELEASE
+          sentry-cli releases finalize $SENTRY_RELEASE
+                  
+          # Create new deploy for this Sentry release
+          sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
+                  
       - name: Notify Slack
         run: |
           curl -X POST \
