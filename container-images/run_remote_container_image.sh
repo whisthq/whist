@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -Eeuo pipefail
 
 app_path=${1%/}

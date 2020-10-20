@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -Eeuo pipefail
 
 image=${1:-fractal/base:current-build}
@@ -7,7 +8,6 @@ if [[ ${2:-''} == mount ]]; then
 else
     mount_protocol=""
 fi
-
 
 runcontainer() {
     docker run -it -d \

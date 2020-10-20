@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 # Update Nvidia BusID to the current GPU's BusID

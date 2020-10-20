@@ -57,7 +57,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean
 
-
 # Install X Server and window manager dependencies and basic Ubuntu packages
 # These packages need to be installed before installing/updating Python
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -89,7 +88,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Note: qt4-qtconfig has not been ported to Ubuntu 20, so we can't install it.
-
 
 # Install FFmpeg and Libav dependencies explicitly
 # These packages need to be installed before installing/updating Python
@@ -176,7 +174,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     libfido2-1 \
     libgbm1 \
     libxcb-dri3-0 \
-    #    python3.8 \
     sudo \
     less \
     vim \
@@ -246,7 +243,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN adduser root pulse-access \
     && adduser fractal pulse-access
 
-# Prevent pulseaudio from running as user (breaking sound for non-root users)
+# Prevent Pulse Audio from running as user (breaking sound for non-root users)
 RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service
 RUN systemctl mask pulseaudio
 RUN chmod -x /usr/bin/start-pulseaudio-x11
@@ -257,13 +254,13 @@ RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fracta
 RUN chgrp fractal -R /usr/share/fractal
 RUN chmod g+rw -R /usr/share/fractal
 
-# echo "Downloading Fractal FFmpeg .so from AWS S3 and Moving to /usr/share/fractal/" 
+# Download Fractal FFmpeg .so from AWS S3 and moving them to /usr/share/fractal
 RUN sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y
 RUN wget -qO shared-libs.tar.gz "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz"
 RUN tar -xvf shared-libs.tar.gz
 RUN sudo mv share/64/Linux/* /usr/share/fractal/
 
-# symlink Fractal FFmpeg .so libs to system libs location for standard Linux system runtime library loading
+# Symlink Fractal FFmpeg .so libs to FFmpeg system libs location for standard Linux system runtime library loading
 RUN ln -sf /usr/share/fractal/libavcodec.so /usr/local/lib/libavcodec-fractal.so \
     ln -sf /usr/share/fractal/libavdevice.so /usr/local/lib/libavdevice-fractal.so \
     ln -sf /usr/share/fractal/libavfilter.so /usr/local/lib/libavfilter-fractal.so \
@@ -275,7 +272,7 @@ RUN ln -sf /usr/share/fractal/libavcodec.so /usr/local/lib/libavcodec-fractal.so
     rm -rf shared-libs.tar.gz \
     rm -rf share
 
-# echo "Downloading Fractal Auto-update Script"
+# Download Fractal Auto-update Script
 RUN ls -al /usr/share/fractal
 RUN sudo wget -qO /usr/share/fractal/update.sh "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/update.sh"
 
@@ -295,7 +292,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean
 
-# Install FFmpeg, taken from protocol/server/linux-server-setup.sh
+# Install system FFmpeg, taken from protocol/server/linux-server-setup.sh
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -377,8 +374,7 @@ COPY fractal-update-nvidia-busid.service /etc/systemd/system/
 COPY update-nvidia-busid.sh /usr/share/fractal/
 RUN chmod +x /usr/share/fractal/update-nvidia-busid.sh 
 
-
-
+# Enable Nvidia Bus ID update script
 RUN systemctl enable fractal-update-nvidia-busid
 
 # Set display environment variable to our Nvidia-powered display
@@ -394,7 +390,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libvdpau-va-gl1 \
     && apt-get autoremove -y \
     && apt-get clean
-
 
 # Set up window manager running on X server, with GTK/QT themes
 RUN git clone https://github.com/vinceliuice/Layan-gtk-theme
@@ -417,10 +412,6 @@ COPY .xinitrc /root/.xinitrc
 # We set the gimp GTK theme to the system's for testing
 COPY gimprc /home/fractal/.config/GIMP/2.10/gimprc
 COPY gimprc /root/.config/GIMP/2.10/gimprc
-
-# Install Firefox nightly (for testing only)
-# RUN add-apt-repository ppa:ubuntu-mozilla-daily/ppa
-# RUN apt-get update && apt-get install firefox-trunk
 
 # Install Fractal services
 COPY fractal-entrypoint.service /etc/systemd/system

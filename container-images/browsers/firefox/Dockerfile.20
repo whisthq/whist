@@ -1,6 +1,6 @@
 FROM fractal/base:current-build
 
-# Install firefox dependencies explicitly
+# Install Firefox dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
@@ -43,7 +43,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get autoremove -y \
     && apt-get clean
 
-# Install Google Chrome
+# Install Firefox
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
