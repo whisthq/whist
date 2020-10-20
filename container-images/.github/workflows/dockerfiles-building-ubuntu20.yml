@@ -15,11 +15,21 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
           token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
           submodules: recursive
 
+      - name: Checkout Protocol repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+          repository: fractalcomputers/protocol
+          token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+          path: base/protocol
+
       - name: Build the Fractal protocol dev branch
-        run: cd base/protocol && git checkout origin/dev && server/linux-server-setup.sh && cmake . && make -j
+        run: cd base/protocol && git checkout dev && server/linux-server-setup.sh && cmake . && make -j
 
       - name: Build the Ubuntu 20.04 Base Image
         run: cd base && docker build . --file Dockerfile.20 --tag base-ubuntu20.04:$(date +%s)
