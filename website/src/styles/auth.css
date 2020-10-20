@@ -41,3 +41,12 @@
 .signout-button:hover {
     cursor: pointer;
 }
+
+.input-form,
+.input-form:focus {
+    width: 100%;
+    background-color: #f4f4f4 !important;
+    border: none !important;
+    padding: 40px 20px;
+    outline: none !important;
+}

@@ -1,10 +1,9 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
-import { debugLog } from "shared/utils/logging"
-import "styles/auth.css"
 
-import GoogleButton from "pages/auth/googleButton"
-import SignoutButton from "pages/auth/signoutButton"
+import LoginView from "pages/auth/views/loginView"
+
+import "styles/auth.css"
 
 const Auth = (props: {
     dispatch: any
@@ -12,17 +11,9 @@ const Auth = (props: {
         user_id: string
     }
 }) => {
-    useEffect(() => {
-        debugLog(props)
-    }, [props])
+    const [mode, setMode] = useState("login")
 
-    return (
-        <div className="auth-wrapper">
-            <div>email: {props.user.user_id}</div>
-            <GoogleButton />
-            <SignoutButton />
-        </div>
-    )
+    return <div>{mode === "login" ? <LoginView /> : <div>signup</div>}</div>
 }
 
 function mapStateToProps(state: { AuthReducer: { user: any } }) {

@@ -33,6 +33,7 @@ import About from "pages/about/about"
 import TermsOfService from "pages/legal/tos"
 import Cookies from "pages/legal/cookies"
 import Privacy from "pages/legal/privacy"
+import Auth from "pages/auth/auth"
 
 Sentry.init({
     dsn:
@@ -129,6 +130,7 @@ ReactDOM.render(
                                     path="/termsofservice"
                                     component={TermsOfService}
                                 />
+                                <Route exact path="/auth" component={Auth} />
                                 <Route
                                     exact
                                     path="/:first?/:second?"
