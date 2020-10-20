@@ -18,7 +18,7 @@ import { FaGoogle } from "react-icons/fa"
 
 import { updateClient } from "store/actions/pure"
 import { googleLogin, loginUser } from "store/actions/sideEffects"
-import { debugLog } from "utils/logging"
+import { debugLog } from "shared/utils/logging"
 import { config } from "shared/constants/config"
 
 // import "styles/login.css";
