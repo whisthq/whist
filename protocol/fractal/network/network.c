@@ -1481,9 +1481,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token, c
         return false;
     }
 
-    // now that we're connected, we can send the POST request to authenticate
-    // the user first, we create the POST request message
-
+    // Now that we're connected, we can send the POST request.
     char access_token_header[1000];
     if (access_token) {
         snprintf(access_token_header, sizeof(access_token_header), "Authorization: Bearer %s\r\n",
@@ -1571,8 +1569,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
         return false;
     }
 
-    // now that we're connected, we can send the POST request to authenticate
-    // the user first, we create the POST request message
+    // now that we're connected, we can send the GET request
     char *message = malloc(250);
     sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
     LOG_INFO("GET Request: %s", message);
