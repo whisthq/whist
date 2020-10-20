@@ -332,8 +332,8 @@ FractalPacket* ReadTCPPacket(SocketContext* context, bool should_recvp);
 FractalPacket* ReadUDPPacket(SocketContext* context);
 
 /**
- * @brief                          Sends a JSON POST request to the Fractal
- *                                 webservers
+ * @brief                          Sends a JSON POST request to some host and
+ *                                 provides the response body
  *
  * @param host_s                   The hostname IP address
  * @param path                     The /path/to/the/endpoint
@@ -355,8 +355,8 @@ bool SendJSONPost(char* host_s, char* path, char* jsonObj, char* access_token, c
                   size_t json_res_size);
 
 /**
- * @brief                          Sends a JSON GET request to the Fractal
- *                                 webservers
+ * @brief                          Sends a JSON GET request to some host and
+ *                                 provides the response body
  *
  * @param host_s                   The hostname IP address
  * @param path                     The /path/to/the/endpoint
