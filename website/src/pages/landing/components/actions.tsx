@@ -7,7 +7,6 @@ import { useMutation } from "@apollo/client"
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
 import * as SideEffectWaitlistAction from "store/actions/waitlist/sideEffects"
 
-import GoogleButton from "pages/auth/googleButton"
 import WaitlistForm from "shared/components/waitlistForm"
 
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
@@ -144,7 +143,6 @@ const Actions = (props: {
         if (user && user.user_id) {
             return (
                 <div style={{ width: "100%" }}>
-                    {<GoogleButton />}
                     <CustomAction
                         onClick={handleOpenModal}
                         text="Refer a Friend"

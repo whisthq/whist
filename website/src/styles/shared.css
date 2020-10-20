@@ -49,6 +49,10 @@ button {
     outline: none !important;
 }
 
+.hover:hover {
+    cursor: pointer !important;
+}
+
 @media only screen and (max-width: 720px) {
     h1 {
         font-size: 45px !important;

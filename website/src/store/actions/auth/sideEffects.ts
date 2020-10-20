@@ -1,9 +1,18 @@
 export const GOOGLE_LOGIN = "GOOGLE_LOGIN"
+export const EMAIL_LOGIN = "EMAIL_LOGIN"
 
-export function googleLogin(user_id: string, points: number) {
+export function googleLogin(code: any) {
     return {
         type: GOOGLE_LOGIN,
-        user_id,
-        points,
+        code,
+    }
+}
+
+export function emailLogin(email: string, password: string) {
+    console.log("action dispatched")
+    return {
+        type: EMAIL_LOGIN,
+        email,
+        password,
     }
 }

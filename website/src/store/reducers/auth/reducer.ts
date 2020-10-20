@@ -10,6 +10,11 @@ export default function (state = DEFAULT, action: any) {
                 ...state,
                 user: Object.assign(state.user, action.body),
             }
+        case PureAction.UPDATE_AUTH_FLOW:
+            return {
+                ...state,
+                authFlow: Object.assign(state.authFlow, action.body),
+            }
         case SharedAction.RESET_STATE:
             return DEFAULT
         default:
