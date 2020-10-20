@@ -128,7 +128,7 @@ jobs:
             client_artifact_relpath: "/desktop/build64/Linux"
             cc: "gcc"
             cxx: "g++"
-          - os: macos-latest
+          - os: macos-10.14
             client_artifact_name: "macOS-64bit_client"
             client_artifact_relpath: "/desktop/build64/Darwin"
             cc: "clang"
@@ -473,7 +473,7 @@ jobs:
               cat log.txt
             log_location: log.txt
             log_artifact_name: Windows-64bit_client_test_logs
-          - os: macos-latest
+          - os: macos-10.14
             client_artifact_name: macOS-64bit_client
             test_predicate: "!contains(needs.params.outputs.should_test_macos, 'false')"
             test_script: |
@@ -672,7 +672,7 @@ jobs:
             client_artifact_relpath: "/desktop/build64/Linux"
             cc: "gcc"
             cxx: "g++"
-          - os: macos-latest
+          - os: macos-10.14
             client_artifact_name: "macOS-64bit_client"
             client_artifact_relpath: "/desktop/build64/Darwin"
             cc: "clang"
