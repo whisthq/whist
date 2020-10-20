@@ -234,8 +234,8 @@ int32_t SendVideo(void* opaque) {
                     update_encoder = false;
                 }
             } else {
-                current_bitrate = (int)(STARTING_BITRATE);
                 LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate, max_mbps);
+                current_bitrate = (int)(max_mbps * 1024 * 1024);
                 pending_encoder = true;
                 encoder_finished = false;
                 encoder_factory_server_w = device->width;
@@ -672,7 +672,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     clock timer;
     StartTimer(&timer);
     do {
-        packet = ReadTCPPacket(context);
+        packet = ReadTCPPacket(context, true);
         SDL_Delay(5);
     } while (packet == NULL && GetTimer(timer) < 3.0);
     if (packet == NULL) {
@@ -882,6 +882,11 @@ int MultithreadedWaitForClient(void* opaque) {
         //     num_controlling_clients++;
         // }
 
+        if (clients[client_id].is_controlling) {
+            // Reset input system when a new input controller arrives
+            ResetInput();
+        }
+
         StartTimer(&(clients[client_id].last_ping));
 
         clients[client_id].is_active = true;
@@ -938,13 +943,15 @@ int main() {
     }
 #endif
 
+    update_webserver_parameters();
+
     input_device = CreateInputDevice();
     if (!input_device) {
         LOG_WARNING("Failed to create input device for playback.");
     }
 
 #ifdef _WIN32
-    if (!InitDesktop(input_device)) {
+    if (!InitDesktop(input_device, get_vm_password())) {
         LOG_WARNING("Could not winlogon!\n");
         destroyLogger();
         return 0;
@@ -966,7 +973,7 @@ int main() {
         StartTimer(&startup_time);
 
         running = true;
-        max_mbps = STARTING_BITRATE;
+        max_mbps = STARTING_BITRATE / 1024.0 / 1024.0;
         wants_iframe = false;
         update_encoder = false;
 
