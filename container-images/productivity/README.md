@@ -5,3 +5,4 @@ This subfolder contains the Dockerfiles for the productivity applications that F
 ## Applications
 
 - Slack
+- Notion

@@ -18,5 +18,6 @@ repos:
                  browsers/chrome/Dockerfile.20
                  browsers/firefox/Dockerfile.20
                  productivity/slack/Dockerfile.20
+                 productivity/notion/Dockerfile.20
                  creative/blockbench/Dockerfile.20
                  creative/blender/Dockerfile.20]

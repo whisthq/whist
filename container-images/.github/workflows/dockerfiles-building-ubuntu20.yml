@@ -43,8 +43,12 @@ jobs:
       - name: Build the Ubuntu 20.04 Slack Image
         run: cd productivity/slack && docker build . --file Dockerfile.20 --tag slack-ubuntu20.04:$(date +%s)
 
+      - name: Build the Ubuntu 20.04 Notion Image
+        run: cd productivity/notion && docker build . --file Dockerfile.20 --tag notion-ubuntu20.04:$(date +%s)
+
       - name: Build the Ubuntu 20.04 Blender Image
         run: cd creative/blender && docker build . --file Dockerfile.20 --tag blender-ubuntu20.04:$(date +%s)
 
       - name: Build the Ubuntu 20.04 Blockbench Image
         run: cd creative/blockbench && docker build . --file Dockerfile.20 --tag blockbench-ubuntu20.04:$(date +%s)
+

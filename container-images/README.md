@@ -102,14 +102,15 @@ Here, `APP` is again the path to the relevant app folder; e.g., `base` or `brows
 
 ### Continous Delivery
 
-This is how we push to production. For every push to `master`, all applications specified under `apps` in `push-images.yml` will automatically be built and pushed to all AWS regions specified under `aws-regions` in `push-images.yml`.
+This is how we push to production. For every push to `master`, all applications specified under `apps` in `.github/workflows/push-images.yml` will automatically be built and pushed to all AWS regions specified under `aws-regions` in `.github/workflows/push-images.yml`.
 
 #### Adding New Applications
 
 For every new application that you add support for, in addition to creating its own subfolder under the relevant category and creating application-specific **Dockerfile.20** and **.xinitrc** files, you should:
 
 - Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`, for pre-commit hooks
-- Add the path to your new Dockerfile.20 under `apps` in `push-images.yml`, for continuous delivery
+- Add a command to build the new Dockerfile.20 in `.github/workflows/dockerfiles-building-ubuntu20.yml`
+- Add the path to your new Dockerfile.20 under `apps` in `.github/workflows/push-images.yml`, for continuous delivery
 
 And, if you're adding a new AWS region, you should add the region name under `aws-regions` in `push-images.yml`.
 
