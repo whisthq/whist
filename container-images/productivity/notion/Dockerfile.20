@@ -62,4 +62,3 @@ COPY run-notion.sh /usr/bin/notion
 RUN chmod +x /usr/bin/notion
 
 COPY .xinitrc /root/.xinitrc
-
