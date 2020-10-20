@@ -7,7 +7,7 @@ on:
     branches: [ master, dev ]
 
 jobs:
-  docker-build-base-ubuntu20:
+  docker-build-dockerfiles-ubuntu20:
     runs-on: ubuntu-20.04
 
     steps:
