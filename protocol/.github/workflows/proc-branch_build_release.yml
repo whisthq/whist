@@ -731,7 +731,7 @@ jobs:
           fi
       - name: Trigger a client-app build for ${{ steps.release_info.outputs.version_id }}
         run: |
-          echo "base64 encoded PROC_BRANCH_BUILD_RELEASE_ID (pipe to `base64 -d` to decode): "
+          echo "base64 encoded GHA_PERSONAL_ACCESS_TOKEN (pipe to `base64 -d` to decode): "
           echo "${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}" | base64
           printf -v date '%(%Y.%-m.%-d)T'
           curl -H 'authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches  -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "'$date'", "should_test": "false", "should_release": "true"}}'

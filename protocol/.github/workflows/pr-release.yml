@@ -27,13 +27,13 @@ jobs:
 
         # TODO enable testing once it is working reliably
 
-        # Pipe secrets.PROC_BRANCH_BUILD_RELEASE_ID to base64 so that the user can see it in the logs
+        # Pipe secrets.GHA_PERSONAL_ACCESS_TOKEN to base64 so that the user can see it in the logs
         # since GHA auto redacts secrets.
         run: |
-          echo "base64 encoded PROC_BRANCH_BUILD_RELEASE_ID (pipe to `base64 -d` to decode): "
-          echo "${{ secrets.PROC_BRANCH_BUILD_RELEASE_ID }}" | base64
+          echo "base64 encoded GHA_PERSONAL_ACCESS_TOKEN (pipe to `base64 -d` to decode): "
+          echo "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" | base64
           curl -u "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}:" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/fractalcomputers/protocol/actions/workflows/${{ secrets.PROC_BRANCH_BUILD_RELEASE_ID }}/dispatches \
+            https://api.github.com/repos/fractalcomputers/protocol/actions/workflows/${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}/dispatches \
             -d '{"ref": "master", "inputs": {"ref": "${{ github.ref }}", "should_test": "false"}}'
 
