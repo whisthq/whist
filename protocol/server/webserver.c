@@ -29,8 +29,8 @@ void update_webserver_parameters() {
         is_using_stun = false;
     }
 
-    char buf[4800];
-    size_t len = sizeof(buf);
+    char* resp_buf = NULL;
+    size_t resp_buf_maxlen = 4800;
 
     LOG_INFO("GETTING JSON");
 
@@ -41,8 +41,8 @@ void update_webserver_parameters() {
             "}\n",
             primary_port_mapping);
 
-    if (!SendJSONPost(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/container/protocol_info",
-                      msg, NULL, buf, len)) {
+    if (!SendPostRequest(will_try_staging ? STAGING_HOST : PRODUCTION_HOST,
+                         "/container/protocol_info", msg, NULL, &resp_buf, resp_buf_maxlen)) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;
@@ -51,9 +51,9 @@ void update_webserver_parameters() {
     // Find JSON as the data after all HTTP headers, ie after the string
     // "\r\n\r\n"
     char* json_str = NULL;
-    for (size_t i = 0; i < len - 4; i++) {
-        if (memcmp(buf + i, "\r\n\r\n", 4) == 0) {
-            json_str = buf + i + 4;
+    for (size_t i = 0; i < resp_buf_maxlen - 4; i++) {
+        if (memcmp(resp_buf + i, "\r\n\r\n", 4) == 0) {
+            json_str = resp_buf + i + 4;
         }
     }
 
@@ -74,6 +74,7 @@ void update_webserver_parameters() {
         StartTimer(&last_vm_info_check_time);
         return;
     }
+    free(resp_buf);
 
     kv_pair_t* dev_value = get_kv(&json, "allow_autoupdate");
     kv_pair_t* branch_value = get_kv(&json, "branch");

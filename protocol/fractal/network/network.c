@@ -1444,8 +1444,8 @@ int CreateUDPContext(SocketContext *context, char *destination, int port, int re
     }
 }
 
-bool send_http_request(char *type, char *host_s, char *path, char *message, char *result,
-                       size_t result_size) {
+bool send_http_request(char *type, char *host_s, char *path, char *message, char **response_body,
+                       size_t max_response_size) {
     SOCKET Socket;  // socket to send/receive request
     struct hostent *host;
     struct sockaddr_in webserver_socketAddress;  // address of the web server socket
@@ -1482,35 +1482,54 @@ bool send_http_request(char *type, char *host_s, char *path, char *message, char
     LOG_INFO("Sending request: %s", message);
 
     // now we send it
-    if (send(Socket, message, (int)strlen(message), 0) < 0) {
-        // error sending, terminate
-        LOG_WARNING("Sending %s message failed.", type);
-        free(message);
-        return false;
-    }
+    int total_sent = 0;
+    int sent_n;
+    int msg_len = ((int)strlen(message));
+    do {
+        sent_n = send(Socket, message + total_sent, msg_len - total_sent, 0);
+        if (sent_n < 0) {
+            // error sending, terminate
+            LOG_WARNING("Sending %s message failed.", type);
+            return false;
+        } else if (sent_n == 0) {
+            break;
+        } else {
+            total_sent += sent_n;
+        }
+    } while (total_sent < msg_len);
 
     // now that it's sent, let's get the reply (if applicable)
-    if ((!result) || (result_size == 0)) {
+    if ((!response_body) || (max_response_size == 0)) {
         // don't care about the reply, so we might as well not make the system
         // call to get the data
         FRACTAL_SHUTDOWN_SOCKET(Socket);
     } else {
-        int len = recv(Socket, result, (int)result_size - 1, 0);  // get the reply
-        if (len < 0) {
-            LOG_WARNING("Response to %s request failed! %d %d", type, len, GetLastNetworkError());
-            result[0] = '\0';
-        } else {
-            result[len] = '\0';
-            LOG_INFO("%s Request Response: %s", type, result);
-        }
+        char *response = malloc(max_response_size);
+        size_t total_read = 0;
+        int read_n;
+        do {
+            read_n = recv(Socket, response + total_read, max_response_size - total_read - 1, 0);
+            if (read_n < 0) {
+                LOG_ERROR("Response to %s request failed! %d %d", type, read_n,
+                          GetLastNetworkError());
+                *response_body = NULL;
+                return false;
+            } else if (read_n == 0) {
+                break;
+            } else {
+                total_read += read_n;
+            }
+        } while (total_read < max_response_size);
+
+        *response_body = response;
     }
 
     FRACTAL_CLOSE_SOCKET(Socket);
     return true;
 }
 
-bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token, char *json_res,
-                  size_t json_res_size) {
+bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token,
+                     char **response_body, size_t max_response_size) {
     // prepare the message
     char access_token_header[1000];
     if (access_token) {
@@ -1520,9 +1539,9 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token, c
         access_token_header[0] = '\0';
     }
 
-    int json_len = (int)strlen(jsonObj);
-    char *message = malloc(5000 + json_len);
-    snprintf(message, 5000 + json_len,
+    int payload_len = (int)strlen(payload);
+    char *message = malloc(5000 + payload_len);
+    snprintf(message, 5000 + payload_len,
              "POST %s HTTP/1.0\r\n"
              "Host: %s\r\n"
              "Content-Type: application/json\r\n"
@@ -1531,21 +1550,22 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token, c
              "\r\n"
              "%s"
              "\r\n",
-             path, host_s, json_len, access_token_header, jsonObj);
+             path, host_s, payload_len, access_token_header, payload);
 
     // send the message
-    bool worked = send_http_request("POST", host_s, path, message, json_res, json_res_size);
+    bool worked =
+        send_http_request("POST", host_s, path, message, response_body, max_response_size);
     free(message);
     return worked;
 }
 
-bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size) {
+bool SendGetRequest(char *host_s, char *path, char **response_body, size_t max_response_size) {
     // prepare the message
     char *message = malloc(400);
     sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
 
     // send the message
-    bool worked = send_http_request("GET", host_s, path, message, json_res, json_res_size);
+    bool worked = send_http_request("GET", host_s, path, message, response_body, max_response_size);
     free(message);
     return worked;
 }
