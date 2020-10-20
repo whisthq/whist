@@ -3,28 +3,34 @@ import { DEFAULT } from "store/reducers/waitlist/default"
 import * as PureAction from "store/actions/waitlist/pure"
 import * as SharedAction from "store/actions/shared"
 
+import { deep_copy } from "shared/utils/reducerHelpers"
+
 export default function (state = DEFAULT, action: any) {
+    var stateCopy = deep_copy(state)
     switch (action.type) {
         case PureAction.UPDATE_WAITLIST_USER:
             return {
-                ...state,
-                user: Object.assign(state.waitlistUser, action.body),
+                ...stateCopy,
+                user: Object.assign(stateCopy.waitlistUser, action.body),
             }
         case PureAction.UPDATE_CLICKS:
             return {
-                ...state,
-                clicks: Object.assign(state.clicks, action.body),
+                ...stateCopy,
+                clicks: Object.assign(stateCopy.clicks, action.body),
             }
         case PureAction.UPDATE_WAITLIST_DATA:
             return {
-                ...state,
-                waitlistData: Object.assign(state.waitlistData, action.body),
+                ...stateCopy,
+                waitlistData: Object.assign(
+                    stateCopy.waitlistData,
+                    action.body
+                ),
             }
 
         case PureAction.UPDATE_NAVIGATION:
             return {
-                ...state,
-                navigation: Object.assign(state.navigation, action.body),
+                ...stateCopy,
+                navigation: Object.assign(stateCopy.navigation, action.body),
             }
         case SharedAction.RESET_STATE:
             return DEFAULT

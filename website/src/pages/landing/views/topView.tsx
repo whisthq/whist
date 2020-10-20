@@ -23,7 +23,7 @@ import PhotoshopColor from "assets/largeGraphics/photoshopColor.svg"
 import "styles/landing.css"
 
 const TopView = (props: any) => {
-    const { width, appHighlight, setAppHighlight } = useContext(MainContext)
+    const { width, appHighlight } = useContext(MainContext)
 
     const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -103,27 +103,24 @@ const TopView = (props: any) => {
                     if (app.name !== appHighlight) {
                         idx += idx === 2 ? 2 : 1
                         return (
-                            <div onClick={() => setAppHighlight(app.name)}>
-                                <FloatingLogo
-                                    textIndex={idx}
-                                    boxShadow={
-                                        "0px 4px 20px rgba(" +
-                                        app.rgb +
-                                        ", 0.2)"
-                                    }
-                                    width={width}
-                                    top={tops[idx]}
-                                    left={lefts[idx]}
-                                    colorImage={app.colorImage}
-                                    noColorImage={app.noColorImage}
-                                    background={"rgba(" + app.rgb + ", 0.1)"}
-                                    animationDelay={0.5 * idx + "s"}
-                                    app={app.name}
-                                />
-                            </div>
+                            <FloatingLogo
+                                textIndex={idx}
+                                boxShadow={
+                                    "0px 4px 20px rgba(" + app.rgb + ", 0.2)"
+                                }
+                                key={"floating-icon-highlight-" + idx}
+                                width={width}
+                                top={tops[idx]}
+                                left={lefts[idx]}
+                                colorImage={app.colorImage}
+                                noColorImage={app.noColorImage}
+                                background={"rgba(" + app.rgb + ", 0.1)"}
+                                animationDelay={0.5 * idx + "s"}
+                                app={app.name}
+                            />
                         )
                     } else {
-                        return <></>
+                        return []
                     }
                 })
                 .concat(
@@ -135,6 +132,7 @@ const TopView = (props: any) => {
                             appImages[appHighlightIndex].rgb +
                             ", 0.2)"
                         }
+                        key={"floating-icon-highlight-higlighted"}
                         width={width}
                         top={tops[3]}
                         left={lefts[3]}
@@ -153,23 +151,20 @@ const TopView = (props: any) => {
             return appImages.map((app: any, _: any) => {
                 idx += 1
                 return (
-                    <div onClick={() => setAppHighlight(app.name)}>
-                        <FloatingLogo
-                            textIndex={idx}
-                            currentIndex={currentIndex}
-                            boxShadow={
-                                "0px 4px 20px rgba(" + app.rgb + ", 0.2)"
-                            }
-                            width={width}
-                            top={tops[idx]}
-                            left={lefts[idx]}
-                            colorImage={app.colorImage}
-                            noColorImage={app.noColorImage}
-                            background={"rgba(" + app.rgb + ", 0.1)"}
-                            animationDelay={0.5 * idx + "s"}
-                            app={app.name}
-                        />
-                    </div>
+                    <FloatingLogo
+                        textIndex={idx}
+                        currentIndex={currentIndex}
+                        boxShadow={"0px 4px 20px rgba(" + app.rgb + ", 0.2)"}
+                        key={"floating-icon-nohiglight" + idx}
+                        width={width}
+                        top={tops[idx]}
+                        left={lefts[idx]}
+                        colorImage={app.colorImage}
+                        noColorImage={app.noColorImage}
+                        background={"rgba(" + app.rgb + ", 0.1)"}
+                        animationDelay={0.5 * idx + "s"}
+                        app={app.name}
+                    />
                 )
             })
         }
