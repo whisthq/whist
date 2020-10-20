@@ -9,5 +9,6 @@ export const DEFAULT = {
     authFlow: {
         loginWarning: null,
         signupWarning: null,
+        verificationEmailsSent: 0,
     },
 }

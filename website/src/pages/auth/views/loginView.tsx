@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react"
+import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { FormControl } from "react-bootstrap"
 
@@ -6,15 +6,11 @@ import "styles/auth.css"
 
 import MainContext from "shared/context/mainContext"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
+import * as AuthPureAction from "store/actions/auth/pure"
 
 import GoogleButton from "pages/auth/components/googleButton"
 
-const LoginView = (props: {
-    dispatch: any
-    user: {
-        user_id: string
-    }
-}) => {
+const LoginView = (props: any) => {
     const { dispatch } = props
 
     const [email, setEmail] = useState("")
@@ -28,7 +24,7 @@ const LoginView = (props: {
             password.length > 6 &&
             email.includes("@")
         ) {
-            setProcessing(true)
+            // setProcessing(true)
             dispatch(AuthSideEffect.emailLogin(email, password))
         }
     }
@@ -36,8 +32,9 @@ const LoginView = (props: {
     const login = () => {
         if (email.length > 4 && password.length > 6 && email.includes("@")) {
             console.log("dispatching")
-            setProcessing(true)
+            // setProcessing(true)
             dispatch(AuthSideEffect.emailLogin(email, password))
+            dispatch(AuthPureAction.updateUser({ name: "Ming1" }))
         }
     }
 
@@ -51,8 +48,21 @@ const LoginView = (props: {
         setPassword(evt.target.value)
     }
 
+    useEffect(() => {
+        // console.log("USE EFFECT FIRED")
+        // let mounted = true
+        // if (mounted) {
+        //     console.log("user or authflow changed")
+        //     // setProcessing(false)
+        // }
+        // return () => {
+        //     mounted = false
+        // }
+        console.log("USE EFFECT")
+    }, [dispatch, props])
+
     if (processing) {
-        return <div>Processing</div>
+        return <div>Processing {props.user.user_id}</div>
     } else {
         return (
             <div>
@@ -69,7 +79,7 @@ const LoginView = (props: {
                             textAlign: "center",
                         }}
                     >
-                        Welcome back!
+                        Welcome back! {props.user.user_id}
                     </h2>
                     <FormControl
                         type="email"
@@ -122,16 +132,19 @@ const LoginView = (props: {
                             background: "#EFEFEF",
                         }}
                     ></div>
-                    <GoogleButton />
+                    {/* <GoogleButton /> */}
                 </div>
             </div>
         )
     }
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
+function mapStateToProps(state: any) {
+    console.log("map state to props")
+    console.log(state.AuthReducer)
     return {
         user: state.AuthReducer.user,
+        authFlow: state.AuthReducer.authFlow,
     }
 }
 

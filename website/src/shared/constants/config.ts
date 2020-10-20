@@ -1,7 +1,7 @@
 const environment: any = {
     development: {
         url: {
-            WEBSERVER_URL: "http://localhost:7300",
+            WEBSERVER_URL: "https://dev-webserver.herokuapp.com",
             FRONTEND_URL: "http://localhost:3000",
             GRAPHQL_HTTP_URL:
                 "https://staging-database.tryfractal.com/v1/graphql",
@@ -47,5 +47,5 @@ const environment: any = {
 
 export const config: any =
     process.env.NODE_ENV === "development"
-        ? environment.staging
+        ? environment.development
         : environment.production
