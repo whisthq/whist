@@ -1,7 +1,8 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-repo_name=fractal/$1
+app_path=${1%/}
+repo_name=fractal/$app_path
 remote_tag=$2
 region=${3:-us-east-1}
 mount=${4:-}
