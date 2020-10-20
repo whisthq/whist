@@ -4,7 +4,7 @@
 |:--:|
 |![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|
 
-This repository contains the code for containerizing the various applications that Fractal streams. The base image running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter images for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
+This repository contains the code for containerizing the various applications that Fractal streams. The base Dockerfile.20 running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
 
 **Supported Applications**
 - Google Chrome
@@ -13,12 +13,13 @@ This repository contains the code for containerizing the various applications th
 - Blockbench
 - Slack
 
-See [Adding New Applications](#Adding-New-Applications).
-
+See [Adding New Applications](#Adding-New-Applications) for details on how to add support for new applications and integrate them with our continuous delivery pipeline.
 
 ## Development
 
-To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfile.20 under `/base/`, unless your changes are application-specific, in which case you should contribute to the relevant Dockerfile.20 for the application in question. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of security attacks possible. Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master`. The `master` branch gets automatically deployed to production by building and uploaded AWS ECR via GitHub Actions, and must not be pushed to unless thorough testing has been performed.
+To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfile.20 under `/base/`, unless your changes are application-specific, in which case you should contribute to the relevant Dockerfile.20 for the application in question. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of security attacks possible.
+
+Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master`. The `master` branch gets automatically deployed to production by building and uploading to AWS ECR via GitHub Actions, and must not be pushed to unless thorough testing has been performed. Currently, at every PR to `master` or `dev`, the Dockerfiles specified in `dockerfiles-building-ubuntu20.yml` will be built on GitHub Actions and status checks will be reported. These tests need to be pass before merging is approved.
 
 ### Getting Started
 
@@ -61,7 +62,7 @@ To build a specific application's container image, run:
 ./build_container_image.sh APP
 ```
 
-This takes a single argument, `APP`, which is the path to the target folder whose application container you wish to build. For example, the base container is built with `./build_container_image.sh base` and the chrome container is built with `./build_container_image.sh browsers/chrome`, since the relevant dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `fractal/$APP`, with a tag of `current-build`.
+This takes a single argument, `APP`, which is the path to the target folder whose application container you wish to build. For example, the base container is built with `./build_container_image.sh base` and the Chrome container is built with `./build_container_image.sh browsers/chrome`, since the relevant Dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `fractal/$APP`, with a tag of `current-build`.
 
 ### Running Local Images
 
@@ -75,7 +76,7 @@ As usual, `APP` is the path to the app folder. Meanwhile, `MOUNT` is an optional
 
 ### Running Remote-Pushed Images
 
-If an image has been pushed to ECR and you wish to test it, first ensure the AWS CLI is configured as in [Pushing Images](#pushing-images). Then, retrieve the tag you wish to run, either from ECR itself or by grabbing the relevant (full) Git commit hash from this repository, and run:
+If an image has been pushed to ECR and you wish to test it, first ensure the AWS CLI is configured. Then, retrieve the tag you wish to run, either from ECR itself or by grabbing the relevant (full) Git commit hash from this repository, and run:
 
 ```
 ./run_remote_container_image.sh APP TAG [REGION] [MOUNT]
@@ -83,7 +84,7 @@ If an image has been pushed to ECR and you wish to test it, first ensure the AWS
 
 As above, `APP` is the path of the application you want to run, `REGION` optionally specifies the ECR region to pull from, with a default of `us-east-1`, and `MOUNT=mount` mounts the submodule. Here `TAG` is the full Git commit hash to run.
 
-## Continous Integration & Publishing
+## Publishing
 
 We store our production container images on AWS Elastic Container Registry (ECR) and deploy them on AWS Elastic Container Service (ECS). 
 
@@ -99,33 +100,18 @@ Once an image has been built via `./build_container_image.sh APP` and therefore 
 
 Here, `APP` is again the path to the relevant app folder; e.g., `base` or `browsers/chrome`. Meanwhile, `REGION` is an optional parameter specifying the AWS region to which to push. This defaults to `us-east-1`. The image is tagged with the full git commit hash of the current branch. Please manually push images sparingly, making sure to commit all of your changes before building and pushing.
 
-### Continuous Integration
+### Continous Delivery
 
+This is how we push to production. For every push to `master`, all applications specified under `apps` in `push-images.yml` will automatically be built and pushed to all AWS regions specified under `aws-regions` in `push-images.yml`.
 
+#### Adding New Applications
 
+For every new application that you add support for, in addition to creating its own subfolder under the relevant category and creating application-specific **Dockerfile.20** and **.xinitrc** files, you should:
 
-Currently, at every PR to `master` or `dev`, the Dockerfiles specified in `dockerfiles-building-ubuntu20.yml` will be built on GitHub Actions and status checks will be reported. These 
+- Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`, for pre-commit hooks
+- Add the path to your new Dockerfile.20 under `apps` in `push-images.yml`, for continuous delivery
 
-
-For every new application that you add support for, you should 
-
-
-
-
-## Adding New Applications
-
-
-
-
-Then, you need to add your new application to the continous integration system:
-
-- Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`
-- Add the path to your new Dockerfile.20 under `apps` in `push-images.yml`
-
-If you're adding a new AWS region
-- Add the region name under `aws-regions` in `push-images.yml`
-
-
+And, if you're adding a new AWS region, you should add the region name under `aws-regions` in `push-images.yml`.
 
 ## Styling
 
