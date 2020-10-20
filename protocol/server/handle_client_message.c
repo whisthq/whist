@@ -35,6 +35,8 @@ extern volatile bool wants_iframe;
 extern volatile bool update_encoder;
 extern input_device_t *input_device;
 
+extern int host_id;
+
 static int handleUserInputMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handleKeyboardStateMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling);
@@ -52,6 +54,7 @@ static int handleQuitMessage(FractalClientMessage *fmsg, int client_id, bool is_
 static int handleTimeMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handleMouseInactiveMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling);
+static int handleEmailMessage(FractalClientMessage *fmsg, int client_id);
 
 int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     switch (fmsg->type) {
@@ -59,6 +62,7 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_contr
         case MESSAGE_MOUSE_BUTTON:
         case MESSAGE_MOUSE_WHEEL:
         case MESSAGE_MOUSE_MOTION:
+        case MESSAGE_MULTIGESTURE:
             return handleUserInputMessage(fmsg, client_id, is_controlling);
         case MESSAGE_KEYBOARD_STATE:
             return handleKeyboardStateMessage(fmsg, client_id, is_controlling);
@@ -82,6 +86,8 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_contr
             return handleQuitMessage(fmsg, client_id, is_controlling);
         case MESSAGE_TIME:
             return handleTimeMessage(fmsg, client_id, is_controlling);
+        case MESSAGE_USER_EMAIL:
+            return handleEmailMessage(fmsg, client_id);
         case MESSAGE_MOUSE_INACTIVE:
             return handleMouseInactiveMessage(fmsg, client_id, is_controlling);
         default:
@@ -93,6 +99,17 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_contr
     }
 }
 
+static int handleEmailMessage(FractalClientMessage *fmsg, int client_id) {
+    if (client_id == host_id) {
+        sentry_value_t user = sentry_value_new_object();
+        sentry_value_set_by_key(user, "email", sentry_value_new_string(fmsg->user_email));
+        sentry_set_user(user);
+    } else {
+        sentry_send_bread_crumb("info", "non host email: %s", fmsg->user_email);
+    }
+    return 0;
+}
+
 // is called with is active read locked
 static int handleUserInputMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     // Replay user input (keyboard or mouse presses)
@@ -100,7 +117,8 @@ static int handleUserInputMessage(FractalClientMessage *fmsg, int client_id, boo
         if (!ReplayUserInput(input_device, fmsg)) {
             LOG_WARNING("Failed to replay input!");
 #ifdef _WIN32
-            InitDesktop();
+            // TODO: Ensure that any password can be used here
+            InitDesktop(input_device, "password1234567.");
 #endif
         }
     }
@@ -125,9 +143,7 @@ static int handleKeyboardStateMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
-#ifdef _WIN32
     UpdateKeyboardState(input_device, fmsg);
-#endif
     return 0;
 }
 

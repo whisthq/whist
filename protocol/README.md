@@ -70,7 +70,9 @@ After doing this, you might have to restart your terminal or IDE, after which yo
 ### Building
 
 If you are on Linux Ubuntu, run `desktop/linux-client-setup.sh` to install the system dependencies.
-
+#### Sentry
+To build you will need to install the sentry-native sdk. This can be done by running the python script get_latest_sentry.py in the root directory of this repo. 
+The SDK is a CMake project which we load in our root CMakeLists.txt. 
 #### IDE
 
 We use CMake to build. If you are using VS code, VS or Clion, this is pretty easy to use. You need to either open the root repo folder as a project, or open the root `CMakelist.txt` as a project. On CLion and VS there is a menu to build at the top, on VS code you need the CMake extension and the build command is at the bottom. CMake currently has two types of builds, Debug and Release. You probably want to be building debug builds while developing, since they log more aggressively (Warning levels: Info and above). 
@@ -120,6 +122,10 @@ These builds will also have `cppcheck` run against them which is a static analys
 These builds will also (TODO) be tested against a live server VM. This workflow will spin up an Azure VM, upload the server build to it, and then use GitHub Actions VMs on Windows, MacOS and Linux Ubuntu as clients to connect and stream via the protocol for one minute. This will also occur nightly against the `dev` branch, but these builds will not be released (this can be removed once testing is stable and re-enabled on all commits).
 
 To see the warnings in context go to the Actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log, where you can clearly see the warnings/errors generated. 
+
+### Testing on VMs
+
+As mentioned above, every commit to `dev`, `staging` and `master` and every new PR results in a build being uploaded to Github Releases. The server build in this release can be easily uploaded to a VM for testing using the `deploy_server_release.py` script. The script requires that you specify the IP address of a VM that is currently running and also allows you to specify the specific release to test, defaulting to the latest release on `dev`. For example, to run the server build in the latest release in the `staging` branch on the VM at IP address 52.168.66.248, you can run `python deploy_server_release.py --vm-ip=52.168.66.248 --release=latest:staging`. To see other optional arguments that are exposed, just open up `deploy_server_release.py`.
 
 ### Special Cases
 

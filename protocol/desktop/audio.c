@@ -14,8 +14,9 @@ audio format.
 
 #include "audio.h"
 #include "network.h"
+#define UNUSED(x) (void)(x)
 
-extern int audio_frequency;
+extern volatile int audio_frequency;
 extern bool has_rendered_yet;
 
 // Hold information about audio data as the packets come in
@@ -55,17 +56,44 @@ int last_played_id = -1;
 
 bool triggered = false;
 
-int decoder_frequency = 48000;  // Hertz
+#define MAX_FREQ 128000
+static int decoder_frequency = 48000;  // Hertz
 
 clock test_timer;
 double test_time;
+SDL_mutex* audio_mutex;
+
+void reinitAudio() {
+    LOG_INFO("Re-init'ing Audio!");
+    if (SDL_LockMutex(audio_mutex) != 0) {
+        LOG_ERROR("Failed to lock mutex!");
+        destroyLogger();
+        exit(-1);
+    }
+    destroyAudio();
+    initAudio();
+    SDL_UnlockMutex(audio_mutex);
+}
+
+int MultithreadedReinitAudio(void* opaque) {
+    UNUSED(opaque);
+    reinitAudio();
+    return 0;
+}
 
 void initAudio() {
+    if (!audio_mutex) {
+        audio_mutex = SDL_CreateMutex();
+        if (!audio_mutex) {
+            LOG_ERROR("Failed to initialize mutex!");
+            destroyLogger();
+            exit(-1);
+        }
+    }
     StartTimer(&nack_timer);
 
     // cast socket and SDL variables back to their data type for usage
     SDL_AudioSpec wantedSpec = {0}, audioSpec = {0};
-
     AudioData.audio_decoder = create_audio_decoder(decoder_frequency);
 
     SDL_zero(wantedSpec);
@@ -80,7 +108,7 @@ void initAudio() {
     AudioData.dev =
         SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (AudioData.dev == 0) {
-        LOG_ERROR("Failed to open audio");
+        LOG_ERROR("Failed to open audio, %s", SDL_GetError());
         destroyLogger();
         exit(1);
     }
@@ -99,12 +127,28 @@ void destroyAudio() {
     if (AudioData.audio_decoder) {
         destroy_audio_decoder(AudioData.audio_decoder);
     }
+    AudioData.dev = 0;
 }
 
 void updateAudio() {
+    if (!audio_mutex) {
+        LOG_ERROR("Mutex or audio is not initialized yet!");
+        destroyLogger();
+        exit(-1);
+    }
+    int status = SDL_TryLockMutex(audio_mutex);
+    if (!AudioData.dev || status != 0) {
+        LOG_INFO("Couldn't lock mutex in updateAudio!");
+        return;
+    }
 #if LOG_AUDIO
     // mprintf("Queue: %d", SDL_GetQueuedAudioSize(AudioData.dev));
 #endif
+    if (audio_frequency > MAX_FREQ) {
+        LOG_ERROR("Frequency received was too large: %d, silencing audio now.", audio_frequency);
+        audio_frequency = MAX_FREQ;
+    }
+
     if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
         LOG_INFO("Updating audio frequency to %d!", audio_frequency);
         decoder_frequency = audio_frequency;
@@ -141,6 +185,7 @@ void updateAudio() {
 
     if (gapping) {
         if (bytes_until_can_play < TARGET_AUDIO_QUEUE_LIMIT) {
+            SDL_UnlockMutex(audio_mutex);
             return;
         } else {
             LOG_INFO("Done catching up! Audio Queue: %d", bytes_until_can_play);
@@ -149,6 +194,7 @@ void updateAudio() {
     }
 
     if (last_played_id == -1) {
+        SDL_UnlockMutex(audio_mutex);
         return;
     }
 
@@ -159,6 +205,7 @@ void updateAudio() {
 
         if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
             LOG_WARNING("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!");
+            SDL_UnlockMutex(audio_mutex);
             return;
         }
 
@@ -270,12 +317,16 @@ void updateAudio() {
             last_nacked_id = i;
         }
     }
+    SDL_UnlockMutex(audio_mutex);
 }
 
 int32_t ReceiveAudio(FractalPacket* packet) {
     if (packet->index >= MAX_NUM_AUDIO_INDICES) {
         LOG_WARNING("Packet Index too large!");
         return -1;
+    }
+    if (audio_frequency == MAX_FREQ) {
+        return 0;
     }
 
     int audio_id = packet->id * MAX_NUM_AUDIO_INDICES + packet->index;

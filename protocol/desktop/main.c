@@ -15,6 +15,7 @@ its threads.
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#include "sentry.h"
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -35,12 +36,12 @@ its threads.
 #include "sdl_utils.h"
 #include "server_message_handler.h"
 #include "video.h"
-
+#include "SDL_syswm.h"
 #ifdef __APPLE__
 #include "../fractal/utils/mac_utils.h"
 #endif
 
-int audio_frequency = -1;
+volatile int audio_frequency = -1;
 
 // Width and Height
 volatile int server_width = -1;
@@ -63,10 +64,14 @@ volatile int ping_failures;
 
 volatile int output_width;
 volatile int output_height;
+volatile char* program_name = NULL;
 volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
+char user_email[USER_EMAIL_MAXLEN];
+extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+bool using_stun = true;
 
 int UDP_port = -1;
 int TCP_port = -1;
@@ -87,7 +92,6 @@ clock window_resize_timer;
 // Function Declarations
 
 int ReceivePackets(void* opaque);
-bool received_server_init_message;
 
 SocketContext PacketSendContext = {0};
 SocketContext PacketReceiveContext = {0};
@@ -149,7 +153,7 @@ void update() {
         }
 
         // Receive tcp buffer, if a full packet has been received
-        FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
+        FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext, true);
         if (tcp_packet) {
             handleServerMessage((FractalServerMessage*)tcp_packet->data,
                                 (size_t)tcp_packet->payload_size);
@@ -161,16 +165,14 @@ void update() {
 
     // Assuming we have all of the important init information, then update the
     // clipboard
-    if (received_server_init_message) {
-        ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
-        if (clipboard) {
-            FractalClientMessage* fmsg_clipboard =
-                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
-            fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
-            memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
-            SendFmsg(fmsg_clipboard);
-            free(fmsg_clipboard);
-        }
+    ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
+    if (clipboard) {
+        FractalClientMessage* fmsg_clipboard =
+            malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
+        fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
+        memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
+        SendFmsg(fmsg_clipboard);
+        free(fmsg_clipboard);
     }
 
     // If we haven't yet tried to update the dimension, and the dimensions don't
@@ -431,7 +433,7 @@ int ReceivePackets(void* opaque) {
                  lastrecv * MS_IN_SECOND);
     }
 
-    SDL_Delay(5);
+    SDL_Delay(50);
 
     destroyUpdate();
 
@@ -439,28 +441,41 @@ int ReceivePackets(void* opaque) {
 }
 
 int syncKeyboardState(void) {
+    // Set keyboard state initialized to null
     FractalClientMessage fmsg = {0};
-
-    SDL_Delay(5);
 
     fmsg.type = MESSAGE_KEYBOARD_STATE;
 
     int num_keys;
-    Uint8* state = (Uint8*)SDL_GetKeyboardState(&num_keys);
+    const Uint8* state = SDL_GetKeyboardState(&num_keys);
 #if defined(_WIN32)
     fmsg.num_keycodes = (short)min(NUM_KEYCODES, num_keys);
 #else
     fmsg.num_keycodes = fmin(NUM_KEYCODES, num_keys);
 #endif
 
-    // lgui/rgui don't work with SDL_GetKeyboardState for some
-    // reason, so set manually
-    state[FK_LGUI] = lgui_pressed;
-    state[FK_RGUI] = rgui_pressed;
-    // Copy keyboard state
-    memcpy(fmsg.keyboard_state, state, fmsg.num_keycodes);
+    // Copy keyboard state, but using scancodes of the keys in the current keyboard layout.
+    // Must convert to/from the name of the key so SDL returns the scancode for the key in the
+    // current layout rather than the scancode for the physical key.
+    for (int i = 0; i < fmsg.num_keycodes; i++) {
+        if (state[i]) {
+            int scancode = SDL_GetScancodeFromName(SDL_GetKeyName(SDL_GetKeyFromScancode(i)));
+            if (0 <= scancode && scancode < (int)sizeof(fmsg.keyboard_state)) {
+                fmsg.keyboard_state[scancode] = 1;
+            }
+        }
+    }
 
     // Also send caps lock and num lock status for syncronization
+#ifdef __APPLE__
+    fmsg.keyboard_state[FK_LCTRL] = ctrl_pressed;
+    fmsg.keyboard_state[FK_LGUI] = false;
+    fmsg.keyboard_state[FK_RGUI] = false;
+#else
+    fmsg.keyboard_state[FK_LGUI] = lgui_pressed;
+    fmsg.keyboard_state[FK_RGUI] = rgui_pressed;
+#endif
+
     fmsg.caps_lock = SDL_GetModState() & KMOD_CAPS;
     fmsg.num_lock = SDL_GetModState() & KMOD_NUM;
 
@@ -470,6 +485,8 @@ int syncKeyboardState(void) {
 }
 
 int main(int argc, char* argv[]) {
+    init_default_port_mappings();
+
     if (parseArgs(argc, argv) != 0) {
         return -1;
     }
@@ -490,6 +507,15 @@ int main(int argc, char* argv[]) {
 
     initLogger(log_dir);
     free(log_dir);
+    // Set sentry user here based on email from command line args
+    // It defaults to None, so we only inform sentry if the client app passes in a user email
+    // We do this here instead of in initLogger because initLogger is used both by the client and
+    // the server so we have to do it for both in their respective main.c files.
+    if (strcmp(user_email, "None") != 0) {
+        sentry_value_t user = sentry_value_new_object();
+        sentry_value_set_by_key(user, "email", sentry_value_new_string(user_email));
+    }
+
     if (running_ci) {
         LOG_INFO("Running in CI mode");
     }
@@ -507,7 +533,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the SDL window
-    window = initSDL(output_width, output_height);
+    window = initSDL(output_width, output_height, (char*)program_name);
     if (!window) {
         LOG_ERROR("Failed to initialize SDL");
         destroySocketLibrary();
@@ -532,25 +558,30 @@ int main(int argc, char* argv[]) {
     exiting = false;
     bool failed = false;
 
-    for (try_amount = 0; try_amount < MAX_NUM_CONNECTION_ATTEMPTS && !exiting && !failed;
+    int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
+    for (try_amount = 0; try_amount < max_connection_attempts && !exiting && !failed;
          try_amount++) {
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
         }
 
-        if (discoverPorts() != 0) {
+        if (discoverPorts(&using_stun) != 0) {
             LOG_WARNING("Failed to discover ports.");
             continue;
         }
 
-        if (connectToServer() != 0) {
+        if (connectToServer(using_stun) != 0) {
             LOG_WARNING("Failed to connect to server.");
             continue;
         }
 
         connected = true;
-        received_server_init_message = true;
+
+        // Initialize audio and variablessendTimeToServer
+        // reset because now connected
+        try_amount = 0;
+        max_connection_attempts = MAX_RECONNECTION_ATTEMPTS;
 
         // Initialize audio and variables
         is_timing_latency = false;
@@ -567,6 +598,10 @@ int main(int argc, char* argv[]) {
             LOG_ERROR("Failed to synchronize time with server.");
         }
 
+        if (sendEmailToServer(user_email) != 0) {
+            LOG_ERROR("Failed to send user email to server");
+        }
+
         // Timer used in CI mode to exit after 1 min
         clock ci_timer;
         StartTimer(&ci_timer);
@@ -578,7 +613,8 @@ int main(int argc, char* argv[]) {
 
         SDL_Event sdl_msg;
 
-        // This code will run once every millisecond
+        // This code will run for as long as there are events queued, or once every millisecond if
+        // there are no events queued
         while (connected && !exiting && !failed) {
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);
@@ -622,7 +658,7 @@ int main(int argc, char* argv[]) {
         }
 
         LOG_INFO("Disconnecting...");
-        if (exiting || failed || try_amount + 1 == MAX_NUM_CONNECTION_ATTEMPTS)
+        if (exiting || failed || try_amount + 1 == max_connection_attempts)
             sendServerQuitMessages(3);
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
@@ -630,11 +666,26 @@ int main(int argc, char* argv[]) {
         closeConnections();
     }
 
+    if (failed) {
+        sentry_value_t event = sentry_value_new_message_event(
+            /*   level */ SENTRY_LEVEL_ERROR,
+            /*  logger */ "client-errors",
+            /* message */ "Failure in main loop");
+        sentry_capture_event(event);
+    }
+
+    if (try_amount >= 3) {
+        sentry_value_t event = sentry_value_new_message_event(
+            /*   level */ SENTRY_LEVEL_ERROR,
+            /*  logger */ "client-errors",
+            /* message */ "Failed to connect after three attemps");
+        sentry_capture_event(event);
+    }
+
     LOG_INFO("Closing Client...");
     destroyVideo();
     destroySDL((SDL_Window*)window);
     destroySocketLibrary();
     destroyLogger();
-
     return (try_amount < 3 && !failed) ? 0 : -1;
 }

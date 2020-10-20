@@ -2,12 +2,22 @@
 ################## FractalServer ##################
 ]]
 
+set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH $ORIGIN)
 add_executable(FractalServer
         client.c
         main.c
         handle_client_message.c
         network.c
         )
+
+# copy the sentry shared library to the build folder after the build
+add_custom_command(
+        TARGET FractalServer POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/sentry-native/${CMAKE_SHARED_LIBRARY_PREFIX}sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
+        ${CMAKE_SOURCE_DIR}/server/build${arch})
 
 set_target_properties(FractalServer PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/server/build${arch}
@@ -49,8 +59,8 @@ target_link_libraries(FractalServer
         fractalNetwork
         fractalUtils
         ${STATIC_SDL2}
-        ${STATIC_OPENSSL}
         ${LIBMFX}
+        sentry
         )
 
 #[[
@@ -84,6 +94,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ${X11_Xtst_LIB}
             asound
             m
+            OpenSSL::Crypto
             )
 endif()
 
@@ -102,6 +113,7 @@ if (${WIN32})
 
     # Link to system libs
     target_link_libraries(FractalServer
+            ${STATIC_OPENSSL}
             libvcruntime
             libcmt
             kernel32

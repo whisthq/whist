@@ -6,8 +6,8 @@
 
 #include "client.h"
 
-#define UDP_CONNECTION_WAIT 1500
-#define TCP_CONNECTION_WAIT 1500
+#define UDP_CONNECTION_WAIT 1000
+#define TCP_CONNECTION_WAIT 1000
 #define BITS_IN_BYTE 8.0
 
 extern Client clients[MAX_NUM_CLIENTS];
@@ -179,10 +179,21 @@ int broadcastTCPPacket(FractalPacketType type, void *data, int len) {
     return ret;
 }
 
+clock last_tcp_read;
+bool has_read = false;
 int tryGetNextMessageTCP(int client_id, FractalClientMessage **fcmsg, size_t *fcmsg_size) {
     *fcmsg_size = 0;
     *fcmsg = NULL;
-    FractalPacket *packet = ReadTCPPacket(&(clients[client_id].TCP_context));
+
+    // Check if 20ms has passed since last TCP recvp, since each TCP recvp read takes 8ms
+    bool should_recvp = false;
+    if (!has_read || GetTimer(last_tcp_read) * 1000.0 > 20.0) {
+        should_recvp = true;
+        StartTimer(&last_tcp_read);
+        has_read = true;
+    }
+
+    FractalPacket *packet = ReadTCPPacket(&(clients[client_id].TCP_context), should_recvp);
     if (packet) {
         *fcmsg = (FractalClientMessage *)packet->data;
         *fcmsg_size = (size_t)packet->payload_size;

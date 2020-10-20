@@ -28,14 +28,21 @@ extern volatile char aes_private_key[16];
 extern volatile char *server_ip;
 extern volatile int output_width;
 extern volatile int output_height;
+extern volatile char *program_name;
 extern volatile CodecType output_codec_type;
 
 extern volatile int max_bitrate;
 extern volatile int running_ci;
+extern char user_email[USER_EMAIL_MAXLEN];  // Note: Is larger than environment maxlen
+extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN + 1];
+
 extern volatile CodecType codec_type;
+extern bool using_stun;
 
 extern mouse_motion_accumulation mouse_state;
 extern volatile SDL_Window *window;
+
+extern unsigned short port_mappings[USHRT_MAX];
 
 // standard for POSIX programs
 #define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
@@ -45,19 +52,27 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"height", required_argument, NULL, 'h'},
                                      {"bitrate", required_argument, NULL, 'b'},
                                      {"codec", required_argument, NULL, 'c'},
-                                     {"private-key", optional_argument, NULL, 'p'},
+                                     {"private-key", required_argument, NULL, 'k'},
+                                     {"user", required_argument, NULL, 'u'},
+                                     {"environment", required_argument, NULL, 'e'},
+                                     {"connection-method", required_argument, NULL, 'z'},
+                                     {"ports", required_argument, NULL, 'p'},
+                                     {"use_ci", no_argument, NULL, 'x'},
+                                     {"name", required_argument, NULL, 'n'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
-#define OPTION_STRING "w:h:b:sc:kp::"
+
+#define OPTION_STRING "w:h:b:c:p:ku:e:z:n:"
 
 int parseArgs(int argc, char *argv[]) {
-    char *usage =
+    // todo: replace `desktop` with argv[0]
+    const char *usage =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "Try 'desktop --help' for more information.\n";
-    char *usage_details =
+    const char *usage_details =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
@@ -70,20 +85,37 @@ int parseArgs(int argc, char *argv[]) {
         "  -b, --bitrate=BITRATE         set the maximum bitrate to use\n"
         "  -c, --codec=CODEC             launch the protocol using the codec\n"
         "                                  specified: h264 (default) or h265\n"
-        "  -p, --private-key=PK          pass in the RSA Private Key as a "
-        "hexadecimal string\n"
-        "  -k, --use_ci                  launch the protocol in CI mode\n"
+        "  -k, --private-key=PK          pass in the RSA Private Key as a "
+        "                                  hexadecimal string\n"
+        "  -u, --user=EMAIL              Tell fractal the users email. Optional defaults to None"
+        "  -e, --environment=ENV         The environment the protocol is running \n"
+        "                                 in. e.g master, staging, dev. Optional defaults to dev"
+        "  -p, --ports=PORTS             Pass in custom port:port mappings, comma-separated\n"
+        "  -x, --use_ci                  launch the protocol in CI mode\n"
+        "  -z, --connection_method=CM    which connection method to try first,\n"
+        "                                  either STUN or DIRECT\n"
+        "  -n, --name=NAME               Set the window title (default: Fractal)\n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
     memcpy((char *)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+    // default sentry environment
+    strcpy(sentry_environment, "dev");
+    // default sentry environment
+    strcpy(user_email, "None");
 
     int opt;
     long int ret;
     bool ip_set = false;
     char *endptr;
+
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
+        if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
+            printf("Option passed into %c is too long! Length of %zd when max is %d", opt,
+                   strlen(optarg), FRACTAL_ENVIRONMENT_MAXLEN);
+            return -1;
+        }
         errno = 0;
         switch (opt) {
             case 'w':
@@ -122,14 +154,65 @@ int parseArgs(int argc, char *argv[]) {
                 }
                 break;
             case 'k':
-                running_ci = 1;
-                break;
-            case 'p':
                 if (!read_hexadecimal_private_key(optarg, (char *)aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
                     printf("%s", usage);
                     return -1;
                 }
+                break;
+            case 'u':
+                strcpy(user_email, optarg);
+                break;
+            case 'e':
+                strcpy(sentry_environment, optarg);
+                break;
+            case 'p': {
+                char c = ',';
+                unsigned short origin_port;
+                unsigned short destination_port;
+                const char *str = optarg;
+                while (c == ',') {
+                    int bytes_read;
+                    int args_read = sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c,
+                                           &bytes_read);
+                    // If we read port arguments, then map them
+                    if (args_read >= 2) {
+                        LOG_INFO("Mapping port: origin=%hu, destination=%hu", origin_port,
+                                 destination_port);
+                        port_mappings[origin_port] = destination_port;
+                    } else {
+                        char invalid_s[13];
+                        unsigned short invalid_s_len = (unsigned short)min(bytes_read, 12);
+                        strncpy(invalid_s, str, invalid_s_len);
+                        invalid_s[invalid_s_len] = '\0';
+                        LOG_ERROR("Unable to parse the parse mapping \"%s\"", invalid_s);
+                        break;
+                    }
+                    // if %c was the end of the string, exit
+                    if (args_read < 3) {
+                        break;
+                    }
+                    // Progress the string forwards
+                    str += bytes_read;
+                }
+            } break;
+            case 'x':
+                running_ci = 1;
+                break;
+            case 'z':
+                if (!strcmp(optarg, "STUN")) {
+                    using_stun = true;
+                } else if (!strcmp(optarg, "DIRECT")) {
+                    using_stun = false;
+                } else {
+                    printf("Invalid connection type: '%s'\n", optarg);
+                    printf("%s", usage);
+                    return -1;
+                }
+                break;
+            case 'n':
+                program_name = calloc(sizeof(char), strlen(optarg));
+                strcpy((char *)program_name, optarg);
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);
@@ -137,6 +220,13 @@ int parseArgs(int argc, char *argv[]) {
             case FRACTAL_GETOPT_VERSION_CHAR:
                 printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
                 return 1;
+            default:
+                if (opt != -1) {
+                    // illegal option
+                    printf("%s", usage);
+                    return -1;
+                }
+                break;
         }
         if (opt == -1) {
             if (optind < argc && !ip_set) {
@@ -197,6 +287,12 @@ char *getLogDir(void) {
 }
 
 int logConnectionID(int connection_id) {
+    // itoa is not portable
+    char *str_connection_id = malloc(sizeof(char) * 100);
+    sprintf(str_connection_id, "%d", connection_id);
+    // send connection id to sentry as a tag, server also does this
+    sentry_set_tag("connection_id", str_connection_id);
+
     char *path;
 #ifdef _WIN32
     path = dupstring("connection_id.txt");
@@ -301,6 +397,18 @@ int sendTimeToServer(void) {
     return 0;
 }
 
+int sendEmailToServer(char *email) {
+    struct FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_USER_EMAIL;
+    strcpy(fmsg.user_email, email);
+
+    if (SendFmsg(&fmsg) != 0) {
+        return -1;
+    } else {
+        return 0;
+    }
+}
+
 int updateMouseMotion() {
     if (mouse_state.update) {
         int window_width, window_height;
@@ -308,7 +416,17 @@ int updateMouseMotion() {
         int x, y, x_nonrel, y_nonrel;
 
         x_nonrel = mouse_state.x_nonrel * MOUSE_SCALING_FACTOR / window_width;
+        if (x_nonrel < 0) {
+            x_nonrel = 0;
+        } else if (x_nonrel >= MOUSE_SCALING_FACTOR) {
+            x_nonrel = MOUSE_SCALING_FACTOR - 1;
+        }
         y_nonrel = mouse_state.y_nonrel * MOUSE_SCALING_FACTOR / window_height;
+        if (y_nonrel < 0) {
+            y_nonrel = 0;
+        } else if (y_nonrel >= MOUSE_SCALING_FACTOR) {
+            y_nonrel = MOUSE_SCALING_FACTOR - 1;
+        }
 
         if (mouse_state.is_relative) {
             x = mouse_state.x_rel;

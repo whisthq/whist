@@ -16,6 +16,7 @@ trigged an SDL event must be triggered in sdl_event_handler.c
 #include "../fractal/utils/logging.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "sdl_utils.h"
+#include "audio.h"
 #include "desktop_utils.h"
 #include "network.h"
 
@@ -47,6 +48,7 @@ int handleKeyUpDown(SDL_Event *event);
 int handleMouseMotion(SDL_Event *event);
 int handleMouseWheel(SDL_Event *event);
 int handleMouseButtonUpDown(SDL_Event *event);
+int handleMultiGesture(SDL_Event *event);
 
 int tryHandleSDLEvent(void) {
     SDL_Event event;
@@ -71,8 +73,20 @@ int handleSDLEvent(SDL_Event *event) {
                 }
             }
             break;
+        case SDL_AUDIODEVICEADDED:
+        case SDL_AUDIODEVICEREMOVED:
+            SDL_DetachThread(
+                SDL_CreateThread(MultithreadedReinitAudio, "MultithreadedReinitAudio", NULL));
+            break;
         case SDL_KEYDOWN:
         case SDL_KEYUP:
+#ifdef __APPLE__
+            // On Mac, map cmd to ctrl
+            if (event->key.keysym.scancode == FK_LGUI) {
+                event->key.keysym.scancode = (SDL_Scancode)FK_LCTRL;
+            }
+#endif
+
             if (handleKeyUpDown(event) != 0) {
                 return -1;
             }
@@ -90,6 +104,11 @@ int handleSDLEvent(SDL_Event *event) {
             break;
         case SDL_MOUSEWHEEL:
             if (handleMouseWheel(event) != 0) {
+                return -1;
+            }
+            break;
+        case SDL_MULTIGESTURE:
+            if (handleMultiGesture(event) != 0) {
                 return -1;
             }
             break;
@@ -136,8 +155,14 @@ int handleMouseLeftWindow(SDL_Event *event) {
 }
 
 int handleKeyUpDown(SDL_Event *event) {
-    FractalKeycode keycode = (FractalKeycode)event->key.keysym.scancode;
+    FractalKeycode keycode =
+        (FractalKeycode)SDL_GetScancodeFromName(SDL_GetKeyName(event->key.keysym.sym));
     bool is_pressed = event->key.type == SDL_KEYDOWN;
+
+    // LOG_INFO("Scancode: %d", event->key.keysym.scancode);
+    // LOG_INFO("Keycode: %d %d", keycode, is_pressed);
+    // LOG_INFO("%s %s", (is_pressed ? "Pressed" : "Released"),
+    // SDL_GetKeyName(event->key.keysym.sym));
 
     // Keep memory of alt/ctrl/lgui/rgui status
     if (keycode == FK_LALT) {
@@ -224,6 +249,9 @@ int handleMouseButtonUpDown(SDL_Event *event) {
     // Record if left / right / middle button
     fmsg.mouseButton.button = event->button.button;
     fmsg.mouseButton.pressed = event->button.type == SDL_MOUSEBUTTONDOWN;
+    if (fmsg.mouseButton.button == MOUSE_L) {
+        SDL_CaptureMouse(fmsg.mouseButton.pressed);
+    }
     SendFmsg(&fmsg);
 
     return 0;
@@ -234,6 +262,15 @@ int handleMouseWheel(SDL_Event *event) {
     fmsg.type = MESSAGE_MOUSE_WHEEL;
     fmsg.mouseWheel.x = event->wheel.x;
     fmsg.mouseWheel.y = event->wheel.y;
+    SendFmsg(&fmsg);
+
+    return 0;
+}
+
+int handleMultiGesture(SDL_Event *event) {
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_MULTIGESTURE;
+    fmsg.multigestureData = event->mgesture;
     SendFmsg(&fmsg);
 
     return 0;

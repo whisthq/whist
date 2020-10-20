@@ -86,17 +86,22 @@ Defines
 #define BASE_UDP_PORT 32263
 #define BASE_TCP_PORT (BASE_UDP_PORT + MAX_NUM_CLIENTS)
 
-#define PRODUCTION_HOST "main-webserver.fractalcomputers.com"
-#define STAGING_HOST "cube-celery-staging.herokuapp.com"
+#define PRODUCTION_HOST "main-webserver.tryfractal.com"
+#define STAGING_HOST "staging-webserver.tryfractal.com"
 
 #define USING_AUDIO_ENCODE_DECODE true
 #define USING_FFMPEG_IFRAME_FLAG false
+
 #ifdef _WIN32
 // possible on windows, so let's do it
 #define USING_SERVERSIDE_SCALE true
 #else
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
+#define USING_XTEST_INPUT_DRIVER true
+#define USING_GPU_CAPTURE true
+#define USING_SHM true
+
 #endif
 
 #define MAXIMUM_BITRATE 30000000
@@ -108,7 +113,7 @@ Defines
 #define STARTING_BURST_BITRATE 31800000
 
 #define AUDIO_BITRATE 128000
-#define FPS 50
+#define FPS 45
 #define MIN_FPS 10
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
@@ -118,6 +123,11 @@ Defines
 #define MOUSE_SCALING_FACTOR 100000
 
 #define WRITE_MPRINTF_TO_LOG true
+
+// Note: Must be larger than FRACTAL_ENVIRONMENT_MAXLEN in order to read email from environment
+// variable
+#define USER_EMAIL_MAXLEN 200
+#define FRACTAL_ENVIRONMENT_MAXLEN 100
 
 /*
 ============================
@@ -389,41 +399,47 @@ typedef struct FractalDiscoveryRequestMessage {
 typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
 
 typedef enum FractalClientMessageType {
-    CMESSAGE_NONE = 0,         ///< No Message
-    MESSAGE_KEYBOARD = 1,      ///< `keyboard` FractalKeyboardMessage is valid in
-                               ///< FractClientMessage.
-    MESSAGE_MOUSE_BUTTON = 2,  ///< `mouseButton` FractalMouseButtonMessage is
+    CMESSAGE_NONE = 0,     ///< No Message
+    MESSAGE_KEYBOARD = 1,  ///< `keyboard` FractalKeyboardMessage is valid in
+                           ///< FractClientMessage.
+    MESSAGE_KEYBOARD_STATE = 2,
+    MESSAGE_MOUSE_BUTTON = 3,  ///< `mouseButton` FractalMouseButtonMessage is
                                ///< valid in FractClientMessage.
-    MESSAGE_MOUSE_WHEEL = 3,   ///< `mouseWheel` FractalMouseWheelMessage is
+    MESSAGE_MOUSE_WHEEL = 4,   ///< `mouseWheel` FractalMouseWheelMessage is
                                ///< valid in FractClientMessage.
-    MESSAGE_MOUSE_MOTION = 4,  ///< `mouseMotion` FractalMouseMotionMessage is
-                               ///< valid in FractClientMessage.
-    MESSAGE_MOUSE_INACTIVE = 5,
-    MESSAGE_RELEASE = 6,  ///< Message instructing the host to release all input
-                          ///< that is currently pressed.
-    MESSAGE_MBPS = 7,     ///< `mbps` double is valid in FractClientMessage.
-    MESSAGE_PING = 8,
-    MESSAGE_DIMENSIONS = 9,  ///< `dimensions.width` int and `dimensions.height`
-                             ///< int is valid in FractClientMessage
-    MESSAGE_VIDEO_NACK = 10,
-    MESSAGE_AUDIO_NACK = 11,
-    MESSAGE_KEYBOARD_STATE = 12,
-    CMESSAGE_CLIPBOARD = 13,
-    MESSAGE_IFRAME_REQUEST = 14,
-    MESSAGE_TIME = 15,
-    CMESSAGE_INTERACTION_MODE = 16,
-    MESSAGE_DISCOVERY_REQUEST = 17,
-    CMESSAGE_QUIT = 100,
+    MESSAGE_MOUSE_MOTION = 5,  ///< `mouseMotion` FractalMouseMotionMessage is
+
+    MESSAGE_MOUSE_INACTIVE = 6,
+    MESSAGE_MULTIGESTURE = 7,  ///< Gesture Event
+    MESSAGE_RELEASE = 8,       ///< Message instructing the host to release all input
+                               ///< that is currently pressed.
+    MESSAGE_MBPS = 107,        ///< `mbps` double is valid in FractClientMessage.
+    MESSAGE_PING = 108,
+    MESSAGE_DIMENSIONS = 109,  ///< `dimensions.width` int and `dimensions.height`
+                               ///< int is valid in FractClientMessage
+    MESSAGE_VIDEO_NACK = 110,
+    MESSAGE_AUDIO_NACK = 111,
+    CMESSAGE_CLIPBOARD = 112,
+    MESSAGE_IFRAME_REQUEST = 113,
+    MESSAGE_TIME = 114,
+    CMESSAGE_INTERACTION_MODE = 115,
+    MESSAGE_DISCOVERY_REQUEST = 116,
+    MESSAGE_USER_EMAIL = 117,
+    CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
 
 typedef struct FractalClientMessage {
     FractalClientMessageType type;  ///< Input message type.
+    unsigned int id;
     union {
         FractalKeyboardMessage keyboard;                  ///< Keyboard message.
         FractalMouseButtonMessage mouseButton;            ///< Mouse button message.
         FractalMouseWheelMessage mouseWheel;              ///< Mouse wheel message.
         FractalMouseMotionMessage mouseMotion;            ///< Mouse motion message.
         FractalDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
+
+        // MESSAGE_MULTIGESTURE
+        SDL_MultiGestureEvent multigestureData;
 
         // CMESSAGE_INTERACTION_MODE
         InteractionMode interaction_mode;
@@ -460,6 +476,8 @@ typedef struct FractalClientMessage {
         bool reinitialize_encoder;
 
         FractalTimeData time_data;
+
+        char user_email[USER_EMAIL_MAXLEN];
     };
 
     // CMESSAGE_CLIPBOARD
@@ -476,19 +494,14 @@ typedef enum FractalServerMessageType {
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
-typedef struct FractalServerMessageInit {
-    char filename[300];
-    char username[50];
-    int connection_id;
-} FractalServerMessageInit;
-
 typedef struct FractalDiscoveryReplyMessage {
     int client_id;
     int UDP_port;
     int TCP_port;
+    int connection_id;
+    int audio_sample_rate;
     char filename[300];
     char username[50];
-    int connection_id;
 } FractalDiscoveryReplyMessage;
 
 typedef struct PeerUpdateMessage {
@@ -613,6 +626,14 @@ bool get_using_stun();
  * @returns                        The access token
  */
 char* get_access_token();
+
+/**
+ * @brief                          Queries the webserver for the VM password
+ * status
+ *
+ * @returns                        The password for the VM
+ */
+char* get_vm_password();
 
 /**
  * @brief                          Calculate the size of a FractalClientMessage
