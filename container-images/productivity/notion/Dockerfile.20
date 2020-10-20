@@ -35,6 +35,7 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && sed -i '3 s/^/# /' /etc/apt/sources.list \
     && apt-get update && apt-get install --allow-downgrades -y google-chrome-stable
 
+# Install Notion macOS application, unpackage it and run it through Linux Electron
 ENV NOTION_VERSION 2.0.8
 ENV ELECTRON_VERSION v6.1.12
 
