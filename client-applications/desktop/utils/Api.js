@@ -1,3 +1,5 @@
+import { debugLog } from './logging.js'
+
 export async function apiPost(endpoint, body, token) {
     try {
         const response = await fetch(endpoint, {
@@ -12,7 +14,7 @@ export async function apiPost(endpoint, body, token) {
         const json = await response.json()
         return { json, response }
     } catch (err) {
-        console.log(err)
+        debugLog(err)
         return err
     }
 }
@@ -30,7 +32,7 @@ export async function apiGet(endpoint, token) {
         const json = await response.json()
         return { json, response }
     } catch (err) {
-        console.log(err)
+        debugLog(err)
         return err
     }
 }

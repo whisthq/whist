@@ -5,6 +5,7 @@ import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
+import { debugLog } from "shared/utils/logging"
 
 const UpdateScreen = (props: any) => {
     const {
@@ -43,26 +44,26 @@ const UpdateScreen = (props: any) => {
         const os = require("os")
 
         if (os.platform() === "darwin") {
-            console.log("darwin found")
+            debugLog("darwin found")
             path = appRootDir + "/protocol-build/desktop/"
             path = path.replace("/app", "")
             executable = "./FractalClient"
         } else if (os.platform() === "linux") {
-            console.log("linux found")
+            debugLog("linux found")
             path = process.cwd() + "/protocol-build"
             path = path.replace("/release", "")
             executable = "./FractalClient"
         } else if (os.platform() === "win32") {
-            console.log("windows found")
+            debugLog("windows found")
             path = process.cwd() + "\\protocol-build\\desktop"
             executable = "FractalClient.exe"
         } else {
-            console.log(`no suitable os found, instead got ${os.platform()}`)
+            debugLog(`no suitable os found, instead got ${os.platform()}`)
         }
 
         var port_info = `32262:${port32262},32263:${port32263},32273:${port32273}`
         var parameters = ["-w", width, "-h", height, "-p", port_info, ip]
-        console.log(`your executable path should be: ${path}`)
+        debugLog(`your executable path should be: ${path}`)
 
         // Starts the protocol
         const protocol1 = child(executable, parameters, {
@@ -75,9 +76,9 @@ const UpdateScreen = (props: any) => {
             //},
         })
         protocol1.on("close", (code: any) => {
-            console.log("the protocol has been closed!")
+            debugLog("the protocol has been closed!")
         })
-        console.log("spawn completed!")
+        debugLog("spawn completed!")
 
         // TODO (adriano) graceful exit vs non graceful exit code
         // this should be done AFTER the endpoint to connect to EXISTS
