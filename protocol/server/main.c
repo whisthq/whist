@@ -1085,6 +1085,8 @@ int main() {
 // Exit file seen, time to exit
 #ifdef _WIN32
                 if (PathFileExistsA("C:\\Program Files\\Fractal\\Exit\\exit")) {
+                    // Give a bit of time to make sure no one is touching the file
+                    SDL_Delay(50);
                     DeleteFileA("C:\\Program Files\\Fractal\\Exit\\exit");
                     exiting = true;
                 }
@@ -1092,6 +1094,8 @@ int main() {
                 FILE* exit_file = fopen("/usr/share/fractal/exit", "r");
                 if (exit_file) {
                     fclose(exit_file);
+                    // Give a bit of time to make sure no one is touching the file
+                    SDL_Delay(50);
                     remove("/usr/share/fractal/exit");
                     exiting = true;
                 }
@@ -1112,8 +1116,6 @@ int main() {
                             LOG_ERROR("Failed to read-release is active RW lock.");
                         }
                     }
-                    // Give a bit of time to make sure no one is touching it
-                    SDL_Delay(50);
                     connected = false;
                 }
                 StartTimer(&last_exit_check);
