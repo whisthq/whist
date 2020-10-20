@@ -397,6 +397,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 
 # Set up window manager running on X server, with GTK/QT themes
+RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git
+RUN cd WhiteSur-cursors && /bin/bash install.sh && cd
 RUN git clone https://github.com/vinceliuice/Layan-gtk-theme
 RUN cd Layan-gtk-theme && /bin/bash install.sh && cd
 RUN git clone https://github.com/vinceliuice/Orchis-theme
