@@ -1444,98 +1444,8 @@ int CreateUDPContext(SocketContext *context, char *destination, int port, int re
     }
 }
 
-// send JSON POST request to the Fractal webserver
-bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token, char *json_res,
-                  size_t json_res_size) {
-    // environment variables
-    SOCKET Socket;  // socket to send/receive POST request
-    struct hostent *host;
-    struct sockaddr_in webserver_socketAddress;  // address of the web server socket
-
-    // Creating our TCP socket to connect to the web server
-    Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (Socket < 0)  // Windows & Unix cases
-    {
-        // if can't create socket, return
-        LOG_WARNING("Could not create socket.");
-        return false;
-    }
-    set_timeout(Socket, 250);
-
-    host = gethostbyname(host_s);
-    if (host == NULL) {
-        LOG_ERROR("Error %d: Could not resolve host %s", h_errno, host_s);
-        return false;
-    }
-
-    // create the struct for the webserver address socket we will query
-    webserver_socketAddress.sin_family = AF_INET;
-    webserver_socketAddress.sin_port = htons(80);  // HTTP port
-    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
-
-    // connect to the web server before sending the POST request packet
-    int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
-                                 sizeof(webserver_socketAddress));
-    if (connect_status < 0) {
-        LOG_WARNING("Could not connect to the webserver.");
-        return false;
-    }
-
-    // Now that we're connected, we can send the POST request.
-    char access_token_header[1000];
-    if (access_token) {
-        snprintf(access_token_header, sizeof(access_token_header), "Authorization: Bearer %s\r\n",
-                 access_token);
-    }
-
-    int json_len = (int)strlen(jsonObj);
-    char *message = malloc(5000 + json_len);
-    snprintf(message, 5000 + json_len,
-             "POST %s HTTP/1.0\r\n"
-             "Host: %s\r\n"
-             "Content-Type: application/json\r\n"
-             "Content-Length: %d\r\n"
-             "%s"  // Potentially an Authorization: Bearer, but potentially an empty string
-             "\r\n"
-             "%s"
-             "\r\n",
-             path, host_s, json_len, access_token ? access_token_header : "", jsonObj);
-
-    LOG_INFO("POST Request: %s", message);
-
-    // now we send it
-    if (send(Socket, message, (int)strlen(message), 0) < 0) {
-        // error sending, terminate
-        LOG_WARNING("Sending POST message failed.");
-        free(message);
-        return false;
-    }
-
-    free(message);
-
-    // now that it's sent, let's get the reply (if applicable)
-    if ((!json_res) || (json_res_size == 0)) {
-        // don't care about the reply, so we might as well not make the system
-        // call to get the data
-        FRACTAL_SHUTDOWN_SOCKET(Socket);
-    } else {
-        int len = recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
-        if (len < 0) {
-            LOG_WARNING("Response to JSON POST failed! %d %d", len, GetLastNetworkError());
-            json_res[0] = '\0';
-        } else {
-            json_res[len] = '\0';
-            LOG_INFO("JSON Webserver POST Request Response: %s", json_res);
-        }
-    }
-
-    FRACTAL_CLOSE_SOCKET(Socket);
-    return true;
-}
-
-// send JSON GET request to the Fractal webserver
-bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size) {
-    // environment variables
+bool send_http_request(char *type, char *host_s, char *path, char *message, char *result,
+                       size_t result_size) {
     SOCKET Socket;  // socket to send/receive request
     struct hostent *host;
     struct sockaddr_in webserver_socketAddress;  // address of the web server socket
@@ -1561,7 +1471,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     webserver_socketAddress.sin_port = htons(80);  // HTTP port
     webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
 
-    // connect to the web server before sending the GET request packet
+    // connect to the web server before sending the request packet
     int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
                                  sizeof(webserver_socketAddress));
     if (connect_status < 0) {
@@ -1569,32 +1479,75 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
         return false;
     }
 
-    // now that we're connected, we can send the GET request
-    char *message = malloc(250);
-    sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
-    LOG_INFO("GET Request: %s", message);
+    LOG_INFO("Sending request: %s", message);
+
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
         // error sending, terminate
-        LOG_WARNING("Sending GET message failed.");
+        LOG_WARNING("Sending %s message failed.", type);
         free(message);
         return false;
     }
 
-    free(message);
-
-    // now that it's sent, let's get the reply
-    int len = recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
-    if (len < 0) {
-        LOG_WARNING("Response to JSON GET failed! %d %d", len, GetLastNetworkError());
-        json_res[0] = '\0';
+    // now that it's sent, let's get the reply (if applicable)
+    if ((!result) || (result_size == 0)) {
+        // don't care about the reply, so we might as well not make the system
+        // call to get the data
+        FRACTAL_SHUTDOWN_SOCKET(Socket);
     } else {
-        json_res[len] = '\0';
-        LOG_INFO("JSON Webserver GET Request Response: %s", json_res);
+        int len = recv(Socket, result, (int)result_size - 1, 0);  // get the reply
+        if (len < 0) {
+            LOG_WARNING("Response to %s request failed! %d %d", type, len, GetLastNetworkError());
+            result[0] = '\0';
+        } else {
+            result[len] = '\0';
+            LOG_INFO("%s Request Response: %s", type, result);
+        }
     }
 
     FRACTAL_CLOSE_SOCKET(Socket);
     return true;
+}
+
+bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token, char *json_res,
+                  size_t json_res_size) {
+    // prepare the message
+    char access_token_header[1000];
+    if (access_token) {
+        snprintf(access_token_header, sizeof(access_token_header), "Authorization: Bearer %s\r\n",
+                 access_token);
+    } else {
+        access_token_header[0] = '\0';
+    }
+
+    int json_len = (int)strlen(jsonObj);
+    char *message = malloc(5000 + json_len);
+    snprintf(message, 5000 + json_len,
+             "POST %s HTTP/1.0\r\n"
+             "Host: %s\r\n"
+             "Content-Type: application/json\r\n"
+             "Content-Length: %d\r\n"
+             "%s"  // Potentially an Authorization: Bearer, but potentially an empty string
+             "\r\n"
+             "%s"
+             "\r\n",
+             path, host_s, json_len, access_token_header, jsonObj);
+
+    // send the message
+    bool worked = send_http_request("POST", host_s, path, message, json_res, json_res_size);
+    free(message);
+    return worked;
+}
+
+bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size) {
+    // prepare the message
+    char *message = malloc(400);
+    sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
+
+    // send the message
+    bool worked = send_http_request("GET", host_s, path, message, json_res, json_res_size);
+    free(message);
+    return worked;
 }
 
 void set_timeout(SOCKET s, int timeout_ms) {
