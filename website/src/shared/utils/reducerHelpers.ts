@@ -28,7 +28,7 @@ export const modified = (
             if (typeof prop_func === "string") {
                 y[prop_func].apply(y, prop_func_args)
             } else {
-                throw "For deep copy type must be string."
+                // throw "For deep copy type must be string."
             }
         }
     } else {
