@@ -2,7 +2,8 @@
 
 set -Eeuo pipefail
 
-image=fractal/$1:current-build
+app_path=${1%/}
+image=fractal/$app_path:current-build
 mount=${2:-}
 
 ./run_container_image.sh $image $mount
