@@ -17,6 +17,7 @@ TODO
 #include "desktop_utils.h"
 
 // Data
+extern volatile int audio_frequency;
 extern volatile char aes_private_key[16];
 extern char filename[300];
 extern char username[50];
@@ -27,22 +28,20 @@ extern SocketContext PacketSendContext;
 extern SocketContext PacketReceiveContext;
 extern SocketContext PacketTCPContext;
 extern char *server_ip;
-extern bool received_server_init_message;
 extern int uid;
 
-#define TCP_CONNECTION_WAIT 1000  // ms
-#define UDP_CONNECTION_WAIT 1000  // ms
+#define TCP_CONNECTION_WAIT 300  // ms
+#define UDP_CONNECTION_WAIT 300  // ms
 
-bool using_stun;
-
-int discoverPorts(void) {
+int discoverPorts(bool *using_stun) {
     SocketContext context;
-    using_stun = true;
-    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, using_stun,
+    LOG_INFO("using stun is %d", *using_stun);
+    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
                          (char *)aes_private_key) < 0) {
-        using_stun = false;
+        *using_stun = !*using_stun;
+        LOG_INFO("using stun is updated to %d", *using_stun);
         if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                             using_stun, (char *)aes_private_key) < 0) {
+                             *using_stun, (char *)aes_private_key) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
             return -1;
         }
@@ -63,7 +62,7 @@ int discoverPorts(void) {
     clock timer;
     StartTimer(&timer);
     do {
-        packet = ReadTCPPacket(&context);
+        packet = ReadTCPPacket(&context, true);
         SDL_Delay(5);
     } while (packet == NULL && GetTimer(timer) < 5.0);
 
@@ -99,6 +98,7 @@ int discoverPorts(void) {
     }
 
     client_id = reply_msg->client_id;
+    audio_frequency = reply_msg->audio_sample_rate;
     UDP_port = reply_msg->UDP_port;
     TCP_port = reply_msg->TCP_port;
     LOG_INFO("Assigned client ID: %d. UDP Port: %d, TCP Port: %d", client_id, UDP_port, TCP_port);
@@ -112,14 +112,14 @@ int discoverPorts(void) {
         return -1;
     }
 
-    received_server_init_message = true;
     closesocket(context.s);
 
     return 0;
 }
 
 // must be called after
-int connectToServer(void) {
+int connectToServer(bool using_stun) {
+    LOG_INFO("using stun is %d", using_stun);
     if (UDP_port < 0) {
         LOG_ERROR("Trying to connect UDP but port not set.");
         return -1;
@@ -182,6 +182,11 @@ int sendServerQuitMessages(int num_messages) {
 // FractalClientMessage packets are needed, then this will have to be
 // implemented)
 int SendFmsg(FractalClientMessage *fmsg) {
+    // Shouldn't overflow, will take 50 days at 1000 fmsg/second to overflow
+    static unsigned int fmsg_id = 0;
+    fmsg->id = fmsg_id;
+    fmsg_id++;
+
     if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_TIME) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
     } else {

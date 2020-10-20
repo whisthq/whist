@@ -26,6 +26,9 @@
 # macOS
 .DS_Store
 
+# sentry
+sentry-native
+
 # fractal files
 version
 **/build32

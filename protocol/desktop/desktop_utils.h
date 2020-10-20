@@ -11,7 +11,8 @@
 
 #define HOST_PUBLIC_KEY_PATH "ssh_host_ecdsa_key.pub"
 #define CLIENT_PRIVATE_KEY_PATH "sshkey"
-#define MAX_NUM_CONNECTION_ATTEMPTS (3)
+#define MAX_INIT_CONNECTION_ATTEMPTS (3)
+#define MAX_RECONNECTION_ATTEMPTS (10)
 
 /**
  * Copyright Fractal Computers, Inc. 2020
@@ -60,6 +61,13 @@ int configureCache(void);
 int configureSSHKeys(void);
 
 int sendTimeToServer(void);
+
+/**
+ * Used to tell the server the user, which is used for sentry
+ * @param email user email
+ * @return 0 for success, 1 for failure
+ */
+int sendEmailToServer(char* email);
 
 int updateMouseMotion();
 

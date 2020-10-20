@@ -45,7 +45,6 @@ typedef struct audio_device_t {
     unsigned int sample_rate;
     enum _snd_pcm_format sample_format;
     uint8_t* buffer;
-    snd_pcm_hw_params_t* params;
     int dummy_state;
 } audio_device_t;
 

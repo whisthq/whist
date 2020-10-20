@@ -82,6 +82,8 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
+unsigned short port_mappings[USHRT_MAX];
+
 /*
 ============================
 Private Custom Types
@@ -186,6 +188,15 @@ Public Function Implementations
 ============================
 */
 
+/*
+@brief                          Initialize default port mappings (i.e. the identity)
+*/
+void init_default_port_mappings() {
+    for (int i = 0; i < USHRT_MAX; i++) {
+        port_mappings[i] = i;
+    }
+}
+
 int GetLastNetworkError() {
 #if defined(_WIN32)
     return WSAGetLastError();
@@ -222,6 +233,7 @@ bool handshakePrivateKey(SocketContext *context) {
                     GetLastNetworkError());
         return false;
     }
+    LOG_INFO("Private key request received");
     if (!signPrivateKey(&their_priv_key_data, recv_size, context->aes_private_key)) {
         LOG_ERROR("signPrivateKey failed!");
         return false;
@@ -240,6 +252,7 @@ bool handshakePrivateKey(SocketContext *context) {
         LOG_ERROR("Could not confirmPrivateKey!");
         return false;
     } else {
+        LOG_INFO("Private key confirmed");
         set_timeout(context->s, context->timeout);
         return true;
     }
@@ -384,6 +397,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
         // Send it off
         SDL_LockMutex(context->mutex);
+        // LOG_INFO("Sending UDP Packet of length %d", encrypt_len);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
         SDL_UnlockMutex(context->mutex);
 
@@ -423,6 +437,7 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
                                      (unsigned char *)context->aes_private_key);
 
     SDL_LockMutex(context->mutex);
+    LOG_INFO("Replay Packet of length %d", encrypt_len);
     int sent_size = sendp(context, &encrypted_packet, encrypt_len);
     SDL_UnlockMutex(context->mutex);
 
@@ -535,7 +550,10 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
             int error = GetLastNetworkError();
             switch (error) {
                 case FRACTAL_ETIMEDOUT:
+                    // LOG_ERROR("Read UDP Packet error: Timeout");
                 case FRACTAL_EWOULDBLOCK:
+                    // LOG_ERROR("Read UDP Packet error: Blocked");
+                    // Break on expected network errors
                     break;
                 default:
                     LOG_WARNING("Unexpected Packet Error: %d", error);
@@ -553,7 +571,7 @@ void ClearReadingTCP(SocketContext *context) {
     reading_packet_len = 0;
 }
 
-FractalPacket *ReadTCPPacket(SocketContext *context) {
+FractalPacket *ReadTCPPacket(SocketContext *context, bool should_recvp) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return NULL;
@@ -568,9 +586,9 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
     static char encrypted_packet_buffer[LARGEST_ENCRYPTED_TCP_PACKET];
     static char decrypted_packet_buffer[LARGEST_TCP_PACKET];
 
-    int len;
+    int len = TCP_SEGMENT_SIZE;
 
-    do {
+    while (should_recvp && len == TCP_SEGMENT_SIZE) {
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
         len = recvp(context, encrypted_packet_buffer + reading_packet_len,
@@ -587,11 +605,11 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
             reading_packet_len += len;
         }
 
-        // If the previous recvp was maxed out, then try pulling some more from
-        // recvp
-    } while (len == TCP_SEGMENT_SIZE);
+        // If the previous recvp was maxed out, ie == TCP_SEGMENT_SIZE,
+        // then try pulling some more from recvp
+    };
 
-    if ((unsigned long)reading_packet_len > sizeof(int)) {
+    if ((unsigned long)reading_packet_len >= sizeof(int)) {
         // The amount of data bytes read (actual len), and the amount of bytes
         // we're looking for (target len), respectively
         int actual_len = reading_packet_len - sizeof(int);
@@ -1053,6 +1071,11 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
 
 int CreateTCPContext(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
                      int stun_timeout_ms, bool using_stun, char *aes_private_key) {
+    if ((int)((unsigned short)port) != port) {
+        LOG_ERROR("Port invalid: %d", port);
+    }
+    port = port_mappings[port];
+
     if (context == NULL) {
         LOG_ERROR("Context is NULL");
         return -1;
@@ -1297,8 +1320,8 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
         return -1;
     }
 
-    LOG_WARNING("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
-                port, ntohs(context->addr.sin_port));
+    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
+             port, ntohs(context->addr.sin_port));
 
     set_timeout(context->s, recvfrom_timeout_ms);
 
@@ -1392,6 +1415,11 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
 
 int CreateUDPContext(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
                      int stun_timeout_ms, bool using_stun, char *aes_private_key) {
+    if ((int)((unsigned short)port) != port) {
+        LOG_ERROR("Port invalid: %d", port);
+    }
+    port = port_mappings[port];
+
     if (context == NULL) {
         LOG_ERROR("Context is NULL");
         return -1;
@@ -1436,8 +1464,8 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
 
     host = gethostbyname(host_s);
 
-    if (!host) {
-        LOG_WARNING("Could not SendJSONPost to %s\n", host_s);
+    if (host == NULL) {
+        LOG_ERROR("Error %d: Could not resolve host %s", h_errno, host_s);
         return false;
     }
 
@@ -1523,6 +1551,10 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     set_timeout(Socket, 250);
 
     host = gethostbyname(host_s);
+    if (host == NULL) {
+        LOG_ERROR("Error %d: Could not resolve host %s", h_errno, host_s);
+        return false;
+    }
 
     // create the struct for the webserver address socket we will query
     webserver_socketAddress.sin_family = AF_INET;
@@ -1541,7 +1573,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     // the user first, we create the POST request message
     char *message = malloc(250);
     sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
-
+    LOG_INFO("%s", message);
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
         // error sending, terminate
@@ -1592,7 +1624,7 @@ void set_timeout(SOCKET s, int timeout_ms) {
 
         if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&read_timeout,
                        sizeof(read_timeout)) < 0) {
-            LOG_WARNING("Failed to set timeout");
+            LOG_WARNING("Failed to set timeout: %d", GetLastNetworkError());
             return;
         }
     }

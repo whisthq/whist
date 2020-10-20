@@ -1,8 +1,25 @@
 #include "cpucapturetransfer.h"
 
 int cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder) {
+#ifdef _WIN32
+    encoder->already_encoded = false;
+#else
+    if (device->capture_is_on_nvidia) {
+        encoder->encoded_frame_data = device->nvidia_capture_device.frame;
+        encoder->encoded_frame_size = device->nvidia_capture_device.size;
+        encoder->is_iframe = device->nvidia_capture_device.is_iframe;
+        encoder->out_width = device->nvidia_capture_device.width;
+        encoder->out_height = device->nvidia_capture_device.height;
+        encoder->codec_type = device->nvidia_capture_device.codec_type;
+        encoder->already_encoded = true;
+        return 0;
+    } else {
+        encoder->already_encoded = false;
+    }
+#endif
+
     static int times_measured = 0;
-    static double time_spent = 0.;
+    static double time_spent = 0.0;
 
     clock cpu_transfer_timer;
     StartTimer(&cpu_transfer_timer);

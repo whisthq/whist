@@ -33,9 +33,12 @@ The option flags are as follows:
   -s, --spectate                launch the protocol as a spectator
   -c, --codec=CODEC             launch the protocol using the codec
                                   specified: h264 (default) or h265
-  -k, --running_ci             The client will quit after time_to_run_ci seconds
-      --help     display help
-      --version  output version information
+  -u, --user                    Tell fractal the users email, optional defaults to None"
+  -e, --environment             The environment the protocol is running
+                                in. e.g master, staging, dev. This is used
+                                for sentry. Optional defaults to dev
+  --help     display this help and exit"
+  --version  output version information and exit;
 ```
 For example, to run the protocol on IP address `0.0.0.0` in an `800x600` window on Linux, call:
 ```

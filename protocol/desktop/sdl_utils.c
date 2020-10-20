@@ -15,6 +15,7 @@ close the window.
 
 extern volatile int output_width;
 extern volatile int output_height;
+extern volatile SDL_Window* window;
 
 #if defined(_WIN32)
 HHOOK g_hKeyboardHook;
@@ -24,10 +25,12 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam);
 // Send a key to SDL event queue, presumably one that is captured and wouldn't
 // naturally make it to the event queue by itself
 
-void SendCapturedKey(FractalKeycode key, int type, int time) {
+void SendCapturedKey(SDL_Keycode key, int type, int time) {
     SDL_Event e = {0};
     e.type = type;
-    e.key.keysym.scancode = (SDL_Scancode)key;
+    e.key.keysym.sym = key;
+    e.key.keysym.scancode = SDL_GetScancodeFromName(SDL_GetKeyName(key));
+    LOG_INFO("KEY: %d", key);
     e.key.timestamp = time;
     SDL_PushEvent(&e);
 }
@@ -45,7 +48,7 @@ int resizingEventWatcher(void* data, SDL_Event* event) {
     return 0;
 }
 
-SDL_Window* initSDL(int target_output_width, int target_output_height) {
+SDL_Window* initSDL(int target_output_width, int target_output_height, char* name) {
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
@@ -77,7 +80,7 @@ SDL_Window* initSDL(int target_output_width, int target_output_height) {
         target_output_height = full_height;
     }
 
-    SDL_Window* window;
+    SDL_Window* sdl_window;
 
 #if defined(_WIN32)
     static const uint32_t fullscreen_flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP;
@@ -89,19 +92,19 @@ SDL_Window* initSDL(int target_output_width, int target_output_height) {
 
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
-    window = SDL_CreateWindow(
-        "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, target_output_width,
-        target_output_height,
+    sdl_window = SDL_CreateWindow(
+        (name == NULL ? "Fractal" : name), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        target_output_width, target_output_height,
         SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : windowed_flags));
 
     if (!is_fullscreen) {
         // Resize event handling
-        SDL_AddEventWatch(resizingEventWatcher, (SDL_Window*)window);
-        if (!window) {
+        SDL_AddEventWatch(resizingEventWatcher, (SDL_Window*)sdl_window);
+        if (!sdl_window) {
             LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
             return NULL;
         }
-        SDL_SetWindowResizable((SDL_Window*)window, true);
+        SDL_SetWindowResizable((SDL_Window*)sdl_window, true);
     }
 
     SDL_Event cur_event;
@@ -112,20 +115,20 @@ SDL_Window* initSDL(int target_output_width, int target_output_height) {
 
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
-    output_width = get_window_pixel_width((SDL_Window*)window);
-    output_height = get_window_pixel_height((SDL_Window*)window);
+    output_width = get_window_pixel_width((SDL_Window*)sdl_window);
+    output_height = get_window_pixel_height((SDL_Window*)sdl_window);
 
-    return window;
+    return sdl_window;
 }
 
-void destroySDL(SDL_Window* window) {
+void destroySDL(SDL_Window* window_param) {
     LOG_INFO("Destroying SDL");
 #if defined(_WIN32)
     UnhookWindowsHookEx(g_hKeyboardHook);
 #endif
-    if (window) {
-        SDL_DestroyWindow((SDL_Window*)window);
-        window = NULL;
+    if (window_param) {
+        SDL_DestroyWindow((SDL_Window*)window_param);
+        window_param = NULL;
     }
     SDL_Quit();
 }
@@ -140,56 +143,58 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam) {
     // By returning a non-zero value from the hook procedure, the
     // message does not get passed to the target window
     KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)lParam;
+    int flags = SDL_GetWindowFlags((SDL_Window*)window);
+    if ((flags & SDL_WINDOW_INPUT_FOCUS)) {
+        switch (nCode) {
+            case HC_ACTION: {
+                // Check to see if the CTRL key is pressed
+                BOOL bControlKeyDown = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
+                BOOL bAltKeyDown = pkbhs->flags & LLKHF_ALTDOWN;
 
-    switch (nCode) {
-        case HC_ACTION: {
-            // Check to see if the CTRL key is pressed
-            BOOL bControlKeyDown = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
-            BOOL bAltKeyDown = pkbhs->flags & LLKHF_ALTDOWN;
+                int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
+                int time = pkbhs->time;
 
-            int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
-            int time = pkbhs->time;
+                // Disable LWIN
+                if (pkbhs->vkCode == VK_LWIN) {
+                    SendCapturedKey(SDLK_LGUI, type, time);
+                    return 1;
+                }
 
-            // Disable LWIN
-            if (pkbhs->vkCode == VK_LWIN) {
-                SendCapturedKey(FK_LGUI, type, time);
-                return 1;
+                // Disable RWIN
+                if (pkbhs->vkCode == VK_RWIN) {
+                    SendCapturedKey(SDLK_RGUI, type, time);
+                    return 1;
+                }
+
+                // Disable CTRL+ESC
+                if (pkbhs->vkCode == VK_ESCAPE && bControlKeyDown) {
+                    SendCapturedKey(SDLK_ESCAPE, type, time);
+                    return 1;
+                }
+
+                // Disable ALT+ESC
+                if (pkbhs->vkCode == VK_ESCAPE && bAltKeyDown) {
+                    SendCapturedKey(SDLK_ESCAPE, type, time);
+                    return 1;
+                }
+
+                // Disable ALT+TAB
+                if (pkbhs->vkCode == VK_TAB && bAltKeyDown) {
+                    SendCapturedKey(SDLK_TAB, type, time);
+                    return 1;
+                }
+
+                // Disable ALT+F4
+                if (pkbhs->vkCode == VK_F4 && bAltKeyDown) {
+                    SendCapturedKey(SDLK_F4, type, time);
+                    return 1;
+                }
+
+                break;
             }
-
-            // Disable RWIN
-            if (pkbhs->vkCode == VK_RWIN) {
-                SendCapturedKey(FK_RGUI, type, time);
-                return 1;
-            }
-
-            // Disable CTRL+ESC
-            if (pkbhs->vkCode == VK_ESCAPE && bControlKeyDown) {
-                SendCapturedKey(FK_ESCAPE, type, time);
-                return 1;
-            }
-
-            // Disable ALT+ESC
-            if (pkbhs->vkCode == VK_ESCAPE && bAltKeyDown) {
-                SendCapturedKey(FK_ESCAPE, type, time);
-                return 1;
-            }
-
-            // Disable ALT+TAB
-            if (pkbhs->vkCode == VK_TAB && bAltKeyDown) {
-                SendCapturedKey(FK_TAB, type, time);
-                return 1;
-            }
-
-            // Disable ALT+F4
-            if (pkbhs->vkCode == VK_F4 && bAltKeyDown) {
-                SendCapturedKey(FK_F4, type, time);
-                return 1;
-            }
-
-            break;
+            default:
+                break;
         }
-        default:
-            break;
     }
     return CallNextHookEx(mule, nCode, wParam, lParam);
 }

@@ -194,6 +194,11 @@ Public Functions
 ============================
 */
 
+/*
+@brief                          Initialize default port mappings (i.e. the identity)
+*/
+void init_default_port_mappings();
+
 /**
  * @brief                          This will set the socket s to have timeout
  *                                 timeout_ms. Use 0 to have a non-blocking
@@ -319,7 +324,7 @@ int Ack(SocketContext* context);
  * @returns                        A pointer to the FractalPacket on success,
  *                                 NULL on failure
  */
-FractalPacket* ReadTCPPacket(SocketContext* context);
+FractalPacket* ReadTCPPacket(SocketContext* context, bool should_recvp);
 FractalPacket* ReadUDPPacket(SocketContext* context);
 
 /**

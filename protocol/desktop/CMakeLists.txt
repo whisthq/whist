@@ -2,6 +2,13 @@
 ################## FractalClient ##################
 ]]
 
+# Add rpath to look for shared libraries on linux
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH $ORIGIN)
+endif()
+
 add_executable(FractalClient
         main.c
         audio.c
@@ -13,6 +20,13 @@ add_executable(FractalClient
         server_message_handler.c
         video.c
         )
+
+# copy the sentry shared library to the build folder after the build
+add_custom_command(
+        TARGET FractalClient POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/sentry-native/${CMAKE_SHARED_LIBRARY_PREFIX}sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
+        ${CMAKE_SOURCE_DIR}/desktop/build${arch}/${CMAKE_SYSTEM_NAME})
 
 # set the build directory
 set_target_properties(FractalClient PROPERTIES
@@ -61,7 +75,7 @@ target_link_libraries(FractalClient
         fractalNetwork
         fractalUtils
         ${STATIC_SDL2}
-        ${STATIC_OPENSSL}
+        sentry
         )
 
 #[[
@@ -76,6 +90,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
             ${ALSA_LIBRARIES}
+            crypto
             m
             )
 endif()
@@ -98,6 +113,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "-framework QuartzCore"
         objc
         iconv
+        ${STATIC_OPENSSL}
         )
 endif()
 
@@ -120,6 +136,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     # Link to system libs
     target_link_libraries(FractalClient
+            ${STATIC_OPENSSL}
             libvcruntime
             libucrt
             libcmt

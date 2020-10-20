@@ -1,8 +1,31 @@
+#ifndef SERVER_CLIENT_H
+#define SERVER_CLIENT_H
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file client.h
+ * @brief This file contains the code for interacting with the client buffer.
+============================
+Usage
+============================
+
+*/
+
+/*
+============================
+Includes
+============================
+*/
+
 #include "../fractal/core/fractal.h"
 #include "../fractal/utils/clock.h"
 #include "../fractal/utils/rwlock.h"
 
-// the write is_active_rwlock takes precedence over
+/*
+============================
+Custom types
+============================
+*/
+
 typedef struct Client {
     /* ACTIVE */
     bool is_active;       // protected by global is_active_rwlock
@@ -44,20 +67,147 @@ extern int num_controlling_clients;
 extern int num_active_clients;
 extern int host_id;
 
+/*
+============================
+Public Functions
+============================
+*/
+
+/**
+ * @brief                          Initializes all clients objects in the client
+ *                                 buffer.
+ *
+ * @details                        Must be called before the client buffer
+ *                                 can be used.
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
 int initClients(void);
 
+/**
+ * @brief                          De-initializes all clients objects in the
+ *                                 client buffer.
+ *
+ * @details                        Should be called after initClients() and
+ *                                 before program exit. Does not disconnect any
+ *                                 connected clients.
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
 int destroyClients(void);
 
+/**
+* @brief                          Deactivates active client.
+*
+* @details                        Disconnects client. Updates count of active
+*                                 clients. May only be called on an active
+*                                 client. The associated client object is
+*                                 not destroyed and may be made active in the
+*                                 future.
+
+* @param id                       Client ID of active client to deactivate
+*
+* @returns                        Returns -1 on failure, 0 on success
+*/
 int quitClient(int id);
 
+/**
+ * @brief                          Deactivates all active clients.
+ *
+ * @details                        Disconnects client. Updates count of active
+ *                                 clients. The associated client objects are
+ *                                 not destroyed and may be made active in the
+ *                                 future.
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
 int quitClients(void);
 
+/**
+ * @brief                          Determines if any active client has timed out.
+ *
+ * @details                        Checks the time of the last received ping for
+ *                                 each active client. If the time since the
+ *                                 server has received a ping from a client
+ *                                 equals or exceeds the timeout threshold, the
+ *                                 client is considered to have timed out.
+ *
+ * @param timeout                  Duration (in seconds) after which an active
+ *                                 client is deemed timed out if the server has
+ *                                 not received a ping from the client.
+ *
+ * @param exists                   The field pointed to by exists is set to true
+ *                                 if one or more clients are timed out client
+ *                                 and false otherwise.
+ *
+ * @returns                        Returns -1 on failure, 0 on success. Whether
+ *                                 or not there exists a timed out client does
+ *                                 not mean failure.
+ */
 int existsTimedOutClient(double timeout, bool *exists);
 
+/**
+ * @brief                          Quits all timed out clients.
+ *
+ * @param timeout                  Duration (in seconds) after which a client
+ *                                 is deemed timed out if the server has not
+ *                                 received a ping from the client.
+ *
+ * @returns                        Returns -1 on failure, 0 on success.
+ */
 int reapTimedOutClients(double timeout);
 
+/**
+ * @brief                          Finds the client ID of the active client
+ *                                 object associated with a username, if there is
+ *                                 one.
+ *
+ * @param username                 Username to be searched for.
+ *
+ * @param found                    Populated with true if an associated client ID
+ *                                 is found, false otherise.
+ *
+ * @param id                       Populated with found client ID, if one is
+ *                                 found.
+ *
+ * @returns                        Returns -1 on failure, 0 on success. Not
+ *                                 finding an associated ID does not mean
+ *                                 failure.
+ */
 int tryFindClientIdByUsername(int username, bool *found, int *id);
 
+/**
+ * @brief                          Finds an available client ID.
+ *
+ * @details                        If a client object is inactive, that object
+ *                                 and the associated client ID are
+ *                                 available for re-use. Function fails if no
+ *                                 client ID is available.
+ *
+ * @param id                       Points to field which function populates
+ *                                 with available client ID.
+ *
+ * @returns                        Returns -1 on failure (including no
+ *                                 client IDs are available), 0 on success.
+ */
 int getAvailableClientID(int *id);
 
+/**
+ * @brief                          Fills buffer with status info for every
+ *                                 active client.
+ *
+ * @details                        Status info includes mouse position,
+ *                                 interaction mode, and more.
+ *
+ * @param msgs                     Buffer to be filled with peer update info.
+ *                                 Must be at least as large as the number
+ *                                 of presently active clients times the size of
+ *                                 each PeerUpdateMessage.
+ *
+ * @param num_msgs                 Number of messages filled by function.
+ *
+ * @returns                        Returns -1 on failure, 0 on success.
+ */
 int fillPeerUpdateMessages(PeerUpdateMessage *msgs, size_t *num_msgs);
+
+#endif  // SERVER_CLIENT_H

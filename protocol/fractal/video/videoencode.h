@@ -33,6 +33,7 @@ typedef struct video_encoder_t {
     AVFilterContext* pFilterGraphSource;
     AVFilterContext* pFilterGraphSink;
     AVBufferRef* hw_device_ctx;
+    int frames_since_last_iframe;
 
     int num_packets;
     AVPacket packets[MAX_ENCODER_PACKETS];
@@ -40,10 +41,13 @@ typedef struct video_encoder_t {
     int in_width, in_height;
     int out_width, out_height;
     int gop_size;
+    bool is_iframe;
     void* sw_frame_buffer;
     void* encoded_frame_data;  /// <Pointer to the encoded data
     int encoded_frame_size;    /// <size of encoded frame in bytes
 
+    bool using_capture_encoder;
+    bool already_encoded;
     AVFrame* hw_frame;
     AVFrame* sw_frame;
     AVFrame* filtered_frame;
@@ -72,6 +76,8 @@ Public Functions
  * @param bitrate                  The number of bits per second that this
  *                                 encoder will encode to
  * @param codec_type               Which codec type (h264 or h265) to use
+ *
+ * @param using_capture_encoder    Whether or not the given frame will already be encoded
  *
  * @returns                        The newly created encoder
  */

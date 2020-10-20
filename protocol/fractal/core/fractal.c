@@ -13,6 +13,7 @@
 #include "../utils/sysinfo.h"
 
 #define UNUSED(x) (void)(x)
+char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 
 // Print Memory Info
 
@@ -252,37 +253,12 @@ int runcmd(const char* cmdline, char** response) {
         if (feof(pPipe)) {
             return current_len;
         } else {
-            LOG_WARNING("Error: Failed to read the pipe to the end.\n");
+            LOG_WARNING("Error: Failed to read the pipe to the end.");
             *response = NULL;
             return -1;
         }
     }
 #endif
-}
-
-char* get_ip() {
-    static char ip[128];
-    static bool already_obtained_ip = false;
-    if (already_obtained_ip) {
-        return ip;
-    }
-
-    char* buf;
-    runcmd("curl ipinfo.io", &buf);
-
-    json_t json;
-    if (!parse_json(buf, &json)) {
-        LOG_WARNING("curl ipinfo.io did not return an IP: %s", buf);
-        return NULL;
-    }
-    kv_pair_t* kv = get_kv(&json, "ip");
-
-    memcpy(ip, kv->str_value, sizeof(ip));
-
-    free_json(json);
-
-    already_obtained_ip = true;
-    return ip;
 }
 
 bool read_hexadecimal_private_key(char* hex_string, char* private_key) {
@@ -303,6 +279,7 @@ static bool already_obtained_vm_type = false;
 static clock last_vm_info_check_time;
 static bool is_using_stun;
 static char* access_token = NULL;
+static char* vm_password = NULL;
 bool is_trying_staging_protocol_info = false;
 
 void update_webserver_parameters() {
@@ -368,6 +345,7 @@ void update_webserver_parameters() {
     kv_pair_t* private_key = get_kv(&json, "private_key");
     kv_pair_t* using_stun = get_kv(&json, "using_stun");
     kv_pair_t* access_token_value = get_kv(&json, "access_token");
+    kv_pair_t* vm_password_value = get_kv(&json, "vm_password");
 
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {
@@ -408,6 +386,10 @@ void update_webserver_parameters() {
                 free(access_token);
             }
             access_token = clone(access_token_value->str_value);
+        }
+
+        if (vm_password_value && vm_password_value->type == JSON_STRING) {
+            vm_password = clone(vm_password_value->str_value);
         }
     } else {
         LOG_WARNING("COULD NOT GET JSON PARAMETERS FROM: %s", json_str);
@@ -458,6 +440,16 @@ char* get_access_token() {
         LOG_ERROR("Webserver parameters not updated!");
     }
     return access_token;
+}
+
+char* get_vm_password() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    if (!vm_password) {
+        return "password1234567.";
+    }
+    return vm_password;
 }
 
 int GetFmsgSize(FractalClientMessage* fmsg) {

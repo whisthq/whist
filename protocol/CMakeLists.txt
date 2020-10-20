@@ -102,7 +102,6 @@ else()
     endif()
 endif()
 
-
 # FFmpeg: using our provided libs on mac and windows and system on linux.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FFMPEG_LIBS libswresample.3.dylib;libavcodec.58.dylib;libavdevice.58.dylib;libavfilter.7.dylib;
@@ -154,6 +153,25 @@ endif ()
 ################## Libraries we supply ##################
 ]]
 # the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
+# For linux we use the system openssl/libcrypto. For mac and windows we bundle our own because is not included with the os
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
+            NO_DEFAULT_PATH
+            NO_CMAKE_ENVIRONMENT PATH
+            NO_CMAKE_PATH
+            NO_SYSTEM_ENVIRONMENT_PATH
+            NO_CMAKE_SYSTEM_PATH
+            NO_CMAKE_FIND_ROOT_PATH)
+
+    if (NOT STATIC_OPENSSL)
+        message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
+    endif()
+else()
+    find_package(OpenSSL REQUIRED)
+endif()
+
+
+
 find_library(STATIC_SDL2 NAMES SDL2 PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT PATH
@@ -165,17 +183,6 @@ if (NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
-find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
-        NO_DEFAULT_PATH
-        NO_CMAKE_ENVIRONMENT PATH
-        NO_CMAKE_PATH
-        NO_SYSTEM_ENVIRONMENT_PATH
-        NO_CMAKE_SYSTEM_PATH
-        NO_CMAKE_FIND_ROOT_PATH)
-
-if (NOT STATIC_OPENSSL)
-    message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
-endif()
 
 find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/
         NO_DEFAULT_PATH
@@ -189,6 +196,38 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/")
 endif()
 
+#download and install Sentry CMake project
+# This is fixed to sdk version 0.4.1
+set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.1/sentry-native.zip)
+set(sentry_dir sentry-native)
+MESSAGE(VERBOSE ${CMAKE_SOURCE_DIR}/${sentry_dir})
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
+    MESSAGE(STATUS "Downloading Sentry")
+    file(DOWNLOAD ${sentry_url} "${CMAKE_SOURCE_DIR}/${sentry_dir}.zip"
+            STATUS sentry_dl_status)
+    MESSAGE(VERBOSE ${sentry_dl_status})
+    file(MAKE_DIRECTORY ${sentry_dir})
+endif()
+
+execute_process(
+        COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${sentry_dir}
+)
+execute_process(
+        COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
+)
+# Do this before setting the OSX compiler so we do not mess with the sentry-native build
+add_subdirectory(sentry-native)
+
+# set a standard location for the sentry shared lib so we can copy it into client/server build folders as a post build step
+set_target_properties(sentry PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
+        )
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  target_compile_options(sentry PRIVATE -Wno-pedantic)
+endif()
+
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     SET(CMAKE_C_COMPILER clang)
@@ -200,6 +239,8 @@ endif()
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
+include_directories(sentry-native/include)
+
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
@@ -211,3 +252,4 @@ if (${BUILD_SERVER} MATCHES "ON" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
     message(STATUS building server)
     add_subdirectory(server)
 endif()
+
