@@ -181,14 +181,11 @@ int GetTimeData(FractalTimeData* time_data) {
 }
 
 void SetTimezoneFromIANAName(char* linux_tz_name) {
-    // TODO we need the sudo password on the server to set the time
-    // when we get around to implementing that we should update this function to
-    // actually work
-    //    char cmd[500] = "echo {INSERT PASSWORD HERE WHEN WE CAN} | sudo -S
-    //    timedatectl set-timezone "; snprintf(cmd + strlen(cmd),
-    //    strlen(linux_tz_name), linux_tz_name);
-    //(void*)linux_tz_name;  // silence unused variable warning
-    UNUSED(linux_tz_name);  // will need to use this at some point
+    // Two spaces to hide from bash history
+    char cmd[2000] = "  echo %s | sudo -S timedatectl set-timezone %s";
+    snprintf(cmd, sizeof(cmd), get_vm_password(), linux_tz_name);
+
+    runcmd(cmd, NULL);
 
     return;
 }

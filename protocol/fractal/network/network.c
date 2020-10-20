@@ -571,7 +571,7 @@ void ClearReadingTCP(SocketContext *context) {
     reading_packet_len = 0;
 }
 
-FractalPacket *ReadTCPPacket(SocketContext *context) {
+FractalPacket *ReadTCPPacket(SocketContext *context, bool should_recvp) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return NULL;
@@ -586,9 +586,9 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
     static char encrypted_packet_buffer[LARGEST_ENCRYPTED_TCP_PACKET];
     static char decrypted_packet_buffer[LARGEST_TCP_PACKET];
 
-    int len;
+    int len = TCP_SEGMENT_SIZE;
 
-    do {
+    while (should_recvp && len == TCP_SEGMENT_SIZE) {
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
         len = recvp(context, encrypted_packet_buffer + reading_packet_len,
@@ -605,11 +605,11 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
             reading_packet_len += len;
         }
 
-        // If the previous recvp was maxed out, then try pulling some more from
-        // recvp
-    } while (len == TCP_SEGMENT_SIZE);
+        // If the previous recvp was maxed out, ie == TCP_SEGMENT_SIZE,
+        // then try pulling some more from recvp
+    };
 
-    if ((unsigned long)reading_packet_len > sizeof(int)) {
+    if ((unsigned long)reading_packet_len >= sizeof(int)) {
         // The amount of data bytes read (actual len), and the amount of bytes
         // we're looking for (target len), respectively
         int actual_len = reading_packet_len - sizeof(int);

@@ -86,6 +86,7 @@ int handleSDLEvent(SDL_Event *event) {
                 event->key.keysym.scancode = (SDL_Scancode)FK_LCTRL;
             }
 #endif
+
             if (handleKeyUpDown(event) != 0) {
                 return -1;
             }
@@ -158,8 +159,10 @@ int handleKeyUpDown(SDL_Event *event) {
         (FractalKeycode)SDL_GetScancodeFromName(SDL_GetKeyName(event->key.keysym.sym));
     bool is_pressed = event->key.type == SDL_KEYDOWN;
 
-    LOG_INFO("Scancode: %d", event->key.keysym.scancode);
-    LOG_INFO("Keycode: %d %d", keycode, is_pressed);
+    // LOG_INFO("Scancode: %d", event->key.keysym.scancode);
+    // LOG_INFO("Keycode: %d %d", keycode, is_pressed);
+    // LOG_INFO("%s %s", (is_pressed ? "Pressed" : "Released"),
+    // SDL_GetKeyName(event->key.keysym.sym));
 
     // Keep memory of alt/ctrl/lgui/rgui status
     if (keycode == FK_LALT) {
@@ -246,6 +249,9 @@ int handleMouseButtonUpDown(SDL_Event *event) {
     // Record if left / right / middle button
     fmsg.mouseButton.button = event->button.button;
     fmsg.mouseButton.pressed = event->button.type == SDL_MOUSEBUTTONDOWN;
+    if (fmsg.mouseButton.button == MOUSE_L) {
+        SDL_CaptureMouse(fmsg.mouseButton.pressed);
+    }
     SendFmsg(&fmsg);
 
     return 0;

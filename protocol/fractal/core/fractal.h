@@ -430,6 +430,7 @@ typedef enum FractalClientMessageType {
 
 typedef struct FractalClientMessage {
     FractalClientMessageType type;  ///< Input message type.
+    unsigned int id;
     union {
         FractalKeyboardMessage keyboard;                  ///< Keyboard message.
         FractalMouseButtonMessage mouseButton;            ///< Mouse button message.
@@ -625,6 +626,14 @@ bool get_using_stun();
  * @returns                        The access token
  */
 char* get_access_token();
+
+/**
+ * @brief                          Queries the webserver for the VM password
+ * status
+ *
+ * @returns                        The password for the VM
+ */
+char* get_vm_password();
 
 /**
  * @brief                          Calculate the size of a FractalClientMessage
