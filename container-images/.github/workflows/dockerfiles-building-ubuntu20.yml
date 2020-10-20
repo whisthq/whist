@@ -35,19 +35,19 @@ jobs:
         run: cd base && docker build . --file Dockerfile.20 --tag fractal/base:current-build
 
       - name: Build the Ubuntu 20.04 Google Chrome Image
-        run: cd browsers/chrome && docker build . --file Dockerfile.20 --tag fractal/chrome:current-build
+        run: cd browsers/chrome && docker build . --file Dockerfile.20 --tag fractal/browsers/chrome:current-build
 
       - name: Build the Ubuntu 20.04 Mozilla Firefox Image
-        run: cd browsers/firefox && docker build . --file Dockerfile.20 --tag fractal/firefox:current-build
+        run: cd browsers/firefox && docker build . --file Dockerfile.20 --tag fractal/browsers/firefox:current-build
 
       - name: Build the Ubuntu 20.04 Slack Image
-        run: cd productivity/slack && docker build . --file Dockerfile.20 --tag fractal/slack:current-build
+        run: cd productivity/slack && docker build . --file Dockerfile.20 --tag fractal/productivity/slack:current-build
 
       - name: Build the Ubuntu 20.04 Notion Image
-        run: cd productivity/notion && docker build . --file Dockerfile.20 --tag fractal/notion:current-build
+        run: cd productivity/notion && docker build . --file Dockerfile.20 --tag fractal/productivity/notion:current-build
 
       - name: Build the Ubuntu 20.04 Blender Image
-        run: cd creative/blender && docker build . --file Dockerfile.20 --tag fractal/blender:current-build
+        run: cd creative/blender && docker build . --file Dockerfile.20 --tag fractal/creative/blender:current-build
 
       - name: Build the Ubuntu 20.04 Blockbench Image
-        run: cd creative/blockbench && docker build . --file Dockerfile.20 --tag fractal/blockbench:current-build
+        run: cd creative/blockbench && docker build . --file Dockerfile.20 --tag fractal/creative/blockbench:current-build
