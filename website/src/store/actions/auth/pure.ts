@@ -6,6 +6,7 @@ export function updateUser(body: {
     name?: string
     accessToken?: string
     refreshToken?: string
+    emailVerificationToken?: string
 }) {
     return {
         type: UPDATE_USER,

@@ -4,6 +4,7 @@ export const DEFAULT = {
         name: null,
         accessToken: null,
         refreshToken: null,
+        emailVerificationToken: null,
     },
     authFlow: {
         loginWarning: null,
