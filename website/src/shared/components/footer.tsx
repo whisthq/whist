@@ -11,6 +11,9 @@ import {
 
 import "styles/shared.css"
 
+import SecretPoints from "shared/components/secretPoints"
+import {SECRET_POINTS, EASTEREGG_POINTS} from "shared/utils/points"
+
 import MainContext from "shared/context/mainContext"
 
 const Footer = (props: any) => {
@@ -41,6 +44,15 @@ const Footer = (props: any) => {
                                 Fractal supercharges your applications by
                                 streaming them from the cloud.
                             </div>
+                            <SecretPoints
+                                points={EASTEREGG_POINTS}
+                                name={SECRET_POINTS.FOOTER_SUPER_SECRET}
+                                style={{
+                                    color: "rgb(204, 204, 204)",
+                                    width: "50%",
+                                }}
+                                spanStyle={{ color: "rgb(204, 204, 204)" }}
+                            />
                             <div
                                 style={{
                                     display: "flex",

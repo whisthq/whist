@@ -4,6 +4,9 @@ import { Row, Col } from "react-bootstrap"
 import WaitlistForm from "shared/components/waitlistForm"
 import MainContext from "shared/context/mainContext"
 
+import SecretPoints from "shared/components/secretPoints"
+import {SECRET_POINTS, EASTEREGG_POINTS} from "shared/utils/points"
+
 import Gaming from "assets/largeGraphics/gaming.svg"
 import Graphics from "assets/largeGraphics/graphics.svg"
 import Productivity from "assets/largeGraphics/productivity.svg"
@@ -159,6 +162,14 @@ function SideBySide(props: any) {
                         >
                             {descriptions[props.case]}
                         </p>
+                        <SecretPoints
+                            points={EASTEREGG_POINTS}
+                            name={
+                                props.case === "Graphics"
+                                    ? SECRET_POINTS.LANDING_NO_GPU_NO_PROBLEM
+                                    : SECRET_POINTS.ABOUT_HOW_IT_WORKS
+                            }
+                        />
                         {props.case === "Gaming" && (
                             <div style={{ marginTop: 30 }}>
                                 <WaitlistForm />

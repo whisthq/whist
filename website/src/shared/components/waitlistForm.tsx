@@ -18,6 +18,7 @@ import * as PureWaitlistAction from "store/actions/waitlist/pure"
 import * as SharedAction from "store/actions/shared"
 
 import "styles/landing.css"
+import { createSecretPointsAction } from "store/actions/waitlist/sideEffects"
 
 function WaitlistForm(props: any) {
     const { dispatch, user, waitlist, isAction } = props
@@ -121,6 +122,11 @@ function WaitlistForm(props: any) {
                     referrals: 0,
                 },
             })
+
+            // this breaks application redirect
+            // dispatch(
+            //     createSecretPointsAction()
+            // )
 
             setProcessing(false)
         } else {
