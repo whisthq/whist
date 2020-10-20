@@ -19,12 +19,12 @@ const UpdateScreen = (props: any) => {
 
     const forgotPassword = () => {
         const { shell } = require("electron")
-        shell.openExternal("https://www.fractalcomputers.com/reset")
+        shell.openExternal("https://www.tryfractal.com/reset")
     }
 
     const signUp = () => {
         const { shell } = require("electron")
-        shell.openExternal("https://www.fractalcomputers.com/auth")
+        shell.openExternal("https://www.tryfractal.com/auth")
     }
 
     useEffect(() => {

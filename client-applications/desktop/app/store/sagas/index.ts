@@ -113,7 +113,8 @@ function* fetchContainer(action: any) {
     history.push("/loading")
     const state = yield select()
     const username = state.MainReducer.auth.username
-    const region = state.MainReducer.client.region
+    //const region = state.MainReducer.client.region
+    const region = 'us-east-1'
     const app = action.app
 
     var { json, response } = yield call(
@@ -196,13 +197,13 @@ function* fetchContainer(action: any) {
                 : test_cluster
             const ip = json.output.ip ? json.output.ip : test_ip
             const port32262 = json.output.port_32262
-                ? json.output.port32262
+                ? json.output.port_32262
                 : test_port32262
             const port32263 = json.output.port_32263
-                ? json.output.port32263
+                ? json.output.port_32263
                 : test_port32263
             const port32273 = json.output.port_32273
-                ? json.output.port32273
+                ? json.output.port_32273
                 : test_port32273
             const location = json.output.location
                 ? json.output.location
@@ -219,10 +220,6 @@ function* fetchContainer(action: any) {
                     publicIP: ip,
                 })
             )
-            yield call(deleteContainer, {
-                username: username,
-                container_id: container_id,
-            })
         }
 
         yield put(
@@ -244,12 +241,13 @@ function* fetchContainer(action: any) {
 }
 
 function* deleteContainer(action: any) {
+    console.log("deleting container!")
     const state = yield select()
     var { json, response } = yield call(
         apiPost,
         `/container/delete`,
         { username: action.username, container_id: action.container_id },
-        state.MainReducer.auth.accesToken
+        state.MainReducer.auth.accessToken
     )
     yield put(
         Action.updateLoading({

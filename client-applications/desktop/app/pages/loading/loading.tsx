@@ -6,10 +6,13 @@ import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 import { debugLog } from "shared/utils/logging"
+import { deleteContainer } from "store/actions/sideEffects"
 
 const UpdateScreen = (props: any) => {
     const {
+        dispatch,
         os,
+        username,
         percentLoaded,
         status,
         container_id,
@@ -77,6 +80,7 @@ const UpdateScreen = (props: any) => {
         })
         protocol1.on("close", (code: any) => {
             debugLog("the protocol has been closed!")
+            dispatch(deleteContainer(username, container_id))
         })
         debugLog("spawn completed!")
 
@@ -162,17 +166,19 @@ const UpdateScreen = (props: any) => {
 }
 
 function mapStateToProps(state: any) {
+    console.log(state)
     return {
         os: state.MainReducer.client.os,
+        username: state.MainReducer.auth.username,
         percentLoaded: state.MainReducer.loading.percentLoaded,
         status: state.MainReducer.loading.statusMessage,
-        container_id: state.MainReducer.container.ontainer_id,
+        container_id: state.MainReducer.container.container_id,
         cluster: state.MainReducer.container.cluster,
         port32262: state.MainReducer.container.port32262,
         port32263: state.MainReducer.container.port32263,
         port32273: state.MainReducer.container.port32273,
         location: state.MainReducer.container.location,
-        ip: state.MainReducer.publicIP,
+        ip: state.MainReducer.container.publicIP,
     }
 }
 
