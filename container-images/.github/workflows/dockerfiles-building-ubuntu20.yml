@@ -1,0 +1,53 @@
+# Workflow to build Docker images for basic testing
+
+name: Dockerfiles Building
+
+on:
+  pull_request:
+    branches: [ master, dev ]
+
+jobs:
+  build-dockerfiles:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout Git repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+          token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+          submodules: recursive
+
+      - name: Checkout Protocol repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+          repository: fractalcomputers/protocol
+          token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+          path: base/protocol
+
+      - name: Build the Fractal protocol dev branch
+        run: cd base/protocol && git checkout dev && server/linux-server-setup.sh && cmake . && make -j
+
+      - name: Build the Ubuntu 20.04 Base Image
+        run: cd base && docker build . --file Dockerfile.20 --tag fractal/base:current-build
+
+      - name: Build the Ubuntu 20.04 Google Chrome Image
+        run: cd browsers/chrome && docker build . --file Dockerfile.20 --tag fractal/browsers/chrome:current-build
+
+      - name: Build the Ubuntu 20.04 Mozilla Firefox Image
+        run: cd browsers/firefox && docker build . --file Dockerfile.20 --tag fractal/browsers/firefox:current-build
+
+      - name: Build the Ubuntu 20.04 Slack Image
+        run: cd productivity/slack && docker build . --file Dockerfile.20 --tag fractal/productivity/slack:current-build
+
+      - name: Build the Ubuntu 20.04 Notion Image
+        run: cd productivity/notion && docker build . --file Dockerfile.20 --tag fractal/productivity/notion:current-build
+
+      - name: Build the Ubuntu 20.04 Blender Image
+        run: cd creative/blender && docker build . --file Dockerfile.20 --tag fractal/creative/blender:current-build
+
+      - name: Build the Ubuntu 20.04 Blockbench Image
+        run: cd creative/blockbench && docker build . --file Dockerfile.20 --tag fractal/creative/blockbench:current-build
