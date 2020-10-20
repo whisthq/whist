@@ -4,7 +4,6 @@
 |:--:|
 |![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)|
 
-
 This repository contains the code for containerizing the various applications that Fractal streams. The base image running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter images for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
 
 **Supported Applications**
@@ -14,7 +13,8 @@ This repository contains the code for containerizing the various applications th
 - Blockbench
 - Slack
 
-Note that if you add new applications, you also need to modify the `dockerfiles-building-ubuntu20.yml` and the `push-images.yml` files under `.github/workflows/` for them to be added to our [Continuous Integration](###Continous Integration) pipeline.
+See [Adding New Applications](#Adding-New-Applications).
+
 
 ## Development
 
