@@ -151,7 +151,7 @@ jobs:
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
           context: ${{ matrix.config.name }}
-          description: 'Running proc-branch_build_release.yaml'
+          description: 'Running build ${{ matrix.config.name }}'
           state: 'pending'
           sha: ${{github.sha}}
           target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{github.run_id}}"
@@ -388,6 +388,27 @@ jobs:
         with:
           name: ${{ matrix.config.client_artifact_name }}
           path: ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}
+
+      - name: Set status to success
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          context: ${{ matrix.config.name }}
+          description: 'Finished build ${{ matrix.config.name }}'
+          state: 'success'
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{github.run_id}}"
+
+      - name: Set status to failure
+        if: ${{ failure() }}
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          context: ${{ matrix.config.name }}
+          description: 'Finished build ${{ matrix.config.name }}'
+          state: 'failure'
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{github.run_id}}"
 
   # The server VM start job is kept separate from the server binary deploy job because it can take some
   # time for a VM to come online. Notice that this job has no dependencies (besides the params job) and
