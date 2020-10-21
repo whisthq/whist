@@ -150,7 +150,7 @@ jobs:
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
-          context: ${{ runner.name }}
+          context: ${{ github.job.name }}
           description: 'Running proc-branch_build_release.yaml'
           state: 'pending'
           sha: ${{github.sha}}
