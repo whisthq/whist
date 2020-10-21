@@ -967,7 +967,7 @@ int parse_args(int argc, char* argv[]) {
                 printf("Identifier passed in: %s", optarg);
                 if (strlen(optarg) > FRACTAL_IDENTIFIER_MAXLEN) {
                     printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
-                           strlen(optarg), FRACTAL_IDENTIFIER_MAXLEN);
+                           (unsigned long)strlen(optarg), FRACTAL_IDENTIFIER_MAXLEN);
                     return -1;
                 }
                 strncpy(identifier, optarg, FRACTAL_IDENTIFIER_MAXLEN);
