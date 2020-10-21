@@ -11,6 +11,7 @@ static char* access_token = NULL;
 bool is_trying_staging_protocol_info = false;
 
 extern volatile int primary_port_mapping;
+extern char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 
 void update_webserver_parameters() {
     if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 30.0) {
@@ -37,9 +38,9 @@ void update_webserver_parameters() {
     char msg[1024];
     sprintf(msg,
             "{\n"
-            "    \"port\": %d\n"
+            "    \"port\": %s\n"
             "}\n",
-            primary_port_mapping);
+            identifier);
 
     if (!SendPostRequest(will_try_staging ? STAGING_HOST : PRODUCTION_HOST,
                          "/container/protocol_info", msg, NULL, &resp_buf, resp_buf_maxlen)) {
