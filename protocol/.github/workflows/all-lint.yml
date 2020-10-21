@@ -19,7 +19,7 @@ jobs:
         with:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-      - name: install linux dependencies
+      - name: Install linux dependencies
         run: |
           sudo apt-get update -y
           ${{ github.workspace }}/desktop/linux-client-setup.sh
@@ -27,8 +27,10 @@ jobs:
         run: cmake -DBUILD_SERVER=OFF -DBUILD_CLIENT=OFF -DBUILD_TESTS=OFF .
       - name: clang-format
         run: make clang-format
-      - name: Commit files
-        run: |
-          git config --local user.email "linter@fractalcomputers.com"
-          git config --local user.name "Fractal Linter"
-          git diff-index --quiet HEAD || (echo "To pass this check please lint the code" && false)
+      - name: Report status
+        if: ${{ failure() }}
+        uses: actions/commit-status-updater@v1.0.4
+        with:
+          status: "failure"
+          description: "Please run clang-format to pass this check"
+
