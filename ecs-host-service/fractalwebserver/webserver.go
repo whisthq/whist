@@ -18,8 +18,8 @@ import (
 const stagingHost = "https://staging-webserver.tryfractal.com"
 const productionHost = "https://main-webserver.tryfractal.com"
 
-const authEndpoint = "/host-service/auth"
-const heartbeatEndpoint = "/host-service/heartbeat"
+const authEndpoint = "/host_service/auth"
+const heartbeatEndpoint = "/host_service/heartbeat"
 
 // TODO: change the webserver to use the production or staging host based on an
 // environment variable
