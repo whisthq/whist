@@ -1509,7 +1509,8 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
         size_t total_read = 0;
         int read_n;
         do {
-            read_n = recv(Socket, response + total_read, max_response_size - total_read - 1, 0);
+            read_n =
+                recv(Socket, response + total_read, (int)(max_response_size - total_read - 1), 0);
             if (read_n < 0) {
                 LOG_ERROR("Response to %s request failed! %d %d", type, read_n,
                           GetLastNetworkError());
