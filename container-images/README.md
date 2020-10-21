@@ -1,8 +1,6 @@
 # Fractal Container Images
 
-| Dockerfiles Building
-|:--:|
-|![Dockerfiles Building](https://github.com/fractalcomputers/container-images/workflows/Dockerfiles%20Building/badge.svg)|
+![Dockerfiles Building](https://github.com/fractalcomputers/container-images/workflows/Dockerfiles%20Building/badge.svg)
 
 This repository contains the code for containerizing the various applications that Fractal streams. The base Dockerfile.20 running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
 
