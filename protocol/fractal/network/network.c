@@ -1578,7 +1578,7 @@ bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token
 
 bool SendGetRequest(char *host_s, char *path, char **response_body, size_t max_response_size) {
     // prepare the message
-    char *message = malloc(400);
+    char *message = malloc(100 + strlen(path) + strlen(host_s));
     sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
 
     // send the message
