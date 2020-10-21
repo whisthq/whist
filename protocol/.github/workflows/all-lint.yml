@@ -1,6 +1,6 @@
 # Format C/C++ code via clang-format
 
-name: clang-format
+name: Linting
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ env:
 
 jobs:
   build:
-    name: clang-format
+    name: Check with clang-format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
