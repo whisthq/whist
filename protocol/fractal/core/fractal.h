@@ -29,7 +29,7 @@ Includes
 #include <Audioclient.h>
 #include <avrt.h>
 #include <initguid.h>
- #include <mmdeviceapi.h>
+#include <mmdeviceapi.h>
 #include <process.h>
 #include <synchapi.h>
 #include <windows.h>
