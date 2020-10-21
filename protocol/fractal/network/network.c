@@ -1459,7 +1459,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *message, char
         LOG_WARNING("Could not create socket.");
         return false;
     }
-    set_timeout(Socket, 250);
+    set_timeout(Socket, 1000);
 
     host = gethostbyname(host_s);
     if (host == NULL) {
