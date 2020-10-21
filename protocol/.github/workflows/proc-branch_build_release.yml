@@ -100,11 +100,11 @@ jobs:
       - name: Set status to in progress # You would run your tests before this using the output to set state/desc
         uses: Sibz/github-status-action@v1
         with:
-          authToken: ${{secrets.GITHUB_TOKEN}}
-          context: 'protocol-build-release'
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          context: 'Create Release'
           description: 'Running proc-branch_build_release.yaml'
           state: 'pending'
-          sha: ${{github.sha}}
+          sha: ${{ github.sha }}
           target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{github.run_id}}"
 
   build:
@@ -149,11 +149,11 @@ jobs:
       - name: Set status to in progress
         uses: Sibz/github-status-action@v1
         with:
-          authToken: ${{secrets.GITHUB_TOKEN}}
+          authToken: ${{ secrets.GITHUB_TOKEN }}
           context: ${{ matrix.config.name }}
           description: 'Running build ${{ matrix.config.name }}'
           state: 'pending'
-          sha: ${{github.sha}}
+          sha: ${{ github.sha }}
           target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{github.run_id}}"
 
       - name: Chocolatey install cppcheck
@@ -582,7 +582,7 @@ jobs:
           $WEBSERVER_BASE_URL/vm/deallocate
 
   create-release:
-    name: Create release
+    name: Create Release
     needs: [params, build, test_client]
     if: always() # See not in first step to understand why this is set to always run (which would seem incorrect since it should only run when builds succeed)
     runs-on: ubuntu-latest
@@ -597,10 +597,18 @@ jobs:
         run: |
           if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
             echo "Proceeding with job"
-            curl -H 'authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}}  -d '{"state": "success", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "protocol-build-release"}'
+            curl \
+              -H 'Authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}' \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}} \
+              -d '{"state": "success", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "Create Release"}'
           else
             echo "Killing release job because builds or tests failed"
-            curl -H 'authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}}  -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "protocol-build-release"}'
+            curl \
+              -H 'Authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}' \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}} \
+              -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "Create Release"}'
             exit 1
           fi
           if ! ${{ needs.params.outputs.should_release }}; then
