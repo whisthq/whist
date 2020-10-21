@@ -1,17 +1,17 @@
 # Fractal Container Images
 
-| Dockerfiles Building
-|:--:|
-|![Dockerfiles Building](https://github.com/fractalcomputers/container-images/workflows/Dockerfiles%20Building/badge.svg)|
+![Dockerfiles Building](https://github.com/fractalcomputers/container-images/workflows/Dockerfiles%20Building/badge.svg)
 
 This repository contains the code for containerizing the various applications that Fractal streams. The base Dockerfile.20 running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
 
 **Supported Applications**
 - Google Chrome
 - Mozilla Firefox
+- Brave Browser
 - Blender
 - Blockbench
 - Slack
+- Discord
 - Notion
 
 See [Adding New Applications](#Adding-New-Applications) for details on how to add support for new applications and integrate them with our continuous delivery pipeline.
@@ -116,6 +116,7 @@ For every new application that you add support for, in addition to creating its 
 - Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`, for pre-commit hooks
 - Add a command to build the new Dockerfile.20 in `.github/workflows/dockerfiles-building-ubuntu20.yml`
 - Add the path to your new Dockerfile.20 under `apps` in `.github/workflows/push-images.yml`, for continuous delivery
+- Update the list of supported applications in this README
 
 And, if you're adding a new AWS region, you should add the region name under `aws-regions` in `push-images.yml`.
 
