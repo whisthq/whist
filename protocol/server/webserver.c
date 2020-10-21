@@ -30,11 +30,12 @@ void update_webserver_parameters() {
     }
 
     char* resp_buf = NULL;
+    size_t request_buf_maxlen = 256;
     size_t resp_buf_maxlen = 4800;
 
     LOG_INFO("GETTING JSON");
 
-    char msg[1024];
+    char msg[request_buf_maxlen];
     sprintf(msg,
             "{\n"
             "    \"port\": %s\n"
