@@ -1,6 +1,6 @@
 # Format C/C++ code via clang-format
 
-name: Linting
+name: Linter
 
 on:
   pull_request:
