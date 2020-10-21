@@ -13,6 +13,7 @@ bool is_trying_staging_protocol_info = false;
 extern char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 
 void update_webserver_parameters() {
+    // Don't need to check more than once every 30 sec
     if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 30.0) {
         return;
     }
