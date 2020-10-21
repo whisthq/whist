@@ -3,6 +3,7 @@
 name: "Procedure: Branch Build & Release"
 
 on:
+  # manual/api trigger
   workflow_dispatch:
     inputs:
       ref:
@@ -99,22 +100,23 @@ jobs:
       - name: Set status to in progress # You would run your tests before this using the output to set state/desc
         uses: Sibz/github-status-action@v1
         with:
-          authToken: ${{secrets.GITHUB_TOKEN}}
-          context: 'protocol-build-release'
-          description: 'Running proc-branch_build_release.yaml'
+          authToken: ${{ github.token }}
+          context: 'Create Release'
+          description: 'Waiting for builds to complete'
           state: 'pending'
-          sha: ${{github.sha}}
-          target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{github.run_id}}"
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}"
 
   build:
-    name: Build on ${{ matrix.config.os }} using ${{ matrix.config.cc }}/${{ matrix.config.cxx }}
+    name: ${{ matrix.config.name }}
     needs: [params]
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
         config:
-          - os: windows-latest
+          - name: "Windows cl"
+            os: windows-latest
             client_artifact_name: "Windows-64bit_client"
             client_artifact_relpath: "/desktop/build64/Windows"
             client_name: "/FractalClient.exe"
@@ -124,13 +126,15 @@ jobs:
             cxx: "cl"
             cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc"
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-          - os: ubuntu-latest
+          - name: "Ubuntu gcc"
+            os: ubuntu-latest
             client_artifact_name: "Linux-64bit_client"
             client_artifact_relpath: "/desktop/build64/Linux"
             client_name: "/FractalClient"
             cc: "gcc"
             cxx: "g++"
-          - os: macos-latest
+          - name: "MacOS clang"
+            os: macos-10.14
             client_artifact_name: "macOS-64bit_client"
             client_artifact_relpath: "/desktop/build64/Darwin"
             client_name: "/FractalClient"
@@ -142,6 +146,16 @@ jobs:
         with:
           ref: ${{ needs.params.outputs.ref }}
 
+      - name: Set status to in progress
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{ github.token }}
+          context: ${{ matrix.config.name }}
+          description: 'Running build ${{ matrix.config.name }}'
+          state: 'pending'
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}"
+
       - name: Chocolatey install cppcheck
         if: runner.os == 'Windows'
         uses: crazy-max/ghaction-chocolatey@v1
@@ -152,11 +166,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
-
-      - name: Get latest sentry
-        run: |
-          pip3 install requests
-          python ${{ github.workspace }}/get_latest_sentry.py --token ${{secrets.GITHUB_TOKEN}}
 
       - name: Install CUDA for windows
         if: runner.os == 'Windows'
@@ -305,7 +314,7 @@ jobs:
               -D CMAKE_MAKE_PROGRAM=ninja
               -D CMAKE_C_COMPILER_LAUNCHER=ccache
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
-              -D CMAKE_OSX_SYSROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
+              -D CMAKE_OSX_SYSROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
               -DUSE_CPPCHECK=ON
             RESULT_VARIABLE result
           )
@@ -361,10 +370,10 @@ jobs:
         uses: mathrix-education/setup-sentry-cli@master
       - name: Upload debug information to sentry
         run: |
-            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractalcomputers -p protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
+            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractalcomputers -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
       - name: upload windows pdb
         if: runner.os == 'Windows'
-        run: sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractalcomputers -p protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
+        run: sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractalcomputers -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
 
       - name: Upload server artifact (if requested on this platform)
         if: matrix.config.server_artifact_name
@@ -379,6 +388,27 @@ jobs:
         with:
           name: ${{ matrix.config.client_artifact_name }}
           path: ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}
+
+      - name: Set status to success
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{ github.token }}
+          context: ${{ matrix.config.name }}
+          description: 'Finished build ${{ matrix.config.name }}'
+          state: 'success'
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}"
+
+      - name: Set status to failure
+        if: ${{ failure() }}
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{ github.token }}
+          context: ${{ matrix.config.name }}
+          description: 'Failed to build ${{ matrix.config.name }}'
+          state: 'failure'
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}"
 
   # The server VM start job is kept separate from the server binary deploy job because it can take some
   # time for a VM to come online. Notice that this job has no dependencies (besides the params job) and
@@ -495,7 +525,7 @@ jobs:
               cat log.txt
             log_location: log.txt
             log_artifact_name: Windows-64bit_client_test_logs
-          - os: macos-latest
+          - os: macos-10.14
             client_artifact_name: macOS-64bit_client
             test_predicate: "!contains(needs.params.outputs.should_test_macos, 'false')"
             test_script: |
@@ -552,7 +582,7 @@ jobs:
           $WEBSERVER_BASE_URL/vm/deallocate
 
   create-release:
-    name: Create release
+    name: Create Release
     needs: [params, build, test_client]
     if: always() # See not in first step to understand why this is set to always run (which would seem incorrect since it should only run when builds succeed)
     runs-on: ubuntu-latest
@@ -567,14 +597,27 @@ jobs:
         run: |
           if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
             echo "Proceeding with job"
-            curl -H 'authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}}  -d '{"state": "success", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "protocol-build-release"}'
+            curl \
+              -H 'Authorization: Bearer ${{ github.token }}' \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}} \
+              -d '{"state": "success", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Release successfully created"}'
           else
             echo "Killing release job because builds or tests failed"
-            curl -H 'authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}}  -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/$GITHUB_RUN_ID", "context": "protocol-build-release"}'
+            curl \
+              -H 'Authorization: Bearer ${{ github.token }}' \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}} \
+              -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Builds or tests failed"}'
             exit 1
           fi
           if ! ${{ needs.params.outputs.should_release }}; then
             echo "Killing release job because should_release=${{ needs.params.outputs.should_release }}"
+            curl \
+              -H 'Authorization: Bearer ${{ github.token }}' \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}} \
+              -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Did not create release because should_release was false"}'
             exit 1
           fi
       # TODO convert this into its own Github Action (ie. not embedded in this workflow but as its own published action)
@@ -633,7 +676,7 @@ jobs:
             }
             version_id = `${cur_ref_name}-${cur_date}.${cur_date_point}`
             console.log(`::set-output name=version_id::${version_id}`)
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{github.token}}
       - uses: actions/checkout@v2
         with:
           ref: ${{ needs.params.outputs.ref }}
@@ -645,7 +688,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           tag_name: ${{ steps.release_info.outputs.version_id }}
           release_name: ${{ steps.release_info.outputs.version_id }}
@@ -698,7 +741,7 @@ jobs:
       - name: Upload to release ${{ needs['create-release'].outputs.version_id }}
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ needs['create-release'].outputs.release_upload_url }}
           asset_path: ./${{ matrix.config.artifact_name }}.zip
@@ -726,7 +769,7 @@ jobs:
           fi
       - name: Trigger a client-app build for ${{ steps.release_info.outputs.version_id }}
         run: |
-          echo "base64 encoded PROC_BRANCH_BUILD_RELEASE_ID (pipe to `base64 -d` to decode): "
+          echo "base64 encoded GHA_PERSONAL_ACCESS_TOKEN (pipe to `base64 -d` to decode): "
           echo "${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}" | base64
           printf -v date '%(%Y.%-m.%-d)T'
-          curl -H 'authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches  -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "'$date'", "should_test": "false", "should_release": "true"}}'
+          curl -H 'Authorization: Bearer ${{ github.token }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches  -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "'$date'", "should_test": "false", "should_release": "true"}}'
