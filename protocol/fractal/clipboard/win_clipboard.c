@@ -473,6 +473,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
                     return;
                 }
                 if (pkt.size - 14 > sizeof(clipboard_buf)) {
+                    av_packet_unref(&pkt);
                     LOG_WARNING("Could not copy, clipboard too large! %d bytes", pkt.size - 14);
                     return;
                 }
@@ -480,6 +481,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
                 cb->size = pkt.size - 14;
                 cf_type = CF_DIB;
                 hMem = getGlobalAlloc(cb->data, cb->size);
+                av_packet_unref(&pkt);
             }
             break;
         case CLIPBOARD_FILES:

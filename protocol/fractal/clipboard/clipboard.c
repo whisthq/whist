@@ -19,7 +19,7 @@ ClipboardData* GetClipboard() {
         SDL_UnlockMutex(mutex);
         return cb;
     } else {
-        LOG_WARNING("Could not get clipboard, clipboard is busy!");
+        LOG_WARNING("GetClipboard SDL_LockMutex failed");
         return NULL;
     }
 }
@@ -34,7 +34,7 @@ void SetClipboard(ClipboardData* cb) {
         unsafe_SetClipboard(cb);
         SDL_UnlockMutex(mutex);
     } else {
-        LOG_WARNING("Could not set clipboard, clipboard is busy!");
+        LOG_WARNING("SetClipboard SDL_LockMutex failed");
     }
 }
 
