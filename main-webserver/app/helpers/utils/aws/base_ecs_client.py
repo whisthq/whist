@@ -225,15 +225,11 @@ class ECSClient:
         if not isinstance(capacity_providers, list):
             raise Exception("capacity_providers must be a list of strs")
         cluster_name = cluster_name or self.generate_name("cluster")
-        resp = self.ecs_client.create_cluster(
+        self.ecs_client.create_cluster(
             clusterName=cluster_name,
             capacityProviders=capacity_providers,
             defaultCapacityProviderStrategy=[
-                {
-                    "capacityProvider": capacity_provider,
-                    "weight": 1,
-                    "base": 0,
-                }
+                {"capacityProvider": capacity_provider, "weight": 1, "base": 0,}
                 for capacity_provider in capacity_providers
             ],
         )
@@ -582,9 +578,7 @@ class ECSClient:
 
     def stop_task(self, reason="user stopped", offset=0):
         self.ecs_client.stop_task(
-            cluster=self.cluster,
-            task=(self.tasks[offset]),
-            reason=reason,
+            cluster=self.cluster, task=(self.tasks[offset]), reason=reason,
         )
 
     def create_launch_configuration(
@@ -619,7 +613,7 @@ class ECSClient:
             userdata = f.read().format(cluster_name)
 
         launch_config_name = launch_config_name or self.generate_name("launch_configuration")
-        response = self.auto_scaling_client.create_launch_configuration(
+        _ = self.auto_scaling_client.create_launch_configuration(
             LaunchConfigurationName=launch_config_name,
             ImageId=ami,
             InstanceType=instance_type,
@@ -657,7 +651,7 @@ class ECSClient:
         auto_scaling_group_name = auto_scaling_group_name or self.generate_name(
             "auto_scaling_group"
         )
-        response = self.auto_scaling_client.create_auto_scaling_group(
+        _ = self.auto_scaling_client.create_auto_scaling_group(
             AutoScalingGroupName=auto_scaling_group_name,
             LaunchConfigurationName=launch_config_name,
             MaxSize=max_size,
@@ -682,7 +676,7 @@ class ECSClient:
             "AutoScalingGroupARN"
         ]
         capacity_provider_name = capacity_provider_name or self.generate_name("capacity_provider")
-        response = self.ecs_client.create_capacity_provider(
+        _ = self.ecs_client.create_capacity_provider(
             name=capacity_provider_name,
             autoScalingGroupProvider={
                 "autoScalingGroupArn": auto_scaling_group_arn,
@@ -703,6 +697,7 @@ class ECSClient:
                     print(detail["name"])
                     if detail["name"] == desired_detail:
                         return detail["value"]
+        raise NotImplementedError
 
     def get_task_binding_info(self, task_info):
         network_binding_map = {}
@@ -775,8 +770,7 @@ class ECSClient:
         # First try to get VPC from containers running on the cluster
         if container_arns:
             container = self.ecs_client.describe_container_instances(
-                cluster=self.cluster,
-                containerInstances=container_arns,
+                cluster=self.cluster, containerInstances=container_arns,
             )["containerInstances"][0]
             attributes = container["attributes"]
             for attribute in attributes:
@@ -862,7 +856,6 @@ class ECSClient:
 
         # wait another 30 seconds just to be safe
         time.sleep(30)
-        return
 
     def spin_til_command_executed(self, command_id, time_delay=5):
         """
@@ -877,7 +870,7 @@ class ECSClient:
             status = self.ssm_client.list_commands(CommandId=command_id)["Commands"][0]["Status"]
             if status == "Success":
                 return True
-            elif status == "Pending" or status == "InProgress":
+            if status == "Pending" or status == "InProgress":
                 time.sleep(time_delay)
             else:
                 return False
