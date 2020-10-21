@@ -18,6 +18,7 @@ env:
       - base
       - browsers/chrome
       - browsers/firefox
+      - browsers/brave
       - productivity/slack
       - productivity/discord
       - productivity/notion

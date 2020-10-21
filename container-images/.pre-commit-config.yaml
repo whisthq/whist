@@ -17,6 +17,7 @@ repos:
           args: [base/Dockerfile.20
                  browsers/chrome/Dockerfile.20
                  browsers/firefox/Dockerfile.20
+                 browsers/brave/Dockerfile.20
                  productivity/slack/Dockerfile.20
                  productivity/discord/Dockerfile.20
                  productivity/notion/Dockerfile.20

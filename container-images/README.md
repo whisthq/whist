@@ -9,6 +9,7 @@ This repository contains the code for containerizing the various applications th
 **Supported Applications**
 - Google Chrome
 - Mozilla Firefox
+- Brave Browser
 - Blender
 - Blockbench
 - Slack
@@ -117,6 +118,7 @@ For every new application that you add support for, in addition to creating its 
 - Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`, for pre-commit hooks
 - Add a command to build the new Dockerfile.20 in `.github/workflows/dockerfiles-building-ubuntu20.yml`
 - Add the path to your new Dockerfile.20 under `apps` in `.github/workflows/push-images.yml`, for continuous delivery
+- Update the list of supported applications in this README
 
 And, if you're adding a new AWS region, you should add the region name under `aws-regions` in `push-images.yml`.
 
