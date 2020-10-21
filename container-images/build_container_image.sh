@@ -1,7 +1,9 @@
 #!/bin/bash
+
 set -Eeuo pipefail
 
 local_tag=current-build
+app_path=${1%/}
 
 # build container with protocol inside it
-docker build -f $1/Dockerfile.20 $1 -t fractal/$1:$local_tag
+docker build -f $app_path/Dockerfile.20 $app_path -t fractal/$app_path:$local_tag

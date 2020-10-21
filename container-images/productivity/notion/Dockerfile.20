@@ -1,0 +1,29 @@
+FROM fractal/browsers/chrome:current-build
+
+# Install notion dependencies explicitly
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    dmg2img \
+    unzip \
+    p7zip-full \
+    && apt-get autoremove -y \
+    && apt-get clean 
+
+ENV NOTION_VERSION 2.0.8
+ENV ELECTRON_VERSION v6.1.12
+
+RUN wget -qO electron.zip https://github.com/electron/electron/releases/download/$ELECTRON_VERSION/electron-$ELECTRON_VERSION-linux-x64.zip \
+    && wget -qO notion.dmg https://desktop-release.notion-static.com/Notion-$NOTION_VERSION.dmg \
+    && dmg2img  notion.dmg notion.img \
+    && mkdir -p tmp/build \
+    && unzip electron.zip -d tmp/build \
+    && 7z x "notion.dmg" -y -otmp/notion \
+    && cp -r tmp/notion/Notion**/*.app/Contents/Resources/* tmp/build \
+    && rm -rf electron.zip notion.dmg notion.img tmp/notion
+
+RUN mv tmp/build /opt/notion
+COPY run-notion.sh /usr/bin/notion
+RUN chmod +x /usr/bin/notion
+
+COPY .xinitrc /root/.xinitrc

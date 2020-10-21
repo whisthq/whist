@@ -1,54 +1,24 @@
-FROM fractal/base:current-build
+FROM fractal/browsers/chrome:current-build
 
-# Install Google Chrome dependencies explicitly
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get update && apt-get install --allow-downgrades -y \
-    libappindicator3-1 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libatspi2.0-0 \
-    libcups2 \
-    libgdk-pixbuf2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxi6 \
-    fonts-liberation \
-    xdg-utils \
-    apt-utils \
     dbus-x11 \
-    dunst \
-    gvfs-bin \
-    hunspell-en-us \
-    software-properties-common \
-    libx11-xcb1 \
-    gconf2 \
-    libgtk2.0-0 \
-    libnotify4 \
-    libxtst6 \
-    libnss3 \
-    xdg-utils \
-    apt-transport-https \
-    gnome-keyring \
+    gconf-service-backend \
+    gconf-service \
+    libc6 \
+    libgconf-2-4 \
+    libglib2.0-0 \
+    libxml2 \
+    psmisc \
     python \
-    libsecret-1-dev \
-    libappindicator1 \
-    libasound2 \
-    wget 
+    gconf2 \
+    python3 \
+    gvfs-common \
+    gvfs \
+    gvfs-bin \
+    && apt-get autoremove -y \
+    && apt-get clean
 
-# Install Google Chrome
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
-RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
-    && sed -i '3 s/^/# /' /etc/apt/sources.list \
-    && apt-get update && apt-get install --allow-downgrades -y google-chrome-stable 
-
+# Install Slack
 RUN wget https://downloads.slack-edge.com/linux_releases/slack-desktop-4.0.2-amd64.deb -O /tmp/slack-desktop-4.0.2-amd64.deb && \
     cd /tmp/ && \
     dpkg -i slack-desktop-4.0.2-amd64.deb && \
