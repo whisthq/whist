@@ -1,6 +1,6 @@
 # NOTE: this name should be kept stable since workflow_dispatch callers may use it to
 # trigger this workflow.
-name: "Procedure: Branch Build & Release"
+name: "Build & Release"
 
 on:
   pull_request:
