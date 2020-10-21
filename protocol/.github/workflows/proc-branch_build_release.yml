@@ -146,6 +146,16 @@ jobs:
         with:
           ref: ${{ needs.params.outputs.ref }}
 
+      - name: Set status to in progress
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{secrets.GITHUB_TOKEN}}
+          context: ${{ runner.name }}
+          description: 'Running proc-branch_build_release.yaml'
+          state: 'pending'
+          sha: ${{github.sha}}
+          target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{github.run_id}}"
+
       - name: Chocolatey install cppcheck
         if: runner.os == 'Windows'
         uses: crazy-max/ghaction-chocolatey@v1
