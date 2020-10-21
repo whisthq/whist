@@ -3,7 +3,6 @@ FROM fractal/base:current-build
 # Install Brave dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
-
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     apt-transport-https \
     curl \
@@ -20,4 +19,3 @@ RUN apt-get update && apt-get install --no-install-recommends -y brave-browser \
     && apt-get clean 
 
 COPY .xinitrc /root/.xinitrc
-
