@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 # things running outside runuser are run as root
-
 i3 &
 
 # running with login means that we lose all environment variables, so we need to pass them in manually
