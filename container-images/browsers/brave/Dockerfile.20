@@ -1,0 +1,23 @@
+FROM fractal/base:current-build
+
+# Install Brave dependencies explicitly
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    apt-transport-https \
+    curl \
+    && apt-get autoremove -y \
+    && apt-get clean 
+
+# Install Brave Browser
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN curl -s https://brave-browser-apt-release.s3.brave.com/brave-core.asc | apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-release.gpg add -
+RUN echo "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" | tee /etc/apt/sources.list.d/brave-browser-release.list
+RUN apt-get update && apt-get install --no-install-recommends -y brave-browser \ 
+    && apt-get autoremove -y \
+    && apt-get clean 
+
+COPY .xinitrc /root/.xinitrc
+
