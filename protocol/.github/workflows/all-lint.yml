@@ -1,8 +1,10 @@
 # Format C/C++ code via clang-format
 
-name: clang-format
+name: Linter
 
-on: [ push ]
+on:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
 
 env:
   CMAKE_VERSION: 3.15.7
@@ -12,23 +14,21 @@ env:
 
 jobs:
   build:
-    name: clang-format
+    name: Check with clang-format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-      - name: install linux dependencies
+      - name: Install linux dependencies
         run: |
           sudo apt-get update -y
           ${{ github.workspace }}/desktop/linux-client-setup.sh
       - name: cmake build
         run: cmake -DBUILD_SERVER=OFF -DBUILD_CLIENT=OFF -DBUILD_TESTS=OFF .
       - name: clang-format
-        run: make clang-format
-      - name: Commit files
         run: |
-          git config --local user.email "linter@fractalcomputers.com"
-          git config --local user.name "Fractal Linter"
-          git diff-index --quiet HEAD || (echo "To pass this check please lint the code" && false)
+          make clang-format
+          git diff-index --quiet HEAD --
+

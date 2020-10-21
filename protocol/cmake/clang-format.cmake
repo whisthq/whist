@@ -20,7 +20,8 @@ file(
   ${PROJECT_SOURCE_DIR}/server/*.m
   ${PROJECT_SOURCE_DIR}/fractal/*.c
   ${PROJECT_SOURCE_DIR}/fractal/*.h
-  ${PROJECT_SOURCE_DIR}/fractal/*.m)
+  ${PROJECT_SOURCE_DIR}/fractal/*.m
+)
 
 file(GLOB_RECURSE DESKTOP_SOURCE_FILES ${PROJECT_SOURCE_DIR}/desktop/*.c
      ${PROJECT_SOURCE_DIR}/desktop/*.h ${PROJECT_SOURCE_DIR}/desktop/*.m)
@@ -40,4 +41,6 @@ add_custom_target(
   COMMAND ${CLANG_FORMAT_EXE} -style=file -i ${SERVER_SOURCE_FILES}
   COMMAND ${CLANG_FORMAT_EXE} -style=file -i ${FRACTAL_DIR_C_FILES}
   COMMAND ${CLANG_FORMAT_EXE} -style=file -i ${FRACTAL_DIR_H_FILES}
-  COMMAND ${CLANG_FORMAT_EXE} -style=file -i ${FRACTAL_DIR_M_FILES})
+  COMMAND ${CLANG_FORMAT_EXE} -style=file -i ${FRACTAL_DIR_M_FILES}
+)
+

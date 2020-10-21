@@ -226,13 +226,15 @@ set_target_properties(sentry PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
         )
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  target_compile_options(sentry PRIVATE -Wno-pedantic)
+    target_compile_options(sentry PRIVATE -Wno-pedantic)
 endif()
 
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    SET(CMAKE_C_COMPILER clang)
-    set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk)
+    set(CMAKE_C_COMPILER clang)
+    if(NOT CMAKE_OSX_SYSROOT)
+        set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk)
+    endif()
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Require MacOS 10.13 or up, to ensure LibObj-C is standard
 endif()
 

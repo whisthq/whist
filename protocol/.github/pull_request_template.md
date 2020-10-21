@@ -33,14 +33,14 @@ Please give instructions for other people to test, e.g.:
 - [ ] Ming
 - [ ] Nicholas
 - [ ] Roshan
+- [ ] Leor
+- [ ] Suriya
+- [ ] Savvy
 - [ ] Owen
 - [ ] Cidney
-- [ ] Savvy
-- [ ] Jonathan
-- [ ] Tina
-- [ ] Leor
+- [ ] Adriano
 - [ ] Eric
-- [ ] Gavin
+- [ ] Tina
 
 ## Checklist
 
