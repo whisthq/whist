@@ -34,6 +34,8 @@ import TermsOfService from "pages/legal/tos"
 import Cookies from "pages/legal/cookies"
 import Privacy from "pages/legal/privacy"
 import Auth from "pages/auth/auth"
+import Verify from "pages/auth/verify"
+import Reset from "pages/auth/reset"
 
 Sentry.init({
     dsn:
@@ -131,6 +133,12 @@ ReactDOM.render(
                                     component={TermsOfService}
                                 />
                                 <Route exact path="/auth" component={Auth} />
+                                <Route
+                                    exact
+                                    path="/verify"
+                                    component={Verify}
+                                />
+                                <Route exact path="/reset" component={Reset} />
                                 <Route
                                     exact
                                     path="/:first?/:second?"

@@ -1,4 +1,4 @@
-import { UniqueOperationTypesRule } from "graphql"
+//import { UniqueOperationTypesRule } from "graphql"
 
 const MINIMUM_EMAIL_LENGTH = 5
 const MINIMUM_PASSWORD_LENGTH = 8

@@ -7,8 +7,9 @@ export function updateUser(body: {
     accessToken?: string
     refreshToken?: string
     emailVerificationToken?: string
+    emailVerified?: boolean
 }) {
-    console.log("update user action")
+    //console.log("update user action")
     return {
         type: UPDATE_USER,
         body,
@@ -20,6 +21,8 @@ export function updateAuthFlow(body: {
     loginWarning?: string
     signupWarning?: string
     verificationEmailsSent?: number
+    verificationAttemptsExecuted?: number
+    resetTokenStatus?: string | null
 }) {
     return {
         type: UPDATE_AUTH_FLOW,

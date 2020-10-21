@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import { FormControl } from "react-bootstrap"
 import PuffLoader from "react-spinners/PuffLoader"
 
 import "styles/auth.css"
