@@ -13,6 +13,10 @@ const Reset = (props: {
     user: {
         user_id: string
     }
+    authFlow: {
+        resetTokenStatus: string | null
+        resetDone: boolean
+    }
 }) => {
     const search = useLocation().search
     const token = search.substring(1, search.length)
@@ -26,7 +30,8 @@ const Reset = (props: {
 
 function mapStateToProps(state: { AuthReducer: { user: any; authFlow: any } }) {
     return {
-        user: state.AuthReducer.user,
+        user: state.AuthReducer.user ? state.AuthReducer.user : {},
+        authFlow: state.AuthReducer.authFlow ? state.AuthReducer.authFlow : {}
     }
 }
 

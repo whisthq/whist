@@ -29,6 +29,12 @@ const LoginView = (props: any) => {
         }
     }
 
+    // so we can display puff while server does it's thing for google as well
+    const google_login = (code: any) => {
+        setProcessing(true)
+        dispatch(AuthSideEffect.googleLogin(code))
+    }
+
     // Handles ENTER key press
     const onKeyPress = (evt: any) => {
         if (
@@ -53,6 +59,7 @@ const LoginView = (props: any) => {
         setPassword(evt.target.value)
     }
 
+    // should trigger when they successfully log in... be it with google or with email
     useEffect(() => {
         setProcessing(false)
     }, [dispatch, user.user_id, authFlow])
@@ -143,7 +150,7 @@ const LoginView = (props: any) => {
                             background: "#dfdfdf",
                         }}
                     ></div>
-                    <GoogleButton />
+                    <GoogleButton login={google_login} />
                     <div style={{ textAlign: "center", marginTop: 20 }}>
                         Need to create an account?{" "}
                         <span

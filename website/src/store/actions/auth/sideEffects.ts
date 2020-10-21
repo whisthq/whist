@@ -9,6 +9,9 @@ export const EMAIL_SIGNUP = "EMAIL_SIGNUP"
 export const VALIDATE_VERIFY_TOKEN = "VALIDATE_SIGNUP_TOKEN"
 export const VALIDATE_RESET_TOKEN = "VALIDATE_RESET_TOKEN"
 
+export const FORGOT_PASSWORD = "FORGOT_PASSWORD"
+export const RESET_PASSWORD = "RESET_PASSWORD"
+
 export function googleLogin(code: any) {
     return {
         type: GOOGLE_LOGIN,
@@ -43,5 +46,20 @@ export function validateResetToken(token: any) {
     return {
         type: VALIDATE_RESET_TOKEN,
         token,
+    }
+}
+
+export function forgotPassword(username: string) {
+    return {
+        type: FORGOT_PASSWORD,
+        username,
+    }
+}
+
+export function resetPassword(username: string, password: string) {
+    return {
+        type: RESET_PASSWORD,
+        username,
+        password,
     }
 }

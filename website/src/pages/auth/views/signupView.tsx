@@ -38,6 +38,12 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
         }
     }
 
+    // so we can display puff while server does it's thing for google as well
+    const google_signup= (code: any) => {
+        setProcessing(true)
+        dispatch(AuthSideEffect.googleLogin(code))
+    }
+
     // Handles ENTER key press
     const onKeyPress = (evt: any) => {
         if (
@@ -91,6 +97,8 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
         } else {
             setConfirmPasswordWarning("")
         }
+    // we only want to change on a specific state change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [confirmPassword])
 
     if (processing) {
@@ -203,7 +211,7 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                             background: "#dfdfdf",
                         }}
                     ></div>
-                    <GoogleButton />
+                    <GoogleButton login={google_signup}/>
                     <div style={{ textAlign: "center", marginTop: 20 }}>
                         Already have an account?{" "}
                         <span

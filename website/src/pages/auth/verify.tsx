@@ -50,14 +50,14 @@ const Verify = (props: any) => {
     const valid_user = user.user_id && user.user_id !== ""
     const valid_token = token && token.length >= 1
 
-    // this will be called ONCE onComponentMount (since it has [])
-    // this will throw a "warning" since raact get angery
     useEffect(() => {
         if (valid_user && valid_token && !processing) {
             dispatch(validateVerificationToken(user.user_id))
 
             setProcessing(true)
         }
+    // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {

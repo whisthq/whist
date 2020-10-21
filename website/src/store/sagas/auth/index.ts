@@ -32,16 +32,68 @@ function* emailLogin(action: any) {
         )
         yield put(
             AuthPureAction.updateAuthFlow({
-                loginWarning: "",
+                loginStatus: "",
             })
         )
     } else {
         console.log("warning")
         yield put(
             AuthPureAction.updateAuthFlow({
-                loginWarning: "Invalid username or password. Try again.",
+                loginStatus: "Invalid username or password. Try again.",
             })
         )
+    }
+}
+
+// also used for signup
+function* googleLogin(action: any) {
+    yield select()
+
+    if (action.code) {
+        const { json } = yield call(
+            apiPost,
+            "/google/login",
+            {
+                code: action.code,
+            },
+            ""
+        )
+        if (json) {
+            if (json.status === 200) {
+                yield put(
+                    AuthPureAction.updateUser({
+                        user_id: json.username,
+                        accessToken: json.access_token,
+                        refreshToken: json.refreshToken,
+                        emailVerified: true,
+                    })
+                )
+
+                yield put(
+                    AuthPureAction.updateAuthFlow({
+                        googleLoginStatus: 200,
+                        loginStatus: "",
+                        signupStatus: "",
+                    })
+                )
+            } else {
+                yield put(
+                    AuthPureAction.updateAuthFlow({
+                        googleLoginStatus: json.status,
+                        loginStatus: "Failed to Authenticate With Google",
+                        signupStatus: "Failed to Authenticate With Google",
+                    })
+                )
+            }
+        } else {
+            yield put(
+                AuthPureAction.updateAuthFlow({
+                    googleLoginStatus: null,
+                    loginStatus: "No Response from Server for Google Login",
+                    signupStatus: "No Response from Server for Google Login",
+                })
+            )
+        }
     }
 }
 
@@ -59,13 +111,15 @@ function* emailSignup(action: any) {
     )
 
     if (json && response.status === 200) {
-        AuthPureAction.updateUser({
-            user_id: action.email,
-            name: "",
-            accessToken: json.access_token,
-            refreshToken: json.refresh_token,
-            emailVerificationToken: json.token,
-        })
+        yield put(
+            AuthPureAction.updateUser({
+                user_id: action.email,
+                name: "",
+                accessToken: json.access_token,
+                refreshToken: json.refresh_token,
+                emailVerificationToken: json.token,
+            })
+        )
 
         console.log(json)
 
@@ -74,11 +128,17 @@ function* emailSignup(action: any) {
             token: json.token,
         })
 
+        yield put(
+            AuthPureAction.updateAuthFlow({
+                signupStatus: "",
+            })
+        )
+
         history.push("/verify")
     } else {
         yield put(
             AuthPureAction.updateAuthFlow({
-                signupWarning: "An error occurred during signup. Try again.",
+                signupStatus: "An error occurred during signup. Try again.",
             })
         )
     }
@@ -152,6 +212,32 @@ function* validateVerificationToken(action: any) {
     }
 }
 
+function* forgotPassword(action: any) {
+    const { json } = yield call(
+        apiPost,
+        "/mail/forgot",
+        {
+            username: action.username,
+        },
+        ""
+    )
+    if (json) {
+        if (json.verified) {
+            yield put(AuthPureAction.updateAuthFlow({
+                forgotStatus: "Email sent"
+            }))
+        } else {
+            yield put(AuthPureAction.updateAuthFlow({
+                forgotStatus: "Not verified"
+            }))
+        }
+    } else {
+        yield put(AuthPureAction.updateAuthFlow({
+            forgotStatus: "No response"
+        }))
+    }
+}
+
 function* validateResetToken(action: any) {
     yield select()
     const { json } = yield call(
@@ -188,14 +274,33 @@ function* validateResetToken(action: any) {
     }
 }
 
+function* resetPassword(action: any) {
+    yield select()
+
+    yield call(
+        apiPost,
+        "/account/resetPassword",
+        {
+            username: action.username,
+            password: action.password,
+        },
+        ""
+    )
+
+    // TODO do something with the response
+}
+
 export default function* () {
     yield all([
         takeEvery(AuthSideEffect.EMAIL_LOGIN, emailLogin),
         takeEvery(AuthSideEffect.EMAIL_SIGNUP, emailSignup),
+        takeEvery(AuthSideEffect.GOOGLE_LOGIN, googleLogin),
         takeEvery(
             AuthSideEffect.VALIDATE_VERIFY_TOKEN,
             validateVerificationToken
         ),
         takeEvery(AuthSideEffect.VALIDATE_RESET_TOKEN, validateResetToken),
+        takeEvery(AuthSideEffect.RESET_PASSWORD, resetPassword),
+        takeEvery(AuthSideEffect.FORGOT_PASSWORD, forgotPassword),
     ])
 }

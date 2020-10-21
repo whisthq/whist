@@ -18,11 +18,14 @@ export function updateUser(body: {
 
 export function updateAuthFlow(body: {
     mode?: string
-    loginWarning?: string
-    signupWarning?: string
+    loginStatus?: string
+    signupStatus?: string
+    forgotStatus?: string
     verificationEmailsSent?: number
     verificationAttemptsExecuted?: number
     resetTokenStatus?: string | null
+    googleLoginStatus?: any | null
+    resetDone?: boolean
 }) {
     return {
         type: UPDATE_AUTH_FLOW,

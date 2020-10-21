@@ -7,30 +7,36 @@ import MainContext from "shared/context/mainContext"
 import { config } from "shared/constants/config"
 
 import "styles/auth.css"
+import { updateAuthFlow } from "store/actions/auth/pure"
 
 const GoogleButton = (props: {
     dispatch: any
     user: {
         user_id: string
     }
+    login: (code: any) => any
 }) => {
     const { width } = useContext(MainContext)
 
     const responseGoogleSuccess = (res: any) => {
-        // the only real difference between the two is the error handling/set failure
-        // if (props.mode === SIGN_UP) {
-        //     props.dispatch(googleSignup(res.code))
-        // } else if (props.mode === LOG_IN) {
-        //     props.dispatch(googleLogin(res.code))
-        // }
-
-        // props.dispatch(setLoading(GOOGLE_BOX, true))
-
-        console.log("google success")
+        props.login(res.code)
+        //TODO might want to remove this and use the warnings in auth? 
+        props.dispatch(
+            updateAuthFlow({
+                loginStatus: "",
+                signupStatus: "",
+            })
+        )
     }
 
     const responseGoogleFailure = (res: any) => {
-        console.log(`response google failure`)
+        //TODO might want to remove this and use the warnings in auth? 
+        props.dispatch(
+            updateAuthFlow({
+                loginStatus: "Google response failure",
+                signupStatus: "Google response failure",
+            })
+        )
     }
 
     const googleButton = (renderProps: any) => (
