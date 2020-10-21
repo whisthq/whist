@@ -253,7 +253,9 @@ const mapStateToProps = (state: {
 }) => {
     return {
         user: state.AuthReducer.user,
-        waitlist: state.WaitlistReducer.waitlistData.waitlist,
+        waitlist: state.WaitlistReducer.waitlistData
+            ? state.WaitlistReducer.waitlistData.waitlist
+            : null,
         waitlistUser: state.WaitlistReducer.waitlistUser,
     }
 }

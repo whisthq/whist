@@ -17,8 +17,9 @@ import * as PureAuthAction from "store/actions/auth/pure"
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
 import * as SharedAction from "store/actions/shared"
 
+import { SECRET_POINTS } from "shared/utils/points"
+
 import "styles/landing.css"
-import { createSecretPointsAction } from "store/actions/waitlist/sideEffects"
 
 function WaitlistForm(props: any) {
     const { dispatch, user, waitlist, isAction } = props
@@ -105,6 +106,7 @@ function WaitlistForm(props: any) {
                 PureWaitlistAction.updateWaitlistUser({
                     points: newPoints,
                     referralCode: newReferralCode,
+                    eastereggsAvailable: new Set(Object.values(SECRET_POINTS)),
                 })
             )
             dispatch(
@@ -122,11 +124,6 @@ function WaitlistForm(props: any) {
                     referrals: 0,
                 },
             })
-
-            // this breaks application redirect
-            // dispatch(
-            //     createSecretPointsAction()
-            // )
 
             setProcessing(false)
         } else {
@@ -290,7 +287,9 @@ function mapStateToProps(state: {
 }) {
     return {
         user: state.AuthReducer.user,
-        waitlist: state.WaitlistReducer.waitlistData.waitlist,
+        waitlist: state.WaitlistReducer.waitlistData
+            ? state.WaitlistReducer.waitlistData.waitlist
+            : null,
     }
 }
 

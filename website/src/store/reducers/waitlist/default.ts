@@ -4,6 +4,7 @@ export const DEFAULT = {
         points: 0,
         ranking: 0,
         referralCode: null,
+        eastereggsAvailable: new Set(),
     },
     clicks: {
         number: 0,

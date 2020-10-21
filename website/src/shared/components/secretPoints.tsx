@@ -4,13 +4,9 @@ import { connect } from "react-redux"
 
 import "styles/shared.css"
 
-import {
-    giveSecretPointsAction,
-} from "store/actions/waitlist/sideEffects"
-import { if_exists_else } from "shared/utils/reducerHelpers"
+import { if_exists_else, modified } from "shared/utils/reducerHelpers"
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
-
-const emptySet = new Set()
+import { updateWaitlistUser } from "store/actions/waitlist/pure"
 
 /*
 secret points is a one-time use button that will give the user points if they click it, but it's supposed to be
@@ -29,7 +25,16 @@ function SecretPoints(props: any) {
     })
 
     async function handleClick() {
-        props.dispatch(giveSecretPointsAction(props.name))
+        props.dispatch(
+            updateWaitlistUser({
+                eastereggsAvailable: modified(
+                    props.eastereggsAvailable,
+                    "delete",
+                    [props.name],
+                    true
+                ),
+            })
+        )
 
         // rank is updated in the waitlist, local waitlist is subscribed so recieves update
         // this updates local user values
@@ -42,8 +47,12 @@ function SecretPoints(props: any) {
         })
     }
 
+    console.log(typeof props.eastereggsAvailable)
+
     // TODO style this!
-    return props.name && props.available_secret_points.has(props.name) &&
+    return props.name &&
+        props.eastereggsAvailable &&
+        props.eastereggsAvailable.has(props.name) &&
         props.points ? (
         props.renderProps ? (
             props.renderProps(handleClick)
@@ -69,18 +78,12 @@ function SecretPoints(props: any) {
     )
 }
 
-function mapStateToProps(state: {
-    AuthReducer: {
-        user: any
-        waitlist: any
-        closing_date: any
-        available_secret_points: Set<string>
-    }
-}) {
+function mapStateToProps(state: { WaitlistReducer: { eastereggsAvailable : Set<string> } }) {
     return {
-        waitlist: state.AuthReducer.waitlist,
-        available_secret_points: if_exists_else(state.AuthReducer, ["waitlistUser", "available_secret_points"], emptySet),
-        user: state.AuthReducer.user,
+        eastereggsAvailable: if_exists_else(
+            state.WaitlistReducer,
+            ["waitlistUser", "eastereggsAvailable"]
+        ),
     }
 }
 

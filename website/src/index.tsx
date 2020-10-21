@@ -4,6 +4,7 @@ import { Provider } from "react-redux"
 import { applyMiddleware, createStore } from "redux"
 import createSagaMiddleware from "redux-saga"
 import { persistStore, persistReducer } from "redux-persist"
+import autoMergeLevel2 from "redux-persist/lib/stateReconciler/autoMergeLevel2"
 import { routerMiddleware } from "connected-react-router"
 import { Route, Switch } from "react-router-dom"
 import { Router } from "react-router"
@@ -46,6 +47,7 @@ const sentryReduxEnhancer = Sentry.createReduxEnhancer({})
 const persistConfig = {
     key: "rootKey",
     storage,
+    stateReconciler: autoMergeLevel2, // allows you to add new keys
 }
 
 const sagaMiddleware = createSagaMiddleware()

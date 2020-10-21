@@ -8,6 +8,7 @@ export function updateWaitlistUser(body: {
     points?: number
     ranking?: number
     referralCode?: string
+    eastereggsAvailable?: Set<string>
 }) {
     return {
         type: UPDATE_WAITLIST_USER,

@@ -12,7 +12,7 @@ import {
 import "styles/shared.css"
 
 import SecretPoints from "shared/components/secretPoints"
-import {SECRET_POINTS, EASTEREGG_POINTS} from "shared/utils/points"
+import { SECRET_POINTS, EASTEREGG_POINTS } from "shared/utils/points"
 
 import MainContext from "shared/context/mainContext"
 
