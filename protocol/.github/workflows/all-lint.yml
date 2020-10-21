@@ -26,7 +26,9 @@ jobs:
       - name: cmake build
         run: cmake -DBUILD_SERVER=OFF -DBUILD_CLIENT=OFF -DBUILD_TESTS=OFF .
       - name: clang-format
-        run: make clang-format
+        run: |
+          make clang-format
+          git diff-index --quiet HEAD --
       - name: Report status
         if: ${{ failure() }}
         uses: ouzi-dev/commit-status-updater@v1.0.4
