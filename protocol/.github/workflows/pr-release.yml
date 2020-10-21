@@ -34,5 +34,5 @@ jobs:
             -u "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}:" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/fractalcomputers/protocol/actions/workflows/proc-branch_build_release/dispatches \
-            -d '{"ref": "${{ github.ref }}", "inputs": {"ref": "${{ github.ref }}", "should_test": "false"}}'
+            -d '{"ref": "${{ github.sha }}", "inputs": {"ref": "${{ github.ref }}", "should_test": "false"}}'
 
