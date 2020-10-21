@@ -389,8 +389,6 @@ int prepareInitToServer(FractalDiscoveryRequestMessage *fmsg, char *email) {
         LOG_ERROR("Failed to get time data.");
         return -1;
     }
-    // Copy port mapping
-    fmsg->port_mapping = port_mappings[PORT_DISCOVERY];
 
     return 0;
 }

@@ -71,7 +71,6 @@ extern Client clients[MAX_NUM_CLIENTS];
 char aes_private_key[16];
 char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 volatile int connection_id;
-volatile int primary_port_mapping;
 volatile bool connected;
 volatile bool running;
 volatile double max_mbps;

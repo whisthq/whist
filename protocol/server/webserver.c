@@ -10,7 +10,6 @@ static bool is_using_stun;
 static char* access_token = NULL;
 bool is_trying_staging_protocol_info = false;
 
-extern volatile int primary_port_mapping;
 extern char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 
 void update_webserver_parameters() {

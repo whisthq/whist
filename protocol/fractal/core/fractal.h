@@ -395,7 +395,6 @@ typedef struct FractalMouseMotionMessage {
 
 typedef struct FractalDiscoveryRequestMessage {
     int username;
-    unsigned short port_mapping;
     FractalTimeData time_data;
     char user_email[USER_EMAIL_MAXLEN];
 } FractalDiscoveryRequestMessage;
