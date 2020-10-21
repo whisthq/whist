@@ -40,6 +40,9 @@ jobs:
       - name: Build the Ubuntu 20.04 Mozilla Firefox Image
         run: cd browsers/firefox && docker build . --file Dockerfile.20 --tag fractal/browsers/firefox:current-build
 
+      - name: Build the Ubuntu 20.04 Brave Browser Image
+        run: cd browsers/brave && docker build . --file Dockerfile.20 --tag fractal/browsers/brave:current-build
+
       - name: Build the Ubuntu 20.04 Slack Image
         run: cd productivity/slack && docker build . --file Dockerfile.20 --tag fractal/productivity/slack:current-build
 
