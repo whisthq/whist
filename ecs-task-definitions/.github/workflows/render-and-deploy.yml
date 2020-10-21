@@ -15,15 +15,21 @@ jobs:
         strategy:
             matrix:
                 aws-region:
-                    [us-east-1, us-east-2, us-west-1, us-west-2, ca-central-1]
+                  - us-east-1
+                  - us-east-2
+                  - us-west-1
+                  - us-west-2
+                  - ca-central-1
                 app:
-                    [
-                        fractal/base,
-                        fractal/browsers/chrome,
-                        fractal/browsers/firefox,
-                        fractal/productivity/slack,
-                        fractal/creative/blender,
-                    ]
+                  - fractal/base
+                  - fractal/browsers/chrome
+                  - fractal/browsers/firefox
+                  - fractal/browsers/brave
+                  - fractal/productivity/slack
+                  - fractal/productivity/discord
+                  - fractal/productivity/notion
+                  - fractal/creative/blender
+                  - fractal/creative/blockbench
 
         steps:
             - name: Checkout git repository
@@ -48,7 +54,7 @@ jobs:
             - name: Store AWS ECR base uri as env variable
               run: echo "ecr_base_uri=${{ env.aws_account }}.dkr.ecr.${{ matrix.aws-region }}.amazonaws.com" >> $GITHUB_ENV
 
-            - name: Store taskdef json name as env variable
+            - name: Store taskdef JSON name as env variable
               run: echo "taskdef_json=$(echo ${{ matrix.app }} | tr / -).json" >> $GITHUB_ENV
 
             - name: Render Amazon ECS task Definitions
