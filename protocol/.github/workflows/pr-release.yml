@@ -1,6 +1,7 @@
 name: Auto release PRs
 
 on:
+  workflow_dispatch:
 
 jobs:
   trigger-release:
