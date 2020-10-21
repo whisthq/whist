@@ -100,7 +100,7 @@ jobs:
       - name: Set status to in progress # You would run your tests before this using the output to set state/desc
         uses: Sibz/github-status-action@v1
         with:
-          authToken: ${{ secrets.GITHUB_TOKEN }}
+          authToken: ${{ github.token }}
           context: 'Create Release'
           description: 'Waiting for builds to complete'
           state: 'pending'
@@ -149,7 +149,7 @@ jobs:
       - name: Set status to in progress
         uses: Sibz/github-status-action@v1
         with:
-          authToken: ${{ secrets.GITHUB_TOKEN }}
+          authToken: ${{ github.token }}
           context: ${{ matrix.config.name }}
           description: 'Running build ${{ matrix.config.name }}'
           state: 'pending'
@@ -392,7 +392,7 @@ jobs:
       - name: Set status to success
         uses: Sibz/github-status-action@v1
         with:
-          authToken: ${{ secrets.GITHUB_TOKEN }}
+          authToken: ${{ github.token }}
           context: ${{ matrix.config.name }}
           description: 'Finished build ${{ matrix.config.name }}'
           state: 'success'
@@ -403,9 +403,9 @@ jobs:
         if: ${{ failure() }}
         uses: Sibz/github-status-action@v1
         with:
-          authToken: ${{ secrets.GITHUB_TOKEN }}
+          authToken: ${{ github.token }}
           context: ${{ matrix.config.name }}
-          description: 'Finished build ${{ matrix.config.name }}'
+          description: 'Failed to build ${{ matrix.config.name }}'
           state: 'failure'
           sha: ${{ github.sha }}
           target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}"
@@ -598,14 +598,14 @@ jobs:
           if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
             echo "Proceeding with job"
             curl \
-              -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+              -H 'Authorization: Bearer ${{ github.token }}' \
               -H "Accept: application/vnd.github.v3+json" \
               https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}} \
               -d '{"state": "success", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Release successfully created"}'
           else
             echo "Killing release job because builds or tests failed"
             curl \
-              -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+              -H 'Authorization: Bearer ${{ github.token }}' \
               -H "Accept: application/vnd.github.v3+json" \
               https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}} \
               -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Builds or tests failed"}'
@@ -614,7 +614,7 @@ jobs:
           if ! ${{ needs.params.outputs.should_release }}; then
             echo "Killing release job because should_release=${{ needs.params.outputs.should_release }}"
             curl \
-              -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+              -H 'Authorization: Bearer ${{ github.token }}' \
               -H "Accept: application/vnd.github.v3+json" \
               https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}} \
               -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Did not create release because should_release was false"}'
@@ -676,7 +676,7 @@ jobs:
             }
             version_id = `${cur_ref_name}-${cur_date}.${cur_date_point}`
             console.log(`::set-output name=version_id::${version_id}`)
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{github.token}}
       - uses: actions/checkout@v2
         with:
           ref: ${{ needs.params.outputs.ref }}
@@ -688,7 +688,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           tag_name: ${{ steps.release_info.outputs.version_id }}
           release_name: ${{ steps.release_info.outputs.version_id }}
@@ -741,7 +741,7 @@ jobs:
       - name: Upload to release ${{ needs['create-release'].outputs.version_id }}
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ needs['create-release'].outputs.release_upload_url }}
           asset_path: ./${{ matrix.config.artifact_name }}.zip
@@ -772,4 +772,4 @@ jobs:
           echo "base64 encoded GHA_PERSONAL_ACCESS_TOKEN (pipe to `base64 -d` to decode): "
           echo "${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}" | base64
           printf -v date '%(%Y.%-m.%-d)T'
-          curl -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches  -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "'$date'", "should_test": "false", "should_release": "true"}}'
+          curl -H 'Authorization: Bearer ${{ github.token }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches  -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "'$date'", "should_test": "false", "should_release": "true"}}'
