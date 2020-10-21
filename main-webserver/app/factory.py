@@ -59,6 +59,8 @@ def init_app(app):
 
     from .blueprints.aws.aws_container_blueprint import aws_container_bp
 
+    from .blueprints.host_service.host_service_blueprint import host_service_bp
+
     app.register_blueprint(account_bp)
     app.register_blueprint(token_bp)
     app.register_blueprint(azure_vm_bp)
@@ -76,5 +78,6 @@ def init_app(app):
     app.register_blueprint(table_bp)
     app.register_blueprint(logs_bp)
     app.register_blueprint(aws_container_bp)
+    app.register_blueprint(host_service_bp)
 
     return app
