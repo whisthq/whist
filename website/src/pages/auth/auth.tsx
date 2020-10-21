@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { connect } from "react-redux"
+import { Redirect } from "react-router"
 
 import LoginView from "pages/auth/views/loginView"
 import SignupView from "pages/auth/views/signupView"
-
-import * as AuthPureAction from "store/actions/auth/pure"
 
 import "styles/auth.css"
 
@@ -13,50 +12,34 @@ const Auth = (props: {
     user: {
         user_id: string
     }
+    mode: any
 }) => {
-    const { dispatch } = props
-    const [mode, setMode] = useState("Log in")
+    const { user, mode } = props
+
+    if (user.user_id && user.user_id !== "") {
+        return <Redirect to="/" />
+    }
 
     if (mode === "Log in") {
         return (
             <div>
                 <LoginView />
-                <div style={{ textAlign: "center", marginTop: 20 }}>
-                    Need to create an account?{" "}
-                    <span
-                        style={{ color: "#3930b8" }}
-                        className="hover"
-                        onClick={() => setMode("Sign up")}
-                    >
-                        Sign up
-                    </span>{" "}
-                    here.
-                </div>
             </div>
         )
     } else {
         return (
             <div>
                 <SignupView />
-                <div style={{ textAlign: "center", marginTop: 20 }}>
-                    Already have an account?{" "}
-                    <span
-                        style={{ color: "#3930b8" }}
-                        className="hover"
-                        onClick={() => setMode("Log in")}
-                    >
-                        Log in
-                    </span>{" "}
-                    here.
-                </div>
             </div>
         )
     }
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
+function mapStateToProps(state: { AuthReducer: { user: any; authFlow: any } }) {
+    console.log(state.AuthReducer.authFlow)
     return {
         user: state.AuthReducer.user,
+        mode: state.AuthReducer.authFlow.mode,
     }
 }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react"
+import React, { useContext } from "react"
 import { connect } from "react-redux"
 import { GoogleLogin } from "react-google-login"
 import { FaGoogle } from "react-icons/fa"

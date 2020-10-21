@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { FormControl } from "react-bootstrap"
+import PuffLoader from "react-spinners/PuffLoader"
 
 import "styles/auth.css"
 
@@ -68,101 +69,129 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
         setConfirmPassword(evt.target.value)
     }
 
-    useEffect(() => {
-        console.log("auth flow changed")
-        console.log(authFlow)
-    }, [authFlow])
+    const loaderCSS =
+        "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
 
     useEffect(() => {
-        console.log("user changed")
-        console.log(user)
-    }, [user])
+        setProcessing(false)
+    }, [user.user_id, authFlow])
 
-    return (
-        <div>
+    if (processing) {
+        return (
             <div
                 style={{
-                    width: 400,
-                    margin: "auto",
-                    marginTop: 150,
+                    width: "100vw",
+                    height: "100vh",
+                    position: "relative",
                 }}
             >
-                <h2
-                    style={{
-                        color: "#111111",
-                        textAlign: "center",
-                    }}
-                >
-                    Let's get started.
-                </h2>
-                <FormControl
-                    type="email"
-                    aria-label="Default"
-                    aria-describedby="inputGroup-sizing-default"
-                    placeholder="Email Address"
-                    className="input-form"
-                    onChange={changeEmail}
-                    onKeyPress={onKeyPress}
-                    value={email}
-                    style={{
-                        marginTop: 40,
-                    }}
-                />
-                <FormControl
-                    type="password"
-                    aria-label="Default"
-                    aria-describedby="inputGroup-sizing-default"
-                    placeholder="Password"
-                    className="input-form"
-                    onChange={changePassword}
-                    onKeyPress={onKeyPress}
-                    value={password}
-                    style={{
-                        marginTop: 15,
-                    }}
-                />
-                <FormControl
-                    type="password"
-                    aria-label="Default"
-                    aria-describedby="inputGroup-sizing-default"
-                    placeholder="Confirm Password"
-                    className="input-form"
-                    onChange={changeConfirmPassword}
-                    onKeyPress={onKeyPress}
-                    value={confirmPassword}
-                    style={{
-                        marginTop: 15,
-                    }}
-                />
-                <button
-                    className="white-button"
-                    style={{
-                        width: "100%",
-                        marginTop: 15,
-                        background: "#3930b8",
-                        border: "none",
-                        color: "white",
-                        fontSize: 16,
-                        paddingTop: 20,
-                        paddingBottom: 20,
-                    }}
-                    onClick={signup}
-                >
-                    Sign up
-                </button>
+                <PuffLoader css={loaderCSS} size={75} />
+            </div>
+        )
+    } else {
+        return (
+            <div>
                 <div
                     style={{
-                        height: 1,
-                        width: "100%",
-                        marginTop: 30,
-                        marginBottom: 30,
-                        background: "#EFEFEF",
+                        width: 400,
+                        margin: "auto",
+                        marginTop: 150,
                     }}
-                ></div>
-                <GoogleButton />
+                >
+                    <h2
+                        style={{
+                            color: "#111111",
+                            textAlign: "center",
+                        }}
+                    >
+                        Let's get started.
+                    </h2>
+                    <FormControl
+                        type="email"
+                        aria-label="Default"
+                        aria-describedby="inputGroup-sizing-default"
+                        placeholder="Email Address"
+                        className="input-form"
+                        onChange={changeEmail}
+                        onKeyPress={onKeyPress}
+                        value={email}
+                        style={{
+                            marginTop: 40,
+                        }}
+                    />
+                    <FormControl
+                        type="password"
+                        aria-label="Default"
+                        aria-describedby="inputGroup-sizing-default"
+                        placeholder="Password"
+                        className="input-form"
+                        onChange={changePassword}
+                        onKeyPress={onKeyPress}
+                        value={password}
+                        style={{
+                            marginTop: 15,
+                        }}
+                    />
+                    <FormControl
+                        type="password"
+                        aria-label="Default"
+                        aria-describedby="inputGroup-sizing-default"
+                        placeholder="Confirm Password"
+                        className="input-form"
+                        onChange={changeConfirmPassword}
+                        onKeyPress={onKeyPress}
+                        value={confirmPassword}
+                        style={{
+                            marginTop: 15,
+                        }}
+                    />
+                    <button
+                        className="white-button"
+                        style={{
+                            width: "100%",
+                            marginTop: 15,
+                            background: "#3930b8",
+                            border: "none",
+                            color: "white",
+                            fontSize: 16,
+                            paddingTop: 20,
+                            paddingBottom: 20,
+                        }}
+                        onClick={signup}
+                    >
+                        Sign up
+                    </button>
+                    <div
+                        style={{
+                            height: 1,
+                            width: "100%",
+                            marginTop: 30,
+                            marginBottom: 30,
+                            background: "#EFEFEF",
+                        }}
+                    ></div>
+                    <GoogleButton />
+                    <div style={{ textAlign: "center", marginTop: 20 }}>
+                        Already have an account?{" "}
+                        <span
+                            style={{ color: "#3930b8" }}
+                            className="hover"
+                            onClick={() =>
+                                dispatch(
+                                    AuthPureAction.updateAuthFlow({
+                                        mode: "Log in",
+                                    })
+                                )
+                            }
+                        >
+                            Log in
+                        </span>{" "}
+                        here.
+                    </div>
+                </div>
             </div>
-        </div>
-    )
+        )
+    }
 }
 
 function mapStateToProps(state: { AuthReducer: { user: any; authFlow: any } }) {

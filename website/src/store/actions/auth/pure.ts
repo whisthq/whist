@@ -16,6 +16,7 @@ export function updateUser(body: {
 }
 
 export function updateAuthFlow(body: {
+    mode?: string
     loginWarning?: string
     signupWarning?: string
     verificationEmailsSent?: number

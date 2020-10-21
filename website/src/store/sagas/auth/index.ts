@@ -7,6 +7,9 @@ import * as AuthPureAction from "store/actions/auth/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
 
 function* emailLogin(action: any) {
+    console.log("login saga")
+    console.log(action)
+
     const { json } = yield call(
         apiPost,
         "/account/login",
@@ -16,8 +19,6 @@ function* emailLogin(action: any) {
         },
         ""
     )
-
-    console.log(json)
 
     if (json && json.verified) {
         console.log("cahnging user")

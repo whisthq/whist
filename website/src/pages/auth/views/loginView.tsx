@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { FormControl } from "react-bootstrap"
+import PuffLoader from "react-spinners/PuffLoader"
 
 import "styles/auth.css"
 
-import MainContext from "shared/context/mainContext"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
 import * as AuthPureAction from "store/actions/auth/pure"
 
 import GoogleButton from "pages/auth/components/googleButton"
 
 const LoginView = (props: any) => {
-    const { dispatch } = props
+    const { dispatch, user, authFlow } = props
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -24,17 +24,15 @@ const LoginView = (props: any) => {
             password.length > 6 &&
             email.includes("@")
         ) {
-            // setProcessing(true)
+            setProcessing(true)
             dispatch(AuthSideEffect.emailLogin(email, password))
         }
     }
 
     const login = () => {
         if (email.length > 4 && password.length > 6 && email.includes("@")) {
-            console.log("dispatching")
-            // setProcessing(true)
+            setProcessing(true)
             dispatch(AuthSideEffect.emailLogin(email, password))
-            dispatch(AuthPureAction.updateUser({ name: "Ming1" }))
         }
     }
 
@@ -48,21 +46,25 @@ const LoginView = (props: any) => {
         setPassword(evt.target.value)
     }
 
+    const loaderCSS =
+        "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
+
     useEffect(() => {
-        // console.log("USE EFFECT FIRED")
-        // let mounted = true
-        // if (mounted) {
-        //     console.log("user or authflow changed")
-        //     // setProcessing(false)
-        // }
-        // return () => {
-        //     mounted = false
-        // }
-        console.log("USE EFFECT")
-    }, [dispatch, props])
+        setProcessing(false)
+    }, [dispatch, user.user_id, authFlow])
 
     if (processing) {
-        return <div>Processing {props.user.user_id}</div>
+        return (
+            <div
+                style={{
+                    width: "100vw",
+                    height: "100vh",
+                    position: "relative",
+                }}
+            >
+                <PuffLoader css={loaderCSS} size={75} />
+            </div>
+        )
     } else {
         return (
             <div>
@@ -132,7 +134,24 @@ const LoginView = (props: any) => {
                             background: "#EFEFEF",
                         }}
                     ></div>
-                    {/* <GoogleButton /> */}
+                    <GoogleButton />
+                    <div style={{ textAlign: "center", marginTop: 20 }}>
+                        Need to create an account?{" "}
+                        <span
+                            style={{ color: "#3930b8" }}
+                            className="hover"
+                            onClick={() =>
+                                dispatch(
+                                    AuthPureAction.updateAuthFlow({
+                                        mode: "Sign up",
+                                    })
+                                )
+                            }
+                        >
+                            Sign up
+                        </span>{" "}
+                        here.
+                    </div>
                 </div>
             </div>
         )
@@ -140,8 +159,7 @@ const LoginView = (props: any) => {
 }
 
 function mapStateToProps(state: any) {
-    console.log("map state to props")
-    console.log(state.AuthReducer)
+    console.log(state)
     return {
         user: state.AuthReducer.user,
         authFlow: state.AuthReducer.authFlow,

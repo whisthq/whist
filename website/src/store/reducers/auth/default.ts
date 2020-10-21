@@ -7,6 +7,7 @@ export const DEFAULT = {
         emailVerificationToken: null,
     },
     authFlow: {
+        mode: "Log in",
         loginWarning: null,
         signupWarning: null,
         verificationEmailsSent: 0,
