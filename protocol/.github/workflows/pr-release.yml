@@ -1,7 +1,8 @@
 name: Auto release PRs
 
 on:
-  workflow_dispatch:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
 
 jobs:
   trigger-release:

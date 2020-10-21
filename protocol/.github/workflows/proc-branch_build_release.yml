@@ -1,10 +1,8 @@
 # NOTE: this name should be kept stable since workflow_dispatch callers may use it to
 # trigger this workflow.
-name: "Build & Release"
+name: "Procedure: Branch Build & Release"
 
 on:
-  pull_request:
-    types: [ opened, synchronize, reopened ]
   # manual/api trigger
   workflow_dispatch:
     inputs:
