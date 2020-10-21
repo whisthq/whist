@@ -74,6 +74,7 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #include <stdio.h>
 
 #include "../utils/aes.h"
+#include "../utils/json.h"
 
 #define STUN_IP "52.5.240.234"
 #define STUN_PORT 48800
@@ -1519,9 +1520,25 @@ bool send_http_request(char *type, char *host_s, char *path, char *message, char
             } else {
                 total_read += read_n;
             }
-        } while (total_read < max_response_size);
+        } while (total_read < max_response_size - 1);
 
-        *response_body = response;
+        response[total_read] = '\0';
+
+        // Figure out where response body starts (i.e. after the string "\r\n\r\n")
+        char *body_to_be_copied = NULL;
+        for (size_t i = 0; i < total_read - 3; ++i) {
+            if (memcmp(response + i, "\r\n\r\n", 4) == 0) {
+                body_to_be_copied = response + i + 4;
+            }
+        }
+        if (!body_to_be_copied) {
+            LOG_ERROR("Could not find end of HTTP headers!");
+            *response_body = NULL;
+            return false;
+        }
+
+        *response_body = clone(body_to_be_copied);
+        free(response);
     }
 
     FRACTAL_CLOSE_SOCKET(Socket);

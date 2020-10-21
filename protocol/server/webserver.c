@@ -48,27 +48,21 @@ void update_webserver_parameters() {
         return;
     }
 
-    // Find JSON as the data after all HTTP headers, ie after the string
-    // "\r\n\r\n"
-    char* json_str = NULL;
-    for (size_t i = 0; i < resp_buf_maxlen - 4; i++) {
-        if (memcmp(resp_buf + i, "\r\n\r\n", 4) == 0) {
-            json_str = resp_buf + i + 4;
-        }
-    }
-
-    if (!json_str) {
+    if (!resp_buf) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;
     }
+
+    LOG_INFO("Response body of length %d from POST request to webserver: %s", strlen(resp_buf),
+             resp_buf);
 
     // Set Default Values
     is_autoupdate = true;
     is_using_stun = false;
 
     json_t json;
-    if (!parse_json(json_str, &json)) {
+    if (!parse_json(resp_buf, &json)) {
         LOG_ERROR("Failed to parse JSON from /container/protocol_info");
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
@@ -117,7 +111,7 @@ void update_webserver_parameters() {
             access_token = clone(access_token_value->str_value);
         }
     } else {
-        LOG_WARNING("COULD NOT GET JSON PARAMETERS FROM: %s", json_str);
+        LOG_WARNING("COULD NOT GET JSON PARAMETERS FROM: %s", resp_buf);
     }
 
     free_json(json);
