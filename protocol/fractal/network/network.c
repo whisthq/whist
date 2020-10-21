@@ -83,7 +83,7 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
-unsigned short port_mappings[USHRT_MAX];
+unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
 ============================
@@ -193,8 +193,8 @@ Public Function Implementations
 @brief                          Initialize default port mappings (i.e. the identity)
 */
 void init_default_port_mappings() {
-    for (int i = 0; i < USHRT_MAX; i++) {
-        port_mappings[i] = i;
+    for (int i = 0; i <= USHRT_MAX; i++) {
+        port_mappings[i] = (unsigned short)i;
     }
 }
 
@@ -1445,7 +1445,7 @@ int CreateUDPContext(SocketContext *context, char *destination, int port, int re
     }
 }
 
-bool send_http_request(char *type, char *host_s, char *path, char *message, char **response_body,
+bool send_http_request(char *type, char *host_s, char *message, char **response_body,
                        size_t max_response_size) {
     SOCKET Socket;  // socket to send/receive request
     struct hostent *host;
@@ -1570,8 +1570,7 @@ bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token
              path, host_s, payload_len, access_token_header, payload);
 
     // send the message
-    bool worked =
-        send_http_request("POST", host_s, path, message, response_body, max_response_size);
+    bool worked = send_http_request("POST", host_s, message, response_body, max_response_size);
     free(message);
     return worked;
 }
@@ -1582,7 +1581,7 @@ bool SendGetRequest(char *host_s, char *path, char **response_body, size_t max_r
     sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
 
     // send the message
-    bool worked = send_http_request("GET", host_s, path, message, response_body, max_response_size);
+    bool worked = send_http_request("GET", host_s, message, response_body, max_response_size);
     free(message);
     return worked;
 }
