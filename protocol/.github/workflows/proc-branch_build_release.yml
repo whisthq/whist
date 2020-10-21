@@ -3,9 +3,6 @@
 name: "Procedure: Branch Build & Release"
 
 on:
-  # auto release PRs
-  pull_request:
-    types: [opened, synchronize]
   # manual/api trigger
   workflow_dispatch:
     inputs:
