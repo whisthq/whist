@@ -8,28 +8,28 @@ on:
 
 env:
     aws-placeholder-region: us-east-1
-    aws-regions:
-      - us-east-1
-      - us-east-2
-      - us-west-1
-      - us-west-2
-      - ca-central-1
-    apps:
-      - base
-      - browsers/chrome
-      - browsers/firefox
-      - browsers/brave
-      - productivity/slack
-      - productivity/discord
-      - productivity/notion
-      - creative/blender
-      - creative/blockbench
+    aws-regions: |
+        us-east-1
+        us-east-2
+        us-west-1
+        us-west-2
+        ca-central-1
+    apps: |
+        base
+        browsers/chrome
+        browsers/firefox
+        browsers/brave
+        productivity/slack
+        productivity/discord
+        productivity/notion
+        creative/blender
+        creative/blockbench
 
 jobs:
     ecr-push:
         name: Build and push to AWS ECR
         runs-on: ubuntu-20.04
-        
+
         steps:
             - name: Checkout Git repository
               uses: actions/checkout@v2
