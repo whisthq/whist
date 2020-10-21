@@ -30,12 +30,11 @@ void update_webserver_parameters() {
     }
 
     char* resp_buf = NULL;
-    size_t request_buf_maxlen = 256;
     size_t resp_buf_maxlen = 4800;
 
     LOG_INFO("GETTING JSON");
 
-    char msg[request_buf_maxlen];
+    char* msg = (char*)malloc(32 + strlen(identifier));
     sprintf(msg,
             "{\n"
             "    \"port\": %s\n"
@@ -48,6 +47,8 @@ void update_webserver_parameters() {
         StartTimer(&last_vm_info_check_time);
         return;
     }
+
+    free(msg);
 
     if (!resp_buf) {
         already_obtained_vm_type = true;
