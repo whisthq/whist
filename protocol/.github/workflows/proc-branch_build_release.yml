@@ -115,7 +115,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - os: windows-latest
+          - name: "Windows MSVC"
+            os: windows-latest
             client_artifact_name: "Windows-64bit_client"
             client_artifact_relpath: "/desktop/build64/Windows"
             client_name: "/FractalClient.exe"
@@ -125,13 +126,15 @@ jobs:
             cxx: "cl"
             cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc"
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-          - os: ubuntu-latest
+          - name: "Ubuntu gcc"
+            os: ubuntu-latest
             client_artifact_name: "Linux-64bit_client"
             client_artifact_relpath: "/desktop/build64/Linux"
             client_name: "/FractalClient"
             cc: "gcc"
             cxx: "g++"
-          - os: macos-10.14
+          - name: "MacOS clang"
+            os: macos-10.14
             client_artifact_name: "macOS-64bit_client"
             client_artifact_relpath: "/desktop/build64/Darwin"
             client_name: "/FractalClient"
