@@ -19,6 +19,7 @@ env:
       - browsers/chrome
       - browsers/firefox
       - productivity/slack
+      - productivity/discord
       - productivity/notion
       - creative/blender
       - creative/blockbench
