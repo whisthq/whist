@@ -31,13 +31,4 @@ jobs:
         run: |
           make clang-format
           git diff-index --quiet HEAD --
-      - name: Report status
-        if: ${{ failure() }}
-        run: |
-          curl \
-            --request POST \
-            -H 'Authorization: Bearer ${{ github.token }}' \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/fractalcomputers/protocol/statuses/${{github.sha}} \
-            -d '{"state": "failure", "target_url": "https://github.com/fractalcomputers/protocol/actions/runs/${{ github.run_id }}", "context": "${{ github.workflow }} / clang-format", "description": "Please run clang-format to pass this check"}'
 
