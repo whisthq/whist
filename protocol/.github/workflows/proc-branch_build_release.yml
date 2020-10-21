@@ -3,6 +3,8 @@
 name: "Procedure: Branch Build & Release"
 
 on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
   # manual/api trigger
   workflow_dispatch:
     inputs:

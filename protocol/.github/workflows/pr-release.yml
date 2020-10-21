@@ -1,8 +1,6 @@
 name: Auto release PRs
 
 on:
-  pull_request:
-    types: [ opened, synchronize ]
 
 jobs:
   trigger-release:
