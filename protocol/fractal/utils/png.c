@@ -66,6 +66,10 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
         Return:
             ret (int): 0 on success, other integer on failure
             => ARG `pkt` is loaded with output PNG data array
+
+        NOTE:
+            After a successful call to bmp_to_png, remember to call av_packet_unref(pkt)
+            to free packet memory.
     */
 
     // Read BMP file header contents
@@ -422,6 +426,10 @@ int png_data_to_bmp_data(uint8_t* png_buffer, AVPacket* pkt, int* width, int* he
         Returns:
             ret (int): 0 on success, other integer on failure
             => ARG `pkt` is loaded with output BMP data array
+
+        NOTE:
+            After a successful call to png_data_to_bmp_data, remember to call
+            av_packet_unref(pkt) to free packet memory.
     */
 
     // Create an empty BMP buffer based on image size.
@@ -516,6 +524,10 @@ int png_char_to_bmp(char* png, int size, AVPacket* pkt) {
         Returns:
             ret (int): 0 on success, other integer on failure
             => ARG `pkt` is loaded with output BMP data array
+
+        NOTE:
+            After a successful call to png_char_to_bmp, remember to call av_packet_unref(pkt)
+            to free packet memory.
     */
 
     uint8_t* input[4];
@@ -547,6 +559,10 @@ int png_file_to_bmp(char* png, AVPacket* pkt) {
         Returns:
             ret (int): 0 on success, other integer on failure
             => ARG `pkt` is loaded with output BMP data array; pkt.data must be freed by the caller
+
+        NOTE:
+            After a successful call to png_file_to_bmp, remember to call free(pkt->data) to
+            free memory.
     */
 
     uint8_t* input[4];

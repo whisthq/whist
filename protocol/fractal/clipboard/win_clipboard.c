@@ -303,6 +303,8 @@ ClipboardData* unsafe_GetClipboard() {
                 memcpy(cb->data, packet.data, packet.size);
                 cb->size = packet.size;
                 cb->type = CLIPBOARD_IMAGE;
+
+                av_packet_unref(&packet);
                 break;
             case CF_HDROP:
                 LOG_WARNING("GetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
@@ -481,6 +483,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
                 cb->size = pkt.size - 14;
                 cf_type = CF_DIB;
                 hMem = getGlobalAlloc(cb->data, cb->size);
+
                 av_packet_unref(&pkt);
             }
             break;
