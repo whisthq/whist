@@ -108,7 +108,7 @@ jobs:
           target_url: "https://github.com/fractalcomputers/protocol/actions/runs/${{github.run_id}}"
 
   build:
-    name: Build on ${{ matrix.config.os }} using ${{ matrix.config.cc }}/${{ matrix.config.cxx }}
+    name: ${{ matrix.config.name }}
     needs: [params]
     runs-on: ${{ matrix.config.os }}
     strategy:
