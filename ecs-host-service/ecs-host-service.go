@@ -50,6 +50,17 @@ func startDockerDaemon() {
 	}
 }
 
+// We take ownership of the ECS agent ourselves
+func startECSAgent() {
+	cmd := exec.Command("/usr/bin/systemctl", "enable", "docker-container@ecs-agent")
+	err := cmd.Run()
+	if err != nil {
+		logger.Panicf("Unable to start ECS-agent. Error: %v", err)
+	} else {
+		logger.Info("Successfully started the ECS agent ourselves.")
+	}
+}
+
 func shutdownHostService() {
 	logger.Info("Beginning host service shutdown procedure.")
 
@@ -260,11 +271,18 @@ func main() {
 		logger.Panicf("Got a Ctrl+C: already uninitialized filesystem, looking to exit")
 	}()
 
-	// Initialize webserver and hearbeat
+	// Initialize webserver and heartbeat
 	err = webserver.InitializeHeartbeat()
 	if err != nil {
 		logger.Panicf("Unable to initialize webserver. Error: %s", err)
 	}
+
+	// Start Docker Daemons and ECS Host Service,
+	// Notably, this needs to happen after the webserver handshake above. This
+	// prevents AWS from assigning any task definitions to our container before
+	// the webserver knows about it.
+	startDockerDaemon()
+	startECSAgent()
 
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
