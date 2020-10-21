@@ -1446,7 +1446,7 @@ int CreateUDPContext(SocketContext *context, char *destination, int port, int re
 }
 
 bool send_http_request(char *type, char *host_s, char *message, char **response_body,
-                       size_t max_response_size) {
+                       ssize_t max_response_size) {
     SOCKET Socket;  // socket to send/receive request
     struct hostent *host;
     struct sockaddr_in webserver_socketAddress;  // address of the web server socket
@@ -1500,14 +1500,14 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
     } while (total_sent < msg_len);
 
     // now that it's sent, let's get the reply (if applicable)
-    if ((!response_body) || (max_response_size == 0)) {
+    if ((!response_body) || (max_response_size <= 0)) {
         // don't care about the reply, so we might as well not make the system
         // call to get the data
         FRACTAL_SHUTDOWN_SOCKET(Socket);
     } else {
         char *response = malloc(max_response_size);
-        size_t total_read = 0;
-        int read_n;
+        ssize_t total_read = 0;
+        ssize_t read_n;
         do {
             read_n = recv(Socket, response + total_read, max_response_size - total_read - 1, 0);
             if (read_n < 0) {
@@ -1526,7 +1526,7 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
 
         // Figure out where response body starts (i.e. after the string "\r\n\r\n")
         char *body_to_be_copied = NULL;
-        for (size_t i = 0; i < total_read - 3; ++i) {
+        for (ssize_t i = 0; i < total_read - 3; ++i) {
             if (memcmp(response + i, "\r\n\r\n", 4) == 0) {
                 body_to_be_copied = response + i + 4;
             }
@@ -1546,7 +1546,7 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
 }
 
 bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token,
-                     char **response_body, size_t max_response_size) {
+                     char **response_body, ssize_t max_response_size) {
     // prepare the message
     char access_token_header[1000];
     if (access_token) {
@@ -1575,7 +1575,7 @@ bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token
     return worked;
 }
 
-bool SendGetRequest(char *host_s, char *path, char **response_body, size_t max_response_size) {
+bool SendGetRequest(char *host_s, char *path, char **response_body, ssize_t max_response_size) {
     // prepare the message
     char *message = malloc(400);
     sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);

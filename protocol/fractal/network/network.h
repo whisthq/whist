@@ -357,7 +357,7 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  *                                 more about the error
  */
 bool SendPostRequest(char* host_s, char* path, char* payload, char* access_token,
-                     char** response_body, size_t max_response_size);
+                     char** response_body, ssize_t max_response_size);
 
 /**
  * @brief                          Sends a JSON GET request to some host and
@@ -380,7 +380,7 @@ bool SendPostRequest(char* host_s, char* path, char* payload, char* access_token
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendGetRequest(char* host_s, char* path, char** response_body, size_t max_response_size);
+bool SendGetRequest(char* host_s, char* path, char** response_body, ssize_t max_response_size);
 
 int sendp(SocketContext* context, void* buf, int len);
 
