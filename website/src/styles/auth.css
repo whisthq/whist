@@ -13,9 +13,8 @@
     border: none;
     outline: none;
     background: rgba(66, 133, 244, 0.9);
-    font-weight: bold;
     color: white;
-    padding: 20px 40px;
+    padding: 15px 40px;
     display: flex;
     justify-content: center;
     font-size: 16px;
@@ -40,13 +39,4 @@
 
 .signout-button:hover {
     cursor: pointer;
-}
-
-.input-form,
-.input-form:focus {
-    width: 100%;
-    background-color: #f4f4f4 !important;
-    border: none !important;
-    padding: 35px 20px;
-    outline: none !important;
 }

@@ -5,9 +5,14 @@ import PuffLoader from "react-spinners/PuffLoader"
 
 import "styles/auth.css"
 
+import Input from "shared/components/input"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
 import * as AuthPureAction from "store/actions/auth/pure"
-
+import {
+    loginEnabled,
+    checkEmail,
+    checkPassword,
+} from "pages/auth/constants/authHelpers"
 import GoogleButton from "pages/auth/components/googleButton"
 
 const LoginView = (props: any) => {
@@ -17,6 +22,15 @@ const LoginView = (props: any) => {
     const [password, setPassword] = useState("")
     const [processing, setProcessing] = useState(false)
 
+    // Dispatches the login API call
+    const login = () => {
+        if (loginEnabled(email, password)) {
+            setProcessing(true)
+            dispatch(AuthSideEffect.emailLogin(email, password))
+        }
+    }
+
+    // Handles ENTER key press
     const onKeyPress = (evt: any) => {
         if (
             evt.key === "Enter" &&
@@ -29,13 +43,7 @@ const LoginView = (props: any) => {
         }
     }
 
-    const login = () => {
-        if (email.length > 4 && password.length > 6 && email.includes("@")) {
-            setProcessing(true)
-            dispatch(AuthSideEffect.emailLogin(email, password))
-        }
-    }
-
+    // Updates email and password fields as user types
     const changeEmail = (evt: any): any => {
         evt.persist()
         setEmail(evt.target.value)
@@ -46,14 +54,12 @@ const LoginView = (props: any) => {
         setPassword(evt.target.value)
     }
 
-    const loaderCSS =
-        "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
-
     useEffect(() => {
         setProcessing(false)
     }, [dispatch, user.user_id, authFlow])
 
     if (processing) {
+        // Conditionally render the loading screen as we wait for signup API call to return
         return (
             <div
                 style={{
@@ -62,17 +68,23 @@ const LoginView = (props: any) => {
                     position: "relative",
                 }}
             >
-                <PuffLoader css={loaderCSS} size={75} />
+                <PuffLoader
+                    css={
+                        "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
+                    }
+                    size={75}
+                />
             </div>
         )
     } else {
+        // Render the login screen
         return (
             <div>
                 <div
                     style={{
                         width: 400,
                         margin: "auto",
-                        marginTop: 150,
+                        marginTop: 120,
                     }}
                 >
                     <h2
@@ -83,32 +95,28 @@ const LoginView = (props: any) => {
                     >
                         Welcome back! {props.user.user_id}
                     </h2>
-                    <FormControl
-                        type="email"
-                        aria-label="Default"
-                        aria-describedby="inputGroup-sizing-default"
-                        placeholder="Email Address"
-                        className="input-form"
-                        onChange={changeEmail}
-                        onKeyPress={onKeyPress}
-                        value={email}
-                        style={{
-                            marginTop: 40,
-                        }}
-                    />
-                    <FormControl
-                        type="password"
-                        aria-label="Default"
-                        aria-describedby="inputGroup-sizing-default"
-                        placeholder="Password"
-                        className="input-form"
-                        onChange={changePassword}
-                        onKeyPress={onKeyPress}
-                        value={password}
-                        style={{
-                            marginTop: 15,
-                        }}
-                    />
+                    <div style={{ marginTop: 40 }}>
+                        <Input
+                            text="Email"
+                            type="email"
+                            placeholder="bob@tryfractal.com"
+                            onChange={changeEmail}
+                            onKeyPress={onKeyPress}
+                            value={email}
+                            valid={checkEmail(email)}
+                        />
+                    </div>
+                    <div style={{ marginTop: 13 }}>
+                        <Input
+                            text="Password"
+                            type="password"
+                            placeholder="Password"
+                            onChange={changePassword}
+                            onKeyPress={onKeyPress}
+                            value={password}
+                            valid={checkPassword(password)}
+                        />
+                    </div>
                     <button
                         className="white-button"
                         style={{
@@ -118,10 +126,12 @@ const LoginView = (props: any) => {
                             border: "none",
                             color: "white",
                             fontSize: 16,
-                            paddingTop: 20,
-                            paddingBottom: 20,
+                            paddingTop: 15,
+                            paddingBottom: 15,
+                            opacity: loginEnabled(email, password) ? 1.0 : 0.6,
                         }}
                         onClick={login}
+                        disabled={!loginEnabled(email, password)}
                     >
                         Log In
                     </button>
@@ -131,7 +141,7 @@ const LoginView = (props: any) => {
                             width: "100%",
                             marginTop: 30,
                             marginBottom: 30,
-                            background: "#EFEFEF",
+                            background: "#dfdfdf",
                         }}
                     ></div>
                     <GoogleButton />

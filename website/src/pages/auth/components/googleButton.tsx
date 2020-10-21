@@ -50,7 +50,6 @@ const GoogleButton = (props: {
             <div
                 style={{
                     fontSize: width > 720 ? 16 : 14,
-                    fontWeight: "bold",
                 }}
             >
                 Log in with Google
@@ -70,7 +69,7 @@ const GoogleButton = (props: {
                 cookiePolicy={"single_host_origin"}
                 redirectUri={"postmessage"}
                 prompt={"consent"}
-                style={{ width: "100%", fontWeight: "bold" }}
+                style={{ width: "100%" }}
                 render={(renderProps) => googleButton(renderProps)}
             />
         </div>
