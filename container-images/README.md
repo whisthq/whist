@@ -65,6 +65,10 @@ To build a specific application's container image, run:
 
 This takes a single argument, `APP`, which is the path to the target folder whose application container you wish to build. For example, the base container is built with `./build_container_image.sh base` and the Chrome container is built with `./build_container_image.sh browsers/chrome`, since the relevant Dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `fractal/$APP`, with a tag of `current-build`.
 
+__NOTE:__ For production we do not cache builds of Dockerfiles. This is for two reasons: 
+1. Using build caches will almost surely lead to outdated versions of packages being present in the final images, which exposes publicly-known security flaws.
+2. It is also more expensive to keep a builder machine alive 24/7 than to just build them on the fly. 
+
 ### Running Local Images
 
 Once an image with tag `current-build` has been built locally via `build_container_images.sh`, it may be run locally by calling:
