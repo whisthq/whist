@@ -66,10 +66,10 @@ extern Client clients[MAX_NUM_CLIENTS];
 char aes_private_key[16];
 volatile int connection_id;
 static volatile bool exiting;
-
 volatile double max_mbps;
 volatile int client_width = -1;
 volatile int client_height = -1;
+volatile int client_dpi = -1;
 volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
@@ -166,7 +166,7 @@ int32_t SendVideo(void* opaque) {
 #endif
 
     while (!exiting) {
-        if (num_active_clients == 0 || client_width < 0 || client_height < 0) {
+        if (num_active_clients == 0 || client_width < 0 || client_height < 0 || client_dpi < 0) {
             SDL_Delay(5);
             continue;
         }
@@ -186,7 +186,7 @@ int32_t SendVideo(void* opaque) {
             }
 
             device = &rdevice;
-            if (CreateCaptureDevice(device, client_width, client_height) < 0) {
+            if (CreateCaptureDevice(device, client_width, client_height, client_dpi) < 0) {
                 LOG_WARNING("Failed to create capture device");
                 device = NULL;
                 update_device = true;

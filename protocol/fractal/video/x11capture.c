@@ -49,7 +49,7 @@ bool is_same_wh(CaptureDevice* device) {
     return device->width == w && device->height == h;
 }
 
-int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
+int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
     device->display = XOpenDisplay(NULL);
     if (!device->display) {
         LOG_ERROR("ERROR: CreateCaptureDevice display did not open");
@@ -76,13 +76,11 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
         system(cmd);
         snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
         system(cmd);
-
         snprintf(cmd, sizeof(cmd),
                  "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
                  "cut -d' ' -f3-)",
                  modename, width, height);
         system(cmd);
-
         snprintf(cmd, sizeof(cmd), "xrandr --addmode default %s", modename);
         system(cmd);
         snprintf(cmd, sizeof(cmd), "xrandr --output default --mode %s", modename);
@@ -90,6 +88,8 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
         snprintf(cmd, sizeof(cmd), "xrandr --addmode DVI-D-0 %s", modename);
         system(cmd);
         snprintf(cmd, sizeof(cmd), "xrandr --output DVI-D-0 --mode %s", modename);
+        system(cmd);
+        snprintf(cmd, sizeof(cmd), "xrandr --dpi %d", dpi);
         system(cmd);
 
         // If it's still not the correct dimensions
