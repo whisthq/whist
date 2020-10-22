@@ -4,9 +4,10 @@ import { connect } from "react-redux"
 import Input from "shared/components/input"
 
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
+import * as AuthPureAction from "store/actions/auth/pure"
 
 import { checkEmail } from "pages/auth/constants/authHelpers"
-
+import SwitchMode from "pages/auth/components/switchMode"
 import { PagePuff } from "shared/components/loadingAnimations"
 
 const ForgotView = (props: any) => {
@@ -65,9 +66,32 @@ const ForgotView = (props: any) => {
                             textAlign: "center",
                         }}
                     >
-                        Failed: {authFlow.forgotStatus}.
+                        Failed
+                        {authFlow.forgotStatus
+                            ? " " + authFlow.forgotStatus
+                            : ""}
+                        .
                     </h2>
-                    <div>You've sent {authFlow.forgotEmailsSent}</div>
+                    <div
+                        style={{
+                            color: "#fc3d03",
+                            textAlign: "center",
+                        }}
+                    >
+                        We've sent you {authFlow.forgotEmailsSent} reset emails.
+                    </div>
+                    <SwitchMode
+                        question="Try going back to login"
+                        link="here"
+                        closer="."
+                        onClick={() =>
+                            dispatch(
+                                AuthPureAction.updateAuthFlow({
+                                    mode: "Log in",
+                                })
+                            )
+                        }
+                    />
                 </div>
             </div>
         )
@@ -87,7 +111,7 @@ const ForgotView = (props: any) => {
                             textAlign: "center",
                         }}
                     >
-                        Enter Your Password {props.user.user_id}
+                        Enter your email.
                     </h2>
                     <div style={{ marginTop: 40 }}>
                         <Input
@@ -100,6 +124,36 @@ const ForgotView = (props: any) => {
                             valid={checkEmail(email)}
                         />
                     </div>
+                    <button
+                        className="white-button"
+                        style={{
+                            width: "100%",
+                            marginTop: 15,
+                            background: "#3930b8",
+                            border: "none",
+                            color: "white",
+                            fontSize: 16,
+                            paddingTop: 15,
+                            paddingBottom: 15,
+                            opacity: checkEmail(email) ? 1.0 : 0.6,
+                        }}
+                        onClick={forgot}
+                        disabled={!checkEmail(email)}
+                    >
+                        Reset
+                    </button>
+                    <SwitchMode
+                        question="Remembered your password?"
+                        link="Log in"
+                        closer="here."
+                        onClick={() =>
+                            dispatch(
+                                AuthPureAction.updateAuthFlow({
+                                    mode: "Log in",
+                                })
+                            )
+                        }
+                    />
                 </div>
             </div>
         )

@@ -37,7 +37,7 @@ const Auth = (props: {
                 <SignupView />
             </div>
         )
-    } else if (mode === "Forgot password") {
+    } else if (mode === "Forgot") {
         return (
             <div className="fractalContainer">
                 <Header color="black" />

@@ -14,9 +14,8 @@ import {
     signupEnabled,
     checkEmail,
 } from "pages/auth/constants/authHelpers"
-
+import SwitchMode from "pages/auth/components/switchMode"
 import PasswordConfirmForm from "pages/auth/components/passwordConfirmForm"
-
 import GoogleButton from "pages/auth/components/googleButton"
 
 const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
@@ -193,23 +192,18 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                         }}
                     />
                     <GoogleButton login={google_signup} />
-                    <div style={{ textAlign: "center", marginTop: 20 }}>
-                        Already have an account?{" "}
-                        <span
-                            style={{ color: "#3930b8" }}
-                            className="hover"
-                            onClick={() =>
-                                dispatch(
-                                    AuthPureAction.updateAuthFlow({
-                                        mode: "Log in",
-                                    })
-                                )
-                            }
-                        >
-                            Log in
-                        </span>{" "}
-                        here.
-                    </div>
+                    <SwitchMode
+                        question="Already have an account?"
+                        link="Log in"
+                        closer="here."
+                        onClick={() =>
+                            dispatch(
+                                AuthPureAction.updateAuthFlow({
+                                    mode: "Log in",
+                                })
+                            )
+                        }
+                    />
                 </div>
             </div>
         )

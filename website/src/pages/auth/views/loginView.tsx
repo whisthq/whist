@@ -12,7 +12,7 @@ import {
     checkEmail,
     checkPassword,
 } from "pages/auth/constants/authHelpers"
-
+import SwitchMode from "pages/auth/components/switchMode"
 import GoogleButton from "pages/auth/components/googleButton"
 
 const LoginView = (props: any) => {
@@ -161,25 +161,32 @@ const LoginView = (props: any) => {
                             marginBottom: 30,
                             background: "#dfdfdf",
                         }}
-                    ></div>
+                    />
                     <GoogleButton login={google_login} />
-                    <div style={{ textAlign: "center", marginTop: 20 }}>
-                        Need to create an account?{" "}
-                        <span
-                            style={{ color: "#3930b8" }}
-                            className="hover"
-                            onClick={() =>
-                                dispatch(
-                                    AuthPureAction.updateAuthFlow({
-                                        mode: "Sign up",
-                                    })
-                                )
-                            }
-                        >
-                            Sign up
-                        </span>{" "}
-                        here.
-                    </div>
+                    <SwitchMode
+                        question="Need to create an account?"
+                        link="Sign up"
+                        closer="here."
+                        onClick={() =>
+                            dispatch(
+                                AuthPureAction.updateAuthFlow({
+                                    mode: "Sign up",
+                                })
+                            )
+                        }
+                    />
+                    <SwitchMode
+                        question="Forgot your password?"
+                        link="Reset"
+                        closer="here."
+                        onClick={() =>
+                            dispatch(
+                                AuthPureAction.updateAuthFlow({
+                                    mode: "Forgot",
+                                })
+                            )
+                        }
+                    />
                 </div>
             </div>
         )

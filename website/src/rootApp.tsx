@@ -24,8 +24,10 @@ const RootApp = (props: any) => {
         }
     }
 
+    // temp reset state so that some bugs will be fixed basically
     useEffect(() => {
         refreshState()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     return (

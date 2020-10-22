@@ -9,8 +9,8 @@ import PuffLoader from "react-spinners/PuffLoader"
  * @param props unused
  */
 
- // PuffLoader has size 60 so we will be adding 30px to transform to center it's actual center
- // (it currently measures by top left corner)
+// PuffLoader has size 60 so we will be adding 30px to transform to center it's actual center
+// (it currently measures by top left corner)
 export const PagePuff = (props: any) => (
     <PuffLoader
         css={
