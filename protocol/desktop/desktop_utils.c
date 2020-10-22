@@ -49,10 +49,10 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"bitrate", required_argument, NULL, 'b'},
                                      {"codec", required_argument, NULL, 'c'},
                                      {"private-key", required_argument, NULL, 'k'},
-                                     {"user", optional_argument, NULL, 'u'},
-                                     {"environment", optional_argument, NULL, 'e'},
+                                     {"user", required_argument, NULL, 'u'},
+                                     {"environment", required_argument, NULL, 'e'},
                                      {"connection-method", required_argument, NULL, 'z'},
-                                     {"ports", optional_argument, NULL, 'p'},
+                                     {"ports", required_argument, NULL, 'p'},
                                      {"use_ci", no_argument, NULL, 'x'},
                                      {"name", required_argument, NULL, 'n'},
                                      // these are standard for POSIX programs
@@ -62,7 +62,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {0, 0, 0, 0}};
 
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u::e::z:p::xn:"
+#define OPTION_STRING "w:h:b:c:k:u:e:z:p:xn:"
 
 int parseArgs(int argc, char *argv[]) {
     // TODO: replace `desktop` with argv[0]
@@ -90,7 +90,7 @@ int parseArgs(int argc, char *argv[]) {
         "                                  in. e.g master, staging, dev. Optional,\n"
         "                                  defaults to dev\n"
         "  -p, --ports=PORTS             Pass in custom port:port mappings, comma-separated.\n"
-        "                                  Optional, defaults to the identity mapping..\n"
+        "                                  Defaults to the identity mapping..\n"
         "  -x, --use_ci                  Launch the protocol in CI mode\n"
         "  -z, --connection_method=CM    Which connection method to try first,\n"
         "                                  either STUN or DIRECT\n"
