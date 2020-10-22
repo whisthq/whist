@@ -30,12 +30,19 @@ const ForgotView = (props: any) => {
     }
 
     const onKeyPress = (evt: any) => {
-        forgot() // note check happens inside forgot
+        if (evt.key === "Enter") {
+            forgot() // note check happens inside forgot
+        }
     }
 
     useEffect(() => {
-        setProcessing(false)
-        setGotResponse(true)
+        // this should not be called on component mount
+        if (authFlow.forgotStatus && authFlow.forgotEmailsSent) {
+            console.log(authFlow.forgotStatus)
+            console.log(authFlow.forgotStatus)
+            setProcessing(false)
+            setGotResponse(true)
+        }
     }, [authFlow.forgotStatus, authFlow.forgotEmailsSent])
 
     if (processing) {
@@ -68,7 +75,7 @@ const ForgotView = (props: any) => {
                     >
                         Failed
                         {authFlow.forgotStatus
-                            ? " " + authFlow.forgotStatus
+                            ? ": " + authFlow.forgotStatus
                             : ""}
                         .
                     </h2>
@@ -78,7 +85,8 @@ const ForgotView = (props: any) => {
                             textAlign: "center",
                         }}
                     >
-                        We've sent you {authFlow.forgotEmailsSent} reset emails.
+                        We've sent you {authFlow.forgotEmailsSent} reset
+                        email(s).
                     </div>
                     <SwitchMode
                         question="Try going back to login"
