@@ -115,7 +115,7 @@ function* fetchContainer(action: any) {
     const state = yield select()
     const username = state.MainReducer.auth.username
     //const region = state.MainReducer.client.region
-    const region = 'us-east-1'
+    const region = "us-east-1"
     const app = action.app
 
     var { json, response } = yield call(
