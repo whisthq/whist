@@ -70,27 +70,33 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi
 
         snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
 
+        char* display_name;
+        runcmd("xrandr --current | grep \" connected\"", &display_name);
+        *strchr(display_name, ' ') = '\0';
+
         snprintf(cmd, sizeof(cmd), "xrandr --delmode default %s", modename);
-        system(cmd);
-        snprintf(cmd, sizeof(cmd), "xrandr --delmode DVI-D-0 %s", modename);
-        system(cmd);
+        runcmd(cmd, NULL);
+        snprintf(cmd, sizeof(cmd), "xrandr --delmode %s %s", display_name, modename);
+        runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
-        system(cmd);
+        runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd),
                  "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
                  "cut -d' ' -f3-)",
                  modename, width, height);
-        system(cmd);
+        runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --addmode default %s", modename);
-        system(cmd);
+        runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --output default --mode %s", modename);
-        system(cmd);
-        snprintf(cmd, sizeof(cmd), "xrandr --addmode DVI-D-0 %s", modename);
-        system(cmd);
-        snprintf(cmd, sizeof(cmd), "xrandr --output DVI-D-0 --mode %s", modename);
-        system(cmd);
-        snprintf(cmd, sizeof(cmd), "xrandr --dpi %d", dpi);
-        system(cmd);
+        runcmd(cmd, NULL);
+        snprintf(cmd, sizeof(cmd), "xrandr --addmode %s %s", display_name, modename);
+        runcmd(cmd, NULL);
+        snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
+        runcmd(cmd, NULL);
+        snprintf(cmd, sizeof(cmd), "xrandr --output %1$s --scaling=%2$fx%2$f", display_name, DEFAULT_DPI / ((double)dpi));
+        runcmd(cmd, NULL);
+
+        free(display_name);
 
         // If it's still not the correct dimensions
         if (!is_same_wh(device)) {
