@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import PuffLoader from "react-spinners/PuffLoader"
+import { PagePuff } from "shared/components/loadingAnimations"
 
 import "styles/auth.css"
 
@@ -12,6 +12,7 @@ import {
     checkEmail,
     checkPassword,
 } from "pages/auth/constants/authHelpers"
+
 import GoogleButton from "pages/auth/components/googleButton"
 
 const LoginView = (props: any) => {
@@ -27,6 +28,12 @@ const LoginView = (props: any) => {
             setProcessing(true)
             dispatch(AuthSideEffect.emailLogin(email, password))
         }
+    }
+
+    // so we can display puff while server does it's thing for google as well
+    const google_login = (code: any) => {
+        setProcessing(true)
+        dispatch(AuthSideEffect.googleLogin(code))
     }
 
     // Handles ENTER key press
@@ -53,6 +60,7 @@ const LoginView = (props: any) => {
         setPassword(evt.target.value)
     }
 
+    // should trigger when they successfully log in... be it with google or with email
     useEffect(() => {
         setProcessing(false)
     }, [dispatch, user.user_id, authFlow])
@@ -67,12 +75,7 @@ const LoginView = (props: any) => {
                     position: "relative",
                 }}
             >
-                <PuffLoader
-                    css={
-                        "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
-                    }
-                    size={75}
-                />
+                <PagePuff />
             </div>
         )
     } else {
@@ -159,7 +162,7 @@ const LoginView = (props: any) => {
                             background: "#dfdfdf",
                         }}
                     ></div>
-                    <GoogleButton />
+                    <GoogleButton login={google_login} />
                     <div style={{ textAlign: "center", marginTop: 20 }}>
                         Need to create an account?{" "}
                         <span

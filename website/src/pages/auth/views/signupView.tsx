@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import PuffLoader from "react-spinners/PuffLoader"
+import { PagePuff } from "shared/components/loadingAnimations"
 
 import "styles/auth.css"
 
@@ -13,8 +13,9 @@ import {
     checkEmailVerbose,
     signupEnabled,
     checkEmail,
-    checkPassword,
 } from "pages/auth/constants/authHelpers"
+
+import PasswordConfirmForm from "pages/auth/components/passwordConfirmForm"
 
 import GoogleButton from "pages/auth/components/googleButton"
 
@@ -36,6 +37,12 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
             setProcessing(true)
             dispatch(AuthSideEffect.emailSignup(email, password))
         }
+    }
+
+    // so we can display puff while server does it's thing for google as well
+    const google_signup = (code: any) => {
+        setProcessing(true)
+        dispatch(AuthSideEffect.googleLogin(code))
     }
 
     // Handles ENTER key press
@@ -91,6 +98,8 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
         } else {
             setConfirmPasswordWarning("")
         }
+        // we only want to change on a specific state change
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [confirmPassword])
 
     if (processing) {
@@ -103,10 +112,7 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                     position: "relative",
                 }}
             >
-                <PuffLoader
-                    css="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
-                    size={75}
-                />
+                <PagePuff />
             </div>
         )
     } else {
@@ -141,34 +147,16 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                             valid={checkEmail(email)}
                         />
                     </div>
-                    <div style={{ marginTop: 13 }}>
-                        <Input
-                            text="Password"
-                            type="password"
-                            placeholder="Password"
-                            onChange={changePassword}
-                            onKeyPress={onKeyPress}
-                            value={password}
-                            warning={passwordWarning}
-                            valid={checkPassword(password)}
-                        />
-                    </div>
-                    <div style={{ marginTop: 13 }}>
-                        <Input
-                            text="Confirm Password"
-                            type="password"
-                            placeholder="Password"
-                            onChange={changeConfirmPassword}
-                            onKeyPress={onKeyPress}
-                            value={confirmPassword}
-                            warning={confirmPasswordWarning}
-                            valid={
-                                confirmPassword.length > 0 &&
-                                confirmPassword === password &&
-                                checkPassword(password)
-                            }
-                        />
-                    </div>
+                    <PasswordConfirmForm
+                        changePassword={changePassword}
+                        changeConfirmPassword={changeConfirmPassword}
+                        onKeyPress={onKeyPress}
+                        password={password}
+                        confirmPassword={confirmPassword}
+                        passwordWarning={passwordWarning}
+                        confirmPasswordWarning={confirmPasswordWarning}
+                        isFirstElement={false}
+                    />
                     <button
                         className="white-button"
                         style={{
@@ -203,8 +191,8 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                             marginBottom: 30,
                             background: "#dfdfdf",
                         }}
-                    ></div>
-                    <GoogleButton />
+                    />
+                    <GoogleButton login={google_signup} />
                     <div style={{ textAlign: "center", marginTop: 20 }}>
                         Already have an account?{" "}
                         <span

@@ -9,6 +9,8 @@ import TermsOfService from "pages/legal/tos"
 import Cookies from "pages/legal/cookies"
 import Privacy from "pages/legal/privacy"
 import Auth from "pages/auth/auth"
+import Verify from "pages/auth/verify"
+import Reset from "pages/auth/reset"
 
 import * as SharedAction from "store/actions/shared"
 
@@ -38,6 +40,8 @@ const RootApp = (props: any) => {
                     component={TermsOfService}
                 />
                 <Route exact path="/auth" component={Auth} />
+                <Route exact path="/verify" component={Verify} />
+                <Route exact path="/reset" component={Reset} />
                 <Route exact path="/:first?/:second?" component={Landing} />
             </Switch>
         </div>
