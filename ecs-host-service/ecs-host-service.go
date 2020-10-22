@@ -282,7 +282,7 @@ func main() {
 	// the webserver knows about it.
 	startDockerDaemon()
 	// Only start the ECS Agent if running in production, on an AWS EC2 instance
-	if os.Getenv("APP_ENV") == "production" {
+	if env := os.Getenv("APP_ENV"); env == "production" || env == "prod" {
 		logger.Infof("Running in production, starting ECS Agent.")
 		startECSAgent()
 	}
