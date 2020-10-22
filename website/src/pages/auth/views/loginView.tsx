@@ -91,18 +91,34 @@ const LoginView = (props: any) => {
                     style={{
                         width: 400,
                         margin: "auto",
-                        marginTop: 120,
+                        marginTop: 70,
                     }}
                 >
-                    <h2
+                    <div
                         style={{
                             color: "#111111",
                             textAlign: "center",
+                            fontSize: 32,
+                            marginBottom: 40,
                         }}
                     >
-                        Welcome back! {props.user.user_id}
-                    </h2>
-                    <div style={{ marginTop: 40 }}>
+                        Welcome back!
+                    </div>
+                    {authFlow.loginWarning && authFlow.loginWarning !== "" && (
+                        <div
+                            style={{
+                                width: "100%",
+                                background: "#ff5627",
+                                padding: "15px 20px",
+                                color: "white",
+                                fontSize: 14,
+                                marginTop: 40,
+                            }}
+                        >
+                            {authFlow.loginWarning}
+                        </div>
+                    )}
+                    <div style={{ marginTop: 13 }}>
                         <Input
                             text="Email"
                             type="email"

@@ -125,17 +125,18 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                     style={{
                         width: 400,
                         margin: "auto",
-                        marginTop: 120,
+                        marginTop: 70,
                     }}
                 >
-                    <h2
+                    <div
                         style={{
                             color: "#111111",
                             textAlign: "center",
+                            fontSize: 32,
                         }}
                     >
                         Let's get started.
-                    </h2>
+                    </div>
                     <div style={{ marginTop: 40 }}>
                         <Input
                             text="Email"

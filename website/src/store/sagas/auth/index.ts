@@ -7,9 +7,6 @@ import * as AuthPureAction from "store/actions/auth/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
 
 function* emailLogin(action: any) {
-    console.log("login saga")
-    console.log(action)
-
     const { json } = yield call(
         apiPost,
         "/account/login",
@@ -36,7 +33,6 @@ function* emailLogin(action: any) {
             })
         )
     } else {
-        console.log("warning")
         yield put(
             AuthPureAction.updateAuthFlow({
                 loginStatus: "Invalid username or password. Try again.",

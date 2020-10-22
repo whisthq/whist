@@ -20,6 +20,8 @@ export default function (state = DEFAULT, action: any) {
             }
         case SharedAction.RESET_STATE:
             return DEFAULT
+        case SharedAction.REFRESH_STATE:
+            return DEFAULT
         default:
             return state
     }
