@@ -59,6 +59,7 @@ function* googleLogin(action: any) {
                 yield put(
                     AuthPureAction.updateUser({
                         user_id: json.username,
+                        name: json.username, //might want to change this later
                         accessToken: json.access_token,
                         refreshToken: json.refreshToken,
                         emailVerified: true,

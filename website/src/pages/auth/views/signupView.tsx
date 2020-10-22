@@ -13,8 +13,9 @@ import {
     checkEmailVerbose,
     signupEnabled,
     checkEmail,
-    checkPassword,
 } from "pages/auth/constants/authHelpers"
+
+import PasswordConfirmForm from "pages/auth/components/passwordConfirmForm"
 
 import GoogleButton from "pages/auth/components/googleButton"
 
@@ -149,34 +150,16 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                             valid={checkEmail(email)}
                         />
                     </div>
-                    <div style={{ marginTop: 13 }}>
-                        <Input
-                            text="Password"
-                            type="password"
-                            placeholder="Password"
-                            onChange={changePassword}
-                            onKeyPress={onKeyPress}
-                            value={password}
-                            warning={passwordWarning}
-                            valid={checkPassword(password)}
-                        />
-                    </div>
-                    <div style={{ marginTop: 13 }}>
-                        <Input
-                            text="Confirm Password"
-                            type="password"
-                            placeholder="Password"
-                            onChange={changeConfirmPassword}
-                            onKeyPress={onKeyPress}
-                            value={confirmPassword}
-                            warning={confirmPasswordWarning}
-                            valid={
-                                confirmPassword.length > 0 &&
-                                confirmPassword === password &&
-                                checkPassword(password)
-                            }
-                        />
-                    </div>
+                    <PasswordConfirmForm
+                        changePassword={changePassword}
+                        changeConfirmPassword={changeConfirmPassword}
+                        onKeyPress={onKeyPress}
+                        password={password}
+                        confirmPassword={confirmPassword}
+                        passwordWarning={passwordWarning}
+                        confirmPasswordWarning={confirmPasswordWarning}
+                        isFirstElement={false}
+                    />
                     <button
                         className="white-button"
                         style={{
@@ -211,7 +194,7 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                             marginBottom: 30,
                             background: "#dfdfdf",
                         }}
-                    ></div>
+                    />
                     <GoogleButton login={google_signup} />
                     <div style={{ textAlign: "center", marginTop: 20 }}>
                         Already have an account?{" "}

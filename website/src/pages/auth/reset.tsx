@@ -15,7 +15,7 @@ import {
     checkPasswordVerbose,
 } from "pages/auth/constants/authHelpers"
 
-import Input from "shared/components/input"
+import PasswordConfirmForm from "pages/auth/components/passwordConfirmForm"
 
 import "styles/auth.css"
 
@@ -151,30 +151,16 @@ const Reset = (props: {
                     >
                         Please Enter Your New Password {props.user.user_id}
                     </h2>
-                    <div style={{ marginTop: 40 }}>
-                        <Input
-                            text="Email"
-                            type="email"
-                            placeholder="bob@tryfractal.com"
-                            onChange={changePassword}
-                            onKeyPress={onKeyPress}
-                            value={password}
-                            warning={passwordWarning}
-                            valid={checkPassword(password)}
-                        />
-                    </div>
-                    <div style={{ marginTop: 13 }}>
-                        <Input
-                            text="Confirm Password"
-                            type="password"
-                            placeholder="Password"
-                            onChange={changeConfirmPassword}
-                            onKeyPress={onKeyPress}
-                            value={confirmPassword}
-                            warning={confirmPasswordWarning}
-                            valid={valid_password}
-                        />
-                    </div>
+                    <PasswordConfirmForm
+                        changePassword={changePassword}
+                        changeConfirmPassword={changeConfirmPassword}
+                        onKeyPress={onKeyPress}
+                        password={password}
+                        confirmPassword={confirmPassword}
+                        passwordWarning={passwordWarning}
+                        confirmPasswordWarning={confirmPasswordWarning}
+                        isFirstElement={true}
+                    />
                     <button
                         className="white-button"
                         style={{
