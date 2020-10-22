@@ -173,7 +173,7 @@ function* validateVerificationToken(action: any) {
         apiPost,
         "/account/verify",
         {
-            username: state.AuthReducer.username,
+            username: state.AuthReducer.user.user_id,
             token: action.token,
         },
         state.AuthReducer.tokens.access_token

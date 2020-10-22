@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { PagePuff } from "shared/components/loadingAnimations"
-
+import PasswordConfirmForm from "pages/auth/components/passwordConfirmForm"
 import {
     resetPassword,
     validateResetToken,
@@ -11,7 +11,7 @@ import {
     checkPasswordVerbose,
 } from "pages/auth/constants/authHelpers"
 
-import PasswordConfirmForm from "pages/auth/components/passwordConfirmForm"
+import "styles/auth.css"
 
 const ResetView = (props: {
     dispatch: any
