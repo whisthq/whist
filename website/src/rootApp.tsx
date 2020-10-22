@@ -11,6 +11,7 @@ import Privacy from "pages/legal/privacy"
 import Auth from "pages/auth/auth"
 import Verify from "pages/auth/verify"
 import Reset from "pages/auth/reset"
+import Dashboard from "pages/dashboard/dashboard"
 
 import * as SharedAction from "store/actions/shared"
 
@@ -42,6 +43,7 @@ const RootApp = (props: any) => {
                 <Route exact path="/auth" component={Auth} />
                 <Route exact path="/verify" component={Verify} />
                 <Route exact path="/reset" component={Reset} />
+                <Route exact path="/dashboard" component={Dashboard} />
                 <Route exact path="/:first?/:second?" component={Landing} />
             </Switch>
         </div>

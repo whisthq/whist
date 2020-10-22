@@ -19,7 +19,7 @@ const Auth = (props: {
     const { user, mode } = props
 
     if (user.user_id && user.user_id !== "") {
-        return <Redirect to="/" />
+        return <Redirect to="/dashboard" />
     }
 
     if (mode === "Log in") {
