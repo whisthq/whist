@@ -44,3 +44,8 @@ class AppsToInstallSchema(ma.SQLAlchemyAutoSchema):
 class SupportedAppImagesSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SupportedAppImages
+
+
+class BannersSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Banners

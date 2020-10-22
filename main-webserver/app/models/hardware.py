@@ -147,3 +147,15 @@ class SupportedAppImages(db.Model):
     long_description = db.Column(db.String(250))
     url = db.Column(db.String(250))
     tos = db.Column(db.String(250))
+    active = db.Column(db.Boolean, nullable=False, default=False)
+
+
+class Banners(db.Model):
+    __tablename__ = "banners"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+
+    heading = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
+    subheading = db.Column(db.String(250))
+    category = db.Column(db.String(250))
+    background = db.Column(db.String(250))
+    url = db.Column(db.String(250))
