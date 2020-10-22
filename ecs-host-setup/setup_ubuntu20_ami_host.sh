@@ -83,8 +83,8 @@ EOF
 # Reload daemon files
 sudo /bin/systemctl daemon-reload
 
-# Enabling ECS Agent
-sudo systemctl enable docker-container@ecs-agent.service
+# Disable ECS Agent (see README.md)
+sudo systemctl disable docker-container@ecs-agent.service
 
 sudo rm -rf /var/lib/cloud/instances/
 sudo rm -f /var/lib/ecs/data/*
