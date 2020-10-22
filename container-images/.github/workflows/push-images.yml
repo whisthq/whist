@@ -45,7 +45,7 @@ jobs:
             - name: Trigger a ECS task definitions render and deployment
               run: |
                 echo "Trigger render_and_deploy.yml from ecs-task-definitions to update tags to our latest container images"
-                curl -X GET -H "Authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/fractalcomputers/ecs-task-definitions/actions/workflows/${{ secrets.ECS_TASK_DEFINITIONS_RENDER_AND_DEPLOY_WORKFLOW_ID }}/dispatches
+                curl -H "Authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/fractalcomputers/ecs-task-definitions/actions/workflows/${{ secrets.ECS_TASK_DEFINITIONS_RENDER_AND_DEPLOY_WORKFLOW_ID }}/dispatches
 
 
 
