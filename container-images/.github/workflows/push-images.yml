@@ -40,7 +40,7 @@ jobs:
 
             - name: Curl
               run: |
-                curl -X GET -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/fractalcomputers/ecs-task-definitions/actions/workflows
+                curl -X GET -H "Authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/fractalcomputers/ecs-task-definitions/actions/workflows
 
             # - name: Configure AWS CLI
             #   uses: aws-actions/configure-aws-credentials@v1
