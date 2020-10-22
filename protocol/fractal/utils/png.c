@@ -110,10 +110,10 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     if (!bmp_buffer) {
         return -1;
     }
-    
+
     for (int y = 0; y < h; y++) {
-        memcpy(bmp_buffer + w * (h - y - 1) * numChannels,
-               bmp_original_buffer + scanlineBytes * y, w * numChannels);
+        memcpy(bmp_buffer + w * (h - y - 1) * numChannels, bmp_original_buffer + scanlineBytes * y,
+               w * numChannels);
     }
 
     // Create a new buffer for the PNG image
