@@ -1,6 +1,7 @@
 package fractalwebserver
 
 import (
+	"os"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
@@ -47,6 +48,18 @@ var authToken string
 var numBeats uint64 = 0
 var httpClient = http.Client{
 	Timeout: 10 * time.Second,
+}
+
+// Simple function to set the appropriate webserverHost based on
+// whether we're running in production or development
+func setWebserverHost() string {
+	if os.Getenv("APP_ENV") == "production" {
+		logger.Infof("Running in production, communicating with %s", productionHost)
+		return productionHost
+	} else {
+		logger.Infof("Running in development, communicating with %s", stagingHost)
+		return stagingHost
+	}
 }
 
 func InitializeHeartbeat() error {
