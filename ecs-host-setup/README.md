@@ -24,8 +24,8 @@ cd ../..
 
 Now, from a Fractal client, try connecting to the IP given by running `curl ipinfo.io` inside the container. You should be all set!
 
-
+## Design Decisions
 
 ### Host Service Controlling the ECS Agent
 
-We have made the decision to make the host service start up the docker daemon when it is ready (i.e. after the handshake with the webserver is complete). Previously, the docker daemon and ECS agent would start up on host machine boot, and our host service would have to race to initialize before the host became marked as ready to accept new tasks. Now, we start the docker daemon and the ECS agent only when we're ready to process Docker events, and we guarantee that the host service never misses the startup of a container. Furthermore, by waiting for the authentication handshake with the webserver to complete before starting the ECS agent, we ensure that a host that failed to authenticate (and therefore fails to deliver heartbeats, thus getting killed by the webserver in a few minutes) does not accept any tasks.
+We have made the decision to make the host service start up the Docker daemon when it is ready (i.e. after the handshake with the webserver is complete). Previously, the Docker daemon and ECS agent would start up on host machine boot, and our host service would have to race to initialize before the host became marked as ready to accept new tasks. Now, we start the Docker daemon and the ECS agent only when we're ready to process Docker events, and we guarantee that the host service never misses the startup of a container. Furthermore, by waiting for the authentication handshake with the webserver to complete before starting the ECS agent, we ensure that a host that failed to authenticate (and therefore fails to deliver heartbeats, thus getting killed by the webserver in a few minutes) does not accept any tasks.
