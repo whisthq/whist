@@ -57,6 +57,7 @@ volatile char aes_private_key[16];
 volatile int connection_id;
 volatile SDL_Window* window;
 volatile bool run_receive_packets;
+volatile bool run_send_clipboard_packets;
 volatile bool is_timing_latency;
 volatile clock latency_timer;
 volatile int ping_id;
@@ -92,6 +93,7 @@ clock window_resize_timer;
 // Function Declarations
 
 int ReceivePackets(void* opaque);
+int SendClipboardPackets(void* opaque);
 
 SocketContext PacketSendContext = {0};
 SocketContext PacketReceiveContext = {0};
@@ -124,7 +126,7 @@ void initUpdate() {
     ping_id = 1;
     ping_failures = -2;
 
-    initClipboardSynchronizer((char*)server_ip);
+    initClipboardSynchronizer();
 }
 
 void destroyUpdate() { destroyClipboardSynchronizer(); }
@@ -161,18 +163,6 @@ void update() {
 
         // Update the last tcp check timer
         StartTimer((clock*)&UpdateData.last_tcp_check_timer);
-    }
-
-    // Assuming we have all of the important init information, then update the
-    // clipboard
-    ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
-    if (clipboard) {
-        FractalClientMessage* fmsg_clipboard =
-            malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
-        fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
-        memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
-        SendFmsg(fmsg_clipboard);
-        free(fmsg_clipboard);
     }
 
     // If we haven't yet tried to update the dimension, and the dimensions don't
@@ -251,6 +241,37 @@ void update() {
         SendFmsg(&fmsg);
     }
     // End Ping
+}
+
+int SendClipboardPackets(void* opaque) {
+    /*
+    Obtain updated clipboard and send clipboard TCP packet to server
+    */
+
+    opaque;
+    LOG_INFO("SendClipboardPackets running on Thread %p", SDL_GetThreadID(NULL));
+
+    clock clipboard_time;
+    while (run_send_clipboard_packets) {
+        StartTimer(&clipboard_time);
+        ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
+        if (clipboard) {
+            FractalClientMessage* fmsg_clipboard =
+                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
+            fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
+            memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
+            SendFmsg(fmsg_clipboard);
+            free(fmsg_clipboard);
+        }
+
+        // delay to avoid clipboard checking spam
+        const int spam_time_ms = 500;
+        if (GetTimer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
+            SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * GetTimer(clipboard_time)), 1));
+        }
+    }
+
+    return 0;
 }
 // END UPDATER CODE
 
@@ -592,6 +613,11 @@ int main(int argc, char* argv[]) {
         SDL_Thread* receive_packets_thread =
             SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
+        // Create thread to send clipboard TCP packets
+        run_send_clipboard_packets = true;
+        SDL_Thread* send_clipboard_thread =
+            SDL_CreateThread(SendClipboardPackets, "SendClipboardPackets", NULL);
+
         StartTimer(&window_resize_timer);
 
         // Timer used in CI mode to exit after 1 min
@@ -653,7 +679,9 @@ int main(int argc, char* argv[]) {
         if (exiting || failed || try_amount + 1 == max_connection_attempts)
             sendServerQuitMessages(3);
         run_receive_packets = false;
+        run_send_clipboard_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
+        SDL_WaitThread(send_clipboard_thread, NULL);
         destroyAudio();
         closeConnections();
     }

@@ -70,6 +70,8 @@ ClipboardData* unsafe_GetClipboard() {
     // true
     if (clipboardHasFiles) {
         LOG_INFO("Getting files from clipboard");
+        LOG_WARNING("GetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
+        return cb;
 
         // allocate memory for filenames and paths
         OSXFilenames* filenames[MAX_URLS];
@@ -122,14 +124,13 @@ ClipboardData* unsafe_GetClipboard() {
     } else if (clipboardHasString) {
         // get the string
         const char* clipboard_string = ClipboardGetString();
-        int data_size = strlen(clipboard_string) + 1;  // for null terminator
+        // int data_size = strlen(clipboard_string) + 1;  // for null terminator
+        int data_size = strlen(clipboard_string);
         // copy the data
         if ((unsigned long)data_size < sizeof(clipboard_buf)) {
             cb->size = data_size;
             memcpy(cb->data, clipboard_string, data_size);
             cb->type = CLIPBOARD_TEXT;
-            LOG_INFO("CLIPBOARD STRING: %s", cb->data);
-            LOG_INFO("Len %d, Strlen %d", cb->size, strlen(cb->data));
         } else {
             LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
         }
@@ -144,19 +145,16 @@ ClipboardData* unsafe_GetClipboard() {
         // copy the data
         if ((unsigned long)clipboard_image->size < sizeof(clipboard_buf)) {
             cb->size = clipboard_image->size;
-            memcpy(cb->data, clipboard_image->data + 14, clipboard_image->size);
+            memcpy(cb->data, clipboard_image->data, clipboard_image->size);
             // dimensions for sanity check
-            LOG_INFO("Width: %d", (*(int*)&cb->data[4]));
-            LOG_INFO("Height: %d", (*(int*)&cb->data[8]));
-            // data type and length
-            cb->type = CLIPBOARD_IMAGE;
-            LOG_INFO("OSX Image! Size: %d", cb->size);
             // now that the image is in Clipboard struct, we can free this
             // struct
             free(clipboard_image);
         } else {
-            LOG_WARNING("Could not copy, clipboard too large! %d bytes", cb->size);
+            LOG_WARNING("Could not copy, clipboard too large! %d bytes", clipboard_image->size);
         }
+
+        cb->type = CLIPBOARD_IMAGE;
     } else {
         LOG_INFO("Nothing in the clipboard!");
     }
@@ -169,29 +167,35 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         return;
     }
     // check the type of the data
+    // Because we are declaring variables within each `case`, make sure each one is
+    //  scoped properly using brackets:
+    //  https://stackoverflow.com/questions/92396/why-cant-variables-be-declared-in-a-switch-statement
     switch (cb->type) {
-        case CLIPBOARD_TEXT:
-            LOG_INFO("SetClipboard to Text: %s", cb->data);
-            ClipboardSetString(cb->data);
+        case CLIPBOARD_TEXT: {
+            // Since Objective-C clipboard string pasting does not take
+            //   string size as an argument, and pastes until null character,
+            //   must malloc string to end with null character to be pasted.
+            //   This means null characters cannot be within the string being
+            //   pasted.
+            char* string_data = malloc(cb->size + 1);
+            memset(string_data, 0, cb->size + 1);
+            memcpy(string_data, cb->data, cb->size);
+            LOG_INFO("SetClipboard to Text: %s", string_data);
+            ClipboardSetString(string_data);
+            free(string_data);
             break;
-        case CLIPBOARD_IMAGE:
+        }
+        case CLIPBOARD_IMAGE: {
             LOG_INFO("SetClipboard to Image with size %d", cb->size);
-            // fix the CGImage header back
-            const size_t header_size = 14;
-            const size_t offset_to_pixel_array = 54;
-            char* data = malloc(cb->size + header_size);
-            *((char*)(&data[0])) = 'B';
-            *((char*)(&data[1])) = 'M';
-            *((int*)(&data[2])) = cb->size + header_size;
-            *((int*)(&data[10])) = offset_to_pixel_array;
-            memcpy(data + header_size, cb->data, cb->size);
-            // set the image and free the temp data
-            ClipboardSetImage(data, cb->size + 14);
-            free(data);
+            ClipboardSetImage(cb->data, cb->size);
             break;
-        case CLIPBOARD_FILES:
+        }
+        case CLIPBOARD_FILES: {
             LOG_INFO("SetClipboard to Files");
+            LOG_WARNING("SetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
+            return;
 
+            /*
             // allocate memory to store filenames in clipboard
             char* filenames[MAX_URLS];
             for (size_t i = 0; i < MAX_URLS; i++) {
@@ -211,9 +215,12 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             }
 
             break;
-        default:
+            */
+        }
+        default: {
             LOG_INFO("No clipboard data to set!");
             break;
+        }
     }
 
     // Update the status so that this specific update doesn't count

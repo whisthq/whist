@@ -84,6 +84,7 @@ else()
 endif()
 
 # download unison binary from AWS S3
+# TODO: REMOVE UNISON
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     MESSAGE(STATUS "Downloading binaries from AWS S3")
     execute_process(COMMAND CMD /C "download-binaries.bat"

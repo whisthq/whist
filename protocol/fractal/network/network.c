@@ -72,6 +72,7 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #include "network.h"
 
 #include <stdio.h>
+#include <fcntl.h>
 
 #include "../utils/aes.h"
 #include "../utils/json.h"
@@ -126,6 +127,27 @@ calls will take for that socket (0 to return immediately, -1 to never return)
 an indefinitely blocking socket
 */
 void set_timeout(SOCKET s, int timeout_ms);
+
+/*
+@brief                          Perform socket syscalls and set fds to
+                                use flag FD_CLOEXEC
+
+@returns                        The socket file descriptor, -1 on failure
+*/
+SOCKET socketp_tcp();
+SOCKET socketp_udp();
+
+/*
+@brief                          Perform accept syscall and set fd to use flag
+                                FD_CLOEXEC
+
+@param sock_fd                  The socket file descriptor
+@param sock_addr                The socket address
+@param sock_len                 The size of the socket address
+
+@returns                        The new socket file descriptor, -1 on failure
+*/
+SOCKET acceptp(int sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len);
 
 /*
 @brief                          This will send or receive data over a socket
@@ -450,6 +472,101 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
     return 0;
 }
 
+SOCKET socketp_tcp() {
+    /*
+        Create a TCP socket and set the FD_CLOEXEC flag.
+        Linux permits atomic FD_CLOEXEC definition via SOCK_CLOEXEC,
+        but this is not available on other operating systems yet.
+    */
+
+#ifdef SOCK_CLOEXEC
+    // Create socket
+    SOCKET sock_fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
+    if (sock_fd <= 0) {
+        LOG_WARNING("Could not create socket %d\n", GetLastNetworkError());
+        return -1;
+    }
+#else
+    // Create socket
+    SOCKET sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock_fd <= 0) {  // Windows & Unix cases
+        LOG_WARNING("Could not create socket %d\n", GetLastNetworkError());
+        return -1;
+    }
+
+#ifndef _WIN32
+    // Set socket to close on child exec
+    // Not necessary for windows because CreateProcessA creates an independent process
+    if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+#endif
+#endif
+
+    return sock_fd;
+}
+
+SOCKET socketp_udp() {
+    /*
+        Create a UDP socket and set the FD_CLOEXEC flag.
+        Linux permits atomic FD_CLOEXEC definition via SOCK_CLOEXEC,
+        but this is not available on other operating systems yet.
+    */
+
+#ifdef SOCK_CLOEXEC
+    // Create socket
+    SOCKET sock_fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
+#else
+    // Create socket
+    SOCKET sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+#ifndef _WIN32
+    // Set socket to close on child exec
+    // Not necessary for windows because CreateProcessA creates an independent process
+    if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+#endif
+#endif
+
+    return sock_fd;
+}
+
+SOCKET acceptp(int sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len) {
+    /*
+        Accept a connection on `sock_fd` and return a new socket fd
+
+        Arguments:
+            sock_fd (int): file descriptor of socket that we are accepting a connection on
+            sock_addr (struct sockaddr*): the address of the socket
+            sock_len (socklen_t*): the length of the socket address struct
+    */
+
+#if defined(_GNU_SOURCE) && defined(SOCK_CLOEXEC)
+    SOCKET new_socket = accept4(sock_fd, sock_addr, sock_len, SOCK_CLOEXEC);
+#else
+    // Accept connection from client
+    SOCKET new_socket = accept(sock_fd, sock_addr, sock_len);
+    if (new_socket < 0) {
+        LOG_WARNING("Did not receive response from client! %d\n", GetLastNetworkError());
+        return -1;
+    }
+
+#ifndef _WIN32
+    // Set socket to close on child exec
+    // Not necessary for windows because CreateProcessA creates an independent process
+    if (fcntl(new_socket, F_SETFD, fcntl(new_socket, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return -1;
+    }
+#endif
+#endif
+
+    return new_socket;
+}
+
 int recvp(SocketContext *context, void *buf, int len) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -659,11 +776,10 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
 
     // Create TCP socket
     LOG_INFO("Creating TCP Socket");
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+    if ((context->s = socketp_tcp()) < 0) {
         return -1;
     }
+
     set_timeout(context->s, stun_timeout_ms);
     // Server connection protocol
     context->is_server = true;
@@ -721,9 +837,7 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     LOG_INFO("Accepting TCP Connection");
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
-    if ((new_socket = accept(context->s, (struct sockaddr *)(&context->addr), &slen)) < 0) {
-        LOG_WARNING("Did not receive response from client! %d\n", GetLastNetworkError());
-        closesocket(context->s);
+    if ((new_socket = acceptp(context->s, (struct sockaddr *)(&context->addr), &slen)) < 0) {
         return -1;
     }
 
@@ -757,14 +871,18 @@ int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     int opt;
 
     // Create TCP socket
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+    if ((context->s = socketp_tcp()) < 0) {
         return -1;
     }
+
     set_timeout(context->s, stun_timeout_ms);
 
-    SOCKET udp_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    // Create UDP socket
+    SOCKET udp_s = socketp_udp();
+    if (udp_s < 0) {
+        return -1;
+    }
+
     // cppcheck-suppress nullPointer
     sendto(udp_s, NULL, 0, 0, (struct sockaddr *)&stun_addr, sizeof(stun_addr));
     closesocket(udp_s);
@@ -840,9 +958,12 @@ int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     closesocket(context->s);
 
     // Create TCP socket
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if ((context->s = socketp_tcp()) < 0) {
+        return -1;
+    }
+
     if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create TCP socket %d\n", GetLastNetworkError());
         return -1;
     }
 
@@ -888,11 +1009,10 @@ int CreateTCPClientContext(SocketContext *context, char *destination, int port,
     context->is_tcp = true;
 
     // Create TCP socket
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+    if ((context->s = socketp_tcp()) < 0) {
         return -1;
     }
+
     set_timeout(context->s, stun_timeout_ms);
 
     // Client connection protocol
@@ -939,15 +1059,18 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
     int opt;
 
     // Create TCP socket
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+    if ((context->s = socketp_tcp()) < 0) {
         return -1;
     }
+
     set_timeout(context->s, stun_timeout_ms);
 
-    // Tell the STUN to use TCP
-    SOCKET udp_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    // Tell the STUN to use UDP
+    SOCKET udp_s = socketp_udp();
+    if (udp_s < 0) {
+        return -1;
+    }
+
     // cppcheck-suppress nullPointer
     sendto(udp_s, NULL, 0, 0, (struct sockaddr *)&stun_addr, sizeof(stun_addr));
     closesocket(udp_s);
@@ -1035,9 +1158,8 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
 
     closesocket(context->s);
 
-    context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+    // Create TCP socket
+    if ((context->s = socketp_tcp()) < 0) {
         return -1;
     }
 
@@ -1124,11 +1246,10 @@ int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeou
 
     context->is_tcp = false;
     // Create UDP socket
-    context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+    if ((context->s = socketp_udp()) < 0) {
         return -1;
     }
+
     set_timeout(context->s, stun_timeout_ms);
     // Server connection protocol
     context->is_server = true;
@@ -1175,11 +1296,10 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     context->is_tcp = false;
 
     // Create UDP socket
-    context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
+    if ((context->s = socketp_udp()) < 0) {
         return -1;
     }
+
     set_timeout(context->s, stun_timeout_ms);
 
     // Server connection protocol
@@ -1291,11 +1411,10 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     context->is_tcp = false;
 
     // Create UDP socket
-    context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+    if ((context->s = socketp_udp()) < 0) {
         return -1;
     }
+
     set_timeout(context->s, stun_timeout_ms);
 
     // Client connection protocol
@@ -1334,11 +1453,10 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
     context->is_tcp = false;
 
     // Create UDP socket
-    context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+    if ((context->s = socketp_udp()) < 0) {
         return -1;
     }
+
     set_timeout(context->s, stun_timeout_ms);
 
     // Client connection protocol
@@ -1452,12 +1570,8 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
     struct sockaddr_in webserver_socketAddress;  // address of the web server socket
 
     // Creating our TCP socket to connect to the web server
-    Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (Socket < 0)  // Windows & Unix cases
-    {
-        // if can't create socket, return
-        LOG_WARNING("Could not create socket.");
-        return false;
+    if ((Socket = socketp_tcp()) < 0) {
+        return -1;
     }
     set_timeout(Socket, 1000);
 
