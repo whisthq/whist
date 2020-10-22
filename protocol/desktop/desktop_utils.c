@@ -49,8 +49,8 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"bitrate", required_argument, NULL, 'b'},
                                      {"codec", required_argument, NULL, 'c'},
                                      {"private-key", required_argument, NULL, 'k'},
-                                     {"user", required_argument, NULL, 'u'},
-                                     {"environment", required_argument, NULL, 'e'},
+                                     {"user", optional_argument, NULL, 'u'},
+                                     {"environment", optional_argument, NULL, 'e'},
                                      {"connection-method", required_argument, NULL, 'z'},
                                      {"ports", required_argument, NULL, 'p'},
                                      {"use_ci", no_argument, NULL, 'x'},
@@ -61,7 +61,8 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
 
-#define OPTION_STRING "w:h:b:c:k:ue:z:p:xn:"
+// Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
+#define OPTION_STRING "w:h:b:c:k:u::e::z:p:xn:"
 
 int parseArgs(int argc, char *argv[]) {
     // TODO: replace `desktop` with argv[0]
