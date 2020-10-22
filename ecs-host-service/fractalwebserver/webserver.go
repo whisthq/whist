@@ -21,6 +21,9 @@ const productionHost = "https://main-webserver.tryfractal.com"
 const authEndpoint = "/host_service/auth"
 const heartbeatEndpoint = "/host_service/heartbeat"
 
+// We cache the webserver host so we can avoid the overhead of repeatedly
+// checking the APP_ENV environment variable (though that could be cached as
+// well).
 var webserverHost = getWebserverHost()
 
 type handshakeRequest struct {
@@ -49,8 +52,8 @@ var httpClient = http.Client{
 	Timeout: 10 * time.Second,
 }
 
-// Simple function to get the appropriate webserverHost based on
-// whether we're running in production or development
+// Get the appropriate webserverHost based on whether we're running in
+// production or development
 func getWebserverHost() string {
 	if logger.IsRunningInProduction() {
 		logger.Infof("Running in production, communicating with %s", productionHost)
