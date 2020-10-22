@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+func IsRunningInProduction() bool {
+	env := os.Getenv("APP_ENV")
+	return env == "production" || env == "prod"
+}
+
 // The following functions are useful for getting system information that we
 // will pass to the Webserver
 

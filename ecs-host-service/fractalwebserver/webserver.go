@@ -1,7 +1,6 @@
 package fractalwebserver
 
 import (
-	"os"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
@@ -22,7 +21,7 @@ const productionHost = "https://main-webserver.tryfractal.com"
 const authEndpoint = "/host_service/auth"
 const heartbeatEndpoint = "/host_service/heartbeat"
 
-var webserverHost = setWebserverHost()
+var webserverHost = getWebserverHost()
 
 type handshakeRequest struct {
 	InstanceID string
@@ -50,10 +49,10 @@ var httpClient = http.Client{
 	Timeout: 10 * time.Second,
 }
 
-// Simple function to set the appropriate webserverHost based on
+// Simple function to get the appropriate webserverHost based on
 // whether we're running in production or development
-func setWebserverHost() string {
-	if os.Getenv("APP_ENV") == "production" {
+func getWebserverHost() string {
+	if logger.IsRunningInProduction() {
 		logger.Infof("Running in production, communicating with %s", productionHost)
 		return productionHost
 	} else {
