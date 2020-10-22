@@ -3,7 +3,7 @@ name: Push images
 # Publish on update to master branch
 on:
     push:
-        branches: [master, phil/trigger-workflow]
+        branches: [master]
     workflow_dispatch:
 
 env:
