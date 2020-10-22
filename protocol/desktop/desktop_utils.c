@@ -52,7 +52,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"user", optional_argument, NULL, 'u'},
                                      {"environment", optional_argument, NULL, 'e'},
                                      {"connection-method", required_argument, NULL, 'z'},
-                                     {"ports", required_argument, NULL, 'p'},
+                                     {"ports", optional_argument, NULL, 'p'},
                                      {"use_ci", no_argument, NULL, 'x'},
                                      {"name", required_argument, NULL, 'n'},
                                      // these are standard for POSIX programs
@@ -62,7 +62,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {0, 0, 0, 0}};
 
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u::e::z:p:xn:"
+#define OPTION_STRING "w:h:b:c:k:u::e::z:p::xn:"
 
 int parseArgs(int argc, char *argv[]) {
     // TODO: replace `desktop` with argv[0]
