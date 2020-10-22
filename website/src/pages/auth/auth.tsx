@@ -6,6 +6,7 @@ import LoginView from "pages/auth/views/loginView"
 import SignupView from "pages/auth/views/signupView"
 
 import "styles/auth.css"
+import ForgotView from "./views/forgotView"
 
 const Auth = (props: {
     dispatch: any
@@ -26,12 +27,21 @@ const Auth = (props: {
                 <LoginView />
             </div>
         )
-    } else {
+    } else if (mode === "Sign up") {
         return (
             <div>
                 <SignupView />
             </div>
         )
+    } else if (mode === "Forgot password") {
+        return (
+            <div>
+                <ForgotView />
+            </div>
+        )
+    } else {
+        // should never happen
+        return <div />
     }
 }
 

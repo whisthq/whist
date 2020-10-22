@@ -24,6 +24,7 @@ export const DEFAULT = {
         // google login
         googleLoginStatus: null, // null | an http status (used to display warnings)
         // reset password
+        forgotEmailsSent: 0,
         resetTokenStatus: null, // null | "verified" | "expired" | "invalid"
         resetDone: false, // whether we are done resetting our password (i.e. server says "I've done it")
     },

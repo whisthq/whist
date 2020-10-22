@@ -112,7 +112,7 @@ const Reset = (props: {
         if (authFlow.resetTokenStatus === "verified" && processing) {
             setProcessing(false)
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [authFlow.resetTokenStatus])
 
     // return tsx

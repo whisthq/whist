@@ -23,6 +23,7 @@ export function updateAuthFlow(body: {
     forgotStatus?: string
     verificationEmailsSent?: number
     verificationAttemptsExecuted?: number
+    forgotEmailsSent?: number
     resetTokenStatus?: string | null
     googleLoginStatus?: any | null
     resetDone?: boolean

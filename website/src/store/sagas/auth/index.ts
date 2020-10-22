@@ -213,6 +213,7 @@ function* validateVerificationToken(action: any) {
 }
 
 function* forgotPassword(action: any) {
+    const state = yield select()
     const { json } = yield call(
         apiPost,
         "/mail/forgot",
@@ -221,17 +222,24 @@ function* forgotPassword(action: any) {
         },
         ""
     )
+
+    const emailsSent = state.AuthReducer.authFlow.forgotEmailsSent
+        ? state.AuthReducer.authFlow.forgotEmailsSent
+        : 0
+
     if (json) {
         if (json.verified) {
             yield put(
                 AuthPureAction.updateAuthFlow({
                     forgotStatus: "Email sent",
+                    forgotEmailsSent: emailsSent + 1,
                 })
             )
         } else {
             yield put(
                 AuthPureAction.updateAuthFlow({
                     forgotStatus: "Not verified",
+                    forgotEmailsSent: emailsSent + 1,
                 })
             )
         }
@@ -239,6 +247,7 @@ function* forgotPassword(action: any) {
         yield put(
             AuthPureAction.updateAuthFlow({
                 forgotStatus: "No response",
+                forgotEmailsSent: emailsSent + 1,
             })
         )
     }

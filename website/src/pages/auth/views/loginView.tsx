@@ -12,6 +12,7 @@ import {
     checkEmail,
     checkPassword,
 } from "pages/auth/constants/authHelpers"
+
 import GoogleButton from "pages/auth/components/googleButton"
 
 const LoginView = (props: any) => {
