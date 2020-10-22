@@ -34,6 +34,8 @@ import TermsOfService from "pages/legal/tos"
 import Cookies from "pages/legal/cookies"
 import Privacy from "pages/legal/privacy"
 
+import withTracker from "shared/utils/withTracker"
+
 Sentry.init({
     dsn:
         "https://9a25b78ce37b4f7db2ff1a4952c1e3a8@o400459.ingest.sentry.io/5394481",
@@ -108,31 +110,35 @@ ReactDOM.render(
                     <ApolloProvider client={apolloClient}>
                         <MainProvider>
                             <Switch>
-                                <Route exact path="/about" component={About} />
+                                <Route
+                                    exact
+                                    path="/about"
+                                    component={withTracker(About)}
+                                />
                                 <Route
                                     exact
                                     path="/application"
-                                    component={Application}
+                                    component={withTracker(Application)}
                                 />
                                 <Route
                                     exact
                                     path="/cookies"
-                                    component={Cookies}
+                                    component={withTracker(Cookies)}
                                 />
                                 <Route
                                     exact
                                     path="/privacy"
-                                    component={Privacy}
+                                    component={withTracker(Privacy)}
                                 />
                                 <Route
                                     exact
                                     path="/termsofservice"
-                                    component={TermsOfService}
+                                    component={withTracker(TermsOfService)}
                                 />
                                 <Route
                                     exact
                                     path="/:first?/:second?"
-                                    component={Landing}
+                                    component={withTracker(Landing)}
                                 />
                             </Switch>
                         </MainProvider>
