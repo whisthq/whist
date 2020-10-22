@@ -7,9 +7,6 @@ import * as AuthPureAction from "store/actions/auth/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
 
 function* emailLogin(action: any) {
-    console.log("login saga")
-    console.log(action)
-
     const { json } = yield call(
         apiPost,
         "/account/login",
@@ -21,7 +18,6 @@ function* emailLogin(action: any) {
     )
 
     if (json && json.verified) {
-        console.log("cahnging user")
         yield put(
             AuthPureAction.updateUser({
                 user_id: action.email,
@@ -36,7 +32,6 @@ function* emailLogin(action: any) {
             })
         )
     } else {
-        console.log("warning")
         yield put(
             AuthPureAction.updateAuthFlow({
                 loginWarning: "Invalid username or password. Try again.",

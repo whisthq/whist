@@ -2,6 +2,7 @@ import React from "react"
 import { connect } from "react-redux"
 import { Redirect } from "react-router"
 
+import Header from "shared/components/header"
 import LoginView from "pages/auth/views/loginView"
 import SignupView from "pages/auth/views/signupView"
 
@@ -22,13 +23,16 @@ const Auth = (props: {
 
     if (mode === "Log in") {
         return (
-            <div>
+            <div className="fractalContainer">
+                <Header color="black" />
                 <LoginView />
             </div>
         )
     } else {
         return (
-            <div>
+            <div className="fractalContainer">
+                <Header color="black" />
+
                 <SignupView />
             </div>
         )

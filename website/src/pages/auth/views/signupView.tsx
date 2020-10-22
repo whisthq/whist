@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import { FormControl } from "react-bootstrap"
 import PuffLoader from "react-spinners/PuffLoader"
 
 import "styles/auth.css"
@@ -118,17 +117,18 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                     style={{
                         width: 400,
                         margin: "auto",
-                        marginTop: 120,
+                        marginTop: 70,
                     }}
                 >
-                    <h2
+                    <div
                         style={{
                             color: "#111111",
                             textAlign: "center",
+                            fontSize: 32,
                         }}
                     >
                         Let's get started.
-                    </h2>
+                    </div>
                     <div style={{ marginTop: 40 }}>
                         <Input
                             text="Email"
