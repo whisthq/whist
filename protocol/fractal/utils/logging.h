@@ -180,7 +180,12 @@ void saveConnectionID(int connection_id);
  *
  * @param is_connected             The connection status to send to the server.
  *                                 Pass true if connected to a client and false
- *                                 otherwise
+ *                                 otherwise.
+ * @param host                     The webserver host to send the message to.
+ * @param access_token             The access token previously provided by the webserver.
+ * @param identifier               The string that uniquely identifies this
+ *                                 instance of the protocol to the webserver.
+ * @param aes_private_key          The access token previously provided by the webserver.
  */
 void updateServerStatus(bool is_connected, char* host, char* access_token, char* identifier,
                         char* aes_private_key);
