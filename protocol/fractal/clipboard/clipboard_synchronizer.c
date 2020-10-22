@@ -1,8 +1,10 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file clipboard_synchronizer.c
- * @brief This file contains code meant, to be used on the clientside, that will
- *        assist in synchronizing the client-server clipboard.
+ * @brief This file contains code meant, to be used by both the server and client
+ *        to synchronize clipboard contents, both setting and gettings. Client
+ *        and server clipboard activities are parallel, and therefore the
+ *        synchronizer abstracts out and allows threading of clipboard actions.
 ============================
 Usage
 ============================
@@ -46,6 +48,7 @@ bool pendingUpdateClipboard();
 extern char filename[300];
 extern char username[50];
 bool updating_set_clipboard;
+bool updating_get_clipboard;
 bool updating_clipboard;
 bool pending_update_clipboard;
 clock last_clipboard_update;
@@ -53,7 +56,6 @@ SDL_sem* clipboard_semaphore;
 ClipboardData* clipboard;
 SDL_Thread* thread;
 static bool connected;
-static char* server_ip;
 
 bool pending_clipboard_push;
 
@@ -61,12 +63,14 @@ bool isClipboardSynchronizing() { return updating_clipboard; }
 
 bool pendingUpdateClipboard() { return pending_update_clipboard; }
 
-void initClipboardSynchronizer(char* server_ip_local) {
+void initClipboardSynchronizer() {
+    /*
+        Initialize the clipboard and the synchronizer thread
+    */
+
     initClipboard();
 
     connected = true;
-
-    server_ip = server_ip_local;
 
     pending_clipboard_push = false;
     updating_clipboard = false;
@@ -80,11 +84,25 @@ void initClipboardSynchronizer(char* server_ip_local) {
 }
 
 void destroyClipboardSynchronizer() {
+    /*
+        Destroy the clipboard synchronizer
+    */
+
     connected = false;
     SDL_SemPost(clipboard_semaphore);
 }
 
 bool ClipboardSynchronizerSetClipboard(ClipboardData* cb) {
+    /*
+        When called, signal that the clipboard can be set to the given contents
+
+        Arguments:
+            cb (ClipboardData*): pointer to the clipboard to load
+
+        Returns:
+            updatable (bool): whether the clipboard can be set right now
+    */
+
     if (updating_clipboard) {
         LOG_INFO("Tried to SetClipboard, but clipboard is updating");
         return false;
@@ -92,6 +110,7 @@ bool ClipboardSynchronizerSetClipboard(ClipboardData* cb) {
 
     updating_clipboard = true;
     updating_set_clipboard = true;
+    updating_get_clipboard = false;
     clipboard = cb;
 
     SDL_SemPost(clipboard_semaphore);
@@ -99,115 +118,22 @@ bool ClipboardSynchronizerSetClipboard(ClipboardData* cb) {
     return true;
 }
 
-int UpdateClipboardThread(void* opaque) {
-    UNUSED(opaque);
-
-    while (connected) {
-        SDL_SemWait(clipboard_semaphore);
-
-        if (!connected) {
-            break;
-        }
-
-        // ClipboardData* clipboard = GetClipboard();
-
-        if (updating_set_clipboard) {
-            LOG_INFO("Trying to set clipboard!");
-            // ClipboardData cb; TODO: unused, still needed?
-            if (clipboard->type == CLIPBOARD_FILES) {
-                char cmd[1000] = "";
-
-#ifndef _WIN32
-                char* prefix = "UNISON=./.unison;";
-#else
-                char* prefix = "";
-#endif
-
-#ifdef _WIN32
-                char* exc = "unison";
-#elif __APPLE__
-                char* exc = "./mac_unison";
-#else  // Linux
-                char* exc = "./linux_unison";
-#endif
-
-                snprintf(
-                    cmd, sizeof(cmd),
-                    "%s %s -follow \"Path *\" -ui text -ignorearchives -confirmbigdel=false -batch \
-						 -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l %s -i sshkey\" \
-                         \"ssh://%s/%s/get_clipboard/\" \
-                         %s \
-                         -force \"ssh://%s/%s/get_clipboard/\"",
-                    prefix, exc, username, server_ip, filename, SET_CLIPBOARD, server_ip, filename);
-
-                LOG_INFO("COMMAND: %s", cmd);
-                runcmd(cmd, NULL);
-            }
-            SetClipboard(clipboard);
-        } else {
-            clock clipboard_time;
-            StartTimer(&clipboard_time);
-
-            if (clipboard->type == CLIPBOARD_FILES) {
-                char cmd[1000] = "";
-
-#ifndef _WIN32
-                char* prefix = "UNISON=./.unison;";
-#else
-                char* prefix = "";
-#endif
-
-#ifdef _WIN32
-                char* exc = "unison";
-#elif __APPLE__
-                char* exc = "./mac_unison";
-#else  // Linux
-                char* exc = "./linux_unison";
-#endif
-
-                snprintf(
-                    cmd, sizeof(cmd),
-                    "%s %s -follow \"Path *\" -ui text -ignorearchives -confirmbigdel=false -batch \
-						 -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l %s -i sshkey\" \
-                         %s \
-                         \"ssh://%s/%s/set_clipboard/\" \
-                         -force %s",
-                    prefix, exc, username, GET_CLIPBOARD, server_ip, filename, GET_CLIPBOARD);
-
-                LOG_INFO("COMMAND: %s", cmd);
-                runcmd(cmd, NULL);
-            }
-
-            pending_clipboard_push = true;
-            /*
-            FractalClientMessage* fmsg =
-                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) +
-                       clipboard->size);
-            fmsg->type = CMESSAGE_CLIPBOARD;
-            memcpy(&fmsg->clipboard, clipboard,
-                   sizeof(ClipboardData) + clipboard->size);
-            clipboard_fmsg = fmsg;
-            */
-
-            // If it hasn't been 500ms yet, then wait 500ms to prevent too much
-            // spam
-            const int spam_time_ms = 500;
-            if (GetTimer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
-                SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * GetTimer(clipboard_time)), 1));
-            }
-        }
-
-        LOG_INFO("Updated clipboard!");
-        updating_clipboard = false;
-    }
-
-    return 0;
-}
-
 ClipboardData* ClipboardSynchronizerGetNewClipboard() {
+    /*
+        When called, return the current clipboard if a new clipboard activity
+        has registered.
+
+        Returns:
+            cb (ClipboardData*): pointer to the current clipboard
+    */
+
     if (pending_clipboard_push) {
         pending_clipboard_push = false;
         return clipboard;
+    }
+
+    if (updating_clipboard) {
+        return NULL;
     }
 
     // If the clipboard has updated since we last checked, or a previous
@@ -223,10 +149,53 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard() {
             pending_update_clipboard = false;
             updating_clipboard = true;
             updating_set_clipboard = false;
-            clipboard = GetClipboard();
+            updating_get_clipboard = true;
             SDL_SemPost(clipboard_semaphore);
         }
     }
 
     return NULL;
+}
+
+int UpdateClipboardThread(void* opaque) {
+    /*
+        Thread to get and set clipboard as signals are received.
+    */
+
+    UNUSED(opaque);
+
+    while (connected) {
+        SDL_SemWait(clipboard_semaphore);
+
+        if (!connected) {
+            break;
+        }
+
+        if (updating_set_clipboard) {
+            LOG_INFO("Trying to set clipboard!");
+            SetClipboard(clipboard);
+            updating_set_clipboard = false;
+        } else if (updating_get_clipboard) {
+            LOG_INFO("Trying to get clipboard!");
+
+            clipboard = GetClipboard();
+            pending_clipboard_push = true;
+            updating_get_clipboard = false;
+        } else {
+            clock clipboard_time;
+            StartTimer(&clipboard_time);
+
+            // If it hasn't been 500ms yet, then wait 500ms to prevent too much
+            // spam
+            const int spam_time_ms = 500;
+            if (GetTimer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
+                SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * GetTimer(clipboard_time)), 1));
+            }
+        }
+
+        LOG_INFO("Updated clipboard!");
+        updating_clipboard = false;
+    }
+
+    return 0;
 }

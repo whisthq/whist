@@ -504,7 +504,7 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
 
     AVPacket pkt;
     av_init_packet(&pkt);
-    png_to_bmp(frame_name, &pkt);
+    png_file_to_bmp(frame_name, &pkt);
     // LOG_INFO( "Test: %f", GetTimer(c) );
 
     SDL_RWops* rw = SDL_RWFromMem(pkt.data, pkt.size);
