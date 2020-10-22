@@ -15,6 +15,8 @@ Basic continuous integration is set up for this project. For every push or PR, b
 
 To ensure that no lingering `console.log()` statements make it to production and can be inspected by users, please use `debugLog()` to print to the console. This custom logging function gets automatically hidden in production.
 
+If you do not have the `.env` environment folder. Run `python retrieve.py` in the root folder. It will download the environment secrets necessary to run the site locally. You will need to export your aws secret access key and access key id for it to work with `export AWS_SECRET_ACCESS_KEY=...` and `export AWS_ACCESS_KEY_ID=...` (replace `...` with each of the two values respectively). You should be able to see these keys in the onboarding email from Phil or your AWS account. Ask someone with root user access if you do not know what your credentials are (probably Ming or Phil). If the code is not working and you do not have time to fix it, consider using the CLI or AWS Console per the instructions in the Notion Engineering Wiki doc.
+
 ## Styling
 
 To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Prettier.
