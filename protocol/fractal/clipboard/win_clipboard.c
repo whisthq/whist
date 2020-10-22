@@ -284,6 +284,9 @@ ClipboardData* unsafe_GetClipboard() {
                 //      add BMP header and then convert from bmp to png
                 //      before saving to clipboard data to be sent to peer
                 char* bmp_data = malloc(cb->size + 14);
+                if (!bmp_data) {
+                    break;
+                }
                 *((char*)(&bmp_data[0])) = 'B';
                 *((char*)(&bmp_data[1])) = 'M';
                 *((int*)(&bmp_data[2])) = cb->size + 14;
@@ -295,6 +298,7 @@ ClipboardData* unsafe_GetClipboard() {
                 AVPacket packet;
                 if (bmp_to_png((unsigned char*)bmp_data, (unsigned)(cb->size + 14), &packet) != 0) {
                     LOG_ERROR("clipboard bmp to png conversion failed");
+                    free(bmp_data);
                     break;
                 }
                 free(bmp_data);

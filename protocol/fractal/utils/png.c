@@ -82,13 +82,19 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     h = *((int*)(&bmp[22]));
     if (bmp[28] != 24 && bmp[28] != 32) return -1;
     unsigned numChannels = bmp[28] / 8;
+
+    // BMP pixel arrays are always multiples of 4. Images with widths that are not multiples
+    //  of 4 are always padded at the end of each row. scanlineBytes is the padded width of each
+    //  BMP row in the original image.
     unsigned scanlineBytes = w * numChannels;
     if (scanlineBytes % 4 != 0) scanlineBytes = (scanlineBytes / 4) * 4 + 4;
 
-    // BMP pixel arrays are always multiples of 4. Images with widths that are not multiples
-    //  of 4 are always padded at the end of each row. orig_bmp_w is the padded width of each
-    //  BMP row in the original image.
-    int orig_bmp_w = w % 4 == 0 ? w : (w / 4) * 4 + 4;
+    // memcpy will face problems below if the calculated size does not match the actual
+    // BMP byte array size
+    if (scanlineBytes * h + pixeloffset != size) {
+        LOG_WARNING("BMP size <> BMP header mismatch");
+        return -1;
+    }
 
     // Depending on numChannels, we could be dealing with BGR24 or BGR32 in the BMP, but
     //  always save to PNG RGB (not RGBA)
@@ -101,31 +107,67 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     uint8_t* bmp_original_buffer = (uint8_t*)(bmp + pixeloffset);
     int bmp_bytes = av_image_get_buffer_size(bmp_format, w, h, 1);
     uint8_t* bmp_buffer = (uint8_t*)av_malloc(bmp_bytes);
+    if (!bmp_buffer) {
+        return -1;
+    }
+    
     for (int y = 0; y < h; y++) {
         memcpy(bmp_buffer + w * (h - y - 1) * numChannels,
-               bmp_original_buffer + orig_bmp_w * y * numChannels, w * numChannels);
+               bmp_original_buffer + scanlineBytes * y, w * numChannels);
     }
 
     // Create a new buffer for the PNG image
     int png_bytes = av_image_get_buffer_size(png_format, w, h, 1);
     uint8_t* png_buffer = (uint8_t*)av_malloc(png_bytes);
+    if (!png_buffer) {
+        av_free(bmp_buffer);
+        return -1;
+    }
 
     // Create and fill the frames for both the original BMP image and the new PNG image
     AVFrame* bmp_frame = av_frame_alloc();
+    if (!bmp_frame) {
+        av_free(bmp_buffer);
+        av_free(png_buffer);
+        return -1;
+    }
     bmp_frame->format = bmp_format;
     bmp_frame->width = w;
     bmp_frame->height = h;
+
     AVFrame* png_frame = av_frame_alloc();
+    if (!png_frame) {
+        av_free(bmp_buffer);
+        av_free(png_buffer);
+        av_frame_free(&bmp_frame);
+    }
     png_frame->format = png_format;
     png_frame->width = w;
     png_frame->height = h;
 
-    av_image_fill_arrays(bmp_frame->data, bmp_frame->linesize, bmp_buffer, bmp_format, w, h, 1);
-    av_image_fill_arrays(png_frame->data, png_frame->linesize, png_buffer, png_format, w, h, 1);
+    if (av_image_fill_arrays(bmp_frame->data, bmp_frame->linesize, bmp_buffer, bmp_format, w, h,
+                             1) < 0) {
+        av_free(bmp_buffer);
+        av_free(png_buffer);
+        av_frame_free(&bmp_frame);
+        av_frame_free(&png_frame);
+        return -1;
+    }
+    if (av_image_fill_arrays(png_frame->data, png_frame->linesize, png_buffer, png_format, w, h,
+                             1) < 0) {
+        av_free(bmp_buffer);
+        av_free(png_buffer);
+        av_frame_free(&bmp_frame);
+        av_frame_free(&png_frame);
+        return -1;
+    }
 
     // Convert the BMP image into the PNG image
     struct SwsContext* conversionContext =
         sws_getContext(w, h, bmp_format, w, h, png_format, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+    if (!conversionContext) {
+        return -1;
+    }
     sws_scale(conversionContext, (const uint8_t* const*)bmp_frame->data, bmp_frame->linesize, 0, h,
               png_frame->data, png_frame->linesize);
 
@@ -173,7 +215,18 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     pkt->data = NULL;
     pkt->size = 0;
 
-    avcodec_send_frame(c, png_frame);
+    if (avcodec_send_frame(c, png_frame) < 0) {
+        avcodec_close(c);
+        av_free(c);
+        av_free(bmp_buffer);
+        av_free(png_buffer);
+        av_frame_free(&bmp_frame);
+        av_frame_free(&png_frame);
+
+        LOG_ERROR("Error sending frame\n");
+        return -1;
+    }
+
     if (avcodec_receive_packet(c, pkt) < 0) {
         avcodec_close(c);
         av_free(c);
@@ -217,6 +270,13 @@ int read_char_open(AVFormatContext** pctx, const char* data, int data_size) {
             pctx (AVFormatContext**): format context that will contain the PNG stream
             data (const char*): the actual PNG file data array to be put into a stream
             data_size (int): size of the PNG file data array
+
+        Return:
+            ret (int): 0 on success, negative value on failure
+            => ARG pctx is loaded with PNG stream
+
+        NOTE: after a successful call, be sure to free (*pctx)->pb->buffer and then (*pctx->pb)
+        before closing and freeing *pctx.
     */
 
     static AVInputFormat* infmt = NULL;
@@ -258,8 +318,6 @@ int read_char_open(AVFormatContext** pctx, const char* data, int data_size) {
         return -5;
     }
 
-    av_free(buffer);
-    av_free(pbctx);
     return 0;
 }
 
@@ -316,6 +374,7 @@ int load_png(uint8_t* data[4], int linesize[4], int* w, int* h, enum AVPixelForm
     if (ret < 0) {
         goto end;
     }
+
     ret = avcodec_receive_frame(codec_ctx, frame);
 
     if (ret < 0) {
@@ -333,10 +392,15 @@ int load_png(uint8_t* data[4], int linesize[4], int* w, int* h, enum AVPixelForm
     av_image_copy(data, linesize, (const uint8_t**)frame->data, frame->linesize, *pix_fmt, *w, *h);
 
 end:
+
     avcodec_close(codec_ctx);
     avcodec_free_context(&codec_ctx);
+
+    av_free(format_ctx->pb->buffer);
+    av_free(format_ctx->pb);
     avformat_close_input(&format_ctx);
     avformat_free_context(format_ctx);
+
     av_freep(&frame);
     return ret;
 }
