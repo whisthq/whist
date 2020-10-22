@@ -57,7 +57,7 @@ const Dashboard = (props: {
                         position: "relative",
                     }}
                 >
-                    <PagePuff />
+                    <PagePuff top="25%" />
                 </div>
             </div>
         )
