@@ -151,7 +151,7 @@ int runcmd(const char* cmdline, char** response) {
 
     memcpy(cmd_buf, cmdline, strlen((const char*)cmdline) + 1);
 
-    SetEnvironmentVariableW((LPCWSTR)L"UNISON", (LPCWSTR)L"./.unison");
+    // SetEnvironmentVariableW((LPCWSTR)L"UNISON", (LPCWSTR)L"./.unison");
 
     if (CreateProcessA(NULL, (LPSTR)cmd_buf, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si,
                        &pi)) {

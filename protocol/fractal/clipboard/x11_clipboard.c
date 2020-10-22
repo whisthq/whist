@@ -30,18 +30,20 @@ whatever files are in the SET_CLIPBOARD directory.
 
 #include "../core/fractal.h"
 #include "clipboard.h"
+#include "../utils/png.h"
 
-#define CLOSE_FDS \
-    "for fd in $(ls /proc/$$/fd); do\
-  case \"$fd\" in 0|1|2|255)\
-      ;;\
-    *)\
-      eval \"exec $fd>&-\"\
-      ;;\
-  esac \
-done; "
+// #define CLOSE_FDS \
+//     "for fd in $(ls /proc/$$/fd); do\
+//   case \"$fd\" in 0|1|2|255)\
+//       ;;\
+//     *)\
+//       eval \"exec $fd>&-\"\
+//       ;;\
+//   esac \
+// done; "
 
-#define MAX_CLIPBOARD_SIZE 10000000
+// TODO: standardize this across all clipboards
+#define MAX_CLIPBOARD_SIZE 9000000
 
 bool StartTrackingClipboardUpdates();
 
@@ -58,38 +60,29 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
 void unsafe_initClipboard() { StartTrackingClipboardUpdates(); }
 
 bool get_clipboard_picture(ClipboardData* cb) {
-    Atom target_atom = XInternAtom(display, "image/bmp", False),
-         property_atom = XInternAtom(display, "XSEL_DATA", False);
+    /*
+    Assume that clipboard stores pictures in png format when getting
+    */
+    Atom target_atom;
+    Atom property_atom = XInternAtom(display, "XSEL_DATA", False);
 
+    target_atom = XInternAtom(display, "image/png", False);
     if (clipboard_has_target(property_atom, target_atom)) {
-        if (!get_clipboard_data(property_atom, cb, 14)) {
+        // is PNG
+        if (!get_clipboard_data(property_atom, cb, 0)) {
             LOG_WARNING("Failed to get clipboard data");
             return false;
         }
-
-        LOG_INFO("content size: %d", cb->size);
-
-        // WRITE TO FILE
-        char* file_buf = malloc(cb->size + 14);
-        memcpy(file_buf + 14, cb->data, cb->size);
-        *((char*)(&file_buf[0])) = 'B';
-        *((char*)(&file_buf[1])) = 'M';
-        *((int*)(&file_buf[2])) = cb->size + 14;
-        *((int*)(&file_buf[10])) = 54;
-        FILE* fptr;
-        fptr = fopen("output.bmp", "wb");
-        fwrite(file_buf, 1, cb->size + 14, fptr);
-        fclose(fptr);
-        // END WRITE TO FILE
-
         cb->type = CLIPBOARD_IMAGE;
-        free(file_buf);
         return true;
-    } else {  // request failed, e.g. owner can't convert to the target format
-        LOG_WARNING("Can't convert clipboard image to target format");
-        return false;
     }
+
+    cb->type = CLIPBOARD_IMAGE;
+
+    LOG_WARNING("Can't convert clipboard image to target format");
+    return false;
 }
+
 bool get_clipboard_string(ClipboardData* cb) {
     Atom target_atom = XInternAtom(display, "UTF8_STRING", False),
          property_atom = XInternAtom(display, "XSEL_DATA", False);
@@ -103,7 +96,7 @@ bool get_clipboard_string(ClipboardData* cb) {
         cb->type = CLIPBOARD_TEXT;
         return true;
     } else {  // request failed, e.g. owner can't convert to the target format
-        LOG_WARNING("Can't convert clipboard image to target format");
+        LOG_WARNING("Can't convert clipboard string to target format");
         return false;
     }
 }
@@ -159,7 +152,10 @@ ClipboardData* unsafe_GetClipboard() {
     ClipboardData* cb = (ClipboardData*)cb_buf;
     cb->type = CLIPBOARD_NONE;
     cb->size = 0;
-    get_clipboard_files(cb) || get_clipboard_picture(cb) || get_clipboard_string(cb);
+
+    // NOT IMPLEMENTING CLIPBOARD FILES RIGHT NOW
+    // get_clipboard_files(cb) || get_clipboard_picture(cb) || get_clipboard_string(cb);
+    get_clipboard_picture(cb) || get_clipboard_string(cb);
 
     // Essentially just cb_buf, we expect that the user of GetClipboard
     // will malloc his own version if he wants to save multiple clipboards
@@ -187,35 +183,32 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         LOG_INFO("Setting clipboard to text!");
 
         // Open up xclip
-        inp = popen(CLOSE_FDS "xclip -i -selection clipboard", "w");
+        inp = popen("xclip -i -selection clipboard", "w");
 
         // Write text data
         fwrite(cb->data, 1, cb->size, inp);
 
         // Close pipe
         pclose(inp);
+
     } else if (cb->type == CLIPBOARD_IMAGE) {
         LOG_INFO("Setting clipboard to image!");
 
         // Open up xclip
-        inp = popen(CLOSE_FDS "xclip -i -selection clipboard -t image/png", "w");
+        inp = popen("xclip -i -selection clipboard -t image/png", "w");
 
-        // Write file header
-        char* file_buf = malloc(14);
-        *((char*)(&file_buf[0])) = 'B';
-        *((char*)(&file_buf[1])) = 'M';
-        *((int*)(&file_buf[2])) = cb->size + 14;
-        *((int*)(&file_buf[10])) = 54;
-        fwrite(file_buf, 1, 14, inp);
-
-        // Write file data
+        // Write text data
         fwrite(cb->data, 1, cb->size, inp);
 
         // Close pipe
         pclose(inp);
+
     } else if (cb->type == CLIPBOARD_FILES) {
         LOG_INFO("Setting clipboard to Files");
 
+        LOG_WARNING("SetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
+        return;
+        /*
         struct dirent* de;
         DIR* dr = opendir(SET_CLIPBOARD);
 
@@ -251,13 +244,12 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             // Close the file descriptor
             pclose(inp);
         }
+        */
     }
 
-    // We make sure that pending clipboard updates are wiped out, because we
-    // just recently updated the clipboard hasClipboardUpdated() is going to
-    // return true right now:
+    // Empty call of unsafe_hasClipboardUpdated() in order to prevent hasUpdated from returning true
+    //      just after we've called xclip to set the clipboard
     unsafe_hasClipboardUpdated();
-    // hasClipboardUpdated() should return false after this
     return;
 }
 
@@ -283,7 +275,9 @@ bool unsafe_hasClipboardUpdated() {
     // then we return "true". Otherwise, return "false".
     //
 
-    static bool first = true;
+    if (!display) return false;
+
+    static bool first = true;  // static, so only sets to true on first call
     int event_base, error_base;
     XEvent event;
     assert(XFixesQueryExtension(display, &event_base, &error_base));
@@ -296,8 +290,9 @@ bool unsafe_hasClipboardUpdated() {
     while (XPending(display)) {
         XNextEvent(display, &event);
         if (event.type == event_base + XFixesSelectionNotify &&
-            ((XFixesSelectionNotifyEvent*)&event)->selection == clipboard)
+            ((XFixesSelectionNotifyEvent*)&event)->selection == clipboard) {
             return true;
+        }
     }
     return false;
 }
