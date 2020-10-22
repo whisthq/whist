@@ -52,8 +52,7 @@ volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
 volatile bool pending_sws_update = false;
 volatile bool pending_texture_update = false;
 volatile bool pending_resize_render = false;
-
-SDL_Renderer* renderer = NULL;
+volatile SDL_Renderer* renderer = NULL;
 
 #define LOG_VIDEO false
 
@@ -572,9 +571,6 @@ int initMultithreadedVideo(void* opaque) {
     }
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
-    // SDL_Renderer* renderer = SDL_CreateRenderer(
-    //     (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
-
     // Show a black screen initially before anything else
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
@@ -640,6 +636,7 @@ int initMultithreadedVideo(void* opaque) {
 // END VIDEO FUNCTIONS
 
 void initVideo() {
+    // renderer must be created in main thread, per SDL guidelines
     renderer = SDL_CreateRenderer(
         (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     VideoData.render_screen_thread = SDL_CreateThread(initMultithreadedVideo, "VideoThread", NULL);
