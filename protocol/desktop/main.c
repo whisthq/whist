@@ -107,10 +107,6 @@ volatile int try_amount;
 char filename[300];
 char username[50];
 
-#define MS_IN_SECOND 1000
-#define WINDOWS_DEFAULT_DPI 96.0
-#define BYTES_IN_KILOBYTE 1024.0
-
 // UPDATER CODE - HANDLES ALL PERIODIC UPDATES
 struct UpdateData {
     bool tried_to_update_dimension;
@@ -177,7 +173,7 @@ void update() {
         fmsg.dimensions.height = (int)output_height;
         fmsg.dimensions.codec_type = (CodecType)output_codec_type;
         fmsg.dimensions.dpi =
-            (int)(WINDOWS_DEFAULT_DPI * output_width / get_virtual_screen_width());
+            (int)(DEFAULT_DPI * output_width / get_window_virtual_width((SDL_Window*)window));
         SendFmsg(&fmsg);
         UpdateData.tried_to_update_dimension = true;
     }
@@ -187,7 +183,7 @@ void update() {
     if (update_mbps) {
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
-        fmsg.mbps = max_bitrate / BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE;
+        fmsg.mbps = max_bitrate / (double)BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE;
         LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
         SendFmsg(&fmsg);
     }

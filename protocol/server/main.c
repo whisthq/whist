@@ -59,8 +59,6 @@ its threads.
 #define DEFAULT_HEIGHT 1080
 
 #define BITS_IN_BYTE 8.0
-#define BYTES_IN_KILOBYTE 1024.0
-#define MS_IN_SECOND 1000
 #define TCP_CONNECTION_WAIT 5000
 
 extern Client clients[MAX_NUM_CLIENTS];
@@ -389,12 +387,12 @@ int32_t SendVideo(void* opaque) {
                     // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime
                     // = max_mbps previousFrameSize * 8.0 / 1024.0 / 1024.0
                     // / max_mbps = IdealTime
-                    double transmit_time = previous_frame_size * BITS_IN_BYTE / BYTES_IN_KILOBYTE /
-                                           BYTES_IN_KILOBYTE / max_mbps;
+                    double transmit_time = ((double)previous_frame_size) * BITS_IN_BYTE /
+                                           BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
 
                     // double average_frame_size = 1.0 * bytes_tested_frames
                     // / bitrate_tested_frames;
-                    double current_trasmit_time = previous_frame_size * BITS_IN_BYTE /
+                    double current_trasmit_time = ((double)previous_frame_size) * BITS_IN_BYTE /
                                                   BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
                     double current_fps = 1.0 / current_trasmit_time;
 
