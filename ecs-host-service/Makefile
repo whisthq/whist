@@ -23,11 +23,11 @@ run: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with debug configuration...)
 	# we run the built binary instead of using `go run` because otherwise signal
 	# handling for Ctrl+C does not work
-	sudo env PATH=$PATH APP_ENV=development $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env PATH=$PATH $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runprod: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with production configuration...)
-	sudo env PATH=$PATH USE_PROD_SENTRY=1 APP_ENV=production $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env PATH=$PATH USE_PROD_SENTRY=1 $(BUILD_FOLDER)/$(BINARY_NAME)
 
 deps:
 	$(GOGET) github.com/docker/docker@v19.03.13

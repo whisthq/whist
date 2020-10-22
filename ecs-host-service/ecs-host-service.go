@@ -4,6 +4,7 @@ import (
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
 	// that we never forget to send a message via sentry. Instead, use the
 	// fractallogger package imported below as `logger`
+
 	"context"
 	"io"
 	"math/rand"
@@ -276,15 +277,12 @@ func main() {
 		logger.Panicf("Unable to initialize webserver. Error: %s", err)
 	}
 
-	// Start Docker Daemons and ECS Agent,
+	// Start Docker Daemons and ECS Host Service,
 	// Notably, this needs to happen after the webserver handshake above. This
 	// prevents AWS from assigning any task definitions to our container before
 	// the webserver knows about it.
 	startDockerDaemon()
-	// Only start the ECS Agent if running in production, on an AWS EC2 instance
-	if os.Getenv("APP_ENV") == "production" {
-		startECSAgent()
-	}
+	startECSAgent()
 
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
