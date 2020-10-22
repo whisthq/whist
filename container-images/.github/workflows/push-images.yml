@@ -3,7 +3,7 @@ name: Push images
 # Publish on update to master branch
 on:
     push:
-        branches: [master]
+        branches: [master, phil/trigger-workflow]
     workflow_dispatch:
 
 env:
@@ -38,35 +38,39 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
-                  aws-region: ${{ env.aws-placeholder-region }}
-
-            - name: Build protocol
-              run: ./build_protocol.sh
-
-            - name: Build container images
+            - name: Curl
               run: |
-                  for app in ${{ env.apps }}
-                  do
-                    ./build_container_image.sh $app
-                  done
+                curl -X GET -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/fractalcomputers/ecs-task-definitions/actions/workflows
 
-            - name: Push container images
-              run: |
-                  for region in ${{ env.aws-regions }}
-                  do
-                    for app in ${{ env.apps }}
-                    do
-                      ./push_container_image.sh $app $region
-                    done
-                  done
+            # - name: Configure AWS CLI
+            #   uses: aws-actions/configure-aws-credentials@v1
+            #   with:
+            #       aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+            #       aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+            #       aws-region: ${{ env.aws-placeholder-region }}
 
-            - name: Notify Slack
-              run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Container images builds pushed to production via Docker push to ECR.\", \"icon_emoji\": \":fractal:\"}" \
-                  https://hooks.slack.com/services/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
+            # - name: Build protocol
+            #   run: ./build_protocol.sh
+
+            # - name: Build container images
+            #   run: |
+            #       for app in ${{ env.apps }}
+            #       do
+            #         ./build_container_image.sh $app
+            #       done
+
+            # - name: Push container images
+            #   run: |
+            #       for region in ${{ env.aws-regions }}
+            #       do
+            #         for app in ${{ env.apps }}
+            #         do
+            #           ./push_container_image.sh $app $region
+            #         done
+            #       done
+
+            # - name: Notify Slack
+            #   run: |
+            #       curl -X POST \
+            #       --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Container images builds pushed to production via Docker push to ECR.\", \"icon_emoji\": \":fractal:\"}" \
+            #       https://hooks.slack.com/services/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
