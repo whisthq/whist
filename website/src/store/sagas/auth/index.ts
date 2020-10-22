@@ -22,7 +22,7 @@ function* emailLogin(action: any) {
         yield put(
             AuthPureAction.updateUser({
                 user_id: action.email,
-                name: "",
+                name: action.email, // temp so it can be displayed
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
             })
@@ -111,7 +111,7 @@ function* emailSignup(action: any) {
         yield put(
             AuthPureAction.updateUser({
                 user_id: action.email,
-                name: "",
+                name: action.email, // also temp so it can display
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
                 emailVerificationToken: json.token,

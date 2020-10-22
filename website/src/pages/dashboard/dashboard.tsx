@@ -26,6 +26,32 @@ const Dashboard = (props: {
                 <Header color="black" />
                 <div
                     style={{
+                        width: 400,
+                        margin: "auto",
+                        marginTop: 70,
+                    }}
+                >
+                    <div
+                        style={{
+                            color: "#111111",
+                            textAlign: "center",
+                            fontSize: 32,
+                        }}
+                    >
+                        Welcome back {user.user_id}.
+                    </div>
+                    <div
+                        style={{
+                            color: "#3930b8",
+                            textAlign: "center",
+                        }}
+                    >
+                        We will be setting up your account soon. Thank you for
+                        registering with us.
+                    </div>
+                </div>
+                <div
+                    style={{
                         width: "100vw",
                         height: "100vh",
                         position: "relative",
