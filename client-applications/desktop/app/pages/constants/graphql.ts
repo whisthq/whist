@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client'
+import { gql } from "@apollo/client"
 
 export const GET_FEATURED_APPS = gql`
     query GetFeaturedApps {
@@ -8,6 +8,19 @@ export const GET_FEATURED_APPS = gql`
             category
             description
             long_description
+            url
+            active
+        }
+    }
+`
+
+export const GET_BANNERS = gql`
+    query GetBanners {
+        hardware_banners {
+            background
+            category
+            heading
+            subheading
             url
         }
     }

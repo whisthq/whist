@@ -25,30 +25,13 @@ const App = (props: any) => {
     }
 
     return (
-        <div className={styles.appContainer}>
-            <div
-                style={{
-                    position: "relative",
-                    width: "70px",
-                }}
-                onClick={handleOpenModal}
-            >
-                <img src={app.logo_url} className={styles.appImage} />
-            </div>
-            <div className={styles.appText} onClick={handleOpenModal}>
-                <div className={styles.appName}>{app.app_id}</div>
-                <div className={styles.appDescription}>{app.description}</div>
-                <div style={{ display: "flex", flexDirection: "row" }}>
-                    <div className={styles.launchButton} onClick={handleLaunch}>
-                        LAUNCH
-                    </div>
-                    <div
-                        className={styles.expandButton}
-                        onClick={handleOpenModal}
-                    >
-                        <img src={Expand} style={{ height: "15px" }} />
-                    </div>
+        <>
+            <div className={styles.appContainer} onClick={handleOpenModal}>
+                <div className={styles.appHeading}>
+                    <img src={app.logo_url} className={styles.appImage} />
+                    <div className={styles.appName}>{app.app_id}</div>
                 </div>
+                <div className={styles.appDescription}>{app.description}</div>
             </div>
             <Modal show={showModal} onHide={handleCloseModal} size="lg">
                 <Modal.Header
@@ -109,7 +92,7 @@ const App = (props: any) => {
                     </button>
                 </Modal.Body>
             </Modal>
-        </div>
+        </>
     )
 }
 

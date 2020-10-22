@@ -27,16 +27,6 @@ const NavTitle = (props: {
 const NavBar = (props: any) => {
     const { dispatch, updateCurrentTab } = props
     const [currentTab, setCurrentTab] = useState("Discover")
-    const top =
-        currentTab == "Discover"
-            ? "35vh"
-            : currentTab == "Settings"
-            ? "42vh"
-            : "50vh"
-
-    const selectedTab = useSpring({
-        top: top,
-    })
 
     const updateTab = (tab: string) => {
         setCurrentTab(tab)
@@ -54,7 +44,6 @@ const NavBar = (props: any) => {
         <div className={styles.navBar}>
             <div className={styles.logoTitle}>Fractal</div>
             <NavTitle
-                style={{ marginTop: "33vh" }}
                 selected={currentTab == "Discover"}
                 text="Discover"
                 onClick={() => updateTab("Discover")}
@@ -69,10 +58,6 @@ const NavBar = (props: any) => {
                 text="Support"
                 onClick={() => updateTab("Support")}
             />
-            <animated.div
-                style={selectedTab}
-                className={styles.select}
-            ></animated.div>
             <button
                 type="button"
                 onClick={handleSignout}

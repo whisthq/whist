@@ -13,7 +13,7 @@ const Dashboard = (props: any) => {
     const [currentTab, setCurrentTab] = useState("Discover")
 
     return (
-        <div className={styles.container} style={{ background: "#f2f4fc" }}>
+        <div className={styles.container}>
             {os === "win32" ? (
                 <div>
                     <Titlebar backgroundColor="#000000" />
@@ -22,7 +22,7 @@ const Dashboard = (props: any) => {
                 <div className={styles.macTitleBar} />
             )}
             <div
-                style={{ display: "flex", flexDirection: "row" }}
+                style={{ display: "flex", flexDirection: "column" }}
                 className={styles.removeDrag}
             >
                 <NavBar updateCurrentTab={setCurrentTab} />
