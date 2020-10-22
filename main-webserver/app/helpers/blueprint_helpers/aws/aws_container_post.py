@@ -43,9 +43,7 @@ def protocol_info(address, port, aeskey):
 
     response = None, NOT_FOUND
     container = UserContainer.query.filter_by(ip=address, port_32262=port).first()
-    if container:
-        username = container.user_id
-    else:
+    if not container:
         return response
     if container.secret_key != aeskey:
         print(aeskey, container.secret_key)
@@ -58,6 +56,7 @@ def protocol_info(address, port, aeskey):
                 "branch": container.branch,
                 "secret_key": container.secret_key,
                 "using_stun": container.using_stun,
+                "container_id": container.container_id,
             },
             SUCCESS,
         )
