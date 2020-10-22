@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { Redirect, useLocation } from "react-router"
 
-import PuffLoader from "react-spinners/PuffLoader"
+import { PagePuff } from "shared/components/loadingAnimations"
 
 import { validateVerificationToken } from "store/actions/auth/sideEffects"
 
@@ -82,10 +82,7 @@ const Verify = (props: any) => {
                         position: "relative",
                     }}
                 >
-                    <PuffLoader
-                        css="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
-                        size={75}
-                    />
+                    <PagePuff />
                 </div>
             )
         } else {

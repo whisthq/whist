@@ -7,7 +7,7 @@ import * as AuthSideEffect from "store/actions/auth/sideEffects"
 
 import { checkEmail } from "pages/auth/constants/authHelpers"
 
-import PuffLoader from "react-spinners/PuffLoader"
+import { PagePuff } from "shared/components/loadingAnimations"
 
 const ForgotView = (props: any) => {
     const { authFlow, dispatch } = props
@@ -46,12 +46,7 @@ const ForgotView = (props: any) => {
                     position: "relative",
                 }}
             >
-                <PuffLoader
-                    css={
-                        "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
-                    }
-                    size={75}
-                />
+                <PagePuff />
             </div>
         )
     } else if (gotResponse) {

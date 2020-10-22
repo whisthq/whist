@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import PuffLoader from "react-spinners/PuffLoader"
+import { PagePuff } from "shared/components/loadingAnimations"
 
 import "styles/auth.css"
 
@@ -75,12 +75,7 @@ const LoginView = (props: any) => {
                     position: "relative",
                 }}
             >
-                <PuffLoader
-                    css={
-                        "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
-                    }
-                    size={75}
-                />
+                <PagePuff />
             </div>
         )
     } else {
