@@ -13,7 +13,7 @@ import (
 
 func IsRunningInProduction() bool {
 	env := os.Getenv("APP_ENV")
-	return env == "production" || env == "prod"
+	return env == "production" || env == "prod" || env == "PRODUCTION" || env == "PROD"
 }
 
 // The following functions are useful for getting system information that we
