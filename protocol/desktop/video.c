@@ -53,6 +53,8 @@ volatile bool pending_sws_update = false;
 volatile bool pending_texture_update = false;
 volatile bool pending_resize_render = false;
 
+SDL_Renderer* renderer = NULL;
+
 #define LOG_VIDEO false
 
 #define BITRATE_BUCKET_SIZE 500000
@@ -570,8 +572,8 @@ int initMultithreadedVideo(void* opaque) {
     }
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(
-        (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+    // SDL_Renderer* renderer = SDL_CreateRenderer(
+    //     (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 
     // Show a black screen initially before anything else
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -632,11 +634,14 @@ int initMultithreadedVideo(void* opaque) {
 
     RenderScreen(renderer);
     SDL_DestroyRenderer(renderer);
+    renderer = NULL;
     return 0;
 }
 // END VIDEO FUNCTIONS
 
 void initVideo() {
+    renderer = SDL_CreateRenderer(
+        (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     VideoData.render_screen_thread = SDL_CreateThread(initMultithreadedVideo, "VideoThread", NULL);
 }
 
