@@ -936,10 +936,10 @@ int parse_args(int argc, char* argv[]) {
         "Usage: server [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
-        "  -k, --private-key=PK          pass in the RSA Private Key as a "
+        "  -k, --private-key=PK          pass in the RSA Private Key as a\n"
         "                                  hexadecimal string\n"
-        "  -i, --identifier=ID           pass in the unique identifier for this server, as a "
-        "string\n"
+        "  -i, --identifier=ID           pass in the unique identifier for this\n"
+        "                                  server as a hexadecimal string\n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
