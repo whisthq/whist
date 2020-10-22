@@ -11,7 +11,9 @@ import (
 
 func InitializeSentry() error {
 	strProd := os.Getenv("USE_PROD_SENTRY")
-	useProdSentry := (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true")
+	// We want to use the production sentry config if we run with that
+	// environment variable, or if we are actually running in production.
+	useProdSentry := (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (IsRunningInProduction())
 	if useProdSentry {
 		log.Print("Using production sentry configuration: Debug: false")
 	} else {

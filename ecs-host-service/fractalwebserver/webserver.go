@@ -21,9 +21,10 @@ const productionHost = "https://main-webserver.tryfractal.com"
 const authEndpoint = "/host_service/auth"
 const heartbeatEndpoint = "/host_service/heartbeat"
 
-// TODO: change the webserver to use the production or staging host based on an
-// environment variable
-const webserverHost = stagingHost
+// We cache the webserver host so we can avoid the overhead of repeatedly
+// checking the APP_ENV environment variable (though that could be cached as
+// well).
+var webserverHost = getWebserverHost()
 
 type handshakeRequest struct {
 	InstanceID string
@@ -49,6 +50,18 @@ var authToken string
 var numBeats uint64 = 0
 var httpClient = http.Client{
 	Timeout: 10 * time.Second,
+}
+
+// Get the appropriate webserverHost based on whether we're running in
+// production or development
+func getWebserverHost() string {
+	if logger.IsRunningInProduction() {
+		logger.Infof("Running in production, communicating with %s", productionHost)
+		return productionHost
+	} else {
+		logger.Infof("Running in development, communicating with %s", stagingHost)
+		return stagingHost
+	}
 }
 
 func InitializeHeartbeat() error {
