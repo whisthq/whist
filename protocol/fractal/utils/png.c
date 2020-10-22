@@ -210,18 +210,55 @@ static int read_open(void* opaque, uint8_t* buf, int buf_size) {
 }
 
 int read_char_open(AVFormatContext** pctx, const char* data, int data_size) {
+    /*
+        Loads PNG file data into an ffmpeg stream stored in `pctx`
+
+        Arguments:
+            pctx (AVFormatContext**): format context that will contain the PNG stream
+            data (const char*): the actual PNG file data array to be put into a stream
+            data_size (int): size of the PNG file data array
+    */
+
     static AVInputFormat* infmt = NULL;
     if (!infmt) infmt = av_find_input_format("png");
+
     *pctx = avformat_alloc_context();
+    if (*pctx == NULL) {
+        return -1;
+    }
+
     const size_t bufferSize = data_size;
     uint8_t* buffer = av_malloc(bufferSize);
+    if (buffer == NULL) {
+        avformat_free_context(*pctx);
+        return -2;
+    }
+
     struct buffer_data opaque = {.ptr = data, .size = data_size};
     AVIOContext* pbctx =
         avio_alloc_context(buffer, (int)bufferSize, 0, &opaque, read_open, NULL, NULL);
+    if (pbctx == NULL) {
+        av_free(buffer);
+        avformat_free_context(*pctx);
+        return -3;
+    }
     (*pctx)->pb = pbctx;
 
-    avformat_open_input(pctx, NULL, NULL, NULL);
-    avformat_find_stream_info(*pctx, NULL);
+    if (avformat_open_input(pctx, NULL, NULL, NULL) < 0) {
+        av_free(buffer);
+        av_free(pbctx);
+        // avformat_free_context(*pctx); pctx will be freed on failure
+        return -4;
+    }
+
+    if (avformat_find_stream_info(*pctx, NULL) < 0) {
+        av_free(buffer);
+        av_free(pbctx);
+        avformat_free_context(*pctx);
+        return -5;
+    }
+
+    av_free(buffer);
     av_free(pbctx);
     return 0;
 }
@@ -240,6 +277,7 @@ int load_png(uint8_t* data[4], int linesize[4], int* w, int* h, enum AVPixelForm
     AVPacket pkt;
 
     if ((ret = read_char_open(&format_ctx, png_data, size)) < 0) {
+        LOG_ERROR("load_png could not load PNG file byte data into an ffmpeg stream: %d", ret);
         return ret;
     }
 
@@ -298,6 +336,7 @@ end:
     avcodec_close(codec_ctx);
     avcodec_free_context(&codec_ctx);
     avformat_close_input(&format_ctx);
+    avformat_free_context(format_ctx);
     av_freep(&frame);
     return ret;
 }
