@@ -56,8 +56,8 @@ const Verify = (props: any) => {
 
             setProcessing(true)
         }
-    // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {

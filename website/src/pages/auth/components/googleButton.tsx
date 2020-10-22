@@ -20,7 +20,7 @@ const GoogleButton = (props: {
 
     const responseGoogleSuccess = (res: any) => {
         props.login(res.code)
-        //TODO might want to remove this and use the warnings in auth? 
+        //TODO might want to remove this and use the warnings in auth?
         props.dispatch(
             updateAuthFlow({
                 loginStatus: "",
@@ -30,7 +30,7 @@ const GoogleButton = (props: {
     }
 
     const responseGoogleFailure = (res: any) => {
-        //TODO might want to remove this and use the warnings in auth? 
+        //TODO might want to remove this and use the warnings in auth?
         props.dispatch(
             updateAuthFlow({
                 loginStatus: "Google response failure",

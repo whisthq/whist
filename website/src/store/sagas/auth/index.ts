@@ -223,18 +223,24 @@ function* forgotPassword(action: any) {
     )
     if (json) {
         if (json.verified) {
-            yield put(AuthPureAction.updateAuthFlow({
-                forgotStatus: "Email sent"
-            }))
+            yield put(
+                AuthPureAction.updateAuthFlow({
+                    forgotStatus: "Email sent",
+                })
+            )
         } else {
-            yield put(AuthPureAction.updateAuthFlow({
-                forgotStatus: "Not verified"
-            }))
+            yield put(
+                AuthPureAction.updateAuthFlow({
+                    forgotStatus: "Not verified",
+                })
+            )
         }
     } else {
-        yield put(AuthPureAction.updateAuthFlow({
-            forgotStatus: "No response"
-        }))
+        yield put(
+            AuthPureAction.updateAuthFlow({
+                forgotStatus: "No response",
+            })
+        )
     }
 }
 
@@ -288,6 +294,11 @@ function* resetPassword(action: any) {
     )
 
     // TODO do something with the response
+    yield put(
+        AuthPureAction.updateAuthFlow({
+            resetDone: true,
+        })
+    )
 }
 
 export default function* () {
