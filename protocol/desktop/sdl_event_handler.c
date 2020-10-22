@@ -132,8 +132,9 @@ int handleWindowSizeChanged(SDL_Event *event) {
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
         fmsg.dimensions.codec_type = (CodecType)output_codec_type;
-        fmsg.dimensions.dpi =
-            (int)(DEFAULT_DPI * output_width / get_window_virtual_width((SDL_Window *)window));
+        float dpi;
+        SDL_GetDisplayDPI(0, NULL, &dpi, NULL);
+        fmsg.dimensions.dpi = (int) dpi;
         SendFmsg(&fmsg);
 
         StartTimer(&window_resize_timer);
