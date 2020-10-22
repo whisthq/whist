@@ -16,6 +16,7 @@ After=docker.service
 Restart=always
 User=root
 Type=exec
+Environment="APP_ENV=PROD"
 ExecStart=/home/ubuntu/ecs-host-service
 
 [Install]
