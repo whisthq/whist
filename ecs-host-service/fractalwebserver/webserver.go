@@ -22,14 +22,7 @@ const productionHost = "https://main-webserver.tryfractal.com"
 const authEndpoint = "/host_service/auth"
 const heartbeatEndpoint = "/host_service/heartbeat"
 
-
-
-
 var webserverHost = setWebserverHost()
-
-
-
-
 
 type handshakeRequest struct {
 	InstanceID string
