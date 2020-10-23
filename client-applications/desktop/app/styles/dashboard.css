@@ -1,23 +1,22 @@
 .dashboardContainer {
     background: white;
-    margin-top: 200px;
-    text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.signoutButton,
-.feedbackButton {
+.signoutButton {
     font-family: "Maven Pro";
     font-weight: bold;
     padding: 10px 25px;
-    margin-top: 33vh;
-    width: 100%;
+    width: max-content;
+    height: max-content;
     border: solid 0.8px #cccccc;
     background: white;
     color: black;
-    font-size: 13px;
+    font-size: 12px;
+    position: absolute;
+    right: 25px;
 }
 
 .feedbackButton,
@@ -52,36 +51,34 @@
 
 .navBar {
     position: relative;
-    top: -22px;
+    top: 0px;
     left: 0px;
-    height: 100vh;
+    width: 100vw;
+    height: 60px;
     display: flex;
-    flex-direction: column;
-    padding: 20px 25px;
-    text-align: left;
-    min-width: 161px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 25px;
+    z-index: 1;
 }
 
 .logoTitle {
     color: black;
     font-family: "Maven Pro";
-    position: absolute;
-    top: 42px;
-    left: 25px;
     font-size: 20px;
 }
 
 .navTitle {
-    font-size: 15px;
-    color: #999999;
-    margin-top: 30px;
+    font-size: 17px;
+    color: #111111;
+    margin-left: 20px;
 }
 
 .selectedNavTitle {
     font-size: 17px;
-    color: black;
-    text-transform: uppercase;
-    margin-top: 30px;
+    color: #111111;
+    font-weight: bold;
+    margin-left: 20px;
 }
 
 .navTitle:hover,
@@ -124,42 +121,48 @@
 }
 
 .appContainer {
-    width: 230px;
-    height: 170px;
+    width: 29vw;
+    height: 185px;
     display: flex;
-    flex-direction: row;
-    padding: 12px;
+    flex-direction: column;
+    padding: 25px;
+    z-index: 1;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0px 1px 8px #dddddd;
+    margin: 5px;
+    transition: all 0.2s ease-in-out;
 }
 
 .appContainer:hover {
     cursor: pointer;
+    transform: scale(1.17);
+    z-index: 2;
+    box-shadow: 0px 1px 12px #cccccc;
 }
 
 .appImage {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 30px;
-    height: 30px;
+    width: 50px;
+    height: 50px;
 }
 
-.appText {
-    flex: 1;
+.appHeading {
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 0px 0px 12px 12px;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
 }
 
 .appName {
-    font-size: 15px;
-    font-weight: bolder;
+    font-size: 18px;
+    font-weight: bold;
     text-transform: uppercase;
+    margin-left: 20px;
 }
 
 .appDescription {
-    font-size: 11px;
-    margin-top: 10px;
+    font-size: 12px;
+    margin-top: 20px;
 }
 
 .launchButton {
@@ -210,7 +213,6 @@
 .container {
     background: white;
     position: absolute;
-    text-align: center;
     width: 100vw;
     height: 100vh;
     overflow-x: hidden;
@@ -222,4 +224,42 @@
     background-repeat: no-repeat;
     -webkit-app-region: drag;
     user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
+}
+
+.bannerText {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 525px;
+    height: 275px;
+    margin: 15px 0 0 90px;
+    z-index: 1;
+}
+
+.category {
+    padding: 5px 25px;
+    border: solid 0.8px black;
+    font-weight: bold;
+    width: max-content;
+    font-size: 13px;
+    z-index: 2;
+}
+
+.heading {
+    letter-spacing: 2px;
+    z-index: 2;
+}
+
+.subheading {
+    font-size: 16px;
+    color: #333333;
+    z-index: 2;
+}
+
+.carousel-indicators {
+    bottom: -20px;
+}
+
+.bannerLink:hover {
+    cursor: pointer;
 }
