@@ -83,13 +83,16 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     if (bmp[28] != 24 && bmp[28] != 32) return -1;
     unsigned numChannels = bmp[28] / 8;
 
-    int data_size = *((int*)(&bmp[34]));
-
     // BMP pixel arrays are always multiples of 4. Images with widths that are not multiples
     //  of 4 are always padded at the end of each row. scanlineBytes is the padded width of each
     //  BMP row in the original image.
     unsigned scanlineBytes = w * numChannels;
     if (scanlineBytes % 4 != 0) scanlineBytes = (scanlineBytes / 4) * 4 + 4;
+
+    int data_size = *((int*)(&bmp[34]));
+    if (data_size == 0) {
+        data_size = scanlineBytes * h;
+    }
 
     // memcpy will face problems below if the calculated size does not match the actual
     // BMP byte array size
@@ -98,7 +101,7 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
         return -1;
     }
     if (scanlineBytes * h != data_size) {
-        LOG_WARNING("BMP size <> BMP header mismatch %d * %d != %d", scanlineBytes, h, size);
+        LOG_WARNING("BMP size <> BMP header mismatch %d * %d != %d", scanlineBytes, h, data_size);
         return -1;
     }
 
