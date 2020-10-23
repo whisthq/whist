@@ -7,7 +7,7 @@ First, create an Ubuntu 20.04 g3s.xlarge EC2 instance (which will later be linke
 Then, run the following commands on the EC2 instance, via AWS Session Manager (SSM):
 
 ```
-curl https://raw.githubusercontent.com/fractalcomputers/ecs-host-setup/master/setup_ubuntu20_host.sh?token=AGNK4MEXEJSKU5TOI3U7HAS7RBVWI > setup_host.sh
+curl https://raw.githubusercontent.com/fractalcomputers/ecs-host-setup/master/setup_ubuntu20_host.sh?token=AGNK4MD4UVYRUQR4425K64C7TN3MU > setup_host.sh
 chmod +x setup_host.sh
 ./setup_host.sh
 sudo reboot
