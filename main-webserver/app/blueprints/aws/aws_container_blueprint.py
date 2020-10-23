@@ -67,7 +67,7 @@ def test_endpoint(action, **kwargs):
             kwargs["body"].get("region_name", None),
             kwargs["body"]["task_definition_arn"],
             kwargs["body"]["use_launch_type"],
-            kwargs["body"]["network_configuration"],
+            kwargs["body"].get("network_configuration"),
         )
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
         task = create_new_container.apply_async(
@@ -113,7 +113,7 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["cluster"],
             kwargs["body"]["region_name"],
             kwargs["body"]["commands"],
-            kwargs["body"]["containers"],
+            kwargs["body"].get("containers"),
         )
         task = send_commands.apply_async([cluster, region_name, commands, containers])
 
@@ -128,19 +128,19 @@ def test_endpoint(action, **kwargs):
 def aws_container_info(**kwargs):
     body = kwargs.pop("body")
     address = kwargs.pop("received_from")
+
     try:
         identifier = body.pop("identifier")
+        private_key = body.pop("private_key")
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-        return response
     else:
-        private_key = body.pop("private_key")
         info, status = protocol_info(address, identifier, private_key)
 
-    if info is not None:
-        response = jsonify(info), status
-    else:
-        response = jsonify({"status": status}), status
+        if info:
+            response = jsonify(info), status
+        else:
+            response = jsonify({"status": status}), status
 
     return response
 
@@ -175,7 +175,6 @@ def aws_container_post(action, **kwargs):
 
     try:
         user = body.pop("username")
-
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:

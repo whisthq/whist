@@ -1,12 +1,14 @@
-from app.imports import *
+import json
+import logging
 
-from app.helpers.utils.general.logs import *
+from functools import wraps
 
-from app.models.public import *
-from app.models.hardware import *
+from flask import jsonify, request
+from flask_jwt_extended import get_jwt_identity
 
-from app.serializers.public import *
-from app.serializers.hardware import *
+from app.constants.config import DASHBOARD_USERNAME
+from app.constants.http_codes import UNAUTHORIZED
+from app.helpers.utils.general.logs import fractalLog
 
 
 def fractalAuth(f):
@@ -21,20 +23,6 @@ def fractalAuth(f):
                     username = body["username"]
                 elif "email" in body.keys():
                     username = body["email"]
-                elif "vm_name" in body.keys():
-                    vm_name = body["vm_name"]
-
-                    vm = UserVM.query.get(vm_name).first()
-
-                    if vm:
-                        username = vm.user_id
-                elif "disk_name" in body.keys():
-                    disk_name = body["disk_name"]
-
-                    disk = OSDisk.query.get(disk_name)
-
-                    if disk:
-                        username = disk.user_id
             elif request.method == "GET":
                 username = request.args.get("username")
         except Exception as e:
@@ -51,7 +39,7 @@ def fractalAuth(f):
 
         current_user = get_jwt_identity()
 
-        if current_user != username and not DASHBOARD_USERNAME in current_user:
+        if current_user != username and DASHBOARD_USERNAME not in current_user:
             format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
 
             logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
@@ -83,7 +71,7 @@ def adminRequired(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         current_user = get_jwt_identity()
-        if not DASHBOARD_USERNAME in current_user:
+        if DASHBOARD_USERNAME not in current_user:
             return (
                 jsonify(
                     {

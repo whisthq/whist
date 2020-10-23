@@ -1,10 +1,13 @@
-from .factory import *
-from .helpers.utils.aws.base_ecs_client import *
-from .helpers.utils.general.logs import *
-from .helpers.utils.general.sql_commands import *
-from .helpers.utils.general.time import *
-from .imports import *
-from .models import *
+import json
+import logging
+import os
+
+from functools import wraps
+
+from celery import Celery
+from flask import request
+
+from .factory import create_app, jwtManager, ma, mail
 
 
 def make_celery(app_name=__name__):
@@ -32,6 +35,9 @@ def fractalPreProcess(f):
         kwargs["received_from"] = received_from
 
         silence = False
+
+        from .constants.config import SILENCED_ENDPOINTS
+
         for endpoint in SILENCED_ENDPOINTS:
             if endpoint in request.url:
                 silence = True
@@ -57,15 +63,4 @@ def fractalPreProcess(f):
 
 celery_instance = make_celery()
 
-app, jwtManager = create_app(celery=celery_instance)
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-db = SQLAlchemy(app, engine_options={"pool_pre_ping": True})
-ma = Marshmallow(app)
-app = init_app(app)
-
-app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
-app.config["ROOT_DIRECTORY"] = os.path.dirname(os.path.abspath(__file__))
-
-CORS(app)
+app = create_app(celery=celery_instance)

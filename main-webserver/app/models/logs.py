@@ -1,6 +1,6 @@
 from sqlalchemy.orm import relationship
 
-from app import db
+from ._meta import db
 
 
 class ProtocolLog(db.Model):

@@ -1,5 +1,17 @@
-from app import *
-from app.helpers.blueprint_helpers.mail.mail_post import *
+from flask import Blueprint
+
+from app import fractalPreProcess
+from app.helpers.blueprint_helpers.mail.mail_post import (
+    cancelHelper,
+    computerReadyHelper,
+    feedbackHelper,
+    forgotPasswordHelper,
+    joinWaitlistHelper,
+    referralMailHelper,
+    trialStartHelper,
+    verificationHelper,
+    waitlistReferralHelper,
+)
 
 mail_bp = Blueprint("mail_bp", __name__)
 

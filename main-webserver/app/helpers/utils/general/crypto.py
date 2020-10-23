@@ -1,7 +1,8 @@
-from app.imports import *
-from app.helpers.utils.general.logs import *
+import binascii
+import hashlib
 
-import hashlib, binascii
+from app.constants.config import SHA_SECRET_KEY
+from app.helpers.utils.general.logs import fractalLog
 
 
 def hash_value(value):

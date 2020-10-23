@@ -78,9 +78,11 @@ GraphQL is already set up, but here's a [setup doc](https://hasura.io/docs/1.0/g
 
 **Pytest**
 
-We have pytest tests in the `/tests` folder. To run tests, just run `pytest -o log_cli=true -s` in a terminal. To run tests in parallel, run `pytest -o log_cli=true -s -n <num>`, with `<num>` as the # of workers in parallel.
+We have pytest tests in the `tests` subdirectory. To run tests, just run `pytest` in a terminal. Refer to the [pytest documentation](https://docs.pytest.org/en/stable/contents.html) to learn how to use pytest.
 
-If tests are failing when you run the command above locally, make sure that the docker-compose stack is running. Start it if it's not. If the docker-compose stack has crashed, there's a good chance you haven't set the correct environment variables, especially if your terminal displays `AttributeError: 'NoneType' object has no attribute 'upper'`. Be sure that environment variables such as `DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD`, and `USE_PRODUCTION_KEYS` are set to the correct values. The username and password should match the values stored in the relevant configuration database. You can define the environment variables in a `.env` file inside of the repository root, or the `docker` or `tests` subdirectories, or you can set them directly in your shell.
+The docker-compose stack does **not** need to be running in order to run tests. However, the tests do need access to Redis. By default, the tests attempt to connect to `redis://localhost:6379/0`. If your Redis service is running elsewhere, expose the correct connection URI to the tests via the environment variable `REDIS_URL`.
+
+If you are observing mysterious test failures, make sure that you have set the correct environment variables. If your terminal displays `AttributeError: 'NoneType' object has no attribute 'upper'`. Be sure that environment variables such as `DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD`, and `USE_PRODUCTION_KEYS` are set to the correct values. The username and password should match the values stored in the relevant configuration database. You can define environment variables in a `.env` file in the `docker` subdirectory or you can set them directly in your shell.
 
 To get an idea of what environment variables you might be missing, try running `git grep 'os\.getenv'` in the repository root.
 
@@ -107,3 +109,5 @@ ext install ms-python.python
 5. Search for “Python formatting provider” and select “Black”.
 
 6. Now open/create a Python file, write some code and save it to see the magic happen!
+
+> **Tip:** Although we don't use [flake8](https://flake8.pycqa.org/en/latest/) in our CI pipeline, it can be a useful tool to use for development. In particular, I like to use flake8 to detect unused and missing imports as well as unused and undefined variables. -O

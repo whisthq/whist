@@ -1,8 +1,12 @@
 from sqlalchemy.exc import DBAPIError
 
-from app import db
-from app.constants.http_codes import NOT_FOUND, BAD_REQUEST, SUCCESS, UNAUTHORIZED
-from app.models.hardware import UserContainer
+from app.constants.http_codes import (
+    NOT_FOUND,
+    BAD_REQUEST,
+    SUCCESS,
+    UNAUTHORIZED,
+)
+from app.models import db, UserContainer
 
 
 class BadAppError(Exception):
@@ -43,23 +47,22 @@ def protocol_info(address, port, aeskey):
 
     response = None, NOT_FOUND
     container = UserContainer.query.filter_by(ip=address, port_32262=port).first()
-    if not container:
-        return response
-    if container.secret_key != aeskey:
-        print(aeskey, container.secret_key)
-        return None, UNAUTHORIZED
 
     if container:
-        response = (
-            {
-                "allow_autoupdate": container.allow_autoupdate,
-                "branch": container.branch,
-                "secret_key": container.secret_key,
-                "using_stun": container.using_stun,
-                "container_id": container.container_id,
-            },
-            SUCCESS,
-        )
+        if container.secret_key == aeskey:
+            username = container.user_id
+            response = (
+                {
+                    "allow_autoupdate": container.allow_autoupdate,
+                    "branch": container.branch,
+                    "secret_key": container.secret_key,
+                    "using_stun": container.using_stun,
+                    "container_id": container.container_id,
+                },
+                SUCCESS,
+            )
+        else:
+            response = None, UNAUTHORIZED
 
     return response
 

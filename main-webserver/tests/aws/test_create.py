@@ -13,38 +13,43 @@ def bad_app(*args, **kwargs):
     raise BadAppError
 
 
-def test_bad_app(client, monkeypatch):
+def test_bad_app(client, authorized, monkeypatch):
     # I couldn't figure out how to patch a function that was defined at the
     # top level of a module. I found this solution at:
     # https://stackoverflow.com/questions/28403380/py-tests-monkeypatch-setattr-not-working-in-some-cases
     monkeypatch.setattr(preprocess_task_info, "__code__", bad_app.__code__)
-    client.login("new-email@tryfractal.com", "new-email-password")
 
-    response = client.container_create("Bad App")
+    response = client.post(
+        "/container/create", json=dict(username=authorized.user_id, app="Bad App")
+    )
 
     assert response.status_code == 400
 
 
-def test_no_username(client):
-    client.login("new-email@tryfractal.com", "new-email-password")
-
-    response = client.container_create(omit_username=True)
+def test_no_username(client, authorized):
+    response = client.post("/container/create", json=dict(app="VSCode"))
 
     assert response.status_code == 401
 
 
-def test_no_app(client):
-    client.login("new-email@tryfractal.com", "new-email-password")
-
-    response = client.container_create(omit_app=True)
+def test_no_app(client, authorized):
+    response = client.post("/container/create", json=dict(username=authorized.user_id))
 
     assert response.status_code == 400
 
 
-def test_successful(client, monkeypatch):
-    monkeypatch.setattr(create_new_container, "apply_async", apply_async)
-    client.login("new-email@tryfractal.com", "new-email-password")
+def test_no_region(client, authorized):
+    response = client.post(
+        "/container/create", json=dict(username=authorized.user_id, app="VSCode")
+    )
 
-    response = client.container_create("Blender")
+
+def test_successful(client, authorized, monkeypatch):
+    monkeypatch.setattr(create_new_container, "apply_async", apply_async)
+
+    response = client.post(
+        "/container/create",
+        json=dict(username=authorized.user_id, app="Blender", region="us-east-1"),
+    )
 
     assert response.status_code == 202

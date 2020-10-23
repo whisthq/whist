@@ -2,10 +2,12 @@
 
 import pytest
 
-from app import db
 from app.celery.aws_ecs_status import pingHelper
 from app.constants.http_codes import SUCCESS
 from app.helpers.utils.stripe.stripe_payments import stripeChargeHourly
+from app.models import db
+
+from ..patches import do_nothing
 
 
 def status(code):
@@ -17,22 +19,26 @@ def no_stripe(monkeypatch):
     monkeypatch.setattr(
         stripeChargeHourly,
         "__code__",
-        (lambda _: None).__code__,
+        do_nothing.__code__,
     )
 
 
 def test_no_availability(client):
-    client.login("new-email@tryfractal.com", "new-email-password")
-
-    response = client.container_ping(omit_available=True)
+    response = client.post("/container/ping", json=dict(identifier=0, private_key="aes_secret_key"))
 
     assert response.status_code == 400
 
 
 def test_no_port(client):
-    client.login("new-email@tryfractal.com", "new-email-password")
+    response = client.post(
+        "/container/ping", json=dict(available=True, private_key="aes_secret_key")
+    )
 
-    response = client.container_ping(omit_identifier=True)
+    assert response.status_code == 400
+
+
+def test_no_key(client):
+    response = client.post("container/ping", json=dict(available=True, identifier=0))
 
     assert response.status_code == 400
 
@@ -40,10 +46,11 @@ def test_no_port(client):
 def test_not_found(client, monkeypatch):
     code = 404
 
-    monkeypatch.setattr(pingHelper, "delay", status(code))
-    client.login("new-email@tryfractal.com", "new-email-password")
+    monkeypatch.setattr(pingHelper, "apply_async", status(code))
 
-    response = client.container_ping(available=True, port=0, aes_key=0)
+    response = client.post(
+        "/container/ping", json=dict(available=True, identifier=0, private_key="aes_secret_key")
+    )
 
     assert response.status_code == code
 
@@ -51,10 +58,11 @@ def test_not_found(client, monkeypatch):
 def test_successful(client, monkeypatch):
     code = 200
 
-    monkeypatch.setattr(pingHelper, "delay", status(code))
-    client.login("new-email@tryfractal.com", "new-email-password")
+    monkeypatch.setattr(pingHelper, "apply_async", status(code))
 
-    response = client.container_ping(available=True, port=0, aes_key=0)
+    response = client.post(
+        "/container/ping", json=dict(available=True, identifier=0, private_key="aes_secret_key")
+    )
 
     assert response.status_code == code
 

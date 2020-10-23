@@ -13,18 +13,32 @@ def success(*args, **kwargs):
 
 def test_not_found(client, monkeypatch):
     monkeypatch.setattr(protocol_info, "__code__", not_found.__code__)
-    client.login("new-email@tryfractal.com", "new-email-password")
 
-    response = client.container_info()
+    response = client.post(
+        "/container/protocol_info", json=dict(identifier=0, private_key="aes_secret_key")
+    )
 
     assert response.status_code == 404
 
 
+def test_no_port(client):
+    response = client.post("/container/protocol_info", json=dict(private_key="aes_secret_key"))
+
+    assert response.status_code == 400
+
+
+def test_no_key(client):
+    response = client.post("/container/protocol_info", json=dict(identifier=0))
+
+    assert response.status_code == 400
+
+
 def test_successful(client, monkeypatch):
     monkeypatch.setattr(protocol_info, "__code__", success.__code__)
-    client.login("new-email@tryfractal.com", "new-email-password")
 
-    response = client.container_info()
+    response = client.post(
+        "/container/protocol_info", json=dict(identifier=0, private_key="aes_secret_key")
+    )
 
     assert response.status_code == 200
 

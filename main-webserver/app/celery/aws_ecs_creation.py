@@ -1,17 +1,15 @@
-import json
+import logging
 import os
 import time
 
-import logging
-
+from celery import shared_task
 from celery.exceptions import Ignore
 
-from app import celery_instance, db
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractalLog
 from app.helpers.utils.general.sql_commands import fractalSQLCommit
 from app.helpers.utils.general.sql_commands import fractalSQLUpdate
-from app.models.hardware import UserContainer, ClusterInfo, SortedClusters
+from app.models import db, UserContainer, ClusterInfo, SortedClusters
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 
 user_container_schema = UserContainerSchema()
@@ -83,7 +81,7 @@ def build_base_from_image(image):
     return base_task
 
 
-@celery_instance.task(bind=True)
+@shared_task(bind=True)
 def create_new_container(
     self,
     username,
@@ -132,7 +130,7 @@ def create_new_container(
             fractalLog(
                 function="create_new_container",
                 label=None,
-                logs=f"No available clusters found. Creating new cluster...",
+                logs="No available clusters found. Creating new cluster...",
             )
             cluster_name = create_new_cluster.delay(region_name=region_name).get(
                 disable_sync_subtasks=False
@@ -214,7 +212,6 @@ def create_new_container(
             function="create_new_container",
             label=str(ecs_client.tasks[0]),
             logs=f"Inserted container with IP address {curr_ip} and network bindings {curr_network_binding}",
-            level=logging.ERROR,
         )
     else:
         fractalLog(
@@ -251,7 +248,7 @@ def create_new_container(
         raise Ignore
 
 
-@celery_instance.task(bind=True)
+@shared_task(bind=True)
 def create_new_cluster(
     self,
     cluster_name=None,
@@ -338,7 +335,7 @@ def create_new_cluster(
         )
 
 
-@celery_instance.task(bind=True)
+@shared_task(bind=True)
 def send_commands(self, cluster, region_name, commands, containers=None):
     try:
         ecs_client = ECSClient(region_name=region_name)

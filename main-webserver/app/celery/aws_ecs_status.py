@@ -1,16 +1,18 @@
-from app import celery_instance, db
+from celery import shared_task
+
 from app.constants.http_codes import SUCCESS, UNAUTHORIZED
 from app.helpers.utils.aws.aws_resource_locks import lockContainerAndUpdate
 from app.helpers.utils.general.logs import fractalLog
-from app.helpers.utils.general.sql_commands import fractalSQLCommit
-from app.helpers.utils.general.sql_commands import fractalSQLUpdate
+from app.helpers.utils.general.sql_commands import (
+    fractalSQLCommit,
+    fractalSQLUpdate,
+)
 from app.helpers.utils.general.time import dateToUnix, getToday
 from app.helpers.utils.stripe.stripe_payments import stripeChargeHourly
-from app.models.hardware import UserContainer
-from app.models.logs import LoginHistory
+from app.models import db, LoginHistory, UserContainer
 
 
-@celery_instance.task
+@shared_task
 def pingHelper(available, container_ip, port_32262, aeskey, version=None):
     """Stores ping timestamps in the v_ms table and tracks number of hours used
 

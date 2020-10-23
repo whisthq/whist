@@ -2,10 +2,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import text
 from sqlalchemy.types import Text
 
-from app import db
-
-# I don't know why this import is necessary and UserContainer is not. -O
-from .logs import LoginHistory
+from ._meta import db
 
 
 class User(db.Model):
@@ -32,5 +29,5 @@ class User(db.Model):
         "UserContainer", back_populates="user", lazy="dynamic", passive_deletes=True
     )
     history = relationship(
-        LoginHistory, back_populates="user", lazy="dynamic", passive_deletes=True
+        "LoginHistory", back_populates="user", lazy="dynamic", passive_deletes=True
     )

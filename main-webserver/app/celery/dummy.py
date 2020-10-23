@@ -1,7 +1,9 @@
-from app import *
+import time
+
+from celery import shared_task
 
 
-@celery_instance.task(bind=True)
+@shared_task(bind=True)
 def dummyTask(self):
     self.update_state(
         state="PENDING",

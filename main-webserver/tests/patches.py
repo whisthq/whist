@@ -16,3 +16,7 @@ class CeleryResult(AsyncResult):
 
 def apply_async(*args, **kwargs):
     return CeleryResult()
+
+
+def do_nothing(*args, **kwargs):
+    pass

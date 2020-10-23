@@ -1,26 +1,29 @@
-import time
+import logging
 import traceback
 
-from app import (
+from celery import shared_task
+
+from app.constants.http_codes import (
     INTERNAL_SERVER_ERROR,
     REQUEST_TIMEOUT,
     SUCCESS,
     UNAUTHORIZED,
-    celery_instance,
-    db,
-    fractalLog,
+)
+from app.helpers.utils.aws.aws_resource_locks import (
+    lockContainerAndUpdate,
+    spinLock,
+)
+from app.helpers.utils.aws.base_ecs_client import ECSClient
+from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.sql_commands import (
     fractalSQLCommit,
     fractalSQLUpdate,
-    logging,
-    fractalSQLUpdate,
-    logging,
 )
-from app.helpers.utils.aws.aws_resource_locks import lockContainerAndUpdate, spinLock
-from app.helpers.utils.aws.base_ecs_client import ECSClient
+from app.models import db
 from app.serializers.hardware import ClusterInfo, UserContainer
 
 
-@celery_instance.task(bind=True)
+@shared_task(bind=True)
 def deleteContainer(self, user_id, container_name):
     """
 
@@ -102,8 +105,7 @@ def deleteContainer(self, user_id, container_name):
                 logs="SQL insertion unsuccessful",
             )
             self.update_state(
-                state="FAILURE",
-                meta={"msg": "Error updating cluster {} in SQL".format(cluster=container_cluster)},
+                state="FAILURE", meta={"msg": f"Error updating cluster {container_cluster} in SQL"}
             )
             return None
     except Exception as e:
@@ -124,7 +126,7 @@ def deleteContainer(self, user_id, container_name):
     return {"status": SUCCESS}
 
 
-@celery_instance.task(bind=True)
+@shared_task(bind=True)
 def drainContainer(self, container_name):
     if spinLock(container_name) < 0:
         return {"status": REQUEST_TIMEOUT}
@@ -166,7 +168,7 @@ def drainContainer(self, container_name):
     return {"status": SUCCESS}
 
 
-@celery_instance.task(bind=True)
+@shared_task(bind=True)
 def delete_cluster(self, cluster, region_name):
     try:
         ecs_client = ECSClient(region_name=region_name)
@@ -182,7 +184,7 @@ def delete_cluster(self, cluster, region_name):
             )
             self.update_state(
                 state="FAILURE",
-                meta={"msg": f"Cannot delete clusters with running tasks"},
+                meta={"msg": "Cannot delete clusters with running tasks"},
             )
         else:
             fractalLog(

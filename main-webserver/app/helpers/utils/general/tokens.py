@@ -1,11 +1,16 @@
 import hashlib
-from better_profanity import profanity
+import random
+import secrets
+import string
 
-from app.imports import *
-from app.helpers.utils.general.sql_commands import *
+from better_profanity import profanity
+from flask import current_app
+from flask_jwt_extended import create_access_token, create_refresh_token
+from google_auth_oauthlib.flow import Flow
+from jose import jwt
+
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
-from app.constants.generate_subsequences_for_words import generate_subsequence_for_word
-from app.models.public import *
+from app.models import User
 
 
 def generatePrivateKey():
@@ -30,11 +35,11 @@ def getAccessTokens(username):
 
 
 def generateToken(username):
-    token = jwt.encode({"email": username}, JWT_SECRET_KEY)
+    token = jwt.encode({"email": username}, current_app.config["JWT_SECRET_KEY"])
     if len(token) > 15:
         token = token[-15:]
     else:
-        token = token[-1 * len(pwd_token) :]
+        token = token[-1 * len(token) :]
 
     return token
 
@@ -53,23 +58,6 @@ def generatePromoCode():
         ).hexdigest() not in BAD_WORDS_HASHED and not profanity.contains_profanity(c2):
             allowed = True
     return c2
-
-
-def genHaiku(n):
-    """Generates an array of haiku names (no more than 15 characters) using haikunator
-
-    Args:
-        n (int): Length of the array to generate
-
-    Returns:
-        arr: An array of haikus
-    """
-    haikunator = Haikunator()
-    haikus = [
-        haikunator.haikunate(delimiter="") + str(np.random.randint(0, 10000)) for _ in range(0, n)
-    ]
-    haikus = [haiku[0 : np.min([15, len(haiku)])] for haiku in haikus]
-    return haikus
 
 
 def getGoogleTokens(code, clientApp):

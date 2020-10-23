@@ -6,11 +6,23 @@ import uuid
 from contextlib import contextmanager
 from random import getrandbits as randbits
 
+import boto3
 import pytest
 
-from app import db
-from app.models.hardware import ClusterInfo, UserContainer
-from app.models.public import User
+from app.models import ClusterInfo, db, UserContainer
+
+from .config import (
+    EC2_ROLE_FOR_ECS_POLICY_ARN,
+    ECS_INSTANCE_ROLE_POLICY_DOCUMENT,
+)
+from .services import iam
+
+
+@pytest.fixture
+def aws():
+    """Create a new boto client session."""
+
+    yield boto3.session.Session()
 
 
 @pytest.fixture
@@ -33,7 +45,7 @@ def cluster():
 
 
 @pytest.fixture
-def container(cluster, region, user):
+def container(cluster, user):
     """Add a row to the user_containers table for testing.
 
     Returns:
@@ -56,7 +68,7 @@ def container(cluster, region, user):
         c = UserContainer(
             container_id=f"test-container-{uuid.uuid4()}",
             ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
-            location=region,
+            location="us-east-1",
             os="Linux",
             state=initial_state,
             user_id=user.user_id,
@@ -79,26 +91,23 @@ def container(cluster, region, user):
 
 
 @pytest.fixture
-def region():
-    """Provide a standard region in which to create all test resources."""
+def ecs_instance_role(aws, iam):
+    """Create a version of the ecsInstanceRole for testing purposes."""
 
-    return "us-east-1"
+    role_name = f"test-role-{uuid.uuid4()}"
+    iam_client = aws.client("iam")
 
+    iam_client.create_role(
+        RoleName=role_name,
+        AssumeRolePolicyDocument=ECS_INSTANCE_ROLE_POLICY_DOCUMENT,
+    )
 
-@pytest.fixture
-def user():
-    """Add a row to the users table for testing.
+    iam = aws.resource("iam")
+    role = iam.Role(role_name)
 
-    Returns:
-        An instance of the User model.
-    """
+    role.attach_policy(PolicyArn=EC2_ROLE_FOR_ECS_POLICY_ARN)
 
-    u = User(user_id=f"test-user-{uuid.uuid4()}", password="")
+    yield role
 
-    db.session.add(u)
-    db.session.commit()
-
-    yield u
-
-    db.session.delete(u)
-    db.session.commit()
+    role.detach_policy(PolicyArn=EC2_ROLE_FOR_ECS_POLICY_ARN)
+    role.delete()

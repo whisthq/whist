@@ -1,18 +1,44 @@
-from app import *
-from app.helpers.utils.mail.stripe_mail import *
-from pyzipcode import ZipCodeDatabase
-from app.constants.states import *
+import logging
+import traceback
 
-from app.models.public import *
-from app.models.hardware import *
-from app.serializers.public import *
-from app.serializers.hardware import *
+from datetime import datetime as dt
+from datetime import timedelta
+
+import stripe
+
+from dateutil.relativedelta import relativedelta
+from flask import jsonify
+from pyzipcode import ZipCodeDatabase
+
+from app.constants.config import (
+    HOURLY_PLAN_ID,
+    MONTHLY_PLAN_ID,
+    STRIPE_SECRET,
+    UNLIMITED_PLAN_ID,
+)
+from app.constants.http_codes import (
+    BAD_REQUEST,
+    CONFLICT,
+    NOT_ACCEPTABLE,
+    NOT_FOUND,
+    PAYMENT_REQUIRED,
+    SUCCESS,
+)
+from app.constants.states import STATE_LIST
+from app.helpers.utils.mail.stripe_mail import (
+    chargeSuccessMail,
+    creditAppliedMail,
+    planChangeMail,
+    trialEndedMail,
+    trialEndingMail,
+)
+from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.time import dateToUnix, getToday
+from app.models import db, User
+from app.serializers.public import UserSchema
 
 stripe.api_key = STRIPE_SECRET
 zcdb = ZipCodeDatabase()
-
-import logging
-
 user_schema = UserSchema()
 
 
@@ -279,16 +305,19 @@ def addProductHelper(email, productName):
         return (jsonify({"status": "Customer with this email does not exist!"}), BAD_REQUEST)
 
     customer_id = None
-    if customers.stripe_customer_id:
-        customer_id = customers.stripe_customer_id
+    if customer.stripe_customer_id:
+        customer_id = customer.stripe_customer_id
     else:
         return (jsonify({"status": "Customer does not have a Stripe ID!"}), BAD_REQUEST)
 
     PLAN_ID = None
-    if productName == "256disk":
-        PLAN_ID = SMALLDISK_PLAN_ID
-    elif productName == "512disk":
-        PLAN_ID = MEDIUMDISK_PLAN_ID
+
+    # TODO: Set PLAN_ID based on productName
+
+    # if productName == ...:
+    #     PLAN_ID = ...
+    # elif ...
+    #     ...
 
     if PLAN_ID is None:
         return (jsonify({"status": "Invalid product"}), BAD_REQUEST)
@@ -325,16 +354,19 @@ def removeProductHelper(email, productName):
         return (jsonify({"status": "Customer with this email does not exist!"}), BAD_REQUEST)
 
     customer_id = None
-    if customers.stripe_customer_id:
-        customer_id = customers.stripe_customer_id
+    if customer.stripe_customer_id:
+        customer_id = customer.stripe_customer_id
     else:
         return (jsonify({"status": "Customer does not have a Stripe ID!"}), BAD_REQUEST)
 
     PLAN_ID = None
-    if productName == "256disk":
-        PLAN_ID = SMALLDISK_PLAN_ID
-    elif productName == "512disk":
-        PLAN_ID = MEDIUMDISK_PLAN_ID
+
+    # TODO: Set PLAN_ID based on productName
+
+    # if productName == ...:
+    #     PLAN_ID = ...
+    # elif ...
+    #     ...
 
     if PLAN_ID is None:
         return (jsonify({"status": "Invalid product"}), BAD_REQUEST)
@@ -378,20 +410,8 @@ def webhookHelper(event):
             label="Stripe",
             logs="Charge failed webhook received from stripe",
         )
-        custId = event.data.object.customer
-        customer = User.query.filter_by(stripe_customer_id=custId).first()
 
-        if customer:
-            chargeFailedMail(customer.email, custId)
-
-            # Schedule disk deletion in 7 days
-            expiry = (dt.today() + timedelta(days=7)).strftime("%m/%d/%Y, %H:%M")
-
-            disks = OSDisk.query.filter_by(user_id=customer.user_id).update(
-                {"state": "TO_BE_DELETED", "delete_date": expiry}
-            )
-            db.session.commit()
-
+        # TODO: Handle failed charge.
     elif event.type == "charge.succeeded":
         fractalLog(
             function="webhookHelper",

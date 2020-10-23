@@ -1,18 +1,18 @@
-from app import (
-    ECSClient,
-    celery_instance,
-    fractalLog,
-    fractalSQLCommit,
-    fractalSQLUpdate,
-    logging,
-    db,
-)
-from collections import defaultdict
-from .helpers.tests.aws_container import *
-from app.models.hardware import UserContainer, ClusterInfo
-import string
-import random
 import copy
+import logging
+import os
+import random
+import string
+
+from collections import defaultdict
+
+import pytest
+
+from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.sql_commands import fractalSQLCommit
+from app.models import ClusterInfo, db, UserContainer
+
+from ..helpers.general.progress import fractalJobRunner, queryStatus
 
 
 def generate_name(starter_name=""):
@@ -32,8 +32,8 @@ pytest.container_name = None
 
 
 @pytest.mark.container_serial
-def check_test_database(input_token, admin_token):
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE" or RESOURCE_GROUP != "FractalStaging":
+def check_test_database():
+    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE":
         fractalLog(
             function="test_aws_container",
             label=None,
@@ -44,20 +44,11 @@ def check_test_database(input_token, admin_token):
 
 
 @pytest.mark.container_serial
-def check_test_database(input_token, admin_token):
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE" or RESOURCE_GROUP != "FractalStaging":
-        fractalLog(
-            function="test_aws_container",
-            label=None,
-            logs="Not using staging database or resource group! Forcefully stopping tests.",
-            level=logging.WARNING,
-        )
-        assert False
-
-
-@pytest.mark.container_serial
+@pytest.mark.usefixtures("celery_session_app")
+@pytest.mark.usefixtures("celery_session_worker")
+@pytest.mark.usefixtures("_save_user")
 def test_create_cluster(
-    input_token, admin_token, cluster_name=pytest.cluster_name, max_containers=10, min_containers=0
+    client, authorized, cluster_name=pytest.cluster_name, max_containers=10, min_containers=0
 ):
     cluster_name = cluster_name or pytest.cluster_name
     fractalLog(
@@ -66,16 +57,20 @@ def test_create_cluster(
         logs="Starting to create cluster {}".format(cluster_name),
     )
 
-    resp = createCluster(
-        cluster_name=cluster_name,
-        instance_type="g3s.xlarge",
-        ami="ami-0c82e2febb87e6d1c",  # updated for host service
-        region_name="us-east-1",
-        max_containers=max_containers,
-        input_token=input_token,
+    resp = client.post(
+        "/aws_container/create_cluster",
+        json=dict(
+            cluster_name=cluster_name,
+            instance_type="g3s.xlarge",
+            ami="ami-0c82e2febb87e6d1c",
+            region_name="us-east-1",
+            max_containers=max_containers,
+            min_containers=min_containers,
+            username=authorized.user_id,
+        ),
     )
 
-    task = queryStatus(resp, timeout=10)
+    task = queryStatus(client, resp, timeout=10)
 
     if task["status"] < 1:
         fractalLog(
@@ -97,23 +92,29 @@ def test_create_cluster(
 
 
 @pytest.mark.container_serial
-def test_create_container(input_token, admin_token, cluster_name=pytest.cluster_name):
+@pytest.mark.usefixtures("celery_session_app")
+@pytest.mark.usefixtures("celery_session_worker")
+@pytest.mark.usefixtures("_retrieve_user")
+@pytest.mark.usefixtures("_save_user")
+def test_create_container(client, authorized, cluster_name=pytest.cluster_name):
     cluster_name = cluster_name or pytest.cluster_name
     fractalLog(
         function="test_create_container",
         label="container/create",
         logs="Starting to create container in cluster {}".format(cluster_name),
     )
-    resp = createContainer(
-        username="test-user@test.com",
-        cluster_name=cluster_name,
-        region_name="us-east-1",
-        task_definition_arn="fractal-browsers-chrome",
-        use_launch_type=False,
-        input_token=input_token,
+    resp = client.post(
+        "/aws_container/create_container",
+        json=dict(
+            username=authorized.user_id,
+            cluster_name=cluster_name,
+            region_name="us-east-1",
+            task_definition_arn="fractal-browsers-chrome",
+            use_launch_type=False,
+        ),
     )
 
-    task = queryStatus(resp, timeout=50)
+    task = queryStatus(client, resp, timeout=50)
 
     if task["status"] < 1:
         fractalLog(
@@ -147,21 +148,27 @@ def test_create_container(input_token, admin_token, cluster_name=pytest.cluster_
 
 
 @pytest.mark.container_serial
-def test_send_commands(input_token, admin_token):
+@pytest.mark.usefixtures("celery_session_app")
+@pytest.mark.usefixtures("celery_session_worker")
+@pytest.mark.usefixtures("_retrieve_user")
+@pytest.mark.usefixtures("_save_user")
+def test_send_commands(client, authorized):
     fractalLog(
         function="test_send_commands",
         label="cluster/send_commands",
         logs="Starting to send commands to cluster {}".format(pytest.cluster_name),
     )
 
-    resp = sendCommands(
-        cluster=pytest.cluster_name,
-        region_name="us-east-1",
-        commands=["echo test_send_commands"],
-        input_token=input_token,
+    resp = client.post(
+        "/aws_container/send_commands",
+        json=dict(
+            cluster=pytest.cluster_name,
+            region_name="us-east-1",
+            commands=["echo test_send_commands"],
+        ),
     )
 
-    task = queryStatus(resp, timeout=10)
+    task = queryStatus(client, resp, timeout=10)
 
     if task["status"] < 1:
         fractalLog(
@@ -176,7 +183,11 @@ def test_send_commands(input_token, admin_token):
 
 
 @pytest.mark.container_serial
-def test_delete_container(input_token, admin_token, container_name=pytest.container_name):
+@pytest.mark.usefixtures("celery_session_app")
+@pytest.mark.usefixtures("celery_session_worker")
+@pytest.mark.usefixtures("_retrieve_user")
+@pytest.mark.usefixtures("_save_user")
+def test_delete_container(client, authorized, container_name=pytest.container_name):
     container_name = container_name or pytest.container_name
     fractalLog(
         function="test_delete_container",
@@ -184,13 +195,15 @@ def test_delete_container(input_token, admin_token, container_name=pytest.contai
         logs="Starting to delete container {}".format(container_name),
     )
 
-    resp = deleteContainer(
-        user_id="test-user@test.com",
-        container_name=pytest.container_name,
-        input_token=input_token,
+    resp = client.post(
+        "/aws_container/delete_container",
+        json=dict(
+            user_id=authorized.user_id,
+            container_name=pytest.container_name,
+        ),
     )
 
-    task = queryStatus(resp, timeout=10)
+    task = queryStatus(client, resp, timeout=10)
 
     if task["status"] < 1:
         fractalLog(
@@ -214,7 +227,10 @@ def test_delete_container(input_token, admin_token, container_name=pytest.contai
 
 
 @pytest.mark.container_serial
-def test_delete_cluster(input_token, admin_token, cluster=pytest.cluster_name):
+@pytest.mark.usefixtures("celery_session_app")
+@pytest.mark.usefixtures("celery_session_worker")
+@pytest.mark.usefixtures("_retrieve_user")
+def test_delete_cluster(client, authorized, cluster=pytest.cluster_name):
     cluster = cluster or pytest.cluster_name
     fractalLog(
         function="test_delete_cluster",
@@ -222,13 +238,15 @@ def test_delete_cluster(input_token, admin_token, cluster=pytest.cluster_name):
         logs="Starting to delete cluster {}".format(cluster),
     )
 
-    resp = deleteCluster(
-        cluster=pytest.cluster_name,
-        region_name="us-east-1",
-        input_token=input_token,
+    resp = client.post(
+        "/aws_container/delete_cluster",
+        json=dict(
+            cluster=pytest.cluster_name,
+            region_name="us-east-1",
+        ),
     )
 
-    task = queryStatus(resp, timeout=10)
+    task = queryStatus(client, resp, timeout=10)
 
     if task["status"] < 1:
         fractalLog(
@@ -253,7 +271,7 @@ def test_delete_cluster(input_token, admin_token, cluster=pytest.cluster_name):
     "CHOOSE_CLUSTER_TEST" not in os.environ,
     reason="This test is slow and reource heavy; run only upon explicit request",
 )
-def test_cluster_assignment(input_token, admin_token):
+def test_cluster_assignment():
     check_test_database(input_token, admin_token)
     fractalLog(
         function="test_cluster_assignment",
