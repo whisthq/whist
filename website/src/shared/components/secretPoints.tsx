@@ -71,9 +71,6 @@ function SecretPoints(props: {
         })
     }
 
-    console.log(waitlistUser)
-    console.log(waitlistUser.eastereggsAvailable)
-
     return name &&
         waitlistUser.eastereggsAvailable &&
         waitlistUser.eastereggsAvailable[name] &&
