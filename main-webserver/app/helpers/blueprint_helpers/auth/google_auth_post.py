@@ -65,6 +65,7 @@ def loginHelper(code, clientApp):
                 "refresh_token": refresh_token,
                 "username": username,
                 "status": SUCCESS,
+                "name": name,
             }
         else:
             return {"status": FORBIDDEN, "error": "Try using non-Google login"}
@@ -87,6 +88,7 @@ def loginHelper(code, clientApp):
         "access_token": access_token,
         "refresh_token": refresh_token,
         "username": username,
+        "name": name,
     }
 
 

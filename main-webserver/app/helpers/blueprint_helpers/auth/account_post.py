@@ -64,6 +64,7 @@ def loginHelper(email, password):
                 "access_token": None,
                 "refresh_token": None,
                 "verification_token": None,
+                "name": None,
             }
 
     # Fetch the JWT tokens
@@ -76,6 +77,7 @@ def loginHelper(email, password):
         "access_token": access_token,
         "refresh_token": refresh_token,
         "verification_token": user.token,
+        "name": user.name,
     }
 
 
