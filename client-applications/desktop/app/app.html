@@ -27,9 +27,7 @@
                 if (process.env.NODE_ENV === "development") {
                     // Dynamically insert the DLL script in development env in the
                     // renderer process
-                    console.log("rendering script")
                     scripts.push("../dll/renderer.dev.dll.js")
-                    console.log("done rendering")
                 }
                 if (process.env.START_HOT) {
                     // Dynamically insert the bundled app script in the renderer process

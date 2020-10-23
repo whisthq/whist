@@ -46,17 +46,14 @@ const UpdateScreen = (props: any) => {
         const os = require("os")
 
         if (os.platform() === "darwin") {
-            console.log("darwin found")
             path = appRootDir + "/protocol-build/desktop/"
             path = path.replace("/app", "")
             executable = "./FractalClient"
         } else if (os.platform() === "linux") {
-            console.log("linux found")
             path = process.cwd() + "/protocol-build"
             path = path.replace("/release", "")
             executable = "./FractalClient"
         } else if (os.platform() === "win32") {
-            console.log("windows found")
             path = process.cwd() + "\\protocol-build\\desktop"
             executable = "FractalClient.exe"
         } else {

@@ -11,12 +11,12 @@
     padding: 10px 25px;
     width: max-content;
     height: max-content;
-    border: solid 0.8px #cccccc;
-    background: white;
+    border: none;
+    background: rgba(0, 0, 0, 0.1);
     color: black;
     font-size: 12px;
     position: absolute;
-    right: 25px;
+    right: 50px;
 }
 
 .feedbackButton,
@@ -58,7 +58,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 0px 25px;
+    padding: 0px 50px;
     z-index: 1;
 }
 
@@ -68,17 +68,17 @@
     font-size: 20px;
 }
 
-.navTitle {
-    font-size: 17px;
+.navTitle,
+.selectedNavTitle {
+    font-size: 16px;
     color: #111111;
     margin-left: 20px;
+    position: relative;
+    top: 2px;
 }
 
 .selectedNavTitle {
-    font-size: 17px;
-    color: #111111;
     font-weight: bold;
-    margin-left: 20px;
 }
 
 .navTitle:hover,
@@ -121,24 +121,22 @@
 }
 
 .appContainer {
-    width: 29vw;
+    width: 275px;
     height: 185px;
     display: flex;
     flex-direction: column;
     padding: 25px;
     z-index: 1;
-    background: white;
-    border-radius: 5px;
-    box-shadow: 0px 1px 8px #dddddd;
-    margin: 5px;
-    transition: all 0.2s ease-in-out;
+    background: rgba(0, 0, 0, 0.04);
+    margin: 10px;
+    transition: all 0.5s ease-in-out;
 }
 
 .appContainer:hover {
     cursor: pointer;
-    transform: scale(1.17);
+    transform: scale(1.05);
     z-index: 2;
-    box-shadow: 0px 1px 12px #cccccc;
+    box-shadow: 0px 1px 12px rgba(0, 0, 0, 0.1);
 }
 
 .appImage {
@@ -161,7 +159,7 @@
 }
 
 .appDescription {
-    font-size: 12px;
+    font-size: 13px;
     margin-top: 20px;
 }
 

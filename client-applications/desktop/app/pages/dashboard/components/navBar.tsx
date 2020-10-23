@@ -47,6 +47,9 @@ const NavBar = (props: any) => {
                 selected={currentTab == "Discover"}
                 text="Discover"
                 onClick={() => updateTab("Discover")}
+                style={{
+                    marginLeft: 50,
+                }}
             />
             <NavTitle
                 selected={currentTab == "Settings"}

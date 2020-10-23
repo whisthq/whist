@@ -11,14 +11,11 @@ import {
     InMemoryCache,
     HttpLink,
     split,
-    gql,
 } from "@apollo/client"
 import { getMainDefinition } from "@apollo/client/utilities"
 import { WebSocketLink } from "@apollo/client/link/ws"
 
-import Login from "pages/login/login"
-import Loading from "pages/loading/loading"
-import Dashboard from "pages/dashboard/dashboard"
+import RootApp from "rootApp"
 
 import "./app.global.css"
 import { config } from "shared/constants/config"
@@ -86,11 +83,7 @@ document.addEventListener("DOMContentLoaded", () =>
             <Provider store={store}>
                 <ConnectedRouter history={history}>
                     <ApolloProvider client={apolloClient}>
-                        <Switch>
-                            <Route path="/dashboard" component={Dashboard} />
-                            <Route path="/loading" component={Loading} />
-                            <Route path="/" component={Login} />
-                        </Switch>
+                        <RootApp />
                     </ApolloProvider>
                 </ConnectedRouter>
             </Provider>
