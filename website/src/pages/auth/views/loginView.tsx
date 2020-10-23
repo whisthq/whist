@@ -70,8 +70,8 @@ const LoginView = (props: any) => {
         return (
             <div
                 style={{
-                    width: "100vw",
-                    height: "100vh",
+                    width: "100%",
+                    marginTop: "40%",
                     position: "relative",
                 }}
             >

@@ -13,15 +13,15 @@ import Verify from "pages/auth/verify"
 import Reset from "pages/auth/reset"
 import Dashboard from "pages/dashboard/dashboard"
 
-import * as SharedAction from "store/actions/shared"
+// import * as SharedAction from "store/actions/shared"
 
 const RootApp = (props: any) => {
-    const { dispatch, user } = props
+    // const { dispatch, user } = props
 
     const refreshState = () => {
-        if (!user.user_id) {
-            dispatch(SharedAction.resetState())
-        }
+        // if (!user.user_id) {
+        //     dispatch(SharedAction.resetState())
+        // }
     }
 
     // temp reset state so that some bugs will be fixed basically

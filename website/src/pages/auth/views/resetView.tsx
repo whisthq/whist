@@ -101,13 +101,13 @@ const ResetView = (props: {
         // we only want to change on a specific state change
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [confirmPassword])
-    
+
     // finally once they click send dispatch a reset as in the beginning and finished -> true
     useEffect(() => {
-        if(finished) {
+        if (finished) {
             // delay for 3 seconds then push to /
             // not sure how this compares to redirect or whatever
-            setTimeout(()=>history.push("/auth"), 3000); // turn this into a helper?
+            setTimeout(() => history.push("/auth"), 3000) // turn this into a helper?
         }
     }, [finished])
 

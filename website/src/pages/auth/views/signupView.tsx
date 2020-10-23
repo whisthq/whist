@@ -106,8 +106,8 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
         return (
             <div
                 style={{
-                    width: "100vw",
-                    height: "100vh",
+                    width: "100%",
+                    marginTop: "40%",
                     position: "relative",
                 }}
             >

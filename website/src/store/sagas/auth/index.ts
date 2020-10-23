@@ -211,7 +211,6 @@ function* validateVerificationToken(action: any) {
 
 function* forgotPassword(action: any) {
     const state = yield select()
-    console.log(`yea i forgot my password`)
     const { json } = yield call(
         apiPost,
         "/mail/forgot",
@@ -225,7 +224,6 @@ function* forgotPassword(action: any) {
         ? state.AuthReducer.authFlow.forgotEmailsSent
         : 0
 
-    console.log(`recieved in forgot ${JSON.stringify(json)}`)
     if (json) {
         if (json.verified) {
             yield put(
@@ -254,7 +252,6 @@ function* forgotPassword(action: any) {
 
 function* validateResetToken(action: any) {
     yield select()
-    console.log(`trynna validate my ego`)
     const { json } = yield call(
         apiPost,
         "/token/validate",
