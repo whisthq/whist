@@ -47,10 +47,10 @@ bool pendingUpdateClipboard();
 
 extern char filename[300];
 extern char username[50];
-bool updating_set_clipboard;    // set to true when SetClipboard() needs to be called
-bool updating_get_clipboard;    // set to true when GetClipboard() needs to be called
-bool updating_clipboard;        // acts as a mutex to prevent clipboard activity from overlapping
-bool pending_update_clipboard;  // set to true when GetClipboard() has finished running
+volatile bool updating_set_clipboard;  // set to true when SetClipboard() needs to be called
+volatile bool updating_get_clipboard;  // set to true when GetClipboard() needs to be called
+volatile bool updating_clipboard;  // acts as a mutex to prevent clipboard activity from overlapping
+volatile bool pending_update_clipboard;  // set to true when GetClipboard() has finished running
 clock last_clipboard_update;
 SDL_sem* clipboard_semaphore;  // used to signal UpdateClipboardThread to continue
 ClipboardData* clipboard;
