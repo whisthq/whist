@@ -55,8 +55,6 @@ static Window window;
 static Atom clipboard;
 static Atom incr_id;
 
-static bool just_received = false;
-
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
 bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
 
@@ -252,10 +250,8 @@ void unsafe_SetClipboard(ClipboardData* cb) {
 
     // Empty call of unsafe_hasClipboardUpdated() in order to prevent hasUpdated from returning true
     //      just after we've called xclip to set the clipboard
-    // unsafe_hasClipboardUpdated();
-    if (cb->type != CLIPBOARD_NONE) {
-        just_received = true;
-    }
+    unsafe_hasClipboardUpdated();
+
     return;
 }
 
@@ -297,10 +293,6 @@ bool unsafe_hasClipboardUpdated() {
         XNextEvent(display, &event);
         if (event.type == event_base + XFixesSelectionNotify &&
             ((XFixesSelectionNotifyEvent*)&event)->selection == clipboard) {
-            if (just_received) {
-                just_received = false;
-                return false;
-            }
             return true;
         }
     }

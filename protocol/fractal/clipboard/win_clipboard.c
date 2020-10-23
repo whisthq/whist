@@ -312,7 +312,10 @@ ClipboardData* unsafe_GetClipboard() {
                 break;
             case CF_HDROP:
                 LOG_WARNING("GetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
-                return cb;
+                break;
+                // we want to break, not return, because CloseClipboard() needs to be called
+                // at the bottom
+
                 /*
                 LOG_INFO("Hdrop! Size: %d", cb->size);
                 DROPFILES drop;
@@ -496,6 +499,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
 
             LOG_WARNING("SetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
             return;
+            // we want to return, not break, because there is no content to place into the clipboard
 
             /*
             WCHAR first_file_path[MAX_PATH] = L"";

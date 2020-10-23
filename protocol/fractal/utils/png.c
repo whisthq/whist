@@ -98,7 +98,8 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
 
     // Depending on numChannels, we could be dealing with BGR24 or BGR32 in the BMP, but
     //  always save to PNG RGB (not RGBA)
-    enum AVPixelFormat bmp_format = numChannels == 3 ? AV_PIX_FMT_BGR24 : AV_PIX_FMT_BGR32;
+    LOG_INFO("NUM CHANNELS %d", numChannels);
+    enum AVPixelFormat bmp_format = numChannels == 3 ? AV_PIX_FMT_BGR24 : AV_PIX_FMT_BGRA;
     enum AVPixelFormat png_format = AV_PIX_FMT_RGB24;
 
     // BMP files are stored with each row left to right, but rows are then stored bottom to top.
