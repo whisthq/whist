@@ -79,7 +79,7 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
         LOG_ERROR("BMP size < MINHEADER");
         return -1;
     }
-    if (bmp[0] != 'B' || bmp[1] != 'M')  {
+    if (bmp[0] != 'B' || bmp[1] != 'M') {
         LOG_ERROR("BMP header BM failed");
         return -1;
     }
@@ -106,7 +106,8 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     // memcpy will face UB problems below if the calculated size does not match the actual
     // BMP byte array size
     if (size < data_size + pixeloffset) {
-        LOG_WARNING("Actual size does not match given data_size and pixeloffset (%d < %d + %d)", size, data_size, pixeloffset);
+        LOG_WARNING("Actual size does not match given data_size and pixeloffset (%d < %d + %d)",
+                    size, data_size, pixeloffset);
         return -1;
     }
     // Require that data_size is uncompressed raw data
