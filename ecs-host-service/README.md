@@ -26,9 +26,11 @@ For more details, see the comments at the beginning of `main()` and `shutdownHos
 
 ## Styling
 
-We use `golint` for proper linting and coding practices in this project. You can install `golint` on your machine by running `go get -u golang.org/x/lint/golint`. To find out where `golint` was installed, run `go list -f {{.Target}} golang.org/x/lint/golint`. You can then call `golint` via the path returned or by adding it to your `$PATH` without arguments to run it on the whole project.
+We use `gofmt` and `golint` for proper linting and coding practices in this project. We use `gofmt` to actually format our Go code, and we use `golint` to enforce proper Go coding practices. We recommend you use both in the pre-commit hooks. You can easily format your code by running `gofmt path-to-file-to-format.go`.
 
-We also have pre-commit hooks installed for `golint` on this project. You can install them by running `pre-commit install`, after having installed the `pre-commit` package via `pip install pre-commit`.
+You can also install `golint` on your machine by running `go get -u golang.org/x/lint/golint`. To find out where `golint` was installed, run `go list -f {{.Target}} golang.org/x/lint/golint`. You can then call `golint` via the path returned or by adding it to your `$PATH` without arguments to run it on the whole project. You can easily run Golint via `golint path-to-file-to-lint.go`, which will output a list of recommended behavior improvements to the code.
+
+We also have pre-commit hooks installed for all relevant Go features, including `gofmt` and `golint`, on this project. You can install them by running `pre-commit install`, after having installed the `pre-commit` package via `pip install pre-commit`.
 
 ## Publishing
 
