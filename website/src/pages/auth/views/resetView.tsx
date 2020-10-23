@@ -10,6 +10,7 @@ import {
     checkPassword,
     checkPasswordVerbose,
 } from "pages/auth/constants/authHelpers"
+import history from "shared/utils/history"
 
 import "styles/auth.css"
 
@@ -26,6 +27,7 @@ const ResetView = (props: {
     const [passwordWarning, setPasswordWarning] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [confirmPasswordWarning, setConfirmPasswordWarning] = useState("")
+    const [finished, setFinished] = useState(true)
 
     // visual state constants
     const [processing, setProcessing] = useState(false)
@@ -37,8 +39,11 @@ const ResetView = (props: {
         checkPassword(password)
 
     const reset = () => {
-        // TODO (might also want to add a email redux state for that which was forgotten)
-        dispatch(resetPassword(user.user_id, password))
+        if (validPassword) {
+            // TODO (might also want to add a email redux state for that which was forgotten)
+            dispatch(resetPassword(user.user_id, password))
+            setFinished(true) // unfortunately this is all the sagas give us
+        }
     }
 
     const changePassword = (evt: any): any => {
@@ -53,11 +58,31 @@ const ResetView = (props: {
 
     // Handles ENTER key press
     const onKeyPress = (evt: any) => {
-        if (evt.key === "Enter" && validPassword) {
+        if (evt.key === "Enter") {
             reset()
         }
     }
 
+    // first ask for a validation and start loading
+    useEffect(() => {
+        if (validToken && !processing) {
+            dispatch(validateResetToken(token))
+
+            setProcessing(true)
+        }
+        // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
+    // then stop loading and let the textbox be displayed
+    useEffect(() => {
+        if (authFlow.resetTokenStatus === "verified" && processing) {
+            setProcessing(false)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authFlow.resetTokenStatus])
+
+    // textbox stuff
     // password warnings
     useEffect(() => {
         setPasswordWarning(checkPasswordVerbose(password))
@@ -76,25 +101,40 @@ const ResetView = (props: {
         // we only want to change on a specific state change
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [confirmPassword])
-
+    
+    // finally once they click send dispatch a reset as in the beginning and finished -> true
     useEffect(() => {
-        if (validToken && !processing) {
-            dispatch(validateResetToken(token))
-
-            setProcessing(true)
+        if(finished) {
+            // delay for 3 seconds then push to /
+            // not sure how this compares to redirect or whatever
+            setTimeout(()=>history.push("/auth"), 3000); // turn this into a helper?
         }
-        // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [finished])
 
-    useEffect(() => {
-        if (authFlow.resetTokenStatus === "verified" && processing) {
-            setProcessing(false)
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [authFlow.resetTokenStatus])
-
-    if (processing) {
+    if (finished) {
+        // assume it worked
+        // TODO (adriano) when the server actually responds do something about it (say your thing was reset for example)
+        return (
+            <div>
+                <div
+                    style={{
+                        width: 400,
+                        margin: "auto",
+                        marginTop: 120,
+                    }}
+                >
+                    <h2
+                        style={{
+                            color: "#111111",
+                            textAlign: "center",
+                        }}
+                    >
+                        Verified. You will soon be redirected.
+                    </h2>
+                </div>
+            </div>
+        )
+    } else if (processing) {
         return (
             <div
                 style={{

@@ -176,7 +176,7 @@ function* validateVerificationToken(action: any) {
             username: state.AuthReducer.user.user_id,
             token: action.token,
         },
-        state.AuthReducer.tokens.access_token
+        state.AuthReducer.user.accessToken
     )
 
     const attemptsExecuted = state.AuthReducer.authFlow
@@ -211,6 +211,7 @@ function* validateVerificationToken(action: any) {
 
 function* forgotPassword(action: any) {
     const state = yield select()
+    console.log(`yea i forgot my password`)
     const { json } = yield call(
         apiPost,
         "/mail/forgot",
@@ -224,6 +225,7 @@ function* forgotPassword(action: any) {
         ? state.AuthReducer.authFlow.forgotEmailsSent
         : 0
 
+    console.log(`recieved in forgot ${JSON.stringify(json)}`)
     if (json) {
         if (json.verified) {
             yield put(
@@ -252,6 +254,7 @@ function* forgotPassword(action: any) {
 
 function* validateResetToken(action: any) {
     yield select()
+    console.log(`trynna validate my ego`)
     const { json } = yield call(
         apiPost,
         "/token/validate",
@@ -261,6 +264,7 @@ function* validateResetToken(action: any) {
         ""
     )
     // at some later point in time we may find it helpful to change strings here to some sort of enum
+    console.log(`here comes the validation: ${JSON.stringify(json)}`)
     if (json) {
         if (json.status === 200) {
             yield put(
