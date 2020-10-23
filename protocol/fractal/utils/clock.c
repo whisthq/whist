@@ -180,10 +180,10 @@ int GetTimeData(FractalTimeData* time_data) {
 #endif
 }
 
-void SetTimezoneFromIANAName(char* linux_tz_name) {
+void SetTimezoneFromIANAName(char* linux_tz_name, char* password) {
     // Two spaces to hide from bash history
     char cmd[2000] = "  echo %s | sudo -S timedatectl set-timezone %s";
-    snprintf(cmd, sizeof(cmd), get_vm_password(), linux_tz_name);
+    snprintf(cmd, sizeof(cmd), password, linux_tz_name);
 
     runcmd(cmd, NULL);
 
