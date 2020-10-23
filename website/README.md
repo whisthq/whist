@@ -15,6 +15,8 @@ Basic continuous integration is set up for this project. For every push or PR, b
 
 To ensure that no lingering `console.log()` statements make it to production and can be inspected by users, please use `debugLog()` to print to the console. This custom logging function gets automatically hidden in production.
 
+If you do not have the `.env` environment folder. Run `python retrieve.py` in the root folder. It will download the environment secrets necessary to run the site locally. You will need to export your aws secret access key and access key id for it to work with `export AWS_SECRET_ACCESS_KEY=...` and `export AWS_ACCESS_KEY_ID=...` (replace `...` with each of the two values respectively). You should be able to see these keys in the onboarding email from Phil or your AWS account. Ask someone with root user access if you do not know what your credentials are (probably Ming or Phil). If the code is not working and you do not have time to fix it, consider using the CLI or AWS Console per the instructions in the Notion Engineering Wiki doc.
+
 ## Styling
 
 To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Prettier.
@@ -40,110 +42,14 @@ To ensure that this extension is used over other extensions you may have install
 }
 ```
 
-## Code Design Philosophy
-
-### Pages
-
-The website is divided into pages, where each page is defined as a component with its own React Router endpoint. Each page gets its own folder in the `pages` folder; within each page is a single base `.tsx` component, which is component rendered by the React Router, and two folders: `components` and `views`. A view is defined as a collection of components; for example, the landing page has a `TopView`, `MiddleView`, and `BottomView`, which are groups of components in the top, middle, and bottom sections of the landing page, respectively. A component is defined as any standalone React Component which is imported into a view, which is then imported into the base page component.
-
-### Components
-
-We choose to use functional React components instead of class components because of their simplicity and readability. For instance, whereas a traditional class component may look like 
-
-```
-export default class ExampleComponent<MyProps, MyState> extends React.Component
-```
-
-a functional component looks like
-
-```
-function ExampleComponent(props: any) 
-```
-
-For consistency, the use of functional React components is enforced across the repo.
-
-### Inline vs. Separate Styling
-
-We do not have a preference for inline vs. separate CSS styling, with the exception of repeated CSS code, in which case we strongly encourage that a CSS class be created. All modifications to default HTML tags (e.g. `div`, `h1`, etc.) should be done in `styles/shared.css`. Every page has its own corresponding `.css` file; all other CSS should go there.
-
-### Naming
-
-For consistency, we enforce all folder, variable, and file names to start with lowercase letters. If a name has multiple words (e.g. "landing page"), we format it as one word, where the first word is lowercased and the subsequent words are capitalized (e.g. `landingPage`). The one exception to the lowercase rule are component names, which are all uppercased; for instance, `import ExampleComponent from pages/ExamplePage/components/exampleComponent`.
-
-### Warnings
-
-To minimize the risk of bugs, we enforce that all PR's be warning-free. You can see warnings in the terminal where the website is running locally; if a PR has warnings, the CI will fail. Note that the Netlify deploys will fail due to warnings, to enforce this design philosophy.
-
-### State Management
-
-We currently use Redux for state management, and try to split actions and reducers into related groups as best as possible. We are currently TBD on whether to use Redux sagas or React hooks for side effects (i.e. API calls).
-
-### Redux State Naming
-
-We encourage that redux state variables be grouped as nested JSON objects for improved readability. For example, instead of a Redux state that looks like 
-
-```
-EXAMPLE_STATE = {
-  username: null,
-  name: null,
-  access_token: null,
-  location: null,
-  stripe_data: {...}
-}
-```
-
-we can organize this state as
-
-```
-EXAMPLE_STATE = {
-  auth: {
-    username: null,
-    name: null,
-    access_token: null
-  },
-  account_data: {
-    location: null,
-    stripe_data: {...}
-  }
-}
-```
-
-### API Calls
-
-We currently use Firebase, so there is no need for many API calls.
-
-When we switch to SQL, whenever possible, we encourage the use of GraphQL instead of writing new server endpoints for the sake of simplicity and coding speed. The only time when we should be writing and calling server endpoints is if we are performing server-side operations that involve more than database operations; for example, an API call to create an ECS container.
-
-## UI Design Philosophy
-
-### Screen Compatibility
-
-We require all front-end code pushed to staging be tested for compatability on both mobile and normal laptop (13-15 inch) screens, and that all code pushed into production be tested for compatability on large screens (up to 27 inch monitors) and ultrawide panels (1440p 21:9 aspect ratios). We use two types of conditional CSS styling: inline conditional styling
-
-```
-<div style = {{fontSize: state.width > 720 ? 30 : 20}}>
-  Conditional font size
-</div>
-```
-
-and separate conditional CSS styling
-
-```
-.myClass {
-  font-size: 30px;
-}
-
-@media only screen and (max-width: 720px) {
-  .myClass {
-    font-size: 20px;
-  }
-}
-```
-
-### Images
-
-For the best image quality, we require that all images and icons be `.svg` files. You can easily create SVG or convert images to `.svg` in Figma; simply highlight the asset(s) you wish to export, right click, and Select Export > Copy to SVG.
-
 ## Contributing
 
-Unless otherwise specified, contributors should branch off `staging` and PR back into `staging`. Because both `staging` and `master` auto-deploy the their respective Netlify sites, pushing to `staging` and `master` is blocked by non-code owners.
+Before contributing, please familiarize yourself with your [coding philosophy](https://www.notion.so/tryfractal/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615). Unless otherwise specified, contributors should branch off `staging` and PR back into `staging`. Because both `staging` and `master` auto-deploy the their respective Netlify sites, pushing to `staging` and `master` is blocked by non-code owners.
+
+## Google Analytics, A/B Testing, and Tracking
+
+To improve our retention rates and scientifically approach the question of "what makes a user stick in our website?" we use basic pageview and event tracking with Google analytics. When users click a button a google analytics (GA) event will trigger that will inform GA of the fact that they clicked, and it will also keep track of their rough geographical locations and page views (which pages they are viewing).
+
+The GA code is in the `withTracker.tsx` component as well as in gaEvents. The GA ids that you need to connect this to your own GA account are included in config. There can be multiple since GA allows us to connect multiple GA accounts to one website, which is good, since that means multiple team members working on A/B testing and analytics can link their GA account to Fractal and avoid having a shared account.
+
+To set up your GA dashboard follow the tutorial on the [Notion engineering wiki](https://www.notion.so/tryfractal/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615).
