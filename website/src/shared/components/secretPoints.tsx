@@ -4,7 +4,7 @@ import { connect } from "react-redux"
 
 import "styles/shared.css"
 
-import { if_exists_else, modified } from "shared/utils/reducerHelpers"
+import { deep_copy } from "shared/utils/reducerHelpers"
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
 import { updateWaitlistUser } from "store/actions/waitlist/pure"
 
@@ -19,20 +19,44 @@ hidden somewhere in the site that you may not expect to encourage users to inter
 // you can also instead pass style={{/*dict*/}} if you just want to style the div
 // you can also pass in classname
 // you can also pass in a span style for the style of the span element inside which has the 100 points text
-function SecretPoints(props: any) {
+function SecretPoints(props: {
+    dispatch: (action: any) => any
+    waitlistUser: any
+    user: any
+    points: number
+    renderProps?: any
+    name: string
+    style?: any
+    className?: string
+    spanStyle?: any
+}) {
+    const {
+        dispatch,
+        waitlistUser,
+        user,
+        points,
+        renderProps,
+        name,
+        style,
+        className,
+        spanStyle,
+    } = props
+
     const [updatePoints] = useMutation(UPDATE_WAITLIST, {
         onError(err) {},
     })
 
     async function handleClick() {
-        props.dispatch(
+        const newEastereggs = deep_copy(
+            waitlistUser.eastereggsAvailable
+                ? waitlistUser.eastereggsAvailable
+                : {}
+        )
+        newEastereggs[name] = undefined
+
+        dispatch(
             updateWaitlistUser({
-                eastereggsAvailable: modified(
-                    props.eastereggsAvailable,
-                    "delete",
-                    [props.name],
-                    true
-                ),
+                eastereggsAvailable: newEastereggs,
             })
         )
 
@@ -40,36 +64,32 @@ function SecretPoints(props: any) {
         // this updates local user values
         updatePoints({
             variables: {
-                user_id: props.user.user_id,
-                points: props.user.points + props.points,
+                user_id: user.user_id,
+                points: waitlistUser.points + points,
             },
             optimisticResponse: true,
         })
     }
 
-    console.log(typeof props.eastereggsAvailable)
+    console.log(waitlistUser)
+    console.log(waitlistUser.eastereggsAvailable)
 
-    // TODO style this!
-    return props.name &&
-        props.eastereggsAvailable &&
-        props.eastereggsAvailable.has(props.name) &&
-        props.points ? (
-        props.renderProps ? (
-            props.renderProps(handleClick)
+    return name &&
+        waitlistUser.eastereggsAvailable &&
+        waitlistUser.eastereggsAvailable[name] &&
+        points ? (
+        renderProps ? (
+            renderProps(handleClick)
         ) : (
             <div
                 onClick={handleClick}
-                style={props.style ? props.style : { width: "50%" }}
-                className={props.className ? props.className : "pointer-hover"}
+                style={style ? style : { width: "50%" }}
+                className={className ? className : "pointer-hover"}
             >
                 Click me for{" "}
-                <span
-                    style={
-                        props.spanStyle ? props.spanStyle : { color: "#3930b8" }
-                    }
-                >
+                <span style={spanStyle ? spanStyle : { color: "#3930b8" }}>
                     {" "}
-                    {props.points} Points{" "}
+                    {points} Points{" "}
                 </span>
             </div>
         )
@@ -78,12 +98,17 @@ function SecretPoints(props: any) {
     )
 }
 
-function mapStateToProps(state: { WaitlistReducer: { eastereggsAvailable : Set<string> } }) {
+function mapStateToProps(state: {
+    WaitlistReducer: {
+        waitlistUser: { points: number; eastereggsAvailable: any }
+    }
+    AuthReducer: { user: { user_id: string } }
+}) {
     return {
-        eastereggsAvailable: if_exists_else(
-            state.WaitlistReducer,
-            ["waitlistUser", "eastereggsAvailable"]
-        ),
+        user: state.AuthReducer.user ? state.AuthReducer.user : {},
+        waitlistUser: state.WaitlistReducer.waitlistUser
+            ? state.WaitlistReducer.waitlistUser
+            : {},
     }
 }
 

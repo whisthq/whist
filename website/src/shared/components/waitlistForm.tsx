@@ -16,7 +16,7 @@ import { UPDATE_WAITLIST } from "shared/constants/graphql"
 import * as PureAuthAction from "store/actions/auth/pure"
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
 import * as SharedAction from "store/actions/shared"
-
+import { deep_copy } from "shared/utils/reducerHelpers"
 import { SECRET_POINTS } from "shared/utils/points"
 
 import "styles/landing.css"
@@ -106,7 +106,7 @@ function WaitlistForm(props: any) {
                 PureWaitlistAction.updateWaitlistUser({
                     points: newPoints,
                     referralCode: newReferralCode,
-                    eastereggsAvailable: new Set(Object.values(SECRET_POINTS)),
+                    eastereggsAvailable: deep_copy(SECRET_POINTS),
                 })
             )
             dispatch(

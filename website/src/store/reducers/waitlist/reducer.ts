@@ -5,8 +5,6 @@ import * as SharedAction from "store/actions/shared"
 
 import { if_exists_spread } from "shared/utils/reducerHelpers"
 
-const emptySet = new Set()
-
 export default function (state = DEFAULT, action: any) {
     switch (action.type) {
         case PureAction.UPDATE_WAITLIST_USER:

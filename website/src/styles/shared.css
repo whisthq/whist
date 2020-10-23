@@ -258,3 +258,7 @@ a {
 .header-link:hover {
     color: #3930b8 !important;
 }
+
+.pointer-hover:hover {
+    cursor: pointer;
+}
