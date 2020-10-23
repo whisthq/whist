@@ -75,12 +75,21 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     // Read BMP file header contents
     int w, h;
     static const unsigned MINHEADER = 54;
-    if (size < MINHEADER) return -1;
-    if (bmp[0] != 'B' || bmp[1] != 'M') return -1;
+    if (size < MINHEADER) {
+        LOG_ERROR("BMP size < MINHEADER");
+        return -1;
+    }
+    if (bmp[0] != 'B' || bmp[1] != 'M')  {
+        LOG_ERROR("BMP header BM failed");
+        return -1;
+    }
     unsigned pixeloffset = *((int*)(&bmp[10]));
     w = *((int*)(&bmp[18]));
     h = *((int*)(&bmp[22]));
-    if (bmp[28] != 24 && bmp[28] != 32) return -1;
+    if (bmp[28] != 24 && bmp[28] != 32) {
+        LOG_ERROR("BMP is not 3 or 4 channel");
+        return -1;
+    }
     unsigned numChannels = bmp[28] / 8;
 
     // BMP pixel arrays are always multiples of 4. Images with widths that are not multiples
@@ -118,6 +127,7 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     int bmp_bytes = av_image_get_buffer_size(bmp_format, w, h, 1);
     uint8_t* bmp_buffer = (uint8_t*)av_malloc(bmp_bytes);
     if (!bmp_buffer) {
+        LOG_ERROR("BMP buffer could not be allocated");
         return -1;
     }
 
@@ -131,6 +141,7 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     uint8_t* png_buffer = (uint8_t*)av_malloc(png_bytes);
     if (!png_buffer) {
         av_free(bmp_buffer);
+        LOG_ERROR("PNG buffer could not be allocated");
         return -1;
     }
 
@@ -139,6 +150,7 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     if (!bmp_frame) {
         av_free(bmp_buffer);
         av_free(png_buffer);
+        LOG_ERROR("BMP frame could not be allocated");
         return -1;
     }
     bmp_frame->format = bmp_format;
@@ -150,6 +162,8 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
         av_free(bmp_buffer);
         av_free(png_buffer);
         av_frame_free(&bmp_frame);
+        LOG_ERROR("PNG frame could not be allocated");
+        return -1;
     }
     png_frame->format = png_format;
     png_frame->width = w;
@@ -161,6 +175,7 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
         av_free(png_buffer);
         av_frame_free(&bmp_frame);
         av_frame_free(&png_frame);
+        LOG_ERROR("av_image_fill_arrays failed for BMP");
         return -1;
     }
     if (av_image_fill_arrays(png_frame->data, png_frame->linesize, png_buffer, png_format, w, h,
@@ -169,6 +184,7 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
         av_free(png_buffer);
         av_frame_free(&bmp_frame);
         av_frame_free(&png_frame);
+        LOG_ERROR("av_image_fill_arrays failed for PNG");
         return -1;
     }
 
@@ -176,6 +192,7 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     struct SwsContext* conversionContext =
         sws_getContext(w, h, bmp_format, w, h, png_format, SWS_FAST_BILINEAR, NULL, NULL, NULL);
     if (!conversionContext) {
+        LOG_ERROR("sws_getContext failed");
         return -1;
     }
     sws_scale(conversionContext, (const uint8_t* const*)bmp_frame->data, bmp_frame->linesize, 0, h,
