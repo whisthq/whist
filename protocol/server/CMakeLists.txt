@@ -10,6 +10,7 @@ add_executable(FractalServer
         main.c
         handle_client_message.c
         network.c
+        webserver.c
         )
 
 # copy the sentry shared library to the build folder after the build

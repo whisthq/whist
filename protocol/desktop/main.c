@@ -599,7 +599,7 @@ int main(int argc, char* argv[]) {
 
         connected = true;
 
-        // Initialize audio and variablessendTimeToServer
+        // Initialize audio and variables
         // reset because now connected
         try_amount = 0;
         max_connection_attempts = MAX_RECONNECTION_ATTEMPTS;
@@ -619,14 +619,6 @@ int main(int argc, char* argv[]) {
             SDL_CreateThread(SendClipboardPackets, "SendClipboardPackets", NULL);
 
         StartTimer(&window_resize_timer);
-
-        if (sendTimeToServer() != 0) {
-            LOG_ERROR("Failed to synchronize time with server.");
-        }
-
-        if (sendEmailToServer(user_email) != 0) {
-            LOG_ERROR("Failed to send user email to server");
-        }
 
         // Timer used in CI mode to exit after 1 min
         clock ci_timer;

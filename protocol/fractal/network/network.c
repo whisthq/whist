@@ -75,6 +75,7 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #include <fcntl.h>
 
 #include "../utils/aes.h"
+#include "../utils/json.h"
 
 #define STUN_IP "52.5.240.234"
 #define STUN_PORT 48800
@@ -83,7 +84,7 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
-unsigned short port_mappings[USHRT_MAX];
+unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
 ============================
@@ -214,8 +215,8 @@ Public Function Implementations
 @brief                          Initialize default port mappings (i.e. the identity)
 */
 void init_default_port_mappings() {
-    for (unsigned short i = 0; i < USHRT_MAX; i++) {
-        port_mappings[i] = i;
+    for (int i = 0; i <= USHRT_MAX; i++) {
+        port_mappings[i] = (unsigned short)i;
     }
 }
 
@@ -1562,11 +1563,9 @@ int CreateUDPContext(SocketContext *context, char *destination, int port, int re
     }
 }
 
-// send JSON post to query the database, authenticate the user and return the VM
-// IP
-bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
-    // environment variables
-    SOCKET Socket;  // socket to send/receive POST request
+bool send_http_request(char *type, char *host_s, char *message, char **response_body,
+                       size_t max_response_size) {
+    SOCKET Socket;  // socket to send/receive request
     struct hostent *host;
     struct sockaddr_in webserver_socketAddress;  // address of the web server socket
 
@@ -1574,11 +1573,9 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
     if ((Socket = socketp_tcp()) < 0) {
         return -1;
     }
-
-    set_timeout(Socket, 250);
+    set_timeout(Socket, 1000);
 
     host = gethostbyname(host_s);
-
     if (host == NULL) {
         LOG_ERROR("Error %d: Could not resolve host %s", h_errno, host_s);
         return false;
@@ -1589,7 +1586,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
     webserver_socketAddress.sin_port = htons(80);  // HTTP port
     webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
 
-    // connect to the web server before sending the POST request packet
+    // connect to the web server before sending the request packet
     int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
                                  sizeof(webserver_socketAddress));
     if (connect_status < 0) {
@@ -1597,117 +1594,111 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
         return false;
     }
 
-    // now that we're connected, we can send the POST request to authenticate
-    // the user first, we create the POST request message
+    LOG_INFO("Sending request: %s", message);
 
+    // now we send it
+    int total_sent = 0;
+    int sent_n;
+    int msg_len = ((int)strlen(message));
+    do {
+        sent_n = send(Socket, message + total_sent, msg_len - total_sent, 0);
+        if (sent_n < 0) {
+            // error sending, terminate
+            LOG_WARNING("Sending %s message failed.", type);
+            return false;
+        } else if (sent_n == 0) {
+            break;
+        } else {
+            total_sent += sent_n;
+        }
+    } while (total_sent < msg_len);
+
+    // now that it's sent, let's get the reply (if applicable)
+    if ((!response_body) || (max_response_size == 0)) {
+        // don't care about the reply, so we might as well not make the system
+        // call to get the data
+        FRACTAL_SHUTDOWN_SOCKET(Socket);
+    } else {
+        char *response = malloc(max_response_size);
+        size_t total_read = 0;
+        int read_n;
+        do {
+            read_n =
+                recv(Socket, response + total_read, (int)(max_response_size - total_read - 1), 0);
+            if (read_n < 0) {
+                LOG_ERROR("Response to %s request failed! %d %d", type, read_n,
+                          GetLastNetworkError());
+                *response_body = NULL;
+                return false;
+            } else if (read_n == 0) {
+                break;
+            } else {
+                total_read += read_n;
+            }
+        } while (total_read < max_response_size - 1);
+
+        response[total_read] = '\0';
+
+        // Figure out where response body starts (i.e. after the string "\r\n\r\n")
+        char *body_to_be_copied = NULL;
+        for (size_t i = 0; i < total_read - 3; ++i) {
+            if (memcmp(response + i, "\r\n\r\n", 4) == 0) {
+                body_to_be_copied = response + i + 4;
+            }
+        }
+        if (!body_to_be_copied) {
+            LOG_ERROR("Could not find end of HTTP headers!");
+            *response_body = NULL;
+            return false;
+        }
+
+        *response_body = clone(body_to_be_copied);
+        free(response);
+    }
+
+    FRACTAL_CLOSE_SOCKET(Socket);
+    return true;
+}
+
+bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token,
+                     char **response_body, size_t max_response_size) {
+    // prepare the message
     char access_token_header[1000];
     if (access_token) {
         snprintf(access_token_header, sizeof(access_token_header), "Authorization: Bearer %s\r\n",
                  access_token);
+    } else {
+        access_token_header[0] = '\0';
     }
 
-    int json_len = (int)strlen(jsonObj);
-    char *message = malloc(5000 + json_len);
-    snprintf(message, 5000 + json_len,
+    int payload_len = (int)strlen(payload);
+    char *message = malloc(5000 + payload_len);
+    snprintf(message, 5000 + payload_len,
              "POST %s HTTP/1.0\r\n"
              "Host: %s\r\n"
              "Content-Type: application/json\r\n"
              "Content-Length: %d\r\n"
-             "%s"
+             "%s"  // Potentially an Authorization: Bearer, but potentially an empty string
              "\r\n"
-             "%s\r\n",
-             path, host_s, json_len, access_token ? access_token_header : "", jsonObj);
+             "%s"
+             "\r\n",
+             path, host_s, payload_len, access_token_header, payload);
 
-    LOG_INFO("POST Request: %s", message);
-
-    // now we send it
-    if (send(Socket, message, (int)strlen(message), 0) < 0) {
-        // error sending, terminate
-        LOG_WARNING("Sending POST message failed.");
-        free(message);
-        return false;
-    }
-
+    // send the message
+    bool worked = send_http_request("POST", host_s, message, response_body, max_response_size);
     free(message);
-
-    // now that it's sent, let's get the reply
-    char buffer[4096];                              // buffer to store the reply
-    int len;                                        // counters
-    len = recv(Socket, buffer, sizeof(buffer), 0);  // get the reply
-
-    // get the parsed credentials
-    for (int i = 0; i < len; i++) {
-        if (buffer[i] == '\r') {
-            buffer[i] = '\0';
-        }
-    }
-    LOG_INFO("POST Request Webserver Response: %s\n", buffer);
-
-    FRACTAL_CLOSE_SOCKET(Socket);
-    // return the user credentials if correct authentication, else empty
-    return true;
+    return worked;
 }
 
-// send JSON get to query the database for VM details
-bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size) {
-    // environment variables
-    SOCKET Socket;  // socket to send/receive POST request
-    struct hostent *host;
-    struct sockaddr_in webserver_socketAddress;  // address of the web server socket
-
-    // Creating our TCP socket to connect to the web server
-    if ((Socket = socketp_tcp()) < 0) {
-        return -1;
-    }
-
-    set_timeout(Socket, 250);
-
-    host = gethostbyname(host_s);
-    if (host == NULL) {
-        LOG_ERROR("Error %d: Could not resolve host %s", h_errno, host_s);
-        return false;
-    }
-
-    // create the struct for the webserver address socket we will query
-    webserver_socketAddress.sin_family = AF_INET;
-    webserver_socketAddress.sin_port = htons(80);  // HTTP port
-    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
-
-    // connect to the web server before sending the POST request packet
-    int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
-                                 sizeof(webserver_socketAddress));
-    if (connect_status < 0) {
-        LOG_WARNING("Could not connect to the webserver.");
-        return false;
-    }
-
-    // now that we're connected, we can send the POST request to authenticate
-    // the user first, we create the POST request message
-    char *message = malloc(250);
+bool SendGetRequest(char *host_s, char *path, char **response_body, size_t max_response_size) {
+    // prepare the message
+    char *message = malloc(100 + strlen(path) + strlen(host_s));
     sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
-    LOG_INFO("%s", message);
-    // now we send it
-    if (send(Socket, message, (int)strlen(message), 0) < 0) {
-        // error sending, terminate
-        LOG_WARNING("Sending GET message failed.");
-        free(message);
-        return false;
-    }
 
+    // send the message
+    bool worked = send_http_request("GET", host_s, message, response_body, max_response_size);
     free(message);
-
-    // now that it's sent, let's get the reply
-    int len = recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
-    if (len < 0) {
-        LOG_WARNING("Response to JSON GET failed! %d %d", len, GetLastNetworkError());
-        json_res[0] = '\0';
-    } else {
-        json_res[len] = '\0';
-        LOG_INFO("JSON GET Response: %s", json_res);
-    }
-
-    FRACTAL_CLOSE_SOCKET(Socket);
-    return true;
+    return worked;
 }
 
 void set_timeout(SOCKET s, int timeout_ms) {

@@ -22,7 +22,7 @@ TODO
 #include "desktop_utils.h"
 #include "network.h"
 #include "../fractal/utils/logging.h"
-#include "fractalgetopt.h"
+#include "../fractal/core/fractalgetopt.h"
 
 extern volatile char aes_private_key[16];
 extern volatile char *server_ip;
@@ -44,10 +44,6 @@ extern volatile SDL_Window *window;
 
 extern unsigned short port_mappings[USHRT_MAX];
 
-// standard for POSIX programs
-#define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
-#define FRACTAL_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
-
 const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"height", required_argument, NULL, 'h'},
                                      {"bitrate", required_argument, NULL, 'b'},
@@ -65,10 +61,11 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
 
-#define OPTION_STRING "w:h:b:c:p:ku:e:z:n:"
+// Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
+#define OPTION_STRING "w:h:b:c:k:u:e:z:p:xn:"
 
 int parseArgs(int argc, char *argv[]) {
-    // todo: replace `desktop` with argv[0]
+    // TODO: replace `desktop` with argv[0]
     const char *usage =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "Try 'desktop --help' for more information.\n";
@@ -76,27 +73,30 @@ int parseArgs(int argc, char *argv[]) {
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
-        "  -w, --width=WIDTH             set the width for the windowed-mode\n"
+        "  -w, --width=WIDTH             Set the width for the windowed-mode\n"
         "                                  window, if both width and height\n"
         "                                  are specified\n"
-        "  -h, --height=HEIGHT           set the height for the windowed-mode\n"
+        "  -h, --height=HEIGHT           Set the height for the windowed-mode\n"
         "                                  window, if both width and height\n"
         "                                  are specified\n"
-        "  -b, --bitrate=BITRATE         set the maximum bitrate to use\n"
-        "  -c, --codec=CODEC             launch the protocol using the codec\n"
+        "  -b, --bitrate=BITRATE         Set the maximum bitrate to use\n"
+        "  -c, --codec=CODEC             Launch the protocol using the codec\n"
         "                                  specified: h264 (default) or h265\n"
-        "  -k, --private-key=PK          pass in the RSA Private Key as a "
+        "  -k, --private-key=PK          Pass in the RSA Private Key as a \n"
         "                                  hexadecimal string\n"
-        "  -u, --user=EMAIL              Tell fractal the users email. Optional defaults to None"
+        "  -u, --user=EMAIL              Tell fractal the users email. Optional, \n"
+        "                                  defaults to None\n"
         "  -e, --environment=ENV         The environment the protocol is running \n"
-        "                                 in. e.g master, staging, dev. Optional defaults to dev"
-        "  -p, --ports=PORTS             Pass in custom port:port mappings, comma-separated\n"
-        "  -x, --use_ci                  launch the protocol in CI mode\n"
-        "  -z, --connection_method=CM    which connection method to try first,\n"
+        "                                  in. e.g master, staging, dev. Optional,\n"
+        "                                  defaults to dev\n"
+        "  -p, --ports=PORTS             Pass in custom port:port mappings, comma-separated.\n"
+        "                                  Defaults to the identity mapping..\n"
+        "  -x, --use_ci                  Launch the protocol in CI mode\n"
+        "  -z, --connection_method=CM    Which connection method to try first,\n"
         "                                  either STUN or DIRECT\n"
         "  -n, --name=NAME               Set the window title (default: Fractal)\n"
-        "      --help     display this help and exit\n"
-        "      --version  output version information and exit\n";
+        "      --help                    Display this help and exit\n"
+        "      --version                 Output version information and exit\n";
 
     memcpy((char *)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
     // default sentry environment
@@ -385,28 +385,16 @@ int configureCache(void) {
     return 0;
 }
 
-int sendTimeToServer(void) {
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_TIME;
-    if (GetTimeData(&(fmsg.time_data)) != 0) {
+int prepareInitToServer(FractalDiscoveryRequestMessage *fmsg, char *email) {
+    // Copy email
+    strcpy(fmsg->user_email, email);
+    // Copy time
+    if (GetTimeData(&(fmsg->time_data)) != 0) {
         LOG_ERROR("Failed to get time data.");
         return -1;
     }
-    SendFmsg(&fmsg);
 
     return 0;
-}
-
-int sendEmailToServer(char *email) {
-    struct FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_USER_EMAIL;
-    strcpy(fmsg.user_email, email);
-
-    if (SendFmsg(&fmsg) != 0) {
-        return -1;
-    } else {
-        return 0;
-    }
 }
 
 int updateMouseMotion() {
