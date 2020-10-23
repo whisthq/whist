@@ -11,9 +11,8 @@ from .factory import create_app, jwtManager, ma, mail
 
 
 def make_celery(app_name=__name__):
-    broker = os.getenv("REDIS_URL")
-    backend = os.getenv("REDIS_URL")
-    return Celery(app_name, broker=broker, backend=backend)
+    redis = os.environ.get("REDIS_URL", "redis://")
+    return Celery(app_name, broker=redis, backend=redis)
 
 
 def fractalPreProcess(f):

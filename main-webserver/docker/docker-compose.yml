@@ -35,6 +35,7 @@ services:
     << : *base-app
     command: celery
     environment:
+      - REDIS_URL=redis://redis
       - AWS_SHARED_CREDENTIALS_FILE=/.aws/credentials
     volumes:
       - ..:/app

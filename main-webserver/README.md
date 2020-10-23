@@ -34,7 +34,7 @@ python retrieve_config.py staging
 py retrieve_config.py staging
 ```
 
-You can review `dev-base-config.json` to see which values will be overriden for local development. For example, the `REDIS_URL` will be changed to use the local Docker version.
+You can review `dev-base-config.json` to see which values will be overriden for local development. Currently, none are listed.
 
 **2. Spin Up Local Servers**
 

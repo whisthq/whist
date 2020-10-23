@@ -58,12 +58,15 @@ env_config = json.loads(heroku_proc.stdout.decode("utf-8"))
 # ag "getenv\(.+?\)" --only-matching --nogroup --nofilename | sort | uniq
 # ```
 
+# REDIS_URL was removed from the list of variables of interest because it is
+# not necessary to set REDIS_URL unless Redis is running anywhere other than
+# localhost:6379 -O 10/23/2020
+
 useful_env_vars = [
     "CONFIG_DB_URL",
     "DASHBOARD_PASSWORD",
     "DASHBOARD_USERNAME",
     "PROD_DB_URL",
-    "REDIS_URL",
     "STAGING_DB_URL",
     "USE_PRODUCTION_KEYS",
 ]
