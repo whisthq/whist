@@ -16,10 +16,9 @@ def forgotPasswordHelper(username):
                 "sub": username,
                 "exp": (dt.now() + timedelta(minutes=10)).replace(tzinfo=timezone.utc).timestamp(),
             },
-            os.getenv("SECRET_KEY"),
+            JWT_SECRET_KEY,
         )
         timeIssued = dt.now().strftime("%m-%d-%Y, %H:%M:%S")
-
         message = SendGridMail(
             from_email="noreply@tryfractal.com",
             to_emails=[username],
