@@ -90,6 +90,12 @@
             "target": [
                 "nsis"
             ]
+        },
+        "protocols": {
+            "name": "fractal-protocol",
+            "schemes": [
+                "fractal"
+            ]
         }
     },
     "contributors": [

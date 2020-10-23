@@ -48,7 +48,31 @@ const Login = (props: any) => {
 
     const setAWSRegion = () => {
         const { spawn } = require("child_process")
-        const regions = spawn("./awsping", ["-verbose", "1"]) // ping via TCP
+        const os = require("os")
+        var appRootDir = require("electron").remote.app.getAppPath()
+        var executable = ""
+        var path = ""
+        // const executable =
+        //     os.platform() === "win32" ? "awsping.exe" : "./awsping"
+        // console.log(executable)
+
+        if (os.platform() === "darwin") {
+            path = appRootDir + "/binaries"
+            path = path.replace("/app", "")
+            executable = "./awsping_osx"
+        } else if (os.platform() === "linux") {
+            path = process.cwd() + "/binaries"
+            path = path.replace("/release", "")
+            executable = "./awsping_osx"
+        } else if (os.platform() === "win32") {
+            path = process.cwd() + "\\binaries"
+            executable = "awsping_windows.exe"
+        } else {
+            console.log(`no suitable os found, instead got ${os.platform()}`)
+        }
+        console.log(`your executable path should be: ${path}`)
+
+        const regions = spawn(executable, ["-verbose", "1"], { cwd: path }) // ping via TCP
         regions.stdout.setEncoding("utf8")
 
         regions.stdout.on("data", (data: any) => {
@@ -140,12 +164,12 @@ const Login = (props: any) => {
 
     const forgotPassword = () => {
         const { shell } = require("electron")
-        shell.openExternal("https://www.fractalcomputers.com/reset")
+        shell.openExternal("https://www.tryfractal.com/reset")
     }
 
     const signUp = () => {
         const { shell } = require("electron")
-        shell.openExternal("https://www.fractalcomputers.com/auth")
+        shell.openExternal("https://www.tryfractal.com/auth")
     }
 
     const changeRememberMe = (event: any) => {
@@ -156,7 +180,14 @@ const Login = (props: any) => {
         const ipc = require("electron").ipcRenderer
         const storage = require("electron-json-storage")
 
+        console.log("starting listener")
+        ipc.on("customURL", (_: any, customURL: any) => {
+            console.log(customURL)
+        })
+
         ipc.on("update", (_: any, update: any) => {
+            console.log("update received")
+            console.log(update)
             setUpdatePingReceived(true)
             setNeedsAutoupdate(update)
         })

@@ -3,7 +3,7 @@ import { Row, Carousel } from "react-bootstrap"
 import { connect } from "react-redux"
 import { useQuery } from "@apollo/client"
 
-import { GET_BANNERS } from "pages/constants/graphql"
+import { GET_BANNERS } from "shared/constants/graphql"
 
 import styles from "styles/dashboard.css"
 

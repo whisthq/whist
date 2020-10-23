@@ -93,10 +93,17 @@ const createWindow = async () => {
         })
     }
     mainWindow.loadURL(`file://${__dirname}/app.html`)
+    mainWindow.webContents.openDevTools()
 
     // @TODO: Use 'ready-to-show' event
     //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
     mainWindow.webContents.on("did-frame-finish-load", () => {
+        if (os.platform() === "win32") {
+            // Keep only command line / deep linked arguments
+
+            const url = process.argv.slice(1)
+            mainWindow.webContents.send("customURL", url.toString())
+        }
         if (
             process.env.NODE_ENV === "development" ||
             process.env.DEBUG_PROD === "true"
@@ -139,10 +146,19 @@ app.on("window-all-closed", () => {
 })
 
 app.on("ready", createWindow)
+
 app.on("activate", () => {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (mainWindow === null) createWindow()
+})
+
+app.setAsDefaultProtocolClient("fractal")
+
+// Set up launch from browser with fractal:// protocol
+app.on("open-url", function (event, data) {
+    event.preventDefault()
+    mainWindow.webContents.send("customURL", data.toString())
 })
 
 autoUpdater.autoDownload = false

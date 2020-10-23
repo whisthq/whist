@@ -3,10 +3,10 @@ import { connect } from "react-redux"
 import styles from "styles/dashboard.css"
 import Titlebar from "react-electron-titlebar"
 
-import NavBar from "./components/navBar"
-import Discover from "./pages/discover"
-import Settings from "./pages/settings"
-import Support from "./pages/support"
+import NavBar from "pages/dashboard/components/navBar"
+import Discover from "pages/dashboard/views/discover"
+import Settings from "pages/dashboard/views/settings"
+import Support from "pages/dashboard/views/support"
 
 const Dashboard = (props: any) => {
     const { dispatch, username, os } = props
