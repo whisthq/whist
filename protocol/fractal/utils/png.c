@@ -103,12 +103,13 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
         data_size = scanlineBytes * h;
     }
 
-    // memcpy will face problems below if the calculated size does not match the actual
+    // memcpy will face UB problems below if the calculated size does not match the actual
     // BMP byte array size
     if (size < data_size + pixeloffset) {
         LOG_WARNING("Actual size does not match given data_size and pixeloffset (%d < %d + %d)", size, data_size, pixeloffset);
         return -1;
     }
+    // Require that data_size is uncompressed raw data
     if (scanlineBytes * h != data_size) {
         LOG_WARNING("BMP size <> BMP header mismatch %d * %d != %d", scanlineBytes, h, data_size);
         return -1;
