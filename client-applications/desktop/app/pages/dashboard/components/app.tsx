@@ -15,9 +15,9 @@ const App = (props: any) => {
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
 
-    const handleLinkClick = () => {
+    const handleLinkClick = (url: string) => {
         const { shell } = require("electron")
-        shell.openExternal(app.url)
+        shell.openExternal(url)
     }
 
     const handleLaunch = () => {
@@ -32,8 +32,16 @@ const App = (props: any) => {
                     <div className={styles.appName}>{app.app_id}</div>
                 </div>
                 <div className={styles.appDescription}>{app.description}</div>
+                <button className={styles.launchButton} onClick={handleLaunch}>
+                    LAUNCH
+                </button>
             </div>
-            <Modal show={showModal} onHide={handleCloseModal} size="lg">
+            <Modal
+                show={showModal}
+                onHide={handleCloseModal}
+                size="lg"
+                style={{ marginTop: 100 }}
+            >
                 <Modal.Header
                     closeButton
                     style={{ border: "none", padding: "20px 40px 0 0" }}
@@ -68,7 +76,7 @@ const App = (props: any) => {
                                 </div>
                                 <span
                                     className={styles.appLink}
-                                    onClick={handleLinkClick}
+                                    onClick={() => handleLinkClick(app.url)}
                                 >
                                     {app.url}
                                 </span>
@@ -83,6 +91,16 @@ const App = (props: any) => {
                         }}
                     >
                         {app.long_description}
+                    </div>
+                    <div className={styles.tos}>
+                        Note: By using this app through Fractal, you are
+                        agreeing to their{" "}
+                        <span
+                            className={styles.tosLink}
+                            onClick={() => handleLinkClick(app.tos)}
+                        >
+                            terms of service.
+                        </span>
                     </div>
                     <button
                         className={styles.modalButton}

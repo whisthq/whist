@@ -296,7 +296,6 @@ input.inputBox::placeholder {
 .loadingBar {
     height: 6px;
     background: #93f1d9;
-    border-radius: 5px;
 }
 
 .bounce {

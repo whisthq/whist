@@ -13,9 +13,20 @@
 }
 
 @font-face {
-    font-family: "Maven Pro Bold";
+    font-family: "Maven Pro Medium";
     src: url("assets/fonts/MavenPro-Medium.ttf");
-    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Maven Pro SemiBold";
+    src: url("assets/fonts/MavenPro-SemiBold.ttf");
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Maven Pro Bold";
+    src: url("assets/fonts/MavenPro-Bold.ttf");
     font-style: normal;
 }
 

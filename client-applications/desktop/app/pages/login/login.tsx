@@ -25,7 +25,7 @@ import { config } from "shared/constants/config"
 // import "styles/login.css";
 
 const Login = (props: any) => {
-    const { dispatch, os, warning } = props
+    const { dispatch, os, loginWarning } = props
 
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
@@ -267,7 +267,7 @@ const Login = (props: any) => {
                             </button>
                         </div>
                     </div>
-                    <div style={{ marginTop: warning ? 0 : 50 }}>
+                    <div style={{ marginTop: loginWarning ? 0 : 50 }}>
                         <div className={styles.loginContainer}>
                             <BackgroundView />
                             <div className={styles.welcomeBack}>
@@ -322,7 +322,7 @@ const Login = (props: any) => {
                                 />
                             </div>
                             <div style={{ marginBottom: 20 }}>
-                                {loggingIn && !warning ? (
+                                {loggingIn && !loginWarning ? (
                                     <button
                                         type="button"
                                         className={styles.processingButton}
@@ -356,7 +356,7 @@ const Login = (props: any) => {
                                     </button>
                                 )}
                                 <div style={{ marginBottom: 20 }}>
-                                    {loggingIn && !warning ? (
+                                    {loggingIn && !loginWarning ? (
                                         <button
                                             type="button"
                                             className={styles.googleButton}
@@ -399,7 +399,7 @@ const Login = (props: any) => {
                                     )}
                                 </div>
                             </div>
-                            {warning && (
+                            {loginWarning && (
                                 <div
                                     style={{
                                         textAlign: "center",

@@ -39,6 +39,7 @@ function* loginUser(action: any) {
                     accessToken: json.access_token,
                     refreshToken: json.refresh_token,
                     username: action.username,
+                    name: json.name,
                 })
             )
             yield call(fetchPaymentInfo, action)
@@ -67,6 +68,7 @@ function* googleLogin(action: any) {
                         accessToken: json.access_token,
                         refreshToken: json.refresh_token,
                         username: json.username,
+                        name: json.name,
                     })
                 )
                 yield call(fetchPaymentInfo, { username: json.username })
@@ -158,16 +160,22 @@ function* fetchContainer(action: any) {
 
         if (json && json.state === "PENDING" && json.output) {
             // NOTE: actual container/create endpoint does not currently return progress
-            var message = json.output.msg
+            // var message = json.output.msg
             // var percent = json.output.progress
-            if (message) {
-                yield put(
-                    Action.updateLoading({
-                        percentLoaded: 50,
-                        statusMessage: message,
-                    })
-                )
-            }
+            // if (message) {
+            //     yield put(
+            //         Action.updateLoading({
+            //             percentLoaded: 50,
+            //             statusMessage: message,
+            //         })
+            //     )
+            // }
+            yield put(
+                Action.updateLoading({
+                    percentLoaded: 50,
+                    statusMessage: "Preparing your app",
+                })
+            )
         }
 
         yield delay(5000)
