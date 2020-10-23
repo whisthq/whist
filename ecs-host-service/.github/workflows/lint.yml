@@ -22,8 +22,8 @@ jobs:
     - name: Check if code is linted with Gofmt
       run: |
         result=$(gofmt -l *.go fractallogger/*.go fractalwebserver/*.go) # gofmt -l returns nothing if all files are formatted, else returns files that need formatting
-        if [ "$result" -z ]; then
-            (echo "Code is linted with Gofmt" && true)
+        if [ "$result" -ne "0" ]; then        
+          (echo "To pass this check please lint the code with Gofmt" && false)
         else
-            (echo "To pass this check please lint the code with Gofmt" && false)
+          (echo "Code is linted with Gofmt" && true)
         fi
