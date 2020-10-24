@@ -28,6 +28,11 @@ jobs:
       - name: Format with Prettier in /desktop
         run: cd desktop && yarn format
   
-      - name: Check if files need linting
-        run: |
-          git diff-index --quiet HEAD || (echo "To pass this check please lint the code with Prettier" && false)
+      - name: Check if code is linted with Prettier
+      run: |
+        result=$(prettier --check .) # --check returns list of files that need formatting, if any          
+        if [ "$result" -ne "0" ]; then        
+          (echo "To pass this check please lint the code with Prettier" && false)
+        else
+          (echo "Code is linted with Prettier" && true)
+        fi
