@@ -29,10 +29,10 @@ jobs:
         run: cd desktop && yarn format
   
       - name: Check if code is linted with Prettier
-      run: |
-        result=$(prettier --check .) # --check returns list of files that need formatting, if any          
-        if [ "$result" -ne "0" ]; then        
-          (echo "To pass this check please lint the code with Prettier" && false)
-        else
-          (echo "Code is linted with Prettier" && true)
-        fi
+        run: |
+          result=$(prettier --check .) # --check returns list of files that need formatting, if any          
+          if [ "$result" -ne "0" ]; then        
+            (echo "To pass this check please lint the code with Prettier" && false)
+          else
+            (echo "Code is linted with Prettier" && true)
+          fi
