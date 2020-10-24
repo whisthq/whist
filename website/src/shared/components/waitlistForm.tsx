@@ -18,6 +18,7 @@ import * as PureWaitlistAction from "store/actions/waitlist/pure"
 import * as SharedAction from "store/actions/shared"
 import { deep_copy } from "shared/utils/reducerHelpers"
 import { SECRET_POINTS } from "shared/utils/points"
+import { db } from "shared/utils/firebase"
 
 import "styles/landing.css"
 
@@ -88,7 +89,8 @@ function WaitlistForm(props: any) {
         var newReferralCode = nanoid(8)
 
         if (!currentUser) {
-            var referrer = getReferrer()
+            const secretPoints = deep_copy(SECRET_POINTS)
+            const referrer = getReferrer()
 
             if (referrer) {
                 updatePoints({
@@ -106,7 +108,7 @@ function WaitlistForm(props: any) {
                 PureWaitlistAction.updateWaitlistUser({
                     points: newPoints,
                     referralCode: newReferralCode,
-                    eastereggsAvailable: deep_copy(SECRET_POINTS),
+                    eastereggsAvailable: secretPoints,
                 })
             )
             dispatch(
@@ -125,8 +127,21 @@ function WaitlistForm(props: any) {
                 },
             })
 
+            db.collection("eastereggs").doc(email).set({
+                available: secretPoints,
+            })
+
             setProcessing(false)
         } else {
+            // get the easter eggs state so we can set local if you re-log in
+            const eastereggsDocument = await db
+                .collection("eastereggs")
+                .doc(email)
+                .get()
+            const data = eastereggsDocument.data()
+
+            const secretPoints = data ? data.available : {}
+
             dispatch(
                 PureAuthAction.updateUser({
                     user_id: email,
@@ -137,6 +152,7 @@ function WaitlistForm(props: any) {
                 PureWaitlistAction.updateWaitlistUser({
                     points: currentUser.points,
                     referralCode: currentUser.referralCode,
+                    eastereggsAvailable: secretPoints,
                 })
             )
 

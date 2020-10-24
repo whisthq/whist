@@ -4,9 +4,9 @@ import { connect } from "react-redux"
 
 import "styles/shared.css"
 
-import { deep_copy } from "shared/utils/reducerHelpers"
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
 import { updateWaitlistUser } from "store/actions/waitlist/pure"
+import { db } from "shared/utils/firebase"
 
 /*
 secret points is a one-time use button that will give the user points if they click it, but it's supposed to be
@@ -47,28 +47,46 @@ function SecretPoints(props: {
     })
 
     async function handleClick() {
-        const newEastereggs = deep_copy(
-            waitlistUser.eastereggsAvailable
-                ? waitlistUser.eastereggsAvailable
-                : {}
-        )
-        newEastereggs[name] = undefined
+        // get the real status from the firebase database
+        const newEastereggsDocument = await db
+            .collection("eastereggs")
+            .doc(user.user_id)
+            .get()
+        const data = newEastereggsDocument.data()
 
-        dispatch(
-            updateWaitlistUser({
-                eastereggsAvailable: newEastereggs,
+        // remove the easteregg just clicked as long as the firebase is updated early enough
+        // if the firebase is not yet updatedthen just don't do it
+        // basically we don't want to do anything until we actually have them in the db since it will error out
+        // the tradeoff is that the buttons don't work for the first couple seconds hopefully at worst
+        if (data && data.available) {
+            const newEastereggs = data.available
+            const getPoints = name in newEastereggs
+            delete newEastereggs[name] // pasing undefined not allowed
+
+            // update the local state which is used to decide which buttons to display
+            dispatch(
+                updateWaitlistUser({
+                    eastereggsAvailable: newEastereggs,
+                })
+            )
+
+            // update remote state which tells us what the "truth" really is
+            db.collection("eastereggs").doc(user.user_id).set({
+                available: newEastereggs,
             })
-        )
 
-        // rank is updated in the waitlist, local waitlist is subscribed so recieves update
-        // this updates local user values
-        updatePoints({
-            variables: {
-                user_id: user.user_id,
-                points: waitlistUser.points + points,
-            },
-            optimisticResponse: true,
-        })
+            // rank is updated in the waitlist, local waitlist is subscribed so recieves update
+            // this updates local user values
+            if (getPoints) {
+                updatePoints({
+                    variables: {
+                        user_id: user.user_id,
+                        points: waitlistUser.points + points,
+                    },
+                    optimisticResponse: true,
+                })
+            }
+        }
     }
 
     return name &&
