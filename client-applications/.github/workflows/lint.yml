@@ -7,7 +7,7 @@ on:
     branches: [ master, dev, eric/debugLogging ]
 
 jobs:
-  yarn-lint:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
