@@ -30,7 +30,7 @@ jobs:
   
       - name: Check if code is linted with Prettier
         run: |
-          result=$(yarn format-check) # checks if code is linted via prettier --check          
+          result=$(cd desktop && yarn format-check) # checks if code is linted via prettier --check          
           if [ "$result" -ne "0" ]; then        
             (echo "To pass this check please lint the code with Prettier" && false)
           else
