@@ -1,4 +1,4 @@
-import { debugLog } from './logging.js'
+import { debugLog } from "./logging.js"
 
 export async function apiPost(endpoint, body, token) {
     try {

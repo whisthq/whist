@@ -2,7 +2,7 @@ import fs from "fs"
 import chalk from "chalk"
 import { execSync } from "child_process"
 import { dependencies } from "../../package.json"
-import { debugLog } from '../../utils/logging.js'
+import { debugLog } from "../../utils/logging.js"
 
 if (dependencies) {
     const dependenciesKeys = Object.keys(dependencies)

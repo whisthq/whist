@@ -12,7 +12,7 @@ import chalk from "chalk"
 import merge from "webpack-merge"
 import { spawn, execSync } from "child_process"
 import { TypedCssModulesPlugin } from "typed-css-modules-webpack-plugin"
-import { debugLog } from '../utils/logging.js'
+import { debugLog } from "../utils/logging.js"
 import baseConfig from "./webpack.config.base"
 import CheckNodeEnv from "../internals/scripts/CheckNodeEnv"
 import dotenv from "dotenv"

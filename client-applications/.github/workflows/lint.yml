@@ -25,9 +25,6 @@ jobs:
       - name: Run yarn -i in /desktop
         run: cd desktop && yarn -i
 
-      - name: Install Prettier in /desktop
-        run: cd desktop && yarn add prettier
-
       - name: Format with Prettier in /desktop
         run: cd desktop && yarn format
   
