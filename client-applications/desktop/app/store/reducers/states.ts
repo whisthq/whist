@@ -4,6 +4,7 @@ export const DEFAULT = {
         accessToken: null,
         refreshToken: null,
         loginWarning: false,
+        name: null,
     },
     container: {
         publicIP: null,
@@ -23,7 +24,7 @@ export const DEFAULT = {
         promoCode: null,
     },
     loading: {
-        statusMessage: "Boot request sent to server",
+        statusMessage: "Powering up your app",
         percentLoaded: 0,
     },
 }

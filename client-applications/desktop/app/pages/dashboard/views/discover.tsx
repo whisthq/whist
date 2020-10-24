@@ -13,8 +13,21 @@ import Banner from "../components/banner"
 import App from "../components/app"
 
 const Discover = (props: any) => {
+    const { updateCurrentTab } = props
+
+    const [search, setSearch] = useState("")
+    const [searchResults, setSearchResults] = useState([])
+
+    const updateSearch = (evt: any) => {
+        setSearch(evt.target.value)
+    }
+
     const checkActive = (app: any) => {
         return app.active
+    }
+
+    const getSearchResults = (app: any) => {
+        return app.app_id.toLowerCase().startsWith(search.toLowerCase())
     }
 
     const { data, error } = useQuery(GET_FEATURED_APPS)
@@ -25,6 +38,14 @@ const Discover = (props: any) => {
     useEffect(() => {
         console.log(error)
     }, [error])
+
+    useEffect(() => {
+        const results = featuredAppData.filter(getSearchResults)
+        console.log(results)
+        setSearchResults(
+            results.map((app: any) => <App key={app.app_id} app={app} />)
+        )
+    }, [search])
 
     let featuredApps = []
     for (var i = 0; i < featuredAppData.length; i += 3) {
@@ -71,31 +92,71 @@ const Discover = (props: any) => {
 
     return (
         <div style={{ flex: 1 }}>
-            <Banner />
-            <Row
-                style={{
-                    textAlign: "left",
-                    display: "flex",
-                    flexDirection: "row",
-                }}
-            >
-                <Carousel
-                    controls
-                    indicators={false}
-                    interval={null}
-                    wrap={false}
-                    nextIcon={nextArrow}
-                    prevIcon={prevArrow}
+            <input
+                value={search}
+                onChange={updateSearch}
+                placeholder="Search for an app"
+                className={styles.searchBar}
+            />
+            {search ? (
+                <Row
                     style={{
-                        width: "100%",
-                        position: "relative",
-                        top: "-30px",
-                        zIndex: 2,
+                        display: "flex",
+                        flexDirection: "row",
+                        margin: "50px",
                     }}
                 >
-                    {featuredApps}
-                </Carousel>
-            </Row>
+                    {searchResults.length > 0 ? (
+                        searchResults
+                    ) : (
+                        <div
+                            style={{
+                                margin: "auto",
+                                marginTop: "150px",
+                                width: "500px",
+                                textAlign: "center",
+                            }}
+                        >
+                            It looks like we don't support that app yet! If it's
+                            something you'd like to see, let us know through our{" "}
+                            <span
+                                className={styles.contactFormLink}
+                                onClick={() => updateCurrentTab("Support")}
+                            >
+                                contact form.
+                            </span>
+                        </div>
+                    )}
+                </Row>
+            ) : (
+                <>
+                    <Banner />
+                    <Row
+                        style={{
+                            textAlign: "left",
+                            display: "flex",
+                            flexDirection: "row",
+                        }}
+                    >
+                        <Carousel
+                            controls
+                            indicators={false}
+                            interval={null}
+                            wrap={false}
+                            nextIcon={nextArrow}
+                            prevIcon={prevArrow}
+                            style={{
+                                width: "100%",
+                                position: "relative",
+                                top: "-30px",
+                                zIndex: 2,
+                            }}
+                        >
+                            {featuredApps}
+                        </Carousel>
+                    </Row>
+                </>
+            )}
         </div>
     )
 }

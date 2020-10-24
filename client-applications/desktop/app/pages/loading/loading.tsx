@@ -122,11 +122,10 @@ const UpdateScreen = (props: any) => {
                 >
                     <div
                         style={{
-                            padding: "2px",
-                            borderRadius: "5px",
                             width: "500px",
                             margin: "auto",
-                            border: "solid 0.8px #555555",
+                            background: "#cccccc",
+                            height: "6px",
                         }}
                     >
                         <animated.div
@@ -144,18 +143,17 @@ const UpdateScreen = (props: any) => {
                         }}
                     >
                         <div style={{ color: "#555555" }}>
-                            {status != "Successfully created container." &&
-                                status != "Successfully deleted container." && (
-                                    <FontAwesomeIcon
-                                        icon={faCircleNotch}
-                                        spin
-                                        style={{
-                                            color: "#5EC4EB",
-                                            marginRight: 4,
-                                            width: 12,
-                                        }}
-                                    />
-                                )}{" "}
+                            {percentLoaded != 100 && (
+                                <FontAwesomeIcon
+                                    icon={faCircleNotch}
+                                    spin
+                                    style={{
+                                        color: "#5EC4EB",
+                                        marginRight: 4,
+                                        width: 12,
+                                    }}
+                                />
+                            )}{" "}
                             {status}
                         </div>
                     </div>

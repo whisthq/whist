@@ -1,5 +1,5 @@
-import React, { useState } from "react"
-import { Row } from "react-bootstrap"
+import React, { useState, useEffect } from "react"
+import { Row, Alert } from "react-bootstrap"
 import { connect } from "react-redux"
 import ToggleButton from "react-toggle-button"
 import Slider from "react-input-slider"
@@ -11,29 +11,45 @@ import Speedometer from "assets/images/speedometer.svg"
 const Settings = (props: any) => {
     const [lowInternetMode, setLowInternetMode] = useState(false)
     const [bandwidth, setBandwidth] = useState(500)
+    const [showSavedAlert, setShowSavedAlert] = useState(false)
+
+    useEffect(() => {
+        const storage = require("electron-json-storage")
+        storage.get("settings", (error: any, data: any) => {
+            if (error) throw error
+            if (data && data.lowInternetMode && data.bandwidth) {
+                setLowInternetMode(data.lowInternetMode)
+                setBandwidth(data.bandwidth)
+            }
+        })
+    }, [])
 
     const toggleLowInternetMode = (mode: boolean) => {
-        const storage = require("electron-json-storage")
         setLowInternetMode(!mode)
-        storage.set("settings", { lowInternetMode: !mode })
     }
 
     const changeBandwidth = (mbps: number) => {
-        const storage = require("electron-json-storage")
         setBandwidth(mbps)
-        mbps = mbps === 50 ? 500 : mbps
-        storage.set("settings", { bandwidth: mbps })
+    }
+
+    const handleSave = () => {
+        const storage = require("electron-json-storage")
+        const mbps = bandwidth === 50 ? 500 : bandwidth
+        storage.set("settings", {
+            lowInternetMode: lowInternetMode,
+            bandwidth: mbps,
+        })
+        setShowSavedAlert(true)
     }
 
     return (
         <div className={styles.page}>
-            <h2>Settings</h2>
+            <h2>App Settings </h2>
             <Row
                 style={{
-                    padding: "20px",
                     display: "flex",
                     flexDirection: "row",
-                    marginTop: "75px",
+                    marginTop: 50,
                 }}
             >
                 <div style={{ width: "75%" }}>
@@ -93,9 +109,10 @@ const Settings = (props: any) => {
             </Row>
             <Row
                 style={{
-                    padding: "20px",
                     display: "flex",
                     flexDirection: "row",
+                    marginTop: 50,
+                    marginBottom: 25,
                 }}
             >
                 <div style={{ width: "75%" }}>
@@ -182,6 +199,34 @@ const Settings = (props: any) => {
                             <div>Unlimited</div>
                         )}
                     </div>
+                </div>
+            </Row>
+            {showSavedAlert && (
+                <Row>
+                    <Alert
+                        variant="success"
+                        onClose={() => setShowSavedAlert(false)}
+                        dismissible
+                        style={{
+                            width: "100%",
+                            fontSize: 14,
+                            borderRadius: 0,
+                            border: "none",
+                            padding: 20,
+                            marginBottom: 0,
+                        }}
+                    >
+                        Your settings have been saved!
+                    </Alert>
+                </Row>
+            )}
+            <Row style={{ justifyContent: "flex-end" }}>
+                <div
+                    className={styles.feedbackButton}
+                    style={{ width: 110, marginTop: 25 }}
+                    onClick={handleSave}
+                >
+                    SAVE
                 </div>
             </Row>
         </div>

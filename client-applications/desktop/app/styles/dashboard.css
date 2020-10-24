@@ -9,14 +9,28 @@
     font-family: "Maven Pro";
     font-weight: bold;
     padding: 10px 25px;
-    width: max-content;
-    height: max-content;
-    border: none;
-    background: rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    box-shadow: 0px 1px 8px #dddddd;
+    background: rgba(255, 255, 255, 0.3);
     color: black;
-    font-size: 12px;
-    position: absolute;
-    right: 50px;
+    font-size: 11px;
+    z-index: 2;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.signoutButton:hover {
+    background: #93f1d9;
+    cursor: pointer;
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: row;
+}
+
+.userInfo:hover {
+    cursor: pointer;
 }
 
 .feedbackButton,
@@ -78,12 +92,25 @@
 }
 
 .selectedNavTitle {
-    font-weight: bold;
+    font-family: "Maven Pro SemiBold";
+    font-size: 17px;
+    color: #111111;
+    margin-left: 20px;
 }
 
 .navTitle:hover,
 .selectedNavTitle:hover {
     cursor: pointer;
+}
+
+.name {
+    font-family: "Maven Pro SemiBold";
+    font-size: 13px;
+}
+
+.email {
+    font-size: 11px;
+    color: #999999;
 }
 
 .macTitleBar {
@@ -97,7 +124,7 @@
 
 .page {
     flex: 1;
-    padding: 50px;
+    padding: 35px 125px;
 }
 
 .carouselRow {
@@ -127,16 +154,19 @@
     flex-direction: column;
     padding: 25px;
     z-index: 1;
-    background: rgba(0, 0, 0, 0.04);
-    margin: 10px;
-    transition: all 0.5s ease-in-out;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 5px;
+    box-shadow: 0px 1px 8px #dddddd;
+    margin: 5px;
+    transition: all 0.2s ease-in-out;
 }
 
 .appContainer:hover {
     cursor: pointer;
     transform: scale(1.05);
     z-index: 2;
-    box-shadow: 0px 1px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 1px 12px #cccccc;
+    background: white;
 }
 
 .appImage {
@@ -152,8 +182,8 @@
 }
 
 .appName {
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 19px;
+    font-family: "Maven Pro Medium";
     text-transform: uppercase;
     margin-left: 20px;
 }
@@ -163,20 +193,41 @@
     margin-top: 20px;
 }
 
+.appButtons {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    position: absolute;
+    bottom: 25px;
+    right: 25px;
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+}
+
 .launchButton {
-    font-size: 13px;
-    padding: 10px 20px;
-    width: 80%;
+    position: absolute;
+    bottom: 25px;
+    right: 25px;
+    font-size: 11px;
+    padding: 4px 10px;
+    width: 100px;
     color: #111111;
-    background: rgba(147, 241, 217, 0.25);
-    font-weight: bold;
+    border: solid 0.8px #cccccc;
+    outline: none;
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+}
+
+.appContainer:hover .launchButton {
+    opacity: 100;
 }
 
 .expandButton {
-    background: rgba(147, 241, 217, 0.25);
+    border: solid 0.8px #cccccc;
     border-left: none;
-    padding: 6px 10px 9px 10px;
-    width: 20%;
+    padding: 3px 7px 6px 7px;
+    width: 27px;
+    outline: none;
 }
 
 .expandButton:hover {
@@ -204,7 +255,20 @@
     margin-left: 30px;
 }
 
-.appLink:hover {
+.tos {
+    position: absolute;
+    left: 40px;
+    bottom: 40px;
+    font-size: 11px;
+    color: #999999;
+}
+
+.tosLink {
+    color: #5ec4eb;
+}
+
+.appLink:hover,
+.tosLink:hover {
     cursor: pointer;
 }
 
@@ -259,5 +323,52 @@
 }
 
 .bannerLink:hover {
+    cursor: pointer;
+}
+
+select {
+    background: #f2f6fb;
+    width: 100%;
+    border-radius: 0px;
+    border: none;
+    text-indent: 11px;
+    height: 58px;
+    outline: 3px solid #f2f6fb;
+    outline-offset: -3px;
+    color: black;
+}
+
+select:required:invalid {
+    color: #9eb1e6;
+}
+
+::placeholder {
+    color: #9eb1e6;
+}
+
+.searchBar {
+    width: 300px;
+    border-radius: 5px;
+    box-shadow: 0px 1px 8px #dddddd;
+    position: absolute;
+    top: 40px;
+    left: 370px;
+    z-index: 1;
+    outline: none;
+    border: none;
+    padding: 5px;
+    text-indent: 5px;
+    font-size: 12px;
+}
+
+.searchBar::placeholder {
+    color: #999999;
+}
+
+.contactFormLink {
+    color: #5ec4eb;
+}
+
+.contactFormLink:hover {
     cursor: pointer;
 }

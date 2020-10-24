@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import { useSpring, animated } from "react-spring"
+import { Collapse } from "react-bootstrap"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faUser } from "@fortawesome/free-solid-svg-icons"
 import { history } from "store/configureStore"
 import styles from "styles/dashboard.css"
 
@@ -25,11 +27,10 @@ const NavTitle = (props: {
 }
 
 const NavBar = (props: any) => {
-    const { dispatch, updateCurrentTab } = props
-    const [currentTab, setCurrentTab] = useState("Discover")
+    const { dispatch, updateCurrentTab, username, name, currentTab } = props
+    const [showProfile, setShowProfile] = useState(false)
 
     const updateTab = (tab: string) => {
-        setCurrentTab(tab)
         updateCurrentTab(tab)
     }
 
@@ -61,23 +62,47 @@ const NavBar = (props: any) => {
                 text="Support"
                 onClick={() => updateTab("Support")}
             />
-            <button
-                type="button"
-                onClick={handleSignout}
-                className={styles.signoutButton}
-                id="signout-button"
+            <div
                 style={{
-                    textAlign: "center",
+                    position: "absolute",
+                    right: "50px",
+                    top: "15px",
+                    height: "max-content",
                 }}
             >
-                SIGN OUT
-            </button>
+                <div
+                    className={styles.userInfo}
+                    onClick={() => setShowProfile(!showProfile)}
+                >
+                    <FontAwesomeIcon
+                        icon={faUser}
+                        style={{
+                            color: "#555555",
+                            fontSize: 35,
+                            padding: 6,
+                            marginRight: 4,
+                        }}
+                    />
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span className={styles.name}>{name}</span>
+                        <span className={styles.email}>{username}</span>
+                    </div>
+                </div>
+                <Collapse in={showProfile}>
+                    <div onClick={handleSignout}>
+                        <div className={styles.signoutButton}>SIGN OUT</div>
+                    </div>
+                </Collapse>
+            </div>
         </div>
     )
 }
 
 const mapStateToProps = (state: any) => {
-    return { username: state.MainReducer.auth.username }
+    return {
+        username: state.MainReducer.auth.username,
+        name: state.MainReducer.auth.name,
+    }
 }
 
 export default connect(mapStateToProps)(NavBar)

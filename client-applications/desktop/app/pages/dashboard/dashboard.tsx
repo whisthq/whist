@@ -25,8 +25,13 @@ const Dashboard = (props: any) => {
                 style={{ display: "flex", flexDirection: "column" }}
                 className={styles.removeDrag}
             >
-                <NavBar updateCurrentTab={setCurrentTab} />
-                {currentTab === "Discover" && <Discover />}
+                <NavBar
+                    updateCurrentTab={setCurrentTab}
+                    currentTab={currentTab}
+                />
+                {currentTab === "Discover" && (
+                    <Discover updateCurrentTab={setCurrentTab} />
+                )}
                 {currentTab === "Settings" && <Settings />}
                 {currentTab === "Support" && <Support />}
             </div>

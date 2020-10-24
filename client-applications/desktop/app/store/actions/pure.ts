@@ -11,6 +11,7 @@ export function updateAuth(body: {
     accessToken?: string
     refreshToken?: string
     loginWarning?: boolean
+    name?: string
 }) {
     return {
         type: UPDATE_AUTH,

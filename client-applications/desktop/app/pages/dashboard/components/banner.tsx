@@ -58,7 +58,7 @@ const Banner = (props: any) => {
         <>
             <Carousel
                 controls={false}
-                interval={10000}
+                interval={8000}
                 style={{ height: 335, zIndex: 1 }}
                 onSelect={handleSelect}
             >

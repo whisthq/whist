@@ -9,6 +9,7 @@ export const GET_FEATURED_APPS = gql`
             description
             long_description
             url
+            tos
             active
         }
     }
