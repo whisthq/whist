@@ -22,8 +22,8 @@ jobs:
         with:
           node-version: 12
 
-      - name: Run yarn . in /desktop
-        run: cd desktop && yarn .
+      - name: Run yarn -i in /desktop
+        run: cd desktop && yarn -i
 
       - name: Install Prettier in /desktop
         run: cd desktop && yarn add prettier
