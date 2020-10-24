@@ -22,17 +22,14 @@ jobs:
         with:
           node-version: 12
 
-      - name: Change directory to desktop application
-        run: cd desktop
+      - name: Run yarn . in /desktop
+        run: cd desktop && yarn .
 
-      - name: Run yarn .
-        run: yarn .
+      - name: Install Prettier in /desktop
+        run: cd desktop && yarn add prettier
 
-      - name: Install Prettier
-        run: yarn add prettier
-
-      - name: Format with Prettier
-        run: yarn format
+      - name: Format with Prettier in /desktop
+        run: cd desktop && yarn format
   
       - name: Check if files need linting
         run: |
