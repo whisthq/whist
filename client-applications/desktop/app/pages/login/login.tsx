@@ -7,7 +7,6 @@ import { parse } from "url"
 
 import UpdateScreen from "pages/dashboard/components/update"
 import BackgroundView from "pages/login/views/backgroundView"
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {
     faCircleNotch,
@@ -19,7 +18,7 @@ import { FaGoogle } from "react-icons/fa"
 
 import { updateClient } from "store/actions/pure"
 import { googleLogin, loginUser } from "store/actions/sideEffects"
-
+import { debugLog } from "shared/utils/logging"
 import { config } from "shared/constants/config"
 
 // import "styles/login.css";
@@ -77,23 +76,23 @@ const Login = (props: any) => {
         regions.stdout.setEncoding("utf8")
 
         regions.stdout.on("data", (data: any) => {
-            console.log("AWS DATA")
-            console.log(data)
+            debugLog("AWS DATA")
+            debugLog(data)
             // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
             const line = data.split(/\r?\n/)[1].replace(/  +/g, " ")
             const items = line.split(" ")
             // In case data is split and sent separately, only use closest AWS region which has index of 0
             if (items[1] == "0") {
                 const region = items[2]
-                console.log(region)
+                debugLog(region)
                 dispatch(updateClient({ region: region }))
             } else {
-                console.log("late packet")
+                debugLog("late packet")
             }
         })
 
         regions.on("close", () => {
-            console.log("child process exited")
+            debugLog("child process exited")
         })
     }
 
@@ -207,7 +206,7 @@ const Login = (props: any) => {
                     setPassword(data.password)
                     setLoggingIn(true)
                     setFetchedCredentials(true)
-                    console.log("set loggingin to true")
+                    debugLog("set loggingin to true")
                 }
             }
         })

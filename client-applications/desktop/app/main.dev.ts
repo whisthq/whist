@@ -30,6 +30,13 @@ if (
     require("electron-debug")()
 }
 
+const debugLog = (callback: any) => {
+    debugLog(process.env.NODE_ENV)
+    if (process.env.NODE_ENV === "development") {
+        debugLog(callback)
+    }
+}
+
 const installExtensions = async () => {
     const installer = require("electron-devtools-installer")
     const forceDownload = !!process.env.UPGRADE_EXTENSIONS
@@ -39,7 +46,7 @@ const installExtensions = async () => {
         extensions.map((name) =>
             installer.default(installer[name], forceDownload)
         )
-    ).catch(console.log)
+    ).catch(debugLog)
 }
 
 const createWindow = async () => {
