@@ -1,10 +1,10 @@
 # Workflow to lint an Electron app with Prettier
 
-name: Yarn Lint
+name: Linter
 
 on:
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, eric/debugLogging ]
 
 jobs:
   yarn-lint:
@@ -17,16 +17,22 @@ jobs:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
-      - name: Install Node.js, NPM and Yarn
+      - name: Install Node.js 12
         uses: actions/setup-node@v1
         with:
           node-version: 12
 
+      - name: Change directory to desktop application
+        run: cd desktop
+
+      - name: Run yarn .
+        run: yarn .
+
       - name: Install Prettier
-        run: yarn global add prettier
+        run: yarn add prettier
 
       - name: Format with Prettier
-        run: cd desktop && yarn format --write --ignore-file ../.prettierignore
+        run: yarn format
   
       - name: Check if files need linting
         run: |
