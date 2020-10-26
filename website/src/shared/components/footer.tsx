@@ -12,7 +12,11 @@ import {
 import "styles/shared.css"
 
 import SecretPoints from "shared/components/secretPoints"
-import { SECRET_POINTS, EASTEREGG_POINTS } from "shared/utils/points"
+import {
+    SECRET_POINTS,
+    EASTEREGG_POINTS,
+    EASTEREGG_RAND,
+} from "shared/utils/points"
 
 import MainContext from "shared/context/mainContext"
 
@@ -45,7 +49,7 @@ const Footer = (props: any) => {
                                 streaming them from the cloud.
                             </div>
                             <SecretPoints
-                                points={EASTEREGG_POINTS}
+                                points={EASTEREGG_POINTS + EASTEREGG_RAND()}
                                 name={SECRET_POINTS.FOOTER_SUPER_SECRET}
                                 style={{
                                     color: "rgb(204, 204, 204)",
