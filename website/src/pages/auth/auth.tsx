@@ -20,7 +20,11 @@ const Auth = (props: {
     }
     mode: any
 }) => {
-    const { user, mode } = props
+    const { user, waitlistUser, mode } = props
+
+    if (!waitlistUser.user_id) {
+        return <Redirect to="/" />
+    }
 
     if (user.user_id && user.user_id !== "") {
         if (user.emailVerified) {

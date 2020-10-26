@@ -19,3 +19,29 @@ export async function apiPost(endpoint: any, body: any, token: any) {
         return err
     }
 }
+
+export async function graphQLPost(operationsDoc: any, operationName: any, variables: any) {
+    try {
+        const response = await fetch(config.url.GRAPHQL_HTTP_URL, {
+            method: 'POST',
+            mode: "cors",
+            headers: {
+                "x-hasura-admin-secret": config.keys.HASURA_ACCESS_KEY,
+            },
+            body: JSON.stringify({
+                "query": stringifyGQL(operationsDoc),
+                "variables": variables,
+                "operationName": operationName,
+            }),
+        })
+        const json = await response.json()
+        return { json, response }
+    } catch(err) {
+        debugLog(err)
+        return err
+    }
+}
+
+export function stringifyGQL(doc: any) {
+    return doc.loc && doc.loc.source.body;
+}

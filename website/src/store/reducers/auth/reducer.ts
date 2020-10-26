@@ -18,6 +18,11 @@ export default function (state = DEFAULT, action: any) {
                 ...stateCopy,
                 authFlow: Object.assign(stateCopy.authFlow, action.body),
             }
+        case PureAction.RESET_USER:
+            return {
+                ...stateCopy,
+                user: DEFAULT.user
+            }
         case SharedAction.RESET_STATE:
             return DEFAULT
         case SharedAction.REFRESH_STATE:

@@ -1,10 +1,16 @@
 import { put, takeEvery, all, call, select } from "redux-saga/effects"
 
-import { apiPost } from "shared/utils/api"
+import { apiPost, graphQLPost } from "shared/utils/api"
 import history from "shared/utils/history"
 
 import * as AuthPureAction from "store/actions/auth/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
+import {
+    UPDATE_WAITLIST_AUTH_EMAIL,
+    UPDATE_WAITLIST,
+} from "shared/constants/graphql"
+import { SIGNUP_POINTS } from "shared/utils/points"
+
 
 function* emailLogin(action: any) {
     const { json } = yield call(
@@ -42,10 +48,10 @@ function* emailLogin(action: any) {
 
 // also used for signup
 function* googleLogin(action: any) {
-    yield select()
+    const state = yield select()
 
     if (action.code) {
-        const { json, response } = yield call(
+        var { json, response } = yield call(
             apiPost,
             "/google/login",
             {
@@ -71,6 +77,28 @@ function* googleLogin(action: any) {
                         signupWarning: "",
                     })
                 )
+
+                yield call(
+                    graphQLPost,
+                    UPDATE_WAITLIST_AUTH_EMAIL,
+                    "UpdateWaitlistAuthEmail",
+                    {
+                        "user_id": state.WaitlistReducer.waitlistUser.user_id,
+                        "authEmail": json.username,
+                    }
+                )
+
+                yield call(
+                    graphQLPost,
+                    UPDATE_WAITLIST,
+                    "UpdateWaitlist",
+                    {
+                        "user_id": state.WaitlistReducer.waitlistUser.user_id,
+                        "points": state.WaitlistReducer.waitlistUser.points + SIGNUP_POINTS,
+                        "referrals": state.WaitlistReducer.waitlistUser.referrals,
+                    },
+                )
+
             } else {
                 yield put(
                     AuthPureAction.updateAuthFlow({
