@@ -8,28 +8,28 @@ on:
 
 env:
     aws-placeholder-region: us-east-1
-    aws-regions:
-      - us-east-1
-      - us-east-2
-      - us-west-1
-      - us-west-2
-      - ca-central-1
-    apps:
-      - base
-      - browsers/chrome
-      - browsers/firefox
-      - browsers/brave
-      - productivity/slack
-      - productivity/discord
-      - productivity/notion
-      - creative/blender
-      - creative/blockbench
+    aws-regions: >
+        us-east-1
+        us-east-2
+        us-west-1
+        us-west-2
+        ca-central-1
+    apps: >
+        base
+        browsers/chrome
+        browsers/firefox
+        browsers/brave
+        productivity/slack
+        productivity/discord
+        productivity/notion
+        creative/blender
+        creative/blockbench
 
 jobs:
     ecr-push:
         name: Build and push to AWS ECR
         runs-on: ubuntu-20.04
-        
+
         steps:
             - name: Checkout Git repository
               uses: actions/checkout@v2
@@ -70,3 +70,10 @@ jobs:
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Container images builds pushed to production via Docker push to ECR.\", \"icon_emoji\": \":fractal:\"}" \
                   https://hooks.slack.com/services/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
+
+              # secrets.ECS_TASK_DEFINITIONS_RENDER_AND_DEPLOY_WORKFLOW_ID is the ID of that specific .yml file in ecs-task-definitions.
+              # It was retrieve via a Curl request and stored into GitHub secrets for this repository. See Notion -> Engineering Wiki for more details
+            - name: Trigger a ECS task definitions render and deployment
+              run: |
+                echo "Trigger render_and_deploy.yml on the main branch of ecs-task-definitions to update tags to our latest container images"
+                curl -X POST -H "Authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/fractalcomputers/ecs-task-definitions/actions/workflows/${{ secrets.ECS_TASK_DEFINITIONS_RENDER_AND_DEPLOY_WORKFLOW_ID }}/dispatches -d '{"ref": "main"}'
