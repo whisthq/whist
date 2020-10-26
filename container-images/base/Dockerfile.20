@@ -272,9 +272,6 @@ RUN ln -sf /usr/share/fractal/libavcodec.so /usr/local/lib/libavcodec-fractal.so
     rm -rf shared-libs.tar.gz \
     rm -rf share
 
-# Download Fractal Auto-update Script
-RUN ls -al /usr/share/fractal
-RUN sudo wget -qO /usr/share/fractal/update.sh "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Linux/update.sh"
 
 # Install FFmpeg dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
