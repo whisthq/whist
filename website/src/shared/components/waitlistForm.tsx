@@ -17,6 +17,7 @@ import * as PureWaitlistAction from "store/actions/waitlist/pure"
 import * as PureAuthAction from "store/actions/auth/pure"
 
 import "styles/landing.css"
+import { checkEmail } from "pages/auth/constants/authHelpers"
 
 function WaitlistForm(props: any) {
     const { dispatch, waitlist, waitlistUser, isAction } = props
@@ -26,6 +27,9 @@ function WaitlistForm(props: any) {
     const [name, setName] = useState("")
     const [country, setCountry] = useState("United States")
     const [processing, setProcessing] = useState(false)
+
+    const validInputs =
+        email && checkEmail(email) && name && name.length > 1 && country
 
     const [addWaitlist] = useMutation(INSERT_WAITLIST)
 
@@ -235,14 +239,9 @@ function WaitlistForm(props: any) {
                                 <Button
                                     onClick={insertWaitlist}
                                     className="waitlist-button"
-                                    disabled={
-                                        email && name && country ? false : true
-                                    }
+                                    disabled={!validInputs}
                                     style={{
-                                        opacity:
-                                            email && name && country
-                                                ? 1.0
-                                                : 0.8,
+                                        opacity: validInputs ? 1.0 : 0.4, // not obvious w/ 0.8
                                         color: "white",
                                     }}
                                 >
@@ -253,10 +252,7 @@ function WaitlistForm(props: any) {
                                     className="waitlist-button"
                                     disabled={true}
                                     style={{
-                                        opacity:
-                                            email && name && country
-                                                ? 1.0
-                                                : 0.8,
+                                        opacity: validInputs ? 1.0 : 0.4,
                                     }}
                                 >
                                     <FontAwesomeIcon
