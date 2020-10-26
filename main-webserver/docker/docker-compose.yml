@@ -26,6 +26,7 @@ services:
     ports:
       - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
     environment:
+      REDIS_URL: redis://redis
       HOT_RELOAD: ${HOT_RELOAD}
       PORT: 7730
     volumes:
