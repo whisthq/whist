@@ -3,8 +3,10 @@
 name: Sentry Release
 
 on:
-  push:
+  pull_request:
     branches: [ master ]
+    paths-ignore:
+    - '**/README.md'
 
 jobs:
   createSentryRelease:
