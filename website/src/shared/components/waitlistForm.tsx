@@ -13,14 +13,12 @@ import { INITIAL_POINTS, REFERRAL_POINTS } from "shared/utils/points"
 import { INSERT_WAITLIST } from "pages/landing/constants/graphql"
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
 
-import * as PureAuthAction from "store/actions/auth/pure"
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
-import * as SharedAction from "store/actions/shared"
 
 import "styles/landing.css"
 
 function WaitlistForm(props: any) {
-    const { dispatch, user, waitlist, isAction } = props
+    const { dispatch, waitlist, waitlistUser, isAction } = props
     const { width, referralCode } = useContext(MainContext)
 
     const [email, setEmail] = useState("")
@@ -99,11 +97,12 @@ function WaitlistForm(props: any) {
                 newPoints = newPoints + REFERRAL_POINTS
             }
 
-            dispatch(PureAuthAction.updateUser({ user_id: email, name: name }))
             dispatch(
                 PureWaitlistAction.updateWaitlistUser({
                     points: newPoints,
                     referralCode: newReferralCode,
+                    user_id: email,
+                    name: name,
                 })
             )
             dispatch(
@@ -125,15 +124,11 @@ function WaitlistForm(props: any) {
             setProcessing(false)
         } else {
             dispatch(
-                PureAuthAction.updateUser({
-                    user_id: email,
-                    name: currentUser.name,
-                })
-            )
-            dispatch(
                 PureWaitlistAction.updateWaitlistUser({
                     points: currentUser.points,
                     referralCode: currentUser.referralCode,
+                    user_id: email,
+                    name: currentUser.name,
                 })
             )
 
@@ -143,14 +138,16 @@ function WaitlistForm(props: any) {
 
     return (
         <div style={{ width: isAction ? "100%" : "" }}>
-            {user && user.user_id ? (
+            {waitlistUser && waitlistUser.user_id ? (
                 <div>
                     <button
                         className="white-button"
                         style={{ textTransform: "uppercase" }}
-                        onClick={() => dispatch(SharedAction.resetState())}
+                        onClick={() =>
+                            dispatch(PureWaitlistAction.resetWaitlistUser())
+                        }
                     >
-                        LOGOUT AS {user.name}
+                        LOGOUT AS {waitlistUser.name}
                     </button>
                 </div>
             ) : (
@@ -275,7 +272,6 @@ function WaitlistForm(props: any) {
 }
 
 function mapStateToProps(state: {
-    AuthReducer: { user: any }
     WaitlistReducer: {
         waitlistUser: any
         waitlist: any[]
@@ -283,8 +279,8 @@ function mapStateToProps(state: {
     }
 }) {
     return {
-        user: state.AuthReducer.user,
         waitlist: state.WaitlistReducer.waitlistData.waitlist,
+        waitlistUser: state.WaitlistReducer.waitlistUser,
     }
 }
 

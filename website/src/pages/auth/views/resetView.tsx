@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import { PagePuff } from "shared/components/loadingAnimations"
+import { PuffAnimation } from "shared/components/loadingAnimations"
 import PasswordConfirmForm from "pages/auth/components/passwordConfirmForm"
 import {
     resetPassword,
@@ -136,14 +136,8 @@ const ResetView = (props: {
         )
     } else if (processing) {
         return (
-            <div
-                style={{
-                    width: "100vw",
-                    height: "100vh",
-                    position: "relative",
-                }}
-            >
-                <PagePuff />
+            <div>
+                <PuffAnimation />
             </div>
         )
     } else if (authFlow.resetTokenStatus === "verified") {

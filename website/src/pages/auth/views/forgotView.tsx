@@ -8,7 +8,7 @@ import * as AuthPureAction from "store/actions/auth/pure"
 
 import { checkEmail } from "pages/auth/constants/authHelpers"
 import SwitchMode from "pages/auth/components/switchMode"
-import { PagePuff } from "shared/components/loadingAnimations"
+import { PuffAnimation } from "shared/components/loadingAnimations"
 
 const ForgotView = (props: any) => {
     const { authFlow, dispatch } = props
@@ -47,14 +47,8 @@ const ForgotView = (props: any) => {
 
     if (processing) {
         return (
-            <div
-                style={{
-                    width: "100vw",
-                    height: "100vh",
-                    position: "relative",
-                }}
-            >
-                <PagePuff />
+            <div>
+                <PuffAnimation />
             </div>
         )
     } else if (gotResponse) {

@@ -8,9 +8,10 @@ import * as PureWaitlistAction from "store/actions/waitlist/pure"
 import * as SideEffectWaitlistAction from "store/actions/waitlist/sideEffects"
 
 import WaitlistForm from "shared/components/waitlistForm"
+import history from "shared/utils/history"
 
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
-import { REFERRAL_POINTS } from "shared/utils/points"
+import { REFERRAL_POINTS, SIGNUP_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "shared/constants/config"
 
@@ -60,17 +61,17 @@ const CustomAction = (props: {
 
 const Actions = (props: {
     dispatch: any
-    user: {
+    waitlistUser: {
         user_id: string
         referralCode: string
         points: number
         referrals: number
         name: string
+        authEmail: string
     }
     clicks: any
-    waitlistUser: any
 }) => {
-    const { dispatch, user, clicks, waitlistUser } = props
+    const { dispatch, clicks, waitlistUser } = props
 
     const [showModal, setShowModal] = useState(false)
     const [showEmailSentAlert, setShowEmailSentAlert] = useState(false)
@@ -86,7 +87,7 @@ const Actions = (props: {
     const handleCloseModal = () => setShowModal(false)
 
     const increasePoints = () => {
-        if (user) {
+        if (waitlistUser) {
             var allowClick = true
             var clickReset = false
             const currentTime = new Date().getTime() / 1000
@@ -116,7 +117,7 @@ const Actions = (props: {
 
                     updatePoints({
                         variables: {
-                            user_id: user.user_id,
+                            user_id: waitlistUser.user_id,
                             points: waitlistUser.points + 1,
                             referrals: waitlistUser.referrals,
                         },
@@ -132,7 +133,7 @@ const Actions = (props: {
     }
 
     const sendReferralEmail = () => {
-        if (user.user_id && recipientEmail) {
+        if (waitlistUser.user_id && recipientEmail) {
             dispatch(SideEffectWaitlistAction.sendReferralEmail(recipientEmail))
             setSentEmail(recipientEmail)
             setShowEmailSentAlert(true)
@@ -140,9 +141,16 @@ const Actions = (props: {
     }
 
     const renderActions = () => {
-        if (user && user.user_id) {
+        if (waitlistUser && waitlistUser.user_id) {
             return (
                 <div style={{ width: "100%" }}>
+                    {!waitlistUser.authEmail && (
+                        <CustomAction
+                            onClick={() => history.push("/auth")}
+                            text="Create an account"
+                            points={SIGNUP_POINTS}
+                        />
+                    )}
                     <CustomAction
                         onClick={handleOpenModal}
                         text="Refer a Friend"
@@ -255,16 +263,12 @@ const Actions = (props: {
 }
 
 function mapStateToProps(state: {
-    AuthReducer: {
-        user: any
-    }
     WaitlistReducer: {
         waitlistUser: any
         clicks: any
     }
 }) {
     return {
-        user: state.AuthReducer.user,
         waitlistUser: state.WaitlistReducer.waitlistUser,
         clicks: state.WaitlistReducer.clicks,
     }

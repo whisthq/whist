@@ -8,11 +8,20 @@ import PuffLoader from "react-spinners/PuffLoader"
  * A puff loader that takes over the middle of the page.
  * @param props unused
  */
-export const PagePuff = (props: any) => (
-    <PuffLoader
-        css={
-            "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
-        }
-        size={75}
-    />
+export const PuffAnimation = (props: any) => (
+    <div
+        style={{
+            position: "relative",
+            width: "100%",
+            height: "100%",
+            marginTop: "30%",
+        }}
+    >
+        <PuffLoader
+            css={
+                "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
+            }
+            size={75}
+        />
+    </div>
 )

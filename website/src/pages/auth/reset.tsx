@@ -14,7 +14,6 @@ const Reset = (props: {
         resetDone: boolean
     }
 }) => {
-    // dispatch is only used by the child
     const { authFlow } = props
 
     const search = useLocation().search

@@ -18,7 +18,6 @@ function* emailLogin(action: any) {
     )
 
     if (json && json.verified) {
-        console.log("changing user")
         yield put(
             AuthPureAction.updateUser({
                 user_id: action.email,
@@ -29,13 +28,13 @@ function* emailLogin(action: any) {
         )
         yield put(
             AuthPureAction.updateAuthFlow({
-                loginStatus: "",
+                loginWarning: "",
             })
         )
     } else {
         yield put(
             AuthPureAction.updateAuthFlow({
-                loginStatus: "Invalid username or password. Try again.",
+                loginWarning: "Invalid username or password. Try again.",
             })
         )
     }
@@ -46,7 +45,7 @@ function* googleLogin(action: any) {
     yield select()
 
     if (action.code) {
-        const { json } = yield call(
+        const { json, response } = yield call(
             apiPost,
             "/google/login",
             {
@@ -55,7 +54,7 @@ function* googleLogin(action: any) {
             ""
         )
         if (json) {
-            if (json.status === 200) {
+            if (response.status === 200) {
                 yield put(
                     AuthPureAction.updateUser({
                         user_id: json.username,
@@ -68,26 +67,24 @@ function* googleLogin(action: any) {
 
                 yield put(
                     AuthPureAction.updateAuthFlow({
-                        googleLoginStatus: 200,
-                        loginStatus: "",
-                        signupStatus: "",
+                        loginWarning: "",
+                        signupWarning: "",
                     })
                 )
             } else {
                 yield put(
                     AuthPureAction.updateAuthFlow({
-                        googleLoginStatus: json.status,
-                        loginStatus: "Failed to Authenticate With Google",
-                        signupStatus: "Failed to Authenticate With Google",
+                        loginWarning: "Google Login failed. Try another email.",
+                        signupWarning:
+                            "Google Login failed. Try another email.",
                     })
                 )
             }
         } else {
             yield put(
                 AuthPureAction.updateAuthFlow({
-                    googleLoginStatus: null,
-                    loginStatus: "No Response from Server for Google Login",
-                    signupStatus: "No Response from Server for Google Login",
+                    loginWarning: "Error: No response from Google server.",
+                    signupWarning: "Error: No response from Google server.",
                 })
             )
         }
@@ -118,8 +115,6 @@ function* emailSignup(action: any) {
             })
         )
 
-        console.log(json)
-
         yield call(sendVerificationEmail, {
             email: action.email,
             token: json.token,
@@ -127,7 +122,8 @@ function* emailSignup(action: any) {
 
         yield put(
             AuthPureAction.updateAuthFlow({
-                signupStatus: "",
+                signupWarning: "",
+                signupSuccess: true,
             })
         )
 
@@ -135,7 +131,8 @@ function* emailSignup(action: any) {
     } else {
         yield put(
             AuthPureAction.updateAuthFlow({
-                signupStatus: "An error occurred during signup. Try again.",
+                signupWarning:
+                    "Email already registered. Please log in instead.",
             })
         )
     }

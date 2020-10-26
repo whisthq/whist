@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
-import { PagePuff } from "shared/components/loadingAnimations"
+import { PuffAnimation } from "shared/components/loadingAnimations"
 import { validateVerificationToken } from "store/actions/auth/sideEffects"
 
 import "styles/auth.css"
@@ -85,14 +85,8 @@ const VerifyView = (props: {
         if (processing) {
             // Conditionally render the loading screen as we wait for signup API call to return
             return (
-                <div
-                    style={{
-                        width: "100vw",
-                        height: "100vh",
-                        position: "relative",
-                    }}
-                >
-                    <PagePuff />
+                <div>
+                    <PuffAnimation />
                 </div>
             )
         } else {

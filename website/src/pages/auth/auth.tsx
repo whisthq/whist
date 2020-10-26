@@ -13,13 +13,21 @@ const Auth = (props: {
     dispatch: any
     user: {
         user_id: string
+        emailVerified: boolean
+    }
+    waitlistUser: {
+        user_id: string
     }
     mode: any
 }) => {
     const { user, mode } = props
 
     if (user.user_id && user.user_id !== "") {
-        return <Redirect to="/dashboard" />
+        if (user.emailVerified) {
+            return <Redirect to="/" />
+        } else {
+            return <Redirect to="/verify" />
+        }
     }
 
     if (mode === "Log in") {
@@ -50,11 +58,14 @@ const Auth = (props: {
     }
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any; authFlow: any } }) {
-    console.log(state.AuthReducer.authFlow)
+function mapStateToProps(state: {
+    AuthReducer: { authFlow: any; user: any }
+    WaitlistReducer: { waitlistUser: any }
+}) {
     return {
-        user: state.AuthReducer.user,
+        waitlistUser: state.WaitlistReducer.waitlistUser,
         mode: state.AuthReducer.authFlow.mode,
+        user: state.AuthReducer.user,
     }
 }
 

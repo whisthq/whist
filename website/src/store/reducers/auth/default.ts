@@ -1,7 +1,7 @@
 export const DEFAULT = {
     user: {
         // identifiers
-        user_id: null, //usually email
+        user_id: null, // email
         name: null, // not really used except for waitlist
         // session auth tokens
         accessToken: null, // access token that lets you talk to the server when logged in
@@ -13,16 +13,15 @@ export const DEFAULT = {
         emailVerified: false, // keeps track of whether this user is verified so we can display the proper info
     },
     authFlow: {
-        mode: "Log in", // what auth is doing right now (todo in the future make it an enum)
+        mode: "Sign up", // what auth is doing right now (todo in the future make it an enum)
         // error message
-        loginStatus: null, // text to tell the user if they messed up logging in (primarily used as warning)
-        signupStatus: null, // text to tell the user if they messed up signing up (primarily used as warning)
+        loginWarning: null, // text to tell the user if they messed up logging in (primarily used as warning)
+        signupWarning: null, // text to tell the user if they messed up signing up (primarily used as warning)
+        signupSuccess: false,
         forgotStatus: null, // text/status info about what happend to the forgot email request sent (status and warning)
-        // verify email
+        // verify emails
         verificationEmailsSent: 0, // how many emails we send
         verificationAttemptsExecuted: 0, // how many tokens someone tried to verify (know when server responded)
-        // google login
-        googleLoginStatus: null, // null | an http status (used to display warnings)
         // reset password
         forgotEmailsSent: 0,
         resetTokenStatus: null, // null | "verified" | "expired" | "invalid"

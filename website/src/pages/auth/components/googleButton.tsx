@@ -9,13 +9,7 @@ import { config } from "shared/constants/config"
 import "styles/auth.css"
 import { updateAuthFlow } from "store/actions/auth/pure"
 
-const GoogleButton = (props: {
-    dispatch: any
-    user: {
-        user_id: string
-    }
-    login: (code: any) => any
-}) => {
+const GoogleButton = (props: { dispatch: any; login: (code: any) => any }) => {
     const { width } = useContext(MainContext)
 
     const responseGoogleSuccess = (res: any) => {
@@ -23,8 +17,8 @@ const GoogleButton = (props: {
         //TODO might want to remove this and use the warnings in auth?
         props.dispatch(
             updateAuthFlow({
-                loginStatus: "",
-                signupStatus: "",
+                loginWarning: "",
+                signupWarning: "",
             })
         )
     }
@@ -33,8 +27,8 @@ const GoogleButton = (props: {
         //TODO might want to remove this and use the warnings in auth?
         props.dispatch(
             updateAuthFlow({
-                loginStatus: "Google response failure",
-                signupStatus: "Google response failure",
+                loginWarning: "Google response failure",
+                signupWarning: "Google response failure",
             })
         )
     }
@@ -82,10 +76,8 @@ const GoogleButton = (props: {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
-    return {
-        user: state.AuthReducer.user,
-    }
+function mapStateToProps(state: any) {
+    return {}
 }
 
 export default connect(mapStateToProps)(GoogleButton)

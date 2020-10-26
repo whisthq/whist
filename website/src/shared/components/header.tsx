@@ -43,9 +43,9 @@ function Header(props: any) {
                 </Link>
                 {width > 720 ? (
                     <div style={{ display: "flex" }}>
-                        <Link to="/auth" className="header-link">
+                        {/* <Link to="/auth" className="header-link">
                             My Account
-                        </Link>
+                        </Link> */}
                         <Link to="/about" className="header-link">
                             About
                         </Link>

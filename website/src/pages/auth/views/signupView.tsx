@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import { PagePuff } from "shared/components/loadingAnimations"
+import { PuffAnimation } from "shared/components/loadingAnimations"
 
 import "styles/auth.css"
 
@@ -104,14 +104,8 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
     if (processing) {
         // Conditionally render the loading screen as we wait for signup API call to return
         return (
-            <div
-                style={{
-                    width: "100%",
-                    marginTop: "40%",
-                    position: "relative",
-                }}
-            >
-                <PagePuff />
+            <div>
+                <PuffAnimation />
             </div>
         )
     } else {
@@ -130,11 +124,27 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                             color: "#111111",
                             textAlign: "center",
                             fontSize: 32,
+                            marginBottom: 40,
                         }}
                     >
                         Let's get started.
                     </div>
-                    <div style={{ marginTop: 40 }}>
+                    {authFlow.signupWarning && authFlow.signupWarning !== "" && (
+                        <div
+                            style={{
+                                width: "100%",
+                                background: "#ff5627",
+                                padding: "15px 20px",
+                                color: "white",
+                                fontSize: 14,
+                                marginTop: 5,
+                                marginBottom: 20,
+                            }}
+                        >
+                            {authFlow.signupWarning}
+                        </div>
+                    )}
+                    <div style={{ marginTop: 13 }}>
                         <Input
                             text="Email"
                             type="email"
@@ -160,7 +170,7 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                         className="white-button"
                         style={{
                             width: "100%",
-                            marginTop: 15,
+                            marginTop: 20,
                             background: "#3930b8",
                             border: "none",
                             color: "white",

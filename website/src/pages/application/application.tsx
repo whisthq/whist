@@ -12,7 +12,7 @@ import MainContext from "shared/context/mainContext"
 import Header from "shared/components/header"
 
 function Application(props: any) {
-    const { user, waitlistUser } = props
+    const { waitlistUser } = props
     const { width } = useContext(MainContext)
 
     const [devices, setDevices] = useState("")
@@ -36,7 +36,7 @@ function Application(props: any) {
 
     function submitForm() {
         db.collection("essays")
-            .doc(user.user_id)
+            .doc(waitlistUser.user_id)
             .set({
                 devices: devices,
                 apps: apps,
@@ -56,7 +56,7 @@ function Application(props: any) {
                         }}
                     >
                         <h2>
-                            Congrats, {user.name}! You're <br />
+                            Congrats, {waitlistUser.name}! You're <br />
                             <span
                                 style={{
                                     color: "#3930b8",
@@ -72,10 +72,10 @@ function Application(props: any) {
                             on the waitlist.
                         </h2>
                         <p style={{ marginTop: 50 }}>
-                            You’re registered as {user.user_id}. When the
-                            countdown reaches zero, we'll invite people to try
-                            Fractal. You can signficantly increase your chances
-                            of being selected by{" "}
+                            You’re registered as {waitlistUser.user_id}. When
+                            the countdown reaches zero, we'll invite people to
+                            try Fractal. You can signficantly increase your
+                            chances of being selected by{" "}
                             <strong>filling out the form below</strong> below
                             and by{" "}
                             <strong>
@@ -157,12 +157,8 @@ function Application(props: any) {
     )
 }
 
-function mapStateToProps(state: {
-    AuthReducer: { user: any }
-    WaitlistReducer: { waitlistUser: any }
-}) {
+function mapStateToProps(state: { WaitlistReducer: { waitlistUser: any } }) {
     return {
-        user: state.AuthReducer.user,
         waitlistUser: state.WaitlistReducer.waitlistUser,
     }
 }

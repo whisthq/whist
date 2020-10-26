@@ -39,11 +39,11 @@ function SideBySide(props: any) {
         Gaming: (
             <div>
                 <div>
-                    Fractal runs and streams your app from the nearest AWS
-                    server by leveraging our high-fidelity streaming.
+                    Fractal leverages our high-fidelity streaming tech to run and stream your app from the nearest AWS
+                    server.
                 </div>
                 <div style={{ marginTop: 20 }}>
-                    Using an app on Fractal is as easy as using the application
+                    Using an app on Fractal is as easy as using the app
                     normally. We handle all the complexity so that your
                     experience is seamless. All that's required to run Fractal
                     is an 8 Mbps Internet connection.

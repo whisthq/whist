@@ -3,7 +3,7 @@ import { connect } from "react-redux"
 import { Redirect } from "react-router"
 
 import Header from "shared/components/header"
-import { PagePuff } from "shared/components/loadingAnimations"
+import { PuffAnimation } from "shared/components/loadingAnimations"
 
 import "styles/auth.css"
 
@@ -50,14 +50,8 @@ const Dashboard = (props: {
                         registering with us.
                     </div>
                 </div>
-                <div
-                    style={{
-                        width: "100vw",
-                        height: "100vh",
-                        position: "relative",
-                    }}
-                >
-                    <PagePuff top="25%" />
+                <div>
+                    <PuffAnimation />
                 </div>
             </div>
         )

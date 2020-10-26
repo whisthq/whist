@@ -49,7 +49,7 @@ const AuthForm = (props: {
 
     return (
         <div>
-            <div style={{ marginTop: isFirstElement ? 13 : 40 }}>
+            <div style={{ marginTop: isFirstElement ? 40 : 13 }}>
                 <Input
                     text="Password"
                     type="password"

@@ -11,7 +11,10 @@ export default function (state = DEFAULT, action: any) {
         case PureAction.UPDATE_WAITLIST_USER:
             return {
                 ...stateCopy,
-                user: Object.assign(stateCopy.waitlistUser, action.body),
+                waitlistUser: Object.assign(
+                    stateCopy.waitlistUser,
+                    action.body
+                ),
             }
         case PureAction.UPDATE_CLICKS:
             return {
@@ -31,6 +34,11 @@ export default function (state = DEFAULT, action: any) {
             return {
                 ...stateCopy,
                 navigation: Object.assign(stateCopy.navigation, action.body),
+            }
+        case PureAction.RESET_WAITLIST_USER:
+            return {
+                ...stateCopy,
+                waitlistUser: DEFAULT.waitlistUser,
             }
         case SharedAction.RESET_STATE:
             return DEFAULT

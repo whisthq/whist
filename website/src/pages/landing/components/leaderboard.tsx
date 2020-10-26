@@ -12,7 +12,6 @@ import "styles/landing.css"
 const Leaderboard = (props: {
     waitlist: any[]
     waitlistUser: any
-    user: { user_id: any; ranking: number }
 }) => {
     const { width } = useContext(MainContext)
     const [topSix, setTopSix]: any[] = useState([])
@@ -120,7 +119,7 @@ const Leaderboard = (props: {
         const topThree = topSix.slice(0, 3)
         if (!props.waitlist) {
             return <tr>No data to show.</tr>
-        } else if (!props.user.user_id || props.waitlistUser.ranking <= 5) {
+        } else if (!props.waitlistUser.user_id || props.waitlistUser.ranking <= 5) {
             const bottomThree = topSix.slice(3, 6)
             return topThree
                 .map((user: any, idx: number) => {
@@ -245,14 +244,12 @@ const Leaderboard = (props: {
 }
 
 const mapStateToProps = (state: {
-    AuthReducer: { user: any }
     WaitlistReducer: {
         waitlistUser: any
         waitlistData: any
     }
 }) => {
     return {
-        user: state.AuthReducer.user,
         waitlist: state.WaitlistReducer.waitlistData.waitlist,
         waitlistUser: state.WaitlistReducer.waitlistUser,
     }
