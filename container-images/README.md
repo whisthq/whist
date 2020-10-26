@@ -107,7 +107,7 @@ Here, `APP` is again the path to the relevant app folder; e.g., `base` or `brows
 
 ### Continous Delivery
 
-This is how we push to production. For every push to `master`, all applications specified under `apps` in `.github/workflows/push-images.yml` will automatically be built and pushed to all AWS regions specified under `aws-regions` in `.github/workflows/push-images.yml`.
+This is how we push to production. For every push to `master`, all applications specified under `apps` in `.github/workflows/push-images.yml` will automatically be built and pushed to all AWS regions specified under `aws-regions` in `.github/workflows/push-images.yml`. This will then automatically trigger a new release of all the ECS task definitions in `fractalcomputers/ecs-task-definitions`, which need to be updated in production to point to our new container image tags.
 
 #### Adding New Applications
 
