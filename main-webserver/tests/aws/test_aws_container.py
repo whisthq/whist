@@ -47,9 +47,7 @@ def check_test_database():
 @pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_save_user")
-def test_create_cluster(
-    client, authorized, cluster_name=pytest.cluster_name, max_containers=10, min_containers=0
-):
+def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
     cluster_name = cluster_name or pytest.cluster_name
     fractalLog(
         function="test_create_cluster",
@@ -64,8 +62,8 @@ def test_create_cluster(
             instance_type="g3s.xlarge",
             ami="ami-0c82e2febb87e6d1c",
             region_name="us-east-1",
-            max_containers=max_containers,
-            min_containers=min_containers,
+            max_size=1,
+            min_size=0,
             username=authorized.user_id,
         ),
     )

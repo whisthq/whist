@@ -24,16 +24,16 @@ aws_container_bp = Blueprint("aws_container_bp", __name__)
 @fractalPreProcess
 def test_endpoint(action, **kwargs):
     if action == "create_cluster":
-        cluster_name, instance_type, ami, region_name, max_containers, min_containers = (
+        cluster_name, instance_type, ami, region_name, max_size, min_size = (
             kwargs["body"]["cluster_name"],
             kwargs["body"]["instance_type"],
             kwargs["body"]["ami"],
             kwargs["body"]["region_name"],
-            kwargs["body"]["max_containers"],
-            kwargs["body"]["min_containers"],
+            kwargs["body"]["max_size"],
+            kwargs["body"]["min_size"],
         )
         task = create_new_cluster.apply_async(
-            [cluster_name, instance_type, ami, region_name, min_containers, max_containers]
+            [cluster_name, instance_type, ami, region_name, min_size, max_size]
         )
 
         if not task:
