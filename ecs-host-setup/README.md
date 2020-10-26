@@ -24,4 +24,4 @@ cd ../..
 
 Now, from a Fractal client, try connecting to the IP given by running `curl ipinfo.io` inside the container. You should be all set!
 
-__NOTE__: If you want to see the actual userdata that gets passed into the EC2 hosts, it's in the repository [`main-webserver`](https://github.com/fractalcomputers/main-webserver). As of the time of writing (10/22/20) it is the string in [`app/helpers/utils/aws/base_ecs_client.py`](https://github.com/fractalcomputers/main-webserver/blob/dev/app/helpers/utils/aws/base_ecs_client.py). Search in that file for the multi-line string starting with `#!/bin/bash`.
+__NOTE__: If you want to see the actual userdata that gets passed into the EC2 hosts, it's in the repository [`main-webserver`](https://github.com/fractalcomputers/main-webserver); it is the string in [`app/helpers/utils/aws/base_ecs_client.py`](https://github.com/fractalcomputers/main-webserver/blob/dev/app/helpers/utils/aws/base_ecs_client.py). Search in that file for the multi-line string starting with `#!/bin/bash`.
