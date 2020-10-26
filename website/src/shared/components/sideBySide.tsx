@@ -39,8 +39,8 @@ function SideBySide(props: any) {
         Gaming: (
             <div>
                 <div>
-                    Fractal leverages our high-fidelity streaming tech to run and stream your app from the nearest AWS
-                    server.
+                    Fractal leverages our high-fidelity streaming tech to run
+                    and stream your app from the nearest AWS server.
                 </div>
                 <div style={{ marginTop: 20 }}>
                     Using an app on Fractal is as easy as using the app
