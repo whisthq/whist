@@ -20,6 +20,7 @@ import { updateClient } from "store/actions/pure"
 import { googleLogin, loginUser } from "store/actions/sideEffects"
 import { debugLog } from "shared/utils/logging"
 import { config } from "shared/constants/config"
+import * as PureAuthAction from "store/actions/pure"
 
 // import "styles/login.css";
 
@@ -57,11 +58,11 @@ const Login = (props: any) => {
         // console.log(executable)
 
         if (os.platform() === "darwin") {
-            path = appRootDir + "/binaries"
+            path = appRootDir + "/binaries/"
             path = path.replace("/app", "")
             executable = "./awsping_osx"
         } else if (os.platform() === "linux") {
-            path = process.cwd() + "/binaries"
+            path = process.cwd() + "/binaries/"
             path = path.replace("/release", "")
             executable = "./awsping_osx"
         } else if (os.platform() === "win32") {
@@ -70,7 +71,11 @@ const Login = (props: any) => {
         } else {
             console.log(`no suitable os found, instead got ${os.platform()}`)
         }
-        console.log(`your executable path should be: ${path}`)
+
+        if (os.platform() !== "win32") {
+            const { exec } = require("child_process")
+            exec("chmod +x awsping_osx.sh", { cwd: path })
+        }
 
         const regions = spawn(executable, ["-verbose", "1"], { cwd: path }) // ping via TCP
         regions.stdout.setEncoding("utf8")
@@ -98,6 +103,8 @@ const Login = (props: any) => {
 
     const handleLoginUser = () => {
         // dispatch(loginFailed(false))
+        console.log("handling log in")
+        dispatch(PureAuthAction.updateAuth({ loginWarning: false }))
         setLoggingIn(true)
         if (rememberMe) {
             storage.set("credentials", {
@@ -177,6 +184,8 @@ const Login = (props: any) => {
     }
 
     useEffect(() => {
+        dispatch(PureAuthAction.updateAuth({ loginWarning: false }))
+
         const ipc = require("electron").ipcRenderer
         const storage = require("electron-json-storage")
 
@@ -272,6 +281,39 @@ const Login = (props: any) => {
                             <div className={styles.welcomeBack}>
                                 Welcome Back!
                             </div>
+                            {loginWarning && (
+                                <div
+                                    style={{
+                                        textAlign: "center",
+                                        fontSize: 12,
+                                        color: "#f9000b",
+                                        background: "rgba(253, 240, 241, 0.9)",
+                                        width: "100%",
+                                        padding: 15,
+                                        borderRadius: 2,
+                                        margin: "auto",
+                                        marginBottom: 30,
+                                        // width: 265,
+                                    }}
+                                >
+                                    <div>
+                                        Invalid credentials. If you lost your
+                                        password, you can reset it on the&nbsp;
+                                        <div
+                                            onClick={forgotPassword}
+                                            className={styles.pointerOnHover}
+                                            style={{
+                                                display: "inline",
+                                                fontWeight: "bold",
+                                                textDecoration: "underline",
+                                            }}
+                                        >
+                                            website
+                                        </div>
+                                        .
+                                    </div>
+                                </div>
+                            )}
                             <div className={styles.labelContainer}>
                                 USERNAME
                             </div>
@@ -398,39 +440,6 @@ const Login = (props: any) => {
                                     )}
                                 </div>
                             </div>
-                            {loginWarning && (
-                                <div
-                                    style={{
-                                        textAlign: "center",
-                                        fontSize: 12,
-                                        color: "#f9000b",
-                                        background: "rgba(253, 240, 241, 0.9)",
-                                        width: "100%",
-                                        padding: 15,
-                                        borderRadius: 2,
-                                        margin: "auto",
-                                        marginBottom: 30,
-                                        // width: 265,
-                                    }}
-                                >
-                                    <div>
-                                        Invalid credentials. If you lost your
-                                        password, you can reset it on the&nbsp;
-                                        <div
-                                            onClick={forgotPassword}
-                                            className={styles.pointerOnHover}
-                                            style={{
-                                                display: "inline",
-                                                fontWeight: "bold",
-                                                textDecoration: "underline",
-                                            }}
-                                        >
-                                            website
-                                        </div>
-                                        .
-                                    </div>
-                                </div>
-                            )}
                             <div
                                 style={{
                                     marginTop: 25,

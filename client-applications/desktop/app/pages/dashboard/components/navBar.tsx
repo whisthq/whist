@@ -27,12 +27,16 @@ const NavTitle = (props: {
 }
 
 const NavBar = (props: any) => {
-    const { dispatch, updateCurrentTab, username, name, currentTab } = props
+    const {
+        dispatch,
+        updateCurrentTab,
+        username,
+        name,
+        currentTab,
+        search,
+        updateSearch,
+    } = props
     const [showProfile, setShowProfile] = useState(false)
-
-    const updateTab = (tab: string) => {
-        updateCurrentTab(tab)
-    }
 
     const handleSignout = () => {
         const storage = require("electron-json-storage")
@@ -47,7 +51,7 @@ const NavBar = (props: any) => {
             <NavTitle
                 selected={currentTab == "Discover"}
                 text="Discover"
-                onClick={() => updateTab("Discover")}
+                onClick={() => updateCurrentTab("Discover")}
                 style={{
                     marginLeft: 50,
                 }}
@@ -55,44 +59,60 @@ const NavBar = (props: any) => {
             <NavTitle
                 selected={currentTab == "Settings"}
                 text="Settings"
-                onClick={() => updateTab("Settings")}
+                onClick={() => updateCurrentTab("Settings")}
             />
             <NavTitle
                 selected={currentTab == "Support"}
                 text="Support"
-                onClick={() => updateTab("Support")}
+                onClick={() => updateCurrentTab("Support")}
             />
             <div
                 style={{
                     position: "absolute",
                     right: "50px",
                     top: "15px",
-                    height: "max-content",
+                    display: "flex",
+                    flexDirection: "row",
+                    maxWidth: 540,
                 }}
             >
-                <div
-                    className={styles.userInfo}
-                    onClick={() => setShowProfile(!showProfile)}
-                >
-                    <FontAwesomeIcon
-                        icon={faUser}
-                        style={{
-                            color: "#555555",
-                            fontSize: 35,
-                            padding: 6,
-                            marginRight: 4,
-                        }}
-                    />
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span className={styles.name}>{name}</span>
-                        <span className={styles.email}>{username}</span>
+                <input
+                    value={search}
+                    onChange={(evt: any) => updateSearch(evt.target.value)}
+                    placeholder="Search for an app"
+                    className={styles.searchBar}
+                />
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                    <div
+                        className={styles.userInfo}
+                        onClick={() => setShowProfile(!showProfile)}
+                    >
+                        <FontAwesomeIcon
+                            icon={faUser}
+                            style={{
+                                color: "#111111",
+                                fontSize: 30,
+                                padding: 6,
+                                position: "relative",
+                                top: 2,
+                                marginRight: 4,
+                            }}
+                        />
+                        <div
+                            style={{ display: "flex", flexDirection: "column" }}
+                        >
+                            <span className={styles.name}>Cidney</span>
+                            <span className={styles.email}>
+                                cidney@fractalcomputers.com
+                            </span>
+                        </div>
                     </div>
+                    <Collapse in={showProfile}>
+                        <div onClick={handleSignout}>
+                            <div className={styles.signoutButton}>Sign Out</div>
+                        </div>
+                    </Collapse>
                 </div>
-                <Collapse in={showProfile}>
-                    <div onClick={handleSignout}>
-                        <div className={styles.signoutButton}>SIGN OUT</div>
-                    </div>
-                </Collapse>
             </div>
         </div>
     )

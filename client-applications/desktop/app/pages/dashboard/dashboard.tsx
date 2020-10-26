@@ -11,6 +11,7 @@ import Support from "pages/dashboard/views/support"
 const Dashboard = (props: any) => {
     const { dispatch, username, os } = props
     const [currentTab, setCurrentTab] = useState("Discover")
+    const [search, setSearch] = useState("")
 
     return (
         <div className={styles.container}>
@@ -28,9 +29,14 @@ const Dashboard = (props: any) => {
                 <NavBar
                     updateCurrentTab={setCurrentTab}
                     currentTab={currentTab}
+                    search={search}
+                    updateSearch={setSearch}
                 />
                 {currentTab === "Discover" && (
-                    <Discover updateCurrentTab={setCurrentTab} />
+                    <Discover
+                        updateCurrentTab={setCurrentTab}
+                        search={search}
+                    />
                 )}
                 {currentTab === "Settings" && <Settings />}
                 {currentTab === "Support" && <Support />}

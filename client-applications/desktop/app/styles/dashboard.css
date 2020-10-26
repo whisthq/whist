@@ -9,24 +9,18 @@
     font-family: "Maven Pro";
     font-weight: bold;
     padding: 10px 25px;
-    border-radius: 5px;
-    box-shadow: 0px 1px 8px #dddddd;
-    background: rgba(255, 255, 255, 0.3);
+    background: white;
     color: black;
     font-size: 11px;
-    z-index: 2;
     width: 100%;
     margin-top: 10px;
-}
-
-.signoutButton:hover {
-    background: #93f1d9;
-    cursor: pointer;
+    border: solid 0.8px #cccccc;
 }
 
 .userInfo {
     display: flex;
     flex-direction: row;
+    opacity: 1 !important;
 }
 
 .userInfo:hover {
@@ -73,7 +67,7 @@
     flex-direction: row;
     align-items: center;
     padding: 0px 50px;
-    z-index: 1;
+    z-index: 2;
 }
 
 .logoTitle {
@@ -347,18 +341,23 @@ select:required:invalid {
 }
 
 .searchBar {
-    width: 300px;
+    width: 280px;
     border-radius: 5px;
-    box-shadow: 0px 1px 8px #dddddd;
-    position: absolute;
-    top: 40px;
-    left: 370px;
+    /* box-shadow: 0px 1px 8px #dddddd; */
+    margin-right: 15px;
     z-index: 1;
     outline: none;
     border: none;
     padding: 5px;
     text-indent: 5px;
     font-size: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    height: 35px;
+}
+
+.searchBar:focus,
+.searchBar:active {
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .searchBar::placeholder {

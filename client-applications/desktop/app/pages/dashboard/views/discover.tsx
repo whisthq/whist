@@ -13,14 +13,9 @@ import Banner from "../components/banner"
 import App from "../components/app"
 
 const Discover = (props: any) => {
-    const { updateCurrentTab } = props
+    const { updateCurrentTab, search } = props
 
-    const [search, setSearch] = useState("")
     const [searchResults, setSearchResults] = useState([])
-
-    const updateSearch = (evt: any) => {
-        setSearch(evt.target.value)
-    }
 
     const checkActive = (app: any) => {
         return app.active
@@ -92,12 +87,6 @@ const Discover = (props: any) => {
 
     return (
         <div style={{ flex: 1 }}>
-            <input
-                value={search}
-                onChange={updateSearch}
-                placeholder="Search for an app"
-                className={styles.searchBar}
-            />
             {search ? (
                 <Row
                     style={{
