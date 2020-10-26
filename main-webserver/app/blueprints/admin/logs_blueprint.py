@@ -15,34 +15,35 @@ from app.helpers.utils.general.auth import adminRequired
 logs_bp = Blueprint("logs_bp", __name__)
 
 
-@logs_bp.route("/logs/<action>", methods=["POST"])
+@logs_bp.route("/logs/insert", methods=["POST"])
 @fractalPreProcess
-def logs_post(action, **kwargs):
-    if action == "insert":
-        version = None
-        if "version" in kwargs["body"].keys():
-            version = kwargs["body"]["version"]
+def logs_post(**kwargs):
+    body = kwargs.pop("body")
 
-        vm_ip = kwargs["received_from"]
-        if "vm_ip" in kwargs["body"].keys():
-            vm_ip = kwargs["body"]["vm_ip"]
-
-        task = uploadLogsToS3.apply_async(
-            [
-                kwargs["body"]["sender"],
-                kwargs["body"]["connection_id"],
-                kwargs["body"]["logs"],
-                vm_ip,
-                version,
-            ]
+    try:
+        args = (
+            body.pop("sender"),
+            body.pop("version", None),
+            body.pop("connection_id"),
+            body.pop("ip", kwargs.pop("received_from")),
+            body.pop("identifier"),
+            body.pop("secret_key"),
+            body.pop("logs"),
         )
+    except KeyError:
+        return jsonify({"ID": None}), BAD_REQUEST
 
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
+    task = uploadLogsToS3.delay(*args)
 
-        return jsonify({"ID": task.id}), ACCEPTED
+    return jsonify({"ID": task.id}), ACCEPTED
 
-    elif action == "delete":
+
+@logs_bp.route("/logs/<action>", methods=("POST",))
+@fractalPreProcess
+@jwt_required
+@adminRequired
+def logs_manage(action, **kwargs):
+    if action == "delete":
         connection_id = kwargs["body"]["connection_id"]
 
         task = deleteLogsFromS3.apply_async([connection_id])
