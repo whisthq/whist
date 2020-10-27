@@ -208,15 +208,16 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 	return nil
 }
 
-func containerDieHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) error {
+func containerDieHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) {
 	// Delete the container-specific data directory we used
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.RemoveAll(datadir)
 	if err != nil {
-		return logger.MakeError("Failed to delete container-specific directory %s", datadir)
+		logger.Errorf("Failed to delete container-specific directory %s", datadir)
 	}
 	logger.Info("Successfully deleted (possibly non-existent) container-specific directory %s\n", datadir)
 
+	// Free tty internal state
 	for tty := range ttyState {
 		if ttyState[tty] == id {
 			ttyState[tty] = ""
@@ -349,17 +350,18 @@ eventLoop:
 			if event.Action == "die" || event.Action == "start" {
 				logger.Info("Event: %s for %s %s\n", event.Action, event.Type, event.ID)
 			}
-			if event.Action == "die" {
-				err := containerDieHandler(ctx, cli, event.ID, &ttyState)
-				if err != nil {
-					logger.Errorf("Error processing event %s for %s %s: %v", event.Action, event.Type, event.ID, err)
-				}
-			}
 			if event.Action == "start" {
+				// We want the container start handler to die immediately upon failure,
+				// so it returns an error as soon as it encounters one.
 				err := containerStartHandler(ctx, cli, event.ID, &ttyState)
 				if err != nil {
 					logger.Errorf("Error processing event %s for %s %s: %v", event.Action, event.Type, event.ID, err)
 				}
+			} else if event.Action == "die" {
+				// Since we want all steps in the die handler to be attempted,
+				// regardless of earlier errors, we let the containerDieHandler report
+				// its own errors, and return nothing to us.
+				containerDieHandler(ctx, cli, event.ID, &ttyState)
 			}
 		}
 	}
