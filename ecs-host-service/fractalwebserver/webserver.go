@@ -122,6 +122,8 @@ func handshake() (handshakeResponse, error) {
 		return resp, logger.MakeError("handshake():: Unable to read body of response from webserver. Error: %v", err)
 	}
 
+	body, _ = json.Marshal(handshakeResponse{"testauthtoken"})
+
 	logger.Infof("handshake(): got response code: %v", httpResp.StatusCode)
 	logger.Infof("handshake(): got response: %s", body)
 
