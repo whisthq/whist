@@ -239,7 +239,7 @@ func main() {
 	// them afterwards. Any container-specific information (which is what I
 	// imagine we would use local tags for) we just add in the text of the
 	// respective error message sent to Sentry. Alternatively, we might just be
-	// able to use sentry.WithScope()
+	// able to use sentry.WithScope(), but that is future work.
 	err := logger.InitializeSentry()
 	if err != nil {
 		logger.Panicf("Unable to initialize sentry. Error: %s", err)
