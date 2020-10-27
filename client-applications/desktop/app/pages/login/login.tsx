@@ -4,6 +4,7 @@ import { connect } from "react-redux"
 import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { parse } from "url"
+import { Redirect } from "react-router-dom"
 
 import UpdateScreen from "pages/dashboard/components/update"
 import BackgroundView from "pages/login/views/backgroundView"
@@ -16,26 +17,35 @@ import {
 
 import { FaGoogle } from "react-icons/fa"
 
-import { updateClient } from "store/actions/pure"
+import { updateClient, updateAuth } from "store/actions/pure"
 import { googleLogin, loginUser } from "store/actions/sideEffects"
 import { debugLog } from "shared/utils/logging"
 import { config } from "shared/constants/config"
-import * as PureAuthAction from "store/actions/pure"
+import { fetchContainer } from "store/actions/sideEffects"
+import { history } from "store/configureStore"
 
 // import "styles/login.css";
 
 const Login = (props: any) => {
-    const { dispatch, os, loginWarning } = props
+    const {
+        dispatch,
+        os,
+        loginWarning,
+        launchImmediately,
+        accessToken,
+        refreshToken,
+    } = props
 
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [loggingIn, setLoggingIn] = useState(false)
     const [version, setVersion] = useState("1.0.0")
     const [rememberMe, setRememberMe] = useState(false)
-    const live = useState(true)
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [needsAutoupdate, setNeedsAutoupdate] = useState(false)
     const [fetchedCredentials, setFetchedCredentials] = useState(false)
+
+    const live = useState(true)
 
     const storage = require("electron-json-storage")
 
@@ -66,7 +76,8 @@ const Login = (props: any) => {
             path = path.replace("/release", "")
             executable = "./awsping_osx"
         } else if (os.platform() === "win32") {
-            path = process.cwd() + "\\binaries"
+            path = appRootDir + "\\binaries"
+            path = path.replace("\\resources\\app.asar", "")
             executable = "awsping_windows.exe"
         } else {
             console.log(`no suitable os found, instead got ${os.platform()}`)
@@ -81,7 +92,6 @@ const Login = (props: any) => {
         regions.stdout.setEncoding("utf8")
 
         regions.stdout.on("data", (data: any) => {
-            debugLog("AWS DATA")
             debugLog(data)
             // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
             const line = data.split(/\r?\n/)[1].replace(/  +/g, " ")
@@ -104,7 +114,7 @@ const Login = (props: any) => {
     const handleLoginUser = () => {
         // dispatch(loginFailed(false))
         console.log("handling log in")
-        dispatch(PureAuthAction.updateAuth({ loginWarning: false }))
+        dispatch(updateAuth({ loginWarning: false }))
         setLoggingIn(true)
         if (rememberMe) {
             storage.set("credentials", {
@@ -113,6 +123,7 @@ const Login = (props: any) => {
             })
         } else {
             storage.set("credentials", { username: "", password: "" })
+            storage.set("tokens", { accessToken: "", refreshToken: "" })
         }
         setUsername(username)
         setPassword(password)
@@ -184,19 +195,12 @@ const Login = (props: any) => {
     }
 
     useEffect(() => {
-        dispatch(PureAuthAction.updateAuth({ loginWarning: false }))
+        dispatch(updateAuth({ loginWarning: false }))
 
         const ipc = require("electron").ipcRenderer
         const storage = require("electron-json-storage")
 
-        console.log("starting listener")
-        ipc.on("customURL", (_: any, customURL: any) => {
-            console.log(customURL)
-        })
-
         ipc.on("update", (_: any, update: any) => {
-            console.log("update received")
-            console.log(update)
             setUpdatePingReceived(true)
             setNeedsAutoupdate(update)
         })
@@ -210,12 +214,30 @@ const Login = (props: any) => {
             if (error) throw error
 
             if (data && Object.keys(data).length > 0) {
-                if (data.username && data.password && live) {
+                if (data.username && live) {
+                    dispatch(
+                        updateAuth({
+                            username: data.username,
+                        })
+                    )
                     setUsername(data.username)
-                    setPassword(data.password)
                     setLoggingIn(true)
                     setFetchedCredentials(true)
-                    debugLog("set loggingin to true")
+                }
+            }
+        })
+
+        storage.get("tokens", (error: any, data: any) => {
+            if (error) throw error
+
+            if (data && Object.keys(data).length > 0) {
+                if (data.accessToken && data.refreshToken && live) {
+                    dispatch(
+                        updateAuth({
+                            accessToken: data.accessToken,
+                            refreshToken: data.refreshToken,
+                        })
+                    )
                 }
             }
         })
@@ -228,14 +250,18 @@ const Login = (props: any) => {
     useEffect(() => {
         if (
             updatePingReceived &&
-            fetchedCredentials &&
             !needsAutoupdate &&
-            username &&
-            password
+            (username || props.username) &&
+            accessToken &&
+            refreshToken
         ) {
-            dispatch(loginUser(username, password))
+            if (!launchImmediately) {
+                history.push("/dashboard")
+            } else {
+                dispatch(fetchContainer("Google Chrome"))
+            }
         }
-    }, [updatePingReceived, fetchedCredentials])
+    }, [updatePingReceived, fetchedCredentials, props.username, accessToken])
 
     return (
         <div className={styles.container} data-tid="container">
@@ -486,6 +512,8 @@ function mapStateToProps(state: any) {
     return {
         username: state.MainReducer.auth.username,
         loginWarning: state.MainReducer.auth.loginWarning,
+        accessToken: state.MainReducer.auth.accessToken,
+        refreshToken: state.MainReducer.auth.refreshToken,
         os: state.MainReducer.client.os,
     }
 }
