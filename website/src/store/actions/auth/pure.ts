@@ -38,6 +38,6 @@ export function updateAuthFlow(body: {
 
 export function resetUser() {
     return {
-        type: RESET_USER
+        type: RESET_USER,
     }
 }

@@ -23,6 +23,8 @@ function* emailLogin(action: any) {
         ""
     )
 
+    console.log(json)
+
     if (json && json.verified) {
         yield put(
             AuthPureAction.updateUser({
@@ -30,6 +32,7 @@ function* emailLogin(action: any) {
                 name: action.email, // temp so it can be displayed
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
+                emailVerified: json.verified,
             })
         )
         yield put(

@@ -21,7 +21,7 @@ export default function (state = DEFAULT, action: any) {
         case PureAction.RESET_USER:
             return {
                 ...stateCopy,
-                user: DEFAULT.user
+                user: DEFAULT.user,
             }
         case SharedAction.RESET_STATE:
             return DEFAULT

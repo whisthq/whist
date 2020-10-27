@@ -83,7 +83,6 @@ function WaitlistForm(props: any) {
     function logout() {
         dispatch(PureWaitlistAction.resetWaitlistUser())
         dispatch(PureAuthAction.resetUser())
-
     }
 
     async function insertWaitlist() {

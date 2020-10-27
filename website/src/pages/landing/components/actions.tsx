@@ -1,9 +1,10 @@
-import React, { useState, useContext } from "react"
+import React, { useState, useContext, useEffect } from "react"
 import { connect } from "react-redux"
 import { Button, Modal, Alert } from "react-bootstrap"
 import { CopyToClipboard } from "react-copy-to-clipboard"
 import { useMutation } from "@apollo/client"
 
+import * as PureAuthAction from "store/actions/auth/pure"
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
 import * as SideEffectWaitlistAction from "store/actions/waitlist/sideEffects"
 
@@ -14,6 +15,10 @@ import { UPDATE_WAITLIST } from "shared/constants/graphql"
 import { REFERRAL_POINTS, SIGNUP_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "shared/constants/config"
+
+import ReactGA from "react-ga"
+
+import { categories, actions, ga_event } from "shared/constants/gaEvents"
 
 const CustomAction = (props: {
     onClick: any
@@ -87,6 +92,18 @@ const Actions = (props: {
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
 
+    useEffect(() => {
+        if (!waitlistUser.authEmail) {
+            dispatch(PureAuthAction.resetUser())
+        }
+    }, [dispatch, waitlistUser])
+
+    const gaLogClickMe = (event: any) => {
+        ReactGA.event(
+            ga_event(categories.POINTS, actions.POINTS.CLICKED_CLICKME)
+        )
+    }
+
     const increasePoints = () => {
         if (waitlistUser) {
             var allowClick = true
@@ -158,7 +175,10 @@ const Actions = (props: {
                         points={REFERRAL_POINTS}
                     />
                     <CustomAction
-                        onClick={increasePoints}
+                        onClick={(event: any) => {
+                            increasePoints()
+                            gaLogClickMe(event)
+                        }}
                         text={
                             <div>
                                 <div>Click Me</div>

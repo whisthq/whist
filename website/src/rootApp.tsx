@@ -11,6 +11,9 @@ import Privacy from "pages/legal/privacy"
 import Auth from "pages/auth/auth"
 import Verify from "pages/auth/verify"
 import Reset from "pages/auth/reset"
+
+import withTracker from "shared/utils/withTracker"
+
 // import Dashboard from "pages/dashboard/dashboard"
 
 // import * as SharedAction from "store/actions/shared"
@@ -33,20 +36,28 @@ const RootApp = (props: any) => {
     return (
         <div>
             <Switch>
-                <Route exact path="/about" component={About} />
-                <Route exact path="/application" component={Application} />
-                <Route exact path="/cookies" component={Cookies} />
-                <Route exact path="/privacy" component={Privacy} />
+                <Route exact path="/about" component={withTracker(About)} />
+                <Route
+                    exact
+                    path="/application"
+                    component={withTracker(Application)}
+                />
+                <Route exact path="/cookies" component={withTracker(Cookies)} />
+                <Route exact path="/privacy" component={withTracker(Privacy)} />
                 <Route
                     exact
                     path="/termsofservice"
-                    component={TermsOfService}
+                    component={withTracker(TermsOfService)}
                 />
-                <Route exact path="/auth" component={Auth} />
-                <Route exact path="/verify" component={Verify} />
-                <Route exact path="/reset" component={Reset} />
+                <Route exact path="/auth" component={withTracker(Auth)} />
+                <Route exact path="/verify" component={withTracker(Verify)} />
+                <Route exact path="/reset" component={withTracker(Reset)} />
                 {/* <Route exact path="/dashboard" component={Dashboard} /> */}
-                <Route exact path="/:first?/:second?" component={Landing} />
+                <Route
+                    exact
+                    path="/:first?/:second?"
+                    component={withTracker(Landing)}
+                />
             </Switch>
         </div>
     )
