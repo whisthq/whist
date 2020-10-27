@@ -1,5 +1,11 @@
-from app import *
-from app.helpers.utils.general.analytics import *
+import logging
+
+import numpy as np
+import pandas as pd
+
+from flask import jsonify
+
+from app.helpers.utils.general.logs import fractalLog
 
 
 def analyticsLogsHelper(body):

@@ -1,5 +1,5 @@
 from app import ma
-from app.models.logs import *
+from app.models import LoginHistory, MonitorLog, ProtocolLog
 
 
 # this one must be different because we have a foreign key

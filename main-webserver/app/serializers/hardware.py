@@ -1,5 +1,12 @@
 from app import ma
-from app.models.hardware import *
+from app.models import (
+    AppsToInstall,
+    Banners,
+    ClusterInfo,
+    InstallCommand,
+    SupportedAppImages,
+    UserContainer,
+)
 
 
 class UserContainerSchema(ma.SQLAlchemyAutoSchema):

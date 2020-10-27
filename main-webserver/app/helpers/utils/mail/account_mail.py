@@ -1,17 +1,20 @@
-from app import *
-from app.helpers.utils.general.logs import *
+import logging
+
+from flask import render_template
+
+from app import mail
+from app.helpers.utils.general.logs import fractalLog
+from app.models import User
 
 
 def signupMail(username, promo_code):
     try:
-        internal_message = SendGridMail(
+        mail.send_email(
             from_email="phil@tryfractal.com",
-            to_emails=username,
+            to_email=username,
             subject="Welcome to Fractal",
-            html_content=render_template("on_signup.html", code=promo_code),
+            html=render_template("on_signup.html", code=promo_code),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
             function="signupMail",

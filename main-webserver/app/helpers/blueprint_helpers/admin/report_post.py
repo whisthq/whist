@@ -1,10 +1,14 @@
-from app import *
-from app.helpers.utils.general.analytics import *
-from app.helpers.utils.general.logs import *
-from app.helpers.utils.general.sql_commands import *
+import datetime
 
-from app.models.logs import *
-from app.serializers.logs import *
+from datetime import datetime as dt
+
+from flask import jsonify
+
+from app.constants.http_codes import BAD_REQUEST, SUCCESS
+from app.helpers.utils.general.analytics import loginsToMinutes
+from app.models import LoginHistory, MonitorLog, User
+from app.serializers.logs import LoginHistorySchema, MonitorLogSchema
+
 
 # this is being @deprecated
 def regionReportHelper(timescale):

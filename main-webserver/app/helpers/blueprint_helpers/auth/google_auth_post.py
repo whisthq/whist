@@ -1,12 +1,19 @@
+import datetime
+import hashlib
+
+from datetime import datetime as dt
+
 from better_profanity import profanity
 
-from app import *
-from app.helpers.utils.general.tokens import *
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
-from app.models.public import *
-from app.models.hardware import *
-from app.serializers.public import *
-from app.serializers.hardware import *
+from app.constants.http_codes import BAD_REQUEST, FORBIDDEN, SUCCESS
+from app.helpers.utils.general.tokens import (
+    generateToken,
+    generateUniquePromoCode,
+    getAccessTokens,
+    getGoogleTokens,
+)
+from app.models import db, User
 
 
 def registerGoogleUser(username, name, token, reason_for_signup=None):
@@ -25,7 +32,7 @@ def registerGoogleUser(username, name, token, reason_for_signup=None):
     if hashlib.md5(
         username_encoding
     ).hexdigest() in BAD_WORDS_HASHED or profanity.contains_profanity(username):
-        return {"status": FAILURE, "error": "Try using a different username"}
+        return {"status": "FAILURE", "error": "Try using a different username"}
 
     new_user = User(
         user_id=username,

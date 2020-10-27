@@ -1,6 +1,5 @@
-from app import *
-from app.helpers.utils.general.logs import *
-from app.helpers.utils.general.tokens import *
+from app.constants.config import DASHBOARD_PASSWORD, DASHBOARD_USERNAME
+from app.helpers.utils.general.tokens import getAccessTokens
 
 
 def adminLoginHelper(username, password):

@@ -1,7 +1,13 @@
-from app import *
+import logging
 
-from app.models.public import *
-from app.models.logs import *
+from datetime import datetime as dt
+from datetime import timedelta
+
+import stripe
+
+from app.constants.config import HOURLY_PLAN_ID, STRIPE_SECRET
+from app.helpers.utils.general.logs import fractalLog
+from app.models import LoginHistory, User
 
 
 def stripeChargeHourly(username):

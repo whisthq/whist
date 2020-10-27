@@ -141,9 +141,9 @@ def registerHelper(username, password, name, reason_for_signup):
     if status == SUCCESS:
         try:
             mail.send_email(
-                to_emails="support@tryfractal.com",
+                to_email="support@tryfractal.com",
                 subject=username + " just created an account!",
-                html_content="<p>Just letting you know that {0} created an account. Their reason for signup is: {1}. Have a great day.</p>".format(
+                html="<p>Just letting you know that {0} created an account. Their reason for signup is: {1}. Have a great day.</p>".format(
                     name, reason_for_signup
                 ),
             )

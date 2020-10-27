@@ -2,6 +2,8 @@ import time
 
 from celery import shared_task
 
+from app.constants.http_codes import SUCCESS
+
 
 @shared_task(bind=True)
 def dummyTask(self):
