@@ -65,6 +65,7 @@ its threads.
 #define BYTES_IN_KILOBYTE 1024.0
 #define MS_IN_SECOND 1000
 #define TCP_CONNECTION_WAIT 5000
+#define CLIENT_PING_TIMEOUT_SEC 3.0
 
 extern Client clients[MAX_NUM_CLIENTS];
 
@@ -676,7 +677,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     do {
         packet = ReadTCPPacket(context, true);
         SDL_Delay(5);
-    } while (packet == NULL && GetTimer(timer) < 3.0);
+    } while (packet == NULL && GetTimer(timer) < CLIENT_PING_TIMEOUT_SEC);
     if (packet == NULL) {
         LOG_WARNING("Did not receive discovery request from client.");
         closesocket(context->s);
@@ -801,12 +802,26 @@ int MultithreadedManageClients(void* opaque) {
     startConnectionLog();
     bool have_sent_logs = true;
 
+    // for managing clean client exit and container destruction
+    // client_exited_nongracefully and last_nongraceful_exit are globals from client.h
+    // bool client_exited_nongracefully = false; // set to true after a nongraceful exit
+    // clock last_nongraceful_exit; // start this after every nongraceful exit
+    double nongraceful_grace_period = 300.0; // 5 minutes to reconnect after nongraceful client disconnect
+
+    bool first_client_connected = false; // set to true once the first client has connected
+    double begin_time_to_exit = 60.0; // give a client 1 minute to connect when the server first goes up
+    clock first_client_timer; // start this now and then discard when first client has connected
+    StartTimer(&first_client_timer);
+    // NOTE: don't want server to exit before first client is connected... ONLY use container destruction code on PRODUCTION_HOST
+    //  strcmp(host, STAGING_HOST) == 0
+
     while (!exiting) {
         if (readLock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to read-acquire an active RW lock.");
             continue;
         }
         int saved_num_active_clients = num_active_clients;
+
         if (readUnlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to read-release and active RW lock.");
             continue;
@@ -834,8 +849,34 @@ int MultithreadedManageClients(void* opaque) {
                 StartTimer(&last_update_timer);
                 trying_to_update = true;
             }
+
+            // container exit logic -
+            //  * clients have connected before but now none are connected
+            //  * no clients have connected in `begin_time_to_exit` secs of server being up
+            // We don't place this in a lock because:
+            //  * if the first client connects right on the threshold of begin_time_to_exit, it doesn't matter if we disconnect
+            //  * if a new client connects right on the threshold of nongraceful_grace_period, it doesn't matter if we disconnect
+            //  * if no clients are connected, it isn't possible for another client to nongracefully exit and reset the grace period timer
+            if ((first_client_connected || (GetTimer(first_client_timer) > begin_time_to_exit)) &&
+                (!client_exited_nongracefully || (GetTimer(last_nongraceful_exit) > nongraceful_grace_period))) {
+                exiting = true;
+            }
         } else {
             trying_to_update = false;
+
+            // container exit logic - client has connected to server for the first time
+            if (!first_client_connected) {
+                first_client_connected = true;
+            }
+
+            // container exit logic - nongraceful client grace period has ended, but clients are connected still
+            if (client_exited_nongracefully) {
+                client_exited_nongracefully = false;
+            }
+        }
+
+        if (client_exited_nongracefully) {
+            StartTimer(&last_nongraceful_exit);
         }
 
         if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
@@ -892,6 +933,12 @@ int MultithreadedManageClients(void* opaque) {
         if (clients[client_id].is_controlling) {
             // Reset input system when a new input controller arrives
             ResetInput();
+        }
+
+        // reapTimedOutClients is called within a writeLock(&is_active_rwlock) and therefore this should as well
+        //  reapTimedOutClients only ever writes client_exited_nongracefully as true. This thread only writes it as false.
+        if (client_exited_nongracefully && (GetTimer(last_nongraceful_exit) > nongraceful_grace_period)) {
+            client_exited_nongracefully = false;
         }
 
         StartTimer(&(clients[client_id].last_ping));
@@ -1153,7 +1200,7 @@ int main(int argc, char* argv[]) {
                     break;
                 }
                 bool exists, should_reap = false;
-                if (existsTimedOutClient(3.0, &exists) != 0) {
+                if (existsTimedOutClient(CLIENT_PING_TIMEOUT_SEC, &exists) != 0) {
                     LOG_ERROR("Failed to find if a client has timed out.");
                 } else {
                     should_reap = exists;
@@ -1167,7 +1214,7 @@ int main(int argc, char* argv[]) {
                         LOG_ERROR("Failed to write-acquire is active RW lock.");
                         break;
                     }
-                    if (reapTimedOutClients(3.0) != 0) {
+                    if (reapTimedOutClients(CLIENT_PING_TIMEOUT_SEC) != 0) {
                         LOG_ERROR("Failed to reap timed out clients.");
                     }
                     if (writeUnlock(&is_active_rwlock) != 0) {
@@ -1319,6 +1366,8 @@ int main(int argc, char* argv[]) {
 
     destroyLogger();
     destroyClients();
+
+    sendContainerDestroyMessage();
 
     return 0;
 }

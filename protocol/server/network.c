@@ -234,3 +234,18 @@ int tryGetNextMessageUDP(int client_id, FractalClientMessage *fcmsg, size_t *fcm
     }
     return 0;
 }
+
+int sendContainerDestroyMessage() {
+    /*
+        Sends a message to the webserver to destroy the container on which the server is running.
+        This should only happen in PRODUCTION, not STAGING.
+
+        Returns:
+            int: 0 on success, -1 on failure
+    */
+
+    // if (SendPostRequest(char *host_s, char *path, char *payload, char *access_token,
+    //                  char **response_body, size_t max_response_size))
+
+    return 0;
+}

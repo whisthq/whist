@@ -145,4 +145,12 @@ int disconnectClient(int id);
  */
 int disconnectClients(void);
 
+/**
+ * @brief                          Sends a message to the webserver to destroy
+ *                                 the container running the server protocol.
+ *
+ * @returns                        Returns -1 on failure, 0 on success.
+ */
+int sendContainerDestroyMessage(void);
+
 #endif  // SERVER_NETWORK_H
