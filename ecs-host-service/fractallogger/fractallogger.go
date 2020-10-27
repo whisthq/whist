@@ -35,11 +35,10 @@ func Panic(err error) {
 	log.Panic(err)
 }
 
-// Log some info and send it to sentry as well
+// Log some info, but do not send it to Sentry
 func Info(format string, v ...interface{}) {
 	str := fmt.Sprintf(format, v...)
 	log.Print(str)
-	sentry.CaptureMessage(str)
 }
 
 // We also create a pair of functions that respect printf syntax, i.e. take in
