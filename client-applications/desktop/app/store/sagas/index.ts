@@ -136,17 +136,10 @@ function* getPromoCode(action: any) {
 function* fetchContainer(action: any) {
     history.push("/loading")
     const state = yield select()
-    // const username = state.MainReducer.auth.username
-    const username = "ming@fractalcomputers.com"
-    //const region = state.MainReducer.client.region
-    const region = "us-east-1"
+    const username = state.MainReducer.auth.username
+    // if they are super far we'll just default them to us east and hope for the best
+    const region = state.MainReducer.client.region ? state.MainReducer.client.region : "us-east-1"
     const app = action.app
-
-    console.log("creating container!")
-    console.log(state.MainReducer.auth.accessToken)
-    console.log(username)
-    console.log(region)
-    console.log(app)
 
     var { json, response } = yield call(
         apiPost,
