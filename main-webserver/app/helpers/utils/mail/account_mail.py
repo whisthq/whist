@@ -19,6 +19,6 @@ def signupMail(username, promo_code):
         fractalLog(
             function="signupMail",
             label="ERROR",
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )

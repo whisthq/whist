@@ -23,7 +23,7 @@ def chargeFailedMail(username, custId):
         fractalLog(
             function="chargeFailedMail",
             label=username,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
 
@@ -40,7 +40,7 @@ def chargeFailedMail(username, custId):
         fractalLog(
             function="chargeFailedMail",
             label=username,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
 
@@ -59,7 +59,7 @@ def chargeSuccessMail(username, custId):
         )
     except Exception as e:
         fractalLog(
-            function="chargeSuccessMail", label="Stripe", logs=e.message, level=logging.ERROR
+            function="chargeSuccessMail", label="Stripe", logs=str(e), level=logging.ERROR
         )
 
 
@@ -80,7 +80,7 @@ def trialEndingMail(user):
             function="trialEndingMail", label="Stripe", logs="Sent trial ending email to customer"
         )
     except Exception as e:
-        fractalLog(function="trialEndingMail", label="Stripe", logs=e.message, level=logging.ERROR)
+        fractalLog(function="trialEndingMail", label="Stripe", logs=str(e), level=logging.ERROR)
 
 
 def trialEndedMail(username):
@@ -96,7 +96,7 @@ def trialEndedMail(username):
             logs="Sent trial ended email to {}".format(username),
         )
     except Exception as e:
-        fractalLog(function="trialEndedMail", label="Stripe", logs=e.message, level=logging.ERROR)
+        fractalLog(function="trialEndedMail", label="Stripe", logs=str(e), level=logging.ERROR)
 
 
 def creditAppliedMail(username):
@@ -122,7 +122,7 @@ def creditAppliedMail(username):
             logs="Sent credit applied email to {}".format(username),
         )
     except Exception as e:
-        fractalLog(function="creditAppliedMail", label="Mail", logs=e.message, level=logging.ERROR)
+        fractalLog(function="creditAppliedMail", label="Mail", logs=str(e), level=logging.ERROR)
         return 1
 
     return 0
@@ -141,4 +141,4 @@ def planChangeMail(username, newPlan):
             logs="Sent plan changed email to {}".format(username),
         )
     except Exception as e:
-        fractalLog(function="planChangeMail", label="Mail", logs=e.message, level=logging.ERROR)
+        fractalLog(function="planChangeMail", label="Mail", logs=str(e), level=logging.ERROR)
