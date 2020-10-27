@@ -63,7 +63,7 @@ def loginHelper(code, clientApp):
     user = User.query.get(username)
 
     if user:
-        if user.using_google_login:
+        if user.using_google_login and user.can_login == True:
             return {
                 "new_user": False,
                 "is_user": True,
