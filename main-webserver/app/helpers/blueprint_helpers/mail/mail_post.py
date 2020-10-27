@@ -40,7 +40,7 @@ def forgotPasswordHelper(username):
             fractalLog(
                 function="forgotPasswordHelper",
                 label=username,
-                logs="Mail send failed: Error code " + e.message,
+                logs="Mail send failed: Error code " + str(e),
                 level=logging.ERROR,
             )
             return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
@@ -63,7 +63,7 @@ def cancelHelper(user, feedback):
         fractalLog(
             function="cancelHelper",
             label=user,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
@@ -86,7 +86,7 @@ def verificationHelper(user, token):
         fractalLog(
             function="verificationHelper",
             label=user,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
@@ -108,7 +108,7 @@ def referralMailHelper(user, recipients, code):
         fractalLog(
             function="referralMailHelper",
             label=user,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
@@ -129,7 +129,7 @@ def feedbackHelper(user, feedback, feedback_type):
         fractalLog(
             function="feedbackHelper",
             label=user,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
@@ -148,7 +148,7 @@ def trialStartHelper(user, location, code):
         fractalLog(
             function="trialStartHelper",
             label=user,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
@@ -165,7 +165,7 @@ def trialStartHelper(user, location, code):
         fractalLog(
             function="trialStartHelper",
             label=user,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
@@ -187,7 +187,7 @@ def computerReadyHelper(user, date, code, location):
         fractalLog(
             function="computerReadyHelper",
             label=user,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
@@ -202,7 +202,7 @@ def computerReadyHelper(user, date, code, location):
         fractalLog(
             function="computerReadyHelper",
             label=user,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
@@ -224,7 +224,7 @@ def joinWaitlistHelper(email, name, date):
         fractalLog(
             function="joinWaitlistHelper",
             label=email,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
@@ -246,7 +246,7 @@ def waitlistReferralHelper(email, name, code, recipient):
         fractalLog(
             function="waitlistReferralHelper",
             label=email,
-            logs="Mail send failed: Error code " + e.message,
+            logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
         )
         return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
