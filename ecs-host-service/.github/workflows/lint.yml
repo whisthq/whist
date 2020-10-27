@@ -24,7 +24,7 @@ jobs:
 
       - name: Install goimports
         run: |
-          go get -u https://pkg.go.dev/golang.org/x/tools/cmd/goimports
+          go get -u golang.org/x/tools/cmd/goimports
 
       - name: Add goimports to $PATH
         run: |
