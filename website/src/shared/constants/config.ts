@@ -48,4 +48,4 @@ const environment: any = {
 export const config: any =
     process.env.NODE_ENV === "development"
         ? environment.development
-        : environment.production
+        : environment.development
