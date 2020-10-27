@@ -106,7 +106,7 @@ click==7.1.2
 colorama==0.4.3
 configparser==4.0.2
 contextlib2==0.6.0.post1
-cryptography==2.8
+cryptography==3.2
 docutils==0.15.2
 ecdsa==0.13.3
 enum34==1.1.10
