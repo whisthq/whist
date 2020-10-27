@@ -36,13 +36,15 @@
             "sign": false
         },
         "extraFiles": [
-            "protocol-build/"
+            "protocol-build/",
+            "binaries/"
         ],
         "files": [
             "dist/",
             "node_modules/",
             "resources/",
             "protocol-build/",
+            "binaries/",
             "app.html",
             "main.prod.js",
             "main.prod.js.map",

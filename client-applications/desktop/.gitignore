@@ -67,6 +67,8 @@ node_modules
 app/node_modules
 dist
 dll
+dll/renderer.dev.dll.js
+dll/renderer.dev.js
 main.js
 main.js.map
 .idea

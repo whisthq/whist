@@ -4,8 +4,6 @@ import * as Action from "store/actions/pure"
 import * as SideEffect from "store/actions/sideEffects"
 import { history } from "store/configureStore"
 
-import { config } from "shared/constants/config"
-
 import moment from "moment"
 
 function* refreshAccess() {
@@ -23,6 +21,13 @@ function* refreshAccess() {
                 refreshToken: json.refresh_token,
             })
         )
+
+        const storage = require("electron-json-storage")
+        storage.set("credentials", {
+            username: state.MainReducer.auth.username,
+            accessToken: json.access_token,
+            refreshToken: json.refresh_token,
+        })
     }
 }
 
@@ -42,9 +47,16 @@ function* loginUser(action: any) {
                     name: json.name,
                 })
             )
+            if (action.rememberMe) {
+                const storage = require("electron-json-storage")
+                storage.set("credentials", {
+                    username: action.username,
+                    accessToken: json.access_token,
+                    refreshToken: json.refresh_token,
+                })
+            }
             yield call(fetchPaymentInfo, action)
             yield call(getPromoCode, action)
-            history.push("/dashboard")
         } else {
             yield put(Action.updateAuth({ loginWarning: true }))
         }
@@ -57,12 +69,12 @@ function* googleLogin(action: any) {
     yield select()
 
     if (action.code) {
-        const { json } = yield call(apiPost, `/google/login`, {
+        const { json, response } = yield call(apiPost, `/google/login`, {
             code: action.code,
             clientApp: true,
         })
         if (json) {
-            if (json.status === 200) {
+            if (response.status === 200) {
                 yield put(
                     Action.updateAuth({
                         accessToken: json.access_token,
@@ -71,6 +83,15 @@ function* googleLogin(action: any) {
                         name: json.name,
                     })
                 )
+
+                if (action.rememberMe) {
+                    const storage = require("electron-json-storage")
+                    storage.set("credentials", {
+                        username: json.username,
+                        accessToken: json.access_token,
+                        refreshToken: json.refresh_token,
+                    })
+                }
                 yield call(fetchPaymentInfo, { username: json.username })
                 yield call(getPromoCode, { username: json.username })
                 history.push("/dashboard")
@@ -115,10 +136,17 @@ function* getPromoCode(action: any) {
 function* fetchContainer(action: any) {
     history.push("/loading")
     const state = yield select()
-    const username = state.MainReducer.auth.username
+    // const username = state.MainReducer.auth.username
+    const username = "ming@fractalcomputers.com"
     //const region = state.MainReducer.client.region
     const region = "us-east-1"
     const app = action.app
+
+    console.log("creating container!")
+    console.log(state.MainReducer.auth.accessToken)
+    console.log(username)
+    console.log(region)
+    console.log(app)
 
     var { json, response } = yield call(
         apiPost,
@@ -250,82 +278,15 @@ function* fetchContainer(action: any) {
 }
 
 function* deleteContainer(action: any) {
-    console.log("deleting container!")
+    console.log("sending delete container")
     const state = yield select()
-    var { json, response } = yield call(
+    yield call(
         apiPost,
         `/container/delete`,
         { username: action.username, container_id: action.container_id },
         state.MainReducer.auth.accessToken
     )
-    yield put(
-        Action.updateLoading({
-            statusMessage: "Starting to shut down resources.",
-            percentLoaded: 0,
-        })
-    )
-
-    const id = json.ID
-    var { json, response } = yield call(
-        apiGet,
-        `/status/` + id,
-        state.MainReducer.auth.accessToken
-    )
-
-    while (json.state !== "SUCCESS" && json.state !== "FAILURE") {
-        var { json, response } = yield call(
-            apiGet,
-            `/status/` + id,
-            state.MainReducer.auth.accessToken
-        )
-
-        if (response && response.status && response.status === 500) {
-            const warning =
-                `(${moment().format("hh:mm:ss")}) ` +
-                "Unexpectedly lost connection with server. Please close the app and try again."
-            yield put(
-                Action.updateLoading({
-                    statusMessage: warning,
-                    percentLoaded: 0,
-                })
-            )
-        }
-
-        if (json && json.state === "PENDING" && json.output) {
-            var message = json.output.msg
-            if (message) {
-                yield put(
-                    Action.updateLoading({
-                        statusMessage: message,
-                        percentLoaded: 50,
-                    })
-                )
-            }
-        }
-
-        yield delay(5000)
-    }
-
-    if (json && json.state && json.state === "SUCCESS") {
-        yield put(
-            Action.updateLoading({
-                statusMessage: "Successfully delete resources.",
-                percentLoaded: 100,
-            })
-        )
-    } else {
-        var warning =
-            `(${moment().format("hh:mm:ss")}) ` +
-            `Unexpectedly lost connection with server. Please close the app and try again.`
-        if (json.output && json.output.msg) {
-            warning = json.output.msg
-        }
-        yield put(
-            Action.updateLoading({
-                statusMessage: warning,
-            })
-        )
-    }
+    history.push("/dashboard")
 }
 
 function* submitFeedback(action: any) {

@@ -58,11 +58,14 @@ const UpdateScreen = (props: any) => {
             executable = "./FractalClient"
         } else if (os.platform() === "win32") {
             debugLog("windows found")
-            path = process.cwd() + "\\protocol-build\\desktop"
+            path = appRootDir + "\\protocol-build\\desktop"
+            path = path.replace("\\resources\\app.asar", "")
+            path = path.replace("\\app\\protocol-build", "\\protocol-build")
             executable = "FractalClient.exe"
         } else {
             debugLog(`no suitable os found, instead got ${os.platform()}`)
         }
+
 
         var port_info = `32262:${port32262},32263:${port32263},32273:${port32273}`
         var parameters = ["-w", 800, "-h", 600, "-p", port_info, ip]

@@ -6,18 +6,20 @@ export const DELETE_CONTAINER = "DELETE_CONTAINER"
 
 export const SUBMIT_FEEDBACK = "SUBMIT_FEEDBACK"
 
-export function loginUser(username: any, password: any) {
+export function loginUser(username: string, password: string, rememberMe: boolean) {
     return {
         type: LOGIN_USER,
         username,
         password,
+        rememberMe
     }
 }
 
-export function googleLogin(code: any) {
+export function googleLogin(code: any, rememberMe: boolean) {
     return {
         type: GOOGLE_LOGIN,
         code,
+        rememberMe
     }
 }
 
