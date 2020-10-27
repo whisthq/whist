@@ -232,7 +232,9 @@ endif()
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_C_COMPILER clang)
-    if(NOT CMAKE_OSX_SYSROOT)
+    if(ENV{FRACTAL_OSX_SYSROOT})
+        set(CMAKE_OSX_SYSROOT ENV{FRACTAL_OSX_SYSROOT})
+    else()
         set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk)
     endif()
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Require MacOS 10.13 or up, to ensure LibObj-C is standard
