@@ -837,7 +837,8 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     LOG_INFO("Accepting TCP Connection");
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
-    if ((new_socket = acceptp(context->s, (struct sockaddr *)(&context->addr), &slen)) == INVALID_SOCKET) {
+    if ((new_socket = acceptp(context->s, (struct sockaddr *)(&context->addr), &slen)) ==
+        INVALID_SOCKET) {
         return -1;
     }
 
