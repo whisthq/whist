@@ -25,12 +25,12 @@ const GoogleButton = (props: { dispatch: any; login: (code: any) => any }) => {
 
     const responseGoogleFailure = (res: any) => {
         //TODO might want to remove this and use the warnings in auth?
-        props.dispatch(
-            updateAuthFlow({
-                loginWarning: "Google response failure",
-                signupWarning: "Google response failure",
-            })
-        )
+        // props.dispatch(
+        //     updateAuthFlow({
+        //         loginWarning: "Google response failure",
+        //         signupWarning: "Google response failure",
+        //     })
+        // )
     }
 
     const googleButton = (renderProps: any) => (

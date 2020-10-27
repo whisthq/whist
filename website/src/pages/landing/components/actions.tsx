@@ -1,9 +1,10 @@
-import React, { useState, useContext } from "react"
+import React, { useState, useContext, useEffect } from "react"
 import { connect } from "react-redux"
 import { Button, Modal, Alert } from "react-bootstrap"
 import { CopyToClipboard } from "react-copy-to-clipboard"
 import { useMutation } from "@apollo/client"
 
+import * as PureAuthAction from "store/actions/auth/pure"
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
 import * as SideEffectWaitlistAction from "store/actions/waitlist/sideEffects"
 
@@ -89,6 +90,12 @@ const Actions = (props: {
 
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
+
+    useEffect(() => {
+        if (!waitlistUser.authEmail) {
+            dispatch(PureAuthAction.resetUser())
+        }
+    }, [dispatch, waitlistUser])
 
     const gaLogClickMe = (event: any) => {
         ReactGA.event(

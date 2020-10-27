@@ -79,6 +79,10 @@ function WaitlistForm(props: any) {
         return null
     }
 
+    function logout() {
+        dispatch(PureWaitlistAction.resetWaitlistUser())
+    }
+
     async function insertWaitlist() {
         setProcessing(true)
 
@@ -147,9 +151,7 @@ function WaitlistForm(props: any) {
                     <button
                         className="white-button"
                         style={{ textTransform: "uppercase" }}
-                        onClick={() =>
-                            dispatch(PureWaitlistAction.resetWaitlistUser())
-                        }
+                        onClick={logout}
                     >
                         LOGOUT AS {waitlistUser.name}
                     </button>
