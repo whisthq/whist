@@ -28,7 +28,7 @@ jobs:
 
       - name: Add goimports to $PATH
         run: |
-          export PATH=$PATH:~/go/bin
+          export PATH=$PATH:$GOPATH/bin
 
       - name: Check if code is linted with goimports
         run: |
