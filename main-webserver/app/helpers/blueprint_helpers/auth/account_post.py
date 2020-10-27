@@ -294,3 +294,24 @@ def updateUserHelper(body):
             return jsonify({"msg": "Password updated successfully"}), SUCCESS
         return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE
     return jsonify({"msg": "User not found"}), NOT_FOUND
+
+def autoLoginHelper(email):
+    user = User.query.get(email)
+    access_token, refresh_token = getAccessTokens(email)
+
+    if user:
+        return {
+            "status": SUCCESS,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "verification_token": user.token,
+            "name": user.name,
+        }
+    else:
+        return {
+            "status": UNAUTHORIZED,
+            "access_token": None,
+            "refresh_token": None,
+            "verification_token": None,
+            "name": None,
+        }
