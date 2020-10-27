@@ -32,7 +32,7 @@ jobs:
 
       - name: Check if code is linted with goimports
         run: |
-          result=$(gofmt -l *.go fractallogger/*.go fractalwebserver/*.go) # goimports -l returns nothing if all files are formatted, else returns files that need formatting
+          result=$(goimports -l *.go fractallogger/*.go fractalwebserver/*.go) # goimports -l returns nothing if all files are formatted, else returns files that need formatting
           if [ "$result" -ne "0" ]; then        
             (echo "To pass this check please lint the code with goimports" && false)
           else
