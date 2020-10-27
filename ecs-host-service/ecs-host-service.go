@@ -159,6 +159,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 	// it, and we want to avoid triggering an error that '32262/tcp' is unmapped
 	// (which gets sent to Sentry).
 	if c.Name == "ecs-agent" {
+		logger.Info("Detected ecs-agent starting. Doing nothing.")
 		return nil
 	}
 
