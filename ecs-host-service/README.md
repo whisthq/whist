@@ -14,7 +14,7 @@ This will build the service under directory `/build` as `ecs-host-service`.
 
 You can run locally by running `make run`. Note that the service must be run as root, which the makefile automatically does.
 
-If you want to test the service with our production Sentry configuration, use the command `make runprod`. Note that this will count against our logging quotas!
+If you want to test the service with our production Sentry configuration, use the command `make runprod`. Note that this will count against our Sentry logging quotas, and also attempt to start the ECS Agent! As such, we only recommend you try to do that on an ECS-optimized AWS EC2 instance.
 
 ### Design Decisions
 
@@ -26,11 +26,9 @@ For more details, see the comments at the beginning of `main()` and `shutdownHos
 
 ## Styling
 
-We use `gofmt` and `golint` for proper linting and coding practices in this project. We use `gofmt` to actually format our Go code, and we use `golint` to enforce proper Go coding practices. We recommend you use both in the pre-commit hooks. You can easily format your code by running `gofmt path-to-file-to-format.go`.
+We use `goimports` and `golint` for proper linting and coding practices in this project. We use `goimports` to actually format our Go code, and we use `golint` to enforce proper Go coding practices. We recommend you use both in the pre-commit hooks. You can install them by running `pre-commit install`, after having installed the `pre-commit` package via `pip install pre-commit`.
 
-You can also install `golint` on your machine by running `go get -u golang.org/x/lint/golint`. To find out where `golint` was installed, run `go list -f {{.Target}} golang.org/x/lint/golint`. You can then call `golint` via the path returned or by adding it to your `$PATH` without arguments to run it on the whole project. You can easily run Golint via `golint path-to-file-to-lint.go`, which will output a list of recommended behavior improvements to the code.
-
-We also have pre-commit hooks installed for all relevant Go features, including `gofmt` and `golint`, on this project. You can install them by running `pre-commit install`, after having installed the `pre-commit` package via `pip install pre-commit`.
+You can install `goimports` and `golint` by running `go get -u golang.org/x/tools/cmd/goimports` and `go get -u golang.org/x/lint/golint`, respectively. You then need to add the Go commands to your path by running `PATH=$PATH:~/go/bin`, on Unix. You can then easily run the commands via `goimports path-to-file-to-lint.go` and `golint path-to-file-to-lint.go`.
 
 ## Publishing
 

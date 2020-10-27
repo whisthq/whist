@@ -4,6 +4,8 @@ name: Go Linter
 on:
   pull_request:
     branches: [ master, dev ]
+    paths-ignore:
+    - '**/README.md'
 
 jobs:
   lint:
@@ -11,19 +13,28 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-        fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+      - name: Checkout Git repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
-    - name: Setup Go environment
-      uses: actions/setup-go@v2.1.3
-            
-    - name: Check if code is linted with Gofmt
-      run: |
-        result=$(gofmt -l *.go fractallogger/*.go fractalwebserver/*.go) # gofmt -l returns nothing if all files are formatted, else returns files that need formatting
-        if [ "$result" -ne "0" ]; then        
-          (echo "To pass this check please lint the code with Gofmt" && false)
-        else
-          (echo "Code is linted with Gofmt" && true)
-        fi
+      - name: Setup Go environment
+        uses: actions/setup-go@v2.1.3
+
+      - name: Install goimports
+        run: |
+          go get -u https://pkg.go.dev/golang.org/x/tools/cmd/goimports
+
+      - name: Add goimports to $PATH
+        run: |
+          PATH=$PATH:~/go/bin
+
+      - name: Check if code is linted with goimports
+        run: |
+          result=$(gofmt -l *.go fractallogger/*.go fractalwebserver/*.go) # goimports -l returns nothing if all files are formatted, else returns files that need formatting
+          if [ "$result" -ne "0" ]; then        
+            (echo "To pass this check please lint the code with goimports" && false)
+          else
+            (echo "Code is linted with goimports" && true)
+          fi
