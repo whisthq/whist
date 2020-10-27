@@ -15,6 +15,10 @@ import { REFERRAL_POINTS, SIGNUP_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "shared/constants/config"
 
+import ReactGA from "react-ga"
+
+import { categories, actions, ga_event } from "shared/constants/gaEvents"
+
 const CustomAction = (props: {
     onClick: any
     text: any
@@ -85,6 +89,12 @@ const Actions = (props: {
 
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
+
+    const gaLogClickMe = (event: any) => {
+        ReactGA.event(
+            ga_event(categories.POINTS, actions.POINTS.CLICKED_CLICKME)
+        )
+    }
 
     const increasePoints = () => {
         if (waitlistUser) {
@@ -157,7 +167,10 @@ const Actions = (props: {
                         points={REFERRAL_POINTS}
                     />
                     <CustomAction
-                        onClick={increasePoints}
+                        onClick={(event: any) => {
+                            increasePoints()
+                            gaLogClickMe(event)
+                        }}
                         text={
                             <div>
                                 <div>Click Me</div>
