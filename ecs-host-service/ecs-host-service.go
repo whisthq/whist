@@ -178,6 +178,37 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 		return err
 	}
 
+	// Since we have that port mapped, we "know" we're working with a fractal
+	// container. Therefore, we assign it its own network bridge.
+
+	// Create the network bridge
+	networkId := "net-id-" + id
+	cmd := exec.Command("/usr/bin/docker", "network", "create", networkId)
+	errstr, err := cmd.CombinedOutput()
+	if err != nil {
+		return logger.MakeError("Unable to create docker network bridge %s. Error: %v, %s", networkId, err, errstr)
+	} else {
+		logger.Infof("Successfully created docker network bridge %s.", networkId)
+	}
+
+	// Attach to the network bridge
+	cmd = exec.Command("/usr/bin/docker", "network", "connect", networkId, id)
+	errstr, err = cmd.CombinedOutput()
+	if err != nil {
+		return logger.MakeError("Unable to connect container to docker network bridge %s. Error: %v %s", networkId, err, errstr)
+	} else {
+		logger.Infof("Successfully connected container to docker network bridge %s.", networkId)
+	}
+
+	// Disconnect from the default network
+	cmd = exec.Command("/usr/bin/docker", "network", "disconnect", "bridge", id)
+	errstr, err = cmd.CombinedOutput()
+	if err != nil {
+		return logger.MakeError("Unable to disconnect container %s from default docker network bridge. Error: %v %s", id, err, errstr)
+	} else {
+		logger.Infof("Successfully disconnected container %s from docker network bridge.", id)
+	}
+
 	// Assign an unused tty
 	assignedTty := -1
 	for tty := range ttyState {
@@ -224,7 +255,24 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string, tty
 		}
 	}
 
-	return nil
+	// Disconnect from container-specific network bridge
+	networkId := "net-id-" + id
+	cmd := exec.Command("/usr/bin/docker", "network", "disconnect", networkId, id)
+	errstr, err := cmd.CombinedOutput()
+	if err != nil {
+		logger.Errorf("Unable to disconnect container from docker network bridge %s. Error: %v, %s", networkId, err, errstr)
+	} else {
+		logger.Infof("Successfully disconnected container from docker network bridge %s.", networkId)
+	}
+
+	// Delete container-specific network bridge
+	cmd = exec.Command("/usr/bin/docker", "network", "rm", networkId)
+	errstr, err = cmd.CombinedOutput()
+	if err != nil {
+		logger.Errorf("Unable to remove docker network bridge %s. Error: %v %s", networkId, err, errstr)
+	} else {
+		logger.Infof("Successfully removed docker network bridge %s.", networkId)
+	}
 }
 
 func main() {
