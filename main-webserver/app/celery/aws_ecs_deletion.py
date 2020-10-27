@@ -206,9 +206,17 @@ def delete_cluster(self, cluster, region_name):
             cluster_info = ClusterInfo.query.filter_by(cluster=cluster)
             fractalSQLCommit(db, lambda _, x: x.update({"status": "INACTIVE"}), cluster_info)
             ecs_client.spin_til_no_containers(cluster)
-            ecs_client.ecs_client.delete_cluster(cluster=cluster)
+
+            asg_name = ecs_client.describe_auto_scaling_groups_in_cluster(cluster)[0][
+                "AutoScalingGroupName"
+            ]
             cluster_info = ClusterInfo.query.get(cluster)
+
             fractalSQLCommit(db, lambda db, x: db.session.delete(x), cluster_info)
+            ecs_client.auto_scaling_client.delete_auto_scaling_group(
+                AutoScalingGroupName=asg_name, ForceDelete=True
+            )
+            ecs_client.ecs_client.delete_cluster(cluster=cluster)
     except Exception as error:
         traceback_str = "".join(traceback.format_tb(error.__traceback__))
         print(traceback_str)
