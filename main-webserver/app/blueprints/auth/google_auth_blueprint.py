@@ -1,6 +1,10 @@
-from app import *
-from app.helpers.utils.general.auth import *
-from app.helpers.blueprint_helpers.auth.google_auth_post import *
+from flask import Blueprint, jsonify
+
+from app import fractalPreProcess
+from app.helpers.blueprint_helpers.auth.google_auth_post import (
+    loginHelper,
+    reasonHelper,
+)
 
 google_auth_bp = Blueprint("google_auth_bp", __name__)
 

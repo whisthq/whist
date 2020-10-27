@@ -1,14 +1,10 @@
-from app import *
-from app.helpers.utils.general.logs import *
+from flask import jsonify
 
-from app.models.public import *
-from app.models.hardware import *
-from app.serializers.public import *
-from app.serializers.hardware import *
+from app.constants.http_codes import BAD_REQUEST, SUCCESS
+from app.models import User
+from app.serializers.public import UserSchema
 
 user_schema = UserSchema()
-os_disk_schema = OSDiskSchema()
-secondary_disk_schema = SecondaryDiskSchema()
 
 
 def codeHelper(username):
@@ -52,56 +48,6 @@ def fetchUserHelper(username):
         return jsonify({"user": user_schema.dump(user), "status": SUCCESS}), SUCCESS
     else:
         return jsonify({"user": None, "status": BAD_REQUEST}), BAD_REQUEST
-
-
-def disksHelper(username, main):
-    """Fetches all disks associated with a username.
-
-    Parameters:
-    username (str): The username
-    main (bool): True if only OS disk is desired, false if all disks are desired
-
-    Returns:
-    json: Fetched disks
-    """
-
-    # Send SQL disk select command
-
-    fractalLog(
-        function="disksHelper",
-        label="{username}".format(username=username),
-        logs="Disk helper function looking for disks associated with {username} and main {main}".format(
-            username=username, main=str(main)
-        ),
-    )
-
-    user = User.query.get(username)
-    if not user:
-        return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
-
-    os_disks = (
-        OSDisk.query.filter_by(user_id=username, state="ACTIVE").all()
-        if main
-        else OSDisk.query.filter_by(user_id=username).all()
-    )
-    os_disks = [os_disk_schema.dump(disk) for disk in os_disks]
-
-    secondary_disks = SecondaryDisk.query.filter_by(user_id=username).all()
-    secondary_disks = [secondary_disk_schema.dump(disk) for disk in secondary_disks]
-
-    fractalLog(
-        function="disksHelper",
-        label="{username}".format(username=username),
-        logs="Disk helper function found OS disks {os_disks} and secondary disks {secondary_disks} associated with {username}".format(
-            os_disks=str([disk["disk_id"] for disk in os_disks]),
-            secondary_disks=str([disk["disk_id"] for disk in secondary_disks]),
-            username=username,
-        ),
-    )
-
-    # Return SQL output
-
-    return {"os_disks": os_disks, "secondary_disks": secondary_disks, "status": SUCCESS}
 
 
 def verifiedHelper(username):

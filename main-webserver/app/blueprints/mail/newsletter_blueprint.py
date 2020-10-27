@@ -1,6 +1,7 @@
-from app import *
-from app.helpers.blueprint_helpers.mail.mail_post import *
-from app.helpers.blueprint_helpers.mail.mail_get import *
+from flask import Blueprint, jsonify
+
+from app import fractalPreProcess
+from app.constants.http_codes import SUCCESS
 
 newsletter_bp = Blueprint("newsletter_bp", __name__)
 

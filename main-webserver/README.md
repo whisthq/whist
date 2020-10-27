@@ -10,7 +10,7 @@ Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?c
 
 #### Coding Philosophy
 
-Before contributing to this project, please read our in-depth coding philosophy document [here](https://www.notion.so/fractalcomputers/Code-Philosophy-Webserver-backend-d036205444464f8b8a61dc36eeae7dbb).
+Before contributing to this project, please read our in-depth coding philosophy document [here](https://www.notion.so/tryfractal/Code-Philosophy-Webserver-backend-d036205444464f8b8a61dc36eeae7dbb).
 
 ## Development
 
@@ -34,7 +34,7 @@ python retrieve_config.py staging
 py retrieve_config.py staging
 ```
 
-You can review `dev-base-config.json` to see which values will be overriden for local development. For example, the `REDIS_URL` will be changed to use the local Docker version.
+You can review `dev-base-config.json` to see which values will be overriden for local development. Currently, none are listed.
 
 **2. Spin Up Local Servers**
 
@@ -56,17 +56,17 @@ We recommend that you download several softwares to help you code and test:
 
 **Postman**
 
-We use Postman to send API requests to our server, to store our API endpoints, and to generate documentation. Our Postman team link is [here](https://fractalcomputers.postman.co/). If you are not part of the team, contact @mingy98. To better understand how Postman works, refer to our wiki [here](https://www.notion.so/fractalcomputers/Postman-API-Documentation-602cc6df23e04cd0a026340c406bd663).
+We use Postman to send API requests to our server, to store our API endpoints, and to generate documentation. Our Postman team link is [here](https://tryfractal.postman.co/). If you are not part of the team, contact @mingy98. To better understand how Postman works, refer to our wiki [here](https://www.notion.so/tryfractal/Postman-API-Documentation-602cc6df23e04cd0a026340c406bd663).
 
 **TablePlus**
 
-We use TablePlus to visualize, search, and modify our SQL database. For instructions on how to set up TablePlus, refer to our wiki [here](https://www.notion.so/fractalcomputers/Using-TablePlus-to-Access-our-PostgresSQL-Database-d5badb38eb3841deb56a84698ccd20f5).
+We use TablePlus to visualize, search, and modify our SQL database. For instructions on how to set up TablePlus, refer to our wiki [here](https://www.notion.so/tryfractal/Using-TablePlus-to-Access-our-PostgresSQL-Database-d5badb38eb3841deb56a84698ccd20f5).
 
 ### Heroku Setup
 
 For continuous integration and delivery, we leverage Heroku pipelines, which provides us with automated PR testing, isolation of environment variables, promotion/rollbacks, and auto-deploys from Github. Contributors should NOT push code to Heroku; only codeowners are expected to do this. Instead, contributors should PR their changes into the appropriate Github branch (most often `master`).
 
-While our Heroku pipeline should not be modified without codeowner permission, it is helpful to understand how it works by consulting our wiki [here](https://www.notion.so/fractalcomputers/Heroku-CI-CD-Pipeline-Webservers-f8ef5b43edc84c969cf005fcac4641ba).
+While our Heroku pipeline should not be modified without codeowner permission, it is helpful to understand how it works by consulting our wiki [here](https://www.notion.so/tryfractal/Heroku-CI-CD-Pipeline-Webservers-f8ef5b43edc84c969cf005fcac4641ba).
 
 ### GraphQL
 
@@ -78,15 +78,17 @@ GraphQL is already set up, but here's a [setup doc](https://hasura.io/docs/1.0/g
 
 **Pytest**
 
-We have pytest tests in the `/tests` folder. To run tests, just run `pytest -o log_cli=true -s` in a terminal. To run tests in parallel, run `pytest -o log_cli=true -s -n <num>`, with `<num>` as the # of workers in parallel.
+We have pytest tests in the `tests` subdirectory. To run tests, just run `pytest` in a terminal. Refer to the [pytest documentation](https://docs.pytest.org/en/stable/contents.html) to learn how to use pytest.
 
-If tests are failing when you run the command above locally, make sure that the docker-compose stack is running. Start it if it's not. If the docker-compose stack has crashed, there's a good chance you haven't set the correct environment variables, especially if your terminal displays `AttributeError: 'NoneType' object has no attribute 'upper'`. Be sure that environment variables such as `DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD`, and `USE_PRODUCTION_KEYS` are set to the correct values. The username and password should match the values stored in the relevant configuration database. You can define the environment variables in a `.env` file inside of the repository root, or the `docker` or `tests` subdirectories, or you can set them directly in your shell.
+The docker-compose stack does **not** need to be running in order to run tests. However, the tests do need access to Redis. By default, the tests attempt to connect to `redis://localhost:6379/0`. If your Redis service is running elsewhere, expose the correct connection URI to the tests via the environment variable `REDIS_URL`.
+
+If you are observing mysterious test failures, make sure that you have set the correct environment variables. If your terminal displays `AttributeError: 'NoneType' object has no attribute 'upper'`. Be sure that environment variables such as `DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD`, and `USE_PRODUCTION_KEYS` are set to the correct values. The username and password should match the values stored in the relevant configuration database. You can define environment variables in a `.env` file in the `docker` subdirectory or you can set them directly in your shell.
 
 To get an idea of what environment variables you might be missing, try running `git grep 'os\.getenv'` in the repository root.
 
 ## Styling
 
-To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python Black](https://github.com/psf/black) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Python Black support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Python Black.
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python Black](https://github.com/psf/black) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Python Black support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Python Black.  We may also add Pylint/flake8 in future, which enables import error checking.
 
 You can always run Python Black directly from a terminal by first installing it via `pip install black` (requires Python 3.6+) and running `black .` to format the whole project. You can see and modify the project's Python Black settings in `pyproject.toml` and list options by running `black --help`. If you prefer, you can also install it directly within your IDE by via the following instructions:
 
@@ -107,3 +109,5 @@ ext install ms-python.python
 5. Search for “Python formatting provider” and select “Black”.
 
 6. Now open/create a Python file, write some code and save it to see the magic happen!
+
+> **Tip:** Although we don't use [flake8](https://flake8.pycqa.org/en/latest/) in our CI pipeline, it can be a useful tool to use for development. In particular, I like to use flake8 to detect unused and missing imports as well as unused and undefined variables. -O

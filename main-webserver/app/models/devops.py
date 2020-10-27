@@ -1,5 +1,4 @@
-from app.models.public import *
-from app import db
+from ._meta import db
 
 
 class ReleaseGroup(db.Model):

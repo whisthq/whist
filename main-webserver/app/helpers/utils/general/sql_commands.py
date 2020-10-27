@@ -1,8 +1,9 @@
-from app.imports import *
-from app.constants.config import *
-from app.helpers.utils.general.logs import *
+import logging
+import time
 
-from sqlalchemy import exc
+from sqlalchemy.exc import OperationalError
+
+from app.helpers.utils.general.logs import fractalLog
 
 
 def fractalSQLCommit(db, f=None, *args):
@@ -17,7 +18,7 @@ def fractalSQLCommit(db, f=None, *args):
             db.session.commit()
             commit_successful = True
             break
-        except exc.OperationalError as e:
+        except OperationalError:
             if attempts < 5:
                 db.session.rollback()
                 time.sleep(2 ** attempts)

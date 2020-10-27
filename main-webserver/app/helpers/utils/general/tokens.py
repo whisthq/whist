@@ -1,9 +1,16 @@
 import hashlib
-from app.imports import *
-from app.helpers.utils.general.sql_commands import *
+import random
+import secrets
+import string
+
+from better_profanity import profanity
+from flask import current_app
+from flask_jwt_extended import create_access_token, create_refresh_token
+from google_auth_oauthlib.flow import Flow
+from jose import jwt
+
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
-from app.constants.generate_subsequences_for_words import generate_subsequence_for_word
-from app.models.public import *
+from app.models import User
 
 
 def generatePrivateKey():
@@ -28,11 +35,11 @@ def getAccessTokens(username):
 
 
 def generateToken(username):
-    token = jwt.encode({"email": username}, JWT_SECRET_KEY)
+    token = jwt.encode({"email": username}, current_app.config["JWT_SECRET_KEY"])
     if len(token) > 15:
         token = token[-15:]
     else:
-        token = token[-1 * len(pwd_token) :]
+        token = token[-1 * len(token) :]
 
     return token
 
@@ -40,42 +47,23 @@ def generateToken(username):
 def generatePromoCode():
     upperCase = string.ascii_uppercase
     numbers = "1234567890"
+
     allowed = False
     while not allowed:
         c1 = "".join([random.choice(numbers) for _ in range(0, 3)])
         c2 = "".join([random.choice(upperCase) for _ in range(0, 3)]) + "-" + c1
-        c2_subsq = generate_subsequence_for_word(c2)
-        for result in c2_subsq:
-            c2_encoding = result.lower().encode("utf-8")
-            if hashlib.md5(c2_encoding).hexdigest() not in BAD_WORDS_HASHED:
-                allowed = True
-            else:
-                allowed = False
-                break
+        c2_encoding = c2.lower().encode("utf-8")
+        if hashlib.md5(
+            c2_encoding
+        ).hexdigest() not in BAD_WORDS_HASHED and not profanity.contains_profanity(c2):
+            allowed = True
     return c2
-
-
-def genHaiku(n):
-    """Generates an array of haiku names (no more than 15 characters) using haikunator
-
-    Args:
-        n (int): Length of the array to generate
-
-    Returns:
-        arr: An array of haikus
-    """
-    haikunator = Haikunator()
-    haikus = [
-        haikunator.haikunate(delimiter="") + str(np.random.randint(0, 10000)) for _ in range(0, n)
-    ]
-    haikus = [haiku[0 : np.min([15, len(haiku)])] for haiku in haikus]
-    return haikus
 
 
 def getGoogleTokens(code, clientApp):
     if clientApp:
         client_secret = "secrets/google_client_secret_desktop.json"
-        redirect_uri = "urn:ietf:wg:oauth:2.0:oob:auto"
+        redirect_uri = "com.tryfractal.app:/oauth2Callback"
     else:
         client_secret = "secrets/google_client_secret.json"
         redirect_uri = "postmessage"

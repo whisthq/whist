@@ -1,6 +1,8 @@
-from app import fractalLog
-from app.imports import *
-from app.helpers.utils.general.time import *
+from datetime import datetime as dt
+
+import numpy as np
+
+from app.helpers.utils.general.time import unixToDate
 
 
 def totalMinutes(report):

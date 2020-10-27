@@ -1,7 +1,21 @@
-from app import *
-from app.helpers.utils.general.auth import *
-from app.helpers.blueprint_helpers.auth.account_get import *
-from app.helpers.blueprint_helpers.auth.account_post import *
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
+
+from app import fractalPreProcess
+from app.constants.http_codes import SUCCESS
+from app.helpers.blueprint_helpers.auth.account_get import (
+    codeHelper,
+    verifiedHelper,
+)
+from app.helpers.blueprint_helpers.auth.account_post import (
+    deleteHelper,
+    loginHelper,
+    lookupHelper,
+    registerHelper,
+    updateUserHelper,
+    verifyHelper,
+)
+from app.helpers.utils.general.auth import fractalAuth
 
 account_bp = Blueprint("account_bp", __name__)
 
@@ -70,18 +84,7 @@ def account_post(action, **kwargs):
 @account_bp.route("/account/<action>", methods=["GET"])
 @fractalPreProcess
 def account_get_no_auth(action, **kwargs):
-    if action == "disks":
-        # Get all the user's disks
-        username = request.args.get("username")
-
-        main = True
-        if "main" in request.args:
-            main = str(request.args.get("main")).upper() == "TRUE"
-
-        output = disksHelper(username, main)
-
-        return jsonify(output), output["status"]
-    elif action == "verified":
+    if action == "verified":
         # Check if the user's email has been verified
         username = request.args.get("username")
 

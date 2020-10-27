@@ -1,5 +1,9 @@
-from app import *
-from app.celery.dummy import *
+from celery import current_app
+from flask import Blueprint, jsonify, make_response
+
+from app import fractalPreProcess
+from app.celery.dummy import dummyTask
+from app.constants.http_codes import ACCEPTED, BAD_REQUEST
 
 celery_status_bp = Blueprint("celery_status_bp", __name__)
 
@@ -8,7 +12,7 @@ celery_status_bp = Blueprint("celery_status_bp", __name__)
 @fractalPreProcess
 def celery_status(task_id, **kwargs):
     try:
-        result = celery_instance.AsyncResult(task_id)
+        result = current_app.AsyncResult(task_id)
         if result.status == "SUCCESS":
             response = {"state": result.status, "output": result.result}
             return make_response(jsonify(response), 200)

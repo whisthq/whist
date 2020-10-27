@@ -1,5 +1,5 @@
 from app import ma
-from app.models.sales import *
+from app.models import MainNewsletter, StripeProduct
 
 
 class StripeProductSchema(ma.SQLAlchemyAutoSchema):

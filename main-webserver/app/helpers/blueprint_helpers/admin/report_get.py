@@ -1,20 +1,16 @@
-from app import *
-from app.helpers.utils.general.analytics import *
-from app.helpers.utils.general.logs import *
+import datetime
 
-from app.models.hardware import *
-from app.models.public import *
-from app.models.logs import *
+from datetime import datetime as dt
 
-from app.serializers.hardware import *
-from app.serializers.public import *
-from app.serializers.logs import *
+from app.helpers.utils.general.analytics import totalMinutes
+from app.models.logs import LoginHistory, MonitorLog
+from app.models.public import User
+from app.serializers.logs import LoginHistorySchema, MonitorLogSchema
+from app.serializers.public import UserSchema
 
 monitor_log_schema = MonitorLogSchema()
 login_history_schema = LoginHistorySchema()
 user_schema = UserSchema()
-vm_schema = UserVMSchema()
-disk_schema = OSDiskSchema()
 
 
 def latestHelper():
@@ -40,7 +36,7 @@ def totalUsageHelper():
         .order_by(LoginHistory.timestamp)
         .all()
     )
-    
+
     monthParams = (today - datetime.timedelta(days=30)).timestamp()
     monthReport = login_history_schema.dump(
         LoginHistory.query.filter(LoginHistory.timestamp > monthParams)
@@ -49,12 +45,13 @@ def totalUsageHelper():
     )
 
     # FIXME why is this empty?!? this doesn't work
-    
+
     dayMins = totalMinutes(dayReport) if dayReport else 0
     weekMins = totalMinutes(weekReport) if weekReport else 0
     monthMins = totalMinutes(monthReport) if monthReport else 0
 
     return {"day": dayMins, "week": weekMins, "month": monthMins}
+
 
 # FIXME
 def signupsHelper():
@@ -82,15 +79,3 @@ def fetchUsersHelper():
     users = User.query.all()
     users = [user_schema.dump(user) for user in users]
     return users
-
-
-def fetchVMsHelper():
-    vms = UserVM.query.all()
-    vms = [vm_schema.dump(vm) for vm in vms]
-    return vms
-
-
-def fetchDisksHelper():
-    disks = OSDisk.query.all()
-    disks = [disk_schema.dump(disk) for disk in disks]
-    return disks

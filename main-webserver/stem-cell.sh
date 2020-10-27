@@ -24,6 +24,6 @@ case "$1" in
 	$([ "$HOT_RELOAD" = "true" ] && \
 	      (pip install watchdog[watchmedo] >&2
 	       echo "watchmedo auto-restart -R -d . --")) \
-		   celery worker --app=celery_worker.celery_instance ;;
+		   celery --app=celery_worker.celery_instance worker ;;
     *) echo "Specify either 'web' or 'celery' to determine what this instance will manifest as." ;;
 esac

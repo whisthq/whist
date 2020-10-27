@@ -1,15 +1,12 @@
 import time
 import threading
-import requests
 import progressbar
-import multiprocessing
 from functools import wraps
 
-from tests.constants.resources import *
-from tests.constants.settings import *
+from tests.constants.settings import ALLOW_MULTITHREADING
 
 
-def queryStatus(resp, timeout=10):
+def queryStatus(client, resp, timeout=10):
     """
     @params:
         resp        - Required  : Raw celery function call response
@@ -18,12 +15,12 @@ def queryStatus(resp, timeout=10):
 
     def getStatus(status_id):
         if status_id:
-            resp = requests.get((SERVER_URL + "/status/" + status_id))
-            return resp.json()
+            resp = client.get(f"/status/{status_id}")
+            return resp.json
         return None
 
     try:
-        status_id = resp.json()["ID"]
+        status_id = resp.json["ID"]
     except Exception as e:
         print(str(e))
         return {"status": -3, "output": "No status ID provided"}
@@ -68,7 +65,7 @@ def queryStatus(resp, timeout=10):
             ),
         }
     else:
-        return {"status": 1, "output": "SUCCESS detected"}
+        return {"status": 1, "output": "SUCCESS detected", "result": returned_json["output"]}
 
 
 def fractalJobRunner(f, initial_list, multithreading=ALLOW_MULTITHREADING):

@@ -4,6 +4,7 @@ import itertools
 def generate_subsequence_for_word(word):
     """Generates all possible subsequences of word and stores
     them in an array called result
+
     Args:
         word
     """

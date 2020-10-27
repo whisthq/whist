@@ -1,17 +1,39 @@
-from app import *
-from app.helpers.utils.general.logs import *
-from app.helpers.utils.general.tokens import *
-from app.helpers.utils.mail.account_mail import *
-from app.helpers.utils.general.crypto import *
-from app.helpers.blueprint_helpers.mail.mail_post import *
-from app.celery.azure_resource_deletion import *
+import datetime
+import logging
+
+from datetime import datetime as dt
+
+from flask import jsonify
+
+from app import mail
+from app.constants.config import ADMIN_PASSWORD
+from app.constants.http_codes import (
+    BAD_REQUEST,
+    NOT_ACCEPTABLE,
+    SUCCESS,
+    UNAUTHORIZED,
+)
+from app.helpers.blueprint_helpers.mail.mail_post import verificationHelper
+from app.helpers.utils.general.crypto import check_value, hash_value
+from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.sql_commands import (
+    fractalSQLCommit,
+    fractalSQLUpdate,
+)
+from app.helpers.utils.general.tokens import (
+    generateToken,
+    generateUniquePromoCode,
+    getAccessTokens,
+)
+from app.models import db, User
 
 
 def loginHelper(email, password):
     """Verifies the username password combination in the users SQL table
 
     If the password is the admin password, just check if the username exists
-    Else, check to see if the username is in the database and the jwt encoded password is in the database
+    Otherwise, check to see if the username is in the database and the JWT
+    encoded password is in the database
 
     Parameters:
     email (str): The email
@@ -35,13 +57,14 @@ def loginHelper(email, password):
     # Return early if username/password combo is invalid
 
     if is_user:
-        if not user or not check_value(user.password, password):
+        if not user or not check_value(user.password, password) or not user.can_login == True:
             return {
                 "verified": False,
                 "is_user": is_user,
                 "access_token": None,
                 "refresh_token": None,
                 "verification_token": None,
+                "name": None,
             }
 
     # Fetch the JWT tokens
@@ -54,6 +77,7 @@ def loginHelper(email, password):
         "access_token": access_token,
         "refresh_token": refresh_token,
         "verification_token": user.token,
+        "name": user.name,
     }
 
 
@@ -115,18 +139,14 @@ def registerHelper(username, password, name, reason_for_signup):
         user_id = access_token = refresh_token = None
 
     if status == SUCCESS:
-        internal_message = SendGridMail(
-            from_email="support@fractalcomputers.com",
-            to_emails="support@fractalcomputers.com",
-            subject=username + " just created an account!",
-            html_content="<p>Just letting you know that {0} created an account. Their reason for signup is: {1}. Have a great day.</p>".format(
-                name, reason_for_signup
-            ),
-        )
-
         try:
-            sg = SendGridAPIClient(SENDGRID_API_KEY)
-            response = sg.send(internal_message)
+            mail.send_email(
+                to_email="support@tryfractal.com",
+                subject=username + " just created an account!",
+                html="<p>Just letting you know that {0} created an account. Their reason for signup is: {1}. Have a great day.</p>".format(
+                    name, reason_for_signup
+                ),
+            )
         except Exception as e:
             fractalLog(
                 function="registerHelper",
@@ -206,15 +226,10 @@ def deleteHelper(username):
     user = User.query.get(username)
 
     if not user:
-        return {"status": BAD_REQUEST, "error": output["error"]}
+        return {"status": BAD_REQUEST, "error": f"User {username} not found"}
 
     db.session.delete(user)
     db.session.commit()
-
-    disks = OSDisk.query.filter_by(user_id=username).all()
-    if disks:
-        for disk in disks:
-            deleteDisk.apply_async([disk.disk_id, VM_GROUP])
 
     return {"status": SUCCESS, "error": None}
 

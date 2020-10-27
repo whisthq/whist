@@ -4,7 +4,7 @@ name: Python Black Linting
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ master, dev ]
 
 jobs:
   lint:
@@ -24,8 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install black
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install black==20.8b1
               
     - name: Check if code is linted with Python Black
       run: |

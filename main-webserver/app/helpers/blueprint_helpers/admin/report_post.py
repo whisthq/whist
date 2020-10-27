@@ -1,17 +1,21 @@
-from app import *
-from app.helpers.utils.general.analytics import *
-from app.helpers.utils.general.logs import *
-from app.helpers.utils.general.sql_commands import *
+import datetime
 
-from app.models.logs import *
-from app.serializers.logs import *
+from datetime import datetime as dt
+
+from flask import jsonify
+
+from app.constants.http_codes import BAD_REQUEST, SUCCESS
+from app.helpers.utils.general.analytics import loginsToMinutes
+from app.models import LoginHistory, MonitorLog, User
+from app.serializers.logs import LoginHistorySchema, MonitorLogSchema
+
 
 # this is being @deprecated
 def regionReportHelper(timescale):
     """
     Queries from when we directly queried:
     (note that the actual implementation yields some extra columns; this is fine)
-    
+
     SELECT timestamp, users_online, eastus_unavailable, northcentralus_unavailable, southcentralus_unavailable
     FROM logs.monitor_logs
     ORDER BY timestamp DESC
@@ -30,26 +34,17 @@ def regionReportHelper(timescale):
     LIMIT 30
     """
     monitor_log_schema = MonitorLogSchema()
-    
+
     # TODO (adriano) not urgent; works, but not exactly the original
     # did it this way because you can't construct a query since it's like already a BaseQuery or something
     output = None
     if timescale == "day":
-        output = (MonitorLog.query
-        .order_by(MonitorLog.timestamp.desc())
-        .limit(24)
-        .all())
+        output = MonitorLog.query.order_by(MonitorLog.timestamp.desc()).limit(24).all()
     elif timescale == "week":
-        output = (MonitorLog.query
-        .order_by(MonitorLog.timestamp.desc())
-        .limit(24 * 7)
-        .all())
+        output = MonitorLog.query.order_by(MonitorLog.timestamp.desc()).limit(24 * 7).all()
     elif timescale == "month":
-        output = (MonitorLog.query
-        .order_by(MonitorLog.timestamp.desc())
-        .limit(24 * 7 * 30)
-        .all())
-    
+        output = MonitorLog.query.order_by(MonitorLog.timestamp.desc()).limit(24 * 7 * 30).all()
+
     output = [monitor_log_schema.dump(element) for element in output]
 
     return output
@@ -86,8 +81,6 @@ def userReportHelper(username, timescale=None, start_date=None):
     if not user:
         # FIXME somehow we keep getting here
         return jsonify({"error": "user with email does not exist!"}), BAD_REQUEST
-
-    
 
     histories = (
         LoginHistory.query.filter(

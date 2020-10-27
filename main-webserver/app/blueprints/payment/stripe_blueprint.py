@@ -1,6 +1,25 @@
-from app import *
-from app.helpers.utils.general.auth import *
-from app.helpers.blueprint_helpers.payment.stripe_post import *
+import stripe
+
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
+
+from app import fractalPreProcess
+from app.constants.config import ENDPOINT_SECRET
+from app.constants.http_codes import FORBIDDEN, NOT_ACCEPTABLE
+from app.helpers.blueprint_helpers.payment.stripe_post import (
+    addCardHelper,
+    addProductHelper,
+    cancelStripeHelper,
+    chargeHelper,
+    deleteCardHelper,
+    discountHelper,
+    referralHelper,
+    removeProductHelper,
+    retrieveStripeHelper,
+    updateHelper,
+    webhookHelper,
+)
+from app.helpers.utils.general.auth import fractalAuth
 
 stripe_bp = Blueprint("stripe_bp", __name__)
 
@@ -74,10 +93,10 @@ def hooks(**kwargs):
 
     try:
         event = stripe.Webhook.construct_event(body, sigHeader, endpointSecret)
-    except ValueError as e:
+    except ValueError:
         # Invalid payload
         return jsonify({"status": "Invalid payload"}), NOT_ACCEPTABLE
-    except stripe.error.SignatureVerificationError as e:
+    except stripe.error.SignatureVerificationError:
         # Invalid signature
         return jsonify({"status": "Invalid signature"}), FORBIDDEN
 

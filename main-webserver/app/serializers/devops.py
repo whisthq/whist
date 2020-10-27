@@ -1,5 +1,5 @@
 from app import ma
-from app.models.devops import *
+from app.models import ReleaseGroup
 
 
 class ReleaseGroupSchema(ma.SQLAlchemyAutoSchema):

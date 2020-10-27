@@ -1,22 +1,24 @@
 from app import ma
-from app.models.hardware import *
+from app.models import (
+    AppsToInstall,
+    Banners,
+    ClusterInfo,
+    InstallCommand,
+    SupportedAppImages,
+    UserContainer,
+)
 
 
-class UserVMSchema(ma.SQLAlchemyAutoSchema):
+class UserContainerSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = UserVM
+        model = UserContainer
         include_fk = True
 
 
-class OSDiskSchema(ma.SQLAlchemyAutoSchema):
+class ClusterInfoSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = OSDisk
+        model = ClusterInfo
         include_fk = True
-
-
-class SecondaryDiskSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = SecondaryDisk
 
 
 class InstallCommandSchema(ma.SQLAlchemyAutoSchema):
@@ -32,3 +34,8 @@ class AppsToInstallSchema(ma.SQLAlchemyAutoSchema):
 class SupportedAppImagesSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SupportedAppImages
+
+
+class BannersSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Banners
