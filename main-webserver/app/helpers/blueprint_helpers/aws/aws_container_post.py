@@ -6,7 +6,7 @@ from app.constants.http_codes import (
     SUCCESS,
     UNAUTHORIZED,
 )
-from app.models import db, UserContainer
+from app.models import db, UserContainer, SupportedAppImages
 
 
 class BadAppError(Exception):
@@ -27,14 +27,15 @@ def preprocess_task_info(app):
             create_new_container celery task.
     """
 
-    # TODO: Don't just hard-code the cluster, region, and task definition ARN
-    app_to_name = {"Google Chrome": "fractal-browsers-chrome"}
-
-    return (
-        (app_to_name[app] if app in app_to_name else app),
-        "us-east-1",
-        "demo-cluster",
-    )
+    # TODO: Don't just hard-code the cluster, region
+    app_data = SupportedAppImages.query.filter_by(app_id=app).first()
+    if app_data:
+        return (
+            app_data.task_definition,
+            "us-east-1",
+            "demo-cluster",
+        )
+    raise BadAppError("No Matching App Found")
 
 
 def protocol_info(address, port, aeskey):
