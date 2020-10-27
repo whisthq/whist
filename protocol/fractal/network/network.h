@@ -106,6 +106,7 @@ Defines
 #define FRACTAL_CLOSE_SOCKET closesocket
 #else
 #define SOCKET int
+#define INVALID_SOCKET -1
 #define closesocket close
 #define FRACTAL_IOCTL_SOCKET ioctl
 #define FRACTAL_CLOSE_SOCKET close
