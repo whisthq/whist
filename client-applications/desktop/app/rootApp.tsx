@@ -14,7 +14,6 @@ const RootApp = (props: any) => {
         const ipc = require("electron").ipcRenderer
         ipc.on("customURL", (_: any, customURL: any) => {
             if (customURL && customURL.toString().includes("fractal://")) {
-                console.log("launch immediately root app")
                 setLaunchImmediately(true)
             }
         })

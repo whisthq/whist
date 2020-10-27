@@ -66,6 +66,7 @@ const UpdateScreen = (props: any) => {
             debugLog(`no suitable os found, instead got ${os.platform()}`)
         }
 
+
         var port_info = `32262:${port32262},32263:${port32263},32273:${port32273}`
         var parameters = ["-w", 800, "-h", 600, "-p", port_info, ip]
         debugLog(`your executable path should be: ${path}`)

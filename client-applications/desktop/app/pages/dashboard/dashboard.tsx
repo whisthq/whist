@@ -16,7 +16,7 @@ const Dashboard = (props: any) => {
     return (
         <div className={styles.container}>
             {os === "win32" ? (
-                <div>
+                <div style = {{zIndex: 9999}}>
                     <Titlebar backgroundColor="#000000" />
                 </div>
             ) : (

@@ -142,6 +142,12 @@ function* fetchContainer(action: any) {
     const region = "us-east-1"
     const app = action.app
 
+    console.log("creating container!")
+    console.log(state.MainReducer.auth.accessToken)
+    console.log(username)
+    console.log(region)
+    console.log(app)
+
     var { json, response } = yield call(
         apiPost,
         `/container/create`,
