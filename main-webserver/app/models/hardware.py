@@ -33,6 +33,7 @@ class ClusterInfo(db.Model):
     __tablename__ = "cluster_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     cluster = db.Column(db.String(250), primary_key=True, unique=True)
+    location = db.Column(db.String(250), nullable=False, default="N/a")
     maxCPURemainingPerInstance = db.Column(db.Float, nullable=False, default=1024.0)
     maxMemoryRemainingPerInstance = db.Column(db.Float, nullable=False, default=2000.0)
     pendingTasksCount = db.Column(db.Integer, nullable=False, default=0)
@@ -53,6 +54,7 @@ class SortedClusters(db.Model):
     __tablename__ = "cluster_sorted"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     cluster = db.Column(db.String(250), primary_key=True, unique=True)
+    location = db.Column(db.String(250), nullable=False, default="N/a")
     maxCPURemainingPerInstance = db.Column(db.Float, nullable=False, default=1024.0)
     maxMemoryRemainingPerInstance = db.Column(db.Float, nullable=False, default=2000.0)
     pendingTasksCount = db.Column(db.Integer, nullable=False, default=0)

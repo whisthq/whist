@@ -58,6 +58,7 @@ def protocol_info(address, port, aeskey):
                     "secret_key": container.secret_key,
                     "using_stun": container.using_stun,
                     "container_id": container.container_id,
+                    "user_id": container.user_id,
                 },
                 SUCCESS,
             )

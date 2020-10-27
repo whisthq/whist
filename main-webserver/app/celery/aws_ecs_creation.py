@@ -122,10 +122,8 @@ def create_new_container(
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
     if not cluster_name:
-        all_clusters = list(SortedClusters.query.all())
+        all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
         all_clusters = [cluster for cluster in all_clusters if "cluster_" in cluster.cluster]
-        print(all_clusters)
-
         if len(all_clusters) == 0:
             fractalLog(
                 function="create_new_container",
@@ -149,7 +147,11 @@ def create_new_container(
 
     cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
     if not cluster_info:
-        fractalSQLCommit(db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster_name))
+        fractalSQLCommit(
+            db,
+            lambda db, x: db.session.add(x),
+            ClusterInfo(cluster=cluster_name, location=region_name),
+        )
         cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
     elif cluster_info.status == "INACTIVE" or cluster_info.status == "DEPROVISIONING":
         fractalLog(
@@ -221,7 +223,7 @@ def create_new_container(
         )
         self.update_state(
             state="FAILURE",
-            meta={"msg": "Error inserting Container {} into SQL".format(ecs_client.taasks[0])},
+            meta={"msg": "Error inserting Container {} into SQL".format(ecs_client.tasks[0])},
         )
         raise Ignore
 
@@ -296,7 +298,9 @@ def create_new_cluster(
         )
 
         cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
-        cluster_usage_info = ClusterInfo(cluster=cluster_name, **cluster_usage)
+        cluster_usage_info = ClusterInfo(
+            cluster=cluster_name, location=region_name, **cluster_usage
+        )
         cluster_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), cluster_usage_info)
         if cluster_sql:
             cluster = ClusterInfo.query.get(cluster_name)
