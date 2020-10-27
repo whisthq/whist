@@ -4,8 +4,6 @@ import * as Action from "store/actions/pure"
 import * as SideEffect from "store/actions/sideEffects"
 import { history } from "store/configureStore"
 
-import { config } from "shared/constants/config"
-
 import moment from "moment"
 
 function* refreshAccess() {
@@ -23,9 +21,10 @@ function* refreshAccess() {
                 refreshToken: json.refresh_token,
             })
         )
-        
+
         const storage = require("electron-json-storage")
-        storage.set("tokens", {
+        storage.set("credentials", {
+            username: state.MainReducer.auth.username,
             accessToken: json.access_token,
             refreshToken: json.refresh_token,
         })
@@ -48,11 +47,14 @@ function* loginUser(action: any) {
                     name: json.name,
                 })
             )
-            const storage = require("electron-json-storage")
-            storage.set("tokens", {
-                accessToken: json.access_token,
-                refreshToken: json.refresh_token,
-            })
+            if (action.rememberMe) {
+                const storage = require("electron-json-storage")
+                storage.set("credentials", {
+                    username: action.username,
+                    accessToken: json.access_token,
+                    refreshToken: json.refresh_token,
+                })
+            }
             yield call(fetchPaymentInfo, action)
             yield call(getPromoCode, action)
         } else {
@@ -81,12 +83,15 @@ function* googleLogin(action: any) {
                         name: json.name,
                     })
                 )
-                
-                const storage = require("electron-json-storage")
-                storage.set("tokens", {
-                    accessToken: json.access_token,
-                    refreshToken: json.refresh_token,
-                })
+
+                if (action.rememberMe) {
+                    const storage = require("electron-json-storage")
+                    storage.set("credentials", {
+                        username: json.username,
+                        accessToken: json.access_token,
+                        refreshToken: json.refresh_token,
+                    })
+                }
                 yield call(fetchPaymentInfo, { username: json.username })
                 yield call(getPromoCode, { username: json.username })
                 history.push("/dashboard")
@@ -131,16 +136,11 @@ function* getPromoCode(action: any) {
 function* fetchContainer(action: any) {
     history.push("/loading")
     const state = yield select()
-    const username = state.MainReducer.auth.username
+    // const username = state.MainReducer.auth.username
+    const username = "ming@fractalcomputers.com"
     //const region = state.MainReducer.client.region
     const region = "us-east-1"
     const app = action.app
-
-    console.log("creating container!")
-    console.log(state.MainReducer.auth.accessToken)
-    console.log(username)
-    console.log(region)
-    console.log(app)
 
     var { json, response } = yield call(
         apiPost,

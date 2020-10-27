@@ -6,8 +6,6 @@ import Login from "pages/login/login"
 import Loading from "pages/loading/loading"
 import Dashboard from "pages/dashboard/dashboard"
 
-import { fetchContainer } from "store/actions/sideEffects"
-
 const RootApp = (props: any) => {
     const { dispatch } = props
     const [launchImmediately, setLaunchImmediately] = useState(false)
@@ -27,9 +25,15 @@ const RootApp = (props: any) => {
             <Switch>
                 <Route path="/dashboard" component={Dashboard} />
                 <Route path="/loading" component={Loading} />
-                <Route path = "/" render={(props) => (
-                    <Login {...props} launchImmediately={launchImmediately} />
-                )}/>
+                <Route
+                    path="/"
+                    render={(props) => (
+                        <Login
+                            {...props}
+                            launchImmediately={launchImmediately}
+                        />
+                    )}
+                />
             </Switch>
         </div>
     )

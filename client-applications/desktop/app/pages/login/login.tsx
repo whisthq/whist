@@ -116,18 +116,16 @@ const Login = (props: any) => {
         console.log("handling log in")
         dispatch(updateAuth({ loginWarning: false }))
         setLoggingIn(true)
-        if (rememberMe) {
+        if (!rememberMe) {
             storage.set("credentials", {
-                username: username,
-                password: password,
+                username: "",
+                accessToken: "",
+                refreshToken: "",
             })
-        } else {
-            storage.set("credentials", { username: "", password: "" })
-            storage.set("tokens", { accessToken: "", refreshToken: "" })
         }
         setUsername(username)
         setPassword(password)
-        dispatch(loginUser(username.trim(), password))
+        dispatch(loginUser(username.trim(), password, rememberMe))
         setAWSRegion()
     }
 
@@ -162,7 +160,7 @@ const Login = (props: any) => {
                     authWindow.removeAllListeners("closed")
                     setImmediate(() => authWindow.close())
                     setLoggingIn(true)
-                    dispatch(googleLogin(query.code))
+                    dispatch(googleLogin(query.code, rememberMe))
                 }
             }
         }
@@ -214,10 +212,17 @@ const Login = (props: any) => {
             if (error) throw error
 
             if (data && Object.keys(data).length > 0) {
-                if (data.username && live) {
+                if (
+                    data.username &&
+                    data.accessToken &&
+                    data.refreshToken &&
+                    live
+                ) {
                     dispatch(
                         updateAuth({
                             username: data.username,
+                            accessToken: data.accessToken,
+                            refreshToken: data.refreshToken,
                         })
                     )
                     setUsername(data.username)
