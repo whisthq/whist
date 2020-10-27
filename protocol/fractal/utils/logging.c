@@ -823,17 +823,13 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
             \"version\" : \"%s\",\n\
             \"available\" : %s,\n\
             \"identifier\" : %s,\n\
-            \"private_key\" : %2X%2X%2X%2X%2X%2X%2X%2X\n\
+            \"private_key\" : %08X%08X%08X%08X\n\
 }",
              get_version(), d->is_connected ? "false" : "true", d->identifier,
-             htons(*((uint32_t *)d->aes_private_key)),
-             htons(*((uint32_t *)(d->aes_private_key + 2))),
-             htons(*((uint32_t *)(d->aes_private_key + 4))),
-             htons(*((uint32_t *)(d->aes_private_key + 6))),
-             htons(*((uint32_t *)(d->aes_private_key + 8))),
-             htons(*((uint32_t *)(d->aes_private_key + 10))),
-             htons(*((uint32_t *)(d->aes_private_key + 12))),
-             htons(*((uint32_t *)(d->aes_private_key + 14))));
+             htonl(*((uint32_t *)(d->aes_private_key))),
+             htonl(*((uint32_t *)(d->aes_private_key + 4))),
+             htonl(*((uint32_t *)(d->aes_private_key + 8))),
+             htonl(*((uint32_t *)(d->aes_private_key + 12))));
     SendPostRequest(d->host, "/container/ping", json, d->access_token, NULL, 0);
 
     free(d);
