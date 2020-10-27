@@ -214,7 +214,7 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string, tty
 	if err != nil {
 		return logger.MakeError("Failed to delete container-specific directory %s", datadir)
 	}
-	logger.Info("Successfully deleted container-specific directory %s\n", datadir)
+	logger.Info("Successfully deleted (possibly non-existent) container-specific directory %s\n", datadir)
 
 	for tty := range ttyState {
 		if ttyState[tty] == id {
