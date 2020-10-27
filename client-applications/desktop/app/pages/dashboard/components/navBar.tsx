@@ -40,9 +40,10 @@ const NavBar = (props: any) => {
 
     const handleSignout = () => {
         const storage = require("electron-json-storage")
-        storage.set("credentials", { username: "", password: "" })
-        dispatch(resetState())
-        history.push("/")
+        storage.set("credentials", { username: "", accessToken: "", refreshToken: ""}, function() {
+            dispatch(resetState())
+            history.push("/")
+        })
     }
 
     return (

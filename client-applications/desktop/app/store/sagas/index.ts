@@ -21,13 +21,6 @@ function* refreshAccess() {
                 refreshToken: json.refresh_token,
             })
         )
-
-        const storage = require("electron-json-storage")
-        storage.set("credentials", {
-            username: state.MainReducer.auth.username,
-            accessToken: json.access_token,
-            refreshToken: json.refresh_token,
-        })
     }
 }
 
@@ -140,6 +133,9 @@ function* fetchContainer(action: any) {
     // if they are super far we'll just default them to us east and hope for the best
     const region = state.MainReducer.client.region ? state.MainReducer.client.region : "us-east-1"
     const app = action.app
+
+    console.log(state.MainReducer.client.region)
+    console.log(app)
 
     var { json, response } = yield call(
         apiPost,
