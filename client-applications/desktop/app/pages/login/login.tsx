@@ -81,8 +81,6 @@ const Login = (props: any) => {
         regions.stdout.setEncoding("utf8")
 
         regions.stdout.on("data", (data: any) => {
-            debugLog("AWS DATA")
-            debugLog(data)
             // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
             const line = data.split(/\r?\n/)[1].replace(/  +/g, " ")
             const items = line.split(" ")
