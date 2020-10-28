@@ -35,7 +35,8 @@ set $right semicolon
 floating_modifier Mod1
 
 # kill focused window
-bindsym Mod1+Shift+q kill
+bindsym Mod1+F4 kill
+bindsym Mod4+w kill
 
 # change focus
 bindsym Mod1+$left focus left
@@ -77,6 +78,24 @@ bindsym Mod1+a focus parent
 default_border pixel
 default_floating_border normal
 hide_edge_borders both
+
+#
+# Make pop-up windows actually appear as pop-ups, rather than tiled
+#
+# The following will account for a lot of them. For those that slip through,
+# we need to enter a per item entry in the config along the lines of
+# for_window [title="Event Tester"]                       floating enable
+# for_window [class="Youtube-dl-gui"]                     floating enable
+# replacing the title or class by that of the application window desired
+#
+# Sometimes a combination of title and class is needed. We can also use 
+# the for_window setting to force size and position, if needed.
+for_window [window_role="pop-up"]                       floating enable
+for_window [window_role="bubble"]                       floating enable 
+for_window [window_role="task_dialog"]                  floating enable
+for_window [window_role="Preferences"]                  floating enable
+for_window [window_type="dialog"]                       floating enable 
+for_window [window_type="menu"]                         floating enable
 
 # Make borders for floating windows look more modern
 # class                 border  backgr. text    indicator child_border

@@ -22,4 +22,5 @@ repos:
                  productivity/discord/Dockerfile.20
                  productivity/notion/Dockerfile.20
                  creative/blockbench/Dockerfile.20
-                 creative/blender/Dockerfile.20]
+                 creative/blender/Dockerfile.20
+                 creative/figma/Dockerfile.20]

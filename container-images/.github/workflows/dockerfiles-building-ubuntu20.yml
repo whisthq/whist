@@ -1,5 +1,4 @@
 # Workflow to build Docker images for basic testing
-
 name: Dockerfiles Building
 
 on:
@@ -8,6 +7,7 @@ on:
 
 jobs:
     build-dockerfiles:
+        name: Build Dockerfiles
         runs-on: ubuntu-20.04
 
         steps:
@@ -18,15 +18,6 @@ jobs:
                   fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
-
-            - name: Checkout Protocol repository
-              uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-                  repository: fractalcomputers/protocol
-                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  path: base/protocol
 
             - name: Build the Fractal protocol dev branch
               run: cd base/protocol && git checkout dev && server/linux-server-setup.sh && cmake . && make -j
@@ -57,3 +48,6 @@ jobs:
 
             - name: Build the Ubuntu 20.04 Blockbench Image
               run: cd creative/blockbench && docker build . --file Dockerfile.20 --tag fractal/creative/blockbench:current-build
+            
+            - name: Build the Ubuntu 20.04 Figma Image
+              run: cd creative/figma && docker build . --file Dockerfile.20 --tag fractal/creative/figma:current-build
