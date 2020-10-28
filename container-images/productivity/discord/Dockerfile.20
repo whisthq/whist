@@ -14,5 +14,5 @@ RUN wget -qO /usr/bin/discord.deb "https://discordapp.com/api/download?platform=
     && dpkg -i /usr/bin/discord.deb \
     && rm -rf /usr/bin/discord*.deb
 
-# Application startup script
-COPY .xinitrc /root/.xinitrc
+# Setup Fractal application symlink
+RUN ln -s /usr/bin/fractal-application /usr/bin/discord

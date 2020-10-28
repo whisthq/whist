@@ -3,12 +3,13 @@ FROM fractal/base:current-build
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
 	wget \
 	&& apt-get autoremove -y \
-    && apt-get clean
+	&& apt-get clean
 
 RUN wget https://github.com/JannisX11/blockbench/releases/download/v3.6.6/Blockbench_3.6.6.deb -O Blockbench_3.6.6.deb
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
 	./Blockbench_3.6.6.deb \
 	&& apt-get autoremove -y \
-    && apt-get clean
+	&& apt-get clean
 
-COPY .xinitrc /root/.xinitrc
+# Setup Fractal application symlink
+RUN ln -s /usr/bin/fractal-application /usr/bin/blockbench

@@ -26,4 +26,6 @@ RUN mv tmp/build /opt/notion
 COPY run-notion.sh /usr/bin/notion
 RUN chmod +x /usr/bin/notion
 
-COPY .xinitrc /root/.xinitrc
+# Setup Fractal application symlink
+RUN ln -s /usr/bin/fractal-application /usr/bin/notion
+

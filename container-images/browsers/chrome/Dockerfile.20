@@ -34,7 +34,8 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
 
 # Don't ask for default browser
 RUN su - fractal -c "mkdir -p /home/fractal/.config/google-chrome \
-                     && touch /home/fractal/.config/google-chrome/'First Run'"
-                     
-# Application startup script
-COPY .xinitrc /root/.xinitrc
+    && touch /home/fractal/.config/google-chrome/'First Run'"
+
+# Setup Fractal application symlink
+RUN ln -s /usr/bin/fractal-application $(which google-chrome)
+
