@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rpadaki/figma-linux-rust-binding.git"
+    "url": "https://github.com/fractalcomputers/figma-font-bindings.git"
   },
   "bugs": {
-    "url": "https://github.com/rpadaki/figma-linux-rust-binding/issues"
+    "url": "https://github.com/fractalcomputers/figma-font-bindings/issues"
   },
-  "homepage": "https://github.com/rpadaki/figma-linux-rust-binding",
+  "homepage": "https://github.com/fractalcomputers/figma-font-bindings",
   "keywords": [
     "Rust",
     "nodejs",
