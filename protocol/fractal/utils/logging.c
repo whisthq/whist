@@ -707,8 +707,7 @@ void saveConnectionID(int connection_id_int) {
 
 // The first time this is called will include the initial log messages,
 // before the first connection, if they haven't been overwritten.
-int sendConnectionHistory() {
-    char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
+int sendConnectionHistory(char *host, char *access_token) {
     // This is for HTTP request, not filesystem
     char *request_path = "/logs/insert";
 
@@ -790,7 +789,7 @@ int sendConnectionHistory() {
                         connection_id_data, get_version(), logs);
 
                 LOG_INFO("Sending logs to webserver...");
-                SendJSONPost(host, request_path, json, get_access_token());
+                SendPostRequest(host, request_path, json, access_token, NULL, 0);
 
                 freopen(connection_id_filename, "wb", connection_id_file);
             }
@@ -808,30 +807,44 @@ int sendConnectionHistory() {
 
 typedef struct update_status_data {
     bool is_connected;
+    char *host;
+    char *access_token;
+    char *identifier;
+    char *aes_private_key;
 } update_status_data_t;
 
-int32_t MultithreadedUpdateStatus(void *data) {
+int32_t MultithreadedUpdateServerStatus(void *data) {
     update_status_data_t *d = data;
-
-    char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
 
     char json[1000];
     snprintf(json, sizeof(json),
              "{\n\
             \"version\" : \"%s\",\n\
-            \"available\" : %s\n\
+            \"available\" : %s,\n\
+            \"identifier\" : \"%s\",\n\
+            \"private_key\" : \"%08X%08X%08X%08X\"\n\
 }",
-             get_version(), d->is_connected ? "false" : "true");
-    SendJSONPost(host, "/vm/ping", json, get_access_token());
+             get_version(), d->is_connected ? "false" : "true", d->identifier,
+             htonl(*((uint32_t *)(d->aes_private_key))),
+             htonl(*((uint32_t *)(d->aes_private_key + 4))),
+             htonl(*((uint32_t *)(d->aes_private_key + 8))),
+             htonl(*((uint32_t *)(d->aes_private_key + 12))));
+    SendPostRequest(d->host, "/container/ping", json, d->access_token, NULL, 0);
 
     free(d);
     return 0;
 }
 
-void updateStatus(bool is_connected) {
+void updateServerStatus(bool is_connected, char *host, char *access_token, char *identifier,
+                        char *aes_private_key) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
-    SDL_Thread *update_status = SDL_CreateThread(MultithreadedUpdateStatus, "UpdateStatus", d);
+    d->host = host;
+    d->access_token = access_token;
+    d->identifier = identifier;
+    d->aes_private_key = aes_private_key;
+    SDL_Thread *update_status =
+        SDL_CreateThread(MultithreadedUpdateServerStatus, "UpdateServerStatus", d);
     SDL_DetachThread(update_status);
 }

@@ -128,6 +128,7 @@ Defines
 // variable
 #define USER_EMAIL_MAXLEN 200
 #define FRACTAL_ENVIRONMENT_MAXLEN 100
+#define FRACTAL_IDENTIFIER_MAXLEN 31
 
 /*
 ============================
@@ -408,6 +409,8 @@ typedef struct FractalMouseMotionMessage {
 
 typedef struct FractalDiscoveryRequestMessage {
     int username;
+    FractalTimeData time_data;
+    char user_email[USER_EMAIL_MAXLEN];
 } FractalDiscoveryRequestMessage;
 
 typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
@@ -435,10 +438,9 @@ typedef enum FractalClientMessageType {
     MESSAGE_AUDIO_NACK = 111,
     CMESSAGE_CLIPBOARD = 112,
     MESSAGE_IFRAME_REQUEST = 113,
-    MESSAGE_TIME = 114,
     CMESSAGE_INTERACTION_MODE = 115,
     MESSAGE_DISCOVERY_REQUEST = 116,
-    MESSAGE_USER_EMAIL = 117,
+
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
 
@@ -488,10 +490,6 @@ typedef struct FractalClientMessage {
 
         // MESSAGE_IFRAME_REQUEST
         bool reinitialize_encoder;
-
-        FractalTimeData time_data;
-
-        char user_email[USER_EMAIL_MAXLEN];
     };
 
     // CMESSAGE_CLIPBOARD
@@ -503,7 +501,6 @@ typedef enum FractalServerMessageType {
     MESSAGE_PONG = 1,
     MESSAGE_AUDIO_FREQUENCY = 2,
     SMESSAGE_CLIPBOARD = 3,
-    MESSAGE_INIT = 4,
     MESSAGE_DISCOVERY_REPLY = 5,
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
@@ -604,52 +601,6 @@ char* get_ip();
 bool read_hexadecimal_private_key(char* hex_string, char* private_key);
 
 /**
- * @brief                          Queries the webserver for various parameters
- */
-void update_webserver_parameters();
-
-/**
- * @brief                          Queries the webserver to ask if a VM is
- *                                 development VM
- *
- * @returns                        True if a VM is a "development" VM (dev
- *                                 protocol branch), False otherwise
- */
-bool is_dev_vm();
-
-/**
- * @brief                          Queries the webserver to get the VM's aes
- * private key
- *
- * @returns                        The VM's 16-byte aes private key
- */
-char* get_private_key();
-
-/**
- * @brief                          Queries the webserver to get the using_stun
- * status
- *
- * @returns                        The using_stun status
- */
-bool get_using_stun();
-
-/**
- * @brief                          Queries the webserver for the get access token
- * status
- *
- * @returns                        The access token
- */
-char* get_access_token();
-
-/**
- * @brief                          Queries the webserver for the VM password
- * status
- *
- * @returns                        The password for the VM
- */
-char* get_vm_password();
-
-/**
  * @brief                          Calculate the size of a FractalClientMessage
  *                                 struct
  *
@@ -658,13 +609,5 @@ char* get_vm_password();
  * @returns                        The size of the Fractal Client Message struct
  */
 int GetFmsgSize(FractalClientMessage* fmsg);
-
-/**
- * @brief                          Retrieves the protocol branch this program is
- *                                 running by asking the webserver
- *
- * @returns                        The string of the branch name
- */
-char* get_branch();
 
 #endif  // FRACTAL_H

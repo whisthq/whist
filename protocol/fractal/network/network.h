@@ -106,6 +106,7 @@ Defines
 #define FRACTAL_CLOSE_SOCKET closesocket
 #else
 #define SOCKET int
+#define INVALID_SOCKET -1
 #define closesocket close
 #define FRACTAL_IOCTL_SOCKET ioctl
 #define FRACTAL_CLOSE_SOCKET close
@@ -114,6 +115,10 @@ Defines
 #define FRACTAL_EAGAIN EAGAIN
 #define FRACTAL_EINPROGRESS EINPROGRESS
 #endif
+
+// Note that both the Windows and Linux versions use 2 as the second argument
+// to indicate shutting down both ends of the socket
+#define FRACTAL_SHUTDOWN_SOCKET(s) shutdown(s, 2)
 
 /*
 ============================
@@ -333,14 +338,23 @@ FractalPacket* ReadTCPPacket(SocketContext* context, bool should_recvp);
 FractalPacket* ReadUDPPacket(SocketContext* context);
 
 /**
- * @brief                          Sends a JSON POST request to the Fractal
- *                                 webservers
+ * @brief                          Sends a JSON POST request to some host and
+ *                                 provides the response body
  *
  * @param host_s                   The hostname IP address
  * @param path                     The /path/to/the/endpoint
- * @param jsonObj                  A string consisting of the JSON-complient
- *                                 datastream to send to the webserver
- * @param access_token             The access token for authentication
+ * @param payload                  A string consisting of the payload
+ *                                 to send to the webserver.
+ * @param access_token             The access token for authentication.
+ *                                 This may be null.
+ * @param response_body            After the function returns, this parameter
+ *                                 will point to a buffer containing the body
+ *                                 of the response. That buffer will need to
+ *                                 be freed to avoid a memory leak.
+ * @param max_response_size        The size of buffer to allocate for the
+ *                                 response (including the headers, which are
+ *                                 stripped out and returned via
+ *                                 `response_body`)
  *
  * @returns                        Will return false on failure, will return
  *                                 true on success Failure implies that the
@@ -348,17 +362,23 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendJSONPost(char* host_s, char* path, char* jsonObj, char* access_token);
+bool SendPostRequest(char* host_s, char* path, char* payload, char* access_token,
+                     char** response_body, size_t max_response_size);
 
 /**
- * @brief                          Sends a JSON GET request to the Fractal
- *                                 webservers
+ * @brief                          Sends a JSON GET request to some host and
+ *                                 provides the response body
  *
  * @param host_s                   The hostname IP address
  * @param path                     The /path/to/the/endpoint
- * @param json_res                 The buffer in which to store the JSON
- *                                 response
- * @param json_res_size            The size of the response buffer
+ * @param response_body            After the function returns, this parameter
+ *                                 will point to a buffer containing the body
+ *                                 of the response. That buffer will need to
+ *                                 be freed to avoid a memory leak.
+ * @param max_response_size        The size of buffer to allocate for the
+ *                                 response (including the headers, which are
+ *                                 stripped out and returned via
+ *                                 `response_body`)
  *
  * @returns                        Will return false on failure, will return
  *                                 true on success Failure implies that the
@@ -366,7 +386,7 @@ bool SendJSONPost(char* host_s, char* path, char* jsonObj, char* access_token);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendJSONGet(char* host_s, char* path, char* json_res, size_t json_res_size);
+bool SendGetRequest(char* host_s, char* path, char** response_body, size_t max_response_size);
 
 int sendp(SocketContext* context, void* buf, int len);
 

@@ -158,7 +158,7 @@ void destroyLogger();
  * @returns                         0: success -1: failure to send file,
  *                                  sent cache instead   -2: outright failure
  */
-int sendConnectionHistory();
+int sendConnectionHistory(char* host, char* access_token);
 
 /**
  * @brief                          Set the logger to categorize all logs from now
@@ -180,9 +180,15 @@ void saveConnectionID(int connection_id);
  *
  * @param is_connected             The connection status to send to the server.
  *                                 Pass true if connected to a client and false
- *                                 otherwise
+ *                                 otherwise.
+ * @param host                     The webserver host to send the message to.
+ * @param access_token             The access token previously provided by the webserver.
+ * @param identifier               The string that uniquely identifies this
+ *                                 instance of the protocol to the webserver.
+ * @param aes_private_key          The access token previously provided by the webserver.
  */
-void updateStatus(bool is_connected);
+void updateServerStatus(bool is_connected, char* host, char* access_token, char* identifier,
+                        char* aes_private_key);
 
 /**
  * @brief                          Get the current server's version number

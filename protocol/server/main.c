@@ -28,6 +28,8 @@ its threads.
 #include <unistd.h>
 #endif
 
+#include "../fractal/utils/logging.h"
+#include "../fractal/core/fractalgetopt.h"
 #include "../fractal/audio/audiocapture.h"
 #include "../fractal/audio/audioencode.h"
 #include "../fractal/core/fractal.h"
@@ -42,6 +44,7 @@ its threads.
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
+#include "webserver.h"
 
 #ifdef _WIN32
 #include "../fractal/utils/windows_utils.h"
@@ -64,6 +67,7 @@ its threads.
 extern Client clients[MAX_NUM_CLIENTS];
 
 char aes_private_key[16];
+char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 volatile int connection_id;
 static volatile bool exiting;
 volatile double max_mbps;
@@ -620,7 +624,7 @@ int32_t SendAudio(void* opaque) {
 void update() {
     update_webserver_parameters();
 
-    if (is_dev_vm()) {
+    if (allow_autoupdate()) {
         LOG_INFO("dev vm - not auto-updating");
         sentry_set_tag("environment", "dev");
     } else {
@@ -641,7 +645,7 @@ void update() {
                  "update.bat\"",
                  get_branch()
 #else
-                 "TODO: Linux command?"
+                 " "  // TODO: Linux Autoupdate
 #endif
         );
 
@@ -654,13 +658,11 @@ void update() {
 #ifdef _WIN32
             cmd
 #else
-            "TODO: Linux command?"
+            " "       // TODO: Linux Autoupdate
 #endif
             ,
             NULL);
     }
-
-    memcpy(aes_private_key, get_private_key(), sizeof(aes_private_key));
 }
 
 #include <time.h>
@@ -731,6 +733,9 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     clients[*client_id].username = username;
     LOG_INFO("Found ID for client. (ID: %d)", *client_id);
 
+    // TODO: Should check for is_controlling, but happens after this function call
+    handleClientMessage(fcmsg, *client_id, true);
+
     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
 
     FractalServerMessage* fsmsg = malloc(fsmsg_size);
@@ -787,7 +792,9 @@ int MultithreadedManageClients(void* opaque) {
     clock last_update_timer;
     StartTimer(&last_update_timer);
 
-    sendConnectionHistory();
+    char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
+
+    sendConnectionHistory(host, get_access_token());
     connection_id = rand();
     startConnectionLog();
     bool have_sent_logs = true;
@@ -806,7 +813,7 @@ int MultithreadedManageClients(void* opaque) {
         LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
                  have_sent_logs ? "yes" : "no");
         if (saved_num_active_clients == 0 && !have_sent_logs) {
-            sendConnectionHistory();
+            sendConnectionHistory(host, get_access_token());
             have_sent_logs = true;
         } else if (saved_num_active_clients > 0 && have_sent_logs) {
             have_sent_logs = false;
@@ -908,7 +915,101 @@ int MultithreadedManageClients(void* opaque) {
     return 0;
 }
 
-int main() {
+const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k'},
+                                     {"identifier", required_argument, NULL, 'i'},
+                                     // these are standard for POSIX programs
+                                     {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
+                                     {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
+                                     // end with NULL-termination
+                                     {0, 0, 0, 0}};
+
+#define OPTION_STRING "k:i:"
+
+int parse_args(int argc, char* argv[]) {
+    // TODO: replace `server` with argv[0]
+    const char* usage =
+        "Usage: server [OPTION]... IP_ADDRESS\n"
+        "Try 'server --help' for more information.\n";
+    const char* usage_details =
+        "Usage: server [OPTION]... IP_ADDRESS\n"
+        "\n"
+        "All arguments to both long and short options are mandatory.\n"
+        "  -k, --private-key=PK          pass in the RSA Private Key as a\n"
+        "                                  hexadecimal string\n"
+        "  -i, --identifier=ID           pass in the unique identifier for this\n"
+        "                                  server as a hexadecimal string\n"
+        "      --help     display this help and exit\n"
+        "      --version  output version information and exit\n";
+
+    memcpy((char*)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+
+    int opt;
+
+    while (true) {
+        opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
+        if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
+            printf("Option passed into %c is too long! Length of %zd when max is %d", opt,
+                   strlen(optarg), FRACTAL_ENVIRONMENT_MAXLEN);
+            return -1;
+        }
+        errno = 0;
+        switch (opt) {
+            case 'k':
+                if (!read_hexadecimal_private_key(optarg, (char*)aes_private_key)) {
+                    printf("Invalid hexadecimal string: %s\n", optarg);
+                    printf("%s", usage);
+                    return -1;
+                }
+                break;
+            case 'i':
+                printf("Identifier passed in: %s", optarg);
+                if (strlen(optarg) > FRACTAL_IDENTIFIER_MAXLEN) {
+                    printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
+                           (unsigned long)strlen(optarg), FRACTAL_IDENTIFIER_MAXLEN);
+                    return -1;
+                }
+                strncpy(identifier, optarg, FRACTAL_IDENTIFIER_MAXLEN);
+                identifier[FRACTAL_IDENTIFIER_MAXLEN] = 0;
+                break;
+            case FRACTAL_GETOPT_HELP_CHAR:
+                printf("%s", usage_details);
+                return 1;
+            case FRACTAL_GETOPT_VERSION_CHAR:
+                printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
+                return 1;
+            default:
+                if (opt != -1) {
+                    // illegal option
+                    printf("%s", usage);
+                    return -1;
+                }
+                break;
+        }
+        if (opt == -1) {
+            bool can_accept_nonoption_args = false;
+            if (optind < argc && can_accept_nonoption_args) {
+                // there's a valid non-option arg
+                // Do stuff with argv[optind]
+                ++optind;
+            } else if (optind < argc && !can_accept_nonoption_args) {
+                // incorrect usage
+                printf("%s", usage);
+                return -1;
+            } else {
+                // we're done
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int main(int argc, char* argv[]) {
+    if (parse_args(argc, argv) == -1) {
+        exit(-1);
+    }
+
     init_default_port_mappings();
 
 #if defined(_WIN32)
@@ -964,7 +1065,8 @@ int main() {
 
     update();
 
-    updateStatus(false);
+    char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
+    updateServerStatus(false, host, get_access_token(), identifier, aes_private_key);
 
     clock startup_time;
     StartTimer(&startup_time);
@@ -1013,7 +1115,8 @@ int main() {
                     }
                 }
             }
-            updateStatus(num_controlling_clients > 0);
+            updateServerStatus(num_controlling_clients > 0, host, get_access_token(), identifier,
+                               aes_private_key);
             StartTimer(&ack_timer);
         }
 

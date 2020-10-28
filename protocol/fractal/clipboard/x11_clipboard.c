@@ -32,15 +32,16 @@ whatever files are in the SET_CLIPBOARD directory.
 #include "clipboard.h"
 #include "../utils/png.h"
 
-// #define CLOSE_FDS \
-//     "for fd in $(ls /proc/$$/fd); do\
-//   case \"$fd\" in 0|1|2|255)\
-//       ;;\
-//     *)\
-//       eval \"exec $fd>&-\"\
-//       ;;\
-//   esac \
-// done; "
+/* #define CLOSE_FDS \
+     "for fd in $(ls /proc/$$/fd); do\
+   case \"$fd\" in 0|1|2|255)\
+       ;;\
+     *)\
+       eval \"exec $fd>&-\"\
+       ;;\
+   esac \
+ done; "
+ */
 
 // TODO: standardize this across all clipboards
 #define MAX_CLIPBOARD_SIZE 9000000
@@ -250,6 +251,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
     // Empty call of unsafe_hasClipboardUpdated() in order to prevent hasUpdated from returning true
     //      just after we've called xclip to set the clipboard
     unsafe_hasClipboardUpdated();
+
     return;
 }
 

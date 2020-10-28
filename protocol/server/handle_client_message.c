@@ -8,6 +8,7 @@
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
+#include "webserver.h"
 
 #ifdef _WIN32
 #include "../fractal/utils/windows_utils.h"
@@ -52,10 +53,9 @@ static int handleIFrameRequestMessage(FractalClientMessage *fmsg, int client_id,
 static int handleInteractionModeMessage(FractalClientMessage *fmsg, int client_id,
                                         bool is_controlling);
 static int handleQuitMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
-static int handleTimeMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handleInitMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handleMouseInactiveMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling);
-static int handleEmailMessage(FractalClientMessage *fmsg, int client_id);
 
 int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     switch (fmsg->type) {
@@ -85,10 +85,8 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_contr
             return handleInteractionModeMessage(fmsg, client_id, is_controlling);
         case CMESSAGE_QUIT:
             return handleQuitMessage(fmsg, client_id, is_controlling);
-        case MESSAGE_TIME:
-            return handleTimeMessage(fmsg, client_id, is_controlling);
-        case MESSAGE_USER_EMAIL:
-            return handleEmailMessage(fmsg, client_id);
+        case MESSAGE_DISCOVERY_REQUEST:
+            return handleInitMessage(fmsg, client_id, is_controlling);
         case MESSAGE_MOUSE_INACTIVE:
             return handleMouseInactiveMessage(fmsg, client_id, is_controlling);
         default:
@@ -98,17 +96,6 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_contr
                 fmsg->type);
             return -1;
     }
-}
-
-static int handleEmailMessage(FractalClientMessage *fmsg, int client_id) {
-    if (client_id == host_id) {
-        sentry_value_t user = sentry_value_new_object();
-        sentry_value_set_by_key(user, "email", sentry_value_new_string(fmsg->user_email));
-        sentry_set_user(user);
-    } else {
-        sentry_send_bread_crumb("info", "non host email: %s", fmsg->user_email);
-    }
-    return 0;
 }
 
 // is called with is active read locked
@@ -375,27 +362,42 @@ static int handleQuitMessage(FractalClientMessage *fmsg, int client_id, bool is_
     return ret;
 }
 
-static int handleTimeMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+static int handleInitMessage(FractalClientMessage *cfmsg, int client_id, bool is_controlling) {
     client_id;
-    if (!is_controlling) return 0;
     LOG_INFO("Receiving a message time packet");
+
+    FractalDiscoveryRequestMessage fmsg = cfmsg->discoveryRequest;
+
+    FractalTimeData time_data = fmsg.time_data;
+
+    // Handle time
 #ifdef _WIN32
-    if (fmsg->time_data.use_win_name) {
-        LOG_INFO("Setting time from windows time zone %s", fmsg->time_data.win_tz_name);
-        SetTimezoneFromWindowsName(fmsg->time_data.win_tz_name);
+    if (time_data.use_win_name) {
+        LOG_INFO("Setting time from windows time zone %s", time_data.win_tz_name);
+        SetTimezoneFromWindowsName(time_data.win_tz_name);
     } else {
-        LOG_INFO("Setting time from UTC offset %d", fmsg->time_data.UTC_Offset);
-        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
+        LOG_INFO("Setting time from UTC offset %d", time_data.UTC_Offset);
+        SetTimezoneFromUtc(time_data.UTC_Offset, time_data.DST_flag);
     }
 #else
-    if (fmsg->time_data.use_linux_name) {
-        LOG_INFO("Setting time from IANA time zone %s", fmsg->time_data.win_tz_name);
-        SetTimezoneFromIANAName(fmsg->time_data.win_tz_name);
+    if (time_data.use_linux_name) {
+        LOG_INFO("Setting time from IANA time zone %s", time_data.win_tz_name);
+        SetTimezoneFromIANAName(time_data.win_tz_name, get_vm_password());
     } else {
-        LOG_INFO("Setting time from UTC offset %d", fmsg->time_data.win_tz_name);
-        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
+        LOG_INFO("Setting time from UTC offset %d", time_data.win_tz_name);
+        SetTimezoneFromUtc(time_data.UTC_Offset, time_data.DST_flag);
     }
 #endif
+
+    // Handle init email email
+    if (client_id == host_id) {
+        sentry_value_t user = sentry_value_new_object();
+        sentry_value_set_by_key(user, "email", sentry_value_new_string(fmsg.user_email));
+        sentry_set_user(user);
+    } else {
+        sentry_send_bread_crumb("info", "non host email: %s", fmsg.user_email);
+    }
+
     return 0;
 }
 
