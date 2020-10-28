@@ -87,7 +87,7 @@ def account_post(action, **kwargs):
         # Automatic login endpoint if user has selected Remember Me
 
         username = body["username"]
-        
+
         output = autoLoginHelper(username)
 
         return jsonify(output), output["status"]

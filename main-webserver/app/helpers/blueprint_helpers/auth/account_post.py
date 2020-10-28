@@ -295,6 +295,7 @@ def updateUserHelper(body):
         return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE
     return jsonify({"msg": "User not found"}), NOT_FOUND
 
+
 def autoLoginHelper(email):
     user = User.query.get(email)
     access_token, refresh_token = getAccessTokens(email)
