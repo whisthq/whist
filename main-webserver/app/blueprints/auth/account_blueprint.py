@@ -15,6 +15,7 @@ from app.helpers.blueprint_helpers.auth.account_post import (
     updateUserHelper,
     verifyHelper,
     resetPasswordHelper,
+    autoLoginHelper,
 )
 from app.helpers.utils.general.auth import fractalAuth
 
