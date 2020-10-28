@@ -12,4 +12,4 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 	&& apt-get clean
 
 # Setup Fractal application symlink
-RUN ln -s /usr/bin/fractal-application /usr/bin/blockbench
+RUN ln -s /usr/bin/blockbench /usr/bin/fractal-application

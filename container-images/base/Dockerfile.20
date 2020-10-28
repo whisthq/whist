@@ -412,7 +412,7 @@ RUN mkdir /usr/share/fractal/bin
 RUN ln -s /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 
 # Setup Fractal application symlink (xterm by default)
-RUN ln -s /usr/bin/fractal-application $(which xterm)
+RUN ln -s $(which xterm) /usr/bin/fractal-application
 
 # Grab pre-compiled Fractal Protocol
 COPY protocol/server/build64/libsentry.so /usr/share/fractal/bin/libsentry.so

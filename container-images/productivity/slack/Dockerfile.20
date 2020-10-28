@@ -27,6 +27,5 @@ RUN wget --quiet https://downloads.slack-edge.com/linux_releases/slack-desktop-4
 
 # Application startup script
 
-
 # Setup Fractal application symlink
-RUN ln -s /usr/bin/fractal-application /usr/lib/slack/slack
+RUN ln -s /usr/lib/slack/slack /usr/bin/fractal-application

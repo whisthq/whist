@@ -27,5 +27,5 @@ COPY run-notion.sh /usr/bin/notion
 RUN chmod +x /usr/bin/notion
 
 # Setup Fractal application symlink
-RUN ln -s /usr/bin/fractal-application /usr/bin/notion
+RUN ln -s /usr/bin/notion /usr/bin/fractal-application
 

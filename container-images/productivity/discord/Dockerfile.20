@@ -15,4 +15,4 @@ RUN wget -qO /usr/bin/discord.deb "https://discordapp.com/api/download?platform=
     && rm -rf /usr/bin/discord*.deb
 
 # Setup Fractal application symlink
-RUN ln -s /usr/bin/fractal-application /usr/bin/discord
+RUN ln -s /usr/bin/discord /usr/bin/fractal-application
