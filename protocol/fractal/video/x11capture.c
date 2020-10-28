@@ -93,7 +93,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi
         runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
         runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --output %1$s --scaling=%2$fx%2$f", display_name, DEFAULT_DPI / ((double)dpi));
+        snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
         runcmd(cmd, NULL);
 
         free(display_name);
