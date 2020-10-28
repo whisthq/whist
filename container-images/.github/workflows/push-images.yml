@@ -1,3 +1,4 @@
+# Deploy Docker images to AWS ECR
 name: Push images
 
 # Publish on update to master branch

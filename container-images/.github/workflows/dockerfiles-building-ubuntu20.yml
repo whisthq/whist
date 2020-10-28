@@ -19,7 +19,7 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
-            - name: Checkout Protocol repository
+            - name: Checkout protocol repository
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
@@ -27,6 +27,15 @@ jobs:
                   repository: fractalcomputers/protocol
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   path: base/protocol
+
+            - name: Checkout figma-font-bindings repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+                  repository: fractalcomputers/figma-font-bindings
+                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+                  path: creative/figma
 
             - name: Build the Fractal protocol dev branch
               run: cd base/protocol && git checkout dev && server/linux-server-setup.sh && cmake . && make -j
