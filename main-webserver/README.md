@@ -86,6 +86,8 @@ If you are observing mysterious test failures, make sure that you have set the c
 
 To get an idea of what environment variables you might be missing, try running `git grep 'os\.getenv'` in the repository root.
 
+> **Tip:** Although we don't use [flake8](https://flake8.pycqa.org/en/latest/) in our CI pipeline, it can be a useful tool to use for development to detect unused and missing imports, as well as unussed and undefined variables.
+
 ## Styling
 
 To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python Black](https://github.com/psf/black) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Python Black support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Python Black.  We may also add Pylint/flake8 in future, which enables import error checking.
@@ -109,5 +111,3 @@ ext install ms-python.python
 5. Search for “Python formatting provider” and select “Black”.
 
 6. Now open/create a Python file, write some code and save it to see the magic happen!
-
-> **Tip:** Although we don't use [flake8](https://flake8.pycqa.org/en/latest/) in our CI pipeline, it can be a useful tool to use for development. In particular, I like to use flake8 to detect unused and missing imports as well as unused and undefined variables. -O
