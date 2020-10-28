@@ -438,8 +438,22 @@ ClipboardData* unsafe_GetClipboard() {
     return cb;
 }
 
-HGLOBAL getGlobalAlloc(void* buf, int len) {
-    HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
+HGLOBAL getGlobalAlloc(void* buf, int len, bool null_char) {
+    /*
+        Allocate space and copy buffer into allocated space
+
+        Arguments:
+            buf (void*): buffer to be copied into allocated space
+            len (int): length of buffer being copied
+            null_char (bool): whether to include a null character at the
+                end of the allocated space
+
+        Return:
+            HGLOBAL: pointer to allocated memory
+    */
+
+    int alloc_len = null_char ? len + 1 : len;
+    HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, alloc_len);
     if (!hMem) {
         LOG_ERROR("GlobalAlloc failed!");
         return hMem;
@@ -447,11 +461,14 @@ HGLOBAL getGlobalAlloc(void* buf, int len) {
     LPTSTR lptstr = GlobalLock(hMem);
 
     if (lptstr == NULL) {
-        LOG_ERROR("getGlobalAlloc GlobalLock failed! Size %d", len);
+        LOG_ERROR("getGlobalAlloc GlobalLock failed! Size %d", alloc_len);
         return hMem;
     }
 
     memcpy(lptstr, buf, len);
+    if (null_char) {
+        memset(lptstr + len, 0, 1);
+    }
     GlobalUnlock(hMem);
 
     return hMem;
@@ -470,7 +487,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             LOG_INFO("SetClipboard to Text: %s", cb->data);
             if (cb->size > 0) {
                 cf_type = CF_TEXT;
-                hMem = getGlobalAlloc(cb->data, cb->size);
+                hMem = getGlobalAlloc(cb->data, cb->size, true);  // add null char at end (true)
             }
             break;
         case CLIPBOARD_IMAGE:
@@ -489,7 +506,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
                 memcpy(cb->data, pkt.data + 14, pkt.size - 14);
                 cb->size = pkt.size - 14;
                 cf_type = CF_DIB;
-                hMem = getGlobalAlloc(cb->data, cb->size);
+                hMem = getGlobalAlloc(cb->data, cb->size, false);  // no null char at end (false)
 
                 av_packet_unref(&pkt);
             }
