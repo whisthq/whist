@@ -90,8 +90,8 @@ RUN mv tmp/build /opt/figma \
 COPY run-figma.sh /usr/bin/figma
 RUN chmod +x /usr/bin/figma
 
-# Install figma.desktop to enable figma:// handling
-COPY figma.desktop /opt/figma/figma-app.desktop
+# Install figma-app.desktop to enable figma:// handling
+COPY figma-app.desktop /opt/figma/figma-app.desktop
 RUN su - fractal -c 'xdg-desktop-menu install /opt/figma/figma-app.desktop'
 
 # Whitelist figma:// in google-chrome
