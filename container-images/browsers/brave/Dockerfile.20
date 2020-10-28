@@ -19,4 +19,4 @@ RUN apt-get update && apt-get install --no-install-recommends -y brave-browser \
     && apt-get clean 
 
 # Setup Fractal application symlink
-RUN ln -s $(which brave-browser) /usr/bin/fractal-application
+RUN ln -sf $(which brave-browser) /usr/bin/fractal-application

@@ -101,4 +101,4 @@ RUN mkdir -p /etc/opt/chrome/policies/managed \
     > /etc/opt/chrome/policies/managed/whitelist.json
 
 # Setup Fractal application symlink
-RUN ln -s /usr/bin/figma /usr/bin/fractal-application
+RUN ln -sf /usr/bin/figma /usr/bin/fractal-application

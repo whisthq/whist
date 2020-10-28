@@ -52,4 +52,4 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean
 
 # Setup Fractal application symlink
-RUN ln -s $(which firefox) /usr/bin/fractal-application
+RUN ln -sf $(which firefox) /usr/bin/fractal-application

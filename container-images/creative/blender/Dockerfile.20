@@ -21,4 +21,4 @@ RUN curl -L ${BLENDER_URL} | tar -xJ -C /usr/local/ && \
 RUN wget -P /usr/local/ https://cloud.blender.org/r/downloads/blender_cloud-latest-addon.zip && unzip /usr/local/blender_cloud-latest-addon.zip 
 
 # Setup Fractal application symlink
-RUN ln -s /usr/local/blender/blender /usr/bin/fractal-application
+RUN ln -sf /usr/local/blender/blender /usr/bin/fractal-application
