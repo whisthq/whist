@@ -174,7 +174,7 @@ void update() {
         fmsg.dimensions.codec_type = (CodecType)output_codec_type;
         float dpi;
         SDL_GetDisplayDPI(0, NULL, &dpi, NULL);
-        fmsg.dimensions.dpi = (int) dpi;
+        fmsg.dimensions.dpi = (int)dpi;
         SendFmsg(&fmsg);
         UpdateData.tried_to_update_dimension = true;
     }
