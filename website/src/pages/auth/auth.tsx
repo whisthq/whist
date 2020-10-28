@@ -20,11 +20,7 @@ const Auth = (props: {
     }
     mode: any
 }) => {
-    const { user, waitlistUser, mode } = props
-
-    if (!waitlistUser.user_id) {
-        return <Redirect to="/" />
-    }
+    const { user, mode } = props
 
     if (user.user_id && user.user_id !== "") {
         if (user.emailVerified) {
@@ -32,9 +28,7 @@ const Auth = (props: {
         } else {
             return <Redirect to="/verify" />
         }
-    }
-
-    if (mode === "Log in") {
+    } else if (mode === "Log in") {
         return (
             <div className="fractalContainer">
                 <Header color="black" />
@@ -64,11 +58,9 @@ const Auth = (props: {
 
 function mapStateToProps(state: {
     AuthReducer: { authFlow: any; user: any }
-    WaitlistReducer: { waitlistUser: any }
 }) {
     console.log(state)
     return {
-        waitlistUser: state.WaitlistReducer.waitlistUser,
         mode: state.AuthReducer.authFlow.mode,
         user: state.AuthReducer.user,
     }
