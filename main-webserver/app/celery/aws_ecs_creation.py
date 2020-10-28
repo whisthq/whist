@@ -133,6 +133,8 @@ def create_new_container(
             cluster_name = create_new_cluster.delay(region_name=region_name).get(
                 disable_sync_subtasks=False
             )["cluster"]
+            for i in range(base_len - len(all_clusters)):
+                create_new_cluster.delay(region_name=region_name)
             time.sleep(10)
         else:
             cluster_name = all_clusters[0].cluster
@@ -153,16 +155,15 @@ def create_new_container(
             ClusterInfo(cluster=cluster_name, location=region_name),
         )
         cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
-    elif cluster_info.status == "INACTIVE" or cluster_info.status == "DEPROVISIONING":
+
+    if cluster_info.status == "DEPROVISIONING":
         fractalLog(
             function="create_new_container",
             label=cluster_name,
             logs=f"Cluster status is {cluster_info.status}",
             level=logging.ERROR,
         )
-        self.update_state(
-            state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.staatus}"}
-        )
+        self.update_state(state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}"})
         raise Ignore
 
     message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
