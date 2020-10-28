@@ -35,7 +35,7 @@ jobs:
                   fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
                   repository: fractalcomputers/figma-font-bindings
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  path: creative/figma
+                  path: creative/figma/figma-font-bindings
 
             - name: Build the Fractal protocol dev branch
               run: cd base/protocol && git checkout dev && server/linux-server-setup.sh && cmake . && make -j
