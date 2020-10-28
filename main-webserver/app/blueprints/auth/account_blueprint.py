@@ -80,12 +80,6 @@ def account_post(action, **kwargs):
 
         output = lookupHelper(body["username"])
         return jsonify(output), output["status"]
-    elif action == "reset":
-        # Reset a user's password
-
-        output = resetPasswordHelper(body["username"], body["password"])
-        return jsonify(output), output["status"]
-
 
 @account_bp.route("/account/<action>", methods=["GET"])
 @fractalPreProcess
