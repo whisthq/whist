@@ -18,7 +18,11 @@ import {
 import { FaGoogle } from "react-icons/fa"
 
 import { updateClient, updateAuth } from "store/actions/pure"
-import { googleLogin, loginUser } from "store/actions/sideEffects"
+import {
+    googleLogin,
+    loginUser,
+    rememberMeLogin,
+} from "store/actions/sideEffects"
 import { debugLog } from "shared/utils/logging"
 import { config } from "shared/constants/config"
 import { fetchContainer } from "store/actions/sideEffects"
@@ -67,7 +71,7 @@ const Login = (props: any) => {
             // const executable =
             //     os.platform() === "win32" ? "awsping.exe" : "./awsping"
             // console.log(executable)
-    
+
             if (os.platform() === "darwin") {
                 path = appRootDir + "/binaries/"
                 path = path.replace("/app", "")
@@ -82,18 +86,19 @@ const Login = (props: any) => {
                 path = path.replace("\\app", "")
                 executable = "awsping_windows.exe"
             } else {
-                console.log(`no suitable os found, instead got ${os.platform()}`)
+                console.log(
+                    `no suitable os found, instead got ${os.platform()}`
+                )
             }
-    
+
             if (os.platform() !== "win32") {
                 const { exec } = require("child_process")
                 exec("chmod +x awsping_osx.sh", { cwd: path })
             }
-    
-    
+
             const regions = spawn(executable, ["-verbose", "1"], { cwd: path }) // ping via TCP
             regions.stdout.setEncoding("utf8")
-    
+
             regions.stdout.on("data", (data: any) => {
                 console.log(data)
                 // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
@@ -153,7 +158,7 @@ const Login = (props: any) => {
             const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=${GOOGLE_REDIRECT_URI}&client_id=${GOOGLE_CLIENT_ID}`
             authWindow.loadURL(authUrl, { userAgent: "Chrome" })
             authWindow.show()
-    
+
             const handleNavigation = (url: any) => {
                 const query = parse(url, true).query
                 if (query) {
@@ -167,11 +172,11 @@ const Login = (props: any) => {
                     }
                 }
             }
-    
+
             authWindow.webContents.on("will-navigate", (_: any, url: any) => {
                 handleNavigation(url)
             })
-    
+
             authWindow.webContents.on(
                 "did-get-redirect-request",
                 (_: any, oldUrl: any, newUrl: any) => {
@@ -228,9 +233,11 @@ const Login = (props: any) => {
                             refreshToken: data.refreshToken,
                         })
                     )
+                    setRememberMe(true)
                     setUsername(data.username)
                     setLoggingIn(true)
                     setFetchedCredentials(true)
+                    dispatch(rememberMeLogin(data.username))
                 }
             }
         })
@@ -246,14 +253,11 @@ const Login = (props: any) => {
             !needsAutoupdate &&
             (username || props.username) &&
             accessToken &&
-            refreshToken
+            refreshToken &&
+            launchImmediately
         ) {
             setAWSRegion().then(() => {
-                if (!launchImmediately) {
-                    history.push("/dashboard")
-                } else {
-                    dispatch(fetchContainer("Google Chrome"))
-                }
+                dispatch(fetchContainer("Google Chrome"))
             })
         }
     }, [updatePingReceived, fetchedCredentials, props.username, accessToken])
@@ -474,6 +478,7 @@ const Login = (props: any) => {
                                         type="checkbox"
                                         onChange={changeRememberMe}
                                         onKeyPress={loginKeyPress}
+                                        checked={rememberMe}
                                     />
                                     <span className={styles.checkmark} />
                                 </label>

@@ -184,7 +184,8 @@
 
 .appDescription {
     font-size: 13px;
-    margin-top: 20px;
+    margin-top: 18px;
+    transition: all 0.2s ease-in-out;
 }
 
 .appButtons {
@@ -200,8 +201,8 @@
 
 .launchButton {
     position: absolute;
-    bottom: 25px;
-    right: 25px;
+    bottom: 17px;
+    right: 17px;
     font-size: 11px;
     padding: 4px 10px;
     width: 100px;
