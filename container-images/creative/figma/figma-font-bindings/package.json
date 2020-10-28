@@ -3,18 +3,18 @@
   "version": "0.1.5",
   "description": "Rust module that makes object of meta data of fonts",
   "main": "native/index.node",
-  "author": "ChugunovRoman <Zebs-BMK@yandex.ru>",
+  "author": "nobody now",
   "engines": {
     "node": ">=10.11.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ChugunovRoman/figma-linux-rust-binding.git"
+    "url": "https://github.com/rpadaki/figma-linux-rust-binding.git"
   },
   "bugs": {
-    "url": "https://github.com/ChugunovRoman/figma-linux-rust-binding/issues"
+    "url": "https://github.com/rpadaki/figma-linux-rust-binding/issues"
   },
-  "homepage": "https://github.com/ChugunovRoman/figma-linux-rust-binding",
+  "homepage": "https://github.com/rpadaki/figma-linux-rust-binding",
   "keywords": [
     "Rust",
     "nodejs",
