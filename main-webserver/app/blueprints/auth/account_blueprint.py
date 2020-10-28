@@ -81,6 +81,7 @@ def account_post(action, **kwargs):
         output = lookupHelper(body["username"])
         return jsonify(output), output["status"]
 
+
 @account_bp.route("/account/<action>", methods=["GET"])
 @fractalPreProcess
 def account_get_no_auth(action, **kwargs):

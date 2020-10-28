@@ -118,7 +118,7 @@ def create_new_container(
     }
     kwargs = {"networkConfiguration": network_configuration, "overrides": container_overrides}
     fractalLog(function="create_new_container", label="None", logs=message)
-    base_len = 3
+    base_len = 2
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
     if not cluster_name:
