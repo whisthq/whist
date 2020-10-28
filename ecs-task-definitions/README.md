@@ -15,6 +15,7 @@ You can retrieve the JSON of a task definition directly in the AWS console when 
 - Slack
 - Discord
 - Notion
+- Figma
 
 ## Adding New Task Definitions
 
