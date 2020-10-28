@@ -15,18 +15,21 @@ import Dashboard from "pages/dashboard/dashboard"
 
 import withTracker from "shared/utils/withTracker"
 
-// import * as SharedAction from "store/actions/shared"
+import * as SharedAction from "store/actions/shared"
 
 const RootApp = (props: any) => {
-    // const { dispatch, user } = props
+    const { dispatch } = props
 
     const refreshState = () => {
-        // if (!user.user_id) {
-        //     dispatch(SharedAction.resetState())
-        // }
+        // this will do a smart merge that will basically
+        // keep them logged in if they existed and update the other state variables
+        // if they were updated (without nulling out stuff that is necessary)
+        // and will otherwise reset to DEFAULT
+        dispatch(SharedAction.refreshState())
     }
 
-    // temp reset state so that some bugs will be fixed basically
+    // will refresh the state on component mount in case of
+    // dev updates or other shenanigans
     useEffect(() => {
         refreshState()
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,6 +73,8 @@ const RootApp = (props: any) => {
 
 function mapStateToProps(state: { AuthReducer: { user: any } }) {
     return {
+        // not used for now
+        // can be used for refresh but we want to refresh waitlist and auth seperately
         user: state.AuthReducer.user,
     }
 }

@@ -14,6 +14,7 @@ import { INSERT_WAITLIST } from "pages/landing/constants/graphql"
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
 
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
+import * as PureAuthAction from "store/actions/auth/pure"
 
 import "styles/landing.css"
 import { checkEmail } from "pages/auth/constants/authHelpers"
@@ -81,6 +82,7 @@ function WaitlistForm(props: any) {
 
     function logout() {
         dispatch(PureWaitlistAction.resetWaitlistUser())
+        dispatch(PureAuthAction.resetUser())
     }
 
     async function insertWaitlist() {

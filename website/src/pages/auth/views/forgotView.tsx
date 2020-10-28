@@ -38,12 +38,10 @@ const ForgotView = (props: any) => {
     useEffect(() => {
         // this should not be called on component mount
         if (email && authFlow.forgotStatus && authFlow.forgotEmailsSent) {
-            console.log(authFlow.forgotStatus)
-            console.log(authFlow.forgotStatus)
             setProcessing(false)
             setGotResponse(true)
         }
-    }, [authFlow.forgotStatus, authFlow.forgotEmailsSent])
+    }, [authFlow.forgotStatus, authFlow.forgotEmailsSent, email])
 
     if (processing) {
         return (

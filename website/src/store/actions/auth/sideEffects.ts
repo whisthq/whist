@@ -1,5 +1,6 @@
 // ask the server to log me in with a google code
 export const GOOGLE_LOGIN = "GOOGLE_LOGIN"
+export const GOOGLE_SIGNUP = "GOOGLE_SIGNUP"
 
 // ask the server to log me in
 export const EMAIL_LOGIN = "EMAIL_LOGIN"
@@ -14,26 +15,45 @@ export const RESET_PASSWORD = "RESET_PASSWORD"
 
 export const SEND_VERIFICATION_EMAIL = "SEND_VERIFICATION_EMAIL"
 
-export function googleLogin(code: any) {
+export function googleLogin(code: any, rememberMe?: boolean) {
     return {
         type: GOOGLE_LOGIN,
         code,
+        rememberMe,
     }
 }
 
-export function emailLogin(email: string, password: string) {
+export function emailLogin(
+    email: string,
+    password: string,
+    rememberMe?: boolean
+) {
     return {
         type: EMAIL_LOGIN,
         email,
         password,
+        rememberMe,
     }
 }
 
-export function emailSignup(email: string, password: string) {
+export function emailSignup(
+    email: string,
+    password: string,
+    rememberMe?: boolean
+) {
     return {
         type: EMAIL_SIGNUP,
         email,
         password,
+        rememberMe,
+    }
+}
+
+export function googleSignup(code: any, rememberMe?: boolean) {
+    return {
+        type: GOOGLE_SIGNUP,
+        code,
+        rememberMe,
     }
 }
 

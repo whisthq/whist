@@ -3,6 +3,7 @@ var _ = require("lodash") // alternatively use a recursive ... function
 
 // deep copy an object so that there is no aliasing
 export const deep_copy = (obj: any) => _.cloneDeep(obj)
+export const deepCopy = deep_copy
 
 // basically will return obj after obj.prop_func(prop_func_args)
 // i.e. modified(a_set, add, element) = a_set after a_set.add(element)
@@ -38,6 +39,8 @@ export const modified = (
     return y
 }
 
+export const mod = modified
+
 // key values should be { k : v }
 // this is meant to avoid rewriting stuff like
 // new_obj : obj ? {
@@ -59,6 +62,8 @@ export const if_exists_spread = (
 
     return if_exists_spread_f(obj, key_valuefs, copy, deepcopy)
 }
+
+export const merge1 = if_exists_spread
 
 // same idea as above but will apply the value_f of {key : value_f} to each of the functions
 // please put your functions in closures if there are any more params than just the key
@@ -89,6 +94,8 @@ export const if_exists_spread_f = (
     return new_obj
 }
 
+export const merge1f = if_exists_spread_f
+
 // this is whether we should just paste in the object, or recurse further instead (!base)
 const is_basic_type = (obj: any) =>
     typeof obj === "string" ||
@@ -102,7 +109,7 @@ const is_base = (obj: any) =>
 
 // DOES NOT WORK IF YOU WANT TO STORE FUNCTIONS
 // IF YOU HAVE COMPOSED FUNCTIONS IT WILL ONLY EVALUATE AT THE FIRST LEVEL
-const merge_f = (
+const _merge_f = (
     new_obj: any,
     new_key_values: any,
     otherwise_in: any | undefined = undefined
@@ -115,7 +122,7 @@ const merge_f = (
 
         if (key in new_obj && !is_base(new_obj[key])) {
             // if it exists we need to search
-            merge_f(new_obj[key], new_key_values[key])
+            _merge_f(new_obj[key], new_key_values[key])
         } else {
             // otherwise it's a base value
             const value = new_key_values[key](
@@ -150,7 +157,7 @@ const nested_values_to_f = (new_key_values: any) => {
 // this is necessarily a deep copy
 // basically a help
 export const if_exists_spread_nested = (obj: any, key_values: any) =>
-    merge_f(deep_copy(obj), nested_values_to_f(deep_copy(key_values)))
+    _merge_f(deep_copy(obj), nested_values_to_f(deep_copy(key_values)))
 
 // same idea but with functions
 // by undefined we are basically setting it to "not existing"
@@ -158,7 +165,10 @@ export const if_exists_spread_nested_f = (
     obj: any,
     key_valuefs: any,
     otherwise_in: any | undefined = undefined
-) => merge_f(deep_copy(obj), deep_copy(key_valuefs), otherwise_in)
+) => _merge_f(deep_copy(obj), deep_copy(key_valuefs), otherwise_in)
+
+export const merge = if_exists_spread_nested
+export const mergef = if_exists_spread_nested_f
 
 // below here are functions that you'll want to use in every day-life
 // i.e. in the mapStateToProps function
@@ -181,3 +191,6 @@ export const if_exists_else = (
 
     return search_obj ? search_obj : otherwise
 }
+
+export const find = if_exists_else
+export const get = if_exists_else
