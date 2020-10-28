@@ -1,6 +1,6 @@
 # Fractal Main Webserver
 
-[![Heroku CI Status](https://heroku-cibadge.herokuapp.com/last.svg)](https://dashboard.heroku.com/pipelines/22da0c0d-7555-4647-8765-031c14b8398f/tests)
+[![Heroku CI Status](https://heroku-cibadge.herokuapp.com/last.svg)](https://dashboard.heroku.com/pipelines/22da0c0d-7555-4647-8765-031c14b8398f/tests) ![Python Black Linting](https://github.com/fractalcomputers/main-webserver/workflows/Python%20Black%20Linting/badge.svg) ![Sentry Release](https://github.com/fractalcomputers/main-webserver/workflows/Sentry%20Release/badge.svg)
 
 This repository contains the code for our webserver, which is our REST API and provides backend support for our user interfaces, our internal tools, and our container/virtual machine management.
 
