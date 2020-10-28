@@ -96,7 +96,7 @@ int reapTimedOutClients(double timeout) {
             LOG_INFO("Dropping client ID: %d", id);
             // indicate that a client has exited nongracefully and is being reaped
             client_exited_nongracefully = true;
-            StartTimer(&last_nongraceful_exit);
+            StartTimer((clock*)&last_nongraceful_exit);
             if (quitClient(id) != 0) {
                 LOG_ERROR("Failed to quit client. (ID: %d)", id);
                 ret = -1;

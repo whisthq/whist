@@ -817,10 +817,10 @@ int MultithreadedManageClients(void* opaque) {
 
 #ifdef __linux__
     Display* x_display = XOpenDisplay(NULL);
-    unsigned long color = BlackPixel(display, DefaultScreen(display));
-    Window x_window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1, 1, 0, color, color);
-    Atom WM_DELETE_WINDOW = XInternAtom(d, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols(x_display, w, &WM_DELETE_WINDOW, 1);
+    unsigned long color = BlackPixel(x_display, DefaultScreen(x_display));
+    Window x_window = XCreateSimpleWindow(x_display, DefaultRootWindow(x_display), 0, 0, 1, 1, 0, color, color);
+    Atom WM_DELETE_WINDOW = XInternAtom(x_display, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols(x_display, x_window, &WM_DELETE_WINDOW, 1);
     XEvent x_event;
 #endif
 
@@ -880,13 +880,9 @@ int MultithreadedManageClients(void* opaque) {
             }
 
             // container exit logic - nongraceful client grace period has ended, but clients are connected still
-            if (client_exited_nongracefully) {
+            if (client_exited_nongracefully && GetTimer(last_nongraceful_exit) > nongraceful_grace_period) {
                 client_exited_nongracefully = false;
             }
-        }
-
-        if (client_exited_nongracefully) {
-            StartTimer(&last_nongraceful_exit);
         }
 
         if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
@@ -959,7 +955,7 @@ int MultithreadedManageClients(void* opaque) {
         // if X display is closed and disconnected, then kick clients and kill server
         while (XPending(x_display)) {
             XNextEvent(x_display, &x_event);
-            if (e.type == ClientMessage) {
+            if (x_event.type == ClientMessage) {
                 if (SDL_LockMutex(state_lock) != 0) {
                     LOG_ERROR("Failed to lock state lock");
                     break;
