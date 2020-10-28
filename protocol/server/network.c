@@ -240,16 +240,28 @@ int sendContainerDestroyMessage(bool production) {
         Sends a message to the webserver to destroy the container on which the server is running.
         This should only happen in PRODUCTION, not STAGING.
 
+        Surround this call by a mutex lock to be sure that it isn't sending a message twice.
+
         Returns:
             int: 0 on success, -1 on failure
     */
+    static bool already_sent_destroy_message =
+        false;  // static, so only sets to false on first call
+
+    if (already_sent_destroy_message) {
+        return 0;
+    }
 
     // if (SendPostRequest(char *host_s, char *path, char *payload, char *access_token,
     //                  char **response_body, size_t max_response_size))
 
+    LOG_INFO("CONTAINER DESTROY SIGNAL BOOL %d", production);
+
     if (!production) {
         LOG_INFO("CONTAINER DESTROY SIGNAL");
     }
+
+    already_sent_destroy_message = true;
 
     return 0;
 }

@@ -22,7 +22,7 @@ bool StartTrackingClipboardUpdates();
 
 void unsafe_initClipboard() { StartTrackingClipboardUpdates(); }
 
-void unsafe_DestroyClipboard() {};
+void unsafe_DestroyClipboard(){};
 
 #include <sys/syslimits.h>
 #include <unistd.h>

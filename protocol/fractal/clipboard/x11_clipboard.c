@@ -294,8 +294,8 @@ bool unsafe_hasClipboardUpdated() {
         first = false;
         return true;
     }
-    while (XPending(display)) { // X ERROR _XEventsQueued -> _XIOError -> _XDefaultIOError -> exit
-        XNextEvent(display, &event);
+    while (XPending(display)) {
+  	XNextEvent(display, &event);
         if (event.type == event_base + XFixesSelectionNotify &&
             ((XFixesSelectionNotifyEvent*)&event)->selection == clipboard) {
             return true;

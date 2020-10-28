@@ -74,6 +74,8 @@ char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 volatile int connection_id;
 static volatile bool exiting;
 
+SDL_mutex* container_destruction_mutex;
+
 volatile double max_mbps;
 volatile int client_width = -1;
 volatile int client_height = -1;
@@ -109,6 +111,79 @@ int encoder_factory_client_w;
 int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
+
+// int RunServerDestructionSequence();
+
+#ifdef __linux__
+int xioerror_handler(Display* d) {
+    /*
+        When X display is destroyed, intercept XIOError in order to
+        quit clients and send container destruction signal. Clients
+        must be quit
+
+        For use as arg for XSetIOErrorHandler - this is fatal and thus
+        any program exit handling that would normally be expected to
+        be handled in another thread must be explicitly handled here.
+        Right now, we handle:
+            * sendContainerDestroyMessage
+            * quitClients
+    */
+
+    SDL_LockMutex(container_destruction_mutex);
+
+    exiting = true;
+
+    // Try sending a container destroy message - if this is the first destruction
+    //  message being sent, then also quit all clients.
+    if (sendContainerDestroyMessage(false) == 0) {  // THIS SHOULD NOT BE 'false' hardcoded
+        // POSSIBLY these locks are not necessary if we're quitting everything and dying anyway?
+
+        // Broadcast client quit message
+        FractalServerMessage fmsg_response = {0};
+        fmsg_response.type = SMESSAGE_QUIT;
+        if (readLock(&is_active_rwlock) != 0) {
+            LOG_ERROR(
+                "Failed to read-acquire is active RW "
+                "lock.");
+        } else {
+            if (broadcastUDPPacket(PACKET_MESSAGE, (uint8_t*)&fmsg_response,
+                                   sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL,
+                                   NULL) != 0) {
+                LOG_WARNING("Could not send Quit Message");
+            }
+            if (readUnlock(&is_active_rwlock) != 0) {
+                LOG_ERROR("Failed to read-release is active RW lock.");
+            }
+        }
+
+        // Kick all clients
+        if (writeLock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-acquire is active RW lock.");
+            return -1;
+        }
+        if (SDL_LockMutex(state_lock) != 0) {
+            LOG_ERROR("Failed to lock state lock");
+            if (writeUnlock(&is_active_rwlock) != 0) {
+                LOG_ERROR("Failed to write-release is active RW lock.");
+            }
+            return -1;
+        }
+        if (quitClients() != 0) {
+            LOG_ERROR("Failed to quit clients.");
+        }
+        if (SDL_UnlockMutex(state_lock) != 0) {
+            LOG_ERROR("Failed to unlock state lock");
+        }
+        if (writeUnlock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-release is active RW lock.");
+        }
+    }
+
+    SDL_UnlockMutex(container_destruction_mutex);
+
+    return 0;
+}
+#endif
 
 int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
@@ -806,23 +881,17 @@ int MultithreadedManageClients(void* opaque) {
     // client_exited_nongracefully and last_nongraceful_exit are globals from client.h
     // bool client_exited_nongracefully = false; // set to true after a nongraceful exit
     // clock last_nongraceful_exit; // start this after every nongraceful exit
-    double nongraceful_grace_period = 300.0; // 5 minutes to reconnect after nongraceful client disconnect
+    double nongraceful_grace_period =
+        300.0;  // 5 minutes to reconnect after nongraceful client disconnect
 
-    bool first_client_connected = false; // set to true once the first client has connected
-    double begin_time_to_exit = 60.0; // give a client 1 minute to connect when the server first goes up
-    clock first_client_timer; // start this now and then discard when first client has connected
+    bool first_client_connected = false;  // set to true once the first client has connected
+    double begin_time_to_exit =
+        60.0;                  // give a client 1 minute to connect when the server first goes up
+    clock first_client_timer;  // start this now and then discard when first client has connected
     StartTimer(&first_client_timer);
-    // NOTE: don't want server to exit before first client is connected... ONLY use container destruction code on PRODUCTION_HOST
+    // NOTE: don't want server to exit before first client is connected... ONLY use container
+    // destruction code on PRODUCTION_HOST
     //  strcmp(host, STAGING_HOST) == 0
-
-#ifdef __linux__
-    Display* x_display = XOpenDisplay(NULL);
-    unsigned long color = BlackPixel(x_display, DefaultScreen(x_display));
-    Window x_window = XCreateSimpleWindow(x_display, DefaultRootWindow(x_display), 0, 0, 1, 1, 0, color, color);
-    Atom WM_DELETE_WINDOW = XInternAtom(x_display, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols(x_display, x_window, &WM_DELETE_WINDOW, 1);
-    XEvent x_event;
-#endif
 
     while (!exiting) {
         if (readLock(&is_active_rwlock) != 0) {
@@ -864,11 +933,15 @@ int MultithreadedManageClients(void* opaque) {
             //  * clients have connected before but now none are connected
             //  * no clients have connected in `begin_time_to_exit` secs of server being up
             // We don't place this in a lock because:
-            //  * if the first client connects right on the threshold of begin_time_to_exit, it doesn't matter if we disconnect
-            //  * if a new client connects right on the threshold of nongraceful_grace_period, it doesn't matter if we disconnect
-            //  * if no clients are connected, it isn't possible for another client to nongracefully exit and reset the grace period timer
+            //  * if the first client connects right on the threshold of begin_time_to_exit, it
+            //  doesn't matter if we disconnect
+            //  * if a new client connects right on the threshold of nongraceful_grace_period, it
+            //  doesn't matter if we disconnect
+            //  * if no clients are connected, it isn't possible for another client to nongracefully
+            //  exit and reset the grace period timer
             if ((first_client_connected || (GetTimer(first_client_timer) > begin_time_to_exit)) &&
-                (!client_exited_nongracefully || (GetTimer(last_nongraceful_exit) > nongraceful_grace_period))) {
+                (!client_exited_nongracefully ||
+                 (GetTimer(last_nongraceful_exit) > nongraceful_grace_period))) {
                 exiting = true;
             }
         } else {
@@ -879,8 +952,10 @@ int MultithreadedManageClients(void* opaque) {
                 first_client_connected = true;
             }
 
-            // container exit logic - nongraceful client grace period has ended, but clients are connected still
-            if (client_exited_nongracefully && GetTimer(last_nongraceful_exit) > nongraceful_grace_period) {
+            // container exit logic - nongraceful client grace period has ended, but clients are
+            // connected still
+            if (client_exited_nongracefully &&
+                GetTimer(last_nongraceful_exit) > nongraceful_grace_period) {
                 client_exited_nongracefully = false;
             }
         }
@@ -941,37 +1016,18 @@ int MultithreadedManageClients(void* opaque) {
             ResetInput();
         }
 
-        // reapTimedOutClients is called within a writeLock(&is_active_rwlock) and therefore this should as well
-        //  reapTimedOutClients only ever writes client_exited_nongracefully as true. This thread only writes it as false.
-        if (client_exited_nongracefully && (GetTimer(last_nongraceful_exit) > nongraceful_grace_period)) {
+        // reapTimedOutClients is called within a writeLock(&is_active_rwlock) and therefore this
+        // should as well
+        //  reapTimedOutClients only ever writes client_exited_nongracefully as true. This thread
+        //  only writes it as false.
+        if (client_exited_nongracefully &&
+            (GetTimer(last_nongraceful_exit) > nongraceful_grace_period)) {
             client_exited_nongracefully = false;
         }
 
         StartTimer(&(clients[client_id].last_ping));
 
         clients[client_id].is_active = true;
-
-#ifdef __linux__
-        // if X display is closed and disconnected, then kick clients and kill server
-        while (XPending(x_display)) {
-            XNextEvent(x_display, &x_event);
-            if (x_event.type == ClientMessage) {
-                if (SDL_LockMutex(state_lock) != 0) {
-                    LOG_ERROR("Failed to lock state lock");
-                    break;
-                }
-                if (quitClients() != 0) {
-                    LOG_ERROR("Failed to quit clients.");
-                }
-                if (SDL_UnlockMutex(state_lock) != 0) {
-                    LOG_ERROR("Failed to unlock state lock");
-                }
-                exiting = true;
-                XCloseDisplay(x_display);
-                break;
-            }
-        }
-#endif
 
         if (writeUnlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
@@ -1139,6 +1195,11 @@ int main(int argc, char* argv[]) {
         destroyLogger();
         return 1;
     }
+
+    container_destruction_mutex = SDL_CreateMutex();
+#ifdef __linux__
+    XSetIOErrorHandler(xioerror_handler);
+#endif
 
     update();
 
@@ -1395,7 +1456,12 @@ int main(int argc, char* argv[]) {
     destroyLogger();
     destroyClients();
 
-    sendContainerDestroyMessage(strcmp(host, PRODUCTION_HOST) == 0);
+    SDL_LockMutex(container_destruction_mutex);
+    if (sendContainerDestroyMessage(strcmp(host, PRODUCTION_HOST) == 0) == -1) {
+        SDL_UnlockMutex(container_destruction_mutex);
+        return -1;
+    }
+    SDL_UnlockMutex(container_destruction_mutex);
 
     return 0;
 }
