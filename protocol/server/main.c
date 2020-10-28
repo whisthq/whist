@@ -11,6 +11,12 @@ Follow main() to see a Fractal video streaming server being created and creating
 its threads.
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #if defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -112,7 +118,29 @@ int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
 
-// int RunServerDestructionSequence();
+
+/*
+============================
+Private Functions
+============================
+*/
+
+/**
+ * @brief                          Sends a message to the webserver to destroy
+ *                                 the container running the server protocol.
+ *
+ * @param                          Whether this is a production server.
+ *
+ * @returns                        Returns -1 on failure, 0 on success.
+ */
+int SendContainerDestroyMessage(bool production);
+
+
+/*
+============================
+Private Function Implementations
+============================
+*/
 
 #ifdef __linux__
 int xioerror_handler(Display* d) {
@@ -125,7 +153,7 @@ int xioerror_handler(Display* d) {
         any program exit handling that would normally be expected to
         be handled in another thread must be explicitly handled here.
         Right now, we handle:
-            * sendContainerDestroyMessage
+            * SendContainerDestroyMessage
             * quitClients
     */
 
@@ -135,7 +163,7 @@ int xioerror_handler(Display* d) {
 
     // Try sending a container destroy message - if this is the first destruction
     //  message being sent, then also quit all clients.
-    if (sendContainerDestroyMessage(false) == 0) {  // THIS SHOULD NOT BE 'false' hardcoded
+    if (SendContainerDestroyMessage(true) == 0) {  // THIS SHOULD NOT BE 'false' hardcoded
         // POSSIBLY these locks are not necessary if we're quitting everything and dying anyway?
 
         // Broadcast client quit message
@@ -184,6 +212,58 @@ int xioerror_handler(Display* d) {
     return 0;
 }
 #endif
+
+int SendContainerDestroyMessage(bool production) {
+    /*
+        Sends a message to the webserver to destroy the container on which the server is running.
+        This should only happen in PRODUCTION, not STAGING.
+
+        Surround this call by a mutex lock to be sure that it isn't sending a message twice.
+
+        Returns:
+            int: 0 on success, -1 on failure
+    */
+
+    // static, so only sets to false on first call
+    static bool already_sent_destroy_message = false;
+
+    if (already_sent_destroy_message) {
+        return 0;
+    }
+
+    LOG_INFO("CONTAINER DESTROY SIGNAL BOOL %d", production);
+
+    if (!production) {
+        LOG_INFO("CONTAINER DESTROY SIGNAL");
+    } else {
+        char* container_id = get_container_id();
+        char* user_id = get_user_id();
+        if (!container_id || !user_id) {
+            return -1;
+        }
+
+        char payload[256];
+        snprintf(
+            "{\n"
+            "\"container_id\": \"%s\",\n"
+            "\"username\": \"%s\"\n"
+            "}",
+            container_id,
+            user_id
+        )
+
+        // send destroy request, don't require response -> update this later
+        char* resp_buf = NULL;
+        size_t resp_buf_maxlen = 4800;
+        SendPostRequest(PRODUCTION_HOST, "/container/delete", payload, get_access_token(), &resp_buf, resp_buf_maxlen);
+
+        LOG_INFO("/container/delete response: %s", resp_buf);
+    }
+
+    already_sent_destroy_message = true;
+
+    return 0;
+}
 
 int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
@@ -1457,7 +1537,7 @@ int main(int argc, char* argv[]) {
     destroyClients();
 
     SDL_LockMutex(container_destruction_mutex);
-    if (sendContainerDestroyMessage(strcmp(host, PRODUCTION_HOST) == 0) == -1) {
+    if (SendContainerDestroyMessage(true) == -1) {
         SDL_UnlockMutex(container_destruction_mutex);
         return -1;
     }

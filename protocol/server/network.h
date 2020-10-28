@@ -145,14 +145,4 @@ int disconnectClient(int id);
  */
 int disconnectClients(void);
 
-/**
- * @brief                          Sends a message to the webserver to destroy
- *                                 the container running the server protocol.
- *
- * @param                          Whether this is a production server.
- *
- * @returns                        Returns -1 on failure, 0 on success.
- */
-int sendContainerDestroyMessage(bool production);
-
 #endif  // SERVER_NETWORK_H

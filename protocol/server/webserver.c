@@ -8,8 +8,11 @@ static bool already_obtained_vm_type = false;
 static clock last_vm_info_check_time;
 static bool is_using_stun;
 static char* access_token = NULL;
+static char* container_id = NULL;
+static char* user_id = NULL;
 bool is_trying_staging_protocol_info = false;
 
+extern char aes_private_key[16];
 extern char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 
 void update_webserver_parameters() {
@@ -35,12 +38,13 @@ void update_webserver_parameters() {
 
     LOG_INFO("GETTING JSON");
 
-    char* msg = (char*)malloc(32 + strlen(identifier));
+    char* msg = (char*)malloc(64 + strlen(identifier) + 16);
     sprintf(msg,
             "{\n"
-            "    \"port\": %s\n"
+            "\"identifier\": %s,\n"
+            "\"private_key\": %s\n"
             "}\n",
-            identifier);
+            identifier, aes_private_key);
 
     if (!SendPostRequest(will_try_staging ? STAGING_HOST : PRODUCTION_HOST,
                          "/container/protocol_info", msg, NULL, &resp_buf, resp_buf_maxlen)) {
@@ -77,6 +81,8 @@ void update_webserver_parameters() {
     kv_pair_t* branch_value = get_kv(&json, "branch");
     kv_pair_t* using_stun = get_kv(&json, "using_stun");
     kv_pair_t* access_token_value = get_kv(&json, "access_token");
+    kv_pair_t* container_id_value = get_key(&json, "container_id");
+    kv_pair_t* user_id_value = get_key(&json, "user_id");
 
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {
@@ -108,11 +114,26 @@ void update_webserver_parameters() {
         }
 
         if (access_token_value && access_token_value->type == JSON_STRING) {
-            if (!access_token) {
+            if (access_token) {
                 free(access_token);
             }
             access_token = clone(access_token_value->str_value);
         }
+
+        if (container_id_value && container_id_value->type == JSON_STRING) {
+            if (container_id) {
+                free(container_id);
+            }
+            container_id = clone(container_id_value->str_value);
+        }
+
+        if (user_id_value && user_id_value->type == JSON_STRING) {
+            if (user_id) {
+                free(user_id);
+            }
+            user_id = clone(user_id_value->str_value);
+        }
+
     } else {
         LOG_WARNING("COULD NOT GET JSON PARAMETERS FROM: %s", resp_buf);
     }
@@ -157,4 +178,18 @@ char* get_access_token() {
         LOG_ERROR("Webserver parameters not updated!");
     }
     return access_token;
+}
+
+char* get_container_id() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return container_id;
+}
+
+char* get_user_id() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return user_id;
 }
