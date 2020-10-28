@@ -5,13 +5,12 @@ const SwitchMode = (props: {
     link: string
     closer: string
     onClick: () => any
-    isFirstElement?: boolean
 }) => {
-    const { question, link, closer, onClick, isFirstElement } = props
+    const { question, link, closer, onClick } = props
 
     return (
         <div
-            style={{ textAlign: "center", marginTop: isFirstElement ? 40 : 20 }}
+            style={{ textAlign: "center" }}
         >
             {question + " "}
             <span
@@ -21,7 +20,7 @@ const SwitchMode = (props: {
             >
                 {link}
             </span>
-            {" " + closer}
+            {closer}
         </div>
     )
 }

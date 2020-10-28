@@ -51,7 +51,7 @@ const RootApp = (props: any) => {
                     path="/termsofservice"
                     component={withTracker(TermsOfService)}
                 />
-                <Route exact path="/auth" component={withTracker(Auth)} />
+                <Route path="/auth/:first?" component={withTracker(Auth)} />
                 <Route exact path="/verify" component={withTracker(Verify)} />
                 <Route exact path="/reset" component={withTracker(Reset)} />
                 {
