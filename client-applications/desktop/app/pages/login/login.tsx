@@ -58,75 +58,77 @@ const Login = (props: any) => {
     }
 
     const setAWSRegion = () => {
-        const { spawn } = require("child_process")
-        const os = require("os")
-        var appRootDir = require("electron").remote.app.getAppPath()
-        var executable = ""
-        var path = ""
-        // const executable =
-        //     os.platform() === "win32" ? "awsping.exe" : "./awsping"
-        // console.log(executable)
-
-        if (os.platform() === "darwin") {
-            path = appRootDir + "/binaries/"
-            path = path.replace("/app", "")
-            executable = "./awsping_osx"
-        } else if (os.platform() === "linux") {
-            path = process.cwd() + "/binaries/"
-            path = path.replace("/release", "")
-            executable = "./awsping_osx"
-        } else if (os.platform() === "win32") {
-            path = appRootDir + "\\binaries"
-            path = path.replace("\\resources\\app.asar", "")
-            executable = "awsping_windows.exe"
-        } else {
-            console.log(`no suitable os found, instead got ${os.platform()}`)
-        }
-
-        if (os.platform() !== "win32") {
-            const { exec } = require("child_process")
-            exec("chmod +x awsping_osx.sh", { cwd: path })
-        }
-
-        const regions = spawn(executable, ["-verbose", "1"], { cwd: path }) // ping via TCP
-        regions.stdout.setEncoding("utf8")
-
-        regions.stdout.on("data", (data: any) => {
-            debugLog(data)
-            // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
-            const line = data.split(/\r?\n/)[1].replace(/  +/g, " ")
-            const items = line.split(" ")
-            // In case data is split and sent separately, only use closest AWS region which has index of 0
-            if (items[1] == "0") {
-                const region = items[2]
-                debugLog(region)
-                dispatch(updateClient({ region: region }))
+        return new Promise((resolve, reject) => {
+            const { spawn } = require("child_process")
+            const os = require("os")
+            var appRootDir = require("electron").remote.app.getAppPath()
+            var executable = ""
+            var path = ""
+            // const executable =
+            //     os.platform() === "win32" ? "awsping.exe" : "./awsping"
+            // console.log(executable)
+    
+            if (os.platform() === "darwin") {
+                path = appRootDir + "/binaries/"
+                path = path.replace("/app", "")
+                executable = "./awsping_osx"
+            } else if (os.platform() === "linux") {
+                path = process.cwd() + "/binaries/"
+                path = path.replace("/release", "")
+                executable = "./awsping_osx"
+            } else if (os.platform() === "win32") {
+                path = appRootDir + "\\binaries"
+                path = path.replace("\\resources\\app.asar", "")
+                path = path.replace("\\app", "")
+                executable = "awsping_windows.exe"
             } else {
-                debugLog("late packet")
+                console.log(`no suitable os found, instead got ${os.platform()}`)
             }
-        })
+    
+            if (os.platform() !== "win32") {
+                const { exec } = require("child_process")
+                exec("chmod +x awsping_osx.sh", { cwd: path })
+            }
+    
+    
+            const regions = spawn(executable, ["-verbose", "1"], { cwd: path }) // ping via TCP
+            regions.stdout.setEncoding("utf8")
+    
+            regions.stdout.on("data", (data: any) => {
+                console.log(data)
+                // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
+                const line = data.split(/\r?\n/)[1].replace(/  +/g, " ")
+                const items = line.split(" ")
+                // In case data is split and sent separately, only use closest AWS region which has index of 0
+                if (items[1] == "0") {
+                    const region = items[2]
+                    debugLog(region)
+                    dispatch(updateClient({ region: region }))
+                } else {
+                    debugLog("late packet")
+                }
 
-        regions.on("close", () => {
-            debugLog("child process exited")
+                resolve()
+            })
         })
     }
 
     const handleLoginUser = () => {
         // dispatch(loginFailed(false))
-        console.log("handling log in")
-        dispatch(updateAuth({ loginWarning: false }))
-        setLoggingIn(true)
-        if (!rememberMe) {
-            storage.set("credentials", {
-                username: "",
-                accessToken: "",
-                refreshToken: "",
-            })
-        }
-        setUsername(username)
-        setPassword(password)
-        dispatch(loginUser(username.trim(), password, rememberMe))
-        setAWSRegion()
+        setAWSRegion().then(() => {
+            dispatch(updateAuth({ loginWarning: false }))
+            setLoggingIn(true)
+            if (!rememberMe) {
+                storage.set("credentials", {
+                    username: "",
+                    accessToken: "",
+                    refreshToken: "",
+                })
+            }
+            setUsername(username)
+            setPassword(password)
+            dispatch(loginUser(username.trim(), password, rememberMe))
+        })
     }
 
     const loginKeyPress = (event: any) => {
@@ -136,46 +138,47 @@ const Login = (props: any) => {
     }
 
     const handleGoogleLogin = () => {
-        const { BrowserWindow } = require("electron").remote
+        setAWSRegion().then(() => {
+            const { BrowserWindow } = require("electron").remote
 
-        const authWindow = new BrowserWindow({
-            width: 800,
-            height: 600,
-            show: false,
-            "node-integration": false,
-            "web-security": false,
-        })
-        const GOOGLE_CLIENT_ID = config.keys.GOOGLE_CLIENT_ID
-        const GOOGLE_REDIRECT_URI = config.url.GOOGLE_REDIRECT_URI
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=${GOOGLE_REDIRECT_URI}&client_id=${GOOGLE_CLIENT_ID}`
-        authWindow.loadURL(authUrl, { userAgent: "Chrome" })
-        authWindow.show()
-
-        const handleNavigation = (url: any) => {
-            const query = parse(url, true).query
-            if (query) {
-                if (query.error) {
-                    // dispatch(loginFailed(true))
-                } else if (query.code) {
-                    authWindow.removeAllListeners("closed")
-                    setImmediate(() => authWindow.close())
-                    setLoggingIn(true)
-                    dispatch(googleLogin(query.code, rememberMe))
+            const authWindow = new BrowserWindow({
+                width: 800,
+                height: 600,
+                show: false,
+                "node-integration": false,
+                "web-security": false,
+            })
+            const GOOGLE_CLIENT_ID = config.keys.GOOGLE_CLIENT_ID
+            const GOOGLE_REDIRECT_URI = config.url.GOOGLE_REDIRECT_URI
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=${GOOGLE_REDIRECT_URI}&client_id=${GOOGLE_CLIENT_ID}`
+            authWindow.loadURL(authUrl, { userAgent: "Chrome" })
+            authWindow.show()
+    
+            const handleNavigation = (url: any) => {
+                const query = parse(url, true).query
+                if (query) {
+                    if (query.error) {
+                        // dispatch(loginFailed(true))
+                    } else if (query.code) {
+                        authWindow.removeAllListeners("closed")
+                        setImmediate(() => authWindow.close())
+                        setLoggingIn(true)
+                        dispatch(googleLogin(query.code, rememberMe))
+                    }
                 }
             }
-        }
-
-        authWindow.webContents.on("will-navigate", (_: any, url: any) => {
-            handleNavigation(url)
+    
+            authWindow.webContents.on("will-navigate", (_: any, url: any) => {
+                handleNavigation(url)
+            })
+    
+            authWindow.webContents.on(
+                "did-get-redirect-request",
+                (_: any, oldUrl: any, newUrl: any) => {
+                    handleNavigation(newUrl)
+                }
+            )
         })
-
-        authWindow.webContents.on(
-            "did-get-redirect-request",
-            (_: any, oldUrl: any, newUrl: any) => {
-                handleNavigation(newUrl)
-            }
-        )
-        setAWSRegion()
     }
 
     const forgotPassword = () => {
@@ -232,21 +235,6 @@ const Login = (props: any) => {
             }
         })
 
-        storage.get("tokens", (error: any, data: any) => {
-            if (error) throw error
-
-            if (data && Object.keys(data).length > 0) {
-                if (data.accessToken && data.refreshToken && live) {
-                    dispatch(
-                        updateAuth({
-                            accessToken: data.accessToken,
-                            refreshToken: data.refreshToken,
-                        })
-                    )
-                }
-            }
-        })
-
         // if (username && publicIP && live) {
         //     history.push("/dashboard");
         // }
@@ -260,11 +248,13 @@ const Login = (props: any) => {
             accessToken &&
             refreshToken
         ) {
-            if (!launchImmediately) {
-                history.push("/dashboard")
-            } else {
-                dispatch(fetchContainer("Google Chrome"))
-            }
+            setAWSRegion().then(() => {
+                if (!launchImmediately) {
+                    history.push("/dashboard")
+                } else {
+                    dispatch(fetchContainer("Google Chrome"))
+                }
+            })
         }
     }, [updatePingReceived, fetchedCredentials, props.username, accessToken])
 

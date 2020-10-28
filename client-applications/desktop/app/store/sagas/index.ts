@@ -21,13 +21,6 @@ function* refreshAccess() {
                 refreshToken: json.refresh_token,
             })
         )
-
-        const storage = require("electron-json-storage")
-        storage.set("credentials", {
-            username: state.MainReducer.auth.username,
-            accessToken: json.access_token,
-            refreshToken: json.refresh_token,
-        })
     }
 }
 
@@ -138,8 +131,13 @@ function* fetchContainer(action: any) {
     const state = yield select()
     const username = state.MainReducer.auth.username
     // if they are super far we'll just default them to us east and hope for the best
-    const region = state.MainReducer.client.region ? state.MainReducer.client.region : "us-east-1"
+    const region = state.MainReducer.client.region
+        ? state.MainReducer.client.region
+        : "us-east-1"
     const app = action.app
+
+    console.log(state.MainReducer.client.region)
+    console.log(app)
 
     var { json, response } = yield call(
         apiPost,
@@ -180,17 +178,6 @@ function* fetchContainer(action: any) {
         }
 
         if (json && json.state === "PENDING" && json.output) {
-            // NOTE: actual container/create endpoint does not currently return progress
-            // var message = json.output.msg
-            // var percent = json.output.progress
-            // if (message) {
-            //     yield put(
-            //         Action.updateLoading({
-            //             percentLoaded: 50,
-            //             statusMessage: message,
-            //         })
-            //     )
-            // }
             yield put(
                 Action.updateLoading({
                     percentLoaded: 50,
@@ -204,50 +191,15 @@ function* fetchContainer(action: any) {
     // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
     if (json && json.state && json.state === "SUCCESS") {
         if (json.output) {
-            // TODO (adriano) these should be removed once we are ready to plug and play
-            const test_container_id = "container_id" // TODO
-            const test_cluster = "cluster" // TODO
-            const test_ip = "34.206.64.200"
-            const test_port32262 = "32780"
-            const test_port32263 = "32778"
-            const test_port32273 = "32779"
-            const test_location = "location" // TODO
-
-            const test_width = 200
-            const test_height = 200
-            // const test_codec = 'h264'
-
-            // TODO (adriano) add a signaling param or something to say that it's the 'test'
-            // or it's the actual thing
-            const container_id = json.output.container_id
-                ? json.output.container_id
-                : test_container_id
-            const cluster = json.output.cluster
-                ? json.output.cluster
-                : test_cluster
-            const ip = json.output.ip ? json.output.ip : test_ip
-            const port32262 = json.output.port_32262
-                ? json.output.port_32262
-                : test_port32262
-            const port32263 = json.output.port_32263
-                ? json.output.port_32263
-                : test_port32263
-            const port32273 = json.output.port_32273
-                ? json.output.port_32273
-                : test_port32273
-            const location = json.output.location
-                ? json.output.location
-                : test_location
-
             yield put(
                 Action.updateContainer({
-                    container_id: container_id,
-                    cluster: cluster,
-                    port32262: port32262,
-                    port32263: port32263,
-                    port32273: port32273,
-                    location: location,
-                    publicIP: ip,
+                    container_id: json.output.container_id,
+                    cluster: json.output.cluster,
+                    port32262: json.output.port_32262,
+                    port32263: json.output.port_32263,
+                    port32273: json.output.port_32273,
+                    location: json.output.location,
+                    publicIP: json.output.ip,
                 })
             )
         }
@@ -279,7 +231,6 @@ function* deleteContainer(action: any) {
         { username: action.username, container_id: action.container_id },
         state.MainReducer.auth.accessToken
     )
-    history.push("/dashboard")
 }
 
 function* submitFeedback(action: any) {

@@ -40,9 +40,14 @@ const NavBar = (props: any) => {
 
     const handleSignout = () => {
         const storage = require("electron-json-storage")
-        storage.set("credentials", { username: "", password: "" })
-        dispatch(resetState())
-        history.push("/")
+        storage.set(
+            "credentials",
+            { username: "", accessToken: "", refreshToken: "" },
+            () => {
+                dispatch(resetState())
+                history.push("/")
+            }
+        )
     }
 
     return (
@@ -101,10 +106,8 @@ const NavBar = (props: any) => {
                         <div
                             style={{ display: "flex", flexDirection: "column" }}
                         >
-                            <span className={styles.name}>Cidney</span>
-                            <span className={styles.email}>
-                                cidney@fractalcomputers.com
-                            </span>
+                            <span className={styles.name}>{name}</span>
+                            <span className={styles.email}>{username}</span>
                         </div>
                     </div>
                     <Collapse in={showProfile}>
