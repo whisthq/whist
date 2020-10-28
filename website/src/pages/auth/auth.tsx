@@ -1,13 +1,15 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { connect } from "react-redux"
 import { Redirect } from "react-router"
 
 import Header from "shared/components/header"
 import LoginView from "pages/auth/views/loginView"
 import SignupView from "pages/auth/views/signupView"
+import ForgotView from "pages/auth/views/forgotView"
 
 import "styles/auth.css"
-import ForgotView from "./views/forgotView"
+
+import history from "shared/utils/history"
 
 const Auth = (props: {
     dispatch: any
@@ -19,12 +21,17 @@ const Auth = (props: {
         user_id: string
     }
     mode: any
+    authFlow: any
+    match: any
 }) => {
-    const { user, waitlistUser, mode } = props
+    const { user, waitlistUser, match, mode } = props
 
-    if (!waitlistUser.user_id) {
-        return <Redirect to="/" />
-    }
+    useEffect(() => {
+        const firstParam = match.params.first
+        if (firstParam !== "bypass" && !waitlistUser.user_id) {
+            history.push("/")
+        }
+    }, [match, waitlistUser.user_id])
 
     if (user.user_id && user.user_id !== "") {
         if (user.emailVerified) {
@@ -71,6 +78,7 @@ function mapStateToProps(state: {
         waitlistUser: state.WaitlistReducer.waitlistUser,
         mode: state.AuthReducer.authFlow.mode,
         user: state.AuthReducer.user,
+        authFlow: state.AuthReducer.authFlow,
     }
 }
 

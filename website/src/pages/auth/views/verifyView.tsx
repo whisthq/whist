@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
+
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import {
     validateVerificationToken,
     sendVerificationEmail,
 } from "store/actions/auth/sideEffects"
-import { updateAuthFlow, updateUser } from "store/actions/auth/pure"
+import { updateAuthFlow, updateUser, resetUser } from "store/actions/auth/pure"
+import history from "shared/utils/history"
 
 import "styles/auth.css"
 
@@ -111,6 +113,11 @@ const VerifyView = (props: {
             : "Sending..."
         : "Login to Re-send"
 
+    const reset = () => {
+        dispatch(resetUser())
+        history.push("/auth")
+    }
+
     const sendWithDelay = (evt: any) => {
         // this can only be reached when there is a valid user
         setCanRetry(false)
@@ -171,6 +178,13 @@ const VerifyView = (props: {
                     checkEmail={validUser && canRetry}
                     onClick={sendWithDelay}
                 />
+                <button
+                    className="white-button"
+                    style={{ width: "100%", marginTop: 20, fontSize: 16 }}
+                    onClick={reset}
+                >
+                    Back to Login
+                </button>
             </div>
         )
     } else {

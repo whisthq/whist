@@ -43,6 +43,10 @@ const ForgotView = (props: any) => {
         }
     }, [authFlow.forgotStatus, authFlow.forgotEmailsSent, email])
 
+    // useEffect(() => {
+    //     setGotResponse(false)
+    // }, [])
+
     if (processing) {
         return (
             <div>
@@ -69,32 +73,39 @@ const ForgotView = (props: any) => {
                         authFlow.forgotStatus !== "Email sent"
                             ? "Failed"
                             : "Succeded"}
-                        {authFlow.forgotStatus
-                            ? ": " + authFlow.forgotStatus
-                            : ""}
-                        .
+                        {authFlow.forgotStatus ? authFlow.forgotStatus : ""}.
                     </h2>
                     <div
                         style={{
-                            color: "#fc3d03",
+                            color: "#333333",
                             textAlign: "center",
+                            marginTop: 20,
                         }}
                     >
-                        We've sent you {authFlow.forgotEmailsSent} reset
-                        email(s).
+                        Didn't receive an email? Please check your spam folder.
+                        To receive another email, click{" "}
+                        <span
+                            onClick={() => setGotResponse(false)}
+                            style={{ color: "#3930b8", cursor: "pointer" }}
+                        >
+                            here
+                        </span>
+                        .
                     </div>
-                    <SwitchMode
-                        question="Try going back to login"
-                        link="here"
-                        closer="."
-                        onClick={() =>
-                            dispatch(
-                                AuthPureAction.updateAuthFlow({
-                                    mode: "Log in",
-                                })
-                            )
-                        }
-                    />
+                    <div style={{ marginTop: 20 }}>
+                        <SwitchMode
+                            question="You can return to the login page"
+                            link="here"
+                            closer="."
+                            onClick={() =>
+                                dispatch(
+                                    AuthPureAction.updateAuthFlow({
+                                        mode: "Log in",
+                                    })
+                                )
+                            }
+                        />
+                    </div>
                 </div>
             </div>
         )
@@ -145,18 +156,20 @@ const ForgotView = (props: any) => {
                     >
                         Reset
                     </button>
-                    <SwitchMode
-                        question="Remembered your password?"
-                        link="Log in"
-                        closer="here."
-                        onClick={() =>
-                            dispatch(
-                                AuthPureAction.updateAuthFlow({
-                                    mode: "Log in",
-                                })
-                            )
-                        }
-                    />
+                    <div style={{ marginTop: 20 }}>
+                        <SwitchMode
+                            question="Remember your password?"
+                            link="Log in "
+                            closer="here."
+                            onClick={() =>
+                                dispatch(
+                                    AuthPureAction.updateAuthFlow({
+                                        mode: "Log in",
+                                    })
+                                )
+                            }
+                        />
+                    </div>
                 </div>
             </div>
         )

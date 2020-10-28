@@ -28,7 +28,7 @@ const Dashboard = (props: {
     const name = user.user_id.split("@")[0]
 
     if (!valid_user) {
-        return <Redirect to="/" />
+        return <Redirect to="/auth" />
     } else {
         // for now it wil lalways be loading
         return (
