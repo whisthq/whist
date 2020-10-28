@@ -251,6 +251,7 @@ void unsafe_SetClipboard(ClipboardData* cb) {
     // Empty call of unsafe_hasClipboardUpdated() in order to prevent hasUpdated from returning true
     //      just after we've called xclip to set the clipboard
     unsafe_hasClipboardUpdated();
+
     return;
 }
 
