@@ -14,6 +14,6 @@ export namespace Fonts {
   }
 }
 
-declare module 'figma-linux-rust-binding' {
+declare module 'figma-font-bindings' {
   function getFonts(): void;
 }

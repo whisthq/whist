@@ -84,7 +84,7 @@ pub fn fonts_async(mut cx: FunctionContext) -> JsResult<JsUndefined> {
         "/usr/local/share/fonts".to_string(),
     ];
 
-    let worker = Worker { dirs: arr };
+    Worker { dirs: arr };
 
     Ok(cx.undefined())
 }
