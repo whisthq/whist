@@ -147,7 +147,7 @@ SOCKET socketp_udp();
 
 @returns                        The new socket file descriptor, -1 on failure
 */
-SOCKET acceptp(int sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len);
+SOCKET acceptp(SOCKET sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len);
 
 /*
 @brief                          This will send or receive data over a socket
@@ -477,6 +477,9 @@ SOCKET socketp_tcp() {
         Create a TCP socket and set the FD_CLOEXEC flag.
         Linux permits atomic FD_CLOEXEC definition via SOCK_CLOEXEC,
         but this is not available on other operating systems yet.
+
+        Return:
+            SOCKET: socket fd on success; INVALID_SOCKET on failure
     */
 
 #ifdef SOCK_CLOEXEC
@@ -512,6 +515,9 @@ SOCKET socketp_udp() {
         Create a UDP socket and set the FD_CLOEXEC flag.
         Linux permits atomic FD_CLOEXEC definition via SOCK_CLOEXEC,
         but this is not available on other operating systems yet.
+
+        Return:
+            SOCKET: socket fd on success; INVALID_SOCKET on failure
     */
 
 #ifdef SOCK_CLOEXEC
@@ -534,14 +540,17 @@ SOCKET socketp_udp() {
     return sock_fd;
 }
 
-SOCKET acceptp(int sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len) {
+SOCKET acceptp(SOCKET sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len) {
     /*
         Accept a connection on `sock_fd` and return a new socket fd
 
         Arguments:
-            sock_fd (int): file descriptor of socket that we are accepting a connection on
+            sock_fd (SOCKET): file descriptor of socket that we are accepting a connection on
             sock_addr (struct sockaddr*): the address of the socket
             sock_len (socklen_t*): the length of the socket address struct
+
+        Return:
+            SOCKET: new fd for socket on success; INVALID_SOCKET on failure
     */
 
 #if defined(_GNU_SOURCE) && defined(SOCK_CLOEXEC)
