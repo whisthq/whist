@@ -202,9 +202,10 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                         }}
                     />
                     <GoogleButton login={google_signup} />
+                    <div style = {{marginTop: 20}}>
                     <SwitchMode
                         question="Already have an account?"
-                        link="Log in"
+                        link="Log in "
                         closer="here."
                         onClick={() =>
                             dispatch(
@@ -214,6 +215,7 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                             )
                         }
                     />
+                    </div>
                 </div>
             </div>
         )

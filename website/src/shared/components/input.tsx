@@ -20,6 +20,11 @@ const Input = (props: any) => {
                 >
                     {props.text}
                 </div>
+                <div style = {{
+                    fontSize: 14
+                }}>
+                    {props.altText}
+                </div>
                 {props.warning && props.warning !== "" && (
                     <div
                         style={{

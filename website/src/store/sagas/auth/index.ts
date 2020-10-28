@@ -25,7 +25,7 @@ function* emailLogin(action: any) {
 
     console.log(json)
 
-    if (json && json.verified) {
+    if (json && json.access_token) {
         yield put(
             AuthPureAction.updateUser({
                 user_id: action.email,
@@ -102,6 +102,14 @@ function* googleLogin(action: any) {
                     },
                 )
 
+            } else if (response.status === 403) {
+                yield put(
+                    AuthPureAction.updateAuthFlow({
+                        loginWarning: "Try using non-Google login.",
+                        signupWarning:
+                            "Try using non-Google login.",
+                    })
+                )
             } else {
                 yield put(
                     AuthPureAction.updateAuthFlow({

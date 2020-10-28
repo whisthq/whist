@@ -21,6 +21,7 @@ const Auth = (props: {
         user_id: string
     }
     mode: any
+    authFlow: any
     match: any
 }) => {
     const { user, waitlistUser, match, mode } = props
@@ -30,7 +31,7 @@ const Auth = (props: {
         if (firstParam !== "bypass" && !waitlistUser.user_id) {
             history.push("/")
         }
-    }, [match])
+    }, [match, waitlistUser.user_id])
 
     if (user.user_id && user.user_id !== "") {
         if (user.emailVerified) {
@@ -77,6 +78,7 @@ function mapStateToProps(state: {
         waitlistUser: state.WaitlistReducer.waitlistUser,
         mode: state.AuthReducer.authFlow.mode,
         user: state.AuthReducer.user,
+        authFlow: state.AuthReducer.authFlow,
     }
 }
 

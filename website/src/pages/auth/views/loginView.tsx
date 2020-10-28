@@ -122,6 +122,20 @@ const LoginView = (props: any) => {
                     <div style={{ marginTop: 13 }}>
                         <Input
                             text="Password"
+                            altText={
+                                <SwitchMode
+                                question=""
+                                link="Forgot password"
+                                closer=""
+                                onClick={() =>
+                                    dispatch(
+                                        AuthPureAction.updateAuthFlow({
+                                            mode: "Forgot",
+                                        })
+                                    )
+                                }
+                            />
+                            }
                             type="password"
                             placeholder="Password"
                             onChange={changePassword}
@@ -158,9 +172,10 @@ const LoginView = (props: any) => {
                         }}
                     />
                     <GoogleButton login={google_login} />
+                    <div style = {{marginTop: 20}}>
                     <SwitchMode
                         question="Need to create an account?"
-                        link="Sign up"
+                        link="Sign up "
                         closer="here."
                         onClick={() =>
                             dispatch(
@@ -170,18 +185,7 @@ const LoginView = (props: any) => {
                             )
                         }
                     />
-                    <SwitchMode
-                        question="Forgot your password?"
-                        link="Reset"
-                        closer="here."
-                        onClick={() =>
-                            dispatch(
-                                AuthPureAction.updateAuthFlow({
-                                    mode: "Forgot",
-                                })
-                            )
-                        }
-                    />
+                    </div>
                 </div>
             </div>
         )
