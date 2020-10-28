@@ -79,18 +79,12 @@ impl Task for Worker {
 }
 
 pub fn fonts_async(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let dirs: Handle<JsArray> = cx.argument::<JsArray>(0)?;
-    let callback = cx.argument::<JsFunction>(1)?;
-
-    let arr: Vec<String> = dirs
-        .to_vec(&mut cx)
-        .unwrap()
-        .iter()
-        .map(|js_value| js_value.downcast::<JsString>().unwrap().value())
-        .collect();
+    let arr: Vec<String> = vec![
+        "/usr/share/fonts".to_string(),
+        "/usr/local/share/fonts".to_string(),
+    ];
 
     let worker = Worker { dirs: arr };
-    worker.schedule(callback);
 
     Ok(cx.undefined())
 }
