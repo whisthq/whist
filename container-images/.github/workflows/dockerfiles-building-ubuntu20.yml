@@ -7,7 +7,7 @@ on:
 
 jobs:
     build-dockerfiles:
-        name: 
+        name: Build Dockerfiles
         runs-on: ubuntu-20.04
 
         steps:
