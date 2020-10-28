@@ -123,7 +123,7 @@ def create_new_container(
 
     if not cluster_name:
         all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
-        all_clusters = [cluster for cluster in all_clusters if "cluster_" in cluster.cluster]
+        all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
         if len(all_clusters) == 0:
             fractalLog(
                 function="create_new_container",
