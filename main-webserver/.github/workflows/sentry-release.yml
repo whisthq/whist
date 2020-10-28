@@ -47,5 +47,5 @@ jobs:
       - name: Notify Slack
         run: |
           curl -X POST \
-          --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Main-Webserver Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+          --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Main Webserver Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
           https://hooks.slack.com/services/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
