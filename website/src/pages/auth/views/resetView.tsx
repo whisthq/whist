@@ -11,6 +11,7 @@ import {
     checkPasswordVerbose,
 } from "pages/auth/constants/authHelpers"
 import history from "shared/utils/history"
+import { updateAuthFlow } from "store/actions/auth/pure"
 
 import "styles/auth.css"
 
@@ -27,7 +28,7 @@ const ResetView = (props: {
     const [passwordWarning, setPasswordWarning] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [confirmPasswordWarning, setConfirmPasswordWarning] = useState("")
-    const [finished, setFinished] = useState(true)
+    const [finished, setFinished] = useState(false)
 
     // visual state constants
     const [processing, setProcessing] = useState(false)
@@ -67,7 +68,11 @@ const ResetView = (props: {
     useEffect(() => {
         if (validToken && !processing) {
             dispatch(validateResetToken(token))
-
+            dispatch(
+                updateAuthFlow({
+                    resetTokenStatus: undefined, // to guarantee that upon a response we will see something
+                })
+            )
             setProcessing(true)
         }
         // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
@@ -76,7 +81,8 @@ const ResetView = (props: {
 
     // then stop loading and let the textbox be displayed
     useEffect(() => {
-        if (authFlow.resetTokenStatus === "verified" && processing) {
+        //console.log(`change ${processing} ${authFlow.resetTokenStatus}`)
+        if (processing && authFlow.resetTokenStatus) {
             setProcessing(false)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -181,7 +187,9 @@ const ResetView = (props: {
                             paddingBottom: 15,
                             opacity: validPassword ? 1.0 : 0.6,
                         }}
-                        onClick={reset}
+                        onClick={() => {
+                            console.log("clicked (then add reset)")
+                        }}
                         disabled={!validPassword}
                     >
                         Reset

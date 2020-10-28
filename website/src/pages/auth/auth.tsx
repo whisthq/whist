@@ -66,6 +66,7 @@ function mapStateToProps(state: {
     AuthReducer: { authFlow: any; user: any }
     WaitlistReducer: { waitlistUser: any }
 }) {
+    console.log(state)
     return {
         waitlistUser: state.WaitlistReducer.waitlistUser,
         mode: state.AuthReducer.authFlow.mode,
