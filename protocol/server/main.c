@@ -815,6 +815,15 @@ int MultithreadedManageClients(void* opaque) {
     // NOTE: don't want server to exit before first client is connected... ONLY use container destruction code on PRODUCTION_HOST
     //  strcmp(host, STAGING_HOST) == 0
 
+#ifdef __linux__
+    Display* x_display = XOpenDisplay(NULL);
+    unsigned long color = BlackPixel(display, DefaultScreen(display));
+    Window x_window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1, 1, 0, color, color);
+    Atom WM_DELETE_WINDOW = XInternAtom(d, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols(x_display, w, &WM_DELETE_WINDOW, 1);
+    XEvent x_event;
+#endif
+
     while (!exiting) {
         if (readLock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to read-acquire an active RW lock.");
@@ -945,6 +954,28 @@ int MultithreadedManageClients(void* opaque) {
         StartTimer(&(clients[client_id].last_ping));
 
         clients[client_id].is_active = true;
+
+#ifdef __linux__
+        // if X display is closed and disconnected, then kick clients and kill server
+        while (XPending(x_display)) {
+            XNextEvent(x_display, &x_event);
+            if (e.type == ClientMessage) {
+                if (SDL_LockMutex(state_lock) != 0) {
+                    LOG_ERROR("Failed to lock state lock");
+                    break;
+                }
+                if (quitClients() != 0) {
+                    LOG_ERROR("Failed to quit clients.");
+                }
+                if (SDL_UnlockMutex(state_lock) != 0) {
+                    LOG_ERROR("Failed to unlock state lock");
+                }
+                exiting = true;
+                XCloseDisplay(x_display);
+                break;
+            }
+        }
+#endif
 
         if (writeUnlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
