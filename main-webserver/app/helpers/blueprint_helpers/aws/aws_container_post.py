@@ -7,6 +7,7 @@ from app.constants.http_codes import (
     UNAUTHORIZED,
 )
 from app.models import db, UserContainer, SupportedAppImages
+from app.serializers.hardware import UserContainerSchema
 
 
 class BadAppError(Exception):
@@ -46,23 +47,24 @@ def protocol_info(address, port, aeskey):
             returned.
     """
 
+    schema = UserContainerSchema(
+        only=(
+            "allow_autoupdate",
+            "branch",
+            "secret_key",
+            "using_stun",
+            "container_id",
+            "user_id",
+            "state",
+        )
+    )
     response = None, NOT_FOUND
     container = UserContainer.query.filter_by(ip=address, port_32262=port).first()
 
     if container:
         if container.secret_key == aeskey:
             username = container.user_id
-            response = (
-                {
-                    "allow_autoupdate": container.allow_autoupdate,
-                    "branch": container.branch,
-                    "secret_key": container.secret_key,
-                    "using_stun": container.using_stun,
-                    "container_id": container.container_id,
-                    "user_id": container.user_id,
-                },
-                SUCCESS,
-            )
+            response = schema.dump(container), SUCCESS
         else:
             response = None, UNAUTHORIZED
 
