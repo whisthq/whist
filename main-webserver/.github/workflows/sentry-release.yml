@@ -1,5 +1,6 @@
 # Automatically push a new Sentry release
-
+# You need this GitHub repository to be linked in the Settings section of the Sentry organization
+# for this workflow to execute properly
 name: Sentry Release
 
 on:
@@ -7,9 +8,11 @@ on:
     branches: [ master ]
     paths-ignore:
     - '**/README.md'
+  workflow_dispatch:
 
 jobs:
   createSentryRelease:
+    name: Create and Upload Sentry Release
     runs-on: ubuntu-latest
     env:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -22,10 +25,11 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
       - name: Set Git repository URL to enable sentry-cli automatic commit tagging
         run: |
-          git remote set-url origin https://github.com/fractalcomputers/ecs-host-service
+          git remote set-url origin https://github.com/fractalcomputers/main-webserver
 
       - name: Create new Sentry release
         run: |
@@ -44,5 +48,5 @@ jobs:
       - name: Notify Slack
         run: |
           curl -X POST \
-          --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Main-Webserver Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+          --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Main Webserver Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
           https://hooks.slack.com/services/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

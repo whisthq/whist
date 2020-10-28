@@ -33,7 +33,7 @@ def preprocess_task_info(app):
         return (
             app_data.task_definition,
             "us-east-1",
-            "demo-cluster",
+            None,
         )
     raise BadAppError("No Matching App Found")
 
