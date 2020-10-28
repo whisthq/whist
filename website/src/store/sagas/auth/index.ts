@@ -11,7 +11,6 @@ import {
 } from "shared/constants/graphql"
 import { SIGNUP_POINTS } from "shared/utils/points"
 
-
 function* emailLogin(action: any) {
     const { json } = yield call(
         apiPost,
@@ -86,28 +85,23 @@ function* googleLogin(action: any) {
                     UPDATE_WAITLIST_AUTH_EMAIL,
                     "UpdateWaitlistAuthEmail",
                     {
-                        "user_id": state.WaitlistReducer.waitlistUser.user_id,
-                        "authEmail": json.username,
+                        user_id: state.WaitlistReducer.waitlistUser.user_id,
+                        authEmail: json.username,
                     }
                 )
 
-                yield call(
-                    graphQLPost,
-                    UPDATE_WAITLIST,
-                    "UpdateWaitlist",
-                    {
-                        "user_id": state.WaitlistReducer.waitlistUser.user_id,
-                        "points": state.WaitlistReducer.waitlistUser.points + SIGNUP_POINTS,
-                        "referrals": state.WaitlistReducer.waitlistUser.referrals,
-                    },
-                )
-
+                yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
+                    user_id: state.WaitlistReducer.waitlistUser.user_id,
+                    points:
+                        state.WaitlistReducer.waitlistUser.points +
+                        SIGNUP_POINTS,
+                    referrals: state.WaitlistReducer.waitlistUser.referrals,
+                })
             } else if (response.status === 403) {
                 yield put(
                     AuthPureAction.updateAuthFlow({
                         loginWarning: "Try using non-Google login.",
-                        signupWarning:
-                            "Try using non-Google login.",
+                        signupWarning: "Try using non-Google login.",
                     })
                 )
             } else {

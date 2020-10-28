@@ -42,12 +42,14 @@ const CustomAction = (props: {
                 <div
                     style={{
                         fontSize: width > 720 ? 17 : 16,
-                        textAlign: "left"
+                        textAlign: "left",
                     }}
                 >
                     {text}
                 </div>
-                <div className="points" style = {{textAlign: "right"}}>+{points.toString()} pts</div>
+                <div className="points" style={{ textAlign: "right" }}>
+                    +{points.toString()} pts
+                </div>
             </div>
             {warning && warning !== "" && (
                 <div

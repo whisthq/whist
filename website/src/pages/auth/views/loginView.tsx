@@ -124,17 +124,17 @@ const LoginView = (props: any) => {
                             text="Password"
                             altText={
                                 <SwitchMode
-                                question=""
-                                link="Forgot password"
-                                closer=""
-                                onClick={() =>
-                                    dispatch(
-                                        AuthPureAction.updateAuthFlow({
-                                            mode: "Forgot",
-                                        })
-                                    )
-                                }
-                            />
+                                    question=""
+                                    link="Forgot password"
+                                    closer=""
+                                    onClick={() =>
+                                        dispatch(
+                                            AuthPureAction.updateAuthFlow({
+                                                mode: "Forgot",
+                                            })
+                                        )
+                                    }
+                                />
                             }
                             type="password"
                             placeholder="Password"
@@ -172,19 +172,19 @@ const LoginView = (props: any) => {
                         }}
                     />
                     <GoogleButton login={google_login} />
-                    <div style = {{marginTop: 20}}>
-                    <SwitchMode
-                        question="Need to create an account?"
-                        link="Sign up "
-                        closer="here."
-                        onClick={() =>
-                            dispatch(
-                                AuthPureAction.updateAuthFlow({
-                                    mode: "Sign up",
-                                })
-                            )
-                        }
-                    />
+                    <div style={{ marginTop: 20 }}>
+                        <SwitchMode
+                            question="Need to create an account?"
+                            link="Sign up "
+                            closer="here."
+                            onClick={() =>
+                                dispatch(
+                                    AuthPureAction.updateAuthFlow({
+                                        mode: "Sign up",
+                                    })
+                                )
+                            }
+                        />
                     </div>
                 </div>
             </div>
