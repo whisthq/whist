@@ -60,6 +60,12 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
 
 void unsafe_initClipboard() { StartTrackingClipboardUpdates(); }
 
+void unsafe_DestroyClipboard() {
+    if (display) {
+        XCloseDisplay(display);
+    }
+}
+
 bool get_clipboard_picture(ClipboardData* cb) {
     /*
     Assume that clipboard stores pictures in png format when getting
@@ -288,7 +294,7 @@ bool unsafe_hasClipboardUpdated() {
         first = false;
         return true;
     }
-    while (XPending(display)) {
+    while (XPending(display)) { // X ERROR _XEventsQueued -> _XIOError -> _XDefaultIOError -> exit
         XNextEvent(display, &event);
         if (event.type == event_base + XFixesSelectionNotify &&
             ((XFixesSelectionNotifyEvent*)&event)->selection == clipboard) {

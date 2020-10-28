@@ -820,6 +820,7 @@ int MultithreadedManageClients(void* opaque) {
             LOG_ERROR("Failed to read-acquire an active RW lock.");
             continue;
         }
+
         int saved_num_active_clients = num_active_clients;
 
         if (readUnlock(&is_active_rwlock) != 0) {
@@ -1367,7 +1368,7 @@ int main(int argc, char* argv[]) {
     destroyLogger();
     destroyClients();
 
-    sendContainerDestroyMessage();
+    sendContainerDestroyMessage(strcmp(host, PRODUCTION_HOST) == 0);
 
     return 0;
 }
