@@ -15,7 +15,7 @@ export const RESET_PASSWORD = "RESET_PASSWORD"
 
 export const SEND_VERIFICATION_EMAIL = "SEND_VERIFICATION_EMAIL"
 
-export function googleLogin(code: any) {
+export function googleLogin(code: any, rememberMe?: boolean) {
     return {
         type: GOOGLE_LOGIN,
         code,
