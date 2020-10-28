@@ -5,8 +5,11 @@ import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
+
 import { debugLog } from "shared/utils/logging"
 import { deleteContainer } from "store/actions/sideEffects"
+import { updateContainer, updateLoading } from "store/actions/pure"
+import { history } from "store/configureStore"
 
 const UpdateScreen = (props: any) => {
     const {
@@ -19,8 +22,6 @@ const UpdateScreen = (props: any) => {
         port32262,
         port32263,
         port32273,
-        width, // for the screen
-        height, // for the screen
         ip,
     } = props
 
@@ -66,13 +67,12 @@ const UpdateScreen = (props: any) => {
             debugLog(`no suitable os found, instead got ${os.platform()}`)
         }
 
-
         var port_info = `32262:${port32262},32263:${port32263},32273:${port32273}`
         var parameters = ["-w", 800, "-h", 600, "-p", port_info, ip]
         debugLog(`your executable path should be: ${path}`)
 
         // Starts the protocol
-        const protocol1 = child(executable, parameters, {
+        const protocol = child(executable, parameters, {
             cwd: path,
             detached: true,
             stdio: "ignore",
@@ -81,9 +81,25 @@ const UpdateScreen = (props: any) => {
             //    PATH: process.env.PATH,
             //},
         })
-        protocol1.on("close", (code: any) => {
-            debugLog("the protocol has been closed!")
+        protocol.on("close", (code: any) => {
             dispatch(deleteContainer(username, container_id))
+            dispatch(
+                updateContainer({
+                    container_id: null,
+                    cluster: null,
+                    port32262: null,
+                    port32263: null,
+                    port32273: null,
+                    publicIP: null,
+                })
+            )
+            dispatch(
+                updateLoading({
+                    statusMessage: "Powering up your app",
+                    percentLoaded: 0,
+                })
+            )
+            history.push("/dashboard")
         })
         debugLog("spawn completed!")
 

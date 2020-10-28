@@ -67,7 +67,7 @@ const Login = (props: any) => {
             // const executable =
             //     os.platform() === "win32" ? "awsping.exe" : "./awsping"
             // console.log(executable)
-    
+
             if (os.platform() === "darwin") {
                 path = appRootDir + "/binaries/"
                 path = path.replace("/app", "")
@@ -82,20 +82,20 @@ const Login = (props: any) => {
                 path = path.replace("\\app", "")
                 executable = "awsping_windows.exe"
             } else {
-                console.log(`no suitable os found, instead got ${os.platform()}`)
+                console.log(
+                    `no suitable os found, instead got ${os.platform()}`
+                )
             }
-    
+
             if (os.platform() !== "win32") {
                 const { exec } = require("child_process")
                 exec("chmod +x awsping_osx.sh", { cwd: path })
             }
-    
-    
+
             const regions = spawn(executable, ["-verbose", "1"], { cwd: path }) // ping via TCP
             regions.stdout.setEncoding("utf8")
-    
+
             regions.stdout.on("data", (data: any) => {
-                console.log(data)
                 // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
                 const line = data.split(/\r?\n/)[1].replace(/  +/g, " ")
                 const items = line.split(" ")
@@ -153,7 +153,7 @@ const Login = (props: any) => {
             const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=${GOOGLE_REDIRECT_URI}&client_id=${GOOGLE_CLIENT_ID}`
             authWindow.loadURL(authUrl, { userAgent: "Chrome" })
             authWindow.show()
-    
+
             const handleNavigation = (url: any) => {
                 const query = parse(url, true).query
                 if (query) {
@@ -167,11 +167,11 @@ const Login = (props: any) => {
                     }
                 }
             }
-    
+
             authWindow.webContents.on("will-navigate", (_: any, url: any) => {
                 handleNavigation(url)
             })
-    
+
             authWindow.webContents.on(
                 "did-get-redirect-request",
                 (_: any, oldUrl: any, newUrl: any) => {
