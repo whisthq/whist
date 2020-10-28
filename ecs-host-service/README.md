@@ -6,7 +6,7 @@ This repository contains the Fractal ECS host service, which is installed on AWS
 
 ### Building
 
-To build the service, first install Go via your local package manager, i.e. `brew install go`, and then run `make`. Note that this was only tested using Go version >= 1.15.
+To build the service, first install Go via your local package manager, i.e. `brew install go` or `sudo snap install --classic --channel=1.15/stable go`, and then run `make`. Note that this was only tested using Go version >= 1.15.
 
 This will build the service under directory `/build` as `ecs-host-service`.
 
