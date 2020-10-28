@@ -199,6 +199,12 @@ int32_t SendVideo(void* opaque) {
                 continue;
             }
 
+#ifndef _WIN32
+            // On Linux containers, we need to wait for the notification of when the
+            // width/height/dpi was set
+            runcmd("touch /usr/share/fractal/monitor_set", NULL);
+#endif
+
             LOG_INFO("Created Capture Device of dimensions %dx%d", device->width, device->height);
 
             while (pending_encoder) {

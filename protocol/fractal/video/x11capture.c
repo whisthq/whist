@@ -58,7 +58,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi
     device->root = DefaultRootWindow(device->display);
 
     if (width <= 0 || height <= 0) {
-        LOG_ERROR("Nonsensicle width/height of %d/%d", width, height);
+        LOG_ERROR("Invalid width/height of %d/%d", width, height);
         return -1;
     }
     device->width = width & ~0xF;
