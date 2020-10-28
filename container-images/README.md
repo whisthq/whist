@@ -10,6 +10,7 @@ This repository contains the code for containerizing the various applications th
 - Brave Browser
 - Blender
 - Blockbench
+- Figma
 - Slack
 - Discord
 - Notion

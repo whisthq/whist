@@ -1,5 +1,4 @@
 # Workflow to build Docker images for basic testing
-
 name: Dockerfiles Building
 
 on:
@@ -8,6 +7,7 @@ on:
 
 jobs:
     build-dockerfiles:
+        name: 
         runs-on: ubuntu-20.04
 
         steps:
@@ -57,3 +57,6 @@ jobs:
 
             - name: Build the Ubuntu 20.04 Blockbench Image
               run: cd creative/blockbench && docker build . --file Dockerfile.20 --tag fractal/creative/blockbench:current-build
+            
+            - name: Build the Ubuntu 20.04 Figma Image
+              run: cd creative/figma && docker build . --file Dockerfile.20 --tag fractal/creative/figma:current-build

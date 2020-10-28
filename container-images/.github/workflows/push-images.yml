@@ -24,6 +24,7 @@ env:
         productivity/notion
         creative/blender
         creative/blockbench
+        creative/figma
 
 jobs:
     ecr-push:
