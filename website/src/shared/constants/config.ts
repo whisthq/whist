@@ -14,6 +14,10 @@ const environment: any = {
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"]
         },
         sentry_env: "development",
+        client_download_urls: {
+            MacOS: "",
+            Windows: "",
+        },
     },
     staging: {
         url: {
@@ -30,6 +34,10 @@ const environment: any = {
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"]
         },
         sentry_env: "development",
+        client_download_urls: {
+            MacOS: "",
+            Windows: "",
+        },
     },
     production: {
         url: {
@@ -45,6 +53,10 @@ const environment: any = {
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"]
         },
         sentry_env: "production",
+        client_download_urls: {
+            MacOS: "",
+            Windows: "",
+        },
     },
 }
 

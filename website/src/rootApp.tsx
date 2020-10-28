@@ -11,10 +11,9 @@ import Privacy from "pages/legal/privacy"
 import Auth from "pages/auth/auth"
 import Verify from "pages/auth/verify"
 import Reset from "pages/auth/reset"
+import Dashboard from "pages/dashboard/dashboard"
 
 import withTracker from "shared/utils/withTracker"
-
-// import Dashboard from "pages/dashboard/dashboard"
 
 // import * as SharedAction from "store/actions/shared"
 
@@ -52,7 +51,13 @@ const RootApp = (props: any) => {
                 <Route exact path="/auth" component={withTracker(Auth)} />
                 <Route exact path="/verify" component={withTracker(Verify)} />
                 <Route exact path="/reset" component={withTracker(Reset)} />
-                {/* <Route exact path="/dashboard" component={Dashboard} /> */}
+                {
+                    <Route
+                        exact
+                        path="/dashboard"
+                        component={withTracker(Dashboard)}
+                    />
+                }
                 <Route
                     exact
                     path="/:first?/:second?"
