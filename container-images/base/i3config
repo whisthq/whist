@@ -35,7 +35,8 @@ set $right semicolon
 floating_modifier Mod1
 
 # kill focused window
-bindsym Mod1+Shift+q kill
+bindsym Mod1+F4 kill
+bindsym Mod4+w kill
 
 # change focus
 bindsym Mod1+$left focus left
