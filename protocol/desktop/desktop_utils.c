@@ -167,7 +167,7 @@ int parseArgs(int argc, char *argv[]) {
                 strcpy(sentry_environment, optarg);
                 break;
             case 'p': {
-                char separator = ';';
+                char separator = '.';
                 char c = separator;
                 unsigned short origin_port;
                 unsigned short destination_port;
