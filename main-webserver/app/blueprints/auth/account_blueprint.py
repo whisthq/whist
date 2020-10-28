@@ -14,6 +14,7 @@ from app.helpers.blueprint_helpers.auth.account_post import (
     registerHelper,
     updateUserHelper,
     verifyHelper,
+    resetPasswordHelper
 )
 from app.helpers.utils.general.auth import fractalAuth
 
@@ -78,6 +79,11 @@ def account_post(action, **kwargs):
         # Check if user exists
 
         output = lookupHelper(body["username"])
+        return jsonify(output), output["status"]
+    elif action == "reset":
+        # Reset a user's password
+
+        output = resetPasswordHelper(body["username"], body["password"])
         return jsonify(output), output["status"]
 
 

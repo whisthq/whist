@@ -47,6 +47,7 @@ def create_app(app_name=PKG_NAME, **kwargs):
     app.config["SENDGRID_DEFAULT_FROM"] = "noreply@tryfractal.com"
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["JWT_IDENTITY_CLAIM"] = "sub"
 
     if kwargs.get("celery"):
         init_celery(kwargs.get("celery"), app)

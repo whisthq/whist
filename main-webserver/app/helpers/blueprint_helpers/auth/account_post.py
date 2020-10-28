@@ -12,6 +12,7 @@ from app.constants.http_codes import (
     NOT_ACCEPTABLE,
     SUCCESS,
     UNAUTHORIZED,
+    NOT_FOUND
 )
 from app.helpers.blueprint_helpers.mail.mail_post import verificationHelper
 from app.helpers.utils.general.crypto import check_value, hash_value
@@ -285,3 +286,4 @@ def updateUserHelper(body):
             resetPasswordHelper(body["username"], body["password"])
             return jsonify({"msg": "Password updated successfully"}), SUCCESS
         return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE
+    return jsonify({"msg": "User not found"}), NOT_FOUND
