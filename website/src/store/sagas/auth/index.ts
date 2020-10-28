@@ -284,6 +284,13 @@ function* validateResetToken(action: any) {
                 )
             }
         }
+    } else {
+        // this happens when the server 500s basically
+        yield put(
+            AuthPureAction.updateAuthFlow({
+                resetTokenStatus: "invalid",
+            })
+        )
     }
 }
 
@@ -320,5 +327,9 @@ export default function* () {
         takeEvery(AuthSideEffect.VALIDATE_RESET_TOKEN, validateResetToken),
         takeEvery(AuthSideEffect.RESET_PASSWORD, resetPassword),
         takeEvery(AuthSideEffect.FORGOT_PASSWORD, forgotPassword),
+        takeEvery(
+            AuthSideEffect.SEND_VERIFICATION_EMAIL,
+            sendVerificationEmail
+        ),
     ])
 }

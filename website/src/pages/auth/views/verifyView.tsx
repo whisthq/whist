@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { PuffAnimation } from "shared/components/loadingAnimations"
-import { validateVerificationToken } from "store/actions/auth/sideEffects"
+import {
+    validateVerificationToken,
+    sendVerificationEmail,
+} from "store/actions/auth/sideEffects"
+import { updateAuthFlow, updateUser } from "store/actions/auth/pure"
 
 import "styles/auth.css"
 
@@ -48,6 +52,35 @@ const Title = (props: { title: string; subtitle?: string }) => {
     )
 }
 
+const DivSpace = (props: { height: number }) => (
+    <div style={{ marginTop: props.height }} />
+)
+
+const RetryButton = (props: {
+    text: string
+    checkEmail: boolean
+    onClick: (evt: any) => any
+}) => (
+    <button
+        className="white-button"
+        style={{
+            width: "100%",
+            marginTop: 15,
+            background: "#3930b8",
+            border: "none",
+            color: "white",
+            fontSize: 16,
+            paddingTop: 15,
+            paddingBottom: 15,
+            opacity: props.checkEmail ? 1.0 : 0.6,
+        }}
+        onClick={props.onClick}
+        disabled={!props.checkEmail}
+    >
+        {props.text}
+    </button>
+)
+
 const VerifyView = (props: {
     dispatch: any
     user: any
@@ -59,9 +92,52 @@ const VerifyView = (props: {
 
     // visual state constants
     const [processing, setProcessing] = useState(false)
+    const [canRetry, setCanRetry] = useState(true)
+    const [sentRetry, setSentRetry] = useState(false)
 
     // logic
-    const validUser = user.user_id && user.user_id !== ""
+    const validUser =
+        user.user_id &&
+        user.user_id !== "" &&
+        user.accessToken &&
+        user.accessToken !== ""
+
+    // used for button
+    const retryMessage = validUser
+        ? sentRetry
+            ? "Sent!"
+            : canRetry
+            ? "Send Again"
+            : "Sending..."
+        : "Login to Re-send"
+
+    const sendWithDelay = (evt: any) => {
+        // this can only be reached when there is a valid user
+        setCanRetry(false)
+
+        dispatch(
+            updateUser({
+                emailVerificationToken: undefined,
+            })
+        )
+        dispatch(
+            updateAuthFlow({
+                verificationEmailsSent: authFlow.verificationEmailsSent
+                    ? authFlow.verificationEmailsSent + 1
+                    : 1,
+            })
+        )
+        dispatch(sendVerificationEmail(user.user_id, user.accessToken))
+        setTimeout(() => {
+            // first show them that it's been sent
+            setSentRetry(true)
+            setTimeout(() => {
+                // then return to the original state
+                setCanRetry(true)
+                setSentRetry(false)
+            }, 3000)
+        }, 2000)
+    }
 
     useEffect(() => {
         if (validUser && validToken && !processing) {
@@ -80,7 +156,23 @@ const VerifyView = (props: {
     }, [user.emailVerified, authFlow.verificationAttemptsExecuted])
 
     if (!validToken) {
-        return <Title title="Check your inbox" subtitle="(and/or spam)" />
+        return (
+            <div
+                style={{
+                    width: 400,
+                    margin: "auto",
+                    marginTop: 70,
+                }}
+            >
+                <Title title="Check your inbox" subtitle="(and/or spam)" />
+                <DivSpace height={40} />
+                <RetryButton
+                    text={retryMessage}
+                    checkEmail={validUser && canRetry}
+                    onClick={sendWithDelay}
+                />
+            </div>
+        )
     } else {
         if (processing) {
             // Conditionally render the loading screen as we wait for signup API call to return
@@ -91,7 +183,23 @@ const VerifyView = (props: {
             )
         } else {
             // this state is reached after processing has finished and failed
-            return <Title title="Failed to verify" />
+            return (
+                <div
+                    style={{
+                        width: 400,
+                        margin: "auto",
+                        marginTop: 70,
+                    }}
+                >
+                    <Title title="Failed to verify" />
+                    <DivSpace height={40} />
+                    <RetryButton
+                        text={retryMessage}
+                        checkEmail={validUser && canRetry}
+                        onClick={sendWithDelay}
+                    />
+                </div>
+            )
         }
     }
 }

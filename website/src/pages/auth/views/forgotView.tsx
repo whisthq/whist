@@ -37,7 +37,7 @@ const ForgotView = (props: any) => {
 
     useEffect(() => {
         // this should not be called on component mount
-        if (authFlow.forgotStatus && authFlow.forgotEmailsSent) {
+        if (email && authFlow.forgotStatus && authFlow.forgotEmailsSent) {
             console.log(authFlow.forgotStatus)
             console.log(authFlow.forgotStatus)
             setProcessing(false)
@@ -67,7 +67,10 @@ const ForgotView = (props: any) => {
                             textAlign: "center",
                         }}
                     >
-                        Failed
+                        {authFlow.forgotStatus &&
+                        authFlow.forgotStatus !== "Email sent"
+                            ? "Failed"
+                            : "Succeded"}
                         {authFlow.forgotStatus
                             ? ": " + authFlow.forgotStatus
                             : ""}

@@ -12,6 +12,8 @@ export const VALIDATE_RESET_TOKEN = "VALIDATE_RESET_TOKEN"
 export const FORGOT_PASSWORD = "FORGOT_PASSWORD"
 export const RESET_PASSWORD = "RESET_PASSWORD"
 
+export const SEND_VERIFICATION_EMAIL = "SEND_VERIFICATION_EMAIL"
+
 export function googleLogin(code: any) {
     return {
         type: GOOGLE_LOGIN,
@@ -61,5 +63,13 @@ export function resetPassword(username: string, password: string) {
         type: RESET_PASSWORD,
         username,
         password,
+    }
+}
+
+export function sendVerificationEmail(email: string, token: string) {
+    return {
+        type: SEND_VERIFICATION_EMAIL,
+        email,
+        token,
     }
 }
