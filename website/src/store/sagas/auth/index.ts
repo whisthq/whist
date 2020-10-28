@@ -11,7 +11,6 @@ import {
 } from "shared/constants/graphql"
 import { SIGNUP_POINTS } from "shared/utils/points"
 
-
 function* emailLogin(action: any) {
     const { json } = yield call(
         apiPost,
@@ -22,8 +21,6 @@ function* emailLogin(action: any) {
         },
         ""
     )
-
-    console.log(json)
 
     if (json && json.access_token) {
         yield put(
@@ -86,28 +83,23 @@ function* googleLogin(action: any) {
                     UPDATE_WAITLIST_AUTH_EMAIL,
                     "UpdateWaitlistAuthEmail",
                     {
-                        "user_id": state.WaitlistReducer.waitlistUser.user_id,
-                        "authEmail": json.username,
+                        user_id: state.WaitlistReducer.waitlistUser.user_id,
+                        authEmail: json.username,
                     }
                 )
 
-                yield call(
-                    graphQLPost,
-                    UPDATE_WAITLIST,
-                    "UpdateWaitlist",
-                    {
-                        "user_id": state.WaitlistReducer.waitlistUser.user_id,
-                        "points": state.WaitlistReducer.waitlistUser.points + SIGNUP_POINTS,
-                        "referrals": state.WaitlistReducer.waitlistUser.referrals,
-                    },
-                )
-
+                yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
+                    user_id: state.WaitlistReducer.waitlistUser.user_id,
+                    points:
+                        state.WaitlistReducer.waitlistUser.points +
+                        SIGNUP_POINTS,
+                    referrals: state.WaitlistReducer.waitlistUser.referrals,
+                })
             } else if (response.status === 403) {
                 yield put(
                     AuthPureAction.updateAuthFlow({
                         loginWarning: "Try using non-Google login.",
-                        signupWarning:
-                            "Try using non-Google login.",
+                        signupWarning: "Try using non-Google login.",
                     })
                 )
             } else {
@@ -205,6 +197,7 @@ function* sendVerificationEmail(action: any) {
 
 function* validateVerificationToken(action: any) {
     const state = yield select()
+    console.log("IN VALIDATE SAGA")
     const { json, response } = yield call(
         apiPost,
         "/account/verify",
@@ -212,7 +205,8 @@ function* validateVerificationToken(action: any) {
             username: state.AuthReducer.user.user_id,
             token: action.token,
         },
-        state.AuthReducer.user.accessToken
+        state.AuthReducer.user.accessToken,
+        state.AuthReducer.user.refreshToken
     )
 
     const attemptsExecuted = state.AuthReducer.authFlow

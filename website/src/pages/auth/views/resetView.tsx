@@ -66,20 +66,22 @@ const ResetView = (props: {
 
     // first ask for a validation and start loading
     useEffect(() => {
-        if (validToken && !processing) {
+        console.log("use effect")
+        console.log(processing)
+        console.log(authFlow.resetTokenStatus)
+        if (validToken && !processing && !authFlow.resetTokenStatus) {
             dispatch(validateResetToken(token))
-            dispatch(
-                updateAuthFlow({
-                    resetTokenStatus: undefined, // to guarantee that upon a response we will see something
-                })
-            )
+            // dispatch(
+            //     updateAuthFlow({
+            //         resetTokenStatus: undefined, // to guarantee that upon a response we will see something
+            //     })
+            // )
             setProcessing(true)
         }
         // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    // then stop loading and let the textbox be displayed
     useEffect(() => {
         //console.log(`change ${processing} ${authFlow.resetTokenStatus}`)
         if (processing && authFlow.resetTokenStatus) {

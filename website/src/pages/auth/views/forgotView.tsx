@@ -69,10 +69,6 @@ const ForgotView = (props: any) => {
                             textAlign: "center",
                         }}
                     >
-                        {authFlow.forgotStatus &&
-                        authFlow.forgotStatus !== "Email sent"
-                            ? "Failed"
-                            : "Succeded"}
                         {authFlow.forgotStatus ? authFlow.forgotStatus : ""}.
                     </h2>
                     <div
