@@ -58,9 +58,13 @@ def chargeSuccessMail(username, custId):
             logs="Sent charge success email to support",
         )
     except Exception as e:
+<<<<<<< HEAD
         fractalLog(
             function="chargeSuccessMail", label="Stripe", logs=str(e), level=logging.ERROR
         )
+=======
+        fractalLog(function="chargeSuccessMail", label="Stripe", logs=str(e), level=logging.ERROR)
+>>>>>>> 0cad5df4234663e13d7f5aca7aa2f088bca75f88
 
 
 def trialEndingMail(user):
