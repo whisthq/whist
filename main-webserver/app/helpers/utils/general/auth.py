@@ -39,6 +39,8 @@ def fractalAuth(f):
 
         current_user = get_jwt_identity()
 
+        fractalLog(function="", label="", logs="FRACTAL AUTH" + current_user)
+
         if current_user != username and DASHBOARD_USERNAME not in current_user:
             format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
 

@@ -4,9 +4,10 @@ import logging
 from datetime import datetime as dt
 from jose import jwt
 from flask import jsonify, current_app
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+from app.constants.config import ADMIN_PASSWORD, SENDGRID_API_KEY, SENDGRID_EMAIL
 
-from app import mail
-from app.constants.config import ADMIN_PASSWORD
 from app.constants.http_codes import BAD_REQUEST, NOT_ACCEPTABLE, SUCCESS, UNAUTHORIZED, NOT_FOUND
 from app.helpers.blueprint_helpers.mail.mail_post import verificationHelper
 from app.helpers.utils.general.crypto import check_value, hash_value
@@ -46,8 +47,6 @@ def loginHelper(email, password):
         is_user = False
 
     user = User.query.get(email)
-
-    fractalLog(function="", label="", logs=str(user))
 
     # Return early if username/password combo is invalid
 
@@ -137,13 +136,16 @@ def registerHelper(username, password, name, reason_for_signup):
 
     if status == SUCCESS:
         try:
-            mail.send_email(
-                to_email="support@tryfractal.com",
+            message = Mail(
+                from_email=SENDGRID_EMAIL,
+                to_emails="support@tryfractal.com",
                 subject=username + " just created an account!",
-                html="<p>Just letting you know that {0} created an account. Their reason for signup is: {1}. Have a great day.</p>".format(
+                html_content="<p>Just letting you know that {0} created an account. Their reason for signup is: {1}. Have a great day.</p>".format(
                     name, reason_for_signup
                 ),
             )
+            sg = SendGridAPIClient(SENDGRID_API_KEY)
+            response = sg.send(message)
         except Exception as e:
             fractalLog(
                 function="registerHelper",
@@ -181,20 +183,7 @@ def verifyHelper(username, provided_user_id):
     if user:
         # Check to see if the provided user ID matches the selected user ID
 
-        provided_user_id = jwt.decode(provided_user_id, current_app.config["JWT_SECRET_KEY"])
-        if provided_user_id:
-            provided_user_id = provided_user_id["sub"]
-
-        fractalLog(
-            function="verifyHelper",
-            label=user_id,
-            logs="Provided {provided_user_id}, but found {user_id}.".format(
-                provided_user_id=provided_user_id, user_id=username
-            ),
-            level=logging.WARNING,
-        )
-
-        if provided_user_id == username:
+        if provided_user_id == user.token:
             fractalLog(
                 function="verifyHelper",
                 label=user_id,
