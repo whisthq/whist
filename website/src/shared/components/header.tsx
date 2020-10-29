@@ -57,7 +57,7 @@ function Header(props: any) {
                         </Link>
                     </div>
                 ) : (
-                    <div/>
+                    <div />
                 )}
             </div>
             <div style={{ opacity: width > 720 ? 1.0 : 0.0 }}>

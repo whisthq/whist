@@ -64,9 +64,7 @@ const Auth = (props: {
     }
 }
 
-function mapStateToProps(state: {
-    AuthReducer: { authFlow: any; user: any }
-}) {
+function mapStateToProps(state: { AuthReducer: { authFlow: any; user: any } }) {
     console.log(state)
     return {
         mode: state.AuthReducer.authFlow.mode,

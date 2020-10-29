@@ -72,17 +72,21 @@ const Dashboard = (props: {
                     </div>
                     <DownloadBox />
                     <DivSpace height={40} />
-                        
-                    <div style={{
-                        display: "flex",
-                        justifyContent: "center",
-                    }}>
+
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "center",
+                        }}
+                    >
                         Want to Log out?
                     </div>
-                    <div style={{
-                        display: "flex",
-                        justifyContent: "center",
-                    }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "center",
+                        }}
+                    >
                         <Link to="/" onClick={logout}>
                             Log out.
                         </Link>
