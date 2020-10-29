@@ -36,7 +36,7 @@ void update_webserver_parameters() {
 
     LOG_INFO("GETTING JSON");
 
-    char* msg = (char*)malloc(64 + strlen(identifier));
+    char* msg = (char*)malloc(64 + strlen(identifier) + strlen(hex_aes_private_key));
     sprintf(msg,
             "{\n\
             \"identifier\" : %s,\n\
