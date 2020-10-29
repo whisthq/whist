@@ -6,6 +6,7 @@ from functools import wraps
 
 from celery import Celery
 from flask import request
+from flask_sendgrid import SendGrid
 
 from .factory import create_app, jwtManager, ma, mail
 
