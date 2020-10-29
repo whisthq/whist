@@ -7,6 +7,7 @@ import {
     sendVerificationEmail,
 } from "store/actions/auth/sideEffects"
 import { updateAuthFlow, updateUser, resetUser } from "store/actions/auth/pure"
+import DivSpace from "shared/components/divSpace"
 import history from "shared/utils/history"
 
 import "styles/auth.css"
@@ -53,10 +54,6 @@ const Title = (props: { title: string; subtitle?: string }) => {
         </div>
     )
 }
-
-const DivSpace = (props: { height: number }) => (
-    <div style={{ marginTop: props.height }} />
-)
 
 const RetryButton = (props: {
     text: string

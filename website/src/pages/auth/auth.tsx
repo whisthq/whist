@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React /*, { useEffect }*/ from "react"
 import { connect } from "react-redux"
 import { Redirect } from "react-router"
 
@@ -9,7 +9,7 @@ import ForgotView from "pages/auth/views/forgotView"
 
 import "styles/auth.css"
 
-import history from "shared/utils/history"
+//import history from "shared/utils/history"
 
 const Auth = (props: {
     dispatch: any
@@ -17,21 +17,18 @@ const Auth = (props: {
         user_id: string
         emailVerified: boolean
     }
-    waitlistUser: {
-        user_id: string
-    }
     mode: any
-    authFlow: any
     match: any
 }) => {
-    const { user, waitlistUser, match, mode } = props
+    const { user, /*match,*/ mode } = props
 
-    useEffect(() => {
-        const firstParam = match.params.first
-        if (firstParam !== "bypass" && !waitlistUser.user_id) {
-            history.push("/")
-        }
-    }, [match, waitlistUser.user_id])
+    // what is this?!
+    // useEffect(() => {
+    //     const firstParam = match.params.first
+    //     if (firstParam !== "bypass" && !user.user_id) {
+    //         history.push("/")
+    //     }
+    // }, [match, user.user_id])
 
     if (user.user_id && user.user_id !== "") {
         if (user.emailVerified) {
@@ -39,9 +36,7 @@ const Auth = (props: {
         } else {
             return <Redirect to="/verify" />
         }
-    }
-
-    if (mode === "Log in") {
+    } else if (mode === "Log in") {
         return (
             <div className="fractalContainer">
                 <Header color="black" />
@@ -71,14 +66,11 @@ const Auth = (props: {
 
 function mapStateToProps(state: {
     AuthReducer: { authFlow: any; user: any }
-    WaitlistReducer: { waitlistUser: any }
 }) {
     console.log(state)
     return {
-        waitlistUser: state.WaitlistReducer.waitlistUser,
         mode: state.AuthReducer.authFlow.mode,
         user: state.AuthReducer.user,
-        authFlow: state.AuthReducer.authFlow,
     }
 }
 
