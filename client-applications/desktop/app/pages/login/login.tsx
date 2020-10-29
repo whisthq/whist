@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-// import { history } from "store/configureStore";
 import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { parse } from "url"
@@ -25,8 +24,6 @@ import {
 import { debugLog } from "shared/utils/logging"
 import { config } from "shared/constants/config"
 import { fetchContainer } from "store/actions/sideEffects"
-
-// import "styles/login.css";
 
 const Login = (props: any) => {
     const {
@@ -238,10 +235,6 @@ const Login = (props: any) => {
                 }
             }
         })
-
-        // if (username && publicIP && live) {
-        //     history.push("/dashboard");
-        // }
     }, [])
 
     useEffect(() => {

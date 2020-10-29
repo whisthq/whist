@@ -101,7 +101,6 @@ function* googleLogin(action: any) {
 }
 
 function* rememberMeLogin(action: any) {
-    const state = yield select()
     const { json } = yield call(apiPost, `/account/auto_login`, {
         username: action.username,
     })

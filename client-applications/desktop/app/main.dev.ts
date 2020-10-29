@@ -37,17 +37,17 @@ const debugLog = (callback: any) => {
     }
 }
 
-const installExtensions = async () => {
-    const installer = require("electron-devtools-installer")
-    const forceDownload = !!process.env.UPGRADE_EXTENSIONS
-    const extensions = ["REACT_DEVELOPER_TOOLS", "REDUX_DEVTOOLS"]
+// const installExtensions = async () => {
+//     const installer = require("electron-devtools-installer")
+//     const forceDownload = !!process.env.UPGRADE_EXTENSIONS
+//     const extensions = ["REACT_DEVELOPER_TOOLS", "REDUX_DEVTOOLS"]
 
-    return Promise.all(
-        extensions.map((name) =>
-            installer.default(installer[name], forceDownload)
-        )
-    ).catch(debugLog)
-}
+//     return Promise.all(
+//         extensions.map((name) =>
+//             installer.default(installer[name], forceDownload)
+//         )
+//     ).catch(debugLog)
+// }
 
 const createWindow = async () => {
     const os = require("os")

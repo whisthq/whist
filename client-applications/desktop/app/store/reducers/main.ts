@@ -1,34 +1,37 @@
 import * as MainAction from "store/actions/pure"
 import { DEFAULT } from "store/reducers/states"
 
+import { deep_copy } from "shared/utils/reducerHelpers"
+
 export default function MainReducer(state = DEFAULT, action: any) {
+    var stateCopy = deep_copy(state)
     switch (action.type) {
         case MainAction.RESET_STATE:
             return DEFAULT
         case MainAction.UPDATE_AUTH:
             return {
-                ...state,
-                auth: Object.assign(state.auth, action.body),
+                ...stateCopy,
+                auth: Object.assign(stateCopy.auth, action.body),
             }
         case MainAction.UPDATE_CLIENT:
             return {
-                ...state,
-                client: Object.assign(state.client, action.body),
+                ...stateCopy,
+                client: Object.assign(stateCopy.client, action.body),
             }
         case MainAction.UPDATE_CONTAINER:
             return {
-                ...state,
-                container: Object.assign(state.container, action.body),
+                ...stateCopy,
+                container: Object.assign(stateCopy.container, action.body),
             }
         case MainAction.UPDATE_LOADING:
             return {
-                ...state,
-                loading: Object.assign(state.loading, action.body),
+                ...stateCopy,
+                loading: Object.assign(stateCopy.loading, action.body),
             }
         case MainAction.UPDATE_PAYMENT:
             return {
-                ...state,
-                payment: Object.assign(state.payment, action.body),
+                ...stateCopy,
+                payment: Object.assign(stateCopy.payment, action.body),
             }
         default:
             return state

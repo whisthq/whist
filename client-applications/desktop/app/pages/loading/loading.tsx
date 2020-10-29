@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useEffect } from "react"
 import { connect } from "react-redux"
 import { useSpring, animated } from "react-spring"
 import styles from "styles/login.css"
