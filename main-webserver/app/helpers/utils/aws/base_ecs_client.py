@@ -424,7 +424,7 @@ class ECSClient:
                 "maxContainers": auto_scaling_group_info["MaxSize"],
             }
 
-        pprint(clusters_usage)
+        print(clusters_usage)
         return clusters_usage
 
     def set_and_register_task(
