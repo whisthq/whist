@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react"
-import { Row, Carousel } from "react-bootstrap"
+import React, { useState } from "react"
+import { Carousel } from "react-bootstrap"
 import { connect } from "react-redux"
 import { useQuery } from "@apollo/client"
 
@@ -37,16 +37,6 @@ const Banner = (props: any) => {
     const bannerBackgrounds = bannerData.map(
         (bannerItem: any) => bannerItem.background
     )
-
-    useEffect(() => {
-        if (data) {
-            console.log("BANNER DATA")
-            console.log(data)
-        } else if (error) {
-            console.log("BANNER ERROR")
-            console.log(error)
-        }
-    }, [data, error])
 
     const [index, setIndex] = useState(0)
 

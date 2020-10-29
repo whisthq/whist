@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { connect } from "react-redux"
 import { Collapse } from "react-bootstrap"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -81,12 +81,14 @@ const NavBar = (props: any) => {
                     maxWidth: 540,
                 }}
             >
-                <input
-                    value={search}
-                    onChange={(evt: any) => updateSearch(evt.target.value)}
-                    placeholder="Search for an app"
-                    className={styles.searchBar}
-                />
+                {currentTab == "Discover" && (
+                    <input
+                        value={search}
+                        onChange={(evt: any) => updateSearch(evt.target.value)}
+                        placeholder="Search for an app"
+                        className={styles.searchBar}
+                    />
+                )}
                 <div style={{ display: "flex", flexDirection: "column" }}>
                     <div
                         className={styles.userInfo}
