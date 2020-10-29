@@ -6,6 +6,7 @@ from functools import wraps
 
 from celery import Celery
 from flask import request
+from flask_sendgrid import SendGrid
 
 from .factory import create_app, jwtManager, ma, mail
 
@@ -48,12 +49,20 @@ def fractalPreProcess(f):
             logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
             logger = logging.getLogger(__name__)
             logger.setLevel(logging.DEBUG)
+            safe_body = ""
 
             if body and request.method == "POST":
                 body = {k: str(v)[0 : min(len(str(v)), 500)] for k, v in dict(body).items()}
-                body = str(body)
+                safe_body = str(
+                    {k: v for k, v in body.items() if "password" not in k and "key" not in k}
+                )
 
-            logger.info("{}\n{}\r\n".format(request.method + " " + request.url, body))
+            logger.info(
+                "{}\n{}\r\n".format(
+                    request.method + " " + request.url,
+                    safe_body,
+                )
+            )
 
         return f(*args, **kwargs)
 
