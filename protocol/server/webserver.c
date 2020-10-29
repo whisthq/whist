@@ -81,8 +81,8 @@ void update_webserver_parameters() {
     kv_pair_t* branch_value = get_kv(&json, "branch");
     kv_pair_t* using_stun = get_kv(&json, "using_stun");
     kv_pair_t* access_token_value = get_kv(&json, "access_token");
-    kv_pair_t* container_id_value = get_key(&json, "container_id");
-    kv_pair_t* user_id_value = get_key(&json, "user_id");
+    kv_pair_t* container_id_value = get_kv(&json, "container_id");
+    kv_pair_t* user_id_value = get_kv(&json, "user_id");
 
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {

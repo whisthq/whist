@@ -162,9 +162,14 @@ int xioerror_handler(Display* d) {
     exiting = true;
 
     // Try sending a container destroy message - if this is the first destruction
-    //  message being sent, then also quit all clients.
-    if (SendContainerDestroyMessage(true) == 0) {  // THIS SHOULD NOT BE 'false' hardcoded
-        // POSSIBLY these locks are not necessary if we're quitting everything and dying anyway?
+    //  message being sent, then also quit all clients. Quitting clients will
+    //  still happen on SendContainerDestroyMessage failure in case
+    //  it is failure on the first attempt of sending a message. This means that there
+    //  is a possibility of the quitClients() pipeline happening more than once
+    //  if SendContainerDestroyMessage fails and then is called again because
+    //  this error handler can be called multiple times.
+    if (SendContainerDestroyMessage(true) != 1) {  // THIS SHOULD NOT BE 'true' hardcoded
+        // POSSIBLY below locks are not necessary if we're quitting everything and dying anyway?
 
         // Broadcast client quit message
         FractalServerMessage fmsg_response = {0};
@@ -194,6 +199,7 @@ int xioerror_handler(Display* d) {
             if (writeUnlock(&is_active_rwlock) != 0) {
                 LOG_ERROR("Failed to write-release is active RW lock.");
             }
+            SDL_UnlockMutex(container_destruction_mutex);
             return -1;
         }
         if (quitClients() != 0) {
@@ -244,13 +250,15 @@ int SendContainerDestroyMessage(bool production) {
 
         char payload[256];
         snprintf(
+            payload,
+            sizeof(payload),
             "{\n"
             "\"container_id\": \"%s\",\n"
             "\"username\": \"%s\"\n"
             "}",
             container_id,
             user_id
-        )
+        );
 
         // send destroy request, don't require response -> update this later
         char* resp_buf = NULL;
