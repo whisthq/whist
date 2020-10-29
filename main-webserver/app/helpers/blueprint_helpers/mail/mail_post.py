@@ -76,6 +76,10 @@ def verificationHelper(user, token):
     url = FRONTEND_URL + "/verify?" + token
     # url = "https://localhost:3000/verify?" + token
 
+    # fractalLog("","",user)
+    # fractalLog("","",title)
+    # fractalLog("","",url)
+
     try:
         mail.send_email(
             to_email=user,
@@ -83,6 +87,7 @@ def verificationHelper(user, token):
             html=render_template("on_email_verification.html", url=url),
         )
     except Exception as e:
+        #fractalLog("","","EXCEPTION WITH TRY")
         fractalLog(
             function="verificationHelper",
             label=user,
