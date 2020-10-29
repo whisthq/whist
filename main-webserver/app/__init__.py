@@ -51,14 +51,15 @@ def fractalPreProcess(f):
             logger.setLevel(logging.DEBUG)
 
             if body and request.method == "POST":
-                body = {
-                    k: str(v)[0 : min(len(str(v)), 500)]
-                    for k, v in dict(body).items()
-                    if "password" not in k and "key" not in k
-                }
+                body = {k: str(v)[0 : min(len(str(v)), 500)] for k, v in dict(body).items()}
                 body = str(body)
 
-            logger.info("{}\n{}\r\n".format(request.method + " " + request.url, body))
+            logger.info(
+                "{}\n{}\r\n".format(
+                    request.method + " " + request.url,
+                    {k: v for k, v in body.items() if "password" not in k and "key" not in k},
+                )
+            )
 
         return f(*args, **kwargs)
 
