@@ -185,10 +185,10 @@ void saveConnectionID(int connection_id);
  * @param access_token             The access token previously provided by the webserver.
  * @param identifier               The string that uniquely identifies this
  *                                 instance of the protocol to the webserver.
- * @param aes_private_key          The access token previously provided by the webserver.
+ * @param hex_aes_private_key      The private key, as a hex string.
  */
 void updateServerStatus(bool is_connected, char* host, char* access_token, char* identifier,
-                        char* aes_private_key);
+                        char* hex_aes_private_key);
 
 /**
  * @brief                          Get the current server's version number

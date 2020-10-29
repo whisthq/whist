@@ -118,7 +118,9 @@ Defines
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
-#define DEFAULT_PRIVATE_KEY "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
+#define DEFAULT_BINARY_PRIVATE_KEY \
+    "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
+#define DEFAULT_HEX_PRIVATE_KEY "ED5EF33CD728D17DB8064581428D19EF"
 
 #define MOUSE_SCALING_FACTOR 100000
 
@@ -579,12 +581,15 @@ char* get_ip();
  * it into private_key
  *
  * @param hex_string               The hexidecimal string to copy
- * @param private_key              The 16-byte buffer to copy the bytes into
+ * @param binary_private_key       The 16-byte buffer to copy the bytes into
+ * @param hex_private_key          The 33-byte buffer to fill with a hex string
+ *                                 representation of the private key.
  *
  * @returns                        True if hex_string was a 16-byte hexadecimal
  * value, otherwise false
  */
-bool read_hexadecimal_private_key(char* hex_string, char* private_key);
+bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
+                                  char* hex_private_key);
 
 /**
  * @brief                          Calculate the size of a FractalClientMessage

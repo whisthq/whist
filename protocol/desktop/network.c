@@ -21,7 +21,7 @@ extern volatile int audio_frequency;
 extern char user_email[USER_EMAIL_MAXLEN];
 
 // Data
-extern volatile char aes_private_key[16];
+extern volatile char binary_aes_private_key[16];
 extern char filename[300];
 extern char username[50];
 extern int UDP_port;
@@ -40,11 +40,11 @@ int discoverPorts(bool *using_stun) {
     SocketContext context;
     LOG_INFO("using stun is %d", *using_stun);
     if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
-                         (char *)aes_private_key) < 0) {
+                         (char *)binary_aes_private_key) < 0) {
         *using_stun = !*using_stun;
         LOG_INFO("using stun is updated to %d", *using_stun);
         if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                             *using_stun, (char *)aes_private_key) < 0) {
+                             *using_stun, (char *)binary_aes_private_key) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
             return -1;
         }
@@ -135,7 +135,7 @@ int connectToServer(bool using_stun) {
     }
 
     if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10, UDP_CONNECTION_WAIT,
-                         using_stun, (char *)aes_private_key) < 0) {
+                         using_stun, (char *)binary_aes_private_key) < 0) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
@@ -150,7 +150,7 @@ int connectToServer(bool using_stun) {
     }
 
     if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, TCP_CONNECTION_WAIT, using_stun,
-                         (char *)aes_private_key) < 0) {
+                         (char *)binary_aes_private_key) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         closesocket(PacketSendContext.s);
         return -1;

@@ -12,7 +12,7 @@ static char* container_id = NULL;
 static char* user_id = NULL;
 bool is_trying_staging_protocol_info = false;
 
-extern char aes_private_key[16];
+extern char hex_aes_private_key[33];
 extern char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 
 void update_webserver_parameters() {
@@ -38,15 +38,13 @@ void update_webserver_parameters() {
 
     LOG_INFO("GETTING JSON");
 
-    char* msg = (char*)malloc(64 + strlen(identifier) + 16);
+    char* msg = (char*)malloc(64 + strlen(identifier) + strlen(hex_aes_private_key));
     sprintf(msg,
-            "{\n"
-            "\"identifier\": %s,\n"
-            "\"private_key\": \"%08X%08X%08X%08X\"\n"
-            "}\n",
-            identifier, htonl(*((uint32_t*)(aes_private_key))),
-            htonl(*((uint32_t*)(aes_private_key + 4))), htonl(*((uint32_t*)(aes_private_key + 8))),
-            htonl(*((uint32_t*)(aes_private_key + 12))));
+            "{\n\
+            \"identifier\" : %s,\n\
+            \"private_key\" : \"%s\"\n\
+}",
+            identifier, hex_aes_private_key);
 
     if (!SendPostRequest(will_try_staging ? STAGING_HOST : PRODUCTION_HOST,
                          "/container/protocol_info", msg, NULL, &resp_buf, resp_buf_maxlen)) {
@@ -63,8 +61,11 @@ void update_webserver_parameters() {
         return;
     }
 
-    LOG_INFO("Response body of length %d from POST request to webserver: %s", strlen(resp_buf),
-             resp_buf);
+    // DO NOT LOG THIS IN PRODUCTION -- IT MAY CONTAIN SENSITIVE INFO
+    // LIKE PRIVATE KEYS
+    /* LOG_INFO("Response body of length %d from POST request to webserver: %s", strlen(resp_buf),
+     */
+    /* resp_buf); */
 
     // Set Default Values
     is_autoupdate = true;

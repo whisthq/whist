@@ -24,7 +24,8 @@ TODO
 #include "../fractal/utils/logging.h"
 #include "../fractal/core/fractalgetopt.h"
 
-extern volatile char aes_private_key[16];
+extern volatile char binary_aes_private_key[16];
+extern volatile char hex_aes_private_key[33];
 extern volatile char *server_ip;
 extern volatile int output_width;
 extern volatile int output_height;
@@ -98,7 +99,11 @@ int parseArgs(int argc, char *argv[]) {
         "      --help                    Display this help and exit\n"
         "      --version                 Output version information and exit\n";
 
-    memcpy((char *)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+    // Initialize private key to default
+    memcpy((char *)&binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
+           sizeof(binary_aes_private_key));
+    memcpy((char *)&hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(hex_aes_private_key));
+
     // default sentry environment
     strcpy(sentry_environment, "dev");
     // default sentry environment
@@ -154,7 +159,8 @@ int parseArgs(int argc, char *argv[]) {
                 }
                 break;
             case 'k':
-                if (!read_hexadecimal_private_key(optarg, (char *)aes_private_key)) {
+                if (!read_hexadecimal_private_key(optarg, (char *)binary_aes_private_key,
+                                                  (char *)hex_aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
                     printf("%s", usage);
                     return -1;
@@ -167,11 +173,12 @@ int parseArgs(int argc, char *argv[]) {
                 strcpy(sentry_environment, optarg);
                 break;
             case 'p': {
-                char c = ',';
+                char separator = '.';
+                char c = separator;
                 unsigned short origin_port;
                 unsigned short destination_port;
                 const char *str = optarg;
-                while (c == ',') {
+                while (c == separator) {
                     int bytes_read;
                     int args_read = sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c,
                                            &bytes_read);
