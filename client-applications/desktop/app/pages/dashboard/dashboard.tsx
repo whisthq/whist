@@ -16,14 +16,25 @@ const Dashboard = (props: any) => {
     return (
         <div className={styles.container}>
             {os === "win32" ? (
-                <div style = {{zIndex: 9999}}>
+                <div
+                    style={{
+                        zIndex: 9999,
+                        position: "fixed",
+                        top: 0,
+                        right: 0,
+                    }}
+                >
                     <Titlebar backgroundColor="#000000" />
                 </div>
             ) : (
                 <div className={styles.macTitleBar} />
             )}
             <div
-                style={{ display: "flex", flexDirection: "column" }}
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    marginTop: 28,
+                }}
                 className={styles.removeDrag}
             >
                 <NavBar

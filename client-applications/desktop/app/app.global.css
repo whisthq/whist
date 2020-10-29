@@ -68,7 +68,10 @@ a:hover {
     cursor: pointer;
 }
 
-.sc-htpNat svg > path{ fill: #333333; }
+.sc-htpNat svg > path {
+    fill: #333333;
+    z-index: 9999;
+}
 
 .sc-bdVaJa {
     z-index: 9999;
