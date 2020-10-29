@@ -161,8 +161,11 @@ def aws_container_ping(**kwargs):
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
         # Update container status.
-        status = pingHelper.delay(available, address, identifier, private_key)
-        response = jsonify(status), status["status"]
+        task = pingHelper.delay(available, address, identifier, private_key)
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
 
     return response
 
