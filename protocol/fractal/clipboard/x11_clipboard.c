@@ -296,7 +296,7 @@ bool unsafe_hasClipboardUpdated() {
         return true;
     }
     while (XPending(display)) {
-  	XNextEvent(display, &event);
+        XNextEvent(display, &event);
         if (event.type == event_base + XFixesSelectionNotify &&
             ((XFixesSelectionNotifyEvent*)&event)->selection == clipboard) {
             return true;

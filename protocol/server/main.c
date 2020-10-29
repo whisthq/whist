@@ -118,7 +118,6 @@ int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
 
-
 /*
 ============================
 Private Functions
@@ -129,12 +128,9 @@ Private Functions
  * @brief                          Sends a message to the webserver to destroy
  *                                 the container running the server protocol.
  *
- * @param                          Whether this is a production server.
- *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int SendContainerDestroyMessage(bool production);
-
+int SendContainerDestroyMessage();
 
 /*
 ============================
@@ -168,7 +164,7 @@ int xioerror_handler(Display* d) {
     //  is a possibility of the quitClients() pipeline happening more than once
     //  if SendContainerDestroyMessage fails and then is called again because
     //  this error handler can be called multiple times.
-    if (SendContainerDestroyMessage(true) != 1) {  // THIS SHOULD NOT BE 'true' hardcoded
+    if (SendContainerDestroyMessage() != 1) {
         // POSSIBLY below locks are not necessary if we're quitting everything and dying anyway?
 
         // Broadcast client quit message
@@ -219,10 +215,11 @@ int xioerror_handler(Display* d) {
 }
 #endif
 
-int SendContainerDestroyMessage(bool production) {
+int SendContainerDestroyMessage() {
     /*
-        Sends a message to the webserver to destroy the container on which the server is running.
-        This should only happen in PRODUCTION, not STAGING.
+        Sends a message to the webserver to destroy the container on which
+        the server is running. This will only work for contianers spun up using
+        the webserver endpoint /container/create
 
         Surround this call by a mutex lock to be sure that it isn't sending a message twice.
 
@@ -237,36 +234,31 @@ int SendContainerDestroyMessage(bool production) {
         return 0;
     }
 
-    LOG_INFO("CONTAINER DESTROY SIGNAL BOOL %d", production);
+    LOG_INFO("CONTAINER DESTROY SIGNAL");
 
-    if (!production) {
-        LOG_INFO("CONTAINER DESTROY SIGNAL");
-    } else {
-        char* container_id = get_container_id();
-        char* user_id = get_user_id();
-        if (!container_id || !user_id) {
-            return -1;
-        }
-
-        char payload[256];
-        snprintf(
-            payload,
-            sizeof(payload),
-            "{\n"
-            "\"container_id\": \"%s\",\n"
-            "\"username\": \"%s\"\n"
-            "}",
-            container_id,
-            user_id
-        );
-
-        // send destroy request, don't require response -> update this later
-        char* resp_buf = NULL;
-        size_t resp_buf_maxlen = 4800;
-        SendPostRequest(PRODUCTION_HOST, "/container/delete", payload, get_access_token(), &resp_buf, resp_buf_maxlen);
-
-        LOG_INFO("/container/delete response: %s", resp_buf);
+    char* container_id = get_container_id();
+    char* user_id = get_user_id();
+    if (!container_id || !user_id) {
+        return -1;
     }
+
+    char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
+
+    char payload[256];
+    snprintf(payload, sizeof(payload),
+             "{\n"
+             "\"container_id\": \"%s\",\n"
+             "\"username\": \"%s\"\n"
+             "}",
+             container_id, user_id);
+
+    // send destroy request, don't require response -> update this later
+    char* resp_buf = NULL;
+    size_t resp_buf_maxlen = 4800;
+    SendPostRequest(host, "/container/delete", payload, get_access_token(), &resp_buf,
+                    resp_buf_maxlen);
+
+    LOG_INFO("/container/delete response: %s", resp_buf);
 
     already_sent_destroy_message = true;
 
@@ -965,21 +957,11 @@ int MultithreadedManageClients(void* opaque) {
     startConnectionLog();
     bool have_sent_logs = true;
 
-    // for managing clean client exit and container destruction
-    // client_exited_nongracefully and last_nongraceful_exit are globals from client.h
-    // bool client_exited_nongracefully = false; // set to true after a nongraceful exit
-    // clock last_nongraceful_exit; // start this after every nongraceful exit
-    double nongraceful_grace_period =
-        300.0;  // 5 minutes to reconnect after nongraceful client disconnect
-
-    bool first_client_connected = false;  // set to true once the first client has connected
-    double begin_time_to_exit =
-        60.0;                  // give a client 1 minute to connect when the server first goes up
+    double nongraceful_grace_period = 300.0;  // 5 min after nongraceful disconn to reconn
+    bool first_client_connected = false;      // set to true once the first client has connected
+    double begin_time_to_exit = 60.0;  // client 1 min to connect when the server first goes up
     clock first_client_timer;  // start this now and then discard when first client has connected
     StartTimer(&first_client_timer);
-    // NOTE: don't want server to exit before first client is connected... ONLY use container
-    // destruction code on PRODUCTION_HOST
-    //  strcmp(host, STAGING_HOST) == 0
 
     while (!exiting) {
         if (readLock(&is_active_rwlock) != 0) {
@@ -1484,7 +1466,7 @@ int main(int argc, char* argv[]) {
     destroyClients();
 
     SDL_LockMutex(container_destruction_mutex);
-    if (SendContainerDestroyMessage(true) == -1) {
+    if (SendContainerDestroyMessage() == -1) {
         SDL_UnlockMutex(container_destruction_mutex);
         return -1;
     }

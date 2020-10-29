@@ -30,7 +30,7 @@ FractalCursorImage GetCurrentCursor() {
     image.cursor_state = CURSOR_STATE_VISIBLE;
     if (disp) {
         XLockDisplay(disp);
-        XFixesCursorImage* ci = XFixesGetCursorImage(disp); 
+        XFixesCursorImage* ci = XFixesGetCursorImage(disp);
         XUnlockDisplay(disp);
 
         if (ci->width > MAX_CURSOR_WIDTH || ci->height > MAX_CURSOR_HEIGHT) {
