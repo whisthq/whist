@@ -2,8 +2,8 @@ import datetime
 import logging
 
 from datetime import datetime as dt
-
-from flask import jsonify
+from jose import jwt
+from flask import jsonify, current_app
 
 from app import mail
 from app.constants.config import ADMIN_PASSWORD
@@ -52,7 +52,7 @@ def loginHelper(email, password):
     # Return early if username/password combo is invalid
 
     if is_user:
-        if not user or not check_value(user.password, password) or not user.can_login == True:
+        if not user or not check_value(user.password, password):
             return {
                 "verified": False,
                 "is_user": is_user,
@@ -60,6 +60,7 @@ def loginHelper(email, password):
                 "refresh_token": None,
                 "verification_token": None,
                 "name": None,
+                "can_login": user.can_login,
             }
 
     # Fetch the JWT tokens
@@ -73,6 +74,7 @@ def loginHelper(email, password):
         "refresh_token": refresh_token,
         "verification_token": user.token,
         "name": user.name,
+        "can_login": user.can_login,
     }
 
 
@@ -177,11 +179,22 @@ def verifyHelper(username, provided_user_id):
     user = User.query.filter_by(user_id=username).first()
 
     if user:
-        user_id = user.token
-
         # Check to see if the provided user ID matches the selected user ID
 
-        if provided_user_id == user_id:
+        provided_user_id = jwt.decode(provided_user_id, current_app.config["JWT_SECRET_KEY"])
+        if provided_user_id:
+            provided_user_id = provided_user_id["sub"]
+
+        fractalLog(
+            function="verifyHelper",
+            label=user_id,
+            logs="Provided {provided_user_id}, but found {user_id}.".format(
+                provided_user_id=provided_user_id, user_id=username
+            ),
+            level=logging.WARNING,
+        )
+
+        if provided_user_id == username:
             fractalLog(
                 function="verifyHelper",
                 label=user_id,
