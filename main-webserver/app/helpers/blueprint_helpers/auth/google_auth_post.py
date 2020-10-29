@@ -32,7 +32,7 @@ def registerGoogleUser(username, name, token, reason_for_signup=None):
     if hashlib.md5(
         username_encoding
     ).hexdigest() in BAD_WORDS_HASHED or profanity.contains_profanity(username):
-        return {"status": "FAILURE", "error": "Try using a different username"}
+        return {"status": FORBIDDEN, "error": "Try using a different username"}
 
     new_user = User(
         user_id=username,
