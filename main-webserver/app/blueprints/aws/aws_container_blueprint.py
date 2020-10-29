@@ -132,6 +132,7 @@ def aws_container_info(**kwargs):
     try:
         identifier = body.pop("identifier")
         private_key = body.pop("private_key")
+        private_key = private_key.lower()
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
@@ -155,6 +156,7 @@ def aws_container_ping(**kwargs):
         available = body.pop("available")
         identifier = body.pop("identifier")
         private_key = body.pop("private_key")
+        private_key = private_key.lower()
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
