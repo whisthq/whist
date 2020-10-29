@@ -50,6 +50,7 @@ function* loginUser(action: any) {
             }
             yield call(fetchPaymentInfo, action)
             yield call(getPromoCode, action)
+            history.push("/dashboard")
         } else {
             yield put(Action.updateAuth({ loginWarning: true }))
         }
@@ -91,6 +92,35 @@ function* googleLogin(action: any) {
             } else {
                 yield put(Action.updateAuth({ loginWarning: true }))
             }
+        } else {
+            yield put(Action.updateAuth({ loginWarning: true }))
+        }
+    } else {
+        yield put(Action.updateAuth({ loginWarning: true }))
+    }
+}
+
+function* rememberMeLogin(action: any) {
+    const state = yield select()
+    const { json } = yield call(apiPost, `/account/auto_login`, {
+        username: action.username,
+    })
+
+    if (json) {
+        if (json.status === 200) {
+            yield put(
+                Action.updateAuth({
+                    accessToken: json.access_token,
+                    refreshToken: json.refresh_token,
+                    username: action.username,
+                    name: json.name,
+                })
+            )
+            yield call(fetchPaymentInfo, action)
+            yield call(getPromoCode, action)
+            history.push("/dashboard")
+        } else {
+            yield put(Action.updateAuth({ loginWarning: true }))
         }
     } else {
         yield put(Action.updateAuth({ loginWarning: true }))
@@ -140,22 +170,27 @@ function* fetchContainer(action: any) {
             : "us-east-1"
         const app = action.app
 
-        console.log(state.MainReducer.client.region)
-        console.log(app)
+    var { json, response } = yield call(
+        apiPost,
+        `/container/create`,
+        { username: username, region: region, app: app },
+        state.MainReducer.auth.accessToken
+    )
 
-        var { json, response } = yield call(
-            apiPost,
-            `/container/create`,
-            { username: username, region: region, app: app },
-            state.MainReducer.auth.accessToken
-        )
-        // var { json, response } = yield call(
-        //     apiGet,
-        //     `/dummy`,
-        //     state.MainReducer.auth.accessToken
-        // )
+    if (response.status === 401 || response.status === 422) {
+        yield call(refreshAccess)
+        yield call(fetchContainer, action)
+        return
+    }
 
-        const id = json.ID
+    const id = json.ID
+    var { json, response } = yield call(
+        apiGet,
+        `/status/` + id,
+        state.MainReducer.auth.accessToken
+    )
+
+    while (json.state !== "SUCCESS" && json.state !== "FAILURE") {
         var { json, response } = yield call(
             apiGet,
             `/status/` + id,
@@ -261,6 +296,7 @@ export default function* rootSaga() {
     yield all([
         takeEvery(SideEffect.LOGIN_USER, loginUser),
         takeEvery(SideEffect.GOOGLE_LOGIN, googleLogin),
+        takeEvery(SideEffect.REMEMBER_ME_LOGIN, rememberMeLogin),
         takeEvery(SideEffect.FETCH_CONTAINER, fetchContainer),
         takeEvery(SideEffect.DELETE_CONTAINER, deleteContainer),
         takeEvery(SideEffect.SUBMIT_FEEDBACK, submitFeedback),

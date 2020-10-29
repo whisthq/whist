@@ -18,7 +18,11 @@ import {
 import { FaGoogle } from "react-icons/fa"
 
 import { updateClient, updateAuth } from "store/actions/pure"
-import { googleLogin, loginUser } from "store/actions/sideEffects"
+import {
+    googleLogin,
+    loginUser,
+    rememberMeLogin,
+} from "store/actions/sideEffects"
 import { debugLog } from "shared/utils/logging"
 import { config } from "shared/constants/config"
 import { fetchContainer } from "store/actions/sideEffects"
@@ -228,9 +232,11 @@ const Login = (props: any) => {
                             refreshToken: data.refreshToken,
                         })
                     )
+                    setRememberMe(true)
                     setUsername(data.username)
                     setLoggingIn(true)
                     setFetchedCredentials(true)
+                    dispatch(rememberMeLogin(data.username))
                 }
             }
         })
@@ -246,14 +252,11 @@ const Login = (props: any) => {
             !needsAutoupdate &&
             (username || props.username) &&
             accessToken &&
-            refreshToken
+            refreshToken &&
+            launchImmediately
         ) {
             setAWSRegion().then(() => {
-                if (!launchImmediately) {
-                    history.push("/dashboard")
-                } else {
-                    dispatch(fetchContainer("Google Chrome"))
-                }
+                dispatch(fetchContainer("Google Chrome"))
             })
         }
     }, [updatePingReceived, fetchedCredentials, props.username, accessToken])
@@ -474,6 +477,7 @@ const Login = (props: any) => {
                                         type="checkbox"
                                         onChange={changeRememberMe}
                                         onKeyPress={loginKeyPress}
+                                        checked={rememberMe}
                                     />
                                     <span className={styles.checkmark} />
                                 </label>

@@ -133,7 +133,7 @@ const UpdateScreen = (props: any) => {
             <div style={{ position: "relative" }}>
                 <div
                     style={{
-                        paddingTop: 180,
+                        paddingTop: 250,
                         textAlign: "center",
                         color: "white",
                         width: 1000,
