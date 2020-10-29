@@ -8,6 +8,12 @@ const Support = (props: any) => {
     return (
         <div className="fractalContainer">
             <Header color="black" />
+            <a
+                href="mailto: support@fractalcomputers.com"
+                className="header-link"
+            >
+                Support
+            </a>
         </div>
     )
 }
