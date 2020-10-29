@@ -120,13 +120,13 @@ int tryGetNextMessageUDP(int client_id, FractalClientMessage *fcmsg, size_t *fcm
  *                                 Failure here
  *
  * @param id                       Client ID of an active client
- * @param aes_private_key          Key used to encrypt and decrypt communication
+ * @param binary_aes_private_key          Key used to encrypt and decrypt communication
  *                                 with the client.
  *
  * @returns                        Returns -1 if either UDP or TCP connection
  *                                 fails or another error occurs, 0 on success.
  */
-int connectClient(int id, char *aes_private_key);
+int connectClient(int id, char *binary_aes_private_key);
 
 /**
  * @brief                          Closes client's UDP and TCP sockets.

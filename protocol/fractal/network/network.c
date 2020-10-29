@@ -257,7 +257,7 @@ bool handshakePrivateKey(SocketContext *context) {
         return false;
     }
     LOG_INFO("Private key request received");
-    if (!signPrivateKey(&their_priv_key_data, recv_size, context->aes_private_key)) {
+    if (!signPrivateKey(&their_priv_key_data, recv_size, context->binary_aes_private_key)) {
         LOG_ERROR("signPrivateKey failed!");
         return false;
     }
@@ -271,7 +271,7 @@ bool handshakePrivateKey(SocketContext *context) {
     // Wait for and verify their signed private key request data
     recv_size = recvp(context, &our_signed_priv_key_data, sizeof(our_signed_priv_key_data));
     if (!confirmPrivateKey(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
-                           context->aes_private_key)) {
+                           context->binary_aes_private_key)) {
         LOG_ERROR("Could not confirmPrivateKey!");
         return false;
     } else {
@@ -317,7 +317,7 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data, in
     int unencrypted_len = PACKET_HEADER_SIZE + packet->payload_size;
     int encrypted_len = encrypt_packet(packet, unencrypted_len,
                                        (FractalPacket *)(sizeof(int) + encrypted_packet_buffer),
-                                       (unsigned char *)context->aes_private_key);
+                                       (unsigned char *)context->binary_aes_private_key);
 
     // Pass the length of the packet as the first byte
     *((int *)encrypted_packet_buffer) = encrypted_len;
@@ -416,7 +416,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
         // Encrypt the packet with AES
         FractalPacket encrypted_packet;
         int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
-                                         (unsigned char *)context->aes_private_key);
+                                         (unsigned char *)context->binary_aes_private_key);
 
         // Send it off
         SDL_LockMutex(context->mutex);
@@ -457,7 +457,7 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
 
     FractalPacket encrypted_packet;
     int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
-                                     (unsigned char *)context->aes_private_key);
+                                     (unsigned char *)context->binary_aes_private_key);
 
     SDL_LockMutex(context->mutex);
     LOG_INFO("Replay Packet of length %d", encrypt_len);
@@ -656,7 +656,7 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
     // If the packet was successfully received, then decrypt it
     if (encrypted_len > 0) {
         int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                                           (unsigned char *)context->aes_private_key);
+                                           (unsigned char *)context->binary_aes_private_key);
 
         // If there was an issue decrypting it, post warning and then
         // ignore the problem
@@ -746,10 +746,10 @@ FractalPacket *ReadTCPPacket(SocketContext *context, bool should_recvp) {
         // good to go
         if (target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len) {
             // Decrypt it
-            int decrypted_len =
-                decrypt_packet_n((FractalPacket *)(encrypted_packet_buffer + sizeof(int)),
-                                 target_len, (FractalPacket *)decrypted_packet_buffer,
-                                 LARGEST_TCP_PACKET, (unsigned char *)context->aes_private_key);
+            int decrypted_len = decrypt_packet_n(
+                (FractalPacket *)(encrypted_packet_buffer + sizeof(int)), target_len,
+                (FractalPacket *)decrypted_packet_buffer, LARGEST_TCP_PACKET,
+                (unsigned char *)context->binary_aes_private_key);
 
             // Move the rest of the read bytes to the beginning of the buffer to
             // continue
@@ -1203,7 +1203,7 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
 }
 
 int CreateTCPContext(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
-                     int stun_timeout_ms, bool using_stun, char *aes_private_key) {
+                     int stun_timeout_ms, bool using_stun, char *binary_aes_private_key) {
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
     }
@@ -1215,7 +1215,8 @@ int CreateTCPContext(SocketContext *context, char *destination, int port, int re
     }
     context->timeout = recvfrom_timeout_ms;
     context->mutex = SDL_CreateMutex();
-    memcpy(context->aes_private_key, aes_private_key, sizeof(context->aes_private_key));
+    memcpy(context->binary_aes_private_key, binary_aes_private_key,
+           sizeof(context->binary_aes_private_key));
 
     int ret;
 
@@ -1543,7 +1544,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
 }
 
 int CreateUDPContext(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
-                     int stun_timeout_ms, bool using_stun, char *aes_private_key) {
+                     int stun_timeout_ms, bool using_stun, char *binary_aes_private_key) {
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
     }
@@ -1556,7 +1557,8 @@ int CreateUDPContext(SocketContext *context, char *destination, int port, int re
 
     context->timeout = recvfrom_timeout_ms;
     context->mutex = SDL_CreateMutex();
-    memcpy(context->aes_private_key, aes_private_key, sizeof(context->aes_private_key));
+    memcpy(context->binary_aes_private_key, binary_aes_private_key,
+           sizeof(context->binary_aes_private_key));
 
     if (using_stun) {
         if (destination == NULL)
@@ -1604,7 +1606,9 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
         return false;
     }
 
-    LOG_INFO("Sending request: %s", message);
+    // DO NOT LOG ARBITRARY HTTP REQUESTS -- THEY MAY CONTAIN SENSITIVE INFO
+    // LIKE PRIVATE KEYS
+    /* LOG_INFO("Sending request: %s", message); */
 
     // now we send it
     int total_sent = 0;

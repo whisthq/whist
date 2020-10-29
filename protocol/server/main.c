@@ -68,7 +68,8 @@ its threads.
 
 extern Client clients[MAX_NUM_CLIENTS];
 
-char aes_private_key[16];
+char binary_aes_private_key[16];
+char hex_aes_private_key[33];
 char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 volatile int connection_id;
 static volatile bool exiting;
@@ -839,7 +840,7 @@ int MultithreadedManageClients(void* opaque) {
         }
 
         if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                             get_using_stun(), aes_private_key) < 0) {
+                             get_using_stun(), binary_aes_private_key) < 0) {
             continue;
         }
 
@@ -852,7 +853,7 @@ int MultithreadedManageClients(void* opaque) {
 
         // Client is not in use so we don't need to worry about anyone else
         // touching it
-        if (connectClient(client_id, aes_private_key) != 0) {
+        if (connectClient(client_id, binary_aes_private_key) != 0) {
             LOG_WARNING(
                 "Failed to establish connection with client. "
                 "(ID: %d)",
@@ -943,7 +944,10 @@ int parse_args(int argc, char* argv[]) {
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
-    memcpy((char*)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+    // Initialize private key to default
+    memcpy((char*)&binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
+           sizeof(binary_aes_private_key));
+    memcpy((char*)&hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(hex_aes_private_key));
 
     int opt;
 
@@ -957,7 +961,8 @@ int parse_args(int argc, char* argv[]) {
         errno = 0;
         switch (opt) {
             case 'k':
-                if (!read_hexadecimal_private_key(optarg, (char*)aes_private_key)) {
+                if (!read_hexadecimal_private_key(optarg, (char*)binary_aes_private_key,
+                                                  (char*)hex_aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
                     printf("%s", usage);
                     return -1;
@@ -1068,7 +1073,7 @@ int main(int argc, char* argv[]) {
     update();
 
     char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
-    updateServerStatus(false, host, get_access_token(), identifier, aes_private_key);
+    updateServerStatus(false, host, get_access_token(), identifier, hex_aes_private_key);
 
     clock startup_time;
     StartTimer(&startup_time);
@@ -1118,7 +1123,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             updateServerStatus(num_controlling_clients > 0, host, get_access_token(), identifier,
-                               aes_private_key);
+                               hex_aes_private_key);
             StartTimer(&ack_timer);
         }
 

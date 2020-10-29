@@ -811,7 +811,7 @@ typedef struct update_status_data {
     char *host;
     char *access_token;
     char *identifier;
-    char *aes_private_key;
+    char *hex_aes_private_key;
 } update_status_data_t;
 
 int32_t MultithreadedUpdateServerStatus(void *data) {
@@ -822,14 +822,11 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
              "{\n\
             \"version\" : \"%s\",\n\
             \"available\" : %s,\n\
-            \"identifier\" : \"%s\",\n\
-            \"private_key\" : \"%08X%08X%08X%08X\"\n\
+            \"identifier\" : %s,\n\
+            \"private_key\" : \"%s\"\n\
 }",
              get_version(), d->is_connected ? "false" : "true", d->identifier,
-             htonl(*((uint32_t *)(d->aes_private_key))),
-             htonl(*((uint32_t *)(d->aes_private_key + 4))),
-             htonl(*((uint32_t *)(d->aes_private_key + 8))),
-             htonl(*((uint32_t *)(d->aes_private_key + 12))));
+             d->hex_aes_private_key);
     SendPostRequest(d->host, "/container/ping", json, d->access_token, NULL, 0);
 
     free(d);
@@ -837,14 +834,14 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
 }
 
 void updateServerStatus(bool is_connected, char *host, char *access_token, char *identifier,
-                        char *aes_private_key) {
+                        char *hex_aes_private_key) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
     d->host = host;
     d->access_token = access_token;
     d->identifier = identifier;
-    d->aes_private_key = aes_private_key;
+    d->hex_aes_private_key = hex_aes_private_key;
     SDL_Thread *update_status =
         SDL_CreateThread(MultithreadedUpdateServerStatus, "UpdateServerStatus", d);
     SDL_DetachThread(update_status);

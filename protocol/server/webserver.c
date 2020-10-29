@@ -10,6 +10,7 @@ static bool is_using_stun;
 static char* access_token = NULL;
 bool is_trying_staging_protocol_info = false;
 
+extern char hex_aes_private_key[33];
 extern char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 
 void update_webserver_parameters() {
@@ -35,12 +36,13 @@ void update_webserver_parameters() {
 
     LOG_INFO("GETTING JSON");
 
-    char* msg = (char*)malloc(32 + strlen(identifier));
+    char* msg = (char*)malloc(64 + strlen(identifier));
     sprintf(msg,
-            "{\n"
-            "    \"port\": %s\n"
-            "}\n",
-            identifier);
+            "{\n\
+            \"identifier\" : %s,\n\
+            \"private_key\" : \"%s\"\n\
+}",
+            identifier, hex_aes_private_key);
 
     if (!SendPostRequest(will_try_staging ? STAGING_HOST : PRODUCTION_HOST,
                          "/container/protocol_info", msg, NULL, &resp_buf, resp_buf_maxlen)) {

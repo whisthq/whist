@@ -260,14 +260,27 @@ int runcmd(const char* cmdline, char** response) {
 #endif
 }
 
-bool read_hexadecimal_private_key(char* hex_string, char* private_key) {
+bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
+                                  char* hex_private_key) {
+    // It looks wasteful to convert from string to binary and back, but we need
+    // to validate the hex string anyways, and it's easier to see exactly the
+    // format in which we're storing it (big-endian).
+
+    if (strlen(hex_string) != 32) {
+        return false;
+    }
     for (int i = 0; i < 16; i++) {
-        if (!isxdigit(hex_string[2 * i]) || !isxdigit(hex_string[2 * i + 1]) ||
-            hex_string[32] != '\0') {
+        if (!isxdigit(hex_string[2 * i]) || !isxdigit(hex_string[2 * i + 1])) {
             return false;
         }
-        sscanf(&hex_string[2 * i], "%2hhx", &(private_key[i]));
+        sscanf(&hex_string[2 * i], "%2hhx", &(binary_private_key[i]));
     }
+
+    snprintf(hex_private_key, 33, "%08X%08X%08X%08X", htonl(*((uint32_t*)(binary_private_key))),
+             htonl(*((uint32_t*)(binary_private_key + 4))),
+             htonl(*((uint32_t*)(binary_private_key + 8))),
+             htonl(*((uint32_t*)(binary_private_key + 12))));
+
     return true;
 }
 
