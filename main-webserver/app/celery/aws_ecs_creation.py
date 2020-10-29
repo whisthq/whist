@@ -105,7 +105,7 @@ def create_new_container(
             clusters using awsvpc networking.
     """
     message = f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in {region_name}"
-    aeskey = os.urandom(8).hex()
+    aeskey = os.urandom(16).hex()
     container_overrides = {
         "containerOverrides": [
             {

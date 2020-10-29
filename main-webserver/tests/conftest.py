@@ -174,7 +174,7 @@ def container(cluster, user):
             port_32263=randbits(16),
             port_32273=randbits(16),
             cluster=cluster.cluster,
-            secret_key=os.urandom(8).hex(),
+            secret_key=os.urandom(16).hex(),
         )
 
         db.session.add(c)
