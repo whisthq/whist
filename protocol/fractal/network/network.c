@@ -147,7 +147,7 @@ SOCKET socketp_udp();
 
 @returns                        The new socket file descriptor, -1 on failure
 */
-SOCKET acceptp(int sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len);
+SOCKET acceptp(SOCKET sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len);
 
 /*
 @brief                          This will send or receive data over a socket
@@ -477,6 +477,9 @@ SOCKET socketp_tcp() {
         Create a TCP socket and set the FD_CLOEXEC flag.
         Linux permits atomic FD_CLOEXEC definition via SOCK_CLOEXEC,
         but this is not available on other operating systems yet.
+
+        Return:
+            SOCKET: socket fd on success; INVALID_SOCKET on failure
     */
 
 #ifdef SOCK_CLOEXEC
@@ -484,14 +487,14 @@ SOCKET socketp_tcp() {
     SOCKET sock_fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
     if (sock_fd <= 0) {
         LOG_WARNING("Could not create socket %d\n", GetLastNetworkError());
-        return -1;
+        return INVALID_SOCKET;
     }
 #else
     // Create socket
     SOCKET sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock_fd <= 0) {  // Windows & Unix cases
         LOG_WARNING("Could not create socket %d\n", GetLastNetworkError());
-        return -1;
+        return INVALID_SOCKET;
     }
 
 #ifndef _WIN32
@@ -499,7 +502,7 @@ SOCKET socketp_tcp() {
     // Not necessary for windows because CreateProcessA creates an independent process
     if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
         LOG_WARNING("Could not set fcntl to set socket to close on child exec");
-        return -1;
+        return INVALID_SOCKET;
     }
 #endif
 #endif
@@ -512,6 +515,9 @@ SOCKET socketp_udp() {
         Create a UDP socket and set the FD_CLOEXEC flag.
         Linux permits atomic FD_CLOEXEC definition via SOCK_CLOEXEC,
         but this is not available on other operating systems yet.
+
+        Return:
+            SOCKET: socket fd on success; INVALID_SOCKET on failure
     */
 
 #ifdef SOCK_CLOEXEC
@@ -526,7 +532,7 @@ SOCKET socketp_udp() {
     // Not necessary for windows because CreateProcessA creates an independent process
     if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
         LOG_WARNING("Could not set fcntl to set socket to close on child exec");
-        return -1;
+        return INVALID_SOCKET;
     }
 #endif
 #endif
@@ -534,14 +540,17 @@ SOCKET socketp_udp() {
     return sock_fd;
 }
 
-SOCKET acceptp(int sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len) {
+SOCKET acceptp(SOCKET sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len) {
     /*
         Accept a connection on `sock_fd` and return a new socket fd
 
         Arguments:
-            sock_fd (int): file descriptor of socket that we are accepting a connection on
+            sock_fd (SOCKET): file descriptor of socket that we are accepting a connection on
             sock_addr (struct sockaddr*): the address of the socket
             sock_len (socklen_t*): the length of the socket address struct
+
+        Return:
+            SOCKET: new fd for socket on success; INVALID_SOCKET on failure
     */
 
 #if defined(_GNU_SOURCE) && defined(SOCK_CLOEXEC)
@@ -551,7 +560,7 @@ SOCKET acceptp(int sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len) {
     SOCKET new_socket = accept(sock_fd, sock_addr, sock_len);
     if (new_socket < 0) {
         LOG_WARNING("Did not receive response from client! %d\n", GetLastNetworkError());
-        return -1;
+        return INVALID_SOCKET;
     }
 
 #ifndef _WIN32
@@ -559,7 +568,7 @@ SOCKET acceptp(int sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len) {
     // Not necessary for windows because CreateProcessA creates an independent process
     if (fcntl(new_socket, F_SETFD, fcntl(new_socket, F_GETFD) | FD_CLOEXEC) < 0) {
         LOG_WARNING("Could not set fcntl to set socket to close on child exec");
-        return -1;
+        return INVALID_SOCKET;
     }
 #endif
 #endif
@@ -776,7 +785,7 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
 
     // Create TCP socket
     LOG_INFO("Creating TCP Socket");
-    if ((context->s = socketp_tcp()) < 0) {
+    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
@@ -837,7 +846,8 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     LOG_INFO("Accepting TCP Connection");
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
-    if ((new_socket = acceptp(context->s, (struct sockaddr *)(&context->addr), &slen)) < 0) {
+    if ((new_socket = acceptp(context->s, (struct sockaddr *)(&context->addr), &slen)) ==
+        INVALID_SOCKET) {
         return -1;
     }
 
@@ -871,7 +881,7 @@ int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     int opt;
 
     // Create TCP socket
-    if ((context->s = socketp_tcp()) < 0) {
+    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
@@ -879,7 +889,7 @@ int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_ti
 
     // Create UDP socket
     SOCKET udp_s = socketp_udp();
-    if (udp_s < 0) {
+    if (udp_s == INVALID_SOCKET) {
         return -1;
     }
 
@@ -958,7 +968,7 @@ int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     closesocket(context->s);
 
     // Create TCP socket
-    if ((context->s = socketp_tcp()) < 0) {
+    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
@@ -1009,7 +1019,7 @@ int CreateTCPClientContext(SocketContext *context, char *destination, int port,
     context->is_tcp = true;
 
     // Create TCP socket
-    if ((context->s = socketp_tcp()) < 0) {
+    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
@@ -1059,7 +1069,7 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
     int opt;
 
     // Create TCP socket
-    if ((context->s = socketp_tcp()) < 0) {
+    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
@@ -1067,7 +1077,7 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
 
     // Tell the STUN to use UDP
     SOCKET udp_s = socketp_udp();
-    if (udp_s < 0) {
+    if (udp_s == INVALID_SOCKET) {
         return -1;
     }
 
@@ -1159,7 +1169,7 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
     closesocket(context->s);
 
     // Create TCP socket
-    if ((context->s = socketp_tcp()) < 0) {
+    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
@@ -1246,7 +1256,7 @@ int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeou
 
     context->is_tcp = false;
     // Create UDP socket
-    if ((context->s = socketp_udp()) < 0) {
+    if ((context->s = socketp_udp()) == INVALID_SOCKET) {
         return -1;
     }
 
@@ -1296,7 +1306,7 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     context->is_tcp = false;
 
     // Create UDP socket
-    if ((context->s = socketp_udp()) < 0) {
+    if ((context->s = socketp_udp()) == INVALID_SOCKET) {
         return -1;
     }
 
@@ -1411,7 +1421,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     context->is_tcp = false;
 
     // Create UDP socket
-    if ((context->s = socketp_udp()) < 0) {
+    if ((context->s = socketp_udp()) == INVALID_SOCKET) {
         return -1;
     }
 
@@ -1453,7 +1463,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
     context->is_tcp = false;
 
     // Create UDP socket
-    if ((context->s = socketp_udp()) < 0) {
+    if ((context->s = socketp_udp()) == INVALID_SOCKET) {
         return -1;
     }
 
@@ -1570,7 +1580,7 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
     struct sockaddr_in webserver_socketAddress;  // address of the web server socket
 
     // Creating our TCP socket to connect to the web server
-    if ((Socket = socketp_tcp()) < 0) {
+    if ((Socket = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
     set_timeout(Socket, 1000);
