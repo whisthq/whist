@@ -31,6 +31,7 @@ jobs:
                   - fractal/creative/blender
                   - fractal/creative/gimp
                   - fractal/creative/blockbench
+                  - fractal/creative/figma
 
         steps:
             - name: Checkout git repository
