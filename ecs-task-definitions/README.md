@@ -25,8 +25,8 @@ Once that done, create a new `.json` file named `fractal-[folder-name-on-contain
 
 Lastly, add your newly-supported application to the `app` list in `.github/workflows/render-and-deploy.yml` as `fractal/[folder-name-on-container-images]/[application-name]`, i.e. `fractal/browsers/chrome`, and you'll be all set to auto-deploy this new task definition on AWS!
 
-## Continous Integration
+## Publishing & Continous Integration
 
 For every push to `main`, all the task definitions specified in `.github/workflows/render-and-deploy.yml`, which should be all task definition JSONs in this repository, will be automatically rendered and deployed to all supported AWS regions listed under `aws-regions` in `.github/workflows/render-and-deploy.yml`. 
 
-On top of that, whenever a there is a push to `master` on the [container-images](https://github.com/fractalcomputers/container-images) repository, all task definitions specified in `.github/workflows/render-and-deploy.yml` will be rendered and deployed automatically, to update the task definition tags to point to the newly-deployed container images.
+On top of that, whenever there is a push to `master` on the [container-images](https://github.com/fractalcomputers/container-images) repository, all task definitions specified in `.github/workflows/render-and-deploy.yml` will be rendered and deployed automatically to update the task definition tags to point to the newly-deployed container images.
