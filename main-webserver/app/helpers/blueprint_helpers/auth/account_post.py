@@ -52,7 +52,7 @@ def loginHelper(email, password):
     # Return early if username/password combo is invalid
 
     if is_user:
-        if not user or not check_value(user.password, password) or not user.can_login == True:
+        if not user or not check_value(user.password, password):
             return {
                 "verified": False,
                 "is_user": is_user,
@@ -60,6 +60,7 @@ def loginHelper(email, password):
                 "refresh_token": None,
                 "verification_token": None,
                 "name": None,
+                "can_login": user.can_login,
             }
 
     # Fetch the JWT tokens
@@ -73,6 +74,7 @@ def loginHelper(email, password):
         "refresh_token": refresh_token,
         "verification_token": user.token,
         "name": user.name,
+        "can_login": user.can_login,
     }
 
 
