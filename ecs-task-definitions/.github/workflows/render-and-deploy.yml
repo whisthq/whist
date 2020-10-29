@@ -29,6 +29,7 @@ jobs:
                   - fractal/productivity/discord
                   - fractal/productivity/notion
                   - fractal/creative/blender
+                  - fractal/creative/gimp
                   - fractal/creative/blockbench
 
         steps:
