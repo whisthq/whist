@@ -1403,67 +1403,6 @@ int main(int argc, char* argv[]) {
             StartTimer(&last_ping_check);
         }
 
-        if (GetTimer(last_exit_check) > 15.0 / MS_IN_SECOND) {
-// Exit file seen, time to exit
-#ifdef _WIN32
-            if (PathFileExistsA("C:\\Program Files\\Fractal\\Exit\\exit")) {
-                // Give a bit of time to make sure no one is
-                // touching it
-                SDL_Delay(50);
-                DeleteFileA("C:\\Program Files\\Fractal\\Exit\\exit");
-#else
-            FILE* exit_file = fopen("/usr/share/fractal/exit", "r");
-            if (exit_file) {
-                fclose(exit_file);
-                // Give a bit of time to make sure no one is touching the file
-                SDL_Delay(50);
-                remove("/usr/share/fractal/exit");
-#endif
-
-                LOG_INFO("Exiting due to button press...");
-                FractalServerMessage fmsg_response = {0};
-                fmsg_response.type = SMESSAGE_QUIT;
-                if (readLock(&is_active_rwlock) != 0) {
-                    LOG_ERROR(
-                        "Failed to read-acquire is active RW "
-                        "lock.");
-                } else {
-                    if (broadcastUDPPacket(PACKET_MESSAGE, (uint8_t*)&fmsg_response,
-                                           sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE,
-                                           NULL, NULL) != 0) {
-                        LOG_WARNING("Could not send Quit Message");
-                    }
-                    if (readUnlock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to read-release is active RW lock.");
-                    }
-                }
-
-                // for now, kick all clients
-                if (writeLock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to write-acquire is active RW lock.");
-                    return -1;
-                }
-                if (SDL_LockMutex(state_lock) != 0) {
-                    LOG_ERROR("Failed to lock state lock");
-                    if (writeUnlock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to write-release is active RW lock.");
-                    }
-                    return -1;
-                }
-                if (quitClients() != 0) {
-                    LOG_ERROR("Failed to quit clients.");
-                }
-                if (SDL_UnlockMutex(state_lock) != 0) {
-                    LOG_ERROR("Failed to unlock state lock");
-                }
-                if (writeUnlock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to write-release is active RW lock.");
-                }
-                exiting = true;
-            }
-            StartTimer(&last_exit_check);
-        }
-
         if (readLock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-acquire is active lock.");
             continue;

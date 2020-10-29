@@ -261,9 +261,11 @@ int runcmd(const char* cmdline, char** response) {
 }
 
 bool read_hexadecimal_private_key(char* hex_string, char* private_key) {
+    if (strlen(hex_string) != 32) {
+        return false;
+    }
     for (int i = 0; i < 16; i++) {
-        if (!isxdigit(hex_string[2 * i]) || !isxdigit(hex_string[2 * i + 1]) ||
-            hex_string[32] != '\0') {
+        if (!isxdigit(hex_string[2 * i]) || !isxdigit(hex_string[2 * i + 1])) {
             return false;
         }
         sscanf(&hex_string[2 * i], "%2hhx", &(private_key[i]));

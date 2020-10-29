@@ -822,7 +822,7 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
              "{\n\
             \"version\" : \"%s\",\n\
             \"available\" : %s,\n\
-            \"identifier\" : \"%s\",\n\
+            \"identifier\" : %s,\n\
             \"private_key\" : \"%08X%08X%08X%08X\"\n\
 }",
              get_version(), d->is_connected ? "false" : "true", d->identifier,

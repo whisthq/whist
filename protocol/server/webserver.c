@@ -42,9 +42,13 @@ void update_webserver_parameters() {
     sprintf(msg,
             "{\n"
             "\"identifier\": %s,\n"
-            "\"private_key\": %s\n"
+            "\"private_key\": \"%08X%08X%08X%08X\"\n"
             "}\n",
-            identifier, aes_private_key);
+            identifier,
+            htonl(*((uint32_t *)(aes_private_key))),
+            htonl(*((uint32_t *)(aes_private_key + 4))),
+            htonl(*((uint32_t *)(aes_private_key + 8))),
+            htonl(*((uint32_t *)(aes_private_key + 12))));
 
     if (!SendPostRequest(will_try_staging ? STAGING_HOST : PRODUCTION_HOST,
                          "/container/protocol_info", msg, NULL, &resp_buf, resp_buf_maxlen)) {
