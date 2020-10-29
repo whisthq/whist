@@ -2,8 +2,10 @@ import os
 import time
 import pytest
 
-from utils.aws.base_ecs_client import ECSClient, boto3
+from flask import current_app
 from moto import mock_ecs, mock_logs, mock_autoscaling, mock_ec2, mock_iam
+
+from utils.aws.base_ecs_client import ECSClient, boto3
 
 
 @pytest.mark.skipif(
@@ -370,3 +372,21 @@ def test_region():
     assert taskdef["family"] == "basefam"
     logger = taskdef["containerDefinitions"][0]["logConfiguration"]["options"]
     assert "us-east-1" in logger["awslogs-region"]
+
+
+def test_prod_name():
+    current_app.testing = False
+
+    client = ECSClient()
+
+    assert not client.generate_name().startswith("test-")
+
+
+def test_test_name():
+    assert current_app.testing
+
+    client = ECSClient()
+    name = client.generate_name()
+
+    assert name.startswith("test-")
+    assert "_" not in name

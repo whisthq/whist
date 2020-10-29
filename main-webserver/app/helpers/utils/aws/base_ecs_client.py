@@ -4,11 +4,15 @@ import paramiko
 import io
 import time
 import json
+import uuid
+
 from collections import defaultdict
 from pprint import pprint
 
 import boto3
 import botocore.exceptions
+
+from flask import current_app
 
 
 def check_str_param(val, name):
@@ -196,8 +200,14 @@ class ECSClient:
         Returns:
             str: the generated name
         """
-        letters = string.ascii_lowercase
-        return starter_name + "_" + "".join(random.choice(letters) for i in range(10))
+
+        if current_app.testing:
+            name = f"test-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
+        else:
+            letters = string.ascii_lowercase
+            name = starter_name + "_" + "".join(random.choice(letters) for i in range(10))
+
+        return name
 
     def create_cluster(self, capacity_providers, cluster_name=None):
         """
