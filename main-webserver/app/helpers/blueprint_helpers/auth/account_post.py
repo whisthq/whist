@@ -7,12 +7,7 @@ from flask import jsonify
 
 from app import mail
 from app.constants.config import ADMIN_PASSWORD
-from app.constants.http_codes import (
-    BAD_REQUEST,
-    NOT_ACCEPTABLE,
-    SUCCESS,
-    UNAUTHORIZED,
-)
+from app.constants.http_codes import BAD_REQUEST, NOT_ACCEPTABLE, SUCCESS, UNAUTHORIZED, NOT_FOUND
 from app.helpers.blueprint_helpers.mail.mail_post import verificationHelper
 from app.helpers.utils.general.crypto import check_value, hash_value
 from app.helpers.utils.general.logs import fractalLog
@@ -285,3 +280,4 @@ def updateUserHelper(body):
             resetPasswordHelper(body["username"], body["password"])
             return jsonify({"msg": "Password updated successfully"}), SUCCESS
         return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE
+    return jsonify({"msg": "User not found"}), NOT_FOUND
