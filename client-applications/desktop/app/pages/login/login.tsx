@@ -4,7 +4,6 @@ import { connect } from "react-redux"
 import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { parse } from "url"
-import { Redirect } from "react-router-dom"
 
 import UpdateScreen from "pages/dashboard/components/update"
 import BackgroundView from "pages/login/views/backgroundView"
@@ -26,7 +25,6 @@ import {
 import { debugLog } from "shared/utils/logging"
 import { config } from "shared/constants/config"
 import { fetchContainer } from "store/actions/sideEffects"
-import { history } from "store/configureStore"
 
 // import "styles/login.css";
 
@@ -74,12 +72,13 @@ const Login = (props: any) => {
 
             if (os.platform() === "darwin") {
                 path = appRootDir + "/binaries/"
+                path = path.replace("/Resources/app.asar", "")
                 path = path.replace("/app", "")
                 executable = "./awsping_osx"
             } else if (os.platform() === "linux") {
                 path = process.cwd() + "/binaries/"
                 path = path.replace("/release", "")
-                executable = "./awsping_osx"
+                executable = "./awsping_linux"
             } else if (os.platform() === "win32") {
                 path = appRootDir + "\\binaries"
                 path = path.replace("\\resources\\app.asar", "")
@@ -96,17 +95,17 @@ const Login = (props: any) => {
                 exec("chmod +x awsping_osx.sh", { cwd: path })
             }
 
-            const regions = spawn(executable, ["-verbose", "1"], { cwd: path }) // ping via TCP
+            const regions = spawn(executable, ["-n", "3"], { cwd: path }) // ping via TCP
             regions.stdout.setEncoding("utf8")
 
             regions.stdout.on("data", (data: any) => {
                 console.log(data)
                 // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
-                const line = data.split(/\r?\n/)[1].replace(/  +/g, " ")
+                const line = data.split(/\r?\n/)[0].replace(/  +/g, " ")
                 const items = line.split(" ")
                 // In case data is split and sent separately, only use closest AWS region which has index of 0
-                if (items[1] == "0") {
-                    const region = items[2]
+                if (items[1] == "1.") {
+                    const region = items[2].slice(1, -1)
                     debugLog(region)
                     dispatch(updateClient({ region: region }))
                 } else {
@@ -119,10 +118,9 @@ const Login = (props: any) => {
     }
 
     const handleLoginUser = () => {
-        // dispatch(loginFailed(false))
+        setLoggingIn(true)
         setAWSRegion().then(() => {
             dispatch(updateAuth({ loginWarning: false }))
-            setLoggingIn(true)
             if (!rememberMe) {
                 storage.set("credentials", {
                     username: "",
@@ -143,47 +141,47 @@ const Login = (props: any) => {
     }
 
     const handleGoogleLogin = () => {
-        setAWSRegion().then(() => {
-            const { BrowserWindow } = require("electron").remote
+        const { BrowserWindow } = require("electron").remote
 
-            const authWindow = new BrowserWindow({
-                width: 800,
-                height: 600,
-                show: false,
-                "node-integration": false,
-                "web-security": false,
-            })
-            const GOOGLE_CLIENT_ID = config.keys.GOOGLE_CLIENT_ID
-            const GOOGLE_REDIRECT_URI = config.url.GOOGLE_REDIRECT_URI
-            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=${GOOGLE_REDIRECT_URI}&client_id=${GOOGLE_CLIENT_ID}`
-            authWindow.loadURL(authUrl, { userAgent: "Chrome" })
-            authWindow.show()
+        const authWindow = new BrowserWindow({
+            width: 800,
+            height: 600,
+            show: false,
+            "node-integration": false,
+            "web-security": false,
+        })
+        const GOOGLE_CLIENT_ID = config.keys.GOOGLE_CLIENT_ID
+        const GOOGLE_REDIRECT_URI = config.url.GOOGLE_REDIRECT_URI
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=${GOOGLE_REDIRECT_URI}&client_id=${GOOGLE_CLIENT_ID}`
+        authWindow.loadURL(authUrl, { userAgent: "Chrome" })
+        authWindow.show()
 
-            const handleNavigation = (url: any) => {
-                const query = parse(url, true).query
-                if (query) {
-                    if (query.error) {
-                        // dispatch(loginFailed(true))
-                    } else if (query.code) {
-                        authWindow.removeAllListeners("closed")
-                        setImmediate(() => authWindow.close())
-                        setLoggingIn(true)
+        const handleNavigation = (url: any) => {
+            const query = parse(url, true).query
+            if (query) {
+                if (query.error) {
+                    // dispatch(loginFailed(true))
+                } else if (query.code) {
+                    authWindow.removeAllListeners("closed")
+                    setImmediate(() => authWindow.close())
+                    setLoggingIn(true)
+                    setAWSRegion().then(() => {
                         dispatch(googleLogin(query.code, rememberMe))
-                    }
+                    })
                 }
             }
+        }
 
-            authWindow.webContents.on("will-navigate", (_: any, url: any) => {
-                handleNavigation(url)
-            })
-
-            authWindow.webContents.on(
-                "did-get-redirect-request",
-                (_: any, oldUrl: any, newUrl: any) => {
-                    handleNavigation(newUrl)
-                }
-            )
+        authWindow.webContents.on("will-navigate", (_: any, url: any) => {
+            handleNavigation(url)
         })
+
+        authWindow.webContents.on(
+            "did-get-redirect-request",
+            (_: any, oldUrl: any, newUrl: any) => {
+                handleNavigation(newUrl)
+            }
+        )
     }
 
     const forgotPassword = () => {
@@ -383,7 +381,11 @@ const Login = (props: any) => {
                                     onChange={updatePassword}
                                     type="password"
                                     className={styles.inputBox}
-                                    placeholder={password ? "•••••••••" : ""}
+                                    placeholder={
+                                        rememberMe && loggingIn
+                                            ? "•••••••••"
+                                            : ""
+                                    }
                                     id="password"
                                 />
                             </div>
