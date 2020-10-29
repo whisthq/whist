@@ -114,7 +114,7 @@ def create_new_container(
                 "name": "fractal-container",
                 "environment": [
                     {"name": "FRACTAL_AES_KEY", "value": aeskey},
-                    {"name": "FRACTAL_DPI", "value": dpi},
+                    {"name": "FRACTAL_DPI", "value": str(dpi)},
                 ],
             },
         ],
