@@ -185,6 +185,7 @@ def aws_container_post(action, **kwargs):
             try:
                 app = body.pop("app")
                 region = body.pop("region")
+                dpi = body.get("dpi", 96)
             except KeyError:
                 response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
             else:
@@ -195,7 +196,7 @@ def aws_container_post(action, **kwargs):
                     response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
                 else:
                     task = create_new_container.delay(
-                        user, task_arn, region, cluster_name=sample_cluster
+                        user, task_arn, region, cluster_name=sample_cluster, dpi=dpi
                     )
                     response = jsonify({"ID": task.id}), ACCEPTED
 

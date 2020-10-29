@@ -90,6 +90,7 @@ def create_new_container(
     cluster_name=None,
     region_name="us-east-1",
     network_configuration=None,
+    dpi=96,
 ):
     """Create a new ECS container running a particular task.
 
@@ -103,6 +104,7 @@ def create_new_container(
             ECSClient's launch type or the cluster's default launch type.
         network_configuration: The network configuration to use for the
             clusters using awsvpc networking.
+        dpi: what DPI to use on the server
     """
     message = f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in {region_name}"
     aeskey = os.urandom(8).hex()
@@ -112,6 +114,7 @@ def create_new_container(
                 "name": "fractal-container",
                 "environment": [
                     {"name": "FRACTAL_AES_KEY", "value": aeskey},
+                    {"name": "FRACTAL_DPI", "value": dpi},
                 ],
             },
         ],
