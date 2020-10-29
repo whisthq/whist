@@ -24,8 +24,8 @@ def forgotPasswordHelper(username):
         numbers = "1234567890"
         token = jwt.encode(
             {
-                "sub": username,
-                "exp": (dt.now() + timedelta(minutes=10)).replace(tzinfo=timezone.utc).timestamp(),
+                "email": username,
+                # "exp": (dt.now() + timedelta(minutes=10)).replace(tzinfo=timezone.utc).timestamp(),
             },
             current_app.config["JWT_SECRET_KEY"],
         )
@@ -204,7 +204,9 @@ def computerReadyHelper(user, date, code, location):
             from_email=SENDGRID_EMAIL,
             to_emails=user,
             subject=title,
-            html_content=render_template("on_cloud_pc_ready.html", date=date, code=code, location=location),
+            html_content=render_template(
+                "on_cloud_pc_ready.html", date=date, code=code, location=location
+            ),
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
