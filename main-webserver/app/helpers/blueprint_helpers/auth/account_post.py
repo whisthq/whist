@@ -59,7 +59,7 @@ def loginHelper(email, password):
                 "refresh_token": None,
                 "verification_token": None,
                 "name": None,
-                "can_login": user.can_login,
+                "can_login": False,
             }
 
     # Fetch the JWT tokens
