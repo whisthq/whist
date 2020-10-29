@@ -59,11 +59,11 @@ void update_webserver_parameters() {
         return;
     }
 
-
     // DO NOT LOG THIS IN PRODUCTION -- IT MAY CONTAIN SENSITIVE INFO
     // LIKE PRIVATE KEYS
-    /* LOG_INFO("Response body of length %d from POST request to webserver: %s", strlen(resp_buf), */
-             /* resp_buf); */
+    /* LOG_INFO("Response body of length %d from POST request to webserver: %s", strlen(resp_buf),
+     */
+    /* resp_buf); */
 
     // Set Default Values
     is_autoupdate = true;
