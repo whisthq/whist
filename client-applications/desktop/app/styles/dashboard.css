@@ -73,7 +73,8 @@
 .logoTitle {
     color: black;
     font-family: "Maven Pro";
-    font-size: 20px;
+    font-size: 20px !important;
+    letter-spacing: 1.5px;
 }
 
 .navTitle,

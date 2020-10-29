@@ -2,6 +2,7 @@ import React, { useState } from "react"
 import { Carousel } from "react-bootstrap"
 import { connect } from "react-redux"
 import { useQuery } from "@apollo/client"
+import Titlebar from "react-electron-titlebar"
 
 import { GET_BANNERS } from "shared/constants/graphql"
 
@@ -32,7 +33,7 @@ const BannerItem = (props: any) => {
 }
 
 const Banner = (props: any) => {
-    const { data, error } = useQuery(GET_BANNERS)
+    const { data, os, error } = useQuery(GET_BANNERS)
     const bannerData = data ? data.hardware_banners : []
     const bannerBackgrounds = bannerData.map(
         (bannerItem: any) => bannerItem.background
@@ -88,7 +89,7 @@ const Banner = (props: any) => {
 }
 
 const mapStateToProps = (state: any) => {
-    return {}
+    return { os: state.MainReducer.client.os }
 }
 
 export default connect(mapStateToProps)(Banner)
