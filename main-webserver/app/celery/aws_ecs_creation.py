@@ -255,7 +255,6 @@ def create_new_container(
                 state="FAILURE",
                 meta={"msg": "Container {} failed to ping.".format(ecs_client.tasks[0])},
             )
-            deleteContainer.delay(user_id=username, container_name=ecs_client.tasks[0])
         return container
     else:
         fractalLog(
