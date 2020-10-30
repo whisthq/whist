@@ -11,7 +11,7 @@
         "afterSign": "build/notarize.js",
         "appId": "com.fractalcomputers.fractal",
         "artifactName": "Fractal.${ext}",
-        "copyright": "Copyright © Fractal Computers, Inc.",
+        "copyright": "Copyright \u00a9 Fractal Computers, Inc.",
         "deb": {
             "icon": "build/icon.png",
             "vendor": "Fractal Computers, Inc."
@@ -83,7 +83,7 @@
         },
         "productName": "Fractal",
         "publish": {
-            "bucket": "fractal-applications-testing",
+            "bucket": "fractal: fractal-applications-testing",
             "provider": "s3",
             "region": "us-east-1"
         },

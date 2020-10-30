@@ -24,6 +24,7 @@ import {
 import { debugLog } from "shared/utils/logging"
 import { config } from "shared/constants/config"
 import { fetchContainer } from "store/actions/sideEffects"
+import { execChmodUnix } from "shared/utils/exec"
 
 const Login = (props: any) => {
     const {
@@ -87,29 +88,31 @@ const Login = (props: any) => {
                 )
             }
 
-            if (os.platform() !== "win32") {
-                const { exec } = require("child_process")
-                exec("chmod +x awsping_osx.sh", { cwd: path })
-            }
+            execChmodUnix("chmod +x awsping_osx", path, os.platform()).then(
+                () => {
+                    const regions = spawn(executable, ["-n", "3"], {
+                        cwd: path,
+                    }) // ping via TCP
+                    regions.stdout.setEncoding("utf8")
 
-            const regions = spawn(executable, ["-n", "3"], { cwd: path }) // ping via TCP
-            regions.stdout.setEncoding("utf8")
+                    regions.stdout.on("data", (data: any) => {
+                        console.log(data)
+                        // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
+                        const line = data.split(/\r?\n/)[0].replace(/  +/g, " ")
+                        const items = line.split(" ")
+                        // In case data is split and sent separately, only use closest AWS region which has index of 0
+                        if (items[1] == "1.") {
+                            const region = items[2].slice(1, -1)
+                            debugLog(region)
+                            dispatch(updateClient({ region: region }))
+                        } else {
+                            debugLog("late packet")
+                        }
 
-            regions.stdout.on("data", (data: any) => {
-                // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
-                const line = data.split(/\r?\n/)[0].replace(/  +/g, " ")
-                const items = line.split(" ")
-                // In case data is split and sent separately, only use closest AWS region which has index of 0
-                if (items[1] == "1.") {
-                    const region = items[2].slice(1, -1)
-                    debugLog(region)
-                    dispatch(updateClient({ region: region }))
-                } else {
-                    debugLog("late packet")
+                        resolve()
+                    })
                 }
-
-                resolve()
-            })
+            )
         })
     }
 

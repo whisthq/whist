@@ -10,6 +10,7 @@ import { debugLog } from "shared/utils/logging"
 import { deleteContainer } from "store/actions/sideEffects"
 import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/configureStore"
+import { execChmodUnix } from "shared/utils/exec"
 
 const UpdateScreen = (props: any) => {
     const {
@@ -48,17 +49,15 @@ const UpdateScreen = (props: any) => {
         const os = require("os")
 
         if (os.platform() === "darwin") {
-            debugLog("darwin found")
             path = appRootDir + "/protocol-build/desktop/"
             path = path.replace("/app", "")
+            path = path.replace("/Resources.asar", "")
             executable = "./FractalClient"
         } else if (os.platform() === "linux") {
-            debugLog("linux found")
             path = process.cwd() + "/protocol-build"
             path = path.replace("/release", "")
             executable = "./FractalClient"
         } else if (os.platform() === "win32") {
-            debugLog("windows found")
             path = appRootDir + "\\protocol-build\\desktop"
             path = path.replace("\\resources\\app.asar", "")
             path = path.replace("\\app\\protocol-build", "\\protocol-build")
@@ -67,42 +66,49 @@ const UpdateScreen = (props: any) => {
             debugLog(`no suitable os found, instead got ${os.platform()}`)
         }
 
-        var port_info = `32262:${port32262},32263:${port32263},32273:${port32273}`
-        var parameters = ["-w", 800, "-h", 600, "-p", port_info, ip]
-        debugLog(`your executable path should be: ${path}`)
+        execChmodUnix("chmod +x FractalClient", path, os.platform()).then(
+            () => {
+                var port_info = `32262:${port32262}.32263:${port32263}.32273:${port32273}`
+                var parameters = ["-w", 800, "-h", 600, "-p", port_info, ip]
+                debugLog(`your executable path should be: ${path}`)
 
-        // Starts the protocol
-        const protocol = child(executable, parameters, {
-            cwd: path,
-            detached: true,
-            stdio: "ignore",
-            // optional:
-            //env: {
-            //    PATH: process.env.PATH,
-            //},
-        })
-        protocol.on("close", (code: any) => {
-            dispatch(deleteContainer(username, container_id))
-            dispatch(
-                updateContainer({
-                    container_id: null,
-                    cluster: null,
-                    port32262: null,
-                    port32263: null,
-                    port32273: null,
-                    publicIP: null,
-                })
-            )
-            dispatch(
-                updateLoading({
-                    statusMessage: "Powering up your app",
-                    percentLoaded: 0,
-                })
-            )
-            history.push("/dashboard")
-        })
-        debugLog("spawn completed!")
+                console.log(path)
+                console.log(port_info)
+                console.log(ip)
 
+                // Starts the protocol
+                const protocol = child(executable, parameters, {
+                    cwd: path,
+                    detached: true,
+                    stdio: "ignore",
+                    // optional:
+                    //env: {
+                    //    PATH: process.env.PATH,
+                    //},
+                })
+                protocol.on("close", () => {
+                    dispatch(deleteContainer(username, container_id))
+                    dispatch(
+                        updateContainer({
+                            container_id: null,
+                            cluster: null,
+                            port32262: null,
+                            port32263: null,
+                            port32273: null,
+                            publicIP: null,
+                        })
+                    )
+                    dispatch(
+                        updateLoading({
+                            statusMessage: "Powering up your app",
+                            percentLoaded: 0,
+                        })
+                    )
+                    history.push("/dashboard")
+                })
+                debugLog("spawn completed!")
+            }
+        )
         // TODO (adriano) graceful exit vs non graceful exit code
         // this should be done AFTER the endpoint to connect to EXISTS
     }
