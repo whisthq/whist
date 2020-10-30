@@ -12,7 +12,7 @@ if [ -f "$PRIVATE_KEY_FILENAME" ]
 then
      export FRACTAL_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
      # use --private-key without argument to make it read the private key from env variable
-     /usr/share/fractal/FractalServer --private-key --identifier=$IDENTIFIER
+     /usr/share/fractal/FractalServer --private-key=$FRACTAL_AES_KEY --identifier=$IDENTIFIER
 else
      /usr/share/fractal/FractalServer --identifier=$IDENTIFIER
 fi
