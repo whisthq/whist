@@ -240,6 +240,7 @@ def create_new_container(
             label=str(ecs_client.tasks[0]),
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
+        # NOTE: this is a 30 second wait time, chosen arbitrarily
         max_pauses = 30
         curr_pause = 0
         while container.state == "CREATING" and curr_pause < max_pauses:
