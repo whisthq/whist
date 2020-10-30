@@ -388,8 +388,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean
 
 # Set up window manager running on X server, with GTK/QT theming
-RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git
-RUN cd WhiteSur-cursors && /bin/bash install.sh && cd
+RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 
 COPY i3config /root/.config/i3/config
 COPY gtk-3-settings.ini /etc/gtk-3.0/settings.ini
