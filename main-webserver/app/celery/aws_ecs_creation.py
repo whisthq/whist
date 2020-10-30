@@ -119,8 +119,6 @@ def create_new_container(
     kwargs = {"networkConfiguration": network_configuration, "overrides": container_overrides}
     fractalLog(function="create_new_container", label="None", logs=message)
     base_len = 2
-    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-
     if not cluster_name:
         all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
         all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
