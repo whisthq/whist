@@ -958,7 +958,7 @@ int MultithreadedManageClients(void* opaque) {
     startConnectionLog();
     bool have_sent_logs = true;
 
-    double nongraceful_grace_period = 300.0;  // 5 min after nongraceful disconn to reconn
+    double nongraceful_grace_period = 600.0;  // 10 min after nongraceful disconn to reconn
     bool first_client_connected = false;      // set to true once the first client has connected
     double begin_time_to_exit = 60.0;  // client 1 min to connect when the server first goes up
     clock first_client_timer;  // start this now and then discard when first client has connected
