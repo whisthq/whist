@@ -25,7 +25,7 @@ def forgotPasswordHelper(username):
         token = jwt.encode(
             {
                 "email": username,
-                # "exp": (dt.now() + timedelta(minutes=10)).replace(tzinfo=timezone.utc).timestamp(),
+                "exp": (dt.now() + timedelta(minutes=10)).replace(tzinfo=timezone.utc).timestamp(),
             },
             current_app.config["JWT_SECRET_KEY"],
         )
