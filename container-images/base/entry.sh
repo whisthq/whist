@@ -33,5 +33,4 @@ sudo mknod -m 660 /dev/dri/card0 c 226 0
 # This install fractal service
 echo "Start Pam Systemd Process for User fractal"
 export FRACTAL_UID=`id -u fractal`
-install -d -o fractal /run/user/$FRACTAL_UID
 systemctl start user@$FRACTAL_UID
