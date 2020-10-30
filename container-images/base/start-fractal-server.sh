@@ -3,7 +3,14 @@
 CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
 FRACTAL_MAPPINGS_DIR=/fractal/containerResourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
+PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/$IDENTIFIER_FILENAME)
 
-/usr/share/fractal/FractalServer --identifier=$IDENTIFIER
+# send in private key if set
+if [ -f "$PRIVATE_KEY_FILENAME" ]
+then
+     /usr/share/fractal/FractalServer --identifier=$IDENTIFIER --private-key=$(cat $PRIVATE_KEY_FILENAME)
+else
+     /usr/share/fractal/FractalServer --identifier=$IDENTIFIER
+fi
