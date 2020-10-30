@@ -249,9 +249,9 @@ int SendContainerDestroyMessage() {
     snprintf(payload, sizeof(payload),
              "{\n"
              "  \"container_id\": \"%s\",\n"
-             "  \"username\": \"%s\"\n"
+             "  \"private_key\": \"%s\"\n"
              "}",
-             container_id, user_id);
+             container_id, hex_aes_private_key);
 
     // send destroy request, don't require response -> update this later
     char* resp_buf = NULL;
