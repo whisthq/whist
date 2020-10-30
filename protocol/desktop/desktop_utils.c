@@ -167,11 +167,12 @@ int parseArgs(int argc, char *argv[]) {
                 strcpy(sentry_environment, optarg);
                 break;
             case 'p': {
-                char c = ',';
+                char separator = '.';
+                char c = separator;
                 unsigned short origin_port;
                 unsigned short destination_port;
                 const char *str = optarg;
-                while (c == ',') {
+                while (c == separator) {
                     int bytes_read;
                     int args_read = sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c,
                                            &bytes_read);
