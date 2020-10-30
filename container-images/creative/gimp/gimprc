@@ -7,8 +7,6 @@
 # Preferences dialog.
 
 (import-raw-plug-in "${gimp_plug_in_dir}/plug-ins/file-raw-placeholder/file-raw-placeholder")
-(monitor-xresolution 101)
-(monitor-yresolution 102)
 (theme "System")
 (fill-options
     (style solid)
