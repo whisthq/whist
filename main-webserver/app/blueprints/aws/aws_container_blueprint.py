@@ -4,10 +4,10 @@ from flask.json import jsonify
 from app import fractalPreProcess
 from app.celery.aws_ecs_creation import create_new_cluster, create_new_container, send_commands
 from app.celery.aws_ecs_deletion import delete_cluster, deleteContainer, drainContainer
-from app.celery.aws_ecs_status import pingHelper
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
+    pingHelper,
     preprocess_task_info,
     protocol_info,
     set_stun,
@@ -161,13 +161,8 @@ def aws_container_ping(**kwargs):
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
         # Update container status.
-        task = pingHelper.delay(available, address, identifier, private_key)
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-        if isinstance(task, dict):
-            # for testing
-            return task
-        return jsonify({"ID": task.id}), ACCEPTED
+        data, status = pingHelper(available, address, identifier, private_key)
+        response = jsonify(data), status
 
     return response
 
