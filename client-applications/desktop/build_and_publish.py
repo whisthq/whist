@@ -236,7 +236,7 @@ if __name__ == "__main__":
     # #####
     shutil.rmtree(protocol_dir, ignore_errors=True)
     print(f"Unpacking '{protocol}' to '{protocol_dir}'")
-    shutil.unpack_archive(protocol, protocol_dir)
+    # shutil.unpack_archive(protocol, protocol_dir)
     cleanup_list.append(protocol_dir)
     # Depending on how the archive was created it may place the files (like "FractalClient") directly
     # in the root of the destination (ie. protocol_dir), or it might create an intermediate folder
@@ -353,14 +353,14 @@ if __name__ == "__main__":
         )
     )
 
-    # yarn_cmd = shutil.which("yarn")
-    # if not yarn_cmd:
-    #    raise Exception(
-    #        "`yarn` must be installed in order to build and package the application"
-    #    )
-    # run_cmd([yarn_cmd], cwd=desktop_dir)  # Ensure that all dependencies are installed
-    # package_script = "package:publish" if args.push_new_update else "package"
-    # run_cmd([yarn_cmd, package_script], cwd=desktop_dir)
+    yarn_cmd = shutil.which("yarn")
+    if not yarn_cmd:
+       raise Exception(
+           "`yarn` must be installed in order to build and package the application"
+       )
+    run_cmd([yarn_cmd], cwd=desktop_dir)  # Ensure that all dependencies are installed
+    package_script = "package:publish" if args.push_new_update else "package"
+    run_cmd([yarn_cmd, package_script], cwd=desktop_dir)
 
     # #####
     # Step: Cleanup
