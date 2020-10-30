@@ -253,7 +253,9 @@ COPY pulse-client.conf /etc/pulse/client.conf
 RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/sync /usr/share/fractal/private
 RUN chgrp fractal -R /usr/share/fractal
 RUN chmod g+rw -R /usr/share/fractal
-# TODO: SET SECURITY SETTINGS FOR usr/share/fractal/private
+# Set /usr/share/fractal/private to root-only
+RUN chown root:root /usr/share/fractal/private
+RUN chmod 600 -R /usr/share/fractal/private
 
 # Download Fractal FFmpeg .so from AWS S3 and moving them to /usr/share/fractal
 RUN sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y
