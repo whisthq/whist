@@ -51,8 +51,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     mesa-utils \
     glmark2 \
     mpv \
-    libgimp2.0 \
-    gimp \
     psmisc \
     && apt-get autoremove -y \
     && apt-get clean
@@ -414,10 +412,6 @@ COPY --chown=fractal .gtkrc-2.0 /home/fractal/.gtkrc-2.0
 COPY qt4-settings.conf /root/.config/Trolltech.conf
 COPY --chown=fractal qt4-settings.conf /home/fractal/.config/Trolltech.conf
 COPY .xinitrc /root/.xinitrc
-
-# We set the gimp GTK theme to the system's for testing
-COPY gimprc /home/fractal/.config/GIMP/2.10/gimprc
-COPY gimprc /root/.config/GIMP/2.10/gimprc
 
 # Install Fractal services
 COPY fractal-entrypoint.service /etc/systemd/system

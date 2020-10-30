@@ -51,3 +51,6 @@ jobs:
             
             - name: Build the Ubuntu 20.04 Figma Image
               run: cd creative/figma && docker build . --file Dockerfile.20 --tag fractal/creative/figma:current-build
+
+            - name: Build the Ubuntu 20.04 Gimp Image
+              run: cd creative/gimp && docker build . --file Dockerfile.20 --tag fractal/creative/gimp:current-build

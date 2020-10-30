@@ -11,6 +11,7 @@ This repository contains the code for containerizing the various applications th
 - Blender
 - Blockbench
 - Figma
+- Gimp
 - Slack
 - Discord
 - Notion
