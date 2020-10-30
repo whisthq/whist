@@ -25,10 +25,10 @@ export function updateAuthFlow(body: {
     signupSuccess?: boolean
     forgotStatus?: string
     verificationEmailsSent?: number
-    verificationAttemptsExecuted?: number
     forgotEmailsSent?: number
     resetTokenStatus?: string | null
     resetDone?: boolean
+    passwordResetEmail?: string
 }) {
     return {
         type: UPDATE_AUTH_FLOW,

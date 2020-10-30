@@ -11,7 +11,6 @@ import {
 } from "shared/constants/graphql"
 import { SIGNUP_POINTS } from "shared/utils/points"
 
-
 function* emailLogin(action: any) {
     const { json } = yield call(
         apiPost,
@@ -86,28 +85,23 @@ function* googleLogin(action: any) {
                     UPDATE_WAITLIST_AUTH_EMAIL,
                     "UpdateWaitlistAuthEmail",
                     {
-                        "user_id": state.WaitlistReducer.waitlistUser.user_id,
-                        "authEmail": json.username,
+                        user_id: state.WaitlistReducer.waitlistUser.user_id,
+                        authEmail: json.username,
                     }
                 )
 
-                yield call(
-                    graphQLPost,
-                    UPDATE_WAITLIST,
-                    "UpdateWaitlist",
-                    {
-                        "user_id": state.WaitlistReducer.waitlistUser.user_id,
-                        "points": state.WaitlistReducer.waitlistUser.points + SIGNUP_POINTS,
-                        "referrals": state.WaitlistReducer.waitlistUser.referrals,
-                    },
-                )
-
+                yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
+                    user_id: state.WaitlistReducer.waitlistUser.user_id,
+                    points:
+                        state.WaitlistReducer.waitlistUser.points +
+                        SIGNUP_POINTS,
+                    referrals: state.WaitlistReducer.waitlistUser.referrals,
+                })
             } else if (response.status === 403) {
                 yield put(
                     AuthPureAction.updateAuthFlow({
                         loginWarning: "Try using non-Google login.",
-                        signupWarning:
-                            "Try using non-Google login.",
+                        signupWarning: "Try using non-Google login.",
                     })
                 )
             } else {
@@ -178,6 +172,7 @@ function* emailSignup(action: any) {
 }
 
 function* sendVerificationEmail(action: any) {
+    console.log(action)
     const state = yield select()
     if (action.email !== "" && action.token !== "") {
         const { json, response } = yield call(
@@ -205,6 +200,7 @@ function* sendVerificationEmail(action: any) {
 
 function* validateVerificationToken(action: any) {
     const state = yield select()
+    console.log("IN VALIDATE SAGA")
     const { json, response } = yield call(
         apiPost,
         "/account/verify",
@@ -212,34 +208,14 @@ function* validateVerificationToken(action: any) {
             username: state.AuthReducer.user.user_id,
             token: action.token,
         },
-        state.AuthReducer.user.accessToken
+        state.AuthReducer.user.accessToken,
+        state.AuthReducer.user.refreshToken
     )
-
-    const attemptsExecuted = state.AuthReducer.authFlow
-        .verificationAttemptsExecuted
-        ? state.AuthReducer.authFlow.verificationAttemptsExecuted
-        : 0
 
     if (json && response.status === 200 && json.verified) {
         yield put(
             AuthPureAction.updateUser({
                 emailVerified: true,
-            })
-        )
-        yield put(
-            AuthPureAction.updateAuthFlow({
-                verificationAttemptsExecuted: attemptsExecuted + 1,
-            })
-        )
-    } else {
-        yield put(
-            AuthPureAction.updateUser({
-                emailVerified: false,
-            })
-        )
-        yield put(
-            AuthPureAction.updateAuthFlow({
-                verificationAttemptsExecuted: attemptsExecuted + 1,
             })
         )
     }
@@ -331,16 +307,18 @@ function* validateResetToken(action: any) {
 }
 
 function* resetPassword(action: any) {
-    yield select()
+    // const state = yield select()
+
+    console.log(action)
 
     yield call(
         apiPost,
-        "/account/resetPassword",
+        "/account/update",
         {
             username: action.username,
             password: action.password,
         },
-        ""
+        action.token
     )
 
     // TODO do something with the response

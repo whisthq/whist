@@ -11,7 +11,6 @@ import {
     checkPasswordVerbose,
 } from "pages/auth/constants/authHelpers"
 import history from "shared/utils/history"
-import { updateAuthFlow } from "store/actions/auth/pure"
 
 import "styles/auth.css"
 
@@ -22,7 +21,7 @@ const ResetView = (props: {
     token?: any
     validToken?: boolean
 }) => {
-    const { dispatch, user, authFlow, token, validToken } = props
+    const { dispatch, authFlow, token, validToken } = props
 
     const [password, setPassword] = useState("")
     const [passwordWarning, setPasswordWarning] = useState("")
@@ -42,7 +41,9 @@ const ResetView = (props: {
     const reset = () => {
         if (validPassword) {
             // TODO (might also want to add a email redux state for that which was forgotten)
-            dispatch(resetPassword(user.user_id, password))
+            dispatch(
+                resetPassword(authFlow.passwordResetEmail, password, token)
+            )
             setFinished(true) // unfortunately this is all the sagas give us
         }
     }
@@ -66,20 +67,14 @@ const ResetView = (props: {
 
     // first ask for a validation and start loading
     useEffect(() => {
-        if (validToken && !processing) {
-            dispatch(validateResetToken(token))
-            dispatch(
-                updateAuthFlow({
-                    resetTokenStatus: undefined, // to guarantee that upon a response we will see something
-                })
-            )
+        if (validToken && !processing && !authFlow.resetTokenStatus) {
             setProcessing(true)
+            dispatch(validateResetToken(token))
         }
         // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    // then stop loading and let the textbox be displayed
     useEffect(() => {
         //console.log(`change ${processing} ${authFlow.resetTokenStatus}`)
         if (processing && authFlow.resetTokenStatus) {
@@ -113,7 +108,7 @@ const ResetView = (props: {
         if (finished) {
             // delay for 3 seconds then push to /
             // not sure how this compares to redirect or whatever
-            setTimeout(() => history.push("/auth"), 3000) // turn this into a helper?
+            setTimeout(() => history.push("/auth"), 500) // turn this into a helper?
         }
     }, [finished])
 
@@ -160,6 +155,7 @@ const ResetView = (props: {
                         style={{
                             color: "#111111",
                             textAlign: "center",
+                            fontWeight: "normal",
                         }}
                     >
                         Please Enter Your New Password {props.user.user_id}
@@ -187,9 +183,7 @@ const ResetView = (props: {
                             paddingBottom: 15,
                             opacity: validPassword ? 1.0 : 0.6,
                         }}
-                        onClick={() => {
-                            console.log("clicked (then add reset)")
-                        }}
+                        onClick={reset}
                         disabled={!validPassword}
                     >
                         Reset

@@ -20,6 +20,11 @@ const ForgotView = (props: any) => {
     const forgot = () => {
         if (checkEmail(email)) {
             setProcessing(true)
+            dispatch(
+                AuthPureAction.updateAuthFlow({
+                    passwordResetEmail: email,
+                })
+            )
             dispatch(AuthSideEffect.forgotPassword(email))
         }
     }
@@ -36,12 +41,11 @@ const ForgotView = (props: any) => {
     }
 
     useEffect(() => {
-        // this should not be called on component mount
-        if (email && authFlow.forgotStatus && authFlow.forgotEmailsSent) {
+        if (authFlow.forgotStatus && authFlow.forgotEmailsSent) {
             setProcessing(false)
             setGotResponse(true)
         }
-    }, [authFlow.forgotStatus, authFlow.forgotEmailsSent, email])
+    }, [authFlow.forgotStatus, authFlow.forgotEmailsSent])
 
     // useEffect(() => {
     //     setGotResponse(false)
@@ -69,10 +73,6 @@ const ForgotView = (props: any) => {
                             textAlign: "center",
                         }}
                     >
-                        {authFlow.forgotStatus &&
-                        authFlow.forgotStatus !== "Email sent"
-                            ? "Failed"
-                            : "Succeded"}
                         {authFlow.forgotStatus ? authFlow.forgotStatus : ""}.
                     </h2>
                     <div

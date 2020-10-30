@@ -31,6 +31,9 @@ const Verify = (props: any) => {
     const valid_token = token && token.length >= 1 ? true : false
     const valid_user = user.user_id && user.user_id !== ""
 
+    console.log("THE TOKEN IS")
+    console.log(token)
+
     useEffect(() => {
         if (authFlow.signupSuccess && !signupPointsGiven) {
             updateWaitlistAuthEmail({
