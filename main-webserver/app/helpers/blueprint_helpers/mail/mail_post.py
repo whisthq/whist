@@ -84,11 +84,7 @@ def verificationHelper(user, token):
     title = "[Fractal] Please Verify Your Email"
     url = FRONTEND_URL + "/verify?" + token
     # url = "https://localhost:3000/verify?" + token
-
-    # fractalLog("","",user)
-    # fractalLog("","",title)
-    # fractalLog("","",url)
-
+    
     try:
         message = Mail(
             from_email=SENDGRID_EMAIL,
@@ -99,7 +95,6 @@ def verificationHelper(user, token):
         sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
     except Exception as e:
-        #fractalLog("","","EXCEPTION WITH TRY")
         fractalLog(
             function="verificationHelper",
             label=user,

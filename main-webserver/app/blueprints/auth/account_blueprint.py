@@ -37,7 +37,7 @@ def account_postDelete(**kwargs):
 
 @account_bp.route("/account/update", methods=["POST"])
 @fractalPreProcess
-@jwt_required # TODO fix this (in the mail blueprint?)
+@jwt_required
 @fractalAuth
 def account_postUpdate(**kwargs):
     # Change the user's name, email, or password
