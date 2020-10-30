@@ -1,27 +1,39 @@
 import React, { useState } from "react"
-
+import { connect } from "react-redux"
 import { Form } from "react-bootstrap"
 import DivSpace from "shared/components/divSpace"
 import { PuffAnimation } from "shared/components/loadingAnimations"
+import { Redirect } from "react-router"
 
 import { GrSend } from "react-icons/gr"
 
 import Header from "shared/components/header"
 
+import { submitFeedback } from "store/actions/customer/sideEffects"
+
 import "styles/shared.css"
 import { checkEmail } from "pages/auth/constants/authHelpers"
 
-const Support = (props: any) => {
+// TODO please tell them they have to be logged in
+const Support = (props: {
+    user: any
+    dispatch: any
+}) => {
+    const { dispatch, user } = props
+
     const [email, setEmail] = useState("")
     const [request, setRequest] = useState("")
     const [processing, setProcessing] = useState(false)
     const [sentRequest, setSentRequest] = useState(false)
 
     // send to support@fractalcomputers.com
+    // TODO this is going to have to be changed
+    // because we want many people to be able to submit questions
+    // we'll want one feedback or support email and one questions email
     const sendRequest = () => {
         if (request.length >= 7 && checkEmail(email)) {
             setProcessing(true)
-            // TODO SEND THE EMAIL
+            dispatch(submitFeedback(request))
             setTimeout(() => {
                 setSentRequest(true)
                 setTimeout(() => {
@@ -53,7 +65,10 @@ const Support = (props: any) => {
         setRequest(evt.target.value)
     }
 
-    if (sentRequest) {
+    if (!user.user_id && user.accessToken) {
+        // tell them somehow that this is a requirement
+        return <Redirect to="/" />
+    } else if (sentRequest) {
         // YEA TODO PLEASE MAKE A VIEW (or another component below)
         // ALSO TODO ADD COOL ICONS
         return (
@@ -163,4 +178,11 @@ const Support = (props: any) => {
     }
 }
 
-export default Support
+
+function mapStateToProps(state: { AuthReducer: { authFlow: any; user: any } }) {
+    return {
+        user: state.AuthReducer.user,
+    }
+}
+
+export default connect(mapStateToProps)(Support)
