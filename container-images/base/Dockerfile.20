@@ -269,7 +269,6 @@ RUN ln -sf /usr/share/fractal/libavcodec.so /usr/local/lib/libavcodec-fractal.so
     rm -rf shared-libs.tar.gz \
     rm -rf share
 
-
 # Install FFmpeg dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
@@ -296,6 +295,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libx11-dev \
     && apt-get autoremove -y \
     && apt-get clean
+
 
 # Install FractalServer scripts and kernel module input rules
 COPY entry.sh /home/fractal
