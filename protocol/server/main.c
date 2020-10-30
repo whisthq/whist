@@ -944,12 +944,16 @@ int parse_args(int argc, char* argv[]) {
         "                                  hexadecimal string\n"
         "  -i, --identifier=ID           pass in the unique identifier for this\n"
         "                                  server as a hexadecimal string\n"
+        "  -d, --dpi=DPI                 pass in the DPI of the monitor, with "96" being the default\n"
+	"                                  \n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
     memcpy((char*)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
 
     int opt;
+    int dpi = -1;
+    char* end_ptr;
 
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
@@ -977,6 +981,15 @@ int parse_args(int argc, char* argv[]) {
                 strncpy(identifier, optarg, FRACTAL_IDENTIFIER_MAXLEN);
                 identifier[FRACTAL_IDENTIFIER_MAXLEN] = 0;
                 break;
+	    case 'd':
+		if (dpi != -1) {
+		    printf("Error: -d was passed in twice");
+		    return -1;
+		}
+		int new_dpi = strtol(optarg, &end_ptr, 10);
+		printf("Setting DPI to %d", new_dpi);
+		dpi = new_dpi;
+		break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);
                 return 1;
@@ -1006,6 +1019,16 @@ int parse_args(int argc, char* argv[]) {
                 break;
             }
         }
+    }
+
+    if (dpi != -1) {
+#ifdef _WIN32
+	printf("DPI setting not implemented yet on windows server");
+	return -1;
+#else
+        snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
+        runcmd(cmd, NULL);
+#endif
     }
 
     return 0;
