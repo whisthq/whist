@@ -781,13 +781,13 @@ int sendConnectionHistory(char *host, char *access_token, char* identifier, char
 
             if (size > 0) {
                 sprintf(json,
-                        "{\
-                        \"sender\" : \"server\",\
-                        \"connection_id\" : \"%s\",\
-                        \"logs\" : \"%s\",\
-                        \"identifier\" : %s,\
-                        \"secret_key\" : %s\
-                        }",
+                        "{"
+                        "   \"sender\" : \"server\","
+                        "   \"connection_id\" : \"%s\","
+                        "   \"logs\" : \"%s\","
+                        "   \"identifier\" : %s,"
+                        "   \"secret_key\" : %s"
+                        "}",
                         connection_id_data,
                         logs,
                         identifier,
@@ -824,11 +824,11 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
 
     char json[1000];
     snprintf(json, sizeof(json),
-             "{\n\
-             \"available\" : %s,\n\
-             \"identifier\" : %s,\n\
-             \"private_key\" : \"%s\"\n\
-             }",
+             "{\n"
+             "  \"available\" : %s,\n"
+             "  \"identifier\" : %s,\n"
+             "  \"private_key\" : \"%s\"\n"
+             "}",
              d->is_connected ? "false" : "true",
              d->identifier,
              d->hex_aes_private_key

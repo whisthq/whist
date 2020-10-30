@@ -40,10 +40,10 @@ void update_webserver_parameters() {
 
     char* msg = (char*)malloc(64 + strlen(identifier) + strlen(hex_aes_private_key));
     sprintf(msg,
-            "{\n\
-            \"identifier\" : %s,\n\
-            \"private_key\" : \"%s\"\n\
-            }",
+            "{\n"
+            "   \"identifier\" : %s,\n"
+            "   \"private_key\" : \"%s\"\n"
+            "}",
             identifier, hex_aes_private_key);
 
     if (!SendPostRequest(will_try_staging ? STAGING_HOST : PRODUCTION_HOST,

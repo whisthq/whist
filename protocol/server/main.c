@@ -248,8 +248,8 @@ int SendContainerDestroyMessage() {
     char payload[256];
     snprintf(payload, sizeof(payload),
              "{\n"
-             "\"container_id\": \"%s\",\n"
-             "\"username\": \"%s\"\n"
+             "  \"container_id\": \"%s\",\n"
+             "  \"username\": \"%s\"\n"
              "}",
              container_id, user_id);
 
