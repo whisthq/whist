@@ -257,7 +257,7 @@ def create_new_container(
 def create_new_cluster(
     self,
     cluster_name=None,
-    instance_type="g3s.xlarge",
+    instance_type="g3.4xlarge",
     ami="ami-0decb4a089d867dc1",
     region_name="us-east-1",
     min_size=0,
