@@ -15,7 +15,6 @@ const UpdateScreen = (props: any) => {
     const {
         dispatch,
         os,
-        username,
         percentLoaded,
         status,
         container_id,
@@ -190,7 +189,6 @@ function mapStateToProps(state: any) {
     console.log(state)
     return {
         os: state.MainReducer.client.os,
-        username: state.MainReducer.auth.username,
         percentLoaded: state.MainReducer.loading.percentLoaded,
         status: state.MainReducer.loading.statusMessage,
         container_id: state.MainReducer.container.container_id,
