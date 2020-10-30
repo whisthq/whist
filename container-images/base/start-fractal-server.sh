@@ -10,7 +10,8 @@ IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/$IDENTIFIER_FILENAME)
 # send in private key if set
 if [ -f "$PRIVATE_KEY_FILENAME" ]
 then
-     /usr/share/fractal/FractalServer --identifier=$IDENTIFIER --private-key=$(cat $PRIVATE_KEY_FILENAME)
+     export FRACTAL_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
+     /bin/sh -c "echo $FRACTAL_AES_KEY && /usr/share/fractal/FractalServer --identifier=$IDENTIFIER"
 else
      /usr/share/fractal/FractalServer --identifier=$IDENTIFIER
 fi
