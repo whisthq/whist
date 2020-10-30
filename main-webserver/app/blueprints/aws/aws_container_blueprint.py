@@ -200,7 +200,7 @@ def aws_container_post(action, **kwargs):
                     response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
                 else:
                     task = create_new_container.delay(
-                        user, task_arn, region, cluster_name=sample_cluster
+                        user, task_arn, region_name=region, cluster_name=sample_cluster
                     )
                     response = jsonify({"ID": task.id}), ACCEPTED
 
