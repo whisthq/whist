@@ -953,7 +953,7 @@ int MultithreadedManageClients(void* opaque) {
 
     char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
 
-    sendConnectionHistory(host, get_access_token());
+    sendConnectionHistory(host, get_access_token(), identifier, hex_aes_private_key);
     connection_id = rand();
     startConnectionLog();
     bool have_sent_logs = true;
@@ -980,7 +980,7 @@ int MultithreadedManageClients(void* opaque) {
         LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
                  have_sent_logs ? "yes" : "no");
         if (saved_num_active_clients == 0 && !have_sent_logs) {
-            sendConnectionHistory(host, get_access_token());
+            sendConnectionHistory(host, get_access_token(), identifier, hex_aes_private_key);
             have_sent_logs = true;
         } else if (saved_num_active_clients > 0 && have_sent_logs) {
             have_sent_logs = false;
