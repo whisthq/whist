@@ -18,21 +18,13 @@ def dummyTask(self):
     time.sleep(10)
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Spinning the wheels.",
-            "progress": 40,
-        },
+        state="PENDING", meta={"msg": "Spinning the wheels.", "progress": 40,},
     )
 
     time.sleep(15)
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Oiling the tubes.",
-            "progress": 70,
-        },
+        state="PENDING", meta={"msg": "Oiling the tubes.", "progress": 70,},
     )
 
     time.sleep(2)

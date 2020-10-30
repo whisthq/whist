@@ -57,12 +57,7 @@ def fractalPreProcess(f):
                     {k: v for k, v in body.items() if "password" not in k and "key" not in k}
                 )
 
-            logger.info(
-                "{}\n{}\r\n".format(
-                    request.method + " " + request.url,
-                    safe_body,
-                )
-            )
+            logger.info("{}\n{}\r\n".format(request.method + " " + request.url, safe_body,))
 
         return f(*args, **kwargs)
 

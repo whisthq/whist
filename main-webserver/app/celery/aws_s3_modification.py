@@ -105,9 +105,7 @@ def uploadLogsToS3(sender, version, connection_id, ip, port, aes_key, message):
     url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
 
     fractalLog(
-        function="uploadLogsToS3",
-        label=username,
-        logs=f"Successfully saved logs to {filename}",
+        function="uploadLogsToS3", label=username, logs=f"Successfully saved logs to {filename}",
     )
 
     log = ProtocolLog.query.get(connection_id)

@@ -8,12 +8,13 @@ from app.helpers.utils.general.logs import fractalLog
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
 
+
 def validateTokenHelper(token):
     if token:
         fractalLog("TOKEN IS", "TOKEN IS", str(token))
         try:
             payload = jwt.decode(token, current_app.config["JWT_SECRET_KEY"])
-            email = payload['email']
+            email = payload["email"]
             modify_token = create_access_token(identity=email, expires_delta=timedelta(minutes=10))
         except Exception as e:
             return (jsonify({"status": UNAUTHORIZED, "error": "Expired token"}), UNAUTHORIZED)

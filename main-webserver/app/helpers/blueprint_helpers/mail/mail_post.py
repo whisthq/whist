@@ -84,7 +84,7 @@ def verificationHelper(user, token):
     title = "[Fractal] Please Verify Your Email"
     url = FRONTEND_URL + "/verify?" + token
     # url = "https://localhost:3000/verify?" + token
-    
+
     try:
         message = Mail(
             from_email=SENDGRID_EMAIL,

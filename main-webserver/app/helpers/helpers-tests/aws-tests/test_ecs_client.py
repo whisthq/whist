@@ -15,9 +15,7 @@ from utils.aws.base_ecs_client import ECSClient, boto3
 def test_setup_vpc():
     testclient = ECSClient()
     testclient.set_and_register_task(
-        ["echo start"],
-        ["/bin/bash", "-c"],
-        family="multimessage",
+        ["echo start"], ["/bin/bash", "-c"], family="multimessage",
     )
     testclient.get_vpc()
     networkConfiguration = {
@@ -37,9 +35,7 @@ def test_setup_vpc():
 def test_network_build():
     testclient = ECSClient()
     testclient.set_and_register_task(
-        ["echo start"],
-        ["/bin/bash", "-c"],
-        family="multimessage",
+        ["echo start"], ["/bin/bash", "-c"], family="multimessage",
     )
     testclient.run_task(networkConfiguration=testclient.build_network_config())
     testclient.spin_til_running(time_delay=2)
@@ -54,11 +50,7 @@ def test_partial_works():
     basedict = {
         "executionRoleArn": "arn:aws:iam::{}:role/ecsTaskExecutionRole".format(747391415460),
         "containerDefinitions": [
-            {
-                "cpu": 0,
-                "environment": [{"name": "TEST", "value": "end"}],
-                "image": "httpd:2.4",
-            }
+            {"cpu": 0, "environment": [{"name": "TEST", "value": "end"}], "image": "httpd:2.4",}
         ],
         "placementConstraints": [],
         "memory": "512",
@@ -71,12 +63,8 @@ def test_partial_works():
     )
     networkConfiguration = {
         "awsvpcConfiguration": {
-            "subnets": [
-                "subnet-0dc1b0c43c4d47945",
-            ],
-            "securityGroups": [
-                "sg-036ebf091f469a23e",
-            ],
+            "subnets": ["subnet-0dc1b0c43c4d47945",],
+            "securityGroups": ["sg-036ebf091f469a23e",],
         }
     }
     testclient.run_task(networkConfiguration=networkConfiguration)
@@ -109,12 +97,8 @@ def test_full_base_config():
     testclient.set_and_register_task(family="multimessage", basedict=basedict)
     networkConfiguration = {
         "awsvpcConfiguration": {
-            "subnets": [
-                "subnet-0dc1b0c43c4d47945",
-            ],
-            "securityGroups": [
-                "sg-036ebf091f469a23e",
-            ],
+            "subnets": ["subnet-0dc1b0c43c4d47945",],
+            "securityGroups": ["sg-036ebf091f469a23e",],
         }
     }
     testclient.run_task(networkConfiguration=networkConfiguration)
@@ -205,18 +189,12 @@ def test_cluster_with_auto_scaling_group():
 def test_basic_ecs_client():
     testclient = ECSClient(launch_type="EC2")
     testclient.set_and_register_task(
-        ["echo start"],
-        ["/bin/bash", "-c"],
-        family="multimessage",
+        ["echo start"], ["/bin/bash", "-c"], family="multimessage",
     )
     networkConfiguration = {
         "awsvpcConfiguration": {
-            "subnets": [
-                "subnet-0dc1b0c43c4d47945",
-            ],
-            "securityGroups": [
-                "sg-036ebf091f469a23e",
-            ],
+            "subnets": ["subnet-0dc1b0c43c4d47945",],
+            "securityGroups": ["sg-036ebf091f469a23e",],
         }
     }
     testclient.run_task()
@@ -260,9 +238,7 @@ def test_command():
         mock=True,
     )
     testclient.set_and_register_task(
-        ["echoes"],
-        [""],
-        family=" ",
+        ["echoes"], [""], family=" ",
     )
     taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
         "taskDefinition"
@@ -306,9 +282,7 @@ def test_entry():
         mock=True,
     )
     testclient.set_and_register_task(
-        [" "],
-        ["entries"],
-        family=" ",
+        [" "], ["entries"], family=" ",
     )
     taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
         "taskDefinition"
@@ -333,9 +307,7 @@ def test_family():
         mock=True,
     )
     testclient.set_and_register_task(
-        ["echoes"],
-        [""],
-        family="basefam",
+        ["echoes"], [""], family="basefam",
     )
     taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
         "taskDefinition"
@@ -362,9 +334,7 @@ def test_region():
         mock=True,
     )
     testclient.set_and_register_task(
-        ["echoes"],
-        [""],
-        family="basefam",
+        ["echoes"], [""], family="basefam",
     )
     taskdef = ecs_client.describe_task_definition(taskDefinition=testclient.task_definition_arn)[
         "taskDefinition"
