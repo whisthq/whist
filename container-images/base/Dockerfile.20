@@ -47,8 +47,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libevent-2.1-7 \
     libutempter0 \
     tmux \
+    sudo \
+    less \
+    vim \
+    git \
     mesa-utils \
-    glmark2 \
     mpv \
     psmisc \
     && apt-get autoremove -y \
@@ -69,7 +72,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libasound2-dev \
     xclip \
     x11-xserver-utils \
-    parcellite \
+    libx11-dev \
     gtk-chtheme \
     xserver-xorg-video-dummy \
     dkms \
@@ -163,7 +166,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     apt-utils \
     x11vnc \
     xvfb \
-    fluxbox \
     wmctrl \
     ca-certificates \
     wget \
@@ -171,12 +173,8 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     libfido2-1 \
     libgbm1 \
     libxcb-dri3-0 \
-    sudo \
-    less \
-    vim \
     libcurl4 \
     curl \
-    git \
     && apt-get autoremove -y \
     && apt-get clean
 
@@ -255,7 +253,6 @@ RUN chown root:root /usr/share/fractal/private
 RUN chmod 600 -R /usr/share/fractal/private
 
 # Download Fractal FFmpeg .so from AWS S3 and moving them to /usr/share/fractal
-RUN sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y
 RUN wget -qO shared-libs.tar.gz "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz"
 RUN tar -xvf shared-libs.tar.gz
 RUN sudo mv share/64/Linux/* /usr/share/fractal/
