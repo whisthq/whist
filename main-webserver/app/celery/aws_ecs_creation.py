@@ -243,6 +243,7 @@ def create_new_container(
         # NOTE: this is a 30 second wait time, chosen arbitrarily
         max_pauses = 30
         curr_pause = 0
+        container = UserContainer.query.get(ecs_client.tasks[0])
         while container.state == "CREATING" and curr_pause < max_pauses:
             container = UserContainer.query.get(ecs_client.tasks[0])
             time.sleep(1)
