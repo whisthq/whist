@@ -131,17 +131,19 @@ def create_new_container(
                 logs="No available clusters found. Creating new cluster...",
             )
             cluster_name = create_new_cluster.delay(
-                region_name=region_name, ami=region_to_ami[region_name]
+                region_name=region_name, ami=region_to_ami[region_name], min_size=1
             ).get(disable_sync_subtasks=False)["cluster"]
             for i in range(base_len - len(all_clusters)):
-                create_new_cluster.delay(region_name=region_name, ami=region_to_ami[region_name])
+                create_new_cluster.delay(
+                    region_name=region_name, ami=region_to_ami[region_name], min_size=1
+                )
             time.sleep(10)
         else:
             cluster_name = all_clusters[0].cluster
             if len(all_clusters) < base_len:
                 for i in range(base_len - len(all_clusters)):
                     create_new_cluster.delay(
-                        region_name=region_name, ami=region_to_ami[region_name]
+                        region_name=region_name, ami=region_to_ami[region_name], min_size=1
                     )
     fractalLog(
         function="create_new_container",
