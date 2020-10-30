@@ -84,30 +84,6 @@ def test_endpoint(action, **kwargs):
 
         return jsonify({"ID": task.id}), ACCEPTED
 
-    if action == "delete_container":
-        user_id, container_name = (
-            kwargs["body"]["user_id"],
-            kwargs["body"]["container_name"],
-        )
-        task = deleteContainer.apply_async([user_id, container_name])
-
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-
-        return jsonify({"ID": task.id}), ACCEPTED
-
-    if action == "delete_container":
-        user_id, container_name = (
-            kwargs["body"]["user_id"],
-            kwargs["body"]["container_name"],
-        )
-        task = deleteContainer.apply_async([user_id, container_name])
-
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-
-        return jsonify({"ID": task.id}), ACCEPTED
-
     if action == "send_commands":
         cluster, region_name, commands, containers = (
             kwargs["body"]["cluster"],
@@ -121,6 +97,22 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+
+
+@aws_container_bp.route("/container/delete", methods=("POST",))
+@fractalPreProcess
+def aws_container_delete(**kwargs):
+    body = kwargs.pop("body")
+
+    try:
+        args = (body.pop("container_id"), body.pop("private_key").lower())
+    except (AttributeError, KeyError):
+        response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+    else:
+        task = deleteContainer.delay(*args)
+        response = jsonify({"ID": task.id}), ACCEPTED
+
+    return response
 
 
 @aws_container_bp.route("/container/protocol_info", methods=("POST",))

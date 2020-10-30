@@ -1,2 +1,2 @@
 web: waitress-serve --port=$PORT app:app
-celery: celery --app=celery_worker.celery_instance worker --concurrency 2
+celery: celery --app=celery_worker.celery_instance worker --concurrency 10

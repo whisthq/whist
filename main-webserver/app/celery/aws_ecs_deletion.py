@@ -7,7 +7,6 @@ from app.constants.http_codes import (
     INTERNAL_SERVER_ERROR,
     REQUEST_TIMEOUT,
     SUCCESS,
-    UNAUTHORIZED,
 )
 from app.helpers.utils.aws.aws_resource_locks import (
     lockContainerAndUpdate,
@@ -24,35 +23,45 @@ from app.serializers.hardware import ClusterInfo, UserContainer
 
 
 @shared_task(bind=True)
-def deleteContainer(self, user_id, container_name):
-    """
+def deleteContainer(self, container_name, aes_key):
+    """Delete a container.
 
     Args:
-        self: the celery instance running the task
-        container_name (str): the ARN of the running container
-        user_id (str): the user trying to delete the container
+        container_name (str): The ARN of the running container.
+        aes_key (str): The 32-character AES key that the container uses to
+            verify its identity.
 
-    Returns: json indicating success or failure
-
+    Returns:
+        None
     """
+
     if spinLock(container_name) < 0:
-        return {"status": REQUEST_TIMEOUT}
-    container = UserContainer.query.get(container_name)
-    if container.user_id != user_id:
         fractalLog(
             function="deleteContainer",
-            label=str(container_name),
-            logs="Wrong user",
+            label=container_name,
+            logs="spinLock took to long.",
+            level=logging.ERROR,
         )
-        self.update_state(
-            state="FAILURE",
-            meta={
-                "msg": "Container {container_name} doesn't belong to user {user_id}".format(
-                    container_name=container_name, user_id=user_id
-                )
-            },
+
+        raise Exception("Failed to acquire resource lock.")
+
+    container = UserContainer.query.get(container_name)
+
+    if not container or container.secret_key != aes_key:
+        if container:
+            message = f"Expected secret key {container.secret_key}. Got {aes_key}."
+        else:
+            message = f"Container {container_name} does not exist."
+
+        fractalLog(
+            function="deleteContainer",
+            label=container_name,
+            logs=message,
+            level=logging.ERROR,
         )
-        return {"status": UNAUTHORIZED}
+
+        raise Exception("The requested container does not exist.")
+
     fractalLog(
         function="deleteContainer",
         label=str(container_name),
@@ -64,66 +73,47 @@ def deleteContainer(self, user_id, container_name):
     lockContainerAndUpdate(
         container_name=container_name, state="DELETING", lock=True, temporary_lock=10
     )
+
     container_cluster = container.cluster
     ecs_client = ECSClient(base_cluster=container_cluster, grab_logs=False)
-    ecs_client.add_task(container_name)
-    try:
-        if not ecs_client.check_if_done(offset=0):
-            ecs_client.stop_task(reason="API triggered task stoppage", offset=0)
-            self.update_state(
-                state="PENDING",
-                meta={
-                    "msg": "Container {container_name} begun stoppage".format(
-                        container_name=container_name,
-                    )
-                },
-            )
-            ecs_client.spin_til_done(offset=0)
-        fractalSQLCommit(db, lambda db, x: db.session.delete(x), container)
 
-        cluster_info = ClusterInfo.query.get(container_cluster)
-        if not cluster_info:
-            fractalSQLCommit(
-                db, lambda db, x: db.session.add(x), ClusterInfo(cluster=container_cluster)
-            )
-            cluster_info = ClusterInfo.query.filter_by(cluster=container_cluster).first()
-        cluster_usage = ecs_client.get_clusters_usage(clusters=[container_cluster])[
-            container_cluster
-        ]
-        cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
-        if cluster_sql:
-            fractalLog(
-                function="deleteContainer",
-                label=container_name,
-                logs=f"Removed task from cluster {container_cluster} and updated cluster info",
-            )
-            return {"status": SUCCESS}
-        else:
-            fractalLog(
-                function="deleteContainer",
-                label=container_name,
-                logs="SQL insertion unsuccessful",
-            )
-            self.update_state(
-                state="FAILURE", meta={"msg": f"Error updating cluster {container_cluster} in SQL"}
-            )
-            return None
-    except Exception as e:
-        fractalLog(
-            function="deleteContainer",
-            label=str(container_name),
-            logs="ran into deletion error {}".format(e),
-        )
+    ecs_client.add_task(container_name)
+
+    if not ecs_client.check_if_done(offset=0):
+        ecs_client.stop_task(reason="API triggered task stoppage", offset=0)
         self.update_state(
-            state="FAILURE",
+            state="PENDING",
             meta={
-                "msg": "Error stopping Container {container_name}".format(
-                    container_name=container_name
+                "msg": "Container {container_name} begun stoppage".format(
+                    container_name=container_name,
                 )
             },
         )
-        return {"status": INTERNAL_SERVER_ERROR}
-    return {"status": SUCCESS}
+        ecs_client.spin_til_done(offset=0)
+    fractalSQLCommit(db, lambda db, x: db.session.delete(x), container)
+
+    cluster_info = ClusterInfo.query.get(container_cluster)
+    if not cluster_info:
+        fractalSQLCommit(
+            db, lambda db, x: db.session.add(x), ClusterInfo(cluster=container_cluster)
+        )
+        cluster_info = ClusterInfo.query.filter_by(cluster=container_cluster).first()
+    cluster_usage = ecs_client.get_clusters_usage(clusters=[container_cluster])[container_cluster]
+    cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
+    if cluster_sql:
+        fractalLog(
+            function="deleteContainer",
+            label=container_name,
+            logs=f"Removed task from cluster {container_cluster} and updated cluster info",
+        )
+    else:
+        fractalLog(
+            function="deleteContainer",
+            label=container_name,
+            logs="Failed to update cluster resources.",
+        )
+
+        raise Exception("SQL update failed.")
 
 
 @shared_task(bind=True)

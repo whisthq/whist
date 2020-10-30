@@ -171,21 +171,19 @@ def test_send_commands(client, authorized):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
-@pytest.mark.usefixtures("_retrieve_user")
-@pytest.mark.usefixtures("_save_user")
-def test_delete_container(client, authorized, container_name=pytest.container_name):
-    container_name = container_name or pytest.container_name
+def test_delete_container(client):
     fractalLog(
         function="test_delete_container",
         label="container/delete",
-        logs="Starting to delete container {}".format(container_name),
+        logs="Starting to delete container {}".format(pytest.container_name),
     )
 
+    container = UserContainer.query.get(pytest.container_name)
     resp = client.post(
-        "/aws_container/delete_container",
+        "/container/delete",
         json=dict(
-            user_id=authorized.user_id,
-            container_name=pytest.container_name,
+            private_key=container.secret_key,
+            container_id=pytest.container_name,
         ),
     )
 
@@ -200,7 +198,9 @@ def test_delete_container(client, authorized, container_name=pytest.container_na
         )
         assert False
 
-    if UserContainer.query.get(container_name):
+    db.session.expire(container)
+
+    if UserContainer.query.get(pytest.container_name):
         fractalLog(
             function="test_delete_container",
             label="container/delete",
