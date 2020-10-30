@@ -3,7 +3,6 @@ export const GOOGLE_LOGIN = "GOOGLE_LOGIN"
 export const REMEMBER_ME_LOGIN = "REMEMBER_ME_LOGIN"
 
 export const FETCH_CONTAINER = "FETCH_CONTAINER"
-export const DELETE_CONTAINER = "DELETE_CONTAINER"
 
 export const SUBMIT_FEEDBACK = "SUBMIT_FEEDBACK"
 
@@ -39,14 +38,6 @@ export function fetchContainer(app: string) {
     return {
         type: FETCH_CONTAINER,
         app,
-    }
-}
-
-export function deleteContainer(username: string, container_id: string) {
-    return {
-        type: DELETE_CONTAINER,
-        username,
-        container_id,
     }
 }
 
