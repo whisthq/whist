@@ -11,6 +11,7 @@ from app.helpers.utils.general.sql_commands import fractalSQLCommit
 from app.helpers.utils.general.sql_commands import fractalSQLUpdate
 from app.models import db, UserContainer, ClusterInfo, SortedClusters
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
+from app.celery.aws_ecs_deletion import deleteContainer
 
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
@@ -239,6 +240,22 @@ def create_new_container(
             label=str(ecs_client.tasks[0]),
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
+        max_pauses = 30
+        curr_pause = 0
+        while container.state == "CREATING" and curr_pause < max_pauses:
+            container = UserContainer.query.get(ecs_client.tasks[0])
+            time.sleep(1)
+        if container.state == "CREATING":
+            fractalLog(
+                function="create_new_container",
+                label=str(ecs_client.tasks[0]),
+                logs="container failed to ping",
+            )
+            self.update_state(
+                state="FAILURE",
+                meta={"msg": "Container {} failed to ping.".format(ecs_client.tasks[0])},
+            )
+            deleteContainer.delay(user_id=username, container_name=ecs_client.tasks[0])
         return container
     else:
         fractalLog(
