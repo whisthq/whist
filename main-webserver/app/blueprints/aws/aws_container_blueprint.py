@@ -164,7 +164,9 @@ def aws_container_ping(**kwargs):
         task = pingHelper.delay(available, address, identifier, private_key)
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
-
+        if isinstance(task, dict):
+            # for testing
+            return task
         return jsonify({"ID": task.id}), ACCEPTED
 
     return response
