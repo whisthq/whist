@@ -7,7 +7,7 @@ RUN apt-get update && \
 	apt-get -y autoremove && \
 	rm -rf /var/lib/apt/lists/*
 
-# We set the gimp GTK theme to the system's for testing, and consistency
+# Set GIMP GTK theme (see comment in gimprc)
 COPY --chown=fractal gimprc /home/fractal/.config/GIMP/2.10/gimprc
 COPY gimprc /root/.config/GIMP/2.10/gimprc
 

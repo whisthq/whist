@@ -7,7 +7,10 @@
 # Preferences dialog.
 
 (import-raw-plug-in "${gimp_plug_in_dir}/plug-ins/file-raw-placeholder/file-raw-placeholder")
-(theme "System")
+# We could set the gimp GTK theme to the system's for testing/consistency with
+# other applications here with '(theme "System")', but for now we leave the
+# default dark theme.
+(theme "Dark")
 (fill-options
     (style solid)
     (antialias yes)
