@@ -164,7 +164,8 @@ void destroyLogger();
  * @returns                         0: success -1: failure to send file,
  *                                  sent cache instead   -2: outright failure
  */
-int sendConnectionHistory(char* host, char* access_token, char* identifier, char* hex_aes_private_key);
+int sendConnectionHistory(char* host, char* access_token, char* identifier,
+                          char* hex_aes_private_key);
 
 /**
  * @brief                          Set the logger to categorize all logs from now

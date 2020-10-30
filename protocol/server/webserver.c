@@ -83,6 +83,8 @@ void update_webserver_parameters() {
     kv_pair_t* dev_value = get_kv(&json, "allow_autoupdate");
     kv_pair_t* branch_value = get_kv(&json, "branch");
     kv_pair_t* using_stun = get_kv(&json, "using_stun");
+    // TODO: remove all mentions of access_token - endpoints used by protocol
+    //      do not require the authorization header
     // kv_pair_t* access_token_value = get_kv(&json, "access_token");
     kv_pair_t* container_id_value = get_kv(&json, "container_id");
     kv_pair_t* user_id_value = get_kv(&json, "user_id");

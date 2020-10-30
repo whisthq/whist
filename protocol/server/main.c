@@ -1018,13 +1018,13 @@ int MultithreadedManageClients(void* opaque) {
         } else {
             trying_to_update = false;
 
-            // container exit logic - client has connected to server for the first time
+            // client has connected to server for the first time
             if (!first_client_connected) {
                 first_client_connected = true;
             }
 
-            // container exit logic - nongraceful client grace period has ended, but clients are
-            // connected still
+            // nongraceful client grace period has ended, but clients are
+            //  connected still - we don't want server to exit yet
             if (client_exited_nongracefully &&
                 GetTimer(last_nongraceful_exit) > nongraceful_grace_period) {
                 client_exited_nongracefully = false;

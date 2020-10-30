@@ -258,7 +258,7 @@ int MultiThreadedPrintf(void *opaque) {
                 }
             }
             // if (i + 6 < cache_size) {
-            //	printf("%s%s%s%s%s%s%s", logger_queue_cache[i].buf,
+            //  printf("%s%s%s%s%s%s%s", logger_queue_cache[i].buf,
             // logger_queue_cache[i+1].buf, logger_queue_cache[i+2].buf,
             // logger_queue_cache[i+3].buf, logger_queue_cache[i+4].buf,
             // logger_queue_cache[i+5].buf,  logger_queue_cache[i+6].buf);
@@ -708,7 +708,8 @@ void saveConnectionID(int connection_id_int) {
 
 // The first time this is called will include the initial log messages,
 // before the first connection, if they haven't been overwritten.
-int sendConnectionHistory(char *host, char *access_token, char* identifier, char* hex_aes_private_key) {
+int sendConnectionHistory(char *host, char *access_token, char *identifier,
+                          char *hex_aes_private_key) {
     // This is for HTTP request, not filesystem
     char *request_path = "/logs/insert";
 
@@ -788,11 +789,7 @@ int sendConnectionHistory(char *host, char *access_token, char* identifier, char
                         "   \"identifier\" : %s,"
                         "   \"secret_key\" : %s"
                         "}",
-                        connection_id_data,
-                        logs,
-                        identifier,
-                        hex_aes_private_key
-                );
+                        connection_id_data, logs, identifier, hex_aes_private_key);
 
                 LOG_INFO("Sending logs to webserver...");
                 SendPostRequest(host, request_path, json, access_token, NULL, 0);
@@ -829,10 +826,7 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
              "  \"identifier\" : %s,\n"
              "  \"private_key\" : \"%s\"\n"
              "}",
-             d->is_connected ? "false" : "true",
-             d->identifier,
-             d->hex_aes_private_key
-    );
+             d->is_connected ? "false" : "true", d->identifier, d->hex_aes_private_key);
     SendPostRequest(d->host, "/container/ping", json, d->access_token, NULL, 0);
 
     free(d);
