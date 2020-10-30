@@ -172,6 +172,9 @@ def aws_container_ping(**kwargs):
     return response
 
 
+allowed_regions = {"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"}
+
+
 @aws_container_bp.route("/container/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
@@ -190,6 +193,9 @@ def aws_container_post(action, **kwargs):
             try:
                 app = body.pop("app")
                 region = body.pop("region")
+                if region not in allowed_regions:
+                    response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+                    return response
             except KeyError:
                 response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
             else:
