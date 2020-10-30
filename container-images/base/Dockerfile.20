@@ -297,9 +297,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 
 # Install FractalServer scripts and kernel module input rules
-COPY entry.sh /home/fractal
-COPY display-service-envs /home/fractal
-COPY fractal-input.rules home/fractal
+COPY entry.sh /usr/share/fractal
+RUN chmod +x /usr/share/fractal/entry.sh
+COPY display-service-envs /usr/share/fractal
+COPY fractal-input.rules /usr/share/fractal
 
 # Install and enable OpenSSH
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -313,10 +314,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 RUN systemctl enable ssh
 
-# Set appropriate user permissions for Fractal
+# Set appropriate user permissions
 RUN chown -vR fractal:fractal /home/fractal
 RUN chown root:root /run/user
-RUN chmod +x /home/fractal/entry.sh
 
 # Set up the entrypoint for the Docker container
 COPY docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
@@ -411,10 +411,6 @@ RUN systemctl enable fractal-protocol
 
 COPY fractal-audio.service /etc/systemd/system
 RUN systemctl enable fractal-audio
-
-# Set fractal-setup script
-COPY fractal-setup.sh /
-RUN chmod +x /fractal-setup.sh
 
 COPY start-fractal-server.sh /usr/share/fractal/start-fractal-server.sh
 RUN chmod +x /usr/share/fractal/start-fractal-server.sh
