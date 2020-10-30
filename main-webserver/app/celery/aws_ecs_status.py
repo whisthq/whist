@@ -37,8 +37,8 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
     if container_info.secret_key != aeskey:
         fractalLog(
             function="pingHelper",
-            label=str(container_info.container_name),
-            logs=f"{container_info.container_name} just tried to ping with the wrong AES key, using\
+            label=str(container_info.container_id),
+            logs=f"{container_info.container_id} just tried to ping with the wrong AES key, using\
 {aeskey} when {container_info.secret_key} was expected",
         )
         return {"status": UNAUTHORIZED}

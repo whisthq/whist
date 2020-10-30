@@ -1,8 +1,8 @@
 import copy
 import logging
 import os
-import random
 import string
+import uuid
 
 from collections import defaultdict
 
@@ -15,19 +15,7 @@ from app.models import ClusterInfo, db, UserContainer
 from ..helpers.general.progress import fractalJobRunner, queryStatus
 
 
-def generate_name(starter_name=""):
-    """
-    Helper function for generating a name with a random UUID
-    Args:
-        starter_name (Optional[str]): starter string for the name
-    Returns:
-        str: the generated name
-    """
-    letters = string.ascii_lowercase
-    return starter_name + "_" + "".join(random.choice(letters) for i in range(10))
-
-
-pytest.cluster_name = generate_name("cluster")
+pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
 pytest.container_name = None
 
 
@@ -317,7 +305,7 @@ def test_cluster_assignment():
             logs="No clusters found in database",
         )
 
-    first_cluster = generate_name("cluster")
+    first_cluster = f"test-cluster-{uuid.uuid4()}"
     test_create_cluster(input_token, admin_token, max_containers=2, cluster_name=first_cluster)
     clusters_to_containers = defaultdict(list)
     container_cluster = first_cluster

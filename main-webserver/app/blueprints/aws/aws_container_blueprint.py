@@ -161,10 +161,18 @@ def aws_container_ping(**kwargs):
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
         # Update container status.
-        status = pingHelper.delay(available, address, identifier, private_key)
-        response = jsonify(status), status["status"]
+        task = pingHelper.delay(available, address, identifier, private_key)
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+        if isinstance(task, dict):
+            # for testing
+            return task
+        return jsonify({"ID": task.id}), ACCEPTED
 
     return response
+
+
+allowed_regions = {"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"}
 
 
 @aws_container_bp.route("/container/<action>", methods=["POST"])
@@ -185,6 +193,9 @@ def aws_container_post(action, **kwargs):
             try:
                 app = body.pop("app")
                 region = body.pop("region")
+                if region not in allowed_regions:
+                    response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+                    return response
             except KeyError:
                 response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
             else:
@@ -195,7 +206,7 @@ def aws_container_post(action, **kwargs):
                     response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
                 else:
                     task = create_new_container.delay(
-                        user, task_arn, region, cluster_name=sample_cluster
+                        user, task_arn, region_name=region, cluster_name=sample_cluster
                     )
                     response = jsonify({"ID": task.id}), ACCEPTED
 

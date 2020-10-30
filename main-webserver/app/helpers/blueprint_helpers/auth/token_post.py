@@ -4,7 +4,7 @@ from flask import current_app, jsonify
 from jose import jwt
 
 from app.constants.http_codes import SUCCESS, UNAUTHORIZED
-
+from app.helpers.utils.general.logs import fractalLog
 
 def validateTokenHelper(token):
     if token:
@@ -12,6 +12,7 @@ def validateTokenHelper(token):
             payload = jwt.decode(token, current_app.config["JWT_SECRET_KEY"])
         except Exception as e:
             return (jsonify({"status": UNAUTHORIZED, "error": "Expired token"}), UNAUTHORIZED)
+        fractalLog("PAYLOAD IS", "PAYLOAD IS", str(payload))
         if payload["exp"] < dt.utcnow().timestamp():
             return (jsonify({"status": UNAUTHORIZED, "error": "Expired token"}), UNAUTHORIZED)
         else:
