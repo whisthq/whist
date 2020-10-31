@@ -75,7 +75,9 @@ def deleteContainer(self, container_name, aes_key):
     )
 
     container_cluster = container.cluster
-    ecs_client = ECSClient(base_cluster=container_cluster, grab_logs=False)
+    ecs_client = ECSClient(
+        base_cluster=container_cluster, region_name=container.location, grab_logs=False
+    )
 
     ecs_client.add_task(container_name)
 
