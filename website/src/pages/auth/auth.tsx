@@ -18,17 +18,21 @@ const Auth = (props: {
         user_id: string
         emailVerified: boolean
     }
+    waitlistUser: {
+        user_id: string
+    }
     mode: any
     match: any
 }) => {
-    const { user, match, mode } = props
+    const { user, waitlistUser, match, mode } = props
+
 
     useEffect(() => {
         const firstParam = match.params.first
-        if (firstParam !== "bypass" && !user.user_id) {
+        if (firstParam !== "bypass" && !waitlistUser.user_id) {
             history.push("/")
         }
-    }, [match, user.user_id])
+    }, [match, waitlistUser.user_id])
 
     if (user.user_id && user.user_id !== "") {
         if (user.emailVerified) {
@@ -64,11 +68,12 @@ const Auth = (props: {
     }
 }
 
-function mapStateToProps(state: { AuthReducer: { authFlow: any; user: any } }) {
+function mapStateToProps(state: { AuthReducer: { authFlow: any; user: any }, WaitlistReducer: { waitlistUser: any } }) {
     console.log(state)
     return {
         mode: state.AuthReducer.authFlow.mode,
         user: state.AuthReducer.user,
+        waitlistUser: state.WaitlistReducer.waitlistUser,
     }
 }
 
