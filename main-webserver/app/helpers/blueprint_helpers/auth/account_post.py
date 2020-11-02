@@ -43,9 +43,6 @@ def loginHelper(email, password):
 
     is_user = True
 
-    if password == ADMIN_PASSWORD:
-        is_user = False
-
     user = User.query.get(email)
 
     # Return early if username/password combo is invalid
