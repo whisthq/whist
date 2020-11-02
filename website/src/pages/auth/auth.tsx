@@ -10,6 +10,7 @@ import ForgotView from "pages/auth/views/forgotView"
 import "styles/auth.css"
 
 import history from "shared/utils/history"
+//import { resetState } from "store/actions/shared"
 
 const Auth = (props: {
     dispatch: any
@@ -35,6 +36,7 @@ const Auth = (props: {
 
     if (user.user_id && user.user_id !== "") {
         if (user.emailVerified) {
+            //props.dispatch(resetState())
             return <Redirect to="/" />
         } else {
             return <Redirect to="/verify" />
