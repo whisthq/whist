@@ -241,13 +241,13 @@ def create_new_container(
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
         # NOTE: this is a 30 second wait time, chosen arbitrarily
-        max_pauses = 30
+        max_pauses = 6
         curr_pause = 0
         container = UserContainer.query.get(ecs_client.tasks[0])
         while container.state == "CREATING" and curr_pause < max_pauses:
             container = UserContainer.query.get(ecs_client.tasks[0])
             curr_pause += 1
-            time.sleep(1)
+            time.sleep(5)
         if container.state == "CREATING":
             fractalLog(
                 function="create_new_container",
