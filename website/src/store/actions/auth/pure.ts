@@ -20,15 +20,16 @@ export function updateUser(body: {
 
 export function updateAuthFlow(body: {
     mode?: string
-    loginWarning?: string
-    signupWarning?: string
+    loginWarning?: string | null
+    signupWarning?: string | null
     signupSuccess?: boolean
-    forgotStatus?: string
+    forgotStatus?: string | null
     verificationEmailsSent?: number
-    verificationAttemptsExecuted?: number
     forgotEmailsSent?: number
     resetTokenStatus?: string | null
     resetDone?: boolean
+    passwordResetEmail?: string | null
+    passwordResetToken?: string | null
 }) {
     return {
         type: UPDATE_AUTH_FLOW,

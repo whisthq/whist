@@ -9,9 +9,7 @@ import {
 import { updateAuthFlow, resetUser } from "store/actions/auth/pure"
 import history from "shared/utils/history"
 
-import { DivSpace } from "shared/components/divSpace"
-
-import { Title} from "pages/auth/components/authUtils"
+import { Title, DivSpace } from "shared/components/spacingAndText"
 
 import "styles/auth.css"
 

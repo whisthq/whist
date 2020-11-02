@@ -21,10 +21,11 @@ export const DEFAULT = {
         forgotStatus: null, // text/status info about what happend to the forgot email request sent (status and warning)
         // verify emails
         verificationEmailsSent: 0, // how many emails we send
-        verificationAttemptsExecuted: 0, // how many tokens someone tried to verify (know when server responded)
         // reset password
         forgotEmailsSent: 0,
         resetTokenStatus: null, // null | "verified" | "expired" | "invalid"
         resetDone: false, // whether we are done resetting our password (i.e. server says "I've done it")
+        passwordResetEmail: null, // forgot password email
+        passwordResetToken: null,
     },
 }

@@ -56,15 +56,11 @@ const RootApp = (props: any) => {
                 <Route path="/auth/:first?" component={withTracker(Auth)} />
                 <Route exact path="/verify" component={withTracker(Verify)} />
                 <Route exact path="/reset" component={withTracker(Reset)} />
-                <Route exact path="/careers" component={withTracker(Careers)} />
-                <Route exact path="/support" component={withTracker(Support)} />
-                {
-                    <Route
-                        exact
-                        path="/dashboard"
-                        component={withTracker(Dashboard)}
-                    />
-                }
+                <Route
+                    exact
+                    path="/dashboard"
+                    component={withTracker(Dashboard)}
+                />
                 <Route
                     exact
                     path="/:first?/:second?"
@@ -75,12 +71,8 @@ const RootApp = (props: any) => {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
-    return {
-        // not used for now
-        // can be used for refresh but we want to refresh waitlist and auth seperately
-        user: state.AuthReducer.user,
-    }
+function mapStateToProps(state: any) {
+    return {}
 }
 
 export default connect(mapStateToProps)(RootApp)

@@ -1,5 +1,5 @@
 import React from "react"
-import { connect } from "react-redux"
+//import { connect } from "react-redux"
 import { Redirect, useLocation } from "react-router-dom"
 
 import Header from "shared/components/header"
@@ -7,24 +7,12 @@ import ResetView from "pages/auth/views/resetView"
 
 import "styles/auth.css"
 
-const Reset = (props: {
-    dispatch: any
-    authFlow: {
-        resetTokenStatus: string | null
-        resetDone: boolean
-    }
-}) => {
-    const { authFlow } = props
-
+const Reset = (props: any) => {
     const search = useLocation().search
     const token = search.substring(1, search.length)
     const valid_token = token && token.length >= 1
 
-    console.log(
-        `NOW IN RESET with valid_token: ${valid_token} and authFlow.resetDone as ${authFlow.resetDone}`
-    )
-
-    if (!valid_token || authFlow.resetDone) {
+    if (!valid_token) {
         return <Redirect to="/" />
     } else {
         return (
@@ -36,10 +24,4 @@ const Reset = (props: {
     }
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any; authFlow: any } }) {
-    return {
-        authFlow: state.AuthReducer.authFlow ? state.AuthReducer.authFlow : {},
-    }
-}
-
-export default connect(mapStateToProps)(Reset)
+export default Reset

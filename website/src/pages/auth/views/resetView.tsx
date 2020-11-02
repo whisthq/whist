@@ -11,7 +11,10 @@ import {
     checkPasswordVerbose,
 } from "pages/auth/constants/authHelpers"
 import history from "shared/utils/history"
-import { updateAuthFlow } from "store/actions/auth/pure"
+
+import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
+import { deepCopy } from "shared/utils/reducerHelpers"
+import { DEFAULT } from "store/reducers/auth/default"
 
 import "styles/auth.css"
 
@@ -22,7 +25,7 @@ const ResetView = (props: {
     token?: any
     validToken?: boolean
 }) => {
-    const { dispatch, user, authFlow, token, validToken } = props
+    const { dispatch, authFlow, token, validToken } = props
 
     const [password, setPassword] = useState("")
     const [passwordWarning, setPasswordWarning] = useState("")
@@ -42,9 +45,28 @@ const ResetView = (props: {
     const reset = () => {
         if (validPassword) {
             // TODO (might also want to add a email redux state for that which was forgotten)
-            dispatch(resetPassword(user.user_id, password))
+            dispatch(
+                resetPassword(
+                    authFlow.passwordResetEmail,
+                    password,
+                    authFlow.passwordResetToken
+                )
+            )
+
+            // if these are not erased then at some point the next user could manipulate this user's things
+            dispatch(
+                updateAuthFlow({
+                    passwordResetEmail: null,
+                    passwordResetToken: null,
+                })
+            )
             setFinished(true) // unfortunately this is all the sagas give us
         }
+    }
+
+    const logout = () => {
+        dispatch(updateUser(deepCopy(DEFAULT.user)))
+        dispatch(updateAuthFlow(deepCopy(DEFAULT.authFlow)))
     }
 
     const changePassword = (evt: any): any => {
@@ -67,24 +89,23 @@ const ResetView = (props: {
     // first ask for a validation and start loading
     useEffect(() => {
         if (validToken && !processing) {
-            dispatch(validateResetToken(token))
             dispatch(
                 updateAuthFlow({
-                    resetTokenStatus: undefined, // to guarantee that upon a response we will see something
+                    resetTokenStatus: null,
                 })
             )
+            dispatch(validateResetToken(token))
             setProcessing(true)
         }
         // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    // then stop loading and let the textbox be displayed
     useEffect(() => {
-        //console.log(`change ${processing} ${authFlow.resetTokenStatus}`)
         if (processing && authFlow.resetTokenStatus) {
             setProcessing(false)
         }
+        // needs to be triggered by a change in resetVerificationsDone and not authFlow
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [authFlow.resetTokenStatus])
 
@@ -113,8 +134,12 @@ const ResetView = (props: {
         if (finished) {
             // delay for 3 seconds then push to /
             // not sure how this compares to redirect or whatever
-            setTimeout(() => history.push("/auth"), 3000) // turn this into a helper?
+            setTimeout(() => {
+                logout()
+                history.push("/auth")
+            }, 5000) // turn this into a helper?
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [finished])
 
     if (finished) {
@@ -135,7 +160,8 @@ const ResetView = (props: {
                             textAlign: "center",
                         }}
                     >
-                        Verified. You will soon be redirected.
+                        Verified. You will soon be logged out and redirected to
+                        log in again.
                     </h2>
                 </div>
             </div>
@@ -160,6 +186,7 @@ const ResetView = (props: {
                         style={{
                             color: "#111111",
                             textAlign: "center",
+                            fontWeight: "normal",
                         }}
                     >
                         Please Enter Your New Password {props.user.user_id}
@@ -187,9 +214,7 @@ const ResetView = (props: {
                             paddingBottom: 15,
                             opacity: validPassword ? 1.0 : 0.6,
                         }}
-                        onClick={() => {
-                            console.log("clicked (then add reset)")
-                        }}
+                        onClick={reset}
                         disabled={!validPassword}
                     >
                         Reset

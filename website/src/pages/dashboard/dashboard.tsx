@@ -1,7 +1,7 @@
 import React from "react"
 import { connect } from "react-redux"
 import { Redirect } from "react-router"
-import DivSpace from "shared/components/divSpace"
+import { DivSpace } from "shared/components/spacingAndText"
 import Header from "shared/components/header"
 import DownloadBox from "pages/dashboard/components/downloadBox"
 //import { CopyToClipboard } from "react-copy-to-clipboard"

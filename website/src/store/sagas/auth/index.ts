@@ -23,6 +23,7 @@ function* emailLogin(action: any) {
         ""
     )
 
+    console.log("LOGIN")
     console.log(json)
 
     if (json && json.access_token) {
@@ -40,6 +41,15 @@ function* emailLogin(action: any) {
                 loginWarning: "",
             })
         )
+
+        if (!json.verified) {
+            yield call(sendVerificationEmail, {
+                email: action.email,
+                token: json.verification_token,
+            })
+
+            history.push("/verify")
+        }
     } else {
         yield put(
             AuthPureAction.updateAuthFlow({
@@ -145,13 +155,13 @@ function* emailSignup(action: any) {
                 name: action.email, // also temp so it can display
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
-                emailVerificationToken: json.token,
+                emailVerificationToken: json.verification_token,
             })
         )
 
         yield call(sendVerificationEmail, {
             email: action.email,
-            token: json.token,
+            token: json.verification_token,
         })
 
         yield put(
@@ -173,6 +183,7 @@ function* emailSignup(action: any) {
 }
 
 function* sendVerificationEmail(action: any) {
+    console.log(action)
     const state = yield select()
     if (action.email !== "" && action.token !== "") {
         const { json, response } = yield call(
@@ -200,6 +211,7 @@ function* sendVerificationEmail(action: any) {
 
 function* validateVerificationToken(action: any) {
     const state = yield select()
+    console.log("IN VALIDATE SAGA")
     const { json, response } = yield call(
         apiPost,
         "/account/verify",
@@ -207,34 +219,14 @@ function* validateVerificationToken(action: any) {
             username: state.AuthReducer.user.user_id,
             token: action.token,
         },
-        state.AuthReducer.user.accessToken
+        state.AuthReducer.user.accessToken,
+        state.AuthReducer.user.refreshToken
     )
-
-    const attemptsExecuted = state.AuthReducer.authFlow
-        .verificationAttemptsExecuted
-        ? state.AuthReducer.authFlow.verificationAttemptsExecuted
-        : 0
 
     if (json && response.status === 200 && json.verified) {
         yield put(
             AuthPureAction.updateUser({
                 emailVerified: true,
-            })
-        )
-        yield put(
-            AuthPureAction.updateAuthFlow({
-                verificationAttemptsExecuted: attemptsExecuted + 1,
-            })
-        )
-    } else {
-        yield put(
-            AuthPureAction.updateUser({
-                emailVerified: false,
-            })
-        )
-        yield put(
-            AuthPureAction.updateAuthFlow({
-                verificationAttemptsExecuted: attemptsExecuted + 1,
             })
         )
     }
@@ -298,6 +290,8 @@ function* validateResetToken(action: any) {
             yield put(
                 AuthPureAction.updateAuthFlow({
                     resetTokenStatus: "verified",
+                    passwordResetEmail: json.user,
+                    passwordResetToken: json.token,
                 })
             )
         } else {
@@ -326,16 +320,18 @@ function* validateResetToken(action: any) {
 }
 
 function* resetPassword(action: any) {
-    yield select()
+    // const state = yield select()
+
+    console.log(action)
 
     yield call(
         apiPost,
-        "/account/resetPassword",
+        "/account/update",
         {
             username: action.username,
             password: action.password,
         },
-        ""
+        action.token
     )
 
     // TODO do something with the response
