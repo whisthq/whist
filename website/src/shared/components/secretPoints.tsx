@@ -22,7 +22,6 @@ hidden somewhere in the site that you may not expect to encourage users to inter
 function SecretPoints(props: {
     dispatch: (action: any) => any
     waitlistUser: any
-    user: any
     points: number
     renderProps?: any
     name: string
@@ -33,7 +32,6 @@ function SecretPoints(props: {
     const {
         dispatch,
         waitlistUser,
-        user,
         points,
         renderProps,
         name,
@@ -50,7 +48,7 @@ function SecretPoints(props: {
         // get the real status from the firebase database
         const newEastereggsDocument = await db
             .collection("eastereggs")
-            .doc(user.user_id)
+            .doc(waitlistUser.user_id)
             .get()
         const data = newEastereggsDocument.data()
 
@@ -71,7 +69,7 @@ function SecretPoints(props: {
             )
 
             // update remote state which tells us what the "truth" really is
-            db.collection("eastereggs").doc(user.user_id).set({
+            db.collection("eastereggs").doc(waitlistUser.user_id).set({
                 available: newEastereggs,
             })
 
@@ -80,7 +78,7 @@ function SecretPoints(props: {
             if (getPoints) {
                 updatePoints({
                     variables: {
-                        user_id: user.user_id,
+                        user_id: waitlistUser.user_id,
                         points: waitlistUser.points + points,
                     },
                     optimisticResponse: true,
@@ -115,12 +113,14 @@ function SecretPoints(props: {
 
 function mapStateToProps(state: {
     WaitlistReducer: {
-        waitlistUser: { points: number; eastereggsAvailable: any }
+        waitlistUser: {
+            user_id: string
+            points: number
+            eastereggsAvailable: any
+        }
     }
-    AuthReducer: { user: { user_id: string } }
 }) {
     return {
-        user: state.AuthReducer.user ? state.AuthReducer.user : {},
         waitlistUser: state.WaitlistReducer.waitlistUser
             ? state.WaitlistReducer.waitlistUser
             : {},

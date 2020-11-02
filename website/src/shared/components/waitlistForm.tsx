@@ -23,12 +23,7 @@ import * as PureAuthAction from "store/actions/auth/pure"
 import "styles/landing.css"
 import { checkEmail } from "pages/auth/constants/authHelpers"
 
-function WaitlistForm(props: {
-    dispatch: (_: any) => any
-    waitlistUser: any
-    waitlist: any
-    isAction: boolean
-}) {
+function WaitlistForm(props: any) {
     const { dispatch, waitlist, waitlistUser, isAction } = props
     const { width, referralCode } = useContext(MainContext)
 
@@ -123,6 +118,7 @@ function WaitlistForm(props: {
                     referralCode: newReferralCode,
                     user_id: email,
                     name: name,
+                    eastereggsAvailable: secretPoints,
                 })
             )
             dispatch(
@@ -162,6 +158,7 @@ function WaitlistForm(props: {
                     referralCode: currentUser.referralCode,
                     user_id: email,
                     name: currentUser.name,
+                    eastereggsAvailable: secretPoints,
                 })
             )
 

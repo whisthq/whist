@@ -269,6 +269,10 @@ a {
     color: #3930b8 !important;
 }
 
+.pointer-hover:hover {
+    cursor: pointer;
+}
+
 .input-form,
 .input-form:focus,
 .input-form:active,
