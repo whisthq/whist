@@ -787,7 +787,7 @@ int sendConnectionHistory(char *host, char *access_token, char *identifier,
                         "   \"connection_id\" : \"%s\","
                         "   \"logs\" : \"%s\","
                         "   \"identifier\" : %s,"
-                        "   \"secret_key\" : %s"
+                        "   \"secret_key\" : \"%s\""
                         "}",
                         connection_id_data, logs, identifier, hex_aes_private_key);
 
