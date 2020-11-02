@@ -39,7 +39,7 @@ const Dashboard = (props: {
     }
 
     if (!valid_user) {
-        return <Redirect to="/auth" />
+        return <Redirect to="/" />
     } else {
         // for now it wil lalways be loading
         return (
