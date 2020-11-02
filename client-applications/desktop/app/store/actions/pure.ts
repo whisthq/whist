@@ -11,6 +11,7 @@ export function updateAuth(body: {
     accessToken?: string
     refreshToken?: string
     loginWarning?: boolean
+    loginMessage?: string
     name?: string
 }) {
     return {

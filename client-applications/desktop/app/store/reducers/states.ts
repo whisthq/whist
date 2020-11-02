@@ -4,6 +4,7 @@ export const DEFAULT = {
         accessToken: null,
         refreshToken: null,
         loginWarning: false,
+        loginMessage: null,
         name: null,
     },
     container: {

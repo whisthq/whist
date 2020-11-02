@@ -32,7 +32,7 @@ function* loginUser(action: any) {
             password: action.password,
         })
 
-        if (json && json.verified) {
+        if (json && json.verified && json.can_login) {
             yield put(
                 Action.updateAuth({
                     accessToken: json.access_token,
@@ -54,9 +54,29 @@ function* loginUser(action: any) {
             history.push("/dashboard")
         } else {
             yield put(Action.updateAuth({ loginWarning: true }))
+            if (json.access_token) {
+                if (!json.verified) {
+                    yield put(
+                        Action.updateAuth({
+                            loginMessage:
+                                "You have not verified your email. Check your email for a verification email.",
+                        })
+                    )
+
+                    yield call(sendVerificationEmail, {
+                        email: action.username,
+                        token: json.verification_token,
+                    })
+                } else if (!json.can_login) {
+                    yield put(
+                        Action.updateAuth({
+                            loginMessage:
+                                "You are still on the waitlist. We will email you when you've been selected!",
+                        })
+                    )
+                }
+            }
         }
-    } else {
-        yield put(Action.updateAuth({ loginWarning: true }))
     }
 }
 
@@ -310,6 +330,20 @@ function* submitFeedback(action: any) {
     if (response.status === 401 || response.status === 422) {
         yield call(refreshAccess)
         yield call(submitFeedback, action)
+    }
+}
+
+function* sendVerificationEmail(action: any) {
+    if (action.email !== "" && action.token !== "") {
+        yield call(
+            apiPost,
+            "/mail/verification",
+            {
+                username: action.email,
+                token: action.token,
+            },
+            ""
+        )
     }
 }
 
