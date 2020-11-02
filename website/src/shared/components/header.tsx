@@ -50,7 +50,7 @@ function Header(props: any) {
                             About
                         </Link>
                         <a
-                            href="mailto: support@ftryfractal.com"
+                            href="mailto: support@tryfractal.com"
                             className="header-link"
                         >
                             Support
