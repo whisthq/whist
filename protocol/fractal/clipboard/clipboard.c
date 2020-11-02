@@ -53,3 +53,17 @@ bool hasClipboardUpdated() {
         return false;
     }
 }
+
+void DestroyClipboard() {
+    if (!mutex) {
+        LOG_ERROR("initClipboard not called yet!");
+        return;
+    }
+
+    if (SDL_LockMutex(mutex) == 0) {
+        unsafe_DestroyClipboard();
+        SDL_UnlockMutex(mutex);
+    } else {
+        LOG_WARNING("DestroyClipboard SDL_LockMutex failed");
+    }
+}

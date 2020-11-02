@@ -11,6 +11,12 @@ Follow main() to see a Fractal video streaming server being created and creating
 its threads.
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #if defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -65,6 +71,7 @@ its threads.
 #define BYTES_IN_KILOBYTE 1024.0
 #define MS_IN_SECOND 1000
 #define TCP_CONNECTION_WAIT 5000
+#define CLIENT_PING_TIMEOUT_SEC 3.0
 
 extern Client clients[MAX_NUM_CLIENTS];
 
@@ -73,6 +80,8 @@ char hex_aes_private_key[33];
 char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 volatile int connection_id;
 static volatile bool exiting;
+
+SDL_mutex* container_destruction_mutex;
 
 volatile double max_mbps;
 volatile int client_width = -1;
@@ -109,6 +118,153 @@ int encoder_factory_client_w;
 int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
+
+/*
+============================
+Private Functions
+============================
+*/
+
+/**
+ * @brief                          Sends a message to the webserver to destroy
+ *                                 the container running the server protocol.
+ *
+ * @returns                        Returns -1 on failure, 0 on success.
+ */
+int SendContainerDestroyMessage();
+
+/*
+============================
+Private Function Implementations
+============================
+*/
+
+#ifdef __linux__
+int xioerror_handler(Display* d) {
+    /*
+        When X display is destroyed, intercept XIOError in order to
+        quit clients and send container destruction signal. Clients
+        must be quit
+
+        For use as arg for XSetIOErrorHandler - this is fatal and thus
+        any program exit handling that would normally be expected to
+        be handled in another thread must be explicitly handled here.
+        Right now, we handle:
+            * SendContainerDestroyMessage
+            * quitClients
+    */
+
+    SDL_LockMutex(container_destruction_mutex);
+
+    exiting = true;
+
+    // Try sending a container destroy message - if this is the first destruction
+    //  message being sent, then also quit all clients. Quitting clients will
+    //  still happen on SendContainerDestroyMessage failure in case
+    //  it is failure on the first attempt of sending a message. This means that there
+    //  is a possibility of the quitClients() pipeline happening more than once
+    //  if SendContainerDestroyMessage fails and then is called again because
+    //  this error handler can be called multiple times.
+    if (SendContainerDestroyMessage() != 1) {
+        // POSSIBLY below locks are not necessary if we're quitting everything and dying anyway?
+
+        // Broadcast client quit message
+        FractalServerMessage fmsg_response = {0};
+        fmsg_response.type = SMESSAGE_QUIT;
+        if (readLock(&is_active_rwlock) != 0) {
+            LOG_ERROR(
+                "Failed to read-acquire is active RW "
+                "lock.");
+        } else {
+            if (broadcastUDPPacket(PACKET_MESSAGE, (uint8_t*)&fmsg_response,
+                                   sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL,
+                                   NULL) != 0) {
+                LOG_WARNING("Could not send Quit Message");
+            }
+            if (readUnlock(&is_active_rwlock) != 0) {
+                LOG_ERROR("Failed to read-release is active RW lock.");
+            }
+        }
+
+        // Kick all clients
+        if (writeLock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-acquire is active RW lock.");
+            return -1;
+        }
+        if (SDL_LockMutex(state_lock) != 0) {
+            LOG_ERROR("Failed to lock state lock");
+            if (writeUnlock(&is_active_rwlock) != 0) {
+                LOG_ERROR("Failed to write-release is active RW lock.");
+            }
+            SDL_UnlockMutex(container_destruction_mutex);
+            return -1;
+        }
+        if (quitClients() != 0) {
+            LOG_ERROR("Failed to quit clients.");
+        }
+        if (SDL_UnlockMutex(state_lock) != 0) {
+            LOG_ERROR("Failed to unlock state lock");
+        }
+        if (writeUnlock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-release is active RW lock.");
+        }
+    }
+
+    SDL_UnlockMutex(container_destruction_mutex);
+
+    return 0;
+}
+#endif
+
+int SendContainerDestroyMessage() {
+    /*
+        Sends a message to the webserver to destroy the container on which
+        the server is running. This will only work for contianers spun up using
+        the webserver endpoint /container/create
+
+        Surround this call by a mutex lock to be sure that it isn't sending a message twice.
+
+        Returns:
+            int: 0 on success, -1 on failure
+    */
+
+    // static, so only sets to false on first call
+    static bool already_sent_destroy_message = false;
+
+    if (already_sent_destroy_message) {
+        return 0;
+    }
+
+    LOG_INFO("CONTAINER DESTROY SIGNAL");
+
+    char* container_id = get_container_id();
+    char* user_id = get_user_id();
+    if (!container_id || !user_id) {
+        return -1;
+    }
+
+    char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
+
+    char payload[256];
+    snprintf(payload, sizeof(payload),
+             "{\n"
+             "  \"container_id\": \"%s\",\n"
+             "  \"private_key\": \"%s\"\n"
+             "}",
+             container_id, hex_aes_private_key);
+
+    // send destroy request, don't require response -> update this later
+    char* resp_buf = NULL;
+    size_t resp_buf_maxlen = 4800;
+    SendPostRequest(host, "/container/delete", payload, get_access_token(), &resp_buf,
+                    resp_buf_maxlen);
+
+    LOG_INFO("/container/delete response: %s", resp_buf);
+
+    already_sent_destroy_message = true;
+
+    return 0;
+}
 
 int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
@@ -677,7 +833,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     do {
         packet = ReadTCPPacket(context, true);
         SDL_Delay(5);
-    } while (packet == NULL && GetTimer(timer) < 3.0);
+    } while (packet == NULL && GetTimer(timer) < CLIENT_PING_TIMEOUT_SEC);
     if (packet == NULL) {
         LOG_WARNING("Did not receive discovery request from client.");
         closesocket(context->s);
@@ -797,17 +953,25 @@ int MultithreadedManageClients(void* opaque) {
 
     char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
 
-    sendConnectionHistory(host, get_access_token());
+    sendConnectionHistory(host, get_access_token(), identifier, hex_aes_private_key);
     connection_id = rand();
     startConnectionLog();
     bool have_sent_logs = true;
+
+    double nongraceful_grace_period = 600.0;  // 10 min after nongraceful disconn to reconn
+    bool first_client_connected = false;      // set to true once the first client has connected
+    double begin_time_to_exit = 60.0;  // client 1 min to connect when the server first goes up
+    clock first_client_timer;  // start this now and then discard when first client has connected
+    StartTimer(&first_client_timer);
 
     while (!exiting) {
         if (readLock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to read-acquire an active RW lock.");
             continue;
         }
+
         int saved_num_active_clients = num_active_clients;
+
         if (readUnlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to read-release and active RW lock.");
             continue;
@@ -816,7 +980,7 @@ int MultithreadedManageClients(void* opaque) {
         LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
                  have_sent_logs ? "yes" : "no");
         if (saved_num_active_clients == 0 && !have_sent_logs) {
-            sendConnectionHistory(host, get_access_token());
+            sendConnectionHistory(host, get_access_token(), identifier, hex_aes_private_key);
             have_sent_logs = true;
         } else if (saved_num_active_clients > 0 && have_sent_logs) {
             have_sent_logs = false;
@@ -835,8 +999,36 @@ int MultithreadedManageClients(void* opaque) {
                 StartTimer(&last_update_timer);
                 trying_to_update = true;
             }
+
+            // container exit logic -
+            //  * clients have connected before but now none are connected
+            //  * no clients have connected in `begin_time_to_exit` secs of server being up
+            // We don't place this in a lock because:
+            //  * if the first client connects right on the threshold of begin_time_to_exit, it
+            //  doesn't matter if we disconnect
+            //  * if a new client connects right on the threshold of nongraceful_grace_period, it
+            //  doesn't matter if we disconnect
+            //  * if no clients are connected, it isn't possible for another client to nongracefully
+            //  exit and reset the grace period timer
+            if ((first_client_connected || (GetTimer(first_client_timer) > begin_time_to_exit)) &&
+                (!client_exited_nongracefully ||
+                 (GetTimer(last_nongraceful_exit) > nongraceful_grace_period))) {
+                exiting = true;
+            }
         } else {
             trying_to_update = false;
+
+            // client has connected to server for the first time
+            if (!first_client_connected) {
+                first_client_connected = true;
+            }
+
+            // nongraceful client grace period has ended, but clients are
+            //  connected still - we don't want server to exit yet
+            if (client_exited_nongracefully &&
+                GetTimer(last_nongraceful_exit) > nongraceful_grace_period) {
+                client_exited_nongracefully = false;
+            }
         }
 
         if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
@@ -893,6 +1085,15 @@ int MultithreadedManageClients(void* opaque) {
         if (clients[client_id].is_controlling) {
             // Reset input system when a new input controller arrives
             ResetInput();
+        }
+
+        // reapTimedOutClients is called within a writeLock(&is_active_rwlock) and therefore this
+        // should as well
+        //  reapTimedOutClients only ever writes client_exited_nongracefully as true. This thread
+        //  only writes it as false.
+        if (client_exited_nongracefully &&
+            (GetTimer(last_nongraceful_exit) > nongraceful_grace_period)) {
+            client_exited_nongracefully = false;
         }
 
         StartTimer(&(clients[client_id].last_ping));
@@ -1070,6 +1271,11 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    container_destruction_mutex = SDL_CreateMutex();
+#ifdef __linux__
+    XSetIOErrorHandler(xioerror_handler);
+#endif
+
     update();
 
     char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
@@ -1158,7 +1364,7 @@ int main(int argc, char* argv[]) {
                     break;
                 }
                 bool exists, should_reap = false;
-                if (existsTimedOutClient(3.0, &exists) != 0) {
+                if (existsTimedOutClient(CLIENT_PING_TIMEOUT_SEC, &exists) != 0) {
                     LOG_ERROR("Failed to find if a client has timed out.");
                 } else {
                     should_reap = exists;
@@ -1172,7 +1378,7 @@ int main(int argc, char* argv[]) {
                         LOG_ERROR("Failed to write-acquire is active RW lock.");
                         break;
                     }
-                    if (reapTimedOutClients(3.0) != 0) {
+                    if (reapTimedOutClients(CLIENT_PING_TIMEOUT_SEC) != 0) {
                         LOG_ERROR("Failed to reap timed out clients.");
                     }
                     if (writeUnlock(&is_active_rwlock) != 0) {
@@ -1182,60 +1388,6 @@ int main(int argc, char* argv[]) {
                 break;
             }
             StartTimer(&last_ping_check);
-        }
-
-        if (GetTimer(last_exit_check) > 15.0 / MS_IN_SECOND) {
-// Exit file seen, time to exit
-#ifdef _WIN32
-            if (PathFileExistsA("C:\\Program Files\\Fractal\\Exit\\exit")) {
-                LOG_INFO("Exiting due to button press...");
-                FractalServerMessage fmsg_response = {0};
-                fmsg_response.type = SMESSAGE_QUIT;
-                if (readLock(&is_active_rwlock) != 0) {
-                    LOG_ERROR(
-                        "Failed to read-acquire is active RW "
-                        "lock.");
-                } else {
-                    if (broadcastUDPPacket(PACKET_MESSAGE, (uint8_t*)&fmsg_response,
-                                           sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE,
-                                           NULL, NULL) != 0) {
-                        LOG_WARNING("Could not send Quit Message");
-                    }
-                    if (readUnlock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to read-release is active RW lock.");
-                    }
-                }
-                // Give a bit of time to make sure no one is
-                // touching it
-                SDL_Delay(50);
-                DeleteFileA("C:\\Program Files\\Fractal\\Exit\\exit");
-
-                // for now, kick all clients
-                if (writeLock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to write-acquire is active RW lock.");
-                    return -1;
-                }
-                if (SDL_LockMutex(state_lock) != 0) {
-                    LOG_ERROR("Failed to lock state lock");
-                    if (writeUnlock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to write-release is active RW lock.");
-                    }
-                    return -1;
-                }
-                if (quitClients() != 0) {
-                    LOG_ERROR("Failed to quit clients.");
-                }
-                if (SDL_UnlockMutex(state_lock) != 0) {
-                    LOG_ERROR("Failed to unlock state lock");
-                }
-                if (writeUnlock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to write-release is active RW lock.");
-                }
-            }
-#else
-// TODO: Filesystem for Unix
-#endif
-            StartTimer(&last_exit_check);
         }
 
         if (readLock(&is_active_rwlock) != 0) {
@@ -1317,6 +1469,13 @@ int main(int argc, char* argv[]) {
 
     destroyLogger();
     destroyClients();
+
+    SDL_LockMutex(container_destruction_mutex);
+    if (SendContainerDestroyMessage() == -1) {
+        SDL_UnlockMutex(container_destruction_mutex);
+        return -1;
+    }
+    SDL_UnlockMutex(container_destruction_mutex);
 
     return 0;
 }

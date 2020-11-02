@@ -123,9 +123,16 @@ void SetClipboard(ClipboardData* cb);
  */
 bool hasClipboardUpdated();
 
+/**
+ * @brief                          Destroy current clipboard
+ *
+ */
+void DestroyClipboard();
+
 void unsafe_initClipboard();
 ClipboardData* unsafe_GetClipboard();
 void unsafe_SetClipboard(ClipboardData* cb);
 bool unsafe_hasClipboardUpdated();
+void unsafe_DestroyClipboard();
 
 #endif  // CLIPBOARD_H

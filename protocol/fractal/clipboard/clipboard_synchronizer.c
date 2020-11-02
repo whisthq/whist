@@ -89,6 +89,9 @@ void destroyClipboardSynchronizer() {
     */
 
     connected = false;
+
+    DestroyClipboard();
+
     SDL_SemPost(clipboard_semaphore);
 }
 

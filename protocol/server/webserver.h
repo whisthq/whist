@@ -45,4 +45,20 @@ char* get_vm_password();
  */
 char* get_branch();
 
+/**
+ * @brief                          Retrieves the container ID that this program is
+ *                                 running in by asking the webserver
+ *
+ * @returns                        The string of the container ID
+ */
+char* get_container_id();
+
+/**
+ * @brief                          Retrieves the username of this program's client
+ *                                 by asking the webserver
+ *
+ * @returns                        The string of the username
+ */
+char* get_user_id();
+
 #endif

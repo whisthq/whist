@@ -8,6 +8,8 @@ static bool already_obtained_vm_type = false;
 static clock last_vm_info_check_time;
 static bool is_using_stun;
 static char* access_token = NULL;
+static char* container_id = NULL;
+static char* user_id = NULL;
 bool is_trying_staging_protocol_info = false;
 
 extern char hex_aes_private_key[33];
@@ -38,10 +40,10 @@ void update_webserver_parameters() {
 
     char* msg = (char*)malloc(64 + strlen(identifier) + strlen(hex_aes_private_key));
     sprintf(msg,
-            "{\n\
-            \"identifier\" : %s,\n\
-            \"private_key\" : \"%s\"\n\
-}",
+            "{\n"
+            "   \"identifier\" : %s,\n"
+            "   \"private_key\" : \"%s\"\n"
+            "}",
             identifier, hex_aes_private_key);
 
     if (!SendPostRequest(will_try_staging ? STAGING_HOST : PRODUCTION_HOST,
@@ -81,7 +83,11 @@ void update_webserver_parameters() {
     kv_pair_t* dev_value = get_kv(&json, "allow_autoupdate");
     kv_pair_t* branch_value = get_kv(&json, "branch");
     kv_pair_t* using_stun = get_kv(&json, "using_stun");
-    kv_pair_t* access_token_value = get_kv(&json, "access_token");
+    // TODO: remove all mentions of access_token - endpoints used by protocol
+    //      do not require the authorization header
+    // kv_pair_t* access_token_value = get_kv(&json, "access_token");
+    kv_pair_t* container_id_value = get_kv(&json, "container_id");
+    kv_pair_t* user_id_value = get_kv(&json, "user_id");
 
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {
@@ -112,12 +118,27 @@ void update_webserver_parameters() {
             is_using_stun = using_stun->bool_value;
         }
 
-        if (access_token_value && access_token_value->type == JSON_STRING) {
-            if (!access_token) {
-                free(access_token);
+        // if (access_token_value && access_token_value->type == JSON_STRING) {
+        //     if (access_token) {
+        //         free(access_token);
+        //     }
+        //     access_token = clone(access_token_value->str_value);
+        // }
+
+        if (container_id_value && container_id_value->type == JSON_STRING) {
+            if (container_id) {
+                free(container_id);
             }
-            access_token = clone(access_token_value->str_value);
+            container_id = clone(container_id_value->str_value);
         }
+
+        if (user_id_value && user_id_value->type == JSON_STRING) {
+            if (user_id) {
+                free(user_id);
+            }
+            user_id = clone(user_id_value->str_value);
+        }
+
     } else {
         LOG_WARNING("COULD NOT GET JSON PARAMETERS FROM: %s", resp_buf);
     }
@@ -162,4 +183,18 @@ char* get_access_token() {
         LOG_ERROR("Webserver parameters not updated!");
     }
     return access_token;
+}
+
+char* get_container_id() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return container_id;
+}
+
+char* get_user_id() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return user_id;
 }
