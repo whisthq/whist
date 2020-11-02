@@ -14,8 +14,6 @@ const Reset = (props: {
         resetDone: boolean
     }
 }) => {
-    const { authFlow } = props
-
     const search = useLocation().search
     const token = search.substring(1, search.length)
     const valid_token = token && token.length >= 1
@@ -24,7 +22,7 @@ const Reset = (props: {
     //     `NOW IN RESET with valid_token: ${valid_token} and authFlow.resetDone as ${authFlow.resetDone}`
     // )
 
-    if (!valid_token || authFlow.resetDone) {
+    if (!valid_token) {
         return <Redirect to="/" />
     } else {
         return (

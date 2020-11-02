@@ -6,7 +6,7 @@ import {
     validateVerificationToken,
     sendVerificationEmail,
 } from "store/actions/auth/sideEffects"
-import { updateAuthFlow, updateUser, resetUser } from "store/actions/auth/pure"
+import { updateAuthFlow, resetUser } from "store/actions/auth/pure"
 import history from "shared/utils/history"
 
 import "styles/auth.css"
@@ -123,18 +123,15 @@ const VerifyView = (props: {
         setCanRetry(false)
 
         dispatch(
-            updateUser({
-                emailVerificationToken: undefined,
-            })
-        )
-        dispatch(
             updateAuthFlow({
                 verificationEmailsSent: authFlow.verificationEmailsSent
                     ? authFlow.verificationEmailsSent + 1
                     : 1,
             })
         )
-        dispatch(sendVerificationEmail(user.user_id, user.accessToken))
+        dispatch(
+            sendVerificationEmail(user.user_id, user.emailVerificationToken)
+        )
         setTimeout(() => {
             // first show them that it's been sent
             setSentRetry(true)
@@ -147,9 +144,9 @@ const VerifyView = (props: {
     }
 
     useEffect(() => {
+        console.log("verify use effect")
         if (validUser && validToken && !processing) {
             dispatch(validateVerificationToken(token))
-
             setProcessing(true)
         }
         // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
@@ -157,10 +154,8 @@ const VerifyView = (props: {
     }, [])
 
     useEffect(() => {
-        if (user.emailVerified) {
-            setProcessing(false)
-        }
-    }, [user.emailVerified, authFlow.verificationAttemptsExecuted])
+        setProcessing(false)
+    }, [user.emailVerified])
 
     if (!validToken) {
         return (

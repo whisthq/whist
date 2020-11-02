@@ -78,11 +78,16 @@ export function forgotPassword(username: string) {
     }
 }
 
-export function resetPassword(username: string, password: string) {
+export function resetPassword(
+    username: string,
+    password: string,
+    token: string
+) {
     return {
         type: RESET_PASSWORD,
         username,
         password,
+        token,
     }
 }
 
