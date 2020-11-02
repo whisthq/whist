@@ -6,7 +6,7 @@
 rm /var/run/nologin
 # echo $SSH_PUBLIC_KEY_AWS > ~/.ssh/authorized_keys
 
-ln -sf /home/fractal/fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
+ln -sf /usr/share/fractal/fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
 
 # begin wait loop to get tty number and port map
 CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
@@ -33,5 +33,4 @@ sudo mknod -m 660 /dev/dri/card0 c 226 0
 # This install fractal service
 echo "Start Pam Systemd Process for User fractal"
 export FRACTAL_UID=`id -u fractal`
-install -d -o fractal /run/user/$FRACTAL_UID
 systemctl start user@$FRACTAL_UID

@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
 # Force failure on non-zero exit code for commands with a pipe in them
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
 ENV container docker
 ENV LC_ALL C
@@ -19,14 +19,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Clean systemd install
+# Remove all sysinit.target systemd services except tmpfile cleaners (and
+# switch back workdir)
 WORKDIR /lib/systemd/system/sysinit.target.wants/
-
-# hadolint ignore=SC2010
-RUN ls | grep -v systemd-tmpfiles-setup | xargs rm -f "$1"
-
+RUN ls | grep -v systemd-tmpfiles-setup | xargs rm -f
 WORKDIR /
 
+# Remove some more systemd services to minimize what's running on our images
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /etc/systemd/system/*.wants/* \
     /lib/systemd/system/local-fs.target.wants/* \
@@ -48,11 +47,12 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libevent-2.1-7 \
     libutempter0 \
     tmux \
+    sudo \
+    less \
+    vim \
+    git \
     mesa-utils \
-    glmark2 \
     mpv \
-    libgimp2.0 \
-    gimp \
     psmisc \
     && apt-get autoremove -y \
     && apt-get clean
@@ -72,7 +72,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libasound2-dev \
     xclip \
     x11-xserver-utils \
-    parcellite \
+    libx11-dev \
     gtk-chtheme \
     xserver-xorg-video-dummy \
     dkms \
@@ -94,6 +94,15 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    libavcodec58 \
+    libavdevice58 \
+    libavfilter7 \
+    libavformat58 \
+    libavresample4 \
+    libavutil56 \
+    libpostproc55 \
+    libswresample3 \
+    libswscale5 \
     libmp3lame0 \
     libopus0 \
     libsnappy1v5 \
@@ -166,7 +175,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     apt-utils \
     x11vnc \
     xvfb \
-    fluxbox \
     wmctrl \
     ca-certificates \
     wget \
@@ -174,12 +182,8 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     libfido2-1 \
     libgbm1 \
     libxcb-dri3-0 \
-    sudo \
-    less \
-    vim \
     libcurl4 \
     curl \
-    git \
     && apt-get autoremove -y \
     && apt-get clean
 
@@ -226,9 +230,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
-# Create fractal user
+# Create fractal user and do NOT add to sudo group
 RUN useradd --create-home fractal \
-    && usermod -aG sudo fractal \
     && echo 'fractal:dX6-gkE%Gx42gapUaR+T*^.4fhm3Pv7c' | chpasswd
 
 # Install Pulse Audio
@@ -249,47 +252,15 @@ RUN systemctl mask pulseaudio
 RUN chmod -x /usr/bin/start-pulseaudio-x11
 COPY pulse-client.conf /etc/pulse/client.conf
 
-# Creating Fractal Directory and Subdirectories in /usr/share
-RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/exit /usr/share/fractal/sync
-RUN chgrp fractal -R /usr/share/fractal
-RUN chmod g+rw -R /usr/share/fractal
-
-# Download Fractal FFmpeg .so from AWS S3 and moving them to /usr/share/fractal
-RUN sudo apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y
-RUN wget -qO shared-libs.tar.gz "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz"
-RUN tar -xvf shared-libs.tar.gz
-RUN sudo mv share/64/Linux/* /usr/share/fractal/
-
-# Symlink Fractal FFmpeg .so libs to FFmpeg system libs location for standard Linux system runtime library loading
-RUN ln -sf /usr/share/fractal/libavcodec.so /usr/local/lib/libavcodec-fractal.so \
-    ln -sf /usr/share/fractal/libavdevice.so /usr/local/lib/libavdevice-fractal.so \
-    ln -sf /usr/share/fractal/libavfilter.so /usr/local/lib/libavfilter-fractal.so \
-    ln -sf /usr/share/fractal/libavformat.so /usr/local/lib/libavformat-fractal.so \
-    ln -sf /usr/share/fractal/libavutil.so /usr/local/lib/libavutil-fractal.so \
-    ln -sf /usr/share/fractal/libpostproc.so /usr/local/lib/libpostproc-fractal.so \
-    ln -sf /usr/share/fractal/libswresample.so /usr/local/lib/libswresample-fractal.so \
-    ln -sf /usr/share/fractal/libswscale.so /usr/local/lib/libswscale-fractal.so \
-    rm -rf shared-libs.tar.gz \
-    rm -rf share
+# Create fractal Directory and Subdirectories in /usr/share
+RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/sync /usr/share/fractal/private
+# Set /usr/share/fractal/to root-only
+RUN chgrp root -R /usr/share/fractal
+RUN chown root:root /usr/share/fractal/
+RUN chmod 600 -R /usr/share/fractal/
 
 
-# Install FFmpeg dependencies explicitly
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    libavcodec58 \
-    libavdevice58 \
-    libavfilter7 \
-    libavformat58 \
-    libavresample4 \
-    libavutil56 \
-    libpostproc55 \
-    libswresample3 \
-    libswscale5 \
-    && apt-get autoremove -y \
-    && apt-get clean
-
-# Install system FFmpeg, taken from protocol/server/linux-server-setup.sh
+# Install system FFmpeg
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -300,10 +271,12 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean
 
+
 # Install FractalServer scripts and kernel module input rules
-COPY entry.sh /home/fractal
-COPY display-service-envs /home/fractal
-COPY fractal-input.rules home/fractal
+COPY entry.sh /usr/share/fractal
+RUN chmod +x /usr/share/fractal/entry.sh
+COPY display-service-envs /usr/share/fractal
+COPY fractal-input.rules /usr/share/fractal
 
 # Install and enable OpenSSH
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -317,10 +290,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 RUN systemctl enable ssh
 
-# Set appropriate user permissions for Fractal
+# Set appropriate user permissions
 RUN chown -vR fractal:fractal /home/fractal
 RUN chown root:root /run/user
-RUN chmod +x /home/fractal/entry.sh
+
+# Set up the entrypoint for the Docker container
+COPY docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
+RUN chmod +x /usr/share/fractal/docker-entrypoint.sh
 
 # Set up Nvidia inside Docker
 LABEL com.nvidia.volumes.needed="nvidia_driver"
@@ -369,7 +345,7 @@ ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 COPY 01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
 COPY fractal-update-nvidia-busid.service /etc/systemd/system/
 COPY update-nvidia-busid.sh /usr/share/fractal/
-RUN chmod +x /usr/share/fractal/update-nvidia-busid.sh 
+RUN chmod +x /usr/share/fractal/update-nvidia-busid.sh
 
 # Enable Nvidia Bus ID update script
 RUN systemctl enable fractal-update-nvidia-busid
@@ -388,17 +364,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean
 
-# Set up window manager running on X server, with GTK/QT themes
-RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git
-RUN cd WhiteSur-cursors && /bin/bash install.sh && cd
-RUN git clone https://github.com/vinceliuice/Layan-gtk-theme
-RUN cd Layan-gtk-theme && /bin/bash install.sh && cd
-RUN git clone https://github.com/vinceliuice/Orchis-theme
-RUN cd Orchis-theme && /bin/bash install.sh && cd
-RUN git clone https://github.com/vinceliuice/Matcha-gtk-theme
-RUN cd Matcha-gtk-theme && /bin/bash install.sh && cd
-RUN git clone https://github.com/vinceliuice/vimix-gtk-themes
-RUN cd vimix-gtk-themes && /bin/bash install.sh && cd
+# Set up window manager running on X server, with GTK/QT theming
+RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 
 COPY i3config /root/.config/i3/config
 COPY gtk-3-settings.ini /etc/gtk-3.0/settings.ini
@@ -407,10 +374,6 @@ COPY --chown=fractal .gtkrc-2.0 /home/fractal/.gtkrc-2.0
 COPY qt4-settings.conf /root/.config/Trolltech.conf
 COPY --chown=fractal qt4-settings.conf /home/fractal/.config/Trolltech.conf
 COPY .xinitrc /root/.xinitrc
-
-# We set the gimp GTK theme to the system's for testing
-COPY gimprc /home/fractal/.config/GIMP/2.10/gimprc
-COPY gimprc /root/.config/GIMP/2.10/gimprc
 
 # Install Fractal services
 COPY fractal-entrypoint.service /etc/systemd/system
@@ -425,9 +388,8 @@ RUN systemctl enable fractal-protocol
 COPY fractal-audio.service /etc/systemd/system
 RUN systemctl enable fractal-audio
 
-# Set fractal-setup script
-COPY fractal-setup.sh /
-RUN chmod +x /fractal-setup.sh
+COPY start-fractal-server.sh /usr/share/fractal/start-fractal-server.sh
+RUN chmod +x /usr/share/fractal/start-fractal-server.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
 
@@ -453,4 +415,5 @@ RUN ln -s /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 COPY protocol/server/build64/libsentry.so /usr/share/fractal/bin/libsentry.so
 COPY protocol/server/build64/FractalServer /usr/share/fractal/bin/FractalServer
 
-CMD ["/lib/systemd/systemd"]
+# Enter the Docker container via the entrypoint
+CMD ["/usr/share/fractal/docker-entrypoint.sh"]
