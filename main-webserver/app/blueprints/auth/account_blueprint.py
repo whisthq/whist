@@ -37,8 +37,8 @@ def account_postDelete(**kwargs):
 
 @account_bp.route("/account/update", methods=["POST"])
 @fractalPreProcess
-@jwt_required
-@fractalAuth
+# @jwt_required
+# @fractalAuth
 def account_postUpdate(**kwargs):
     # Change the user's name, email, or password
     return updateUserHelper(kwargs["body"])
