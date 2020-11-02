@@ -3,33 +3,62 @@ import { DEFAULT } from "store/reducers/waitlist/default"
 import * as PureAction from "store/actions/waitlist/pure"
 import * as SharedAction from "store/actions/shared"
 
-import { if_exists_spread } from "shared/utils/reducerHelpers"
+import { deep_copy } from "shared/utils/reducerHelpers"
 
 export default function (state = DEFAULT, action: any) {
+    const stateCopy: any = deep_copy(state)
     switch (action.type) {
         case PureAction.UPDATE_WAITLIST_USER:
             return {
-                ...state,
-                waitlistUser: if_exists_spread(state.waitlistUser, action.body),
+                ...stateCopy,
+                waitlistUser: Object.assign(
+                    stateCopy.waitlistUser,
+                    action.body
+                ),
             }
         case PureAction.UPDATE_CLICKS:
             return {
-                ...state,
-                clicks: if_exists_spread(state.clicks, action.body),
+                ...stateCopy,
+                clicks: Object.assign(stateCopy.clicks, action.body),
             }
         case PureAction.UPDATE_WAITLIST_DATA:
             return {
-                ...state,
-                waitlistData: if_exists_spread(state.waitlistData, action.body),
+                ...stateCopy,
+                waitlistData: Object.assign(
+                    stateCopy.waitlistData,
+                    action.body
+                ),
             }
 
         case PureAction.UPDATE_NAVIGATION:
             return {
-                ...state,
-                navigation: if_exists_spread(state.navigation, action.body),
+                ...stateCopy,
+                navigation: Object.assign(stateCopy.navigation, action.body),
+            }
+        case PureAction.RESET_WAITLIST_USER:
+            return {
+                ...stateCopy,
+                waitlistUser: DEFAULT.waitlistUser,
             }
         case SharedAction.RESET_STATE:
             return DEFAULT
+        case SharedAction.REFRESH_STATE:
+            // enforce structure of default but add in old information
+            const mergeInto: any = deep_copy(DEFAULT)
+
+            Object.keys(stateCopy).forEach((outerKey: any) => {
+                Object.keys(stateCopy[outerKey]).forEach((innerKey: string) => {
+                    if (stateCopy[outerKey][innerKey]) {
+                        mergeInto[outerKey][innerKey] =
+                            stateCopy[outerKey][innerKey]
+                    }
+                })
+            })
+
+            console.log("STATE REFRESH")
+            console.log(mergeInto)
+
+            return mergeInto
         default:
             return state
     }

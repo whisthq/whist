@@ -7,6 +7,13 @@
     font-style: normal;
 }
 
+@font-face {
+    font-family: "Maven Pro";
+    src: url("../assets/fonts/MavenPro-Bold.ttf");
+    font-weight: bold;
+    font-style: bold;
+}
+
 body,
 html,
 #root {
@@ -47,6 +54,10 @@ p {
 
 button {
     outline: none !important;
+}
+
+.hover:hover {
+    cursor: pointer !important;
 }
 
 @media only screen and (max-width: 720px) {
@@ -229,7 +240,6 @@ a {
 }
 
 .white-button {
-    font-weight: bold;
     padding: 15px 50px;
     font-size: 18px;
     outline: none !important;
@@ -259,6 +269,20 @@ a {
     color: #3930b8 !important;
 }
 
-.pointer-hover:hover {
-    cursor: pointer;
+.input-form,
+.input-form:focus,
+.input-form:active,
+.input-form.active {
+    width: 100%;
+    background-color: #ffffff;
+    border: solid 1px #dfdfdf;
+    padding: 15px 20px;
+    outline: none !important;
+    border-radius: 0px;
+    color: #111111;
+}
+
+::placeholder {
+    color: #efefef;
+    font-size: 16px;
 }

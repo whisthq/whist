@@ -8,6 +8,7 @@ export const GET_WAITLIST = gql`
             referral_code
             referrals
             user_id
+            auth_email
         }
     }
 `
@@ -51,6 +52,7 @@ export const SUBSCRIBE_WAITLIST = gql`
             user_id
             referrals
             referral_code
+            auth_email
         }
     }
 `

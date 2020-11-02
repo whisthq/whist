@@ -20,7 +20,7 @@ import Footer from "shared/components/footer"
 
 const Landing = (props: any) => {
     const { setReferralCode, setAppHighlight } = useContext(MainContext)
-    const { dispatch, user, waitlistUser, match, applicationRedirect } = props
+    const { dispatch, waitlistUser, match, applicationRedirect } = props
 
     const { data } = useSubscription(SUBSCRIBE_WAITLIST)
 
@@ -37,7 +37,7 @@ const Landing = (props: any) => {
     const getUser = useCallback(
         (waitlist: any) => {
             for (var i = 0; i < waitlist.length; i++) {
-                if (waitlist[i].user_id === user.user_id) {
+                if (waitlist[i].user_id === waitlistUser.user_id) {
                     return {
                         ...waitlist[i],
                         ranking: i + 1,
@@ -47,27 +47,17 @@ const Landing = (props: any) => {
             }
             return null
         },
-        [user]
+        [waitlistUser]
     )
 
-    useEffect(() => {
-        dispatch(
-            PureWaitlistAction.updateNavigation({ applicationRedirect: false })
-        )
-    }, [dispatch])
-
-    useEffect(() => {
-        if (data) {
+    const updateWaitlistUser = useCallback(() => {
+        if (data && data.waitlist) {
             const waitlist = data.waitlist
-            dispatch(
-                PureWaitlistAction.updateWaitlistData({ waitlist: waitlist })
-            )
-
-            if (user && user.user_id) {
+            if (waitlistUser && waitlistUser.user_id) {
                 const newUser = getUser(waitlist)
                 if (newUser) {
                     if (
-                        newUser.ranking !== user.ranking ||
+                        newUser.ranking !== waitlistUser.ranking ||
                         waitlistUser.ranking === 0 ||
                         waitlistUser.points !== newUser.points
                     ) {
@@ -76,9 +66,9 @@ const Landing = (props: any) => {
                                 points: newUser.points,
                                 ranking: newUser.ranking,
                                 referralCode: newUser.referralCode,
+                                authEmail: newUser.auth_email,
                             })
                         )
-
                         if (applicationRedirect) {
                             history.push("/application")
                         }
@@ -86,15 +76,30 @@ const Landing = (props: any) => {
                 }
             }
         }
-    }, [
-        data,
-        user,
-        dispatch,
-        applicationRedirect,
-        getUser,
-        waitlistUser.points,
-        waitlistUser.ranking,
-    ])
+    }, [applicationRedirect, data, dispatch, getUser, waitlistUser])
+
+    const updateWaitlist = useCallback(() => {
+        if (data && data.waitlist) {
+            const waitlist = data.waitlist
+            dispatch(
+                PureWaitlistAction.updateWaitlistData({ waitlist: waitlist })
+            )
+        }
+    }, [data, dispatch])
+
+    useEffect(() => {
+        dispatch(
+            PureWaitlistAction.updateNavigation({ applicationRedirect: false })
+        )
+    }, [dispatch])
+
+    useEffect(() => {
+        updateWaitlistUser()
+    }, [data, updateWaitlistUser])
+
+    useEffect(() => {
+        updateWaitlist()
+    }, [data, updateWaitlist])
 
     useEffect(() => {
         const firstParam = match.params.first
@@ -127,6 +132,7 @@ const mapStateToProps = (state: {
     AuthReducer: { user: any }
     WaitlistReducer: { navigation: any; waitlistUser: any }
 }) => {
+    console.log(state)
     return {
         user: state.AuthReducer.user,
         waitlistUser: state.WaitlistReducer.waitlistUser,
