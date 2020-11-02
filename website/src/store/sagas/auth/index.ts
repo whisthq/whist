@@ -37,6 +37,15 @@ function* emailLogin(action: any) {
                 loginWarning: "",
             })
         )
+
+        if (!json.verified) {
+            yield call(sendVerificationEmail, {
+                email: action.email,
+                token: json.verification_token,
+            })
+
+            history.push("/verify")
+        }
     } else {
         yield put(
             AuthPureAction.updateAuthFlow({
@@ -142,13 +151,13 @@ function* emailSignup(action: any) {
                 name: action.email, // also temp so it can display
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
-                emailVerificationToken: json.token,
+                emailVerificationToken: json.verification_token,
             })
         )
 
         yield call(sendVerificationEmail, {
             email: action.email,
-            token: json.token,
+            token: json.verification_token,
         })
 
         yield put(
@@ -277,6 +286,8 @@ function* validateResetToken(action: any) {
             yield put(
                 AuthPureAction.updateAuthFlow({
                     resetTokenStatus: "verified",
+                    passwordResetEmail: json.user,
+                    passwordResetToken: json.token,
                 })
             )
         } else {
