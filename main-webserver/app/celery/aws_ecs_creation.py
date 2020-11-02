@@ -213,7 +213,6 @@ def create_new_container(
     container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
     if container_sql:
         container = UserContainer.query.get(ecs_client.tasks[0])
-        container = user_container_schema.dump(container)
         fractalLog(
             function="create_new_container",
             label=str(ecs_client.tasks[0]),
@@ -240,20 +239,23 @@ def create_new_container(
             label=str(ecs_client.tasks[0]),
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
-        # NOTE: this is a 200 second wait time, chosen arbitrarily
-        max_pauses = 40
-        curr_pause = 0
-        container = UserContainer.query.get(ecs_client.tasks[0])
-        while container.state == "CREATING" and curr_pause < max_pauses:
-            container = UserContainer.query.get(ecs_client.tasks[0])
-            db.session.commit()
-            fractalLog(
-                function="create_new_container",
-                label=str(ecs_client.tasks[0]),
-                logs=f"container_state: {user_container_schema.dump(container)}",
-            )
-            curr_pause += 1
-            time.sleep(5)
+
+        # Poll the database until the container state is no longer CREATING or up to 40
+        # * 5 = 200 seconds. Perhaps this would be an appropriate use case for Hasura
+        # subscriptions.
+        for _ in range(40):
+            if container.state == "CREATING":
+                fractalLog(
+                    function="create_new_container",
+                    label=str(ecs_client.tasks[0]),
+                    logs=f"{container.container_id} deployment in progress.",
+                    level=logging.WARNING,
+                )
+                db.session.refresh(container)
+                time.sleep(5)
+            else:
+                break
+
         if container.state == "CREATING":
             fractalLog(
                 function="create_new_container",
@@ -264,8 +266,10 @@ def create_new_container(
                 state="FAILURE",
                 meta={"msg": "Container {} failed to ping.".format(ecs_client.tasks[0])},
             )
+
             raise Ignore
-        return container
+        else:
+            return user_container_schema.dump(container)
     else:
         fractalLog(
             function="create_new_container",
