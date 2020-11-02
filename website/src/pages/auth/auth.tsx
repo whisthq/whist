@@ -1,4 +1,4 @@
-import React /*, { useEffect }*/ from "react"
+import React , { useEffect } from "react"
 import { connect } from "react-redux"
 import { Redirect } from "react-router"
 
@@ -9,7 +9,7 @@ import ForgotView from "pages/auth/views/forgotView"
 
 import "styles/auth.css"
 
-//import history from "shared/utils/history"
+import history from "shared/utils/history"
 
 const Auth = (props: {
     dispatch: any
@@ -22,13 +22,12 @@ const Auth = (props: {
 }) => {
     const { user, /*match,*/ mode } = props
 
-    // what is this?!
-    // useEffect(() => {
-    //     const firstParam = match.params.first
-    //     if (firstParam !== "bypass" && !user.user_id) {
-    //         history.push("/")
-    //     }
-    // }, [match, user.user_id])
+    useEffect(() => {
+        const firstParam = match.params.first
+        if (firstParam !== "bypass" && !user.user_id) {
+            history.push("/")
+        }
+    }, [match, user.user_id])
 
     if (user.user_id && user.user_id !== "") {
         if (user.emailVerified) {
