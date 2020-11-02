@@ -246,6 +246,7 @@ def create_new_container(
         container = UserContainer.query.get(ecs_client.tasks[0])
         while container.state == "CREATING" and curr_pause < max_pauses:
             container = UserContainer.query.get(ecs_client.tasks[0])
+            db.session.commit()
             fractalLog(
                 function="create_new_container",
                 label=str(ecs_client.tasks[0]),
