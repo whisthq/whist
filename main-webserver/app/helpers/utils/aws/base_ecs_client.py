@@ -654,7 +654,9 @@ chmod +x userdata-bootstrap.sh
         Returns:
              str: name of auto scaling group created
         """
-        availability_zones = availability_zones or [self.region_name + "b"]
+        availability_zones = availability_zones or [
+            self.region_name + "a" if self.region_name != "us-east-1" else "us-east-1b"
+        ]
         if isinstance(availability_zones, str):
             availability_zones = [availability_zones]
         if not isinstance(availability_zones, list):

@@ -120,8 +120,6 @@ def create_new_container(
     kwargs = {"networkConfiguration": network_configuration, "overrides": container_overrides}
     fractalLog(function="create_new_container", label="None", logs=message)
     base_len = 2
-    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-
     if not cluster_name:
         all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
         all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
@@ -132,17 +130,19 @@ def create_new_container(
                 logs="No available clusters found. Creating new cluster...",
             )
             cluster_name = create_new_cluster.delay(
-                region_name=region_name, ami=region_to_ami[region_name]
+                region_name=region_name, ami=region_to_ami[region_name], min_size=1
             ).get(disable_sync_subtasks=False)["cluster"]
             for i in range(base_len - len(all_clusters)):
-                create_new_cluster.delay(region_name=region_name, ami=region_to_ami[region_name])
+                create_new_cluster.delay(
+                    region_name=region_name, ami=region_to_ami[region_name], min_size=1
+                )
             time.sleep(10)
         else:
             cluster_name = all_clusters[0].cluster
             if len(all_clusters) < base_len:
                 for i in range(base_len - len(all_clusters)):
                     create_new_cluster.delay(
-                        region_name=region_name, ami=region_to_ami[region_name]
+                        region_name=region_name, ami=region_to_ami[region_name], min_size=1
                     )
     fractalLog(
         function="create_new_container",
@@ -277,7 +277,7 @@ def create_new_container(
 def create_new_cluster(
     self,
     cluster_name=None,
-    instance_type="g3s.xlarge",
+    instance_type="g3.4xlarge",
     ami="ami-0decb4a089d867dc1",
     region_name="us-east-1",
     min_size=0,

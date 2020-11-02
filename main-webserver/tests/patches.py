@@ -14,6 +14,10 @@ class CeleryResult(AsyncResult):
         return str(uuid.uuid4())
 
 
+class Patch:
+    pass
+
+
 def apply_async(*args, **kwargs):
     return CeleryResult()
 

@@ -4,10 +4,10 @@ from flask.json import jsonify
 from app import fractalPreProcess
 from app.celery.aws_ecs_creation import create_new_cluster, create_new_container, send_commands
 from app.celery.aws_ecs_deletion import delete_cluster, deleteContainer, drainContainer
-from app.celery.aws_ecs_status import pingHelper
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
+    pingHelper,
     preprocess_task_info,
     protocol_info,
     set_stun,
@@ -84,30 +84,6 @@ def test_endpoint(action, **kwargs):
 
         return jsonify({"ID": task.id}), ACCEPTED
 
-    if action == "delete_container":
-        user_id, container_name = (
-            kwargs["body"]["user_id"],
-            kwargs["body"]["container_name"],
-        )
-        task = deleteContainer.apply_async([user_id, container_name])
-
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-
-        return jsonify({"ID": task.id}), ACCEPTED
-
-    if action == "delete_container":
-        user_id, container_name = (
-            kwargs["body"]["user_id"],
-            kwargs["body"]["container_name"],
-        )
-        task = deleteContainer.apply_async([user_id, container_name])
-
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-
-        return jsonify({"ID": task.id}), ACCEPTED
-
     if action == "send_commands":
         cluster, region_name, commands, containers = (
             kwargs["body"]["cluster"],
@@ -121,6 +97,22 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+
+
+@aws_container_bp.route("/container/delete", methods=("POST",))
+@fractalPreProcess
+def aws_container_delete(**kwargs):
+    body = kwargs.pop("body")
+
+    try:
+        args = (body.pop("container_id"), body.pop("private_key").lower())
+    except (AttributeError, KeyError):
+        response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+    else:
+        task = deleteContainer.delay(*args)
+        response = jsonify({"ID": task.id}), ACCEPTED
+
+    return response
 
 
 @aws_container_bp.route("/container/protocol_info", methods=("POST",))
@@ -161,15 +153,13 @@ def aws_container_ping(**kwargs):
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
         # Update container status.
-        task = pingHelper.delay(available, address, identifier, private_key)
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-        if isinstance(task, dict):
-            # for testing
-            return task
-        return jsonify({"ID": task.id}), ACCEPTED
+        data, status = pingHelper(available, address, identifier, private_key)
+        response = jsonify(data), status
 
     return response
+
+
+allowed_regions = {"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"}
 
 
 @aws_container_bp.route("/container/<action>", methods=["POST"])
@@ -190,6 +180,9 @@ def aws_container_post(action, **kwargs):
             try:
                 app = body.pop("app")
                 region = body.pop("region")
+                if region not in allowed_regions:
+                    response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+                    return response
             except KeyError:
                 response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
             else:
@@ -200,7 +193,7 @@ def aws_container_post(action, **kwargs):
                     response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
                 else:
                     task = create_new_container.delay(
-                        user, task_arn, region, cluster_name=sample_cluster
+                        user, task_arn, region_name=region, cluster_name=sample_cluster
                     )
                     response = jsonify({"ID": task.id}), ACCEPTED
 
