@@ -18,7 +18,9 @@ def status(code):
 @pytest.fixture
 def no_stripe(monkeypatch):
     monkeypatch.setattr(
-        stripeChargeHourly, "__code__", do_nothing.__code__,
+        stripeChargeHourly,
+        "__code__",
+        do_nothing.__code__,
     )
 
 
@@ -43,7 +45,8 @@ def test_no_key(client):
 
 
 @pytest.mark.skipif(
-    "CHOOSE_CLUSTER_TEST" not in os.environ, reason="Temporarily disabling to fix celery CI",
+    "CHOOSE_CLUSTER_TEST" not in os.environ,
+    reason="Temporarily disabling to fix celery CI",
 )
 def test_not_found(client, monkeypatch):
     code = 404
@@ -58,7 +61,8 @@ def test_not_found(client, monkeypatch):
 
 
 @pytest.mark.skipif(
-    "CHOOSE_CLUSTER_TEST" not in os.environ, reason="Temporarily disabling to fix celery CI",
+    "CHOOSE_CLUSTER_TEST" not in os.environ,
+    reason="Temporarily disabling to fix celery CI",
 )
 def test_successful(client, monkeypatch):
     code = 200

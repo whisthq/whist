@@ -11,7 +11,6 @@ from datetime import timedelta
 
 def validateTokenHelper(token):
     if token:
-        fractalLog("TOKEN IS", "TOKEN IS", str(token))
         try:
             payload = jwt.decode(token, current_app.config["JWT_SECRET_KEY"])
             email = payload["email"]

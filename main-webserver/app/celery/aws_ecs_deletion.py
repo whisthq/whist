@@ -40,7 +40,9 @@ def deleteContainer(self, user_id, container_name):
     container = UserContainer.query.get(container_name)
     if container.user_id != user_id:
         fractalLog(
-            function="deleteContainer", label=str(container_name), logs="Wrong user",
+            function="deleteContainer",
+            label=str(container_name),
+            logs="Wrong user",
         )
         self.update_state(
             state="FAILURE",
@@ -98,7 +100,9 @@ def deleteContainer(self, user_id, container_name):
             return {"status": SUCCESS}
         else:
             fractalLog(
-                function="deleteContainer", label=container_name, logs="SQL insertion unsuccessful",
+                function="deleteContainer",
+                label=container_name,
+                logs="SQL insertion unsuccessful",
             )
             self.update_state(
                 state="FAILURE", meta={"msg": f"Error updating cluster {container_cluster} in SQL"}
@@ -179,7 +183,8 @@ def delete_cluster(self, cluster, region_name):
                 level=logging.ERROR,
             )
             self.update_state(
-                state="FAILURE", meta={"msg": "Cannot delete clusters with running tasks"},
+                state="FAILURE",
+                meta={"msg": "Cannot delete clusters with running tasks"},
             )
         else:
             fractalLog(
@@ -191,7 +196,12 @@ def delete_cluster(self, cluster, region_name):
             )
             ecs_client.terminate_containers_in_cluster(cluster)
             self.update_state(
-                state="PENDING", meta={"msg": "Terminating containers in {}".format(cluster,)},
+                state="PENDING",
+                meta={
+                    "msg": "Terminating containers in {}".format(
+                        cluster,
+                    )
+                },
             )
             cluster_info = ClusterInfo.query.filter_by(cluster=cluster)
             fractalSQLCommit(db, lambda _, x: x.update({"status": "INACTIVE"}), cluster_info)
@@ -217,5 +227,6 @@ def delete_cluster(self, cluster, region_name):
             level=logging.ERROR,
         )
         self.update_state(
-            state="FAILURE", meta={"msg": f"Encountered error: {error}"},
+            state="FAILURE",
+            meta={"msg": f"Encountered error: {error}"},
         )

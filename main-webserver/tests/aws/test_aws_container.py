@@ -183,7 +183,10 @@ def test_delete_container(client, authorized, container_name=pytest.container_na
 
     resp = client.post(
         "/aws_container/delete_container",
-        json=dict(user_id=authorized.user_id, container_name=pytest.container_name,),
+        json=dict(
+            user_id=authorized.user_id,
+            container_name=pytest.container_name,
+        ),
     )
 
     task = queryStatus(client, resp, timeout=10)
@@ -223,7 +226,10 @@ def test_delete_cluster(client, authorized, cluster=pytest.cluster_name):
 
     resp = client.post(
         "/aws_container/delete_cluster",
-        json=dict(cluster=pytest.cluster_name, region_name="us-east-1",),
+        json=dict(
+            cluster=pytest.cluster_name,
+            region_name="us-east-1",
+        ),
     )
 
     task = queryStatus(client, resp, timeout=10)

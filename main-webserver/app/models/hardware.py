@@ -43,7 +43,10 @@ class ClusterInfo(db.Model):
     maxContainers = db.Column(db.Integer, nullable=False, default=0)
     status = db.Column(db.String(250), nullable=False)
     containers = relationship(
-        "UserContainer", back_populates="parent_cluster", lazy="dynamic", passive_deletes=True,
+        "UserContainer",
+        back_populates="parent_cluster",
+        lazy="dynamic",
+        passive_deletes=True,
     )
 
 
