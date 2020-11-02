@@ -26,7 +26,6 @@ const Auth = (props: {
 }) => {
     const { user, waitlistUser, match, mode } = props
 
-
     useEffect(() => {
         const firstParam = match.params.first
         if (firstParam !== "bypass" && !waitlistUser.user_id) {
@@ -68,7 +67,10 @@ const Auth = (props: {
     }
 }
 
-function mapStateToProps(state: { AuthReducer: { authFlow: any; user: any }, WaitlistReducer: { waitlistUser: any } }) {
+function mapStateToProps(state: {
+    AuthReducer: { authFlow: any; user: any }
+    WaitlistReducer: { waitlistUser: any }
+}) {
     console.log(state)
     return {
         mode: state.AuthReducer.authFlow.mode,

@@ -49,12 +49,18 @@ function Header(props: any) {
                         <Link to="/about" className="header-link">
                             About
                         </Link>
-                        <Link to="/support" className="header-link">
+                        <a
+                            href="mailto: support@ftryfractal.com"
+                            className="header-link"
+                        >
                             Support
-                        </Link>
-                        <Link to="/careers" className="header-link">
-                            Careers
-                        </Link>
+                        </a>
+                        <a
+                            href="mailto: careers@tryfractal.com"
+                            className="header-link"
+                        >
+                            Career
+                        </a>
                     </div>
                 ) : (
                     <div />
