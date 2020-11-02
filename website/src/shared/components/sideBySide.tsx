@@ -166,14 +166,19 @@ function SideBySide(props: any) {
                         >
                             {descriptions[props.case]}
                         </p>
-                        <SecretPoints
-                            points={EASTEREGG_POINTS + EASTEREGG_RAND()}
-                            name={
-                                props.case === "Graphics"
-                                    ? SECRET_POINTS.LANDING_NO_GPU_NO_PROBLEM
-                                    : SECRET_POINTS.ABOUT_HOW_IT_WORKS
-                            }
-                        />
+                        {props.case === "Gaming" ||
+                        props.case === "Graphics" ? (
+                            <SecretPoints
+                                points={EASTEREGG_POINTS + EASTEREGG_RAND()}
+                                name={
+                                    props.case === "Graphics"
+                                        ? SECRET_POINTS.LANDING_NO_GPU_NO_PROBLEM
+                                        : SECRET_POINTS.ABOUT_HOW_IT_WORKS
+                                }
+                            />
+                        ) : (
+                            <div />
+                        )}
                         {props.case === "Gaming" && (
                             <div style={{ marginTop: 30 }}>
                                 <WaitlistForm />
