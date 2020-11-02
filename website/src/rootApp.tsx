@@ -12,8 +12,6 @@ import Auth from "pages/auth/auth"
 import Verify from "pages/auth/verify"
 import Reset from "pages/auth/reset"
 import Dashboard from "pages/dashboard/dashboard"
-import Careers from "pages/careers/careers"
-import Support from "pages/support/support"
 
 import withTracker from "shared/utils/withTracker"
 

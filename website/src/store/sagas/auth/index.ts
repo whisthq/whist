@@ -343,7 +343,7 @@ function* resetPassword(action: any) {
 }
 
 function* submitFeedback(action: any) {
-    const state = yield select();
+    const state = yield select()
 
     yield call(
         apiPost,
@@ -353,8 +353,8 @@ function* submitFeedback(action: any) {
             feedback: action.feedback,
             type: "Purchase Feedback", // wanna change this?
         },
-        state.AuthReducer.access_token,
-    );
+        state.AuthReducer.access_token
+    )
 }
 
 export default function* () {
@@ -373,9 +373,6 @@ export default function* () {
             AuthSideEffect.SEND_VERIFICATION_EMAIL,
             sendVerificationEmail
         ),
-        takeEvery(
-            CustomerSideEffect.SUBMIT_PURCHASE_FEEDBACK,
-            submitFeedback
-        ),
+        takeEvery(CustomerSideEffect.SUBMIT_PURCHASE_FEEDBACK, submitFeedback),
     ])
 }
