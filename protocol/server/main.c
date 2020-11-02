@@ -1192,6 +1192,7 @@ int parse_args(int argc, char* argv[]) {
                 }
                 strncpy(webserver_url, optarg, MAX_WEBSERVER_URL_LEN);
                 webserver_url[MAX_WEBSERVER_URL_LEN] = 0;
+                break;
             }
             case FRACTAL_GETOPT_HELP_CHAR:
             {
