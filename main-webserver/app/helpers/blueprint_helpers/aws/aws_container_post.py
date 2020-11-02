@@ -94,7 +94,7 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
         lockContainerAndUpdate(
             container_name=container_info.container_id,
             state="RUNNING_UNAVAILABLE",
-            lock=True,
+            lock=False,
             temporary_lock=0,
         )
 
