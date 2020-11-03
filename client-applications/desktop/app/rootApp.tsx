@@ -7,14 +7,16 @@ import Loading from "pages/loading/loading"
 import Dashboard from "pages/dashboard/dashboard"
 
 const RootApp = (props: any) => {
-    const { dispatch } = props
     const [launchImmediately, setLaunchImmediately] = useState(false)
+    const [launchURL, setLaunchURL] = useState("")
 
     useEffect(() => {
         const ipc = require("electron").ipcRenderer
         ipc.on("customURL", (_: any, customURL: any) => {
             if (customURL && customURL.toString().includes("fractal://")) {
+                customURL.replace("fractal://", "")
                 setLaunchImmediately(true)
+                setLaunchURL(customURL)
             }
         })
     }, [])
@@ -30,6 +32,7 @@ const RootApp = (props: any) => {
                         <Login
                             {...props}
                             launchImmediately={launchImmediately}
+                            launchURL={launchURL}
                         />
                     )}
                 />

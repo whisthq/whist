@@ -3,6 +3,7 @@ import { connect } from "react-redux"
 import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { parse } from "url"
+import { useQuery } from "@apollo/client"
 
 import UpdateScreen from "pages/dashboard/components/update"
 import BackgroundView from "pages/login/views/backgroundView"
@@ -25,6 +26,8 @@ import { debugLog } from "shared/utils/logging"
 import { config } from "shared/constants/config"
 import { fetchContainer } from "store/actions/sideEffects"
 import { execChmodUnix } from "shared/utils/exec"
+import { GET_FEATURED_APPS } from "shared/constants/graphql"
+import { checkActive, urlToApp } from "pages/login/constants/helpers"
 
 const Login = (props: any) => {
     const {
@@ -32,6 +35,7 @@ const Login = (props: any) => {
         os,
         loginWarning,
         launchImmediately,
+        launchURL,
         accessToken,
         refreshToken,
     } = props
@@ -44,10 +48,14 @@ const Login = (props: any) => {
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [needsAutoupdate, setNeedsAutoupdate] = useState(false)
     const [fetchedCredentials, setFetchedCredentials] = useState(false)
-
     const live = useState(true)
 
     const storage = require("electron-json-storage")
+
+    const { data } = useQuery(GET_FEATURED_APPS)
+    const featuredAppData = data
+        ? data.hardware_supported_app_images.filter(checkActive)
+        : []
 
     const updateUsername = (evt: any) => {
         setUsername(evt.target.value)
@@ -64,9 +72,6 @@ const Login = (props: any) => {
             var appRootDir = require("electron").remote.app.getAppPath()
             var executable = ""
             var path = ""
-            // const executable =
-            //     os.platform() === "win32" ? "awsping.exe" : "./awsping"
-            // console.log(executable)
 
             if (os.platform() === "darwin") {
                 path = appRootDir + "/binaries/"
@@ -201,7 +206,6 @@ const Login = (props: any) => {
         dispatch(updateAuth({ loginWarning: false }))
 
         const ipc = require("electron").ipcRenderer
-        const storage = require("electron-json-storage")
 
         ipc.on("update", (_: any, update: any) => {
             setUpdatePingReceived(true)
@@ -247,13 +251,26 @@ const Login = (props: any) => {
             (username || props.username) &&
             accessToken &&
             refreshToken &&
-            launchImmediately
+            launchImmediately &&
+            featuredAppData.length > 0
         ) {
             setAWSRegion().then(() => {
-                dispatch(fetchContainer("Google Chrome"))
+                const { app_id, url } = Object(
+                    urlToApp(
+                        "fractal://figma.com".toLowerCase(),
+                        featuredAppData
+                    )
+                )
+                dispatch(fetchContainer(app_id, url))
             })
         }
-    }, [updatePingReceived, fetchedCredentials, props.username, accessToken])
+    }, [
+        updatePingReceived,
+        fetchedCredentials,
+        props.username,
+        accessToken,
+        featuredAppData,
+    ])
 
     return (
         <div className={styles.container} data-tid="container">

@@ -34,10 +34,11 @@ export function rememberMeLogin(username: string) {
     }
 }
 
-export function fetchContainer(app: string) {
+export function fetchContainer(app: string, url: string) {
     return {
         type: FETCH_CONTAINER,
         app,
+        url,
     }
 }
 

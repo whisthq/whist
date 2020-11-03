@@ -68,6 +68,9 @@ def get_release(repo, desired_release):
     all_release_names = "\n".join(
         list(map(lambda release: release.title, all_releases))
     )
+
+    print(all_release_names)
+
     raise Exception(
         f"Unable to find a release for '{desired_release}' in {len(all_release_names)} releases: {all_release_names}"
     )

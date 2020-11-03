@@ -9,8 +9,8 @@ import styles from "styles/dashboard.css"
 
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 
-import Banner from "../components/banner"
-import App from "../components/app"
+import Banner from "pages/dashboard/components/banner"
+import App from "pages/dashboard/components/app"
 
 const Discover = (props: any) => {
     const { updateCurrentTab, search } = props
@@ -25,18 +25,13 @@ const Discover = (props: any) => {
         return app.app_id.toLowerCase().startsWith(search.toLowerCase())
     }
 
-    const { data, error } = useQuery(GET_FEATURED_APPS)
+    const { data } = useQuery(GET_FEATURED_APPS)
     const featuredAppData = data
         ? data.hardware_supported_app_images.filter(checkActive)
         : []
 
     useEffect(() => {
-        console.log(error)
-    }, [error])
-
-    useEffect(() => {
         const results = featuredAppData.filter(getSearchResults)
-        console.log(results)
         setSearchResults(
             results.map((app: any) => <App key={app.app_id} app={app} />)
         )
