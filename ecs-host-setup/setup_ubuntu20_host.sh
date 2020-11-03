@@ -29,12 +29,6 @@ sudo groupadd docker ||:
 sudo gpasswd -a $USER docker
 
 echo "================================================"
-echo "Configuring docker daemon..."
-echo "================================================"
-sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
-sudo cp docker-daemon-config/seccomp-filter.json /etc/docker/seccomp-filter.json
-
-echo "================================================"
 echo "Installing nvidia drivers..."
 echo "================================================"
 sudo apt-get install -y linux-headers-$(uname -r)
@@ -77,6 +71,12 @@ curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 sudo apt-get update
 sudo apt-get install -y nvidia-docker2
+
+echo "================================================"
+echo "Configuring docker daemon..."
+echo "================================================"
+sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
+sudo cp docker-daemon-config/seccomp-filter.json /etc/docker/seccomp-filter.json
 # disable Docker (see README.md)
 sudo systemctl restart docker
 sudo systemctl disable --now docker
