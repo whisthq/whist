@@ -110,7 +110,14 @@ int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
     }
     if (*++oli != ':') { /* don't need argument */
         optarg = NULL;
-        if (!*place) ++optind;
+    } else if (*++oli == ':') { /* optional argument */
+        if (*place)             /* no white space */
+            optarg = place;
+        else if (nargc <= ++optind) { /* no arg */
+            optarg = NULL;
+        } else
+            optarg = nargv[optind];
+        place = EMSG;
     } else {        /* need an argument */
         if (*place) /* no white space */
             optarg = place;
@@ -123,8 +130,8 @@ int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
         } else /* white space */
             optarg = nargv[optind];
         place = EMSG;
-        ++optind;
     }
+    if (!*place) ++optind;
     return (optopt); /* dump back option letter */
 }
 

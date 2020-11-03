@@ -363,7 +363,7 @@ static int handleQuitMessage(FractalClientMessage *fmsg, int client_id, bool is_
 }
 
 static int handleInitMessage(FractalClientMessage *cfmsg, int client_id, bool is_controlling) {
-    client_id;
+    client_id, is_controlling;
     LOG_INFO("Receiving a message time packet");
 
     FractalDiscoveryRequestMessage fmsg = cfmsg->discoveryRequest;

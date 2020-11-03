@@ -46,7 +46,7 @@ Includes
 ============================
 */
 
-int parseArgs(int argc, char* argv[]);
+int parse_args(int argc, char* argv[]);
 
 char* getLogDir(void);
 

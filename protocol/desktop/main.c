@@ -506,8 +506,13 @@ int syncKeyboardState(void) {
 int main(int argc, char* argv[]) {
     init_default_port_mappings();
 
-    if (parseArgs(argc, argv) != 0) {
+    int ret = parse_args(argc, argv);
+    if (ret == -1) {
+        // invalid usage
         return -1;
+    } else if (ret == 1) {
+        // --help or --version
+        return 0;
     }
 
     srand(rand() * (unsigned int)time(NULL) + rand());

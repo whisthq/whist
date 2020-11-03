@@ -65,7 +65,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
 #define OPTION_STRING "w:h:b:c:k:u:e:z:p:xn:"
 
-int parseArgs(int argc, char *argv[]) {
+int parse_args(int argc, char *argv[]) {
     // TODO: replace `desktop` with argv[0]
     const char *usage =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
@@ -74,10 +74,11 @@ int parseArgs(int argc, char *argv[]) {
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
+        // regular options should look nice, with 2-space indenting for multiple lines
         "  -w, --width=WIDTH             Set the width for the windowed-mode\n"
         "                                  window, if both width and height\n"
         "                                  are specified\n"
-        "  -h, --height=HEIGHT           Set the height for the windowed-mode\n"
+        "  -h, --height=HEIGHT            Set the height for the windowed-mode\n"
         "                                  window, if both width and height\n"
         "                                  are specified\n"
         "  -b, --bitrate=BITRATE         Set the maximum bitrate to use\n"
@@ -85,19 +86,18 @@ int parseArgs(int argc, char *argv[]) {
         "                                  specified: h264 (default) or h265\n"
         "  -k, --private-key=PK          Pass in the RSA Private Key as a \n"
         "                                  hexadecimal string\n"
-        "  -u, --user=EMAIL              Tell fractal the users email. Optional, \n"
-        "                                  defaults to None\n"
-        "  -e, --environment=ENV         The environment the protocol is running \n"
-        "                                  in. e.g master, staging, dev. Optional,\n"
-        "                                  defaults to dev\n"
-        "  -p, --ports=PORTS             Pass in custom port:port mappings, comma-separated.\n"
-        "                                  Defaults to the identity mapping..\n"
+        "  -u, --user=EMAIL              Tell Fractal the user's email. Default: None \n"
+        "  -e, --environment=ENV         The environment the protocol is running in,\n"
+        "                                  e.g master, staging, dev. Default: dev\n"
+        "  -p, --ports=PORTS             Pass in custom port:port mappings, period-separated.\n"
+        "                                  Default: identity mapping\n"
         "  -x, --use_ci                  Launch the protocol in CI mode\n"
         "  -z, --connection_method=CM    Which connection method to try first,\n"
         "                                  either STUN or DIRECT\n"
-        "  -n, --name=NAME               Set the window title (default: Fractal)\n"
-        "      --help                    Display this help and exit\n"
-        "      --version                 Output version information and exit\n";
+        "  -n, --name=NAME               Set the window title. Default: Fractal\n"
+        // special options should be indented further to the left
+        "      --help     Display this help and exit\n"
+        "      --version  Output version information and exit\n";
 
     // Initialize private key to default
     memcpy((char *)&binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
@@ -192,7 +192,7 @@ int parseArgs(int argc, char *argv[]) {
                         unsigned short invalid_s_len = (unsigned short)min(bytes_read, 12);
                         strncpy(invalid_s, str, invalid_s_len);
                         invalid_s[invalid_s_len] = '\0';
-                        LOG_ERROR("Unable to parse the parse mapping \"%s\"", invalid_s);
+                        LOG_ERROR("Unable to parse the port mapping \"%s\"", invalid_s);
                         break;
                     }
                     // if %c was the end of the string, exit
