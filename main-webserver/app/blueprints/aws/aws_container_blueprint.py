@@ -43,7 +43,7 @@ def test_endpoint(action, **kwargs):
 
     if action == "delete_cluster":
         cluster, region_name = (
-            kwargs["body"]["cluster"],
+            kwargs["body"]["cluster_name"],
             kwargs["body"]["region_name"],
         )
         task = delete_cluster.apply_async([cluster, region_name])
@@ -77,6 +77,7 @@ def test_endpoint(action, **kwargs):
                 "region_name": region_name,
                 "use_launch_type": use_launch_type,
                 "network_configuration": network_configuration,
+                "webserver_url": kwargs["webserver_url"],
             },
         )
         if not task:
@@ -193,7 +194,11 @@ def aws_container_post(action, **kwargs):
                     response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
                 else:
                     task = create_new_container.delay(
-                        user, task_arn, region_name=region, cluster_name=sample_cluster
+                        user,
+                        task_arn,
+                        region_name=region,
+                        cluster_name=sample_cluster,
+                        webserver_url=kwargs["webserver_url"],
                     )
                     response = jsonify({"ID": task.id}), ACCEPTED
 

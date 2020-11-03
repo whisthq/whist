@@ -227,7 +227,7 @@ def test_delete_cluster(client, authorized, cluster=pytest.cluster_name):
     resp = client.post(
         "/aws_container/delete_cluster",
         json=dict(
-            cluster=pytest.cluster_name,
+            cluster_name=pytest.cluster_name,
             region_name="us-east-1",
         ),
     )
