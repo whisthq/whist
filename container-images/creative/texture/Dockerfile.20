@@ -1,0 +1,26 @@
+FROM fractal/base:current-build
+
+# Install yarn dependencies explicitly
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    curl \
+    && apt-get autoremove -y \
+    && apt-get clean  
+
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - \
+    && echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+
+RUN apt-get update && apt-get install -y \
+    yarn \
+    && apt-get autoremove -y \
+    && apt-get clean
+
+RUN git clone https://github.com/njbrown/texturelab.git /usr/bin/texturelab 
+RUN cd /usr/bin/texturelab && git submodule update --init
+COPY run-texture.sh /usr/bin/texturelab/run-texture.sh
+RUN chmod +x /usr/bin/texturelab/run-texture.sh
+
+COPY .xinitrc /root/.xinitrc
+
