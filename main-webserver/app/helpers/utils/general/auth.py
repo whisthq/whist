@@ -47,15 +47,15 @@ def fractalAuth(f):
             logger.setLevel(logging.DEBUG)
 
             logger.info(
-                "Authorization failed. Provided username {username} does not match username associated with provided Bearer token {bearer}.".format(
-                    username=str(username), bearer=str(current_user)
-                )
+                f"Authorization failed. Provided username {username} does not match username "
+                f"associated with provided Bearer token {current_user}."
             )
             return (
                 jsonify(
                     {
-                        "error": "Authorization failed. Provided username {username} does not match username associated with provided Bearer token {bearer}.".format(
-                            username=str(username), bearer=str(current_user)
+                        "error": (
+                            f"Authorization failed. Provided username {username} does not match "
+                            f"the username associated with provided Bearer token {current_user}."
                         )
                     }
                 ),
@@ -75,7 +75,10 @@ def adminRequired(f):
             return (
                 jsonify(
                     {
-                        "error": "Authorization failed. Provided username does not match username associated with provided Bearer token."
+                        "error": (
+                            "Authorization failed. Provided username does not match the username "
+                            "associated with the provided Bearer token."
+                        ),
                     }
                 ),
                 UNAUTHORIZED,
