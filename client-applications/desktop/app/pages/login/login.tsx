@@ -34,6 +34,7 @@ const Login = (props: any) => {
         dispatch,
         os,
         loginWarning,
+        loginMessage,
         launchImmediately,
         launchURL,
         accessToken,
@@ -124,7 +125,7 @@ const Login = (props: any) => {
     const handleLoginUser = () => {
         setLoggingIn(true)
         setAWSRegion().then(() => {
-            dispatch(updateAuth({ loginWarning: false }))
+            dispatch(updateAuth({ loginWarning: false, loginMessage: null }))
             if (!rememberMe) {
                 storage.set("credentials", {
                     username: "",
@@ -331,22 +332,29 @@ const Login = (props: any) => {
                                         // width: 265,
                                     }}
                                 >
-                                    <div>
-                                        Invalid credentials. If you lost your
-                                        password, you can reset it on the&nbsp;
-                                        <div
-                                            onClick={forgotPassword}
-                                            className={styles.pointerOnHover}
-                                            style={{
-                                                display: "inline",
-                                                fontWeight: "bold",
-                                                textDecoration: "underline",
-                                            }}
-                                        >
-                                            website
+                                    {loginMessage ? (
+                                        <div>{loginMessage}</div>
+                                    ) : (
+                                        <div>
+                                            Invalid credentials. If you lost
+                                            your password, you can reset it on
+                                            the&nbsp;
+                                            <div
+                                                onClick={forgotPassword}
+                                                className={
+                                                    styles.pointerOnHover
+                                                }
+                                                style={{
+                                                    display: "inline",
+                                                    fontWeight: "bold",
+                                                    textDecoration: "underline",
+                                                }}
+                                            >
+                                                website
+                                            </div>
+                                            .
                                         </div>
-                                        .
-                                    </div>
+                                    )}
                                 </div>
                             )}
                             <div className={styles.labelContainer}>
@@ -526,6 +534,7 @@ function mapStateToProps(state: any) {
     return {
         username: state.MainReducer.auth.username,
         loginWarning: state.MainReducer.auth.loginWarning,
+        loginMessage: state.MainReducer.auth.loginMessage,
         accessToken: state.MainReducer.auth.accessToken,
         refreshToken: state.MainReducer.auth.refreshToken,
         os: state.MainReducer.client.os,

@@ -9,6 +9,13 @@ import moment from "moment"
 
 function* refreshAccess() {
     const state = yield select()
+    const username = state.MainReducer.auth.username
+
+    if (!username || username === "None" || username === "") {
+        history.push("/")
+        return
+    }
+
     const { json } = yield call(
         apiPost,
         `/token/refresh`,
@@ -32,7 +39,7 @@ function* loginUser(action: any) {
             password: action.password,
         })
 
-        if (json && json.verified) {
+        if (json && json.verified && json.can_login) {
             yield put(
                 Action.updateAuth({
                     accessToken: json.access_token,
@@ -54,9 +61,29 @@ function* loginUser(action: any) {
             history.push("/dashboard")
         } else {
             yield put(Action.updateAuth({ loginWarning: true }))
+            if (json.access_token) {
+                if (!json.verified) {
+                    yield put(
+                        Action.updateAuth({
+                            loginMessage:
+                                "You have not verified your email. Check your email for a verification email.",
+                        })
+                    )
+
+                    yield call(sendVerificationEmail, {
+                        email: action.username,
+                        token: json.verification_token,
+                    })
+                } else if (!json.can_login) {
+                    yield put(
+                        Action.updateAuth({
+                            loginMessage:
+                                "You are still on the waitlist. We will email you when you've been selected!",
+                        })
+                    )
+                }
+            }
         }
-    } else {
-        yield put(Action.updateAuth({ loginWarning: true }))
     }
 }
 
@@ -70,6 +97,16 @@ function* googleLogin(action: any) {
         })
         if (json) {
             if (response.status === 200) {
+                if (!json.can_login) {
+                    yield put(
+                        Action.updateAuth({
+                            loginWarning: true,
+                            loginMessage:
+                                "You are still on the waitlist. We will email you when you've been selected!",
+                        })
+                    )
+                    return
+                }
                 yield put(
                     Action.updateAuth({
                         accessToken: json.access_token,
@@ -91,7 +128,12 @@ function* googleLogin(action: any) {
                 yield call(getPromoCode, { username: json.username })
                 history.push("/dashboard")
             } else {
-                yield put(Action.updateAuth({ loginWarning: true }))
+                yield put(
+                    Action.updateAuth({
+                        loginWarning: true,
+                        loginMessage: "Try using non-Google login.",
+                    })
+                )
             }
         } else {
             yield put(Action.updateAuth({ loginWarning: true }))
@@ -165,11 +207,16 @@ function* fetchContainer(action: any, retries?: number) {
         var region = state.MainReducer.client.region
             ? state.MainReducer.client.region
             : "us-east-1"
-        if (region === "ca-central-1") {
+        if (region === "us-east-2") {
             region = "us-east-1"
         }
-        if (region === "us-west-1") {
-            region = "us-west-2"
+        if (region === "us-west-2") {
+            region = "us-west-1"
+        }
+
+        if (!username || username === "None" || username === "") {
+            history.push("/")
+            return
         }
 
         var { json, response } = yield call(
@@ -266,6 +313,7 @@ function* fetchContainer(action: any, retries?: number) {
                             port32273: json.output.port_32273,
                             location: json.output.location,
                             publicIP: json.output.ip,
+                            secretKey: json.output.secret_key,
                         })
                     )
                 }
@@ -315,6 +363,20 @@ function* submitFeedback(action: any) {
     if (response.status === 401 || response.status === 422) {
         yield call(refreshAccess)
         yield call(submitFeedback, action)
+    }
+}
+
+function* sendVerificationEmail(action: any) {
+    if (action.email !== "" && action.token !== "") {
+        yield call(
+            apiPost,
+            "/mail/verification",
+            {
+                username: action.email,
+                token: action.token,
+            },
+            ""
+        )
     }
 }
 

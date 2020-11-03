@@ -11,6 +11,7 @@ export function updateAuth(body: {
     accessToken?: string
     refreshToken?: string
     loginWarning?: boolean
+    loginMessage?: string
     name?: string
 }) {
     return {
@@ -27,6 +28,7 @@ export function updateContainer(body: {
     port32263: string
     port32273: string
     location: string
+    secretKey: string
 }) {
     return {
         type: UPDATE_CONTAINER,
