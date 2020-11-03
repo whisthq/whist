@@ -283,17 +283,6 @@ function* fetchContainer(action: any, retries?: number) {
     }
 }
 
-function* deleteContainer(action: any) {
-    console.log("sending delete container")
-    const state = yield select()
-    yield call(
-        apiPost,
-        `/container/delete`,
-        { username: action.username, container_id: action.container_id },
-        state.MainReducer.auth.accessToken
-    )
-}
-
 function* submitFeedback(action: any) {
     const state = yield select()
     const { response } = yield call(
@@ -319,7 +308,6 @@ export default function* rootSaga() {
         takeEvery(SideEffect.GOOGLE_LOGIN, googleLogin),
         takeEvery(SideEffect.REMEMBER_ME_LOGIN, rememberMeLogin),
         takeEvery(SideEffect.FETCH_CONTAINER, fetchContainer),
-        takeEvery(SideEffect.DELETE_CONTAINER, deleteContainer),
         takeEvery(SideEffect.SUBMIT_FEEDBACK, submitFeedback),
     ])
 }

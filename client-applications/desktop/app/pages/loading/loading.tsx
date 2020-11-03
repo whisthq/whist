@@ -7,7 +7,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 import { debugLog } from "shared/utils/logging"
-import { deleteContainer } from "store/actions/sideEffects"
 import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/configureStore"
 import { execChmodUnix } from "shared/utils/exec"
@@ -16,7 +15,6 @@ const UpdateScreen = (props: any) => {
     const {
         dispatch,
         os,
-        username,
         percentLoaded,
         status,
         container_id,
@@ -87,7 +85,6 @@ const UpdateScreen = (props: any) => {
                     //},
                 })
                 protocol.on("close", () => {
-                    dispatch(deleteContainer(username, container_id))
                     dispatch(
                         updateContainer({
                             container_id: null,
@@ -192,7 +189,6 @@ function mapStateToProps(state: any) {
     console.log(state)
     return {
         os: state.MainReducer.client.os,
-        username: state.MainReducer.auth.username,
         percentLoaded: state.MainReducer.loading.percentLoaded,
         status: state.MainReducer.loading.statusMessage,
         container_id: state.MainReducer.container.container_id,
