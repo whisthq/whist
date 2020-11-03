@@ -181,6 +181,7 @@ def aws_container_post(action, **kwargs):
             try:
                 app = body.pop("app")
                 region = body.pop("region")
+                dpi = body.get("dpi", 96)
                 if region not in allowed_regions:
                     response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
                     return response
@@ -199,6 +200,7 @@ def aws_container_post(action, **kwargs):
                         region_name=region,
                         cluster_name=sample_cluster,
                         webserver_url=kwargs["webserver_url"],
+                        dpi=dpi,
                     )
                     response = jsonify({"ID": task.id}), ACCEPTED
 
