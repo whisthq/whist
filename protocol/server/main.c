@@ -1024,7 +1024,9 @@ int MultithreadedManageClients(void* opaque) {
             trying_to_update = false;
 
             // client has connected to server for the first time
+            // update webserver parameters the first time a client connects
             if (!first_client_connected) {
+                update();
                 first_client_connected = true;
             }
 
