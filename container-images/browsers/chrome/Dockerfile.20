@@ -39,10 +39,14 @@ RUN su - fractal -c \
     && xdg-mime default google-chrome.desktop x-scheme-handler/https \
     && xdg-mime default google-chrome.desktop x-scheme-handler/about"
 
+COPY install-extensions.sh /usr/bin/install-extensions.sh
+RUN chmod +x /usr/bin/install-extensions.sh
+RUN /usr/bin/install-extensions.sh
+
 # Don't show first run popup
 RUN su - fractal -c "mkdir -p /home/fractal/.config/google-chrome \
     && touch /home/fractal/.config/google-chrome/'First Run'"
 
 # Setup Fractal application symlink
-RUN ln -sf $(which google-chrome) /usr/bin/fractal-application
-
+# Application startup script
+COPY .xinitrc /root/.xinitrc
