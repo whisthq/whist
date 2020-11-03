@@ -45,7 +45,6 @@ export const actions = {
             CLICKED_EASTEREGG_9: "Clicked easter egg 9",
         },
 
-        CLICKED_CLICKME: "Clicked on the click me button",
         CLICKED_GOTO_AUTH_BUTTON:
             "Clicked on button guiding users to auth for points",
 
@@ -62,6 +61,7 @@ export const actions = {
 
         CLICKED_REFER_FRIEND: "Clicked on refer a friend",
         REFERRED_FRIEND: "Referred friend",
+        SENT_REFERALL_EMAIL: "Sent Referall Email",
 
         HEADER_LINKS: {
             CLICKED_SUPPORT_HEADER:
