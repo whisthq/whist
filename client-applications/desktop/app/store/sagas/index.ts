@@ -227,6 +227,7 @@ function* fetchContainer(action: any, retries?: number) {
                 region: region,
                 app: action.app,
                 url: action.url,
+                dpi: state.MainReducer.client.dpi,
             },
             state.MainReducer.auth.accessToken
         )
