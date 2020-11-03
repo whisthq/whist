@@ -55,9 +55,6 @@ export default function (state = DEFAULT, action: any) {
                 })
             })
 
-            console.log("STATE REFRESH")
-            console.log(mergeInto)
-
             return mergeInto
         default:
             return state

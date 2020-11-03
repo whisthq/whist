@@ -9,9 +9,7 @@ const SwitchMode = (props: {
     const { question, link, closer, onClick } = props
 
     return (
-        <div
-            style={{ textAlign: "center" }}
-        >
+        <div style={{ textAlign: "center" }}>
             {question + " "}
             <span
                 style={{ color: "#3930b8" }}

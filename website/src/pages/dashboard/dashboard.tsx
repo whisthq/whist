@@ -18,6 +18,7 @@ const Dashboard = (props: {
     dispatch: any
     user: {
         user_id: string
+        canLogin: boolean
     }
 }) => {
     const { user } = props
@@ -25,10 +26,12 @@ const Dashboard = (props: {
     //const [copiedtoClip, setCopiedtoClip] = useState(false)
     //const linuxCommands = "sudo apt-get install libavcodec-dev libavdevice-dev libx11-dev libxtst-dev xclip x11-xserver-utils -y"
     const valid_user = user.user_id && user.user_id !== ""
-    const name = user.user_id.split("@")[0]
+    const name = user.user_id ? user.user_id.split("@")[0] : ""
 
     if (!valid_user) {
         return <Redirect to="/auth" />
+    } else if (!user.canLogin) {
+        return <Redirect to="/" />
     } else {
         // for now it wil lalways be loading
         return (
