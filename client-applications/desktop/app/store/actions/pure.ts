@@ -36,7 +36,11 @@ export function updateContainer(body: {
     }
 }
 
-export function updateClient(body: { os?: string; region?: string }) {
+export function updateClient(body: {
+    os?: string
+    region?: string
+    dpi?: number
+}) {
     return {
         type: UPDATE_CLIENT,
         body,

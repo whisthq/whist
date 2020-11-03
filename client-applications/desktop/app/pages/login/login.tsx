@@ -27,7 +27,7 @@ import { config } from "shared/constants/config"
 import { fetchContainer } from "store/actions/sideEffects"
 import { execChmodUnix } from "shared/utils/exec"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
-import { checkActive, urlToApp } from "pages/login/constants/helpers"
+import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
 
 const Login = (props: any) => {
     const {
@@ -214,8 +214,9 @@ const Login = (props: any) => {
         })
 
         const appVersion = require("../../package.json").version
+        const dpi = findDPI()
         const os = require("os")
-        dispatch(updateClient({ os: os.platform() }))
+        dispatch(updateClient({ os: os.platform(), dpi: dpi }))
         setVersion(appVersion)
 
         storage.get("credentials", (error: any, data: any) => {

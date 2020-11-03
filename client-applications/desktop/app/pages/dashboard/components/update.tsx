@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
-import Logo from "assets/images/logo.svg"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
@@ -10,7 +9,7 @@ const UpdateScreen = (props: any) => {
     const { os } = props
 
     const [updateScreen, setUpdateScreen] = useState(false)
-    const [percentageLeft, setPercentageLeft] = useState(300)
+    const [percentageLeft, setPercentageLeft] = useState(500)
     const [percentageDownloaded, setPercentageDownloaded] = useState(0)
     const [downloadSpeed, setDownloadSpeed] = useState("0")
     const [transferred, setTransferred] = useState("0")
@@ -36,7 +35,7 @@ const UpdateScreen = (props: any) => {
 
         ipc.on("percent", (_: any, percent: any) => {
             percent = percent * 3
-            setPercentageLeft(300 - percent)
+            setPercentageLeft(500 - percent)
             setPercentageDownloaded(percent)
         })
 
@@ -69,7 +68,7 @@ const UpdateScreen = (props: any) => {
                         left: 0,
                         width: 1000,
                         height: 680,
-                        backgroundColor: "#0B172B",
+                        backgroundColor: "white",
                         zIndex: 1000,
                     }}
                 >
@@ -82,21 +81,7 @@ const UpdateScreen = (props: any) => {
                     )}
                     <div className={styles.landingHeader}>
                         <div className={styles.landingHeaderLeft}>
-                            <img src={Logo} width="20" height="20" />
                             <span className={styles.logoTitle}>Fractal</span>
-                        </div>
-                        <div className={styles.landingHeaderRight}>
-                            <span id="forgotButton" onClick={forgotPassword}>
-                                Forgot Password?
-                            </span>
-                            <button
-                                type="button"
-                                className={styles.signupButton}
-                                id="signup-button"
-                                onClick={signUp}
-                            >
-                                Sign Up
-                            </button>
                         </div>
                     </div>
                     <div style={{ position: "relative" }}>
@@ -119,8 +104,7 @@ const UpdateScreen = (props: any) => {
                                     style={{
                                         width: `${percentageDownloaded}px`,
                                         height: 6,
-                                        background:
-                                            "linear-gradient(258.54deg, #5ec3eb 0%, #d023eb 100%)",
+                                        background: "#EFEFEF",
                                     }}
                                 ></div>
                                 <div
@@ -141,12 +125,12 @@ const UpdateScreen = (props: any) => {
                                         justifyContent: "center",
                                     }}
                                 >
-                                    <div style={{ color: "#D6D6D6" }}>
+                                    <div style={{ color: "#333333" }}>
                                         <FontAwesomeIcon
                                             icon={faCircleNotch}
                                             spin
                                             style={{
-                                                color: "#5EC4EB",
+                                                color: "#333333",
                                                 marginRight: 4,
                                                 width: 12,
                                             }}
@@ -165,14 +149,14 @@ const UpdateScreen = (props: any) => {
                                         justifyContent: "center",
                                     }}
                                 >
-                                    <div style={{ color: "#D6D6D6" }}>
+                                    <div style={{ color: "#333333" }}>
                                         {downloadError}
                                     </div>
                                 </div>
                             )}
                             <div
                                 style={{
-                                    color: "#C9C9C9",
+                                    color: "#333333",
                                     fontSize: 10,
                                     margin: "auto",
                                     marginTop: 5,

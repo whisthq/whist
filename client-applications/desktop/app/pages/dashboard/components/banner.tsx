@@ -33,7 +33,7 @@ const BannerItem = (props: any) => {
 }
 
 const Banner = (props: any) => {
-    const { data, os, error } = useQuery(GET_BANNERS)
+    const { data, error } = useQuery(GET_BANNERS)
     const bannerData = data ? data.hardware_banners : []
     const bannerBackgrounds = bannerData.map(
         (bannerItem: any) => bannerItem.background
