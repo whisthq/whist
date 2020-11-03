@@ -1191,15 +1191,15 @@ int parse_args(int argc, char* argv[]) {
                 identifier[FRACTAL_IDENTIFIER_MAXLEN] = 0;
                 break;
             }
-	          case 'd': {
-		            if (dpi != -1) {
-		                printf("Error: -d was passed in twice");
-		                return -1;
-	              }
-           	    int new_dpi = strtol(optarg, &end_ptr, 10);
-	          	  printf("Setting DPI to %d", new_dpi);
-	              dpi = new_dpi;
-           	 	  break;
+            case 'd': {
+                if (dpi != -1) {
+                    printf("Error: -d was passed in twice");
+                    return -1;
+                }
+                int new_dpi = strtol(optarg, &end_ptr, 10);
+                printf("Setting DPI to %d", new_dpi);
+                dpi = new_dpi;
+                break;
             }
             case 'w': {
                 printf("Webserver URL passed in: %s", optarg);
@@ -1247,8 +1247,8 @@ int parse_args(int argc, char* argv[]) {
 
     if (dpi != -1) {
 #ifdef _WIN32
-	printf("DPI setting not implemented yet on windows server");
-	return -1;
+        printf("DPI setting not implemented yet on windows server");
+        return -1;
 #else
         snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
         runcmd(cmd, NULL);
