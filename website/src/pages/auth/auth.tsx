@@ -28,6 +28,9 @@ const Auth = (props: {
 }) => {
     const { user, waitlistUser, match, mode } = props
 
+    console.log("USER")
+    console.log(user)
+
     useEffect(() => {
         const firstParam = match.params.first
         if (firstParam !== "bypass" && !waitlistUser.user_id) {
