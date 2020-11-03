@@ -1,3 +1,5 @@
+import * as SharedAction from "store/actions/shared"
+
 export const UPDATE_USER = "UPDATE_USER"
 export const UPDATE_AUTH_FLOW = "UPDATE_AUTH_FLOW"
 
@@ -10,6 +12,7 @@ export function updateUser(body: {
     refreshToken?: string
     emailVerificationToken?: string
     emailVerified?: boolean
+    canLogin?: boolean
 }) {
     //console.log("update user action")
     return {
@@ -23,6 +26,7 @@ export function updateAuthFlow(body: {
     loginWarning?: string | null
     signupWarning?: string | null
     signupSuccess?: boolean
+    verificationStatus?: string | null
     forgotStatus?: string | null
     verificationEmailsSent?: number
     forgotEmailsSent?: number
@@ -40,5 +44,11 @@ export function updateAuthFlow(body: {
 export function resetUser() {
     return {
         type: RESET_USER,
+    }
+}
+
+export function resetState() {
+    return {
+        type: SharedAction.RESET_STATE,
     }
 }

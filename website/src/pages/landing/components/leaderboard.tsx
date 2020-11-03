@@ -71,7 +71,7 @@ const Leaderboard = (props: { waitlist: any[]; waitlistUser: any }) => {
                                     marginRight: 15,
                                     position: "relative",
                                     top: 4,
-                                    color: "#3930b8",
+                                    color: userRow ? "#fffa99" : "#3930b8",
                                 }}
                             />
                         )}
