@@ -1608,7 +1608,7 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
 
     // DO NOT LOG ARBITRARY HTTP REQUESTS -- THEY MAY CONTAIN SENSITIVE INFO
     // LIKE PRIVATE KEYS
-    /* LOG_INFO("Sending request: %s", message); */
+    // LOG_INFO("Sending request: %s", message);
 
     // now we send it
     int total_sent = 0;
@@ -1676,6 +1676,29 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
 
 bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token,
                      char **response_body, size_t max_response_size) {
+    /*
+        Send post request to `host_s` with body `payload`
+
+        Arguments:
+            host_s (char*): host for request to be sent to
+            path (char*): path in host to send request to
+            payload (char*): content to be sent in request body
+            access_token (char*): access token for Authorization header of request
+            response_body (char**): pointer to buffer for request response to be
+                copied into
+            max_response_size (size_t): max size of received response to be
+                copied into `response_body`
+
+        Return:
+            bool: return true on succes (or 0-length host), false on failure
+    */
+
+    // assume that no host means no post request needs to be sent,
+    //  so treat this as an auto-success
+    if (strlen(host_s) == 0) {
+        return true;
+    }
+
     // prepare the message
     char access_token_header[1000];
     if (access_token) {
@@ -1705,6 +1728,27 @@ bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token
 }
 
 bool SendGetRequest(char *host_s, char *path, char **response_body, size_t max_response_size) {
+    /*
+        Send get request to `host_s`
+
+        Arguments:
+            host_s (char*): host for request to be sent to
+            path (char*): path in host to send request to
+            response_body (char**): pointer to buffer for request response to be
+                copied into
+            max_response_size (size_t): max size of received response to be
+                copied into `response_body`
+
+        Return:
+            bool: return true on succes (or 0-length host), false on failure
+    */
+
+    // assume that no host means no post request needs to be sent,
+    //  so treat this as an auto-success
+    if (strlen(host_s) == 0) {
+        return true;
+    }
+
     // prepare the message
     char *message = malloc(100 + strlen(path) + strlen(host_s));
     sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);

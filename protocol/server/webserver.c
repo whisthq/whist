@@ -10,22 +10,16 @@ static bool is_using_stun;
 static char* access_token = NULL;
 static char* container_id = NULL;
 static char* user_id = NULL;
-bool is_trying_staging_protocol_info = false;
 
 extern char hex_aes_private_key[33];
 extern char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
+extern char webserver_url[MAX_WEBSERVER_URL_LEN + 1];
 
 void update_webserver_parameters() {
     // Don't need to check more than once every 30 sec
     if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 30.0) {
         return;
     }
-
-    bool will_try_staging = false;
-    if (is_trying_staging_protocol_info) {
-        will_try_staging = true;
-    }
-    is_trying_staging_protocol_info = false;
 
     if (!already_obtained_vm_type) {
         // Set Default Values
@@ -46,8 +40,8 @@ void update_webserver_parameters() {
             "}",
             identifier, hex_aes_private_key);
 
-    if (!SendPostRequest(will_try_staging ? STAGING_HOST : PRODUCTION_HOST,
-                         "/container/protocol_info", msg, NULL, &resp_buf, resp_buf_maxlen)) {
+    if (!SendPostRequest(webserver_url, "/container/protocol_info", msg, NULL, &resp_buf,
+                         resp_buf_maxlen)) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;
@@ -144,15 +138,9 @@ void update_webserver_parameters() {
     }
 
     free_json(json);
-    if (is_autoupdate && !will_try_staging) {
-        is_trying_staging_protocol_info = true;
-        // This time trying the staging protocol info, if we haven't already
-        update_webserver_parameters();
-        return;
-    } else {
-        already_obtained_vm_type = true;
-        StartTimer(&last_vm_info_check_time);
-    }
+
+    already_obtained_vm_type = true;
+    StartTimer(&last_vm_info_check_time);
 }
 
 char* get_branch() {

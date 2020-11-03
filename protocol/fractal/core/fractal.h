@@ -86,9 +86,6 @@ Defines
 #define BASE_UDP_PORT 32263
 #define BASE_TCP_PORT (BASE_UDP_PORT + MAX_NUM_CLIENTS)
 
-#define PRODUCTION_HOST "main-webserver.tryfractal.com"
-#define STAGING_HOST "staging-webserver.tryfractal.com"
-
 #define USING_AUDIO_ENCODE_DECODE true
 #define USING_FFMPEG_IFRAME_FLAG false
 
@@ -131,6 +128,7 @@ Defines
 #define USER_EMAIL_MAXLEN 200
 #define FRACTAL_ENVIRONMENT_MAXLEN 100
 #define FRACTAL_IDENTIFIER_MAXLEN 31
+#define MAX_WEBSERVER_URL_LEN 63
 
 /*
 ============================

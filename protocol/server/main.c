@@ -78,6 +78,7 @@ extern Client clients[MAX_NUM_CLIENTS];
 char binary_aes_private_key[16];
 char hex_aes_private_key[33];
 char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
+char webserver_url[MAX_WEBSERVER_URL_LEN + 1];
 volatile int connection_id;
 static volatile bool exiting;
 
@@ -238,12 +239,10 @@ int SendContainerDestroyMessage() {
     LOG_INFO("CONTAINER DESTROY SIGNAL");
 
     char* container_id = get_container_id();
-    char* user_id = get_user_id();
-    if (!container_id || !user_id) {
+    if (!container_id) {
+        LOG_ERROR("Container destroy could not find container_id");
         return -1;
     }
-
-    char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
 
     char payload[256];
     snprintf(payload, sizeof(payload),
@@ -256,7 +255,7 @@ int SendContainerDestroyMessage() {
     // send destroy request, don't require response -> update this later
     char* resp_buf = NULL;
     size_t resp_buf_maxlen = 4800;
-    SendPostRequest(host, "/container/delete", payload, get_access_token(), &resp_buf,
+    SendPostRequest(webserver_url, "/container/delete", payload, get_access_token(), &resp_buf,
                     resp_buf_maxlen);
 
     LOG_INFO("/container/delete response: %s", resp_buf);
@@ -951,9 +950,7 @@ int MultithreadedManageClients(void* opaque) {
     clock last_update_timer;
     StartTimer(&last_update_timer);
 
-    char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
-
-    sendConnectionHistory(host, get_access_token(), identifier, hex_aes_private_key);
+    sendConnectionHistory(webserver_url, get_access_token(), identifier, hex_aes_private_key);
     connection_id = rand();
     startConnectionLog();
     bool have_sent_logs = true;
@@ -980,7 +977,8 @@ int MultithreadedManageClients(void* opaque) {
         LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
                  have_sent_logs ? "yes" : "no");
         if (saved_num_active_clients == 0 && !have_sent_logs) {
-            sendConnectionHistory(host, get_access_token(), identifier, hex_aes_private_key);
+            sendConnectionHistory(webserver_url, get_access_token(), identifier,
+                                  hex_aes_private_key);
             have_sent_logs = true;
         } else if (saved_num_active_clients > 0 && have_sent_logs) {
             have_sent_logs = false;
@@ -1121,13 +1119,14 @@ int MultithreadedManageClients(void* opaque) {
 
 const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k'},
                                      {"identifier", required_argument, NULL, 'i'},
+                                     {"webserver", required_argument, NULL, 'w'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
 
-#define OPTION_STRING "k:i:"
+#define OPTION_STRING "k:i:w:"
 
 int parse_args(int argc, char* argv[]) {
     // TODO: replace `server` with argv[0]
@@ -1143,7 +1142,9 @@ int parse_args(int argc, char* argv[]) {
         "  -i, --identifier=ID           pass in the unique identifier for this\n"
         "                                  server as a hexadecimal string\n"
         "      --help     display this help and exit\n"
-        "      --version  output version information and exit\n";
+        "      --version  output version information and exit\n"
+        "  -w, --webserver=WS_URL        pass in the webserver url for this\n"
+        "                                  server's requests";
 
     // Initialize private key to default
     memcpy((char*)&binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
@@ -1161,7 +1162,7 @@ int parse_args(int argc, char* argv[]) {
         }
         errno = 0;
         switch (opt) {
-            case 'k':
+            case 'k': {
                 if (!read_hexadecimal_private_key(optarg, (char*)binary_aes_private_key,
                                                   (char*)hex_aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
@@ -1169,7 +1170,8 @@ int parse_args(int argc, char* argv[]) {
                     return -1;
                 }
                 break;
-            case 'i':
+            }
+            case 'i': {
                 printf("Identifier passed in: %s", optarg);
                 if (strlen(optarg) > FRACTAL_IDENTIFIER_MAXLEN) {
                     printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
@@ -1179,19 +1181,33 @@ int parse_args(int argc, char* argv[]) {
                 strncpy(identifier, optarg, FRACTAL_IDENTIFIER_MAXLEN);
                 identifier[FRACTAL_IDENTIFIER_MAXLEN] = 0;
                 break;
-            case FRACTAL_GETOPT_HELP_CHAR:
+            }
+            case 'w': {
+                printf("Webserver URL passed in: %s", optarg);
+                if (strlen(optarg) > MAX_WEBSERVER_URL_LEN) {
+                    printf("Webserver url passed in is too long! Has length %lu but max is %d.\n",
+                           (unsigned long)strlen(optarg), MAX_WEBSERVER_URL_LEN);
+                }
+                strncpy(webserver_url, optarg, MAX_WEBSERVER_URL_LEN);
+                webserver_url[MAX_WEBSERVER_URL_LEN] = 0;
+                break;
+            }
+            case FRACTAL_GETOPT_HELP_CHAR: {
                 printf("%s", usage_details);
                 return 1;
-            case FRACTAL_GETOPT_VERSION_CHAR:
+            }
+            case FRACTAL_GETOPT_VERSION_CHAR: {
                 printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
                 return 1;
-            default:
+            }
+            default: {
                 if (opt != -1) {
                     // illegal option
                     printf("%s", usage);
                     return -1;
                 }
                 break;
+            }
         }
         if (opt == -1) {
             bool can_accept_nonoption_args = false;
@@ -1278,8 +1294,7 @@ int main(int argc, char* argv[]) {
 
     update();
 
-    char* host = allow_autoupdate() ? STAGING_HOST : PRODUCTION_HOST;
-    updateServerStatus(false, host, get_access_token(), identifier, hex_aes_private_key);
+    updateServerStatus(false, webserver_url, get_access_token(), identifier, hex_aes_private_key);
 
     clock startup_time;
     StartTimer(&startup_time);
@@ -1328,8 +1343,8 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
-            updateServerStatus(num_controlling_clients > 0, host, get_access_token(), identifier,
-                               hex_aes_private_key);
+            updateServerStatus(num_controlling_clients > 0, webserver_url, get_access_token(),
+                               identifier, hex_aes_private_key);
             StartTimer(&ack_timer);
         }
 
