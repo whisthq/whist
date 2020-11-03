@@ -12,3 +12,5 @@ install_chrome_extension () {
 }
 
 install_chrome_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin"
+install_chrome_extension "hdokiejnpimakedhajhdlcegeplioahd" "LastPass: Free Password Manager"
+install_chrome_extension "klbibkeccnjlkjkiokjodocebajanakg" "The Great Suspender"

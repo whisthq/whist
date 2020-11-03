@@ -49,4 +49,6 @@ RUN su - fractal -c "mkdir -p /home/fractal/.config/google-chrome \
 
 # Setup Fractal application symlink
 # Application startup script
-COPY .xinitrc /root/.xinitrc
+COPY start-chrome.sh /usr/bin/start-chrome
+RUN chmod +x /usr/bin/start-chrome
+RUN ln -sf /usr/bin/start-chrome /usr/bin/fractal-application
