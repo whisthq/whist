@@ -25,4 +25,4 @@ then
     OPTIONS="$OPTIONS --webserver=$WEBSERVER_URL"
 fi
 
-/usr/share/fractal/FractalServer $OPTIONS
+/usr/share/fractal/FractalServer --identifier=$IDENTIFIER  $OPTIONS
