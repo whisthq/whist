@@ -82,8 +82,14 @@
             "type": "distribution"
         },
         "productName": "Fractal",
+        "protocols": {
+            "name": "fractal-protocol",
+            "schemes": [
+                "fractal"
+            ]
+        },
         "publish": {
-            "bucket": "fractal: fractal-applications-testing",
+            "bucket": "fractal-mac-application-testing",
             "provider": "s3",
             "region": "us-east-1"
         },
@@ -91,12 +97,6 @@
             "icon": "build/icon.ico",
             "target": [
                 "nsis"
-            ]
-        },
-        "protocols": {
-            "name": "fractal-protocol",
-            "schemes": [
-                "fractal"
             ]
         }
     },
@@ -111,8 +111,8 @@
         }
     ],
     "dependencies": {
-        "3": "^2.1.0",
         "-": "^0.0.1",
+        "3": "^2.1.0",
         "@apollo/client": "^3.2.4",
         "@fortawesome/fontawesome-free": "^5.12.1",
         "@fortawesome/fontawesome-svg-core": "^1.2.27",

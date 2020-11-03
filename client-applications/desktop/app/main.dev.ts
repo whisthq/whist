@@ -14,6 +14,7 @@ import { autoUpdater } from "electron-updater"
 
 let updating = false
 let mainWindow: BrowserWindow | null = null
+var customURL = null
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 process.env.GOOGLE_API_KEY = "AIzaSyA2FUwAOXKqIWMqKN5DNPBUaqYMOWdBADQ"
@@ -103,6 +104,10 @@ const createWindow = async () => {
 
             const url = process.argv.slice(1)
             mainWindow.webContents.send("customURL", url.toString())
+        } else {
+            if (customURL) {
+                mainWindow.webContents.send("customURL", customURL)
+            }
         }
         if (
             process.env.NODE_ENV === "development" ||
@@ -158,7 +163,7 @@ app.setAsDefaultProtocolClient("fractal")
 // Set up launch from browser with fractal:// protocol
 app.on("open-url", function (event, data) {
     event.preventDefault()
-    mainWindow.webContents.send("customURL", data.toString())
+    customURL = data.toString()
 })
 
 autoUpdater.autoDownload = false
