@@ -64,7 +64,7 @@ def loginHelper(email, password):
     access_token, refresh_token = getAccessTokens(email)
 
     return {
-        "verified": True,
+        "verified": user.verified,
         "is_user": is_user,
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -153,7 +153,7 @@ def registerHelper(username, password, name, reason_for_signup):
 
     return {
         "status": status,
-        "token": new_user.token,
+        "verification_token": new_user.token,
         "access_token": access_token,
         "refresh_token": refresh_token,
     }
