@@ -71,11 +71,16 @@ def uploadLogsToS3(sender, version, connection_id, ip, port, aes_key, message):
 
     # Make sure that the container with the specified networking attributes
     # exists.
-    if not container or aes_key != container.secret_key:
+    if not container or aes_key.lower() != container.secret_key.lower():
+        if container:
+            message = f"Expected secret key {container.secret_key}. Got {aes_key}."
+        else:
+            message = f"Container {container} does not exist."
+
         fractalLog(
             function="uploadLogsToS3",
-            label=None,
-            logs="Unable to find a matching container.",
+            label=container,
+            logs=message,
             level=logging.ERROR,
         )
 
