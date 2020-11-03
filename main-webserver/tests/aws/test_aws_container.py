@@ -1,13 +1,13 @@
 import copy
 import logging
 import os
-import string
 import uuid
 
 from collections import defaultdict
 
 import pytest
 
+from app.celery.aws_ecs_creation import _poll
 from app.helpers.utils.general.logs import fractalLog
 from app.helpers.utils.general.sql_commands import fractalSQLCommit
 from app.models import ClusterInfo, db, UserContainer
@@ -82,18 +82,19 @@ def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
-def test_create_container(client, authorized, cluster_name=pytest.cluster_name):
-    cluster_name = cluster_name or pytest.cluster_name
+def test_create_container(client, authorized, monkeypatch):
+    monkeypatch.setattr(_poll, "__code__", (lambda *args, **kwargs: True).__code__)
+
     fractalLog(
         function="test_create_container",
         label="container/create",
-        logs="Starting to create container in cluster {}".format(cluster_name),
+        logs="Starting to create container in cluster {}".format(pytest.cluster_name),
     )
     resp = client.post(
         "/aws_container/create_container",
         json=dict(
             username=authorized.user_id,
-            cluster_name=cluster_name,
+            cluster_name=pytest.cluster_name,
             region_name="us-east-1",
             task_definition_arn="fractal-browsers-chrome",
             use_launch_type=False,
