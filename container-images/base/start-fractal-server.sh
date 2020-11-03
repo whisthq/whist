@@ -25,4 +25,10 @@ then
     OPTIONS="$OPTIONS --webserver=$WEBSERVER_URL"
 fi
 
-/usr/share/fractal/FractalServer --identifier=$IDENTIFIER  $OPTIONS
+FRACTAL_DPI_ARG=""
+if [ ! -z "$FRACTAL_DPI" ]; then
+    FRACTAL_DPI_ARG="--dpi=$FRACTAL_DPI"
+fi
+
+/usr/share/fractal/FractalServer --identifier=$IDENTIFIER $FRACTAL_DPI_ARG $OPTIONS
+
