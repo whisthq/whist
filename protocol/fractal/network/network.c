@@ -1608,7 +1608,7 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
 
     // DO NOT LOG ARBITRARY HTTP REQUESTS -- THEY MAY CONTAIN SENSITIVE INFO
     // LIKE PRIVATE KEYS
-    LOG_INFO("Sending request: %s", message);
+    // LOG_INFO("Sending request: %s", message);
 
     // now we send it
     int total_sent = 0;
