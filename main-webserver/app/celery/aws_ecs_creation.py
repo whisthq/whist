@@ -280,7 +280,7 @@ def create_new_container(
             fractalLog(
                 function="create_new_container",
                 label=str(ecs_client.tasks[0]),
-                logs=f"""container pinged!  To connect manually, run:
+                logs=f"""container pinged!  To connect, run:
 desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
                      """,
             )
