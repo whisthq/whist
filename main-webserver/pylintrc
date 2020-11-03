@@ -10,7 +10,22 @@ fail-under=10.0
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
-ignore=CVS
+ignore=CVS,
+       admin_blueprint.py,
+       analytics.py,
+       analytics_blueprint.py,
+       analytics_post.py,
+       base_ecs_client.py,
+       hash_bad_words.py,
+       newsletter_blueprint.py,
+       report_blueprint.py,
+       report_get.py,
+       report_post.py,
+       sql_table_blueprint.py,
+       stripe_blueprint.py,
+       stripe_mail.py,
+       stripe_payments.py,
+       stripe_post.py
 
 # Add files or directories matching the regex patterns to the blacklist. The
 # regex matches against base names, not paths.
@@ -60,91 +75,36 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable=print-statement,
-        parameter-unpacking,
-        unpacking-in-except,
-        old-raise-syntax,
-        backtick,
-        long-suffix,
-        old-ne-operator,
-        old-octal-literal,
-        import-star-module-level,
-        non-ascii-bytes-literal,
-        raw-checker-failed,
-        bad-inline-option,
-        locally-disabled,
-        file-ignored,
-        suppressed-message,
-        useless-suppression,
-        deprecated-pragma,
-        use-symbolic-message-instead,
-        apply-builtin,
-        basestring-builtin,
-        buffer-builtin,
-        cmp-builtin,
-        coerce-builtin,
-        execfile-builtin,
-        file-builtin,
-        long-builtin,
-        raw_input-builtin,
-        reduce-builtin,
-        standarderror-builtin,
-        unicode-builtin,
-        xrange-builtin,
-        coerce-method,
-        delslice-method,
-        getslice-method,
-        setslice-method,
-        no-absolute-import,
-        old-division,
-        dict-iter-method,
-        dict-view-method,
-        next-method-called,
-        metaclass-assignment,
-        indexing-exception,
-        raising-string,
-        reload-builtin,
-        oct-method,
-        hex-method,
-        nonzero-method,
-        cmp-method,
-        input-builtin,
-        round-builtin,
-        intern-builtin,
-        unichr-builtin,
-        map-builtin-not-iterating,
-        zip-builtin-not-iterating,
-        range-builtin-not-iterating,
-        filter-builtin-not-iterating,
-        using-cmp-argument,
-        eq-without-hash,
-        div-method,
-        idiv-method,
-        rdiv-method,
-        exception-message-attribute,
-        invalid-str-codec,
-        sys-max-int,
-        bad-python3-import,
-        deprecated-string-function,
-        deprecated-str-translate-call,
-        deprecated-itertools-function,
-        deprecated-types-field,
-        next-method-defined,
-        dict-items-not-iterating,
-        dict-keys-not-iterating,
-        dict-values-not-iterating,
-        deprecated-operator-function,
-        deprecated-urllib-function,
-        xreadlines-attribute,
-        deprecated-sys-function,
-        exception-escape,
-        comprehension-escape
+disable=bare-except,
+	broad-except,
+	cyclic-import,
+	duplicate-code,
+	fixme,
+	import-outside-toplevel,
+	inconsistent-return-statements,
+	invalid-name,
+	logging-format-interpolation,
+	logging-fstring-interpolation,
+	missing-class-docstring,
+        missing-function-docstring,
+        missing-module-docstring,
+	no-else-return,
+	pointless-statement,
+	redefined-builtin,
+	too-few-public-methods,
+	too-many-ancestors,
+	too-many-arguments,
+	too-many-branches,
+	too-many-locals,
+	too-many-public-methods,
+	too-many-return-statements,
+	too-many-statements
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
-enable=c-extension-no-member
+enable=
 
 
 [REPORTS]
@@ -245,7 +205,13 @@ ignore-on-opaque-inference=yes
 # List of class names for which member attributes should not be checked (useful
 # for classes with dynamically set attributes). This supports the use of
 # qualified names.
-ignored-classes=optparse.Values,thread._local,_thread._local
+ignored-classes=optparse.Values,
+                thread._local,
+		_thread._local,
+		Session,
+		SQLAlchemy,
+		scoped_session
+		
 
 # List of module names for which member attributes should not be checked
 # (useful for modules/projects where namespaces are manipulated during runtime
@@ -284,11 +250,11 @@ check-str-concat-over-line-jumps=no
 
 # The type of string formatting that logging methods do. `old` means using %
 # formatting, `new` is for `{}` formatting.
-logging-format-style=old
+logging-format-style=new
 
 # Logging modules to check that the string format arguments are in logging
 # function parameter format.
-logging-modules=logging
+logging-modules=logging,logs
 
 
 [MISCELLANEOUS]
@@ -418,7 +384,7 @@ const-naming-style=UPPER_CASE
 
 # Minimum line length for functions/classes that require docstrings, shorter
 # ones are exempt.
-docstring-min-length=-1
+docstring-min-length=3
 
 # Naming style matching correct function names.
 function-naming-style=snake_case
