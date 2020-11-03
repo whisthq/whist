@@ -10,5 +10,5 @@ def test_serialize(container):
         data = schema.dump(c)
 
         assert "secret_key" in data
-        assert len(data["secret_key"]) == 16
+        assert len(data["secret_key"]) == 32
         assert isinstance(data["secret_key"], str)

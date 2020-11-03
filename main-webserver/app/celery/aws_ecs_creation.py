@@ -12,16 +12,18 @@ from app.helpers.utils.general.sql_commands import fractalSQLUpdate
 from app.models import db, UserContainer, ClusterInfo, SortedClusters
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 
+MAX_POLL_ITERATIONS = 20
+
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
 # all amis support ecs-host-service
 region_to_ami = {
-    "us-east-1": "ami-0c82e2febb87e6d1c",
-    "us-east-2": "ami-0e060b3855ff4b3a5",
-    "us-west-1": "ami-0381c3215c671199b",
-    "us-west-2": "ami-0aa7ccf369518c789",
-    "ca-central-1": "ami-0d08fca67385a13bc",
+    "us-east-1": "ami-0ff621efe35407b94",
+    "us-east-2": "ami-09ca6dce71a870c6e",
+    "us-west-1": "ami-0914e92a46ab8f546",
+    "us-west-2": "ami-0ef2d9c97b2425bfc",
+    "ca-central-1": "ami-0fe17e1f98a492a2f",
 }
 
 
@@ -81,6 +83,40 @@ def build_base_from_image(image):
     return base_task
 
 
+def _poll(container_id):
+    """Poll the database until the web server receives its first ping from the new container.
+
+    Time out after 20 seconds. This may be an appropriate use case for Hasura subscriptions.
+
+    This function should patched to immediately return True in order to get CI to pass.
+
+    Arguments:
+        container_id: The container ID of the container whose state to poll.
+
+    Returns:
+        True iff the container's starts with RUNNING_ by the end of the polling period.
+    """
+
+    container = UserContainer.query.get(container_id)
+    result = False
+
+    for i in range(MAX_POLL_ITERATIONS):
+        if not container.state.startswith("RUNNING_"):
+            fractalLog(
+                function="create_new_container",
+                label=None,
+                logs=f"{container.container_id} deployment in progress. {i}/{MAX_POLL_ITERATIONS}",
+                level=logging.WARNING,
+            )
+            time.sleep(1)
+            db.session.refresh(container)
+        else:
+            result = True
+            break
+
+    return result
+
+
 @shared_task(bind=True)
 def create_new_container(
     self,
@@ -90,6 +126,8 @@ def create_new_container(
     cluster_name=None,
     region_name="us-east-1",
     network_configuration=None,
+    dpi=96,
+    webserver_url=None,
 ):
     """Create a new ECS container running a particular task.
 
@@ -103,44 +141,52 @@ def create_new_container(
             ECSClient's launch type or the cluster's default launch type.
         network_configuration: The network configuration to use for the
             clusters using awsvpc networking.
+        dpi: what DPI to use on the server
     """
     message = f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in {region_name}"
-    aeskey = os.urandom(8).hex()
+    aeskey = os.urandom(16).hex()
     container_overrides = {
         "containerOverrides": [
             {
                 "name": "fractal-container",
                 "environment": [
                     {"name": "FRACTAL_AES_KEY", "value": aeskey},
+                    {"name": "FRACTAL_DPI", "value": str(dpi)},
+                    {
+                        "name": "WEBSERVER_URL",
+                        "value": (webserver_url if webserver_url is not None else ""),
+                    },
                 ],
             },
         ],
     }
     kwargs = {"networkConfiguration": network_configuration, "overrides": container_overrides}
     fractalLog(function="create_new_container", label="None", logs=message)
-    base_len = 3
-    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-
+    base_len = 2
     if not cluster_name:
         all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
-        all_clusters = [cluster for cluster in all_clusters if "cluster_" in cluster.cluster]
+        all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
         if len(all_clusters) == 0:
             fractalLog(
                 function="create_new_container",
                 label=None,
                 logs="No available clusters found. Creating new cluster...",
             )
-            cluster_name = create_new_cluster.delay(region_name=region_name).get(
-                disable_sync_subtasks=False
-            )["cluster"]
+            cluster_name = create_new_cluster.delay(
+                region_name=region_name, ami=region_to_ami[region_name], min_size=1
+            ).get(disable_sync_subtasks=False)["cluster"]
             for i in range(base_len - len(all_clusters)):
-                create_new_cluster.delay(region_name=region_name)
+                create_new_cluster.delay(
+                    region_name=region_name, ami=region_to_ami[region_name], min_size=1
+                )
             time.sleep(10)
         else:
             cluster_name = all_clusters[0].cluster
             if len(all_clusters) < base_len:
                 for i in range(base_len - len(all_clusters)):
-                    create_new_cluster.delay(region_name=region_name)
+                    create_new_cluster.delay(
+                        region_name=region_name, ami=region_to_ami[region_name], min_size=1
+                    )
     fractalLog(
         function="create_new_container",
         label=cluster_name,
@@ -210,7 +256,6 @@ def create_new_container(
     container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
     if container_sql:
         container = UserContainer.query.get(ecs_client.tasks[0])
-        container = user_container_schema.dump(container)
         fractalLog(
             function="create_new_container",
             label=str(ecs_client.tasks[0]),
@@ -237,7 +282,29 @@ def create_new_container(
             label=str(ecs_client.tasks[0]),
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
-        return container
+
+        if not _poll(container.container_id):
+            fractalLog(
+                function="create_new_container",
+                label=str(ecs_client.tasks[0]),
+                logs="container failed to ping",
+            )
+            self.update_state(
+                state="FAILURE",
+                meta={"msg": "Container {} failed to ping.".format(ecs_client.tasks[0])},
+            )
+
+            raise Ignore
+        else:
+            fractalLog(
+                function="create_new_container",
+                label=str(ecs_client.tasks[0]),
+                logs=f"""container pinged!  To connect, run:
+desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
+                     """,
+            )
+
+            return user_container_schema.dump(container)
     else:
         fractalLog(
             function="create_new_container",
@@ -255,7 +322,7 @@ def create_new_container(
 def create_new_cluster(
     self,
     cluster_name=None,
-    instance_type="g3s.xlarge",
+    instance_type="g3.4xlarge",
     ami="ami-0decb4a089d867dc1",
     region_name="us-east-1",
     min_size=0,

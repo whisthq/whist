@@ -1,13 +1,16 @@
 import os
 import uuid
 
+from contextlib import contextmanager
+from random import getrandbits as randbits
+
 import pytest
 
 from celery.app.task import Task
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
 from app.factory import create_app
-from app.models import db, User
+from app.models import ClusterInfo, db, User, UserContainer
 
 from .patches import do_nothing
 
@@ -118,6 +121,71 @@ def celery_parameters(app):
     return {
         "task_cls": ContextTask,
     }
+
+
+@pytest.fixture
+def cluster():
+    """Add a row to the cluster_info of the database for testing.
+
+    Returns:
+        An instance of the ClusterInfo model.
+    """
+
+    c = ClusterInfo(cluster=f"test-cluster-{uuid.uuid4()}")
+
+    db.session.add(c)
+    db.session.commit()
+
+    yield c
+
+    db.session.delete(c)
+    db.session.commit()
+
+
+@pytest.fixture
+def container(cluster, user):
+    """Add a row to the user_containers table for testing.
+
+    Returns:
+        A context manager that populates the user_containers table with a test
+        row whose state column is set to initial_state.
+    """
+
+    @contextmanager
+    def _container(initial_state="CREATING"):
+        """Create a dummy container for testing.
+
+        Arguments:
+            initial_state: The initial value with which the new row's state
+                column should be populated.
+
+        Yields:
+            An instance of the UserContainer model.
+        """
+
+        c = UserContainer(
+            container_id=f"test-container-{uuid.uuid4()}",
+            ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
+            location="us-east-1",
+            os="Linux",
+            state=initial_state,
+            user_id=user.user_id,
+            port_32262=randbits(16),
+            port_32263=randbits(16),
+            port_32273=randbits(16),
+            cluster=cluster.cluster,
+            secret_key=os.urandom(16).hex(),
+        )
+
+        db.session.add(c)
+        db.session.commit()
+
+        yield c
+
+        db.session.delete(c)
+        db.session.commit()
+
+    return _container
 
 
 @pytest.fixture(autouse=True)

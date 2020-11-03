@@ -1,9 +1,6 @@
-from app import *
-
-from app.models.logs import *
-from app.models.public import *
-
-from app.serializers.logs import *
+from app.constants.http_codes import SUCCESS
+from app.models import ProtocolLog
+from app.serializers.logs import ProtocolLogSchema
 
 
 def logsHelper(connection_id, username, bookmarked):

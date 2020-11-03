@@ -1,26 +1,22 @@
 """Tests for the /container/ping endpoint."""
 
+import os
 import pytest
 
-from app.celery.aws_ecs_status import pingHelper
 from app.constants.http_codes import SUCCESS
+from app.helpers.blueprint_helpers.aws.aws_container_post import pingHelper
 from app.helpers.utils.stripe.stripe_payments import stripeChargeHourly
 from app.models import db
 
-from ..patches import do_nothing
+from ..patches import Patch
 
 
-def status(code):
-    return eval(f"""lambda *args, **kwargs: {{"status": {code}}}""")
+def status_code(*args, **kwargs):
+    from tests.patches import Patch
 
+    patch = Patch()
 
-@pytest.fixture
-def no_stripe(monkeypatch):
-    monkeypatch.setattr(
-        stripeChargeHourly,
-        "__code__",
-        do_nothing.__code__,
-    )
+    return None, patch.status_code
 
 
 def test_no_availability(client):
@@ -46,7 +42,8 @@ def test_no_key(client):
 def test_not_found(client, monkeypatch):
     code = 404
 
-    monkeypatch.setattr(pingHelper, "apply_async", status(code))
+    monkeypatch.setattr(Patch, "status_code", code, raising=False)
+    monkeypatch.setattr(pingHelper, "__code__", status_code.__code__)
 
     response = client.post(
         "/container/ping", json=dict(available=True, identifier=0, private_key="aes_secret_key")
@@ -58,7 +55,8 @@ def test_not_found(client, monkeypatch):
 def test_successful(client, monkeypatch):
     code = 200
 
-    monkeypatch.setattr(pingHelper, "apply_async", status(code))
+    monkeypatch.setattr(Patch, "status_code", code, raising=False)
+    monkeypatch.setattr(pingHelper, "__code__", status_code.__code__)
 
     response = client.post(
         "/container/ping", json=dict(available=True, identifier=0, private_key="aes_secret_key")
@@ -67,10 +65,17 @@ def test_successful(client, monkeypatch):
     assert response.status_code == code
 
 
-def test_no_container(container, no_stripe):
-    with container("RUNNING_AVAILABLE"):
-        with pytest.raises(Exception):
-            pingHelper(True, "x.x.x.x", 0)
+def test_no_container():
+    data, status = pingHelper(True, "x.x.x.x", 0, "garbage!")
+
+    assert status == 404
+
+
+def test_wrong_key(container):
+    with container("RUNNING_AVAILABLE") as c:
+        data, status = pingHelper(True, c.ip, c.port_32262, "garbage!")
+
+    assert status == 404
 
 
 @pytest.mark.parametrize(
@@ -86,12 +91,13 @@ def test_no_container(container, no_stripe):
         (False, "STOPPING", "STOPPING"),
     ),
 )
-def test_ping_helper(available, container, final_state, initial_state, no_stripe):
+def test_ping_helper(available, container, final_state, initial_state):
     with container(initial_state) as c:
-        result = pingHelper(available, c.ip, c.port_32262, c.secret_key)
+        data, status = pingHelper(available, c.ip, c.port_32262, c.secret_key)
 
-        assert "status" in result
-        assert result["status"] == SUCCESS
+        assert data.pop("status", None) == "OK"
+        assert not data
+        assert status == SUCCESS
 
         # I don't totally understand why this line is necessary, but it seems
         # to be. -O

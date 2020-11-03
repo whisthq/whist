@@ -33,3 +33,6 @@ class User(db.Model):
     history = relationship(
         "LoginHistory", back_populates="user", lazy="dynamic", passive_deletes=True
     )
+    protocol_logs = relationship(
+        "ProtocolLog", back_populates="user", lazy="dynamic", passive_deletes=True
+    )

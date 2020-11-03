@@ -2,17 +2,13 @@ import datetime
 import logging
 
 from datetime import datetime as dt
+from jose import jwt
+from flask import jsonify, current_app
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+from app.constants.config import ADMIN_PASSWORD, SENDGRID_API_KEY, SENDGRID_EMAIL
 
-from flask import jsonify
-
-from app import mail
-from app.constants.config import ADMIN_PASSWORD
-from app.constants.http_codes import (
-    BAD_REQUEST,
-    NOT_ACCEPTABLE,
-    SUCCESS,
-    UNAUTHORIZED,
-)
+from app.constants.http_codes import BAD_REQUEST, NOT_ACCEPTABLE, SUCCESS, UNAUTHORIZED, NOT_FOUND
 from app.helpers.blueprint_helpers.mail.mail_post import verificationHelper
 from app.helpers.utils.general.crypto import check_value, hash_value
 from app.helpers.utils.general.logs import fractalLog
@@ -47,17 +43,12 @@ def loginHelper(email, password):
 
     is_user = True
 
-    if password == ADMIN_PASSWORD:
-        is_user = False
-
     user = User.query.get(email)
-
-    fractalLog(function="", label="", logs=str(user))
 
     # Return early if username/password combo is invalid
 
     if is_user:
-        if not user or not check_value(user.password, password) or not user.can_login == True:
+        if not user or not check_value(user.password, password):
             return {
                 "verified": False,
                 "is_user": is_user,
@@ -65,6 +56,7 @@ def loginHelper(email, password):
                 "refresh_token": None,
                 "verification_token": None,
                 "name": None,
+                "can_login": False,
             }
 
     # Fetch the JWT tokens
@@ -72,12 +64,13 @@ def loginHelper(email, password):
     access_token, refresh_token = getAccessTokens(email)
 
     return {
-        "verified": True,
+        "verified": user.verified,
         "is_user": is_user,
         "access_token": access_token,
         "refresh_token": refresh_token,
         "verification_token": user.token,
         "name": user.name,
+        "can_login": user.can_login,
     }
 
 
@@ -140,13 +133,16 @@ def registerHelper(username, password, name, reason_for_signup):
 
     if status == SUCCESS:
         try:
-            mail.send_email(
-                to_email="support@tryfractal.com",
+            message = Mail(
+                from_email=SENDGRID_EMAIL,
+                to_emails="support@tryfractal.com",
                 subject=username + " just created an account!",
-                html="<p>Just letting you know that {0} created an account. Their reason for signup is: {1}. Have a great day.</p>".format(
+                html_content="<p>Just letting you know that {0} created an account. Their reason for signup is: {1}. Have a great day.</p>".format(
                     name, reason_for_signup
                 ),
             )
+            sg = SendGridAPIClient(SENDGRID_API_KEY)
+            response = sg.send(message)
         except Exception as e:
             fractalLog(
                 function="registerHelper",
@@ -157,7 +153,7 @@ def registerHelper(username, password, name, reason_for_signup):
 
     return {
         "status": status,
-        "token": new_user.token,
+        "verification_token": new_user.token,
         "access_token": access_token,
         "refresh_token": refresh_token,
     }
@@ -182,11 +178,9 @@ def verifyHelper(username, provided_user_id):
     user = User.query.filter_by(user_id=username).first()
 
     if user:
-        user_id = user.token
-
         # Check to see if the provided user ID matches the selected user ID
 
-        if provided_user_id == user_id:
+        if provided_user_id == user.token:
             fractalLog(
                 function="verifyHelper",
                 label=user_id,
@@ -285,3 +279,26 @@ def updateUserHelper(body):
             resetPasswordHelper(body["username"], body["password"])
             return jsonify({"msg": "Password updated successfully"}), SUCCESS
         return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE
+    return jsonify({"msg": "User not found"}), NOT_FOUND
+
+
+def autoLoginHelper(email):
+    user = User.query.get(email)
+    access_token, refresh_token = getAccessTokens(email)
+
+    if user:
+        return {
+            "status": SUCCESS,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "verification_token": user.token,
+            "name": user.name,
+        }
+    else:
+        return {
+            "status": UNAUTHORIZED,
+            "access_token": None,
+            "refresh_token": None,
+            "verification_token": None,
+            "name": None,
+        }

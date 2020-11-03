@@ -14,6 +14,8 @@ from app.helpers.blueprint_helpers.auth.account_post import (
     registerHelper,
     updateUserHelper,
     verifyHelper,
+    resetPasswordHelper,
+    autoLoginHelper,
 )
 from app.helpers.utils.general.auth import fractalAuth
 
@@ -74,10 +76,20 @@ def account_post(action, **kwargs):
         output = verifyHelper(username, token)
 
         return jsonify(output), output["status"]
+
     elif action == "lookup":
         # Check if user exists
 
         output = lookupHelper(body["username"])
+        return jsonify(output), output["status"]
+
+    elif action == "auto_login":
+        # Automatic login endpoint if user has selected Remember Me
+
+        username = body["username"]
+
+        output = autoLoginHelper(username)
+
         return jsonify(output), output["status"]
 
 

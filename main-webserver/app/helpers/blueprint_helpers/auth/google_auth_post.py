@@ -32,7 +32,7 @@ def registerGoogleUser(username, name, token, reason_for_signup=None):
     if hashlib.md5(
         username_encoding
     ).hexdigest() in BAD_WORDS_HASHED or profanity.contains_profanity(username):
-        return {"status": "FAILURE", "error": "Try using a different username"}
+        return {"status": FORBIDDEN, "error": "Try using a different username"}
 
     new_user = User(
         user_id=username,
@@ -63,7 +63,7 @@ def loginHelper(code, clientApp):
     user = User.query.get(username)
 
     if user:
-        if user.using_google_login and user.can_login == True:
+        if user.using_google_login:
             return {
                 "new_user": False,
                 "is_user": True,
@@ -73,6 +73,7 @@ def loginHelper(code, clientApp):
                 "username": username,
                 "status": SUCCESS,
                 "name": name,
+                "can_login": user.can_login,
             }
         else:
             return {"status": FORBIDDEN, "error": "Try using non-Google login"}
@@ -96,6 +97,7 @@ def loginHelper(code, clientApp):
         "refresh_token": refresh_token,
         "username": username,
         "name": name,
+        "can_login": False,
     }
 
 
