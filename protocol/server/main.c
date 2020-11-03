@@ -240,8 +240,15 @@ int SendContainerDestroyMessage() {
 
     char* container_id = get_container_id();
     if (!container_id) {
-        LOG_ERROR("Container destroy could not find container_id");
-        return -1;
+        // If container_id is not found, then get protocol_info again
+        update_webserver_parameters();
+        container_id = get_container_id();
+
+        // If container_id is still not found, then fail
+        if (!container_id) {
+            LOG_ERROR("Container destroy could not find container_id");
+            return -1;
+        }
     }
 
     char payload[256];
