@@ -18,11 +18,11 @@ user_cluster_schema = ClusterInfoSchema()
 
 # all amis support ecs-host-service
 region_to_ami = {
-    "us-east-1": "ami-0c82e2febb87e6d1c",
-    "us-east-2": "ami-0e060b3855ff4b3a5",
-    "us-west-1": "ami-0381c3215c671199b",
-    "us-west-2": "ami-0aa7ccf369518c789",
-    "ca-central-1": "ami-0d08fca67385a13bc",
+    "us-east-1": "ami-0ff621efe35407b94",
+    "us-east-2": "ami-09ca6dce71a870c6e",
+    "us-west-1": "ami-0914e92a46ab8f546",
+    "us-west-2": "ami-0ef2d9c97b2425bfc",
+    "ca-central-1": "ami-0fe17e1f98a492a2f",
 }
 
 
