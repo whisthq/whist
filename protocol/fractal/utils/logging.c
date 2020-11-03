@@ -257,7 +257,7 @@ int MultiThreadedPrintf(void *opaque) {
                 }
             }
             // if (i + 6 < cache_size) {
-            //	printf("%s%s%s%s%s%s%s", logger_queue_cache[i].buf,
+            //  printf("%s%s%s%s%s%s%s", logger_queue_cache[i].buf,
             // logger_queue_cache[i+1].buf, logger_queue_cache[i+2].buf,
             // logger_queue_cache[i+3].buf, logger_queue_cache[i+4].buf,
             // logger_queue_cache[i+5].buf,  logger_queue_cache[i+6].buf);
@@ -707,7 +707,8 @@ void saveConnectionID(int connection_id_int) {
 
 // The first time this is called will include the initial log messages,
 // before the first connection, if they haven't been overwritten.
-int sendConnectionHistory(char *host, char *access_token) {
+int sendConnectionHistory(char *host, char *access_token, char *identifier,
+                          char *hex_aes_private_key) {
     // This is for HTTP request, not filesystem
     char *request_path = "/logs/insert";
 
@@ -780,13 +781,14 @@ int sendConnectionHistory(char *host, char *access_token) {
 
             if (size > 0) {
                 sprintf(json,
-                        "{\
-            \"connection_id\" : \"%s\",\
-            \"version\" : \"%s\",\
-            \"logs\" : \"%s\",\
-            \"sender\" : \"server\"\
-    }",
-                        connection_id_data, get_version(), logs);
+                        "{"
+                        "   \"sender\" : \"server\","
+                        "   \"connection_id\" : \"%s\","
+                        "   \"logs\" : \"%s\","
+                        "   \"identifier\" : %s,"
+                        "   \"secret_key\" : \"%s\""
+                        "}",
+                        connection_id_data, logs, identifier, hex_aes_private_key);
 
                 LOG_INFO("Sending logs to webserver...");
                 SendPostRequest(host, request_path, json, access_token, NULL, 0);
@@ -810,7 +812,7 @@ typedef struct update_status_data {
     char *host;
     char *access_token;
     char *identifier;
-    char *aes_private_key;
+    char *hex_aes_private_key;
 } update_status_data_t;
 
 int32_t MultithreadedUpdateServerStatus(void *data) {
@@ -818,17 +820,12 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
 
     char json[1000];
     snprintf(json, sizeof(json),
-             "{\n\
-            \"version\" : \"%s\",\n\
-            \"available\" : %s,\n\
-            \"identifier\" : \"%s\",\n\
-            \"private_key\" : \"%08X%08X%08X%08X\"\n\
-}",
-             get_version(), d->is_connected ? "false" : "true", d->identifier,
-             htonl(*((uint32_t *)(d->aes_private_key))),
-             htonl(*((uint32_t *)(d->aes_private_key + 4))),
-             htonl(*((uint32_t *)(d->aes_private_key + 8))),
-             htonl(*((uint32_t *)(d->aes_private_key + 12))));
+             "{\n"
+             "  \"available\" : %s,\n"
+             "  \"identifier\" : %s,\n"
+             "  \"private_key\" : \"%s\"\n"
+             "}",
+             d->is_connected ? "false" : "true", d->identifier, d->hex_aes_private_key);
     SendPostRequest(d->host, "/container/ping", json, d->access_token, NULL, 0);
 
     free(d);
@@ -836,14 +833,14 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
 }
 
 void updateServerStatus(bool is_connected, char *host, char *access_token, char *identifier,
-                        char *aes_private_key) {
+                        char *hex_aes_private_key) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
     d->host = host;
     d->access_token = access_token;
     d->identifier = identifier;
-    d->aes_private_key = aes_private_key;
+    d->hex_aes_private_key = hex_aes_private_key;
     SDL_Thread *update_status =
         SDL_CreateThread(MultithreadedUpdateServerStatus, "UpdateServerStatus", d);
     SDL_DetachThread(update_status);

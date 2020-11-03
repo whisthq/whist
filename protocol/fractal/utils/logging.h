@@ -155,10 +155,17 @@ void destroyLogger();
 /**
  * @brief                          Send the log history to the webserver
  *
+ * @param host                     The webserver host to send the message to.
+ * @param access_token             The access token previously provided by the webserver.
+ * @param identifier               The string that uniquely identifies this
+ *                                 instance of the protocol to the webserver.
+ * @param hex_aes_private_key      The private key, as a hex string.
+ *
  * @returns                         0: success -1: failure to send file,
  *                                  sent cache instead   -2: outright failure
  */
-int sendConnectionHistory(char* host, char* access_token);
+int sendConnectionHistory(char* host, char* access_token, char* identifier,
+                          char* hex_aes_private_key);
 
 /**
  * @brief                          Set the logger to categorize all logs from now
@@ -185,10 +192,10 @@ void saveConnectionID(int connection_id);
  * @param access_token             The access token previously provided by the webserver.
  * @param identifier               The string that uniquely identifies this
  *                                 instance of the protocol to the webserver.
- * @param aes_private_key          The access token previously provided by the webserver.
+ * @param hex_aes_private_key      The private key, as a hex string.
  */
 void updateServerStatus(bool is_connected, char* host, char* access_token, char* identifier,
-                        char* aes_private_key);
+                        char* hex_aes_private_key);
 
 /**
  * @brief                          Get the current server's version number

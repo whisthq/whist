@@ -32,6 +32,8 @@ int handler(Display* d, XErrorEvent* a) {
 }
 
 void get_wh(CaptureDevice* device, int* w, int* h) {
+    if (!device) return;
+
     XWindowAttributes window_attributes;
     if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
         *w = 0;
@@ -50,6 +52,8 @@ bool is_same_wh(CaptureDevice* device) {
 }
 
 int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+    if (!device) return -1;
+
     device->display = XOpenDisplay(NULL);
     if (!device->display) {
         LOG_ERROR("ERROR: CreateCaptureDevice display did not open");
@@ -164,6 +168,8 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi
 }
 
 int CaptureScreen(CaptureDevice* device) {
+    if (!device) return -1;
+
     if (device->using_nvidia) {
         int ret = NvidiaCaptureScreen(&device->nvidia_capture_device);
         if (ret < 0) {
@@ -232,6 +238,8 @@ int TransferScreen(CaptureDevice* device) { return 0; }
 void ReleaseScreen(CaptureDevice* device) {}
 
 void DestroyCaptureDevice(CaptureDevice* device) {
+    if (!device) return;
+
     if (device->using_nvidia) {
         DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
     } else {
@@ -243,6 +251,8 @@ void DestroyCaptureDevice(CaptureDevice* device) {
 }
 
 void UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec) {
+    if (!device) return;
+
     if (device->using_nvidia) {
         DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
         CreateNvidiaCaptureDevice(&device->nvidia_capture_device, bitrate, codec);

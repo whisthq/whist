@@ -15,15 +15,15 @@ extern Client clients[MAX_NUM_CLIENTS];
 
 int last_input_id = -1;
 
-int connectClient(int id, char *aes_private_key) {
+int connectClient(int id, char *binary_aes_private_key) {
     if (CreateUDPContext(&(clients[id].UDP_context), NULL, clients[id].UDP_port, 1,
-                         UDP_CONNECTION_WAIT, get_using_stun(), aes_private_key) < 0) {
+                         UDP_CONNECTION_WAIT, get_using_stun(), binary_aes_private_key) < 0) {
         LOG_ERROR("Failed UDP connection with client (ID: %d)", id);
         return -1;
     }
 
     if (CreateTCPContext(&(clients[id].TCP_context), NULL, clients[id].TCP_port, 1,
-                         TCP_CONNECTION_WAIT, get_using_stun(), aes_private_key) < 0) {
+                         TCP_CONNECTION_WAIT, get_using_stun(), binary_aes_private_key) < 0) {
         LOG_WARNING("Failed TCP connection with client (ID: %d)", id);
         closesocket(clients[id].UDP_context.s);
         return -1;
@@ -145,7 +145,7 @@ int broadcastUDPPacket(FractalPacketType type, void *data, int len, int id, int 
                 FractalPacket encrypted_packet;
                 int encrypt_len =
                     encrypt_packet(packet, packet_size, &encrypted_packet,
-                                   (unsigned char *)clients[j].UDP_context.aes_private_key);
+                                   (unsigned char *)clients[j].UDP_context.binary_aes_private_key);
 
                 SDL_LockMutex(clients[j].UDP_context.mutex);
                 int sent_size = sendp(&(clients[j].UDP_context), &encrypted_packet, encrypt_len);

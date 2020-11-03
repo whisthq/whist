@@ -47,6 +47,8 @@ void unsafe_initClipboard() {
     StartTrackingClipboardUpdates();
 }
 
+void unsafe_DestroyClipboard() {}
+
 #ifdef _WIN32
 #include "shlwapi.h"
 #pragma comment(lib, "Shlwapi.lib")

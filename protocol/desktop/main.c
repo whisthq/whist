@@ -53,7 +53,8 @@ volatile int max_bitrate = STARTING_BITRATE;
 volatile bool update_mbps = false;
 
 // Global state variables
-volatile char aes_private_key[16];
+volatile char binary_aes_private_key[16];
+volatile char hex_aes_private_key[33];
 volatile int connection_id;
 volatile SDL_Window* window;
 volatile bool run_receive_packets;
