@@ -977,7 +977,8 @@ int MultithreadedManageClients(void* opaque) {
         LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
                  have_sent_logs ? "yes" : "no");
         if (saved_num_active_clients == 0 && !have_sent_logs) {
-            sendConnectionHistory(host, get_access_token(), identifier, hex_aes_private_key);
+            sendConnectionHistory(webserver_url, get_access_token(), identifier,
+                                  hex_aes_private_key);
             have_sent_logs = true;
         } else if (saved_num_active_clients > 0 && have_sent_logs) {
             have_sent_logs = false;
@@ -1161,8 +1162,7 @@ int parse_args(int argc, char* argv[]) {
         }
         errno = 0;
         switch (opt) {
-            case 'k':
-            {
+            case 'k': {
                 if (!read_hexadecimal_private_key(optarg, (char*)binary_aes_private_key,
                                                   (char*)hex_aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
@@ -1171,8 +1171,7 @@ int parse_args(int argc, char* argv[]) {
                 }
                 break;
             }
-            case 'i':
-            {
+            case 'i': {
                 printf("Identifier passed in: %s", optarg);
                 if (strlen(optarg) > FRACTAL_IDENTIFIER_MAXLEN) {
                     printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
@@ -1183,8 +1182,7 @@ int parse_args(int argc, char* argv[]) {
                 identifier[FRACTAL_IDENTIFIER_MAXLEN] = 0;
                 break;
             }
-            case 'w':
-            {
+            case 'w': {
                 printf("Webserver URL passed in: %s", optarg);
                 if (strlen(optarg) > MAX_WEBSERVER_URL_LEN) {
                     printf("Webserver url passed in is too long! Has length %lu but max is %d.\n",
@@ -1194,18 +1192,15 @@ int parse_args(int argc, char* argv[]) {
                 webserver_url[MAX_WEBSERVER_URL_LEN] = 0;
                 break;
             }
-            case FRACTAL_GETOPT_HELP_CHAR:
-            {
+            case FRACTAL_GETOPT_HELP_CHAR: {
                 printf("%s", usage_details);
                 return 1;
             }
-            case FRACTAL_GETOPT_VERSION_CHAR:
-            {
+            case FRACTAL_GETOPT_VERSION_CHAR: {
                 printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
                 return 1;
             }
-            default:
-            {
+            default: {
                 if (opt != -1) {
                     // illegal option
                     printf("%s", usage);
@@ -1348,8 +1343,8 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
-            updateServerStatus(num_controlling_clients > 0, host, get_access_token(), identifier,
-                               hex_aes_private_key);
+            updateServerStatus(num_controlling_clients > 0, webserver_url, get_access_token(),
+                               identifier, hex_aes_private_key);
             StartTimer(&ack_timer);
         }
 
