@@ -51,5 +51,5 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean
 
-# Application startup script
-COPY .xinitrc /root/.xinitrc
+# Setup Fractal application symlink
+RUN ln -sf $(which firefox) /usr/bin/fractal-application

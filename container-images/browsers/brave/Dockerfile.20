@@ -18,4 +18,5 @@ RUN apt-get update && apt-get install --no-install-recommends -y brave-browser \
     && apt-get autoremove -y \
     && apt-get clean 
 
-COPY .xinitrc /root/.xinitrc
+# Setup Fractal application symlink
+RUN ln -sf $(which brave-browser) /usr/bin/fractal-application
