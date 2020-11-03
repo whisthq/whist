@@ -1,8 +1,8 @@
 import copy
 import logging
 import os
-import random
 import string
+import uuid
 
 from collections import defaultdict
 
@@ -15,19 +15,7 @@ from app.models import ClusterInfo, db, UserContainer
 from ..helpers.general.progress import fractalJobRunner, queryStatus
 
 
-def generate_name(starter_name=""):
-    """
-    Helper function for generating a name with a random UUID
-    Args:
-        starter_name (Optional[str]): starter string for the name
-    Returns:
-        str: the generated name
-    """
-    letters = string.ascii_lowercase
-    return starter_name + "_" + "".join(random.choice(letters) for i in range(10))
-
-
-pytest.cluster_name = generate_name("cluster")
+pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
 pytest.container_name = None
 
 
@@ -107,7 +95,7 @@ def test_create_container(client, authorized, cluster_name=pytest.cluster_name):
             username=authorized.user_id,
             cluster_name=cluster_name,
             region_name="us-east-1",
-            task_definition_arn="fractal-browsers-chrome",
+            task_definition_arn="fractal-browsers-suriya-chrome",
             use_launch_type=False,
         ),
     )
@@ -183,21 +171,19 @@ def test_send_commands(client, authorized):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
-@pytest.mark.usefixtures("_retrieve_user")
-@pytest.mark.usefixtures("_save_user")
-def test_delete_container(client, authorized, container_name=pytest.container_name):
-    container_name = container_name or pytest.container_name
+def test_delete_container(client):
     fractalLog(
         function="test_delete_container",
         label="container/delete",
-        logs="Starting to delete container {}".format(container_name),
+        logs="Starting to delete container {}".format(pytest.container_name),
     )
 
+    container = UserContainer.query.get(pytest.container_name)
     resp = client.post(
-        "/aws_container/delete_container",
+        "/container/delete",
         json=dict(
-            user_id=authorized.user_id,
-            container_name=pytest.container_name,
+            private_key=container.secret_key,
+            container_id=pytest.container_name,
         ),
     )
 
@@ -212,7 +198,9 @@ def test_delete_container(client, authorized, container_name=pytest.container_na
         )
         assert False
 
-    if UserContainer.query.get(container_name):
+    db.session.expire(container)
+
+    if UserContainer.query.get(pytest.container_name):
         fractalLog(
             function="test_delete_container",
             label="container/delete",
@@ -239,7 +227,7 @@ def test_delete_cluster(client, authorized, cluster=pytest.cluster_name):
     resp = client.post(
         "/aws_container/delete_cluster",
         json=dict(
-            cluster=pytest.cluster_name,
+            cluster_name=pytest.cluster_name,
             region_name="us-east-1",
         ),
     )
@@ -317,7 +305,7 @@ def test_cluster_assignment():
             logs="No clusters found in database",
         )
 
-    first_cluster = generate_name("cluster")
+    first_cluster = f"test-cluster-{uuid.uuid4()}"
     test_create_cluster(input_token, admin_token, max_containers=2, cluster_name=first_cluster)
     clusters_to_containers = defaultdict(list)
     container_cluster = first_cluster

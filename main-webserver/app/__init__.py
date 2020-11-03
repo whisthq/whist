@@ -33,6 +33,7 @@ def fractalPreProcess(f):
 
         kwargs["body"] = body
         kwargs["received_from"] = received_from
+        kwargs["webserver_url"] = request.host
 
         silence = False
 

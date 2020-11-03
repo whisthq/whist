@@ -11,17 +11,18 @@ from app.helpers.utils.general.sql_commands import fractalSQLCommit
 from app.helpers.utils.general.sql_commands import fractalSQLUpdate
 from app.models import db, UserContainer, ClusterInfo, SortedClusters
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
+from app.celery.aws_ecs_deletion import deleteContainer
 
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
 # all amis support ecs-host-service
 region_to_ami = {
-    "us-east-1": "ami-0c82e2febb87e6d1c",
-    "us-east-2": "ami-0e060b3855ff4b3a5",
-    "us-west-1": "ami-0381c3215c671199b",
-    "us-west-2": "ami-0aa7ccf369518c789",
-    "ca-central-1": "ami-0d08fca67385a13bc",
+    "us-east-1": "ami-0ff621efe35407b94",
+    "us-east-2": "ami-09ca6dce71a870c6e",
+    "us-west-1": "ami-0914e92a46ab8f546",
+    "us-west-2": "ami-0ef2d9c97b2425bfc",
+    "ca-central-1": "ami-0fe17e1f98a492a2f",
 }
 
 
@@ -91,6 +92,7 @@ def create_new_container(
     region_name="us-east-1",
     network_configuration=None,
     dpi=96,
+    webserver_url=None,
 ):
     """Create a new ECS container running a particular task.
 
@@ -107,7 +109,7 @@ def create_new_container(
         dpi: what DPI to use on the server
     """
     message = f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in {region_name}"
-    aeskey = os.urandom(8).hex()
+    aeskey = os.urandom(16).hex()
     container_overrides = {
         "containerOverrides": [
             {
@@ -115,6 +117,10 @@ def create_new_container(
                 "environment": [
                     {"name": "FRACTAL_AES_KEY", "value": aeskey},
                     {"name": "FRACTAL_DPI", "value": str(dpi)},
+                    {
+                        "name": "WEBSERVER_URL",
+                        "value": (webserver_url if webserver_url is not None else ""),
+                    },
                 ],
             },
         ],
@@ -122,8 +128,6 @@ def create_new_container(
     kwargs = {"networkConfiguration": network_configuration, "overrides": container_overrides}
     fractalLog(function="create_new_container", label="None", logs=message)
     base_len = 2
-    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-
     if not cluster_name:
         all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
         all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
@@ -133,17 +137,21 @@ def create_new_container(
                 label=None,
                 logs="No available clusters found. Creating new cluster...",
             )
-            cluster_name = create_new_cluster.delay(region_name=region_name).get(
-                disable_sync_subtasks=False
-            )["cluster"]
+            cluster_name = create_new_cluster.delay(
+                region_name=region_name, ami=region_to_ami[region_name], min_size=1
+            ).get(disable_sync_subtasks=False)["cluster"]
             for i in range(base_len - len(all_clusters)):
-                create_new_cluster.delay(region_name=region_name)
+                create_new_cluster.delay(
+                    region_name=region_name, ami=region_to_ami[region_name], min_size=1
+                )
             time.sleep(10)
         else:
             cluster_name = all_clusters[0].cluster
             if len(all_clusters) < base_len:
                 for i in range(base_len - len(all_clusters)):
-                    create_new_cluster.delay(region_name=region_name)
+                    create_new_cluster.delay(
+                        region_name=region_name, ami=region_to_ami[region_name], min_size=1
+                    )
     fractalLog(
         function="create_new_container",
         label=cluster_name,
@@ -213,7 +221,6 @@ def create_new_container(
     container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
     if container_sql:
         container = UserContainer.query.get(ecs_client.tasks[0])
-        container = user_container_schema.dump(container)
         fractalLog(
             function="create_new_container",
             label=str(ecs_client.tasks[0]),
@@ -240,7 +247,45 @@ def create_new_container(
             label=str(ecs_client.tasks[0]),
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
-        return container
+
+        # Poll the database until the container state is no longer CREATING or up to 40
+        # * 5 = 200 seconds. Perhaps this would be an appropriate use case for Hasura
+        # subscriptions.
+        for _ in range(40):
+            if container.state == "CREATING":
+                fractalLog(
+                    function="create_new_container",
+                    label=str(ecs_client.tasks[0]),
+                    logs=f"{container.container_id} deployment in progress.",
+                    level=logging.WARNING,
+                )
+                db.session.refresh(container)
+                time.sleep(5)
+            else:
+                break
+
+        if container.state == "CREATING":
+            fractalLog(
+                function="create_new_container",
+                label=str(ecs_client.tasks[0]),
+                logs="container failed to ping",
+            )
+            self.update_state(
+                state="FAILURE",
+                meta={"msg": "Container {} failed to ping.".format(ecs_client.tasks[0])},
+            )
+
+            raise Ignore
+        else:
+            fractalLog(
+                function="create_new_container",
+                label=str(ecs_client.tasks[0]),
+                logs=f"""container pinged!  To connect manually, run:
+desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
+                     """,
+            )
+
+            return user_container_schema.dump(container)
     else:
         fractalLog(
             function="create_new_container",
@@ -258,7 +303,7 @@ def create_new_container(
 def create_new_cluster(
     self,
     cluster_name=None,
-    instance_type="g3s.xlarge",
+    instance_type="g3.4xlarge",
     ami="ami-0decb4a089d867dc1",
     region_name="us-east-1",
     min_size=0,
