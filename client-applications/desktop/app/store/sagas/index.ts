@@ -256,7 +256,7 @@ function* fetchContainer(action: any, retries?: number) {
             )
 
             while (json.state !== "SUCCESS" && json.state !== "FAILURE") {
-                if (secondsPassed % 3 === 0) {
+                if (secondsPassed % 1 === 0) {
                     var { json, response } = yield call(
                         apiGet,
                         `/status/` + id,

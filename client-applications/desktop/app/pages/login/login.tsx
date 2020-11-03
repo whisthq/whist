@@ -257,10 +257,7 @@ const Login = (props: any) => {
         ) {
             setAWSRegion().then(() => {
                 const { app_id, url } = Object(
-                    urlToApp(
-                        "fractal://figma.com".toLowerCase(),
-                        featuredAppData
-                    )
+                    urlToApp(launchURL.toLowerCase(), featuredAppData)
                 )
                 dispatch(fetchContainer(app_id, url))
             })
