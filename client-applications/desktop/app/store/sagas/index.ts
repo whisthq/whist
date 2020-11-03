@@ -9,6 +9,13 @@ import moment from "moment"
 
 function* refreshAccess() {
     const state = yield select()
+    const username = state.MainReducer.auth.username
+
+    if (!username || username === "None" || username === "") {
+        history.push("/")
+        return
+    }
+
     const { json } = yield call(
         apiPost,
         `/token/refresh`,
@@ -185,11 +192,16 @@ function* fetchContainer(action: any, retries?: number) {
         var region = state.MainReducer.client.region
             ? state.MainReducer.client.region
             : "us-east-1"
-        if (region === "ca-central-1") {
+        if (region === "us-east-2") {
             region = "us-east-1"
         }
-        if (region === "us-west-1") {
-            region = "us-west-2"
+        if (region === "us-west-2") {
+            region = "us-west-1"
+        }
+
+        if (!username || username === "None" || username === "") {
+            history.push("/")
+            return
         }
 
         var { json, response } = yield call(
