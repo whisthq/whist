@@ -91,6 +91,7 @@ def create_new_container(
     cluster_name=None,
     region_name="us-east-1",
     network_configuration=None,
+    webserver_url=None,
 ):
     """Create a new ECS container running a particular task.
 
@@ -113,6 +114,10 @@ def create_new_container(
                 "name": "fractal-container",
                 "environment": [
                     {"name": "FRACTAL_AES_KEY", "value": aeskey},
+                    {
+                        "name": "WEBSERVER_URL",
+                        "value": (webserver_url if webserver_url is not None else ""),
+                    },
                 ],
             },
         ],
@@ -269,6 +274,14 @@ def create_new_container(
 
             raise Ignore
         else:
+            fractalLog(
+                function="create_new_container",
+                label=str(ecs_client.tasks[0]),
+                logs=f"""container pinged!  To connect manually, run:
+desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
+                     """,
+            )
+
             return user_container_schema.dump(container)
     else:
         fractalLog(
