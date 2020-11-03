@@ -8,10 +8,6 @@ export const DEFAULT = {
         referralCode: null,
         authEmail: null,
     },
-    clicks: {
-        number: 0,
-        lastClicked: 0,
-    },
     waitlistData: {
         waitlist: [],
         closingDate: null,

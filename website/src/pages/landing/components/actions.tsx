@@ -2,16 +2,13 @@ import React, { useState, useContext, useEffect } from "react"
 import { connect } from "react-redux"
 import { Button, Modal, Alert } from "react-bootstrap"
 import { CopyToClipboard } from "react-copy-to-clipboard"
-import { useMutation } from "@apollo/client"
 
 import * as PureAuthAction from "store/actions/auth/pure"
-import * as PureWaitlistAction from "store/actions/waitlist/pure"
 import * as SideEffectWaitlistAction from "store/actions/waitlist/sideEffects"
 
 import WaitlistForm from "shared/components/waitlistForm"
 import history from "shared/utils/history"
 
-import { UPDATE_WAITLIST } from "shared/constants/graphql"
 import { REFERRAL_POINTS, SIGNUP_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "shared/constants/config"
@@ -77,19 +74,13 @@ const Actions = (props: {
         name: string
         authEmail: string
     }
-    clicks: any
 }) => {
-    const { dispatch, clicks, waitlistUser } = props
+    const { dispatch, waitlistUser } = props
 
     const [showModal, setShowModal] = useState(false)
     const [showEmailSentAlert, setShowEmailSentAlert] = useState(false)
     const [recipientEmail, setRecipientEmail] = useState("")
     const [sentEmail, setSentEmail] = useState("")
-    const [warning, setWarning] = useState("")
-
-    const [updatePoints] = useMutation(UPDATE_WAITLIST, {
-        onError(err) {},
-    })
 
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
@@ -100,51 +91,10 @@ const Actions = (props: {
         }
     }, [dispatch, waitlistUser])
 
-    const gaLogClickMe = (event: any) => {
+    const gaLogSentReferallEmail = () => {
         ReactGA.event(
-            ga_event(categories.POINTS, actions.POINTS.CLICKED_CLICKME)
+            ga_event(categories.POINTS, actions.POINTS.SENT_REFERALL_EMAIL)
         )
-    }
-
-    const increasePoints = () => {
-        if (waitlistUser) {
-            var allowClick = true
-            var clickReset = false
-            const currentTime = new Date().getTime() / 1000
-
-            if (currentTime - clicks.lastClicked > 1) {
-                if (clicks.number > 50) {
-                    if (currentTime - clicks.lastClicked > 60 * 60 * 3) {
-                        clickReset = true
-                    } else {
-                        allowClick = false
-                        setWarning(
-                            "Max clicks reached! Clicking will reset in 3 hours."
-                        )
-                    }
-                }
-
-                if (allowClick) {
-                    if (clickReset) {
-                        dispatch(PureWaitlistAction.updateClicks({ number: 1 }))
-                    } else {
-                        dispatch(
-                            PureWaitlistAction.updateClicks({
-                                number: clicks.number + 1,
-                            })
-                        )
-                    }
-
-                    updatePoints({
-                        variables: {
-                            user_id: waitlistUser.user_id,
-                            points: waitlistUser.points + 1,
-                            referrals: waitlistUser.referrals,
-                        },
-                    })
-                }
-            }
-        }
     }
 
     const updateRecipientEmail = (evt: any) => {
@@ -157,6 +107,8 @@ const Actions = (props: {
             dispatch(SideEffectWaitlistAction.sendReferralEmail(recipientEmail))
             setSentEmail(recipientEmail)
             setShowEmailSentAlert(true)
+
+            gaLogSentReferallEmail()
         }
     }
 
@@ -175,19 +127,6 @@ const Actions = (props: {
                         onClick={handleOpenModal}
                         text="Refer a Friend"
                         points={REFERRAL_POINTS}
-                    />
-                    <CustomAction
-                        onClick={(event: any) => {
-                            increasePoints()
-                            gaLogClickMe(event)
-                        }}
-                        text={
-                            <div>
-                                <div>Click Me</div>
-                            </div>
-                        }
-                        points={1}
-                        warning={warning}
                     />
                 </div>
             )
@@ -288,12 +227,10 @@ const Actions = (props: {
 function mapStateToProps(state: {
     WaitlistReducer: {
         waitlistUser: any
-        clicks: any
     }
 }) {
     return {
         waitlistUser: state.WaitlistReducer.waitlistUser,
-        clicks: state.WaitlistReducer.clicks,
     }
 }
 
