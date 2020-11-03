@@ -98,7 +98,6 @@ const VerifyView = (props: {
     }
 
     useEffect(() => {
-        console.log("verify use effect")
         if (validUser && validToken && !processing) {
             dispatch(validateVerificationToken(token))
         }
@@ -189,7 +188,6 @@ const VerifyView = (props: {
 }
 
 function mapStateToProps(state: { AuthReducer: { user: any; authFlow: any } }) {
-    console.log(state)
     return {
         user: state.AuthReducer.user ? state.AuthReducer.user : {},
         authFlow: state.AuthReducer.authFlow ? state.AuthReducer.authFlow : {},

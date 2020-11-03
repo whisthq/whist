@@ -14,8 +14,6 @@ export default function (state = DEFAULT, action: any) {
                 user: Object.assign(stateCopy.user, action.body),
             }
         case PureAction.UPDATE_AUTH_FLOW:
-            console.log("UPDATE AUTH FLOW")
-            console.log(action.body)
             return {
                 ...stateCopy,
                 authFlow: Object.assign(stateCopy.authFlow, action.body),
@@ -39,9 +37,6 @@ export default function (state = DEFAULT, action: any) {
                     }
                 })
             })
-
-            console.log("STATE REFRESH")
-            console.log(mergeInto)
 
             return mergeInto
         default:

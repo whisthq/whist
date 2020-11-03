@@ -193,7 +193,6 @@ const LoginView = (props: any) => {
 }
 
 function mapStateToProps(state: any) {
-    console.log(state)
     return {
         user: state.AuthReducer.user,
         authFlow: state.AuthReducer.authFlow,

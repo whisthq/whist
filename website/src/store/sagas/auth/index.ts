@@ -181,7 +181,6 @@ function* emailSignup(action: any) {
 }
 
 function* sendVerificationEmail(action: any) {
-    console.log(action)
     const state = yield select()
     if (action.email !== "" && action.token !== "") {
         const { json, response } = yield call(
@@ -209,7 +208,6 @@ function* sendVerificationEmail(action: any) {
 
 function* validateVerificationToken(action: any) {
     const state = yield select()
-    console.log("IN VALIDATE SAGA")
     const { json, response } = yield call(
         apiPost,
         "/account/verify",
@@ -299,7 +297,6 @@ function* validateResetToken(action: any) {
         ""
     )
     // at some later point in time we may find it helpful to change strings here to some sort of enum
-    console.log(`here comes the validation: ${JSON.stringify(json)}`)
     if (json) {
         if (json.status === 200) {
             yield put(
@@ -336,8 +333,6 @@ function* validateResetToken(action: any) {
 
 function* resetPassword(action: any) {
     // const state = yield select()
-
-    console.log(action)
 
     yield call(
         apiPost,

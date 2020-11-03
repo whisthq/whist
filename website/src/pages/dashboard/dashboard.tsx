@@ -27,6 +27,7 @@ const Dashboard = (props: {
     //const linuxCommands = "sudo apt-get install libavcodec-dev libavdevice-dev libx11-dev libxtst-dev xclip x11-xserver-utils -y"
     const valid_user = user.user_id && user.user_id !== ""
     const name = user.user_id ? user.user_id.split("@")[0] : ""
+    console.log(user)
 
     if (!valid_user) {
         return <Redirect to="/auth" />
