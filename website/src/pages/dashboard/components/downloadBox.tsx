@@ -29,6 +29,11 @@ const withOS = (obWin: any, obMac: any) =>
 const againstOS = (obWin: any, obMac: any) =>
     osName === "Windows" ? obMac : obWin
 
+// the download box is two buttons that allow you to download from either
+// MacOS or Windows. It will display the one which belongs to you on the top
+// it will be preferable in the future to make it so that the top button is
+// visually much larger than the bottom one (in the current state it is only
+// marginally larger)
 const DownloadBox = (props: {
     dispatch: any
     user: {
