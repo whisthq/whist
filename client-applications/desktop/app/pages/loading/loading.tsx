@@ -81,9 +81,6 @@ const UpdateScreen = (props: any) => {
                 ]
                 debugLog(`your executable path should be: ${path}`)
 
-                console.log("PARAMETERS ARE")
-                console.log(parameters)
-
                 // Starts the protocol
                 const protocol = child(executable, parameters, {
                     cwd: path,
