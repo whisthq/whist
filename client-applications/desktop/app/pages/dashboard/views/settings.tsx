@@ -233,7 +233,7 @@ const Settings = (props: any) => {
     )
 }
 
-const mapStateToProps = () => {
+const mapStateToProps = (state: any) => {
     return {}
 }
 

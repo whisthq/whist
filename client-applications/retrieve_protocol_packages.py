@@ -19,7 +19,9 @@ from github.Repository import Repository
 from github.GitRelease import GitRelease
 from github.GitReleaseAsset import GitReleaseAsset
 
-default_protocol_dir = join(dirname(realpath(__file__)), "protocol-packages")
+default_protocol_dir = join(
+    dirname(realpath(__file__)), "protocol-packages"
+)
 
 """ repo: Repository, desired_release: str -> GitRelease """
 
@@ -33,7 +35,7 @@ def get_release(repo, desired_release):
     )
 
     # BRANCH-YYYYMMDD.v+ (example dev-20200930.123)
-    version_id_re = re.compile(r"(\S+)-(\d{8})\.(\d+)")
+    version_id_re = re.compile(r"(\S+)-(\d{8})\.(\d+)")  
 
     if "latest:" in desired_release:
         desired_branch = desired_release.split(":")[1]
@@ -123,7 +125,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--release",
         help="which release to download the packages from; either a fully qualified release name or 'latest:branch' which will pick the latest for the branch",
-        default="latest:master",
+        default="latest:dev",
     )
     parser.add_argument(
         "--out-dir",
@@ -144,12 +146,12 @@ if __name__ == "__main__":
     if not github_token:
         raise Exception(
             (
-                "GITHUB_TOKEN was not found in the env vars %s"
-                % json.dumps(dict(environ), indent=2)
-                + "\n"
-                + "\nPlease go to https://github.com/settings/tokens and create a token."
-                + "\nThen run export GITHUB_TOKEN=your_github_token. You can check it's there with echo $GITHUB_TOKEN."
-                + "\n"
+            "GITHUB_TOKEN was not found in the env vars %s"
+            % json.dumps(dict(environ), indent=2)
+            + "\n"
+            + "\nPlease go to https://github.com/settings/tokens and create a token."
+            + "\nThen run export GITHUB_TOKEN=your_github_token. You can check it's there with echo $GITHUB_TOKEN."
+            + "\n"
             )
         )
     github_client = Github(github_token)
@@ -187,14 +189,14 @@ if __name__ == "__main__":
             headers={"Accept": "application/octet-stream"},
             stream=True,
         ) as r:
-
+            
             try:
                 r.raise_for_status()
                 print(
-                    f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes",
-                    flush=True,
-                )
-
+                        f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes",
+                        flush=True,
+                    )
+                
                 with open(out_path, "wb") as out:
                     shutil.copyfileobj(r.raw, out)
 

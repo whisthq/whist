@@ -11,7 +11,7 @@
         "afterSign": "build/notarize.js",
         "appId": "com.fractalcomputers.fractal",
         "artifactName": "Fractal.${ext}",
-        "copyright": "Copyright © Fractal Computers, Inc.",
+        "copyright": "Copyright \u00a9 Fractal Computers, Inc.",
         "deb": {
             "icon": "build/icon.png",
             "vendor": "Fractal Computers, Inc."
@@ -55,10 +55,11 @@
         "linux": {
             "artifactName": "Fractal.${ext}",
             "category": "Productivity",
-            "description": "Fractal Launcher",
+            "description": "Fractal Desktop Application. ",
             "icon": "build/icon.png",
-            "synopsis": "Fractal Launcher",
+            "synopsis": "Fractal Desktop Application",
             "target": [
+                "deb",
                 "AppImage"
             ]
         },
@@ -75,6 +76,7 @@
             "icon": "build/icon.icns",
             "minimumSystemVersion": "10.13.0",
             "target": [
+                "zip",
                 "dmg"
             ],
             "type": "distribution"
@@ -186,7 +188,7 @@
         "subscriptions-transport-ws": "^0.9.18",
         "systeminformation": "^4.22.3"
     },
-    "description": "Fractal Launcher",
+    "description": "Fractal Desktop Application",
     "devDependencies": {
         "@babel/core": "^7.8.3",
         "@babel/plugin-proposal-class-properties": "^7.8.3",
@@ -300,7 +302,7 @@
         "npm": ">=4.x",
         "yarn": ">=0.21.3"
     },
-    "homepage": "https://www.tryfractal.com",
+    "homepage": "https://www.fractalcomputers.com",
     "jest": {
         "moduleDirectories": [
             "node_modules",

@@ -1,6 +1,6 @@
 # Fractal Client Applications
 
-This repository contains the Fractal client applications, which users download to their local device to connect stream applications via Fractal to their local device. Each subfolder contains the code for its platforms, each with a proper README with information on how to develop or build each application.
+This repository contains the Fractal client applications, which users download to their local device to connect stream applications via Fractal to their local device. Each subfolder contains the appropriate code for its platform, each with a proper README with information on how to develop or build each application.
 
 ## Supported Applications
 

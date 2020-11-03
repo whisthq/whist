@@ -1,19 +1,17 @@
 # Workflow to lint an Electron app with Prettier
-name: Prettier Linter
+
+name: Linter
 
 on:
   pull_request:
-    branches: [ master, dev ]
-    paths-ignore:
-      - '**/README.md'
+    branches: [ master, dev, eric/debugLogging ]
 
 jobs:
-  desktop-lint:
-    name: Desktop Prettier Linter
+  lint:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Git repository
+      - name: Check out Git repository
         uses: actions/checkout@v2
         with:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token

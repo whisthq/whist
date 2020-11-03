@@ -5,8 +5,5 @@
 protocol-packages/
 
 # yarn
-yarn.lock
 node_modules/
-desktop/yarn.lock
 desktop/node_modules/
-desktop/app/yarn.lock

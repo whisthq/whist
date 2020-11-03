@@ -18,7 +18,6 @@ import RootApp from "rootApp"
 
 import "./app.global.css"
 import { config } from "shared/constants/config"
-import { debugLog } from "shared/utils/logging"
 
 const store = configureStore()
 
@@ -26,7 +25,7 @@ const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer
 
 // Set up Apollo GraphQL provider for https and wss (websocket)
 
-debugLog(config)
+console.log(config)
 
 const httpLink = new HttpLink({
     uri: config.url.GRAPHQL_HTTP_URL,
@@ -75,7 +74,7 @@ const apolloClient = new ApolloClient({
 //             }
 //         `,
 //     })
-//     .then((result) => debugLog(result))
+//     .then((result) => console.log(result))
 
 document.addEventListener("DOMContentLoaded", () =>
     render(

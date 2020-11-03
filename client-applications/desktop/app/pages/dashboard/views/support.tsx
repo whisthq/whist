@@ -4,7 +4,6 @@ import { Alert } from "react-bootstrap"
 import styles from "styles/dashboard.css"
 
 import { submitFeedback } from "store/actions/sideEffects"
-import { debugLog } from "shared/utils/logging"
 
 const Settings = (props: any) => {
     const { dispatch } = props
@@ -19,7 +18,7 @@ const Settings = (props: any) => {
 
     const handleSelect = (evt: any) => {
         setType(evt.target.value)
-        debugLog(type)
+        console.log(type)
     }
 
     const handleSubmit = () => {
@@ -97,7 +96,7 @@ const Settings = (props: any) => {
     )
 }
 
-const mapStateToProps = () => {
+const mapStateToProps = (state: any) => {
     return {}
 }
 

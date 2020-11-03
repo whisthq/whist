@@ -1,5 +1,6 @@
 # This workflow deletes GitHub Releases/Tags every 7 days, keeping the 5 latest Releases/Tags
-name: 'Delete Old Releases'
+
+name: 'Delete old releases'
 
 on:
   schedule:
@@ -7,7 +8,6 @@ on:
 
 jobs:
   delete-releases:
-    name: Delete Old Releases
     runs-on: ubuntu-latest
     
     steps:
