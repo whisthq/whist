@@ -4,6 +4,7 @@ import { connect } from "react-redux"
 import { useQuery } from "@apollo/client"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faAngleRight, faAngleLeft } from "@fortawesome/free-solid-svg-icons"
+import { debugLog } from "shared/utils/logging"
 
 import styles from "styles/dashboard.css"
 
@@ -145,7 +146,7 @@ const Discover = (props: any) => {
     )
 }
 
-const mapStateToProps = (state: any) => {
+const mapStateToProps = () => {
     return {}
 }
 

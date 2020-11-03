@@ -348,7 +348,7 @@ function* fetchContainer(action: any, retries?: number) {
     }
 }
 
-function* submitFeedback(action: any) {
+function* submitFeedback(action: any): any {
     const state = yield select()
     const { response } = yield call(
         apiPost,

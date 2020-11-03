@@ -28,23 +28,24 @@ platform_map_no_size = {
 
 default_channel_s3_buckets = {
     "testing": {
-        "Windows-64bit": "fractal-applications-testing",
-        "Linux-64bit": "fractal-linux-applications-testing",  # TODO as of 2020-07-18 this bucket does not exist!
+        "Windows-64bit": "fractal-windows-application-testing",
+        "Linux-64bit": "fractal-linux-application-testing",
         "macOS-64bit": "fractal-mac-application-testing",
     },
     "production": {
-        "Windows-64bit": "fractal-applications-release",
-        "Linux-64bit": "fractal-linux-applications-release",
-        "macOS-64bit": "fractal-mac-applications-release",
+        "Windows-64bit": "fractal-windows-application-release",
+        "Linux-64bit": "fractal-linux-application-release",
+        "macOS-64bit": "fractal-mac-application-release",
     },
-    "noupdates": defaultdict(lambda: "fractal: fractal-applications-testing"),
+    "noupdates": defaultdict(lambda: "fractal: fractal-windows-application-testing"),
 }
 
 
 def select_protocol_binary(platform: str, protocol_id: str, protocol_dir: Path) -> Path:
     valid_protocols = protocol_dir.glob(f"*{platform}*.*")
     mtime_sorted_protocols = sorted(
-        map(lambda p: (p, p.stat().st_mtime), valid_protocols), key=lambda b: b[1],
+        map(lambda p: (p, p.stat().st_mtime), valid_protocols),
+        key=lambda b: b[1],
     )
     if len(mtime_sorted_protocols) < 1:
         raise Exception(
@@ -121,7 +122,7 @@ def prep_macos(desktop_dir: Path, protocol_dir: Path, codesign_identity: str) ->
 
 
 def prep_linux(protocol_dir: Path) -> None:
-    client = protocol_dir / "FractalClient"
+    client = protocol_dir / "Fractal"
     client.chmod(
         client.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )  # this long chain is equivalent to "chmod +x"
@@ -146,11 +147,11 @@ def prep_windows(protocol_dir: Path) -> None:
             shutil.copyfileobj(r.raw, f)
     rcedit_cmd = [
         str(rcedit_path),
-        str(protocol_dir / "FractalClient.exe"),
+        str(protocol_dir / "Fractal.exe"),
         "--set-icon",
         "desktop\\build\\icon.ico",
     ]
-    print("Updating FractalClient icon using `%s`" % " ".join(rcedit_cmd))
+    print("Updating Fractal.exe icon using `%s`" % " ".join(rcedit_cmd))
     subprocess.run(rcedit_cmd, check=True)
 
 

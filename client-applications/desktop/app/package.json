@@ -16,7 +16,7 @@
         "speedtest.net": "^0.1.0",
         "tunnel-agent": "^0.6.0"
     },
-    "description": "Fractal Desktop Application",
+    "description": "Fractal Launcher",
     "license": "UNLICENSED",
     "main": "./main.prod.js",
     "name": "fractal",

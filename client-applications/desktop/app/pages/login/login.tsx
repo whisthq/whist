@@ -519,9 +519,9 @@ const Login = (props: any) => {
                     }}
                 >
                     {" "}
-                    We are currently pushing out a critical Linux update. Your
-                    app will be back online very soon. We apologize for the
-                    inconvenience!
+                    We are currently pushing out a critical update. The Fractal
+                    launcher will be back online very soon. We apologize for the
+                    inconvenience.
                 </div>
             )}
         </div>

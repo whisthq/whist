@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "fractal-client-apps-scripts"
+name = "fractal-client-applications-scripts"
 version = "0.0.0"
-description = "Scripts to assist with development of the Fractal Client Apps"
+description = "Scripts to assist with development of the Fractal Client Applications"
 
 [tool.poetry.dependencies]
 python = "^3.6"

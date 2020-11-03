@@ -5,6 +5,7 @@ import { useQuery } from "@apollo/client"
 import Titlebar from "react-electron-titlebar"
 
 import { GET_BANNERS } from "shared/constants/graphql"
+import { debugLog } from "shared/utils/logging"
 
 import styles from "styles/dashboard.css"
 

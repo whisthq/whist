@@ -2,7 +2,7 @@
 
 ![Electron CI](https://github.com/fractalcomputers/client-applications/workflows/Electron%20CI/badge.svg)
 
-This folder contains the code for the Fractal desktop applications running on Windows, MacOS and Linux Ubuntu. The applications are built with cross-platform compatibility using ElectronJS. This repository contains all the directions for building the applications locally and for publishing them for production on each of the following OSes:
+This folder contains the code for the Fractal desktop applications running on Windows, MacOS and Linux Ubuntu. The applications are built with cross-platform compatibility using Electron. This repository contains all the directions for building the applications locally and for publishing them for production on each of the following OSes:
 
 -   Windows 10
 -   MacOS 10.10+
@@ -44,7 +44,13 @@ The installer executable will be in `client-applications/desktop/release` as a `
 
 #### MacOS Notarizing
 
-Before you can package the MacOS application it needs to be notarized. This means that it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developer Certificate in your MacOS Keychain for this work successfully. You can download the certificate from AWS S3 on [this link](https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12) assuming you have access to the Fractal AWS organization, and then install it by double-clicking the `.p12` certificate file. The application will get notarized as part of the regular build script.
+Before you can package the MacOS application it needs to be notarized. This means that it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need a few things for this process to go smoothly:
+
+- Install Xcode (from the MacOS App Store) if you haven't already (beware, it requires ~15GB)
+- After having installed Xcode, open a terminal and run `xcode-select --install` to install the Apple command-line tools
+- Download the Fractal Apple Developer Certificate from AWS S3 [here](s3://fractal-dev-secrets/fractal-apple-codesigning-certificate.p12) and install it into your MacOS Keychain by double-cling on the `.p12` file
+
+The application will get notarized as part of the regular build script.
 
 ### Publishing New Versions
 
