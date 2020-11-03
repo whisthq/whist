@@ -4,6 +4,7 @@
 # EXPOSES electron.v to bindings-builder
 # EXPOSES all of figma-1 to figma-2 as the final image
 ##########################################################
+
 FROM fractal/browsers/chrome:current-build as figma-1
 
 # Install figma build dependencies explicitly
