@@ -271,6 +271,7 @@ function* fetchContainer(action: any, retries?: number) {
                         port32273: json.output.port_32273,
                         location: json.output.location,
                         publicIP: json.output.ip,
+                        secretKey: json.output.secret_key,
                     })
                 )
             }

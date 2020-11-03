@@ -31,12 +31,7 @@ const Discover = (props: any) => {
         : []
 
     useEffect(() => {
-        console.log(error)
-    }, [error])
-
-    useEffect(() => {
         const results = featuredAppData.filter(getSearchResults)
-        console.log(results)
         setSearchResults(
             results.map((app: any) => <App key={app.app_id} app={app} />)
         )
