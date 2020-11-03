@@ -22,16 +22,16 @@ RUN wget -qO figma.zip https://www.figma.com/download/desktop/mac \
     && cp -r tmp/figma/*.app/Contents/Resources/* tmp/build \
     && rm figma.zip \
     && strings tmp/figma/*.app/Contents/Frameworks/'Electron Framework'.framework/Versions/Current/'Electron Framework' \
-        | grep Electron/ \
-        | head -1 \
-        | awk -F/ '{print $NF}' \
-        > electron.v \
+    | grep Electron/ \
+    | head -1 \
+    | awk -F/ '{print $NF}' \
+    > electron.v \
     && rm -rf tmp/figma
 
 # Install appropriate electron version
 RUN ELECTRON_V="v$(cat electron.v)" \
     && wget -qO electron.zip \
-        "https://github.com/electron/electron/releases/download/$ELECTRON_V/electron-$ELECTRON_V-linux-x64.zip" \
+    "https://github.com/electron/electron/releases/download/$ELECTRON_V/electron-$ELECTRON_V-linux-x64.zip" \
     && unzip electron.zip -d tmp/build \
     && rm -rf electron.zip
 
@@ -97,7 +97,8 @@ RUN su - fractal -c 'xdg-desktop-menu install /opt/figma/figma-app.desktop'
 # Whitelist figma:// in google-chrome
 RUN mkdir -p /etc/opt/chrome/policies/managed \
     && echo {} \
-        | jq '.URLWhitelist=["figma://*"]' \
-        > /etc/opt/chrome/policies/managed/whitelist.json
+    | jq '.URLWhitelist=["figma://*"]' \
+    > /etc/opt/chrome/policies/managed/whitelist.json
 
-COPY .xinitrc /root/.xinitrc
+# Setup Fractal application symlink
+RUN ln -sf /usr/bin/figma /usr/bin/fractal-application

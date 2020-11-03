@@ -26,4 +26,6 @@ RUN wget --quiet https://downloads.slack-edge.com/linux_releases/slack-desktop-4
     rm -rf /tmp/slack-desktop*.deb
 
 # Application startup script
-COPY .xinitrc /root/.xinitrc
+
+# Setup Fractal application symlink
+RUN ln -sf /usr/lib/slack/slack /usr/bin/fractal-application

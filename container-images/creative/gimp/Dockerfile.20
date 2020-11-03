@@ -12,4 +12,5 @@ COPY --chown=fractal gimprc /home/fractal/.config/GIMP/2.10/gimprc
 COPY gimprc /root/.config/GIMP/2.10/gimprc
 
 # Application startup script
-COPY .xinitrc /root/.xinitrc
+
+RUN ln -sf $(which gimp) /usr/bin/fractal-application
