@@ -22,6 +22,7 @@ const UpdateScreen = (props: any) => {
         port32263,
         port32273,
         ip,
+        secretKey,
     } = props
 
     // figure out how to use useEffect
@@ -67,12 +68,21 @@ const UpdateScreen = (props: any) => {
         execChmodUnix("chmod +x FractalClient", path, os.platform()).then(
             () => {
                 var port_info = `32262:${port32262}.32263:${port32263}.32273:${port32273}`
-                var parameters = ["-w", 800, "-h", 600, "-p", port_info, ip]
+                var parameters = [
+                    "-w",
+                    800,
+                    "-h",
+                    600,
+                    "-p",
+                    port_info,
+                    "-k",
+                    secretKey,
+                    ip,
+                ]
                 debugLog(`your executable path should be: ${path}`)
 
-                console.log(path)
-                console.log(port_info)
-                console.log(ip)
+                console.log("PARAMETERS ARE")
+                console.log(parameters)
 
                 // Starts the protocol
                 const protocol = child(executable, parameters, {
@@ -93,6 +103,7 @@ const UpdateScreen = (props: any) => {
                             port32263: null,
                             port32273: null,
                             publicIP: null,
+                            secretKey: null,
                         })
                     )
                     dispatch(
@@ -186,7 +197,6 @@ const UpdateScreen = (props: any) => {
 }
 
 function mapStateToProps(state: any) {
-    console.log(state)
     return {
         os: state.MainReducer.client.os,
         percentLoaded: state.MainReducer.loading.percentLoaded,
@@ -198,6 +208,7 @@ function mapStateToProps(state: any) {
         port32273: state.MainReducer.container.port32273,
         location: state.MainReducer.container.location,
         ip: state.MainReducer.container.publicIP,
+        secretKey: state.MainReducer.container.secretKey,
     }
 }
 

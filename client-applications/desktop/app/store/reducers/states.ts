@@ -4,6 +4,7 @@ export const DEFAULT = {
         accessToken: null,
         refreshToken: null,
         loginWarning: false,
+        loginMessage: null,
         name: null,
     },
     container: {
@@ -14,6 +15,7 @@ export const DEFAULT = {
         port32263: null,
         port32273: null,
         location: null,
+        secretKey: null,
     },
     client: {
         os: null,
