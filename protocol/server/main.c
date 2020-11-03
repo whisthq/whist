@@ -1117,6 +1117,7 @@ int MultithreadedManageClients(void* opaque) {
     return 0;
 }
 
+// required_argument means --identifier MUST take an argument
 const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k'},
                                      {"identifier", required_argument, NULL, 'i'},
                                      {"webserver", required_argument, NULL, 'w'},
@@ -1126,6 +1127,7 @@ const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
 
+// i: means --identifier MUST take an argument
 #define OPTION_STRING "k:i:w:"
 
 int parse_args(int argc, char* argv[]) {
@@ -1137,16 +1139,18 @@ int parse_args(int argc, char* argv[]) {
         "Usage: server [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
-        "  -k, --private-key=PK          pass in the RSA Private Key as a\n"
-        "                                  hexadecimal string\n"
-        "  -i, --identifier=ID           pass in the unique identifier for this\n"
+        // regular options should look nice, with 2-space indenting for multiple lines
+        "  -k, --private-key=PK        Pass in the RSA Private Key as a\n"
+        "                                  hexadecimal string. Defaults to\n"
+        "                                  binary and hex default keys in\n"
+        "                                  the protocol code\n"
+        "  -i, --identifier=ID           Pass in the unique identifier for this\n"
         "                                  server as a hexadecimal string\n"
-        "      --help     display this help and exit\n"
-        "      --version  output version information and exit\n"
-        "  -w, --webserver=WS_URL        pass in the webserver url for this\n"
-        "                                  server's requests";
-
-    // Initialize private key to default
+        "  -w, --webserver=WS_URL        Pass in the webserver url for this\n"
+        "                                  server's requests\n"
+        // special options should be indented further to the left
+        "      --help     Display this help and exit\n"
+        "      --version  Output version information and exit\n";
     memcpy((char*)&binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
            sizeof(binary_aes_private_key));
     memcpy((char*)&hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(hex_aes_private_key));
@@ -1172,7 +1176,7 @@ int parse_args(int argc, char* argv[]) {
                 break;
             }
             case 'i': {
-                printf("Identifier passed in: %s", optarg);
+                printf("Identifier passed in: %s\n", optarg);
                 if (strlen(optarg) > FRACTAL_IDENTIFIER_MAXLEN) {
                     printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
                            (unsigned long)strlen(optarg), FRACTAL_IDENTIFIER_MAXLEN);
@@ -1183,7 +1187,7 @@ int parse_args(int argc, char* argv[]) {
                 break;
             }
             case 'w': {
-                printf("Webserver URL passed in: %s", optarg);
+                printf("Webserver URL passed in: %s\n", optarg);
                 if (strlen(optarg) > MAX_WEBSERVER_URL_LEN) {
                     printf("Webserver url passed in is too long! Has length %lu but max is %d.\n",
                            (unsigned long)strlen(optarg), MAX_WEBSERVER_URL_LEN);
@@ -1230,8 +1234,13 @@ int parse_args(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-    if (parse_args(argc, argv) == -1) {
-        exit(-1);
+    int ret = parse_args(argc, argv);
+    if (ret == -1) {
+        // invalid usage
+        return -1;
+    } else if (ret == 1) {
+        // --help or --version
+        return 0;
     }
 
     init_default_port_mappings();
