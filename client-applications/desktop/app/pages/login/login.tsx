@@ -125,7 +125,7 @@ const Login = (props: any) => {
     const handleLoginUser = () => {
         setLoggingIn(true)
         setAWSRegion().then(() => {
-            dispatch(updateAuth({ loginWarning: false }))
+            dispatch(updateAuth({ loginWarning: false, loginMessage: null }))
             if (!rememberMe) {
                 storage.set("credentials", {
                     username: "",

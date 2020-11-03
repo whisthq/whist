@@ -97,6 +97,16 @@ function* googleLogin(action: any) {
         })
         if (json) {
             if (response.status === 200) {
+                if (!json.can_login) {
+                    yield put(
+                        Action.updateAuth({
+                            loginWarning: true,
+                            loginMessage:
+                                "You are still on the waitlist. We will email you when you've been selected!",
+                        })
+                    )
+                    return
+                }
                 yield put(
                     Action.updateAuth({
                         accessToken: json.access_token,
@@ -118,7 +128,12 @@ function* googleLogin(action: any) {
                 yield call(getPromoCode, { username: json.username })
                 history.push("/dashboard")
             } else {
-                yield put(Action.updateAuth({ loginWarning: true }))
+                yield put(
+                    Action.updateAuth({
+                        loginWarning: true,
+                        loginMessage: "Try using non-Google login.",
+                    })
+                )
             }
         } else {
             yield put(Action.updateAuth({ loginWarning: true }))
