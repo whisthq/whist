@@ -38,10 +38,11 @@ build_specific_image () {
 
 
 # Function to build an image and its dependencies from the Dockerfile
-# Usage: build_image_with_deps $app_path $tag
-# e.g. build_image_with_deps creative/figma
+# Usage: build_image_with_deps $app_path $tag $always_show_output
+# e.g. build_image_with_deps creative/figma false
+# If always_show_output is false, then the build output is shown only on error
 build_image_with_deps() {
-  if [[ $# != 2 ]]
+  if [[ $# != 3 ]]
   then
     echo "build_image_with_deps(): Missing an argument!"
     exit -1
@@ -50,7 +51,7 @@ build_image_with_deps() {
   if [[ $1 == "base" ]]
   then
     # Deal with base case
-    build_specific_image "base" "$2" "false"
+    build_specific_image "$1" "$2" "$3"
   else
     # Get the fractal images that are also dependencies
     deps_with_tags=$(grep -o -E "^[[:blank:]]*FROM[[:blank:]]+fractal[^[:blank:]]*" $1/Dockerfile.20 | sed "s/[[:blank:]]*FROM[[:blank:]]\+fractal\///g")
@@ -72,11 +73,11 @@ build_image_with_deps() {
         tag="latest"
       fi
 
-      build_image_with_deps "$dep" "$tag"
+      build_image_with_deps "$dep" "$tag" "$3"
     done < <(printf "%s\n" "$deps_with_tags")
 
     # Build the final image
-    build_specific_image "$1" "$local_tag" "false"
+    build_specific_image "$1" "$2" "$3"
   fi
 }
 
@@ -85,5 +86,6 @@ build_image_with_deps() {
 local_tag=current-build
 app_path=${1:-base}
 app_path=${app_path%/}
+force_output=${2:-false}
 
-build_image_with_deps "$app_path" "$local_tag"
+build_image_with_deps "$app_path" "$local_tag" "$force_output"
