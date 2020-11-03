@@ -200,7 +200,7 @@ def aws_container_post(action, **kwargs):
                         region_name=region,
                         cluster_name=sample_cluster,
                         webserver_url=kwargs["webserver_url"],
-                        dpi=dpi
+                        dpi=dpi,
                     )
                     response = jsonify({"ID": task.id}), ACCEPTED
 
