@@ -71,7 +71,7 @@ def uploadLogsToS3(sender, version, connection_id, ip, port, aes_key, message):
 
     # Make sure that the container with the specified networking attributes
     # exists.
-    if not container or aes_key != container.secret_key:
+    if not container or aes_key.lower() != container.secret_key.lower():
         fractalLog(
             function="uploadLogsToS3",
             label=None,
