@@ -2,38 +2,88 @@
 
 set -Eeuo pipefail
 
-local_tag=current-build
+# Function to build a specific image
+# Usage: build_specific_image $app_path $tag $always_show_output
+# e.g. build_specific_image browsers/firefox current-build false
+# If always_show_output is false, then the build output is shown only on error
+build_specific_image () {
+  if [[ $# != 3 ]]
+  then
+    echo "build_specific_image(): Missing an argument!"
+    exit -1
+  fi
 
-app_path=${1:-base}
-app_path=${app_path%/}
+  printf "Building image: %s...\n" "$1:$2"
 
-if [[ $app_path == "base" ]]
-then
-  echo "Building base image..."
-  docker build -f $app_path/Dockerfile.20 $app_path -t fractal/$app_path:$local_tag
-else
-  # Get the fractal images that are also dependencies
-  deps_with_tags=$(grep -o -E "^[[:blank:]]*FROM[[:blank:]]+fractal[^[:blank:]]*" $app_path/Dockerfile.20 | sed "s/[[:blank:]]*FROM[[:blank:]]\+fractal\///g")
-
-  while IFS= read -r tagged_dep
-  do
-    untagged_dep=$(echo "$tagged_dep" | sed "s/:.*//g")
-    echo "Building dependency $untagged_dep ($tagged_dep)..."
-
-    docker build -f $untagged_dep/Dockerfile.20 $untagged_dep -t fractal/$tagged_dep >> .build_output 2>&1
+  if [[ $3 == "true" ]]
+  then
+    docker build -f $1/Dockerfile.20 $1 -t fractal/$1:$2
+  else
+    set +e
+    docker build -f $1/Dockerfile.20 $1 -t fractal/$1:$2 >> .build_output 2>&1
     status=$?
+    set -e
 
     if [[ $status != 0 ]]
     then
-      printf "\tError building dependency %s (%s)!! Output:\n%s" "$untagged_dep" "$tagged_dep" $(cat .build_output)
+      printf "\tError building image %s!! Build output:\n%s" "$1:$2" "$(cat .build_output)"
+      rm .build_output
       exit $status
     else
-      printf "\tSuccessfully built dependency %s (%s).\n" "$untagged_dep" "$tagged_dep"
+      printf "\tSuccessfully built image %s.\n" "$1:$2"
+      rm .build_output
     fi
+  fi
+}
 
-    rm .build_output
 
-  done < <(printf "%s\n" "$deps_with_tags")
+# Function to build an image and its dependencies from the Dockerfile
+# Usage: build_image_with_deps $app_path $tag
+# e.g. build_image_with_deps creative/figma
+build_image_with_deps() {
+  if [[ $# != 2 ]]
+  then
+    echo "build_image_with_deps(): Missing an argument!"
+    exit -1
+  fi
 
-  docker build -f $app_path/Dockerfile.20 $app_path -t fractal/$app_path:$local_tag
-fi
+  if [[ $1 == "base" ]]
+  then
+    # Deal with base case
+    build_specific_image "base" "$2" "false"
+  else
+    # Get the fractal images that are also dependencies
+    deps_with_tags=$(grep -o -E "^[[:blank:]]*FROM[[:blank:]]+fractal[^[:blank:]]*" $1/Dockerfile.20 | sed "s/[[:blank:]]*FROM[[:blank:]]\+fractal\///g")
+
+    # We do this nested echo thing to get rid of newlines
+    echo "Dependencies for $1: " $(echo $deps_with_tags)
+
+    # Actually build the dependencies
+    while IFS= read -r tagged_dep
+    do
+      if [[ $tagged_dep == *:* ]]
+      then
+        # There exists a tag
+        dep=$(echo "$tagged_dep" | sed "s/:.*//g")
+        tag=$(echo "$tagged_dep" | sed "s/^.*://g")
+      else
+        # We use the default tag "latest"
+        dep="$tagged_dep"
+        tag="latest"
+      fi
+
+      build_image_with_deps "$dep" "$tag"
+    done < <(printf "%s\n" "$deps_with_tags")
+
+    # Build the final image
+    build_specific_image "$1" "$local_tag" "false"
+  fi
+}
+
+
+# Input variables and constants
+local_tag=current-build
+app_path=${1:-base}
+app_path=${app_path%/}
+
+build_image_with_deps "$app_path" "$local_tag"
