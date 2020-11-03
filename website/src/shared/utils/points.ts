@@ -1,3 +1,3 @@
 export const INITIAL_POINTS = 50
-export const SIGNUP_POINTS = 100
-export const REFERRAL_POINTS = 300
+export const SIGNUP_POINTS = 200
+export const REFERRAL_POINTS = Math.floor(Math.random() * 50 + 276)

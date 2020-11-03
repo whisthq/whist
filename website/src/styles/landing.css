@@ -196,6 +196,8 @@ thead tr th {
 
 .points {
     color: rgb(57, 48, 184);
+    position: relative;
+    top: 2px;
 }
 
 .modal-header {

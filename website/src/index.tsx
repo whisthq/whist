@@ -5,13 +5,12 @@ import { applyMiddleware, createStore } from "redux"
 import createSagaMiddleware from "redux-saga"
 import { persistStore, persistReducer } from "redux-persist"
 import { routerMiddleware } from "connected-react-router"
-import { Route, Switch } from "react-router-dom"
 import { Router } from "react-router"
 import { PersistGate } from "redux-persist/integration/react"
 import { composeWithDevTools } from "redux-devtools-extension"
 import ReduxPromise from "redux-promise"
 import storage from "redux-persist/lib/storage"
-import rootSaga from "store/sagas"
+import rootSaga from "store/sagas/root"
 import * as Sentry from "@sentry/react"
 import { ApolloProvider } from "@apollo/react-hooks"
 import { ApolloClient, InMemoryCache, HttpLink, split } from "@apollo/client"
@@ -27,14 +26,7 @@ import * as serviceWorker from "serviceWorker"
 import "styles/shared.css"
 import "bootstrap/dist/css/bootstrap.min.css"
 
-import Landing from "pages/landing/landing"
-import Application from "pages/application/application"
-import About from "pages/about/about"
-import TermsOfService from "pages/legal/tos"
-import Cookies from "pages/legal/cookies"
-import Privacy from "pages/legal/privacy"
-
-import withTracker from "shared/utils/withTracker"
+import RootApp from "rootApp"
 
 Sentry.init({
     dsn:
@@ -109,38 +101,7 @@ ReactDOM.render(
                 <PersistGate loading={null} persistor={persistor}>
                     <ApolloProvider client={apolloClient}>
                         <MainProvider>
-                            <Switch>
-                                <Route
-                                    exact
-                                    path="/about"
-                                    component={withTracker(About)}
-                                />
-                                <Route
-                                    exact
-                                    path="/application"
-                                    component={withTracker(Application)}
-                                />
-                                <Route
-                                    exact
-                                    path="/cookies"
-                                    component={withTracker(Cookies)}
-                                />
-                                <Route
-                                    exact
-                                    path="/privacy"
-                                    component={withTracker(Privacy)}
-                                />
-                                <Route
-                                    exact
-                                    path="/termsofservice"
-                                    component={withTracker(TermsOfService)}
-                                />
-                                <Route
-                                    exact
-                                    path="/:first?/:second?"
-                                    component={withTracker(Landing)}
-                                />
-                            </Switch>
+                            <RootApp />
                         </MainProvider>
                     </ApolloProvider>
                 </PersistGate>
