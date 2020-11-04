@@ -1,6 +1,7 @@
 import React from "react"
 import { connect } from "react-redux"
 import { Redirect } from "react-router"
+
 import Header from "shared/components/header"
 import DownloadBox from "pages/dashboard/components/downloadBox"
 //import { CopyToClipboard } from "react-copy-to-clipboard"
