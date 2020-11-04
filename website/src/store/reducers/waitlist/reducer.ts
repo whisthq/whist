@@ -6,17 +6,15 @@ import * as SharedAction from "store/actions/shared"
 import { deep_copy } from "shared/utils/reducerHelpers"
 
 export default function (state = DEFAULT, action: any) {
-    var stateCopy = deep_copy(state)
+    const stateCopy: any = deep_copy(state)
     switch (action.type) {
         case PureAction.UPDATE_WAITLIST_USER:
             return {
                 ...stateCopy,
-                user: Object.assign(stateCopy.waitlistUser, action.body),
-            }
-        case PureAction.UPDATE_CLICKS:
-            return {
-                ...stateCopy,
-                clicks: Object.assign(stateCopy.clicks, action.body),
+                waitlistUser: Object.assign(
+                    stateCopy.waitlistUser,
+                    action.body
+                ),
             }
         case PureAction.UPDATE_WAITLIST_DATA:
             return {
@@ -32,8 +30,27 @@ export default function (state = DEFAULT, action: any) {
                 ...stateCopy,
                 navigation: Object.assign(stateCopy.navigation, action.body),
             }
+        case PureAction.RESET_WAITLIST_USER:
+            return {
+                ...stateCopy,
+                waitlistUser: DEFAULT.waitlistUser,
+            }
         case SharedAction.RESET_STATE:
             return DEFAULT
+        case SharedAction.REFRESH_STATE:
+            // enforce structure of default but add in old information
+            const mergeInto: any = deep_copy(DEFAULT)
+
+            Object.keys(stateCopy).forEach((outerKey: any) => {
+                Object.keys(stateCopy[outerKey]).forEach((innerKey: string) => {
+                    if (stateCopy[outerKey][innerKey]) {
+                        mergeInto[outerKey][innerKey] =
+                            stateCopy[outerKey][innerKey]
+                    }
+                })
+            })
+
+            return mergeInto
         default:
             return state
     }

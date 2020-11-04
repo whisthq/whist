@@ -2,18 +2,20 @@ import React, { useState, useContext } from "react"
 import { connect } from "react-redux"
 import { Button, Modal, Alert } from "react-bootstrap"
 import { CopyToClipboard } from "react-copy-to-clipboard"
-import { useMutation } from "@apollo/client"
 
-import * as PureWaitlistAction from "store/actions/waitlist/pure"
+// import * as PureAuthAction from "store/actions/auth/pure"
 import * as SideEffectWaitlistAction from "store/actions/waitlist/sideEffects"
 
-import GoogleButton from "pages/auth/googleButton"
 import WaitlistForm from "shared/components/waitlistForm"
+import history from "shared/utils/history"
 
-import { UPDATE_WAITLIST } from "shared/constants/graphql"
-import { REFERRAL_POINTS } from "shared/utils/points"
+import { REFERRAL_POINTS, SIGNUP_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "shared/constants/config"
+
+import ReactGA from "react-ga"
+
+import { categories, actions, ga_event } from "shared/constants/gaEvents"
 
 const CustomAction = (props: {
     onClick: any
@@ -36,12 +38,15 @@ const CustomAction = (props: {
             >
                 <div
                     style={{
-                        fontSize: width > 720 ? 20 : 16,
+                        fontSize: width > 720 ? 17 : 16,
+                        textAlign: "left",
                     }}
                 >
                     {text}
                 </div>
-                <div className="points">+{points.toString()} points</div>
+                <div className="points" style={{ textAlign: "right" }}>
+                    +{points.toString()} pts
+                </div>
             </div>
             {warning && warning !== "" && (
                 <div
@@ -61,70 +66,35 @@ const CustomAction = (props: {
 
 const Actions = (props: {
     dispatch: any
-    user: {
+    waitlistUser: {
         user_id: string
         referralCode: string
         points: number
         referrals: number
         name: string
+        authEmail: string
     }
-    clicks: any
-    waitlistUser: any
 }) => {
-    const { dispatch, user, clicks, waitlistUser } = props
+    const { dispatch, waitlistUser } = props
 
     const [showModal, setShowModal] = useState(false)
     const [showEmailSentAlert, setShowEmailSentAlert] = useState(false)
     const [recipientEmail, setRecipientEmail] = useState("")
     const [sentEmail, setSentEmail] = useState("")
-    const [warning, setWarning] = useState("")
-
-    const [updatePoints] = useMutation(UPDATE_WAITLIST, {
-        onError(err) {},
-    })
 
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
 
-    const increasePoints = () => {
-        if (user) {
-            var allowClick = true
-            var clickReset = false
-            const currentTime = new Date().getTime() / 1000
+    // useEffect(() => {
+    //     if (!waitlistUser.authEmail) {
+    //         dispatch(PureAuthAction.resetUser())
+    //     }
+    // }, [dispatch, waitlistUser])
 
-            if (currentTime - clicks.lastClicked > 1) {
-                if (clicks.number > 50) {
-                    if (currentTime - clicks.lastClicked > 60 * 60 * 3) {
-                        clickReset = true
-                    } else {
-                        allowClick = false
-                        setWarning(
-                            "Max clicks reached! Clicking will reset in 3 hours."
-                        )
-                    }
-                }
-
-                if (allowClick) {
-                    if (clickReset) {
-                        dispatch(PureWaitlistAction.updateClicks({ number: 1 }))
-                    } else {
-                        dispatch(
-                            PureWaitlistAction.updateClicks({
-                                number: clicks.number + 1,
-                            })
-                        )
-                    }
-
-                    updatePoints({
-                        variables: {
-                            user_id: user.user_id,
-                            points: waitlistUser.points + 1,
-                            referrals: waitlistUser.referrals,
-                        },
-                    })
-                }
-            }
-        }
+    const gaLogSentReferallEmail = () => {
+        ReactGA.event(
+            ga_event(categories.POINTS, actions.POINTS.SENT_REFERALL_EMAIL)
+        )
     }
 
     const updateRecipientEmail = (evt: any) => {
@@ -133,32 +103,30 @@ const Actions = (props: {
     }
 
     const sendReferralEmail = () => {
-        if (user.user_id && recipientEmail) {
+        if (waitlistUser.user_id && recipientEmail) {
             dispatch(SideEffectWaitlistAction.sendReferralEmail(recipientEmail))
             setSentEmail(recipientEmail)
             setShowEmailSentAlert(true)
+
+            gaLogSentReferallEmail()
         }
     }
 
     const renderActions = () => {
-        if (user && user.user_id) {
+        if (waitlistUser && waitlistUser.user_id) {
             return (
                 <div style={{ width: "100%" }}>
-                    {<GoogleButton />}
+                    {!waitlistUser.authEmail && (
+                        <CustomAction
+                            onClick={() => history.push("/auth")}
+                            text="Create an account"
+                            points={SIGNUP_POINTS}
+                        />
+                    )}
                     <CustomAction
                         onClick={handleOpenModal}
                         text="Refer a Friend"
                         points={REFERRAL_POINTS}
-                    />
-                    <CustomAction
-                        onClick={increasePoints}
-                        text={
-                            <div>
-                                <div>Click Me</div>
-                            </div>
-                        }
-                        points={1}
-                        warning={warning}
                     />
                 </div>
             )
@@ -257,18 +225,12 @@ const Actions = (props: {
 }
 
 function mapStateToProps(state: {
-    AuthReducer: {
-        user: any
-    }
     WaitlistReducer: {
         waitlistUser: any
-        clicks: any
     }
 }) {
     return {
-        user: state.AuthReducer.user,
         waitlistUser: state.WaitlistReducer.waitlistUser,
-        clicks: state.WaitlistReducer.clicks,
     }
 }
 

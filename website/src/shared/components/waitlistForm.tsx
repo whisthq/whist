@@ -13,20 +13,25 @@ import { INITIAL_POINTS, REFERRAL_POINTS } from "shared/utils/points"
 import { INSERT_WAITLIST } from "pages/landing/constants/graphql"
 import { UPDATE_WAITLIST } from "shared/constants/graphql"
 
-import * as PureAuthAction from "store/actions/auth/pure"
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
-import * as SharedAction from "store/actions/shared"
+import * as PureAuthAction from "store/actions/auth/pure"
+import { deepCopy } from "shared/utils/reducerHelpers"
+import { DEFAULT } from "store/reducers/auth/default"
 
 import "styles/landing.css"
+import { checkEmail } from "pages/auth/constants/authHelpers"
 
 function WaitlistForm(props: any) {
-    const { dispatch, user, waitlist, isAction } = props
+    const { dispatch, waitlist, waitlistUser, isAction } = props
     const { width, referralCode } = useContext(MainContext)
 
     const [email, setEmail] = useState("")
     const [name, setName] = useState("")
     const [country, setCountry] = useState("United States")
     const [processing, setProcessing] = useState(false)
+
+    const validInputs =
+        email && checkEmail(email) && name && name.length > 1 && country
 
     const [addWaitlist] = useMutation(INSERT_WAITLIST)
 
@@ -77,6 +82,12 @@ function WaitlistForm(props: any) {
         return null
     }
 
+    function logout() {
+        dispatch(PureWaitlistAction.resetWaitlistUser())
+        dispatch(PureAuthAction.updateUser(deepCopy(DEFAULT.user)))
+        dispatch(PureAuthAction.updateAuthFlow(deepCopy(DEFAULT.authFlow)))
+    }
+
     async function insertWaitlist() {
         setProcessing(true)
 
@@ -99,11 +110,12 @@ function WaitlistForm(props: any) {
                 newPoints = newPoints + REFERRAL_POINTS
             }
 
-            dispatch(PureAuthAction.updateUser({ user_id: email, name: name }))
             dispatch(
                 PureWaitlistAction.updateWaitlistUser({
                     points: newPoints,
                     referralCode: newReferralCode,
+                    user_id: email,
+                    name: name,
                 })
             )
             dispatch(
@@ -125,15 +137,11 @@ function WaitlistForm(props: any) {
             setProcessing(false)
         } else {
             dispatch(
-                PureAuthAction.updateUser({
-                    user_id: email,
-                    name: currentUser.name,
-                })
-            )
-            dispatch(
                 PureWaitlistAction.updateWaitlistUser({
                     points: currentUser.points,
                     referralCode: currentUser.referralCode,
+                    user_id: email,
+                    name: currentUser.name,
                 })
             )
 
@@ -143,14 +151,14 @@ function WaitlistForm(props: any) {
 
     return (
         <div style={{ width: isAction ? "100%" : "" }}>
-            {user && user.user_id ? (
+            {waitlistUser && waitlistUser.user_id ? (
                 <div>
                     <button
                         className="white-button"
                         style={{ textTransform: "uppercase" }}
-                        onClick={() => dispatch(SharedAction.resetState())}
+                        onClick={logout}
                     >
-                        LOGOUT AS {user.name}
+                        LOGOUT AS {waitlistUser.name}
                     </button>
                 </div>
             ) : (
@@ -233,14 +241,9 @@ function WaitlistForm(props: any) {
                                 <Button
                                     onClick={insertWaitlist}
                                     className="waitlist-button"
-                                    disabled={
-                                        email && name && country ? false : true
-                                    }
+                                    disabled={!validInputs}
                                     style={{
-                                        opacity:
-                                            email && name && country
-                                                ? 1.0
-                                                : 0.8,
+                                        opacity: validInputs ? 1.0 : 0.4, // not obvious w/ 0.8
                                         color: "white",
                                     }}
                                 >
@@ -251,10 +254,7 @@ function WaitlistForm(props: any) {
                                     className="waitlist-button"
                                     disabled={true}
                                     style={{
-                                        opacity:
-                                            email && name && country
-                                                ? 1.0
-                                                : 0.8,
+                                        opacity: validInputs ? 1.0 : 0.4,
                                     }}
                                 >
                                     <FontAwesomeIcon
@@ -275,7 +275,6 @@ function WaitlistForm(props: any) {
 }
 
 function mapStateToProps(state: {
-    AuthReducer: { user: any }
     WaitlistReducer: {
         waitlistUser: any
         waitlist: any[]
@@ -283,8 +282,8 @@ function mapStateToProps(state: {
     }
 }) {
     return {
-        user: state.AuthReducer.user,
         waitlist: state.WaitlistReducer.waitlistData.waitlist,
+        waitlistUser: state.WaitlistReducer.waitlistUser,
     }
 }
 
