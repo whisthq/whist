@@ -61,6 +61,7 @@ const Landing = (props: any) => {
                         waitlistUser.ranking === 0 ||
                         waitlistUser.points !== newUser.points
                     ) {
+                        console.log("redirecting")
                         dispatch(
                             PureWaitlistAction.updateWaitlistUser({
                                 points: newUser.points,
@@ -69,6 +70,7 @@ const Landing = (props: any) => {
                                 authEmail: newUser.auth_email,
                             })
                         )
+                        console.log(applicationRedirect)
                         if (applicationRedirect) {
                             history.push("/application")
                         }
