@@ -37,11 +37,7 @@ const Auth = (props: {
 
     if (user.user_id && user.user_id !== "") {
         if (user.emailVerified) {
-            if (user.canLogin) {
-                return <Redirect to="/dashboard" />
-            }
-            //props.dispatch(resetState())
-            return <Redirect to="/" />
+            return <Redirect to="/dashboard" />
         } else {
             return <Redirect to="/verify" />
         }
