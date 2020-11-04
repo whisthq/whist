@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install --allow-downgrades -y \
     gvfs-common \
     gvfs \
     gvfs-bin \
+    jq \
     && apt-get autoremove -y \
     && apt-get clean
 
@@ -25,7 +26,11 @@ RUN wget --quiet https://downloads.slack-edge.com/linux_releases/slack-desktop-4
     dpkg -i slack-desktop-4.0.2-amd64.deb && \
     rm -rf /tmp/slack-desktop*.deb
 
-# Application startup script
+# Whitelist slack:// in google-chrome
+RUN mkdir -p /etc/opt/chrome/policies/managed \
+    && echo {} \
+    | jq '.URLWhitelist=["slack://*"]' \
+    > /etc/opt/chrome/policies/managed/whitelist.json
 
 # Setup Fractal application symlink
 RUN ln -sf /usr/lib/slack/slack /usr/bin/fractal-application
