@@ -38,5 +38,5 @@ jobs:
             (echo "Code is linted with Python Black" && true)
           fi
 
-      - name: Check code with pylint
-        run: pylint app # Returns 0 iff code is not linted.
+      - name: Check if code matches Pylint standards
+        run: pylint app # Returns 0 iff code is not linted
