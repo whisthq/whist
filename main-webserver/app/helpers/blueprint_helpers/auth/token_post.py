@@ -1,8 +1,5 @@
-from datetime import datetime as dt
-from datetime import timedelta
-
-from flask import current_app, jsonify
-from flask_jwt_extended import create_access_token, decode_token
+from flask import jsonify
+from flask_jwt_extended import decode_token
 
 from app.constants.http_codes import SUCCESS, UNAUTHORIZED
 
