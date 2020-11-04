@@ -3,7 +3,7 @@ import time
 import pytest
 
 from flask import current_app
-from moto import mock_ecs, mock_logs, mock_autoscaling, mock_ec2, mock_iam
+from moto import mock_ecs, mock_logs, mock_iam
 
 from utils.aws.base_ecs_client import ECSClient, boto3
 
@@ -209,6 +209,8 @@ def test_basic_ecs_client():
         ["/bin/bash", "-c"],
         family="multimessage",
     )
+
+    # pylint: disable=unused-variable
     networkConfiguration = {
         "awsvpcConfiguration": {
             "subnets": [
@@ -219,28 +221,11 @@ def test_basic_ecs_client():
             ],
         }
     }
+    # pylint: enable=unused-variable
+
     testclient.run_task()
     testclient.spin_til_running(time_delay=2)
     assert "." in testclient.task_ips.get(0, "-1")
-
-
-@mock_ecs
-@mock_logs
-@mock_iam
-def test_set_cluster():
-    log_client = boto3.client("logs", region_name="us-east-2")
-    ecs_client = boto3.client("ecs", region_name="us-east-2")
-    iam_client = boto3.client("iam", region_name="us-east-2")
-    ecs_client.create_cluster(clusterName="test_clust")
-    testclient = ECSClient(
-        key_id="Testing",
-        access_key="Testing",
-        starter_client=ecs_client,
-        starter_log_client=log_client,
-        starter_iam_client=iam_client,
-        mock=True,
-    )
-    assert "test_clust" in testclient.cluster
 
 
 @mock_ecs

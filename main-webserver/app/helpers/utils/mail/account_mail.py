@@ -4,9 +4,8 @@ from flask import render_template
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-from app import mail
+from app.constants.config import SENDGRID_API_KEY
 from app.helpers.utils.general.logs import fractalLog
-from app.models import User
 
 
 def signupMail(username, promo_code):
@@ -18,7 +17,8 @@ def signupMail(username, promo_code):
             html_content=render_template("on_signup.html", code=promo_code),
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
+
+        sg.send(message)
     except Exception as e:
         fractalLog(
             function="signupMail",

@@ -6,7 +6,7 @@ from sqlalchemy.exc import OperationalError
 from app.helpers.utils.general.logs import fractalLog
 
 
-def fractalSQLCommit(db, f=None, *args):
+def fractalSQLCommit(db, f=None, *args):  # pylint: disable=keyword-arg-before-vararg
     attempts = 0
     commit_successful = False
 
@@ -41,6 +41,6 @@ def fractalSQLCommit(db, f=None, *args):
     return commit_successful
 
 
-def fractalSQLUpdate(db, obj, attributes):
+def fractalSQLUpdate(db, obj, attributes):  # pylint: disable=unused-argument
     for k, v in attributes.items():
         setattr(obj, k, v)

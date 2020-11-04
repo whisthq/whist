@@ -2,12 +2,11 @@ import datetime
 import logging
 
 from datetime import datetime as dt
-from jose import jwt
-from flask import jsonify, current_app
+from flask import jsonify
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from app.constants.config import ADMIN_PASSWORD, SENDGRID_API_KEY, SENDGRID_EMAIL
 
+from app.constants.config import SENDGRID_API_KEY, SENDGRID_EMAIL
 from app.constants.http_codes import BAD_REQUEST, NOT_ACCEPTABLE, SUCCESS, UNAUTHORIZED, NOT_FOUND
 from app.helpers.blueprint_helpers.mail.mail_post import verificationHelper
 from app.helpers.utils.general.crypto import check_value, hash_value
@@ -129,7 +128,7 @@ def registerHelper(username, password, name, reason_for_signup):
             level=logging.ERROR,
         )
         status = BAD_REQUEST
-        user_id = access_token = refresh_token = None
+        access_token = refresh_token = None
 
     if status == SUCCESS:
         try:
@@ -137,12 +136,13 @@ def registerHelper(username, password, name, reason_for_signup):
                 from_email=SENDGRID_EMAIL,
                 to_emails="support@tryfractal.com",
                 subject=username + " just created an account!",
-                html_content="<p>Just letting you know that {0} created an account. Their reason for signup is: {1}. Have a great day.</p>".format(
-                    name, reason_for_signup
+                html_content=(
+                    f"<p>Just letting you know that {name} created an account. Their reason for "
+                    f"signup is: {reason_for_signup}. Have a great day.</p>"
                 ),
             )
             sg = SendGridAPIClient(SENDGRID_API_KEY)
-            response = sg.send(message)
+            sg.send(message)
         except Exception as e:
             fractalLog(
                 function="registerHelper",
@@ -186,12 +186,8 @@ def verifyHelper(username, provided_user_id):
                 label=user_id,
                 logs="Verification token is valid, verifying.",
             )
-            alreadyVerified = user.verified
             fractalSQLCommit(db, fractalSQLUpdate, user, {"verified": True})
 
-            # if not alreadyVerified:
-            #     # Send welcome mail to user after they verify for the first time
-            #     signupMail(user.user_id, user.referral_code)
             return {"status": SUCCESS, "verified": True}
         else:
             fractalLog(

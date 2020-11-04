@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required
 from app import fractalPreProcess
 from app.celery.aws_s3_deletion import deleteLogsFromS3
 from app.celery.aws_s3_modification import uploadLogsToS3
-from app.constants.http_codes import ACCEPTED, BAD_REQUEST
+from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.admin.logs_get import logsHelper
 from app.helpers.blueprint_helpers.admin.logs_post import (
     bookmarkHelper,
@@ -53,26 +53,28 @@ def logs_manage(action, **kwargs):
 
         return jsonify({"ID": task.id}), ACCEPTED
 
-    elif action == "bookmark":
+    if action == "bookmark":
         connection_id = kwargs["body"]["connection_id"]
 
         output = bookmarkHelper(connection_id)
 
         return jsonify(output), output["status"]
 
-    elif action == "unbookmark":
+    if action == "unbookmark":
         connection_id = kwargs["body"]["connection_id"]
 
         output = unbookmarkHelper(connection_id)
 
         return jsonify(output), output["status"]
 
+    return jsonify({"error": NOT_FOUND}), NOT_FOUND
+
 
 @logs_bp.route("/logs", methods=["GET"])
 @fractalPreProcess
 @jwt_required
 @adminRequired
-def logs_get(**kwargs):
+def logs_get(**kwargs):  # pylint: disable=unused-argument
     connection_id, username, bookmarked = (
         request.args.get("connection_id"),
         request.args.get("username"),

@@ -171,7 +171,10 @@ def delete_cluster(self, cluster, region_name):
             fractalLog(
                 function="delete_cluster",
                 label=cluster,
-                logs=f"Cannot delete cluster {cluster} with running tasks {running_tasks}. Please delete the tasks first.",
+                logs=(
+                    f"Cannot delete cluster {cluster} with running tasks {running_tasks}. Please "
+                    "delete the tasks first."
+                ),
                 level=logging.ERROR,
             )
             self.update_state(

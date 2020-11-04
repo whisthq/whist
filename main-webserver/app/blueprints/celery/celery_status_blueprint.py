@@ -10,7 +10,7 @@ celery_status_bp = Blueprint("celery_status_bp", __name__)
 
 @celery_status_bp.route("/status/<task_id>", methods=["GET"])
 @fractalPreProcess
-def celery_status(task_id, **kwargs):
+def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
     try:
         result = current_app.AsyncResult(task_id)
         if result.status == "SUCCESS":
@@ -35,7 +35,7 @@ def celery_status(task_id, **kwargs):
 
 @celery_status_bp.route("/dummy", methods=["GET"])
 @fractalPreProcess
-def celery_dummy(**kwargs):
+def celery_dummy(**kwargs):  # pylint: disable=unused-argument
     task = dummyTask.apply_async([])
 
     if not task:
