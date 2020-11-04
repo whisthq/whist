@@ -1,5 +1,4 @@
 export const UPDATE_WAITLIST_USER = "UPDATE_WAITLIST_USER"
-export const UPDATE_CLICKS = "UPDATE_CLICKS"
 export const UPDATE_WAITLIST_DATA = "UPDATE_WAITLIST_DATA"
 export const UPDATE_NAVIGATION = "UPDATE_NAVIGATION"
 
@@ -17,13 +16,6 @@ export function updateWaitlistUser(body: {
 }) {
     return {
         type: UPDATE_WAITLIST_USER,
-        body,
-    }
-}
-
-export function updateClicks(body: { number?: number; lastClicked?: number }) {
-    return {
-        type: UPDATE_CLICKS,
         body,
     }
 }

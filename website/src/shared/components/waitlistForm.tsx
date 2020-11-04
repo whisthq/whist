@@ -19,6 +19,8 @@ import { deep_copy } from "shared/utils/reducerHelpers"
 import { SECRET_POINTS } from "shared/utils/points"
 import { db } from "shared/utils/firebase"
 import * as PureAuthAction from "store/actions/auth/pure"
+import { deepCopy } from "shared/utils/reducerHelpers"
+import { DEFAULT } from "store/reducers/auth/default"
 
 import "styles/landing.css"
 import { checkEmail } from "pages/auth/constants/authHelpers"
@@ -86,7 +88,8 @@ function WaitlistForm(props: any) {
 
     function logout() {
         dispatch(PureWaitlistAction.resetWaitlistUser())
-        dispatch(PureAuthAction.resetUser())
+        dispatch(PureAuthAction.updateUser(deepCopy(DEFAULT.user)))
+        dispatch(PureAuthAction.updateAuthFlow(deepCopy(DEFAULT.authFlow)))
     }
 
     async function insertWaitlist() {

@@ -102,15 +102,20 @@ const VerifyView = (props: {
         console.log("verify use effect")
         if (validUser && validToken && !processing) {
             dispatch(validateVerificationToken(token))
-            setProcessing(true)
         }
+        setProcessing(true)
         // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
-        setProcessing(false)
-    }, [user.emailVerified])
+        if (
+            authFlow.verificationStatus === "success" ||
+            authFlow.verificationStatus === "failed"
+        ) {
+            setProcessing(false)
+        }
+    }, [authFlow.verificationStatus])
 
     if (!validToken) {
         return (
@@ -121,7 +126,10 @@ const VerifyView = (props: {
                     marginTop: 70,
                 }}
             >
-                <Title title="Check your inbox" subtitle="(and/or spam)" />
+                <Title
+                    title="Check your inbox to verify your email"
+                    subtitle="(and/or spam)"
+                />
                 <DivSpace height={40} />
                 <RetryButton
                     text={retryMessage}
@@ -155,13 +163,26 @@ const VerifyView = (props: {
                         marginTop: 70,
                     }}
                 >
-                    <Title title="Failed to verify" />
-                    <DivSpace height={40} />
-                    <RetryButton
-                        text={retryMessage}
-                        checkEmail={validUser && canRetry}
-                        onClick={sendWithDelay}
-                    />
+                    {authFlow.verificationStatus === "success" && (
+                        <>
+                            <Title
+                                title="Successfully verified email!"
+                                subtitle="Redirecting you back to the homepage"
+                            />
+                            <PuffAnimation />
+                        </>
+                    )}
+                    {authFlow.verificationStatus === "failed" && (
+                        <>
+                            <Title title="Failed to verify" />
+                            <DivSpace height={40} />
+                            <RetryButton
+                                text={retryMessage}
+                                checkEmail={validUser && canRetry}
+                                onClick={sendWithDelay}
+                            />
+                        </>
+                    )}
                 </div>
             )
         }
@@ -169,6 +190,7 @@ const VerifyView = (props: {
 }
 
 function mapStateToProps(state: { AuthReducer: { user: any; authFlow: any } }) {
+    console.log(state)
     return {
         user: state.AuthReducer.user ? state.AuthReducer.user : {},
         authFlow: state.AuthReducer.authFlow ? state.AuthReducer.authFlow : {},

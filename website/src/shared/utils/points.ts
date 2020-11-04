@@ -1,6 +1,5 @@
 export const INITIAL_POINTS = 50
 export const SIGNUP_POINTS = 200
-export const REFERRAL_POINTS = 300
 // this will change every time you reload so technically they can game the system to get the maximal 60*3 = 180 points
 // however that it's unlikely everyone will and probably we will get semi-uniform looking leaderboard scores
 export const EASTEREGG_POINTS = 50
@@ -12,3 +11,4 @@ export const SECRET_POINTS = {
     ABOUT_HOW_IT_WORKS: "ABOUT_HOW_IT_WORKS",
     FOOTER_SUPER_SECRET: "FOOTER_SUPER_SECRET",
 }
+export const REFERRAL_POINTS = Math.floor(Math.random() * 50 + 276)

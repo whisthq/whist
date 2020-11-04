@@ -9,10 +9,6 @@ export const DEFAULT = {
         eastereggsAvailable: {},
         authEmail: null,
     },
-    clicks: {
-        number: 0,
-        lastClicked: 0,
-    },
     waitlistData: {
         waitlist: [],
         closingDate: null,

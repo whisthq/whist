@@ -16,11 +16,6 @@ export default function (state = DEFAULT, action: any) {
                     action.body
                 ),
             }
-        case PureAction.UPDATE_CLICKS:
-            return {
-                ...stateCopy,
-                clicks: Object.assign(stateCopy.clicks, action.body),
-            }
         case PureAction.UPDATE_WAITLIST_DATA:
             return {
                 ...stateCopy,
@@ -54,9 +49,6 @@ export default function (state = DEFAULT, action: any) {
                     }
                 })
             })
-
-            console.log("STATE REFRESH")
-            console.log(mergeInto)
 
             return mergeInto
         default:

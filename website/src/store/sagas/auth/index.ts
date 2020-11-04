@@ -1,4 +1,4 @@
-import { put, takeEvery, all, call, select } from "redux-saga/effects"
+import { put, takeEvery, all, call, select, delay } from "redux-saga/effects"
 
 import { apiPost, graphQLPost } from "shared/utils/api"
 import history from "shared/utils/history"
@@ -23,9 +23,6 @@ function* emailLogin(action: any) {
         ""
     )
 
-    console.log("LOGIN")
-    console.log(json)
-
     if (json && json.access_token) {
         yield put(
             AuthPureAction.updateUser({
@@ -34,6 +31,7 @@ function* emailLogin(action: any) {
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
                 emailVerified: json.verified,
+                canLogin: json.can_login,
             })
         )
         yield put(
@@ -81,6 +79,7 @@ function* googleLogin(action: any) {
                         accessToken: json.access_token,
                         refreshToken: json.refreshToken,
                         emailVerified: true,
+                        canLogin: json.can_login,
                     })
                 )
 
@@ -225,8 +224,25 @@ function* validateVerificationToken(action: any) {
 
     if (json && response.status === 200 && json.verified) {
         yield put(
+            AuthPureAction.updateAuthFlow({
+                verificationStatus: "success",
+            })
+        )
+        yield delay(2000)
+        yield put(
             AuthPureAction.updateUser({
                 emailVerified: true,
+            })
+        )
+        yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
+            user_id: state.WaitlistReducer.waitlistUser.user_id,
+            points: state.WaitlistReducer.waitlistUser.points + SIGNUP_POINTS,
+            referrals: state.WaitlistReducer.waitlistUser.referrals,
+        })
+    } else {
+        yield put(
+            AuthPureAction.updateAuthFlow({
+                verificationStatus: "failed",
             })
         )
     }
