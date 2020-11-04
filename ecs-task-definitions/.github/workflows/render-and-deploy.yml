@@ -55,7 +55,7 @@ jobs:
         run: echo "aws_account=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
 
       - name: Generate the task definitions
-        run: apt-get install jq && ./generate_taskdefs.sh
+        run: ./generate_taskdefs.sh
           
       - name: Store AWS ECR base uri as env variable
         run: echo "ecr_base_uri=${{ env.aws_account }}.dkr.ecr.${{ matrix.aws-regions }}.amazonaws.com" >> $GITHUB_ENV
