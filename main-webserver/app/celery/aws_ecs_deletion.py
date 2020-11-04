@@ -120,7 +120,7 @@ def deleteContainer(self, container_name, aes_key):
     
     datadogLog(
         title="Deleted Container",
-        text=f"Container {container_name} in cluster {cluster_name}",
+        text=f"Container {container_name} in cluster {container_cluster}",
         tags=["container", "success"],
     )
 
