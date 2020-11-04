@@ -327,7 +327,7 @@ desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_b
             meta={"msg": "Error updating container {} in SQL.".format(ecs_client.tasks[0])},
         )
         raise Ignore
-    
+
     datadogLog(
         title="Created new Container",
         text=f"Container {container.container_id} in cluster {cluster_name}",
@@ -433,9 +433,11 @@ def create_new_cluster(
             state="FAILURE",
             meta={"msg": f"Encountered error: {error}"},
         )
-    
+
     datadogLog(
-        title="Created new Cluster", text=f"Cluster {cluster_name}", tags=["cluster-creation", "success"],
+        title="Created new Cluster",
+        text=f"Cluster {cluster_name}",
+        tags=["cluster-creation", "success"],
     )
 
 

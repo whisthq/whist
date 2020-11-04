@@ -11,7 +11,7 @@ from datadog import initialize, api
 
 
 def logEvent(title, text="", tags=None, function=None):
-    """ 
+    """
     Log event will log an event by making a datadog event and sending it to our
     account w/ the api and app keys as well as doing a fractalLog to keep it in our main body of logs.
 

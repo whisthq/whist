@@ -23,6 +23,7 @@ from app.serializers.hardware import ClusterInfo, UserContainer
 
 from app.helpers.utils.datadog.events_logger import logEvent as datadogLog
 
+
 @shared_task(bind=True)
 def deleteContainer(self, container_name, aes_key):
     """Delete a container.
@@ -117,7 +118,7 @@ def deleteContainer(self, container_name, aes_key):
         )
 
         raise Exception("SQL update failed.")
-    
+
     datadogLog(
         title="Deleted Container",
         text=f"Container {container_name} in cluster {container_cluster}",
@@ -232,7 +233,9 @@ def delete_cluster(self, cluster, region_name):
             state="FAILURE",
             meta={"msg": f"Encountered error: {error}"},
         )
-    
+
     datadogLog(
-        title="Deleted Cluster", text=f"Cluster {cluster}", tags=["cluster deletion", "success"],
+        title="Deleted Cluster",
+        text=f"Cluster {cluster}",
+        tags=["cluster deletion", "success"],
     )
