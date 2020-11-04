@@ -47,8 +47,10 @@ const Verify = (props: any) => {
     ])
 
     // return visuals
-    if (!valid_user || user.emailVerified) {
+    if (!valid_user) {
         return <Redirect to="/" />
+    } else if (user.emailVerified) {
+        return <Redirect to="/dashboard" />
     } else {
         return (
             <div className="fractalContainer">
