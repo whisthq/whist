@@ -4,7 +4,7 @@ name: Render and Deploy ECS Task Definitions
 # Publish on updates to the master branch
 on:
   push:
-    branches: [ main ]
+    branches: [ main, phil/autogen ]
     paths-ignore:
     - '**/README.md'
   workflow_dispatch:
