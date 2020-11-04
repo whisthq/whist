@@ -136,9 +136,8 @@ const mapStateToProps = (state: {
     return {
         user: state.AuthReducer.user,
         waitlistUser: state.WaitlistReducer.waitlistUser,
-        applicationRedirect: state.WaitlistReducer.navigation
-            ? state.WaitlistReducer.navigation.applicationRedirect
-            : null,
+        applicationRedirect:
+            state.WaitlistReducer.navigation.applicationRedirect,
     }
 }
 

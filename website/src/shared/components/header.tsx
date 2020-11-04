@@ -43,27 +43,27 @@ function Header(props: any) {
                 </Link>
                 {width > 720 ? (
                     <div style={{ display: "flex" }}>
-                        <Link to="/auth" className="header-link">
+                        {/* <Link to="/auth" className="header-link">
                             My Account
-                        </Link>
+                        </Link> */}
                         <Link to="/about" className="header-link">
                             About
                         </Link>
                         <a
-                            href="mailto: support@tryfractal.com"
+                            href="mailto: support@fractalcomputers.com"
                             className="header-link"
                         >
                             Support
                         </a>
                         <a
-                            href="mailto: careers@tryfractal.com"
+                            href="mailto: careers@fractalcomputers.com"
                             className="header-link"
                         >
-                            Career
+                            Careers
                         </a>
                     </div>
                 ) : (
-                    <div />
+                    <div></div>
                 )}
             </div>
             <div style={{ opacity: width > 720 ? 1.0 : 0.0 }}>

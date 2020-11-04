@@ -5,7 +5,6 @@ import history from "shared/utils/history"
 
 import * as AuthPureAction from "store/actions/auth/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
-import * as CustomerSideEffect from "store/actions/customer/sideEffects"
 import {
     UPDATE_WAITLIST_AUTH_EMAIL,
     UPDATE_WAITLIST,
@@ -358,21 +357,6 @@ function* resetPassword(action: any) {
     )
 }
 
-function* submitFeedback(action: any) {
-    const state = yield select()
-
-    yield call(
-        apiPost,
-        "/mail/feedback",
-        {
-            username: state.AuthReducer.user.user_id,
-            feedback: action.feedback,
-            type: "Purchase Feedback", // wanna change this?
-        },
-        state.AuthReducer.access_token
-    )
-}
-
 export default function* () {
     yield all([
         takeEvery(AuthSideEffect.EMAIL_LOGIN, emailLogin),
@@ -389,6 +373,5 @@ export default function* () {
             AuthSideEffect.SEND_VERIFICATION_EMAIL,
             sendVerificationEmail
         ),
-        takeEvery(CustomerSideEffect.SUBMIT_PURCHASE_FEEDBACK, submitFeedback),
     ])
 }
