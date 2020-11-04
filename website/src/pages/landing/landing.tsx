@@ -51,10 +51,13 @@ const Landing = (props: any) => {
     )
 
     const updateWaitlistUser = useCallback(() => {
+        console.log("callback fired")
+        console.log(waitlistUser)
         if (data && data.waitlist) {
             const waitlist = data.waitlist
             if (waitlistUser && waitlistUser.user_id) {
                 const newUser = getUser(waitlist)
+                console.log(newUser)
                 if (newUser) {
                     if (
                         newUser.ranking !== waitlistUser.ranking ||
