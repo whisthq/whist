@@ -1,5 +1,7 @@
 FROM fractal/browsers/chrome:current-build
 
+# Install slack depends explicitly
+
 RUN apt-get update && apt-get install --allow-downgrades -y \
     libappindicator1 \
     dbus-x11 \
