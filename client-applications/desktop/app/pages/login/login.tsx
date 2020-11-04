@@ -49,6 +49,7 @@ const Login = (props: any) => {
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [needsAutoupdate, setNeedsAutoupdate] = useState(false)
     const [fetchedCredentials, setFetchedCredentials] = useState(false)
+    const [launches, setLaunches] = useState(0)
     const live = useState(true)
 
     const storage = require("electron-json-storage")
@@ -256,12 +257,7 @@ const Login = (props: any) => {
             launchImmediately &&
             featuredAppData.length > 0
         ) {
-            setAWSRegion().then(() => {
-                const { app_id, url } = Object(
-                    urlToApp(launchURL.toLowerCase(), featuredAppData)
-                )
-                dispatch(fetchContainer(app_id, url))
-            })
+            setLaunches(launches + 1)
         }
     }, [
         updatePingReceived,
@@ -270,6 +266,17 @@ const Login = (props: any) => {
         accessToken,
         featuredAppData,
     ])
+
+    useEffect(() => {
+        if (launches === 1) {
+            setAWSRegion().then(() => {
+                const { app_id, url } = Object(
+                    urlToApp(launchURL.toLowerCase(), featuredAppData)
+                )
+                dispatch(fetchContainer(app_id, url))
+            })
+        }
+    }, [launches])
 
     return (
         <div className={styles.container} data-tid="container">

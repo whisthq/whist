@@ -16,6 +16,8 @@ export const DEFAULT = {
         port32273: null,
         location: null,
         secretKey: null,
+        currentAppID: null,
+        desiredAppID: null,
     },
     client: {
         os: null,

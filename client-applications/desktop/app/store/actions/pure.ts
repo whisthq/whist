@@ -29,6 +29,8 @@ export function updateContainer(body: {
     port32273: string
     location: string
     secretKey: string
+    desiredAppID: string
+    currentAppID: string
 }) {
     return {
         type: UPDATE_CONTAINER,
