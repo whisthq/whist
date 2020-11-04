@@ -43,7 +43,11 @@ export default function (state = DEFAULT, action: any) {
 
             Object.keys(stateCopy).forEach((outerKey: any) => {
                 Object.keys(stateCopy[outerKey]).forEach((innerKey: string) => {
-                    if (stateCopy[outerKey][innerKey]) {
+                    if (
+                        stateCopy[outerKey][innerKey] &&
+                        mergeInto[outerKey] &&
+                        mergeInto[outerKey][innerKey]
+                    ) {
                         mergeInto[outerKey][innerKey] =
                             stateCopy[outerKey][innerKey]
                     }
