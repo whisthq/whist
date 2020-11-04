@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { useSpring, animated } from "react-spring"
 import styles from "styles/login.css"
@@ -23,6 +23,8 @@ const UpdateScreen = (props: any) => {
         port32273,
         ip,
         secretKey,
+        desiredAppID,
+        currentAppID,
     } = props
 
     // figure out how to use useEffect
@@ -31,13 +33,23 @@ const UpdateScreen = (props: any) => {
     // use two variables for that or instead do something like this below
     var percentLoadedWidth = 5 * percentLoaded
 
+    const [launches, setLaunches] = useState(0)
     const loadingBar = useSpring({ width: percentLoadedWidth })
 
     useEffect(() => {
-        if (container_id) {
-            LaunchProtocol()
+        // Ensures that a container exists, that the protocol has not been launched before, and that
+        // the app we want to launch is the app that will be launched
+        if (container_id && launches === 0 && currentAppID === desiredAppID) {
+            setLaunches(launches + 1)
         }
     }, [container_id])
+
+    useEffect(() => {
+        if (launches === 1) {
+            console.log("PREPARING TO RUN LAUNCH PROTOCOL FUNCTION")
+            LaunchProtocol()
+        }
+    }, [launches])
 
     const LaunchProtocol = () => {
         var child = require("child_process").spawn
@@ -80,6 +92,7 @@ const UpdateScreen = (props: any) => {
                     ip,
                 ]
                 debugLog(`your executable path should be: ${path}`)
+                console.log(parameters)
 
                 // Starts the protocol
                 const protocol = child(executable, parameters, {
@@ -109,9 +122,9 @@ const UpdateScreen = (props: any) => {
                             percentLoaded: 0,
                         })
                     )
+                    setLaunches(0)
                     history.push("/dashboard")
                 })
-                debugLog("spawn completed!")
             }
         )
         // TODO (adriano) graceful exit vs non graceful exit code
@@ -206,6 +219,8 @@ function mapStateToProps(state: any) {
         location: state.MainReducer.container.location,
         ip: state.MainReducer.container.publicIP,
         secretKey: state.MainReducer.container.secretKey,
+        desiredAppID: state.MainReducer.container.desiredAppID,
+        currentAppID: state.MainReducer.container.currentAppID,
     }
 }
 

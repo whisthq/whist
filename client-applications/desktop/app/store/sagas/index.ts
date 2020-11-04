@@ -198,145 +198,149 @@ function* getPromoCode(action: any) {
     }
 }
 
-function* fetchContainer(action: any, retries?: number) {
-    if (!retries || retries < 2) {
-        history.push("/loading")
-        const state = yield select()
-        const username = state.MainReducer.auth.username
+function* fetchContainer(action: any) {
+    yield put(
+        Action.updateContainer({
+            desiredAppID: action.app,
+        })
+    )
 
-        var region = state.MainReducer.client.region
-            ? state.MainReducer.client.region
-            : "us-east-1"
-        if (region === "us-east-2") {
-            region = "us-east-1"
-        }
-        if (region === "us-west-2") {
-            region = "us-west-1"
-        }
+    history.push("/loading")
+    const state = yield select()
+    const username = state.MainReducer.auth.username
 
-        if (!username || username === "None" || username === "") {
-            history.push("/")
-            return
-        }
+    var region = state.MainReducer.client.region
+        ? state.MainReducer.client.region
+        : "us-east-1"
+    if (region === "us-east-2") {
+        region = "us-east-1"
+    }
+    if (region === "us-west-2") {
+        region = "us-west-1"
+    }
 
+    if (!username || username === "None" || username === "") {
+        history.push("/")
+        return
+    }
+
+    var { json, response } = yield call(
+        apiPost,
+        `/container/create`,
+        {
+            username: username,
+            region: region,
+            app: action.app,
+            url: action.url,
+            dpi: state.MainReducer.client.dpi,
+        },
+        state.MainReducer.auth.accessToken
+    )
+
+    if (response.status === 401 || response.status === 422) {
+        yield call(refreshAccess)
+        yield call(fetchContainer, action)
+        return
+    }
+
+    if (response.status === 202) {
+        const id = json.ID
         var { json, response } = yield call(
-            apiPost,
-            `/container/create`,
-            {
-                username: username,
-                region: region,
-                app: action.app,
-                url: action.url,
-                dpi: state.MainReducer.client.dpi,
-            },
+            apiGet,
+            `/status/` + id,
             state.MainReducer.auth.accessToken
         )
 
-        if (response.status === 401 || response.status === 422) {
-            yield call(refreshAccess)
-            yield call(fetchContainer, action)
-            return
-        }
+        var progressSoFar = 0
+        var secondsPassed = 0
 
-        if (response.status === 202) {
-            const id = json.ID
-            var { json, response } = yield call(
-                apiGet,
-                `/status/` + id,
-                state.MainReducer.auth.accessToken
-            )
+        yield put(
+            Action.updateLoading({
+                percentLoaded: progressSoFar,
+                statusMessage: "Preparing to stream " + action.app,
+            })
+        )
 
-            var progressSoFar = 0
-            var secondsPassed = 0
+        while (json.state !== "SUCCESS" && json.state !== "FAILURE") {
+            if (secondsPassed % 1 === 0) {
+                var { json, response } = yield call(
+                    apiGet,
+                    `/status/` + id,
+                    state.MainReducer.auth.accessToken
+                )
 
+                if (response && response.status && response.status === 500) {
+                    const warning =
+                        `(${moment().format("hh:mm:ss")}) ` +
+                        "Unexpectedly lost connection with server. Please close the app and try again."
+
+                    progressSoFar = 0
+                    yield put(
+                        Action.updateLoading({
+                            percentLoaded: progressSoFar,
+                            statusMessage: warning,
+                        })
+                    )
+                }
+            }
+
+            // Update status message every six seconds
+            if (secondsPassed > 0 && secondsPassed % 6 === 0) {
+                yield put(
+                    Action.updateLoading({
+                        statusMessage: generateMessage(),
+                    })
+                )
+            }
+
+            // Update loading bar every second
             yield put(
                 Action.updateLoading({
                     percentLoaded: progressSoFar,
-                    statusMessage: "Preparing to stream " + action.app,
                 })
             )
+            progressSoFar = Math.min(99, progressSoFar + 1)
 
-            while (json.state !== "SUCCESS" && json.state !== "FAILURE") {
-                if (secondsPassed % 1 === 0) {
-                    var { json, response } = yield call(
-                        apiGet,
-                        `/status/` + id,
-                        state.MainReducer.auth.accessToken
-                    )
-
-                    if (
-                        response &&
-                        response.status &&
-                        response.status === 500
-                    ) {
-                        const warning =
-                            `(${moment().format("hh:mm:ss")}) ` +
-                            "Unexpectedly lost connection with server. Please close the app and try again."
-
-                        yield put(
-                            Action.updateLoading({
-                                percentLoaded: 0,
-                                statusMessage: warning,
-                            })
-                        )
-                    }
-                }
-
-                // Update status message every six seconds
-                if (secondsPassed > 0 && secondsPassed % 6 === 0) {
-                    yield put(
-                        Action.updateLoading({
-                            statusMessage: generateMessage(),
-                        })
-                    )
-                }
-
-                // Update loading bar every second
+            yield delay(1000)
+            secondsPassed += 1
+        }
+        // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
+        if (json && json.state && json.state === "SUCCESS") {
+            if (json.output) {
                 yield put(
-                    Action.updateLoading({
-                        percentLoaded: progressSoFar,
+                    Action.updateContainer({
+                        container_id: json.output.container_id,
+                        cluster: json.output.cluster,
+                        port32262: json.output.port_32262,
+                        port32263: json.output.port_32263,
+                        port32273: json.output.port_32273,
+                        location: json.output.location,
+                        publicIP: json.output.ip,
+                        secretKey: json.output.secret_key,
+                        currentAppID: action.app,
                     })
                 )
-                progressSoFar = Math.min(99, progressSoFar + 1)
-
-                yield delay(1000)
-                secondsPassed += 1
             }
-            // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
-            if (json && json.state && json.state === "SUCCESS") {
-                if (json.output) {
-                    yield put(
-                        Action.updateContainer({
-                            container_id: json.output.container_id,
-                            cluster: json.output.cluster,
-                            port32262: json.output.port_32262,
-                            port32263: json.output.port_32263,
-                            port32273: json.output.port_32273,
-                            location: json.output.location,
-                            publicIP: json.output.ip,
-                            secretKey: json.output.secret_key,
-                        })
-                    )
-                }
 
-                yield put(
-                    Action.updateLoading({
-                        statusMessage: "Stream successfully started.",
-                        percentLoaded: 100,
-                    })
-                )
-            } else {
-                var warning =
-                    `(${moment().format("hh:mm:ss")}) ` +
-                    `Unexpectedly lost connection with server. Trying again...`
-                yield put(
-                    Action.updateLoading({
-                        statusMessage: warning,
-                    })
-                )
-                yield delay(15000)
-                yield call(fetchContainer, action, retries ? retries + 1 : 1)
-            }
+            progressSoFar = 100
+
+            yield put(
+                Action.updateLoading({
+                    statusMessage: "Stream successfully started.",
+                    percentLoaded: progressSoFar,
+                })
+            )
+        } else {
+            var warning =
+                `(${moment().format("hh:mm:ss")}) ` +
+                `Unexpectedly lost connection with server. Trying again...`
+            progressSoFar = 0
+            yield put(
+                Action.updateLoading({
+                    statusMessage: warning,
+                    percentLoaded: progressSoFar,
+                })
+            )
         }
     } else {
         yield put(
