@@ -1,0 +1,16 @@
+FROM fractal/base:current-build
+
+# Install texturelab build dependencies
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    unzip \
+    && apt-get autoremove -y \
+    && apt-get clean  
+
+# Install texturelab electron app
+RUN wget -qO texturelab.zip https://github.com/njbrown/texturelab/releases/download/v0.2.0/TextureLabLinux-v0.2.0.zip \
+    && unzip texturelab.zip -d /opt/texturelab \
+    && rm texturelab.zip \
+    && ln -sf /opt/texturelab/texturelab /usr/bin/texturelab
+
+# Symlink fractal application
+RUN ln -sf /usr/bin/texturelab /usr/bin/fractal-application
