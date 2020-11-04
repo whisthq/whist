@@ -4,7 +4,6 @@ import secrets
 import string
 
 from better_profanity import profanity
-from flask import current_app
 from flask_jwt_extended import create_access_token, create_refresh_token
 from google_auth_oauthlib.flow import Flow
 

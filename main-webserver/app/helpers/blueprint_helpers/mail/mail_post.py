@@ -1,13 +1,10 @@
 import logging
 
-from datetime import datetime as dt
-from datetime import timedelta, timezone
+from datetime import timedelta
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from flask import current_app, jsonify, render_template
+from flask import jsonify, render_template
 from flask_jwt_extended import create_access_token
-from datetime import timedelta
-
 
 from app.constants.config import FRONTEND_URL, SENDGRID_API_KEY, SENDGRID_EMAIL
 from app.constants.http_codes import NOT_FOUND, SUCCESS, UNAUTHORIZED
