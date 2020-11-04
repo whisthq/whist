@@ -11,9 +11,10 @@ BINARY_NAME  = ecs-host-service
 
 all: deps build
 
-build:
+build:	
+	export GIT_COMMIT=$(git rev-list -1 HEAD)
 	$(info building in $(BUILD_FOLDER)...)
-	$(GOBUILD) -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
+	$(GOBUILD) -ldflags "-X main.GitCommit=$(GIT_COMMIT)" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
 
 clean:
 	$(GOCLEAN)

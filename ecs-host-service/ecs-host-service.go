@@ -27,6 +27,9 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// Variable for hash of last Git commit
+var GitCommit string
+
 // The location on disk where we store the container resource allocations
 const resourceMappingDirectory = "/fractal/containerResourceMappings/"
 
@@ -252,6 +255,9 @@ func main() {
 		logger.Panicf("Unable to initialize sentry. Error: %s", err)
 	}
 	// We flush Sentry's queue in shutdownHostService(), so we don't need to defer it here
+
+	// Log the Git commit of the running executable
+	logger.Info("Host Service Version: %s", GitCommit)
 
 	// After the above defer and initialization of Sentry, this needs to be the
 	// next line of code that runs, since the following operations will require
