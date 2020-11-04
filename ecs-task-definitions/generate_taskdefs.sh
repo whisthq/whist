@@ -13,15 +13,13 @@ apps=("fractal-browsers-chrome"
       "fractal-productivity-slack"
     )
 
-
-
-
-
+# Currently, all apps have the same task definition parameters,
+# so we only need to update the family tag.
+#
+# When there are app-specific parameters, we can update those
+# as well in this for loop
 for app in "${apps[@]}"
 do
    : 
    cat fractal-base.json | jq '.family |= "'$app'"' > $app.json
 done
-
-
-
