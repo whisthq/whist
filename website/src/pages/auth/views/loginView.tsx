@@ -158,7 +158,6 @@ const LoginView = (props: any) => {
                             opacity: loginEnabled(email, password) ? 1.0 : 0.6,
                         }}
                         onClick={login}
-                        disabled={!loginEnabled(email, password)}
                     >
                         Log In
                     </button>
