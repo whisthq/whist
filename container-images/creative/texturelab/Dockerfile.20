@@ -3,13 +3,28 @@ FROM fractal/base:current-build
 # Install texturelab build dependencies
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     unzip \
+    curl \
     && apt-get autoremove -y \
     && apt-get clean  
 
-# Install texturelab electron app
-RUN wget -qO texturelab.zip https://github.com/njbrown/texturelab/releases/download/v0.2.0/TextureLabLinux-v0.2.0.zip \
-    && unzip texturelab.zip -d /opt/texturelab \
-    && rm texturelab.zip \
+# Add yarn to apt
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - \
+    && echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+
+# Install yarn
+RUN apt-get update && apt-get install -y \
+    yarn \
+    && apt-get autoremove -y \
+    && apt-get clean
+
+# Build and install texturelab electron app
+RUN git clone https://github.com/njbrown/texturelab \
+    && cd texturelab \
+    && yarn install \
+    && yarn electron:build \
+    && mv dist_electron/linux-unpacked /opt/texturelab \
+    && cd .. \
+    && rm -rf texturelab \
     && ln -sf /opt/texturelab/texturelab /usr/bin/texturelab
 
 # Symlink fractal application
