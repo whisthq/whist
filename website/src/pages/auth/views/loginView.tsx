@@ -13,7 +13,7 @@ import {
     checkPassword,
 } from "pages/auth/constants/authHelpers"
 import SwitchMode from "pages/auth/components/switchMode"
-import GoogleButton from "pages/auth/components/googleButton"
+// import GoogleButton from "pages/auth/components/googleButton"
 
 const LoginView = (props: any) => {
     const { dispatch, user, authFlow } = props
@@ -31,10 +31,10 @@ const LoginView = (props: any) => {
     }
 
     // so we can display puff while server does it's thing for google as well
-    const google_login = (code: any) => {
-        setProcessing(true)
-        dispatch(AuthSideEffect.googleLogin(code))
-    }
+    // const google_login = (code: any) => {
+    //     setProcessing(true)
+    //     dispatch(AuthSideEffect.googleLogin(code))
+    // }
 
     // Handles ENTER key press
     const onKeyPress = (evt: any) => {
@@ -170,7 +170,7 @@ const LoginView = (props: any) => {
                             background: "#dfdfdf",
                         }}
                     />
-                    <GoogleButton login={google_login} />
+                    {/* <GoogleButton login={google_login} /> */}
                     <div style={{ marginTop: 20 }}>
                         <SwitchMode
                             question="Need to create an account?"
