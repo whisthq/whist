@@ -78,7 +78,7 @@ jobs:
 
   notify-slack:
     name: Notify Slack
-    needs: [render-and-deploy]
+    needs: [ render-and-deploy ]
     if: success()
     runs-on: ubuntu-20.04
     steps:
