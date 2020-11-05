@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get autoremove -y \
     && apt-get clean
 
-# Build and install texturelab electron app
+# Build and install TextureLab Electron app
 RUN git clone https://github.com/njbrown/texturelab \
     && cd texturelab \
     && yarn install \
