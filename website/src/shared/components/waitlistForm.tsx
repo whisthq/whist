@@ -151,8 +151,18 @@ function WaitlistForm(props: any) {
                 .collection("eastereggs")
                 .doc(email)
                 .get()
-            const data = eastereggsDocument.data()
+            
+            let data = eastereggsDocument.data()
 
+            // if they did existed but were here before the update
+            if(!eastereggsDocument.exists) {
+                data = {
+                    available: deepCopy(SECRET_POINTS)
+                }
+
+                db.collection("eastereggs").doc(email).set(data)
+            }
+            
             const secretPoints = data ? data.available : {}
 
             dispatch(
