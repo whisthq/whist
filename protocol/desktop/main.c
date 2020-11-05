@@ -547,12 +547,6 @@ int main(int argc, char* argv[]) {
         LOG_INFO("Running in CI mode");
     }
 
-    if (configureSSHKeys() != 0) {
-        LOG_ERROR("Failed to configure SSH keys.");
-        destroyLogger();
-        return -1;
-    }
-
     if (initSocketLibrary() != 0) {
         LOG_ERROR("Failed to initialize socket library.");
         destroyLogger();

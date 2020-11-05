@@ -55,9 +55,9 @@ cmake-build-*
 CMakeFiles/
 build/
 CMakeCache.txt
-**/Makefile
-**/makefile
-**/GNUmakefile
+**/Makefile*
+**/makefile*
+**/GNUmakefile*
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
