@@ -98,7 +98,7 @@ else()
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     RESULT_VARIABLE download)
     if (NOT ${download} EQUAL "0")
-        message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${download}")
+        message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download}")
     endif()
 endif()
 
