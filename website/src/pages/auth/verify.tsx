@@ -24,7 +24,11 @@ const Verify = (props: any) => {
     const valid_user = user.user_id && user.user_id !== ""
 
     useEffect(() => {
-        if (authFlow.signupSuccess && !waitlistUser.authEmail) {
+        if (
+            authFlow.signupSuccess &&
+            !waitlistUser.authEmail &&
+            waitlistUser.user_id
+        ) {
             updateWaitlistAuthEmail({
                 variables: {
                     user_id: waitlistUser.user_id,
