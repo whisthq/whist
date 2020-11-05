@@ -7,7 +7,6 @@ static bool is_autoupdate;
 static bool already_obtained_vm_type = false;
 static clock last_vm_info_check_time;
 static bool is_using_stun;
-static char* access_token = NULL;
 static char* container_id = NULL;
 static char* user_id = NULL;
 
@@ -77,9 +76,6 @@ void update_webserver_parameters() {
     kv_pair_t* dev_value = get_kv(&json, "allow_autoupdate");
     kv_pair_t* branch_value = get_kv(&json, "branch");
     kv_pair_t* using_stun = get_kv(&json, "using_stun");
-    // TODO: remove all mentions of access_token - endpoints used by protocol
-    //      do not require the authorization header
-    // kv_pair_t* access_token_value = get_kv(&json, "access_token");
     kv_pair_t* container_id_value = get_kv(&json, "container_id");
     kv_pair_t* user_id_value = get_kv(&json, "user_id");
 
@@ -111,13 +107,6 @@ void update_webserver_parameters() {
             LOG_INFO("Using Stun: %s", using_stun->bool_value ? "Yes" : "No");
             is_using_stun = using_stun->bool_value;
         }
-
-        // if (access_token_value && access_token_value->type == JSON_STRING) {
-        //     if (access_token) {
-        //         free(access_token);
-        //     }
-        //     access_token = clone(access_token_value->str_value);
-        // }
 
         if (container_id_value && container_id_value->type == JSON_STRING) {
             if (container_id) {
@@ -165,13 +154,6 @@ bool allow_autoupdate() {
 }
 
 char* get_vm_password() { return "password1234567."; }
-
-char* get_access_token() {
-    if (!already_obtained_vm_type) {
-        LOG_ERROR("Webserver parameters not updated!");
-    }
-    return access_token;
-}
 
 char* get_container_id() {
     if (!already_obtained_vm_type) {

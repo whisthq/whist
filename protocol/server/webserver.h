@@ -22,14 +22,6 @@ bool allow_autoupdate();
 bool get_using_stun();
 
 /**
- * @brief                          Queries the webserver for the get access token
- * status
- *
- * @returns                        The access token
- */
-char* get_access_token();
-
-/**
  * @brief                          Queries the webserver for the VM password
  * status
  *

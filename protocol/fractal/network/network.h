@@ -345,8 +345,6 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  * @param path                     The /path/to/the/endpoint
  * @param payload                  A string consisting of the payload
  *                                 to send to the webserver.
- * @param access_token             The access token for authentication.
- *                                 This may be null.
  * @param response_body            After the function returns, this parameter
  *                                 will point to a buffer containing the body
  *                                 of the response. That buffer will need to
@@ -362,7 +360,7 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendPostRequest(char* host_s, char* path, char* payload, char* access_token,
+bool SendPostRequest(char* host_s, char* path, char* payload,
                      char** response_body, size_t max_response_size);
 
 /**
