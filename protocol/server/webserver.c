@@ -3,10 +3,9 @@
 #include "webserver.h"
 
 static char* branch = NULL;
-static bool is_autoupdate;
-static bool already_obtained_vm_type = false;
+static bool is_autoupdate = true;
 static clock last_vm_info_check_time;
-static bool is_using_stun;
+static bool is_using_stun = false;
 static char* container_id = NULL;
 static char* user_id = NULL;
 
@@ -25,11 +24,9 @@ void update_webserver_parameters(bool) {
         return;
     }
 
-    if (!already_obtained_vm_type) {
-        // Set Default Values
-        is_autoupdate = true;
-        is_using_stun = false;
-    }
+    // Set Default Values
+    is_autoupdate = true;
+    is_using_stun = false;
 
     char* resp_buf = NULL;
     size_t resp_buf_maxlen = 4800;
@@ -46,7 +43,6 @@ void update_webserver_parameters(bool) {
 
     if (!SendPostRequest(webserver_url, "/container/protocol_info", msg, &resp_buf,
                          resp_buf_maxlen)) {
-        already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;
     }
@@ -54,7 +50,6 @@ void update_webserver_parameters(bool) {
     free(msg);
 
     if (!resp_buf) {
-        already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;
     }
@@ -65,14 +60,9 @@ void update_webserver_parameters(bool) {
      */
     /* resp_buf); */
 
-    // Set Default Values
-    is_autoupdate = true;
-    is_using_stun = false;
-
     json_t json;
     if (!parse_json(resp_buf, &json)) {
         LOG_ERROR("Failed to parse JSON from /container/protocol_info");
-        already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;
     }
@@ -87,7 +77,6 @@ void update_webserver_parameters(bool) {
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {
             free_json(json);
-            already_obtained_vm_type = true;
             StartTimer(&last_vm_info_check_time);
             return;
         }
@@ -133,43 +122,27 @@ void update_webserver_parameters(bool) {
 
     free_json(json);
 
-    already_obtained_vm_type = true;
     StartTimer(&last_vm_info_check_time);
 }
 
 char* get_branch() {
-    if (!already_obtained_vm_type) {
-        LOG_ERROR("Webserver parameters not updated!");
-    }
     return branch;
 }
 
 bool get_using_stun() {
-    if (!already_obtained_vm_type) {
-        LOG_ERROR("Webserver parameters not updated!");
-    }
     return is_using_stun;
 }
 
 bool allow_autoupdate() {
-    if (!already_obtained_vm_type) {
-        LOG_ERROR("Webserver parameters not updated!");
-    }
     return is_autoupdate;
 }
 
 char* get_vm_password() { return "password1234567."; }
 
 char* get_container_id() {
-    if (!already_obtained_vm_type) {
-        LOG_ERROR("Webserver parameters not updated!");
-    }
     return container_id;
 }
 
 char* get_user_id() {
-    if (!already_obtained_vm_type) {
-        LOG_ERROR("Webserver parameters not updated!");
-    }
     return user_id;
 }
