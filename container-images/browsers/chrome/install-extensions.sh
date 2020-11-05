@@ -11,6 +11,5 @@ install_chrome_extension () {
   echo Added \""$pref_file_path"\" ["$2"]
 }
 
+# Install uBlock Ad Blocker
 install_chrome_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin"
-install_chrome_extension "hdokiejnpimakedhajhdlcegeplioahd" "LastPass: Free Password Manager"
-install_chrome_extension "klbibkeccnjlkjkiokjodocebajanakg" "The Great Suspender"
