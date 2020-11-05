@@ -39,22 +39,22 @@ export default function (state = DEFAULT, action: any) {
             return DEFAULT
         case SharedAction.REFRESH_STATE:
             // enforce structure of default but add in old information
-            const mergeInto: any = deep_copy(DEFAULT)
+            const defaultCopy: any = deep_copy(DEFAULT)
 
             Object.keys(stateCopy).forEach((outerKey: any) => {
                 Object.keys(stateCopy[outerKey]).forEach((innerKey: string) => {
                     if (
                         stateCopy[outerKey][innerKey] &&
-                        mergeInto[outerKey] &&
-                        mergeInto[outerKey][innerKey]
+                        defaultCopy.hasOwnProperty(outerKey) &&
+                        defaultCopy[outerKey].hasOwnProperty(innerKey)
                     ) {
-                        mergeInto[outerKey][innerKey] =
+                        defaultCopy[outerKey][innerKey] =
                             stateCopy[outerKey][innerKey]
                     }
                 })
             })
 
-            return mergeInto
+            return defaultCopy
         default:
             return state
     }
