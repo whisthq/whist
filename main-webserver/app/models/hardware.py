@@ -15,6 +15,7 @@ class UserContainer(db.Model):
     state = db.Column(db.String(250), nullable=False)
     lock = db.Column(db.Boolean, nullable=False, default=False)
     user_id = db.Column(db.ForeignKey("users.user_id"))
+    is_assigned = db.Column(db.Boolean, nullable=False, default=False)
     user = relationship("User", back_populates="containers")
     port_32262 = db.Column(db.Integer, nullable=False)
     port_32263 = db.Column(db.Integer, nullable=False)
