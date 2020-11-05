@@ -35,6 +35,9 @@ func InitializeSentry() error {
 		// into a separate function because we want to defer sending the errors
 		// about being unable to set Sentry tags until after we have set all the
 		// ones we can.
+		scope.SetTag("git-commit-hash", GetGitCommit())
+		log.Printf("Set sentry tag git-commit-hash: %s", GetGitCommit())
+
 		if val, err := GetAwsAmiId(); err != nil {
 			defer Errorf("Unable to set Sentry tag aws.ami-id: %v", err)
 		} else {
