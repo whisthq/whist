@@ -17,6 +17,8 @@ class UserContainer(db.Model):
     user_id = db.Column(db.ForeignKey("users.user_id"))
     is_assigned = db.Column(db.Boolean, nullable=False, default=False)
     user = relationship("User", back_populates="containers")
+    app_id = db.Column(db.ForeignKey("hardware.supported_app_images.app_id"))
+    app = relationship("SupportedAppImages", back_populates="containers")
     port_32262 = db.Column(db.Integer, nullable=False)
     port_32263 = db.Column(db.Integer, nullable=False)
     port_32273 = db.Column(db.Integer, nullable=False)
@@ -101,6 +103,12 @@ class SupportedAppImages(db.Model):
     url = db.Column(db.String(250))
     tos = db.Column(db.String(250))
     active = db.Column(db.Boolean, nullable=False, default=False)
+    containers = relationship(
+        "UserContainer",
+        back_populates="app",
+        lazy="dynamic",
+        passive_deletes=True,
+    )
 
 
 class Banners(db.Model):
