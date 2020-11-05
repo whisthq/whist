@@ -105,11 +105,7 @@ const DownloadBox = (props: {
                 style={{
                     textDecoration: "None",
                 }}
-                href={
-                    osName === "Windows"
-                        ? WindowsBin
-                        : againstOS(winBin, macBin)
-                }
+                href={againstOS(winBin, macBin)}
                 download={againstOS(winBinName, macBinName)}
             >
                 <button
