@@ -39,7 +39,11 @@ function* loginUser(action: any) {
             password: action.password,
         })
 
-        if (json && json.verified && json.can_login) {
+        if (
+            json &&
+            json.verified &&
+            (json.can_login || action.username.includes("@tryfractal.com"))
+        ) {
             yield put(
                 Action.updateAuth({
                     accessToken: json.access_token,
@@ -74,7 +78,10 @@ function* loginUser(action: any) {
                         email: action.username,
                         token: json.verification_token,
                     })
-                } else if (!json.can_login) {
+                } else if (
+                    !json.can_login &&
+                    !action.username.includes("@tryfractal.com")
+                ) {
                     yield put(
                         Action.updateAuth({
                             loginMessage:
