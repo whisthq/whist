@@ -37,7 +37,6 @@ desktop/log.txt
 server/log.txt
 share/
 desktop/external_utils/Windows/ssh.exe
-desktop/loading/
 *.v
 ._share
 connection_id.txt
