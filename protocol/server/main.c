@@ -798,34 +798,6 @@ void update() {
         }
         LOG_INFO("setting sentry environment");
         sentry_set_tag("environment", get_branch());
-        LOG_INFO("Checking for server protocol updates...");
-        char cmd[5000];
-
-        snprintf(cmd, sizeof(cmd),
-#ifdef _WIN32
-                 "powershell -command \"iwr -outf 'C:\\Program "
-                 "Files\\Fractal\\update.bat' "
-                 "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/Windows/"
-                 "update.bat\"",
-                 get_branch()
-#else
-                 " "  // TODO: Linux Autoupdate
-#endif
-        );
-
-        runcmd(cmd, NULL);
-
-        snprintf(cmd, sizeof(cmd), "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\" %s",
-                 get_branch());
-
-        runcmd(
-#ifdef _WIN32
-            cmd
-#else
-            " "       // TODO: Linux Autoupdate
-#endif
-            ,
-            NULL);
     }
 }
 
