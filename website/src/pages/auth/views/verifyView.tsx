@@ -68,7 +68,7 @@ const VerifyView = (props: {
         : "Login to Re-send"
 
     const reset = () => {
-        // dispatch(resetUser())
+        dispatch(resetUser())
         history.push("/auth/bypass")
     }
 

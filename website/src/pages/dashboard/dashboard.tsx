@@ -150,16 +150,17 @@ const Dashboard = (props: {
                         <div
                             style={{
                                 textAlign: "center",
-                                marginTop: 15,
+                                marginTop: 25,
+                                width: "100%",
+                                height: 1,
+                                background: "#DFDFDF",
                             }}
-                        >
-                            or
-                        </div>
+                        ></div>
                         <button
                             className="white-button"
                             style={{
                                 width: "100%",
-                                marginTop: 15,
+                                marginTop: 25,
                                 fontSize: 16,
                             }}
                             onClick={logout}
