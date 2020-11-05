@@ -448,7 +448,7 @@ const Login = (props: any) => {
                                         LOG IN
                                     </button>
                                 )}
-                                <div style={{ marginBottom: 20 }}>
+                                {/* <div style={{ marginBottom: 20 }}>
                                     {loggingIn && !loginWarning ? (
                                         <button
                                             type="button"
@@ -490,7 +490,7 @@ const Login = (props: any) => {
                                             Login with Google
                                         </button>
                                     )}
-                                </div>
+                                </div> */}
                             </div>
                             <div
                                 style={{
