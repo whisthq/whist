@@ -13,7 +13,7 @@ extern char hex_aes_private_key[33];
 extern char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 extern char webserver_url[MAX_WEBSERVER_URL_LEN + 1];
 
-void update_webserver_parameters(bool) {
+void update_webserver_parameters() {
     /*
         Update parameters received from the container/protocol_info
         endpoint
@@ -125,24 +125,14 @@ void update_webserver_parameters(bool) {
     StartTimer(&last_vm_info_check_time);
 }
 
-char* get_branch() {
-    return branch;
-}
+char* get_branch() { return branch; }
 
-bool get_using_stun() {
-    return is_using_stun;
-}
+bool get_using_stun() { return is_using_stun; }
 
-bool allow_autoupdate() {
-    return is_autoupdate;
-}
+bool allow_autoupdate() { return is_autoupdate; }
 
 char* get_vm_password() { return "password1234567."; }
 
-char* get_container_id() {
-    return container_id;
-}
+char* get_container_id() { return container_id; }
 
-char* get_user_id() {
-    return user_id;
-}
+char* get_user_id() { return user_id; }
