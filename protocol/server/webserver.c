@@ -14,9 +14,14 @@ extern char hex_aes_private_key[33];
 extern char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 extern char webserver_url[MAX_WEBSERVER_URL_LEN + 1];
 
-void update_webserver_parameters() {
-    // Don't need to check more than once every 30 sec
-    if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 30.0) {
+void update_webserver_parameters(bool) {
+    /*
+        Update parameters received from the container/protocol_info
+        endpoint
+    */
+
+    // Don't need to check more than once every 30 sec, unless no meaningful response
+    if (container_id && GetTimer(last_vm_info_check_time) < 30.0) {
         return;
     }
 

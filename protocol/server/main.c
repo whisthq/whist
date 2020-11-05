@@ -240,6 +240,7 @@ int SendContainerDestroyMessage() {
     char* container_id = get_container_id();
     if (!container_id) {
         // If container_id is not found, then get protocol_info again
+        LOG_INFO("Container ID not found, re-requesting protocol_info");
         update_webserver_parameters();
         container_id = get_container_id();
 
