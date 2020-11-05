@@ -32,5 +32,3 @@ RUN apt-get install curl git -y
 
 RUN apt-get install libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip -y
 WORKDIR /workdir
-
-
