@@ -5,11 +5,11 @@ import { FaApple, FaWindows } from "react-icons/fa"
 import { config } from "shared/constants/config"
 import "styles/auth.css"
 
-import WindowsBin from "downloads/Fractal.exe"
+// import WindowsBin from "downloads/Fractal.exe"
 
 const DOWNLOAD_TIMEOUT = 3000
 
-const winBin = WindowsBin
+const winBin = config.client_download_urls["Windows"]
 const macBin = config.client_download_urls["MacOS"]
 const winBinName = "Fractal.exe"
 const macBinName = "bin/Fractal.dmg"
