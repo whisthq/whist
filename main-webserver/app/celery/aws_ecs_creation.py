@@ -12,7 +12,10 @@ from app.helpers.utils.general.sql_commands import fractalSQLUpdate
 from app.models import db, UserContainer, ClusterInfo, SortedClusters
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 
-from app.helpers.utils.datadog.events_logger import logEvent as datadogLog
+from app.helpers.utils.datadog.events import (
+    datadogEvent_containerCreate,
+    datadogEvent_clusterCreate,
+)
 
 MAX_POLL_ITERATIONS = 20
 
@@ -328,11 +331,8 @@ desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_b
         )
         raise Ignore
 
-    datadogLog(
-        title="Created new Container",
-        text=f"Container {container.container_id} in cluster {cluster_name}",
-        tags=["container-creation", "success"],
-    )
+    # log a datadog event of the creation of this container
+    datadogEvent_containerCreate(container.container_id, cluster_name)
 
 
 @shared_task(bind=True)
@@ -434,11 +434,8 @@ def create_new_cluster(
             meta={"msg": f"Encountered error: {error}"},
         )
 
-    datadogLog(
-        title="Created new Cluster",
-        text=f"Cluster {cluster_name}",
-        tags=["cluster-creation", "success"],
-    )
+    # logs a datadog event for the creation of this cluster
+    datadogEvent_clusterCreate(cluster_name)
 
 
 @shared_task(bind=True)
