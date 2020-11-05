@@ -6,7 +6,7 @@ import {
     validateVerificationToken,
     sendVerificationEmail,
 } from "store/actions/auth/sideEffects"
-import { updateAuthFlow } from "store/actions/auth/pure"
+import { updateAuthFlow, resetUser } from "store/actions/auth/pure"
 import history from "shared/utils/history"
 import { DivSpace, Title } from "pages/auth/components/authUtils"
 
@@ -68,7 +68,7 @@ const VerifyView = (props: {
         : "Login to Re-send"
 
     const reset = () => {
-        // dispatch(resetUser())
+        dispatch(resetUser())
         history.push("/auth/bypass")
     }
 

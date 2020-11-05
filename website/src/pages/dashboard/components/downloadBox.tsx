@@ -5,9 +5,11 @@ import { FaApple, FaWindows } from "react-icons/fa"
 import { config } from "shared/constants/config"
 import "styles/auth.css"
 
+import WindowsBin from "downloads/Fractal.exe"
+
 const DOWNLOAD_TIMEOUT = 3000
 
-const winBin = config.client_download_urls["Windows"]
+const winBin = WindowsBin
 const macBin = config.client_download_urls["MacOS"]
 const winBinName = "Fractal.exe"
 const macBinName = "bin/Fractal.dmg"
@@ -46,7 +48,24 @@ const DownloadBox = (props: {
 
     const largeIcon = withOS(windowsIcon, macIcon)
     const smallIcon = againstOS(windowsIcon, macIcon)
+    const supportedOS = ["Windows", "Mac OS"]
 
+    if (!supportedOS.includes(osName)) {
+        return (
+            <div
+                style={{
+                    marginTop: 40,
+                    padding: 25,
+                    background: "#ffebeb",
+                    fontSize: 14,
+                }}
+            >
+                Warning: We've detected you're on a non-supported device.
+                Fractal currently only supports Windows and Mac computers. We
+                expect to support other operating systems in the coming months.
+            </div>
+        )
+    }
     return (
         <div
             style={{
@@ -86,7 +105,11 @@ const DownloadBox = (props: {
                 style={{
                     textDecoration: "None",
                 }}
-                href={againstOS(winBin, macBin)}
+                href={
+                    osName === "Windows"
+                        ? WindowsBin
+                        : againstOS(winBin, macBin)
+                }
                 download={againstOS(winBinName, macBinName)}
             >
                 <button
