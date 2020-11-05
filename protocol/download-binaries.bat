@@ -11,11 +11,6 @@ xcopy /e /Y /c share\64\Windows\* desktop\build64\Windows\
 xcopy /e /Y /c share\64\Darwin\* desktop\build64\Darwin\
 xcopy /e /Y /c share\64\Windows\* server\build64\
 
-REM Get Unison binary
-REM curl -s -O "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/unison.exe"
-REM if not exist desktop\external_utils\Windows mkdir desktop\external_utils\Windows
-REM move unison.exe desktop\external_utils\Windows
-
 REM Get ssh.exe
 curl -s -O "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/ssh.exe"
 if not exist desktop\external_utils\Windows mkdir desktop\external_utils\Windows
