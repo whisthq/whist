@@ -1674,8 +1674,8 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
     return true;
 }
 
-bool SendPostRequest(char *host_s, char *path, char *payload,
-                     char **response_body, size_t max_response_size) {
+bool SendPostRequest(char *host_s, char *path, char *payload, char **response_body,
+                     size_t max_response_size) {
     /*
         Send post request to `host_s` with body `payload`
 

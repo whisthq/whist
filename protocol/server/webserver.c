@@ -39,7 +39,7 @@ void update_webserver_parameters() {
             "}",
             identifier, hex_aes_private_key);
 
-    if (!SendPostRequest(webserver_url, "/container/protocol_info", msg, NULL, &resp_buf,
+    if (!SendPostRequest(webserver_url, "/container/protocol_info", msg, &resp_buf,
                          resp_buf_maxlen)) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);

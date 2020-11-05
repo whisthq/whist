@@ -262,8 +262,7 @@ int SendContainerDestroyMessage() {
     // send destroy request, don't require response -> update this later
     char* resp_buf = NULL;
     size_t resp_buf_maxlen = 4800;
-    SendPostRequest(webserver_url, "/container/delete", payload, &resp_buf,
-                    resp_buf_maxlen);
+    SendPostRequest(webserver_url, "/container/delete", payload, &resp_buf, resp_buf_maxlen);
 
     LOG_INFO("/container/delete response: %s", resp_buf);
 
@@ -984,8 +983,7 @@ int MultithreadedManageClients(void* opaque) {
         LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
                  have_sent_logs ? "yes" : "no");
         if (saved_num_active_clients == 0 && !have_sent_logs) {
-            sendConnectionHistory(webserver_url, identifier,
-                                  hex_aes_private_key);
+            sendConnectionHistory(webserver_url, identifier, hex_aes_private_key);
             have_sent_logs = true;
         } else if (saved_num_active_clients > 0 && have_sent_logs) {
             have_sent_logs = false;
@@ -1361,8 +1359,8 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
-            updateServerStatus(num_controlling_clients > 0, webserver_url,
-                               identifier, hex_aes_private_key);
+            updateServerStatus(num_controlling_clients > 0, webserver_url, identifier,
+                               hex_aes_private_key);
             StartTimer(&ack_timer);
         }
 

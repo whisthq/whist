@@ -708,8 +708,7 @@ void saveConnectionID(int connection_id_int) {
 
 // The first time this is called will include the initial log messages,
 // before the first connection, if they haven't been overwritten.
-int sendConnectionHistory(char *host, char *identifier,
-                          char *hex_aes_private_key) {
+int sendConnectionHistory(char *host, char *identifier, char *hex_aes_private_key) {
     // This is for HTTP request, not filesystem
     char *request_path = "/logs/insert";
 

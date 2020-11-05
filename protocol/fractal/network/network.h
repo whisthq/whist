@@ -360,8 +360,8 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendPostRequest(char* host_s, char* path, char* payload,
-                     char** response_body, size_t max_response_size);
+bool SendPostRequest(char* host_s, char* path, char* payload, char** response_body,
+                     size_t max_response_size);
 
 /**
  * @brief                          Sends a JSON GET request to some host and
