@@ -6,7 +6,7 @@ import {
     validateVerificationToken,
     sendVerificationEmail,
 } from "store/actions/auth/sideEffects"
-import { updateAuthFlow } from "store/actions/auth/pure"
+import { updateAuthFlow, resetUser } from "store/actions/auth/pure"
 import history from "shared/utils/history"
 import { DivSpace, Title } from "pages/auth/components/authUtils"
 
