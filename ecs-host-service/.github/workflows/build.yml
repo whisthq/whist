@@ -28,5 +28,5 @@ jobs:
       - name: Build Go project
         run: make build
         
-      - name: Run Go project in production-mode
+      - name: Run Go project in debug mode
         run: make run
