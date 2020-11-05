@@ -11,6 +11,13 @@ import (
 	"time"
 )
 
+// Variable for hash of last Git commit --- filled in by linker
+var gitCommit string
+
+func GetGitCommit() string {
+	return gitCommit
+}
+
 func IsRunningInProduction() bool {
 	env := os.Getenv("APP_ENV")
 	return env == "production" || env == "prod" || env == "PRODUCTION" || env == "PROD"

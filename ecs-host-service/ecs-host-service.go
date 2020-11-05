@@ -27,9 +27,6 @@ import (
 	"github.com/docker/docker/client"
 )
 
-// Variable for hash of last Git commit
-var GitCommit string
-
 // The location on disk where we store the container resource allocations
 const resourceMappingDirectory = "/fractal/containerResourceMappings/"
 
@@ -256,9 +253,6 @@ func main() {
 	}
 	// We flush Sentry's queue in shutdownHostService(), so we don't need to defer it here
 
-	// Log the Git commit of the running executable
-	logger.Info("Host Service Version: %s", GitCommit)
-
 	// After the above defer and initialization of Sentry, this needs to be the
 	// next line of code that runs, since the following operations will require
 	// root permissions.
@@ -282,6 +276,9 @@ func main() {
 		uninitializeFilesystem()
 		logger.Panicf("Got a Ctrl+C: already uninitialized filesystem, looking to exit")
 	}()
+
+	// Log the Git commit of the running executable
+	logger.Info("Host Service Version: %s", logger.GetGitCommit())
 
 	// Initialize webserver and heartbeat
 	err = webserver.InitializeHeartbeat()
