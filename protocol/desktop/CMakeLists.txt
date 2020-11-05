@@ -43,9 +43,6 @@ set_target_properties(FractalClient PROPERTIES
 add_custom_command(TARGET FractalClient PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/desktop/loading $<TARGET_FILE_DIR:FractalClient>/loading)
-add_custom_command(TARGET FractalClient PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/desktop/external_utils/${CMAKE_SYSTEM_NAME} $<TARGET_FILE_DIR:FractalClient>)
 
 # Print out compile flags in verbose mode of CMake
 message(VERBOSE "c base flags${CMAKE_C_FLAGS}")
