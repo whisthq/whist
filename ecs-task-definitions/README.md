@@ -26,7 +26,7 @@ You can generate the task definitions from `fractal-base.json` by running `./gen
 
 To add a new task definition, first ensure that support was added for the specific application on the [container-images](https://github.com/fractalcomputers/container-images) repository.
 
-Once that done, add the application to the `apps` array in `generate_taskdefs.sh` as `fractal-[folder-name-on-container-images]-[application-name]`, alongside with app-specific tags to modify from `fractal-base.json` in the for loop. Lastly, add your newly-supported application to the `app` list in `.github/workflows/render-and-deploy.yml` as `fractal/[folder-name-on-container-images]/[application-name]`, i.e. `fractal/browsers/chrome`, and you'll be all set to auto-deploy this new task definition on AWS via GitHub Actions!
+Once that done, add the application to the `apps` array in `generate_taskdefs.sh` as `fractal-[folder-name-on-container-images]-[application-name]`, alongside with any app-specific tags that need to be modified from the `fractal-base.json` template, in the for loop. Lastly, add your newly-supported application to the `app` list in `.github/workflows/render-and-deploy.yml` as `fractal/[folder-name-on-container-images]/[application-name]`, i.e. `fractal/browsers/chrome`, and you'll be all set to auto-deploy this new task definition on AWS via GitHub Actions! Note that before your new task definition is ready to go into production, you need to also edit the database with the app's logo, terms of service link, description, task definition link, etc.
 
 ## Publishing & Continous Integration
 
