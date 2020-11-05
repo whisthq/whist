@@ -90,7 +90,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     RESULT_VARIABLE download_res)
     if (NOT ${download_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to binaries from AWS S3: exitcode: ${download_res}")
+        message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download_res}")
     endif()
 else()
     MESSAGE(STATUS "Downloading binaries from AWS S3")
