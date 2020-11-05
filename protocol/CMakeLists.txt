@@ -83,15 +83,14 @@ else()
     set(arch 32)
 endif()
 
-# download unison binary from AWS S3
-# TODO: REMOVE UNISON
+# download AWS S3 binaries
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     MESSAGE(STATUS "Downloading binaries from AWS S3")
     execute_process(COMMAND CMD /C "download-binaries.bat"
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     RESULT_VARIABLE download_res)
     if (NOT ${download_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to binaries from AWS S3: exitcode: ${download_res}")
+        message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download_res}")
     endif()
 else()
     MESSAGE(STATUS "Downloading binaries from AWS S3")
@@ -99,7 +98,7 @@ else()
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     RESULT_VARIABLE download)
     if (NOT ${download} EQUAL "0")
-        message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${download}")
+        message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download}")
     endif()
 endif()
 
@@ -257,4 +256,3 @@ if (${BUILD_SERVER} MATCHES "ON" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
     message(STATUS building server)
     add_subdirectory(server)
 endif()
-

@@ -239,8 +239,15 @@ int SendContainerDestroyMessage() {
 
     char* container_id = get_container_id();
     if (!container_id) {
-        LOG_ERROR("Container destroy could not find container_id");
-        return -1;
+        // If container_id is not found, then get protocol_info again
+        update_webserver_parameters();
+        container_id = get_container_id();
+
+        // If container_id is still not found, then fail
+        if (!container_id) {
+            LOG_ERROR("Container destroy could not find container_id");
+            return -1;
+        }
     }
 
     char payload[256];
@@ -254,8 +261,7 @@ int SendContainerDestroyMessage() {
     // send destroy request, don't require response -> update this later
     char* resp_buf = NULL;
     size_t resp_buf_maxlen = 4800;
-    SendPostRequest(webserver_url, "/container/delete", payload, get_access_token(), &resp_buf,
-                    resp_buf_maxlen);
+    SendPostRequest(webserver_url, "/container/delete", payload, &resp_buf, resp_buf_maxlen);
 
     LOG_INFO("/container/delete response: %s", resp_buf);
 
@@ -797,34 +803,6 @@ void update() {
         }
         LOG_INFO("setting sentry environment");
         sentry_set_tag("environment", get_branch());
-        LOG_INFO("Checking for server protocol updates...");
-        char cmd[5000];
-
-        snprintf(cmd, sizeof(cmd),
-#ifdef _WIN32
-                 "powershell -command \"iwr -outf 'C:\\Program "
-                 "Files\\Fractal\\update.bat' "
-                 "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/Windows/"
-                 "update.bat\"",
-                 get_branch()
-#else
-                 " "  // TODO: Linux Autoupdate
-#endif
-        );
-
-        runcmd(cmd, NULL);
-
-        snprintf(cmd, sizeof(cmd), "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\" %s",
-                 get_branch());
-
-        runcmd(
-#ifdef _WIN32
-            cmd
-#else
-            " "       // TODO: Linux Autoupdate
-#endif
-            ,
-            NULL);
     }
 }
 
@@ -955,7 +933,7 @@ int MultithreadedManageClients(void* opaque) {
     clock last_update_timer;
     StartTimer(&last_update_timer);
 
-    sendConnectionHistory(webserver_url, get_access_token(), identifier, hex_aes_private_key);
+    sendConnectionHistory(webserver_url, identifier, hex_aes_private_key);
     connection_id = rand();
     startConnectionLog();
     bool have_sent_logs = true;
@@ -982,8 +960,7 @@ int MultithreadedManageClients(void* opaque) {
         LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
                  have_sent_logs ? "yes" : "no");
         if (saved_num_active_clients == 0 && !have_sent_logs) {
-            sendConnectionHistory(webserver_url, get_access_token(), identifier,
-                                  hex_aes_private_key);
+            sendConnectionHistory(webserver_url, identifier, hex_aes_private_key);
             have_sent_logs = true;
         } else if (saved_num_active_clients > 0 && have_sent_logs) {
             have_sent_logs = false;
@@ -1022,7 +999,9 @@ int MultithreadedManageClients(void* opaque) {
             trying_to_update = false;
 
             // client has connected to server for the first time
+            // update webserver parameters the first time a client connects
             if (!first_client_connected) {
+                update();
                 first_client_connected = true;
             }
 
@@ -1331,7 +1310,7 @@ int main(int argc, char* argv[]) {
 
     update();
 
-    updateServerStatus(false, webserver_url, get_access_token(), identifier, hex_aes_private_key);
+    updateServerStatus(false, webserver_url, identifier, hex_aes_private_key);
 
     clock startup_time;
     StartTimer(&startup_time);
@@ -1380,8 +1359,8 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
-            updateServerStatus(num_controlling_clients > 0, webserver_url, get_access_token(),
-                               identifier, hex_aes_private_key);
+            updateServerStatus(num_controlling_clients > 0, webserver_url, identifier,
+                               hex_aes_private_key);
             StartTimer(&ack_timer);
         }
 

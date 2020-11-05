@@ -707,8 +707,7 @@ void saveConnectionID(int connection_id_int) {
 
 // The first time this is called will include the initial log messages,
 // before the first connection, if they haven't been overwritten.
-int sendConnectionHistory(char *host, char *access_token, char *identifier,
-                          char *hex_aes_private_key) {
+int sendConnectionHistory(char *host, char *identifier, char *hex_aes_private_key) {
     // This is for HTTP request, not filesystem
     char *request_path = "/logs/insert";
 
@@ -791,7 +790,7 @@ int sendConnectionHistory(char *host, char *access_token, char *identifier,
                         connection_id_data, logs, identifier, hex_aes_private_key);
 
                 LOG_INFO("Sending logs to webserver...");
-                SendPostRequest(host, request_path, json, access_token, NULL, 0);
+                SendPostRequest(host, request_path, json, NULL, 0);
 
                 freopen(connection_id_filename, "wb", connection_id_file);
             }
@@ -810,7 +809,6 @@ int sendConnectionHistory(char *host, char *access_token, char *identifier,
 typedef struct update_status_data {
     bool is_connected;
     char *host;
-    char *access_token;
     char *identifier;
     char *hex_aes_private_key;
 } update_status_data_t;
@@ -826,19 +824,18 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
              "  \"private_key\" : \"%s\"\n"
              "}",
              d->is_connected ? "false" : "true", d->identifier, d->hex_aes_private_key);
-    SendPostRequest(d->host, "/container/ping", json, d->access_token, NULL, 0);
+    SendPostRequest(d->host, "/container/ping", json, NULL, 0);
 
     free(d);
     return 0;
 }
 
-void updateServerStatus(bool is_connected, char *host, char *access_token, char *identifier,
+void updateServerStatus(bool is_connected, char *host, char *identifier,
                         char *hex_aes_private_key) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
     d->host = host;
-    d->access_token = access_token;
     d->identifier = identifier;
     d->hex_aes_private_key = hex_aes_private_key;
     SDL_Thread *update_status =

@@ -1674,8 +1674,8 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
     return true;
 }
 
-bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token,
-                     char **response_body, size_t max_response_size) {
+bool SendPostRequest(char *host_s, char *path, char *payload, char **response_body,
+                     size_t max_response_size) {
     /*
         Send post request to `host_s` with body `payload`
 
@@ -1683,7 +1683,6 @@ bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token
             host_s (char*): host for request to be sent to
             path (char*): path in host to send request to
             payload (char*): content to be sent in request body
-            access_token (char*): access token for Authorization header of request
             response_body (char**): pointer to buffer for request response to be
                 copied into
             max_response_size (size_t): max size of received response to be
@@ -1699,15 +1698,6 @@ bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token
         return true;
     }
 
-    // prepare the message
-    char access_token_header[1000];
-    if (access_token) {
-        snprintf(access_token_header, sizeof(access_token_header), "Authorization: Bearer %s\r\n",
-                 access_token);
-    } else {
-        access_token_header[0] = '\0';
-    }
-
     int payload_len = (int)strlen(payload);
     char *message = malloc(5000 + payload_len);
     snprintf(message, 5000 + payload_len,
@@ -1715,11 +1705,10 @@ bool SendPostRequest(char *host_s, char *path, char *payload, char *access_token
              "Host: %s\r\n"
              "Content-Type: application/json\r\n"
              "Content-Length: %d\r\n"
-             "%s"  // Potentially an Authorization: Bearer, but potentially an empty string
              "\r\n"
              "%s"
              "\r\n",
-             path, host_s, payload_len, access_token_header, payload);
+             path, host_s, payload_len, payload);
 
     // send the message
     bool worked = send_http_request("POST", host_s, message, response_body, max_response_size);
