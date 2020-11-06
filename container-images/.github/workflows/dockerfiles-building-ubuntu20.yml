@@ -2,8 +2,22 @@
 name: Dockerfiles Building
 
 on:
-    pull_request:
-        branches: [master, dev]
+  pull_request:
+    branches: [ master, dev ]
+
+env:
+  apps: >
+    base
+    browsers/chrome
+    browsers/firefox
+    browsers/brave
+    productivity/slack
+    productivity/discord
+    productivity/notion
+    creative/blender
+    creative/blockbench
+    creative/figma
+    creative/gimp
 
 jobs:
     build-dockerfiles:
@@ -22,35 +36,10 @@ jobs:
             - name: Build protocol master branch
               run: ./build_protocol.sh
 
-            - name: Build the Ubuntu 20.04 Base Image
-              run: cd base && docker build . --file Dockerfile.20 --tag fractal/base:current-build
-
-            - name: Build the Ubuntu 20.04 Google Chrome Image
-              run: cd browsers/chrome && docker build . --file Dockerfile.20 --tag fractal/browsers/chrome:current-build
-
-            - name: Build the Ubuntu 20.04 Mozilla Firefox Image
-              run: cd browsers/firefox && docker build . --file Dockerfile.20 --tag fractal/browsers/firefox:current-build
-
-            - name: Build the Ubuntu 20.04 Brave Browser Image
-              run: cd browsers/brave && docker build . --file Dockerfile.20 --tag fractal/browsers/brave:current-build
-
-            - name: Build the Ubuntu 20.04 Slack Image
-              run: cd productivity/slack && docker build . --file Dockerfile.20 --tag fractal/productivity/slack:current-build
-
-            - name: Build the Ubuntu 20.04 Discord Image
-              run: cd productivity/discord && docker build . --file Dockerfile.20 --tag fractal/productivity/discord:current-build
-
-            - name: Build the Ubuntu 20.04 Notion Image
-              run: cd productivity/notion && docker build . --file Dockerfile.20 --tag fractal/productivity/notion:current-build
-
-            - name: Build the Ubuntu 20.04 Blender Image
-              run: cd creative/blender && docker build . --file Dockerfile.20 --tag fractal/creative/blender:current-build
-
-            - name: Build the Ubuntu 20.04 Blockbench Image
-              run: cd creative/blockbench && docker build . --file Dockerfile.20 --tag fractal/creative/blockbench:current-build
-            
-            - name: Build the Ubuntu 20.04 Figma Image
-              run: cd creative/figma && docker build . --file Dockerfile.20 --tag fractal/creative/figma:current-build
-
-            - name: Build the Ubuntu 20.04 Gimp Image
-              run: cd creative/gimp && docker build . --file Dockerfile.20 --tag fractal/creative/gimp:current-build
+            - name: Build container images
+              run: |
+                for app in ${{ env.apps }}
+                do
+                  ./build_container_image.sh $app
+                done
+                
