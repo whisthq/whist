@@ -199,6 +199,10 @@ class StripeClient:
             )
             subscribed = False
 
+            user.stripe_customer_id = stripe_customer_id
+            user.credits_outstanding = 0
+            db.session.commit()
+
             fractalLog(
                 function="StripeClient.create_subscription",
                 label=email,
