@@ -23,5 +23,5 @@ repos:
                  productivity/notion/Dockerfile.20
                  creative/blockbench/Dockerfile.20
                  creative/blender/Dockerfile.20
-                 creative/figma/Dockerfile.20]
-                 creative/gimp/Dockerfile.20
+                 creative/figma/Dockerfile.20
+                 creative/gimp/Dockerfile.20]

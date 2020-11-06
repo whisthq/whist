@@ -115,11 +115,10 @@ This is how we push to production. For every push to `master`, all applications 
 
 #### Adding New Applications
 
-For every new application that you add support for, in addition to creating its own subfolder under the relevant category and creating application-specific **Dockerfile.20** and **.xinitrc** files, you should:
+For every new application that you add support for, in addition to creating its own subfolder under the relevant category and creating application-specific **Dockerfile.20**, you need to:
 
 - Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`, for pre-commit hooks
-- Add a command to build the new Dockerfile.20 in `.github/workflows/dockerfiles-building-ubuntu20.yml`
-- Add the path to your new Dockerfile.20 under `apps` in `.github/workflows/push-images.yml`, for continuous delivery
+- Add the path to your new Dockerfile.20 under `apps` in `.github/workflows/push-images.yml` and `.github/workflows/dockerfiles-building-ubuntu20.yml`, for continuous integration and deployment
 - Update the list of supported applications in this README
 
 And, if you're adding a new AWS region, you should add the region name under `aws-regions` in `push-images.yml`.
