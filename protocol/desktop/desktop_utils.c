@@ -344,36 +344,6 @@ int destroySocketLibrary(void) {
     return 0;
 }
 
-/*
-   Write ecdsa key to a local file for ssh to use, for that server ip
-   This will identify the connecting server as the correct server and not an
-   imposter
-*/
-int configureSSHKeys(void) {
-    FILE *ssh_key_host = fopen(HOST_PUBLIC_KEY_PATH, "w");
-    if (ssh_key_host == NULL) {
-        LOG_ERROR("Failed to open public ssh key file.");
-        return -1;
-    }
-    if (fprintf(ssh_key_host, "%s %s\n", server_ip, HOST_PUBLIC_KEY) < 0) {
-        fclose(ssh_key_host);
-        LOG_ERROR("Failed to write public ssh key to file.");
-        return -1;
-    }
-    fclose(ssh_key_host);
-
-#ifndef _WIN32
-    if (chmod(CLIENT_PRIVATE_KEY_PATH, 600) != 0) {
-        LOG_ERROR(
-            "Failed to make host's private ssh (at %s) readable and"
-            "writable. (Error: %s)",
-            CLIENT_PRIVATE_KEY_PATH, strerror(errno));
-        return -1;
-    }
-#endif
-    return 0;
-}
-
 // files can't be written to a macos app bundle, so they need to be
 // cached in /Users/USERNAME/.APPNAME, here .fractal directory
 // attempt to create fractal cache directory, it will fail if it

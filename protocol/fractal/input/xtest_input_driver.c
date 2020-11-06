@@ -382,11 +382,11 @@ int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
         XTestFakeButtonEvent(input_device->display, 5, 1, CurrentTime);
         XTestFakeButtonEvent(input_device->display, 5, 0, CurrentTime);
     }
-    if (x > 0) {
+    if (x < 0) {
         // Left
         XTestFakeButtonEvent(input_device->display, 6, 1, CurrentTime);
         XTestFakeButtonEvent(input_device->display, 6, 0, CurrentTime);
-    } else if (x < 0) {
+    } else if (x > 0) {
         // Right
         XTestFakeButtonEvent(input_device->display, 7, 1, CurrentTime);
         XTestFakeButtonEvent(input_device->display, 7, 0, CurrentTime);
