@@ -11,6 +11,7 @@ CLUSTER_CREATION = "cluster-creation"
 CLUSTER_DELETION = "cluster-delection"
 
 CONTAINER_LIFECYCLE = "container-lifecycle"
+CLUSTER_LIFECYCLE = "cluster-lifecycle"
 
 _type_tags = {
     CONTAINER_CREATION,
@@ -18,22 +19,21 @@ _type_tags = {
     CLUSTER_CREATION,
     CLUSTER_DELETION,
     CONTAINER_LIFECYCLE,
+    CLUSTER_LIFECYCLE,
 }
 
 """Status tags"""
 SUCCESS = "success"
 FAILURE = "failure"
 
-_status_tags = {
-    SUCCESS,
-    FAILURE
-}
+_status_tags = {SUCCESS, FAILURE}
 
 # these need to be formatted
 # do something like CONTAINER_NAME.format(container_name="my_container")
 # to get "container-name:my_container"
 CONTAINER_NAME = "container-name:{container_name}"
 CLUSTER_NAME = "cluster-name:{cluster_name}"
+
 
 def validTags(tags):
     """Check whether the given tags are valid in that they contain the minimum requirements to be
