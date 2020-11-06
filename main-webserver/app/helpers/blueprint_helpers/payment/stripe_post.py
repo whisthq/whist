@@ -10,12 +10,6 @@ from dateutil.relativedelta import relativedelta
 from flask import jsonify
 from pyzipcode import ZipCodeDatabase
 
-from app.constants.config import (
-    HOURLY_PLAN_ID,
-    MONTHLY_PLAN_ID,
-    STRIPE_SECRET,
-    UNLIMITED_PLAN_ID,
-)
 from app.constants.http_codes import (
     BAD_REQUEST,
     CONFLICT,
