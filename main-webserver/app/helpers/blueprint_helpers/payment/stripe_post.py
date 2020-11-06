@@ -1,14 +1,12 @@
-import logging
-import traceback
+from app.helpers.utils.mail.stripe_mail import (
+    chargeSuccessMail,
+    creditAppliedMail,
+    planChangeMail,
+    trialEndedMail,
+    trialEndingMail,
+)  # TODO REMOVE THIS ABOVE
 
-from datetime import datetime as dt
-from datetime import timedelta
-
-import stripe
-
-from dateutil.relativedelta import relativedelta
 from flask import jsonify
-from pyzipcode import ZipCodeDatabase
 
 from app.constants.http_codes import (
     BAD_REQUEST,
@@ -18,14 +16,6 @@ from app.constants.http_codes import (
     PAYMENT_REQUIRED,
     SUCCESS,
     FORBIDDEN,
-)
-from app.constants.states import STATE_LIST
-from app.helpers.utils.mail.stripe_mail import (
-    chargeSuccessMail,
-    creditAppliedMail,
-    planChangeMail,
-    trialEndedMail,
-    trialEndingMail,
 )
 from app.helpers.utils.general.logs import fractalLog
 from app.helpers.utils.stripe.stripe_client import (
@@ -67,76 +57,30 @@ def chargeHelper(token, email, code, plan):
 
 
 def retrieveStripeHelper(email):
-    fractalLog(
-        function="retrieveStripeHelper",
-        label="Stripe",
-        logs="Retrieving subscriptions for {}".format(email),
-    )
-    customer = User.query.get(email)
-
-    if not customer:
+    client = StripeClient(STRIPE_SECRET)
+    try:
+        info = client.get_stripe_info(email)
+        info["status"] = SUCCESS
+        return jsonify(info), SUCCESS
+    except NonexistentUser:
+        return jsonify({"status": FORBIDDEN}), FORBIDDEN
+    # if info is None then we will raise a typerror
+    except TypeError:
         return (
-            jsonify({"status": PAYMENT_REQUIRED, "error": "No such user for that email!"}),
-            PAYMENT_REQUIRED,
+            jsonify(
+                {
+                    "status": PAYMENT_REQUIRED,
+                    "subscription": {},
+                    "cards": [],
+                    "creditsOutstanding": credits,
+                    "account_locked": False,
+                    "customer": {},
+                }
+            ),
         )
-
-    customer = user_schema.dump(customer)
-    credits = customer["credits_outstanding"]
-
-    if customer["stripe_customer_id"]:
-        try:
-            payload = stripe.Customer.retrieve(customer["stripe_customer_id"])
-            subscription = stripe.Subscription.list(customer=customer["stripe_customer_id"])
-            if subscription and subscription["data"]:
-                subscription = subscription["data"][0]
-                cards = payload["sources"]["data"]
-
-                account_locked = subscription["trial_end"] < dateToUnix(getToday())
-
-                return (
-                    jsonify(
-                        {
-                            "status": SUCCESS,
-                            "subscription": subscription,
-                            "cards": cards,
-                            "creditsOutstanding": credits,
-                            "account_locked": account_locked,
-                            "customer": customer,
-                        }
-                    ),
-                    SUCCESS,
-                )
-            return (
-                jsonify(
-                    {
-                        "status": SUCCESS,
-                        "subscription": None,
-                        "cards": [],
-                        "creditsOutstanding": credits,
-                        "account_locked": False,
-                        "customer": customer,
-                    }
-                ),
-                SUCCESS,
-            )
-        except Exception as e:
-            fractalLog(
-                function="retrieveStripeHelper", label=email, logs=str(e), level=logging.ERROR
-            )
-
-    return (
-        jsonify(
-            {
-                "status": PAYMENT_REQUIRED,
-                "subscription": {},
-                "cards": [],
-                "creditsOutstanding": credits,
-                "account_locked": False,
-                "customer": {},
-            }
-        ),
         PAYMENT_REQUIRED,
-    )
+    except Exception:
+        return jsonify({"status": INTERNAL_SERVER_ERROR}), INTERNAL_SERVER_ERROR
 
 
 def cancelStripeHelper(email):

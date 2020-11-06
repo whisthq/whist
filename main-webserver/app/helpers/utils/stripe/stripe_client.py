@@ -1,5 +1,4 @@
 import logging
-import traceback
 
 from datetime import datetime, timedelta
 
@@ -9,7 +8,6 @@ import stripe
 import uuid
 
 from dateutil.relativedelta import relativedelta
-from flask import jsonify
 from pyzipcode import ZipCodeDatabase
 
 # list of the 50 states
@@ -80,6 +78,55 @@ class StripeClient:
         """
         stripe.api_key = api_key
 
+    def get_stripe_info(email):
+        """Retrieves the information for a user regarding stripe. Returns in the following format:
+        {
+            "subscription": a subscription object per the stripe api (json format),
+            "cards": cards object per stripe api (also json format),
+            "creditsOutstanding": what it says,
+            "account_locked": whether your account is account_locked,
+            "customer": customer as a json - the schema dump,
+        } or None if the customer does not exist
+
+        This will throw an exception of unknown type if the subscription fetching fails.
+
+        Args:
+            email (str): The email for the user.
+        """
+
+        # get the user if they are valid/exist
+        user = User.query.get(email)
+        if not user:
+            raise NonexistentUser
+
+        customer = user_schema.dump(user)
+        credits_outstanding = customer["credits_outstanding"]
+
+        # return a valid object if they exist else None
+        if customer["stripe_customer_id"]:
+            customer_info = stripe.Customer.retrieve(customer["stripe_customer_id"])
+            subscription = stripe.Subscription.list(customer=customer["stripe_customer_id"])
+
+            if subscription and subscription["data"]:
+                subscription = subscription["data"][0]
+                cards = payload["sources"]["data"]
+                account_locked = subscription["trial_end"] < dateToUnix(getToday())
+            else:
+                subscription = None
+                cards = []
+                account_locked = False
+
+            return {
+                "status": SUCCESS,
+                "subscription": subscription,
+                "cards": cards,
+                "creditsOutstanding": credits_outstanding,
+                "account_locked": account_locked,
+                "customer": customer,
+            }
+        else:
+            return None
+
     def create_subscription(self, token, email, plan, code=None):
         """This will create a new subscription for a client with the given email
         and a code if it exists. This is similar to what was previously stripe_post's "chargeHelper."
@@ -146,9 +193,9 @@ class StripeClient:
             referrer = User.query.filter_by(referral_code=code).first() if code else None
 
             trial_end = (
-                round((dt.now() + relativedelta(months=1)).timestamp())
+                dateToUnix(datetime.now() + relativedelta(months=1))
                 if referrer
-                else round((datetime.now() + timedelta(weeks=1)).timestamp())
+                else dateToUnix(datetime.now() + timedelta(weeks=1))
             )
             subscribed = False
 
@@ -160,7 +207,7 @@ class StripeClient:
         else:
             subscriptions = stripe.Subscription.list(customer=customer_id)["data"]
             if len(subscriptions) == 0:
-                trial_end = round((dt.now() + relativedelta(weeks=1)).timestamp())
+                trial_end = dateToUnix(datetime.now() + relativedelta(weeks=1))
                 subscribed = False
 
         # if they had a subscription modify it, don't make a new one
