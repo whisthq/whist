@@ -23,14 +23,6 @@ bool get_using_stun();
 char* get_vm_password();
 
 /**
- * @brief                          Retrieves the protocol branch this program is
- *                                 running by asking the webserver
- *
- * @returns                        The string of the branch name
- */
-char* get_branch();
-
-/**
  * @brief                          Retrieves the container ID that this program is
  *                                 running in by asking the webserver
  *

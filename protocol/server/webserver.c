@@ -27,7 +27,7 @@ void update_webserver_parameters() {
     char* resp_buf = NULL;
     size_t resp_buf_maxlen = 4800;
 
-    LOG_INFO("GETTING JSON");
+    LOG_INFO("GETTING JSON from container/protocol_info");
 
     char* msg = (char*)malloc(64 + strlen(identifier) + strlen(hex_aes_private_key));
     sprintf(msg,
