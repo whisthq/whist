@@ -6,6 +6,7 @@ from flask_jwt_extended import jwt_required
 from app import fractalPreProcess
 from app.constants.config import ENDPOINT_SECRET
 from app.constants.http_codes import FORBIDDEN, NOT_ACCEPTABLE
+
 # from app.helpers.blueprint_helpers.payment.stripe_post import (
 # )
 from app.helpers.utils.general.auth import fractalAuth
@@ -33,7 +34,7 @@ def deleteCard(**kwargs):
 @fractalAuth
 def payment(action, **kwargs):
     body = kwargs["body"]
-    
+
     # Adds a subscription to the customer
     if action == "charge":
         pass

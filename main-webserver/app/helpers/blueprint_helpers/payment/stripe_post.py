@@ -27,13 +27,7 @@ from app.helpers.utils.mail.stripe_mail import (
     trialEndingMail,
 )
 from app.helpers.utils.general.logs import fractalLog
-from app.helpers.utils.general.time import dateToUnix, getToday
-from app.models import db, User
-from app.serializers.public import UserSchema
-
-stripe.api_key = STRIPE_SECRET
-zcdb = ZipCodeDatabase()
-user_schema = UserSchema()
+from app.helpers.utils.stripe.stripe_client import StripeClient
 
 
 def chargeHelper(token, email, code, plan):
@@ -42,116 +36,16 @@ def chargeHelper(token, email, code, plan):
         label=email,
         logs="Signing {} up for plan {}, with code {}, token{}".format(email, plan, code, token),
     )
+    plan = (
+        UNLIMITED_PLAN_ID
+        if plan == "unlimited"
+        else HOURLY_PLAN_ID
+        if plan == "hourly"
+        else MONTHLY_PLAN_ID
+    )
 
-    PLAN_ID = MONTHLY_PLAN_ID
-    if plan == "unlimited":
-        PLAN_ID = UNLIMITED_PLAN_ID
-    elif plan == "hourly":
-        PLAN_ID = HOURLY_PLAN_ID
-
-    trial_end = 0
-    customer_exists = False
-    customer_id = ""
-
-    customer = User.query.get(email)
-    if customer:
-        if customer.stripe_customer_id:
-            customer_id = customer.stripe_customer_id
-            customer_exists = True
-        else:
-            trial_end = round((dt.now() + timedelta(days=1)).timestamp())
-    else:
-        return (
-            jsonify(
-                {"status": CONFLICT, "error": "Cannot apply subscription to nonexistant user!"}
-            ),
-            CONFLICT,
-        )
-
-    try:
-        zipCode = stripe.Token.retrieve(token)["card"]["address_zip"]
-        purchaseState = None
-        try:
-            purchaseState = zcdb[zipCode].state
-        except IndexError:
-            return (
-                jsonify(
-                    {"status": "NOT_ACCEPTABLE", "error": "Zip code does not exist in the US!"}
-                ),
-                NOT_ACCEPTABLE,
-            )
-
-        taxRates = stripe.TaxRate.list(limit=100, active=True)["data"]
-        taxRate = []
-        logger = logging.getLogger(__name__)
-        for tax in taxRates:
-            if tax["jurisdiction"].strip().lower() == STATE_LIST[purchaseState].strip().lower():
-                taxRate = [tax["id"]]
-
-        if customer_exists:
-            subscriptions = stripe.Subscription.list(customer=customer_id)["data"]
-            if len(subscriptions) == 0:
-                trial_end = round((dt.now() + relativedelta(weeks=1)).timestamp())
-                stripe.Subscription.create(
-                    customer=customer_id,
-                    items=[{"plan": PLAN_ID}],
-                    trial_end=trial_end,
-                    trial_from_plan=False,
-                    default_tax_rates=taxRate,
-                )
-                fractalLog(
-                    function="chargeHelper",
-                    label=email,
-                    logs="Customer subscription created successful",
-                )
-            else:
-                stripe.SubscriptionItem.modify(
-                    subscriptions[0]["items"]["data"][0]["id"], plan=PLAN_ID
-                )
-                fractalLog(function="chargeHelper", label=email, logs="Customer updated successful")
-        else:
-            new_customer = stripe.Customer.create(email=email, source=token)
-            customer_id = new_customer["id"]
-            user = User.query.get(email)
-            credits = user.credits_outstanding
-
-            referrer = User.query.filter_by(referral_code=code).first()
-
-            if referrer:
-                trial_end = round((dt.now() + relativedelta(months=1)).timestamp())
-                stripe.Subscription.create(
-                    customer=customer_id,
-                    items=[{"plan": PLAN_ID}],
-                    trial_end=trial_end,
-                    trial_from_plan=False,
-                    default_tax_rates=taxRate,
-                )
-
-            else:
-                trial_end = round((dt.now() + relativedelta(weeks=1)).timestamp())
-                stripe.Subscription.create(
-                    customer=new_customer["id"],
-                    items=[{"plan": PLAN_ID}],
-                    trial_end=trial_end,
-                    trial_from_plan=False,
-                    default_tax_rates=taxRate,
-                )
-
-            user.stripe_customer_id = customer_id
-            user.credits_outstanding = 0
-            db.session.commit()
-
-            fractalLog(function="chargeHelper", label=email, logs="Customer added successful")
-
-    except Exception as e:
-        track = traceback.format_exc()
-        fractalLog(
-            function="chargeHelper",
-            label=email,
-            logs="Stripe charge encountered a critical error: {error}".format(error=track),
-            level=logging.CRITICAL,
-        )
-        return jsonify({"status": CONFLICT, "error": str(e)}), CONFLICT
+    client = StripeClient(STRIPE_SECRET)
+    client.create_subscription(token, email, plan, code=code)
 
     return jsonify({"status": SUCCESS}), SUCCESS
 

@@ -22,20 +22,29 @@ from app.helpers.utils.general.time import dateToUnix, getToday
 from app.models import db, User
 from app.serializers.public import UserSchema
 
+
 class NonexistentUser(Exception):
     """This exception is raised when the user (customer) does not exist on a charge or
     simiar transaction."""
+
     pass
+
+
 class RegionNotSupported(Exception):
     """We only suppor the NA (North America) region currently. In the past we only
     supported the US, though in the future we'd like to go global. This exception is
     raised when transactions are made for customers outside supported regions."""
+
     pass
+
+
 class InvalidStripeToken(Exception):
     """This exception is raised when a customer passes an invalid token to an endpoint.
     For example, if they are trying to charge and pass in a token that stripe cannot parse
     we will raise this issue."""
+
     pass
+
 
 class StripeClient:
     # api key must be the stripe secret key or
@@ -53,17 +62,17 @@ class StripeClient:
         # this is not saved in our class for security reasons
         # also we do not need it
         stripe.api_key = api_key
-        
+
         self.regions = STATE_LIST
         self.zipcode_db = ZipCodeDatabase()
 
         self.user_schema = UserSchema
-    
+
     def refresh_key(self, api_key):
         """Reset the stripe api key.
 
         Args:
-            api_key (str): A stripe api key that we want to set as 
+            api_key (str): A stripe api key that we want to set as
                 the new value of the api key. We may want to do this
                 if we are executing various commands or reusing an object
                 in different endpoints, and don't want someone to be able
@@ -74,6 +83,7 @@ class StripeClient:
     def create_subscription(self, token, email, plan, code=None):
         """This will create a new subscription for a client with the given email
         and a code if it exists. This is similar to what was previously stripe_post's "chargeHelper."
+        It will return true on a succes run.
 
         Args:
             token (str): A stripe token that can be used to get credit card information etc by stripe.
@@ -89,13 +99,15 @@ class StripeClient:
                 a subscription already ARE users. This is for people who've never logged in to our site.
             InvalidStripeToken: The token is invalid or malformatted.
             RegionNotSupported: The region is not supported. We only support NA (really US) right now.
+
+        Other exceptions may be raised in malformed data is passed in. This is meant to be caught outside.
         """
 
         # get the customer and whether they exist
         user = User.query.get(email)
         if not user:
             raise NonexistentUser
-        
+
         try:
             token = stripe.Token.retrieve(token)
         except:
@@ -103,7 +115,7 @@ class StripeClient:
 
         stripe_customer_id = customer.stripe_customer_id
 
-        # get the zipcode/region 
+        # get the zipcode/region
         zipcode = token["card"]["address_zip"]
 
         if zipcode in self.zipcode_db:
@@ -117,16 +129,11 @@ class StripeClient:
 
         # apply tax rate for their region (find the id for their region)
         tax_rates = map(
-            lambda tax: {
-                "region" : tax["jurisdiction"].strip().lower(),
-                "id": tax["id"]
-            }, 
-            stripe.TaxRate.list(limit=100, active=True)["data"]
+            lambda tax: {"region": tax["jurisdiction"].strip().lower(), "id": tax["id"]},
+            stripe.TaxRate.list(limit=100, active=True)["data"],
         )
         tax_rate = reduce(
-            lambda acc, tax: acc = acc if acc else tax["id"] if tax["region"] == purchase_region, 
-            tax_rates, 
-            None
+            lambda acc, tax: tax["id"] if tax["region"] == purchase_region else acc, tax_rates, None
         )
 
         # if they are a new customer initialize them
@@ -138,24 +145,33 @@ class StripeClient:
             stripe_customer_id = new_customer["id"]
             referrer = User.query.filter_by(referral_code=code).first() if code else None
 
-            
-            trial_end = round((dt.now() + relativedelta(months=1)).timestamp()) if referrer else round((datetime.now() + timedelta(weeks=1)).timestamp())
+            trial_end = (
+                round((dt.now() + relativedelta(months=1)).timestamp())
+                if referrer
+                else round((datetime.now() + timedelta(weeks=1)).timestamp())
+            )
             subscribed = False
 
-            fractalLog(function="StripeClient.create_subscription", label=email, logs="Customer added successful")
+            fractalLog(
+                function="StripeClient.create_subscription",
+                label=email,
+                logs="Customer added successful",
+            )
         else:
             subscriptions = stripe.Subscription.list(customer=customer_id)["data"]
             if len(subscriptions) == 0:
                 trial_end = round((dt.now() + relativedelta(weeks=1)).timestamp())
                 subscribed = False
-        
+
         # if they had a subscription modify it, don't make a new one
         # else make a new one with the corresponding params
         if subscriptions:
-            stripe.SubscriptionItem.modify(
-                    subscriptions[0]["items"]["data"][0]["id"], plan=PLAN_ID
-                )
-            fractalLog(function="StripeClient.create_subscription", label=email, logs="Customer updated successful")
+            stripe.SubscriptionItem.modify(subscriptions[0]["items"]["data"][0]["id"], plan=PLAN_ID)
+            fractalLog(
+                function="StripeClient.create_subscription",
+                label=email,
+                logs="Customer updated successful",
+            )
         else:
             stripe.Subscription.create(
                 customer=stripe_customer_id,
@@ -169,5 +185,5 @@ class StripeClient:
                 label=email,
                 logs="Customer subscription created successful",
             )
+
     return True
-                
