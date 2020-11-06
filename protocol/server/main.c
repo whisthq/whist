@@ -1134,7 +1134,6 @@ int parse_args(int argc, char* argv[]) {
     memcpy((char*)&hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(hex_aes_private_key));
 
     int opt;
-    char* end_ptr;
 
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
