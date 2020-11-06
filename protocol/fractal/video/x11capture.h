@@ -74,10 +74,11 @@ Public Functions
  *                                 device
  * @param width                    Width of the screen to capture, in pixels
  * @param height                   Height of the screen to capture, in pixels
+ * @param dpi                      Dots per inch of the screen, in pixels
  *
  * @returns                        0 if succeeded, else -1
  */
-int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height);
+int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi);
 
 /**
  * @brief                          Capture a bitmap snapshot of the screen, in
