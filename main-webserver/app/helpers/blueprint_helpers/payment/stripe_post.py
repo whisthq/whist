@@ -17,6 +17,7 @@ from app.constants.http_codes import (
     NOT_FOUND,
     PAYMENT_REQUIRED,
     SUCCESS,
+    FORBIDDEN,
 )
 from app.constants.states import STATE_LIST
 from app.helpers.utils.mail.stripe_mail import (
@@ -27,7 +28,12 @@ from app.helpers.utils.mail.stripe_mail import (
     trialEndingMail,
 )
 from app.helpers.utils.general.logs import fractalLog
-from app.helpers.utils.stripe.stripe_client import StripeClient
+from app.helpers.utils.stripe.stripe_client import (
+    StripeClient,
+    NonexistentUser,
+    RegionNotSupported,
+    InvalidStripeToken,
+)
 
 
 def chargeHelper(token, email, code, plan):
@@ -45,9 +51,19 @@ def chargeHelper(token, email, code, plan):
     )
 
     client = StripeClient(STRIPE_SECRET)
-    client.create_subscription(token, email, plan, code=code)
+    try:
+        client.create_subscription(token, email, plan, code=code)
+        status = SUCCESS
+    except NonexistentUser:
+        status = FORBIDDEN
+    except RegionNotSupported:
+        status = BAD_REQUEST
+    except InvalidStripeToken:
+        status = BAD_REQUEST
+    except Exception:
+        status = INTERNAL_SERVER_ERROR
 
-    return jsonify({"status": SUCCESS}), SUCCESS
+    return jsonify({"status": status}), status
 
 
 def retrieveStripeHelper(email):
