@@ -31,6 +31,9 @@ set $down k
 set $left j
 set $right semicolon
 
+# focus follows click, not hover
+focus_follows_mouse no
+
 # use Mouse+Mod1 to drag floating windows to their wanted position
 floating_modifier Mod1
 
