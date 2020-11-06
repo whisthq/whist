@@ -1130,7 +1130,8 @@ int parse_args(int argc, char* argv[]) {
         "                                  the protocol code\n"
         "  -i, --identifier=ID           Pass in the unique identifier for this\n"
         "                                  server as a hexadecimal string\n"
-        "  -d, --dpi=DPI                 Pass in the DPI of the monitor, with "96" being the default\n"
+        "  -d, --dpi=DPI                 Pass in the DPI of the monitor, with \"96\" being the "
+        "default\n"
         "  -w, --webserver=WS_URL        Pass in the webserver url for this\n"
         "                                  server's requests\n"
         // special options should be indented further to the left
