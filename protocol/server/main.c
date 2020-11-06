@@ -1233,6 +1233,7 @@ int parse_args(int argc, char* argv[]) {
         printf("DPI setting not implemented yet on windows server");
         return -1;
 #else
+        char cmd[512];
         snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
         runcmd(cmd, NULL);
 #endif
