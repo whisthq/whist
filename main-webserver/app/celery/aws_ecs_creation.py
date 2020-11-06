@@ -118,6 +118,43 @@ def _poll(container_id):
 
 
 @shared_task(bind=True)
+def assign_container(
+    self,
+    username,
+    task_definition_arn,
+    region_name="us-east-1",
+    dpi=96,
+    webserver_url=None,
+):
+    base_container = (
+        UserContainer.query()
+        .filter_by(is_assigned=False, task_definition=task_definition_arn, region_name=region_name)
+        .with_for_update()
+        .limit(1)
+    )
+    num_extra = 1
+    if base_container:
+        base_container.is_assigned = True
+        base_container.user_id = username
+        db.session.commit()
+        for i in range(num_extra):
+            create_new_container.delay(
+                "Unassigned",
+                task_definition_arn,
+                region_name=region_name,
+                dpi=dpi,
+                webserver_url=webserver_url,
+            )
+            pass
+        return base_container
+    else:
+        db.session.commit()
+        # create_new_container here
+        pass
+    pass
+
+
+@shared_task(bind=True)
 def create_new_container(
     self,
     username,
@@ -252,6 +289,7 @@ def create_new_container(
         os="Linux",
         lock=False,
         secret_key=aeskey,
+        task_definition=task_definition_arn,
     )
     container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
     if container_sql:
