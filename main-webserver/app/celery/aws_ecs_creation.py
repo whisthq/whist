@@ -4,6 +4,7 @@ import time
 
 from celery import shared_task
 from celery.exceptions import Ignore
+from flask import current_app
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractalLog
@@ -331,8 +332,8 @@ desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_b
         )
         raise Ignore
 
-    # log a datadog event of the creation of this container
-    datadogEvent_containerCreate(container.container_id, cluster_name)
+    if not current_app.testing:
+        datadogEvent_containerCreate(container.container_id, cluster_name)
 
 
 @shared_task(bind=True)
@@ -434,8 +435,8 @@ def create_new_cluster(
             meta={"msg": f"Encountered error: {error}"},
         )
 
-    # logs a datadog event for the creation of this cluster
-    datadogEvent_clusterCreate(cluster_name)
+    if not current_app.testing:
+        datadogEvent_clusterCreate(cluster_name)
 
 
 @shared_task(bind=True)

@@ -2,6 +2,7 @@ import logging
 import traceback
 
 from celery import shared_task
+from flask import current_app
 
 from app.constants.http_codes import (
     INTERNAL_SERVER_ERROR,
@@ -122,7 +123,8 @@ def deleteContainer(self, container_name, aes_key):
 
         raise Exception("SQL update failed.")
 
-    datadogEvent_containerDelete(container_name, container_cluster, lifecycle=True)
+    if not current_app.testing:
+        datadogEvent_containerDelete(container_name, container_cluster, lifecycle=True)
 
 
 @shared_task(bind=True)
@@ -232,5 +234,5 @@ def delete_cluster(self, cluster, region_name):
             state="FAILURE",
             meta={"msg": f"Encountered error: {error}"},
         )
-
-    datadogEvent_clusterDelete(cluster, lifecycle=True)
+    if not current_app.testing:
+        datadogEvent_clusterDelete(cluster, lifecycle=True)
