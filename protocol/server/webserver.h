@@ -7,13 +7,6 @@
 void update_webserver_parameters();
 
 /**
- * @brief                          Queries the webserver to ask if the VM should autoupdate itself
- *
- * @returns                        True if VM should autoupdate
- */
-bool allow_autoupdate();
-
-/**
  * @brief                          Queries the webserver to get the using_stun
  * status
  *
@@ -44,13 +37,5 @@ char* get_branch();
  * @returns                        The string of the container ID
  */
 char* get_container_id();
-
-/**
- * @brief                          Retrieves the username of this program's client
- *                                 by asking the webserver
- *
- * @returns                        The string of the username
- */
-char* get_user_id();
 
 #endif
