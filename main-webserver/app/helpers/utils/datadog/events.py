@@ -189,7 +189,9 @@ def datadogEvent_containerLifecycle(container_name):
     )
     if event:
         if not CONTAINER_CREATION in event["tags"]:
-            was_deletion = str(CONTAINER_DELETION in event["tags"])
+            was_deletion = str(
+                CONTAINER_DELETION in event["tags"] or CONTAINER_LIFECYCLE in event["tags"]
+            )
             fractalLog(
                 function="datadogEvent_containerLifecycle",
                 label=None,
@@ -247,7 +249,9 @@ def datadogEvent_clusterLifecycle(cluster_name):
     event = _most_recent_by_tags([CLUSTER_NAME_F.format(cluster_name)])
     if event:
         if not CLUSTER_CREATION in event["tags"]:
-            was_deletion = str(CLUSTER_DELETION in event["tags"])
+            was_deletion = str(
+                CLUSTER_DELETION in event["tags"] or CLUSTER_LIFECYCLE in event["tags"]
+            )
             fractalLog(
                 function="datadogEvent_clusterLifecycle",
                 label=None,
