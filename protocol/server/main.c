@@ -1124,8 +1124,6 @@ int parse_args(int argc, char* argv[]) {
         "                                  the protocol code\n"
         "  -i, --identifier=ID           Pass in the unique identifier for this\n"
         "                                  server as a hexadecimal string\n"
-        "  -d, --dpi=DPI                 Pass in the DPI of the monitor, with \"96\" being the "
-        "default\n"
         "  -w, --webserver=WS_URL        Pass in the webserver url for this\n"
         "                                  server's requests\n"
         // special options should be indented further to the left
@@ -1136,7 +1134,6 @@ int parse_args(int argc, char* argv[]) {
     memcpy((char*)&hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(hex_aes_private_key));
 
     int opt;
-    int dpi = -1;
     char* end_ptr;
 
     while (true) {
@@ -1166,16 +1163,6 @@ int parse_args(int argc, char* argv[]) {
                 }
                 strncpy(identifier, optarg, FRACTAL_IDENTIFIER_MAXLEN);
                 identifier[FRACTAL_IDENTIFIER_MAXLEN] = 0;
-                break;
-            }
-            case 'd': {
-                if (dpi != -1) {
-                    printf("Error: -d was passed in twice");
-                    return -1;
-                }
-                int new_dpi = strtol(optarg, &end_ptr, 10);
-                printf("Setting DPI to %d", new_dpi);
-                dpi = new_dpi;
                 break;
             }
             case 'w': {
@@ -1220,17 +1207,6 @@ int parse_args(int argc, char* argv[]) {
                 break;
             }
         }
-    }
-
-    if (dpi != -1) {
-#ifdef _WIN32
-        printf("DPI setting not implemented yet on windows server");
-        return -1;
-#else
-        char cmd[512];
-        snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
-        runcmd(cmd, NULL);
-#endif
     }
 
     return 0;
