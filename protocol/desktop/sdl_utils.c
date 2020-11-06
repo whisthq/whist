@@ -54,7 +54,7 @@ SDL_Window* initSDL(int target_output_width, int target_output_height, char* nam
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
 #endif
 
-#if defined(_WIN32)
+#if defined(_WIN32) && CAPTURE_SPECIAL_WINDOWS_KEYS
     // Hook onto windows keyboard to intercept windows special key combinations
     g_hKeyboardHook =
         SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
