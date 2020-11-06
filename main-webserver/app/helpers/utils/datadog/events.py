@@ -2,7 +2,8 @@ from app import *
 from app.helpers.utils.general.logs import fractalLog
 
 import logging
-from time import time  # TODO WTF
+from time import time
+from datetime import timedelta
 from flask import current_app
 from datadog import initialize, api
 
@@ -179,7 +180,7 @@ def datadogEvent_containerLifecycle(container_name):
     Args:
         container_name (str): The name of the container whose lifecycle we are observing the end for.
     """
-    deletion_date = time.time()
+    deletion_date = time()
 
     event = _most_recent_by_tags(
         [CONTAINER_NAME_F.format(container_name=container_name)],
@@ -204,7 +205,7 @@ def datadogEvent_containerLifecycle(container_name):
             creation_date = event["date_happened"]
 
             # find everything as a string so we can embedd it in a format string
-            runtime = str(deletion_date - creation_date)
+            runtime = str(timedelta(seconds=(deletion_date - creation_date)))
             creation_date, deletion_date = str(creation_date), str(deletion_date)
 
             datadogEvent(
@@ -244,9 +245,9 @@ def datadogEvent_clusterLifecycle(cluster_name):
     Args:
         cluster_name (str): Name of the string
     """
-    deletion_date = time.time()
+    deletion_date = time()
 
-    event = _most_recent_by_tags([CLUSTER_NAME_F.format(cluster_name)])
+    event = _most_recent_by_tags([CLUSTER_NAME_F.format(cluster_name=cluster_name)])
     if event:
         if not CLUSTER_CREATION in event["tags"]:
             was_deletion = str(
@@ -263,7 +264,7 @@ def datadogEvent_clusterLifecycle(cluster_name):
         else:
             creation_date = event["date_happened"]
 
-            runtime = str(deletion_date - creation_date)
+            runtime = str(timedelta(seconds=(deletion_date - creation_date)))
             creation_date, deletion_date = str(creation_date), str(deletion_date)
 
             datadogEvent(
@@ -293,6 +294,7 @@ def _most_recent_by_tags(
     sort_by=lambda event: event["date_happened"],
     dt=3600,
     max_d=86400,
+    init=True,
 ):
     """Helper method that will find the most recent (or some other order) event within the last
     max_d seconds (default one day) such that it had one of the tags in tag_by (it's an OR). If
@@ -306,9 +308,13 @@ def _most_recent_by_tags(
         dt (int, optional): How much to cinrement by on each try. Defaults to 3600.
         max_d (int, optional): Maximum amount of time in the past to check. Defaults to 86400.
     """
+    if init:
+        initDatadog()
+
     d = dt
 
-    end_time, start_time = time.time(), end_time - dt
+    end_time = time()
+    start_time = end_time - dt
 
     while d < max_d:
         events = api.Event.query(
