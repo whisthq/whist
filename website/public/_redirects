@@ -1,3 +1,5 @@
+http://testingtesting.tryfractal.com https://testingtesting.tryfractal.com 302!
 http://testingtesting.tryfractal.com/* https://testingtesting.tryfractal.com/:splat 302!
-https://testingtesting.tryfractal.com/* https://www.google.com/:splat 200
+https://testingtesting.tryfractal.com https://gentle-garbanzo-w8oy45a908aufaql0fjxdebh.herokudns.com 200
+https://testingtesting.tryfractal.com/* https://gentle-garbanzo-w8oy45a908aufaql0fjxdebh.herokudns.com/:splat 200
 /*    /index.html   200
