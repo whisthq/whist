@@ -44,6 +44,13 @@ class InvalidStripeToken(Exception):
     pass
 
 
+class InvalidOperation(Exception):
+    """This is raised when you try to delete your subscription if you are not subscribed
+    or you try to create a subscription already being subscribed without modifying."""
+
+    pass
+
+
 class StripeClient:
     # api key must be the stripe secret key or
     # a restrited "secret" key as in the stripe dashboard
@@ -160,7 +167,7 @@ class StripeClient:
         except:
             raise InvalidStripeToken
 
-        stripe_customer_id = customer.stripe_customer_id
+        stripe_customer_id = user.stripe_customer_id
 
         # get the zipcode/region
         zipcode = token["card"]["address_zip"]
@@ -191,6 +198,7 @@ class StripeClient:
             customer = stripe.Customer.create(email=email, source=token)
             stripe_customer_id = new_customer["id"]
             referrer = User.query.filter_by(referral_code=code).first() if code else None
+            # they are rewarded by another request to discount by the client where they get credits
 
             trial_end = (
                 dateToUnix(datetime.now() + relativedelta(months=1))
@@ -238,3 +246,21 @@ class StripeClient:
             )
 
     return True
+
+    def cancel_subscription(self, email):
+        user = User.query.get(email)
+        if not user:
+            raise NonexistentUser
+
+        subscription = stripe.Subscription.list(customer=user.stripe_customer_id)["data"]
+
+        if len(subscription) == 0:
+            raise InvalidOperation
+        else:
+            payload = stripe.Subscription.delete(subscription[0]["id"])
+            fractalLog(
+                function="StripeClient.cancel_subscription",
+                label=email,
+                logs="Cancelled stripe subscription for {}".format(email),
+            )
+            return True
