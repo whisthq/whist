@@ -32,6 +32,7 @@ jobs:
           - fractal/creative/blender
           - fractal/creative/gimp
           - fractal/creative/blockbench
+          - fractal/creative/texturelab
           - fractal/creative/figma
 
     steps:
