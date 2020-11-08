@@ -19,4 +19,4 @@ do
 done
 
 # output images in repo
-printf '%s\n' "${apps[@]}"
+printf '%s ' "${apps[@]}"
