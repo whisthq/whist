@@ -18,5 +18,5 @@ do
     apps+=($path)
 done
 
-# convert array to JSON for GHA format
-printf '%s\n' "${apps[@]}" | jq -R . | jq -s .
+# output images in repo
+printf '%s ' "${apps[@]}"
