@@ -44,7 +44,7 @@ jobs:
 
             - name: Build container images
               run: |
-                  for app in ${{ env.apps[@] }}
+                  for app in ${{ env.apps }}
                   do
                     ./build_container_image.sh $app
                   done
