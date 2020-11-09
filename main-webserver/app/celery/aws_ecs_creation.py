@@ -142,9 +142,14 @@ def create_new_container(
         network_configuration: The network configuration to use for the
             clusters using awsvpc networking.
         dpi: what DPI to use on the server
+        webserver_url: The URL of the web server to ping and with which to authenticate.
     """
-    message = f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in {region_name}"
+
     aeskey = os.urandom(16).hex()
+    message = (
+        f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in "
+        f"{region_name}"
+    )
     container_overrides = {
         "containerOverrides": [
             {
@@ -175,7 +180,7 @@ def create_new_container(
             cluster_name = create_new_cluster.delay(
                 region_name=region_name, ami=region_to_ami[region_name], min_size=1
             ).get(disable_sync_subtasks=False)["cluster"]
-            for i in range(base_len - len(all_clusters)):
+            for _ in range(base_len - len(all_clusters)):
                 create_new_cluster.delay(
                     region_name=region_name, ami=region_to_ami[region_name], min_size=1
                 )
@@ -183,7 +188,7 @@ def create_new_container(
         else:
             cluster_name = all_clusters[0].cluster
             if len(all_clusters) < base_len:
-                for i in range(base_len - len(all_clusters)):
+                for _ in range(base_len - len(all_clusters)):
                     create_new_cluster.delay(
                         region_name=region_name, ami=region_to_ami[region_name], min_size=1
                     )
@@ -259,7 +264,10 @@ def create_new_container(
         fractalLog(
             function="create_new_container",
             label=str(ecs_client.tasks[0]),
-            logs=f"Inserted container with IP address {curr_ip} and network bindings {curr_network_binding}",
+            logs=(
+                f"Inserted container with IP address {curr_ip} and network bindings "
+                f"{curr_network_binding}"
+            ),
         )
     else:
         fractalLog(
@@ -295,16 +303,17 @@ def create_new_container(
             )
 
             raise Ignore
-        else:
-            fractalLog(
-                function="create_new_container",
-                label=str(ecs_client.tasks[0]),
-                logs=f"""container pinged!  To connect, run:
-desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
-                     """,
-            )
 
-            return user_container_schema.dump(container)
+        # pylint: disable=line-too-long
+        fractalLog(
+            function="create_new_container",
+            label=str(ecs_client.tasks[0]),
+            logs=f"""container pinged!  To connect, run:
+desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
+            """,
+        )
+
+        return user_container_schema.dump(container)
     else:
         fractalLog(
             function="create_new_container",
@@ -332,25 +341,36 @@ def create_new_cluster(
     """
     Args:
         self: the celery instance running the task
-        instance_type (Optional[str]): size of instances to create in auto scaling group, defaults to t2.small
-        ami (Optional[str]): AMI to use for the instances created in auto scaling group, defaults to an ECS-optimized, GPU-optimized Amazon Linux 2 AMI
-        min_size (Optional[int]): the minimum number of containers in the auto scaling group, defaults to 1
-        max_size (Optional[int]): the maximum number of containers in the auto scaling group, defaults to 10
+        instance_type (Optional[str]): size of instances to create in auto scaling group, defaults
+            to t2.small
+        ami (Optional[str]): AMI to use for the instances created in auto scaling group, defaults
+            to an ECS-optimized, GPU-optimized Amazon Linux 2 AMI
+        min_size (Optional[int]): the minimum number of containers in the auto scaling group,
+            defaults to 1
+        max_size (Optional[int]): the maximum number of containers in the auto scaling group,
+            defaults to 10
         region_name (Optional[str]): which AWS region you're running on
-        availability_zones (Optional[List[str]]): the availability zones for creating instances in the auto scaling group
+        availability_zones (Optional[List[str]]): the availability zones for creating instances in
+            the auto scaling group
     Returns:
         user_cluster_schema: information on cluster created
     """
     fractalLog(
         function="create_new_cluster",
         label="None",
-        logs=f"Creating new cluster on ECS with instance_type {instance_type} and ami {ami} in region {region_name}",
+        logs=(
+            f"Creating new cluster on ECS with instance_type {instance_type} and ami {ami} in "
+            f"region {region_name}"
+        ),
     )
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     self.update_state(
         state="PENDING",
         meta={
-            "msg": f"Creating new cluster on ECS with instance_type {instance_type} and ami {ami} in region {region_name}"
+            "msg": (
+                f"Creating new cluster on ECS with instance_type {instance_type} and ami {ami} in "
+                f"region {region_name}"
+            ),
         },
     )
     time.sleep(10)

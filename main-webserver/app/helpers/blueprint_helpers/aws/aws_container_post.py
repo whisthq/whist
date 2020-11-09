@@ -20,8 +20,6 @@ from app.serializers.hardware import UserContainerSchema
 class BadAppError(Exception):
     """Raised when `preprocess_task_info` doesn't recognized an input."""
 
-    pass
-
 
 def pingHelper(available, container_ip, port_32262, aeskey, version=None):
     """Update container state in the database.
@@ -42,7 +40,10 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
     container_info = UserContainer.query.filter_by(ip=container_ip, port_32262=port_32262).first()
 
     if not container_info or container_info.secret_key != aeskey:
-        return {"error": f"No container with IP {container_ip} and ports {[port_32262]}"}, NOT_FOUND
+        return (
+            {"error": f"No container with IP {container_ip} and ports {[port_32262]}"},
+            NOT_FOUND,
+        )
 
     username = container_info.user_id
 
@@ -121,7 +122,7 @@ def preprocess_task_info(app):
             create_new_container celery task.
     """
 
-    # TODO: Don't just hard-code the cluster, region
+    # TODO: Don't just hard-code the cluster and region
     app_data = SupportedAppImages.query.filter_by(app_id=app).first()
     if app_data:
         return (
@@ -156,7 +157,6 @@ def protocol_info(address, port, aeskey):
 
     if container:
         if container.secret_key == aeskey:
-            username = container.user_id
             response = schema.dump(container), SUCCESS
         else:
             response = None, UNAUTHORIZED

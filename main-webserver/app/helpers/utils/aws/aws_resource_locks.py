@@ -13,7 +13,7 @@ from app.models import db, UserContainer
 
 
 def lockContainerAndUpdate(container_name, state, lock, temporary_lock):
-    """Changes the state, lock, and temporary lock of a Container
+    """Change the state, lock, and temporary lock of a Container
 
     Args:
         container_name (str): Name of Container
@@ -21,8 +21,8 @@ def lockContainerAndUpdate(container_name, state, lock, temporary_lock):
             [RUNNING_AVAILABLE, RUNNING_UNAVAILABLE, DEALLOCATED, DEALLOCATING, STOPPED, STOPPING,
             DELETING, CREATING, RESTARTING, STARTING]
         lock (bool): True if Container is locked, False otherwise
-        temporary_lock (int): Number of minutes, starting from now, to lock the Container (max is 10)
-
+        temporary_lock (int): Number of minutes, starting from now, to lock the Container (max is
+            10).
 
     Returns:
         int: 1 = container is unlocked, -1 = giving up
@@ -122,9 +122,7 @@ def spinLock(container_name, s=None):
         fractalLog(
             function="spinLock",
             label=str(username),
-            logs="Container {container_name} found locked on first try. Proceeding to wait...".format(
-                container_name=container_name
-            ),
+            logs=f"Container {container_name} found locked on first try. Proceeding to wait...",
         )
         if s:
             s.update_state(
@@ -141,9 +139,7 @@ def spinLock(container_name, s=None):
             fractalLog(
                 function="spinLock",
                 label=str(username),
-                logs="Container {container_name} locked after waiting 200 seconds. Giving up...".format(
-                    container_name=container_name
-                ),
+                logs=f"Container {container_name} locked after waiting 200 seconds. Giving up...",
                 level=logging.ERROR,
             )
             return -1

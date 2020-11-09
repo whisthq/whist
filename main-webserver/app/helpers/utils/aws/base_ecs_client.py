@@ -119,6 +119,7 @@ class ECSClient:
 
         if not self.mock:
             self.role_name = "autoscaling_role"
+            # pylint: disable=line-too-long
             # self.role_name = 'role_name_oqursxkjhh'
             ## Create role and instance profile that allows containers to use SSM, S3, and EC2
             # self.role_name = self.generate_name('role_name')
@@ -173,6 +174,7 @@ class ECSClient:
             # self.iam_client.add_role_to_instance_profile(
             #     InstanceProfileName=self.instance_profile, RoleName=self.role_name
             # )
+            # pylint: enable=line-too-long
 
     def make_client(self, client_type, **kwargs):
         """
@@ -210,11 +212,12 @@ class ECSClient:
         return name
 
     def create_cluster(self, capacity_providers, cluster_name=None):
-        """
-        Creates a new cluster with the specified capacity providers and sets the task's compute cluster to it
+        """Create a new cluster with the specified capacity providers.
+
         Args:
             capacity_providers (List[str]): capacity providers to use for cluster
-            cluster_name (Optional[str]): name of cluster, will be automatically generated if not provided
+            cluster_name (Optional[str]): name of cluster, will be automatically generated if not
+                provided
         """
         if isinstance(capacity_providers, str):
             capacity_providers = [capacity_providers]
@@ -237,11 +240,15 @@ class ECSClient:
         return cluster_name
 
     def set_cluster(self, cluster_name=None):
-        """
-        Sets the task's compute cluster to be the inputted cluster, or the first available/default compute cluster if a cluster is not provided
+        """Set the task's compute cluster.
+
+        Choose either specified cluster or the first available/default compute cluster if a cluster
+        is not provided.
+
         Args:
             cluster_name (Optional[str]): name of cluster to set task's compute cluster to
         """
+
         self.cluster = (
             check_str_param(cluster_name, "cluster_name")
             if cluster_name
@@ -345,7 +352,8 @@ class ECSClient:
         sets input list of containers to draining
         Args:
             containers (list[str]): the ARNs of the containers you want to drain
-            cluster (optional[str]): the cluster on which the containers are, defaults to the overall client's cluster.
+            cluster (optional[str]): the cluster on which the containers are, defaults to the
+                overall client's cluster.
 
         Returns: the json returned by the API
 
@@ -358,11 +366,14 @@ class ECSClient:
         return resp
 
     def terminate_containers_in_cluster(self, cluster):
-        """
-        Terminates all of the containers in the cluster. They will eventually be cleaned up automatically.
+        """Terminate all of the containers in the cluster.
+
+        They will eventually be cleaned up automatically.
+
         Args:
             cluster (str): name of cluster
         """
+
         container_arns = self.get_containers_in_cluster(cluster)
         if container_arns:
             containers = self.get_container_instance_ids(cluster, container_arns)
@@ -397,14 +408,20 @@ class ECSClient:
             self.exec_commands_on_containers(cluster, containers, commands)
 
     def get_clusters_usage(self, clusters=None):
-        """
-        Gets usage info of clusters, including status, pending tasks, running tasks,
-        container instances, container usage, min containers, and max containers
+        """Fetch usage info of clusters.
+
+        Fetched data includes status, pending tasks, running tasks, container instances, container
+        usage, min containers, and max containers.
+
         Args:
-            clusters (Optional[List[str]]): the clusters to get the usage info for, defaults to all clusters associated with AWS account
+            clusters (Optional[List[str]]): the clusters to get the usage info for, defaults to all
+                clusters associated with AWS account
+
         Returns:
-            Dict[Dict]: A dictionary mapping each cluster name to cluster usage info, which is stored in a dict
+            Dict[Dict]: A dictionary mapping each cluster name to cluster usage info, which is
+                stored in a dict.
         """
+
         clusters, clusters_usage = clusters or self.get_all_clusters(), {}
         for cluster in clusters:
             cluster_info = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0]
@@ -449,20 +466,24 @@ class ECSClient:
         memory="512",
         cpu="256",
     ):
-        """
+        """Generate a task.
+
         Generates a task corresponding to a given docker image, command, and entry point
         while setting instance attrs accordingly (logging and task attrs).
+
         Args:
             command (List[str]): Command to run on container
             entrypoint (List[str]): Entrypoint for container
             basedict (Optional[Dict[str, Any]]): the base parametrization of your task.
-            port_mappings (Optional[List[Dict]): any port mappings you want on the host container, defaults to 8080 tcp.
+            port_mappings (Optional[List[Dict]): any port mappings you want on the host container,
+                defaults to 8080 tcp.
             family (Optional[str]): what task family you want this task revising
             containername (Optional[str]):  what you want the container the task is on to be called
             imagename (Optional[str]): the URI for the docker image
             memory (Optional[str]): how much memory (in MB) the task needs
             cpu (Optional[str]): how much CPU (in vCPU) the task needs
         """
+
         fmtstr = family + str(self.offset + 1)
         if port_mappings is None:
             port_mappings = [{"hostPort": 8080, "protocol": "tcp", "containerPort": 8080}]
@@ -528,11 +549,14 @@ class ECSClient:
         self.task_definition_arn = task_arn
 
     def add_task(self, task_arn):
-        """
-        Adds a task by arn to this client's task list.  Useful for keeping an eye on already running tasks.
+        """Add a task by ARN to this client's task list.
+
+        Useful for keeping an eye on already running tasks.
+
         Args:
             task_arn: the ID of the task to add.
         """
+
         self.tasks.append(task_arn)
         self.tasks_done.append(False)
         self.offset += 1
@@ -570,18 +594,27 @@ class ECSClient:
         cluster_name=None,
         key_name="auto-scaling-key",
     ):
-        """
+        """Add a launch configuration to our AWS account.
+
         Args:
-             instance_type (Optional[str]): size of instances to create in auto scaling group, defaults to t2.small
-             ami (Optional[str]): AMI to use for the instances created in auto scaling group, defaults to an ECS-optimized, GPU-optimized Amazon Linux 2 AMI
-             launch_config_name (Optional[str]): the name to give the generated launch configuration, will be automatically generated if not provided
-             cluster_name (Optional[str]): the cluster name that the launch configuration will be used for, will be automatically generated if not provided
+            instance_type (Optional[str]): size of instances to create in auto scaling group,
+                defaults to t2.small
+            ami (Optional[str]): AMI to use for the instances created in auto scaling group,
+                defaults to an ECS-optimized, GPU-optimized Amazon Linux 2 AMI
+            launch_config_name (Optional[str]): the name to give the generated launch configuration,
+                will be automatically generated if not provided
+            cluster_name (Optional[str]): the cluster name that the launch configuration will be
+                used for, will be automatically generated if not provided
+
         Returns:
-             (str, str): name of cluster for launch configuration, name of launch configuration created
+            (str, str): name of cluster for launch configuration, name of launch configuration
+                created
         """
+
         cluster_name = cluster_name or self.generate_name("cluster")
 
         # Initial data/scripts to be run on all container instances
+        # pylint: disable=line-too-long
         userdata = """\
 #!/bin/bash
 
@@ -596,7 +629,7 @@ done
 # Convert GPU IDs to JSON Array
 ID_JSON=$(printf '%s\n' \"${{IDS[@]}}\" | jq -R . | jq -s -c .)
 
-# Create JSON GPU Object and populate nvidia-gpu-info.json 
+# Create JSON GPU Object and populate nvidia-gpu-info.json
 echo \"{{\\\"DriverVersion\\\":\\\"${{DRIVER_VERSION}}\\\",\\\"GPUIDs\\\":${{ID_JSON}}}}\" > /var/lib/ecs/gpu/nvidia-gpu-info.json
 
 #Create ECS config
@@ -624,6 +657,7 @@ chmod +x userdata-bootstrap.sh
 """.format(
             cluster_name
         )
+        # pylint: enable=line-too-long
 
         launch_config_name = launch_config_name or self.generate_name("launch_configuration")
         response = self.auto_scaling_client.create_launch_configuration(

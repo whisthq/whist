@@ -39,7 +39,7 @@ def deleteContainer(self, container_name, aes_key):
         fractalLog(
             function="deleteContainer",
             label=container_name,
-            logs="spinLock took to long.",
+            logs="spinLock took too long.",
             level=logging.ERROR,
         )
 
@@ -47,7 +47,7 @@ def deleteContainer(self, container_name, aes_key):
 
     container = UserContainer.query.get(container_name)
 
-    if not container or container.secret_key != aes_key:
+    if not container or container.secret_key.lower() != aes_key.lower():
         if container:
             message = f"Expected secret key {container.secret_key}. Got {aes_key}."
         else:
@@ -171,7 +171,10 @@ def delete_cluster(self, cluster, region_name):
             fractalLog(
                 function="delete_cluster",
                 label=cluster,
-                logs=f"Cannot delete cluster {cluster} with running tasks {running_tasks}. Please delete the tasks first.",
+                logs=(
+                    f"Cannot delete cluster {cluster} with running tasks {running_tasks}. Please "
+                    "delete the tasks first."
+                ),
                 level=logging.ERROR,
             )
             self.update_state(

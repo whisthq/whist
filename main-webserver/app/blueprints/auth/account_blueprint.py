@@ -14,7 +14,6 @@ from app.helpers.blueprint_helpers.auth.account_post import (
     registerHelper,
     updateUserHelper,
     verifyHelper,
-    resetPasswordHelper,
     autoLoginHelper,
 )
 from app.helpers.utils.general.auth import fractalAuth
@@ -95,7 +94,7 @@ def account_post(action, **kwargs):
 
 @account_bp.route("/account/<action>", methods=["GET"])
 @fractalPreProcess
-def account_get_no_auth(action, **kwargs):
+def account_get_no_auth(action, **kwargs):  # pylint: disable=unused-argument
     if action == "verified":
         # Check if the user's email has been verified
         username = request.args.get("username")

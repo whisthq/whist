@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify
 
 from app import fractalPreProcess
+from app.constants.http_codes import NOT_FOUND
 from app.helpers.blueprint_helpers.auth.google_auth_post import (
     loginHelper,
     reasonHelper,
@@ -22,9 +23,12 @@ def google_auth_post(action, **kwargs):
         output = loginHelper(code, clientApp)
 
         return jsonify(output), output["status"]
-    elif action == "reason":
+
+    if action == "reason":
         username, reason_for_signup = (kwargs["body"]["username"], kwargs["body"]["reason"])
 
         output = reasonHelper(username, reason_for_signup)
 
         return jsonify(output), output["status"]
+
+    return jsonify({"error": "Not Found"}), NOT_FOUND
