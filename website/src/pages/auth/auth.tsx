@@ -33,6 +33,9 @@ const Auth = (props: {
         if (firstParam !== "bypass" && !waitlistUser.user_id) {
             history.push("/")
         }
+        if (firstParam === "bypass") {
+            console.log("bypass login")
+        }
     }, [match, waitlistUser.user_id])
 
     if (user.user_id && user.user_id !== "") {

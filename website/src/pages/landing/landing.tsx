@@ -22,7 +22,9 @@ const Landing = (props: any) => {
     const { setReferralCode, setAppHighlight } = useContext(MainContext)
     const { dispatch, waitlistUser, match, applicationRedirect } = props
 
-    const { data } = useSubscription(SUBSCRIBE_WAITLIST)
+    const { data, error } = useSubscription(SUBSCRIBE_WAITLIST)
+
+    console.log(error)
 
     const apps = ["Photoshop", "Blender", "Figma", "VSCode", "Chrome", "Maya"]
     const appsLowercase = [

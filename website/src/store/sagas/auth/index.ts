@@ -7,7 +7,7 @@ import * as AuthPureAction from "store/actions/auth/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
 import {
     UPDATE_WAITLIST_AUTH_EMAIL,
-    UPDATE_WAITLIST,
+    UPDATE_WAITLIST_REFERRALS,
 } from "shared/constants/graphql"
 import { SIGNUP_POINTS } from "shared/utils/points"
 
@@ -21,6 +21,8 @@ function* emailLogin(action: any) {
         },
         ""
     )
+
+    console.log(json)
 
     if (json && json.access_token) {
         yield put(
@@ -99,13 +101,18 @@ function* googleLogin(action: any) {
                     }
                 )
 
-                yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
-                    user_id: state.WaitlistReducer.waitlistUser.user_id,
-                    points:
-                        state.WaitlistReducer.waitlistUser.points +
-                        SIGNUP_POINTS,
-                    referrals: state.WaitlistReducer.waitlistUser.referrals,
-                })
+                yield call(
+                    graphQLPost,
+                    UPDATE_WAITLIST_REFERRALS,
+                    "UpdateWaitlist",
+                    {
+                        user_id: state.WaitlistReducer.waitlistUser.user_id,
+                        points:
+                            state.WaitlistReducer.waitlistUser.points +
+                            SIGNUP_POINTS,
+                        referrals: state.WaitlistReducer.waitlistUser.referrals,
+                    }
+                )
             } else if (response.status === 403) {
                 yield put(
                     AuthPureAction.updateAuthFlow({
@@ -231,7 +238,7 @@ function* validateVerificationToken(action: any) {
                 emailVerified: true,
             })
         )
-        yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
+        yield call(graphQLPost, UPDATE_WAITLIST_REFERRALS, "UpdateWaitlist", {
             user_id: state.WaitlistReducer.waitlistUser.user_id,
             points: state.WaitlistReducer.waitlistUser.points + SIGNUP_POINTS,
             referrals: state.WaitlistReducer.waitlistUser.referrals,

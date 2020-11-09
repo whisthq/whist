@@ -27,6 +27,7 @@ const Dashboard = (props: {
     user: {
         user_id: string
         canLogin: boolean
+        accessToken: string
     }
 }) => {
     const { user, dispatch } = props
@@ -37,9 +38,17 @@ const Dashboard = (props: {
     const valid_user = user.user_id && user.user_id !== ""
     const name = user.user_id ? user.user_id.split("@")[0] : ""
 
-    const { data, loading } = useQuery(GET_USER, {
+    const { data, loading, error } = useQuery(GET_USER, {
         variables: { user_id: user.user_id },
+        context: {
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        },
     })
+
+    console.log(data)
+    console.log(error)
 
     const logout = () => {
         dispatch(updateUser(deepCopy(DEFAULT.user)))
