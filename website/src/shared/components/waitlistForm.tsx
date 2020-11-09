@@ -151,18 +151,18 @@ function WaitlistForm(props: any) {
                 .collection("eastereggs")
                 .doc(email)
                 .get()
-            
+
             let data = eastereggsDocument.data()
 
             // if they did existed but were here before the update
-            if(!eastereggsDocument.exists) {
+            if (!eastereggsDocument.exists) {
                 data = {
-                    available: deepCopy(SECRET_POINTS)
+                    available: deepCopy(SECRET_POINTS),
                 }
 
                 db.collection("eastereggs").doc(email).set(data)
             }
-            
+
             const secretPoints = data ? data.available : {}
 
             dispatch(
@@ -209,7 +209,9 @@ function WaitlistForm(props: any) {
                                 >
                                     Join Waitlist
                                 </div>
-                                <div className="points"> +100 points</div>
+                                <div className="points">
+                                    +{INITIAL_POINTS} points
+                                </div>
                             </button>
                         ) : (
                             <button className="white-button">
