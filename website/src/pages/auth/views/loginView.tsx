@@ -158,7 +158,10 @@ const LoginView = (props: any) => {
                             opacity: loginEnabled(email, password) ? 1.0 : 0.6,
                         }}
                         onClick={login}
+<<<<<<< HEAD
                         disabled={!loginEnabled(email, password)}
+=======
+>>>>>>> staging
                     >
                         Log In
                     </button>
@@ -193,7 +196,10 @@ const LoginView = (props: any) => {
 }
 
 function mapStateToProps(state: any) {
+<<<<<<< HEAD
     console.log(state)
+=======
+>>>>>>> staging
     return {
         user: state.AuthReducer.user,
         authFlow: state.AuthReducer.authFlow,

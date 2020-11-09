@@ -15,8 +15,10 @@ const environment: any = {
         },
         sentry_env: "development",
         client_download_urls: {
-            MacOS: "",
-            Windows: "",
+            MacOS:
+                "https://fractal-mac-application-testing.s3.amazonaws.com/Fractal.dmg",
+            Windows:
+                "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe",
         },
     },
     development: {
@@ -35,8 +37,10 @@ const environment: any = {
         },
         sentry_env: "development",
         client_download_urls: {
-            MacOS: "",
-            Windows: "",
+            MacOS:
+                "https://fractal-mac-application-testing.s3.amazonaws.com/Fractal.dmg",
+            Windows:
+                "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe   ",
         },
     },
     staging: {
@@ -55,8 +59,10 @@ const environment: any = {
         },
         sentry_env: "development",
         client_download_urls: {
-            MacOS: "",
-            Windows: "",
+            MacOS:
+                "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
+            Windows:
+                "https://fractal-windows-application-release.s3.amazonaws.com/Fractal.exe",
         },
     },
     production: {
@@ -74,8 +80,10 @@ const environment: any = {
         },
         sentry_env: "production",
         client_download_urls: {
-            MacOS: "",
-            Windows: "",
+            MacOS:
+                "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
+            Windows:
+                "https://fractal-windows-application-release.s3.amazonaws.com/Fractal.exe",
         },
     },
 }

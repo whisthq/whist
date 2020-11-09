@@ -104,11 +104,12 @@ function WaitlistForm(props: any) {
             const secretPoints = deep_copy(SECRET_POINTS)
             const referrer = getReferrer()
 
-            if (referrer) {
+            if (referrer && referrer.user_id) {
                 updatePoints({
                     variables: {
                         user_id: referrer.user_id,
                         points: referrer.points + REFERRAL_POINTS,
+                        referrals: referrer.referrals + 1,
                     },
                     optimisticResponse: true,
                 })

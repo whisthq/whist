@@ -14,7 +14,6 @@ export function updateUser(body: {
     emailVerified?: boolean
     canLogin?: boolean
 }) {
-    //console.log("update user action")
     return {
         type: UPDATE_USER,
         body,

@@ -89,23 +89,25 @@ function* googleLogin(action: any) {
                     })
                 )
 
-                yield call(
-                    graphQLPost,
-                    UPDATE_WAITLIST_AUTH_EMAIL,
-                    "UpdateWaitlistAuthEmail",
-                    {
-                        user_id: state.WaitlistReducer.waitlistUser.user_id,
-                        authEmail: json.username,
-                    }
-                )
+                if (state.WaitlistReducer.waitlistUser.user_id) {
+                    yield call(
+                        graphQLPost,
+                        UPDATE_WAITLIST_AUTH_EMAIL,
+                        "UpdateWaitlistAuthEmail",
+                        {
+                            user_id: state.WaitlistReducer.waitlistUser.user_id,
+                            authEmail: json.username,
+                        }
+                    )
 
-                yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
-                    user_id: state.WaitlistReducer.waitlistUser.user_id,
-                    points:
-                        state.WaitlistReducer.waitlistUser.points +
-                        SIGNUP_POINTS,
-                    referrals: state.WaitlistReducer.waitlistUser.referrals,
-                })
+                    yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
+                        user_id: state.WaitlistReducer.waitlistUser.user_id,
+                        points:
+                            state.WaitlistReducer.waitlistUser.points +
+                            SIGNUP_POINTS,
+                        referrals: state.WaitlistReducer.waitlistUser.referrals,
+                    })
+                }
             } else if (response.status === 403) {
                 yield put(
                     AuthPureAction.updateAuthFlow({
@@ -181,7 +183,6 @@ function* emailSignup(action: any) {
 }
 
 function* sendVerificationEmail(action: any) {
-    console.log(action)
     const state = yield select()
     if (action.email !== "" && action.token !== "") {
         const { json, response } = yield call(
@@ -209,7 +210,6 @@ function* sendVerificationEmail(action: any) {
 
 function* validateVerificationToken(action: any) {
     const state = yield select()
-    console.log("IN VALIDATE SAGA")
     const { json, response } = yield call(
         apiPost,
         "/account/verify",
@@ -233,11 +233,14 @@ function* validateVerificationToken(action: any) {
                 emailVerified: true,
             })
         )
-        yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
-            user_id: state.WaitlistReducer.waitlistUser.user_id,
-            points: state.WaitlistReducer.waitlistUser.points + SIGNUP_POINTS,
-            referrals: state.WaitlistReducer.waitlistUser.referrals,
-        })
+        if (state.WaitlistReducer.waitlistUser.user_id) {
+            yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
+                user_id: state.WaitlistReducer.waitlistUser.user_id,
+                points:
+                    state.WaitlistReducer.waitlistUser.points + SIGNUP_POINTS,
+                referrals: state.WaitlistReducer.waitlistUser.referrals,
+            })
+        }
     } else {
         yield put(
             AuthPureAction.updateAuthFlow({
@@ -299,7 +302,6 @@ function* validateResetToken(action: any) {
         ""
     )
     // at some later point in time we may find it helpful to change strings here to some sort of enum
-    console.log(`here comes the validation: ${JSON.stringify(json)}`)
     if (json) {
         if (json.status === 200) {
             yield put(
@@ -336,8 +338,6 @@ function* validateResetToken(action: any) {
 
 function* resetPassword(action: any) {
     // const state = yield select()
-
-    console.log(action)
 
     yield call(
         apiPost,

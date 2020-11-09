@@ -14,8 +14,6 @@ export default function (state = DEFAULT, action: any) {
                 user: Object.assign(stateCopy.user, action.body),
             }
         case PureAction.UPDATE_AUTH_FLOW:
-            console.log("UPDATE AUTH FLOW")
-            console.log(action.body)
             return {
                 ...stateCopy,
                 authFlow: Object.assign(stateCopy.authFlow, action.body),
@@ -29,21 +27,22 @@ export default function (state = DEFAULT, action: any) {
             return DEFAULT
         case SharedAction.REFRESH_STATE:
             // enforce structure of default but add in old information
-            const mergeInto: any = deep_copy(DEFAULT)
+            const defaultCopy: any = deep_copy(DEFAULT)
 
             Object.keys(stateCopy).forEach((outerKey: any) => {
                 Object.keys(stateCopy[outerKey]).forEach((innerKey: string) => {
-                    if (stateCopy[outerKey][innerKey]) {
-                        mergeInto[outerKey][innerKey] =
+                    if (
+                        stateCopy[outerKey][innerKey] &&
+                        defaultCopy.hasOwnProperty(outerKey) &&
+                        defaultCopy[outerKey].hasOwnProperty(innerKey)
+                    ) {
+                        defaultCopy[outerKey][innerKey] =
                             stateCopy[outerKey][innerKey]
                     }
                 })
             })
 
-            console.log("STATE REFRESH")
-            console.log(mergeInto)
-
-            return mergeInto
+            return defaultCopy
         default:
             return state
     }
