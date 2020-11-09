@@ -41,8 +41,6 @@ audio_packet receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
 
-#define MS_IN_SECOND 1000.0
-
 struct AudioData {
     SDL_AudioDeviceID dev;
     audio_decoder_t* audio_decoder;

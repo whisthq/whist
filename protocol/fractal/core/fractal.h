@@ -136,6 +136,20 @@ Defines
 
 /*
 ============================
+Constants
+============================
+*/
+
+#define MS_IN_SECOND 1000
+#define BYTES_IN_KILOBYTE 1024
+#ifdef _WIN32
+#define DEFAULT_DPI 96.0
+#else
+#define DEFAULT_DPI 72.0
+#endif
+
+/*
+============================
 Custom Types
 ============================
 */

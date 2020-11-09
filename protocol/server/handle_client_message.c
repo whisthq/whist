@@ -29,6 +29,7 @@ extern int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 extern volatile double max_mbps;
 extern volatile int client_width;
 extern volatile int client_height;
+extern volatile int client_dpi;
 extern volatile bool update_device;
 extern volatile CodecType client_codec_type;
 
@@ -173,10 +174,11 @@ static int handleDimensionsMessage(FractalClientMessage *fmsg, int client_id, bo
     LOG_INFO("Request to use dimensions %dx%d received", fmsg->dimensions.width,
              fmsg->dimensions.height);
     if (client_width != fmsg->dimensions.width || client_height != fmsg->dimensions.height ||
-        client_codec_type != fmsg->dimensions.codec_type) {
+        client_codec_type != fmsg->dimensions.codec_type || client_dpi != fmsg->dimensions.dpi) {
         client_width = fmsg->dimensions.width;
         client_height = fmsg->dimensions.height;
         client_codec_type = fmsg->dimensions.codec_type;
+        client_dpi = fmsg->dimensions.dpi;
         // Update device if knowledge changed
         update_device = true;
     }

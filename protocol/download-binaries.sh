@@ -2,7 +2,7 @@
 
 # Get shared libs
 echo "Downloading Shared Libs"
-curl -s "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz" | tar xv
+curl -s "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz" | tar xzv
 
 mkdir -p desktop/build64/Windows
 mkdir -p server/build64/Windows

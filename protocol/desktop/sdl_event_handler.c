@@ -21,7 +21,6 @@ trigged an SDL event must be triggered in sdl_event_handler.c
 #include "network.h"
 
 #define UNUSED(x) (void)(x)
-#define WINDOWS_DEFAULT_DPI 96.0
 
 // Keyboard state variables
 extern bool alt_pressed;
@@ -134,8 +133,9 @@ int handleWindowSizeChanged(SDL_Event *event) {
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
         fmsg.dimensions.codec_type = (CodecType)output_codec_type;
-        fmsg.dimensions.dpi =
-            (int)(WINDOWS_DEFAULT_DPI * output_width / get_virtual_screen_width());
+        float dpi;
+        SDL_GetDisplayDPI(0, NULL, &dpi, NULL);
+        fmsg.dimensions.dpi = (int)dpi;
         SendFmsg(&fmsg);
 
         StartTimer(&window_resize_timer);

@@ -32,7 +32,6 @@ LARGE_INTEGER frequency;
 bool set_frequency = false;
 #endif
 
-#define MS_IN_SECOND 1000.0
 #define US_IN_MS 1000.0
 
 void StartTimer(clock* timer) {
@@ -76,7 +75,7 @@ clock CreateClock(int timeout_ms) {
 #if defined(_WIN32)
     out.QuadPart = timeout_ms;
 #else
-    out.tv_sec = timeout_ms / MS_IN_SECOND;
+    out.tv_sec = timeout_ms / (double)MS_IN_SECOND;
     out.tv_usec = (timeout_ms % 1000) * 1000;
 #endif
     return out;

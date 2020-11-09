@@ -68,8 +68,6 @@ Includes
 #define DEFAULT_HEIGHT 1080
 
 #define BITS_IN_BYTE 8.0
-#define BYTES_IN_KILOBYTE 1024.0
-#define MS_IN_SECOND 1000
 #define TCP_CONNECTION_WAIT 5000
 #define CLIENT_PING_TIMEOUT_SEC 3.0
 
@@ -87,6 +85,7 @@ SDL_mutex* container_destruction_mutex;
 volatile double max_mbps;
 volatile int client_width = -1;
 volatile int client_height = -1;
+volatile int client_dpi = -1;
 volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
@@ -334,7 +333,7 @@ int32_t SendVideo(void* opaque) {
 #endif
 
     while (!exiting) {
-        if (num_active_clients == 0 || client_width < 0 || client_height < 0) {
+        if (num_active_clients == 0 || client_width < 0 || client_height < 0 || client_dpi < 0) {
             SDL_Delay(5);
             continue;
         }
@@ -354,7 +353,7 @@ int32_t SendVideo(void* opaque) {
             }
 
             device = &rdevice;
-            if (CreateCaptureDevice(device, client_width, client_height) < 0) {
+            if (CreateCaptureDevice(device, client_width, client_height, client_dpi) < 0) {
                 LOG_WARNING("Failed to create capture device");
                 device = NULL;
                 update_device = true;
@@ -555,12 +554,12 @@ int32_t SendVideo(void* opaque) {
                     // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime
                     // = max_mbps previousFrameSize * 8.0 / 1024.0 / 1024.0
                     // / max_mbps = IdealTime
-                    double transmit_time = previous_frame_size * BITS_IN_BYTE / BYTES_IN_KILOBYTE /
-                                           BYTES_IN_KILOBYTE / max_mbps;
+                    double transmit_time = ((double)previous_frame_size) * BITS_IN_BYTE /
+                                           BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
 
                     // double average_frame_size = 1.0 * bytes_tested_frames
                     // / bitrate_tested_frames;
-                    double current_trasmit_time = previous_frame_size * BITS_IN_BYTE /
+                    double current_trasmit_time = ((double)previous_frame_size) * BITS_IN_BYTE /
                                                   BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
                     double current_fps = 1.0 / current_trasmit_time;
 
@@ -1119,7 +1118,7 @@ int parse_args(int argc, char* argv[]) {
         "\n"
         "All arguments to both long and short options are mandatory.\n"
         // regular options should look nice, with 2-space indenting for multiple lines
-        "  -k, --private-key=PK        Pass in the RSA Private Key as a\n"
+        "  -k, --private-key=PK          Pass in the RSA Private Key as a\n"
         "                                  hexadecimal string. Defaults to\n"
         "                                  binary and hex default keys in\n"
         "                                  the protocol code\n"
