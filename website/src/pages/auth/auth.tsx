@@ -77,9 +77,10 @@ function mapStateToProps(state: {
 }) {
     return {
         waitlistUser: state.WaitlistReducer.waitlistUser,
-        mode: state.AuthReducer.authFlow.mode
-            ? state.AuthReducer.authFlow.mode
-            : "Sign up",
+        mode:
+            state.AuthReducer.authFlow && state.AuthReducer.authFlow.mode
+                ? state.AuthReducer.authFlow.mode
+                : "Sign up",
         user: state.AuthReducer.user,
         authFlow: state.AuthReducer.authFlow,
     }
