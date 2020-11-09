@@ -28,6 +28,7 @@ class UserContainer(db.Model):
     branch = db.Column(db.String(250), nullable=False, default="master")
     allow_autoupdate = db.Column(db.Boolean, nullable=False, default=True)
     temporary_lock = db.Column(db.Integer)
+    dpi = db.Column(db.Integer)
     secret_key = db.Column(db.String(32), nullable=False)
 
 

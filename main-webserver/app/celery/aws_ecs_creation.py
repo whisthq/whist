@@ -136,13 +136,13 @@ def assign_container(
     if base_container:
         base_container.is_assigned = True
         base_container.user_id = username
+        base_container.dpi = dpi
         db.session.commit()
         for i in range(num_extra):
             create_new_container.delay(
                 "Unassigned",
                 task_definition_arn,
                 region_name=region_name,
-                dpi=dpi,
                 webserver_url=webserver_url,
             )
             pass
@@ -163,7 +163,6 @@ def create_new_container(
     cluster_name=None,
     region_name="us-east-1",
     network_configuration=None,
-    dpi=96,
     webserver_url=None,
 ):
     """Create a new ECS container running a particular task.
@@ -180,6 +179,7 @@ def create_new_container(
             clusters using awsvpc networking.
         dpi: what DPI to use on the server
         webserver_url: The URL of the web server to ping and with which to authenticate.
+        #TODO:  Move DPI to assign_container
     """
 
     aeskey = os.urandom(16).hex()
@@ -193,7 +193,6 @@ def create_new_container(
                 "name": "fractal-container",
                 "environment": [
                     {"name": "FRACTAL_AES_KEY", "value": aeskey},
-                    {"name": "FRACTAL_DPI", "value": str(dpi)},
                     {
                         "name": "WEBSERVER_URL",
                         "value": (webserver_url if webserver_url is not None else ""),
