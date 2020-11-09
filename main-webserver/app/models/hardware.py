@@ -1,6 +1,5 @@
 from sqlalchemy import Index
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import expression, text
 
 from ._meta import db
 

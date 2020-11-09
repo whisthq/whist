@@ -16,7 +16,9 @@ from app.helpers.utils.general.tokens import (
 from app.models import db, User
 
 
-def registerGoogleUser(username, name, token, reason_for_signup=None):
+def registerGoogleUser(
+    username, name, token, reason_for_signup=None
+):  # pylint: disable=unused-argument
     """Registers a user, and stores it in the users table
 
     Args:

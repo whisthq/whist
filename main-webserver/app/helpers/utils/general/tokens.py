@@ -4,10 +4,8 @@ import secrets
 import string
 
 from better_profanity import profanity
-from flask import current_app
 from flask_jwt_extended import create_access_token, create_refresh_token
 from google_auth_oauthlib.flow import Flow
-from jose import jwt
 
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
 from app.models import User
@@ -35,7 +33,7 @@ def getAccessTokens(username):
 
 
 def generateToken(username):
-    token = jwt.encode({"email": username}, current_app.config["JWT_SECRET_KEY"])
+    token = create_access_token(identity=username)
     if len(token) > 15:
         token = token[-15:]
     else:

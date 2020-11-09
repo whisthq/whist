@@ -11,7 +11,7 @@ from app.models import db, ProtocolLog
 
 
 @shared_task(bind=True)
-def deleteLogsFromS3(sender, connection_id):
+def deleteLogsFromS3(connection_id):
     """Delete logs from S3
 
     Args:

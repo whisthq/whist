@@ -1,5 +1,6 @@
 from flask import Blueprint
 from flask.json import jsonify
+from flask_jwt_extended import jwt_required
 
 from app import fractalPreProcess
 from app.celery.aws_ecs_creation import create_new_cluster, create_new_container, send_commands
@@ -15,7 +16,6 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
 
 from app.helpers.utils.general.auth import fractalAuth
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
-from flask_jwt_extended import jwt_required
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -98,6 +98,8 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+
+    return jsonify({"error": NOT_FOUND}), NOT_FOUND
 
 
 @aws_container_bp.route("/container/delete", methods=("POST",))
@@ -223,10 +225,6 @@ def aws_container_post(action, **kwargs):
                 # Delete the container
                 task = drainContainer.delay(user, container)
                 response = jsonify({"ID": task.id}), ACCEPTED
-
-        elif action == "restart":
-            # TODO: Same as above, but inspire yourself from the vm/restart endpoint.
-            pass
 
         elif action == "stun":
             try:

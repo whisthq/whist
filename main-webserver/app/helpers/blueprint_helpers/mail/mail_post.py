@@ -1,14 +1,11 @@
 import logging
-import string
 
-from datetime import datetime as dt
-from datetime import timedelta, timezone
+from datetime import timedelta
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from flask import current_app, jsonify, render_template
-from jose import jwt
+from flask import jsonify, render_template
+from flask_jwt_extended import create_access_token
 
-from app import mail
 from app.constants.config import FRONTEND_URL, SENDGRID_API_KEY, SENDGRID_EMAIL
 from app.constants.http_codes import NOT_FOUND, SUCCESS, UNAUTHORIZED
 from app.helpers.utils.general.logs import fractalLog
@@ -19,17 +16,7 @@ def forgotPasswordHelper(username):
     user = User.query.get(username)
 
     if user:
-        upperCase = string.ascii_uppercase
-        lowerCase = string.ascii_lowercase
-        numbers = "1234567890"
-        token = jwt.encode(
-            {
-                "email": username,
-                "exp": (dt.now() + timedelta(minutes=10)).replace(tzinfo=timezone.utc).timestamp(),
-            },
-            current_app.config["JWT_SECRET_KEY"],
-        )
-        timeIssued = dt.now().strftime("%m-%d-%Y, %H:%M:%S")
+        token = create_access_token(identity=username, expires_delta=timedelta(minutes=10))
 
         try:
             message = Mail(
@@ -41,7 +28,8 @@ def forgotPasswordHelper(username):
                 ),
             )
             sg = SendGridAPIClient(SENDGRID_API_KEY)
-            response = sg.send(message)
+
+            sg.send(message)
         except Exception as e:
             fractalLog(
                 function="forgotPasswordHelper",
@@ -67,7 +55,8 @@ def cancelHelper(user, feedback):
             html_content=feedback,
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
+
+        sg.send(message)
     except Exception as e:
         fractalLog(
             function="cancelHelper",
@@ -93,7 +82,8 @@ def verificationHelper(user, token):
             html_content=render_template("on_email_verification.html", url=url),
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
+
+        sg.send(message)
     except Exception as e:
         fractalLog(
             function="verificationHelper",
@@ -117,7 +107,8 @@ def referralMailHelper(user, recipients, code):
             html_content=render_template("on_referral.html", code=code, user=user),
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
+
+        sg.send(message)
     except Exception as e:
         fractalLog(
             function="referralMailHelper",
@@ -141,7 +132,8 @@ def feedbackHelper(user, feedback, feedback_type):
             html_content="<div>" + feedback + "</div>",
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
+
+        sg.send(message)
     except Exception as e:
         fractalLog(
             function="feedbackHelper",
@@ -163,7 +155,8 @@ def trialStartHelper(user, location, code):
             html_content=render_template("on_purchase.html", location=location, code=code),
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
+
+        sg.send(message)
     except Exception as e:
         fractalLog(
             function="trialStartHelper",
@@ -183,7 +176,8 @@ def trialStartHelper(user, location, code):
             html_content="<div>No action needed from our part at this point.</div>",
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
+
+        sg.send(message)
     except Exception as e:
         fractalLog(
             function="trialStartHelper",
@@ -209,7 +203,8 @@ def computerReadyHelper(user, date, code, location):
             ),
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
+
+        sg.send(message)
     except Exception as e:
         fractalLog(
             function="computerReadyHelper",
@@ -227,7 +222,8 @@ def computerReadyHelper(user, date, code, location):
             html_content="<div>{} has signed up for a Fractal paid plan.</div>".format(user),
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
+
+        sg.send(message)
     except Exception as e:
         fractalLog(
             function="computerReadyHelper",
@@ -251,7 +247,8 @@ def joinWaitlistHelper(email, name, date):
             html_content=render_template("join_waitlist.html", name=name, date=date),
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
+
+        sg.send(message)
     except Exception as e:
         fractalLog(
             function="joinWaitlistHelper",
@@ -275,7 +272,8 @@ def waitlistReferralHelper(email, name, code, recipient):
             html_content=render_template("on_waitlist_referral.html", email=email, code=code),
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
+
+        sg.send(message)
     except Exception as e:
         fractalLog(
             function="waitlistReferralHelper",

@@ -1,7 +1,8 @@
+import logging
+
 from datetime import datetime as dt
 
 import boto3
-import logging
 
 from celery import shared_task
 
@@ -17,8 +18,6 @@ class BadSenderError(Exception):
     Raised by uploadLogsToS3 when the sender argument is anything other than
     "client" or "server" (case-insensitive).
     """
-
-    pass
 
 
 class ContainerNotFoundError(Exception):
