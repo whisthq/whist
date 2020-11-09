@@ -83,6 +83,7 @@ int handleSDLEvent(SDL_Event *event) {
             // On Mac, map cmd to ctrl
             if (event->key.keysym.scancode == FK_LGUI) {
                 event->key.keysym.scancode = (SDL_Scancode)FK_LCTRL;
+                event->key.keysym.sym = SDLK_LCTRL;
             }
 #endif
 
