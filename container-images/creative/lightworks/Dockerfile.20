@@ -1,0 +1,16 @@
+M fractal/base:current-build
+
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+	wget \
+	&& apt-get autoremove -y \
+	&& apt-get clean
+
+RUN wget -O lightworks.deb 'https://www.lwks.com/index.php?option=com_docman&task=doc_download&gid=194'
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+	./lightworks.deb \
+	&& apt-get autoremove -y \
+	&& apt-get clean
+
+# Setup Fractal application symlink
+RUN ln -sf /usr/bin/lightworks /usr/bin/fractal-application
+
