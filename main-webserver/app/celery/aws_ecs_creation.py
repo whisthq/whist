@@ -179,7 +179,6 @@ def create_new_container(
             clusters using awsvpc networking.
         dpi: what DPI to use on the server
         webserver_url: The URL of the web server to ping and with which to authenticate.
-        #TODO:  Move DPI to assign_container
     """
 
     aeskey = os.urandom(16).hex()
