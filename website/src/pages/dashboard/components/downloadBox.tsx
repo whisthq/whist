@@ -5,11 +5,8 @@ import { FaApple, FaWindows } from "react-icons/fa"
 import { config } from "shared/constants/config"
 import "styles/auth.css"
 
-<<<<<<< HEAD
-=======
 // import WindowsBin from "downloads/Fractal.exe"
 
->>>>>>> staging
 const DOWNLOAD_TIMEOUT = 3000
 
 const winBin = config.client_download_urls["Windows"]
@@ -51,9 +48,6 @@ const DownloadBox = (props: {
 
     const largeIcon = withOS(windowsIcon, macIcon)
     const smallIcon = againstOS(windowsIcon, macIcon)
-<<<<<<< HEAD
-
-=======
     const supportedOS = ["Windows", "Mac OS"]
 
     if (!supportedOS.includes(osName)) {
@@ -72,7 +66,6 @@ const DownloadBox = (props: {
             </div>
         )
     }
->>>>>>> staging
     return (
         <div
             style={{

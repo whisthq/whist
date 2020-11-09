@@ -136,11 +136,7 @@ const ResetView = (props: {
             // not sure how this compares to redirect or whatever
             setTimeout(() => {
                 logout()
-<<<<<<< HEAD
-                history.push("/auth")
-=======
                 history.push("/auth/bypass")
->>>>>>> staging
             }, 5000) // turn this into a helper?
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,27 +147,7 @@ const ResetView = (props: {
         // TODO (adriano) when the server actually responds do something about it (say your thing was reset for example)
         return (
             <div>
-<<<<<<< HEAD
-                <div
-                    style={{
-                        width: 400,
-                        margin: "auto",
-                        marginTop: 120,
-                    }}
-                >
-                    <h2
-                        style={{
-                            color: "#111111",
-                            textAlign: "center",
-                        }}
-                    >
-                        Verified. You will soon be logged out and redirected to
-                        log in again.
-                    </h2>
-                </div>
-=======
                 <PuffAnimation />
->>>>>>> staging
             </div>
         )
     } else if (processing) {

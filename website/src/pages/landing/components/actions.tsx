@@ -1,13 +1,9 @@
-import React, { useState, useContext, useEffect } from "react"
+import React, { useState, useContext } from "react"
 import { connect } from "react-redux"
 import { Button, Modal, Alert } from "react-bootstrap"
 import { CopyToClipboard } from "react-copy-to-clipboard"
 
-<<<<<<< HEAD
-import * as PureAuthAction from "store/actions/auth/pure"
-=======
 // import * as PureAuthAction from "store/actions/auth/pure"
->>>>>>> staging
 import * as SideEffectWaitlistAction from "store/actions/waitlist/sideEffects"
 
 import WaitlistForm from "shared/components/waitlistForm"
@@ -89,19 +85,11 @@ const Actions = (props: {
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
 
-<<<<<<< HEAD
-    useEffect(() => {
-        if (!waitlistUser.authEmail) {
-            dispatch(PureAuthAction.resetUser())
-        }
-    }, [dispatch, waitlistUser])
-=======
     // useEffect(() => {
     //     if (!waitlistUser.authEmail) {
     //         dispatch(PureAuthAction.resetUser())
     //     }
     // }, [dispatch, waitlistUser])
->>>>>>> staging
 
     const gaLogSentReferallEmail = () => {
         ReactGA.event(

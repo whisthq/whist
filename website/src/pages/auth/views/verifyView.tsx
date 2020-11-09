@@ -8,12 +8,7 @@ import {
 } from "store/actions/auth/sideEffects"
 import { updateAuthFlow, resetUser } from "store/actions/auth/pure"
 import history from "shared/utils/history"
-<<<<<<< HEAD
-
-import { Title, DivSpace } from "shared/components/spacingAndText"
-=======
 import { DivSpace, Title } from "pages/auth/components/authUtils"
->>>>>>> staging
 
 import "styles/auth.css"
 
@@ -74,11 +69,7 @@ const VerifyView = (props: {
 
     const reset = () => {
         dispatch(resetUser())
-<<<<<<< HEAD
-        history.push("/auth")
-=======
         history.push("/auth/bypass")
->>>>>>> staging
     }
 
     const sendWithDelay = (evt: any) => {
@@ -107,10 +98,6 @@ const VerifyView = (props: {
     }
 
     useEffect(() => {
-<<<<<<< HEAD
-        console.log("verify use effect")
-=======
->>>>>>> staging
         if (validUser && validToken && !processing) {
             dispatch(validateVerificationToken(token))
         }
@@ -201,10 +188,6 @@ const VerifyView = (props: {
 }
 
 function mapStateToProps(state: { AuthReducer: { user: any; authFlow: any } }) {
-<<<<<<< HEAD
-    console.log(state)
-=======
->>>>>>> staging
     return {
         user: state.AuthReducer.user ? state.AuthReducer.user : {},
         authFlow: state.AuthReducer.authFlow ? state.AuthReducer.authFlow : {},

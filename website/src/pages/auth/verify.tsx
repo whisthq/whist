@@ -23,20 +23,12 @@ const Verify = (props: any) => {
     const valid_token = token && token.length >= 1 ? true : false
     const valid_user = user.user_id && user.user_id !== ""
 
-<<<<<<< HEAD
-    console.log("THE TOKEN IS")
-    console.log(token)
-
-    useEffect(() => {
-        if (authFlow.signupSuccess && !waitlistUser.authEmail) {
-=======
     useEffect(() => {
         if (
             authFlow.signupSuccess &&
             !waitlistUser.authEmail &&
             waitlistUser.user_id
         ) {
->>>>>>> staging
             updateWaitlistAuthEmail({
                 variables: {
                     user_id: waitlistUser.user_id,
@@ -59,15 +51,10 @@ const Verify = (props: any) => {
     ])
 
     // return visuals
-<<<<<<< HEAD
-    if (!valid_user || user.emailVerified) {
-        return <Redirect to="/" />
-=======
     if (!valid_user) {
         return <Redirect to="/" />
     } else if (user.emailVerified) {
         return <Redirect to="/dashboard" />
->>>>>>> staging
     } else {
         return (
             <div className="fractalContainer">

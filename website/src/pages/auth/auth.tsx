@@ -37,15 +37,7 @@ const Auth = (props: {
 
     if (user.user_id && user.user_id !== "") {
         if (user.emailVerified) {
-<<<<<<< HEAD
-            if (user.canLogin) {
-                return <Redirect to="/dashboard" />
-            }
-            //props.dispatch(resetState())
-            return <Redirect to="/" />
-=======
             return <Redirect to="/dashboard" />
->>>>>>> staging
         } else {
             return <Redirect to="/verify" />
         }
@@ -83,19 +75,12 @@ function mapStateToProps(state: {
     AuthReducer: { authFlow: any; user: any }
     WaitlistReducer: { waitlistUser: any }
 }) {
-<<<<<<< HEAD
-    console.log(state)
-    return {
-        waitlistUser: state.WaitlistReducer.waitlistUser,
-        mode: state.AuthReducer.authFlow.mode,
-=======
     return {
         waitlistUser: state.WaitlistReducer.waitlistUser,
         mode:
             state.AuthReducer.authFlow && state.AuthReducer.authFlow.mode
                 ? state.AuthReducer.authFlow.mode
                 : "Sign up",
->>>>>>> staging
         user: state.AuthReducer.user,
         authFlow: state.AuthReducer.authFlow,
     }
