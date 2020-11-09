@@ -38,7 +38,7 @@ const Dashboard = (props: {
     const valid_user = user.user_id && user.user_id !== ""
     const name = user.user_id ? user.user_id.split("@")[0] : ""
 
-    const { data, loading, error } = useQuery(GET_USER, {
+    const { data, loading } = useQuery(GET_USER, {
         variables: { user_id: user.user_id },
         context: {
             headers: {
@@ -46,9 +46,6 @@ const Dashboard = (props: {
             },
         },
     })
-
-    console.log(data)
-    console.log(error)
 
     const logout = () => {
         dispatch(updateUser(deepCopy(DEFAULT.user)))

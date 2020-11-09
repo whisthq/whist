@@ -56,3 +56,12 @@ query GetUser($user_id: String!) {
         can_login
     }
 }
+
+mutation UpdateWaitlistAuthEmail($user_id: String, $authEmail: String) {
+    update_waitlist(
+        where: { user_id: { _eq: $user_id } }
+        _set: { auth_email: $authEmail }
+    ) {
+        affected_rows
+    }
+}

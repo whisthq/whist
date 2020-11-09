@@ -14,6 +14,7 @@ import VerifyView from "pages/auth/views/verifyView"
 
 const Verify = (props: any) => {
     const { user, authFlow, waitlistUser, dispatch } = props
+    console.log(user.accessToken)
     const [updateWaitlistAuthEmail] = useMutation(UPDATE_WAITLIST_AUTH_EMAIL, {
         context: {
             headers: {
@@ -30,7 +31,11 @@ const Verify = (props: any) => {
     const valid_user = user.user_id && user.user_id !== ""
 
     useEffect(() => {
-        if (authFlow.signupSuccess && !waitlistUser.authEmail) {
+        if (
+            authFlow.signupSuccess &&
+            !waitlistUser.authEmail &&
+            waitlistUser.user_id
+        ) {
             updateWaitlistAuthEmail({
                 variables: {
                     user_id: waitlistUser.user_id,
