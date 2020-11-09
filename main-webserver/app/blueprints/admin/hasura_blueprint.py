@@ -17,6 +17,6 @@ def hasura_auth_get(**kwargs):
     token = request.headers.get("Authorization")
     output = authHelper(token)
 
-    fractalLog("","",str(output))
-    
+    fractalLog("", "", str(output))
+
     return jsonify(output), SUCCESS
