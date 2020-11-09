@@ -1,14 +1,30 @@
 from flask_jwt_extended import get_jwt_identity
+from jose import jwt
 
+from app.constants.config import JWT_SECRET_KEY
 from app.models import User
 
+# from app.helpers.utils.general.logs import fractalLog
 
-def authHelper():
-    current_user = get_jwt_identity()
 
-    user = User.query.get(current_user)
-
-    if user:
-        return {"X-Hasura-Role": "user", "X-Hasura-User-Id": current_user}
+def authHelper(token):
+    if not token:
+        return {"X-Hasura-Role": "anonymous", "X-Hasura-User-Id": None}
     else:
+        token = token.replace("Bearer ", "")
+        current_user = None
+
+        try:
+            decoded_key = jwt.decode(token, JWT_SECRET_KEY)
+            if decoded_key:
+                current_user = decoded_key["identity"]
+            fractalLog("", "", str(current_user))
+        except Exception as e:
+            return {"X-Hasura-Role": "anonymous", "X-Hasura-User-Id": None}
+
+        user = None if not current_user else User.query.get(current_user)
+
+        if user:
+            return {"X-Hasura-Role": "user", "X-Hasura-User-Id": current_user}
+
         return {"X-Hasura-Role": "anonymous", "X-Hasura-User-Id": None}

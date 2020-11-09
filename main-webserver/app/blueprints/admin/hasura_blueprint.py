@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from app import fractalPreProcess
@@ -11,7 +11,8 @@ hasura_bp = Blueprint("hasura_bp", __name__)
 
 @hasura_bp.route("/hasura/auth", methods=["GET"])
 @fractalPreProcess
-@jwt_required
 def hasura_auth_get(**kwargs):
-    output = authHelper()
+    token = request.headers.get("Authorization")
+    output = authHelper(token)
+
     return jsonify(output), SUCCESS
