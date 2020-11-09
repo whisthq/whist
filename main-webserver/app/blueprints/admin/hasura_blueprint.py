@@ -12,7 +12,7 @@ hasura_bp = Blueprint("hasura_bp", __name__)
 
 @hasura_bp.route("/hasura/auth", methods=["GET"])
 @fractalPreProcess
-def hasura_auth_get(**kwargs):
+def hasura_auth_get(**kwargs):  # pylint: disable=unused-argument
     token = request.headers.get("Authorization")
     output = authHelper(token)
 
