@@ -37,7 +37,7 @@ jobs:
                   aws-region: ${{ env.aws-placeholder-region }}
 
             - name: Walk repo to find all dockerfiles and store path as env variable
-              run: echo "apps=( $(./find_images_in_git_repo.sh) )" >> $GITHUB_ENV
+              run: echo "apps=$(./find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
             - name: Build protocol
               run: ./build_protocol.sh
