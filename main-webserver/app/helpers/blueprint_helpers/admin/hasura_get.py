@@ -12,19 +12,18 @@ def authHelper(token):
         return {"X-Hasura-Role": "anonymous", "X-Hasura-User-Id": None}
     else:
         token = token.replace("Bearer ", "")
-        current_user = None
+        current_user = ""
 
         try:
             decoded_key = jwt.decode(token, JWT_SECRET_KEY)
             if decoded_key:
                 current_user = decoded_key["identity"]
-            fractalLog("", "", str(current_user))
         except Exception as e:
-            return {"X-Hasura-Role": "anonymous", "X-Hasura-User-Id": None}
+            return {"X-Hasura-Role": "anonymous", "X-Hasura-User-Id": current_user}
 
         user = None if not current_user else User.query.get(current_user)
 
         if user:
             return {"X-Hasura-Role": "user", "X-Hasura-User-Id": current_user}
 
-        return {"X-Hasura-Role": "anonymous", "X-Hasura-User-Id": None}
+        return {"X-Hasura-Role": "anonymous", "X-Hasura-User-Id": current_user}
