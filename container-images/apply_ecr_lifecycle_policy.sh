@@ -11,5 +11,5 @@ if [ -z "$output" ];
 then
     echo "Successfully put lifecycle policy in fractal/${REPO} ECR repository in AWS region ${AWS_REGION}."
 else
-    echo "Failed to put lifecycle policy on fractal/${REPO} ECR repository in AWS region ${AWS_REGION}."
+    echo "Failed to put lifecycle policy on fractal/${REPO} ECR repository in AWS region ${AWS_REGION}. Error output: $output"
 fi
