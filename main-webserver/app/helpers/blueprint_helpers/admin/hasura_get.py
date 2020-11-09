@@ -19,11 +19,11 @@ def authHelper(token):
             if decoded_key:
                 current_user = decoded_key["identity"]
         except Exception as e:
-            return {"X-Hasura-Role": "anonymous", "X-Hasura-User-Id": ""}
+            return {"X-Hasura-Role": "anonymous"}
 
         user = None if not current_user else User.query.get(current_user)
 
         if user and current_user:
             return {"X-Hasura-Role": "user", "X-Hasura-User-Id": current_user}
 
-        return {"X-Hasura-Role": "anonymous", "X-Hasura-User-Id": ""}
+        return {"X-Hasura-Role": "anonymous"}
