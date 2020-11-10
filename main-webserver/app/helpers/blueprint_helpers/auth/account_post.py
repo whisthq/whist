@@ -305,3 +305,16 @@ def autoLoginHelper(email):
             "verification_token": None,
             "name": None,
         }
+
+def verifyPasswordHelper(email, password):
+    user = User.query.get(email)
+
+    if not user or not check_value(user.password, password):
+        return {
+            "status": UNAUTHORIZED,
+        }
+    else:
+        return {
+            "status": SUCCESS,
+        }
+

@@ -91,6 +91,14 @@ def account_post(action, **kwargs):
 
         return jsonify(output), output["status"]
 
+    elif action == "verify_password":
+        # Verifies correct current password before allowing a user to change password
+
+        username, password = body["username"], body["password"]
+
+        output = verifyPasswordHelper(username, password)
+
+        return jsonify(output), output["status"]
 
 @account_bp.route("/account/<action>", methods=["GET"])
 @fractalPreProcess
