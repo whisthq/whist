@@ -24,4 +24,5 @@ repos:
                  creative/blockbench/Dockerfile.20
                  creative/blender/Dockerfile.20
                  creative/figma/Dockerfile.20
+                 creative/lightworks/Dockerfile.20
                  creative/gimp/Dockerfile.20]

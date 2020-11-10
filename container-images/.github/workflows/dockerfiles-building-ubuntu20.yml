@@ -17,6 +17,7 @@ env:
     creative/blender
     creative/blockbench
     creative/figma
+    creative/lightworks
     creative/gimp
 
 jobs:
