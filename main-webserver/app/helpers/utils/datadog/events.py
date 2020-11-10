@@ -17,6 +17,10 @@ from app.helpers.utils.datadog.event_tags import (
     CLUSTER_DELETION,
     CLUSTER_LIFECYCLE,
     CLUSTER_NAME as CLUSTER_NAME_F,  # cluster_name=
+    LOGON,
+    LOGOFF,
+    USER_LIFECYCLE,
+    USER_NAME as USER_NAME_F,
     SUCCESS,
     FAILURE,
     validTags,
@@ -78,6 +82,20 @@ lifecycle events.
 """
 
 
+def datadogEvent_userLogon(user_name):
+    """Logs whether a user logged on. This is used to help Leor (or whoever is maintaing
+    the webserver now) to see whether users are using our service after they initially sign up.
+
+    Args:
+        user_name (str): Name of the user who just logged on.
+    """
+    datadogEvent(
+        title="User Logged On",
+        text="User {user_name} just logged on".format(user_name=user_name),
+        tags=[LOGON, SUCCESS, USER_NAME_F.format(user_name=user_name)],
+    )
+
+
 def datadogEvent_containerCreate(container_name, cluster_name):
     """Logs an event for container creation. This is necessary for lifecycle events to be
     able to work so that they can find the time that the deleted container was created.
@@ -113,6 +131,25 @@ def datadogEvent_clusterCreate(cluster_name):
         text="Cluster {cluster_name}".format(cluster_name=cluster_name),
         tags=[CLUSTER_CREATION, SUCCESS, CLUSTER_NAME_F.format(cluster_name=cluster_name)],
     )
+
+
+def datadogEvent_userLogoff(user_name, lifecycle=False):
+    """Logs whether a user logged off. Same as logon basically.
+
+    Args:
+        user_name (str): Name of the user who just logged off.
+        lifecycle (bool, optional): Whether to do the lifecycle calculation, which involves us
+            calculating how long the user was logged on, or to naively just say "logged off" with
+            a timestamp.
+    """
+    if lifecycle:
+        datadogEvent_userLifecycle(user_name)
+    else:
+        datadogEvent(
+            title="User Logged Off",
+            text="User {user_name} just logged off".format(user_name=user_name),
+            tags=[LOGOFF, SUCCESS, USER_NAME_F.format(user_name=user_name)],
+        )
 
 
 def datadogEvent_containerDelete(container_name, cluster_name, lifecycle=False):
@@ -284,6 +321,52 @@ def datadogEvent_clusterLifecycle(cluster_name):
             logs="Failed to find creation event for cluster {cluster_name}".format(
                 cluster_name=cluster_name
             ),
+            level=logging.ERROR,
+        )
+
+
+def datadogEvent_userLifecycle(user_name):
+    """Same as above but for log in/log off.
+
+    Args:
+        user_name (str): Name of the user who logged off and we'd like to find their previous log in
+            or whatever.
+    """
+    end_date = time()
+
+    event = _most_recent_by_tags([USER_NAME_F.format(user_name=user_name)])
+    if event:
+        if not LOGON in event["tags"]:
+            was_logoff = str(LOGOFF in event["tags"] or USER_LIFECYCLE in event["tags"])
+            fractalLog(
+                function="datadogEvent_userLifecycle",
+                label=None,
+                logs="Last event was not a log on for user {user_name}. Was it log off? Answer: {was_logoff}.".format(
+                    user_name=user_name, was_logoff=was_logoff
+                ),
+                level=logging.ERROR,
+            )
+        else:
+            start_date = event["date_happened"]
+
+            runtime = str(timedelta(seconds=(end_date - start_date)))
+            start_date, end_date = str(start_date), str(end_date)
+
+            datadogEvent(
+                title="User Lifcycle ended.",
+                text="User {user_name} logged off, completing his/her lifecycle. Log on time was {start_date} and log off time was {end_date}. Change in time was {runtime}.".format(
+                    user_name=user_name,
+                    start_date=start_date,
+                    end_date=end_date,
+                    runtime=runtime,
+                ),
+                tags=[USER_LIFECYCLE, SUCCESS, USER_NAME_F.format(user_name=user_name)],
+            )
+    else:
+        fractalLog(
+            function="datadogEvent_userLifecycle",
+            label=None,
+            logs="Failed to find logon event for user {user_name}".format(user_name=user_name),
             level=logging.ERROR,
         )
 

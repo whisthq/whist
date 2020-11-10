@@ -10,8 +10,13 @@ CONTAINER_DELETION = "container-deletion"
 CLUSTER_CREATION = "cluster-creation"
 CLUSTER_DELETION = "cluster-delection"
 
+LOGON = "logon"
+LOGOFF = "logoff"
+
 CONTAINER_LIFECYCLE = "container-lifecycle"
 CLUSTER_LIFECYCLE = "cluster-lifecycle"
+USER_LIFECYCLE = "user-lifecycle"
+
 
 _type_tags = {
     CONTAINER_CREATION,
@@ -20,6 +25,8 @@ _type_tags = {
     CLUSTER_DELETION,
     CONTAINER_LIFECYCLE,
     CLUSTER_LIFECYCLE,
+    LOGON,
+    LOGOFF,
 }
 
 """Status tags"""
@@ -33,6 +40,7 @@ _status_tags = {SUCCESS, FAILURE}
 # to get "container-name:my_container"
 CONTAINER_NAME = "container-name:{container_name}"
 CLUSTER_NAME = "cluster-name:{cluster_name}"
+USER_NAME = "user-name:{user_name}"
 
 
 def validTags(tags):
