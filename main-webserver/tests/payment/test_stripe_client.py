@@ -24,7 +24,7 @@ from app.helpers.utils.general.time import dateToUnix
 from app.helpers.utils.payment.stripe_client import (
     StripeClient,
     # for when users are not in the db
-    NonexistentUser, 
+    NonexistentUser,
     # for when the token is malformed
     InvalidStripeToken,
     # for when users are already subscribed and we try to do so again or are not and we try to cancel
@@ -34,8 +34,8 @@ from app.helpers.utils.payment.stripe_client import (
 )
 
 from app.constants.config import (
-    MONTHLY_PLAN_ID as monthly_plan, # this is an old plan # TODO update this bad boy
-    STRIPE_SECRET as stripe_api_key, # this is a test secret
+    MONTHLY_PLAN_ID as monthly_plan,  # this is an old plan # TODO update this bad boy
+    STRIPE_SECRET as stripe_api_key,  # this is a test secret
 )
 
 from app.models import db, User
@@ -49,15 +49,16 @@ stripe_auth_req_card = "4000002760003184"
 dummy_zip_uk = "CR09XY"
 dummy_zip_us = "08902"
 
-# arbitrary 
+# arbitrary
 dummy_email = "bob@tryfractal.com"
 dummy_nonexistent_email = "sdfsd23498io2u3ihwe232342njkosjdfldsfsdfs12312kh"
-dummy_referrer = "ming@tryfractal.com" # make sure we don't remove ming
+dummy_referrer = "ming@tryfractal.com"  # make sure we don't remove ming
 
 # datetime evaluated once at the start so that we can check precisely the lengths
 # these are used for referral codes
 week = dateToUnix(datetime.now() + relativedelta(weeks=1))
 month = dateToUnix(datetime.now() + relativedelta(months=1))
+
 
 def _generate_token(number=stripe_no_auth_card, zipcode=dummy_zip_us, malformed=False):
     """Helper function to generate a token string that we can use to test subscription
@@ -78,17 +79,22 @@ def _generate_token(number=stripe_no_auth_card, zipcode=dummy_zip_us, malformed=
     """
 
     # this is the expected format (i.e. a string: what you get from <token obj>.id)
-    # otherwise you'll get a stripe.error.InvalidRequestError: 
+    # otherwise you'll get a stripe.error.InvalidRequestError:
     # Could not determine which URL to request & something about an "invalid ID"
-    return stripe.Token.create(
-        card={
-            "address_zip": zipcode,
-            "number": number,
-            "exp_month": "12",
-            "exp_year": "2021",
-            "cvc": "123"
-        },
-    ).id if not malformed else "3489weji456rdfdfdbhjiosdn" # an arbitrary not a token string
+    return (
+        stripe.Token.create(
+            card={
+                "address_zip": zipcode,
+                "number": number,
+                "exp_month": "12",
+                "exp_year": "2021",
+                "cvc": "123",
+            },
+        ).id
+        if not malformed
+        else "3489weji456rdfdfdbhjiosdn"
+    )  # an arbitrary not a token string
+
 
 def _remove_stripe_customer(email):
     """Makes sure there is no stripe customer with given email. If there is
@@ -107,6 +113,7 @@ def _remove_stripe_customer(email):
 
         user.stripe_customer_id = None
         db.session.commit()
+
 
 def _create_stripe_customer_and_subscribe(email, plan=monthly_plan, referrer=None):
     """Makes sure that there is a stripe customer with given email. If there is
@@ -140,6 +147,7 @@ def _create_stripe_customer_and_subscribe(email, plan=monthly_plan, referrer=Non
             trial_end=trial_end,
         )
 
+
 @pytest.fixture
 def client():
     """Makes a client with an api key (setting the global api key).
@@ -148,6 +156,7 @@ def client():
         (str): client with api key initialized.
     """
     return StripeClient(stripe_api_key)
+
 
 @pytest.fixture()
 def with_no_stripe_customer_id():
@@ -160,6 +169,7 @@ def with_no_stripe_customer_id():
     _remove_stripe_customer(dummy_email)
     yield True
     _remove_stripe_customer(dummy_email)
+
 
 @pytest.fixture(params=[dummy_referrer, None])
 def with_stripe_subscription(request):
@@ -175,17 +185,19 @@ def with_stripe_subscription(request):
 
 
 """Here we test the get_stripe_info for common cases."""
+
+
 def test_get_stripe_info(client, with_stripe_subscription):
     referrer = with_stripe_subscription
 
     info = client.get_stripe_info(dummy_email)
 
-    assert info["subscription"]["trial_end"] == (
-        month if referrer else week
-    )
+    assert info["subscription"]["trial_end"] == (month if referrer else week)
+
 
 def test_get_stripe_info_no_customer_id(client, with_no_stripe_customer_id):
     assert client.get_stripe_info(dummy_email) is None
+
 
 """Here we test creation of subscription for common cases."""
 
@@ -199,6 +211,7 @@ def test_create_subscription_without_customer(client, with_no_stripe_customer_id
     dummy_token = _generate_token()
 
     assert client.create_subscription(dummy_token, dummy_email, monthly_plan)
+
 
 # this will run twice, once with code, and once without referral code
 def test_create_subscription_with_customer(client, with_stripe_subscription):
@@ -214,15 +227,22 @@ def test_create_subscription_with_customer(client, with_stripe_subscription):
         month if referrer else week
     )
 
+
 """Here we test subscruption cancellation for common cases."""
+
+
 def test_cancel_subscription(client, with_stripe_subscription):
     assert client.cancel_subscription(dummy_email)
+
 
 def test_cancel_no_subscription_throws(client, with_no_stripe_customer_id):
     with pytest.raises(InvalidOperation):
         client.cancel_subscription(dummy_email)
 
+
 """Here we test all functionality for invalid users."""
+
+
 def test_invalid_user_throws(client):
     dummy_token = _generate_token()
 
