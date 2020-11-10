@@ -102,18 +102,20 @@ function* googleLogin(action: any) {
                         }
                     )
 
-                yield call(
-                    graphQLPost,
-                    UPDATE_WAITLIST_REFERRALS,
-                    "UpdateWaitlistReferrals",
-                    {
-                        user_id: state.WaitlistReducer.waitlistUser.user_id,
-                        points:
-                            state.WaitlistReducer.waitlistUser.points +
-                            SIGNUP_POINTS,
-                        referrals: state.WaitlistReducer.waitlistUser.referrals,
-                    }
-                )
+                    yield call(
+                        graphQLPost,
+                        UPDATE_WAITLIST_REFERRALS,
+                        "UpdateWaitlistReferrals",
+                        {
+                            user_id: state.WaitlistReducer.waitlistUser.user_id,
+                            points:
+                                state.WaitlistReducer.waitlistUser.points +
+                                SIGNUP_POINTS,
+                            referrals:
+                                state.WaitlistReducer.waitlistUser.referrals,
+                        }
+                    )
+                }
             } else if (response.status === 403) {
                 yield put(
                     AuthPureAction.updateAuthFlow({
@@ -239,17 +241,20 @@ function* validateVerificationToken(action: any) {
                 emailVerified: true,
             })
         )
-        yield call(
-            graphQLPost,
-            UPDATE_WAITLIST_REFERRALS,
-            "UpdateWaitlistReferrals",
-            {
-                user_id: state.WaitlistReducer.waitlistUser.user_id,
-                points:
-                    state.WaitlistReducer.waitlistUser.points + SIGNUP_POINTS,
-                referrals: state.WaitlistReducer.waitlistUser.referrals,
-            }
-        )
+        if (state.WaitlistReducer.waitlistUser.user_id) {
+            yield call(
+                graphQLPost,
+                UPDATE_WAITLIST_REFERRALS,
+                "UpdateWaitlistReferrals",
+                {
+                    user_id: state.WaitlistReducer.waitlistUser.user_id,
+                    points:
+                        state.WaitlistReducer.waitlistUser.points +
+                        SIGNUP_POINTS,
+                    referrals: state.WaitlistReducer.waitlistUser.referrals,
+                }
+            )
+        }
     } else {
         yield put(
             AuthPureAction.updateAuthFlow({

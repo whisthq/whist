@@ -4,7 +4,7 @@ import { connect } from "react-redux"
 
 import "styles/shared.css"
 
-import { UPDATE_WAITLIST } from "shared/constants/graphql"
+import { UPDATE_WAITLIST_REFERRALS } from "shared/constants/graphql"
 import { updateWaitlistUser } from "store/actions/waitlist/pure"
 import { db } from "shared/utils/firebase"
 
@@ -40,7 +40,7 @@ function SecretPoints(props: {
         spanStyle,
     } = props
 
-    const [updatePoints] = useMutation(UPDATE_WAITLIST, {
+    const [updatePoints] = useMutation(UPDATE_WAITLIST_REFERRALS, {
         onError(err) {},
     })
 
