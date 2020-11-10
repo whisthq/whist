@@ -26,6 +26,9 @@ from app.helpers.utils.datadog.event_tags import (
     validTags,
 )
 
+# TODO make higher order functions or something to basically
+# generate all the different variations of logs with some parameters
+
 # TODO (adriano) ideally in the future we'll want to initialize once
 def initDatadog():
     """A simple function that will initialize datadog for our usage in the future.
