@@ -71,7 +71,7 @@ class StripeClient:
         self.regions = STATE_LIST
         self.zipcode_db = ZipCodeDatabase()
 
-        self.user_schema = UserSchema
+        self.user_schema = UserSchema()
 
     def refresh_key(self, api_key):
         """Reset the stripe api key.
@@ -85,7 +85,7 @@ class StripeClient:
         """
         stripe.api_key = api_key
 
-    def get_stripe_info(email):
+    def get_stripe_info(self, email):
         """Retrieves the information for a user regarding stripe. Returns in the following format:
         {
             "subscription": a subscription object per the stripe api (json format),
@@ -106,7 +106,7 @@ class StripeClient:
         if not user:
             raise NonexistentUser
 
-        customer = user_schema.dump(user)
+        customer = self.user_schema.dump(user)
         credits_outstanding = customer["credits_outstanding"]
 
         # return a valid object if they exist else None
@@ -116,7 +116,7 @@ class StripeClient:
 
             if subscription and subscription["data"]:
                 subscription = subscription["data"][0]
-                cards = payload["sources"]["data"]
+                cards = customer_info["sources"]["data"]
                 account_locked = subscription["trial_end"] < dateToUnix(getToday())
             else:
                 subscription = None
@@ -124,7 +124,6 @@ class StripeClient:
                 account_locked = False
 
             return {
-                "status": SUCCESS,
                 "subscription": subscription,
                 "cards": cards,
                 "creditsOutstanding": credits_outstanding,
@@ -172,7 +171,7 @@ class StripeClient:
         # get the zipcode/region
         zipcode = token["card"]["address_zip"]
 
-        if zipcode in self.zipcode_db:
+        if not self.zipcode_db[zipcode]:
             raise RegionNotSupported
         try:
             purchase_region_code = self.zipcode_db[zipcode].state
@@ -195,8 +194,9 @@ class StripeClient:
         subscribed = True
 
         if not stripe_customer_id:
+            subscriptions = None # this is necessary since if <unbound> != if None (i.e. false)
             customer = stripe.Customer.create(email=email, source=token)
-            stripe_customer_id = new_customer["id"]
+            stripe_customer_id = customer["id"]
             referrer = User.query.filter_by(referral_code=code).first() if code else None
             # they are rewarded by another request to discount by the client where they get credits
 
@@ -217,7 +217,7 @@ class StripeClient:
                 logs="Customer added successful",
             )
         else:
-            subscriptions = stripe.Subscription.list(customer=customer_id)["data"]
+            subscriptions = stripe.Subscription.list(customer=stripe_customer_id)["data"]
             if len(subscriptions) == 0:
                 trial_end = dateToUnix(datetime.now() + relativedelta(weeks=1))
                 subscribed = False
@@ -225,7 +225,7 @@ class StripeClient:
         # if they had a subscription modify it, don't make a new one
         # else make a new one with the corresponding params
         if subscriptions:
-            stripe.SubscriptionItem.modify(subscriptions[0]["items"]["data"][0]["id"], plan=PLAN_ID)
+            stripe.SubscriptionItem.modify(subscriptions[0]["items"]["data"][0]["id"], plan=plan)
             fractalLog(
                 function="StripeClient.create_subscription",
                 label=email,
@@ -245,7 +245,7 @@ class StripeClient:
                 logs="Customer subscription created successful",
             )
 
-    return True
+        return True
 
     def cancel_subscription(self, email):
         user = User.query.get(email)
@@ -257,7 +257,7 @@ class StripeClient:
         if len(subscription) == 0:
             raise InvalidOperation
         else:
-            payload = stripe.Subscription.delete(subscription[0]["id"])
+            stripe.Subscription.delete(subscription[0]["id"])
             fractalLog(
                 function="StripeClient.cancel_subscription",
                 label=email,
