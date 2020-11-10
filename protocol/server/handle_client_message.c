@@ -358,7 +358,9 @@ static int handleQuitMessage(FractalClientMessage *fmsg, int client_id, bool is_
         LOG_ERROR("BAD. IRRECOVERABLE.");
         ret = -1;
     }
-    if (ret == 0) LOG_INFO("Client successfully quit. (ID: %d)", client_id);
+    if (ret == 0) {
+        LOG_INFO("Client successfully quit. (ID: %d)", client_id);
+    }
     return ret;
 }
 

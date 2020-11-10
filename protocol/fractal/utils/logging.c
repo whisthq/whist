@@ -115,14 +115,13 @@ void initLogger(char *log_dir) {
     if (log_dir) {
         size_t dir_len = strlen(log_dir);
         log_directory = (char *)malloc(dir_len + 2);
-        strncpy(log_directory, log_dir, dir_len);
+        strncpy(log_directory, log_dir, dir_len + 1);
 #if defined(_WIN32)
         log_directory[dir_len] = '\\';
 #else
         log_directory[dir_len] = '/';
 #endif
         log_directory[dir_len + 1] = '\0';
-
         strcat(f, log_directory);
         strcat(f, "log.txt");
 

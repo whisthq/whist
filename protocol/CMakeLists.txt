@@ -16,7 +16,7 @@ cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 
 #set default compiler flags
-set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
+include("cmake/CompilerOptions.cmake")
 
 project(FractalProtocol LANGUAGES C)
 
