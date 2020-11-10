@@ -1,4 +1,7 @@
 if (MSVC) # Windows MSVC compiler base flags
+    # Od makes it compile in debug mode in DEBUG or CI settings. Should give
+    # better stack traces.  MT is for release, MTd is for debug, and for
+    # RELEASE we should compile against the release version.
     set(CMAKE_C_FLAGS_INIT "-DWIN32 -DWIN32_LEAN_AND_MEAN -DUNICODE")
     set(CMAKE_C_FLAGS_DEBUG_INIT "/W4 /MP /MTd /Od" )
     set(CMAKE_C_FLAGS_RELEASE_INIT "/W4 /MP /MT /O2" )
