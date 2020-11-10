@@ -29,7 +29,11 @@ args = parser.add_argument(
 )
 args = parser.parse_args()
 
-env_to_app_name = {"production": "main-webserver", "staging": "staging-webserver"}
+env_to_app_name = {
+    "production": "main-webserver",
+    "staging": "staging-webserver",
+    "dev": "dev-webserver",
+}
 app_name = env_to_app_name.get(args.env, args.env)
 
 if str(sys.platform).startswith("win"):
@@ -68,9 +72,11 @@ useful_env_vars = [
     "DASHBOARD_USERNAME",
     "PROD_DB_URL",
     "STAGING_DB_URL",
+    "DEV_DB_URL",
     "USE_PRODUCTION_KEYS",
     "AWS_SECRET_ACCESS_KEY",
     "AWS_ACCESS_KEY_ID",
+    "HEROKU_APP_NAME",
 ]
 
 useful_config = {k: env_config.get(k) for k in useful_env_vars}

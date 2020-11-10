@@ -18,7 +18,7 @@ Before contributing to this project, please read our in-depth coding philosophy 
 
 #### Local Setup
 
-Docker is being leveraged to create a partial-stack deployment of the `main-webserver` components, `web` and `celery`. To do so, it packages the application into an image with all necessary dependencies and then launches the application with the appropriate configurations, depending on if it's `web` or `celery` using `stem-cell.sh`. 
+Docker is being leveraged to create a partial-stack deployment of the `main-webserver` components, `web` and `celery`. To do so, it packages the application into an image with all necessary dependencies and then launches the application with the appropriate configurations, depending on if it's `web` or `celery` using `stem-cell.sh`.
 
 Currently, the full environment is only partially replicated, so `retrieve_config.py` exists for collecting the appropriate environment variables needed to connect to the non-replicated portions of the environment. They are pulled from Heroku.
 
@@ -28,10 +28,10 @@ First, ensure that the CLI tool `heroku`, and then type `heroku login` to log in
 
 ```sh
 # MacOS/Linux
-python retrieve_config.py staging
+python retrieve_config.py dev
 
 # Windows
-py retrieve_config.py staging
+py retrieve_config.py dev
 ```
 
 You can review `dev-base-config.json` to see which values will be overriden for local development. Currently, none are listed.
@@ -70,7 +70,7 @@ While our Heroku pipeline should not be modified without codeowner permission, i
 
 ### GraphQL
 
-We leverage Hasura GraphQL (hosted on Heroku) to enable real-time database access and serverless database retrieval. For pure SQL requests, we encourage using GraphQL instead of writing your own server endpoint to minimize the amount of code we write and because GraphQL has a lot of really nice built-in features. 
+We leverage Hasura GraphQL (hosted on Heroku) to enable real-time database access and serverless database retrieval. For pure SQL requests, we encourage using GraphQL instead of writing your own server endpoint to minimize the amount of code we write and because GraphQL has a lot of really nice built-in features.
 
 GraphQL is already set up, but here's a [setup doc](https://hasura.io/docs/1.0/graphql/core/deployment/deployment-guides/heroku.html) for reference. Hasura GraphQL also provides a console for easy interfacing with the database. The prod database console is [here](prod-database.tryfractal.com) using access key stored as a config variable in the Heroku `fractal-graphql` application.
 
@@ -90,7 +90,7 @@ To get an idea of what environment variables you might be missing, try running `
 
 ## Styling
 
-To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python Black](https://github.com/psf/black) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Python Black support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Python Black.  We may also add Pylint/flake8 in future, which enables import error checking.
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python Black](https://github.com/psf/black) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Python Black support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Python Black. We may also add Pylint/flake8 in future, which enables import error checking.
 
 You can always run Python Black directly from a terminal by first installing it via `pip install black` (requires Python 3.6+) and running `black .` to format the whole project. You can see and modify the project's Python Black settings in `pyproject.toml` and list options by running `black --help`. If you prefer, you can also install it directly within your IDE by via the following instructions:
 
