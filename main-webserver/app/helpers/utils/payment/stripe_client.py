@@ -114,7 +114,7 @@ class StripeClient:
             customer_info = stripe.Customer.retrieve(customer["stripe_customer_id"])
             subscription = stripe.Subscription.list(customer=customer["stripe_customer_id"])
 
-            if subscription and subscription["data"]:
+            if subscription and subscription["data"] and len(subscription["data"]) > 0:
                 subscription = subscription["data"][0]
                 cards = customer_info["sources"]["data"]
                 account_locked = subscription["trial_end"] < dateToUnix(getToday())
@@ -171,8 +171,6 @@ class StripeClient:
         # get the zipcode/region
         zipcode = token["card"]["address_zip"]
 
-        if not self.zipcode_db[zipcode]:
-            raise RegionNotSupported
         try:
             purchase_region_code = self.zipcode_db[zipcode].state
         except IndexError:
@@ -194,7 +192,7 @@ class StripeClient:
         subscribed = True
 
         if not stripe_customer_id:
-            subscriptions = None # this is necessary since if <unbound> != if None (i.e. false)
+            subscriptions = None  # this is necessary since if <unbound> != if None (i.e. false)
             customer = stripe.Customer.create(email=email, source=token)
             stripe_customer_id = customer["id"]
             referrer = User.query.filter_by(referral_code=code).first() if code else None
@@ -251,6 +249,9 @@ class StripeClient:
         user = User.query.get(email)
         if not user:
             raise NonexistentUser
+
+        if not user.stripe_customer_id:
+            raise InvalidOperation
 
         subscription = stripe.Subscription.list(customer=user.stripe_customer_id)["data"]
 

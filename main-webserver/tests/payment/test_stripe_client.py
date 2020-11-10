@@ -154,6 +154,25 @@ def _new_customer(email, plan=monthly_plan, referrer=None, subscribe=True):
         )
 
 
+def _assert_create_get_trial_end(referrer, client):
+    """This helper function is commonly used in create to check that it runs through, returning the
+    trial end to be checked for validity.
+
+    Args:
+        referrer (str): Email of the user who referred the dummy user to fractal.
+
+    Returns:
+        (unix time): The time of the end of the trial.
+    """
+    dummy_token = _generate_token()
+    referral_code = _get_code(referrer)
+
+    assert client.create_subscription(dummy_token, dummy_email, monthly_plan, code=referral_code)
+
+    stripe_customer_id = _get_stripe_customer_id()
+    return stripe.Subscription.list(customer=stripe_customer_id)["data"][0]["trial_end"]
+
+
 def _get_code(referrer):
     if not referrer:
         return None
@@ -221,49 +240,57 @@ def test_get_stripe_info_no_customer_id(client, not_customer):
 
 """Here we test creation of subscription for common cases."""
 
-## TODO different combinations:
-# 1. valid zip code vs invalid/international zip code
-# 2. valid vs invalid token
 
-# def test_create_subscription_with_no_customer(client, not_customer):
-#     dummy_token = _generate_token()
+def test_create_subscription_with_not_customer(client, not_customer):
+    for referrer in [dummy_referrer, None]:
+        trial_end = _assert_create_get_trial_end(referrer, client)
 
-#     referral_code = _get_code(referrer)
+        assert _closest(trial_end, [month, week]) == month if referrer else week
 
-#     assert client.create_subscription(dummy_token, dummy_email, monthly_plan, referral_code=referral_code)
-
-#     stripe_customer_id = _get_stripe_customer_id()
-
-#     assert _off_by(stripe.Subscription.list(customer=stripe_customer_id)["data"][0]["trial_end"], [month, week]) == month if not subscribed and referrer else week
+        _remove_stripe_customer(dummy_email)
 
 
-# # this will run twice, once with code, and once without referral code
-# def test_create_subscription_with_customer(client, with_stripe_customer_id):
-#     dummy_token = _generate_token()
+def test_create_subscription_with_customer(client, not_customer):
 
-#     referrer, subscribed = with_stripe_customer_id
+    for original_referrer in [dummy_referrer, None]:
+        for subscribed in [True, False]:
+            _new_customer(dummy_email, referrer=original_referrer, subscribe=subscribed)
 
-#     referral_code = _get_code(referrer)
+            for referrer in [dummy_referrer, None]:
+                trial_end = _assert_create_get_trial_end(referrer, client)
 
-#     assert client.create_subscription(dummy_token, dummy_email, monthly_plan, code=referral_code)
-
-#     stripe_customer_id = _get_stripe_customer_id()
-
-#     # you can only get referred once, return customers do not get the month again and again
-#     error = 10000
-#     assert _off_by(stripe.Subscription.list(customer=stripe_customer_id)["data"][0]["trial_end"], [month, week], error=error) == month if not subscribed and referrer else week
+                assert (
+                    _closest(trial_end, [month, week]) == month
+                    if original_referrer and subscribed
+                    else week
+                )
 
 
-# # this will run one extra time whatever
-# def test_create_subscription_invalid_code(client, not_customer):
-#     dummy_token = _generate_token()
+def test_create_subscription_invalid_code(client, not_customer):
+    dummy_token = _generate_token()
 
-#     assert client.create_subscription(dummy_token, dummy_email, monthly_plan, dummy_invalid_referral_code)
+    assert client.create_subscription(
+        dummy_token, dummy_email, monthly_plan, dummy_invalid_referral_code
+    )
 
-#     stripe_customer_id = _get_stripe_customer_id()
+    stripe_customer_id = _get_stripe_customer_id()
+    trial_end = stripe.Subscription.list(customer=stripe_customer_id)["data"][0]["trial_end"]
 
-#     error = 1000
-#     assert (stripe.Subscription.list(customer=stripe_customer_id)["data"][0]["trial_end"] - week) < error
+    assert _closest(trial_end, [month, week]) == week
+
+
+def test_invalid_zip_code(client, not_customer):
+    dummy_token = _generate_token(zipcode=dummy_zip_uk)
+
+    with pytest.raises(RegionNotSupported):
+        client.create_subscription(dummy_token, dummy_email, monthly_plan)
+
+
+def test_invalid_token(client, not_customer):
+    dummy_token = _generate_token(malformed=True)
+
+    with pytest.raises(InvalidStripeToken):
+        client.create_subscription(dummy_token, dummy_email, monthly_plan)
 
 
 """Here we test subscruption cancellation for common cases."""
