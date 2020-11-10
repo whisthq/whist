@@ -72,8 +72,8 @@ if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
             "--verbose"
             "--std=c99"
             "--suppress=shiftTooManyBitsSigned"
-	    "--suppress=*:${CMAKE_CURRENT_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
-	    "--suppress=*:${CMAKE_CURRENT_SOURCE_DIR}/sentry-native/include/sentry.h"
+	    "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
+	    "--suppress=*:${CMAKE_SOURCE_DIR}/sentry-native/include/sentry.h"
             "--inline-suppr"
             )
 endif()
