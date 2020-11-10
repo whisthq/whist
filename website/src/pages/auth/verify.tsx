@@ -14,7 +14,14 @@ import VerifyView from "pages/auth/views/verifyView"
 
 const Verify = (props: any) => {
     const { user, authFlow, waitlistUser, dispatch } = props
-    const [updateWaitlistAuthEmail] = useMutation(UPDATE_WAITLIST_AUTH_EMAIL)
+    console.log(user.accessToken)
+    const [updateWaitlistAuthEmail] = useMutation(UPDATE_WAITLIST_AUTH_EMAIL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        },
+    })
 
     const search = useLocation().search
     const token = search.substring(1, search.length)

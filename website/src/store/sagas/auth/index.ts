@@ -7,7 +7,7 @@ import * as AuthPureAction from "store/actions/auth/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
 import {
     UPDATE_WAITLIST_AUTH_EMAIL,
-    UPDATE_WAITLIST,
+    UPDATE_WAITLIST_REFERRALS,
 } from "shared/constants/graphql"
 import { SIGNUP_POINTS } from "shared/utils/points"
 
@@ -21,6 +21,8 @@ function* emailLogin(action: any) {
         },
         ""
     )
+
+    console.log(json)
 
     if (json && json.access_token) {
         yield put(
@@ -100,13 +102,19 @@ function* googleLogin(action: any) {
                         }
                     )
 
-                    yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
-                        user_id: state.WaitlistReducer.waitlistUser.user_id,
-                        points:
-                            state.WaitlistReducer.waitlistUser.points +
-                            SIGNUP_POINTS,
-                        referrals: state.WaitlistReducer.waitlistUser.referrals,
-                    })
+                    yield call(
+                        graphQLPost,
+                        UPDATE_WAITLIST_REFERRALS,
+                        "UpdateWaitlistReferrals",
+                        {
+                            user_id: state.WaitlistReducer.waitlistUser.user_id,
+                            points:
+                                state.WaitlistReducer.waitlistUser.points +
+                                SIGNUP_POINTS,
+                            referrals:
+                                state.WaitlistReducer.waitlistUser.referrals,
+                        }
+                    )
                 }
             } else if (response.status === 403) {
                 yield put(
@@ -234,12 +242,18 @@ function* validateVerificationToken(action: any) {
             })
         )
         if (state.WaitlistReducer.waitlistUser.user_id) {
-            yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
-                user_id: state.WaitlistReducer.waitlistUser.user_id,
-                points:
-                    state.WaitlistReducer.waitlistUser.points + SIGNUP_POINTS,
-                referrals: state.WaitlistReducer.waitlistUser.referrals,
-            })
+            yield call(
+                graphQLPost,
+                UPDATE_WAITLIST_REFERRALS,
+                "UpdateWaitlistReferrals",
+                {
+                    user_id: state.WaitlistReducer.waitlistUser.user_id,
+                    points:
+                        state.WaitlistReducer.waitlistUser.points +
+                        SIGNUP_POINTS,
+                    referrals: state.WaitlistReducer.waitlistUser.referrals,
+                }
+            )
         }
     } else {
         yield put(

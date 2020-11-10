@@ -27,6 +27,7 @@ const Dashboard = (props: {
     user: {
         user_id: string
         canLogin: boolean
+        accessToken: string
     }
 }) => {
     const { user, dispatch } = props
@@ -39,6 +40,11 @@ const Dashboard = (props: {
 
     const { data, loading } = useQuery(GET_USER, {
         variables: { user_id: user.user_id },
+        context: {
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        },
     })
 
     const logout = () => {
