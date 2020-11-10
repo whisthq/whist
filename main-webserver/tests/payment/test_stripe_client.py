@@ -108,7 +108,7 @@ def _remove_stripe_customer(email):
         user.stripe_customer_id = None
         db.session.commit()
 
-def _create_stripe_customer_and_subscribe(email, plan=monthly_plan, referral_code=None):
+def _create_stripe_customer_and_subscribe(email, plan=monthly_plan, referrer=None):
     """Makes sure that there is a stripe customer with given email. If there is
     not one it will be created. Also adds the id to the database.
 
@@ -127,7 +127,10 @@ def _create_stripe_customer_and_subscribe(email, plan=monthly_plan, referral_cod
         user.stripe_customer_id = stripe_customer_id
         db.session.commit()
 
-        referrer = User.query.filter_by(referral_code=referral_code).first() if referral_code else None
+        # we do it this way because referral_code for the same user may vary in production vs staging
+        referrer = User.query.get(referrer)
+        if not referrer.referral_code:
+            referrer = None
         trial_end = month if referrer else week
 
         # keep trial_end so that we can test that it was correctly evaluated based on referrer
@@ -146,7 +149,7 @@ def client():
     """
     return StripeClient(stripe_api_key)
 
-@pytest.fixture
+@pytest.fixture()
 def with_no_stripe_customer_id():
     """Makes sure that there is no stripe customer id before or after the function that uses this
     fixture.
@@ -158,25 +161,33 @@ def with_no_stripe_customer_id():
     yield True
     _remove_stripe_customer(dummy_email)
 
-@pytest.fixture
-def with_stripe_subscription():
+@pytest.fixture(params=[dummy_referrer, None])
+def with_stripe_subscription(request):
     """Makes sure that there is a stripe customer id both before and after the the function
     that uses this fixture.
 
     Yields:
         (bool): True
     """
-    _create_stripe_customer_and_subscribe(dummy_email)
-    yield True
-    _create_stripe_customer_and_subscribe(dummy_email)
+    _create_stripe_customer_and_subscribe(dummy_email, referrer=request.param)
+    yield request.param
+    _create_stripe_customer_and_subscribe(dummy_email, referrer=request.param)
 
-#######################################################
 
-## TODO different combinations:
-# 1. existing user vs nonexistent user
-# 2. is a customer or is not
-def test_get_stripe_info(client):
+"""Here we test the get_stripe_info for common cases."""
+def test_get_stripe_info(client, with_stripe_subscription):
+    referrer = with_stripe_subscription
+
     info = client.get_stripe_info(dummy_email)
+
+    assert info["subscription"]["trial_end"] == (
+        month if referrer else week
+    )
+
+def test_get_stripe_info_no_customer_id(client, with_no_stripe_customer_id):
+    assert client.get_stripe_info(dummy_email) is None
+
+"""Here we test creation of subscription for common cases."""
 
 ## TODO different combinations:
 # 1. valid zip code vs invalid/international zip code
@@ -189,14 +200,35 @@ def test_create_subscription_without_customer(client, with_no_stripe_customer_id
 
     assert client.create_subscription(dummy_token, dummy_email, monthly_plan)
 
+# this will run twice, once with code, and once without referral code
 def test_create_subscription_with_customer(client, with_stripe_subscription):
     dummy_token = _generate_token()
+    referrer = with_stripe_subscription
 
     assert client.create_subscription(dummy_token, dummy_email, monthly_plan)
 
-## TODO different combinations: 
-# 1. existing user vs nonexistent user
-# 2. user has stripe customer id vs doesn't
-# 3. user has a subscription vs has no subscription
+    user = User.query.get(dummy_email)
+    stripe_customer_id = user.stripe_customer_id
+
+    assert stripe.Subscription.list(customer=stripe_customer_id)["data"][0]["trial_end"] == (
+        month if referrer else week
+    )
+
+"""Here we test subscruption cancellation for common cases."""
 def test_cancel_subscription(client, with_stripe_subscription):
     assert client.cancel_subscription(dummy_email)
+
+def test_cancel_no_subscription_throws(client, with_no_stripe_customer_id):
+    with pytest.raises(InvalidOperation):
+        client.cancel_subscription(dummy_email)
+
+"""Here we test all functionality for invalid users."""
+def test_invalid_user_throws(client):
+    dummy_token = _generate_token()
+
+    with pytest.raises(NonexistentUser):
+        client.cancel_subscription(dummy_nonexistent_email)
+    with pytest.raises(NonexistentUser):
+        client.create_subscription(dummy_nonexistent_email, dummy_token, dummy_zip_us)
+    with pytest.raises(NonexistentUser):
+        client.get_stripe_info(dummy_nonexistent_email)
