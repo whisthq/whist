@@ -69,7 +69,7 @@ const VerifyView = (props: {
 
     const reset = () => {
         dispatch(resetUser())
-        history.push("/auth")
+        history.push("/auth/bypass")
     }
 
     const sendWithDelay = (evt: any) => {

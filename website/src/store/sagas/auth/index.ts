@@ -91,15 +91,16 @@ function* googleLogin(action: any) {
                     })
                 )
 
-                yield call(
-                    graphQLPost,
-                    UPDATE_WAITLIST_AUTH_EMAIL,
-                    "UpdateWaitlistAuthEmail",
-                    {
-                        user_id: state.WaitlistReducer.waitlistUser.user_id,
-                        authEmail: json.username,
-                    }
-                )
+                if (state.WaitlistReducer.waitlistUser.user_id) {
+                    yield call(
+                        graphQLPost,
+                        UPDATE_WAITLIST_AUTH_EMAIL,
+                        "UpdateWaitlistAuthEmail",
+                        {
+                            user_id: state.WaitlistReducer.waitlistUser.user_id,
+                            authEmail: json.username,
+                        }
+                    )
 
                 yield call(
                     graphQLPost,

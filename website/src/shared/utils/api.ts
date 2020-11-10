@@ -23,6 +23,8 @@ import history from "shared/utils/history"
 
 async function sendPost(endpoint: string, body: any, token: string) {
     try {
+        console.log("SEND POST")
+        console.log(token)
         const response = await fetch(config.url.WEBSERVER_URL + endpoint, {
             method: "POST",
             mode: "cors",
