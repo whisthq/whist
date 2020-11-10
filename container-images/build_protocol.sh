@@ -18,7 +18,7 @@ base/protocol/docker-run-builder-shell.sh \
     " \
     cd base/protocol && \
     git clean -dfx && \
-    cmake FractalServer ${release_tag} && \
+    cmake . ${release_tag} && \
     make clang-format && \
-    make -j \
+    make -j FractalServer \
 "
