@@ -3,7 +3,7 @@ name: Render and Deploy ECS Task Definitions
 # Publish on updates to the master branch
 on:
     push:
-        branches: [main]
+        branches: [ main ]
         paths-ignore:
         - '**/README.md'
     workflow_dispatch:
@@ -48,7 +48,7 @@ jobs:
                   aws-region: ${{ matrix.aws-regions }}
 
             - name: Retrieve container-images master git hash as env variable
-              run: echo "containers_gha_sha=$(git ls-remote https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractalcomputers/container-images | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
+              run: echo "containers_gha_sha=$(git ls-remote https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/container-images | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
 
             - name: Retrieve AWS account number as env variable
               run: echo "aws_account=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
