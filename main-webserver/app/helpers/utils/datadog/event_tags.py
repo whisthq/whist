@@ -40,6 +40,7 @@ _status_tags = {SUCCESS, FAILURE}
 # to get "container-name:my_container"
 CONTAINER_NAME = "container-name:{container_name}"
 CLUSTER_NAME = "cluster-name:{cluster_name}"
+CONTAINER_USER = "container-user:{container_user}"
 USER_NAME = "user-name:{user_name}"
 
 

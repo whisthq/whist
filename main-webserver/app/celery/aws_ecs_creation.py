@@ -333,7 +333,7 @@ desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_b
         raise Ignore
 
     if not current_app.testing:
-        datadogEvent_containerCreate(container.container_id, cluster_name)
+        datadogEvent_containerCreate(container.container_id, cluster_name, username=username)
 
 
 @shared_task(bind=True)

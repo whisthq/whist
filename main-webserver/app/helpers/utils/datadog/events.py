@@ -1,6 +1,8 @@
 from app import *
 from app.helpers.utils.general.logs import fractalLog
 
+from functools import reduce
+
 import logging
 from time import time
 from datetime import timedelta
@@ -13,6 +15,7 @@ from app.helpers.utils.datadog.event_tags import (
     CONTAINER_DELETION,
     CONTAINER_LIFECYCLE,
     CONTAINER_NAME as CONTAINER_NAME_F,  # container_name=
+    CONTAINER_USER as CONTAINER_USER_F,
     CLUSTER_CREATION,
     CLUSTER_DELETION,
     CLUSTER_LIFECYCLE,
@@ -99,7 +102,7 @@ def datadogEvent_userLogon(user_name):
     )
 
 
-def datadogEvent_containerCreate(container_name, cluster_name):
+def datadogEvent_containerCreate(container_name, cluster_name, username=None):
     """Logs an event for container creation. This is necessary for lifecycle events to be
     able to work so that they can find the time that the deleted container was created.
 
@@ -107,18 +110,26 @@ def datadogEvent_containerCreate(container_name, cluster_name):
         container_name (str): The name of the container which was created.
             This is used to search in lifecycle.
         cluster_name (str): The cluster it was created in.
+        username (str, optional): The username of the user this is created for.
     """
+
+    tags = [
+        CONTAINER_CREATION,
+        SUCCESS,
+        CONTAINER_NAME_F.format(container_name=container_name),
+        CLUSTER_NAME_F.format(cluster_name=cluster_name),
+    ]
+    if username:
+        tags.append(CONTAINER_USER_F.format(container_user=username))
+
     datadogEvent(
         title="Created new Container",
-        text="Container {container_name} in cluster {cluster_name}".format(
-            container_name=container_name, cluster_name=cluster_name
+        text="Container {container_name} in cluster {cluster_name} for user {username}".format(
+            container_name=container_name,
+            cluster_name=cluster_name,
+            username=(username if username else "unknown"),
         ),
-        tags=[
-            CONTAINER_CREATION,
-            SUCCESS,
-            CONTAINER_NAME_F.format(container_name=container_name),
-            CLUSTER_NAME_F.format(cluster_name=cluster_name),
-        ],
+        tags=tags,
     )
 
 
@@ -229,15 +240,23 @@ def datadogEvent_containerLifecycle(container_name):
         # to log a wrong event
     )
     if event:
-        if not CONTAINER_CREATION in event["tags"]:
-            was_deletion = str(
-                CONTAINER_DELETION in event["tags"] or CONTAINER_LIFECYCLE in event["tags"]
-            )
+        tags = event["tags"]
+        container_user = reduce(
+            # splitting with second param 1 means to split along the first : (arn has :)
+            lambda acc, tag: acc if not "container-user" in tags else tag.split(":", 1)[1],
+            tags,
+            "unknown",
+        )
+
+        if not CONTAINER_CREATION in tags:
+            was_deletion = str(CONTAINER_DELETION in tags or CONTAINER_LIFECYCLE in tags)
             fractalLog(
                 function="datadogEvent_containerLifecycle",
                 label=None,
-                logs="Last event was not a creation for container {container_name}. Was it deletion? Answer: {was_deletion}.".format(
-                    container_name=container_name, was_deletion=was_deletion
+                logs="Last event was not a creation for container {container_name}. Was it deletion? Answer: {was_deletion}. The user was {cointainer_user}.".format(
+                    container_name=container_name,
+                    was_deletion=was_deletion,
+                    container_user=container_user,
                 ),
                 level=logging.ERROR,
             )
@@ -250,11 +269,12 @@ def datadogEvent_containerLifecycle(container_name):
 
             datadogEvent(
                 title="Container Lifecycle Ended",
-                text="Container {container_name} has been deleted, completing its lifecycle. Creation time was {creation_date} and deletion time was {deletion_date}. Change in time was {runtime}.".format(
+                text="Container {container_name} has been deleted, completing its lifecycle. Creation time was {creation_date} and deletion time was {deletion_date}. Change in time was {runtime}. Ther user was {container_user}".format(
                     container_name=container_name,
                     creation_date=creation_date,
                     deletion_date=deletion_date,
                     runtime=runtime,
+                    container_user=container_user,
                 ),
                 tags=[
                     CONTAINER_LIFECYCLE,
@@ -378,8 +398,8 @@ def _most_recent_by_tags(
     tag_by,
     check_event=lambda event: True,
     sort_by=lambda event: event["date_happened"],
-    dt=3600,
-    max_d=86400,
+    dt=3600,  # 60 sec * 60 min = 1 hour
+    max_d=86400,  # 86400 seconds = 1 hr * 24 = 1 day
     init=True,
 ):
     """Helper method that will find the most recent (or some other order) event within the last
@@ -409,7 +429,9 @@ def _most_recent_by_tags(
             # sources ?
             tags=tag_by,
             unaggregated=True,
-        )
+        )[
+            "events"
+        ]  # bruh why this convention it sucks
 
         try:
             # https://docs.datadoghq.com/api/v1/events/
