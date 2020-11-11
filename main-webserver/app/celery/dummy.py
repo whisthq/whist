@@ -30,7 +30,7 @@ def dummyTask(self):
     self.update_state(
         state="PENDING",
         meta={
-            "msg": "Oiling the tubes.",
+            "msg": "Greasing the gears.",
             "progress": 70,
         },
     )

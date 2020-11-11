@@ -6,6 +6,12 @@ from sqlalchemy.orm import sessionmaker
 config_engine = sqlalchemy.create_engine(os.getenv("CONFIG_DB_URL"), echo=False, pool_pre_ping=True)
 ConfigSession = sessionmaker(bind=config_engine, autocommit=False)
 
+app_to_db = {
+    "dev-webserver": "DEV_DB_URL",
+    "staging-webserver": "STAGING_DB_URL",
+    "main-webserver": "PROD_DB_URL",
+}
+
 
 def getEnvVar(key):
     if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE":
@@ -36,11 +42,10 @@ def getEnvVar(key):
     return output[1]
 
 
-DATABASE_URL = (
-    os.getenv("PROD_DB_URL")
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE"
-    else os.getenv("STAGING_DB_URL")
-)
+try:
+    DATABASE_URL = os.getenv(app_to_db[os.getenv("HEROKU_APP_NAME")])
+except:
+    DATABASE_URL = os.getenv(app_to_db["dev-webserver"])
 
 VM_GROUP = "Fractal" if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE" else "FractalStaging"
 
