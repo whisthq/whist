@@ -81,7 +81,6 @@ def spinLock(container_name, s=None):
 
     Args:
         container_name (str): Name of container of interest
-        ID (int, optional): Unique papertrail logging id. Defaults to -1.
 
     Returns:
         int: 1 = container is unlocked, -1 = giving up
