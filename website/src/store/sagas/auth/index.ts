@@ -306,6 +306,7 @@ function* forgotPassword(action: any) {
 }
 
 function* validateResetToken(action: any) {
+    console.log("VALIDATE RESET TOKEN")
     yield select()
     const { json } = yield call(
         apiPost,
@@ -315,6 +316,7 @@ function* validateResetToken(action: any) {
         },
         ""
     )
+
     // at some later point in time we may find it helpful to change strings here to some sort of enum
     if (json) {
         if (json.status === 200) {
@@ -322,7 +324,7 @@ function* validateResetToken(action: any) {
                 AuthPureAction.updateAuthFlow({
                     resetTokenStatus: "verified",
                     passwordResetEmail: json.user,
-                    passwordResetToken: json.token,
+                    passwordResetToken: action.token,
                 })
             )
         } else {
@@ -353,6 +355,8 @@ function* validateResetToken(action: any) {
 function* resetPassword(action: any) {
     // const state = yield select()
 
+    console.log(action)
+
     yield call(
         apiPost,
         "/account/update",
@@ -367,6 +371,8 @@ function* resetPassword(action: any) {
     yield put(
         AuthPureAction.updateAuthFlow({
             resetDone: true,
+            passwordResetEmail: null,
+            passwordResetToken: null,
         })
     )
 }
