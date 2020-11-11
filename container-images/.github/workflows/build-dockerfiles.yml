@@ -5,21 +5,6 @@ on:
   pull_request:
     branches: [ master, dev ]
 
-env:
-  apps: >
-    base
-    browsers/chrome
-    browsers/firefox
-    browsers/brave
-    browsers/sidekick
-    productivity/slack
-    productivity/discord
-    productivity/notion
-    creative/blender
-    creative/blockbench
-    creative/figma
-    creative/gimp
-
 jobs:
     build-dockerfiles:
         name: Build Dockerfiles
@@ -34,6 +19,9 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
+            - name: Walk repo to find all dockerfiles and store path as env variable
+              run: echo "apps=$(./find_images_in_git_repo.sh)" >> $GITHUB_ENV
+
             - name: Build debug protocol
               run: ./build_protocol.sh
 
@@ -43,4 +31,3 @@ jobs:
                 do
                   ./build_container_image.sh $app
                 done
-                
