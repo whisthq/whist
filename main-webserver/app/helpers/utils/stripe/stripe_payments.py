@@ -11,6 +11,7 @@ from app.models import LoginHistory, User
 
 HOURLY_PLAN_ID = "DUMMY"
 
+
 def stripeChargeHourly(username):
 
     # Check to see if the user is a current customer

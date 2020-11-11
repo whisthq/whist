@@ -32,10 +32,10 @@ target_metadata = None
 
 
 def get_url():
-    if os.getenv("USE_PRODUCTION_DATABASE").upper() == "TRUE":
-        url = os.getenv("DATABASE_URL")
+    if os.getenv("HEROKU_APP_NAME").upper() == "main-webserver":
+        url = os.getenv("PROD_DB_URL")
     else:
-        url = os.getenv("HEROKU_POSTGRESQL_ORANGE_URL")
+        url = os.getenv("STAGING_DB_URL")
     print(url)
     return url
 
