@@ -54,20 +54,11 @@ def test_endpoint(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "create_container":
-        (
-            username,
-            cluster_name,
-            region_name,
-            task_definition_arn,
-            use_launch_type,
-            network_configuration,
-        ) = (
+        (username, cluster_name, region_name, task_definition_arn) = (
             kwargs["body"]["username"],
             kwargs["body"]["cluster_name"],
             kwargs["body"].get("region_name", None),
             kwargs["body"]["task_definition_arn"],
-            kwargs["body"]["use_launch_type"],
-            kwargs["body"].get("network_configuration"),
         )
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
         task = create_new_container.apply_async(
@@ -75,8 +66,6 @@ def test_endpoint(action, **kwargs):
             {
                 "cluster_name": cluster_name,
                 "region_name": region_name,
-                "use_launch_type": use_launch_type,
-                "network_configuration": network_configuration,
                 "webserver_url": kwargs["webserver_url"],
             },
         )
