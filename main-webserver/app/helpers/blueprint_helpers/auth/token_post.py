@@ -1,9 +1,5 @@
-from datetime import datetime as dt
-from datetime import timedelta
-
-from flask import current_app, jsonify
-from flask_jwt_extended import create_access_token
-from jose import jwt
+from flask import jsonify
+from flask_jwt_extended import decode_token
 
 from app.constants.http_codes import SUCCESS, UNAUTHORIZED
 
@@ -11,17 +7,11 @@ from app.constants.http_codes import SUCCESS, UNAUTHORIZED
 def validateTokenHelper(token):
     if token:
         try:
-            payload = jwt.decode(token, current_app.config["JWT_SECRET_KEY"])
-            email = payload["email"]
-            modify_token = create_access_token(identity=email, expires_delta=timedelta(minutes=10))
+            payload = decode_token(token)
+            email = payload["identity"]
         except Exception:
             return (jsonify({"status": UNAUTHORIZED, "error": "Expired token"}), UNAUTHORIZED)
-        # if try succeded
-        if payload["exp"] < dt.utcnow().timestamp():
-            return (jsonify({"status": UNAUTHORIZED, "error": "Expired token"}), UNAUTHORIZED)
-        else:
-            # email and token are necessary to modify user on reset
-            # in the future we'll want to avoid actions like this
-            return jsonify({"status": SUCCESS, "user": email, "token": modify_token}), SUCCESS
+        # if the token is expired decode_token throws an exception
+        return jsonify({"status": SUCCESS, "user": email}), SUCCESS
     else:
         return jsonify({"status": UNAUTHORIZED, "error": "Invalid token"}), UNAUTHORIZED

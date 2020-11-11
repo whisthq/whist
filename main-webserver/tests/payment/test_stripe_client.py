@@ -33,13 +33,11 @@ from app.helpers.utils.payment.stripe_client import (
     RegionNotSupported,
 )
 
-# TODO get monthly plan id as monthly_plan
 from app.constants.config import (
     STRIPE_SECRET as stripe_api_key,  # this is a test secret
 )
 
 from app.models import db, User
-
 
 # the two test cards stripe gives us
 stripe_no_auth_card = "4242424242424242"
@@ -60,6 +58,18 @@ dummy_invalid_referral_code = "asdofhasiuldofjlasnklfd23980q9wsiojdnh"
 # these are used for referral codes
 week = dateToUnix(datetime.now() + relativedelta(weeks=1))
 month = dateToUnix(datetime.now() + relativedelta(months=1))
+
+
+def _get_monthly_plan():
+    stripe.api_key = stripe_api_key
+    for price in stripe.Price.list(limit=20):
+        metadata = price["metadata"]
+        if "name" in metadata and metadata["name"] == "Fractal Monthly":
+            return price["id"]
+    return None  # should not be reached
+
+
+monthly_plan = _get_monthly_plan()
 
 
 def _generate_token(number=stripe_no_auth_card, zipcode=dummy_zip_us, malformed=False):

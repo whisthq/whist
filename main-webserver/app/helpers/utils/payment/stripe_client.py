@@ -7,6 +7,8 @@ from functools import reduce
 import stripe
 import uuid
 
+from flask import current_app
+
 from dateutil.relativedelta import relativedelta
 from pyzipcode import ZipCodeDatabase
 
@@ -417,10 +419,12 @@ class StripeClient:
             )
             return False
         else:
-            creditsOutstanding = referrer.credits_outstanding
+            credits_outstanding = referrer.credits_outstanding
+            if not credits_outstanding:
+                credits_outstanding = 0
             email = referrer.user_id
 
-            referrer.credits_outstanding = creditsOutstanding + 1
+            referrer.credits_outstanding = credits_outstanding + 1
             db.session.commit()
 
             fractalLog(
@@ -429,6 +433,8 @@ class StripeClient:
                 logs="Applied discount and updated credits outstanding",
             )
 
-            creditAppliedMail(email)
+            # don't want to spam ming :)
+            if not current_app.testing:
+                creditAppliedMail(email)
 
             return True

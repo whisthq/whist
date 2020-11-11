@@ -20,7 +20,7 @@ mail = SendGrid()
 
 
 def create_app(app_name=PKG_NAME, **kwargs):
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "true":
+    if os.getenv("HEROKU_APP_NAME") == "main-webserver":
         env = "prod"
     else:
         env = "staging"
@@ -38,6 +38,8 @@ def create_app(app_name=PKG_NAME, **kwargs):
         DATABASE_URL,
         JWT_SECRET_KEY,
         SENDGRID_API_KEY,
+        DATADOG_API_KEY,
+        DATADOG_APP_KEY,
     )
 
     app = Flask(app_name, template_folder=template_dir)
@@ -47,6 +49,8 @@ def create_app(app_name=PKG_NAME, **kwargs):
     app.config["SENDGRID_DEFAULT_FROM"] = "noreply@tryfractal.com"
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["DATADOG_API_KEY"] = DATADOG_API_KEY
+    app.config["DATADOG_APP_KEY"] = DATADOG_APP_KEY
 
     if kwargs.get("celery"):
         init_celery(kwargs.get("celery"), app)
@@ -69,6 +73,7 @@ def init_app(app):
     from .blueprints.admin.admin_blueprint import admin_bp
     from .blueprints.admin.sql_table_blueprint import table_bp
     from .blueprints.admin.logs_blueprint import logs_bp
+    from .blueprints.admin.hasura_blueprint import hasura_bp
 
     from .blueprints.auth.account_blueprint import account_bp
     from .blueprints.auth.token_blueprint import token_bp
@@ -89,6 +94,7 @@ def init_app(app):
     app.register_blueprint(token_bp)
     app.register_blueprint(celery_status_bp)
     app.register_blueprint(aws_container_bp)
+    app.register_blueprint(hasura_bp)
     app.register_blueprint(google_auth_bp)
     app.register_blueprint(mail_bp)
     app.register_blueprint(newsletter_bp)

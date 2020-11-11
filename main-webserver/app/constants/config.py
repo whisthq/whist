@@ -6,12 +6,20 @@ from sqlalchemy.orm import sessionmaker
 config_engine = sqlalchemy.create_engine(os.getenv("CONFIG_DB_URL"), echo=False, pool_pre_ping=True)
 ConfigSession = sessionmaker(bind=config_engine, autocommit=False)
 
+app_to_env = {
+    "dev-webserver": {"database": "DEV_DB_URL", "env": "dev"},
+    "staging-webserver": {"database": "STAGING_DB_URL", "env": "staging"},
+    "main-webserver": {"database": "PROD_DB_URL", "env": "production"},
+}
+
 
 def getEnvVar(key):
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE":
-        env = "production"
-    else:
-        env = "staging"
+    output, env = None, None
+
+    try:
+        env = app_to_env[os.getenv("HEROKU_APP_NAME")]["env"]
+    except:
+        env = app_to_env["dev-webserver"]["env"]
 
     session = ConfigSession()
 
@@ -23,6 +31,8 @@ def getEnvVar(key):
     try:
         rows = session.execute(command, params)
         output = rows.fetchone()
+        if output:
+            output = output[1]
     except Exception as e:
         print(
             "Error executing fetching config variable [{command}]: {error}".format(
@@ -33,35 +43,39 @@ def getEnvVar(key):
     session.commit()
     session.close()
 
-    return output[1]
+    return output
 
 
-DATABASE_URL = (
-    os.getenv("PROD_DB_URL")
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE"
-    else os.getenv("STAGING_DB_URL")
-)
+try:
+    DATABASE_URL = os.getenv(app_to_env[os.getenv("HEROKU_APP_NAME")]["database"])
+except:
+    DATABASE_URL = os.getenv(app_to_env["dev-webserver"]["database"])
 
-VM_GROUP = "Fractal" if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE" else "FractalStaging"
-
+# Stripe
 STRIPE_SECRET = getEnvVar("STRIPE_SECRET")
-
-JWT_SECRET_KEY = getEnvVar("JWT_SECRET_KEY")
-AWS_ACCESS_KEY = getEnvVar("AWS_ACCESS_KEY")
-AWS_SECRET_KEY = getEnvVar("AWS_SECRET_KEY")
+HOURLY_PLAN_ID = getEnvVar("HOURLY_PLAN_ID")
+MONTHLY_PLAN_ID = getEnvVar("MONTHLY_PLAN_ID")
+UNLIMITED_PLAN_ID = getEnvVar("UNLIMITED_PLAN_ID")
 ENDPOINT_SECRET = getEnvVar("ENDPOINT_SECRET")
+
+# Auth
+JWT_SECRET_KEY = getEnvVar("JWT_SECRET_KEY")
 DASHBOARD_USERNAME = getEnvVar("DASHBOARD_USERNAME")
 DASHBOARD_PASSWORD = getEnvVar("DASHBOARD_PASSWORD")
 SHA_SECRET_KEY = getEnvVar("SHA_SECRET_KEY")
-ADMIN_PASSWORD = getEnvVar("ADMIN_PASSWORD")
+
+# AWS
+AWS_ACCESS_KEY = getEnvVar("AWS_ACCESS_KEY")
+AWS_SECRET_KEY = getEnvVar("AWS_SECRET_KEY")
+
+# Sendgrid
 SENDGRID_API_KEY = getEnvVar("SENDGRID_API_KEY")
-FRONTEND_URL = getEnvVar("FRONTEND_URL")
-VM_PASSWORD = getEnvVar("VM_PASSWORD")
 SENDGRID_EMAIL = "noreply@tryfractal.com"
+FRONTEND_URL = getEnvVar("FRONTEND_URL")
 
-AZURE_SUBSCRIPTION_ID = getEnvVar("AZURE_SUBSCRIPTION_ID")
-AZURE_CLIENT_ID = getEnvVar("AZURE_CLIENT_ID")
-AZURE_CLIENT_SECRET = getEnvVar("AZURE_CLIENT_SECRET")
-AZURE_TENANT_ID = getEnvVar("AZURE_TENANT_ID")
+# Datadog
+DATADOG_API_KEY = getEnvVar("DATADOG_API_KEY")
+DATADOG_APP_KEY = getEnvVar("DATADOG_APP_KEY")
 
+# Misc
 SILENCED_ENDPOINTS = ["/status", "/ping"]
