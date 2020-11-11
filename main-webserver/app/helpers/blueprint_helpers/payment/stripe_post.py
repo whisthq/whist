@@ -10,12 +10,6 @@ from dateutil.relativedelta import relativedelta
 from flask import jsonify
 from pyzipcode import ZipCodeDatabase
 
-from app.constants.config import (
-    HOURLY_PLAN_ID,
-    MONTHLY_PLAN_ID,
-    STRIPE_SECRET,
-    UNLIMITED_PLAN_ID,
-)
 from app.constants.http_codes import (
     BAD_REQUEST,
     CONFLICT,
@@ -36,6 +30,12 @@ from app.helpers.utils.general.logs import fractalLog
 from app.helpers.utils.general.time import dateToUnix, getToday
 from app.models import db, User
 from app.serializers.public import UserSchema
+
+HOURLY_PLAN_ID = "DUMMY"
+MONTHLY_PLAN_ID = "DUMMY"
+STRIPE_SECRET = "DUMMY"
+UNLIMITED_PLAN_ID = "DUMMY"
+
 
 stripe.api_key = STRIPE_SECRET
 zcdb = ZipCodeDatabase()
