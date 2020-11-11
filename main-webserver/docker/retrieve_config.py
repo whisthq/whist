@@ -73,7 +73,6 @@ useful_env_vars = [
     "PROD_DB_URL",
     "STAGING_DB_URL",
     "DEV_DB_URL",
-    "USE_PRODUCTION_KEYS",
     "AWS_SECRET_ACCESS_KEY",
     "AWS_ACCESS_KEY_ID",
     "HEROKU_APP_NAME",
