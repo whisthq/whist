@@ -20,7 +20,7 @@ You can retrieve the JSON of a task definition directly in the AWS console when 
 
 ## Adding New Task Definitions
 
-To add a new task definition, first ensure that support was added for the specific application on the [container-images](https://github.com/fractalcomputers/container-images) repository.
+To add a new task definition, first ensure that support was added for the specific application on the [container-images](https://github.com/fractal/container-images) repository.
 
 Once that done, create a new `.json` file named `fractal-[folder-name-on-container-images]-[application-name].json`, and copy-paste the content of a a pre-existing task definition JSON, replacing the `"family"` tag with `fractal-[folder-name-on-container-images]-[application-name]`. For instance, Google Chrome is named `chrome` under the folder `browsers`, so the family tag is `fractal-browsers-chrome`.
 
@@ -30,4 +30,4 @@ Lastly, add your newly-supported application to the `app` list in `.github/workf
 
 For every push to `main`, all the task definitions specified in `.github/workflows/render-and-deploy.yml`, which should be all task definition JSONs in this repository, will be automatically rendered and deployed to all supported AWS regions listed under `aws-regions` in `.github/workflows/render-and-deploy.yml`. 
 
-On top of that, whenever there is a push to `master` on the [container-images](https://github.com/fractalcomputers/container-images) repository, all task definitions specified in `.github/workflows/render-and-deploy.yml` will be rendered and deployed automatically to update the task definition tags to point to the newly-deployed container images.
+On top of that, whenever there is a push to `master` on the [container-images](https://github.com/fractal/container-images) repository, all task definitions specified in `.github/workflows/render-and-deploy.yml` will be rendered and deployed automatically to update the task definition tags to point to the newly-deployed container images.
