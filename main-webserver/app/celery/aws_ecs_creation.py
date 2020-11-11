@@ -354,7 +354,7 @@ desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_b
         )
         raise Ignore
 
-    if not current_app.testing or True:
+    if not current_app.testing:
         task_time_taken = time.time() - task_start_time
         datadogEvent_containerCreate(
             container.container_id, cluster_name, username=username, time_taken=task_time_taken
@@ -462,7 +462,7 @@ def create_new_cluster(
             meta={"msg": f"Encountered error: {error}"},
         )
 
-    if not current_app.testing or True:
+    if not current_app.testing:
         task_time_taken = time.time() - task_start_time
         datadogEvent_clusterCreate(cluster_name, time_taken=task_time_taken)
 
