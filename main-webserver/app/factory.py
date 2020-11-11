@@ -20,7 +20,7 @@ mail = SendGrid()
 
 
 def create_app(app_name=PKG_NAME, **kwargs):
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "true":
+    if os.getenv("HEROKU_APP_NAME") == "main-webserver":
         env = "prod"
     else:
         env = "staging"
