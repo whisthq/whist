@@ -10,11 +10,12 @@ function printhelp {
     echo "                                  in S3 bucket"
     echo "  --bucket BUCKET                set the S3 bucket to upload to (if -publish=true)"
     echo "                                  options are:"
-    echo "                                    fractal-applications-release [Windows bucket]"
+    echo "                                    fractal-windows-application-release [Windows bucket]"
     echo "                                    fractal-mac-application-release [Mac bucket]"
     echo "                                    fractal-linux-application-release [Linux bucket]"
-    echo "                                    fractal-applications-testing [Internal use Windows testing bucket]"
-    echo "                                    fractal-mac-application-testing [Internal use Macvp testing bucket]"
+    echo "                                    fractal-windows-application-testing [Internal use Windows testing bucket]"
+    echo "                                    fractal-mac-application-testing [Internal use Mac testing bucket]"
+    echo "                                    fractal-linux-application-testing [Internal use Linux testing bucket]"
     echo "  --publish PUBLISH              set whether to publish to S3 and auto-update live apps"
     echo "                                  defaults to false, options are true/false"
 }
@@ -40,7 +41,7 @@ else
      python3 setVersion.gyp $bucket $version
 
      rm -rf .protocol
-     git clone --depth 1 https://github.com/fractalcomputers/protocol .protocol
+     git clone --depth 1 https://github.com/fractal/protocol .protocol
      cd .protocol
      git reset --hard
      git fetch --depth 25 origin $branch:$branch 
@@ -55,15 +56,9 @@ else
      cd ..
      cp .protocol/desktop/build64/Darwin/FractalClient protocol-build/desktop
      cp -R .protocol/desktop/build64/Darwin/loading protocol-build/desktop
-     cp .protocol/desktop/build64/Darwin/sshkey protocol-build/desktop
-     cp .protocol/desktop/build64/Darwin/sshkey.pub protocol-build/desktop
-     sudo chmod 600 protocol-build/desktop/sshkey # was previously in protocol, but operation not permitted from protocol
      if [[ "$OSTYPE" == "linux-gnu" ]]; then
      # Linux Ubuntu
-     # copy over the Unison executable and make executable files executable
-     cp .protocol/desktop/build64/linux_unison protocol-build/desktop
      sudo chmod +x protocol-build/desktop/FractalClient
-     sudo chmod +x protocol-build/desktop/linux_unison
      elif [[ "$OSTYPE" == "darwin"* ]]; then
      # Mac OSX
      # add logo to the FractalClient executable
@@ -73,7 +68,6 @@ else
      SetFile -a C protocol-build/desktop/FractalClient # use the resource to set the icon
      rm tmpicns.rsrc # clean up
      # copy over the Unison executable and FFmpeg dylibs
-     cp .protocol/desktop/build64/Darwin/mac_unison protocol-build/desktop
      cp .protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol-build/desktop
      cp .protocol/lib/64/ffmpeg/Darwin/libavdevice.58.dylib protocol-build/desktop
      cp .protocol/lib/64/ffmpeg/Darwin/libavfilter.7.dylib protocol-build/desktop
