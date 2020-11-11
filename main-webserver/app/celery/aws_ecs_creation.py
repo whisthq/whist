@@ -219,20 +219,21 @@ def assign_container(
         base_container.user_id = username
         base_container.dpi = dpi
         db.session.commit()
-        for i in range(num_extra):
+        for _ in range(num_extra):
             create_new_container.delay(
                 "Unassigned",
                 task_definition_arn,
                 region_name=region_name,
                 webserver_url=webserver_url,
             )
-            pass
+        self.update_state(
+            state="SUCCESS",
+            meta={"msg": "Container assigned."},
+        )
         return base_container
     else:
         db.session.commit()
         # create_new_container here
-        pass
-    pass
 
 
 @shared_task(bind=True)
@@ -240,10 +241,8 @@ def create_new_container(
     self,
     username,
     task_definition_arn,
-    use_launch_type=False,
     cluster_name=None,
     region_name="us-east-1",
-    network_configuration=None,
     webserver_url=None,
 ):
     """Create a new ECS container running a particular task.
