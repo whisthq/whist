@@ -14,15 +14,14 @@ cmake_minimum_required(VERSION 3.15)
 #We need CMP0091 to select the MSVC_RUNTIME_LIBRARY
 #See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
 cmake_policy(SET CMP0091 NEW)
-
-#set default compiler flags
-include("cmake/CompilerOptions.cmake")
-
 project(FractalProtocol LANGUAGES C)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     enable_language(CUDA)
 endif()
+
+#set default compiler flags
+include(cmake/CompilerOptions.cmake)
 
 set(META_PROJECT_NAME        "FractalProtocol")
 set(META_PROJECT_DESCRIPTION "CMake Project for the Fractal client protocol clients on mac, linux and windows
