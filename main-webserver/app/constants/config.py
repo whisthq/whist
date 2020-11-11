@@ -73,5 +73,9 @@ SENDGRID_API_KEY = getEnvVar("SENDGRID_API_KEY")
 SENDGRID_EMAIL = "noreply@tryfractal.com"
 FRONTEND_URL = getEnvVar("FRONTEND_URL")
 
+# Datadog
+DATADOG_API_KEY = getEnvVar("DATADOG_API_KEY")
+DATADOG_APP_KEY = getEnvVar("DATADOG_APP_KEY")
+
 # Misc
 SILENCED_ENDPOINTS = ["/status", "/ping"]

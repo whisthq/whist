@@ -4,6 +4,7 @@ import hashlib
 from datetime import datetime as dt
 
 from better_profanity import profanity
+from flask import current_app
 
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
 from app.constants.http_codes import BAD_REQUEST, FORBIDDEN, SUCCESS
@@ -14,6 +15,11 @@ from app.helpers.utils.general.tokens import (
     getGoogleTokens,
 )
 from app.models import db, User
+
+
+from app.helpers.utils.datadog.events import (
+    datadogEvent_userLogon,
+)
 
 
 def registerGoogleUser(
@@ -66,6 +72,9 @@ def loginHelper(code, clientApp):
 
     if user:
         if user.using_google_login:
+            if not current_app.testing:
+                datadogEvent_userLogon(username)
+
             return {
                 "new_user": False,
                 "is_user": True,
