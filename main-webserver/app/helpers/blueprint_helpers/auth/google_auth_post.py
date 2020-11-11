@@ -15,6 +15,12 @@ from app.helpers.utils.general.tokens import (
 )
 from app.models import db, User
 
+from flask import current_app
+
+from app.helpers.utils.datadog.events import (
+    datadogEvent_userLogon,
+)
+
 
 def registerGoogleUser(
     username, name, token, reason_for_signup=None
@@ -66,6 +72,9 @@ def loginHelper(code, clientApp):
 
     if user:
         if user.using_google_login:
+            if not current_app.testing:
+                datadogEvent_userLogon(username)
+
             return {
                 "new_user": False,
                 "is_user": True,

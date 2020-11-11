@@ -2,7 +2,7 @@ import datetime
 import logging
 
 from datetime import datetime as dt
-from flask import jsonify
+from flask import jsonify, current_app
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
@@ -21,6 +21,10 @@ from app.helpers.utils.general.tokens import (
     getAccessTokens,
 )
 from app.models import db, User
+
+from app.helpers.utils.datadog.events import (
+    datadogEvent_userLogon,
+)
 
 
 def loginHelper(email, password):
@@ -61,6 +65,9 @@ def loginHelper(email, password):
     # Fetch the JWT tokens
 
     access_token, refresh_token = getAccessTokens(email)
+
+    if not current_app.testing:
+        datadogEvent_userLogon(username)
 
     return {
         "verified": user.verified,
