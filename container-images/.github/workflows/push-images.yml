@@ -48,8 +48,8 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.aws-placeholder-region }}
 
-            - name: Build protocol
-              run: ./build_protocol.sh
+            - name: Build release protocol
+              run: ./build_protocol.sh release
 
             - name: Build container images
               run: |
