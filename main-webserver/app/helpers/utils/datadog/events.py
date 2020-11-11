@@ -190,7 +190,7 @@ def datadogEvent_containerDelete(container_name, cluster_name, lifecycle=False, 
     else:
         datadogEvent(
             title="Deleted Container",
-            text="Container {container_name} in cluster {container_cluster}. Call took {time_taken} time.".format(
+            text="Container {container_name} in cluster {cluster_name}. Call took {time_taken} time.".format(
                 container_name=container_name, cluster_name=cluster_name, time_taken=time_taken
             ),
             tags=[
@@ -277,12 +277,14 @@ def datadogEvent_containerLifecycle(container_name, cluster_name="unknown", time
 
             datadogEvent(
                 title="Container Lifecycle Ended",
-                text="Container {container_name} has been deleted, completing its lifecycle. Creation time was {creation_date} and deletion time was {deletion_date}. Change in time was {runtime}. Ther user was {container_user}".format(
+                text="Container {container_name} has been deleted, completing its lifecycle. Creation time was {creation_date} and deletion time was {deletion_date}. Change in time was {runtime}. Ther user was {container_user}. Cluster was {cluster_name} and the call to delete took {time_taken}.".format(
                     container_name=container_name,
                     creation_date=creation_date,
                     deletion_date=deletion_date,
                     runtime=runtime,
                     container_user=container_user,
+                    cluster_name=cluster_name,
+                    time_taken=time_taken,
                 ),
                 tags=[
                     CONTAINER_LIFECYCLE,
@@ -337,11 +339,12 @@ def datadogEvent_clusterLifecycle(cluster_name, time_taken="unknown"):
 
             datadogEvent(
                 title="Cluster Lifecycle Ended",
-                text="Cluster {cluster_name} has been deleted, completing its lifecycle. Creation time was {creation_date} and deletion time was {deletion_date}. Change in time was {runtime}.".format(
+                text="Cluster {cluster_name} has been deleted, completing its lifecycle. Creation time was {creation_date} and deletion time was {deletion_date}. Change in time was {runtime}. Time taken to invoke shutdown was {time_taken}.".format(
                     cluster_name=cluster_name,
                     creation_date=creation_date,
                     deletion_date=deletion_date,
                     runtime=runtime,
+                    time_taken=time_taken,
                 ),
                 tags=[CLUSTER_LIFECYCLE, SUCCESS, CLUSTER_NAME_F.format(cluster_name=cluster_name)],
             )
