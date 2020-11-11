@@ -68,6 +68,16 @@ jobs:
                     done
                   done
 
+            - name: Create Lifecycle Policies for each image, only keeps latest 10
+              run: |
+                  for region in ${{ env.aws-regions }}
+                  do
+                    for app in ${{ env.apps }}
+                    do
+                      ./apply_ecr_lifecycle_policy.sh $app $region
+                    done
+                  done
+
             - name: Notify Slack
               run: |
                   curl -X POST \
