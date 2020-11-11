@@ -34,7 +34,7 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
-            - name: Build protocol
+            - name: Build debug protocol
               run: ./build_protocol.sh
 
             - name: Build container images

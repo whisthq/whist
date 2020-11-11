@@ -49,8 +49,8 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.aws-placeholder-region }}
 
-            - name: Build protocol
-              run: ./build_protocol.sh
+            - name: Build release protocol
+              run: ./build_protocol.sh release
 
             - name: Build container images
               run: |
@@ -66,6 +66,16 @@ jobs:
                     for app in ${{ env.apps }}
                     do
                       ./push_container_image.sh $app $region
+                    done
+                  done
+
+            - name: Create Lifecycle Policies for each image, only keeps latest 10
+              run: |
+                  for region in ${{ env.aws-regions }}
+                  do
+                    for app in ${{ env.apps }}
+                    do
+                      ./apply_ecr_lifecycle_policy.sh $app $region
                     done
                   done
 
