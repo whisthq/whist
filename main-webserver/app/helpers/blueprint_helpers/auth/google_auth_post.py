@@ -4,6 +4,7 @@ import hashlib
 from datetime import datetime as dt
 
 from better_profanity import profanity
+from flask import current_app
 
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
 from app.constants.http_codes import BAD_REQUEST, FORBIDDEN, SUCCESS
@@ -15,7 +16,6 @@ from app.helpers.utils.general.tokens import (
 )
 from app.models import db, User
 
-from flask import current_app
 
 from app.helpers.utils.datadog.events import (
     datadogEvent_userLogon,

@@ -67,7 +67,7 @@ def loginHelper(email, password):
     access_token, refresh_token = getAccessTokens(email)
 
     if not current_app.testing:
-        datadogEvent_userLogon(username)
+        datadogEvent_userLogon(email)
 
     return {
         "verified": user.verified,
