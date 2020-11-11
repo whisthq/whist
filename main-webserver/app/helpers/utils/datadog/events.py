@@ -102,7 +102,9 @@ def datadogEvent_userLogon(user_name):
     )
 
 
-def datadogEvent_containerCreate(container_name, cluster_name, username=None):
+def datadogEvent_containerCreate(
+    container_name, cluster_name, username="unknown", time_taken="unknown"
+):
     """Logs an event for container creation. This is necessary for lifecycle events to be
     able to work so that they can find the time that the deleted container was created.
 
@@ -111,6 +113,7 @@ def datadogEvent_containerCreate(container_name, cluster_name, username=None):
             This is used to search in lifecycle.
         cluster_name (str): The cluster it was created in.
         username (str, optional): The username of the user this is created for.
+        time_taken
     """
 
     tags = [
@@ -124,16 +127,17 @@ def datadogEvent_containerCreate(container_name, cluster_name, username=None):
 
     datadogEvent(
         title="Created new Container",
-        text="Container {container_name} in cluster {cluster_name} for user {username}".format(
+        text="Container {container_name} in cluster {cluster_name} for user {username}. Call took {time_taken} time.".format(
             container_name=container_name,
             cluster_name=cluster_name,
-            username=(username if username else "unknown"),
+            username=username,
+            time_taken=time_taken,
         ),
         tags=tags,
     )
 
 
-def datadogEvent_clusterCreate(cluster_name):
+def datadogEvent_clusterCreate(cluster_name, time_taken="unknown"):
     """Same as datadogEvent_containerCreate but for clusters.
 
     Args:
@@ -141,7 +145,7 @@ def datadogEvent_clusterCreate(cluster_name):
             This is used to search in lifecycle.
     """
     datadogEvent(
-        title="Created new Cluster",
+        title="Created new Cluster. Call took {time_taken} time.".format(time_taken=time_taken),
         text="Cluster {cluster_name}".format(cluster_name=cluster_name),
         tags=[CLUSTER_CREATION, SUCCESS, CLUSTER_NAME_F.format(cluster_name=cluster_name)],
     )
@@ -166,7 +170,7 @@ def datadogEvent_userLogoff(user_name, lifecycle=False):
         )
 
 
-def datadogEvent_containerDelete(container_name, cluster_name, lifecycle=False):
+def datadogEvent_containerDelete(container_name, cluster_name, lifecycle=False, time_taken=None):
     """Logs an event for the deletion of the container. It has a "naive" option and a
     lifecycle option. In the lifecycle option it will log a lifecycle type event instead
     of a deletion type event. This event will inform users of the length of time taken.
@@ -180,12 +184,14 @@ def datadogEvent_containerDelete(container_name, cluster_name, lifecycle=False):
             event or prefer just to log the deletion itself naively. Defaults to False.
     """
     if lifecycle:
-        datadogEvent_containerLifecycle(container_name)
+        datadogEvent_containerLifecycle(
+            container_name, cluster_name=cluster_name, time_taken=time_taken
+        )
     else:
         datadogEvent(
             title="Deleted Container",
-            text="Container {container_name} in cluster {container_cluster}".format(
-                container_name=container_name, cluster_name=cluster_name
+            text="Container {container_name} in cluster {container_cluster}. Call took {time_taken} time.".format(
+                container_name=container_name, cluster_name=cluster_name, time_taken=time_taken
             ),
             tags=[
                 CONTAINER_DELETION,
@@ -196,7 +202,7 @@ def datadogEvent_containerDelete(container_name, cluster_name, lifecycle=False):
         )
 
 
-def datadogEvent_clusterDelete(cluster_name, lifecycle=False):
+def datadogEvent_clusterDelete(cluster_name, lifecycle=False, time_taken="unknown"):
     """Same idea as datadogEvent_containerDelete but for clusters.
 
     Args:
@@ -204,16 +210,18 @@ def datadogEvent_clusterDelete(cluster_name, lifecycle=False):
         lifecycle (bool, optional): Whether to do lifecycle type instead of naive. Defaults to False.
     """
     if lifecycle:
-        datadogEvent_clusterLifecycle(cluster_name)
+        datadogEvent_clusterLifecycle(cluster_name, time_taken=time_taken)
     else:
         datadogEvent(
             title="Deleted Cluster",
-            text="Cluster {cluster_name}".format(cluster_name=cluster_name),
+            text="Cluster {cluster_name}. Call took {time_taken} time.".format(
+                cluster_name=cluster_name, time_taken=time_taken
+            ),
             tags=[CLUSTER_DELETION, SUCCESS, CLUSTER_NAME_F.format(cluster_name=cluster_name)],
         )
 
 
-def datadogEvent_containerLifecycle(container_name):
+def datadogEvent_containerLifecycle(container_name, cluster_name="unknown", time_taken="unknown"):
     """The goal is to tell the amount of time a container was up/down.
 
     This will log an event for the lifecycle of a container that is being shut down.
@@ -298,7 +306,7 @@ def datadogEvent_containerLifecycle(container_name):
         # could be invoked in a real environment and do not want to break the server
 
 
-def datadogEvent_clusterLifecycle(cluster_name):
+def datadogEvent_clusterLifecycle(cluster_name, time_taken="unknown"):
     """Effectively the same as datadogEvent_containerLifecycle, except for clusters.
     Read above.
 

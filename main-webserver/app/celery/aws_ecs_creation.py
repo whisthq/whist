@@ -189,6 +189,8 @@ def create_new_container(
         webserver_url: The URL of the web server to ping and with which to authenticate.
     """
 
+    task_start_time = time.time()
+
     message = (
         f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in "
         f"{region_name}"
@@ -352,8 +354,11 @@ desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_b
         )
         raise Ignore
 
-    if not current_app.testing:
-        datadogEvent_containerCreate(container.container_id, cluster_name, username=username)
+    if not current_app.testing or True:
+        task_time_taken = time.time() - task_start_time
+        datadogEvent_containerCreate(
+            container.container_id, cluster_name, username=username, time_taken=task_time_taken
+        )
 
 
 @shared_task(bind=True)
@@ -384,6 +389,8 @@ def create_new_cluster(
     Returns:
         user_cluster_schema: information on cluster created
     """
+    task_start_time = time.time()
+
     fractalLog(
         function="create_new_cluster",
         label="None",
@@ -455,8 +462,9 @@ def create_new_cluster(
             meta={"msg": f"Encountered error: {error}"},
         )
 
-    if not current_app.testing:
-        datadogEvent_clusterCreate(cluster_name)
+    if not current_app.testing or True:
+        task_time_taken = time.time() - task_start_time
+        datadogEvent_clusterCreate(cluster_name, time_taken=task_time_taken)
 
 
 @shared_task(bind=True)
