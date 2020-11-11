@@ -30,13 +30,7 @@ def chargeHelper(token, email, code, plan):
         label=email,
         logs="Signing {} up for plan {}, with code {}, token{}".format(email, plan, code, token),
     )
-    plan = (
-        UNLIMITED_PLAN_ID
-        if plan == "unlimited"
-        else HOURLY_PLAN_ID
-        if plan == "hourly"
-        else MONTHLY_PLAN_ID
-    )
+    # TODO GET PLAN IDS
 
     client = StripeClient(STRIPE_SECRET)
     try:
@@ -159,14 +153,7 @@ def removeProductHelper(email, productName):
 # TODO
 def updateHelper(username, new_plan_type):
     new_plan_id = None
-    if new_plan_type == "Hourly":
-        new_plan_id = HOURLY_PLAN_ID
-    elif new_plan_type == "Monthly":
-        new_plan_id = MONTHLY_PLAN_ID
-    elif new_plan_type == "Unlimited":
-        new_plan_id = UNLIMITED_PLAN_ID
-    else:
-        return (jsonify({"status": NOT_ACCEPTABLE, "error": "Invalid plan type"}), NOT_ACCEPTABLE)
+    # TODO GET PLAN ID
 
     customer = User.query.get(username)
     if not customer:

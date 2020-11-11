@@ -33,8 +33,8 @@ from app.helpers.utils.payment.stripe_client import (
     RegionNotSupported,
 )
 
+# TODO get monthly plan id as monthly_plan
 from app.constants.config import (
-    MONTHLY_PLAN_ID as monthly_plan,  # this is an old plan # TODO update this bad boy
     STRIPE_SECRET as stripe_api_key,  # this is a test secret
 )
 
