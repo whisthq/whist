@@ -85,6 +85,7 @@ def loginHelper(code, clientApp):
                 "status": SUCCESS,
                 "name": name,
                 "can_login": user.can_login,
+                "using_google_login": True,
             }
         else:
             return {"status": FORBIDDEN, "error": "Try using non-Google login"}
@@ -109,6 +110,7 @@ def loginHelper(code, clientApp):
         "username": username,
         "name": name,
         "can_login": False,
+        "using_google_login": True,
     }
 
 
