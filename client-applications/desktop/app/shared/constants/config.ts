@@ -1,6 +1,6 @@
-const staging: any = {
+const local: any = {
     url: {
-        WEBSERVER_URL: "https://dev-webserver.herokuapp.com",
+        WEBSERVER_URL: "http://127.0.0.1:7730",
         FRONTEND_URL: "http://localhost:3000",
         GRAPHQL_HTTP_URL: "https://staging-database.tryfractal.com/v1/graphql",
         GRAPHQL_WS_URL: "wss://staging-database.tryfractal.com/v1/graphql",
@@ -14,9 +14,9 @@ const staging: any = {
     sentry_env: "development",
 }
 
-const local: any = {
+const development: any = {
     url: {
-        WEBSERVER_URL: "http://127.0.0.1:7730",
+        WEBSERVER_URL: "https://dev-webserver.herokuapp.com",
         FRONTEND_URL: "http://localhost:3000",
         GRAPHQL_HTTP_URL: "https://staging-database.tryfractal.com/v1/graphql",
         GRAPHQL_WS_URL: "wss://staging-database.tryfractal.com/v1/graphql",
@@ -47,4 +47,4 @@ const production: any = {
 }
 
 export const config: any =
-    process.env.NODE_ENV === "development" ? production : production
+    process.env.NODE_ENV === "development" ? development : production

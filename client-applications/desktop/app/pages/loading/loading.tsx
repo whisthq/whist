@@ -46,7 +46,6 @@ const UpdateScreen = (props: any) => {
 
     useEffect(() => {
         if (launches === 1) {
-            console.log("PREPARING TO RUN LAUNCH PROTOCOL FUNCTION")
             LaunchProtocol()
         }
     }, [launches])
@@ -91,7 +90,6 @@ const UpdateScreen = (props: any) => {
                     secretKey,
                     ip,
                 ]
-                debugLog(`your executable path should be: ${path}`)
                 console.log(parameters)
 
                 // Starts the protocol
@@ -105,6 +103,7 @@ const UpdateScreen = (props: any) => {
                     //},
                 })
                 protocol.on("close", () => {
+                    console.log("Stream exit detected")
                     dispatch(
                         updateContainer({
                             container_id: null,

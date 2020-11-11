@@ -45,7 +45,7 @@ else
      git reset --hard
      git fetch --depth 25 origin $branch:$branch 
      git checkout $branch
-     cmake .
+     cmake . -DCMAKE_BUILD_TYPE=Release
      make FractalClient
      cd ..
      rm -rf protocol-build 

@@ -268,7 +268,7 @@ function* fetchContainer(action: any) {
             })
         )
 
-        while (json.state !== "SUCCESS" && json.state !== "FAILURE") {
+        while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
             if (secondsPassed % 1 === 0) {
                 var { json, response } = yield call(
                     apiGet,

@@ -89,7 +89,7 @@
                                                 ]
                                 },
                   "publish":  {
-                                  "bucket":  "fractal-windows-application-release",
+                                  "bucket":  "fractal-windows-application-testing",
                                   "provider":  "s3",
                                   "region":  "us-east-1"
                               },

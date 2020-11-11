@@ -21,7 +21,7 @@ if "%1%" == "--help" (
     git reset --hard
     git fetch --depth 25 origin %branch%:%branch%
     git checkout %branch%
-    cmake -G "NMake Makefiles"
+    cmake . -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles"
     nmake FractalClient
     cd ..
     rmdir /S/Q protocol-build
@@ -57,10 +57,9 @@ echo                                   must be greater than the current version
 echo                                   in S3 bucket
 echo   -bucket=BUCKET                set the S3 bucket to upload to (if -publish=true)
 echo                                   options are:
-echo                                     fractal-applications-release [Windows bucket]
-echo                                     fractal-mac-application-release [Mac bucket]
-echo                                     fractal-linux-application-release [Linux bucket]
-echo                                     fractal-applications-testing [Internal use testing bucket]
+echo                                     fractal-windows-application-release/fractal-windows-application-testing [Windows bucket]
+echo                                     fractal-mac-application-release/fractal-mac-application-testing [Mac bucket]
+echo                                     fractal-linux-application-release/fractal-linux-application-release [Linux bucket]
 echo   -publish=PUBLISH              set whether to publish to S3 and auto-update live apps
 echo                                   defaults to false, options are true/false
 exit /b 0
