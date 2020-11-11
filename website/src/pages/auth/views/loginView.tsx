@@ -155,7 +155,6 @@ const LoginView = (props: any) => {
                             fontSize: 16,
                             paddingTop: 15,
                             paddingBottom: 15,
-                            opacity: loginEnabled(email, password) ? 1.0 : 0.6,
                         }}
                         onClick={login}
                     >
