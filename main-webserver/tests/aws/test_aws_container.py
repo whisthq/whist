@@ -97,7 +97,6 @@ def test_create_container(client, authorized, monkeypatch):
             cluster_name=pytest.cluster_name,
             region_name="us-east-1",
             task_definition_arn="fractal-browsers-chrome",
-            use_launch_type=False,
         ),
     )
 
