@@ -117,6 +117,44 @@ def _poll(container_id):
     return result
 
 
+def select_cluster(region_name):
+    """
+    Selects the best cluster for task placement in a given region, creating new clusters as
+    necessary.
+    Args:
+        region_name: which region to create the cluster in.
+
+    Returns: a valid cluster name.
+
+    """
+    all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
+    all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
+    base_len = 2
+    regen_fraction = 0.7
+    if len(all_clusters) == 0:
+        fractalLog(
+            function="select_cluster",
+            label=None,
+            logs="No available clusters found. Creating new cluster...",
+        )
+        cluster_name = create_new_cluster.delay(
+            region_name=region_name, ami=region_to_ami[region_name], min_size=1
+        ).get(disable_sync_subtasks=False)["cluster"]
+        for _ in range(base_len - len(all_clusters)):
+            create_new_cluster.delay(
+                region_name=region_name, ami=region_to_ami[region_name], min_size=1
+            )
+    else:
+        cluster_name = all_clusters[0].cluster
+        if len(all_clusters) == 1 and float(
+            all_clusters[0].registeredContainerInstancesCount
+        ) > regen_fraction * float(all_clusters[0].maxContainers):
+            create_new_cluster.delay(
+                region_name=region_name, ami=region_to_ami[region_name], min_size=1
+            )
+    return cluster_name
+
+
 @shared_task(bind=True)
 def assign_container(
     self,
@@ -163,6 +201,7 @@ def create_new_container(
     cluster_name=None,
     region_name="us-east-1",
     network_configuration=None,
+    dpi=96,
     webserver_url=None,
 ):
     """Create a new ECS container running a particular task.
@@ -186,47 +225,9 @@ def create_new_container(
         f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in "
         f"{region_name}"
     )
-    container_overrides = {
-        "containerOverrides": [
-            {
-                "name": "fractal-container",
-                "environment": [
-                    {"name": "FRACTAL_AES_KEY", "value": aeskey},
-                    {
-                        "name": "WEBSERVER_URL",
-                        "value": (webserver_url if webserver_url is not None else ""),
-                    },
-                ],
-            },
-        ],
-    }
-    kwargs = {"networkConfiguration": network_configuration, "overrides": container_overrides}
     fractalLog(function="create_new_container", label="None", logs=message)
-    base_len = 2
     if not cluster_name:
-        all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
-        all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
-        if len(all_clusters) == 0:
-            fractalLog(
-                function="create_new_container",
-                label=None,
-                logs="No available clusters found. Creating new cluster...",
-            )
-            cluster_name = create_new_cluster.delay(
-                region_name=region_name, ami=region_to_ami[region_name], min_size=1
-            ).get(disable_sync_subtasks=False)["cluster"]
-            for _ in range(base_len - len(all_clusters)):
-                create_new_cluster.delay(
-                    region_name=region_name, ami=region_to_ami[region_name], min_size=1
-                )
-            time.sleep(10)
-        else:
-            cluster_name = all_clusters[0].cluster
-            if len(all_clusters) < base_len:
-                for _ in range(base_len - len(all_clusters)):
-                    create_new_cluster.delay(
-                        region_name=region_name, ami=region_to_ami[region_name], min_size=1
-                    )
+        cluster_name = select_cluster(region_name)
     fractalLog(
         function="create_new_container",
         label=cluster_name,
@@ -253,7 +254,30 @@ def create_new_container(
         raise Ignore
 
     message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
+    self.update_state(
+        state="PENDING",
+        meta={"msg": message},
+    )
     fractalLog(function="create_new_container", label="None", logs=message)
+
+    # TODO:  Refactor out the task run logic into its own function, similar to cluster assignment
+
+    aeskey = os.urandom(16).hex()
+    container_overrides = {
+        "containerOverrides": [
+            {
+                "name": "fractal-container",
+                "environment": [
+                    {"name": "FRACTAL_AES_KEY", "value": aeskey},
+                    {
+                        "name": "WEBSERVER_URL",
+                        "value": (webserver_url if webserver_url is not None else ""),
+                    },
+                ],
+            },
+        ],
+    }
+    kwargs = {"networkConfiguration": network_configuration, "overrides": container_overrides}
 
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
@@ -261,10 +285,6 @@ def create_new_container(
     ecs_client.set_task_definition_arn(task_definition_arn)
     ecs_client.run_task(use_launch_type, **{k: v for k, v in kwargs.items() if v is not None})
 
-    self.update_state(
-        state="PENDING",
-        meta={"msg": message},
-    )
     ecs_client.spin_til_running(time_delay=2)
     curr_ip = ecs_client.task_ips.get(0, -1)
     curr_network_binding = ecs_client.task_ports.get(0, -1)
@@ -278,6 +298,8 @@ def create_new_container(
         )
         self.update_state(state="FAILURE", meta={"msg": "Error generating task with running IP"})
         raise Ignore
+
+    # TODO:  refactor this out into its own function
 
     container = UserContainer(
         container_id=ecs_client.tasks[0],
