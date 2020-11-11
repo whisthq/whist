@@ -220,7 +220,6 @@ def create_new_container(
         webserver_url: The URL of the web server to ping and with which to authenticate.
     """
 
-    aeskey = os.urandom(16).hex()
     message = (
         f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in "
         f"{region_name}"
