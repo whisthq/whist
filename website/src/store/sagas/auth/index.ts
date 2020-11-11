@@ -7,7 +7,7 @@ import * as AuthPureAction from "store/actions/auth/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
 import {
     UPDATE_WAITLIST_AUTH_EMAIL,
-    UPDATE_WAITLIST,
+    UPDATE_WAITLIST_REFERRALS,
 } from "shared/constants/graphql"
 import { SIGNUP_POINTS } from "shared/utils/points"
 
@@ -100,13 +100,19 @@ function* googleLogin(action: any) {
                         }
                     )
 
-                    yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
-                        user_id: state.WaitlistReducer.waitlistUser.user_id,
-                        points:
-                            state.WaitlistReducer.waitlistUser.points +
-                            SIGNUP_POINTS,
-                        referrals: state.WaitlistReducer.waitlistUser.referrals,
-                    })
+                    yield call(
+                        graphQLPost,
+                        UPDATE_WAITLIST_REFERRALS,
+                        "UpdateWaitlistReferrals",
+                        {
+                            user_id: state.WaitlistReducer.waitlistUser.user_id,
+                            points:
+                                state.WaitlistReducer.waitlistUser.points +
+                                SIGNUP_POINTS,
+                            referrals:
+                                state.WaitlistReducer.waitlistUser.referrals,
+                        }
+                    )
                 }
             } else if (response.status === 403) {
                 yield put(
@@ -234,12 +240,18 @@ function* validateVerificationToken(action: any) {
             })
         )
         if (state.WaitlistReducer.waitlistUser.user_id) {
-            yield call(graphQLPost, UPDATE_WAITLIST, "UpdateWaitlist", {
-                user_id: state.WaitlistReducer.waitlistUser.user_id,
-                points:
-                    state.WaitlistReducer.waitlistUser.points + SIGNUP_POINTS,
-                referrals: state.WaitlistReducer.waitlistUser.referrals,
-            })
+            yield call(
+                graphQLPost,
+                UPDATE_WAITLIST_REFERRALS,
+                "UpdateWaitlistReferrals",
+                {
+                    user_id: state.WaitlistReducer.waitlistUser.user_id,
+                    points:
+                        state.WaitlistReducer.waitlistUser.points +
+                        SIGNUP_POINTS,
+                    referrals: state.WaitlistReducer.waitlistUser.referrals,
+                }
+            )
         }
     } else {
         yield put(
@@ -301,6 +313,7 @@ function* validateResetToken(action: any) {
         },
         ""
     )
+
     // at some later point in time we may find it helpful to change strings here to some sort of enum
     if (json) {
         if (json.status === 200) {
@@ -308,7 +321,7 @@ function* validateResetToken(action: any) {
                 AuthPureAction.updateAuthFlow({
                     resetTokenStatus: "verified",
                     passwordResetEmail: json.user,
-                    passwordResetToken: json.token,
+                    passwordResetToken: action.token,
                 })
             )
         } else {
@@ -337,8 +350,6 @@ function* validateResetToken(action: any) {
 }
 
 function* resetPassword(action: any) {
-    // const state = yield select()
-
     yield call(
         apiPost,
         "/account/update",
@@ -353,6 +364,8 @@ function* resetPassword(action: any) {
     yield put(
         AuthPureAction.updateAuthFlow({
             resetDone: true,
+            passwordResetEmail: null,
+            passwordResetToken: null,
         })
     )
 }

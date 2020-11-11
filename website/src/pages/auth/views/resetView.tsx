@@ -52,14 +52,6 @@ const ResetView = (props: {
                     authFlow.passwordResetToken
                 )
             )
-
-            // if these are not erased then at some point the next user could manipulate this user's things
-            dispatch(
-                updateAuthFlow({
-                    passwordResetEmail: null,
-                    passwordResetToken: null,
-                })
-            )
             setFinished(true) // unfortunately this is all the sagas give us
         }
     }

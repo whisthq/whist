@@ -1,18 +1,5 @@
 import { gql } from "@apollo/client"
 
-export const GET_WAITLIST = gql`
-    query GetWaitlist {
-        waitlist(order_by: { points: desc }) {
-            name
-            points
-            referral_code
-            referrals
-            user_id
-            auth_email
-        }
-    }
-`
-
 export const INSERT_WAITLIST = gql`
     mutation InsertWaitlist(
         $user_id: String!
