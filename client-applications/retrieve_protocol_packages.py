@@ -115,7 +115,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--protocol-repo",
         help="name of the protocol repository",
-        default="fractalcomputers/protocol",
+        default="fractal/protocol",
     )
     parser.add_argument(
         "--platforms",
