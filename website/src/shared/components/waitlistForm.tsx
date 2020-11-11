@@ -150,6 +150,7 @@ function WaitlistForm(props: any) {
                     points: newPoints,
                     referral_code: newReferralCode,
                     referrals: 0,
+                    country: country,
                 },
             })
 
