@@ -84,7 +84,13 @@ const environment: any = {
     },
 }
 
+const LIVE_ENV = process.env.REACT_APP_ENVIRONMENT
+    ? process.env.REACT_APP_ENVIRONMENT.toString()
+    : "development"
+
+console.log("The environment is " + LIVE_ENV)
+
 export const config: any =
     process.env.NODE_ENV === "development"
         ? environment.local
-        : environment.development
+        : environment[LIVE_ENV]
