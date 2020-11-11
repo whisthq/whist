@@ -1,6 +1,6 @@
 # Fractal ECS Host Service
 
-![Build Host Service](https://github.com/fractalcomputers/ecs-host-service/workflows/Build%20Host%20Service/badge.svg) ![Go Linter](https://github.com/fractalcomputers/ecs-host-service/workflows/Go%20Linter/badge.svg) ![Publish builds](https://github.com/fractalcomputers/ecs-host-service/workflows/Publish%20builds/badge.svg) ![Sentry Release](https://github.com/fractalcomputers/ecs-host-service/workflows/Sentry%20Release/badge.svg)
+![Build Host Service](https://github.com/fractal/ecs-host-service/workflows/Build%20Host%20Service/badge.svg) ![Go Linter](https://github.com/fractal/ecs-host-service/workflows/Go%20Linter/badge.svg) ![Publish builds](https://github.com/fractal/ecs-host-service/workflows/Publish%20builds/badge.svg) ![Sentry Release](https://github.com/fractal/ecs-host-service/workflows/Sentry%20Release/badge.svg)
 
 This repository contains the Fractal ECS host service, which is installed on AWS EC2 instances running Fractal containers via AWS ECS to perform dynamic tty allocation and ensure new containers can be safely allocated on the host machine as simultaneous requests come in.
 

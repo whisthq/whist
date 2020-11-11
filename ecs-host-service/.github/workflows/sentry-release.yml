@@ -29,7 +29,7 @@ jobs:
 
       - name: Set Git repository URL to enable sentry-cli automatic commit tagging
         run: |
-          git remote set-url origin https://github.com/fractalcomputers/ecs-host-service
+          git remote set-url origin https://github.com/fractal/ecs-host-service
 
       - name: Create new Sentry release
         run: |
