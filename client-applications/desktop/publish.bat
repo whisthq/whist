@@ -16,7 +16,7 @@ if "%1%" == "--help" (
     PowerShell.exe -ExecutionPolicy Bypass -Command "& './setVersion.ps1'" -version %version% -bucket %bucket%
 
     rmdir /S/Q .protocol
-    git clone --depth 1 https://github.com/fractalcomputers/protocol .protocol
+    git clone --depth 1 https://github.com/fractal/protocol .protocol
     cd .protocol
     git reset --hard
     git fetch --depth 25 origin %branch%:%branch%
@@ -38,7 +38,7 @@ if "%1%" == "--help" (
 
     if "%publish%" == "true" (
         yarn package-ci 
-        REM yarn package-ci && curl -X POST -H Content-Type:application/json  -d "{ \"branch\" : \"%1\", \"version\" : \"%2\" }" https://cube-celery-staging2.herokuapp.com/version
+        REM yarn package-ci && curl -X POST -H Content-Type:application/json  -d "{ \"branch\" : \"%1\", \"version\" : \"%2\" }" https://staging-webserver.tryfractal.com/version
     ) else (
         yarn package
     )
