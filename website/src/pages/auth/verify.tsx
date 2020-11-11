@@ -14,7 +14,6 @@ import VerifyView from "pages/auth/views/verifyView"
 
 const Verify = (props: any) => {
     const { user, authFlow, waitlistUser, dispatch } = props
-    console.log(user.accessToken)
     const [updateWaitlistAuthEmail] = useMutation(UPDATE_WAITLIST_AUTH_EMAIL, {
         context: {
             headers: {

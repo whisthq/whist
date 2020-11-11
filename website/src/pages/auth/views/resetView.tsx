@@ -223,7 +223,6 @@ const ResetView = (props: {
 }
 
 function mapStateToProps(state: { AuthReducer: { user: any; authFlow: any } }) {
-    console.log(state)
     return {
         user: state.AuthReducer.user ? state.AuthReducer.user : {},
         authFlow: state.AuthReducer.authFlow ? state.AuthReducer.authFlow : {},

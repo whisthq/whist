@@ -25,8 +25,6 @@ var firebaseConfig =
                   process.env.REACT_APP_MESSAGING_SENDER_ID_PRODUCTION,
           }
 
-console.log(firebaseConfig)
-
 firebase.initializeApp(firebaseConfig)
 
 export const db = firebase.firestore()

@@ -22,8 +22,6 @@ function* emailLogin(action: any) {
         ""
     )
 
-    console.log(json)
-
     if (json && json.access_token) {
         yield put(
             AuthPureAction.updateUser({
@@ -306,7 +304,6 @@ function* forgotPassword(action: any) {
 }
 
 function* validateResetToken(action: any) {
-    console.log("VALIDATE RESET TOKEN")
     yield select()
     const { json } = yield call(
         apiPost,
@@ -353,10 +350,6 @@ function* validateResetToken(action: any) {
 }
 
 function* resetPassword(action: any) {
-    // const state = yield select()
-
-    console.log(action)
-
     yield call(
         apiPost,
         "/account/update",
