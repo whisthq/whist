@@ -1,6 +1,6 @@
 # Fractal Desktop Applications
 
-![Electron CI](https://github.com/fractalcomputers/client-applications/workflows/Electron%20CI/badge.svg)
+![Electron CI](https://github.com/fractal/client-applications/workflows/Electron%20CI/badge.svg)
 
 This folder contains the code for the Fractal desktop applications running on Windows, MacOS and Linux Ubuntu. The applications are built with cross-platform compatibility using ElectronJS. This repository contains all the directions for building the applications locally and for publishing them for production on each of the following OSes:
 
@@ -62,7 +62,7 @@ There is a channel for `testing` and `production` on each platform. These channe
 
 #### Publishing to Production
 
-If you're ready to publish an update to production, as part of our [Release Schedule](https://www.notion.so/fractalcomputers/Release-Schedule-Drafting-c29cbe11c5f94cedb9c01aaa6d0d1ca4), then it is time to publish. You can publish by running `python build_and_publish.py --set-version master-YYYYMMDD.# --update-channel production --push-new-update`.
+If you're ready to publish an update to production, as part of our [Release Schedule](https://www.notion.so/tryfractal/Release-Schedule-Drafting-c29cbe11c5f94cedb9c01aaa6d0d1ca4), then it is time to publish. You can publish by running `python build_and_publish.py --set-version master-YYYYMMDD.# --update-channel production --push-new-update`.
 
 **TODO: once the following manual fix is removed, CI should fully handle these release operations.**
 
@@ -74,7 +74,7 @@ This repository has basic continuous integration through GitHub Actions. For eve
 
 New builds from the `dev` will also be pushed out on the `testing` channel.
 
-Moreover, new builds from [fractalcomputers/protocol](https://github.com/fractalcomputers/protocol) will trigger builds in this repository on their corresponding branch (or on `dev` if there is no appropriate corresponding branch). Similarly, new protocol builds on `dev` will also trigger a new build to be sent out on the `testing` channel.
+Moreover, new builds from [fractal/protocol](https://github.com/fractalcomputers/protocol) will trigger builds in this repository on their corresponding branch (or on `dev` if there is no appropriate corresponding branch). Similarly, new protocol builds on `dev` will also trigger a new build to be sent out on the `testing` channel.
 
 Additionally, [style](#Styling) checks will be run to verify that you formatted your code via Prettier. You should make sure that all tests pass under the Actions tab.
 
