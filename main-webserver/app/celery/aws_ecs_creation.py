@@ -155,6 +155,49 @@ def select_cluster(region_name):
     return cluster_name
 
 
+def start_container(webserver_url, region_name, cluster_name, task_definition_arn):
+    """
+    This helper function configures and starts a container running
+
+    Args:
+        webserver_url: the URL of the webserver the container should connect to
+        region_name: which region to run the container in
+        cluster_name: which cluster to run the container in
+        task_definition_arn: which taskdef to use
+
+    Returns: the task_id, IP, port, and aeskey of the container once running
+
+    """
+    aeskey = os.urandom(16).hex()
+    container_overrides = {
+        "containerOverrides": [
+            {
+                "name": "fractal-container",
+                "environment": [
+                    {"name": "FRACTAL_AES_KEY", "value": aeskey},
+                    {
+                        "name": "WEBSERVER_URL",
+                        "value": (webserver_url if webserver_url is not None else ""),
+                    },
+                ],
+            },
+        ],
+    }
+    kwargs = {"networkConfiguration": None, "overrides": container_overrides}
+
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+
+    ecs_client.set_cluster(cluster_name)
+    ecs_client.set_task_definition_arn(task_definition_arn)
+    ecs_client.run_task(False, **{k: v for k, v in kwargs.items() if v is not None})
+
+    ecs_client.spin_til_running(time_delay=2)
+    curr_ip = ecs_client.task_ips.get(0, -1)
+    curr_network_binding = ecs_client.task_ports.get(0, -1)
+    task_id = ecs_client.tasks[0]
+    return task_id, curr_ip, curr_network_binding, aeskey
+
+
 @shared_task(bind=True)
 def assign_container(
     self,
@@ -201,7 +244,6 @@ def create_new_container(
     cluster_name=None,
     region_name="us-east-1",
     network_configuration=None,
-    dpi=96,
     webserver_url=None,
 ):
     """Create a new ECS container running a particular task.
@@ -258,35 +300,9 @@ def create_new_container(
         meta={"msg": message},
     )
     fractalLog(function="create_new_container", label="None", logs=message)
-
-    # TODO:  Refactor out the task run logic into its own function, similar to cluster assignment
-
-    aeskey = os.urandom(16).hex()
-    container_overrides = {
-        "containerOverrides": [
-            {
-                "name": "fractal-container",
-                "environment": [
-                    {"name": "FRACTAL_AES_KEY", "value": aeskey},
-                    {
-                        "name": "WEBSERVER_URL",
-                        "value": (webserver_url if webserver_url is not None else ""),
-                    },
-                ],
-            },
-        ],
-    }
-    kwargs = {"networkConfiguration": network_configuration, "overrides": container_overrides}
-
-    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-
-    ecs_client.set_cluster(cluster_name)
-    ecs_client.set_task_definition_arn(task_definition_arn)
-    ecs_client.run_task(use_launch_type, **{k: v for k, v in kwargs.items() if v is not None})
-
-    ecs_client.spin_til_running(time_delay=2)
-    curr_ip = ecs_client.task_ips.get(0, -1)
-    curr_network_binding = ecs_client.task_ports.get(0, -1)
+    task_id, curr_ip, curr_network_binding, aeskey = start_container(
+        webserver_url, region_name, cluster_name, task_definition_arn
+    )
     # TODO:  Get this right
     if curr_ip == -1 or curr_network_binding == -1:
         fractalLog(
@@ -300,16 +316,20 @@ def create_new_container(
 
     # TODO:  refactor this out into its own function
 
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+
+    ecs_client.set_cluster(cluster_name)
+
     container = UserContainer(
-        container_id=ecs_client.tasks[0],
+        container_id=task_id,
         user_id=username,
-        cluster=ecs_client.cluster,
+        cluster=cluster_name,
         ip=curr_ip,
         port_32262=curr_network_binding[32262],
         port_32263=curr_network_binding[32263],
         port_32273=curr_network_binding[32273],
         state="CREATING",
-        location=ecs_client.region_name,
+        location=region_name,
         os="Linux",
         lock=False,
         secret_key=aeskey,
@@ -317,10 +337,10 @@ def create_new_container(
     )
     container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
     if container_sql:
-        container = UserContainer.query.get(ecs_client.tasks[0])
+        container = UserContainer.query.get(task_id)
         fractalLog(
             function="create_new_container",
-            label=str(ecs_client.tasks[0]),
+            label=str(task_id),
             logs=(
                 f"Inserted container with IP address {curr_ip} and network bindings "
                 f"{curr_network_binding}"
@@ -329,12 +349,12 @@ def create_new_container(
     else:
         fractalLog(
             function="create_new_container",
-            label=str(ecs_client.tasks[0]),
+            label=str(task_id),
             logs="SQL insertion unsuccessful",
         )
         self.update_state(
             state="FAILURE",
-            meta={"msg": "Error inserting Container {} into SQL".format(ecs_client.tasks[0])},
+            meta={"msg": "Error inserting Container {} into SQL".format(task_id)},
         )
         raise Ignore
 
@@ -344,19 +364,19 @@ def create_new_container(
     if cluster_sql:
         fractalLog(
             function="create_new_container",
-            label=str(ecs_client.tasks[0]),
+            label=str(task_id),
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
 
         if not _poll(container.container_id):
             fractalLog(
                 function="create_new_container",
-                label=str(ecs_client.tasks[0]),
+                label=str(task_id),
                 logs="container failed to ping",
             )
             self.update_state(
                 state="FAILURE",
-                meta={"msg": "Container {} failed to ping.".format(ecs_client.tasks[0])},
+                meta={"msg": "Container {} failed to ping.".format(task_id)},
             )
 
             raise Ignore
@@ -364,7 +384,7 @@ def create_new_container(
         # pylint: disable=line-too-long
         fractalLog(
             function="create_new_container",
-            label=str(ecs_client.tasks[0]),
+            label=str(task_id),
             logs=f"""container pinged!  To connect, run:
 desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
             """,
@@ -374,12 +394,12 @@ desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_b
     else:
         fractalLog(
             function="create_new_container",
-            label=str(ecs_client.tasks[0]),
+            label=str(task_id),
             logs="SQL insertion unsuccessful",
         )
         self.update_state(
             state="FAILURE",
-            meta={"msg": "Error updating container {} in SQL.".format(ecs_client.tasks[0])},
+            meta={"msg": "Error updating container {} in SQL.".format(task_id)},
         )
         raise Ignore
 
