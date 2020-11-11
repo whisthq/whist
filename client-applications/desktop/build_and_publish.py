@@ -28,16 +28,16 @@ platform_map_no_size = {
 
 default_channel_s3_buckets = {
     "testing": {
-        "Windows-64bit": "fractal-windows-applications-testing",
-        "Linux-64bit": "fractal-linux-applications-testing",  # TODO as of 2020-07-18 this bucket does not exist!
+        "Windows-64bit": "fractal-windows-application-testing",
+        "Linux-64bit": "fractal-linux-application-testing",  # TODO as of 2020-07-18 this bucket does not exist!
         "macOS-64bit": "fractal-mac-application-testing",
     },
     "production": {
-        "Windows-64bit": "fractal-windows-applications-release",
-        "Linux-64bit": "fractal-linux-applications-release",
-        "macOS-64bit": "fractal-mac-applications-release",
+        "Windows-64bit": "fractal-windows-application-release",
+        "Linux-64bit": "fractal-linux-application-release",
+        "macOS-64bit": "fractal-mac-application-release",
     },
-    "noupdates": defaultdict(lambda: "fractal: fractal-windows-applications-testing"),
+    "noupdates": defaultdict(lambda: "fractal: fractal-windows-application-testing"),
 }
 
 
