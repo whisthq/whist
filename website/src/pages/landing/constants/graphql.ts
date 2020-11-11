@@ -7,6 +7,7 @@ export const INSERT_WAITLIST = gql`
         $points: Int!
         $referral_code: String!
         $referrals: Int!
+        $country: String!
     ) {
         insert_waitlist(
             objects: {
@@ -16,6 +17,7 @@ export const INSERT_WAITLIST = gql`
                 referral_code: $referral_code
                 referrals: $referrals
                 user_id: $user_id
+                country: $country
             }
             on_conflict: { constraint: waitlist_pkey, update_columns: name }
         ) {
@@ -26,6 +28,7 @@ export const INSERT_WAITLIST = gql`
                 referral_code
                 referrals
                 user_id
+                country
             }
         }
     }
