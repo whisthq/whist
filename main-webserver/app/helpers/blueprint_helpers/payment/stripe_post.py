@@ -1,5 +1,7 @@
 from flask import jsonify
 
+from functools import reduce
+
 from app.constants.http_codes import (
     BAD_REQUEST,
     CONFLICT,
@@ -30,18 +32,23 @@ def addSubscriptionHelper(token, email, plan, code):
         logs="Signing {} up for plan {}, with code {}, token{}".format(email, plan, code, token),
     )
     client = StripeClient(STRIPE_SECRET)
-    # TODO GET PLAN IDS
-    try:
-        client.create_subscription(token, email, plan, code=code)
-        status = SUCCESS
-    except NonexistentUser:
-        status = FORBIDDEN
-    except RegionNotSupported:
+    plans = client.get_prices()  # product Fractal by default
+
+    plan = reduce(lambda acc, pl: acc if pl[0] != plan else pl[1], plans, None)
+    if plan:
+        try:
+            client.create_subscription(token, email, plan, code=code)
+            status = SUCCESS
+        except NonexistentUser:
+            status = FORBIDDEN
+        except RegionNotSupported:
+            status = BAD_REQUEST
+        except InvalidStripeToken:
+            status = BAD_REQUEST
+        except Exception:
+            status = INTERNAL_SERVER_ERROR
+    else:
         status = BAD_REQUEST
-    except InvalidStripeToken:
-        status = BAD_REQUEST
-    except Exception:
-        status = INTERNAL_SERVER_ERROR
 
     return jsonify({"status": status}), status
 

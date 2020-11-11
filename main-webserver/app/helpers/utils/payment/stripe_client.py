@@ -438,3 +438,71 @@ class StripeClient:
                 creditAppliedMail(email)
 
             return True
+
+
+## TODO not entirely sure if we are going to use this either
+# def stripeChargeHourly(username):
+
+#     # Check to see if the user is a current customer
+#     customer = User.query.get(username)
+
+#     if not customer:
+#         return
+
+#     # Check to see if user is an hourly plan subscriber
+
+#     stripe.api_key = STRIPE_SECRET
+
+#     hourly_price = None
+#     for price in stripe.Price.list(limit=20):
+#         metadata = price["metadata"]
+#         if "name" in metadata and metadata["name"] == "Fractal Monthly":
+#             hourly_price = price
+#             break
+
+#     subscription_id = customer.stripe_customer_id
+
+#     try:
+#         payload = stripe.Subscription.retrieve(subscription_id)
+
+#         if hourly_price == payload["items"]["data"][0]["plan"]["id"]:
+#             user_activity = (
+#                 LoginHistory.query.filter_by(user_id=username)
+#                 .order_by(LoginHistory.timestamp.desc())
+#                 .first()
+#             )
+
+#             if user_activity.action != "logon":
+#                 fractalLog(
+#                     function="stripeChargeHourly",
+#                     label=str(username),
+#                     logs="{username} logged off and is an hourly subscriber, but no logon was found".format(
+#                         username=username
+#                     ),
+#                     level=logging.ERROR,
+#                 )
+#             else:
+#                 now = datetime.now()
+#                 logon = datetime.strptime(user_activity["timestamp"], "%m-%d-%Y, %H:%M:%S")
+
+#                 hours_used = now - logon
+#                 if hours_used > timedelta(minutes=0):
+#                     amount = round(79 * (hours_used).total_seconds() / 60 / 60)
+
+#                     fractalLog(
+#                         function="stripeChargeHourly",
+#                         label=str(username),
+#                         logs="{username} used Fractal for {hours_used} hours and is an hourly subscriber. Charging {amount} cents".format(
+#                             username=username, hours_used=str(hours_used), amount=amount
+#                         ),
+#                     )
+#     except Exception as e:
+#         fractalLog(
+#             function="stripeChargeHourly",
+#             label=str(username),
+#             logs="Error charging {username} for hourly plan: {error}".format(
+#                 username=username, error=str(e)
+#             ),
+#         )
+
+#     return

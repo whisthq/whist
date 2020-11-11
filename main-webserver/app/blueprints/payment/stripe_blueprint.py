@@ -1,11 +1,12 @@
-import stripe
+# import stripe
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify  # , request
 from flask_jwt_extended import jwt_required
 
 from app import fractalPreProcess
-from app.constants.config import ENDPOINT_SECRET
-from app.constants.http_codes import FORBIDDEN, NOT_ACCEPTABLE
+
+# from app.constants.config import ENDPOINT_SECRET
+from app.constants.http_codes import FORBIDDEN  # , NOT_ACCEPTABLE
 
 from app.helpers.blueprint_helpers.payment.stripe_post import (
     addSubscriptionHelper,
@@ -39,7 +40,7 @@ def payment(action, **kwargs):
     # Retrieves the stripe subscription of the customer so we can tell them some basic info
     elif action == "retrieve":
         return retrieveHelper(body["email"])
-    return {"status": FORBIDDEN}
+    return jsonify({"status": FORBIDDEN}), FORBIDDEN
 
 
 ## TODO
