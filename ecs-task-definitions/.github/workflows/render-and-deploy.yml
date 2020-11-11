@@ -26,6 +26,7 @@ jobs:
           - fractal/browsers/chrome
           - fractal/browsers/firefox
           - fractal/browsers/brave
+          - fractal/browsers/sidekick
           - fractal/productivity/slack
           - fractal/productivity/discord
           - fractal/productivity/notion

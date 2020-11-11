@@ -4,6 +4,7 @@
 apps=("fractal-browsers-chrome"
       "fractal-browsers-firefox"
       "fractal-browsers-brave"
+      "fractal-browsers-sidekick"
       "fractal-creative-blender"
       "fractal-creative-blockbench"
       "fractal-creative-texturelab"
