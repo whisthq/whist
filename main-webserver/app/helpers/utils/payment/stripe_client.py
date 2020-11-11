@@ -17,6 +17,9 @@ from app.constants.states import STATE_LIST
 from app.helpers.utils.general.logs import fractalLog
 from app.helpers.utils.general.time import dateToUnix, getToday
 
+# TODO we may want to move this out of the client? not sure
+from app.helpers.utils.mail.stripe_mail import creditAppliedMail
+
 from app.models import db, User
 from app.serializers.public import UserSchema
 
@@ -51,6 +54,10 @@ class InvalidOperation(Exception):
     pass
 
 
+## TODO this class can be made clearer
+## by seperating checks of existence of the client and subsequent actions
+## by turning reused code into shared functions
+## by removing methods that are not useful and creating helper methods for complex, useful methods
 class StripeClient:
     # api key must be the stripe secret key or
     # a restrited "secret" key as in the stripe dashboard
@@ -85,7 +92,64 @@ class StripeClient:
         """
         stripe.api_key = api_key
 
-    def get_stripe_info(self, email):
+    def get_products(self, product_names=["Fractal"], limit=20):
+        """Fetch the product ids of various products.
+
+        Precondition:
+            There are less than limit products to fetch. (i.e. you can fit on one page). This is
+                realistic for Fractal.
+
+        Args:
+            product_names ([type], optional): [description]. Defaults to None.
+            limit (int, optional): [description]. Defaults to 20.
+
+        Returns:
+            (generator[tuple[str, str]]): An iteratble of name_product_id for each of the products in
+                product_names. For products that were not found returns None.
+        """
+        products = stripe.Product.list(limit=limit)["data"]
+        product_names = set(product_names)
+
+        for product in products:
+            name, product_id = product["name"], product["id"]
+            if name in product_names:
+                product_names.remove(name)
+                yield name, product_id
+
+        for product_name in product_names:
+            yield product_name, None
+
+    def get_prices(self, products=["Fractal"]):
+        """Fetch the prices of said products. This is a generator.
+
+        Precondition:
+            No product has more than 10 (default limit) prices in it. Each price has a metadata
+                object with a key "name" mapping to a unique name.
+
+        Precondition:
+            Product names are unique.
+
+        Args:
+            products (list[str], optional): The iterable of products to get prices for.
+                Defaults to ["Fractal"]. If the product is a product id it will simply fetch, otherwise
+                it will get the product ids for the products and try again.
+
+        Returns:
+            (generator[tuple[str, str]]): An iterable of the name, price_id of each price (what used to be
+                called "plans").
+        """
+        for product in products:
+            try:
+                for price in stripe.Price.list(product=product)[
+                    "data"
+                ]:  # TODO what if there are > 10
+                    yield price["metadata"]["name"], price["id"]
+            except:
+                for _, product_id in self.get_products(product_names=[product]):
+                    for price in stripe.Price.list(product=product)["data"]:
+                        yield price["metadata"]["name"], price["id"]
+
+    def get_customer_info(self, email):
         """Retrieves the information for a user regarding stripe. Returns in the following format:
         {
             "subscription": a subscription object per the stripe api (json format),
@@ -133,6 +197,7 @@ class StripeClient:
         else:
             return None
 
+    # TODO make it so that if there is a source it will charge with their source
     def create_subscription(self, token, email, plan, code=None):
         """This will create a new subscription for a client with the given email
         and a code if it exists. This is similar to what was previously stripe_post's "chargeHelper."
@@ -198,11 +263,12 @@ class StripeClient:
             referrer = User.query.filter_by(referral_code=code).first() if code else None
             # they are rewarded by another request to discount by the client where they get credits
 
-            trial_end = (
-                dateToUnix(datetime.now() + relativedelta(months=1))
-                if referrer
-                else dateToUnix(datetime.now() + timedelta(weeks=1))
-            )
+            if referrer:
+                trial_end = dateToUnix(datetime.now() + relativedelta(months=1))
+                self.discount(referrer)
+            else:
+                trial_end = dateToUnix(datetime.now() + timedelta(weeks=1))
+
             subscribed = False
 
             user.stripe_customer_id = stripe_customer_id
@@ -246,6 +312,20 @@ class StripeClient:
         return True
 
     def cancel_subscription(self, email):
+        """Cancels the subscription for the user identified by the given
+        email.
+
+        Args:
+            email (str): The email of the user whose subscription we are cancelling.
+
+        Raises:
+            NonexistentUser: If the user does not exist.
+            InvalidOperation: If the user is not a stripe customer i.e. cannot have bought our product.
+            InvalidOperation: If the user does not have any subscriptions.
+
+        Returns:
+            [type]: [description]
+        """
         user = User.query.get(email)
         if not user:
             raise NonexistentUser
@@ -264,4 +344,91 @@ class StripeClient:
                 label=email,
                 logs="Cancelled stripe subscription for {}".format(email),
             )
+            return True
+
+    def add_card(self, email, source):
+        """Adds a card/source to the customer/user with the given email. If they do
+            not have a source i.e. are not a customer (whenever we create a customer we always
+            have a default source enter, so they should always have a source... unless they call
+            delete_card enough, in which case I'm not sure) we create a new customer and a new source.
+            We then store their customer id.
+
+        Args:
+            email (str): The email identifying the said customer.
+            source (str): The source token/id (usually a card) for the payment method.
+
+        Raises:
+            NonexistentUser: If the user does not exist.
+        """
+        user = User.query.get(email)
+        if not user:
+            raise NonexistentUser
+
+        if not user.stripe_customer_id:
+            customer = stripe.Customer.create(email=email, source=token)
+
+            user.stripe_customer_id = stripe_customer_id
+            db.session.commit()
+        else:
+            stripe.Customer.create_source(user.stripe_customer_id, source=source)
+
+    def delete_card(self, email, card):
+        """Deletes a card (source) for a customer. This is not a recommended
+        method to use. I'm not sure if it is necessary or what will happen if they try
+        to delete their only source regarding the subscription.
+
+        Args:
+            email (str): Email for the user.
+            card (str): Card token (or "id") for the card we want to remove.
+
+        Raises:
+            NonexistentUser: If the user doesn't exist.
+            InvalidOperation: If the user does not have a stripe customer id i.e. has not signed up
+                with a source yet.
+        """
+        user = User.query.get(email)
+        if not user:
+            raise NonexistentUser
+
+        if not user.stripe_customer_id:
+            raise InvalidOperation
+
+        stripe.Customer.delete_source(user.stripe_customer_id, card)
+
+    def discount(self, referrer):
+        """Apply a discount to a referrer if they have referred. As you may notice,
+        this isn't, strictly speaking, stripe code. The reason we keep it in the client
+        is to abstract away this functionality from elsewhere, since it may at some point
+        actually become stripe code.
+
+        Args:
+            referrer (str): The referrer who referred someone else such that we now want
+                to discount them.
+
+        Returns:
+            (bool): False if there was an error discounting (i.e. there is no referrer) else True.
+        """
+        if not referrer:
+            fractalLog(
+                function="StripeClient.discount",
+                label="None",
+                logs="No user for code {}".format(code),
+                level=logging.ERROR,
+            )
+            return False
+        else:
+            creditsOutstanding = referrer.credits_outstanding
+            email = referrer.user_id
+
+            referrer.credits_outstanding = creditsOutstanding + 1
+            db.session.commit()
+
+            fractalLog(
+                function="StripeClient.discount",
+                label=email,
+                logs="Applied discount and updated credits outstanding",
+            )
+
+            creditAppliedMail(email)
+
             return True

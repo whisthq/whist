@@ -212,7 +212,7 @@ def not_customer():
     _remove_stripe_customer(dummy_email)
 
 
-"""Here we test the get_stripe_info for common cases. These include whether you've subscribed or not."""
+"""Here we test the get_customer_info for common cases. These include whether you've subscribed or not."""
 
 
 def test_get_stripe_info(client, not_customer):
@@ -222,7 +222,7 @@ def test_get_stripe_info(client, not_customer):
 
             _new_customer(dummy_email, referrer=referrer, subscribe=subscribe)
 
-            info = client.get_stripe_info(dummy_email)
+            info = client.get_customer_info(dummy_email)
 
             if subscribe:
                 trial_end = info["subscription"]["trial_end"]
@@ -235,7 +235,7 @@ def test_get_stripe_info(client, not_customer):
 
 
 def test_get_stripe_info_no_customer_id(client, not_customer):
-    assert client.get_stripe_info(dummy_email) is None
+    assert client.get_customer_info(dummy_email) is None
 
 
 """Here we test creation of subscription for common cases."""
@@ -327,4 +327,4 @@ def test_invalid_user_throws(client):
     with pytest.raises(NonexistentUser):
         client.create_subscription(dummy_nonexistent_email, dummy_token, dummy_zip_us)
     with pytest.raises(NonexistentUser):
-        client.get_stripe_info(dummy_nonexistent_email)
+        client.get_customer_info(dummy_nonexistent_email)
