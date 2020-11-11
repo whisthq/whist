@@ -8,6 +8,7 @@ This repository contains the code for containerizing the various applications th
 - Google Chrome
 - Mozilla Firefox
 - Brave Browser
+- Sidekick Browser
 - Blender
 - Blockbench
 - Figma

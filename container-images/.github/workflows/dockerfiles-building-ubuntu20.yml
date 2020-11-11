@@ -11,6 +11,7 @@ env:
     browsers/chrome
     browsers/firefox
     browsers/brave
+    browsers/sidekick
     productivity/slack
     productivity/discord
     productivity/notion
