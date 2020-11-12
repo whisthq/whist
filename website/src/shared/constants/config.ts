@@ -57,7 +57,7 @@ const environment: any = {
             MacOS:
                 "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
             Windows:
-                "https://fractal-windows-application-release.s3.amazonaws.com/Fractal.exe",
+                "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
         },
     },
     production: {
@@ -77,7 +77,7 @@ const environment: any = {
             MacOS:
                 "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
             Windows:
-                "https://fractal-windows-application-release.s3.amazonaws.com/Fractal.exe",
+                "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
         },
     },
 }
