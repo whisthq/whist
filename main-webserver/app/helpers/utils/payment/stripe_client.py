@@ -22,7 +22,7 @@ from app.helpers.utils.general.time import dateToUnix, getToday
 # TODO we may want to move this out of the client? not sure
 from app.helpers.utils.mail.stripe_mail import creditAppliedMail
 
-from app.models import db, User
+from app.models import db, User, LoginHistory
 from app.serializers.public import UserSchema
 
 
@@ -177,16 +177,18 @@ class StripeClient:
 
         # return a valid object if they exist else None
         if customer["stripe_customer_id"]:
-            customer_info = stripe.Customer.retrieve(customer["stripe_customer_id"])
+            customer_info = stripe.Customer.retrieve(
+                customer["stripe_customer_id"], expand=["sources"]
+            )
+            cards = customer_info["sources"]["data"]
+
             subscription = stripe.Subscription.list(customer=customer["stripe_customer_id"])
 
             if subscription and subscription["data"] and len(subscription["data"]) > 0:
                 subscription = subscription["data"][0]
-                cards = customer_info["sources"]["data"]
                 account_locked = subscription["trial_end"] < dateToUnix(getToday())
             else:
                 subscription = None
-                cards = []
                 account_locked = False
 
             return {
@@ -439,70 +441,128 @@ class StripeClient:
 
             return True
 
+    def charge_hourly(self, email):
+        """A function that we should be calling just after a user logs off to charge them
+        for the mount of hours they were logged on to Fractal. This may be deprecated. Currently,
+        if they use Fractal for >0 minutes, we round their usage time to a minimum of one unit, since
+        Stripe does not seem to allow fractional units. In the future, we may prefer to simply change
+        the per-hour monthly plan and then add a table in the db for these users and how many minutes
+        they've used Fractal for. (this is a TODO and kind of a big one at that).
 
-## TODO not entirely sure if we are going to use this either
-# def stripeChargeHourly(username):
+        Args:
+            email (str): The email of the user that just logged off.
 
-#     # Check to see if the user is a current customer
-#     customer = User.query.get(username)
+        Raises:
+            NonexistentUser: The user does not exist.
+            RuntimeError: Somehow the hourly fractal plan/price does not exist, we may have
+                moved on in our pricing strategy and this function is deprecated. Similarly, if
+                the Fractal Hourly per-hour does not exist we will raise a similar error.
+            InvalidOperation: The user is not an hourly price user. They should not be charged
+                per the hour. Also raised if the user is not a stripe user. Also raised if they
+                do not have a source.
+        """
+        # Check to see if the user is a current customer
+        user = User.query.get(email)
 
-#     if not customer:
-#         return
+        if not customer:
+            raise NonexistentUser
 
-#     # Check to see if user is an hourly plan subscriber
+        # Check to see if user is an hourly plan subscriber
 
-#     stripe.api_key = STRIPE_SECRET
+        hourly_price = None
+        for price_name, price in self.get_prices():
+            if price_name == "Fractal Hourly":
+                hourly_price = price
+                break
 
-#     hourly_price = None
-#     for price in stripe.Price.list(limit=20):
-#         metadata = price["metadata"]
-#         if "name" in metadata and metadata["name"] == "Fractal Monthly":
-#             hourly_price = price
-#             break
+        if not hourly_price:
+            raise RuntimeError("Hourly price option not found at all on Fractal Stripe.")
 
-#     subscription_id = customer.stripe_customer_id
+        stripe_customer_id = user.stripe_customer_id
 
-#     try:
-#         payload = stripe.Subscription.retrieve(subscription_id)
+        if not stripe_customer_id:
+            raise InvalidOperation
 
-#         if hourly_price == payload["items"]["data"][0]["plan"]["id"]:
-#             user_activity = (
-#                 LoginHistory.query.filter_by(user_id=username)
-#                 .order_by(LoginHistory.timestamp.desc())
-#                 .first()
-#             )
+        subscriptions = stripe.Subscription.list(customer=customer["stripe_customer_id"])["data"]
+        subscription = subscriptions[0]
 
-#             if user_activity.action != "logon":
-#                 fractalLog(
-#                     function="stripeChargeHourly",
-#                     label=str(username),
-#                     logs="{username} logged off and is an hourly subscriber, but no logon was found".format(
-#                         username=username
-#                     ),
-#                     level=logging.ERROR,
-#                 )
-#             else:
-#                 now = datetime.now()
-#                 logon = datetime.strptime(user_activity["timestamp"], "%m-%d-%Y, %H:%M:%S")
+        up = lambda p: subscription["items"]["data"][0][p]["id"]
+        try:
+            user_price = up("price")
+        except:
+            user_price = up("plan")
 
-#                 hours_used = now - logon
-#                 if hours_used > timedelta(minutes=0):
-#                     amount = round(79 * (hours_used).total_seconds() / 60 / 60)
+        if user_price != hourly_price:
+            fractalLog(
+                function="StripeClient.charge_hourly",
+                label=email,
+                logs="{username} is not an hourly price subscriber. Why are we charging them hourly?".format(
+                    username=email
+                ),
+                level=logging.ERROR,
+            )
+            return
 
-#                     fractalLog(
-#                         function="stripeChargeHourly",
-#                         label=str(username),
-#                         logs="{username} used Fractal for {hours_used} hours and is an hourly subscriber. Charging {amount} cents".format(
-#                             username=username, hours_used=str(hours_used), amount=amount
-#                         ),
-#                     )
-#     except Exception as e:
-#         fractalLog(
-#             function="stripeChargeHourly",
-#             label=str(username),
-#             logs="Error charging {username} for hourly plan: {error}".format(
-#                 username=username, error=str(e)
-#             ),
-#         )
+        latest_user_activity = (
+            LoginHistory.query.filter_by(user_id=email)
+            .order_by(LoginHistory.timestamp.desc())
+            .first()
+        )
 
-#     return
+        if latest_user_activity.action != "logon":
+            fractalLog(
+                function="StripeClient.charge_hourly",
+                label=email,
+                logs="{username} logged off and is an hourly subscriber, but no logon was found".format(
+                    username=email
+                ),
+                level=logging.ERROR,
+            )
+            return
+
+        now = datetime.now()
+        logon = datetime.strptime(user_activity["timestamp"], "%m-%d-%Y, %H:%M:%S")
+
+        hours_used = now - logon
+
+        if hours_used > timedelta(minutes=0):
+            prices = self.get_prices()
+            # unlike above, this is for the actual rate we'll be charging per hour
+            # we also charge them $5.00 per month which is why the per-hour pricing strategy
+            # has two prices
+            hourly_price_per_hour = None
+            for price_name, price in prices:
+                if price_name == "Fractal Hourly Per Hour":
+                    hourly_price_per_hour = price
+                    break
+
+            if not hourly_price_per_hour:
+                raise RuntimeError("Hourly price per-hour price does not exist on Fractal Stripe.")
+
+            # TODO self.get_prices should give you the option to fetch this
+            price_amount_cents = stripe.Price.retrieve(hourly_price_per_hour)["unit_amount"]
+            # 60 seconds per minute * 60 minutes per hour = per hour
+            total_hours = hours_used.total_seconds() / 3600
+            total_price = round(total_hours * price_amount_cents)
+
+            # TODO this can be simplified
+            source = stripe.Customer.retrieve(stripe_customer_id)["default_source"]
+            if not source:
+                source = self.get_customer_info(email)["cards"][0]["data"]["id"]
+
+            stripe.Charge.create(
+                amount=total_price,
+                currency="usd",
+                source=source,
+                description="Charging for hourly use. User {username} used for {hours_used} hours. Charging {rate} per hour.".format(
+                    username=email, hours_used=str(total_hours), rate=price_amount_cents
+                ),
+            )
+
+            fractalLog(
+                function="StripeClient.charge_hourly",
+                label=email,
+                logs="{username} used Fractal for {hours_used} hours and is an hourly subscriber. Charged {amount} cents".format(
+                    username=email, hours_used=str(total_hours), amount=total_price
+                ),
+            )
