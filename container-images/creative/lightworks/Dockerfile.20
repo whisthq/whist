@@ -13,4 +13,3 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 
 # Setup Fractal application symlink
 RUN ln -sf /usr/bin/lightworks /usr/bin/fractal-application
-
