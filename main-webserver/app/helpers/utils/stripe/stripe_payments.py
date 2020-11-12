@@ -5,9 +5,11 @@ from datetime import timedelta
 
 import stripe
 
-from app.constants.config import HOURLY_PLAN_ID, STRIPE_SECRET
+from app.constants.config import STRIPE_SECRET
 from app.helpers.utils.general.logs import fractalLog
 from app.models import LoginHistory, User
+
+HOURLY_PLAN_ID = "DUMMY"
 
 
 def stripeChargeHourly(username):

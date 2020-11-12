@@ -1,6 +1,6 @@
 # Fractal Main Webserver
 
-[![Heroku CI Status](https://heroku-cibadge.herokuapp.com/last.svg)](https://dashboard.heroku.com/pipelines/22da0c0d-7555-4647-8765-031c14b8398f/tests) ![Python Black Linting](https://github.com/fractalcomputers/main-webserver/workflows/Python%20Black%20Linting/badge.svg) ![Sentry Release](https://github.com/fractalcomputers/main-webserver/workflows/Sentry%20Release/badge.svg)
+[![Heroku CI Status](https://heroku-cibadge.herokuapp.com/last.svg)](https://dashboard.heroku.com/pipelines/22da0c0d-7555-4647-8765-031c14b8398f/tests) ![Python Black Linting](https://github.com/fractal/main-webserver/workflows/Python%20Black%20Linting/badge.svg) ![Sentry Release](https://github.com/fractal/main-webserver/workflows/Sentry%20Release/badge.svg)
 
 This repository contains the code for our webserver, which is our REST API and provides backend support for our user interfaces, our internal tools, and our container/virtual machine management.
 
@@ -82,7 +82,7 @@ We have pytest tests in the `tests` subdirectory. To run tests, just run `pytest
 
 The docker-compose stack does **not** need to be running in order to run tests. However, the tests do need access to Redis. By default, the tests attempt to connect to `redis://localhost:6379/0`. If your Redis service is running elsewhere, expose the correct connection URI to the tests via the environment variable `REDIS_URL`.
 
-If you are observing mysterious test failures, make sure that you have set the correct environment variables. If your terminal displays `AttributeError: 'NoneType' object has no attribute 'upper'`. Be sure that environment variables such as `DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD`, and `USE_PRODUCTION_KEYS` are set to the correct values. The username and password should match the values stored in the relevant configuration database. You can define environment variables in a `.env` file in the `docker` subdirectory or you can set them directly in your shell.
+If you are observing mysterious test failures, make sure that you have set the correct environment variables. If your terminal displays `AttributeError: 'NoneType' object has no attribute 'upper'`. Be sure that environment variables such as `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD` are set to the correct values. The username and password should match the values stored in the relevant configuration database. You can define environment variables in a `.env` file in the `docker` subdirectory or you can set them directly in your shell.
 
 To get an idea of what environment variables you might be missing, try running `git grep 'os\.getenv'` in the repository root.
 
