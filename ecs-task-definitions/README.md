@@ -6,17 +6,15 @@ You can retrieve the JSON of a task definition directly in the AWS console when 
 
 **Currently supported applications**
 
-- Base (Ubuntu 20.04)
-- Google Chrome
-- Mozilla Firefox
-- Brave Browser
-- Blender
-- Blockbench
-- Slack
-- Discord
-- Notion
-- Figma
-- Gimp
+All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
+
+| Browsers         | Creative 2D/3D | Productivity |
+| ---------------- | -------------- | ------------ |
+| Google Chrome    | Blender        | Slack        |
+| Mozilla Firefox  | Blockbench     | Notion       |
+| Brave Browser    | Figma          | Discord      |
+| Sidekick Browser | TextureLab     |              |
+|                  | Gimp           |              |
 
 ## Generating Task Definitions
 
