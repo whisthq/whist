@@ -31,6 +31,7 @@ function* emailLogin(action: any) {
                 refreshToken: json.refresh_token,
                 emailVerified: json.verified,
                 canLogin: json.can_login,
+                emailVerificationToken: json.verification_token,
             })
         )
         yield put(

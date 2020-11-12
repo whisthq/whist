@@ -21,8 +21,8 @@ const environment: any = {
     },
     development: {
         url: {
-            WEBSERVER_URL: "https://dev-webserver.herokuapp.com",
-            FRONTEND_URL: "http://localhost:3000",
+            WEBSERVER_URL: "https://dev-webserver.tryfractal.com",
+            FRONTEND_URL: "https://dev.tryfractal.com",
             GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
         },
@@ -42,7 +42,7 @@ const environment: any = {
     staging: {
         url: {
             WEBSERVER_URL: "https://staging-webserver.tryfractal.com",
-            FRONTEND_URL: "https://tryfractal-staging.netlify.app",
+            FRONTEND_URL: "https://staging.tryfractal.com",
             GRAPHQL_HTTP_URL:
                 "https://staging-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://staging-database.tryfractal.com/v1/graphql",
@@ -86,9 +86,7 @@ const LIVE_ENV = process.env.REACT_APP_ENVIRONMENT
     ? process.env.REACT_APP_ENVIRONMENT.toString()
     : "development"
 
-console.log("The environment is " + LIVE_ENV)
-
 export const config: any =
     process.env.NODE_ENV === "development"
-        ? environment.local
+        ? environment.development
         : environment[LIVE_ENV]
