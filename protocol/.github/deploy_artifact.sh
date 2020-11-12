@@ -10,7 +10,7 @@ run_id=$2
 
 artifact_name=${artifact_name:-windows_server_build}
 resource_group=${resource_group:-FractalProtocolCI}
-web_server=${web_server:-https://staging-webserver.fractalcomputers.com/}
+web_server=${web_server:-https://staging-webserver.tryfractal.com/}
 
 # get named params
 while [ $# -gt 0 ]; do
