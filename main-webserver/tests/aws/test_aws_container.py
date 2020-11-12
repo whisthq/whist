@@ -21,7 +21,7 @@ pytest.container_name = None
 
 @pytest.mark.container_serial
 def check_test_database():
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "TRUE":
+    if os.getenv("HEROKU_APP_NAME") == "main-webserver":
         fractalLog(
             function="test_aws_container",
             label=None,

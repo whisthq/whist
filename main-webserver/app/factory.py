@@ -20,7 +20,7 @@ mail = SendGrid()
 
 
 def create_app(app_name=PKG_NAME, **kwargs):
-    if os.getenv("USE_PRODUCTION_KEYS").upper() == "true":
+    if os.getenv("HEROKU_APP_NAME") == "main-webserver":
         env = "prod"
     else:
         env = "staging"
@@ -38,6 +38,8 @@ def create_app(app_name=PKG_NAME, **kwargs):
         DATABASE_URL,
         JWT_SECRET_KEY,
         SENDGRID_API_KEY,
+        DATADOG_API_KEY,
+        DATADOG_APP_KEY,
     )
 
     app = Flask(app_name, template_folder=template_dir)
@@ -47,6 +49,8 @@ def create_app(app_name=PKG_NAME, **kwargs):
     app.config["SENDGRID_DEFAULT_FROM"] = "noreply@tryfractal.com"
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["DATADOG_API_KEY"] = DATADOG_API_KEY
+    app.config["DATADOG_APP_KEY"] = DATADOG_APP_KEY
 
     if kwargs.get("celery"):
         init_celery(kwargs.get("celery"), app)

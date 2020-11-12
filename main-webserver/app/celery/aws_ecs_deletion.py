@@ -1,7 +1,9 @@
 import logging
 import traceback
+import time
 
 from celery import shared_task
+from flask import current_app
 
 from app.constants.http_codes import (
     INTERNAL_SERVER_ERROR,
@@ -21,6 +23,11 @@ from app.helpers.utils.general.sql_commands import (
 from app.models import db
 from app.serializers.hardware import ClusterInfo, UserContainer
 
+from app.helpers.utils.datadog.events import (
+    datadogEvent_containerDelete,
+    datadogEvent_clusterDelete,
+)
+
 
 @shared_task(bind=True)
 def deleteContainer(self, container_name, aes_key):
@@ -34,6 +41,7 @@ def deleteContainer(self, container_name, aes_key):
     Returns:
         None
     """
+    task_start_time = time.time()
 
     if spinLock(container_name) < 0:
         fractalLog(
@@ -117,6 +125,12 @@ def deleteContainer(self, container_name, aes_key):
 
         raise Exception("SQL update failed.")
 
+    if not current_app.testing:
+        task_time_taken = time.time() - task_start_time
+        datadogEvent_containerDelete(
+            container_name, container_cluster, lifecycle=True, time_taken=task_time_taken
+        )
+
 
 @shared_task(bind=True)
 def drainContainer(self, container_name):
@@ -162,6 +176,8 @@ def drainContainer(self, container_name):
 
 @shared_task(bind=True)
 def delete_cluster(self, cluster, region_name):
+    task_start_time = time.time()
+
     try:
         ecs_client = ECSClient(region_name=region_name)
         running_tasks = ecs_client.ecs_client.list_tasks(cluster=cluster, desiredStatus="RUNNING")[
@@ -225,3 +241,6 @@ def delete_cluster(self, cluster, region_name):
             state="FAILURE",
             meta={"msg": f"Encountered error: {error}"},
         )
+    if not current_app.testing:
+        task_time_taken = time.time() - task_start_time
+        datadogEvent_clusterDelete(cluster, lifecycle=True, time_taken=task_time_taken)
