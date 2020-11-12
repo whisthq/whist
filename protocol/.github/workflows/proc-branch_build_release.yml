@@ -369,11 +369,13 @@ jobs:
         uses: mathrix-education/setup-sentry-cli@master
       - name: Upload debug information to sentry
         run: |
-            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}} || echo "Didn't Work"
+            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
+        continue-on-error: true
       - name: upload windows pdb
         if: runner.os == 'Windows'
-        run: sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb || echo "Didn't Work"
-
+        run: |
+            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
+        continue-on-error: true
       - name: Upload server artifact (if requested on this platform)
         if: matrix.config.server_artifact_name
         uses: actions/upload-artifact@v2
