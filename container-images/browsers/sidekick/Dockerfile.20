@@ -1,0 +1,24 @@
+FROM fractal/base:current-build
+
+# Install Sidekick
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN wget -qO sidekick.deb https://api.meetsidekick.com/downloads/df/linux/deb \
+    && apt install -y ./sidekick.deb \
+    && apt autoremove -y \
+    && apt clean \
+    && rm sidekick.deb
+
+# Set default browser
+RUN su - fractal -c \
+    "xdg-mime default sidekick-browser.desktop text/html \
+    && xdg-mime default sidekick-browser.desktop x-scheme-handler/http \
+    && xdg-mime default sidekick-browser.desktop x-scheme-handler/https \
+    && xdg-mime default sidekick-browser.desktop x-scheme-handler/about"
+
+# Don't show first run popup
+RUN su - fractal -c "mkdir -p /home/fractal/.config/sidekick \
+    && touch /home/fractal/.config/sidekick/'First Run'"
+
+# Setup Fractal application symlink
+RUN ln -sf $(which sidekick-browser) /usr/bin/fractal-application
