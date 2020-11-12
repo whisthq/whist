@@ -5,7 +5,7 @@
 
 vm_name=$1
 
-web_server=${web_server:-https://staging-webserver.fractalcomputers.com/}
+web_server=${web_server:-https://staging-webserver.tryfractal.com/}
 
 # get named params
 while [ $# -gt 0 ]; do
