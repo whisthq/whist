@@ -21,6 +21,8 @@ import (
 
 	webserver "github.com/fractal/ecs-host-service/fractalwebserver"
 
+	httpserver "github.com/fractal/ecs-host-service/httpserver"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
@@ -280,11 +282,14 @@ func main() {
 	// Log the Git commit of the running executable
 	logger.Info("Host Service Version: %s", logger.GetGitCommit())
 
-	// Initialize webserver and heartbeat
+	// Initialize webserver heartbeat
 	err = webserver.InitializeHeartbeat()
 	if err != nil {
 		logger.Panicf("Unable to initialize webserver. Error: %s", err)
 	}
+
+	// Start the HTTP server and listen for events
+	serverEvents, err := httpserver.StartHttpServer()
 
 	// Start Docker Daemons and ECS Agent,
 	// Notably, this needs to happen after the webserver handshake above. This
@@ -317,19 +322,19 @@ func main() {
 	// event stream. This is necessary because the Docker event stream needs to
 	// be reopened after any error is sent over the error channel.
 	needToReinitializeEventStream := false
-	events, errs := cli.Events(context.Background(), eventOptions)
+	dockerevents, dockererrs := cli.Events(context.Background(), eventOptions)
 	logger.Info("Initialized event stream...")
 
 eventLoop:
 	for {
 		if needToReinitializeEventStream {
-			events, errs = cli.Events(context.Background(), eventOptions)
+			dockerevents, dockererrs = cli.Events(context.Background(), eventOptions)
 			needToReinitializeEventStream = false
 			logger.Info("Re-initialized event stream...")
 		}
 
 		select {
-		case err := <-errs:
+		case err := <-dockererrs:
 			needToReinitializeEventStream = true
 			switch {
 			case err == nil:
@@ -347,23 +352,26 @@ eventLoop:
 				logger.Panicf("Got an unknown error from the Docker event stream: %v", err)
 			}
 
-		case event := <-events:
-			if event.Action == "die" || event.Action == "start" {
-				logger.Info("Event: %s for %s %s\n", event.Action, event.Type, event.ID)
+		case dockerevent := <-dockerevents:
+			if dockerevent.Action == "die" || dockerevent.Action == "start" {
+				logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
 			}
-			if event.Action == "start" {
+			if dockerevent.Action == "start" {
 				// We want the container start handler to die immediately upon failure,
 				// so it returns an error as soon as it encounters one.
-				err := containerStartHandler(ctx, cli, event.ID, &ttyState)
+				err := containerStartHandler(ctx, cli, dockerevent.ID, &ttyState)
 				if err != nil {
-					logger.Errorf("Error processing event %s for %s %s: %v", event.Action, event.Type, event.ID, err)
+					logger.Errorf("Error processing dockerevent %s for %s %s: %v", dockerevent.Action, dockerevent.Type, dockerevent.ID, err)
 				}
-			} else if event.Action == "die" {
+			} else if dockerevent.Action == "die" {
 				// Since we want all steps in the die handler to be attempted,
 				// regardless of earlier errors, we let the containerDieHandler report
 				// its own errors, and return nothing to us.
-				containerDieHandler(ctx, cli, event.ID, &ttyState)
+				containerDieHandler(ctx, cli, dockerevent.ID, &ttyState)
 			}
+
+		case serverevent := <-serverEvents:
+			logger.Errorf("unimplemented handling of server event %v", serverevent)
 		}
 	}
 }
