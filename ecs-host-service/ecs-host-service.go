@@ -101,9 +101,25 @@ func initializeFilesystem() {
 		}
 	}
 
+	// Create the resource mapping directory
 	err := os.MkdirAll(resourceMappingDirectory, 0644|os.ModeSticky)
 	if err != nil {
 		logger.Panicf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
+	}
+
+	// Same check as above, but for fractal-private directory
+	if _, err := os.Lstat(httpserver.FractalPrivatePath); !os.IsNotExist(err) {
+		if err == nil {
+			logger.Panicf("Directory %s already exists!", httpserver.FractalPrivatePath)
+		} else {
+			logger.Panicf("Could not make directory %s because of error %v", httpserver.FractalPrivatePath, err)
+		}
+	}
+
+	// Create fractal-private directory
+	err = os.MkdirAll(httpserver.FractalPrivatePath, 0644|os.ModeSticky)
+	if err != nil {
+		logger.Panicf("Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
 	}
 }
 
@@ -113,6 +129,13 @@ func uninitializeFilesystem() {
 		logger.Panicf("Failed to delete directory %s: error: %v\n", resourceMappingDirectory, err)
 	} else {
 		logger.Infof("Successfully deleted directory %s\n", resourceMappingDirectory)
+	}
+
+	err = os.RemoveAll(httpserver.FractalPrivatePath)
+	if err != nil {
+		logger.Panicf("Failed to delete directory %s: error: %v\n", httpserver.FractalPrivatePath, err)
+	} else {
+		logger.Infof("Successfully deleted directory %s\n", httpserver.FractalPrivatePath)
 	}
 }
 
@@ -289,7 +312,10 @@ func main() {
 	}
 
 	// Start the HTTP server and listen for events
-	serverEvents, err := httpserver.StartHttpServer()
+	serverEvents, err := httpserver.StartHTTPSServer()
+	if err != nil {
+		logger.Panic(err)
+	}
 
 	// Start Docker Daemons and ECS Agent,
 	// Notably, this needs to happen after the webserver handshake above. This
