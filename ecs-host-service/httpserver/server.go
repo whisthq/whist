@@ -18,7 +18,8 @@ type ServerEvent interface {
 func StartHttpServer() (<-chan ServerEvent, error) {
 	logger.Info("Setting up webserver.")
 
-	events := make(chan ServerEvent)
+	// Buffer up to 100 events so we don't block
+	events := make(chan ServerEvent, 100)
 
 	helloHandler := func(w http.ResponseWriter, req *http.Request) {
 		logger.Infof("Got a connection!")
