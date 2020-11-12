@@ -18,6 +18,7 @@ const (
 
 func initializeTLS() error {
 	// Create a self-signed passwordless certificate
+	// https://unix.stackexchange.com/questions/104171/create-ssl-certificate-non-interactively
 	cmd := exec.Command(
 		"/usr/bin/openssl",
 		"req",
