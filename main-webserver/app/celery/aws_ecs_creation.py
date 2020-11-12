@@ -198,6 +198,10 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
     return task_id, curr_ip, curr_network_binding, aeskey
 
 
+def ping_instance(ip, port, dpi):
+    pass
+
+
 @shared_task(bind=True)
 def assign_container(
     self,
@@ -219,21 +223,152 @@ def assign_container(
         base_container.user_id = username
         base_container.dpi = dpi
         db.session.commit()
-        for _ in range(num_extra):
-            create_new_container.delay(
-                "Unassigned",
-                task_definition_arn,
-                region_name=region_name,
-                webserver_url=webserver_url,
-            )
         self.update_state(
             state="SUCCESS",
             meta={"msg": "Container assigned."},
         )
-        return base_container
     else:
         db.session.commit()
-        # create_new_container here
+        cluster_name = select_cluster(region_name)
+        fractalLog(
+            function="select_container",
+            label=cluster_name,
+            logs=f"Creating new container in cluster {cluster_name}",
+        )
+
+        cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
+
+        if cluster_info.status == "DEPROVISIONING":
+            fractalLog(
+                function="create_new_container",
+                label=cluster_name,
+                logs=f"Cluster status is {cluster_info.status}",
+                level=logging.ERROR,
+            )
+            self.update_state(
+                state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}"}
+            )
+            raise Ignore
+
+        message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
+        self.update_state(
+            state="PENDING",
+            meta={"msg": message},
+        )
+        fractalLog(function="create_new_container", label="None", logs=message)
+        task_id, curr_ip, curr_network_binding, aeskey = start_container(
+            webserver_url, region_name, cluster_name, task_definition_arn
+        )
+        # TODO:  Get this right
+        if curr_ip == -1 or curr_network_binding == -1:
+            fractalLog(
+                function="create_new_container",
+                label=str(username),
+                logs="Error generating task with running IP",
+                level=logging.ERROR,
+            )
+            self.update_state(
+                state="FAILURE", meta={"msg": "Error generating task with running IP"}
+            )
+            raise Ignore
+
+        # TODO:  refactor this out into its own function
+
+        ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+
+        ecs_client.set_cluster(cluster_name)
+
+        container = UserContainer(
+            container_id=task_id,
+            user_id=username,
+            cluster=cluster_name,
+            ip=curr_ip,
+            port_32262=curr_network_binding[32262],
+            port_32263=curr_network_binding[32263],
+            port_32273=curr_network_binding[32273],
+            state="CREATING",
+            location=region_name,
+            os="Linux",
+            lock=False,
+            secret_key=aeskey,
+            task_definition=task_definition_arn,
+        )
+        container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
+        if container_sql:
+            container = UserContainer.query.get(task_id)
+            fractalLog(
+                function="create_new_container",
+                label=str(task_id),
+                logs=(
+                    f"Inserted container with IP address {curr_ip} and network bindings "
+                    f"{curr_network_binding}"
+                ),
+            )
+        else:
+            fractalLog(
+                function="create_new_container",
+                label=str(task_id),
+                logs="SQL insertion unsuccessful",
+            )
+            self.update_state(
+                state="FAILURE",
+                meta={"msg": "Error inserting Container {} into SQL".format(task_id)},
+            )
+            raise Ignore
+
+        cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
+        cluster_usage["cluster"] = cluster_name
+        cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
+        if cluster_sql:
+            fractalLog(
+                function="create_new_container",
+                label=str(task_id),
+                logs=f"Added task to cluster {cluster_name} and updated cluster info",
+            )
+            base_container = container
+        else:
+            fractalLog(
+                function="create_new_container",
+                label=str(task_id),
+                logs="SQL insertion unsuccessful",
+            )
+            self.update_state(
+                state="FAILURE",
+                meta={"msg": "Error updating container {} in SQL.".format(task_id)},
+            )
+            raise Ignore
+
+    ping_instance(base_container.ip, base_container.port_32262, base_container.dpi)
+    time.sleep(5)
+    if not _poll(base_container.container_id):
+        fractalLog(
+            function="create_new_container",
+            label=str(base_container.container_id),
+            logs="container failed to ping",
+        )
+        self.update_state(
+            state="FAILURE",
+            meta={"msg": "Container {} failed to ping.".format(base_container.container_id)},
+        )
+
+        raise Ignore
+
+        # pylint: disable=line-too-long
+    fractalLog(
+        function="create_new_container",
+        label=str(base_container.container_id),
+        logs=f"""container pinged!  To connect, run:
+               desktop 3.96.141.146 -p32262:{base_container.port_32262}.32263:{base_container.port_32263}.32273:{base_container.port_32273} -k {base_container.secret_key}
+                           """,
+    )
+    for _ in range(num_extra):
+        create_new_container.delay(
+            "Unassigned",
+            task_definition_arn,
+            region_name=region_name,
+            webserver_url=webserver_url,
+        )
+    return user_container_schema.dump(base_container)
 
 
 @shared_task(bind=True)
