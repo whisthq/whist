@@ -20,10 +20,50 @@ from app.helpers.utils.general.logs import fractalLog
 from app.helpers.utils.general.time import dateToUnix, getToday
 
 # TODO we may want to move this out of the client? not sure
-from app.helpers.utils.mail.stripe_mail import creditAppliedMail
+from app.helpers.utils.mail.stripe_mail import creditAppliedMail, planChangeMail
 
 from app.models import db, User, LoginHistory
 from app.serializers.public import UserSchema
+
+""" Welcome to the stripe client. The stripe client is a one stop shop for all things stripe, similarly
+to how the ECSClient covers much of our ECS core functionality, allowing us to use its various abstractions
+for important tasks.
+
+The Stripe client is designed to emulate previous stripe functionality, while cleaning up code and
+provding users with easy to-use functions and descriptive errors defined below.
+
+This client was written before any pricing meeting for the new container stack, so it may require some
+updates in the near future. As of now it makes the same assumption as previous implementations, which
+should be clear to avoid strange errors. If these assumptions are wrong in the future the code may need
+to be changed.
+
+Assumptions:
+1. Every user is subscribed to at most one subscription.
+2. Users have at least one source of payment.
+3. There are <20 (though easy to change for <100) total prices available.
+4. There are <10 (though easy to change for <100) total products availble. Best if only one.
+5. Product names are unique.
+6. Prices have, inside their metadata (look at the key-value metadata in the stripe dashboard) an item
+    of the form "name" : "some stripe name"
+7. The Stripe prices we use are: 
+    7.1 "Fractal Hourly" (used to charge an additional subscription at a lower rate than the other ones)
+    7.2 "Fractal Hourly Per Hour" (used to calculate how much to charge per hour of use)
+    7.3 "Fractal Monthly" (used to charge a monthly subscription; all subscriptions are monthly)
+    7.4 "Fractal Unlimited" (used to charge a subscription at a higher rate)
+    Note that these are hardcoded into the code. If we grow to have more, it will help to have
+    some set labels in a file to keep track (we'd map dynamically once to stripe objects).
+8. The functions marked as "Deprecated" are not to be used without testing that they work and
+    making edits at necessary. They are marked at the top of their doc string.
+
+Future TODO/Tech Debt:
+1. Make code generally more clear and less cluttered, removed unecessary functionality.
+2. Batch checks of validity and then turn that into its own function to shorten code
+3. Reuse boilerplate
+4. Consolidate everything that is called "plan" and everything called "price" and just pick one (preferably
+    price since plan might get deprecated by Stripe).
+5. Create helper functions, and give more options to some of the fetch functionality so that you can
+    get the entire objects or just the ids by choice, rather than being forced to only get the ids.
+"""
 
 
 class NonexistentUser(Exception):
@@ -56,10 +96,6 @@ class InvalidOperation(Exception):
     pass
 
 
-## TODO this class can be made clearer
-## by seperating checks of existence of the client and subsequent actions
-## by turning reused code into shared functions
-## by removing methods that are not useful and creating helper methods for complex, useful methods
 class StripeClient:
     # api key must be the stripe secret key or
     # a restrited "secret" key as in the stripe dashboard
@@ -122,14 +158,14 @@ class StripeClient:
             yield product_name, None
 
     def get_prices(self, products=["Fractal"]):
-        """Fetch the prices of said products. This is a generator.
+        """Fetch the prices of said products. This is a generator. Pass None as products for all.
 
         Precondition:
             No product has more than 10 (default limit) prices in it. Each price has a metadata
                 object with a key "name" mapping to a unique name.
 
         Precondition:
-            Product names are unique.
+            Product names are unique, less than limit (20) prices.
 
         Args:
             products (list[str], optional): The iterable of products to get prices for.
@@ -140,16 +176,23 @@ class StripeClient:
             (generator[tuple[str, str]]): An iterable of the name, price_id of each price (what used to be
                 called "plans").
         """
-        for product in products:
-            try:
-                for price in stripe.Price.list(product=product)[
-                    "data"
-                ]:  # TODO what if there are > 10
-                    yield price["metadata"]["name"], price["id"]
-            except:
-                for _, product_id in self.get_products(product_names=[product]):
-                    for price in stripe.Price.list(product=product)["data"]:
+        if not products:
+            yield from map(
+                lambda price: price["metadata"]["name"],
+                price["id"],
+                stripe.Price.list(limit=20)["data"],
+            )
+        else:
+            for product in products:
+                try:
+                    for price in stripe.Price.list(product=product)[
+                        "data"
+                    ]:  # TODO what if there are > 10
                         yield price["metadata"]["name"], price["id"]
+                except:
+                    for _, product_id in self.get_products(product_names=[product]):
+                        for price in stripe.Price.list(product=product)["data"]:
+                            yield price["metadata"]["name"], price["id"]
 
     def get_customer_info(self, email):
         """Retrieves the information for a user regarding stripe. Returns in the following format:
@@ -442,12 +485,19 @@ class StripeClient:
             return True
 
     def charge_hourly(self, email):
-        """A function that we should be calling just after a user logs off to charge them
-        for the mount of hours they were logged on to Fractal. This may be deprecated. Currently,
-        if they use Fractal for >0 minutes, we round their usage time to a minimum of one unit, since
-        Stripe does not seem to allow fractional units. In the future, we may prefer to simply change
-        the per-hour monthly plan and then add a table in the db for these users and how many minutes
-        they've used Fractal for. (this is a TODO and kind of a big one at that).
+        """Deprecated.
+
+        A function that we should be calling just after a user logs off to charge them
+        for the mount of hours they were logged on to Fractal.
+
+        Currently, if they use Fractal for >0 minutes, we round their usage time to a minimum of one unit,
+        since Stripe does not seem to allow fractional units. In the future, we may prefer to simply
+        change the per-hour monthly plan and then add a table in the db for these users and how many
+        minutes they've used Fractal for. (this is a TODO and kind of a big one at that).
+
+        Moreover, this uses the charges api which is not compliant with certain EU regulations. Effectively,
+        you'd need to switch over the the Payment Intent API to be able to go beyond NA. (Keep in mind
+        that this also does not actually use the Fractal Hourly Per Hour to avoid clutter.)
 
         Args:
             email (str): The email of the user that just logged off.
@@ -566,3 +616,146 @@ class StripeClient:
                     username=email, hours_used=str(total_hours), amount=total_price
                 ),
             )
+
+        def add_product(self, email, product_name, price_name):
+            """Deprecated.
+
+            The will add a product to a user if the price with price_name as its name is
+            inside the product.
+
+            Args:
+                email (str): Email of user we are adding product to.
+                product_name (str): Name of the product that you can see in the stripe dashboard.
+                price_name (str): Name of the price we want to identify by.
+
+            Raises:
+                NonexistentUser: The user does not exist.
+                InvalidOperation: The user is not a stripe customer.
+            """
+            user = User.query.get(email)
+            if not user:
+                raise NonexistentUser
+
+            stripe_customer_id = user.stripe_customer_id
+
+            if not stripe_customer_id:
+                raise InvalidOperation
+
+            price = None
+            for _price_name, _price in self.get_prices(products=[product_name]):
+                if price_name == _price_name:
+                    price = _price
+                    break
+
+            if not price:
+                raise RuntimeError(
+                    "Tried to add product with a price/plan, but price didn't exist."
+                )
+
+            subscription = stripe.Subscription.list(customer=stripe_customer_id)["data"][0]
+            subscription_item = None
+            for item in subscription["items"]["data"]:
+                if item["price"]["id"] == price:  # plan or price?
+                    subscription_item = stripe.SubscriptionItem.retrieve(item["id"])
+                    break
+
+            if not subscription_item:
+                stripe.SubscriptionItem.create(subscription=subscription["id"], price=price)
+            else:
+                stripe.SubscriptionItem.modify(
+                    subscription_item["id"], quantity=subscription_item["quantity"] + 1
+                )
+
+        def remove_product(self, email, product_name, price_name):
+            """Deprecated.
+
+            Almost the same as add_product, except will remove one.
+
+            Args:
+                email (str): The email of the user for which we want to remove product
+                    named by product_name.
+                product_name (str): Name of the product we want to remove.
+                price_name (str): Name of the price we want to identify by.
+
+            Raises:
+                NonexistentUser: User does not exist.
+                InvalidOperation: User is not a stripe customer.
+                RuntimeError: Price that
+            """
+            user = User.query.get(email)
+
+            if not user:
+                raise NonexistentUser
+
+            stripe_customer_id = customer.stripe_customer_id
+            if not stripe_customer_id:
+                raise InvalidOperation
+
+            price = None
+            for _price_name, _price in self.get_prices(products=[product_name]):
+                if price_name == _price_name:
+                    price = _price
+                    break
+
+            if not price:
+                raise RuntimeError(
+                    "Tried to remove product with a price/plan, but price didn't exist."
+                )
+
+            subscription = stripe.Subscription.list(customer=customer_id)["data"][0]
+            subscription_item = None
+            for item in subscription["items"]["data"]:
+                if item["price"]["id"] == price:  # price or plan?
+                    subscription_item = stripe.SubscriptionItem.retrieve(item["id"])
+                    break
+
+            if subscription_item:
+                if subscription_item["quantity"] == 1:
+                    stripe.SubscriptionItem.delete(subscription_item["id"])
+                else:
+                    stripe.SubscriptionItem.modify(
+                        subscription_item["id"], quantity=subscription_item["quantity"] - 1
+                    )
+
+        def updateHelper(self, email, new_price_name):
+            """Deprecated.
+
+            Update the plan/price for a certain user to by that with the new_price_name name.
+
+            Args:
+                email (str): Email of the user.
+                new_price_name (str): Name of the new price/plan they want.
+
+            Raises:
+                RuntimeError: If the new price does not exist.
+                NonexistentUser: If the user does not exist.
+                InvalidOperation: If the user does not have a stripe customer id.
+                InvalidOperation: If the user is not subscribed to anything.
+            """
+            new_price = None
+            for price_name, price in self.get_prices():
+                if price_name == new_price_name:
+                    new_price = price
+                    break
+
+            if not new_price:
+                raise RuntimeError("New price does not exist with given name.")
+
+            user = User.query.get(email)
+            if not user:
+                raise NonexistentUser
+
+            stripe_customer_id = user.stripe_customer_id
+            if not stripe_customer_id:
+                raise InvalidOperation
+
+            subscriptions = stripe.Subscription.list(customer=stripe_customer_id)["data"]
+            if not subscriptions or len(subscriptions) == 0:
+                raise InvalidOperation
+
+            stripe.SubscriptionItem.modify(
+                subscriptions[0]["items"]["data"][0]["id"], price=new_price
+            )
+
+            if not current_app.testing:
+                planChangeMail(username, new_plan_type)
