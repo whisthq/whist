@@ -80,6 +80,7 @@ Defines
 */
 
 #define NUM_KEYCODES 265
+#define CAPTURE_SPECIAL_WINDOWS_KEYS false
 
 #define MAX_NUM_CLIENTS 10
 #define PORT_DISCOVERY 32262
@@ -90,9 +91,12 @@ Defines
 #define USING_FFMPEG_IFRAME_FLAG false
 
 #ifdef _WIN32
+
 // possible on windows, so let's do it
 #define USING_SERVERSIDE_SCALE true
+
 #else
+
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
 #define USING_XTEST_INPUT_DRIVER true
