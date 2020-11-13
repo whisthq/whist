@@ -306,6 +306,7 @@ def autoLoginHelper(email):
             "name": None,
         }
 
+
 def verifyPasswordHelper(email, password):
     user = User.query.get(email)
 
@@ -317,4 +318,3 @@ def verifyPasswordHelper(email, password):
         return {
             "status": SUCCESS,
         }
-

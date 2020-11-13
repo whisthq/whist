@@ -15,7 +15,7 @@ from app.helpers.blueprint_helpers.auth.account_post import (
     updateUserHelper,
     verifyHelper,
     autoLoginHelper,
-    verifyPasswordHelper
+    verifyPasswordHelper,
 )
 from app.helpers.utils.general.auth import fractalAuth
 
@@ -100,6 +100,7 @@ def account_post(action, **kwargs):
         output = verifyPasswordHelper(username, password)
 
         return jsonify(output), output["status"]
+
 
 @account_bp.route("/account/<action>", methods=["GET"])
 @fractalPreProcess
