@@ -341,6 +341,12 @@ desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_b
             """,
         )
 
+        if not current_app.testing:
+            task_time_taken = time.time() - task_start_time
+            datadogEvent_containerCreate(
+                container.container_id, cluster_name, username=username, time_taken=task_time_taken
+            )
+
         return user_container_schema.dump(container)
     else:
         fractalLog(
@@ -353,12 +359,6 @@ desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_b
             meta={"msg": "Error updating container {} in SQL.".format(ecs_client.tasks[0])},
         )
         raise Ignore
-
-    if not current_app.testing:
-        task_time_taken = time.time() - task_start_time
-        datadogEvent_containerCreate(
-            container.container_id, cluster_name, username=username, time_taken=task_time_taken
-        )
 
 
 @shared_task(bind=True)
@@ -434,6 +434,11 @@ def create_new_cluster(
                 label=cluster_name,
                 logs=f"Successfully created cluster {cluster_name}",
             )
+
+            if not current_app.testing:
+                task_time_taken = time.time() - task_start_time
+                datadogEvent_clusterCreate(cluster_name, time_taken=task_time_taken)
+
             return cluster
         else:
             fractalLog(
@@ -461,10 +466,6 @@ def create_new_cluster(
             state="FAILURE",
             meta={"msg": f"Encountered error: {error}"},
         )
-
-    if not current_app.testing:
-        task_time_taken = time.time() - task_start_time
-        datadogEvent_clusterCreate(cluster_name, time_taken=task_time_taken)
 
 
 @shared_task(bind=True)
