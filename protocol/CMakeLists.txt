@@ -51,6 +51,7 @@ if (${CMAKE_BUILD_TYPE} MATCHES Debug)
 elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
     add_definitions(-DLOG_LEVEL=2)
 endif()
+add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 
 # static analysis during build defaults to off, but we set to on in github actions
 # you can also use this locally if you like, but will need to install cppcheck.
