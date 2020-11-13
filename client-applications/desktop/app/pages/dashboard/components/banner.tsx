@@ -39,6 +39,8 @@ const Banner = (props: any) => {
         (bannerItem: any) => bannerItem.background
     )
 
+    console.log(error)
+
     const [index, setIndex] = useState(0)
 
     const handleSelect = (selectedIndex: number) => {
