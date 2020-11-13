@@ -12,6 +12,7 @@ export const DEFAULT = {
         // verification status for this specific user
         emailVerified: false, // keeps track of whether this user is verified so we can display the proper info
         canLogin: false, // are they off the waitlist?
+        waitlistToken: null,
     },
     authFlow: {
         mode: "Sign up", // what auth is doing right now (todo in the future make it an enum)

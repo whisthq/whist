@@ -13,6 +13,7 @@ export function updateUser(body: {
     emailVerificationToken?: string
     emailVerified?: boolean
     canLogin?: boolean
+    waitlistToken?: string
 }) {
     return {
         type: UPDATE_USER,

@@ -28,6 +28,8 @@ const Dashboard = (props: {
         user_id: string
         canLogin: boolean
         accessToken: string
+        waitlistToken: string
+        emailVerificationToken: string
     }
 }) => {
     const { user, dispatch } = props
@@ -57,7 +59,8 @@ const Dashboard = (props: {
             data.users &&
             data.users[0] &&
             (data.users[0].can_login ||
-                user.user_id.includes("@tryfractal.com"))
+                user.user_id.includes("@tryfractal.com") ||
+                user.waitlistToken === user.emailVerificationToken)
         ) {
             setCanLogin(true)
             dispatch(
@@ -66,7 +69,13 @@ const Dashboard = (props: {
                 })
             )
         }
-    }, [data, dispatch, user.user_id])
+    }, [
+        data,
+        dispatch,
+        user.user_id,
+        user.waitlistToken,
+        user.emailVerificationToken,
+    ])
 
     if (loading) {
         return (
@@ -114,11 +123,29 @@ const Dashboard = (props: {
                         <HashLink to="/#top">
                             <button
                                 className="white-button"
-                                style={{ width: "100%", marginTop: 25 }}
+                                style={{
+                                    width: "100%",
+                                    marginTop: 25,
+                                    color: "white",
+                                    background: "rgba(66, 133, 244, 0.9)",
+                                    border: "none",
+                                    fontSize: 16,
+                                }}
                             >
                                 Back to Home
                             </button>
                         </HashLink>
+                        <button
+                            className="white-button"
+                            style={{
+                                width: "100%",
+                                marginTop: 25,
+                                fontSize: 16,
+                            }}
+                            onClick={logout}
+                        >
+                            Log Out
+                        </button>
                     </div>
                 </div>
             )
