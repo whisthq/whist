@@ -49,7 +49,8 @@ option(BUILD_CLIENT "build FractalClient" ON)
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
     add_definitions(-DLOG_LEVEL=5)
 elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
-    add_definitions(-DLOG_LEVEL=2)
+    # For now, always show all logs
+    add_definitions(-DLOG_LEVEL=5)
 endif()
 add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 
