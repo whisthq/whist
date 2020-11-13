@@ -10,7 +10,7 @@ repos:
     - repo: git://github.com/prettier/prettier
       rev: 2.0.5
       hooks:
-          - id: prettier 
+          - id: prettier
     - repo: git://github.com/doublify/pre-commit-clang-format
       rev: master
       hooks:
