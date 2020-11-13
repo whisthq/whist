@@ -15,6 +15,7 @@ from app.helpers.blueprint_helpers.auth.account_post import (
     updateUserHelper,
     verifyHelper,
     autoLoginHelper,
+    verifyPasswordHelper,
 )
 from app.helpers.utils.general.auth import fractalAuth
 
@@ -88,6 +89,15 @@ def account_post(action, **kwargs):
         username = body["username"]
 
         output = autoLoginHelper(username)
+
+        return jsonify(output), output["status"]
+
+    elif action == "verify_password":
+        # Verifies correct current password before allowing a user to change password
+
+        username, password = body["username"], body["password"]
+
+        output = verifyPasswordHelper(username, password)
 
         return jsonify(output), output["status"]
 
