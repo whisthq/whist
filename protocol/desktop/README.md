@@ -21,7 +21,9 @@ desktop IP_ADDRESS [OPTION]...
 MacOS/Linux:
 ./desktop IP_ADDRESS [OPTION]...
 ```
+
 The option flags are as follows:
+
 ```
   -w, --width=WIDTH             set the width for the windowed-mode
                                   window, if both width and height
@@ -40,7 +42,9 @@ The option flags are as follows:
   --help     display this help and exit"
   --version  output version information and exit;
 ```
+
 For example, to run the protocol on IP address `0.0.0.0` in an `800x600` window on Linux, call:
+
 ```
 ./desktop 0.0.0.0 --width 800 --height 600
 ```

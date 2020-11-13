@@ -24,7 +24,7 @@ MacOS/Linux:
 
 ### Updating Fractal Virtual Machines
 
-The Fractal virtual machines run this server executable. We run 3 different types of executables: 
+The Fractal virtual machines run this server executable. We run 3 different types of executables:
 
 `master`, for the latest release branch | User-facing
 

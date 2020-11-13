@@ -1,15 +1,15 @@
 {
-  "problemMatcher": [
-    {
-      "owner": "msvc",
-      "pattern": [
+    "problemMatcher": [
         {
-          "regexp": "^(.*)\\((\\d+)\\):\\s(error|warning .*):(.*)$",
-          "file": 1,
-          "line": 2,
-          "message": 3
+            "owner": "msvc",
+            "pattern": [
+                {
+                    "regexp": "^(.*)\\((\\d+)\\):\\s(error|warning .*):(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "message": 3
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }
