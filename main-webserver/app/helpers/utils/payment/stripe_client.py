@@ -63,6 +63,9 @@ Future TODO/Tech Debt:
     price since plan might get deprecated by Stripe).
 5. Create helper functions, and give more options to some of the fetch functionality so that you can
     get the entire objects or just the ids by choice, rather than being forced to only get the ids.
+6. Make it so that if there is a source it will charge with their source and not need a token for
+    create_subscription. In General, it may be good to do this and similar stuff for various functions,
+    so having a decorator might be good.
 """
 
 
@@ -146,11 +149,14 @@ class StripeClient:
                 product_names. For products that were not found returns None.
         """
         products = stripe.Product.list(limit=limit)["data"]
-        product_names = set(product_names)
+        product_names = set(product_names) if product_names else None
 
         for product in products:
             name, product_id = product["name"], product["id"]
-            if name in product_names:
+
+            if product_names is None:
+                yield name_product_id
+            elif name in product_names:
                 product_names.remove(name)
                 yield name, product_id
 
@@ -177,10 +183,10 @@ class StripeClient:
                 called "plans").
         """
         if not products:
+            # TODO key error name wtf
             yield from map(
-                lambda price: price["metadata"]["name"],
-                price["id"],
-                stripe.Price.list(limit=20)["data"],
+                lambda price: (price["metadata"]["name"], price["id"]),
+                stripe.Price.list(limit=20, active=True)["data"],
             )
         else:
             for product in products:
@@ -244,7 +250,6 @@ class StripeClient:
         else:
             return None
 
-    # TODO make it so that if there is a source it will charge with their source
     def create_subscription(self, token, email, plan, code=None):
         """This will create a new subscription for a client with the given email
         and a code if it exists. This is similar to what was previously stripe_post's "chargeHelper."
@@ -411,13 +416,14 @@ class StripeClient:
         if not user:
             raise NonexistentUser
 
-        if not user.stripe_customer_id:
-            customer = stripe.Customer.create(email=email, source=token)
+        stripe_customer_id = user.stripe_customer_id
+        if not stripe_customer_id:
+            customer = stripe.Customer.create(email=email, source=source)
 
-            user.stripe_customer_id = stripe_customer_id
+            user.stripe_customer_id = customer["id"]
             db.session.commit()
         else:
-            stripe.Customer.create_source(user.stripe_customer_id, source=source)
+            stripe.Customer.create_source(stripe_customer_id, source=source)
 
     def delete_card(self, email, card):
         """Deletes a card (source) for a customer. This is not a recommended
@@ -449,19 +455,13 @@ class StripeClient:
         actually become stripe code.
 
         Args:
-            referrer (str): The referrer who referred someone else such that we now want
+            referrer (app.models.User): The referrer who referred someone else such that we now want
                 to discount them.
 
         Returns:
             (bool): False if there was an error discounting (i.e. there is no referrer) else True.
         """
         if not referrer:
-            fractalLog(
-                function="StripeClient.discount",
-                label="None",
-                logs="No user for code {}".format(code),
-                level=logging.ERROR,
-            )
             return False
         else:
             credits_outstanding = referrer.credits_outstanding

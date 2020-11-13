@@ -325,6 +325,128 @@ def test_cancel_no_stripe_throws(client, not_customer):
         client.cancel_subscription(dummy_email)
 
 
+"""Here we test application of the discount in a valid case and an invalid case."""
+
+
+def test_discount(client):
+    # ming is going to have a hell of a lot of credits
+    dummy = User.query.get(dummy_referrer)
+    original_credits = dummy.credits_outstanding
+
+    client.discount(dummy)
+    dummy = User.query.get(dummy_referrer)
+    new_credits = dummy.credits_outstanding
+
+    assert new_credits == 1 or not original_credits is None and new_credits == original_credits + 1
+
+    client.discount(None)
+    dummy = User.query.get(dummy_referrer)
+    newest_credits = dummy.credits_outstanding
+
+    assert newest_credits == new_credits
+
+
+"""Here we test functionality of adding a card and deleting a card for valid users and users without
+stripe customer ids.
+"""
+
+
+def test_add_card(client, not_customer):
+    dummy_token = _generate_token()
+    get = lambda: User.query.get(dummy_email)
+    info = lambda: stripe.Customer.retrieve(user.stripe_customer_id, expand=["sources"])
+
+    # test for a user that does not have a customer id
+    client.add_card(dummy_email, dummy_token)
+    user = get()
+
+    assert user.stripe_customer_id
+    customer_info = info()
+    cards = customer_info["sources"]["data"]  # might also have a default source but we don't care
+
+    assert len(cards) == 1
+
+    # this is allowed through somehow without requiring auth for this
+    # probably because it's not being charged
+    # anyways this card supposedly requires auth, but I needed another test card to see if this
+    # would work :P
+    dummy_token = _generate_token(number=stripe_auth_req_card)
+    client.add_card(dummy_email, dummy_token)
+
+    customer_info = info()
+    cards = customer_info["sources"]["data"]
+    assert len(cards) == 2
+
+
+def test_delete_card_no_stripe_customer_id(client, not_customer):
+    with pytest.raises(InvalidOperation):
+        client.delete_card(dummy_email, "dummy")
+
+
+def test_delete_card(client, not_customer):
+    dummy_token = _generate_token()
+    get = lambda: User.query.get(dummy_email)
+
+    _new_customer(dummy_email, subscribe=False)
+
+    user = get()
+    info = lambda: stripe.Customer.retrieve(user.stripe_customer_id, expand=["sources"])
+
+    customer_info = info()
+    cards = customer_info["sources"]["data"]
+    card = cards[0]["id"]
+
+    client.delete_card(dummy_email, card)
+
+    customer_info = info()
+    cards = customer_info["sources"]["data"]
+    assert len(cards) == 0
+
+
+"""Here we will test fetch functions like get_prices and get_products. We'll test once with names and once
+with ids for get_prices."""
+
+
+def test_get_prices_with_ids(client):
+    # for now Fractal is the only product, but whatever
+    all_prices = set()
+    all_prices_again = set()
+
+    products = map(
+        lambda p: p["id"],
+        (p for p in stripe.Product.list(limit=10)["data"] if p["name"] == "Fractal"),
+    )
+
+    # fetch all prices by their product ids
+    for price_name, price in client.get_prices(products=products):
+        retrieved = stripe.Price.retrieve(price)
+        assert not retrieved is None and len(retrieved) > 0
+
+        all_prices.add(price)
+
+    # fetch all prices
+    for price_name, price in client.get_prices(products=None):
+        assert price in all_prices
+
+        all_prices.remove(price)
+        all_prices_again.add(price)
+
+    products = map(
+        lambda p: p["name"],
+        (p for p in stripe.Product.list(limit=10)["data"] if p["name"] == "Fractal"),
+    )
+
+    # fetch all prices by product name and not id
+    for price_name, price in client.get_prices(products=products):
+        assert price in all_prices_again
+
+        all_prices_again.remove(price)
+
+
+def test_get_products(client):
+    pass  # TODO
+
+
 """Here we test all functionality for invalid users."""
 
 # it's ok to ignore whether the state exists or not since this will exit
@@ -338,3 +460,7 @@ def test_invalid_user_throws(client):
         client.create_subscription(dummy_nonexistent_email, dummy_token, dummy_zip_us)
     with pytest.raises(NonexistentUser):
         client.get_customer_info(dummy_nonexistent_email)
+    with pytest.raises(NonexistentUser):
+        client.add_card(dummy_nonexistent_email, "dummy")
+    with pytest.raises(NonexistentUser):
+        client.delete_card(dummy_nonexistent_email, "dummy")
