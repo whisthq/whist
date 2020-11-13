@@ -14,6 +14,12 @@ cmake_minimum_required(VERSION 3.15)
 #We need CMP0091 to select the MSVC_RUNTIME_LIBRARY
 #See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
 cmake_policy(SET CMP0091 NEW)
+
+#set default compiler flags
+set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 project(FractalProtocol LANGUAGES C)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -205,16 +211,16 @@ endif()
 
 #download and install Sentry CMake project
 # This is fixed to sdk version 0.4.1
-set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.1/sentry-native.zip)
-set(sentry_dir sentry-native)
-MESSAGE(VERBOSE ${CMAKE_SOURCE_DIR}/${sentry_dir})
-if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
-    MESSAGE(STATUS "Downloading Sentry")
-    file(DOWNLOAD ${sentry_url} "${CMAKE_SOURCE_DIR}/${sentry_dir}.zip"
-            STATUS sentry_dl_status)
-    MESSAGE(VERBOSE ${sentry_dl_status})
-    file(MAKE_DIRECTORY ${sentry_dir})
-endif()
+#set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.1/sentry-native.zip)
+#set(sentry_dir sentry-native)
+#MESSAGE(VERBOSE ${CMAKE_SOURCE_DIR}/${sentry_dir})
+#if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
+#    MESSAGE(STATUS "Downloading Sentry")
+#    file(DOWNLOAD ${sentry_url} "${CMAKE_SOURCE_DIR}/${sentry_dir}.zip"
+#            STATUS sentry_dl_status)
+#    MESSAGE(VERBOSE ${sentry_dl_status})
+#    file(MAKE_DIRECTORY ${sentry_dir})
+#endif()
 
 execute_process(
         COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
