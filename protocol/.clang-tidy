@@ -1,0 +1,6 @@
+Checks: '-*,readability-identifier-naming'
+CheckOptions: [
+    {key: readability-identifier-naming.FunctionCase, value: camelBack},
+    {key: readability-identifier-naming.GlobalVariablePrefix, value: g_},
+    {key: readability-identifier-naming.VariableCase, value: lower_case}
+]
