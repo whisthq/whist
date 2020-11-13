@@ -68,6 +68,7 @@ func StartHTTPSServer() (<-chan ServerEvent, error) {
 
 	http.HandleFunc("/", helloHandler)
 	go func() {
+		// TODO: defer things correctly so that a panic here is actually caught and resolved
 		logger.Panicf("HTTP Server Error: %v", http.ListenAndServeTLS("0.0.0.0"+portToListen, certPath, privatekeyPath, nil))
 	}()
 
