@@ -8,6 +8,7 @@ This repository contains the code for containerizing the various applications th
 - Google Chrome
 - Mozilla Firefox
 - Brave Browser
+- Sidekick Browser
 - Blender
 - Blockbench
 - Figma
@@ -112,14 +113,13 @@ Here, `APP` is again the path to the relevant app folder; e.g., `base` or `brows
 
 ### Continous Delivery
 
-This is how we push to production. For every push to `master`, all applications specified under `apps` in `.github/workflows/push-images.yml` will automatically be built and pushed to all AWS regions specified under `aws-regions` in `.github/workflows/push-images.yml`. This will then automatically trigger a new release of all the ECS task definitions in `fractalcomputers/ecs-task-definitions`, which need to be updated in production to point to our new container image tags.
+This is how we push to production. For every push to `master`, all applications that have a Dockerfile get automatically built and pushed to all AWS regions specified under `aws-regions` in `.github/workflows/push-images.yml`. This will then automatically trigger a new release of all the ECS task definitions in `fractalcomputers/ecs-task-definitions`, which need to be updated in production to point to our new container image tags.
 
 #### Adding New Applications
 
 For every new application that you add support for, in addition to creating its own subfolder under the relevant category and creating application-specific **Dockerfile.20**, you need to:
 
 - Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`, for pre-commit hooks
-- Add the path to your new Dockerfile.20 under `apps` in `.github/workflows/push-images.yml` and `.github/workflows/dockerfiles-building-ubuntu20.yml`, for continuous integration and deployment
 - Update the list of supported applications in this README
 
 And, if you're adding a new AWS region, you should add the region name under `aws-regions` in `push-images.yml`.
