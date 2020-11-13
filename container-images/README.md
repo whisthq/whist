@@ -16,6 +16,7 @@ This repository contains the code for containerizing the various applications th
 - Slack
 - Discord
 - Notion
+- Lightworks
 
 See [Adding New Applications](#Adding-New-Applications) for details on how to add support for new applications and integrate them with our continuous delivery pipeline.
 
