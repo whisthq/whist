@@ -148,7 +148,7 @@ class StripeClient:
             (generator[tuple[str, str]]): An iteratble of name_product_id for each of the products in
                 product_names. For products that were not found returns None.
         """
-        products = stripe.Product.list(limit=limit)["data"]
+        products = stripe.Product.list(limit=limit, active=True)["data"]
         product_names = set(product_names) if product_names else None
 
         for product in products:
@@ -183,7 +183,7 @@ class StripeClient:
                 called "plans").
         """
         if not products:
-            # TODO key error name wtf
+            # TODO key error use nickname?
             yield from map(
                 lambda price: (price["metadata"]["name"], price["id"]),
                 stripe.Price.list(limit=20, active=True)["data"],
@@ -191,13 +191,13 @@ class StripeClient:
         else:
             for product in products:
                 try:
-                    for price in stripe.Price.list(product=product)[
+                    for price in stripe.Price.list(product=product, active=True)[
                         "data"
                     ]:  # TODO what if there are > 10
                         yield price["metadata"]["name"], price["id"]
                 except:
                     for _, product_id in self.get_products(product_names=[product]):
-                        for price in stripe.Price.list(product=product)["data"]:
+                        for price in stripe.Price.list(product=product_id, active=True)["data"]:
                             yield price["metadata"]["name"], price["id"]
 
     def get_customer_info(self, email):
