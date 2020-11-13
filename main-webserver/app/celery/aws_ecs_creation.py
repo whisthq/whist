@@ -6,6 +6,8 @@ from celery import shared_task
 from celery.exceptions import Ignore
 from flask import current_app
 
+from app.celery.aws_ecs_deletion import delete_cluster
+
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractalLog
 from app.helpers.utils.general.sql_commands import fractalSQLCommit
@@ -158,6 +160,11 @@ def select_cluster(region_name):
             create_new_cluster.delay(
                 region_name=region_name, ami=region_to_ami[region_name], min_size=1
             )
+        # delete spurious clusters
+        if len(all_clusters) > 2:
+            for cluster in all_clusters[2:]:
+                if cluster.pendingTasksCount + cluster.runningTasksCount == 0:
+                    delete_cluster.delay(cluster.cluster, cluster.location)
     return cluster_name
 
 
