@@ -256,7 +256,8 @@ class StripeClient:
         It will return true on a succes run.
 
         Args:
-            token (str): A stripe token that can be used to get credit card information etc by stripe.
+            token (str): A stripe token that can be used to get credit card information etc by stripe.  It
+                can be none to use the default source of an existing user.
             email (str): The user's email.
             plan (str): The plan they have purchased (can by our standard, or unlimited etc).
             code (str, optional): A promo/referall code if they were referred. None by default indicates
@@ -278,10 +279,13 @@ class StripeClient:
         if not user:
             raise NonexistentUser
 
-        try:
-            token = stripe.Token.retrieve(token)
-        except:
-            raise InvalidStripeToken
+        # if they pass an invalid string token then we raise an error otherwise we set it to
+        # the token object (i.e. with the info etc)
+        if not token is None:
+            try:
+                token = stripe.Token.retrieve(token)
+            except:
+                raise InvalidStripeToken
 
         stripe_customer_id = user.stripe_customer_id
 
@@ -309,6 +313,10 @@ class StripeClient:
         subscribed = True
 
         if not stripe_customer_id:
+            # if they are not a customer they require a token
+            if token is None:
+                raise InvalidStripeToken
+
             subscriptions = None  # this is necessary since if <unbound> != if None (i.e. false)
             customer = stripe.Customer.create(email=email, source=token)
             stripe_customer_id = customer["id"]
@@ -348,6 +356,11 @@ class StripeClient:
                 logs="Customer updated successful",
             )
         else:
+            # we have not yet allowed customers to delete cards, but
+            # in the future when we do we should either not let them go below one, or
+            # delete their stripe info if they do, or add something here to block you from
+            # subscriping with a None token... I'm assuming they have a "default_source" in
+            # their customer object
             stripe.Subscription.create(
                 customer=stripe_customer_id,
                 items=[{"plan": plan}],

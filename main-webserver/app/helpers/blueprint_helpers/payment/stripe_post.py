@@ -25,12 +25,15 @@ def addSubscriptionHelper(token, email, plan, code):
     fractalLog(
         function="addSubscriptionHelper",
         label=email,
-        logs="Signing {} up for plan {}, with code {}, token{}".format(email, plan, code, token),
+        logs="Signing {} up for plan {}, with code {}, token {}".format(
+            email, plan, code, str(token)
+        ),
     )
     client = StripeClient(STRIPE_SECRET)
     plans = client.get_prices()  # product Fractal by default
 
     plan = reduce(lambda acc, pl: acc if pl[0] != plan else pl[1], plans, None)
+
     if plan:
         try:
             client.create_subscription(token, email, plan, code=code)
