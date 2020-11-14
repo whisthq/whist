@@ -443,6 +443,8 @@ class StripeClient:
         method to use. I'm not sure if it is necessary or what will happen if they try
         to delete their only source regarding the subscription.
 
+        In the future make it so you can pass in a card id instead as an alternative.
+
         Args:
             email (str): Email for the user.
             card (str): Card token (or "id") for the card we want to remove.

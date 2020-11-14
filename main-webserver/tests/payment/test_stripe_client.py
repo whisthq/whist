@@ -398,11 +398,11 @@ def test_delete_card(client, not_customer):
     user = get()
     info = lambda: stripe.Customer.retrieve(user.stripe_customer_id, expand=["sources"])
 
-    customer_info = info()
-    cards = customer_info["sources"]["data"]
-    card = cards[0]["id"]
+    # customer_info = info()
+    # cards = customer_info["sources"]["data"]
+    # card = cards[0]["id"]
 
-    client.delete_card(dummy_email, card)
+    client.delete_card(dummy_email, dummy_token)
 
     customer_info = info()
     cards = customer_info["sources"]["data"]
