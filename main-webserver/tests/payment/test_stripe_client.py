@@ -17,6 +17,8 @@ easy to simply use the test key given to us by stripe.
 import stripe
 import pytest
 
+from tests.helpers.general.logs import fractalLog
+
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from app.helpers.utils.general.time import dateToUnix
@@ -106,6 +108,10 @@ def _generate_token(number=stripe_no_auth_card, zipcode=dummy_zip_us, malformed=
         if not malformed
         else "3489weji456rdfdfdbhjiosdn"
     )  # an arbitrary not a token string
+
+
+# for i in range(100):
+#     fractalLog("Generated Token:", f"{i}", _generate_token())
 
 
 def _remove_stripe_customer(email):

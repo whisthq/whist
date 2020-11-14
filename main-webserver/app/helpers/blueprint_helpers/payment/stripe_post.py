@@ -2,6 +2,8 @@ from flask import jsonify
 
 from functools import reduce
 
+from app.constants.config import STRIPE_SECRET
+
 from app.constants.http_codes import (
     BAD_REQUEST,
     CONFLICT,
@@ -87,11 +89,11 @@ def addCardHelper(email, token):
     return jsonify({"status": status}), status
 
 
-def deleteCardHelper(email):
+def deleteCardHelper(email, token):
     client = StripeClient(STRIPE_SECRET)
 
     try:
-        client.delete_card(email)
+        client.delete_card(email, token)
         status = SUCCESS
     except NonexistentUser:
         status = FORBIDDEN

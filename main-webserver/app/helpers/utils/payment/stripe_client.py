@@ -438,7 +438,7 @@ class StripeClient:
         else:
             stripe.Customer.create_source(stripe_customer_id, source=source)
 
-    def delete_card(self, email, card):
+    def delete_card(self, email, source):
         """Deletes a card (source) for a customer. This is not a recommended
         method to use. I'm not sure if it is necessary or what will happen if they try
         to delete their only source regarding the subscription.
@@ -456,10 +456,25 @@ class StripeClient:
         if not user:
             raise NonexistentUser
 
-        if not user.stripe_customer_id:
+        stripe_customer_id = user.stripe_customer_id
+        if not stripe_customer_id:
             raise InvalidOperation
 
-        stripe.Customer.delete_source(user.stripe_customer_id, card)
+        card = stripe.Token.retrieve(source)["card"]
+        last4 = card["last4"]
+
+        remove_ids = set()
+
+        # if we make get customer info more flexible use it here
+        customer_info = stripe.Customer.retrieve(stripe_customer_id, expand=["sources"])
+        cards = customer_info["sources"]["data"]
+
+        for card in cards:
+            if card["last4"] == last4:
+                remove_ids.add(card["id"])
+
+        for card in remove_ids:
+            stripe.Customer.delete_source(user.stripe_customer_id, card)
 
     def discount(self, referrer):
         """Apply a discount to a referrer if they have referred. As you may notice,
