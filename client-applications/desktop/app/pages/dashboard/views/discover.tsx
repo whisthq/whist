@@ -25,7 +25,13 @@ const Discover = (props: any) => {
         return app.app_id.toLowerCase().startsWith(search.toLowerCase())
     }
 
-    const { data } = useQuery(GET_FEATURED_APPS)
+    const { data } = useQuery(GET_FEATURED_APPS, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${props.accessToken}`,
+            },
+        },
+    })
     const featuredAppData = data
         ? data.hardware_supported_app_images.filter(checkActive)
         : []
@@ -146,7 +152,9 @@ const Discover = (props: any) => {
 }
 
 const mapStateToProps = (state: any) => {
-    return {}
+    return {
+        accessToken: state.MainReducer.auth.accessToken,
+    }
 }
 
 export default connect(mapStateToProps)(Discover)
