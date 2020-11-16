@@ -1,5 +1,6 @@
 import logging
 import os
+import requests
 import time
 
 from celery import shared_task
@@ -212,7 +213,11 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
 
 
 def ping_instance(ip, port, dpi):
-    pass
+    data = {"host_port": port, "dpi": dpi}
+    r = requests.post(ip, data=data)
+    if r.status_code != 200:
+        return False, r
+    return True, r
 
 
 @shared_task(bind=True)
