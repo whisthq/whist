@@ -63,8 +63,9 @@ def account_post(action, **kwargs):
         username, password = body["username"], body["password"]
         name = body["name"]
         reason_for_signup = body["feedback"]
+        can_login = body.pop("can_login", False)
 
-        output = registerHelper(username, password, name, reason_for_signup)
+        output = registerHelper(username, password, name, reason_for_signup, can_login)
 
         return jsonify(output), output["status"]
 
