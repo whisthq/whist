@@ -155,17 +155,18 @@ class StripeClient:
         if not stripe_customer_id:
             return True
 
-        if stripe_customer_id:
-            try:
-                stripe.Customer.retrieve(stripe_customer_id)
-            except stripe.error.InvalidRequestError as e:
-                if user:
-                    user.stripe_customer_id = None
-                    db.session.commit()
-                    return False
-                else:
-                    raise e
-            return True
+        try:
+            customer = stripe.Customer.retrieve(stripe_customer_id)
+            if "deleted" in customer and customer["deleted"]:
+                raise RuntimeError("Customer deleted.")
+        except Exception as e:
+            if user:
+                user.stripe_customer_id = None
+                db.session.commit()
+                return False
+            else:
+                raise e
+        return True
 
     def get_products(self, product_names=["Fractal"], limit=20):
         """Fetch the product ids of various products.
