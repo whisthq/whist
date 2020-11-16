@@ -211,16 +211,16 @@ endif()
 
 #download and install Sentry CMake project
 # This is fixed to sdk version 0.4.1
-#set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.1/sentry-native.zip)
-#set(sentry_dir sentry-native)
-#MESSAGE(VERBOSE ${CMAKE_SOURCE_DIR}/${sentry_dir})
-#if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
-#    MESSAGE(STATUS "Downloading Sentry")
-#    file(DOWNLOAD ${sentry_url} "${CMAKE_SOURCE_DIR}/${sentry_dir}.zip"
-#            STATUS sentry_dl_status)
-#    MESSAGE(VERBOSE ${sentry_dl_status})
-#    file(MAKE_DIRECTORY ${sentry_dir})
-#endif()
+set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.1/sentry-native.zip)
+set(sentry_dir sentry-native)
+MESSAGE(VERBOSE ${CMAKE_SOURCE_DIR}/${sentry_dir})
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
+    MESSAGE(STATUS "Downloading Sentry")
+    file(DOWNLOAD ${sentry_url} "${CMAKE_SOURCE_DIR}/${sentry_dir}.zip"
+            STATUS sentry_dl_status)
+    MESSAGE(VERBOSE ${sentry_dl_status})
+    file(MAKE_DIRECTORY ${sentry_dir})
+endif()
 
 execute_process(
         COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
@@ -271,3 +271,5 @@ if (${BUILD_SERVER} MATCHES "ON" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
     message(STATUS building server)
     add_subdirectory(server)
 endif()
+
+set(CMAKE_C_CLANG_TIDY clang-tidy --header-filter=".*" --line-filter='[{"name":"include/*","lines":[[9999999,9999999]]}, {"name":".c"}]')
