@@ -26,6 +26,54 @@ stripe_bp = Blueprint("stripe_bp", __name__)
 @jwt_required
 @fractalAuth
 def payment(action, **kwargs):
+    """Covers payment endpoints for stripe. Right now has seven endpoints:
+
+        addSubscription - (token, email, plan, code?) -> Will add or modify a subscription
+            depending on whether a user exists.
+
+        modifySubscription - (token, email) -> Carbon copy of addSubscription. Meant to make
+            naming easier when the user already has a subscription and you want to modify it.
+
+        deleteSubscription - (email) -> Delete a subscription, but does not delete a customer.
+
+        addCard - Adds a card. Stripe does not check whether the card already exists (at least,
+            it doesn't check if the #s are equal; it might check if ALL the fields are though...
+            not sure).
+
+        modifyCard - (token, email) -> Carbon copy of addCard.
+
+        deleteCard - (email) -> Deletes a card matching by last four digits.
+
+        retrieve - (email) -> Returns a formatted json object with information about
+            a customer. Check stripe_client.get_customer_info to see the format returned.
+
+    When we say we require (token, email, ...) etc... the expected format from the site or client
+    app is having the body of the post request be like {
+        "token" : "this is a token string",
+        "email" : "this is an email string"
+        ...
+    } where the keyword 'token' or 'email' or 'code' etc are the string keys and the string body
+    is the payload expected. Types are as such:
+
+        token: stripe token id string (has format tok_andabunchofchars)
+
+        email: regular email string
+
+        plan: string for the plan we want, should match the name (not the id) of the plan in stripe
+            the format is = "Fractal Monthly" | "Fractal Unlimited" | "Fractal Hourly"
+
+        code: a code that someone has for referrals, check the config db for the format (it's a
+            constant length of random chars I think.)
+
+
+    Return values vary based on the helpers. Check in  app/helpers/blueprint_helpers/payment_stripe_post
+    for details on how the returns function. Generally speaking, 500 will mean something went wrong,
+    200 will mean everything went swimmingly, 403 (forbidden) will mean that the user did not exist or
+    something similar, 400 will mean that necessary information was not given and the request could
+    not be processed (or that the user has the permissions to do the action, but not the context: for
+    example a user who has not yet signed up for a subscription and has no stripe customer id cannot
+    make stripe actions even if they are a full user).
+    """
     body = kwargs["body"]
 
     # these add a subscription or remove (or modify)

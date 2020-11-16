@@ -12,6 +12,7 @@ from app.constants.http_codes import (
     PAYMENT_REQUIRED,
     SUCCESS,
     FORBIDDEN,
+    INTERNAL_SERVER_ERROR,
 )
 from app.helpers.utils.general.logs import fractalLog
 from app.helpers.utils.payment.stripe_client import (
@@ -122,7 +123,7 @@ def retrieveHelper(email):
                     "status": PAYMENT_REQUIRED,
                     "subscription": {},
                     "cards": [],
-                    "creditsOutstanding": credits,
+                    "creditsOutstanding": 0,
                     "account_locked": False,
                     "customer": {},
                 }
