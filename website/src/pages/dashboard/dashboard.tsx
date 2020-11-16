@@ -9,8 +9,6 @@ import DownloadBox from "pages/dashboard/components/downloadBox"
 import { GET_USER } from "pages/dashboard/constants/graphql"
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import { updateUser } from "store/actions/auth/pure"
-import { DEFAULT } from "store/reducers/auth/default"
-import { deepCopy } from "shared/utils/reducerHelpers"
 
 //import { CopyToClipboard } from "react-copy-to-clipboard"
 // use copy to clipboard functionality when we add back in linux
@@ -48,10 +46,6 @@ const Dashboard = (props: {
             },
         },
     })
-
-    const logout = () => {
-        dispatch(updateUser(deepCopy(DEFAULT.user)))
-    }
 
     useEffect(() => {
         if (
@@ -95,7 +89,7 @@ const Dashboard = (props: {
         } else if (!user.canLogin && !canLogin) {
             return (
                 <div className="fractalContainer">
-                    <Header color="black" />
+                    <Header color="black" account />
                     <div
                         style={{
                             width: 400,
@@ -135,17 +129,6 @@ const Dashboard = (props: {
                                 Back to Home
                             </button>
                         </HashLink>
-                        <button
-                            className="white-button"
-                            style={{
-                                width: "100%",
-                                marginTop: 25,
-                                fontSize: 16,
-                            }}
-                            onClick={logout}
-                        >
-                            Log Out
-                        </button>
                     </div>
                 </div>
             )
@@ -153,7 +136,7 @@ const Dashboard = (props: {
             // for now it wil lalways be loading
             return (
                 <div className="fractalContainer">
-                    <Header color="black" />
+                    <Header color="black" account />
                     <div
                         style={{
                             width: 400,
@@ -180,26 +163,6 @@ const Dashboard = (props: {
                             the button below to download Fractal.
                         </div>
                         <DownloadBox />
-                        <div
-                            style={{
-                                textAlign: "center",
-                                marginTop: 25,
-                                width: "100%",
-                                height: 1,
-                                background: "#DFDFDF",
-                            }}
-                        ></div>
-                        <button
-                            className="white-button"
-                            style={{
-                                width: "100%",
-                                marginTop: 25,
-                                fontSize: 16,
-                            }}
-                            onClick={logout}
-                        >
-                            Log Out
-                        </button>
                     </div>
                 </div>
             )

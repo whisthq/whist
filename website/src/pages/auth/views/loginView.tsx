@@ -27,6 +27,12 @@ const LoginView = (props: any) => {
         if (loginEnabled(email, password)) {
             setProcessing(true)
             dispatch(AuthSideEffect.emailLogin(email, password))
+        } else {
+            dispatch(
+                AuthPureAction.updateAuthFlow({
+                    loginWarning: "Invalid username or password. Try again.",
+                })
+            )
         }
     }
 
@@ -59,6 +65,16 @@ const LoginView = (props: any) => {
         evt.persist()
         setPassword(evt.target.value)
     }
+
+    useEffect(() => {
+        if (email === "" && password === "") {
+            dispatch(
+                AuthPureAction.updateAuthFlow({
+                    loginWarning: "",
+                })
+            )
+        }
+    }, [email, password, dispatch])
 
     // should trigger when they successfully log in... be it with google or with email
     useEffect(() => {
@@ -112,7 +128,7 @@ const LoginView = (props: any) => {
                         <Input
                             text="Email"
                             type="email"
-                            placeholder="bob@tryfractal.com"
+                            placeholder="bob@gmail.com"
                             onChange={changeEmail}
                             onKeyPress={onKeyPress}
                             value={email}
