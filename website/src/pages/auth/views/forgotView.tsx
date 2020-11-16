@@ -131,7 +131,7 @@ const ForgotView = (props: any) => {
                         <Input
                             text="Email"
                             type="email"
-                            placeholder="bob@tryfractal.com"
+                            placeholder="bob@gmail.com"
                             onChange={changeEmail}
                             onKeyPress={onKeyPress}
                             value={email}

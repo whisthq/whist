@@ -15,26 +15,29 @@ import {
     checkEmail,
 } from "pages/auth/constants/authHelpers"
 import SwitchMode from "pages/auth/components/switchMode"
-import PasswordConfirmForm from "pages/auth/components/passwordConfirmForm"
+import PasswordConfirmForm from "shared/components/passwordConfirmForm"
 // import GoogleButton from "pages/auth/components/googleButton"
 
 const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
     const { authFlow, user, dispatch } = props
 
     const [email, setEmail] = useState("")
+    const [name, setName] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [emailWarning, setEmailWarning] = useState("")
+    const [nameWarning, setNameWarning] = useState("")
     const [passwordWarning, setPasswordWarning] = useState("")
     const [confirmPasswordWarning, setConfirmPasswordWarning] = useState("")
+    const [enteredName, setEnteredName] = useState(false)
 
     const [processing, setProcessing] = useState(false)
 
     // Dispatches signup API call
     const signup = () => {
-        if (signupEnabled(email, password, confirmPassword)) {
+        if (signupEnabled(email, name, password, confirmPassword)) {
             setProcessing(true)
-            dispatch(AuthSideEffect.emailSignup(email, password))
+            dispatch(AuthSideEffect.emailSignup(email, name, password))
         }
     }
 
@@ -49,11 +52,12 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
         if (
             evt.key === "Enter" &&
             email.length > 4 &&
+            name.length > 0 &&
             password.length > 6 &&
             email.includes("@")
         ) {
             setProcessing(true)
-            dispatch(AuthSideEffect.emailSignup(email, password))
+            dispatch(AuthSideEffect.emailSignup(email, name, password))
         }
     }
 
@@ -61,6 +65,14 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
     const changeEmail = (evt: any): any => {
         evt.persist()
         setEmail(evt.target.value)
+    }
+
+    const changeName = (evt: any): any => {
+        if (!enteredName) {
+            setEnteredName(true)
+        }
+        evt.persist()
+        setName(evt.target.value)
     }
 
     const changePassword = (evt: any): any => {
@@ -71,6 +83,18 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
     const changeConfirmPassword = (evt: any): any => {
         evt.persist()
         setConfirmPassword(evt.target.value)
+    }
+
+    const checkNameVerbose = (name: string): any => {
+        if (name.length > 0) {
+            return ""
+        } else {
+            return "Required"
+        }
+    }
+
+    const checkName = (name: string): boolean => {
+        return name.length > 0
     }
 
     // Removes loading screen on prop change and page load
@@ -86,6 +110,14 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
     useEffect(() => {
         setPasswordWarning(checkPasswordVerbose(password))
     }, [password])
+
+    useEffect(() => {
+        if (enteredName) {
+            setNameWarning(checkNameVerbose(name))
+        } else {
+            setNameWarning("")
+        }
+    }, [name, enteredName])
 
     useEffect(() => {
         if (
@@ -148,12 +180,24 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                         <Input
                             text="Email"
                             type="email"
-                            placeholder="bob@tryfractal.com"
+                            placeholder="bob@gmail.com"
                             onChange={changeEmail}
                             onKeyPress={onKeyPress}
                             value={email}
                             warning={emailWarning}
                             valid={checkEmail(email)}
+                        />
+                    </div>
+                    <div style={{ marginTop: 13 }}>
+                        <Input
+                            text="Name"
+                            type="name"
+                            placeholder="Bob"
+                            onChange={changeName}
+                            onKeyPress={onKeyPress}
+                            value={name}
+                            warning={nameWarning}
+                            valid={checkName(name)}
                         />
                     </div>
                     <PasswordConfirmForm
@@ -179,6 +223,7 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                             paddingBottom: 15,
                             opacity: signupEnabled(
                                 email,
+                                name,
                                 password,
                                 confirmPassword
                             )
@@ -187,7 +232,12 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                         }}
                         onClick={signup}
                         disabled={
-                            !signupEnabled(email, password, confirmPassword)
+                            !signupEnabled(
+                                email,
+                                name,
+                                password,
+                                confirmPassword
+                            )
                         }
                     >
                         Sign up

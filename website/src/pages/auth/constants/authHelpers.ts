@@ -71,13 +71,15 @@ export const checkEmailVerbose = (email: string): string => {
 
 export const signupEnabled = (
     email: string,
+    name: string,
     password: string,
     confirmPassword: string
 ): boolean => {
     return (
         checkEmail(email) &&
         checkPassword(password) &&
-        password === confirmPassword
+        password === confirmPassword &&
+        name.length > 0
     )
 }
 

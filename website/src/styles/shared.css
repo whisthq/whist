@@ -255,18 +255,51 @@ a {
     color: #111111;
 }
 
-.header-link {
+.header-link,
+.account-button {
     outline: none !important;
     text-decoration: none !important;
     margin-right: 30px;
     color: black;
-    top: 3px;
+    top: 4.5px;
     position: relative;
     letter-spacing: 1.2px;
+    border: none;
+    outline: none;
+    background: none;
+}
+
+.account-button {
+    margin-right: 0px;
+    font-weight: bold;
+}
+
+.account-button:hover {
+    color: #3930b8;
 }
 
 .header-link:hover {
     color: #3930b8 !important;
+    cursor: pointer;
+}
+
+.dropdown-toggle::after {
+    content: none !important;
+}
+
+.dropdown-menu.show {
+    margin-top: 5px !important;
+    border-radius: 0px;
+    padding: 0px;
+}
+
+.dropdown-item {
+    padding: 0.75rem 2rem !important;
+    letter-spacing: 1.2px;
+}
+
+.dropdown-item:hover {
+    background: #93f1d9 !important;
 }
 
 .pointer-hover:hover {

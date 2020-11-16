@@ -12,6 +12,7 @@ export const VALIDATE_RESET_TOKEN = "VALIDATE_RESET_TOKEN"
 
 export const FORGOT_PASSWORD = "FORGOT_PASSWORD"
 export const RESET_PASSWORD = "RESET_PASSWORD"
+export const UPDATE_PASSWORD = "UPDATE_PASSWORD"
 
 export const SEND_VERIFICATION_EMAIL = "SEND_VERIFICATION_EMAIL"
 
@@ -38,12 +39,14 @@ export function emailLogin(
 
 export function emailSignup(
     email: string,
+    name: string,
     password: string,
     rememberMe?: boolean
 ) {
     return {
         type: EMAIL_SIGNUP,
         email,
+        name,
         password,
         rememberMe,
     }
@@ -96,5 +99,13 @@ export function sendVerificationEmail(email: string, token: string) {
         type: SEND_VERIFICATION_EMAIL,
         email,
         token,
+    }
+}
+
+export function updatePassword(currentPassword: string, newPassword: string) {
+    return {
+        type: UPDATE_PASSWORD,
+        currentPassword,
+        newPassword,
     }
 }
