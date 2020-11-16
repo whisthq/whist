@@ -133,6 +133,41 @@ class StripeClient:
         """
         stripe.api_key = api_key
 
+    def validate_customer_id(self, stripe_customer_id, user=None):
+        """Confirms that a stripe customer id that we store is valid and is not
+        deleted, for example. The use case is when we manually delete people from
+        the stripe dashboard, we don't want to break the code (the db isn't updated immediately).
+
+        Then it will delete a stripe_customer_id from the database if it does not exist (and user object
+        is passed).
+
+        Args:
+            stripe_customer_id (str): The customer id string of the stripe customer, might be none.
+            user (User, optional): The user for whom we might want to update the db.
+
+        Returns:
+            False if the stripe_customer_id was not valid even if we are able to update it (to be null).
+
+        Raises:
+            stripe.error.InvalidRequestError if customer is not retrievable (not a valid id) and we
+            are not able to fix it.
+        """
+        if not stripe_customer_id:
+            return True
+
+        try:
+            customer = stripe.Customer.retrieve(stripe_customer_id)
+            if "deleted" in customer and customer["deleted"]:
+                raise RuntimeError("Customer deleted.")
+        except Exception as e:
+            if user:
+                user.stripe_customer_id = None
+                db.session.commit()
+                return False
+            else:
+                raise e
+        return True
+
     def get_products(self, product_names=["Fractal"], limit=20):
         """Fetch the product ids of various products.
 
@@ -224,14 +259,14 @@ class StripeClient:
         customer = self.user_schema.dump(user)
         credits_outstanding = customer["credits_outstanding"]
 
+        stripe_customer_id = customer["stripe_customer_id"]
+
         # return a valid object if they exist else None
-        if customer["stripe_customer_id"]:
-            customer_info = stripe.Customer.retrieve(
-                customer["stripe_customer_id"], expand=["sources"]
-            )
+        if stripe_customer_id and self.validate_customer_id(stripe_customer_id, user):
+            customer_info = stripe.Customer.retrieve(stripe_customer_id, expand=["sources"])
             cards = customer_info["sources"]["data"]
 
-            subscription = stripe.Subscription.list(customer=customer["stripe_customer_id"])
+            subscription = stripe.Subscription.list(customer=stripe_customer_id)
 
             if subscription and subscription["data"] and len(subscription["data"]) > 0:
                 subscription = subscription["data"][0]
@@ -288,6 +323,8 @@ class StripeClient:
                 raise InvalidStripeToken
 
         stripe_customer_id = user.stripe_customer_id
+        if not self.validate_customer_id(stripe_customer_id, user):
+            stripe_customer_id = None
 
         # get the zipcode/region
         zipcode = token["card"]["address_zip"]
@@ -395,10 +432,12 @@ class StripeClient:
         if not user:
             raise NonexistentUser
 
-        if not user.stripe_customer_id:
+        stripe_customer_id = user.stripe_customer_id
+
+        if not stripe_customer_id or not self.validate_customer_id(stripe_customer_id, user):
             raise InvalidOperation
 
-        subscription = stripe.Subscription.list(customer=user.stripe_customer_id)["data"]
+        subscription = stripe.Subscription.list(customer=stripe_customer_id)["data"]
 
         if len(subscription) == 0:
             raise InvalidOperation
@@ -430,9 +469,8 @@ class StripeClient:
             raise NonexistentUser
 
         stripe_customer_id = user.stripe_customer_id
-        if not stripe_customer_id:
+        if not stripe_customer_id or not self.validate_customer_id(stripe_customer_id, user):
             customer = stripe.Customer.create(email=email, source=source)
-
             user.stripe_customer_id = customer["id"]
             db.session.commit()
         else:
@@ -459,7 +497,7 @@ class StripeClient:
             raise NonexistentUser
 
         stripe_customer_id = user.stripe_customer_id
-        if not stripe_customer_id:
+        if not stripe_customer_id or not self.validate_customer_id(stripe_customer_id, user):
             raise InvalidOperation
 
         card = stripe.Token.retrieve(source)["card"]
