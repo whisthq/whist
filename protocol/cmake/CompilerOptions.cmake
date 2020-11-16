@@ -12,7 +12,6 @@ else() # GCC and Clang base flags
             "-Wno-missing-braces"
             "-Wno-unused-value"
             "-Wno-unused-parameter"
-            "-Wno-unused-but-set-variable"
             "-Wno-unused-result"
             "-Wno-unused-variable"
             "-Wno-missing-field-initializers"
