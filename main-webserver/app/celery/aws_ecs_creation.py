@@ -1,7 +1,7 @@
 import logging
 import os
-import requests
 import time
+import requests
 
 from celery import shared_task
 from celery.exceptions import Ignore
