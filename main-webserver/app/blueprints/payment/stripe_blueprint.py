@@ -1,52 +1,23 @@
-import stripe
+# import stripe
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify  # , request
 from flask_jwt_extended import jwt_required
 
 from app import fractalPreProcess
-from app.constants.config import ENDPOINT_SECRET
-from app.constants.http_codes import FORBIDDEN, NOT_ACCEPTABLE
+
+# from app.constants.config import ENDPOINT_SECRET
+from app.constants.http_codes import FORBIDDEN  # , NOT_ACCEPTABLE
+
 from app.helpers.blueprint_helpers.payment.stripe_post import (
+    addSubscriptionHelper,
+    deleteSubscriptionHelper,
     addCardHelper,
-    addProductHelper,
-    cancelStripeHelper,
-    chargeHelper,
     deleteCardHelper,
-    discountHelper,
-    referralHelper,
-    removeProductHelper,
-    retrieveStripeHelper,
-    updateHelper,
-    webhookHelper,
+    retrieveHelper,
 )
 from app.helpers.utils.general.auth import fractalAuth
 
 stripe_bp = Blueprint("stripe_bp", __name__)
-
-
-@stripe_bp.route("/stripe/addCard", methods=["POST"])
-@fractalPreProcess
-@jwt_required
-def addCard(**kwargs):
-    body = kwargs["body"]
-    return addCardHelper(body["custId"], body["sourceId"])
-
-
-@stripe_bp.route("/stripe/deleteCard", methods=["POST"])
-@fractalPreProcess
-@jwt_required
-def deleteCard(**kwargs):
-    body = kwargs["body"]
-
-    return deleteCardHelper(body["custId"], body["cardId"])
-
-
-@stripe_bp.route("/stripe/discount", methods=["POST"])
-@fractalPreProcess
-@jwt_required
-def discount(**kwargs):
-    body = kwargs["body"]
-    return discountHelper(body["code"])
 
 
 @stripe_bp.route("/stripe/<action>", methods=["POST"])
@@ -56,48 +27,45 @@ def discount(**kwargs):
 def payment(action, **kwargs):
     body = kwargs["body"]
 
-    # Adds a subscription to the customer
-    if action == "charge":
-        return chargeHelper(body["token"], body["username"], body["code"], body["plan"])
-
-    elif action == "addProduct":
-        return addProductHelper(body["username"], body["product"])
-
-    elif action == "removeProduct":
-        return removeProductHelper(body["username"], body["product"])
-
-    # Retrieves the stripe subscription of the customer
+    # these add a subscription or remove (or modify)
+    if action == "addSubscription" or action == "modifySubscription":
+        return addSubscriptionHelper(body["token"], body["email"], body["plan"], body["code"])
+    elif action == "deleteSubscription":
+        return deleteSubscriptionHelper(body["email"])
+    # these will add a card as a source or remove (or modify) for future payment
+    elif action == "addCard" or action == "modifyCard":
+        return addCardHelper(body["email"], body["token"])
+    elif action == "deleteCard":
+        return deleteCardHelper(body["email"], body["token"])
+    # Retrieves the stripe subscription of the customer so we can tell them some basic info
     elif action == "retrieve":
-        return retrieveStripeHelper(body["username"])
-
-    # Cancel a stripe subscription
-    elif action == "cancel":
-        return cancelStripeHelper(body["username"])
-
-    elif action == "update":
-        # When a customer requests to change their plan type
-        return updateHelper(body["username"], body["plan"])
-
-    elif action == "referral":
-        return referralHelper(body["code"], body["username"])
+        return retrieveHelper(body["email"])
+    return jsonify({"status": FORBIDDEN}), FORBIDDEN
 
 
-@stripe_bp.route("/stripe/hooks", methods=["POST"])
-def hooks(**kwargs):
-    body = request.get_data()
+## TODO
+# in the future we may want to re-add endpoints to let them add products
+# basically, there are products which they can buy multiple units of
+# right now, not really so it's not implemented
+# there should be some scaffolding you can use in the client to make it happen
 
-    # Endpoint for stripe webhooks
-    sigHeader = request.headers["Stripe-Signature"]
-    endpointSecret = ENDPOINT_SECRET
-    event = None
+## TODO not sure what this is used by exactly
+# @stripe_bp.route("/stripe/hooks", methods=["POST"])
+# def hooks(**kwargs):
+#     body = request.get_data()
 
-    try:
-        event = stripe.Webhook.construct_event(body, sigHeader, endpointSecret)
-    except ValueError:
-        # Invalid payload
-        return jsonify({"status": "Invalid payload"}), NOT_ACCEPTABLE
-    except stripe.error.SignatureVerificationError:
-        # Invalid signature
-        return jsonify({"status": "Invalid signature"}), FORBIDDEN
+#     # Endpoint for stripe webhooks
+#     sigHeader = request.headers["Stripe-Signature"]
+#     endpointSecret = ENDPOINT_SECRET
+#     event = None
 
-    return webhookHelper(event)
+#     try:
+#         event = stripe.Webhook.construct_event(body, sigHeader, endpointSecret)
+#     except ValueError:
+#         # Invalid payload
+#         return jsonify({"status": "Invalid payload"}), NOT_ACCEPTABLE
+#     except stripe.error.SignatureVerificationError:
+#         # Invalid signature
+#         return jsonify({"status": "Invalid signature"}), FORBIDDEN
+
+#     return webhookHelper(event)

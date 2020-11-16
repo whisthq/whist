@@ -5,7 +5,6 @@ import pytest
 
 from app.constants.http_codes import SUCCESS
 from app.helpers.blueprint_helpers.aws.aws_container_post import pingHelper
-from app.helpers.utils.stripe.stripe_payments import stripeChargeHourly
 from app.models import db
 
 from ..patches import Patch
