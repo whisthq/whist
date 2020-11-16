@@ -4,7 +4,7 @@ declare -a excludeFolders=(
     "fractal/video/nvidia-linux"
 )
 
-fileFilterString="clang-tidy --header-filter=\".*\" --line-filter='["
+fileFilterString="--line-filter=["
 
 for folder in "${excludeFolders[@]}"
 do
@@ -14,7 +14,7 @@ do
     done
 done
 
-fileFilterString="${fileFilterString},{\"name\":\"c\"}, {\"name\":\"h\"}]'"
+fileFilterString="${fileFilterString} {\"name\":\"c\"}, {\"name\":\"h\"}]"
 
-echo $fileFilterString
+exec "clang-tidy" '-header-filter=.*' "${fileFilterString}" $1
 
