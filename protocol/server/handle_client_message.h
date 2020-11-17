@@ -9,7 +9,7 @@
 Usage
 ============================
 
-handleClientMessage() must be called on any received message from a client.
+handle_client_message() must be called on any received message from a client.
 */
 
 /*
@@ -43,6 +43,6 @@ Public Functions
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 
 #endif  // CLIENT_MESSAGE_HANDLER_H

@@ -219,7 +219,7 @@ void init_default_port_mappings();
  *                                 through WSAGetLastError on Windows or errno
  *                                 on Linux
  */
-int GetLastNetworkError();
+int get_last_network_error();
 
 /**
  * @brief                          Initialize a UDP/TCP connection between a
@@ -246,9 +246,9 @@ int GetLastNetworkError();
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int CreateUDPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
+int create_udp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
                      int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
-int CreateTCPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
+int create_tcp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
                      int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
 
 /**
@@ -266,7 +266,7 @@ int CreateTCPContext(SocketContext* context, char* destination, int port, int re
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data, int len);
+int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, int len);
 
 /**
  * @brief                          This will send a FractalPacket over UDP to
@@ -292,7 +292,7 @@ int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data, in
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int SendUDPPacket(SocketContext* context, FractalPacketType type, void* data, int len, int id,
+int send_udp_packet(SocketContext* context, FractalPacketType type, void* data, int len, int id,
                   int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer);
 
 /**
@@ -308,7 +308,7 @@ int SendUDPPacket(SocketContext* context, FractalPacketType type, void* data, in
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int ReplayPacket(SocketContext* context, FractalPacket* packet, size_t len);
+int replay_packet(SocketContext* context, FractalPacket* packet, size_t len);
 
 /**
  * @brief                          Send a 0-length packet over the socket. Used
@@ -323,7 +323,7 @@ int ReplayPacket(SocketContext* context, FractalPacket* packet, size_t len);
  *                                 GetLastNetworkError() to learn more about the
  *                                 error
  */
-int Ack(SocketContext* context);
+int ack(SocketContext* context);
 
 /**
  * @brief                          Receive a FractalPacket from a SocketContext,
@@ -334,8 +334,8 @@ int Ack(SocketContext* context);
  * @returns                        A pointer to the FractalPacket on success,
  *                                 NULL on failure
  */
-FractalPacket* ReadTCPPacket(SocketContext* context, bool should_recvp);
-FractalPacket* ReadUDPPacket(SocketContext* context);
+FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp);
+FractalPacket* read_udp_packet(SocketContext* context);
 
 /**
  * @brief                          Sends a JSON POST request to some host and
@@ -360,7 +360,7 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendPostRequest(char* host_s, char* path, char* payload, char** response_body,
+bool send_post_request(char* host_s, char* path, char* payload, char** response_body,
                      size_t max_response_size);
 
 /**
@@ -384,7 +384,7 @@ bool SendPostRequest(char* host_s, char* path, char* payload, char** response_bo
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendGetRequest(char* host_s, char* path, char** response_body, size_t max_response_size);
+bool send_get_request(char* host_s, char* path, char** response_body, size_t max_response_size);
 
 int sendp(SocketContext* context, void* buf, int len);
 

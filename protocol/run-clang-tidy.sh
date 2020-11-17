@@ -66,6 +66,4 @@ clang-tidy -header-filter=.* "${fileFilterString}" --quiet --export-fixes=${yaml
 # ]
 
 # cleanup
-rm -rf $yamlFolder
-
-
+# rm -rf $yamlFolder

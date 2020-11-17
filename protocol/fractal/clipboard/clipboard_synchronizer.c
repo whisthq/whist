@@ -42,8 +42,7 @@ destroyClipboardSynchronizer();
 #define UNUSED(x) (void)(x)
 #define MS_IN_SECOND 1000
 
-int UpdateClipboardThread(void* opaque);
-bool pendingUpdateClipboard();
+int update_clipboard_thread(void* opaque);
 
 extern char filename[300];
 extern char username[50];
@@ -59,43 +58,41 @@ static bool connected;
 
 bool pending_clipboard_push;
 
-bool isClipboardSynchronizing() { return updating_clipboard; }
+bool is_clipboard_synchronizing() { return updating_clipboard; }
 
-bool pendingUpdateClipboard() { return pending_update_clipboard; }
-
-void initClipboardSynchronizer() {
+void init_clipboard_synchronizer() {
     /*
         Initialize the clipboard and the synchronizer thread
     */
 
-    initClipboard();
+    init_clipboard();
 
     connected = true;
 
     pending_clipboard_push = false;
     updating_clipboard = false;
     pending_update_clipboard = false;
-    StartTimer((clock*)&last_clipboard_update);
+    start_timer((clock*)&last_clipboard_update);
     clipboard_semaphore = SDL_CreateSemaphore(0);
 
-    thread = SDL_CreateThread(UpdateClipboardThread, "UpdateClipboardThread", NULL);
+    thread = SDL_CreateThread(update_clipboard_thread, "UpdateClipboardThread", NULL);
 
     pending_update_clipboard = true;
 }
 
-void destroyClipboardSynchronizer() {
+void destroy_clipboard_synchronizer() {
     /*
         Destroy the clipboard synchronizer
     */
 
     connected = false;
 
-    DestroyClipboard();
+    destroy_clipboard();
 
     SDL_SemPost(clipboard_semaphore);
 }
 
-bool ClipboardSynchronizerSetClipboard(ClipboardData* cb) {
+bool clipboard_synchronizer_set_clipboard(ClipboardData* cb) {
     /*
         When called, signal that the clipboard can be set to the given contents
 
@@ -121,7 +118,7 @@ bool ClipboardSynchronizerSetClipboard(ClipboardData* cb) {
     return true;
 }
 
-ClipboardData* ClipboardSynchronizerGetNewClipboard() {
+ClipboardData* clipboard_synchronizer_get_new_clipboard() {
     /*
         When called, return the current clipboard if a new clipboard activity
         has registered.
@@ -141,7 +138,7 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard() {
 
     // If the clipboard has updated since we last checked, or a previous
     // clipboard update is still pending, then we try to update the clipboard
-    if (hasClipboardUpdated() || pendingUpdateClipboard()) {
+    if (has_clipboard_updated() || pending_update_clipboard) {
         if (updating_clipboard) {
             // Clipboard is busy, to set pending update clipboard to true to
             // make sure we keep checking the clipboard state
@@ -160,7 +157,7 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard() {
     return NULL;
 }
 
-int UpdateClipboardThread(void* opaque) {
+int update_clipboard_thread(void* opaque) {
     /*
         Thread to get and set clipboard as signals are received.
     */
@@ -177,23 +174,23 @@ int UpdateClipboardThread(void* opaque) {
         if (updating_set_clipboard) {
             LOG_INFO("Trying to set clipboard!");
 
-            SetClipboard(clipboard);
+            set_clipboard(clipboard);
             updating_set_clipboard = false;
         } else if (updating_get_clipboard) {
             LOG_INFO("Trying to get clipboard!");
 
-            clipboard = GetClipboard();
+            clipboard = get_clipboard();
             pending_clipboard_push = true;
             updating_get_clipboard = false;
         } else {
             clock clipboard_time;
-            StartTimer(&clipboard_time);
+            start_timer(&clipboard_time);
 
             // If it hasn't been 500ms yet, then wait 500ms to prevent too much
             // spam
             const int spam_time_ms = 500;
-            if (GetTimer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
-                SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * GetTimer(clipboard_time)), 1));
+            if (get_timer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
+                SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * get_timer(clipboard_time)), 1));
             }
         }
 

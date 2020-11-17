@@ -85,7 +85,7 @@ Public Functions
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int initClients(void);
+int init_clients(void);
 
 /**
  * @brief                          De-initializes all clients objects in the
@@ -97,7 +97,7 @@ int initClients(void);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int destroyClients(void);
+int destroy_clients(void);
 
 /**
 * @brief                          Deactivates active client.
@@ -112,7 +112,7 @@ int destroyClients(void);
 *
 * @returns                        Returns -1 on failure, 0 on success
 */
-int quitClient(int id);
+int quit_client(int id);
 
 /**
  * @brief                          Deactivates all active clients.
@@ -124,7 +124,7 @@ int quitClient(int id);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int quitClients(void);
+int quit_clients(void);
 
 /**
  * @brief                          Determines if any active client has timed out.
@@ -147,7 +147,7 @@ int quitClients(void);
  *                                 or not there exists a timed out client does
  *                                 not mean failure.
  */
-int existsTimedOutClient(double timeout, bool *exists);
+int exists_timed_out_client(double timeout, bool *exists);
 
 /**
  * @brief                          Quits all timed out clients.
@@ -158,7 +158,7 @@ int existsTimedOutClient(double timeout, bool *exists);
  *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int reapTimedOutClients(double timeout);
+int reap_timed_out_clients(double timeout);
 
 /**
  * @brief                          Finds the client ID of the active client
@@ -177,7 +177,7 @@ int reapTimedOutClients(double timeout);
  *                                 finding an associated ID does not mean
  *                                 failure.
  */
-int tryFindClientIdByUsername(int username, bool *found, int *id);
+int try_find_client_id_by_username(int username, bool *found, int *id);
 
 /**
  * @brief                          Finds an available client ID.
@@ -193,7 +193,7 @@ int tryFindClientIdByUsername(int username, bool *found, int *id);
  * @returns                        Returns -1 on failure (including no
  *                                 client IDs are available), 0 on success.
  */
-int getAvailableClientID(int *id);
+int get_available_client_id(int *id);
 
 /**
  * @brief                          Fills buffer with status info for every
@@ -211,6 +211,6 @@ int getAvailableClientID(int *id);
  *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int fillPeerUpdateMessages(PeerUpdateMessage *msgs, size_t *num_msgs);
+int fill_peer_update_messages(PeerUpdateMessage *msgs, size_t *num_msgs);
 
 #endif  // SERVER_CLIENT_H

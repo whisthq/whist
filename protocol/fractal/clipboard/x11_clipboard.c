@@ -46,7 +46,7 @@ whatever files are in the SET_CLIPBOARD directory.
 // TODO: standardize this across all clipboards
 #define MAX_CLIPBOARD_SIZE 9000000
 
-bool StartTrackingClipboardUpdates();
+bool start_tracking_clipboard_updates();
 
 static char cb_buf[MAX_CLIPBOARD_SIZE];
 static Display* display = NULL;
@@ -58,9 +58,9 @@ static Atom incr_id;
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
 bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
 
-void unsafe_initClipboard() { StartTrackingClipboardUpdates(); }
+void unsafe_init_clipboard() { start_tracking_clipboard_updates(); }
 
-void unsafe_DestroyClipboard() {
+void unsafe_destroy_clipboard() {
     if (display) {
         XCloseDisplay(display);
     }
@@ -155,7 +155,7 @@ bool get_clipboard_files(ClipboardData* cb) {
     }
 }
 
-ClipboardData* unsafe_GetClipboard() {
+ClipboardData* unsafe_get_clipboard() {
     ClipboardData* cb = (ClipboardData*)cb_buf;
     cb->type = CLIPBOARD_NONE;
     cb->size = 0;
@@ -170,7 +170,7 @@ ClipboardData* unsafe_GetClipboard() {
     return cb;
 }
 
-void unsafe_SetClipboard(ClipboardData* cb) {
+void unsafe_set_clipboard(ClipboardData* cb) {
     static FILE* inp = NULL;
 
     //
@@ -256,12 +256,12 @@ void unsafe_SetClipboard(ClipboardData* cb) {
 
     // Empty call of unsafe_hasClipboardUpdated() in order to prevent hasUpdated from returning true
     //      just after we've called xclip to set the clipboard
-    unsafe_hasClipboardUpdated();
+    unsafe_has_clipboard_updated();
 
     return;
 }
 
-bool StartTrackingClipboardUpdates() {
+bool start_tracking_clipboard_updates() {
     // To be called at the beginning of clipboard usage
     display = XOpenDisplay(NULL);
     if (!display) {
@@ -276,7 +276,7 @@ bool StartTrackingClipboardUpdates() {
     return true;
 }
 
-bool unsafe_hasClipboardUpdated() {
+bool unsafe_has_clipboard_updated() {
     //
     // If the clipboard has updated since this function was last called,
     // or since StartTrackingClipboardUpdates was last called,

@@ -35,7 +35,7 @@ Public Functions
  * @brief                          Initialize the input system. Should be used prior to every new
  * client connection that will send inputs
  */
-void ResetInput();
+void reset_input();
 
 /**
  * @brief                          Replayed a received user action on a server,
@@ -49,7 +49,7 @@ void ResetInput();
  * @returns                        True if it replayed the event, False
  *                                 otherwise
  */
-bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg);
+bool replay_user_input(input_device_t* input_device, FractalClientMessage* fmsg);
 
 /**
  * @brief                          Updates the keyboard state on the server to
@@ -60,7 +60,7 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg);
  * @param fmsg                     The Fractal message packet, defining one
  *                                 keyboard event, to update the keyboard state
  */
-void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fmsg);
+void update_keyboard_state(input_device_t* input_device, FractalClientMessage* fmsg);
 
 /**
  * @brief                          Updates the keyboard state on the server to
@@ -77,6 +77,6 @@ void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fms
  * @returns                        The number of keycodes successfully inputted from
  *                                 the array
  */
-size_t InputKeycodes(input_device_t* input_device, FractalKeycode* keycodes, size_t count);
+size_t input_keycodes(input_device_t* input_device, FractalKeycode* keycodes, size_t count);
 
 #endif  // INPUT_H

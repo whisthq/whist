@@ -565,12 +565,12 @@ Public Functions
 /**
  * @brief                          Print the memory trace of a process
  */
-void PrintMemoryInfo();
+void print_memory_info();
 
 /**
  * @brief                          Print the system info of the computer
  */
-void PrintSystemInfo();
+void print_system_info();
 
 /**
  * @brief                          Run a system command via command prompt or
@@ -615,6 +615,6 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
  *
  * @returns                        The size of the Fractal Client Message struct
  */
-int GetFmsgSize(FractalClientMessage* fmsg);
+int get_fmsg_size(FractalClientMessage* fmsg);
 
 #endif  // FRACTAL_H

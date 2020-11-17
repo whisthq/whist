@@ -25,7 +25,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam);
 // Send a key to SDL event queue, presumably one that is captured and wouldn't
 // naturally make it to the event queue by itself
 
-void SendCapturedKey(SDL_Keycode key, int type, int time) {
+void send_captured_key(SDL_Keycode key, int type, int time) {
     SDL_Event e = {0};
     e.type = type;
     e.key.keysym.sym = key;
@@ -36,7 +36,7 @@ void SendCapturedKey(SDL_Keycode key, int type, int time) {
 }
 
 // Handle SDL resize events
-int resizingEventWatcher(void* data, SDL_Event* event) {
+int resizing_event_watcher(void* data, SDL_Event* event) {
     if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_RESIZED) {
         // If the resize event if for the current window
         SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
@@ -48,7 +48,7 @@ int resizingEventWatcher(void* data, SDL_Event* event) {
     return 0;
 }
 
-SDL_Window* initSDL(int target_output_width, int target_output_height, char* name) {
+SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name) {
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
@@ -99,7 +99,7 @@ SDL_Window* initSDL(int target_output_width, int target_output_height, char* nam
 
     if (!is_fullscreen) {
         // Resize event handling
-        SDL_AddEventWatch(resizingEventWatcher, (SDL_Window*)sdl_window);
+        SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)sdl_window);
         if (!sdl_window) {
             LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
             return NULL;
@@ -121,7 +121,7 @@ SDL_Window* initSDL(int target_output_width, int target_output_height, char* nam
     return sdl_window;
 }
 
-void destroySDL(SDL_Window* window_param) {
+void destroy_sdl(SDL_Window* window_param) {
     LOG_INFO("Destroying SDL");
 #if defined(_WIN32)
     UnhookWindowsHookEx(g_hKeyboardHook);

@@ -26,7 +26,7 @@ strings, for use on windows OS's
 #include "../utils/png.h"
 #include "clipboard.h"
 
-bool StartTrackingClipboardUpdates();
+bool start_tracking_clipboard_updates();
 
 #ifdef _WIN32
 char* get_clipboard_directory() {
@@ -41,13 +41,13 @@ char* set_clipboard_directory() {
 }
 #endif
 
-void unsafe_initClipboard() {
+void unsafe_init_clipboard() {
     get_clipboard_directory();
     set_clipboard_directory();
-    StartTrackingClipboardUpdates();
+    start_tracking_clipboard_updates();
 }
 
-void unsafe_DestroyClipboard() {}
+void unsafe_destroy_clipboard() {}
 
 #ifdef _WIN32
 #include "shlwapi.h"
@@ -197,12 +197,12 @@ static int last_clipboard_sequence_number = -1;
 
 static char clipboard_buf[9000000];
 
-bool StartTrackingClipboardUpdates() {
+bool start_tracking_clipboard_updates() {
     last_clipboard_sequence_number = GetClipboardSequenceNumber();
     return true;
 }
 
-bool unsafe_hasClipboardUpdated() {
+bool unsafe_has_clipboard_updated() {
     bool hasUpdated = false;
 
     int new_clipboard_sequence_number = GetClipboardSequenceNumber();
@@ -213,7 +213,7 @@ bool unsafe_hasClipboardUpdated() {
     return hasUpdated;
 }
 
-ClipboardData* unsafe_GetClipboard() {
+ClipboardData* unsafe_get_clipboard() {
     // We have to wait a bit after hasClipboardUpdated, before the clipboard actually updates
     SDL_Delay(15);
 
@@ -339,7 +339,7 @@ ClipboardData* unsafe_GetClipboard() {
                 sh.pFrom = LGET_CLIPBOARD;
 
                 clock t;
-                StartTimer(&t);
+                start_timer(&t);
                 // SHFileOperationW( &sh );
 
                 WIN32_FIND_DATAW data;
@@ -422,7 +422,7 @@ ClipboardData* unsafe_GetClipboard() {
 
                     filename += wcslen(filename) + 1;
                 }
-                LOG_INFO("Time: %f", GetTimer(t));
+                LOG_INFO("Time: %f", get_timer(t));
 
                 cb->type = CLIPBOARD_FILES;
                 cb->size = 0;
@@ -440,7 +440,7 @@ ClipboardData* unsafe_GetClipboard() {
     return cb;
 }
 
-HGLOBAL getGlobalAlloc(void* buf, int len, bool null_char) {
+HGLOBAL get_global_alloc(void* buf, int len, bool null_char) {
     /*
         Allocate space and copy buffer into allocated space
 
@@ -456,9 +456,9 @@ HGLOBAL getGlobalAlloc(void* buf, int len, bool null_char) {
 
     int alloc_len = null_char ? len + 1 : len;
     HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, alloc_len);
-    if (!hMem) {
+    if (!drem) {
         LOG_ERROR("GlobalAlloc failed!");
-        return hMem;
+        return drem;
     }
     LPTSTR lptstr = GlobalLock(hMem);
 
@@ -476,7 +476,7 @@ HGLOBAL getGlobalAlloc(void* buf, int len, bool null_char) {
     return hMem;
 }
 
-void unsafe_SetClipboard(ClipboardData* cb) {
+void unsafe_set_clipboard(ClipboardData* cb) {
     if (cb->type == CLIPBOARD_NONE) {
         return;
     }
@@ -602,5 +602,5 @@ void unsafe_SetClipboard(ClipboardData* cb) {
     }
 
     // Update the status so that this specific update doesn't count
-    unsafe_hasClipboardUpdated();
+    unsafe_has_clipboard_updated();
 }

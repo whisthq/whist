@@ -27,7 +27,7 @@ int remove_file(const char* fpath, const struct stat* sb, int typeflag, struct F
 
 void mac_rm_rf(const char* path) {
     int errCode =
-        nftw(path, remove_file, 64 /* number of simultaneously opened fds*/, FTW_DEPTH | FTW_PHYS);
+        nftw(path, remove_file, 64 /* number of simultaneously opened fds*/, FTW_DEPTH | FTW_NS);
     if (errCode < 0) {
         LOG_WARNING("Error from nftw, remove recursively: %d", errCode);
     }

@@ -63,7 +63,7 @@ const int windows_keycodes[NUM_KEYCODES] = {
     0x38,                    // 37 -> 8
     0x39,                    // 38 -> 9
     0x30,                    // 39 -> 0
-    VK_RETURN,               // 40 -> Enter
+    SDLK_RETURN,               // 40 -> Enter
     0x1B,                    // 41 -> Escape
     VK_BACK,                 // 42 -> Backspace
     0x09,                    // 43 -> Tab
@@ -78,19 +78,19 @@ const int windows_keycodes[NUM_KEYCODES] = {
     VK_OEM_7,                // 52 -> Apostrophe
     VK_OEM_3,                // 53 -> Backtick
     VK_OEM_COMMA,            // 54 -> Comma
-    VK_OEM_PERIOD,           // 55 -> Period
+    FK_KP_PERIOD,           // 55 -> Period
     VK_OEM_2,                // 56 -> Forward Slash
     VK_CAPITAL,              // 57 -> Capslock
-    VK_F1,                   // 58 -> F1
-    VK_F2,                   // 59 -> F2
-    VK_F3,                   // 60 -> F3
-    VK_F4,                   // 61 -> F4
-    VK_F5,                   // 62 -> F5
-    VK_F6,                   // 63 -> F6
-    VK_F7,                   // 64 -> F7
-    VK_F8,                   // 65 -> F8
-    VK_F9,                   // 66 -> F9
-    VK_F10,                  // 67 -> F10
+    FK_F1,                   // 58 -> F1
+    FK_F2,                   // 59 -> F2
+    FK_F3,                   // 60 -> F3
+    FK_F4,                   // 61 -> F4
+    FK_F5,                   // 62 -> F5
+    FK_F6,                   // 63 -> F6
+    FK_F7,                   // 64 -> F7
+    FK_F8,                   // 65 -> F8
+    FK_F9,                   // 66 -> F9
+    FK_F10,                  // 67 -> F10
     VK_F11,                  // 68 -> F11
     VK_F12,                  // 69 -> F12
     VK_SNAPSHOT,             // 70 -> Print Screen
@@ -289,13 +289,13 @@ const int windows_keycodes[NUM_KEYCODES] = {
     VK_LAUNCH_MEDIA_SELECT  // 263 -> Media Select
 };
 
-input_device_t* CreateInputDevice() {
+input_device_t* create_input_device() {
     input_device_t* input_device = malloc(sizeof(input_device_t));
     memset(input_device, 0, sizeof(input_device_t));
     return input_device;
 }
 
-void DestroyInputDevice(input_device_t* input_device) {
+void destroy_input_device(input_device_t* input_device) {
     free(input_device);
     return;
 }
@@ -303,17 +303,17 @@ void DestroyInputDevice(input_device_t* input_device) {
 #define GetWindowsKeyCode(sdl_keycode) windows_keycodes[sdl_keycode]
 #define KEYPRESS_MASK 0x8000
 
-int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_keycode) {
+int get_keyboard_modifier_state(input_device_t* input_device, FractalKeycode sdl_keycode) {
     input_device;
     return 1 & GetKeyState(GetWindowsKeyCode(sdl_keycode));
 }
 
-int GetKeyboardKeyState(input_device_t* input_device, FractalKeycode sdl_keycode) {
+int get_keyboard_key_state(input_device_t* input_device, FractalKeycode sdl_keycode) {
     input_device;
     return (KEYPRESS_MASK & GetAsyncKeyState(GetWindowsKeyCode(sdl_keycode))) >> 15;
 }
 
-int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed) {
+int emit_key_event(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed) {
     input_device;
 
     INPUT ip;
@@ -347,7 +347,7 @@ int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int p
     return 0;
 }
 
-int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int relative) {
+int emit_mouse_motion_event(input_device_t* input_device, int32_t x, int32_t y, int relative) {
     input_device;
 
     INPUT ip;
@@ -373,7 +373,7 @@ int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int
     return 0;
 }
 
-int EmitMouseButtonEvent(input_device_t* input_device, FractalMouseButton button, int pressed) {
+int emit_mouse_button_event(input_device_t* input_device, FractalMouseButton button, int pressed) {
     input_device;
 
     INPUT ip;
@@ -419,7 +419,7 @@ int EmitMouseButtonEvent(input_device_t* input_device, FractalMouseButton button
     return 0;
 }
 
-int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
+int emit_mouse_wheel_event(input_device_t* input_device, int32_t x, int32_t y) {
     input_device;
 
     INPUT ip[2];  // vertical and horizontal are separate
@@ -446,7 +446,7 @@ int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
 
     return 0;
 }
-void EnterWinString(enum FractalKeycode* keycodes, int len) {
+void enter_win_string(enum FractalKeycode* keycodes, int len) {
     // get screen width and height for mouse cursor
     int i, index = 0;
     enum FractalKeycode keycode;

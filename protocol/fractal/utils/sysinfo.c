@@ -11,7 +11,7 @@ Call the respective functions to log a device's OS, model, CPU, RAM, etc.
 
 #include "sysinfo.h"
 
-void PrintOSInfo() {
+void print_os_info() {
 #ifdef _WIN32
     char buf[1024];
     char product[256];
@@ -72,7 +72,7 @@ void PrintOSInfo() {
 #endif
 }
 
-void PrintModelInfo() {
+void print_model_info() {
 #ifdef _WIN32
     char* response = NULL;
     int total_sz = runcmd("wmic computersystem get model,manufacturer", &response);
@@ -145,7 +145,7 @@ void PrintModelInfo() {
 #endif
 }
 
-void PrintMonitors() {
+void print_monitors() {
 #ifdef _WIN32
     int num_adapters = 0, i = 0, j = 0;
     IDXGIFactory1* factory;
@@ -233,7 +233,7 @@ void PrintMonitors() {
 #endif
 }
 
-void PrintRAMInfo() {
+void print_ram_info() {
 #if defined(_WIN32)
     size_t total_ram;
     size_t total_ram_usage;
@@ -281,7 +281,7 @@ void PrintRAMInfo() {
     LOG_INFO("Total Physical RAM: %.2f GB", (size_t)total_ram / BYTES_IN_GB);
 }
 
-void PrintMemoryInfo() {
+void print_memory_info() {
 #if defined(_WIN32)
     DWORD processID = GetCurrentProcessId();
     HANDLE hProcess;
@@ -302,7 +302,7 @@ void PrintMemoryInfo() {
 }
 // End Print Memory Info
 
-void cpuID(unsigned i, unsigned regs[4]) {
+void cpu_id(unsigned i, unsigned regs[4]) {
 #ifdef _WIN32
     __cpuid((int*)regs, (int)i);
 #else
@@ -313,13 +313,13 @@ void cpuID(unsigned i, unsigned regs[4]) {
 #endif
 }
 
-void PrintCPUInfo() {
+void print_cpu_info() {
     // https://stackoverflow.com/questions/2901694/how-to-detect-the-number-of-physical-processors-cores-on-windows-mac-and-linu
     unsigned regs[4];
 
     // Get vendor
     char cpuVendor[13] = {0};
-    cpuID(0, regs);
+    cpu_id(0, regs);
     ((unsigned*)cpuVendor)[0] = regs[1];  // EBX
     ((unsigned*)cpuVendor)[1] = regs[3];  // EDX
     ((unsigned*)cpuVendor)[2] = regs[2];  // ECX
@@ -330,10 +330,10 @@ void PrintCPUInfo() {
     unsigned int nExIds = 0;
     char CPUBrandString[0x40];
     // Get the information associated with each extended ID.
-    cpuID(0x80000000, regs);
+    cpu_id(0x80000000, regs);
     nExIds = regs[0];
     for (unsigned int i = 0x80000000; i <= nExIds; ++i) {
-        cpuID(i, regs);
+        cpu_id(i, regs);
         // Interpret CPU brand string
         if (i == 0x80000002)
             memcpy(CPUBrandString, regs, sizeof(regs));
@@ -346,19 +346,19 @@ void PrintCPUInfo() {
     LOG_INFO("CPU Type: %s", CPUBrandString);
 
     // Logical core count per CPU
-    cpuID(1, regs);
+    cpu_id(1, regs);
     unsigned logical = (regs[1] >> 16) & 0xff;  // EBX[23:16]
     LOG_INFO("Logical Cores: %d", logical);
     unsigned cores = logical;
 
     if (strcmp(cpuVendor, "GenuineIntel") == 0) {
         // Get DCP cache info
-        cpuID(4, regs);
+        cpu_id(4, regs);
         cores = ((regs[0] >> 26) & 0x3f) + 1;  // EAX[31:26] + 1
 
     } else if (strcmp(cpuVendor, "AuthenticAMD") == 0) {
         // Get NC: Number of CPU cores - 1
-        cpuID(0x80000008, regs);
+        cpu_id(0x80000008, regs);
         cores = ((unsigned)(regs[2] & 0xff)) + 1;  // ECX[7:0] + 1
     } else {
         LOG_WARNING("Unrecognized processor: %s", cpuVendor);
@@ -367,7 +367,7 @@ void PrintCPUInfo() {
     LOG_INFO("Physical Cores: %d", cores);
 
     // Get CPU features
-    cpuID(1, regs);
+    cpu_id(1, regs);
     unsigned cpuFeatures = regs[3];  // EDX
 
     // Detect hyper-threads
@@ -384,7 +384,7 @@ void PrintCPUInfo() {
 #endif
 }
 
-void PrintHardDriveInfo() {
+void print_hard_drive_info() {
     double used_space;
     double total_space;
     double available_space;
