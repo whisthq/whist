@@ -70,13 +70,13 @@ if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON" AND ${CMAKE_SYSTEM_NAME} MATCHES "
             "--enable=performance,portability"
             "--verbose"
             "--std=c99"
-            "-j 4"
-            "--error-exitcode=1"
+            "-j 8" # Run in 8 threads
+            "--error-exitcode=1" # Propagate cppcheck errors to cmake
             "--suppress=shiftTooManyBitsSigned"
             "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
-            "--suppress=*:*sentry-native/*"
+            "--suppress=*:*/sentry-native/*.c" # Ignore errors that occur in sentry-native c files. We shouldn't ignore errors in sentry-native h files
             "-D__linux" # Needed for sentry.h to pass
-            "--inline-suppr"
+            "--inline-suppr" # Allow cppcheck-suppress comments in code
             )
 else()
     message(STATUS "cppcheck inactive")
