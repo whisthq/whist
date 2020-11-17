@@ -42,7 +42,7 @@ destroyClipboardSynchronizer();
 #define UNUSED(x) (void)(x)
 #define MS_IN_SECOND 1000
 
-int update_clipboard_thread(void* opaque);
+int update_clipboard(void* opaque);
 
 extern char filename[300];
 extern char username[50];
@@ -51,9 +51,9 @@ volatile bool updating_get_clipboard;  // set to true when GetClipboard() needs 
 volatile bool updating_clipboard;  // acts as a mutex to prevent clipboard activity from overlapping
 volatile bool pending_update_clipboard;  // set to true when GetClipboard() has finished running
 clock last_clipboard_update;
-SDL_sem* clipboard_semaphore;  // used to signal UpdateClipboardThread to continue
+SDL_sem* clipboard_semaphore;  // used to signal clipboard_synchronizer_thread to continue
 ClipboardData* clipboard;
-SDL_Thread* thread;
+SDL_Thread* clipboard_synchronizer_thread;
 static bool connected;
 
 bool pending_clipboard_push;
@@ -75,7 +75,7 @@ void init_clipboard_synchronizer() {
     start_timer((clock*)&last_clipboard_update);
     clipboard_semaphore = SDL_CreateSemaphore(0);
 
-    thread = SDL_CreateThread(update_clipboard_thread, "UpdateClipboardThread", NULL);
+    clipboard_synchronizer_thread = SDL_CreateThread(update_clipboard, "update_clipboard", NULL);
 
     pending_update_clipboard = true;
 }
@@ -157,7 +157,7 @@ ClipboardData* clipboard_synchronizer_get_new_clipboard() {
     return NULL;
 }
 
-int update_clipboard_thread(void* opaque) {
+int update_clipboard(void* opaque) {
     /*
         Thread to get and set clipboard as signals are received.
     */
