@@ -18,11 +18,11 @@ whatever files are in the SET_CLIPBOARD directory.
 #include "../core/fractal.h"
 #include "clipboard.h"
 
-bool StartTrackingClipboardUpdates();
+bool start_tracking_clipboard_updates();
 
-void unsafe_initClipboard() { StartTrackingClipboardUpdates(); }
+void unsafe_init_clipboard() { start_tracking_clipboard_updates(); }
 
-void unsafe_DestroyClipboard(){};
+void unsafe_destroy_clipboard(){};
 
 #include <sys/syslimits.h>
 #include <unistd.h>
@@ -37,23 +37,23 @@ static int last_clipboard_sequence_number = -1;
 
 static char clipboard_buf[9000000];
 
-bool StartTrackingClipboardUpdates() {
-    last_clipboard_sequence_number = GetClipboardChangecount();  // to capture the first event
+bool start_tracking_clipboard_updates() {
+    last_clipboard_sequence_number = get_clipboard_changecount();  // to capture the first event
     clipboardHasImage = false;
     clipboardHasString = false;
     clipboardHasFiles = false;
     return true;
 }
 
-bool unsafe_hasClipboardUpdated() {
+bool unsafe_has_clipboard_updated() {
     bool hasUpdated = false;
 
-    int new_clipboard_sequence_number = GetClipboardChangecount();
+    int new_clipboard_sequence_number = get_clipboard_changecount();
     if (new_clipboard_sequence_number > last_clipboard_sequence_number) {
         // check if new clipboard is an image or a string
-        clipboardHasImage = ClipboardHasImage();
-        clipboardHasString = ClipboardHasString();
-        clipboardHasFiles = ClipboardHasFiles();
+        clipboardHasImage = clipboard_has_image();
+        clipboardHasString = clipboard_has_string();
+        clipboardHasFiles = clipboard_has_files();
         hasUpdated = (clipboardHasImage || clipboardHasString ||
                       clipboardHasFiles);  // should be always set to true in here
         last_clipboard_sequence_number = new_clipboard_sequence_number;
@@ -61,7 +61,7 @@ bool unsafe_hasClipboardUpdated() {
     return hasUpdated;
 }
 
-ClipboardData* unsafe_GetClipboard() {
+ClipboardData* unsafe_get_clipboard() {
     ClipboardData* cb = (ClipboardData*)clipboard_buf;
 
     cb->size = 0;
@@ -88,7 +88,7 @@ ClipboardData* unsafe_GetClipboard() {
         }
 
         // populate filenames array with file URLs
-        ClipboardGetFiles(filenames);
+        clipboard_get_files(filenames);
 
         // set clipboard data attributes to be returned
         cb->type = CLIPBOARD_FILES;
@@ -125,7 +125,7 @@ ClipboardData* unsafe_GetClipboard() {
 
     } else if (clipboardHasString) {
         // get the string
-        const char* clipboard_string = ClipboardGetString();
+        const char* clipboard_string = clipboard_get_string();
         // int data_size = strlen(clipboard_string) + 1;  // for null terminator
         int data_size = strlen(clipboard_string);
         // copy the data
@@ -142,7 +142,7 @@ ClipboardData* unsafe_GetClipboard() {
         memset(clipboard_image, 0, sizeof(OSXImage));
 
         // get the image
-        ClipboardGetImage(clipboard_image);
+        clipboard_get_image(clipboard_image);
 
         // copy the data
         if ((unsigned long)clipboard_image->size < sizeof(clipboard_buf)) {
@@ -164,7 +164,7 @@ ClipboardData* unsafe_GetClipboard() {
     return cb;
 }
 
-void unsafe_SetClipboard(ClipboardData* cb) {
+void unsafe_set_clipboard(ClipboardData* cb) {
     if (cb->type == CLIPBOARD_NONE) {
         return;
     }
@@ -183,13 +183,13 @@ void unsafe_SetClipboard(ClipboardData* cb) {
             memset(string_data, 0, cb->size + 1);
             memcpy(string_data, cb->data, cb->size);
             LOG_INFO("SetClipboard to Text: %s", string_data);
-            ClipboardSetString(string_data);
+            clipboard_set_string(string_data);
             free(string_data);
             break;
         }
         case CLIPBOARD_IMAGE: {
             LOG_INFO("SetClipboard to Image with size %d", cb->size);
-            ClipboardSetImage(cb->data, cb->size);
+            clipboard_set_image(cb->data, cb->size);
             break;
         }
         case CLIPBOARD_FILES: {
@@ -226,5 +226,5 @@ void unsafe_SetClipboard(ClipboardData* cb) {
     }
 
     // Update the status so that this specific update doesn't count
-    unsafe_hasClipboardUpdated();
+    unsafe_has_clipboard_updated();
 }

@@ -51,7 +51,7 @@ bool is_same_wh(CaptureDevice* device) {
     return device->width == w && device->height == h;
 }
 
-int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
     if (!device) return -1;
 
     device->display = XOpenDisplay(NULL);
@@ -110,14 +110,14 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi
     }
 
 #if USING_GPU_CAPTURE
-    if (CreateNvidiaCaptureDevice(&device->nvidia_capture_device, 10000000, CODEC_TYPE_UNKNOWN) <
+    if (create_nvidia_capture_device(&device->nvidia_capture_device, 10000000, CODEC_TYPE_UNKNOWN) <
         0) {
         device->using_nvidia = false;
         LOG_WARNING("USING_GPU_CAPTURE defined but not using Nvidia Capture SDK!");
     } else {
         device->using_nvidia = true;
         device->image = NULL;
-        CaptureScreen(device);
+        capture_screen(device);
         device->capture_is_on_nvidia = false;
         LOG_INFO("Using Nvidia Capture SDK!");
         return 0;
@@ -159,7 +159,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi
     device->pitch = device->width * 4;
 #else
     device->image = NULL;
-    CaptureScreen(device);
+    capture_screen(device);
 #endif
     device->capture_is_on_nvidia = false;
     device->texture_on_gpu = false;
@@ -167,11 +167,11 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi
     return 0;
 }
 
-int CaptureScreen(CaptureDevice* device) {
+int capture_screen(CaptureDevice* device) {
     if (!device) return -1;
 
     if (device->using_nvidia) {
-        int ret = NvidiaCaptureScreen(&device->nvidia_capture_device);
+        int ret = nvidia_capture_screen(&device->nvidia_capture_device);
         if (ret < 0) {
             return ret;
         } else {
@@ -233,15 +233,15 @@ int CaptureScreen(CaptureDevice* device) {
     return update;
 }
 
-int TransferScreen(CaptureDevice* device) { return 0; }
+int transfer_screen(CaptureDevice* device) { return 0; }
 
-void ReleaseScreen(CaptureDevice* device) {}
+void release_screen(CaptureDevice* device) {}
 
-void DestroyCaptureDevice(CaptureDevice* device) {
+void destroy_capture_device(CaptureDevice* device) {
     if (!device) return;
 
     if (device->using_nvidia) {
-        DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
+        destroy_nvidia_capture_device(&device->nvidia_capture_device);
     } else {
         if (device->image) {
             XFree(device->image);
@@ -250,11 +250,11 @@ void DestroyCaptureDevice(CaptureDevice* device) {
     XCloseDisplay(device->display);
 }
 
-void UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec) {
+void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec) {
     if (!device) return;
 
     if (device->using_nvidia) {
-        DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
-        CreateNvidiaCaptureDevice(&device->nvidia_capture_device, bitrate, codec);
+        destroy_nvidia_capture_device(&device->nvidia_capture_device);
+        create_nvidia_capture_device(&device->nvidia_capture_device, bitrate, codec);
     }
 }

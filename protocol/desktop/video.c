@@ -144,9 +144,9 @@ bool has_rendered_yet = false;
 
 // START VIDEO FUNCTIONS
 
-void updateDecoderParameters(int width, int height, CodecType codec_type);
-int32_t RenderScreen(SDL_Renderer* renderer);
-void loadingSDL(SDL_Renderer* renderer, int loading_index);
+void update_decoder_parameters(int width, int height, CodecType codec_type);
+int32_t render_screen(SDL_Renderer* renderer);
+void loading_sdl(SDL_Renderer* renderer, int loading_index);
 
 void nack(int id, int index) {
     if (VideoData.is_waiting_for_iframe) {
@@ -158,11 +158,11 @@ void nack(int id, int index) {
     fmsg.type = MESSAGE_VIDEO_NACK;
     fmsg.nack_data.id = id;
     fmsg.nack_data.index = index;
-    SendFmsg(&fmsg);
+    send_fmsg(&fmsg);
 }
 
-bool requestIframe() {
-    if (GetTimer(VideoData.last_iframe_request_timer) > 1500.0 / 1000.0) {
+bool request_iframe() {
+    if (get_timer(VideoData.last_iframe_request_timer) > 1500.0 / 1000.0) {
         FractalClientMessage fmsg;
         fmsg.type = MESSAGE_IFRAME_REQUEST;
         if (VideoData.last_rendered_id == 0) {
@@ -170,8 +170,8 @@ bool requestIframe() {
         } else {
             fmsg.reinitialize_encoder = false;
         }
-        SendFmsg(&fmsg);
-        StartTimer(&VideoData.last_iframe_request_timer);
+        send_fmsg(&fmsg);
+        start_timer(&VideoData.last_iframe_request_timer);
         VideoData.is_waiting_for_iframe = true;
         return true;
     } else {
@@ -181,7 +181,7 @@ bool requestIframe() {
 
 static enum AVPixelFormat sws_input_fmt;
 
-void updateSwsContext() {
+void update_sws_context() {
     LOG_INFO("Updating SWS Context");
     video_decoder_t* decoder = videoContext.decoder;
 
@@ -211,15 +211,15 @@ void updateSwsContext() {
     }
 }
 
-void updatePixelFormat() {
+void update_pixel_format() {
     if (sws_input_fmt != videoContext.decoder->sw_frame->format || pending_sws_update) {
         sws_input_fmt = videoContext.decoder->sw_frame->format;
         pending_sws_update = false;
-        updateSwsContext();
+        update_sws_context();
     }
 }
 
-void updateTexture() {
+void update_texture() {
     if (pending_texture_update) {
         LOG_INFO("Beginning to use %d x %d", output_width, output_height);
         SDL_Texture* texture =
@@ -237,7 +237,7 @@ void updateTexture() {
     }
 }
 
-void updateDecoderParameters(int width, int height, CodecType codec_type) {
+void update_decoder_parameters(int width, int height, CodecType codec_type) {
     LOG_INFO("Updating Width & Height to %dx%d and Codec to %d", width, height, codec_type);
 
     if (videoContext.decoder) {
@@ -249,7 +249,7 @@ void updateDecoderParameters(int width, int height, CodecType codec_type) {
     videoContext.decoder = decoder;
     if (!decoder) {
         LOG_WARNING("ERROR: Decoder could not be created!");
-        destroyLogger();
+        destroy_logger();
         exit(-1);
     }
 
@@ -261,7 +261,7 @@ void updateDecoderParameters(int width, int height, CodecType codec_type) {
     output_codec_type = codec_type;
 }
 
-static int renderPeers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
+static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
     int ret = 0;
 
     int window_width, window_height;
@@ -273,7 +273,7 @@ static int renderPeers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t n
         if (client_id == msgs->peer_id) {
             continue;
         }
-        if (drawPeerCursor(renderer, x, y, msgs->color.r, msgs->color.g, msgs->color.b) != 0) {
+        if (draw_peer_cursor(renderer, x, y, msgs->color.r, msgs->color.g, msgs->color.b) != 0) {
             LOG_ERROR("Failed to draw spectator cursor.");
             ret = -1;
         }
@@ -281,7 +281,7 @@ static int renderPeers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t n
     return ret;
 }
 
-int32_t RenderScreen(SDL_Renderer* renderer) {
+int32_t render_screen(SDL_Renderer* renderer) {
     LOG_INFO("RenderScreen running on Thread %d", SDL_GetThreadID(NULL));
 
 //    Windows GHA VM cannot render, it just segfaults on creating the renderer
@@ -294,7 +294,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
     int loading_index = 0;
 
     // present the loading screen
-    loadingSDL(renderer, loading_index);
+    loading_sdl(renderer, loading_index);
 
     while (VideoData.run_render_screen_thread) {
         int ret = SDL_SemTryWait(VideoData.renderscreen_semaphore);
@@ -308,7 +308,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         if (ret == SDL_MUTEX_TIMEDOUT) {
             if (loading_index >= 0) {
                 loading_index++;
-                loadingSDL(renderer, loading_index);
+                loading_sdl(renderer, loading_index);
             }
 
             SDL_Delay(1);
@@ -335,13 +335,13 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
 #if LOG_VIDEO
         mprintf("Rendering ID %d (Age %f) (Packets %d) %s\n", renderContext.id,
-                GetTimer(renderContext.frame_creation_timer), renderContext.num_packets,
+                get_timer(renderContext.frame_creation_timer), renderContext.num_packets,
                 frame->is_iframe ? "(I-Frame)" : "");
 #endif
 
-        if (GetTimer(renderContext.frame_creation_timer) > 25.0 / 1000.0) {
+        if (get_timer(renderContext.frame_creation_timer) > 25.0 / 1000.0) {
             LOG_INFO("Late! Rendering ID %d (Age %f) (Packets %d) %s", renderContext.id,
-                     GetTimer(renderContext.frame_creation_timer), renderContext.num_packets,
+                     get_timer(renderContext.frame_creation_timer), renderContext.num_packets,
                      frame->is_iframe ? "(I-Frame)" : "");
         }
 
@@ -363,14 +363,14 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                     "From %dx%d, codec %d to %dx%d, codec %d",
                     server_width, server_height, server_codec_type, frame->width, frame->height,
                     frame->codec_type);
-                updateDecoderParameters(frame->width, frame->height, frame->codec_type);
+                update_decoder_parameters(frame->width, frame->height, frame->codec_type);
             } else {
                 LOG_INFO("Wants to change resolution, but not an i-frame!");
             }
         }
 
         clock decode_timer;
-        StartTimer(&decode_timer);
+        start_timer(&decode_timer);
 
         if (!video_decoder_decode(videoContext.decoder, frame->compressed_frame, frame->size)) {
             LOG_WARNING("Failed to video_decoder_decode!");
@@ -378,16 +378,16 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             continue;
         }
 
-        // LOG_INFO( "Decode Time: %f", GetTimer( decode_timer ) );
+        // LOG_INFO( "Decode Time: %f", get_timer( decode_timer ) );
 
         SDL_LockMutex(render_mutex);
-        updatePixelFormat();
+        update_pixel_format();
 
         if (!skip_render && can_render) {
             clock sws_timer;
-            StartTimer(&sws_timer);
+            start_timer(&sws_timer);
 
-            updateTexture();
+            update_texture();
 
             if (videoContext.sws) {
                 sws_scale(videoContext.sws,
@@ -401,7 +401,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                        sizeof(videoContext.linesize));
             }
 
-            // LOG_INFO( "SWS Time: %f", GetTimer( sws_timer ) );
+            // LOG_INFO( "SWS Time: %f", get_timer( sws_timer ) );
 
             SDL_UpdateYUVTexture(videoContext.texture, NULL, videoContext.data[0],
                                  videoContext.linesize[0], videoContext.data[1],
@@ -453,14 +453,14 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         // mprintf("Client Frame Time for ID %d: %f\n", renderContext.id,
-        // GetTimer(renderContext.client_frame_timer));
+        // get_timer(renderContext.client_frame_timer));
 
         if (!skip_render && can_render) {
             // SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
             // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
 
             SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL, NULL);
-            if (renderPeers((SDL_Renderer*)renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
+            if (render_peers((SDL_Renderer*)renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
                 LOG_ERROR("Failed to render peers.");
             }
             SDL_RenderPresent((SDL_Renderer*)renderer);
@@ -470,7 +470,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
 #if LOG_VIDEO
         LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", renderContext.id, renderContext.frame_size,
-                  GetTimer(renderContext.frame_creation_timer));
+                  get_timer(renderContext.frame_creation_timer));
 #endif
 
         if (frame->is_iframe) {
@@ -487,11 +487,11 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 }
 
 // Make the screen black
-void loadingSDL(SDL_Renderer* renderer, int loading_index) {
+void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     int gif_frame_index = loading_index % 83;
 
     clock c;
-    StartTimer(&c);
+    start_timer(&c);
 
     char frame_name[24];
     if (gif_frame_index < 10) {
@@ -505,7 +505,7 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
     AVPacket pkt;
     av_init_packet(&pkt);
     png_file_to_bmp(frame_name, &pkt);
-    // LOG_INFO( "Test: %f", GetTimer(c) );
+    // LOG_INFO( "Test: %f", get_timer(c) );
 
     SDL_RWops* rw = SDL_RWFromMem(pkt.data, pkt.size);
 
@@ -533,7 +533,7 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
     SDL_RenderPresent(renderer);
     SDL_DestroyTexture(loading_screen_texture);
 
-    int remaining_ms = 30 - (int)GetTimer(c);
+    int remaining_ms = 30 - (int)get_timer(c);
     if (remaining_ms > 0) {
         SDL_Delay(remaining_ms);
     }
@@ -541,16 +541,16 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
     gif_frame_index %= 83;  // number of loading frames
 }
 
-void clearSDL(SDL_Renderer* renderer) {
+void clear_sdl(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
 }
 
-int initMultithreadedVideo(void* opaque) {
+int init_multithreaded_video(void* opaque) {
     UNUSED(opaque);
 
-    if (InitPeerCursors() != 0) {
+    if (init_peer_cursors() != 0) {
         LOG_ERROR("Failed to init peer cursors.");
     }
 
@@ -600,7 +600,7 @@ int initMultithreadedVideo(void* opaque) {
                                 SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
     if (!texture) {
         LOG_ERROR("SDL: could not create texture - exiting");
-        destroyLogger();
+        destroy_logger();
         exit(1);
     }
 
@@ -614,14 +614,14 @@ int initMultithreadedVideo(void* opaque) {
     VideoData.pending_ctx = NULL;
     VideoData.frames_received = 0;
     VideoData.bytes_transferred = 0;
-    StartTimer(&VideoData.frame_timer);
+    start_timer(&VideoData.frame_timer);
     VideoData.last_statistics_id = 1;
     VideoData.last_rendered_id = 0;
     VideoData.max_id = 0;
     VideoData.most_recent_iframe = -1;
     VideoData.num_nacked = 0;
     VideoData.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
-    StartTimer(&VideoData.last_iframe_request_timer);
+    start_timer(&VideoData.last_iframe_request_timer);
 
     for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
         receiving_frames[i].id = -1;
@@ -630,22 +630,22 @@ int initMultithreadedVideo(void* opaque) {
     VideoData.renderscreen_semaphore = SDL_CreateSemaphore(0);
     VideoData.run_render_screen_thread = true;
 
-    RenderScreen(renderer);
+    render_screen(renderer);
     SDL_DestroyRenderer(renderer);
     return 0;
 }
 // END VIDEO FUNCTIONS
 
-void initVideo() {
-    VideoData.render_screen_thread = SDL_CreateThread(initMultithreadedVideo, "VideoThread", NULL);
+void init_video() {
+    VideoData.render_screen_thread = SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
 }
 
 int last_rendered_index = 0;
 
-void updateVideo() {
+void update_video() {
     // Get statistics from the last 3 seconds of data
-    if (GetTimer(VideoData.frame_timer) > 3) {
-        double time = GetTimer(VideoData.frame_timer);
+    if (get_timer(VideoData.frame_timer) > 3) {
+        double time = get_timer(VideoData.frame_timer);
 
         // Calculate statistics
         /*
@@ -713,7 +713,7 @@ void updateVideo() {
         VideoData.bytes_transferred = 0;
         VideoData.frames_received = 0;
         VideoData.last_statistics_id = VideoData.max_id;
-        StartTimer(&VideoData.frame_timer);
+        start_timer(&VideoData.frame_timer);
     }
 
     if (VideoData.last_rendered_id == -1 && VideoData.most_recent_iframe > 0) {
@@ -758,7 +758,7 @@ void updateVideo() {
                 // mprintf( "Packets: %d %s\n", ctx->num_packets,
                 // ((Frame*)ctx->frame_buffer)->is_iframe ? "(I-frame)" : "" );
                 // mprintf("Rendering %d (Age %f)\n", ctx->id,
-                // GetTimer(ctx->frame_creation_timer));
+                // get_timer(ctx->frame_creation_timer));
 
                 renderContext = *ctx;
                 rendering = true;
@@ -776,8 +776,8 @@ void updateVideo() {
                 }
                 SDL_SemPost(VideoData.renderscreen_semaphore);
             } else {
-                if ((GetTimer(ctx->last_packet_timer) > 6.0 / 1000.0) &&
-                    GetTimer(ctx->last_nacked_timer) >
+                if ((get_timer(ctx->last_packet_timer) > 6.0 / 1000.0) &&
+                    get_timer(ctx->last_nacked_timer) >
                         (8.0 + 8.0 * ctx->num_times_nacked) / 1000.0) {
                     if (ctx->num_times_nacked == -1) {
                         ctx->num_times_nacked = 0;
@@ -785,7 +785,7 @@ void updateVideo() {
                     }
                     int num_nacked = 0;
                     // mprintf("************NACKING PACKET %d, alive for %f
-                    // MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
+                    // MS\n", ctx->id, get_timer(ctx->frame_creation_timer));
                     for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 1;
                          i++) {
                         if (!ctx->received_indicies[i]) {
@@ -793,7 +793,7 @@ void updateVideo() {
                             LOG_INFO(
                                 "************NACKING VIDEO PACKET %d %d (/%d), "
                                 "alive for %f MS",
-                                ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
+                                ctx->id, i, ctx->num_packets, get_timer(ctx->frame_creation_timer));
                             ctx->nacked_indicies[i] = true;
                             nack(ctx->id, i);
                         }
@@ -803,7 +803,7 @@ void updateVideo() {
                         ctx->last_nacked_index = -1;
                         ctx->num_times_nacked++;
                     }
-                    StartTimer(&ctx->last_nacked_timer);
+                    start_timer(&ctx->last_nacked_timer);
                 }
             }
         }
@@ -815,24 +815,24 @@ void updateVideo() {
 
             if (VideoData.max_id >
                 VideoData.last_rendered_id + 3)  // || (cur_ctx->id == VideoData.last_rendered_id &&
-                                                 // GetTimer( cur_ctx->last_packet_timer ) > 96.0 /
+                                                 // get_timer( cur_ctx->last_packet_timer ) > 96.0 /
                                                  // 1000.0) )
             {
-                if (requestIframe()) {
+                if (request_iframe()) {
                     LOG_INFO("TOO FAR BEHIND! REQUEST FOR IFRAME!");
                 }
             }
         }
 
         if (VideoData.max_id > VideoData.last_rendered_id + 5) {
-            if (requestIframe()) {
+            if (request_iframe()) {
                 LOG_INFO("WAYY TOO FAR BEHIND! REQUEST FOR IFRAME!");
             }
         }
     }
 }
 
-int32_t ReceiveVideo(FractalPacket* packet) {
+int32_t receive_video(FractalPacket* packet) {
     // mprintf("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)\n",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
 
@@ -864,15 +864,15 @@ int32_t ReceiveVideo(FractalPacket* packet) {
         ctx->frame_size = 0;
         memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
         memset(ctx->nacked_indicies, 0, sizeof(ctx->nacked_indicies));
-        StartTimer(&ctx->last_nacked_timer);
-        StartTimer(&ctx->frame_creation_timer);
+        start_timer(&ctx->last_nacked_timer);
+        start_timer(&ctx->frame_creation_timer);
         // mprintf("Initialized packet %d!\n", ctx->id);
     } else {
         // mprintf("Already Started: %d/%d - %f\n", ctx->packets_received + 1,
-        // ctx->num_packets, GetTimer(ctx->client_frame_timer));
+        // ctx->num_packets, get_timer(ctx->client_frame_timer));
     }
 
-    StartTimer(&ctx->last_packet_timer);
+    start_timer(&ctx->last_packet_timer);
 
     // If we already received this packet, we can skip
     if (packet->is_a_nack) {
@@ -897,7 +897,7 @@ int32_t ReceiveVideo(FractalPacket* packet) {
         mprintf(
             "Skipping duplicate Video ID %d Index %d at time since creation %f "
             "%s\n",
-            packet->id, packet->index, GetTimer(ctx->frame_creation_timer),
+            packet->id, packet->index, get_timer(ctx->frame_creation_timer),
             packet->is_a_nack ? "(nack)" : "");
 #endif
         return 0;
@@ -905,14 +905,14 @@ int32_t ReceiveVideo(FractalPacket* packet) {
 
 #if LOG_VIDEO
     // mprintf("Received Video ID %d Index %d at time since creation %f %s\n",
-    // packet->id, packet->index, GetTimer(ctx->frame_creation_timer),
+    // packet->id, packet->index, get_timer(ctx->frame_creation_timer),
     // packet->is_a_nack ? "(nack)" : "");
 #endif
 
     VideoData.max_id = max(VideoData.max_id, ctx->id);
 
     ctx->received_indicies[packet->index] = true;
-    if (packet->index > 0 && GetTimer(ctx->last_nacked_timer) > 6.0 / 1000) {
+    if (packet->index > 0 && get_timer(ctx->last_nacked_timer) > 6.0 / 1000) {
         int to_index = packet->index - 5;
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             // Nacking index i
@@ -920,7 +920,7 @@ int32_t ReceiveVideo(FractalPacket* packet) {
             if (!ctx->received_indicies[i]) {
                 ctx->nacked_indicies[i] = true;
                 nack(packet->id, i);
-                StartTimer(&ctx->last_nacked_timer);
+                start_timer(&ctx->last_nacked_timer);
                 break;
             }
         }
@@ -957,7 +957,7 @@ int32_t ReceiveVideo(FractalPacket* packet) {
     return 0;
 }
 
-void destroyVideo() {
+void destroy_video() {
     VideoData.run_render_screen_thread = false;
     SDL_WaitThread(VideoData.render_screen_thread, NULL);
     SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
@@ -969,7 +969,7 @@ void destroyVideo() {
 
     has_rendered_yet = false;
 
-    if (DestroyPeerCursors() != 0) {
+    if (destroy_peer_cursors() != 0) {
         LOG_ERROR("Failed to destroy peer cursors.");
     }
 }

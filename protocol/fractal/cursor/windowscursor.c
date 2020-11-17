@@ -37,13 +37,13 @@ typedef struct FractalCursorTypes {
 struct FractalCursorTypes l_types = {0};
 struct FractalCursorTypes* types = &l_types;
 
-FractalCursorImage GetCursorImage(PCURSORINFO pci);
+FractalCursorImage get_cursor_image(PCURSORINFO pci);
 
-void LoadCursors();
+void load_cursors();
 
-void InitCursors() { LoadCursors(); }
+void init_cursors() { load_cursors(); }
 
-void LoadCursors() {
+void load_cursors() {
     types->CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
     types->CursorArrow = LoadCursor(NULL, IDC_ARROW);
     types->CursorCross = LoadCursor(NULL, IDC_CROSS);
@@ -62,7 +62,7 @@ void LoadCursors() {
     types->CursorWait = LoadCursor(NULL, IDC_WAIT);
 }
 
-FractalCursorImage GetCursorImage(PCURSORINFO pci) {
+FractalCursorImage get_cursor_image(PCURSORINFO pci) {
     HCURSOR cursor = pci->hCursor;
     FractalCursorImage image = {0};
 
@@ -95,7 +95,7 @@ FractalCursorImage GetCursorImage(PCURSORINFO pci) {
     return image;
 }
 
-FractalCursorImage GetCurrentCursor() {
+FractalCursorImage get_current_cursor() {
     CURSORINFO pci;
     pci.cbSize = sizeof(CURSORINFO);
     GetCursorInfo(&pci);

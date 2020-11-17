@@ -388,7 +388,7 @@ void destroy_video_decoder_members(video_decoder_t* decoder) {
 /// @details decode an encoded frame under YUV color format into RGB frame
 bool video_decoder_decode(video_decoder_t* decoder, void* buffer, int buffer_size) {
     clock t;
-    StartTimer(&t);
+    start_timer(&t);
 
     // copy the received packet back into the decoder AVPacket
     // memcpy(&decoder->packet.data, &buffer, buffer_size);
@@ -463,7 +463,7 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer, int buffer_siz
         }
     }
 
-    double time = GetTimer(t);
+    double time = get_timer(t);
 
     static double total_time = 0.0;
     static double max_time = 0.0;

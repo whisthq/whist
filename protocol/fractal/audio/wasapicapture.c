@@ -17,7 +17,7 @@ device via DestroyAudioDevice.
 
 #include "wasapicapture.h"
 
-audio_device_t *CreateAudioDevice() {
+audio_device_t *create_audio_device() {
     audio_device_t *audio_device = malloc(sizeof(audio_device_t));
     memset(audio_device, 0, sizeof(audio_device_t));
 
@@ -97,7 +97,7 @@ audio_device_t *CreateAudioDevice() {
     return audio_device;
 }
 
-void StartAudioDevice(audio_device_t *audio_device) {
+void start_audio_device(audio_device_t *audio_device) {
     audio_device->hWakeUp = CreateWaitableTimer(NULL, FALSE, NULL);
 
     LARGE_INTEGER liFirstFire;
@@ -115,7 +115,7 @@ void StartAudioDevice(audio_device_t *audio_device) {
     audio_device->pAudioClient->lpVtbl->Start(audio_device->pAudioClient);
 }
 
-void DestroyAudioDevice(audio_device_t *audio_device) {
+void destroy_audio_device(audio_device_t *audio_device) {
     audio_device->pAudioClient->lpVtbl->Stop(audio_device->pAudioClient);
     audio_device->pAudioCaptureClient->lpVtbl->Release(audio_device->pAudioCaptureClient);
     CoTaskMemFree(audio_device->pwfx);
@@ -126,27 +126,27 @@ void DestroyAudioDevice(audio_device_t *audio_device) {
     free(audio_device);
 }
 
-void GetNextPacket(audio_device_t *audio_device) {
+void get_next_packet(audio_device_t *audio_device) {
     audio_device->hNextPacketResult = audio_device->pAudioCaptureClient->lpVtbl->GetNextPacketSize(
         audio_device->pAudioCaptureClient, &audio_device->nNextPacketSize);
 }
 
-bool PacketAvailable(audio_device_t *audio_device) {
+bool packet_available(audio_device_t *audio_device) {
     return SUCCEEDED(audio_device->hNextPacketResult) && audio_device->nNextPacketSize > 0;
 }
 
-void GetBuffer(audio_device_t *audio_device) {
+void get_buffer(audio_device_t *audio_device) {
     audio_device->pAudioCaptureClient->lpVtbl->GetBuffer(
         audio_device->pAudioCaptureClient, &audio_device->buffer, &audio_device->frames_available,
         &audio_device->dwFlags, NULL, NULL);
     audio_device->buffer_size = audio_device->frames_available * audio_device->pwfx->nBlockAlign;
 }
 
-void ReleaseBuffer(audio_device_t *audio_device) {
+void release_buffer(audio_device_t *audio_device) {
     audio_device->pAudioCaptureClient->lpVtbl->ReleaseBuffer(audio_device->pAudioCaptureClient,
                                                              audio_device->frames_available);
 }
 
-void WaitTimer(audio_device_t *audio_device) {
+void wait_timer(audio_device_t *audio_device) {
     WaitForSingleObject(audio_device->hWakeUp, INFINITE);
 }

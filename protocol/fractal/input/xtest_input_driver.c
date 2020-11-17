@@ -279,7 +279,7 @@ const int x11_keysyms[NUM_KEYCODES] = {
     XF86XK_AudioMedia   // 263 -> Media Select
 };
 
-input_device_t* CreateInputDevice() {
+input_device_t* create_input_device() {
     input_device_t* input_device = malloc(sizeof(input_device_t));
     memset(input_device, 0, sizeof(input_device_t));
 
@@ -289,7 +289,7 @@ input_device_t* CreateInputDevice() {
     return input_device;
 }
 
-void GetInputDimensions(input_device_t* input_device, int32_t* w, int32_t* h) {
+void get_input_dimensions(input_device_t* input_device, int32_t* w, int32_t* h) {
     XWindowAttributes window_attributes;
     if (!XGetWindowAttributes(input_device->display, input_device->root, &window_attributes)) {
         *w = 0;
@@ -301,7 +301,7 @@ void GetInputDimensions(input_device_t* input_device, int32_t* w, int32_t* h) {
     *h = window_attributes.height;
 }
 
-void DestroyInputDevice(input_device_t* input_device) {
+void destroy_input_device(input_device_t* input_device) {
     XCloseDisplay(input_device->display);
     free(input_device);
     return;
@@ -309,7 +309,7 @@ void DestroyInputDevice(input_device_t* input_device) {
 
 #define GetX11KeySym(sdl_keycode) x11_keysyms[sdl_keycode]
 
-int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_keycode) {
+int get_keyboard_modifier_state(input_device_t* input_device, FractalKeycode sdl_keycode) {
     switch (sdl_keycode) {
         case FK_CAPSLOCK:
             return input_device->caps_lock;
@@ -321,11 +321,11 @@ int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_ke
     }
 }
 
-int GetKeyboardKeyState(input_device_t* input_device, FractalKeycode sdl_keycode) {
+int get_keyboard_key_state(input_device_t* input_device, FractalKeycode sdl_keycode) {
     return input_device->keyboard_state[sdl_keycode];
 }
 
-int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed) {
+int emit_key_event(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed) {
     XLockDisplay(input_device->display);
     KeyCode kcode = XKeysymToKeycode(input_device->display, GetX11KeySym(sdl_keycode));
     if (!kcode) {
@@ -347,13 +347,13 @@ int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int p
     return 0;
 }
 
-int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int relative) {
+int emit_mouse_motion_event(input_device_t* input_device, int32_t x, int32_t y, int relative) {
     XLockDisplay(input_device->display);
     if (relative) {
         XTestFakeRelativeMotionEvent(input_device->display, x, y, CurrentTime);
     } else {
         int32_t w, h;
-        GetInputDimensions(input_device, &w, &h);
+        get_input_dimensions(input_device, &w, &h);
         XTestFakeMotionEvent(input_device->display, -1, (int)(x * w / MOUSE_SCALING_FACTOR),
                              (int)(y * h / MOUSE_SCALING_FACTOR), CurrentTime);
     }
@@ -362,7 +362,7 @@ int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int
     return 0;
 }
 
-int EmitMouseButtonEvent(input_device_t* input_device, FractalMouseButton button, int pressed) {
+int emit_mouse_button_event(input_device_t* input_device, FractalMouseButton button, int pressed) {
     XLockDisplay(input_device->display);
     XTestFakeButtonEvent(input_device->display, button, pressed, CurrentTime);
     XSync(input_device->display, false);
@@ -370,7 +370,7 @@ int EmitMouseButtonEvent(input_device_t* input_device, FractalMouseButton button
     return 0;
 }
 
-int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
+int emit_mouse_wheel_event(input_device_t* input_device, int32_t x, int32_t y) {
     XLockDisplay(input_device->display);
 
     if (y > 0) {
