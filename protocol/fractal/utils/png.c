@@ -354,6 +354,19 @@ int load_png(uint8_t* data[4], int linesize[4], int* w, int* h, enum AVPixelForm
              char* png_data, int size) {
     /*
         Loads PNG pixel data into `data[0]` given PNG file byte data in `png_data`
+
+        Arguments:
+            data[4] (uint8_t*): image buffer
+            linesize[4] (int): image linesizes
+            w (int*): pointer with image width
+            h (int*): pointer with image height
+            pix_fmt (enum AVPixelFormat*): image pixel format
+            png_data (char*): png data byte array
+            size (int): png image size
+
+        Return:
+            ret (int): 0 on success, negative value on failure
+            => ARG data[0] is loaded with PNG pixel data
     */
 
     AVFormatContext* format_ctx = NULL;
@@ -438,6 +451,18 @@ int load_png_file(uint8_t* data[4], int linesize[4], unsigned int* w, unsigned i
                   enum AVPixelFormat* pix_fmt, char* png_filename) {
     /*
         Loads PNG pixel data into `data[0]` given PNG filename in `png_filename`
+
+        Arguments:
+            data[4] (uint8_t*): image buffer
+            linesize[4] (int): image linesizes
+            w (int*): pointer with image width
+            h (int*): pointer with image height
+            pix_fmt (enum AVPixelFormat*): image pixel format
+            png_filename (char*): PNG image file path
+
+        Return:
+            ret (int): 0 on success, negative value on failure
+            => ARG data[0] is loaded with PNG pixel data
     */
 
     AVFormatContext* format_ctx = NULL;
@@ -667,7 +692,9 @@ int png_char_to_bmp(char* png, int size, AVPacket* pkt) {
     int width, height;
     enum AVPixelFormat png_format = AV_PIX_FMT_RGB24;
     enum AVPixelFormat bmp_format = AV_PIX_FMT_BGR24;
-    load_png(input, linesize, &width, &height, &png_format, png, size);
+    if (load_png(input, linesize, &width, &height, &png_format, png, size) != 0) {
+        return -1;
+    }
 
     uint8_t* png_buffer = (uint8_t*)input[0];
     if (png_data_to_bmp_data(png_buffer, pkt, &width, &height, &png_format, &bmp_format) != 0)
@@ -701,7 +728,9 @@ int png_file_to_bmp(char* png, AVPacket* pkt) {
     int linesize[4];
     unsigned int width, height;
     enum AVPixelFormat pix_fmt = AV_PIX_FMT_RGB24;
-    load_png_file(input, linesize, &width, &height, &pix_fmt, png);
+    if (load_png_file(input, linesize, &width, &height, &pix_fmt, png) != 0) {
+        return -1;
+    }
 
     unsigned int pixeloffset = 54;
     unsigned int numChannels = 3;
