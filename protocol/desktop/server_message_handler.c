@@ -36,28 +36,28 @@ extern volatile int ping_failures;
 extern volatile int try_amount;
 extern int client_id;
 
-static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size);
-static int handleQuitMessage(FractalServerMessage *fmsg, size_t fmsg_size);
-static int handleAudioFrequencyMessage(FractalServerMessage *fmsg, size_t fmsg_size);
-static int handleClipboardMessage(FractalServerMessage *fmsg, size_t fmsg_size);
+static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size);
+static int handle_quit_message(FractalServerMessage *fmsg, size_t fmsg_size);
+static int handle_audio_frequency_message(FractalServerMessage *fmsg, size_t fmsg_size);
+static int handle_clipboard_message(FractalServerMessage *fmsg, size_t fmsg_size);
 
-int handleServerMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
+int handle_server_message(FractalServerMessage *fmsg, size_t fmsg_size) {
     switch (fmsg->type) {
         case MESSAGE_PONG:
-            return handlePongMessage(fmsg, fmsg_size);
+            return handle_pong_message(fmsg, fmsg_size);
         case SMESSAGE_QUIT:
-            return handleQuitMessage(fmsg, fmsg_size);
+            return handle_quit_message(fmsg, fmsg_size);
         case MESSAGE_AUDIO_FREQUENCY:
-            return handleAudioFrequencyMessage(fmsg, fmsg_size);
+            return handle_audio_frequency_message(fmsg, fmsg_size);
         case SMESSAGE_CLIPBOARD:
-            return handleClipboardMessage(fmsg, fmsg_size);
+            return handle_clipboard_message(fmsg, fmsg_size);
         default:
             LOG_WARNING("Unknown FractalServerMessage Received");
             return -1;
     }
 }
 
-static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size) {
     if (fmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
@@ -65,7 +65,7 @@ static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
         return -1;
     }
     if (ping_id == fmsg->ping_id) {
-        LOG_INFO("Latency: %f", GetTimer(latency_timer));
+        LOG_INFO("Latency: %f", get_timer(latency_timer));
         is_timing_latency = false;
         ping_failures = 0;
         try_amount = 0;
@@ -75,7 +75,7 @@ static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
     return 0;
 }
 
-static int handleQuitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handle_quit_message(FractalServerMessage *fmsg, size_t fmsg_size) {
     UNUSED(fmsg);
     if (fmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
@@ -88,7 +88,7 @@ static int handleQuitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
     return 0;
 }
 
-static int handleAudioFrequencyMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handle_audio_frequency_message(FractalServerMessage *fmsg, size_t fmsg_size) {
     if (fmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
@@ -100,7 +100,7 @@ static int handleAudioFrequencyMessage(FractalServerMessage *fmsg, size_t fmsg_s
     return 0;
 }
 
-static int handleClipboardMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handle_clipboard_message(FractalServerMessage *fmsg, size_t fmsg_size) {
     if (fmsg_size != sizeof(FractalServerMessage) + fmsg->clipboard.size) {
         LOG_ERROR(
             "Incorrect message size for a server message"
@@ -108,7 +108,7 @@ static int handleClipboardMessage(FractalServerMessage *fmsg, size_t fmsg_size) 
         return -1;
     }
     LOG_INFO("Received %d byte clipboard message from server!", fmsg_size);
-    if (!ClipboardSynchronizerSetClipboard(&fmsg->clipboard)) {
+    if (!clipboard_synchronizer_set_clipboard(&fmsg->clipboard)) {
         LOG_ERROR("Failed to set local clipboard from server message.");
         return -1;
     }

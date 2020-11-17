@@ -17,7 +17,7 @@ void update_webserver_parameters() {
     */
 
     // Don't need to check more than once every 30 sec, unless no meaningful response
-    if (container_id && GetTimer(last_protocol_info_check_time) < 30.0) {
+    if (already_obtained_vm_type && get_timer(last_vm_info_check_time) < 30.0) {
         return;
     }
 
@@ -37,16 +37,16 @@ void update_webserver_parameters() {
             "}",
             identifier, hex_aes_private_key);
 
-    if (!SendPostRequest(webserver_url, "/container/protocol_info", msg, &resp_buf,
+    if (!send_post_request(webserver_url, "/container/protocol_info", msg, &resp_buf,
                          resp_buf_maxlen)) {
-        StartTimer(&last_protocol_info_check_time);
+        start_timer(&last_protocol_info_check_time);
         return;
     }
 
     free(msg);
 
     if (!resp_buf) {
-        StartTimer(&last_protocol_info_check_time);
+        start_timer(&last_protocol_info_check_time);
         return;
     }
 
@@ -59,7 +59,7 @@ void update_webserver_parameters() {
     json_t json;
     if (!parse_json(resp_buf, &json)) {
         LOG_ERROR("Failed to parse JSON from /container/protocol_info");
-        StartTimer(&last_protocol_info_check_time);
+        start_timer(&last_protocol_info_check_time);
         return;
     }
     free(resp_buf);
@@ -85,7 +85,7 @@ void update_webserver_parameters() {
 
     free_json(json);
 
-    StartTimer(&last_protocol_info_check_time);
+    start_timer(&last_protocol_info_check_time);
 }
 
 bool get_using_stun() { return is_using_stun; }

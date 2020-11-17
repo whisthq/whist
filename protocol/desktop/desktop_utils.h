@@ -40,23 +40,23 @@ Includes
 
 int parse_args(int argc, char* argv[]);
 
-char* getLogDir(void);
+char* get_log_dir(void);
 
-int logConnectionID(int connection_id);
+int log_connection_id(int connection_id);
 
-int initSocketLibrary(void);
+int init_socket_library(void);
 
-int destroySocketLibrary(void);
+int destroy_socket_library(void);
 
-int configureCache(void);
+int configure_cache(void);
 
 /**
  * Used to tell the server the user, which is used for sentry, along with other init information
  * @param email user email
  * @return 0 for success, -1 for failure
  */
-int prepareInitToServer(FractalDiscoveryRequestMessage* fmsg, char* email);
+int prepare_init_to_server(FractalDiscoveryRequestMessage* fmsg, char* email);
 
-int updateMouseMotion();
+int update_mouse_motion();
 
 #endif  // DESKTOP_UTILS_H

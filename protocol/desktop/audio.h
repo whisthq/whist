@@ -34,14 +34,14 @@ Public Functions
  * @brief                          This will destroy and initialize audio again,
  *                                 locking to avoid race conditions with update
  */
-int MultithreadedReinitAudio(void* opaque);
+int multithreaded_reinit_audio(void* opaque);
 
 /**
  * @brief                          This will initialize the FFmpeg AAC audio
  *                                 decoder, and set the proper audio parameters
  *                                 for receiving from the server
  */
-void initAudio();
+void init_audio();
 
 /**
  * @brief                          Receives a FractalPacket into an audio
@@ -53,19 +53,19 @@ void initAudio();
  * @returns                        Returns -1 if received an incorrect packet,
  *                                 else 0
  */
-int32_t ReceiveAudio(FractalPacket* packet);
+int32_t receive_audio(FractalPacket* packet);
 
 /**
  * @brief                          Update the audio parameters to new parameters
  *                                 sent from server, if any, by reinitializing,
  *                                 and catch up if needed
  */
-void updateAudio();
+void update_audio();
 
 /**
  * @brief                          Close the SDL audio and the FFmpeg audio
  *                                 decoder
  */
-void destroyAudio();
+void destroy_audio();
 
 #endif  // DESKTOP_AUDIO_H

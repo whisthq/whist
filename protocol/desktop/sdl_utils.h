@@ -41,7 +41,7 @@ Public Functions
  * @returns                        NULL if fails to create SDL window, else it
  *                                 returns the SDL window variable
  */
-SDL_Window* initSDL(int output_width, int output_height, char* name);
+SDL_Window* init_sdl(int output_width, int output_height, char* name);
 
 /**
  * @brief                          Destroys an SDL window and associated
@@ -49,6 +49,6 @@ SDL_Window* initSDL(int output_width, int output_height, char* name);
  *
  * @param window                   The SDL window to destroy
  */
-void destroySDL(SDL_Window* window);
+void destroy_sdl(SDL_Window* window);
 
 #endif  // SDL_UTILS_H

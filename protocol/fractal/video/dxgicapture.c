@@ -10,13 +10,13 @@
 // To link IID_'s
 #pragma comment(lib, "dxguid.lib")
 
-void GetBitmapScreenshot(CaptureDevice* device);
-ID3D11Texture2D* CreateTexture(CaptureDevice* device);
+void get_bitmap_screenshot(CaptureDevice* device);
+ID3D11Texture2D* create_texture(CaptureDevice* device);
 
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
     // tech debt: don't ignore dpi
     dpi;
 
@@ -254,14 +254,14 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi
 
     device->released = true;
 
-    GetBitmapScreenshot(device);
+    get_bitmap_screenshot(device);
 
     device->screenshot.staging_texture = CreateTexture(device);
 
     return 0;
 }
 
-void GetBitmapScreenshot(CaptureDevice* device) {
+void get_bitmap_screenshot(CaptureDevice* device) {
     HDC hScreenDC = CreateDCW(device->monitorInfo.szDevice, NULL, NULL, NULL);
     HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
 
@@ -287,7 +287,7 @@ void GetBitmapScreenshot(CaptureDevice* device) {
     device->texture_on_gpu = false;
 }
 
-ID3D11Texture2D* CreateTexture(CaptureDevice* device) {
+ID3D11Texture2D* create_texture(CaptureDevice* device) {
     HRESULT hr;
 
     DisplayHardware* hardware = device->hardware;
@@ -326,7 +326,7 @@ ID3D11Texture2D* CreateTexture(CaptureDevice* device) {
     return texture;
 }
 
-void ReleaseScreenshot(ScreenshotContainer* screenshot) {
+void release_screenshot(ScreenshotContainer* screenshot) {
     if (screenshot->final_texture != NULL) {
         screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
         screenshot->final_texture = NULL;
@@ -343,8 +343,8 @@ void ReleaseScreenshot(ScreenshotContainer* screenshot) {
     }
 }
 
-int CaptureScreen(CaptureDevice* device) {
-    ReleaseScreen(device);
+int capture_screen(CaptureDevice* device) {
+    release_screen(device);
 
     HRESULT hr;
 
@@ -372,7 +372,7 @@ int CaptureScreen(CaptureDevice* device) {
         }
     }
 
-    ReleaseScreenshot(screenshot);
+    release_screenshot(screenshot);
     screenshot->desktop_resource = desktop_resource;
 
     hr = screenshot->desktop_resource->lpVtbl->QueryInterface(
@@ -398,7 +398,7 @@ int CaptureScreen(CaptureDevice* device) {
     return accumulated_frames;
 }
 
-int TransferScreen(CaptureDevice* device) {
+int transfer_screen(CaptureDevice* device) {
     HRESULT hr;
     ScreenshotContainer* screenshot = &device->screenshot;
 
@@ -426,7 +426,7 @@ int TransferScreen(CaptureDevice* device) {
     return 0;
 }
 
-void ReleaseScreen(CaptureDevice* device) {
+void release_screen(CaptureDevice* device) {
     if (device->released) {
         return;
     }
@@ -441,7 +441,7 @@ void ReleaseScreen(CaptureDevice* device) {
     device->released = true;
 }
 
-void DestroyCaptureDevice(CaptureDevice* device) {
+void destroy_capture_device(CaptureDevice* device) {
     HRESULT hr;
 
     hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
@@ -463,7 +463,7 @@ void DestroyCaptureDevice(CaptureDevice* device) {
     }
 }
 
-void UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec) {
+void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec) {
     device;
     bitrate;
     codec;
