@@ -1,12 +1,17 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useCallback, useState } from "react"
 import { connect } from "react-redux"
 import { Redirect } from "react-router"
-import { useQuery } from "@apollo/client"
+import { useQuery, useMutation } from "@apollo/client"
 import { HashLink } from "react-router-hash-link"
 
 import Header from "shared/components/header"
 import DownloadBox from "pages/dashboard/components/downloadBox"
-import { GET_USER } from "pages/dashboard/constants/graphql"
+import {
+    GET_USER,
+    GET_WAITLIST_USER_FROM_TOKEN,
+    NULLIFY_WAITLIST_TOKEN,
+    UPDATE_USER_CAN_LOGIN,
+} from "pages/dashboard/constants/graphql"
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import { updateUser } from "store/actions/auth/pure"
 
@@ -47,20 +52,81 @@ const Dashboard = (props: {
         },
     })
 
-    useEffect(() => {
-        if (
-            data &&
-            data.users &&
-            data.users[0] &&
-            (data.users[0].can_login ||
-                user.user_id.includes("@tryfractal.com") ||
-                user.waitlistToken === user.emailVerificationToken)
-        ) {
-            setCanLogin(true)
+    const waitlistUserData = useQuery(GET_WAITLIST_USER_FROM_TOKEN, {
+        variables: { waitlist_access_token: user.waitlistToken },
+        context: {
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        },
+    })
+
+    const [nullifyWaitlistToken] = useMutation(NULLIFY_WAITLIST_TOKEN, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        },
+    })
+
+    const [updateUserCanLogin] = useMutation(UPDATE_USER_CAN_LOGIN, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        },
+    })
+
+    const toggleCanLogin = useCallback(
+        (canLogin: boolean) => {
+            setCanLogin(canLogin)
             dispatch(
                 updateUser({
-                    canLogin: data.users[0].can_login,
+                    canLogin: canLogin,
                 })
+            )
+        },
+        [dispatch]
+    )
+
+    useEffect(() => {
+        if (
+            waitlistUserData &&
+            waitlistUserData.data &&
+            waitlistUserData.data.waitlist &&
+            waitlistUserData.data.waitlist.length > 0
+        ) {
+            toggleCanLogin(true)
+
+            const offboardedUserID = waitlistUserData.data.waitlist[0].user_id
+            if (user.user_id) {
+                updateUserCanLogin({
+                    variables: {
+                        user_id: user.user_id,
+                    },
+                })
+            }
+            if (offboardedUserID) {
+                nullifyWaitlistToken({
+                    variables: {
+                        user_id: offboardedUserID,
+                    },
+                })
+            }
+        }
+    }, [
+        waitlistUserData,
+        nullifyWaitlistToken,
+        updateUserCanLogin,
+        toggleCanLogin,
+        user.user_id,
+    ])
+
+    useEffect(() => {
+        if (data && data.users && data.users[0]) {
+            toggleCanLogin(
+                data.users[0].can_login ||
+                    user.user_id.includes("@tryfractal.com")
             )
         }
     }, [
@@ -69,9 +135,10 @@ const Dashboard = (props: {
         user.user_id,
         user.waitlistToken,
         user.emailVerificationToken,
+        toggleCanLogin,
     ])
 
-    if (loading) {
+    if (loading || waitlistUserData.loading) {
         return (
             <div
                 style={{
