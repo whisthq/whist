@@ -79,6 +79,8 @@ const Dashboard = (props: {
 
     const toggleCanLogin = useCallback(
         (canLogin: boolean) => {
+            console.log("toggle can login")
+            console.log(canLogin)
             setCanLogin(canLogin)
             dispatch(
                 updateUser({
