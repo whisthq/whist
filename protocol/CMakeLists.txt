@@ -63,18 +63,23 @@ else()
     message(STATUS "cppcheck not found")
 endif()
 
-if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
-    message(STATUS CPPCHECKON)
+if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    message(STATUS "cppcheck active")
     set(CMAKE_C_CPPCHECK "${CPPCHECK}"
-            "--template=cppcheck:{file}:{line}:{severity}: cppcheck: {file}:{line} {message}"
+            "--template=\"cppcheck: {file}:{line} ({severity}) {message}\""
             "--enable=performance,portability"
             "--verbose"
             "--std=c99"
+            "-j 4"
+            "--error-exitcode=1"
             "--suppress=shiftTooManyBitsSigned"
             "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
             "--suppress=*:*sentry-native/*"
+            "-D__linux" # Needed for sentry.h to pass
             "--inline-suppr"
             )
+else()
+    message(STATUS "cppcheck inactive")
 endif()
 
 

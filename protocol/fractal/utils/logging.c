@@ -343,7 +343,7 @@ int MultiThreadedPrintf(void *opaque) {
                 char f[1000] = "";
                 strcat(f, log_directory);
                 strcat(f, "log_connection.txt");
-                freopen(f, "wb", mprintf_log_connection_file);
+                mprintf_log_connection_file = freopen(f, "wb", mprintf_log_connection_file);
                 fwrite(buf, buf_len, 1, mprintf_log_connection_file);
                 fflush(mprintf_log_connection_file);
 
@@ -487,6 +487,8 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
                 buf = (char *)logger_queue[index].buf;
                 line = strtok_r(NULL, "\n", &strtok_context);
             }
+
+            va_end(args_copy);
         }
 
     } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
@@ -791,7 +793,7 @@ int sendConnectionHistory(char *host, char *identifier, char *hex_aes_private_ke
                 LOG_INFO("Sending logs to webserver...");
                 SendPostRequest(host, request_path, json, NULL, 0);
 
-                freopen(connection_id_filename, "wb", connection_id_file);
+                connection_id_file = freopen(connection_id_filename, "wb", connection_id_file);
             }
 
             fclose(connection_id_file);
