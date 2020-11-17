@@ -1,13 +1,13 @@
 import React, { useEffect, useCallback, useState } from "react"
 import { connect } from "react-redux"
 import { Redirect } from "react-router"
-import { useQuery, useMutation } from "@apollo/client"
+import { useQuery, useSubscription, useMutation } from "@apollo/client"
 import { HashLink } from "react-router-hash-link"
 
 import Header from "shared/components/header"
 import DownloadBox from "pages/dashboard/components/downloadBox"
 import {
-    GET_USER,
+    SUBSCRIBE_USER,
     GET_WAITLIST_USER_FROM_TOKEN,
     NULLIFY_WAITLIST_TOKEN,
     UPDATE_USER_CAN_LOGIN,
@@ -43,13 +43,8 @@ const Dashboard = (props: {
     const valid_user = user.user_id && user.user_id !== ""
     const name = user.user_id ? user.user_id.split("@")[0] : ""
 
-    const { data, loading } = useQuery(GET_USER, {
+    const { data, loading } = useSubscription(SUBSCRIBE_USER, {
         variables: { user_id: user.user_id },
-        context: {
-            headers: {
-                Authorization: `Bearer ${user.accessToken}`,
-            },
-        },
     })
 
     const waitlistUserData = useQuery(GET_WAITLIST_USER_FROM_TOKEN, {
