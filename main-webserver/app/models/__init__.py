@@ -12,5 +12,6 @@ from .hardware import (
     SupportedAppImages,
 )
 from .logs import LoginHistory, MonitorLog, ProtocolLog
+from .oauth import Credential
 from .public import User
 from .sales import MainNewsletter, StripeProduct
