@@ -2,6 +2,7 @@ better-profanity==0.6.1
 blinker==1.4
 boto3==1.16.0
 celery==5.0.1
+cryptography==3.1.1
 Flask==1.1.2
 Flask-Cors==3.0.9
 Flask-JWT-Extended==3.24.1
@@ -21,6 +22,7 @@ pyzipcode==2.0.0
 redis==3.5.3
 requests==2.24.0
 sentry-sdk==0.19.4
+SQLAlchemy-Utils==0.36.8
 stripe==2.55.0
 waitress==1.4.4
 datadog==0.39.0
