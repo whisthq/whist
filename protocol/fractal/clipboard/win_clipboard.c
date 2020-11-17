@@ -125,9 +125,9 @@ typedef struct {
 
 #include <winioctl.h>
 
-bool CreateJunction(WCHAR* szJunction, WCHAR* szPath);
+bool create_junction(WCHAR* szJunction, WCHAR* szPath);
 
-bool CreateJunction(WCHAR* szJunction, WCHAR* szPath) {
+bool create_junction(WCHAR* szJunction, WCHAR* szPath) {
     BYTE buf[sizeof(REPARSE_MOUNTPOINT_DATA_BUFFER) + MAX_PATH * sizeof(WCHAR)];
     REPARSE_MOUNTPOINT_DATA_BUFFER* ReparseBuffer = (REPARSE_MOUNTPOINT_DATA_BUFFER*)buf;
     WCHAR szTarget[MAX_PATH] = L"\\??\\";
@@ -407,8 +407,8 @@ ClipboardData* unsafe_get_clipboard() {
                     LOG_INFO("Src: %S", filename);
 
                     if (fileattributes & FILE_ATTRIBUTE_DIRECTORY) {
-                        if (!CreateJunction(target_file, filename)) {
-                            LOG_WARNING("CreateJunction Error: %d", GetLastError());
+                        if (!create_junction(target_file, filename)) {
+                            LOG_WARNING("create_junction Error: %d", GetLastError());
                         }
                     } else {
                         if (!CreateHardLinkW(target_file, filename, 0)) {
