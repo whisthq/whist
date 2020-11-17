@@ -202,7 +202,7 @@ function WaitlistForm(props: any) {
                         style={{ textTransform: "uppercase" }}
                         onClick={logout}
                     >
-                        LOGOUT AS {waitlistUser.name}
+                        LOGOUT FROM WAITLIST
                     </button>
                 </div>
             ) : (
