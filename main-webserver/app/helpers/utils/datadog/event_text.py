@@ -23,12 +23,16 @@ USER_NAME = "username"
 START_DATE = "start_date"
 END_DATE = "end_date"
 
+FORMAT_VERSION = "format_version"
+CURRENT_FORMAT_VERSION = "1.0"
 
-def format_into_text(keyvals):
+
+def format_into_text(kv):
     text = ""
-    for key, value in kwargs:
+    for key, value in kv.items():
         text += str(key) + ":" + str(value) + "\n"
-    return text[:-1]  # ignore the very last \n since we don't care about it
+    text += FORMAT_VERSION + ":" + CURRENT_FORMAT_VERSION
+    return text  # ignore the very last \n since we don't care about it
 
 
 # a wrapper since we might want the original for fancy things later
