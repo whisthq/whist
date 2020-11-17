@@ -58,7 +58,7 @@ Public Functions
  * @returns                        Will return -2 on failure, will return 0 on
  *                                 success
  */
-int setCurrentInputDesktop(HDESK currentInputDesktop);
+int set_current_input_desktop(HDESK currentInputDesktop);
 
 /**
  * @brief                          Open current or specified Desktop and set its
@@ -75,13 +75,13 @@ int setCurrentInputDesktop(HDESK currentInputDesktop);
  * @returns                        Returns a DesktopContext with information on
  *                                 the opened Desktop
  */
-DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_thread);
+DesktopContext open_new_desktop(WCHAR* desktop_name, bool get_name, bool set_thread);
 
 /**
  * @brief                          Open a Windows window station (a handle to a
  *                                 Desktop session), like Winsta0 or Winlogon
  */
-void OpenWindow();
+void open_window();
 
 /**
  * @brief                          Call the above functions; logs from Winlogon
@@ -93,6 +93,6 @@ void OpenWindow();
  *
  * @returns                        Return false is succeeded, else true
  */
-bool InitDesktop(input_device_t* input_device, char* vm_password);
+bool init_desktop(input_device_t* input_device, char* vm_password);
 
 #endif  // WINDOWS_UTILS_H

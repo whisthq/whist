@@ -16,24 +16,24 @@ char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 
 // Print Memory Info
 
-int MultithreadedPrintSystemInfo(void* opaque) {
+int multithreaded_print_system_info(void* opaque) {
     UNUSED(opaque);
 
     LOG_INFO("Hardware information:");
 
-    PrintOSInfo();
-    PrintModelInfo();
-    PrintCPUInfo();
-    PrintRAMInfo();
-    PrintMonitors();
-    PrintHardDriveInfo();
+    print_os_info();
+    print_model_info();
+    print_cpu_info();
+    print_ram_info();
+    print_monitors();
+    print_hard_drive_info();
 
     return 0;
 }
 
-void PrintSystemInfo() {
+void print_system_info() {
     SDL_Thread* sysinfo_thread =
-        SDL_CreateThread(MultithreadedPrintSystemInfo, "PrintSystemInfo", NULL);
+        SDL_CreateThread(multithreaded_print_system_info, "print_system_info", NULL);
     SDL_DetachThread(sysinfo_thread);
 }
 
@@ -282,7 +282,7 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
     return true;
 }
 
-int GetFmsgSize(FractalClientMessage* fmsg) {
+int get_fmsg_size(FractalClientMessage* fmsg) {
     if (fmsg->type == MESSAGE_KEYBOARD_STATE || fmsg->type == MESSAGE_DISCOVERY_REQUEST) {
         return sizeof(*fmsg);
     } else if (fmsg->type == CMESSAGE_CLIPBOARD) {

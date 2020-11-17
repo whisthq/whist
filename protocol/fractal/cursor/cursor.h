@@ -63,19 +63,19 @@ Public Functions
 /**
  * @brief                          Initialize all cursors
  */
-void InitCursors();
+void init_cursors();
 
 /**
  * @brief                          Returns the current cursor image
  *
  * @returns                        Current FractalCursorImage
  */
-FractalCursorImage GetCurrentCursor();
+FractalCursorImage get_current_cursor();
 
-int InitPeerCursors(void);
+int init_peer_cursors(void);
 
-int DestroyPeerCursors(void);
+int destroy_peer_cursors(void);
 
-int drawPeerCursor(SDL_Renderer *renderer, int x, int y, int r, int g, int b);
+int draw_peer_cursor(SDL_Renderer *renderer, int x, int y, int r, int g, int b);
 
 #endif  // CURSOR_H

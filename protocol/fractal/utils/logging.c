@@ -53,7 +53,7 @@ could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 
 char *get_logger_history();
 int get_logger_history_len();
-void initBacktraceHandler();
+void init_backtrace_handler();
 
 extern int connection_id;
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
@@ -78,7 +78,7 @@ static volatile int logger_global_id = 0;
 // logger global variables
 SDL_Thread *mprintf_thread = NULL;
 static volatile bool run_multithreaded_printf;
-int MultiThreadedPrintf(void *opaque);
+int multi_threaded_printf(void *opaque);
 void real_mprintf(bool log, const char *fmtStr, va_list args);
 clock mprintf_timer;
 FILE *mprintf_log_file = NULL;
@@ -94,11 +94,11 @@ int logger_history_len;
 char *get_logger_history() { return logger_history; }
 int get_logger_history_len() { return logger_history_len; }
 
-void startConnectionLog();
+void start_connection_log();
 
 // Initializes the logger and starts a connection log
-void initLogger(char *log_dir) {
-    initBacktraceHandler();
+void init_logger(char *log_dir) {
+    init_backtrace_handler();
     sentry_options_t *options = sentry_options_new();
     //    sentry_options_set_debug(options, true); //if sentry is playing up uncomment this
     sentry_options_set_dsn(options, SENTRY_DSN);
@@ -141,13 +141,13 @@ void initLogger(char *log_dir) {
     logger_mutex = SDL_CreateMutex();
     logger_semaphore = SDL_CreateSemaphore(0);
     mprintf_thread =
-        SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
+        SDL_CreateThread((SDL_ThreadFunction)multi_threaded_printf, "MultiThreadedPrintf", NULL);
     LOG_INFO("Writing logs to %s", f);
-    //    StartTimer(&mprintf_timer);
+    //    start_timer(&mprintf_timer);
 }
 
 // Sets up logs for a new connection, overwriting previous
-void startConnectionLog() {
+void start_connection_log() {
     SDL_LockMutex((SDL_mutex *)logger_mutex);
 
     if (mprintf_log_connection_file) {
@@ -164,7 +164,7 @@ void startConnectionLog() {
     LOG_INFO("Beginning connection log");
 }
 
-void destroyLogger() {
+void destroy_logger() {
     // Wait for any remaining printfs to execute
     SDL_Delay(50);
     sentry_shutdown();
@@ -211,7 +211,7 @@ void sentry_send_event(const char *fmtStr, ...) {
     sentry_capture_event(event);
 }
 
-int MultiThreadedPrintf(void *opaque) {
+int multi_threaded_printf(void *opaque) {
     UNUSED(opaque);
 
     while (true) {
@@ -505,7 +505,7 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
 
 SDL_mutex *crash_handler_mutex;
 
-void PrintStacktrace() {
+void print_stacktrace() {
     SDL_LockMutex(crash_handler_mutex);
 
 #ifdef _WIN32
@@ -638,13 +638,13 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS *ExceptionInfo) {
 #else
 void crash_handler(int sig) {
     fprintf(stderr, "\nError: signal %d:\n", sig);
-    PrintStacktrace();
+    print_stacktrace();
     SDL_Delay(100);
     exit(-1);
 }
 #endif
 
-void initBacktraceHandler() {
+void init_backtrace_handler() {
     crash_handler_mutex = SDL_CreateMutex();
 #ifdef _WIN32
     SetUnhandledExceptionFilter(windows_exception_handler);
@@ -692,7 +692,7 @@ char *get_version() {
     return version;
 }
 
-void saveConnectionID(int connection_id_int) {
+void save_connection_id(int connection_id_int) {
     char connection_id_filename[1000] = "";
     strcat(connection_id_filename, log_directory);
     strcat(connection_id_filename, "connection_id.txt");
@@ -708,7 +708,7 @@ void saveConnectionID(int connection_id_int) {
 
 // The first time this is called will include the initial log messages,
 // before the first connection, if they haven't been overwritten.
-int sendConnectionHistory(char *host, char *identifier, char *hex_aes_private_key) {
+int send_connection_history(char *host, char *identifier, char *hex_aes_private_key) {
     // This is for HTTP request, not filesystem
     char *request_path = "/logs/insert";
 
@@ -791,7 +791,7 @@ int sendConnectionHistory(char *host, char *identifier, char *hex_aes_private_ke
                         connection_id_data, logs, identifier, hex_aes_private_key);
 
                 LOG_INFO("Sending logs to webserver...");
-                SendPostRequest(host, request_path, json, NULL, 0);
+                send_post_request(host, request_path, json, NULL, 0);
 
                 connection_id_file = freopen(connection_id_filename, "wb", connection_id_file);
             }
@@ -814,7 +814,7 @@ typedef struct update_status_data {
     char *hex_aes_private_key;
 } update_status_data_t;
 
-int32_t MultithreadedUpdateServerStatus(void *data) {
+int32_t multithreaded_update_server_status(void *data) {
     update_status_data_t *d = data;
 
     char json[1000];
@@ -825,13 +825,13 @@ int32_t MultithreadedUpdateServerStatus(void *data) {
              "  \"private_key\" : \"%s\"\n"
              "}",
              d->is_connected ? "false" : "true", d->identifier, d->hex_aes_private_key);
-    SendPostRequest(d->host, "/container/ping", json, NULL, 0);
+    send_post_request(d->host, "/container/ping", json, NULL, 0);
 
     free(d);
     return 0;
 }
 
-void updateServerStatus(bool is_connected, char *host, char *identifier,
+void update_server_status(bool is_connected, char *host, char *identifier,
                         char *hex_aes_private_key) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
@@ -840,6 +840,6 @@ void updateServerStatus(bool is_connected, char *host, char *identifier,
     d->identifier = identifier;
     d->hex_aes_private_key = hex_aes_private_key;
     SDL_Thread *update_status =
-        SDL_CreateThread(MultithreadedUpdateServerStatus, "UpdateServerStatus", d);
+        SDL_CreateThread(multithreaded_update_server_status, "update_server_status", d);
     SDL_DetachThread(update_status);
 }

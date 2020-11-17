@@ -36,14 +36,14 @@ extern int uid;
 #define TCP_CONNECTION_WAIT 300  // ms
 #define UDP_CONNECTION_WAIT 300  // ms
 
-int discoverPorts(bool *using_stun) {
+int discover_ports(bool *using_stun) {
     SocketContext context;
     LOG_INFO("using stun is %d", *using_stun);
-    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
+    if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
                          (char *)binary_aes_private_key) < 0) {
         *using_stun = !*using_stun;
         LOG_INFO("using stun is updated to %d", *using_stun);
-        if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
+        if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
                              *using_stun, (char *)binary_aes_private_key) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
             return -1;
@@ -54,9 +54,9 @@ int discoverPorts(bool *using_stun) {
     fcmsg.type = MESSAGE_DISCOVERY_REQUEST;
     fcmsg.discoveryRequest.username = uid;
 
-    prepareInitToServer(&fcmsg.discoveryRequest, user_email);
+    prepare_init_to_server(&fcmsg.discoveryRequest, user_email);
 
-    if (SendTCPPacket(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg)) < 0) {
+    if (send_tcp_packet(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg)) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
         closesocket(context.s);
         return -1;
@@ -65,11 +65,11 @@ int discoverPorts(bool *using_stun) {
 
     FractalPacket *packet;
     clock timer;
-    StartTimer(&timer);
+    start_timer(&timer);
     do {
-        packet = ReadTCPPacket(&context, true);
+        packet = read_tcp_packet(&context, true);
         SDL_Delay(5);
-    } while (packet == NULL && GetTimer(timer) < 5.0);
+    } while (packet == NULL && get_timer(timer) < 5.0);
 
     if (packet == NULL) {
         LOG_WARNING("Did not receive discovery packet from server.");
@@ -111,7 +111,7 @@ int discoverPorts(bool *using_stun) {
     memcpy(filename, reply_msg->filename, min(sizeof(filename), sizeof(reply_msg->filename)));
     memcpy(username, reply_msg->username, min(sizeof(username), sizeof(reply_msg->username)));
 
-    if (logConnectionID(reply_msg->connection_id) < 0) {
+    if (log_connection_id(reply_msg->connection_id) < 0) {
         LOG_ERROR("Failed to log connection ID.");
         closesocket(context.s);
         return -1;
@@ -123,7 +123,7 @@ int discoverPorts(bool *using_stun) {
 }
 
 // must be called after
-int connectToServer(bool using_stun) {
+int connect_to_server(bool using_stun) {
     LOG_INFO("using stun is %d", using_stun);
     if (UDP_port < 0) {
         LOG_ERROR("Trying to connect UDP but port not set.");
@@ -134,7 +134,7 @@ int connectToServer(bool using_stun) {
         return -1;
     }
 
-    if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10, UDP_CONNECTION_WAIT,
+    if (create_udp_context(&PacketSendContext, server_ip, UDP_port, 10, UDP_CONNECTION_WAIT,
                          using_stun, (char *)binary_aes_private_key) < 0) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
@@ -145,11 +145,11 @@ int connectToServer(bool using_stun) {
     int a = 65535;
     if (setsockopt(PacketSendContext.s, SOL_SOCKET, SO_RCVBUF, (const char *)&a, sizeof(int)) ==
         -1) {
-        LOG_ERROR("Error setting socket opts: %d", GetLastNetworkError());
+        LOG_ERROR("Error setting socket opts: %d", get_last_network_error());
         return -1;
     }
 
-    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, TCP_CONNECTION_WAIT, using_stun,
+    if (create_tcp_context(&PacketTCPContext, server_ip, TCP_port, 1, TCP_CONNECTION_WAIT, using_stun,
                          (char *)binary_aes_private_key) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         closesocket(PacketSendContext.s);
@@ -161,20 +161,20 @@ int connectToServer(bool using_stun) {
     return 0;
 }
 
-int closeConnections(void) {
+int close_connections(void) {
     closesocket(PacketSendContext.s);
     closesocket(PacketReceiveContext.s);
     closesocket(PacketTCPContext.s);
     return 0;
 }
 
-int sendServerQuitMessages(int num_messages) {
+int send_server_quit_messages(int num_messages) {
     FractalClientMessage fmsg = {0};
     fmsg.type = CMESSAGE_QUIT;
     int retval = 0;
     for (; num_messages > 0; num_messages--) {
         SDL_Delay(50);
-        if (SendFmsg(&fmsg) != 0) {
+        if (send_fmsg(&fmsg) != 0) {
             retval = -1;
         }
     }
@@ -186,16 +186,16 @@ int sendServerQuitMessages(int num_messages) {
 // sub-packets to send, it not supported (If low latency large
 // FractalClientMessage packets are needed, then this will have to be
 // implemented)
-int SendFmsg(FractalClientMessage *fmsg) {
+int send_fmsg(FractalClientMessage *fmsg) {
     // Shouldn't overflow, will take 50 days at 1000 fmsg/second to overflow
     static unsigned int fmsg_id = 0;
     fmsg->id = fmsg_id;
     fmsg_id++;
 
     if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_DISCOVERY_REQUEST) {
-        return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
+        return send_tcp_packet(&PacketTCPContext, PACKET_MESSAGE, fmsg, get_fmsg_size(fmsg));
     } else {
-        if ((size_t)GetFmsgSize(fmsg) > MAX_PACKET_SIZE) {
+        if ((size_t)get_fmsg_size(fmsg) > MAX_PACKET_SIZE) {
             LOG_ERROR(
                 "Attempting to send FMSG that is too large for UDP, and only CLIPBOARD and TIME is "
                 "presumed to be over TCP");
@@ -203,7 +203,7 @@ int SendFmsg(FractalClientMessage *fmsg) {
         }
         static int sent_packet_id = 0;
         sent_packet_id++;
-        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg),
+        return send_udp_packet(&PacketSendContext, PACKET_MESSAGE, fmsg, get_fmsg_size(fmsg),
                              sent_packet_id, -1, NULL, NULL);
     }
 }

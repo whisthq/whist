@@ -16,12 +16,12 @@ TODO
 */
 
 // must be called before connectToServer()
-int discoverPorts(bool* using_stun);
+int discover_ports(bool* using_stun);
 
 // must be called after discoverPorts()
-int connectToServer(bool using_stun);
+int connect_to_server(bool using_stun);
 
-int closeConnections(void);
+int close_connections(void);
 
 /**
  * @brief                          Sends quit messages to the server
@@ -34,7 +34,7 @@ int closeConnections(void);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int sendServerQuitMessages(int num_messages);
+int send_server_quit_messages(int num_messages);
 
 /**
  * @brief                          Send a FractalMessage from client to server
@@ -43,6 +43,6 @@ int sendServerQuitMessages(int num_messages);
  *
  * @returns                        0 if succeeded, else -1
  */
-int SendFmsg(FractalClientMessage* fmsg);
+int send_fmsg(FractalClientMessage* fmsg);
 
 #endif  // DESKTOP_NETWORK_H

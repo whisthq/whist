@@ -18,7 +18,7 @@ DesktopContext: This type represents a Windows desktop object.
 
 #include "windows_utils.h"
 
-void logToFile(char* msg, char* filename) {
+void log_to_file(char* msg, char* filename) {
     FILE* fp;
     fp = fopen(filename, "a+");
     fprintf(fp, msg);
@@ -28,7 +28,7 @@ void logToFile(char* msg, char* filename) {
 
 // @brief Attaches the current thread to the current input desktop.
 // @details Uses OpenInputDesktop and SetThreadDesktop from WinAPI.
-int setCurrentInputDesktop(HDESK currentInputDesktop) {
+int set_current_input_desktop(HDESK currentInputDesktop) {
     // Set current thread to the current user input desktop
     if (!SetThreadDesktop(currentInputDesktop)) {
         LOG_WARNING("SetThreadDesktop failed w/ error code: %d.\n", GetLastError());
@@ -37,7 +37,7 @@ int setCurrentInputDesktop(HDESK currentInputDesktop) {
     return 0;
 }
 
-DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_thread) {
+DesktopContext open_new_desktop(WCHAR* desktop_name, bool get_name, bool set_thread) {
     DesktopContext context = {0};
     HDESK new_desktop;
 
@@ -54,7 +54,7 @@ DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_threa
     if (get_name) {
         TCHAR szName[1000];
         DWORD dwLen;
-        GetUserObjectInformationW(new_desktop, UOI_NAME, szName, sizeof(szName), &dwLen);
+        GetUserObjectInformationW(new_desktop, UOI_NAME, szName, sizeof(tzname), &dwLen);
         memcpy(context.desktop_name, szName, dwLen);
     }
 
@@ -64,16 +64,16 @@ DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_threa
     return context;
 }
 
-void OpenWindow() {
+void open_window() {
     HWINSTA hwinsta = OpenWindowStationW(L"WinSta0", FALSE, GENERIC_ALL);
     SetProcessWindowStation(hwinsta);
 }
 
 // Log into the desktop, and block until the login process finishes
-bool InitDesktop(input_device_t* input_device, char* vm_password) {
+bool init_desktop(input_device_t* input_device, char* vm_password) {
     DesktopContext lock_screen;
 
-    OpenWindow();
+    open_window();
     lock_screen = OpenNewDesktop(NULL, true, true);
 
     bool failed = false;

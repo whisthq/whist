@@ -78,7 +78,7 @@ Public Functions
  *
  * @returns                        0 if succeeded, else -1
  */
-int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi);
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
 
 /**
  * @brief                          Capture a bitmap snapshot of the screen, in
@@ -88,7 +88,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi
  *
  * @returns                        0 if succeeded, else -1
  */
-int CaptureScreen(CaptureDevice* device);
+int capture_screen(CaptureDevice* device);
 
 /**
  * @brief                          Dummy function for API compatibility.
@@ -97,7 +97,7 @@ int CaptureScreen(CaptureDevice* device);
  *
  * @returns                        0 always
  */
-int TransferScreen(CaptureDevice* device);
+int transfer_screen(CaptureDevice* device);
 
 /**
  * @brief                          Release a captured screen bitmap snapshot
@@ -105,7 +105,7 @@ int TransferScreen(CaptureDevice* device);
  * @param device                   The Linux screencapture device holding the
  *                                 screen object captured
  */
-void ReleaseScreen(CaptureDevice* device);
+void release_screen(CaptureDevice* device);
 
 /**
  * @brief                          Destroys and frees the memory of a Linux
@@ -114,7 +114,7 @@ void ReleaseScreen(CaptureDevice* device);
  * @param device                   The Linux Ubuntu screencapture device to
  *                                 destroy and free the memory of
  */
-void DestroyCaptureDevice(CaptureDevice* device);
+void destroy_capture_device(CaptureDevice* device);
 
 /**
  * @brief                          Updates the capture device if the capture device is also the
@@ -126,6 +126,6 @@ void DestroyCaptureDevice(CaptureDevice* device);
  *
  * @returns                        True if the capture device was indeed updated as an encoder
  */
-void UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec);
+void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec);
 
 #endif  // CAPTURE_X11CAPTURE_H

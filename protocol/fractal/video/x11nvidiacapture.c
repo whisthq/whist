@@ -12,7 +12,7 @@
 
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
 
-int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec) {
+int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec) {
     NVFBC_SIZE frameSize = {0, 0};
     NVFBC_BOOL printStatusOnly = NVFBC_FALSE;
 
@@ -221,7 +221,7 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecTyp
 
 #define SHOW_DEBUG_FRAMES false
 
-int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
+int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 #if SHOW_DEBUG_FRAMES
     uint64_t t1, t2;
 #endif
@@ -312,7 +312,7 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
     return 1;
 }
 
-void DestroyNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
+void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBCSTATUS fbcStatus;
     NVFBC_DESTROY_CAPTURE_SESSION_PARAMS destroyCaptureParams;
     NVFBC_DESTROY_HANDLE_PARAMS destroyHandleParams;

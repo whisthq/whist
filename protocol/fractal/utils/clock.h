@@ -8,7 +8,7 @@
 Usage
 ============================
 
-You can use StartTimer and GetTimer to time specific pieces of code, or to
+You can use start_timer and get_timer to time specific pieces of code, or to
 relate different events across server and client.
 */
 
@@ -68,15 +68,15 @@ Public Functions
  *
  * @param timer		               Pointer to the the timer in question
  */
-void StartTimer(clock* timer);
+void start_timer(clock* timer);
 
 /**
  * @brief                          Get the amount of elapsed time since the last
- *                                 StartTimer
+ *                                 start_timer
  *
  * @param timer		               The timer in question
  */
-double GetTimer(clock timer);
+double get_timer(clock timer);
 
 /**
  * @brief                          Create a clock that represents the given
@@ -86,33 +86,33 @@ double GetTimer(clock timer);
  *
  * @returns						   The desired clock
  */
-clock CreateClock(int timeout_ms);
+clock create_clock(int timeout_ms);
 
 /**
  * @brief                          Returns the current time as a string
  *
  * @returns						   The current time as a string
  */
-char* CurrentTimeStr();
+char* current_time_str();
 
 /**
  * @brief                          Returns the current UTC offset as a string
  * @return                         int of current utc offset
  */
-int GetUTCOffset();
+int get_utc_offset();
 
 /**
  * @brief                          Returns a flag for whether DST is on or off
  * @return                         Positive int for on 0 for off.
  */
-int GetDST();
+int get_dst();
 
-int GetTimeData(FractalTimeData* time_data);
+int get_time_data(FractalTimeData* time_data);
 
-void SetTimezoneFromIANAName(char* linux_tz_name, char* password);
+void set_timezone_from_iana_name(char* linux_tz_name, char* password);
 
-void SetTimezoneFromWindowsName(char* win_tz_name);
+void set_timezone_from_windows_name(char* win_tz_name);
 
-void SetTimezoneFromUtc(int utc, int DST_flag);
+void set_timezone_from_utc(int utc, int DST_flag);
 
 #endif
