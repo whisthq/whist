@@ -151,7 +151,6 @@ const Header = (props: {
 const mapStateToProps = (state: {
     AuthReducer: { user: any; authFlow: any }
 }) => {
-    console.log(state)
     return {
         user: state.AuthReducer.user,
     }
