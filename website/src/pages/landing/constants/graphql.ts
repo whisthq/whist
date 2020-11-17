@@ -36,7 +36,10 @@ export const INSERT_WAITLIST = gql`
 
 export const SUBSCRIBE_WAITLIST = gql`
     subscription SubscribeWaitlist {
-        waitlist(order_by: { points: desc }) {
+        waitlist(
+            order_by: { points: desc }
+            where: { on_waitlist: { _eq: true } }
+        ) {
             name
             points
             user_id

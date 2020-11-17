@@ -132,7 +132,6 @@ const mapStateToProps = (state: {
     AuthReducer: { user: any }
     WaitlistReducer: { navigation: any; waitlistUser: any }
 }) => {
-    console.log(state)
     return {
         user: state.AuthReducer.user,
         waitlistUser: state.WaitlistReducer.waitlistUser,
