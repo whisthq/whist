@@ -1275,7 +1275,7 @@ int main(int argc, char* argv[]) {
     update_encoder = false;
     exiting = false;
 
-    SDL_Thread* manage_clients =
+    SDL_Thread* manage_clients_thread =
         SDL_CreateThread(multithreaded_manage_clients, "MultithreadedManageClients", NULL);
     SDL_Delay(500);
 
@@ -1424,7 +1424,7 @@ int main(int argc, char* argv[]) {
 
     SDL_WaitThread(send_video_thread, NULL);
     SDL_WaitThread(send_audio_thread, NULL);
-    SDL_WaitThread(manage_clients, NULL);
+    SDL_WaitThread(manage_clients_thread, NULL);
 
     SDL_DestroyMutex(packet_mutex);
 
