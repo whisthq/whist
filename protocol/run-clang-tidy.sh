@@ -1,11 +1,23 @@
+#!/bin/bash
+# this can only be run if compile_commands.json exists:
+#   set(CMAKE_EXPORT_COMPILE_COMMANDS ON) must be set in CMakeLists.txt
+
+# array of all folders to be ignored (some paths are roundabout accessed)
 declare -a excludeFolders=(
     "include"
+    "include/ffmpeg/libavcodec/../libavutil/../../"
+    "include/ffmpeg/libavformat/../libavcodec/../libavutil/../../"
     "lib"
     "fractal/video/nvidia-linux"
 )
 
-fileFilterString="--line-filter=["
+# array of all folders to be checked and modified
+declare -a includeFolders=(
+    "fractal"
+)
 
+# iterate through exclusion folders and option to only read the 9999999th line of each of these files
+fileFilterString="--line-filter=["
 for folder in "${excludeFolders[@]}"
 do
     for filePath in $(find $folder -type f -print)
@@ -14,7 +26,28 @@ do
     done
 done
 
+# include the rest of the .c and .h files
 fileFilterString="${fileFilterString} {\"name\":\"c\"}, {\"name\":\"h\"}]"
 
-exec "clang-tidy" '-header-filter=.*' "${fileFilterString}" $1
+yamlFolder="fixes"
+mkdir $yamlFolder
+
+
+for folder in "${includeFolders[@]}"
+do
+    for cFilePath in $(find $folder -type f -regex ".*\.\c")
+    do
+        # run clang-tidy and output to clang-tidy-fixes.yaml
+        clang-tidy -header-filter=.* "${fileFilterString}" $cFilePath --export-fixes=${yamlFolder}/clang-tidy-fixes.yaml
+
+        # run clang-tidy noted replacements
+        clang-apply-replacements $yamlFolder
+
+        sleep 1
+    done
+done
+
+# cleanup
+rm -rf $yamlFolder
+
 
