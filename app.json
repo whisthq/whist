@@ -8,6 +8,10 @@
     }
   ],
   "env": {
+    "OAUTHLIB_RELAX_TOKEN_SCOPE": {
+      "description": "Don't raise an exception if the granted and requested OAuth scopes differ.",
+      "value": "1"
+    },
     "PROJECT_PATH": {
       "description": "The path to the directory containing the Heroku app itself.",
       "value": "main-webserver"
