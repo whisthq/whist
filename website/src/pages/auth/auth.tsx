@@ -10,7 +10,7 @@ import ForgotView from "pages/auth/views/forgotView"
 import "styles/auth.css"
 
 import history from "shared/utils/history"
-//import { resetState } from "store/actions/shared"
+import { updateUser } from "store/actions/auth/pure"
 
 const Auth = (props: {
     dispatch: any
@@ -26,14 +26,20 @@ const Auth = (props: {
     authFlow: any
     match: any
 }) => {
-    const { user, waitlistUser, match, mode } = props
+    const { user, waitlistUser, match, mode, dispatch } = props
 
     useEffect(() => {
         const firstParam = match.params.first
+        const secondParam = match.params.second
+
         if (firstParam !== "bypass" && !waitlistUser.user_id) {
             history.push("/")
         }
-    }, [match, waitlistUser.user_id])
+
+        if (secondParam && secondParam !== "") {
+            dispatch(updateUser({ waitlistToken: secondParam }))
+        }
+    }, [match, waitlistUser.user_id, dispatch])
 
     if (user.user_id && user.user_id !== "") {
         if (user.emailVerified) {

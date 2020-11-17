@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useCallback, useState } from "react"
 import { connect } from "react-redux"
 import { Redirect } from "react-router"
-import { useQuery } from "@apollo/client"
+import { useQuery, useSubscription, useMutation } from "@apollo/client"
 import { HashLink } from "react-router-hash-link"
 
 import Header from "shared/components/header"
 import DownloadBox from "pages/dashboard/components/downloadBox"
-import { GET_USER } from "pages/dashboard/constants/graphql"
+import {
+    SUBSCRIBE_USER,
+    GET_WAITLIST_USER_FROM_TOKEN,
+    NULLIFY_WAITLIST_TOKEN,
+    UPDATE_USER_CAN_LOGIN,
+} from "pages/dashboard/constants/graphql"
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import { updateUser } from "store/actions/auth/pure"
-import { DEFAULT } from "store/reducers/auth/default"
-import { deepCopy } from "shared/utils/reducerHelpers"
 
 //import { CopyToClipboard } from "react-copy-to-clipboard"
 // use copy to clipboard functionality when we add back in linux
@@ -28,6 +31,8 @@ const Dashboard = (props: {
         user_id: string
         canLogin: boolean
         accessToken: string
+        waitlistToken: string
+        emailVerificationToken: string
     }
 }) => {
     const { user, dispatch } = props
@@ -38,8 +43,12 @@ const Dashboard = (props: {
     const valid_user = user.user_id && user.user_id !== ""
     const name = user.user_id ? user.user_id.split("@")[0] : ""
 
-    const { data, loading } = useQuery(GET_USER, {
+    const { data, loading } = useSubscription(SUBSCRIBE_USER, {
         variables: { user_id: user.user_id },
+    })
+
+    const waitlistUserData = useQuery(GET_WAITLIST_USER_FROM_TOKEN, {
+        variables: { waitlist_access_token: user.waitlistToken },
         context: {
             headers: {
                 Authorization: `Bearer ${user.accessToken}`,
@@ -47,28 +56,84 @@ const Dashboard = (props: {
         },
     })
 
-    const logout = () => {
-        dispatch(updateUser(deepCopy(DEFAULT.user)))
-    }
+    const [nullifyWaitlistToken] = useMutation(NULLIFY_WAITLIST_TOKEN, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        },
+    })
+
+    const [updateUserCanLogin] = useMutation(UPDATE_USER_CAN_LOGIN, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        },
+    })
+
+    const toggleCanLogin = useCallback(
+        (canLogin: boolean) => {
+            setCanLogin(canLogin)
+            dispatch(
+                updateUser({
+                    canLogin: canLogin,
+                })
+            )
+        },
+        [dispatch]
+    )
 
     useEffect(() => {
         if (
-            data &&
-            data.users &&
-            data.users[0] &&
-            (data.users[0].can_login ||
-                user.user_id.includes("@tryfractal.com"))
+            waitlistUserData &&
+            waitlistUserData.data &&
+            waitlistUserData.data.waitlist &&
+            waitlistUserData.data.waitlist.length > 0
         ) {
-            setCanLogin(true)
-            dispatch(
-                updateUser({
-                    canLogin: data.users[0].can_login,
+            toggleCanLogin(true)
+
+            const offboardedUserID = waitlistUserData.data.waitlist[0].user_id
+            if (user.user_id) {
+                updateUserCanLogin({
+                    variables: {
+                        user_id: user.user_id,
+                    },
                 })
+            }
+            if (offboardedUserID) {
+                nullifyWaitlistToken({
+                    variables: {
+                        user_id: offboardedUserID,
+                    },
+                })
+            }
+        }
+    }, [
+        waitlistUserData,
+        nullifyWaitlistToken,
+        updateUserCanLogin,
+        toggleCanLogin,
+        user.user_id,
+    ])
+
+    useEffect(() => {
+        if (data && data.users && data.users[0]) {
+            toggleCanLogin(
+                data.users[0].can_login ||
+                    user.user_id.includes("@tryfractal.com")
             )
         }
-    }, [data, dispatch, user.user_id])
+    }, [
+        data,
+        dispatch,
+        user.user_id,
+        user.waitlistToken,
+        user.emailVerificationToken,
+        toggleCanLogin,
+    ])
 
-    if (loading) {
+    if (loading || waitlistUserData.loading) {
         return (
             <div
                 style={{
@@ -86,7 +151,7 @@ const Dashboard = (props: {
         } else if (!user.canLogin && !canLogin) {
             return (
                 <div className="fractalContainer">
-                    <Header color="black" />
+                    <Header color="black" account />
                     <div
                         style={{
                             width: 400,
@@ -114,7 +179,14 @@ const Dashboard = (props: {
                         <HashLink to="/#top">
                             <button
                                 className="white-button"
-                                style={{ width: "100%", marginTop: 25 }}
+                                style={{
+                                    width: "100%",
+                                    marginTop: 25,
+                                    color: "white",
+                                    background: "rgba(66, 133, 244, 0.9)",
+                                    border: "none",
+                                    fontSize: 16,
+                                }}
                             >
                                 Back to Home
                             </button>
@@ -126,7 +198,7 @@ const Dashboard = (props: {
             // for now it wil lalways be loading
             return (
                 <div className="fractalContainer">
-                    <Header color="black" />
+                    <Header color="black" account />
                     <div
                         style={{
                             width: 400,
@@ -153,26 +225,6 @@ const Dashboard = (props: {
                             the button below to download Fractal.
                         </div>
                         <DownloadBox />
-                        <div
-                            style={{
-                                textAlign: "center",
-                                marginTop: 25,
-                                width: "100%",
-                                height: 1,
-                                background: "#DFDFDF",
-                            }}
-                        ></div>
-                        <button
-                            className="white-button"
-                            style={{
-                                width: "100%",
-                                marginTop: 25,
-                                fontSize: 16,
-                            }}
-                            onClick={logout}
-                        >
-                            Log Out
-                        </button>
                     </div>
                 </div>
             )

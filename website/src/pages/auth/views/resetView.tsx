@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { PuffAnimation } from "shared/components/loadingAnimations"
-import PasswordConfirmForm from "pages/auth/components/passwordConfirmForm"
+import PasswordConfirmForm from "shared/components/passwordConfirmForm"
 import {
     resetPassword,
     validateResetToken,
