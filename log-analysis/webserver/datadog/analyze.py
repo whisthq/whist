@@ -1,7 +1,14 @@
 import boto3
+import time
 import json  # so human readable
+import os
+
+from functools import reduce
+
+from dotenv import load_dotenv  # this might need to be pipped
 
 from datetime import datetime
+from datadog import initialize
 
 from events import fetch, container_events_by_region, interval_avg
 
@@ -12,6 +19,12 @@ from events import fetch, container_events_by_region, interval_avg
 # 4. DATADOG_APP_KEY
 # 5... possibly also the region
 from os import getenv
+
+SECRET_BUCKET = "fractal-dev-secrets"
+SECRET_FILE = "datadog-api"
+
+DATADOG_API_KEY = "DATADOG_API_KEY"
+DATADOG_APP_KEY = "DATADOG_APP_KEY"
 
 BUCKET = "fractal-webserver-logs"
 FILEPATH = "{tag}/{region}/"
@@ -52,21 +65,57 @@ REGIONS = [
     "us-east-1",
 ]
 
+
+def initialize_datadog():
+    s3 = boto3.resource("s3")
+
+    # ok client isn't used but whatever
+    file_objects = s3.Bucket(SECRET_BUCKET).objects.all()
+
+    secrets_file = reduce(
+        lambda acc, file: file.key if file.key == SECRET_FILE else acc, None
+    )
+
+    if secrets_file is None:
+        raise RuntimeError(
+            "Could not find datadog API secrets in the dev secrets bucket."
+        )
+
+    remote = secrets_file.key
+    local = ".env"
+
+    s3.Bucket(SECRET_BUCKET).download_file(remote, local)
+    load_dotenv(local)
+
+    options = {
+        "api_key": os.getenv(DATADOG_API_KEY),
+        "app_key": os.getenv(DATADOG_APP_KEY),
+    }
+
+    initialize(**options)
+
+
 # we can run this weekly to get the average usage per day... or whatever
 # interval should work for day too but that would depend on the otherone not being messed up yikes
 def store_averages_to_files(window=DAY, interval=WEEK):
+    # this should be allowed via lambda or whatever
     client = boto3.client("s3")
+    initialize_datadog(client)
 
     # this will be helpful if we are running a lambda because
     # we want to avoid it going over 15 minutes since otherwise
     # it might shutdown during work which is worrisome
     lambda_time_start = time.time()
 
-    textkey2label = lambda: "average_" + textkexy + ("_by_day" if window == DAY else "")
+    textkey2label = (
+        lambda textkey: "average_"
+        + textkey
+        + ("_by_day" if window == DAY else "_by_week" if window == WEEK else "")
+    )
 
     previous_time = time.time() - interval
     all_events = fetch(previous_time, [tag for tag, _ in TAGS_TEXTKEYS])
-    region2events = container_events_by_region(all_events)
+    region2events = container_events_by_region(all_events, regions=REGIONS)
 
     # json object to be stored in the recap
     # json has format like the files
@@ -109,9 +158,10 @@ def store_averages_to_files(window=DAY, interval=WEEK):
                 date_str = date.strftime("%Y%m%d")
                 recap[tag][region][label][date_str] = avg
 
-                filename = filepath + FILENAME.format(date=date_str, label=label)
-                store_json = json.dumps({label: avg}).encode("utf-8")
-                store(filename, store_json, client=client)
+                # won't be using this for now
+                # filename = filepath + FILENAME.format(date=date_str, label=label)
+                # store_json = json.dumps({label: avg}).encode("utf-8")
+                # store(filename, store_json, client=client)
 
     # this is in seconds
     recap["lambda_time"] = round(time.time() - lambda_time_start)  # in seconds
@@ -127,3 +177,7 @@ def store(filename, binary_data, client=None):
         client = boto3.client("s3")
 
     client.put_object(Body=binary_data, Bucket=BUCKET, Key=filename)
+
+
+if __name__ == "__main__":
+    store_averages_to_files()
