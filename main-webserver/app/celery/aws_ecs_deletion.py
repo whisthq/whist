@@ -241,6 +241,6 @@ def delete_cluster(self, cluster, region_name):
             state="FAILURE",
             meta={"msg": f"Encountered error: {error}"},
         )
-    if not current_app.testing :
+    if not current_app.testing:
         task_time_taken = time.time() - task_start_time
         datadogEvent_clusterDelete(cluster, lifecycle=True, time_taken=task_time_taken)
