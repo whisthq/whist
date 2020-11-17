@@ -1,7 +1,13 @@
 {
   "environments": {
     "review": {
-      "addons": ["heroku-redis:hobby-dev"]
+      "addons": ["heroku-redis:hobby-dev"],
+      "env": {
+        "OAUTHLIB_RELAX_TOKEN_SCOPE": {
+          "description": "Don't raise an exception if the requested and granted scopes differ.",
+          "value": "1"
+        }
+      }
     },
     "test": {
       "addons": ["heroku-redis:in-dyno"],
