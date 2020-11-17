@@ -38,7 +38,7 @@ def interval_avg(events, textkey, window, interval):
 
 def avg(events, textkey):
     return np.avg(
-        list(map(lambda event: parse_event_text(event["text"])[textkey], events))
+        list(map(lambda event: float(parse_event_text(event["text"])[textkey]), events))
     )
 
 
