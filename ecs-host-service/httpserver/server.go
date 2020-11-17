@@ -1,7 +1,6 @@
 package httpserver
 
 import (
-	"io"
 	"net/http"
 	"os/exec"
 
@@ -49,6 +48,29 @@ type ServerEvent interface {
 	HandleEvent() error
 }
 
+// Define the mount_cloud_storage endpoint
+func mountHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
+// Define the DPI endpoint
+func dpiHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
+// Define the default handler (to return a 404)
+func defaultHandler(w http.ResponseWriter, r *http.Request) {
+	errstr := "endpoint not found"
+	http.Error(w, errstr, 404)
+	var method string
+	if r.Method != "" {
+		method = r.Method
+	} else {
+		method = "GET"
+	}
+	logger.Infof("HTTP Server: got a %s request to non-existent endpoint %s", method, r.URL.Path)
+}
+
 // The first return value is a channel of events from the webserver
 func StartHTTPSServer() (<-chan ServerEvent, error) {
 	logger.Info("Setting up HTTP server.")
@@ -58,15 +80,13 @@ func StartHTTPSServer() (<-chan ServerEvent, error) {
 		return nil, logger.MakeError("Error starting HTTP Server: %v", err)
 	}
 
-	// Buffer up to 100 events so we don't block
+	// Buffer up to 100 events so we don't block. This should be mostly
+	// unnecessary, but we want to be able to handle a burst without blocking.
 	events := make(chan ServerEvent, 100)
 
-	helloHandler := func(w http.ResponseWriter, req *http.Request) {
-		logger.Infof("Got a connection!")
-		io.WriteString(w, "Hello, world!\n")
-	}
-
-	http.HandleFunc("/", helloHandler)
+	http.HandleFunc("/", defaultHandler)
+	http.HandleFunc("/mount_cloud_storage", mountHandler)
+	http.HandleFunc("/set_container_dpi", dpiHandler)
 	go func() {
 		// TODO: defer things correctly so that a panic here is actually caught and resolved
 		logger.Panicf("HTTP Server Error: %v", http.ListenAndServeTLS("0.0.0.0"+portToListen, certPath, privatekeyPath, nil))
