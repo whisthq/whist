@@ -21,4 +21,4 @@ base/protocol/docker-run-builder-shell.sh \
     cmake . ${release_tag} && \
     make clang-format && \
     make -j FractalServer \
-"
+    "
