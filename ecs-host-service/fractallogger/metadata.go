@@ -14,40 +14,61 @@ import (
 // Variable for hash of last Git commit --- filled in by linker
 var gitCommit string
 
+// GetGitCommit returns the git commit hash of this build.
 func GetGitCommit() string {
 	return gitCommit
 }
 
-func IsRunningInProduction() bool {
+// An EnvironmentType represents either dev, staging, or prod
+type EnvironmentType string
+
+// Constants for whether we are running in dev, staging, or prod
+const (
+	EnvDev     EnvironmentType = "DEV"
+	EnvStaging EnvironmentType = "STAGING"
+	EnvProd    EnvironmentType = "PROD"
+)
+
+// GetAppEnvironment returns the EnvironmentType of the current instance
+func GetAppEnvironment() EnvironmentType {
 	env := os.Getenv("APP_ENV")
-	return env == "production" || env == "prod" || env == "PRODUCTION" || env == "PROD"
+	switch env {
+	case "development", "dev", "DEVELOPMENT", "DEV":
+		return EnvDev
+	case "staging", "STAGING":
+		return EnvStaging
+	case "production", "prod", "PRODUCTION", "PROD":
+		return EnvProd
+	default:
+		return EnvDev
+	}
 }
 
 // The following functions are useful for getting system information that we
 // will pass to the Webserver
 
-// Get the number of logical CPUs on the host
+// GetNumLogicalCPUs returns the number of logical CPUs on the host
 func GetNumLogicalCPUs() (string, error) {
 	return fmt.Sprint(runtime.NumCPU()), nil
 }
 
-// Get the total memory of the host in KB. This function can be memoized
-// because the total memory will not change over time.
+// GetTotalMemoryInKB returns the total memory of the host in KB. This function
+// can be memoized because the total memory will not change over time.
 var GetTotalMemoryInKB = memoizeString(func() (string, error) {
 	return calculateMemoryStatInKB("MemTotal")
 })
 
-// Get the amount of currently free memory in the host in KB. This is a lower
-// bound for how much more memory we can theoretically use, since some cached
-// files can be evicted to free up some more memory.
+// GetFreeMemoryInKB returns the amount of currently free memory in the host in
+// KB. This is a lower bound for how much more memory we can theoretically use,
+// since some cached files can be evicted to free up some more memory.
 var GetFreeMemoryInKB = func() (string, error) {
 	return calculateMemoryStatInKB("MemFree")
 }
 
-// Get the amount of currently available memory in the host in KB. This is a
-// hard upper bound for how much more memory we can use before we start
-// swapping or crash. We should stay well below this number because performance
-// will suffer long before we get here.
+// GetAvailableMemoryInKB returns the amount of currently available memory in
+// the host in KB. This is a hard upper bound for how much more memory we can
+// use before we start swapping or crash. We should stay well below this number
+// because performance will suffer long before we get here.
 var GetAvailableMemoryInKB = func() (string, error) {
 	return calculateMemoryStatInKB("MemAvailable")
 }
@@ -79,11 +100,23 @@ func calculateMemoryStatInKB(field string) (string, error) {
 }
 
 // All of these have signature (func() (string, error))
-var GetAwsAmiId = memoizeString(generateAWSMetadataRetriever("ami-id"))
+
+// GetAwsAmiID returns the AMI ID of the current EC2 instance
+var GetAwsAmiID = memoizeString(generateAWSMetadataRetriever("ami-id"))
+
+// GetAwsAmiLaunchIndex returns the AWS Launch Index
 var GetAwsAmiLaunchIndex = memoizeString(generateAWSMetadataRetriever("ami-launch-index"))
-var GetAwsInstanceId = memoizeString(generateAWSMetadataRetriever("instance-id"))
+
+// GetAwsInstanceID returns the Instance ID of the current EC2 instance
+var GetAwsInstanceID = memoizeString(generateAWSMetadataRetriever("instance-id"))
+
+// GetAwsInstanceType returns the type of the current EC2 instance (e.g. g3s.xlarge)
 var GetAwsInstanceType = memoizeString(generateAWSMetadataRetriever("instance-type"))
+
+// GetAwsPlacementRegion returns the placement region of the current EC2 instance
 var GetAwsPlacementRegion = memoizeString(generateAWSMetadataRetriever("placement/region"))
+
+// GetAwsPublicIpv4 returns the public IPv4 address of the current EC2 instance
 var GetAwsPublicIpv4 = memoizeString(generateAWSMetadataRetriever("public-ipv4"))
 
 // This helper function lets us memoize a function of type (func() string,
@@ -102,15 +135,14 @@ func memoizeString(f func() (string, error)) func() (string, error) {
 	return func() (string, error) {
 		if cached {
 			return cachedResult, nil
-		} else {
-			if result, err := f(); err != nil {
-				return result, err
-			} else {
-				cachedResult = result
-				cached = true
-				return cachedResult, nil
-			}
 		}
+		result, err := f()
+		if err != nil {
+			return result, err
+		}
+		cachedResult = result
+		cached = true
+		return cachedResult, nil
 	}
 }
 

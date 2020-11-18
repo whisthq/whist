@@ -10,10 +10,13 @@ import (
 	logger "github.com/fractal/ecs-host-service/fractallogger"
 )
 
-// Variable for the auth_secret used to communicate between the webserver and
+// Variables for the auth_secret used to communicate between the webserver and
 // host service --- filled in by linker
+var webserverAuthSecretDev, webserverAuthSecretStaging, webserverAuthSecretProd string
+
 var webserverAuthSecret string
 
+// Constants for use in setting up the HTTPS server
 const (
 	// We listen on the port "HOST" converted to a telephone number
 	portToListen       = ":4678"
@@ -52,17 +55,20 @@ func (r requestResult) send(w http.ResponseWriter) {
 	}
 }
 
-// Define the (unauthenticated) mount_cloud_storage endpoint
+// MountCloudStorageRequest defines the (unauthenticated) mount_cloud_storage
+// endpoint
 type MountCloudStorageRequest struct {
-	HostPort     int                `json:"host_port"`
-	Provider     string             `json:"provider"`
-	AccessToken  string             `json:"access_token"`
-	RefreshToken string             `json:"refresh_token"`
-	Expiry       string             `json:"expiry"`
-	TokenType    string             `json:"token_type"`
-	resultChan   chan requestResult `json:"-"`
+	HostPort     int    `json:"host_port"`
+	Provider     string `json:"provider"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	Expiry       string `json:"expiry"`
+	TokenType    string `json:"token_type"`
+	resultChan   chan requestResult
 }
 
+// ReturnResult is called to pass the result of a request back to the the HTTP
+// request handler
 func (s *MountCloudStorageRequest) ReturnResult(result string, err error) {
 	s.resultChan <- requestResult{result, err}
 }
@@ -93,13 +99,15 @@ func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, que
 	res.send(w)
 }
 
-// Define the (unauthenticated) DPI endpoint
+// SetContainerDPIRequest defines the (unauthenticated) DPI endpoint
 type SetContainerDPIRequest struct {
-	HostPort   int                `json:"host_port"`
-	DPI        int                `json:"dpi"`
-	resultChan chan requestResult `json:"-"`
+	HostPort   int `json:"host_port"`
+	DPI        int `json:"dpi"`
+	resultChan chan requestResult
 }
 
+// ReturnResult is called to pass the result of a request back to the the HTTP
+// request handler
 func (s *SetContainerDPIRequest) ReturnResult(result string, err error) {
 	s.resultChan <- requestResult{result, err}
 }
@@ -208,9 +216,12 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	return nil
 }
 
-// The first return value is a channel of events from the webserver
+// StartHTTPSServer returns a channel of events from the webserver as its first return value
 func StartHTTPSServer() (<-chan ServerRequest, error) {
 	logger.Info("Setting up HTTP server.")
+
+	// Select the correct environment (dev, staging, prod)
+	logger.Info(webserverAuthSecretDev + "   " + webserverAuthSecretStaging + "   " + webserverAuthSecretProd)
 
 	err := initializeTLS()
 	if err != nil {
