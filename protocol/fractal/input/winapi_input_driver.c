@@ -103,15 +103,15 @@ const int windows_keycodes[NUM_KEYCODES] = {
     FK_END,                  // 77 -> End
     FK_LEFT,                 // 78 -> Pagedown
     FK_RIGHT,                // 79 -> Right
-    VK_LEFT,                 // 80 -> Left
-    VK_DOWN,                 // 81 -> Down
-    VK_UP,                   // 82 -> Up
-    VK_NUMLOCK,              // 83 -> Numlock
+    FK_LEFT,                 // 80 -> Left
+    FK_DOWN,                 // 81 -> Down
+    FK_UP,                   // 82 -> Up
+    FK_NUMLOCK,              // 83 -> Numlock
     VK_DIVIDE,               // 84 -> Numeric Keypad Divide
-    VK_MULTIPLY,             // 85 -> Numeric Keypad Multiply
+    FK_KP_MULTIPLY,             // 85 -> Numeric Keypad Multiply
     VK_SUBTRACT,             // 86 -> Numeric Keypad Minus
     VK_ADD,                  // 87 -> Numeric Keypad Plus
-    VK_RETURN + USE_NUMPAD,  // 88 -> Numeric Keypad Enter
+    SDLK_RETURN + USE_NUMPAD,  // 88 -> Numeric Keypad Enter
     0x61,                    // 89 -> Numeric Keypad 1
     0x62,                    // 90 -> Numeric Keypad 2
     0x63,                    // 91 -> Numeric Keypad 3
