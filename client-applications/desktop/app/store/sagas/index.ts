@@ -62,7 +62,6 @@ function* loginUser(action: any) {
             }
             yield call(fetchPaymentInfo, action)
             yield call(getPromoCode, action)
-            history.push("/dashboard")
         } else {
             yield put(Action.updateAuth({ loginWarning: true }))
             if (json.access_token) {

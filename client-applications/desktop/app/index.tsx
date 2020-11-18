@@ -25,8 +25,6 @@ const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer
 
 // Set up Apollo GraphQL provider for https and wss (websocket)
 
-console.log(config)
-
 const httpLink = new HttpLink({
     uri: config.url.GRAPHQL_HTTP_URL,
 })
@@ -54,19 +52,6 @@ const apolloClient = new ApolloClient({
     link: splitLink,
     cache: new InMemoryCache(),
 })
-
-// apolloClient
-//     .query({
-//         query: gql`
-//             query GetFeaturedApps {
-//                 hardware_supported_app_images {
-//                     app_id
-//                     logo_url
-//                 }
-//             }
-//         `,
-//     })
-//     .then((result) => console.log(result))
 
 document.addEventListener("DOMContentLoaded", () =>
     render(
