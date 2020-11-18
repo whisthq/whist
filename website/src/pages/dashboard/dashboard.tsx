@@ -45,11 +45,6 @@ const Dashboard = (props: {
 
     const { data, loading } = useSubscription(SUBSCRIBE_USER, {
         variables: { user_id: user.user_id },
-        context: {
-            headers: {
-                Authorization: `Bearer ${user.accessToken}`,
-            },
-        },
     })
 
     const waitlistUserData = useQuery(GET_WAITLIST_USER_FROM_TOKEN, {
