@@ -15,6 +15,7 @@ import (
 	logger "github.com/fractal/ecs-host-service/fractallogger"
 )
 
+const devHost = "https://dev-webserver.tryfractal.com"
 const stagingHost = "https://staging-webserver.tryfractal.com"
 const productionHost = "https://main-webserver.tryfractal.com"
 
@@ -55,15 +56,22 @@ var httpClient = http.Client{
 // Get the appropriate webserverHost based on whether we're running in
 // production or development
 func getWebserverHost() string {
-	if logger.IsRunningInProduction() {
+	switch logger.GetAppEnvironment() {
+	case logger.EnvStaging:
+		logger.Infof("Running in staging, communicating with %s", stagingHost)
+		return stagingHost
+	case logger.EnvProd:
 		logger.Infof("Running in production, communicating with %s", productionHost)
 		return productionHost
-	} else {
-		logger.Infof("Running in development, communicating with %s", stagingHost)
-		return stagingHost
+	case logger.EnvDev:
+		fallthrough
+	default:
+		logger.Infof("Running in development, communicating with %s", devHost)
+		return devHost
 	}
 }
 
+// InitializeHeartbeat starts the heartbeat goroutine
 func InitializeHeartbeat() error {
 	resp, err := handshake()
 	if err != nil {
@@ -89,6 +97,7 @@ func heartbeatGoroutine() {
 	}
 }
 
+// SendGracefulShutdownNotice sends a heartbeat with IsDyingHeartbeat set to true
 func SendGracefulShutdownNotice() {
 	sendHeartbeat(true)
 }
@@ -100,7 +109,7 @@ func SendGracefulShutdownNotice() {
 func handshake() (handshakeResponse, error) {
 	var resp handshakeResponse
 
-	instanceID, err := logger.GetAwsInstanceId()
+	instanceID, err := logger.GetAwsInstanceID()
 	if err != nil {
 		return resp, logger.MakeError("handshake(): Couldn't get AWS instanceID. Error: %v", err)
 	}
@@ -117,11 +126,16 @@ func handshake() (handshakeResponse, error) {
 		return resp, logger.MakeError("handshake(): Got back an error from the webserver at URL %s. Error:  %v", requestURL, err)
 	}
 
-	body, err := ioutil.ReadAll(httpResp.Body)
+	// We would normally just read in body, err := iotuil.ReadAll(httpResp.body),
+	// but the handshake is not properly implmented yet, and we need to avoid a
+	// linter warning for an "ineffectual assingment to body", so we declare it
+	// and only set it later.
+	var body []byte
+	_, err = ioutil.ReadAll(httpResp.Body)
 	if err != nil {
 		return resp, logger.MakeError("handshake():: Unable to read body of response from webserver. Error: %v", err)
 	}
-
+	// Overwrite body because handshake is not implemented properly yet
 	body, _ = json.Marshal(handshakeResponse{"testauthtoken"})
 
 	logger.Infof("handshake(): got response code: %v", httpResp.StatusCode)
@@ -147,7 +161,7 @@ func sendHeartbeat(isDying bool) {
 	// passed on as an empty string or nil. It's not worth terminating the
 	// instance over a malformed heartbeat --- we can let the webserver decide if
 	// we want to mark the instance as draining.
-	instanceID, _ := logger.GetAwsInstanceId()
+	instanceID, _ := logger.GetAwsInstanceID()
 	instanceType, _ := logger.GetAwsInstanceType()
 	totalRAM, _ := logger.GetTotalMemoryInKB()
 	freeRAM, _ := logger.GetFreeMemoryInKB()
@@ -175,5 +189,5 @@ func sendHeartbeat(isDying bool) {
 		logger.Errorf("Error sending heartbeat: %s", err)
 	}
 
-	numBeats += 1
+	numBeats++
 }

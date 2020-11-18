@@ -9,10 +9,13 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
+// InitializeSentry initializes sentry for use.
 func InitializeSentry() error {
 	// Only set up Sentry to log events if running in production
 	strProd := os.Getenv("USE_PROD_SENTRY")
-	useProdSentry := (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (IsRunningInProduction())
+	// We want to use the production sentry config if we run with that
+	// environment variable, or if we are actually running in production.
+	useProdSentry := (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (GetAppEnvironment() == EnvProd)
 	if useProdSentry {
 		log.Print("Using production sentry configuration.")
 	} else {
@@ -37,7 +40,7 @@ func InitializeSentry() error {
 		// about being unable to set Sentry tags until after we have set all the
 		// ones we can.
 
-		if val, err := GetAwsAmiId(); err != nil {
+		if val, err := GetAwsAmiID(); err != nil {
 			defer Errorf("Unable to set Sentry tag aws.ami-id: %v", err)
 		} else {
 			scope.SetTag("aws.ami-id", val)
@@ -51,7 +54,7 @@ func InitializeSentry() error {
 			log.Printf("Set sentry tag aws.ami-launch-index: %s", val)
 		}
 
-		if val, err := GetAwsInstanceId(); err != nil {
+		if val, err := GetAwsInstanceID(); err != nil {
 			defer Errorf("Unable to set Sentry tag aws.instance-id: %v", err)
 		} else {
 			scope.SetTag("aws.instance-id", val)
@@ -82,6 +85,7 @@ func InitializeSentry() error {
 	return nil
 }
 
+// FlushSentry flushes events in the Sentry queue
 func FlushSentry() {
 	sentry.Flush(5 * time.Second)
 }
