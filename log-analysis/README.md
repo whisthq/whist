@@ -11,6 +11,6 @@ We have two tools for processing protocol logs, both meant for debugging and fin
 
 To use either of these two tools, you need to provide a Fractal protocol log file, either client or server, named `log.txt`. The notebook will then parse the file and plot some statistics from what it finds in the log, which should help with debugging and finding bottlenecks.
 
-# [Webserver](#webserver)
+## [Webserver](#webserver)
 
 We have a few Python scripts to log important events from the webserver logs to Datadog via storing in S3 and running cron jobs to generate the visualization.
