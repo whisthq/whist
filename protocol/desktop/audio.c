@@ -44,7 +44,7 @@ audio_packet receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 struct AudioData {
     SDL_AudioDeviceID dev;
     audio_decoder_t* audio_decoder;
-} volatile AudioData;
+} volatile audio_data;
 
 clock nack_timer;
 
@@ -91,27 +91,27 @@ void init_audio() {
     start_timer(&nack_timer);
 
     // cast socket and SDL variables back to their data type for usage
-    SDL_AudioSpec wantedSpec = {0}, audioSpec = {0};
-    AudioData.audio_decoder = create_audio_decoder(decoder_frequency);
+    SDL_AudioSpec wanted_spec = {0}, audio_spec = {0};
+    audio_data.audio_decoder = create_audio_decoder(decoder_frequency);
 
-    SDL_zero(wantedSpec);
-    SDL_zero(audioSpec);
-    wantedSpec.channels = 2;
-    wantedSpec.freq = decoder_frequency;
-    LOG_INFO("Freq: %d", wantedSpec.freq);
-    wantedSpec.format = AUDIO_F32SYS;
-    wantedSpec.silence = 0;
-    wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
+    SDL_zero(wanted_spec);
+    SDL_zero(audio_spec);
+    wanted_spec.channels = 2;
+    wanted_spec.freq = decoder_frequency;
+    LOG_INFO("Freq: %d", wanted_spec.freq);
+    wanted_spec.format = AUDIO_F32SYS;
+    wanted_spec.silence = 0;
+    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;
 
-    AudioData.dev =
-        SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
-    if (AudioData.dev == 0) {
+    audio_data.dev =
+        SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &audio_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+    if (audio_data.dev == 0) {
         LOG_ERROR("Failed to open audio, %s", SDL_GetError());
         destroy_logger();
         exit(1);
     }
 
-    SDL_PauseAudioDevice(AudioData.dev, 0);
+    SDL_PauseAudioDevice(audio_data.dev, 0);
 
     for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
         receiving_audio[i].id = -1;
@@ -121,11 +121,11 @@ void init_audio() {
 }
 
 void destroy_audio() {
-    SDL_CloseAudioDevice(AudioData.dev);
-    if (AudioData.audio_decoder) {
-        destroy_audio_decoder(AudioData.audio_decoder);
+    SDL_CloseAudioDevice(audio_data.dev);
+    if (audio_data.audio_decoder) {
+        destroy_audio_decoder(audio_data.audio_decoder);
     }
-    AudioData.dev = 0;
+    audio_data.dev = 0;
 }
 
 void update_audio() {
@@ -135,7 +135,7 @@ void update_audio() {
         exit(-1);
     }
     int status = SDL_TryLockMutex(audio_mutex);
-    if (!AudioData.dev || status != 0) {
+    if (!audio_data.dev || status != 0) {
         LOG_INFO("Couldn't lock mutex in updateAudio!");
         return;
     }
@@ -175,7 +175,7 @@ void update_audio() {
     // Wait to delay
     static bool gapping = false;
     int bytes_until_can_play = (most_recent_audio_id - last_played_id) * MAX_PAYLOAD_SIZE +
-                               SDL_GetQueuedAudioSize(AudioData.dev);
+                               SDL_GetQueuedAudioSize(audio_data.dev);
     if (!gapping && bytes_until_can_play < AUDIO_QUEUE_LOWER_LIMIT) {
         LOG_INFO("Audio Queue too low: %d. Needs to catch up!", bytes_until_can_play);
         gapping = true;
@@ -220,10 +220,10 @@ void update_audio() {
 
             int real_limit = triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
 
-            if (SDL_GetQueuedAudioSize(AudioData.dev) > (unsigned int)real_limit) {
+            if (SDL_GetQueuedAudioSize(audio_data.dev) > (unsigned int)real_limit) {
                 LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
                             next_to_play_id / MAX_NUM_AUDIO_INDICES,
-                            SDL_GetQueuedAudioSize(AudioData.dev));
+                            SDL_GetQueuedAudioSize(audio_data.dev));
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     packet->id = -1;
@@ -246,18 +246,18 @@ void update_audio() {
                     packet->id = -1;
                     packet->nacked_amount = 0;
                 }
-                res = audio_decoder_decode_packet(AudioData.audio_decoder, &encoded_packet);
+                res = audio_decoder_decode_packet(audio_data.audio_decoder, &encoded_packet);
                 av_free(encoded_packet.data);
                 av_packet_unref(&encoded_packet);
 
                 if (res == 0) {
                     uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
 
-                    audio_decoder_packet_readout(AudioData.audio_decoder, decoded_data);
+                    audio_decoder_packet_readout(audio_data.audio_decoder, decoded_data);
 
                     res =
-                        SDL_QueueAudio(AudioData.dev, &decoded_data,
-                                       audio_decoder_get_frame_data_size(AudioData.audio_decoder));
+                        SDL_QueueAudio(audio_data.dev, &decoded_data,
+                                       audio_decoder_get_frame_data_size(audio_data.audio_decoder));
 
                     if (res < 0) {
                         LOG_WARNING("Could not play audio!");

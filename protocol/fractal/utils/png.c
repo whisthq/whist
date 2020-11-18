@@ -74,8 +74,8 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
 
     // Read BMP file header contents
     int w, h;
-    static const unsigned MINHEADER = 54;
-    if (size < MINHEADER) {
+    static const unsigned minheader = 54;
+    if (size < minheader) {
         LOG_ERROR("BMP size < MINHEADER");
         return -1;
     }
@@ -90,17 +90,17 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
         LOG_ERROR("BMP is not 3 or 4 channel");
         return -1;
     }
-    int numChannels = bmp[28] / 8;
+    int num_channels = bmp[28] / 8;
 
     // BMP pixel arrays are always multiples of 4. Images with widths that are not multiples
     //  of 4 are always padded at the end of each row. scanlineBytes is the padded width of each
     //  BMP row in the original image.
-    int scanlineBytes = w * numChannels;
-    if (scanlineBytes % 4 != 0) scanlineBytes = (scanlineBytes / 4) * 4 + 4;
+    int scanline_bytes = w * num_channels;
+    if (scanline_bytes % 4 != 0) scanline_bytes = (scanline_bytes / 4) * 4 + 4;
 
     int data_size = *((int*)(&bmp[34]));
     if (data_size == 0) {
-        data_size = scanlineBytes * h;
+        data_size = scanline_bytes * h;
     }
 
     // memcpy will face UB problems below if the calculated size does not match the actual
@@ -111,15 +111,15 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
         return -1;
     }
     // Require that data_size is uncompressed raw data
-    if (scanlineBytes * h != data_size) {
-        LOG_WARNING("BMP size <> BMP header mismatch %d * %d != %d", scanlineBytes, h, data_size);
+    if (scanline_bytes * h != data_size) {
+        LOG_WARNING("BMP size <> BMP header mismatch %d * %d != %d", scanline_bytes, h, data_size);
         return -1;
     }
 
     // Depending on numChannels, we could be dealing with BGR24 or BGR32 in the BMP, but
     //  always save to PNG RGB (not RGBA)
-    LOG_INFO("NUM CHANNELS %d", numChannels);
-    enum AVPixelFormat bmp_format = numChannels == 3 ? AV_PIX_FMT_BGR24 : AV_PIX_FMT_BGRA;
+    LOG_INFO("NUM CHANNELS %d", num_channels);
+    enum AVPixelFormat bmp_format = num_channels == 3 ? AV_PIX_FMT_BGR24 : AV_PIX_FMT_BGRA;
     enum AVPixelFormat png_format = AV_PIX_FMT_RGB24;
 
     // BMP files are stored with each row left to right, but rows are then stored bottom to top.
@@ -134,8 +134,8 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     }
 
     for (int y = 0; y < h; y++) {
-        memcpy(bmp_buffer + w * (h - y - 1) * numChannels, bmp_original_buffer + scanlineBytes * y,
-               w * numChannels);
+        memcpy(bmp_buffer + w * (h - y - 1) * num_channels, bmp_original_buffer + scanline_bytes * y,
+               w * num_channels);
     }
 
     // Create a new buffer for the PNG image
@@ -191,13 +191,13 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     }
 
     // Convert the BMP image into the PNG image
-    struct SwsContext* conversionContext =
+    struct SwsContext* conversion_context =
         sws_getContext(w, h, bmp_format, w, h, png_format, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-    if (!conversionContext) {
+    if (!conversion_context) {
         LOG_ERROR("sws_getContext failed");
         return -1;
     }
-    sws_scale(conversionContext, (const uint8_t* const*)bmp_frame->data, bmp_frame->linesize, 0, h,
+    sws_scale(conversion_context, (const uint8_t* const*)bmp_frame->data, bmp_frame->linesize, 0, h,
               png_frame->data, png_frame->linesize);
 
     // Encode the PNG image frame into an actual PNG image
@@ -316,8 +316,8 @@ int read_char_open(AVFormatContext** pctx, const char* data, int data_size) {
         return -1;
     }
 
-    const size_t bufferSize = data_size;
-    uint8_t* buffer = av_malloc(bufferSize);
+    const size_t buffer_size = data_size;
+    uint8_t* buffer = av_malloc(buffer_size);
     if (buffer == NULL) {
         avformat_free_context(*pctx);
         return -2;
@@ -325,7 +325,7 @@ int read_char_open(AVFormatContext** pctx, const char* data, int data_size) {
 
     struct buffer_data opaque = {.ptr = data, .size = data_size};
     AVIOContext* pbctx =
-        avio_alloc_context(buffer, (int)bufferSize, 0, &opaque, read_open, NULL, NULL);
+        avio_alloc_context(buffer, (int)buffer_size, 0, &opaque, read_open, NULL, NULL);
     if (pbctx == NULL) {
         av_free(buffer);
         avformat_free_context(*pctx);
@@ -528,10 +528,10 @@ int load_png_file(uint8_t* data[4], int linesize[4], unsigned int* w, unsigned i
     }
     ret = 0;
 
-    struct SwsContext* swsContext =
+    struct SwsContext* sws_context =
         sws_getContext(*w, *h, *pix_fmt, *w, *h, AV_PIX_FMT_RGB24, 0, NULL, NULL, NULL);
 
-    sws_scale(swsContext, (uint8_t const* const*)frame->data, frame->linesize, 0, *h, data,
+    sws_scale(sws_context, (uint8_t const* const*)frame->data, frame->linesize, 0, *h, data,
               linesize);
 
 end:
@@ -585,10 +585,10 @@ int png_data_to_bmp_data(uint8_t* png_buffer, AVPacket* pkt, int* width, int* he
                          *height, 1);
 
     // Convert the PNG pixel array to the BMP pixel array
-    struct SwsContext* conversionContext =
+    struct SwsContext* conversion_context =
         sws_getContext(*width, *height, *png_format, *width, *height, *bmp_format,
                        SWS_FAST_BILINEAR, NULL, NULL, NULL);
-    sws_scale(conversionContext, (const uint8_t* const*)png_frame->data, png_frame->linesize, 0,
+    sws_scale(conversion_context, (const uint8_t* const*)png_frame->data, png_frame->linesize, 0,
               *height, bmp_frame->data, bmp_frame->linesize);
 
     // Encode the BMP image frame into an actual BMP image
@@ -704,18 +704,18 @@ int png_file_to_bmp(char* png, AVPacket* pkt) {
     load_png_file(input, linesize, &width, &height, &pix_fmt, png);
 
     unsigned int pixeloffset = 54;
-    unsigned int numChannels = 3;
-    unsigned int scanlineBytes = width * numChannels;
-    unsigned int dataSize = scanlineBytes * height + pixeloffset;
+    unsigned int num_channels = 3;
+    unsigned int scanline_bytes = width * num_channels;
+    unsigned int data_size = scanline_bytes * height + pixeloffset;
 
-    unsigned char* bmp = calloc(sizeof(unsigned char*), dataSize);
+    unsigned char* bmp = calloc(sizeof(unsigned char*), data_size);
     // File type Data
     bmp[0] = 'B';
     bmp[1] = 'M';
-    bmp[2] = dataSize;
-    bmp[3] = dataSize >> 8u;
-    bmp[4] = dataSize >> 16u;
-    bmp[5] = dataSize >> 24u;
+    bmp[2] = data_size;
+    bmp[3] = data_size >> 8u;
+    bmp[4] = data_size >> 16u;
+    bmp[5] = data_size >> 24u;
     bmp[10] = pixeloffset;
     bmp[11] = pixeloffset >> 8u;
     bmp[12] = pixeloffset >> 16u;
@@ -735,7 +735,7 @@ int png_file_to_bmp(char* png, AVPacket* pkt) {
 
     unsigned char* output = bmp + pixeloffset;
     pkt->data = bmp;
-    pkt->size = (int)(dataSize);
+    pkt->size = (int)(data_size);
     unsigned int offset, offset_base;
     for (unsigned int y = 0; y < height; y++) {
         for (unsigned int x = 0; x < width; x++) {

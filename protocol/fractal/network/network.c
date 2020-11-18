@@ -1577,15 +1577,15 @@ int create_udp_context(SocketContext *context, char *destination, int port, int 
 
 bool send_http_request(char *type, char *host_s, char *message, char **response_body,
                        size_t max_response_size) {
-    SOCKET Socket;  // socket to send/receive request
+    SOCKET socket;  // socket to send/receive request
     struct hostent *host;
-    struct sockaddr_in webserver_socketAddress;  // address of the web server socket
+    struct sockaddr_in webserver_socket_address;  // address of the web server socket
 
     // Creating our TCP socket to connect to the web server
-    if ((Socket = socketp_tcp()) == INVALID_SOCKET) {
+    if ((socket = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
-    set_timeout(Socket, 1000);
+    set_timeout(socket, 1000);
 
     host = gethostbyname(host_s);
     if (host == NULL) {
@@ -1594,13 +1594,13 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
     }
 
     // create the struct for the webserver address socket we will query
-    webserver_socketAddress.sin_family = AF_INET;
-    webserver_socketAddress.sin_port = htons(80);  // HTTP port
-    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
+    webserver_socket_address.sin_family = AF_INET;
+    webserver_socket_address.sin_port = htons(80);  // HTTP port
+    webserver_socket_address.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
 
     // connect to the web server before sending the request packet
-    int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
-                                 sizeof(webserver_socketAddress));
+    int connect_status = connect(socket, (struct sockaddr *)&webserver_socket_address,
+                                 sizeof(webserver_socket_address));
     if (connect_status < 0) {
         LOG_WARNING("Could not connect to the webserver.");
         return false;
@@ -1615,7 +1615,7 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
     int sent_n;
     int msg_len = ((int)strlen(message));
     do {
-        sent_n = send(Socket, message + total_sent, msg_len - total_sent, 0);
+        sent_n = send(socket, message + total_sent, msg_len - total_sent, 0);
         if (sent_n < 0) {
             // error sending, terminate
             LOG_WARNING("Sending %s message failed.", type);
@@ -1631,14 +1631,14 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
     if ((!response_body) || (max_response_size == 0)) {
         // don't care about the reply, so we might as well not make the system
         // call to get the data
-        FRACTAL_SHUTDOWN_SOCKET(Socket);
+        FRACTAL_SHUTDOWN_SOCKET(socket);
     } else {
         char *response = malloc(max_response_size);
         size_t total_read = 0;
         int read_n;
         do {
             read_n =
-                recv(Socket, response + total_read, (int)(max_response_size - total_read - 1), 0);
+                recv(socket, response + total_read, (int)(max_response_size - total_read - 1), 0);
             if (read_n < 0) {
                 LOG_ERROR("Response to %s request failed! %d %d", type, read_n,
                           get_last_network_error());
@@ -1670,7 +1670,7 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
         free(response);
     }
 
-    FRACTAL_CLOSE_SOCKET(Socket);
+    FRACTAL_CLOSE_SOCKET(socket);
     return true;
 }
 

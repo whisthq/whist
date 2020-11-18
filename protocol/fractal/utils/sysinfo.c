@@ -318,32 +318,32 @@ void print_cpu_info() {
     unsigned regs[4];
 
     // Get vendor
-    char cpuVendor[13] = {0};
+    char cpu_vendor[13] = {0};
     cpu_id(0, regs);
-    ((unsigned*)cpuVendor)[0] = regs[1];  // EBX
-    ((unsigned*)cpuVendor)[1] = regs[3];  // EDX
-    ((unsigned*)cpuVendor)[2] = regs[2];  // ECX
+    ((unsigned*)cpu_vendor)[0] = regs[1];  // EBX
+    ((unsigned*)cpu_vendor)[1] = regs[3];  // EDX
+    ((unsigned*)cpu_vendor)[2] = regs[2];  // ECX
 
-    LOG_INFO("CPU Vendor: %s", cpuVendor);
+    LOG_INFO("CPU Vendor: %s", cpu_vendor);
 
     // Get Brand String
-    unsigned int nExIds = 0;
-    char CPUBrandString[0x40];
+    unsigned int n_ex_ids = 0;
+    char cpu_brand_string[0x40];
     // Get the information associated with each extended ID.
     cpu_id(0x80000000, regs);
-    nExIds = regs[0];
-    for (unsigned int i = 0x80000000; i <= nExIds; ++i) {
+    n_ex_ids = regs[0];
+    for (unsigned int i = 0x80000000; i <= n_ex_ids; ++i) {
         cpu_id(i, regs);
         // Interpret CPU brand string
         if (i == 0x80000002)
-            memcpy(CPUBrandString, regs, sizeof(regs));
+            memcpy(cpu_brand_string, regs, sizeof(regs));
         else if (i == 0x80000003)
-            memcpy(CPUBrandString + 16, regs, sizeof(regs));
+            memcpy(cpu_brand_string + 16, regs, sizeof(regs));
         else if (i == 0x80000004)
-            memcpy(CPUBrandString + 32, regs, sizeof(regs));
+            memcpy(cpu_brand_string + 32, regs, sizeof(regs));
     }
     // string includes manufacturer, model and clockspeed
-    LOG_INFO("CPU Type: %s", CPUBrandString);
+    LOG_INFO("CPU Type: %s", cpu_brand_string);
 
     // Logical core count per CPU
     cpu_id(1, regs);
@@ -351,29 +351,29 @@ void print_cpu_info() {
     LOG_INFO("Logical Cores: %d", logical);
     unsigned cores = logical;
 
-    if (strcmp(cpuVendor, "GenuineIntel") == 0) {
+    if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
         // Get DCP cache info
         cpu_id(4, regs);
         cores = ((regs[0] >> 26) & 0x3f) + 1;  // EAX[31:26] + 1
 
-    } else if (strcmp(cpuVendor, "AuthenticAMD") == 0) {
+    } else if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
         // Get NC: Number of CPU cores - 1
         cpu_id(0x80000008, regs);
         cores = ((unsigned)(regs[2] & 0xff)) + 1;  // ECX[7:0] + 1
     } else {
-        LOG_WARNING("Unrecognized processor: %s", cpuVendor);
+        LOG_WARNING("Unrecognized processor: %s", cpu_vendor);
     }
 
     LOG_INFO("Physical Cores: %d", cores);
 
     // Get CPU features
     cpu_id(1, regs);
-    unsigned cpuFeatures = regs[3];  // EDX
+    unsigned cpu_features = regs[3];  // EDX
 
     // Detect hyper-threads
-    bool hyperThreads = cpuFeatures & (1 << 28) && cores < logical;
+    bool hyper_threads = cpu_features & (1 << 28) && cores < logical;
 
-    LOG_INFO("HyperThreaded: %s", (hyperThreads ? "true" : "false"));
+    LOG_INFO("HyperThreaded: %s", (hyper_threads ? "true" : "false"));
 
 // add CPU usage at beginning of Fractal
 #ifdef __APPLE__

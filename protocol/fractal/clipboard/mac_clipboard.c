@@ -30,35 +30,35 @@ void unsafe_destroy_clipboard(){};
 #include "../utils/mac_utils.h"
 #include "clipboard_osx.h"
 
-bool clipboardHasImage;
-bool clipboardHasString;
-bool clipboardHasFiles;
+bool clipboard_has_image;
+bool clipboard_has_string;
+bool clipboard_has_files;
 static int last_clipboard_sequence_number = -1;
 
 static char clipboard_buf[9000000];
 
 bool start_tracking_clipboard_updates() {
     last_clipboard_sequence_number = get_clipboard_changecount();  // to capture the first event
-    clipboardHasImage = false;
-    clipboardHasString = false;
-    clipboardHasFiles = false;
+    clipboard_has_image = false;
+    clipboard_has_string = false;
+    clipboard_has_files = false;
     return true;
 }
 
 bool unsafe_has_clipboard_updated() {
-    bool hasUpdated = false;
+    bool has_updated = false;
 
     int new_clipboard_sequence_number = get_clipboard_changecount();
     if (new_clipboard_sequence_number > last_clipboard_sequence_number) {
         // check if new clipboard is an image or a string
-        clipboardHasImage = clipboard_has_image();
-        clipboardHasString = clipboard_has_string();
-        clipboardHasFiles = clipboard_has_files();
-        hasUpdated = (clipboardHasImage || clipboardHasString ||
-                      clipboardHasFiles);  // should be always set to true in here
+        clipboard_has_image = clipboard_has_image();
+        clipboard_has_string = clipboard_has_string();
+        clipboard_has_files = clipboard_has_files();
+        has_updated = (clipboard_has_image || clipboard_has_string ||
+                      clipboard_has_files);  // should be always set to true in here
         last_clipboard_sequence_number = new_clipboard_sequence_number;
     }
-    return hasUpdated;
+    return has_updated;
 }
 
 ClipboardData* unsafe_get_clipboard() {
@@ -70,7 +70,7 @@ ClipboardData* unsafe_get_clipboard() {
     // do clipboardHasFiles check first because it is more restrictive
     // otherwise gets multiple files confused with string and thinks both are
     // true
-    if (clipboardHasFiles) {
+    if (clipboard_has_files) {
         LOG_INFO("Getting files from clipboard");
         LOG_WARNING("GetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
         return cb;
@@ -106,11 +106,11 @@ ClipboardData* unsafe_get_clipboard() {
         for (size_t i = 0; i < MAX_URLS; i++) {
             // if there are no more file URLs in clipboard, exit loop
             if (*filenames[i]->fullPath != '\0') {
-                char symlinkName[PATH_MAX] = "";
-                strcat(symlinkName, GET_CLIPBOARD);
-                strcat(symlinkName, "/");
-                strcat(symlinkName, filenames[i]->filename);
-                symlink(filenames[i]->fullPath, symlinkName);
+                char symlink_name[PATH_MAX] = "";
+                strcat(symlink_name, GET_CLIPBOARD);
+                strcat(symlink_name, "/");
+                strcat(symlink_name, filenames[i]->filename);
+                symlink(filenames[i]->fullPath, symlink_name);
             } else {
                 break;
             }
@@ -123,7 +123,7 @@ ClipboardData* unsafe_get_clipboard() {
             free(filenames[i]);
         }
 
-    } else if (clipboardHasString) {
+    } else if (clipboard_has_string) {
         // get the string
         const char* clipboard_string = clipboard_get_string();
         // int data_size = strlen(clipboard_string) + 1;  // for null terminator
@@ -136,7 +136,7 @@ ClipboardData* unsafe_get_clipboard() {
         } else {
             LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
         }
-    } else if (clipboardHasImage) {
+    } else if (clipboard_has_image) {
         // malloc some space for the image
         OSXImage* clipboard_image = (OSXImage*)malloc(sizeof(OSXImage));
         memset(clipboard_image, 0, sizeof(OSXImage));
