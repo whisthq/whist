@@ -184,15 +184,17 @@ const UpdateScreen = (props: any) => {
                             justifyContent: "center",
                         }}
                     >
-                        <div style={{ color: "#555555" }}>
+                        <div style={{ display: "flex", color: "#333333" }}>
                             {percentLoaded != 100 && (
                                 <FontAwesomeIcon
                                     icon={faCircleNotch}
                                     spin
                                     style={{
-                                        color: "#5EC4EB",
-                                        marginRight: 4,
+                                        color: "#333333",
+                                        marginRight: 10,
                                         width: 12,
+                                        position: "relative",
+                                        top: 3,
                                     }}
                                 />
                             )}{" "}

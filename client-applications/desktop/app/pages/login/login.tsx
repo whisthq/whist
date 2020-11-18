@@ -168,9 +168,9 @@ const Login = (props: any) => {
                 if (query.error) {
                     // dispatch(loginFailed(true))
                 } else if (query.code) {
+                    setLoggingIn(true)
                     authWindow.removeAllListeners("closed")
                     setImmediate(() => authWindow.close())
-                    setLoggingIn(true)
                     setAWSRegion().then(() => {
                         dispatch(googleLogin(query.code, rememberMe))
                     })
@@ -230,6 +230,7 @@ const Login = (props: any) => {
                     data.refreshToken &&
                     live
                 ) {
+                    setLoggingIn(true)
                     dispatch(
                         updateAuth({
                             username: data.username,
@@ -239,7 +240,6 @@ const Login = (props: any) => {
                     )
                     setRememberMe(true)
                     setUsername(data.username)
-                    setLoggingIn(true)
                     setFetchedCredentials(true)
                     dispatch(rememberMeLogin(data.username))
                 }
