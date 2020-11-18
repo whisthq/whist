@@ -213,8 +213,8 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
 
 
 def ping_instance(ip, port, dpi):
-    data = {"host_port": port, "dpi": dpi}
-    r = requests.post(ip, data=data)
+    data = {"host_port": port, "dpi": dpi, "auth_secret": "testwebserverauthsecret"}
+    r = requests.put(ip, data=data)
     if r.status_code != 200:
         return False, r
     return True, r
