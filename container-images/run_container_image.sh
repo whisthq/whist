@@ -46,6 +46,6 @@ runcontainer() {
 container_id=$(runcontainer $1)
 
 echo "Running container with ID: $container_id"
-docker exec -it $container_id /bin/bash
-docker kill $container_id
-docker rm $container_id
+docker exec -it $container_id /bin/bash || true
+docker kill $container_id || true
+docker rm $container_id || true
