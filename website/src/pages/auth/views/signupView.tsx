@@ -161,21 +161,23 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                     >
                         Let's get started.
                     </div>
-                    {authFlow.signupWarning && authFlow.signupWarning !== "" && (
-                        <div
-                            style={{
-                                width: "100%",
-                                background: "#ff5627",
-                                padding: "15px 20px",
-                                color: "white",
-                                fontSize: 14,
-                                marginTop: 5,
-                                marginBottom: 20,
-                            }}
-                        >
-                            {authFlow.signupWarning}
-                        </div>
-                    )}
+                    {authFlow &&
+                        authFlow.signupWarning &&
+                        authFlow.signupWarning !== "" && (
+                            <div
+                                style={{
+                                    width: "100%",
+                                    background: "#ff5627",
+                                    padding: "15px 20px",
+                                    color: "white",
+                                    fontSize: 14,
+                                    marginTop: 5,
+                                    marginBottom: 20,
+                                }}
+                            >
+                                {authFlow.signupWarning}
+                            </div>
+                        )}
                     <div style={{ marginTop: 13 }}>
                         <Input
                             text="Email"

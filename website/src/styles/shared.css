@@ -306,6 +306,10 @@ a {
     cursor: pointer;
 }
 
+.pointer-hover:hover {
+    cursor: pointer;
+}
+
 .input-form,
 .input-form:focus,
 .input-form:active,
