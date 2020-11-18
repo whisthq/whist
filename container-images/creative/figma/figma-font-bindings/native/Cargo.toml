@@ -8,8 +8,8 @@ build = "build.rs"
 exclude = ["artifacts.json", "index.node"]
 
 description = "Reads fonts in passed directories and return objects of fonts for Figma Font Helper"
-homepage = "https://github.com/fractalcomputers/figma-font-bindings"
-repository = "https://github.com/fractalcomputers/figma-font-bindings"
+homepage = "https://github.com/fractal/figma-font-bindings"
+repository = "https://github.com/fractal/figma-font-bindings"
 
 keywords = ["System", "Fonts", "Figma"]
 categories = ["filesystem"]
