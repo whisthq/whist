@@ -1,6 +1,6 @@
 # Fractal ECS Task Definitions
 
-This repository contains the JSON task definitions for each of the applications we stream via containers on AWS Elastic Container Service. Each application we stream has its dedicated JSON task definition. 
+This repository contains the JSON task definitions for each of the applications we stream via containers on AWS Elastic Container Service. Each application we stream has its dedicated JSON task definition.
 
 You can retrieve the JSON of a task definition directly in the AWS console when manually testing and developing a new task ahead of production release, and then add it here for version-tracking or simply base it on the existing task definitions.
 
@@ -8,13 +8,13 @@ You can retrieve the JSON of a task definition directly in the AWS console when 
 
 All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
 
-| Browsers         | Creative       | Productivity |
-| ---------------- | -------------- | ------------ |
-| Google Chrome    | Blender        | Slack        |
-| Mozilla Firefox  | Blockbench     | Notion       |
-| Brave Browser    | Figma          | Discord      |
-| Sidekick Browser | TextureLab     |              |
-|                  | Gimp           |              |
+| Browsers         | Creative   | Productivity |
+| ---------------- | ---------- | ------------ |
+| Google Chrome    | Blender    | Slack        |
+| Mozilla Firefox  | Blockbench | Notion       |
+| Brave Browser    | Figma      | Discord      |
+| Sidekick Browser | TextureLab |              |
+|                  | Gimp       |              |
 
 ## Generating Task Definitions
 
@@ -28,6 +28,6 @@ Once that done, add the application to the `apps` array in `generate_taskdefs.sh
 
 ## Publishing & Continous Integration
 
-For every push to `main`, all the task definitions specified in `.github/workflows/render-and-deploy.yml`, which should be all task definition JSONs in this repository, will be automatically rendered and deployed to all supported AWS regions listed under `aws-regions` in `.github/workflows/render-and-deploy.yml`. 
+For every push to `main`, all the task definitions specified in `.github/workflows/render-and-deploy.yml`, which should be all task definition JSONs in this repository, will be automatically rendered and deployed to all supported AWS regions listed under `aws-regions` in `.github/workflows/render-and-deploy.yml`.
 
 On top of that, whenever there is a push to `master` on the [`container-images`](https://github.com/fractal/container-images) repository, all task definitions specified in `.github/workflows/render-and-deploy.yml` will be rendered and deployed automatically to update the task definition tags to point to the newly-deployed container images.
