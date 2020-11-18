@@ -1,6 +1,6 @@
 import boto3
 import time
-import json  # so human readable
+import json
 import os
 
 from functools import reduce
@@ -14,10 +14,10 @@ from events import fetch, container_events_by_region, interval_avg
 
 ## TODO
 # we will need to fetch
-
 # 3. DATADOG_API_KEY
 # 4. DATADOG_APP_KEY
 # 5... possibly also the region
+
 from os import getenv
 
 SECRET_BUCKET = "fractal-dev-secrets"
@@ -30,6 +30,7 @@ BUCKET = "fractal-webserver-logs"
 FILEPATH = "{tag}/{region}/"
 FILENAME = "{date}-{label}"
 RECAP = "recap/"
+
 # we store everything in
 # tag/region/date-label
 #   for example:
