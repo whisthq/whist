@@ -73,7 +73,9 @@ def initialize_datadog():
     file_objects = s3.Bucket(SECRET_BUCKET).objects.all()
 
     secrets_file = reduce(
-        lambda acc, file: file.key if file.key == SECRET_FILE else acc, None
+        lambda acc, file: file.key if file.key == SECRET_FILE else acc,
+        file_objects,
+        None,
     )
 
     if secrets_file is None:
@@ -81,7 +83,7 @@ def initialize_datadog():
             "Could not find datadog API secrets in the dev secrets bucket."
         )
 
-    remote = secrets_file.key
+    remote = secrets_file
     local = ".env"
 
     s3.Bucket(SECRET_BUCKET).download_file(remote, local)
@@ -100,7 +102,7 @@ def initialize_datadog():
 def store_averages_to_files(window=DAY, interval=WEEK):
     # this should be allowed via lambda or whatever
     client = boto3.client("s3")
-    initialize_datadog(client)
+    initialize_datadog()
 
     # this will be helpful if we are running a lambda because
     # we want to avoid it going over 15 minutes since otherwise
