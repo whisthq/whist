@@ -26,11 +26,12 @@ function* emailLogin(action: any) {
         yield put(
             AuthPureAction.updateUser({
                 user_id: action.email,
-                name: action.email, // temp so it can be displayed
+                name: json.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
                 emailVerified: json.verified,
                 canLogin: json.can_login,
+                emailVerificationToken: json.verification_token,
             })
         )
         yield put(
@@ -74,11 +75,12 @@ function* googleLogin(action: any) {
                 yield put(
                     AuthPureAction.updateUser({
                         user_id: json.username,
-                        name: json.username, //might want to change this later
+                        name: json.name, //might want to change this later
                         accessToken: json.access_token,
                         refreshToken: json.refreshToken,
                         emailVerified: true,
                         canLogin: json.can_login,
+                        usingGoogleLogin: json.using_google_login,
                     })
                 )
 
@@ -148,8 +150,8 @@ function* emailSignup(action: any) {
         {
             username: action.email,
             password: action.password,
-            name: "", // this will need to be changed later!
-            feedback: "", //this too!
+            name: action.name,
+            feedback: "", //this will need to be changed later!
         },
         ""
     )
@@ -158,7 +160,7 @@ function* emailSignup(action: any) {
         yield put(
             AuthPureAction.updateUser({
                 user_id: action.email,
-                name: action.email, // also temp so it can display
+                name: action.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
                 emailVerificationToken: json.verification_token,
@@ -350,7 +352,7 @@ function* validateResetToken(action: any) {
 }
 
 function* resetPassword(action: any) {
-    yield call(
+    const { response } = yield call(
         apiPost,
         "/account/update",
         {
@@ -361,13 +363,58 @@ function* resetPassword(action: any) {
     )
 
     // TODO do something with the response
-    yield put(
-        AuthPureAction.updateAuthFlow({
-            resetDone: true,
-            passwordResetEmail: null,
-            passwordResetToken: null,
-        })
+    if (response && response.status === 200) {
+        yield put(
+            AuthPureAction.updateAuthFlow({
+                resetDone: true,
+                passwordResetEmail: null,
+                passwordResetToken: null,
+            })
+        )
+    } else {
+        yield put(
+            AuthPureAction.updateAuthFlow({
+                resetDone: false,
+                passwordResetEmail: null,
+                passwordResetToken: null,
+            })
+        )
+    }
+}
+
+function* updatePassword(action: any) {
+    const state = yield select()
+
+    const { json } = yield call(
+        apiPost,
+        "/account/verify_password",
+        {
+            username: state.AuthReducer.user.user_id,
+            password: action.currentPassword,
+        },
+        state.AuthReducer.user.accessToken
     )
+
+    if (json && json.status) {
+        if (json.status === 200) {
+            yield put(
+                AuthPureAction.updateAuthFlow({
+                    passwordVerified: "success",
+                })
+            )
+            yield call(resetPassword, {
+                username: state.AuthReducer.user.user_id,
+                password: action.newPassword,
+                token: state.AuthReducer.user.accessToken,
+            })
+        } else {
+            yield put(
+                AuthPureAction.updateAuthFlow({
+                    passwordVerified: "failed",
+                })
+            )
+        }
+    }
 }
 
 export default function* () {
@@ -386,5 +433,6 @@ export default function* () {
             AuthSideEffect.SEND_VERIFICATION_EMAIL,
             sendVerificationEmail
         ),
+        takeEvery(AuthSideEffect.UPDATE_PASSWORD, updatePassword),
     ])
 }

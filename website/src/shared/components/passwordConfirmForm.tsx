@@ -26,7 +26,7 @@ import "styles/auth.css"
  * Note that we store variables in the parent component since we need to them or actual **logic**
  * We'd like to have logic in one place to make it easier to work with.
  */
-const AuthForm = (props: {
+const PasswordConfirmForm = (props: {
     changePassword: (evt: any) => any
     changeConfirmPassword: (evt: any) => any
     onKeyPress: (evt: any) => any
@@ -35,6 +35,7 @@ const AuthForm = (props: {
     passwordWarning?: string
     confirmPasswordWarning?: string
     isFirstElement?: boolean
+    profile?: boolean
 }) => {
     const {
         changePassword,
@@ -45,15 +46,16 @@ const AuthForm = (props: {
         passwordWarning,
         confirmPasswordWarning,
         isFirstElement,
+        profile,
     } = props
 
     return (
-        <div>
+        <div style={{ width: "100%" }}>
             <div style={{ marginTop: isFirstElement ? 40 : 13 }}>
                 <Input
-                    text="Password"
+                    text={profile ? "New Password" : "Password"}
                     type="password"
-                    placeholder="Password"
+                    placeholder={profile ? "New Password" : "Password"}
                     onChange={changePassword}
                     onKeyPress={onKeyPress}
                     value={password}
@@ -81,4 +83,4 @@ const AuthForm = (props: {
     )
 }
 
-export default AuthForm
+export default PasswordConfirmForm

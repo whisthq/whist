@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { PuffAnimation } from "shared/components/loadingAnimations"
-import PasswordConfirmForm from "pages/auth/components/passwordConfirmForm"
+import PasswordConfirmForm from "shared/components/passwordConfirmForm"
 import {
     resetPassword,
     validateResetToken,
@@ -165,7 +165,7 @@ const ResetView = (props: {
                             fontWeight: "normal",
                         }}
                     >
-                        Please Enter Your New Password {props.user.user_id}
+                        Please Enter Your New Password
                     </h2>
                     <PasswordConfirmForm
                         changePassword={changePassword}
