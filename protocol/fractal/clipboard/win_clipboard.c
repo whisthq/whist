@@ -600,7 +600,4 @@ void unsafe_SetClipboard(ClipboardData* cb) {
 
         CloseClipboard();
     }
-
-    // Update the status so that this specific update doesn't count
-    unsafe_hasClipboardUpdated();
 }

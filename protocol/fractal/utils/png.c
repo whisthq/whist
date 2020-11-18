@@ -697,8 +697,9 @@ int png_char_to_bmp(char* png, int size, AVPacket* pkt) {
     }
 
     uint8_t* png_buffer = (uint8_t*)input[0];
-    if (png_data_to_bmp_data(png_buffer, pkt, &width, &height, &png_format, &bmp_format) != 0)
+    if (png_data_to_bmp_data(png_buffer, pkt, &width, &height, &png_format, &bmp_format) != 0) {
         return -1;
+    }
 
     av_freep(input);
     return 0;
