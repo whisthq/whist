@@ -4,7 +4,7 @@ This repository contains the JSON task definitions for each of the applications 
 
 You can retrieve the JSON of a task definition directly in the AWS console when manually testing and developing a new task ahead of production release, and then add it here for version-tracking or simply base it on the existing task definitions.
 
-### Currently supported applications
+### Supported Applications
 
 All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
 
