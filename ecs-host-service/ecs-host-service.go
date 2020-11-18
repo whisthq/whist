@@ -397,7 +397,7 @@ eventLoop:
 			}
 
 		case serverevent := <-serverEvents:
-			logger.Errorf("unimplemented handling of server event %v", serverevent)
+			logger.Info("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
 		}
 	}
 }

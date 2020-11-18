@@ -15,7 +15,7 @@ all: deps build
 
 build:
 	$(info building in $(BUILD_FOLDER)...)
-	$(GOBUILD) -ldflags "-X 'github.com/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
+	$(GOBUILD) -ldflags "-X 'github.com/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)' -X 'github.com/fractal/ecs-host-service/httpserver.webserver_auth_secret=testwebserverauthsecret'" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
 
 clean:
 	$(GOCLEAN)
