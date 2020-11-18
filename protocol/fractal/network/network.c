@@ -98,7 +98,7 @@ typedef struct {
     unsigned short public_port;
 } stun_entry_t;
 
-typedef enum stun_request_type { ASK_INFO, POST_INFO } stun_request_type_t;
+typedef enum StunRequestType { ASK_INFO, POST_INFO } stun_request_type_t;
 
 typedef struct {
     stun_request_type_t type;
