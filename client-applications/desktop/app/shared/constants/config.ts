@@ -11,10 +11,6 @@ const environment: any = {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
             GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
-<<<<<<< HEAD
-            HASURA_ACCESS_KEY: process.env.REACT_APP_HASURA_STAGING_ACCESS_KEY,
-=======
->>>>>>> 802360971fe967ca25433db5c464e81b436518db
         },
         sentry_env: "development",
         client_download_urls: {
@@ -36,10 +32,6 @@ const environment: any = {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
             GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
-<<<<<<< HEAD
-            HASURA_ACCESS_KEY: process.env.REACT_APP_HASURA_STAGING_ACCESS_KEY,
-=======
->>>>>>> 802360971fe967ca25433db5c464e81b436518db
         },
         sentry_env: "development",
         client_download_urls: {
