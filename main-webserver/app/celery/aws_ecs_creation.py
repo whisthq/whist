@@ -212,9 +212,20 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
     return task_id, curr_ip, curr_network_binding, aeskey
 
 
-def ping_instance(ip, port, dpi):
+def send_dpi_info_to_instance(ip, port, dpi):
+    """
+
+    Args:
+        ip: the IP of the instance hosting the container
+        port: what host port the container has port 32262 mapped to
+        dpi: what DPI the container should be run on
+
+    Returns: a tuple of success/failure and response
+
+    """
     data = {"host_port": port, "dpi": dpi, "auth_secret": "testwebserverauthsecret"}
-    r = requests.put(ip, data=data)
+    instance_port = 4678
+    r = requests.put(f"http://{ip}:{instance_port}", data=data)
     if r.status_code != 200:
         return False, r
     return True, r
@@ -356,7 +367,7 @@ def assign_container(
             )
             raise Ignore
 
-    ping_instance(base_container.ip, base_container.port_32262, base_container.dpi)
+    send_dpi_info_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
     time.sleep(5)
     if not _poll(base_container.container_id):
         fractalLog(
