@@ -21,11 +21,11 @@ all: deps build
 
 checkCI:
 	$(info building in $(BUILD_FOLDER) with CI set to $(CI)...)
-ifeq ($(CI),true)
-# We're building on GHA, so we need to require non-trivial secrets
+	ifeq ($(CI),true)
+	# We're building on GHA, so we need to require non-trivial secrets
 	$(info CI is true)
-ifeq ($(origin WEBSERVER_AUTH_SECRET_DEV),file)
-# This means that a replacement secret was not passed in on the command-line or as an environment variable
+	ifeq ($(origin WEBSERVER_AUTH_SECRET_DEV),file)
+	# This means that a replacement secret was not passed in on the command-line or as an environment variable
 	$(error "WEBSERVER_AUTH_SECRET_DEV is not set, but CI is true")
 endif
 ifeq ($(WEBSERVER_AUTH_SECRET_DEV),)
