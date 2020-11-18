@@ -58,14 +58,14 @@ double get_timer(clock timer) {
     gettimeofday(&t2, NULL);
 
     // compute and print the elapsed time in millisec
-    double elapsedTime = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;  // sec to ms
-    elapsedTime += (t2.tv_usec - timer.tv_usec) / US_IN_MS;          // us to ms
+    double elapsed_time = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;  // sec to ms
+    elapsed_time += (t2.tv_usec - timer.tv_usec) / US_IN_MS;          // us to ms
 
     // printf("elapsed time in ms is: %f\n", elapsedTime);
 
     // standard var to return and convert to seconds since it gets converted to
     // ms in function call
-    double ret = elapsedTime / MS_IN_SECOND;
+    double ret = elapsed_time / MS_IN_SECOND;
 #endif
     return ret;
 }

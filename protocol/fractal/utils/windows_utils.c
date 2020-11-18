@@ -48,7 +48,7 @@ DesktopContext open_new_desktop(WCHAR* desktop_name, bool get_name, bool set_thr
     }
 
     if (set_thread) {
-        setCurrentInputDesktop(new_desktop);
+        setCurrentInputDesktop(init_desktop);
     }
 
     if (get_name) {

@@ -203,14 +203,14 @@ bool start_tracking_clipboard_updates() {
 }
 
 bool unsafe_has_clipboard_updated() {
-    bool hasUpdated = false;
+    bool has_updated = false;
 
     int new_clipboard_sequence_number = GetClipboardSequenceNumber();
     if (new_clipboard_sequence_number > last_clipboard_sequence_number) {
-        hasUpdated = true;
+        has_updated = true;
         last_clipboard_sequence_number = new_clipboard_sequence_number;
     }
-    return hasUpdated;
+    return has_updated;
 }
 
 ClipboardData* unsafe_get_clipboard() {
@@ -464,7 +464,7 @@ HGLOBAL get_global_alloc(void* buf, int len, bool null_char) {
 
     if (lptstr == NULL) {
         LOG_ERROR("getGlobalAlloc GlobalLock failed! Size %d", alloc_len);
-        return hMem;
+        return drem;
     }
 
     memcpy(lptstr, buf, len);
