@@ -141,10 +141,7 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard() {
 
     // If the clipboard has updated since we last checked, or a previous
     // clipboard update is still pending, then we try to update the clipboard
-    bool hcu = hasClipboardUpdated();
-    bool puc = pendingUpdateClipboard();
-    if (hcu || puc) {
-        LOG_INFO("clipboard hcu: %d puc: %d", hcu, puc);
+    if (hasClipboardUpdated() || pendingUpdateClipboard()) {
         if (updating_clipboard) {
             // Clipboard is busy, to set pending update clipboard to true to
             // make sure we keep checking the clipboard state
@@ -181,8 +178,6 @@ int UpdateClipboardThread(void* opaque) {
             LOG_INFO("Trying to set clipboard!");
 
             SetClipboard(clipboard);
-            // clear out update from filling clipboard
-            while (clipboard->type != CLIPBOARD_NONE && !hasClipboardUpdated());
             updating_set_clipboard = false;
         } else if (updating_get_clipboard) {
             LOG_INFO("Trying to get clipboard!");
