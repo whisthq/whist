@@ -41,7 +41,7 @@ for folder in "${includeFolders[@]}"
 do
     for cFilePath in $(find $folder -type f -regex ".*\.\c")
     do
-        if [[ "$cFilePath" != *"desktop/main.c"* ]]
+        if [[ "$cFilePath" != *"desktop/main.c"* && "$cFilePath" != *"server/main.c"* ]]
         then
             filesToFix="${filesToFix} ${cFilePath}"
         fi

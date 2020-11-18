@@ -207,7 +207,7 @@ int runcmd(const char* cmdline, char** response) {
         system(cmdline);
         return 0;
     } else {
-        FILE* pPipe;
+        FILE* p_pipe;
 
         /* Run DIR so that it writes its output to a pipe. Open this
          * pipe with read text attribute so that we can read it
@@ -217,7 +217,7 @@ int runcmd(const char* cmdline, char** response) {
         char* cmd = malloc(strlen(cmdline) + 128);
         snprintf(cmd, strlen(cmdline) + 128, "%s 2>/dev/null", cmdline);
 
-        if ((pPipe = popen(cmd, "r")) == NULL) {
+        if ((p_pipe = popen(cmd, "r")) == NULL) {
             LOG_WARNING("Failed to popen %s", cmd);
             free(cmd);
             return -1;
@@ -230,7 +230,7 @@ int runcmd(const char* cmdline, char** response) {
         dynamic_buffer db = init_dynamic_buffer();
 
         while (true) {
-            char c = (char)fgetc(pPipe);
+            char c = (char)fgetc(p_pipe);
 
             resize_dynamic_buffer(db, current_len + 1);
 
@@ -247,7 +247,7 @@ int runcmd(const char* cmdline, char** response) {
         free(db);
 
         /* Close pipe and print return value of pPipe. */
-        if (feof(pPipe)) {
+        if (feof(p_pipe)) {
             return current_len;
         } else {
             LOG_WARNING("Error: Failed to read the pipe to the end.");

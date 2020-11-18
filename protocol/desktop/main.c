@@ -75,8 +75,8 @@ char user_email[USER_EMAIL_MAXLEN];
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 bool using_stun = true;
 
-int UDP_port = -1;
-int TCP_port = -1;
+int udp_port = -1;
+int tcp_port = -1;
 int client_id = -1;
 int uid;
 
@@ -96,9 +96,9 @@ clock window_resize_timer;
 int receive_packets(void* opaque);
 int send_clipboard_packets(void* opaque);
 
-SocketContext PacketSendContext = {0};
-SocketContext PacketReceiveContext = {0};
-SocketContext PacketTCPContext = {0};
+SocketContext packet_send_context = {0};
+SocketContext packet_receive_context = {0};
+SocketContext packet_tcp_context = {0};
 
 volatile bool connected = true;
 volatile bool exiting = false;
@@ -113,12 +113,12 @@ struct UpdateData {
     bool tried_to_update_dimension;
     bool has_initialized_updated;
     clock last_tcp_check_timer;
-} volatile UpdateData;
+} volatile update_data;
 
 void init_update() {
-    UpdateData.tried_to_update_dimension = false;
+    update_data.tried_to_update_dimension = false;
 
-    start_timer((clock*)&UpdateData.last_tcp_check_timer);
+    start_timer((clock*)&update_data.last_tcp_check_timer);
     start_timer((clock*)&latency_timer);
     ping_id = 1;
     ping_failures = -2;
@@ -142,29 +142,29 @@ void update() {
     // Check for a new clipboard update from the server, if it's been 25ms since
     // the last time we checked the TCP socket, and the clipboard isn't actively
     // busy
-    if (get_timer(UpdateData.last_tcp_check_timer) > 25.0 / MS_IN_SECOND &&
+    if (get_timer(update_data.last_tcp_check_timer) > 25.0 / MS_IN_SECOND &&
         !is_clipboard_synchronizing()) {
         // Check if TCP connction is active
-        int result = ack(&PacketTCPContext);
+        int result = ack(&packet_tcp_context);
         if (result < 0) {
             LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
             // TODO: Should exit or recover protocol if TCP connection is lost
         }
 
         // Receive tcp buffer, if a full packet has been received
-        FractalPacket* tcp_packet = read_tcp_packet(&PacketTCPContext, true);
+        FractalPacket* tcp_packet = read_tcp_packet(&packet_tcp_context, true);
         if (tcp_packet) {
             handle_server_message((FractalServerMessage*)tcp_packet->data,
                                 (size_t)tcp_packet->payload_size);
         }
 
         // Update the last tcp check timer
-        start_timer((clock*)&UpdateData.last_tcp_check_timer);
+        start_timer((clock*)&update_data.last_tcp_check_timer);
     }
 
     // If we haven't yet tried to update the dimension, and the dimensions don't
     // line up, then request the proper dimension
-    if (!UpdateData.tried_to_update_dimension &&
+    if (!update_data.tried_to_update_dimension &&
         (server_width != output_width || server_height != output_height ||
          server_codec_type != output_codec_type)) {
         LOG_INFO("Asking for server dimension to be %dx%d with codec type h%d", output_width,
@@ -177,7 +177,7 @@ void update() {
         SDL_GetDisplayDPI(0, NULL, &dpi, NULL);
         fmsg.dimensions.dpi = (int)dpi;
         send_fmsg(&fmsg);
-        UpdateData.tried_to_update_dimension = true;
+        update_data.tried_to_update_dimension = true;
     }
 
     // If the code has triggered a mbps update, then notify the server of the
@@ -277,7 +277,7 @@ int receive_packets(void* opaque) {
     LOG_INFO("receive_packets running on Thread %p", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
-    SocketContext socketContext = *(SocketContext*)opaque;
+    SocketContext socket_context = *(SocketContext*)opaque;
 
     /****
     Timers
@@ -328,7 +328,7 @@ int receive_packets(void* opaque) {
 
     while (run_receive_packets) {
         if (get_timer(last_ack) > 5.0) {
-            ack(&socketContext);
+            ack(&socket_context);
             start_timer(&last_ack);
         }
 
@@ -391,7 +391,7 @@ int receive_packets(void* opaque) {
             LOG_INFO("DROPPING");
             packet = NULL;
         } else {
-            packet = read_udp_packet(&socketContext);
+            packet = read_udp_packet(&socket_context);
         }
 
         double recvfrom_short_time = get_timer(recvfrom_timer);
@@ -608,7 +608,7 @@ int main(int argc, char* argv[]) {
         // Create thread to receive all packets and handle them as needed
         run_receive_packets = true;
         SDL_Thread* receive_packets_thread =
-            SDL_CreateThread(receive_packets, "ReceivePackets", &PacketReceiveContext);
+            SDL_CreateThread(receive_packets, "ReceivePackets", &packet_receive_context);
 
         // Create thread to send clipboard TCP packets
         run_send_clipboard_packets = true;
@@ -632,8 +632,8 @@ int main(int argc, char* argv[]) {
         // there are no events queued
         while (connected && !exiting && !failed) {
             if (get_timer(ack_timer) > 5) {
-                ack(&PacketSendContext);
-                ack(&PacketTCPContext);
+                ack(&packet_send_context);
+                ack(&packet_tcp_context);
                 start_timer(&ack_timer);
             }
             // if we are running a CI test we run for time_to_run_ci seconds
