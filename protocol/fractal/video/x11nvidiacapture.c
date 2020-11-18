@@ -13,24 +13,24 @@
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
 
 int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec) {
-    NVFBC_SIZE frameSize = {0, 0};
-    NVFBC_BOOL printStatusOnly = NVFBC_FALSE;
+    NVFBC_SIZE frame_size = {0, 0};
+    NVFBC_BOOL print_status_only = NVFBC_FALSE;
 
-    NVFBC_TRACKING_TYPE trackingType = NVFBC_TRACKING_DEFAULT;
-    char outputName[NVFBC_OUTPUT_NAME_LEN];
-    uint32_t outputId = 0;
+    NVFBC_TRACKING_TYPE tracking_type = NVFBC_TRACKING_DEFAULT;
+    char output_name[NVFBC_OUTPUT_NAME_LEN];
+    uint32_t output_id = 0;
 
-    void* libNVFBC = NULL;
-    PNVFBCCREATEINSTANCE NvFBCCreateInstance_ptr = NULL;
+    void* lib_nvfbc = NULL;
+    PNVFBCCREATEINSTANCE nv_fbc_create_instance_ptr = NULL;
 
-    NVFBCSTATUS fbcStatus;
+    NVFBCSTATUS fbc_status;
 
-    NVFBC_CREATE_HANDLE_PARAMS createHandleParams;
-    NVFBC_GET_STATUS_PARAMS statusParams;
-    NVFBC_CREATE_CAPTURE_SESSION_PARAMS createCaptureParams;
+    NVFBC_CREATE_HANDLE_PARAMS create_handle_params;
+    NVFBC_GET_STATUS_PARAMS status_params;
+    NVFBC_CREATE_CAPTURE_SESSION_PARAMS create_capture_params;
 
-    NVFBC_HWENC_CONFIG encoderConfig;
-    NVFBC_TOHWENC_SETUP_PARAMS setupParams;
+    NVFBC_HWENC_CONFIG encoder_config;
+    NVFBC_TOHWENC_SETUP_PARAMS setup_params;
 
     NVFBC_HWENC_CODEC codec;
     if (requested_codec == CODEC_TYPE_H265) {
@@ -46,8 +46,8 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, Codec
     /*
      * Dynamically load the NvFBC library.
      */
-    libNVFBC = dlopen(LIB_NVFBC_NAME, RTLD_NOW);
-    if (libNVFBC == NULL) {
+    lib_nvfbc = dlopen(LIB_NVFBC_NAME, RTLD_NOW);
+    if (lib_nvfbc == NULL) {
         fprintf(stderr, "Unable to open '%s' (%s)\n", LIB_NVFBC_NAME, dlerror());
         return -1;
     }
@@ -56,8 +56,8 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, Codec
      * Resolve the 'NvFBCCreateInstance' symbol that will allow us to get
      * the API function pointers.
      */
-    NvFBCCreateInstance_ptr = (PNVFBCCREATEINSTANCE)dlsym(libNVFBC, "NvFBCCreateInstance");
-    if (NvFBCCreateInstance_ptr == NULL) {
+    nv_fbc_create_instance_ptr = (PNVFBCCREATEINSTANCE)dlsym(lib_nvfbc, "NvFBCCreateInstance");
+    if (nv_fbc_create_instance_ptr == NULL) {
         fprintf(stderr, "Unable to resolve symbol 'NvFBCCreateInstance'\n");
         return -1;
     }
@@ -71,21 +71,21 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, Codec
 
     device->pFn.dwVersion = NVFBC_VERSION;
 
-    fbcStatus = NvFBCCreateInstance_ptr(&device->pFn);
-    if (fbcStatus != NVFBC_SUCCESS) {
-        fprintf(stderr, "Unable to create NvFBC instance (status: %d)\n", fbcStatus);
+    fbc_status = nv_fbc_create_instance_ptr(&device->pFn);
+    if (fbc_status != NVFBC_SUCCESS) {
+        fprintf(stderr, "Unable to create NvFBC instance (status: %d)\n", fbc_status);
         return -1;
     }
 
     /*
      * Create a session handle that is used to identify the client.
      */
-    memset(&createHandleParams, 0, sizeof(createHandleParams));
+    memset(&create_handle_params, 0, sizeof(create_handle_params));
 
-    createHandleParams.dwVersion = NVFBC_CREATE_HANDLE_PARAMS_VER;
+    create_handle_params.dwVersion = NVFBC_CREATE_HANDLE_PARAMS_VER;
 
-    fbcStatus = device->pFn.nvFBCCreateHandle(&device->fbcHandle, &createHandleParams);
-    if (fbcStatus != NVFBC_SUCCESS) {
+    fbc_status = device->pFn.nvFBCCreateHandle(&device->fbcHandle, &create_handle_params);
+    if (fbc_status != NVFBC_SUCCESS) {
         fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return -1;
     }
@@ -96,39 +96,39 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, Codec
      * This call is optional but helps the application decide what it should
      * do.
      */
-    memset(&statusParams, 0, sizeof(statusParams));
+    memset(&status_params, 0, sizeof(status_params));
 
-    statusParams.dwVersion = NVFBC_GET_STATUS_PARAMS_VER;
+    status_params.dwVersion = NVFBC_GET_STATUS_PARAMS_VER;
 
-    fbcStatus = device->pFn.nvFBCGetStatus(device->fbcHandle, &statusParams);
-    if (fbcStatus != NVFBC_SUCCESS) {
+    fbc_status = device->pFn.nvFBCGetStatus(device->fbcHandle, &status_params);
+    if (fbc_status != NVFBC_SUCCESS) {
         fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return -1;
     }
 
-    if (printStatusOnly) {
-        NvFBCUtilsPrintStatus(&statusParams);
+    if (print_status_only) {
+        NvFBCUtilsPrintStatus(&status_params);
         return EXIT_SUCCESS;
     }
 
-    if (statusParams.bCanCreateNow == NVFBC_FALSE) {
+    if (status_params.bCanCreateNow == NVFBC_FALSE) {
         fprintf(stderr,
                 "It is not possible to create a capture session "
                 "on this system.\n");
         return -1;
     }
 
-    if (trackingType == NVFBC_TRACKING_OUTPUT) {
-        if (!statusParams.bXRandRAvailable) {
+    if (tracking_type == NVFBC_TRACKING_OUTPUT) {
+        if (!status_params.bXRandRAvailable) {
             fprintf(stderr, "The XRandR extension is not available.\n");
             fprintf(stderr, "It is therefore not possible to track an RandR output.\n");
             return -1;
         }
 
-        outputId =
-            NvFBCUtilsGetOutputId(statusParams.outputs, statusParams.dwOutputNum, outputName);
-        if (outputId == 0) {
-            fprintf(stderr, "RandR output '%s' not found.\n", outputName);
+        output_id =
+            NvFBCUtilsGetOutputId(status_params.outputs, status_params.dwOutputNum, output_name);
+        if (output_id == 0) {
+            fprintf(stderr, "RandR output '%s' not found.\n", output_name);
             return -1;
         }
     }
@@ -138,21 +138,21 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, Codec
      */
     printf("Creating a capture session of HW compressed frames.\n");
 
-    memset(&createCaptureParams, 0, sizeof(createCaptureParams));
+    memset(&create_capture_params, 0, sizeof(create_capture_params));
 
-    createCaptureParams.dwVersion = NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER;
-    createCaptureParams.eCaptureType = NVFBC_CAPTURE_TO_HW_ENCODER;
-    createCaptureParams.bWithCursor = NVFBC_FALSE;
-    createCaptureParams.frameSize = frameSize;
-    createCaptureParams.bRoundFrameSize = NVFBC_TRUE;
-    createCaptureParams.eTrackingType = trackingType;
+    create_capture_params.dwVersion = NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER;
+    create_capture_params.eCaptureType = NVFBC_CAPTURE_TO_HW_ENCODER;
+    create_capture_params.bWithCursor = NVFBC_FALSE;
+    create_capture_params.frameSize = frame_size;
+    create_capture_params.bRoundFrameSize = NVFBC_TRUE;
+    create_capture_params.eTrackingType = tracking_type;
 
-    if (trackingType == NVFBC_TRACKING_OUTPUT) {
-        createCaptureParams.dwOutputId = outputId;
+    if (tracking_type == NVFBC_TRACKING_OUTPUT) {
+        create_capture_params.dwOutputId = output_id;
     }
 
-    fbcStatus = device->pFn.nvFBCCreateCaptureSession(device->fbcHandle, &createCaptureParams);
-    if (fbcStatus != NVFBC_SUCCESS) {
+    fbc_status = device->pFn.nvFBCCreateCaptureSession(device->fbcHandle, &create_capture_params);
+    if (fbc_status != NVFBC_SUCCESS) {
         fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return -1;
     }
@@ -165,44 +165,44 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, Codec
      * Here, we are configuring a 60 fps capture at a balanced encode / decode
      * time, using a high quality profile.
      */
-    memset(&encoderConfig, 0, sizeof(encoderConfig));
+    memset(&encoder_config, 0, sizeof(encoder_config));
 
-    encoderConfig.dwVersion = NVFBC_HWENC_CONFIG_VER;
+    encoder_config.dwVersion = NVFBC_HWENC_CONFIG_VER;
     if (codec == NVFBC_HWENC_CODEC_H264) {
-        encoderConfig.dwProfile = 77;
+        encoder_config.dwProfile = 77;
     } else {
-        encoderConfig.dwProfile = 1;
+        encoder_config.dwProfile = 1;
     }
-    encoderConfig.dwFrameRateNum = FPS;
-    encoderConfig.dwFrameRateDen = 1;
-    encoderConfig.dwAvgBitRate = bitrate;
-    encoderConfig.dwPeakBitRate = encoderConfig.dwAvgBitRate * 1.5;
-    encoderConfig.dwGOPLength = 99999;
-    encoderConfig.eRateControl = NVFBC_HWENC_PARAMS_RC_CBR;
-    encoderConfig.ePresetConfig = NVFBC_HWENC_PRESET_LOW_LATENCY_HP;
-    encoderConfig.dwQP = 18;
-    encoderConfig.eInputBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
-    encoderConfig.dwVBVBufferSize = encoderConfig.dwAvgBitRate;
-    encoderConfig.dwVBVInitialDelay = encoderConfig.dwVBVBufferSize;
-    encoderConfig.codec = codec;
+    encoder_config.dwFrameRateNum = FPS;
+    encoder_config.dwFrameRateDen = 1;
+    encoder_config.dwAvgBitRate = bitrate;
+    encoder_config.dwPeakBitRate = encoder_config.dwAvgBitRate * 1.5;
+    encoder_config.dwGOPLength = 99999;
+    encoder_config.eRateControl = NVFBC_HWENC_PARAMS_RC_CBR;
+    encoder_config.ePresetConfig = NVFBC_HWENC_PRESET_LOW_LATENCY_HP;
+    encoder_config.dwQP = 18;
+    encoder_config.eInputBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
+    encoder_config.dwVBVBufferSize = encoder_config.dwAvgBitRate;
+    encoder_config.dwVBVInitialDelay = encoder_config.dwVBVBufferSize;
+    encoder_config.codec = codec;
 
     /*
      * Frame headers are included with the frame.  Set this to TRUE for
      * outband header fetching.  Headers can then be fetched using the
      * NvFBCToHwEncGetHeader() API call.
      */
-    encoderConfig.bOutBandSPSPPS = NVFBC_FALSE;
+    encoder_config.bOutBandSPSPPS = NVFBC_FALSE;
 
     /*
      * Set up the capture session.
      */
-    memset(&setupParams, 0, sizeof(setupParams));
+    memset(&setup_params, 0, sizeof(setup_params));
 
-    setupParams.dwVersion = NVFBC_TOHWENC_SETUP_PARAMS_VER;
-    setupParams.pEncodeConfig = &encoderConfig;
+    setup_params.dwVersion = NVFBC_TOHWENC_SETUP_PARAMS_VER;
+    setup_params.pEncodeConfig = &encoder_config;
 
-    fbcStatus = device->pFn.nvFBCToHwEncSetUp(device->fbcHandle, &setupParams);
-    if (fbcStatus != NVFBC_SUCCESS) {
+    fbc_status = device->pFn.nvFBCToHwEncSetUp(device->fbcHandle, &setup_params);
+    if (fbc_status != NVFBC_SUCCESS) {
         fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return -1;
     }
@@ -226,22 +226,22 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     uint64_t t1, t2;
 #endif
 
-    NVFBCSTATUS fbcStatus;
+    NVFBCSTATUS fbc_status;
 
-    NVFBC_TOHWENC_GRAB_FRAME_PARAMS grabParams;
+    NVFBC_TOHWENC_GRAB_FRAME_PARAMS grab_params;
 
-    NVFBC_FRAME_GRAB_INFO frameInfo;
-    NVFBC_HWENC_FRAME_INFO encFrameInfo;
+    NVFBC_FRAME_GRAB_INFO frame_info;
+    NVFBC_HWENC_FRAME_INFO enc_frame_info;
 
 #if SHOW_DEBUG_FRAMES
     t1 = NvFBCUtilsGetTimeInMillis();
 #endif
 
-    memset(&grabParams, 0, sizeof(grabParams));
-    memset(&frameInfo, 0, sizeof(frameInfo));
-    memset(&encFrameInfo, 0, sizeof(encFrameInfo));
+    memset(&grab_params, 0, sizeof(grab_params));
+    memset(&frame_info, 0, sizeof(frame_info));
+    memset(&enc_frame_info, 0, sizeof(enc_frame_info));
 
-    grabParams.dwVersion = NVFBC_TOHWENC_GRAB_FRAME_PARAMS_VER;
+    grab_params.dwVersion = NVFBC_TOHWENC_GRAB_FRAME_PARAMS_VER;
 
     /*
      * Use blocking calls.
@@ -249,23 +249,23 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
      * The application will wait for new frames.  New frames are generated
      * when the mouse cursor moves or when the screen if refreshed.
      */
-    grabParams.dwFlags = NVFBC_TOHWENC_GRAB_FLAGS_NOWAIT;
+    grab_params.dwFlags = NVFBC_TOHWENC_GRAB_FLAGS_NOWAIT;
 
     /*
      * This structure will contain information about the captured frame.
      */
-    grabParams.pFrameGrabInfo = &frameInfo;
+    grab_params.pFrameGrabInfo = &frame_info;
 
     /*
      * This structure will contain information about the encoding of
      * the captured frame.
      */
-    grabParams.pEncFrameInfo = &encFrameInfo;
+    grab_params.pEncFrameInfo = &enc_frame_info;
 
     /*
      * Specify per-frame encoding configuration.  Here, keep the defaults.
      */
-    grabParams.pEncodeParams = NULL;
+    grab_params.pEncodeParams = NULL;
 
     /*
      * This pointer is allocated by the NvFBC library and will
@@ -274,13 +274,13 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
      * Make sure this pointer stays the same during the capture session
      * to prevent memory leaks.
      */
-    grabParams.ppBitStreamBuffer = (void**)&device->frame;
+    grab_params.ppBitStreamBuffer = (void**)&device->frame;
 
     /*
      * Capture a new frame.
      */
-    fbcStatus = device->pFn.nvFBCToHwEncGrabFrame(device->fbcHandle, &grabParams);
-    if (fbcStatus != NVFBC_SUCCESS) {
+    fbc_status = device->pFn.nvFBCToHwEncGrabFrame(device->fbcHandle, &grab_params);
+    if (fbc_status != NVFBC_SUCCESS) {
         fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return -1;
     }
@@ -292,10 +292,10 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
      * the frameInfo structure.
      */
 
-    device->size = encFrameInfo.dwByteSize;
+    device->size = enc_frame_info.dwByteSize;
     // fwrite(frame, 1, frameInfo.dwByteSize, fd);
 
-    device->is_iframe = encFrameInfo.bIsIFrame;
+    device->is_iframe = enc_frame_info.bIsIFrame;
 
 #if SHOW_DEBUG_FRAMES
     t2 = NvFBCUtilsGetTimeInMillis();
@@ -306,26 +306,26 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
            (unsigned long long)(t2 - t1));
 #endif
 
-    device->width = frameInfo.dwWidth;
-    device->height = frameInfo.dwHeight;
+    device->width = frame_info.dwWidth;
+    device->height = frame_info.dwHeight;
 
     return 1;
 }
 
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
-    NVFBCSTATUS fbcStatus;
-    NVFBC_DESTROY_CAPTURE_SESSION_PARAMS destroyCaptureParams;
-    NVFBC_DESTROY_HANDLE_PARAMS destroyHandleParams;
+    NVFBCSTATUS fbc_status;
+    NVFBC_DESTROY_CAPTURE_SESSION_PARAMS destroy_capture_params;
+    NVFBC_DESTROY_HANDLE_PARAMS destroy_handle_params;
 
     /*
      * Destroy capture session, tear down resources.
      */
-    memset(&destroyCaptureParams, 0, sizeof(destroyCaptureParams));
+    memset(&destroy_capture_params, 0, sizeof(destroy_capture_params));
 
-    destroyCaptureParams.dwVersion = NVFBC_DESTROY_CAPTURE_SESSION_PARAMS_VER;
+    destroy_capture_params.dwVersion = NVFBC_DESTROY_CAPTURE_SESSION_PARAMS_VER;
 
-    fbcStatus = device->pFn.nvFBCDestroyCaptureSession(device->fbcHandle, &destroyCaptureParams);
-    if (fbcStatus != NVFBC_SUCCESS) {
+    fbc_status = device->pFn.nvFBCDestroyCaptureSession(device->fbcHandle, &destroy_capture_params);
+    if (fbc_status != NVFBC_SUCCESS) {
         fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return;
     }
@@ -333,12 +333,12 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     /*
      * Destroy session handle, tear down more resources.
      */
-    memset(&destroyHandleParams, 0, sizeof(destroyHandleParams));
+    memset(&destroy_handle_params, 0, sizeof(destroy_handle_params));
 
-    destroyHandleParams.dwVersion = NVFBC_DESTROY_HANDLE_PARAMS_VER;
+    destroy_handle_params.dwVersion = NVFBC_DESTROY_HANDLE_PARAMS_VER;
 
-    fbcStatus = device->pFn.nvFBCDestroyHandle(device->fbcHandle, &destroyHandleParams);
-    if (fbcStatus != NVFBC_SUCCESS) {
+    fbc_status = device->pFn.nvFBCDestroyHandle(device->fbcHandle, &destroy_handle_params);
+    if (fbc_status != NVFBC_SUCCESS) {
         fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return;
     }

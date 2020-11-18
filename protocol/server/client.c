@@ -33,7 +33,7 @@ int init_clients(void) {
         clients[id].UDP_port = BASE_UDP_PORT + id;
         clients[id].TCP_port = BASE_TCP_PORT + id;
 
-        memcpy(&(clients[id].mouse.color), &(MOUSE_COLORS[id]), sizeof(RGB_Color));
+        memcpy(&(clients[id].mouse.color), &(mouse_colors[id]), sizeof(RGB_Color));
     }
     return 0;
 }
