@@ -141,7 +141,7 @@ func processSetContainerDPIRequest(w http.ResponseWriter, r *http.Request, queue
 // Function to verify the type (method) of a request
 func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) error {
 	if r.Method != method {
-		err := logger.MakeError("Received a request to URL %s of type %s, but it should have been type %s", r.URL, r.Method, method)
+		err := logger.MakeError("Received a request from %s to URL %s of type %s, but it should have been type %s", r.Host, r.URL, r.Method, method)
 		logger.Error(err)
 
 		http.Error(w, logger.Sprintf("Bad request type. Expected %s, got %s", method, r.Method), http.StatusBadRequest)
@@ -171,7 +171,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return logger.MakeError("Error getting body from request to URL %s: %s", r.URL, err)
+		return logger.MakeError("Error getting body from request from %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	// Extract only the auth_secret field from a raw JSON unmarshalling that
@@ -180,13 +180,13 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	err = json.Unmarshal(body, &rawmap)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return logger.MakeError("Error raw-unmarshalling JSON body sent to URL %s: %s", r.URL, err)
+		return logger.MakeError("Error raw-unmarshalling JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
 	}
 	var requestAuthSecret string
 	err = json.Unmarshal(*rawmap["auth_secret"], &requestAuthSecret)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return logger.MakeError("Error getting auth_secret from JSON body sent to URL %s: %s", r.URL, err)
+		return logger.MakeError("Error getting auth_secret from JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	// Actually verify authentication. Note that we check the length of the token
@@ -200,14 +200,14 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 			[]byte(requestAuthSecret),
 		) == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return logger.MakeError("Received a bad auth_secret at URL %s", r.URL)
+		return logger.MakeError("Received a bad auth_secret from %s to URL %s", r.Host, r.URL)
 	}
 
 	// Now, actually do the unmarshalling into the right object type
 	err = json.Unmarshal(body, s)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return logger.MakeError("Could not fully unmarshal the body of a request sent to URL %s: %s", r.URL, err)
+		return logger.MakeError("Could not fully unmarshal the body of a request sent from %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	// Set up the result channel
