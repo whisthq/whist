@@ -38,18 +38,6 @@ const debugLog = (callback: any) => {
     }
 }
 
-// const installExtensions = async () => {
-//     const installer = require("electron-devtools-installer")
-//     const forceDownload = !!process.env.UPGRADE_EXTENSIONS
-//     const extensions = ["REACT_DEVELOPER_TOOLS", "REDUX_DEVTOOLS"]
-
-//     return Promise.all(
-//         extensions.map((name) =>
-//             installer.default(installer[name], forceDownload)
-//         )
-//     ).catch(debugLog)
-// }
-
 const createWindow = async () => {
     const os = require("os")
     if (os.platform() === "win32") {
@@ -150,13 +138,26 @@ app.on("window-all-closed", () => {
     }
 })
 
-app.on("ready", createWindow)
+const gotTheLock = app.requestSingleInstanceLock()
 
-app.on("activate", () => {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (mainWindow === null) createWindow()
-})
+if (!gotTheLock) {
+    app.quit()
+} else {
+    app.on("second-instance", () => {
+        // Someone tried to run a second instance, we should focus our window.
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore()
+            mainWindow.focus()
+        }
+    })
+    app.on("ready", createWindow)
+
+    app.on("activate", () => {
+        // On macOS it's common to re-create a window in the app when the
+        // dock icon is clicked and there are no other windows open.
+        if (mainWindow === null) createWindow()
+    })
+}
 
 app.setAsDefaultProtocolClient("fractal")
 

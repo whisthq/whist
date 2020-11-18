@@ -13,9 +13,9 @@ import {
     faUser,
     faLock,
 } from "@fortawesome/free-solid-svg-icons"
+// import { FaGoogle } from "react-icons/fa"
 
-import { FaGoogle } from "react-icons/fa"
-
+import { history } from "store/configureStore"
 import { updateClient, updateAuth } from "store/actions/pure"
 import {
     googleLogin,
@@ -103,7 +103,6 @@ const Login = (props: any) => {
                     regions.stdout.setEncoding("utf8")
 
                     regions.stdout.on("data", (data: any) => {
-                        // console.log(data)
                         // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
                         const line = data.split(/\r?\n/)[0].replace(/  +/g, " ")
                         const items = line.split(" ")
@@ -277,6 +276,17 @@ const Login = (props: any) => {
             })
         }
     }, [launches])
+
+    useEffect(() => {
+        if (
+            !launchImmediately &&
+            props.username &&
+            props.accessToken &&
+            props.accessToken !== ""
+        ) {
+            history.push("/dashboard")
+        }
+    }, [props.username, accessToken])
 
     return (
         <div className={styles.container} data-tid="container">

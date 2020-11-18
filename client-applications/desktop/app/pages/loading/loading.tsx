@@ -11,7 +11,7 @@ import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/configureStore"
 import { execChmodUnix } from "shared/utils/exec"
 
-const UpdateScreen = (props: any) => {
+const Loading = (props: any) => {
     const {
         dispatch,
         os,
@@ -225,4 +225,4 @@ function mapStateToProps(state: any) {
     }
 }
 
-export default connect(mapStateToProps)(UpdateScreen)
+export default connect(mapStateToProps)(Loading)
