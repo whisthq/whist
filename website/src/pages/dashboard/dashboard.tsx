@@ -118,7 +118,7 @@ const Dashboard = (props: {
     ])
 
     useEffect(() => {
-        if (data && data.users && data.users[0]) {
+        if (data && data.users && data.users[0] && user.user_id) {
             toggleCanLogin(
                 data.users[0].can_login ||
                     user.user_id.includes("@tryfractal.com")
