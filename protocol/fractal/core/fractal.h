@@ -160,7 +160,7 @@ typedef enum CodecType {
     CODEC_TYPE_UNKNOWN = 0,
     CODEC_TYPE_H264 = 264,
     CODEC_TYPE_H265 = 265,
-    __CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
+    CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
 } CodecType;
 
 typedef enum FractalCursorID {
@@ -327,7 +327,7 @@ typedef enum FractalMouseButton {
     MOUSE_R = 3,       ///< Right mouse button.
     MOUSE_X1 = 4,      ///< Extra mouse button 1.
     MOUSE_X2 = 5,      ///< Extra mouse button 2.
-    __MOUSE_MAKE_32 = 0x7FFFFFFF,
+    MOUSE_MAKE_32 = 0x7FFFFFFF,
 } FractalMouseButton;
 
 typedef struct RGB_Color {
