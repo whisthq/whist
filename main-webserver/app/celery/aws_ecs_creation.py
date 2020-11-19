@@ -532,28 +532,34 @@ def create_new_container(
             label=str(task_id),
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
+        if username != "Unassigned":
+            if not _poll(container.container_id):
+                fractalLog(
+                    function="create_new_container",
+                    label=str(task_id),
+                    logs="container failed to ping",
+                )
+                self.update_state(
+                    state="FAILURE",
+                    meta={"msg": "Container {} failed to ping.".format(task_id)},
+                )
 
-        if not _poll(container.container_id):
+                raise Ignore
+
+            # pylint: disable=line-too-long
             fractalLog(
                 function="create_new_container",
                 label=str(task_id),
-                logs="container failed to ping",
-            )
-            self.update_state(
-                state="FAILURE",
-                meta={"msg": "Container {} failed to ping.".format(task_id)},
+                logs=f"""container pinged!  To connect, run:
+    desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
+                """,
             )
 
-            raise Ignore
-
-        # pylint: disable=line-too-long
-        fractalLog(
-            function="create_new_container",
-            label=str(task_id),
-            logs=f"""container pinged!  To connect, run:
-desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
-            """,
-        )
+        if not current_app.testing:
+            task_time_taken = time.time() - task_start_time
+            datadogEvent_containerCreate(
+                container.container_id, cluster_name, username=username, time_taken=task_time_taken
+            )
 
         return user_container_schema.dump(container)
     else:
@@ -567,12 +573,6 @@ desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_b
             meta={"msg": "Error updating container {} in SQL.".format(task_id)},
         )
         raise Ignore
-
-    if not current_app.testing:
-        task_time_taken = time.time() - task_start_time
-        datadogEvent_containerCreate(
-            container.container_id, cluster_name, username=username, time_taken=task_time_taken
-        )
 
 
 @shared_task(bind=True)
