@@ -4,20 +4,18 @@
 
 This repository contains the code for containerizing the various applications that Fractal streams. The base Dockerfile.20 running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
 
-**Supported Applications**
+### Supported Applications
 
--   Google Chrome
--   Mozilla Firefox
--   Brave Browser
--   Sidekick Browser
--   Blender
--   Blockbench
--   Figma
--   Gimp
--   Slack
--   Discord
--   Notion
--   Lightworks
+All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
+
+| Browsers         | Creative   | Productivity |
+| ---------------- | ---------- | ------------ |
+| Google Chrome    | Blender    | Slack        |
+| Mozilla Firefox  | Blockbench | Notion       |
+| Brave Browser    | Figma      | Discord      |
+| Sidekick Browser | TextureLab |              |
+|                  | Gimp       |              |
+|                  | Lightworks |              |
 
 See [Adding New Applications](#Adding-New-Applications) for details on how to add support for new applications and integrate them with our continuous delivery pipeline.
 
