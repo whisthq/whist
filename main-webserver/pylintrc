@@ -24,7 +24,6 @@ ignore=CVS,
        sql_table_blueprint.py,
        stripe_blueprint.py,
        stripe_mail.py,
-       stripe_payments.py,
        stripe_post.py
 
 # Add files or directories matching the regex patterns to the blacklist. The

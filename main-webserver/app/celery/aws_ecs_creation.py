@@ -561,6 +561,12 @@ def create_new_container(
                 container.container_id, cluster_name, username=username, time_taken=task_time_taken
             )
 
+        if not current_app.testing:
+            task_time_taken = time.time() - task_start_time
+            datadogEvent_containerCreate(
+                container.container_id, cluster_name, username=username, time_taken=task_time_taken
+            )
+
         return user_container_schema.dump(container)
     else:
         fractalLog(
@@ -648,6 +654,11 @@ def create_new_cluster(
                 label=cluster_name,
                 logs=f"Successfully created cluster {cluster_name}",
             )
+
+            if not current_app.testing:
+                task_time_taken = time.time() - task_start_time
+                datadogEvent_clusterCreate(cluster_name, time_taken=task_time_taken)
+
             return cluster
         else:
             fractalLog(
@@ -675,10 +686,6 @@ def create_new_cluster(
             state="FAILURE",
             meta={"msg": f"Encountered error: {error}"},
         )
-
-    if not current_app.testing:
-        task_time_taken = time.time() - task_start_time
-        datadogEvent_clusterCreate(cluster_name, time_taken=task_time_taken)
 
 
 @shared_task(bind=True)

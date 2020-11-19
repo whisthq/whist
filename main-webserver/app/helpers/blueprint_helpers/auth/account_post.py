@@ -80,7 +80,7 @@ def loginHelper(email, password):
     }
 
 
-def registerHelper(username, password, name, reason_for_signup):
+def registerHelper(username, password, name, reason_for_signup, can_login):
     """Stores username and password in the database and generates user metadata, like their
     user ID and promo code
 
@@ -117,6 +117,7 @@ def registerHelper(username, password, name, reason_for_signup):
         reason_for_signup=reason_for_signup,
         release_stage=50,
         created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
+        can_login=can_login,
     )
 
     status = SUCCESS
@@ -304,4 +305,17 @@ def autoLoginHelper(email):
             "refresh_token": None,
             "verification_token": None,
             "name": None,
+        }
+
+
+def verifyPasswordHelper(email, password):
+    user = User.query.get(email)
+
+    if not user or not check_value(user.password, password):
+        return {
+            "status": UNAUTHORIZED,
+        }
+    else:
+        return {
+            "status": SUCCESS,
         }

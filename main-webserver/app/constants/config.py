@@ -52,11 +52,10 @@ except:
     DATABASE_URL = os.getenv(app_to_env["dev-webserver"]["database"])
 
 # Stripe
-STRIPE_SECRET = getEnvVar("STRIPE_SECRET")
-HOURLY_PLAN_ID = getEnvVar("HOURLY_PLAN_ID")
-MONTHLY_PLAN_ID = getEnvVar("MONTHLY_PLAN_ID")
-UNLIMITED_PLAN_ID = getEnvVar("UNLIMITED_PLAN_ID")
-ENDPOINT_SECRET = getEnvVar("ENDPOINT_SECRET")
+try:
+    STRIPE_SECRET = getEnvVar("STRIPE_RESTRICTED")  # this one has less permissions basically
+except:
+    STRIPE_SECRET = getEnvVar("STRIPE_SECRET")
 
 # Auth
 JWT_SECRET_KEY = getEnvVar("JWT_SECRET_KEY")
