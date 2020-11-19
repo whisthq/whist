@@ -14,8 +14,8 @@ RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
 RUN apt-get update && apt-get clean
 RUN dpkg --configure -a && apt-get install -f
 RUN apt-get install -y make gcc g++
-RUN apt-get install -y cmake cppcheck sudo clang-format
-RUN apt-get install -y clang-format
+RUN apt install cmake=3.18.4-0kitware1ubuntu20.04.1 cmake-data=3.18.4-0kitware1ubuntu20.04.1 --allow-downgrades
+RUN apt-get install -y cppcheck sudo clang-format
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 ADD desktop/linux-client-setup.sh /
