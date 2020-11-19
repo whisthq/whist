@@ -35,6 +35,7 @@ jobs:
                     - fractal/creative/blockbench
                     - fractal/creative/texturelab
                     - fractal/creative/figma
+                    - fractal/creative/lightworks
 
         steps:
             - name: Checkout git repository
