@@ -15,6 +15,7 @@ All of the following applications are based off of the **Ubuntu 20.04 Base Image
 | Brave Browser    | Figma      | Discord      |
 | Sidekick Browser | TextureLab |              |
 |                  | Gimp       |              |
+|                  | Lightworks |              |
 
 ## Generating Task Definitions
 
