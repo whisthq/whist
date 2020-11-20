@@ -304,9 +304,9 @@ const int linux_mouse_buttons[6] = {
 #define GetLinuxKeyCode(sdl_keycode) linux_keycodes[sdl_keycode]
 #define GetLinuxMouseButton(sdl_button) linux_mouse_buttons[sdl_button]
 
-input_device_t* CreateInputDevice() {
-    input_device_t* input_device = malloc(sizeof(input_device_t));
-    memset(input_device, 0, sizeof(input_device_t));
+InputDevice* CreateInputDevice() {
+    InputDevice* input_device = malloc(sizeof(InputDevice));
+    memset(input_device, 0, sizeof(InputDevice));
 
     // create event writing FDs
 
@@ -407,7 +407,7 @@ failure:
     return NULL;
 }
 
-void DestroyInputDevice(input_device_t* input_device) {
+void DestroyInputDevice(InputDevice* input_device) {
     if (!input_device) {
         LOG_INFO("DestroyInputDevice: Nothing to do, device is null!");
         return;
@@ -433,7 +433,7 @@ void EmitInputEvent(int fd, int type, int code, int val) {
     write(fd, &ie, sizeof(ie));
 }
 
-int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_keycode) {
+int GetKeyboardModifierState(InputDevice* input_device, FractalKeycode sdl_keycode) {
     switch (sdl_keycode) {
         case FK_CAPSLOCK:
             return input_device->caps_lock;
@@ -445,12 +445,12 @@ int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_ke
     }
 }
 
-int GetKeyboardKeyState(input_device_t* input_device, FractalKeycode sdl_keycode) {
+int GetKeyboardKeyState(InputDevice* input_device, FractalKeycode sdl_keycode) {
     return input_device->keyboard_state[sdl_keycode];
     return -1;
 }
 
-int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed) {
+int EmitKeyEvent(InputDevice* input_device, FractalKeycode sdl_keycode, int pressed) {
     EmitInputEvent(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(sdl_keycode), pressed);
     EmitInputEvent(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
     input_device->keyboard_state[sdl_keycode] = pressed;
@@ -465,7 +465,7 @@ int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int p
     return 0;
 }
 
-int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int relative) {
+int EmitMouseMotionEvent(InputDevice* input_device, int32_t x, int32_t y, int relative) {
     if (relative) {
         EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_X, x);
         EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_Y, y);
@@ -483,13 +483,13 @@ int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int
     return 0;
 }
 
-int EmitMouseButtonEvent(input_device_t* input_device, FractalMouseButton button, int pressed) {
+int EmitMouseButtonEvent(InputDevice* input_device, FractalMouseButton button, int pressed) {
     EmitInputEvent(input_device->fd_relmouse, EV_KEY, GetLinuxMouseButton(button), pressed);
     EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     return 0;
 }
 
-int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y) {
+int EmitMouseWheelEvent(InputDevice* input_device, int32_t x, int32_t y) {
     EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x);
     EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_WHEEL, y);
     EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);

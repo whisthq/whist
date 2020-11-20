@@ -71,7 +71,7 @@ Public Functions
  *
  * @returns                        The initialized FFmpeg audio encoder struct
  */
-audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate);
+AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate);
 
 /**
  * @brief                          Feeds raw audio data to the FIFO queue, which
@@ -84,7 +84,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate);
  *                                 encoder FIFO queue to encode
  * @param len                      Length of the buffer of data to intake
  */
-void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data, int len);
+void audio_encoder_fifo_intake(AudioEncoder* encoder, uint8_t* data, int len);
 
 /**
  * @brief                          Encodes an AVFrame of audio to AAC format
@@ -94,7 +94,7 @@ void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data, int len)
  *
  * @returns                        0 if success, else -1
  */
-int audio_encoder_encode_frame(audio_encoder_t* encoder);
+int audio_encoder_encode_frame(AudioEncoder* encoder);
 
 /**
  * @brief                          Destroys and frees the FFmpeg audio encoder
@@ -102,6 +102,6 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder);
  * @param encoder                  The audio encoder struct to destroy and free
  *                                 the memory of
  */
-void destroy_audio_encoder(audio_encoder_t* encoder);
+void destroy_audio_encoder(AudioEncoder* encoder);
 
 #endif  // ENCODE_H

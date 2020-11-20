@@ -35,7 +35,7 @@ extern volatile CodecType client_codec_type;
 
 extern volatile bool wants_iframe;
 extern volatile bool update_encoder;
-extern input_device_t *input_device;
+extern InputDevice *input_device;
 
 extern int host_id;
 

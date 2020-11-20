@@ -93,6 +93,6 @@ void open_window();
  *
  * @returns                        Return false is succeeded, else true
  */
-bool init_desktop(input_device_t* input_device, char* vm_password);
+bool init_desktop(InputDevice* input_device, char* vm_password);
 
 #endif  // WINDOWS_UTILS_H
