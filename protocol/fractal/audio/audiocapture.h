@@ -42,7 +42,7 @@ Public Functions
  *
  * @returns                        The initialized audio device struct
  */
-audio_device_t* create_audio_device();
+AudioDevice* create_audio_device();
 
 /**
  * @brief                          Set the audio device to start capturing audio
@@ -50,7 +50,7 @@ audio_device_t* create_audio_device();
  * @param audio_device             The audio device that gets started to capture
  *                                 audio
  */
-void start_audio_device(audio_device_t* audio_device);
+void start_audio_device(AudioDevice* audio_device);
 
 /**
  * @brief                          Destroy the audio device sutrct and free its
@@ -58,7 +58,7 @@ void start_audio_device(audio_device_t* audio_device);
  *
  * @param audio_device             The audio device that gets destroyed
  */
-void destroy_audio_device(audio_device_t* audio_device);
+void destroy_audio_device(AudioDevice* audio_device);
 
 /**
  * @brief                          Request the next packet of audio data from
@@ -67,7 +67,7 @@ void destroy_audio_device(audio_device_t* audio_device);
  * @param audio_device             The audio device that captures the audio
  *                                 stream
  */
-void get_next_packet(audio_device_t* audio_device);
+void get_next_packet(AudioDevice* audio_device);
 
 /**
  * @brief                          Check if the next packet of audio data is
@@ -79,7 +79,7 @@ void get_next_packet(audio_device_t* audio_device);
  * @returns                        True if the next packet of audio data is
  *                                 available, else False
  */
-bool packet_available(audio_device_t* audio_device);
+bool packet_available(AudioDevice* audio_device);
 
 /**
  * @brief                          Get the buffer holding the next packet of
@@ -88,7 +88,7 @@ bool packet_available(audio_device_t* audio_device);
  * @param audio_device             The audio device that captures the audio
  *                                 stream
  */
-void get_buffer(audio_device_t* audio_device);
+void get_buffer(AudioDevice* audio_device);
 
 /**
  * @brief                          Release the buffer holding the next packet of
@@ -97,7 +97,7 @@ void get_buffer(audio_device_t* audio_device);
  * @param audio_device             The audio device that captures the audio
  *                                 stream
  */
-void release_buffer(audio_device_t* audio_device);
+void release_buffer(AudioDevice* audio_device);
 
 /**
  * @brief                          Wait for the next packet (only on ALSA, since
@@ -106,6 +106,6 @@ void release_buffer(audio_device_t* audio_device);
  * @param audio_device             The audio device that captures the audio
  *                                 stream
  */
-void wait_timer(audio_device_t* audio_device);
+void wait_timer(AudioDevice* audio_device);
 
 #endif  // AUDIO_CAPTURE_H

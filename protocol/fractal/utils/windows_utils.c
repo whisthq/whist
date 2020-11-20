@@ -70,7 +70,7 @@ void open_window() {
 }
 
 // Log into the desktop, and block until the login process finishes
-bool init_desktop(input_device_t* input_device, char* vm_password) {
+bool init_desktop(InputDevice* input_device, char* vm_password) {
     DesktopContext lock_screen;
 
     open_window();
