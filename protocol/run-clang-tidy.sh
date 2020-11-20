@@ -69,20 +69,16 @@ do
     yq d -i $yamlFolder/$fixesFilename $pathExpression
 done
 
+echo "-----> CHECK PROPOSED REPLACEMENTS IN ${yamlFolder}/${fixesFilename} <-----"
+echo "----->       THEN TYPE 'c' TO REPLACE. ANY OTHER KEY WILL QUIT       <-----"
 
-# old .clang-tidy
-# Checks: '-*,readability-identifier-naming'
-# CheckOptions: [
-#     {key: readability-identifier-naming.FunctionCase, value: lower_case},
-#     {key: readability-identifier-naming.VariableCase, value: lower_case},
-#     {key: readability-identifier-naming.EnumCase, value: CamelCase},
-#     {key: readability-identifier-naming.EnumConstantCase, value: UPPER_CASE},
-#     {key: readability-identifier-naming.StructCase, value: CamelCase},
-#     {key: readability-identifier-naming.TypedefCase, value: CamelCase}
-# ]
+read -n 1 -p "'c' to replace, ano other key to quit without replacing: " k
+if [[ $k = c ]]
+then
+    echo "Running clang-apply-replacements"
+    # run clang-tidy noted replacements
+    clang-apply-replacements $yamlFolder
 
-# # run clang-tidy noted replacements
-# clang-apply-replacements $yamlFolder
-
-# cleanup
-# rm -rf $yamlFolder
+    # cleanup
+    rm -rf $yamlFolder
+fi

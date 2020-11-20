@@ -202,23 +202,23 @@ static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id, 
     if (!is_controlling) return 0;
     // mprintf("Audio NACK requested for: ID %d Index %d\n",
     // fmsg->nack_data.id, fmsg->nack_data.index);
-    FractalPacket *AudioPacket =
+    FractalPacket *audio_packet =
         &audio_buffer[fmsg->nack_data.id % AUDIO_BUFFER_SIZE][fmsg->nack_data.index];
     int len =
         audio_buffer_packet_len[fmsg->nack_data.id % AUDIO_BUFFER_SIZE][fmsg->nack_data.index];
-    if (AudioPacket->id == fmsg->nack_data.id) {
+    if (audio_packet->id == fmsg->nack_data.id) {
         LOG_INFO(
             "NACKed audio packet %d found of length %d. "
             "Relaying!",
             fmsg->nack_data.id, len);
-        replay_packet(&(clients[client_id].UDP_context), AudioPacket, len);
+        replay_packet(&(clients[client_id].UDP_context), audio_packet, len);
     }
     // If we were asked for an invalid index, just ignore it
-    else if (fmsg->nack_data.index < AudioPacket->num_indices) {
+    else if (fmsg->nack_data.index < audio_packet->num_indices) {
         LOG_WARNING(
             "NACKed audio packet %d %d not found, ID %d %d was "
             "located instead.",
-            fmsg->nack_data.id, fmsg->nack_data.index, AudioPacket->id, AudioPacket->index);
+            fmsg->nack_data.id, fmsg->nack_data.index, audio_packet->id, audio_packet->index);
     }
     return 0;
 }
