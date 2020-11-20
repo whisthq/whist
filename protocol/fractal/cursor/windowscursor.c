@@ -101,7 +101,7 @@ FractalCursorImage get_current_cursor() {
     GetCursorInfo(&pci);
 
     FractalCursorImage image = {0};
-    image = GetCursorImage(&pci);
+    image = get_cursor_image(&pci);
 
     image.cursor_state = pci.flags;
 

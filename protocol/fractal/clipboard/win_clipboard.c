@@ -456,15 +456,15 @@ HGLOBAL get_global_alloc(void* buf, int len, bool null_char) {
 
     int alloc_len = null_char ? len + 1 : len;
     HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, alloc_len);
-    if (!drem) {
+    if (!hMem) {
         LOG_ERROR("GlobalAlloc failed!");
-        return drem;
+        return hMem;
     }
     LPTSTR lptstr = GlobalLock(hMem);
 
     if (lptstr == NULL) {
-        LOG_ERROR("getGlobalAlloc GlobalLock failed! Size %d", alloc_len);
-        return drem;
+        LOG_ERROR("get_global_alloc GlobalLock failed! Size %d", alloc_len);
+        return hMem;
     }
 
     memcpy(lptstr, buf, len);
@@ -489,7 +489,7 @@ void unsafe_set_clipboard(ClipboardData* cb) {
             LOG_INFO("SetClipboard to Text: %s", cb->data);
             if (cb->size > 0) {
                 cf_type = CF_TEXT;
-                hMem = getGlobalAlloc(cb->data, cb->size, true);  // add null char at end (true)
+                hMem = get_global_alloc(cb->data, cb->size, true);  // add null char at end (true)
             }
             break;
         case CLIPBOARD_IMAGE:
@@ -508,7 +508,7 @@ void unsafe_set_clipboard(ClipboardData* cb) {
                 memcpy(cb->data, pkt.data + 14, pkt.size - 14);
                 cb->size = pkt.size - 14;
                 cf_type = CF_DIB;
-                hMem = getGlobalAlloc(cb->data, cb->size, false);  // no null char at end (false)
+                hMem = get_global_alloc(cb->data, cb->size, false);  // no null char at end (false)
 
                 av_packet_unref(&pkt);
             }
@@ -578,7 +578,7 @@ void unsafe_set_clipboard(ClipboardData* cb) {
             total_len += sizeof(L'\0');
 
             cf_type = CF_HDROP;
-            hMem = getGlobalAlloc(drop, total_len);
+            hMem = get_global_alloc(drop, total_len);
 
             break;
             */

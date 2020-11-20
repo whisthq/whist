@@ -256,7 +256,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
 
     get_bitmap_screenshot(device);
 
-    device->screenshot.staging_texture = CreateTexture(device);
+    device->screenshot.staging_texture = create_texture(device);
 
     return 0;
 }
@@ -446,7 +446,7 @@ void destroy_capture_device(CaptureDevice* device) {
 
     hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
-    ReleaseScreenshot(&device->screenshot);
+    release_screenshot(&device->screenshot);
 
     if (device->screenshot.staging_texture != NULL) {
         device->screenshot.staging_texture->lpVtbl->Release(device->screenshot.staging_texture);
