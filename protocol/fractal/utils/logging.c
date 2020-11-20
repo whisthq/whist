@@ -629,7 +629,7 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS *ExceptionInfo) {
     /* If this is a stack overflow then we can't walk the stack, so just show
       where the error happened */
     if (EXCEPTION_STACK_OVERFLOW != ExceptionInfo->ExceptionRecord->ExceptionCode) {
-        PrintStacktrace();
+        print_stacktrace();
     } else {
     }
 

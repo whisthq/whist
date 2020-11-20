@@ -48,13 +48,13 @@ DesktopContext open_new_desktop(WCHAR* desktop_name, bool get_name, bool set_thr
     }
 
     if (set_thread) {
-        setCurrentInputDesktop(init_desktop);
+        set_current_input_desktop(init_desktop);
     }
 
     if (get_name) {
         TCHAR szName[1000];
         DWORD dwLen;
-        GetUserObjectInformationW(new_desktop, UOI_NAME, szName, sizeof(tzname), &dwLen);
+        GetUserObjectInformationW(new_desktop, UOI_NAME, szName, sizeof(szName), &dwLen);
         memcpy(context.desktop_name, szName, dwLen);
     }
 
@@ -74,7 +74,7 @@ bool init_desktop(InputDevice* input_device, char* vm_password) {
     DesktopContext lock_screen;
 
     open_window();
-    lock_screen = OpenNewDesktop(NULL, true, true);
+    lock_screen = open_new_desktop(NULL, true, true);
 
     bool failed = false;
     int attempt = 0;
@@ -92,7 +92,7 @@ bool init_desktop(InputDevice* input_device, char* vm_password) {
 
         FractalKeycode keycodes1[] = {FK_SPACE, FK_BACKSPACE, FK_BACKSPACE};
 
-        InputKeycodes(input_device, keycodes1, 3);
+        input_keycodes(input_device, keycodes1, 3);
 
         Sleep(500);
 
@@ -118,7 +118,7 @@ bool init_desktop(InputDevice* input_device, char* vm_password) {
         }
 
         // Type in the password
-        InputKeycodes(input_device, password_keycodes, password_len);
+        input_keycodes(input_device, password_keycodes, password_len);
 
         free(password_keycodes);
 
@@ -126,11 +126,11 @@ bool init_desktop(InputDevice* input_device, char* vm_password) {
 
         FractalKeycode keycodes2[] = {FK_ENTER, FK_ENTER};
 
-        InputKeycodes(input_device, keycodes2, 2);
+        input_keycodes(input_device, keycodes2, 2);
 
         Sleep(1000);
 
-        lock_screen = OpenNewDesktop(NULL, true, true);
+        lock_screen = open_new_desktop(NULL, true, true);
 
         attempt++;
     }

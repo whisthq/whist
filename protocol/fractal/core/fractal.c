@@ -168,7 +168,7 @@ int runcmd(const char* cmdline, char** response) {
         CHAR chBuf[2048];
         BOOL bSuccess = FALSE;
 
-        dynamic_buffer db = init_dynamic_buffer();
+        DynamicBuffer* db = init_dynamic_buffer();
         for (;;) {
             bSuccess = ReadFile(hChildStd_OUT_Rd, chBuf, sizeof(chBuf), &dwRead, NULL);
             if (!bSuccess || dwRead == 0) break;
