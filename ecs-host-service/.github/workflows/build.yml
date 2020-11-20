@@ -6,7 +6,7 @@ on:
     branches: [ master, dev ]
     paths-ignore:
     - '**/README.md'
-  workflow-dispatch:
+  workflow_dispatch:
 
 
 jobs:
