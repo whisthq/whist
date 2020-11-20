@@ -538,7 +538,7 @@ def create_new_container(
         if username != "Unassigned":
             try:
                 send_dpi_info_to_instance(container.ip, container.port_32262, container.dpi)
-            except NewConnectionError:
+            except requests.exceptions.ConnectionError:
                 pass
             if not _poll(container.container_id):
                 fractalLog(
