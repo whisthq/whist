@@ -13,7 +13,7 @@ GIT_COMMIT := $(shell git rev-list -1 HEAD)
 
 all: deps build
 
-build:	
+build:
 	$(info building in $(BUILD_FOLDER)...)
 	$(GOBUILD) -ldflags "-X 'github.com/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
 
