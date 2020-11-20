@@ -1244,7 +1244,7 @@ int main(int argc, char* argv[]) {
     }
 
 #ifdef _WIN32
-    if (!InitDesktop(input_device, get_vm_password())) {
+    if (!init_desktop(input_device, get_vm_password())) {
         LOG_WARNING("Could not winlogon!\n");
         destroy_logger();
         return 0;
