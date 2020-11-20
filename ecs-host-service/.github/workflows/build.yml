@@ -1,32 +1,34 @@
 # Build and run the host service in production mode
-name: Build Host Service
+name: Build and Run Host Service
 
 on:
   pull_request:
     branches: [ master, dev ]
     paths-ignore:
     - '**/README.md'
+  workflow-dispatch:
+
 
 jobs:
   build:
     name: Build and Run Host Service
     runs-on: ubuntu-20.04
-        
+
     steps:
       - name: Checkout git repository
         uses: actions/checkout@v2
         with:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-        
+
       - name: Setup Go environment
         uses: actions/setup-go@v2.1.3
-        
+
       - name: Install Go dependencies
         run: make deps
-        
+
       - name: Build Go project
         run: make build
-        
+
       - name: Run Go project in debug mode
         run: make run
