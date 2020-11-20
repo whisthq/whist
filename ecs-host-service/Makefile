@@ -28,11 +28,20 @@ ifeq ($(origin WEBSERVER_AUTH_SECRET_DEV),file)
 # This means that a replacement secret was not passed in on the command-line or as an environment variable
 	$(error "WEBSERVER_AUTH_SECRET_DEV is not set, but CI is true")
 endif
+ifeq ($(WEBSERVER_AUTH_SECRET_DEV),)
+	$(error "WEBSERVER_AUTH_SECRET_DEV is empty, but CI is true")
+endif
 ifeq ($(origin WEBSERVER_AUTH_SECRET_STAGING),file)
 	$(error "WEBSERVER_AUTH_SECRET_STAGING is not set, but CI is true")
 endif
+ifeq ($(WEBSERVER_AUTH_SECRET_STAGING),)
+	$(error "WEBSERVER_AUTH_SECRET_STAGING is empty, but CI is true")
+endif
 ifeq ($(origin WEBSERVER_AUTH_SECRET_PROD),file)
 	$(error "WEBSERVER_AUTH_SECRET_PROD is not set, but CI is true")
+endif
+ifeq ($(WEBSERVER_AUTH_SECRET_PROD),)
+	$(error "WEBSERVER_AUTH_SECRET_PROD is empty, but CI is true")
 endif
 else
 	$(info CI is false)
