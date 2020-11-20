@@ -1,5 +1,8 @@
 Checks: '-*,readability-identifier-naming'
+InheritParentConfig: false
 CheckOptions: [
-	{key: readability-identifier-naming.EnumCase, value: CamelCase},
-	{key: readability-identifier-naming.EnumConstantCase, value: UPPER_CASE}
+    {key: readability-identifier-naming.FunctionCase, value: lower_case},
+    {key: readability-identifier-naming.VariableCase, value: lower_case},
+    {key: readability-identifier-naming.EnumCase, value: CamelCase},
+    {key: readability-identifier-naming.EnumConstantCase, value: UPPER_CASE}
 ]
