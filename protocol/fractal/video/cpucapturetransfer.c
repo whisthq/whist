@@ -1,6 +1,6 @@
 #include "cpucapturetransfer.h"
 
-int cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder) {
+int cpu_transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
 #ifdef _WIN32
     encoder->already_encoded = false;
 #else
