@@ -2,6 +2,7 @@ import logging
 import os
 import time
 import requests
+from urllib3.exceptions import NewConnectionError
 
 from celery import shared_task
 from celery.exceptions import Ignore
@@ -535,7 +536,10 @@ def create_new_container(
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
         if username != "Unassigned":
-            send_dpi_info_to_instance(container.ip, container.port_32262, container.dpi)
+            try:
+                send_dpi_info_to_instance(container.ip, container.port_32262, container.dpi)
+            except NewConnectionError:
+                pass
             if not _poll(container.container_id):
                 fractalLog(
                     function="create_new_container",
