@@ -50,7 +50,6 @@ dummy_zip_uk = "CR09XY"
 dummy_zip_us = "08902"
 
 # arbitrary
-dummy_email = "bob@tryfractal.com"
 dummy_nonexistent_email = "sdfsd23498io2u3ihwe232342njkosjdfldsfsdfs12312kh"
 dummy_referrer = "ming@tryfractal.com"  # make sure we don't remove ming
 
@@ -170,7 +169,7 @@ def _new_customer(email, plan=monthly_plan, referrer=None, subscribe=True):
         )
 
 
-def _assert_create_get_trial_end(referrer, client):
+def _assert_create_get_trial_end(email, referrer, client):
     """This helper function is commonly used in create to check that it runs through, returning the
     trial end to be checked for validity.
 
@@ -183,9 +182,9 @@ def _assert_create_get_trial_end(referrer, client):
     dummy_token = _generate_token()
     referral_code = _get_code(referrer)
 
-    assert client.create_subscription(dummy_token, dummy_email, monthly_plan, code=referral_code)
+    assert client.create_subscription(dummy_token, email, monthly_plan, code=referral_code)
 
-    stripe_customer_id = _get_stripe_customer_id()
+    stripe_customer_id = _get_stripe_customer_id(email)
     return stripe.Subscription.list(customer=stripe_customer_id)["data"][0]["trial_end"]
 
 
@@ -196,8 +195,8 @@ def _get_code(referrer):
     return User.query.get(referrer).referral_code
 
 
-def _get_stripe_customer_id(email=dummy_email):
-    user = User.query.get(dummy_email)
+def _get_stripe_customer_id(email):
+    user = User.query.get(email)
     return user.stripe_customer_id
 
 
@@ -216,29 +215,31 @@ def client():
 
 
 @pytest.fixture()
-def not_customer():
+def not_customer(user):
+    user = user.user_id
     """Makes sure that there is no stripe customer id before or after the function that uses this
     fixture.
 
     Yields:
         (bool): True
     """
-    _remove_stripe_customer(dummy_email)
-    yield True
-    _remove_stripe_customer(dummy_email)
+    _remove_stripe_customer(user)
+    yield user
+    _remove_stripe_customer(user)
 
 
 """Here we test the get_customer_info for common cases. These include whether you've subscribed or not."""
 
 
 def test_get_stripe_info(client, not_customer):
+    user = not_customer
 
     for subscribe in [True, False]:
         for referrer in [dummy_referrer, None]:
 
-            _new_customer(dummy_email, referrer=referrer, subscribe=subscribe)
+            _new_customer(user, referrer=referrer, subscribe=subscribe)
 
-            info = client.get_customer_info(dummy_email)
+            info = client.get_customer_info(user)
 
             if subscribe:
                 trial_end = info["subscription"]["trial_end"]
@@ -247,33 +248,36 @@ def test_get_stripe_info(client, not_customer):
             else:
                 assert info["subscription"] is None
 
-            _remove_stripe_customer(dummy_email)
+            _remove_stripe_customer(user)
 
 
 def test_get_stripe_info_no_customer_id(client, not_customer):
-    assert client.get_customer_info(dummy_email) is None
+    user = not_customer
+    assert client.get_customer_info(user) is None
 
 
 """Here we test creation of subscription for common cases."""
 
 
 def test_create_subscription_with_not_customer(client, not_customer):
+    user = not_customer
     for referrer in [dummy_referrer, None]:
-        trial_end = _assert_create_get_trial_end(referrer, client)
+        trial_end = _assert_create_get_trial_end(user, referrer, client)
 
         assert _closest(trial_end, [month, week]) == month if referrer else week
 
-        _remove_stripe_customer(dummy_email)
+        _remove_stripe_customer(user)
 
 
 def test_create_subscription_with_customer(client, not_customer):
+    user = not_customer
 
     for original_referrer in [dummy_referrer, None]:
         for subscribed in [True, False]:
-            _new_customer(dummy_email, referrer=original_referrer, subscribe=subscribed)
+            _new_customer(user, referrer=original_referrer, subscribe=subscribed)
 
             for referrer in [dummy_referrer, None]:
-                trial_end = _assert_create_get_trial_end(referrer, client)
+                trial_end = _assert_create_get_trial_end(user, referrer, client)
 
                 assert (
                     _closest(trial_end, [month, week]) == month
@@ -283,52 +287,56 @@ def test_create_subscription_with_customer(client, not_customer):
 
 
 def test_create_subscription_invalid_code(client, not_customer):
+    user = not_customer
+
     dummy_token = _generate_token()
 
-    assert client.create_subscription(
-        dummy_token, dummy_email, monthly_plan, dummy_invalid_referral_code
-    )
+    assert client.create_subscription(dummy_token, user, monthly_plan, dummy_invalid_referral_code)
 
-    stripe_customer_id = _get_stripe_customer_id()
+    stripe_customer_id = _get_stripe_customer_id(user)
     trial_end = stripe.Subscription.list(customer=stripe_customer_id)["data"][0]["trial_end"]
 
     assert _closest(trial_end, [month, week]) == week
 
 
 def test_invalid_zip_code(client, not_customer):
+    user = not_customer
     dummy_token = _generate_token(zipcode=dummy_zip_uk)
 
     with pytest.raises(RegionNotSupported):
-        client.create_subscription(dummy_token, dummy_email, monthly_plan)
+        client.create_subscription(dummy_token, user, monthly_plan)
 
 
 def test_invalid_token(client, not_customer):
+    user = not_customer
     dummy_token = _generate_token(malformed=True)
 
     with pytest.raises(InvalidStripeToken):
-        client.create_subscription(dummy_token, dummy_email, monthly_plan)
+        client.create_subscription(dummy_token, user, monthly_plan)
 
 
 """Here we test subscruption cancellation for common cases."""
 
 
 def test_cancel_subscription(client, not_customer):
+    user = not_customer
     for subscribe, referrer in [(True, dummy_referrer), (True, None), (False, None)]:
-        _new_customer(dummy_email, referrer=referrer, subscribe=subscribe)
+        _new_customer(user, referrer=referrer, subscribe=subscribe)
 
         if subscribe:
-            assert client.cancel_subscription(dummy_email)
+            assert client.cancel_subscription(user)
         else:
             with pytest.raises(InvalidOperation):
-                client.cancel_subscription(dummy_email)
+                client.cancel_subscription(user)
 
-        _remove_stripe_customer(dummy_email)
+        _remove_stripe_customer(user)
 
 
 # same problem as above
 def test_cancel_no_stripe_throws(client, not_customer):
+    user = not_customer
     with pytest.raises(InvalidOperation):
-        client.cancel_subscription(dummy_email)
+        client.cancel_subscription(user)
 
 
 """Here we test application of the discount in a valid case and an invalid case."""
@@ -358,12 +366,13 @@ stripe customer ids.
 
 
 def test_add_card(client, not_customer):
+    email = not_customer
     dummy_token = _generate_token()
-    get = lambda: User.query.get(dummy_email)
+    get = lambda: User.query.get(email)
     info = lambda: stripe.Customer.retrieve(user.stripe_customer_id, expand=["sources"])
 
     # test for a user that does not have a customer id
-    client.add_card(dummy_email, dummy_token)
+    client.add_card(email, dummy_token)
     user = get()
 
     assert user.stripe_customer_id
@@ -377,7 +386,7 @@ def test_add_card(client, not_customer):
     # anyways this card supposedly requires auth, but I needed another test card to see if this
     # would work :P
     dummy_token = _generate_token(number=stripe_auth_req_card)
-    client.add_card(dummy_email, dummy_token)
+    client.add_card(email, dummy_token)
 
     customer_info = info()
     cards = customer_info["sources"]["data"]
@@ -385,15 +394,17 @@ def test_add_card(client, not_customer):
 
 
 def test_delete_card_no_stripe_customer_id(client, not_customer):
+    user = not_customer
     with pytest.raises(InvalidOperation):
-        client.delete_card(dummy_email, "dummy")
+        client.delete_card(user, "dummy")
 
 
 def test_delete_card(client, not_customer):
+    email = not_customer
     dummy_token = _generate_token()
-    get = lambda: User.query.get(dummy_email)
+    get = lambda: User.query.get(email)
 
-    _new_customer(dummy_email, subscribe=False)
+    _new_customer(email, subscribe=False)
 
     user = get()
     info = lambda: stripe.Customer.retrieve(user.stripe_customer_id, expand=["sources"])
@@ -402,7 +413,7 @@ def test_delete_card(client, not_customer):
     # cards = customer_info["sources"]["data"]
     # card = cards[0]["id"]
 
-    client.delete_card(dummy_email, dummy_token)
+    client.delete_card(email, dummy_token)
 
     customer_info = info()
     cards = customer_info["sources"]["data"]
