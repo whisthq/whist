@@ -493,7 +493,7 @@ SOCKET socketp_tcp() {
     // Create socket
     SOCKET sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock_fd <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create socket %d\n", get_last_network_error());
         return INVALID_SOCKET;
     }
 
@@ -559,7 +559,7 @@ SOCKET acceptp(SOCKET sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len) 
     // Accept connection from client
     SOCKET new_socket = accept(sock_fd, sock_addr, sock_len);
     if (new_socket < 0) {
-        LOG_WARNING("Did not receive response from client! %d\n", GetLastNetworkError());
+        LOG_WARNING("Did not receive response from client! %d\n", get_last_network_error());
         return INVALID_SOCKET;
     }
 
