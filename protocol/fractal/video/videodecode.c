@@ -14,7 +14,7 @@
 
 #define UNUSED(x) (void)(x)
 
-void destroy_video_decoder_members(video_decoder_t* decoder);
+void destroy_video_decoder_members(VideoDecoder* decoder);
 
 #define SHOW_DECODER_LOGS false
 
@@ -27,14 +27,14 @@ void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
 }
 #endif
 
-static void set_opt(video_decoder_t* decoder, char* option, char* value) {
+static void set_opt(VideoDecoder* decoder, char* option, char* value) {
     int ret = av_opt_set(decoder->context->priv_data, option, value, 0);
     if (ret < 0) {
         LOG_WARNING("Could not av_opt_set %s to %s!", option, value);
     }
 }
 
-void set_decoder_opts(video_decoder_t* decoder) {
+void set_decoder_opts(VideoDecoder* decoder) {
     // decoder->context->flags |= AV_CODEC_FLAG_LOW_DELAY;
     // decoder->context->flags2 |= AV_CODEC_FLAG2_FAST;
     set_opt(decoder, "async_depth", "1");
@@ -84,7 +84,7 @@ enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* p
 }
 
 enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts) {
-    video_decoder_t* decoder = ctx->opaque;
+    VideoDecoder* decoder = ctx->opaque;
 
     enum AVPixelFormat match = match_format(ctx, pix_fmts, decoder->match_fmt);
 
@@ -126,7 +126,7 @@ enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix
     return match;
 }
 
-int try_setup_video_decoder(video_decoder_t* decoder) {
+int try_setup_video_decoder(VideoDecoder* decoder) {
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only Linux uses FFmpeg 3.4.x because of canonical system packages
@@ -289,7 +289,7 @@ DecodeType decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
 
 #define NUM_DECODER_TYPES (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
 
-bool try_next_decoder(video_decoder_t* decoder) {
+bool try_next_decoder(VideoDecoder* decoder) {
     if (decoder->can_use_hardware) {
         unsigned int i = 0;
         if (decoder->type != DECODE_TYPE_NONE) {
@@ -329,15 +329,15 @@ bool try_next_decoder(video_decoder_t* decoder) {
     }
 }
 
-video_decoder_t* create_video_decoder(int width, int height, bool use_hardware,
+VideoDecoder* create_video_decoder(int width, int height, bool use_hardware,
                                       CodecType codec_type) {
 #if SHOW_DECODER_LOGS
     // av_log_set_level( AV_LOG_ERROR );
     av_log_set_callback(swap_decoder);
 #endif
 
-    video_decoder_t* decoder = (video_decoder_t*)malloc(sizeof(video_decoder_t));
-    memset(decoder, 0, sizeof(video_decoder_t));
+    VideoDecoder* decoder = (VideoDecoder*)malloc(sizeof(VideoDecoder));
+    memset(decoder, 0, sizeof(VideoDecoder));
 
     decoder->width = width;
     decoder->height = height;
@@ -356,7 +356,7 @@ video_decoder_t* create_video_decoder(int width, int height, bool use_hardware,
 /// @brief destroy decoder decoder
 /// @details frees FFmpeg decoder memory
 
-void destroy_video_decoder(video_decoder_t* decoder) {
+void destroy_video_decoder(VideoDecoder* decoder) {
     destroy_video_decoder_members(decoder);
 
     // free the buffer and decoder
@@ -364,7 +364,7 @@ void destroy_video_decoder(video_decoder_t* decoder) {
     return;
 }
 
-void destroy_video_decoder_members(video_decoder_t* decoder) {
+void destroy_video_decoder_members(VideoDecoder* decoder) {
     // check if decoder decoder exists
     if (decoder == NULL) {
         LOG_WARNING("Cannot destroy decoder decoder.");
@@ -386,7 +386,7 @@ void destroy_video_decoder_members(video_decoder_t* decoder) {
 
 /// @brief decode a frame using the decoder decoder
 /// @details decode an encoded frame under YUV color format into RGB frame
-bool video_decoder_decode(video_decoder_t* decoder, void* buffer, int buffer_size) {
+bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) {
     clock t;
     start_timer(&t);
 

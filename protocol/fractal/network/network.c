@@ -96,19 +96,19 @@ typedef struct {
     unsigned int ip;
     unsigned short private_port;
     unsigned short public_port;
-} stun_entry_t;
+} StunEntry;
 
-typedef enum StunRequestType { ASK_INFO, POST_INFO } stun_request_type_t;
+typedef enum StunRequestType { ASK_INFO, POST_INFO } StunRequestType;
 
 typedef struct {
-    stun_request_type_t type;
-    stun_entry_t entry;
-} stun_request_t;
+    StunRequestType type;
+    StunEntry entry;
+} StunRequest;
 
 typedef struct {
     char iv[16];
     char signature[32];
-} private_key_data_t;
+} PrivateKeyData;
 
 /*
 ============================
@@ -178,7 +178,7 @@ void clear_reading_tcp(SocketContext *context);
 
 @param priv_key_data            The private key data buffer
 */
-void prepare_private_key_request(private_key_data_t *priv_key_data);
+void prepare_private_key_request(PrivateKeyData *priv_key_data);
 
 /*
 @brief                          This will sign the other connection's private key data
@@ -189,7 +189,7 @@ void prepare_private_key_request(private_key_data_t *priv_key_data);
 
 @returns                        True if the verification succeeds, false if it fails
 */
-bool sign_private_key(private_key_data_t *priv_key_data, int recv_size, void *private_key);
+bool sign_private_key(PrivateKeyData *priv_key_data, int recv_size, void *private_key);
 
 /*
 @brief                          This will verify the given private key
@@ -201,8 +201,8 @@ bool sign_private_key(private_key_data_t *priv_key_data, int recv_size, void *pr
 
 @returns                        True if the verification succeeds, false if it fails
 */
-bool confirm_private_key(private_key_data_t *our_priv_key_data,
-                       private_key_data_t *our_signed_priv_key_data, int recv_size,
+bool confirm_private_key(PrivateKeyData *our_priv_key_data,
+                       PrivateKeyData *our_signed_priv_key_data, int recv_size,
                        void *private_key);
 
 /*
@@ -231,9 +231,9 @@ int get_last_network_error() {
 bool handshake_private_key(SocketContext *context) {
     set_timeout(context->s, 1000);
 
-    private_key_data_t our_priv_key_data;
-    private_key_data_t our_signed_priv_key_data;
-    private_key_data_t their_priv_key_data;
+    PrivateKeyData our_priv_key_data;
+    PrivateKeyData our_signed_priv_key_data;
+    PrivateKeyData their_priv_key_data;
     int recv_size;
     socklen_t slen = sizeof(context->addr);
 
@@ -661,8 +661,8 @@ FractalPacket *read_udp_packet(SocketContext *context) {
         // If there was an issue decrypting it, post warning and then
         // ignore the problem
         if (decrypted_len < 0) {
-            if (encrypted_len == sizeof(stun_entry_t)) {
-                stun_entry_t *e;
+            if (encrypted_len == sizeof(StunEntry)) {
+                StunEntry *e;
                 e = (void *)&encrypted_packet;
                 LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port),
                          ntohs(e->private_port));
@@ -923,7 +923,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
     }
 
     // Send STUN request
-    stun_request_t stun_request;
+    StunRequest stun_request;
     stun_request.type = POST_INFO;
     stun_request.entry.public_port = htons((unsigned short)port);
 
@@ -938,7 +938,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
     start_timer(&t);
 
     int recv_size = 0;
-    stun_entry_t entry = {0};
+    StunEntry entry = {0};
 
     while (recv_size < (int)sizeof(entry) && get_timer(t) < stun_timeout_ms) {
         int single_recv_size;
@@ -1109,7 +1109,7 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
     }
 
     // Make STUN request
-    stun_request_t stun_request;
+    StunRequest stun_request;
     stun_request.type = ASK_INFO;
     stun_request.entry.ip = inet_addr(destination);
     stun_request.entry.public_port = htons((unsigned short)port);
@@ -1125,7 +1125,7 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
     start_timer(&t);
 
     int recv_size = 0;
-    stun_entry_t entry = {0};
+    StunEntry entry = {0};
 
     while (recv_size < (int)sizeof(entry) && get_timer(t) < stun_timeout_ms) {
         int single_recv_size;
@@ -1322,7 +1322,7 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
     stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
     stun_addr.sin_port = htons(STUN_PORT);
 
-    stun_request_t stun_request;
+    StunRequest stun_request;
     stun_request.type = POST_INFO;
     stun_request.entry.public_port = htons((unsigned short)port);
 
@@ -1345,7 +1345,7 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
     start_timer(&recv_timer);
 
     socklen_t slen = sizeof(context->addr);
-    stun_entry_t entry = {0};
+    StunEntry entry = {0};
     int recv_size;
     while ((recv_size = recvfrom(context->s, (char *)&entry, sizeof(entry), 0,
                                  (struct sockaddr *)(&context->addr), &slen)) < 0) {
@@ -1478,7 +1478,7 @@ int create_udp_client_context_stun(SocketContext *context, char *destination, in
     stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
     stun_addr.sin_port = htons(STUN_PORT);
 
-    stun_request_t stun_request;
+    StunRequest stun_request;
     stun_request.type = ASK_INFO;
     stun_request.entry.ip = inet_addr(destination);
     stun_request.entry.public_port = htons((unsigned short)port);
@@ -1491,7 +1491,7 @@ int create_udp_client_context_stun(SocketContext *context, char *destination, in
         return -1;
     }
 
-    stun_entry_t entry = {0};
+    StunEntry entry = {0};
     int recv_size;
     if ((recv_size = recvp(context, &entry, sizeof(entry))) < 0) {
         LOG_WARNING("Could not receive message from STUN %d\n", get_last_network_error());
@@ -1780,36 +1780,36 @@ void set_timeout(SOCKET s, int timeout_ms) {
     }
 }
 
-void prepare_private_key_request(private_key_data_t *priv_key_data) { gen_iv(priv_key_data->iv); }
+void prepare_private_key_request(PrivateKeyData *priv_key_data) { gen_iv(priv_key_data->iv); }
 
 typedef struct {
     char iv[16];
     char private_key[16];
-} signature_data_t;
+} SignatureData;
 
-bool sign_private_key(private_key_data_t *priv_key_data, int recv_size, void *private_key) {
-    if (recv_size == sizeof(private_key_data_t)) {
-        signature_data_t sig_data;
+bool sign_private_key(PrivateKeyData *priv_key_data, int recv_size, void *private_key) {
+    if (recv_size == sizeof(PrivateKeyData)) {
+        SignatureData sig_data;
         memcpy(sig_data.iv, priv_key_data->iv, sizeof(priv_key_data->iv));
         memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
         hmac(priv_key_data->signature, &sig_data, sizeof(sig_data), private_key);
         return true;
     } else {
-        LOG_ERROR("Recv Size was not equal to private_key_data_t: %d instead of %d", recv_size,
-                  sizeof(private_key_data_t));
+        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
+                  sizeof(PrivateKeyData));
         return false;
     }
 }
 
-bool confirm_private_key(private_key_data_t *our_priv_key_data,
-                       private_key_data_t *our_signed_priv_key_data, int recv_size,
+bool confirm_private_key(PrivateKeyData *our_priv_key_data,
+                       PrivateKeyData *our_signed_priv_key_data, int recv_size,
                        void *private_key) {
-    if (recv_size == sizeof(private_key_data_t)) {
+    if (recv_size == sizeof(PrivateKeyData)) {
         if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
             LOG_ERROR("IV is incorrect!");
             return false;
         } else {
-            signature_data_t sig_data;
+            SignatureData sig_data;
             memcpy(sig_data.iv, our_signed_priv_key_data->iv, sizeof(our_signed_priv_key_data->iv));
             memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
             if (!verify_hmac(our_signed_priv_key_data->signature, &sig_data, sizeof(sig_data),
@@ -1821,8 +1821,8 @@ bool confirm_private_key(private_key_data_t *our_priv_key_data,
             }
         }
     } else {
-        LOG_ERROR("Recv Size was not equal to private_key_data_t: %d instead of %d", recv_size,
-                  sizeof(private_key_data_t));
+        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
+                  sizeof(PrivateKeyData));
         return false;
     }
 }

@@ -64,8 +64,8 @@ void update_webserver_parameters() {
     }
     free(resp_buf);
 
-    kv_pair_t* using_stun = get_kv(&json, "using_stun");
-    kv_pair_t* container_id_value = get_kv(&json, "container_id");
+    KVPair* using_stun = get_kv(&json, "using_stun");
+    KVPair* container_id_value = get_kv(&json, "container_id");
 
     if (using_stun && using_stun->type == JSON_BOOL) {
         LOG_INFO("Using Stun: %s", using_stun->bool_value ? "Yes" : "No");
