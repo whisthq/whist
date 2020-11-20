@@ -10,7 +10,13 @@ from dotenv import load_dotenv  # this might need to be pipped
 from datetime import datetime
 from datadog import initialize
 
-from events import fetch, container_events_by_region, interval_avg, avg
+from events import (
+    fetch,
+    container_events_by_region,
+    interval_avg,
+    avg,
+    datadog_log_metrics_daily,
+)
 
 ## TODO
 # we will need to fetch
@@ -185,6 +191,7 @@ def _fetch_region2events(previous_time):
     region2events = container_events_by_region(all_events, regions=REGIONS)
     return region2events
 
+
 # here are the actual functions we use
 
 # get the average metric of each region for each metric
@@ -215,7 +222,16 @@ def store_average_each_window(window=DAY):
     store_json = json.dumps(recap).encode("utf-8")
     store(filename, store_json, client=client)
 
-    print("Stored file.")
+    datadog_log_metrics_daily(recap)
+
+    # tag is which types of logs we are processing
+    # region is where we will choose to get logs that we process
+    # label is the type of processing that happened on the log
+    #   i.e. which analysis algo did we use and which numerical
+    #   value of the log did we run on
+    print(
+        "Stored file and logged daily metrics with <tag>.<region>.<label> as their metric."
+    )
 
 
 # we can run this weekly to get the average usage per day... or whatever
@@ -257,8 +273,6 @@ def store_averages_to_files_by_interval(window=DAY, interval=WEEK):
     print("Stored file.")
 
 
-# TODO also write to datadog event stream or something else
-# todo clean this up depending on how we want to do it
 def store(filename, binary_data, client=None):
     if not client:
         client = boto3.client("s3")
@@ -267,6 +281,6 @@ def store(filename, binary_data, client=None):
 
 
 if __name__ == "__main__":
-    # TODO make an argparse in the future
-    store_averages_to_files_by_interval()  # this is going to be run by the workflow
+    # will want to be an argparse if we make this more complicated
+    # store_averages_to_files_by_interval()  # this is going to be run by the workflow
     store_average_each_window()

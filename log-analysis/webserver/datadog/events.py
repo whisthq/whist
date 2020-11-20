@@ -149,6 +149,37 @@ def container_events_by_region(all_events, regions=None):
         raise RuntimeError("Not supported with all regions.")
 
 
+# take a recap object and log metrics
+# recap objects are
+# {
+#    tag: {
+#        region: {
+#            datetime : [int] representing the metric by label for that day in region by tag
+#        }
+#    }
+# }
+# datadog must be initialized for you to use this
+def datadog_log_metrics_daily(recap):
+    print(recap)
+    now = round(time.time())
+
+    # we'll be sending daily
+    # you can also send in batches
+    # and that should be easy to implement for the
+    # version of this for weeks (i.e. intervals)
+    # by just getting each object with the datetime and then sending
+    # the list of items() inside the region_obj[label] which is a dict
+    # of timestamp to val
+    for tag, tag_obj in recap.items():
+        for region, region_obj in tag_obj.items():
+            for label, metric_val in region_obj.items():
+                metric = tag + "." + region + "." + label
+                print(metric, metric_val)
+                api.Metric.send(
+                    metric=metric, points=(now, 0 if metric_val is None else metric_val)
+                )
+
+
 if __name__ == "__main__":
     # TODO this should not be committed blyat
     options = {
