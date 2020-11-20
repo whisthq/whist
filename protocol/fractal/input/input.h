@@ -49,7 +49,7 @@ void reset_input();
  * @returns                        True if it replayed the event, False
  *                                 otherwise
  */
-bool replay_user_input(input_device_t* input_device, FractalClientMessage* fmsg);
+bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg);
 
 /**
  * @brief                          Updates the keyboard state on the server to
@@ -60,7 +60,7 @@ bool replay_user_input(input_device_t* input_device, FractalClientMessage* fmsg)
  * @param fmsg                     The Fractal message packet, defining one
  *                                 keyboard event, to update the keyboard state
  */
-void update_keyboard_state(input_device_t* input_device, FractalClientMessage* fmsg);
+void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fmsg);
 
 /**
  * @brief                          Updates the keyboard state on the server to
@@ -77,6 +77,6 @@ void update_keyboard_state(input_device_t* input_device, FractalClientMessage* f
  * @returns                        The number of keycodes successfully inputted from
  *                                 the array
  */
-size_t input_keycodes(input_device_t* input_device, FractalKeycode* keycodes, size_t count);
+size_t input_keycodes(InputDevice* input_device, FractalKeycode* keycodes, size_t count);
 
 #endif  // INPUT_H

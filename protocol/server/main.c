@@ -89,7 +89,7 @@ volatile int client_dpi = -1;
 volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
-input_device_t* input_device = NULL;
+InputDevice* input_device = NULL;
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
 
@@ -684,14 +684,14 @@ int32_t send_audio(void* opaque) {
     opaque;
     int id = 1;
 
-    audio_device_t* audio_device = create_audio_device();
+    AudioDevice* audio_device = create_audio_device();
     if (!audio_device) {
         LOG_ERROR("Failed to create audio device...");
         return -1;
     }
     LOG_INFO("Created audio device!");
     start_audio_device(audio_device);
-    audio_encoder_t* audio_encoder = create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
+    AudioEncoder* audio_encoder = create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
     int res;
 
     // Tell the client what audio frequency we're using

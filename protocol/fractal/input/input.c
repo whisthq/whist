@@ -7,7 +7,7 @@ unsigned int last_input_fmsg_id = 0;
 
 void reset_input() { last_input_fmsg_id = 0; }
 
-void update_keyboard_state(input_device_t* input_device, FractalClientMessage* fmsg) {
+void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fmsg) {
     if (fmsg->id <= last_input_fmsg_id) {
         // Ignore Old FractalClientMessage
         return;
@@ -69,7 +69,7 @@ void update_keyboard_state(input_device_t* input_device, FractalClientMessage* f
     }
 }
 
-bool replay_user_input(input_device_t* input_device, FractalClientMessage* fmsg) {
+bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
     if (fmsg->id <= last_input_fmsg_id) {
         // Ignore Old FractalClientMessage
         return true;
@@ -107,7 +107,7 @@ bool replay_user_input(input_device_t* input_device, FractalClientMessage* fmsg)
     return true;
 }
 
-size_t input_keycodes(input_device_t* input_device, FractalKeycode* keycodes, size_t count) {
+size_t input_keycodes(InputDevice* input_device, FractalKeycode* keycodes, size_t count) {
     for (unsigned int i = 0; i < count; ++i) {
         if (KeyDown(input_device, keycodes[i])) {
             LOG_WARNING("Error pressing keycode %d!", keycodes[i]);
