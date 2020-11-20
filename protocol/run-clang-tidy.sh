@@ -76,7 +76,9 @@ done
 #     {key: readability-identifier-naming.FunctionCase, value: lower_case},
 #     {key: readability-identifier-naming.VariableCase, value: lower_case},
 #     {key: readability-identifier-naming.EnumCase, value: CamelCase},
-#     {key: readability-identifier-naming.EnumConstantCase, value: UPPER_CASE}
+#     {key: readability-identifier-naming.EnumConstantCase, value: UPPER_CASE},
+#     {key: readability-identifier-naming.StructCase, value: CamelCase},
+#     {key: readability-identifier-naming.TypedefCase, value: CamelCase}
 # ]
 
 # # run clang-tidy noted replacements

@@ -20,13 +20,13 @@ extern volatile int audio_frequency;
 extern bool has_rendered_yet;
 
 // Hold information about audio data as the packets come in
-typedef struct audio_packet {
+typedef struct AudioPacket {
     int id;
     int size;
     int nacked_for;
     int nacked_amount;
     char data[MAX_PAYLOAD_SIZE];
-} audio_packet;
+} AudioPacket;
 
 #define LOG_AUDIO false
 
@@ -37,13 +37,13 @@ typedef struct audio_packet {
 #define MAX_NUM_AUDIO_FRAMES 25
 #define MAX_NUM_AUDIO_INDICES 3
 #define RECV_AUDIO_BUFFER_SIZE (MAX_NUM_AUDIO_FRAMES * MAX_NUM_AUDIO_INDICES)
-audio_packet receiving_audio[RECV_AUDIO_BUFFER_SIZE];
+AudioPacket receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
 
 struct AudioData {
     SDL_AudioDeviceID dev;
-    audio_decoder_t* audio_decoder;
+    AudioDecoder* audio_decoder;
 } volatile audio_data;
 
 clock nack_timer;
@@ -225,7 +225,7 @@ void update_audio() {
                             next_to_play_id / MAX_NUM_AUDIO_INDICES,
                             SDL_GetQueuedAudioSize(audio_data.dev));
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+                    AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     packet->id = -1;
                     packet->nacked_amount = 0;
                 }
@@ -240,7 +240,7 @@ void update_audio() {
                 encoded_packet.size = 0;
 
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+                    AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
                     encoded_packet.size += packet->size;
                     packet->id = -1;
@@ -265,7 +265,7 @@ void update_audio() {
                 }
 #else
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+                    AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     if (packet->size > 0) {
 #if LOG_AUDIO
                         mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id,
@@ -297,7 +297,7 @@ void update_audio() {
         last_nacked_id = max(last_played_id, last_nacked_id);
         for (int i = last_nacked_id + 1; i < most_recent_audio_id - 4 && num_nacked < 1; i++) {
             int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
-            audio_packet* i_packet = &receiving_audio[i_buffer_index];
+            AudioPacket* i_packet = &receiving_audio[i_buffer_index];
             if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
                 i_packet->nacked_amount++;
                 FractalClientMessage fmsg;
@@ -328,7 +328,7 @@ int32_t receive_audio(FractalPacket* packet) {
     }
 
     int audio_id = packet->id * MAX_NUM_AUDIO_INDICES + packet->index;
-    audio_packet* audio_pkt = &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
+    AudioPacket* audio_pkt = &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
 
     if (audio_id == audio_pkt->id) {
         //         LOG_WARNING("Already received audio packet: %d", audio_id);

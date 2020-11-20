@@ -34,7 +34,7 @@ Custom Types
 ============================
 */
 
-typedef struct audio_encoder_t {
+typedef struct AudioEncoder {
     AVCodec* pCodec;
     AVCodecContext* pCodecCtx;
     AVFrame* pFrame;
@@ -44,13 +44,13 @@ typedef struct audio_encoder_t {
     int frame_count;
     int encoded_frame_size;
     void* encoded_frame_data;
-} audio_encoder_t;
+} AudioEncoder;
 
-typedef struct encoded_audio_t {
+typedef struct EncodedAudio {
     int pts;
     int size;
     uint8_t data[10];
-} encoded_audio_t;
+} EncodedAudio;
 
 /*
 ============================

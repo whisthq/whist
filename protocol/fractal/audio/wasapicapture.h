@@ -45,7 +45,7 @@ define_guid(IID_IAudioClient3, 0x7ed4ee07, 0x8E67, 0x4CD4, 0x8C, 0x1A, 0x2B, 0x7
 define_guid(IID_IAudioCaptureClient, 0xc8adbd64, 0xe71e, 0x48a0, 0xa4, 0xde, 0x18, 0x5c, 0x39, 0x5c,
             0xd3, 0x17);
 
-typedef struct audio_device_t {
+typedef struct AudioDevice {
     IMMDevice* device;
     IMMDeviceEnumerator* pMMDeviceEnumerator;
     IAudioClient3* pAudioClient;
@@ -62,6 +62,6 @@ typedef struct audio_device_t {
     UINT32 sample_rate;
     UINT32 nNextPacketSize;
     HRESULT hNextPacketResult;
-} audio_device_t;
+} AudioDevice;
 
 #endif  // WASAPICAPTURE_H

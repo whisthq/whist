@@ -35,7 +35,7 @@ Custom Types
 ============================
 */
 
-typedef struct audio_device_t {
+typedef struct AudioDevice {
     snd_pcm_t* handle;
     snd_pcm_uframes_t num_frames;
     unsigned long frames_available;
@@ -46,6 +46,6 @@ typedef struct audio_device_t {
     enum _snd_pcm_format sample_format; // NOLINT
     uint8_t* buffer;
     int dummy_state;
-} audio_device_t;
+} AudioDevice;
 
 #endif  // ALSA_CAPTURE_H

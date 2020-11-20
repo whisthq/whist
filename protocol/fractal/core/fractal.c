@@ -37,16 +37,14 @@ void print_system_info() {
     SDL_DetachThread(sysinfo_thread);
 }
 
-struct dynamic_buffer_struct {
+typedef struct DynamicBuffer {
     int size;
     int capacity;
     char* buf;
-};
+} DynamicBuffer;
 
-typedef struct dynamic_buffer_struct* dynamic_buffer;
-
-dynamic_buffer init_dynamic_buffer() {
-    dynamic_buffer db = malloc(sizeof(struct dynamic_buffer_struct));
+DynamicBuffer* init_dynamic_buffer() {
+    DynamicBuffer* db = malloc(sizeof(DynamicBuffer));
     db->size = 0;
     db->capacity = 128;
     db->buf = malloc(db->capacity);
@@ -58,7 +56,7 @@ dynamic_buffer init_dynamic_buffer() {
     return db;
 }
 
-void resize_dynamic_buffer(dynamic_buffer db, int new_size) {
+void resize_dynamic_buffer(DynamicBuffer* db, int new_size) {
     if (new_size > db->capacity) {
         int new_capacity = new_size * 2;
         char* new_buffer = realloc(db->buf, new_capacity);
@@ -76,7 +74,7 @@ void resize_dynamic_buffer(dynamic_buffer db, int new_size) {
     }
 }
 
-void free_dynamic_buffer(dynamic_buffer db) {
+void free_dynamic_buffer(DynamicBuffer* db) {
     free(db->buf);
     free(db);
 }
@@ -227,7 +225,7 @@ int runcmd(const char* cmdline, char** response) {
         /* Read pipe until end of file, or an error occurs. */
 
         int current_len = 0;
-        dynamic_buffer db = init_dynamic_buffer();
+        DynamicBuffer* db = init_dynamic_buffer();
 
         while (true) {
             char c = (char)fgetc(p_pipe);

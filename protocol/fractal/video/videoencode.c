@@ -28,7 +28,7 @@ void set_opt(video_encoder_t *encoder, char *option, char *value) {
     }
 }
 
-typedef video_encoder_t *(*video_encoder_creator)(int, int, int, int, int, CodecType);
+typedef video_encoder_t *(*VideoEncoderCreator)(int, int, int, int, int, CodecType);
 
 video_encoder_t *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
                                       int bitrate, CodecType codec_type) {
