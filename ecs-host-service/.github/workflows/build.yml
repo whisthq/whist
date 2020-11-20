@@ -1,5 +1,5 @@
 # Build and run the host service in production mode
-name: Build and Run Host Service
+name: Build Host Service
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build and Run Host Service
+    name: Build Host Service
     runs-on: ubuntu-20.04
 
     steps:
@@ -29,6 +29,3 @@ jobs:
 
       - name: Build Go project
         run: make build
-
-      - name: Run Go project in debug mode
-        run: make run
