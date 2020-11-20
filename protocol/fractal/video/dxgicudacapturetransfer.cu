@@ -50,7 +50,7 @@ void dxgi_cuda_close_transfer_context() {
 }
 
 int dxgi_cuda_transfer_capture(CaptureDevice* device,
-                               video_encoder_t* encoder) {
+                               VideoEncoder* encoder) {
     if (cuda_is_available && active_transfer_context) {
         cudaError_t res;
         cudaArray_t mappedArray;

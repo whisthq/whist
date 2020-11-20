@@ -2,6 +2,23 @@
 # this can only be run if compile_commands.json exists:
 #   set(CMAKE_EXPORT_COMPILE_COMMANDS ON) must be set in CMakeLists.txt
 
+# run wtih option -c for CI check without replacement option
+
+OPTIND=1
+CICheck=0
+
+while getopts "c" opt
+do
+    case "$opt" in
+        c)
+            CICheck=1
+    esac
+done
+
+shift $((OPTIND-1))
+
+[ "${1:-}" = "--" ] && shift
+
 # array of all folders to be checked and modified
 declare -a includeFolders=(
     "fractal"
@@ -69,16 +86,27 @@ do
     yq d -i $yamlFolder/$fixesFilename $pathExpression
 done
 
-echo "-----> CHECK PROPOSED REPLACEMENTS IN ${yamlFolder}/${fixesFilename} <-----"
-echo "----->       THEN TYPE 'c' TO REPLACE. ANY OTHER KEY WILL QUIT       <-----"
-
-read -n 1 -p "'c' to replace, ano other key to quit without replacing: " k
-if [[ $k = c ]]
+if [[ CICheck ]]
 then
-    echo "Running clang-apply-replacements"
-    # run clang-tidy noted replacements
-    clang-apply-replacements $yamlFolder
+    numSuggestions=$(yq r -l ${yamlFolder}/${fixesFilename} Diagnostics)
+    if [[ $numSuggestions != 0 ]]
+    then
+        echo "format issues found"
+        exit 1
+    fi
+    echo "clang-tidy successful"
+else
+    echo "-----> CHECK PROPOSED REPLACEMENTS IN ${yamlFolder}/${fixesFilename} <-----"
+    echo "----->       THEN TYPE 'c' TO REPLACE. ANY OTHER KEY WILL QUIT       <-----"
 
-    # cleanup
-    rm -rf $yamlFolder
+    read -n 1 -p "'c' to replace, ano other key to quit without replacing: " k
+    if [[ $k = c ]]
+    then
+        echo "\nRunning clang-apply-replacements"
+        # run clang-tidy noted replacements
+        clang-apply-replacements $yamlFolder
+    fi
 fi
+
+# cleanup
+rm -rf $yamlFolder
