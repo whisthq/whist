@@ -23,11 +23,11 @@ Public Functions
 ============================
 */
 
-audio_device_t *create_audio_device() {
+AudioDevice *create_audio_device() {
     // See http://alsamodular.sourceforge.net/alsa_programming_howto.html
 
-    audio_device_t *audio_device = malloc(sizeof(audio_device_t));
-    memset(audio_device, 0, sizeof(audio_device_t));
+    AudioDevice *audio_device = malloc(sizeof(AudioDevice));
+    memset(audio_device, 0, sizeof(AudioDevice));
 
     int res;
 
@@ -147,27 +147,27 @@ audio_device_t *create_audio_device() {
     return audio_device;
 }
 
-void start_audio_device(audio_device_t *audio_device) {
+void start_audio_device(AudioDevice *audio_device) {
     audio_device->dummy_state = 0;
     return;
 }
 
-void destroy_audio_device(audio_device_t *audio_device) {
+void destroy_audio_device(AudioDevice *audio_device) {
     snd_pcm_drop(audio_device->handle);
     snd_pcm_close(audio_device->handle);
     free(audio_device->buffer);
     free(audio_device);
 }
 
-void get_next_packet(audio_device_t *audio_device) {
+void get_next_packet(AudioDevice *audio_device) {
     audio_device->dummy_state++;
     return;
 }
 
 // make it so the for loop only happens once for ALSA (unlike WASAPI)
-bool packet_available(audio_device_t *audio_device) { return audio_device->dummy_state < 2; }
+bool packet_available(AudioDevice *audio_device) { return audio_device->dummy_state < 2; }
 
-void get_buffer(audio_device_t *audio_device) {
+void get_buffer(AudioDevice *audio_device) {
     int res = snd_pcm_readi(audio_device->handle, audio_device->buffer, audio_device->num_frames);
     if (res == -EPIPE) {
         snd_pcm_recover(audio_device->handle, res, 0);
@@ -182,7 +182,7 @@ void get_buffer(audio_device_t *audio_device) {
     audio_device->buffer_size = audio_device->frames_available * audio_device->frame_size;
 }
 
-void release_buffer(audio_device_t *audio_device) { return; }
+void release_buffer(AudioDevice *audio_device) { return; }
 
 // ALSA is blocking, unlike WASAPI
-void wait_timer(audio_device_t *audio_device) { audio_device->dummy_state = 0; }
+void wait_timer(AudioDevice *audio_device) { audio_device->dummy_state = 0; }

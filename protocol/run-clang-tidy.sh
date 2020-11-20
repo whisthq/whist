@@ -86,7 +86,7 @@ do
     yq d -i $yamlFolder/$fixesFilename $pathExpression
 done
 
-if [[ CICheck ]]
+if [[ CICheck == 1 ]]
 then
     numSuggestions=$(yq r -l ${yamlFolder}/${fixesFilename} Diagnostics)
     if [[ $numSuggestions != 0 ]]
@@ -102,9 +102,16 @@ else
     read -n 1 -p "'c' to replace, ano other key to quit without replacing: " k
     if [[ $k = c ]]
     then
-        echo "\nRunning clang-apply-replacements"
+        echo
+        echo "Running clang-apply-replacements"
+
         # run clang-tidy noted replacements
-        clang-apply-replacements $yamlFolder
+        if command -v clang-apply-replacements &> /dev/null
+        then
+            clang-apply-replacements $yamlFolder
+        else
+            clang-apply-replacements-10 $yamlFolder
+        fi
     fi
 fi
 

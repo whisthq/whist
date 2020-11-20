@@ -289,13 +289,13 @@ const int windows_keycodes[NUM_KEYCODES] = {
     VK_LAUNCH_MEDIA_SELECT  // 263 -> Media Select
 };
 
-input_device_t* create_input_device() {
-    input_device_t* input_device = malloc(sizeof(input_device_t));
-    memset(input_device, 0, sizeof(input_device_t));
+InputDevice* create_input_device() {
+    InputDevice* input_device = malloc(sizeof(InputDevice));
+    memset(input_device, 0, sizeof(InputDevice));
     return input_device;
 }
 
-void destroy_input_device(input_device_t* input_device) {
+void destroy_input_device(InputDevice* input_device) {
     free(input_device);
     return;
 }
@@ -303,17 +303,17 @@ void destroy_input_device(input_device_t* input_device) {
 #define GetWindowsKeyCode(sdl_keycode) windows_keycodes[sdl_keycode]
 #define KEYPRESS_MASK 0x8000
 
-int get_keyboard_modifier_state(input_device_t* input_device, FractalKeycode sdl_keycode) {
+int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode sdl_keycode) {
     input_device;
     return 1 & GetKeyState(GetWindowsKeyCode(sdl_keycode));
 }
 
-int get_keyboard_key_state(input_device_t* input_device, FractalKeycode sdl_keycode) {
+int get_keyboard_key_state(InputDevice* input_device, FractalKeycode sdl_keycode) {
     input_device;
     return (KEYPRESS_MASK & GetAsyncKeyState(GetWindowsKeyCode(sdl_keycode))) >> 15;
 }
 
-int emit_key_event(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed) {
+int emit_key_event(InputDevice* input_device, FractalKeycode sdl_keycode, int pressed) {
     input_device;
 
     INPUT ip;
@@ -347,7 +347,7 @@ int emit_key_event(input_device_t* input_device, FractalKeycode sdl_keycode, int
     return 0;
 }
 
-int emit_mouse_motion_event(input_device_t* input_device, int32_t x, int32_t y, int relative) {
+int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int relative) {
     input_device;
 
     INPUT ip;
@@ -373,7 +373,7 @@ int emit_mouse_motion_event(input_device_t* input_device, int32_t x, int32_t y, 
     return 0;
 }
 
-int emit_mouse_button_event(input_device_t* input_device, FractalMouseButton button, int pressed) {
+int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button, int pressed) {
     input_device;
 
     INPUT ip;
@@ -419,7 +419,7 @@ int emit_mouse_button_event(input_device_t* input_device, FractalMouseButton but
     return 0;
 }
 
-int emit_mouse_wheel_event(input_device_t* input_device, int32_t x, int32_t y) {
+int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
     input_device;
 
     INPUT ip[2];  // vertical and horizontal are separate
