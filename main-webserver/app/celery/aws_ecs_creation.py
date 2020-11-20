@@ -14,8 +14,9 @@ from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.helpers.utils.general.sql_commands import fractal_sql_update
-from app.models import db, UserContainer, ClusterInfo, SortedClusters, SupportedAppImages
+from app.models import db, UserContainer, ClusterInfo, SortedClusters, SupportedAppImages, User
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
+from app.serializers.oauth import CredentialSchema
 
 from app.helpers.utils.datadog.events import (
     datadogEvent_containerCreate,
@@ -91,6 +92,65 @@ def build_base_from_image(image):
         "volumes": [{"name": "cgroup", "host": {"sourcePath": "/sys/fs/cgroup"}}],
     }
     return base_task
+
+
+def _mount_cloud_storage(user, container):
+    """Send a request to the ECS host service to mount a cloud storage folder to the container.
+
+    Arguments:
+        user: The user who owns the container.
+        container: An instance of the UserContainer model.
+    """
+
+    schema = CredentialSchema()
+
+    if user.credentials:
+        # Mount a cloud storage folder to the container.
+        try:
+            response = requests.post(
+                (
+                    f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+                    "/mount_cloud_storage"
+                ),
+                json=dict(
+                    auth_secret=current_app.config["HOST_SERVICE_SECRET"],
+                    host_port=container.port_32262,
+                    provider="google_drive",
+                    **schema.dump(user.credentials[0]),
+                ),
+                verify=False,
+            )
+        except (ConnectionError, Timeout, TooManyRedirects) as error:
+            # Don't just explode if there's a problem connecting to the ECS host service.
+            log_kwargs = {
+                "logs": (
+                    "Encountered an error while attempting to connect to the ECS host service "
+                    f"running on {container.ip}: {error}"
+                ),
+                "level": logging.ERROR,
+            }
+        else:
+            if response.ok:
+                log_kwargs = {
+                    "logs": "Cloud storage folder mounted successfully.",
+                    "level": logging.INFO,
+                }
+            else:
+                log_kwargs = {
+                    "logs": "Cloud storage folder failed to mount: {response.text}",
+                    "level": logging.ERROR,
+                }
+    else:
+        log_kwargs = {
+            "logs": "No cloud storage credentials found.",
+            "level": logging.WARNING,
+        }
+
+    fractal_log(
+        function="_mount_cloud_storage",
+        label=container.container_id,
+        **log_kwargs,
+    )
 
 
 def _pass_start_dpi_to_instance(ip, port, dpi):
@@ -297,6 +357,10 @@ def assign_container(
     """
 
     enable_waiting = False
+    user = User.query.get(username)
+
+    assert user
+
     # if a cluster is passed in, we're in testing mode:
     if cluster_name is None and enable_waiting:
         # first, we check for a preexisting container with the correct user and pass it back:
@@ -448,6 +512,7 @@ def assign_container(
             )
             raise Ignore
 
+    _mount_cloud_storage(user, base_container)  # Not tested
     _pass_start_dpi_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
     time.sleep(5)
 
@@ -509,11 +574,11 @@ def create_new_container(
     """
 
     task_start_time = time.time()
-
     message = (
         f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in "
         f"{region_name}"
     )
+
     fractal_log(function="create_new_container", label="None", logs=message)
     if not cluster_name:
         cluster_name = select_cluster(region_name)
@@ -617,6 +682,11 @@ def create_new_container(
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
         if username != "Unassigned":
+            user = User.query.get(username)
+
+            assert user
+
+            _mount_cloud_storage(user, container)
             _pass_start_dpi_to_instance(container.ip, container.port_32262, container.dpi)
 
             if not _poll(container.container_id):
@@ -640,6 +710,7 @@ def create_new_container(
     desktop {container.ip} -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
                 """,
             )
+            # pylint: enable=line-too-long
 
         if not current_app.testing:
             task_time_taken = time.time() - task_start_time
