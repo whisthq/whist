@@ -15,7 +15,7 @@ FRACTAL_MAPPINGS_DIR=/fractal/containerResourceMappings
 # wait for files to exist
 until [ -f $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/.ready ]
 do
-	sleep 0.1
+    sleep 0.1
 done
 
 ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/tty)

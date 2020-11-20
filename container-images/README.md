@@ -40,7 +40,7 @@ Or, if you have sshkeys:
 git clone --recurse-submodules --branch $your-container-images-branch git@github.com:fractalcomputers/container-images.git ~/container-images
 ```
 
-Then, setup on your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractalcomputers/ecs-host-setup/) repository: 
+Then, setup on your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractalcomputers/ecs-host-setup/) repository:
 
 ```
 ./setup_ubuntu20_host.sh
@@ -70,9 +70,10 @@ This takes a single argument, `APP`, which is the path to the target folder whos
 
 You first need to build the protocol and then build the base image before you can finally build a specific application image.
 
-__NOTE:__ For production we do not cache builds of Dockerfiles. This is for two reasons: 
+**NOTE:** For production we do not cache builds of Dockerfiles. This is for two reasons:
+
 1. Using build caches will almost surely lead to outdated versions of packages being present in the final images, which exposes publicly-known security flaws.
-2. It is also more expensive to keep a builder machine alive 24/7 than to just build them on the fly. 
+2. It is also more expensive to keep a builder machine alive 24/7 than to just build them on the fly.
 
 ### Running Local Images
 
@@ -96,7 +97,7 @@ As above, `APP` is the path of the application you want to run, `REGION` optiona
 
 ## Publishing
 
-We store our production container images on AWS Elastic Container Registry (ECR) and deploy them on AWS Elastic Container Service (ECS). 
+We store our production container images on AWS Elastic Container Registry (ECR) and deploy them on AWS Elastic Container Service (ECS).
 
 ### Manual Publishing
 
@@ -118,8 +119,8 @@ This is how we push to production. For every push to `master`, all applications 
 
 For every new application that you add support for, in addition to creating its own subfolder under the relevant category and creating application-specific **Dockerfile.20**, you need to:
 
-- Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`, for pre-commit hooks
-- Update the list of supported applications in this README
+-   Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`, for pre-commit hooks
+-   Update the list of supported applications in this README
 
 And, if you're adding a new AWS region, you should add the region name under `aws-regions` in `push-images.yml`.
 

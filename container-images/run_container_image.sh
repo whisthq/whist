@@ -11,15 +11,15 @@ fi
 
 runcontainer() {
     docker run -it -d \
-	    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-	    -v /fractal:/fractal:ro \
+        -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+        -v /fractal:/fractal:ro \
         $mount_protocol \
-	    --tmpfs /run \
-	    --tmpfs /run/lock \
-	    --gpus all \
-	    -e NVIDIA_CONTAINER_CAPABILITIES=all \
-	    -e NVIDIA_VISIBLE_DEVICES=all \
-	    --shm-size=8g \
+        --tmpfs /run \
+        --tmpfs /run/lock \
+        --gpus all \
+        -e NVIDIA_CONTAINER_CAPABILITIES=all \
+        -e NVIDIA_VISIBLE_DEVICES=all \
+        --shm-size=8g \
         --cap-drop ALL \
         --cap-add CAP_SETPCAP \
         --cap-add CAP_MKNOD \
@@ -40,12 +40,12 @@ runcontainer() {
         -p 32263:32263/udp \
         -p 32273:32273 \
         $image
-# capabilities not enabled by default: CAP_NICE
+    # capabilities not enabled by default: CAP_NICE
 }
 
 container_id=$(runcontainer $1)
 
 echo "Running container with ID: $container_id"
-docker exec -it $container_id /bin/bash
-docker kill $container_id
-docker rm $container_id
+docker exec -it $container_id /bin/bash || true
+docker kill $container_id || true
+docker rm $container_id || true
