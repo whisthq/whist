@@ -19,7 +19,7 @@ WEBSERVER_AUTH_SECRET_PROD ?= testwebserverauthsecret3
 
 all: deps build
 
-build:
+checkCI:
 	$(info building in $(BUILD_FOLDER) with CI set to $(CI)...)
 ifeq ($(CI),true)
 # We're building on GHA, so we need to require non-trivial secrets
@@ -37,6 +37,8 @@ endif
 else
 	$(info CI is false)
 endif
+
+build: checkCI
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/ecs-host-service/httpserver.webserverAuthSecretDev=$(WEBSERVER_AUTH_SECRET_DEV)'\
