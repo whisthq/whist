@@ -12,9 +12,9 @@ BINARY_NAME  = ecs-host-service
 GIT_COMMIT := $(shell git rev-list -1 HEAD)
 
 CI ?= false
-WEBSERVER_AUTH_SECRET_DEV ?= testwebserverauthsecret
-WEBSERVER_AUTH_SECRET_STAGING ?= testwebserverauthsecret2
-WEBSERVER_AUTH_SECRET_PROD ?= testwebserverauthsecret3
+WEBSERVER_AUTH_SECRET_DEV ?= testwebserverauthsecretdev
+WEBSERVER_AUTH_SECRET_STAGING ?= testwebserverauthsecretstaging
+WEBSERVER_AUTH_SECRET_PROD ?= testwebserverauthsecretprod
 
 
 all: deps build
