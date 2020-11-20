@@ -59,6 +59,8 @@ def login_helper(email, password):
                 "verification_token": None,
                 "name": None,
                 "can_login": False,
+                "card_brand": None,
+                "card_last_four": None,
             }
 
     # Fetch the JWT tokens
@@ -76,6 +78,8 @@ def login_helper(email, password):
         "verification_token": user.token,
         "name": user.name,
         "can_login": user.can_login,
+        "card_brand": user.card_brand,
+        "card_last_four": user.card_last_four,
     }
 
 
