@@ -408,6 +408,7 @@ def create_new_container(
     cluster_name=None,
     region_name="us-east-1",
     webserver_url=None,
+    dpi=96,
 ):
     """Create a new ECS container running a particular task.
 
@@ -499,6 +500,7 @@ def create_new_container(
         lock=False,
         secret_key=aeskey,
         task_definition=task_definition_arn,
+        dpi=dpi,
     )
     container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
     if container_sql:
@@ -533,6 +535,7 @@ def create_new_container(
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
         if username != "Unassigned":
+            send_dpi_info_to_instance(container.ip, container.port_32262, container.dpi)
             if not _poll(container.container_id):
                 fractalLog(
                     function="create_new_container",
