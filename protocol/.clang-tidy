@@ -1,5 +1,4 @@
 Checks: '-*,readability-identifier-naming'
-InheritParentConfig: false
 CheckOptions: [
     {key: readability-identifier-naming.FunctionCase, value: lower_case},
     {key: readability-identifier-naming.VariableCase, value: lower_case},
