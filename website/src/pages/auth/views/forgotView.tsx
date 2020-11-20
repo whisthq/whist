@@ -51,7 +51,7 @@ const ForgotView = (props: any) => {
     //     setGotResponse(false)
     // }, [])
 
-    if (processing) {
+    if (loading) {
         return (
             <div>
                 <PuffAnimation />
