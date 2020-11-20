@@ -2,41 +2,22 @@
 # this can only be run if compile_commands.json exists:
 #   set(CMAKE_EXPORT_COMPILE_COMMANDS ON) must be set in CMakeLists.txt
 
-# array of all folders to be ignored (some paths are roundabout accessed)
-declare -a excludeFolders=(
-    "include"
-    "include/ffmpeg/libavcodec/../libavutil/../.."
-    "include/ffmpeg/libavformat/../libavcodec/../libavutil/../.."
-    "lib"
-    "fractal/video/nvidia-linux"
-)
-
 # array of all folders to be checked and modified
 declare -a includeFolders=(
     "fractal"
     "desktop"
+    "server"
 )
-
-# iterate through exclusion folders and option to only read the 9999999th line of each of these files
-fileFilterString="--line-filter=["
-for folder in "${excludeFolders[@]}"
-do
-    for filePath in $(find $folder -type f -print)
-    do
-        fileFilterString="${fileFilterString}{\"name\":\"${filePath}\",\"lines\":[[9999999,9999999]]}, "
-    done
-done
-
-# include the rest of the .c and .h files
-fileFilterString="${fileFilterString} {\"name\":\"c\"}, {\"name\":\"h\"}]"
 
 yamlFolder="fixes"
 mkdir $yamlFolder
+fixesFilename=clang-tidy-fixes.yaml
 
-# echo $fileFilterString
+# run clang-tidy and output suggested fixes to clang-tidy-fixes.yaml
+echo "Running clang-tidy into ${yamlFolder}/${fixesFilename}"
 
+# generate string of arguments to pass in for files to tidy
 filesToFix="desktop/main.c server/main.c"
-
 for folder in "${includeFolders[@]}"
 do
     for cFilePath in $(find $folder -type f -regex ".*\.\c")
@@ -45,25 +26,61 @@ do
         then
             filesToFix="${filesToFix} ${cFilePath}"
         fi
-        # # run clang-tidy and output to clang-tidy-fixes.yaml
-        # clang-tidy -header-filter=.* "${fileFilterString}" $cFilePath --export-fixes=${yamlFolder}/clang-tidy-fixes.yaml
-
-        # # run clang-tidy noted replacements
-        # clang-apply-replacements $yamlFolder
-
-        # sleep 1
     done
 done
 
-# run clang-tidy and output suggested fixes to clang-tidy-fixes.yaml
-clang-tidy -header-filter=.* "${fileFilterString}" --quiet --export-fixes=${yamlFolder}/clang-tidy-fixes.yaml $filesToFix
+# header files to be included in clang-tidy (don't want to include third-party folders)
+headerFilter="desktop/|fractal/|server/"
+
+clang-tidy -header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix
+
+# ---- clean up yaml file before running replacements ----
+
+# deletes all clang-diagnostic-error entries
+echo "Deleting all clang-diagnostic-error entries"
+yq d -i $yamlFolder/$fixesFilename 'Diagnostics.(DiagnosticName==clang-diagnostic-error)'
+
+IFS=$'\n'
+# normalizes any paths that have '..'
+echo "Normalizing paths"
+for pathPair in $(yq r --printMode pv $yamlFolder/$fixesFilename 'Diagnostics.[*].**.FilePath')
+do
+    arr=( $(perl -E 'say for split quotemeta shift, shift' -- ": " "$pathPair" | tr -d \') )
+    if [[ "${arr[1]}" == *".."* ]]
+    then
+        yq w -i $yamlFolder/$fixesFilename ${arr[0]} $(realpath ${arr[1]})
+    fi
+done
+
+# remove any diagnostic entries with excluded folder paths - some remain because of roundabout access (..)
+echo "Removing excluded paths"
+declare -a excludeFolders=(
+    "include"
+    "lib"
+    "docs"
+    "sentry-native"
+    "share"
+    "fractal/video/nvidia-linux"
+)
+
+for excludeFolder in "${excludeFolders[@]}"
+do
+    pathExpression="Diagnostics.(DiagnosticMessage.FilePath==$(pwd)/${excludeFolder}/*)"
+    yq d -i $yamlFolder/$fixesFilename $pathExpression
+done
+
 
 # old .clang-tidy
 # Checks: '-*,readability-identifier-naming'
 # CheckOptions: [
 #     {key: readability-identifier-naming.FunctionCase, value: lower_case},
-#     {key: readability-identifier-naming.VariableCase, value: lower_case}
+#     {key: readability-identifier-naming.VariableCase, value: lower_case},
+#     {key: readability-identifier-naming.EnumCase, value: CamelCase},
+#     {key: readability-identifier-naming.EnumConstantCase, value: UPPER_CASE}
 # ]
+
+# # run clang-tidy noted replacements
+# clang-apply-replacements $yamlFolder
 
 # cleanup
 # rm -rf $yamlFolder
