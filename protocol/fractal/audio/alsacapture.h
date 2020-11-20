@@ -43,7 +43,7 @@ typedef struct audio_device_t {
     unsigned long frame_size;
     unsigned int channels;
     unsigned int sample_rate;
-    enum _snd_pcm_format sample_format;
+    enum _snd_pcm_format sample_format; // NOLINT
     uint8_t* buffer;
     int dummy_state;
 } audio_device_t;
