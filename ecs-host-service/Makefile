@@ -11,14 +11,32 @@ BINARY_NAME  = ecs-host-service
 
 GIT_COMMIT := $(shell git rev-list -1 HEAD)
 
+CI ?= false
 WEBSERVER_AUTH_SECRET_DEV ?= testwebserverauthsecret
 WEBSERVER_AUTH_SECRET_STAGING ?= testwebserverauthsecret2
 WEBSERVER_AUTH_SECRET_PROD ?= testwebserverauthsecret3
 
+
 all: deps build
 
 build:
-	$(info building in $(BUILD_FOLDER)...)
+	$(info building in $(BUILD_FOLDER) with CI set to $(CI)...)
+ifeq ($(CI),true)
+# We're building on GHA, so we need to require non-trivial secrets
+	$(info CI is true)
+ifeq ($(origin WEBSERVER_AUTH_SECRET_DEV),file)
+# This means that a replacement secret was not passed in on the command-line or as an environment variable
+	$(error "WEBSERVER_AUTH_SECRET_DEV is not set, but CI is true")
+endif
+ifeq ($(origin WEBSERVER_AUTH_SECRET_STAGING),file)
+	$(error "WEBSERVER_AUTH_SECRET_STAGING is not set, but CI is true")
+endif
+ifeq ($(origin WEBSERVER_AUTH_SECRET_PROD),file)
+	$(error "WEBSERVER_AUTH_SECRET_PROD is not set, but CI is true")
+endif
+else
+	$(info CI is false)
+endif
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/ecs-host-service/httpserver.webserverAuthSecretDev=$(WEBSERVER_AUTH_SECRET_DEV)'\
