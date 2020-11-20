@@ -2,7 +2,6 @@ import logging
 import os
 import time
 import requests
-from urllib3.exceptions import NewConnectionError
 
 from celery import shared_task
 from celery.exceptions import Ignore
