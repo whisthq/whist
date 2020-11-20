@@ -277,12 +277,12 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     return 0;
 }
 
-struct buffer_data {
+typedef struct ImageBufferData {
     const char* ptr;
     size_t size;
-};
+} ImageBufferData;
 static int read_open(void* opaque, uint8_t* buf, int buf_size) {
-    struct buffer_data* bd = (struct buffer_data*)opaque;
+    ImageBufferData* bd = (ImageBufferData*)opaque;
     buf_size = FFMIN(buf_size, (int)bd->size);
     if (!buf_size) return AVERROR_EOF;
     memcpy(buf, bd->ptr, buf_size);
@@ -323,7 +323,7 @@ int read_char_open(AVFormatContext** pctx, const char* data, int data_size) {
         return -2;
     }
 
-    struct buffer_data opaque = {.ptr = data, .size = data_size};
+    ImageBufferData opaque = {.ptr = data, .size = data_size};
     AVIOContext* pbctx =
         avio_alloc_context(buffer, (int)buffer_size, 0, &opaque, read_open, NULL, NULL);
     if (pbctx == NULL) {

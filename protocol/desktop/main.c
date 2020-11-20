@@ -87,7 +87,7 @@ bool lgui_pressed = false;
 bool rgui_pressed = false;
 
 // Mouse motion state
-mouse_motion_accumulation mouse_state = {0};
+MouseMotionAccumulation mouse_state = {0};
 
 clock window_resize_timer;
 

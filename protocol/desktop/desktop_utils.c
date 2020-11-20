@@ -40,7 +40,7 @@ extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 extern volatile CodecType codec_type;
 extern bool using_stun;
 
-extern mouse_motion_accumulation mouse_state;
+extern MouseMotionAccumulation mouse_state;
 extern volatile SDL_Window *window;
 
 extern unsigned short port_mappings[USHRT_MAX];

@@ -23,14 +23,14 @@ Custom Types
 ============================
 */
 
-typedef struct mouse_motion_accumulation {
+typedef struct MouseMotionAccumulation {
     int x_rel;
     int y_rel;
     int x_nonrel;
     int y_nonrel;
     bool is_relative;
     bool update;
-} mouse_motion_accumulation;
+} MouseMotionAccumulation;
 
 /*
 ============================

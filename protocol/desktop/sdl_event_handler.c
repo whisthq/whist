@@ -39,7 +39,7 @@ extern volatile int output_width;
 extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 
-extern mouse_motion_accumulation mouse_state;
+extern MouseMotionAccumulation mouse_state;
 
 int handle_window_size_changed(SDL_Event *event);
 int handle_mouse_left_window(SDL_Event *event);

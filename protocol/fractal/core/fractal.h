@@ -330,11 +330,11 @@ typedef enum FractalMouseButton {
     MOUSE_MAKE_32 = 0x7FFFFFFF,
 } FractalMouseButton;
 
-typedef struct RGB_Color {
+typedef struct FractalFractalRGBColor {
     uint8_t r;
     uint8_t g;
     uint8_t b;
-} RGB_Color;
+} FractalRGBColor;
 
 /// @brief Cursor properties.
 /// @details Track important information on cursor.
@@ -524,7 +524,7 @@ typedef struct PeerUpdateMessage {
     int x;
     int y;
     bool is_controlling;
-    RGB_Color color;
+    FractalRGBColor color;
 } PeerUpdateMessage;
 
 typedef struct FractalServerMessage {
