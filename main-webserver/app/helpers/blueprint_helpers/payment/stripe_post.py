@@ -77,7 +77,7 @@ def addCardHelper(email, token):
     client = StripeClient(current_app.config["STRIPE_SECRET"])
 
     try:
-        client.add_card(email, token)
+        client.add_card(email, source)
         status = SUCCESS
     except NonexistentUser:
         status = FORBIDDEN
