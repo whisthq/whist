@@ -71,7 +71,7 @@ int get_clipboard_changecount();
  *
  * @returns                        True if it contains a string, else False
  */
-bool clipboard_has_string();
+bool check_clipboard_has_string();
 
 /**
  * @brief                          Check if the clipboard has an image stored in
@@ -79,14 +79,14 @@ bool clipboard_has_string();
  *
  * @returns                        True if it contains an image, else False
  */
-bool clipboard_has_image();
+bool check_clipboard_has_image();
 
 /**
  * @brief                          Check if the clipboard has files stored in it
  *
  * @returns                        True if it contains files, else False
  */
-bool clipboard_has_files();
+bool check_clipboard_has_files();
 
 /**
  * @brief                          Get a string from the clipboard

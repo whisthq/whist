@@ -26,14 +26,14 @@ int get_clipboard_changecount() {
     return (int)changeCount;
 }
 
-bool clipboard_has_string() {
+bool check_clipboard_has_string() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
     NSDictionary *options = [NSDictionary dictionary];
     return [pasteboard canReadObjectForClasses:classArray options:options];
 }
 
-bool clipboard_has_image() {
+bool check_clipboard_has_image() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *classArray = [NSArray arrayWithObject:[NSImage class]];
     NSDictionary *options = [NSDictionary dictionary];
@@ -100,7 +100,7 @@ void clipboard_set_image(char *img, int len) {
     return;
 }
 
-bool clipboard_has_files() {
+bool check_clipboard_has_files() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *classArray = [NSArray arrayWithObject:[NSURL class]];
     NSDictionary *options =
