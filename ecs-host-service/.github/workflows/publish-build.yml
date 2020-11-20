@@ -40,7 +40,7 @@ jobs:
         run: make deps
 
       - name: Build Go project
-          run: make build
+        run: make build
 
       - name: Upload binary to S3
         run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
