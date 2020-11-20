@@ -56,7 +56,7 @@ void update_webserver_parameters() {
      */
     /* resp_buf); */
 
-    json_t json;
+    Json json;
     if (!parse_json(resp_buf, &json)) {
         LOG_ERROR("Failed to parse JSON from /container/protocol_info");
         start_timer(&last_protocol_info_check_time);
