@@ -135,7 +135,7 @@ void destroy_sdl(SDL_Window* window_param) {
 
 #if defined(_WIN32)
 // Function to capture keyboard strokes and block them if they encode special
-// key combinations, with intent to redirect them to SendCapturedKey so that the
+// key combinations, with intent to redirect them to send_captured_key so that the
 // keys can still be streamed over to the host
 
 HHOOK mule;
@@ -156,37 +156,37 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam) {
 
                 // Disable LWIN
                 if (pkbhs->vkCode == VK_LWIN) {
-                    SendCapturedKey(SDLK_LGUI, type, time);
+                    send_captured_key(SDLK_LGUI, type, time);
                     return 1;
                 }
 
                 // Disable RWIN
                 if (pkbhs->vkCode == VK_RWIN) {
-                    SendCapturedKey(SDLK_RGUI, type, time);
+                    send_captured_key(SDLK_RGUI, type, time);
                     return 1;
                 }
 
                 // Disable CTRL+ESC
                 if (pkbhs->vkCode == VK_ESCAPE && bControlKeyDown) {
-                    SendCapturedKey(SDLK_ESCAPE, type, time);
+                    send_captured_key(SDLK_ESCAPE, type, time);
                     return 1;
                 }
 
                 // Disable ALT+ESC
                 if (pkbhs->vkCode == VK_ESCAPE && bAltKeyDown) {
-                    SendCapturedKey(SDLK_ESCAPE, type, time);
+                    send_captured_key(SDLK_ESCAPE, type, time);
                     return 1;
                 }
 
                 // Disable ALT+TAB
                 if (pkbhs->vkCode == VK_TAB && bAltKeyDown) {
-                    SendCapturedKey(SDLK_TAB, type, time);
+                    send_captured_key(SDLK_TAB, type, time);
                     return 1;
                 }
 
                 // Disable ALT+F4
                 if (pkbhs->vkCode == VK_F4 && bAltKeyDown) {
-                    SendCapturedKey(SDLK_F4, type, time);
+                    send_captured_key(SDLK_F4, type, time);
                     return 1;
                 }
 
