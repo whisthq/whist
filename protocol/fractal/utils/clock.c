@@ -24,7 +24,7 @@ relate different events across server and client.
 #include "clock.h"
 
 #ifdef _WIN32
-int GetUTCOffset();
+int get_utc_offset();
 #endif
 
 #if defined(_WIN32)
@@ -149,9 +149,9 @@ int get_time_data(FractalTimeData* time_data) {
     time_data->use_win_name = 0;
     time_data->use_linux_name = 1;
 
-    time_data->UTC_Offset = GetUTCOffset();
+    time_data->UTC_Offset = get_utc_offset();
     LOG_INFO("Sending UTC offset %d", time_data->UTC_Offset);
-    time_data->DST_flag = GetDST();
+    time_data->DST_flag = get_dst();
 
     char* response = NULL;
     runcmd(

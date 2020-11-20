@@ -51,9 +51,9 @@ bool unsafe_has_clipboard_updated() {
     int new_clipboard_sequence_number = get_clipboard_changecount();
     if (new_clipboard_sequence_number > last_clipboard_sequence_number) {
         // check if new clipboard is an image or a string
-        clipboard_has_image = clipboard_has_image();
-        clipboard_has_string = clipboard_has_string();
-        clipboard_has_files = clipboard_has_files();
+        clipboard_has_image = check_clipboard_has_image();
+        clipboard_has_string = check_clipboard_has_string();
+        clipboard_has_files = check_clipboard_has_files();
         has_updated = (clipboard_has_image || clipboard_has_string ||
                       clipboard_has_files);  // should be always set to true in here
         last_clipboard_sequence_number = new_clipboard_sequence_number;
