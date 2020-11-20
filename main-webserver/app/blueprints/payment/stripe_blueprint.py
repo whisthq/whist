@@ -83,7 +83,7 @@ def payment(action, **kwargs):
         return deleteSubscriptionHelper(body["email"])
     # these will add a card as a source or remove (or modify) for future payment
     elif action == "addCard" or action == "modifyCard":
-        return addCardHelper(body["email"], body["token"])
+        return addCardHelper(body["email"], body["source"])
     elif action == "deleteCard":
         return deleteCardHelper(body["email"], body["token"])
     # Retrieves the stripe subscription of the customer so we can tell them some basic info
