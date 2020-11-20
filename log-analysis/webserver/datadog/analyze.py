@@ -10,7 +10,7 @@ from dotenv import load_dotenv  # this might need to be pipped
 from datetime import datetime
 from datadog import initialize
 
-from events import fetch, container_events_by_region, interval_avg
+from events import fetch, container_events_by_region, interval_avg, avg
 
 ## TODO
 # we will need to fetch
@@ -29,7 +29,8 @@ DATADOG_APP_KEY = "DATADOG_APP_KEY"
 BUCKET = "fractal-webserver-logs"
 FILEPATH = "{tag}/{region}/"
 FILENAME = "{date}-{label}"
-RECAP = "recap/"
+WEEKLY_RECAP = "weekly-recap/"
+DAILY_RECAP = "daily-recap/"
 
 # we store everything in
 # tag/region/date-label
@@ -62,9 +63,7 @@ TAGS_TEXTKEYS = [
     (CONTAINER_LIFECYCLE, LIFETIME),
 ]
 
-REGIONS = [
-    "us-east-1",
-]
+REGIONS = ["us-east-1", "ca-central-1"]
 
 
 def initialize_datadog():
@@ -98,27 +97,139 @@ def initialize_datadog():
     initialize(**options)
 
 
-# we can run this weekly to get the average usage per day... or whatever
-# interval should work for day too but that would depend on the otherone not being messed up yikes
-def store_averages_to_files(window=DAY, interval=WEEK):
-    # this should be allowed via lambda or whatever
-    client = boto3.client("s3")
-    initialize_datadog()
+# below here are various helpers for what comes next because there is code repetition
 
-    # this will be helpful if we are running a lambda because
-    # we want to avoid it going over 15 minutes since otherwise
-    # it might shutdown during work which is worrisome
-    lambda_time_start = time.time()
+# (boolean to avoid aliasing)
+def _init_recap(textkey2label, textkey2label_val=False):
+    recap = {tag: None for tag, _ in TAGS_TEXTKEYS}
+    for tag in recap.keys():
+        recap[tag] = {
+            region: {
+                textkey2label(textkey): {} if textkey2label_val else None
+                for _, textkey in TAGS_TEXTKEYS
+            }
+            for region in REGIONS
+        }
+    return recap
 
-    textkey2label = (
+
+def _for_tag_textkey_region_events(region2events, textkey2label, recap, f):
+    for tag, textkey in TAGS_TEXTKEYS:
+        for region in REGIONS:
+            print(
+                "analyzing tag {} with textkey {} with region {}".format(
+                    tag, textkey, region
+                )
+            )
+            events = region2events[region]
+            events_with_tag = filter(lambda event: tag in event["tags"], events)
+
+            f(
+                tag=tag,
+                textkey=textkey,
+                region=region,
+                label=textkey2label(textkey),
+                events=events_with_tag,
+                recap=recap,
+            )
+
+
+def _update_daily_recap_curry(now):
+    def _update_daily_recap(**kwargs):
+        tag, textkey, region = kwargs["tag"], kwargs["textkey"], kwargs["region"]
+        label, events, recap = kwargs["label"], kwargs["events"], kwargs["recap"]
+
+        recap[tag][region][label] = avg(
+            events,
+            textkey,
+        )
+
+    return _update_daily_recap
+
+
+def _update_weekly_recap_curry(window, interval):
+    def _update_weekly_recap(**kwargs):
+        tag, textkey, region = kwargs["tag"], kwargs["textkey"], kwargs["region"]
+        label, events, recap = kwargs["label"], kwargs["events"], kwargs["recap"]
+
+        avgs = interval_avg(
+            events,
+            textkey,
+            window=window,
+            interval=interval,
+        )
+
+        # alternative to store on one file?
+        for date, avg in avgs:
+            try:
+                # this is if it's a datetime object
+                date_str = date.strftime("%Y%m%d")
+            except:
+                # probably unix time
+                date_str = str(date)
+            recap[tag][region][label][date_str] = avg
+
+    return _update_weekly_recap
+
+
+def _init_textkey2label(window):
+    return (
         lambda textkey: "average_"
         + textkey
         + ("_by_day" if window == DAY else "_by_week" if window == WEEK else "")
     )
 
-    previous_time = time.time() - interval
+
+def _fetch_region2events(previous_time):
     all_events = fetch(previous_time, [tag for tag, _ in TAGS_TEXTKEYS])
     region2events = container_events_by_region(all_events, regions=REGIONS)
+    return region2events
+
+# here are the actual functions we use
+
+# get the average metric of each region for each metric
+def store_average_each_window(window=DAY):
+    # THIS SHOULD BE RUN BY A DAILY CRON JOB
+
+    # basically the same as below, we might want to combine the code or something
+    # bruh code reuse plz
+    client = boto3.client("s3")
+    initialize_datadog()
+
+    previous_time = time.time() - window
+    region2events = _fetch_region2events(previous_time)
+
+    textkey2label = _init_textkey2label(window)
+
+    recap = _init_recap(textkey2label)
+    print("Initialized datastructure.")
+
+    now = datetime.now()
+    _update_daily_recap = _update_daily_recap_curry(now)
+    _for_tag_textkey_region_events(
+        region2events, textkey2label, recap, _update_daily_recap
+    )
+    print("Finished analysis.")
+
+    filename = DAILY_RECAP + now.strftime("%Y%m%d") + ".json"
+    store_json = json.dumps(recap).encode("utf-8")
+    store(filename, store_json, client=client)
+
+    print("Stored file.")
+
+
+# we can run this weekly to get the average usage per day... or whatever
+# interval should work for day too but that would depend on the otherone not being messed up yikes
+def store_averages_to_files_by_interval(window=DAY, interval=WEEK):
+    # THIS SHOULD BE RUN BY A WEEKLY CRON JOB
+
+    client = boto3.client("s3")
+    initialize_datadog()
+
+    textkey2label = _init_textkey2label(window)
+
+    previous_time = time.time() - interval
+    region2events = _fetch_region2events(previous_time)
 
     # json object to be stored in the recap
     # json has format like the files
@@ -131,49 +242,22 @@ def store_averages_to_files(window=DAY, interval=WEEK):
     #        }
     #    }
     # }
-    recap = {tag: None for tag, _ in TAGS_TEXTKEYS}
-    for tag in recap.keys():
-        recap[tag] = {
-            region: {textkey2label(textkey): {} for _, textkey in TAGS_TEXTKEYS}
-            for region in REGIONS
-        }
+    recap = _init_recap(textkey2label, textkey2label_val=True)
+    print("Initialized datastructure.")
 
-    # go and find the averages, add to the recap, and then also add to each individual file
-    # we probably won't actually save anything but the recap until we have more detailed logs, not sure
-    for tag, textkey in TAGS_TEXTKEYS:
-        for region in REGIONS:
-            events = region2events[region]
-
-            # only supports day now
-            label = textkey2label(textkey)
-
-            filepath = FILEPATH.format(tag=tag, region=region)
-
-            avgs = interval_avg(
-                filter(lambda event: tag in event["tags"], events),
-                textkey,
-                window=window,
-                interval=interval,
-            )
-
-            # alternative to store on one file?
-            for date, avg in avgs:
-                date_str = date.strftime("%Y%m%d")
-                recap[tag][region][label][date_str] = avg
-
-                # won't be using this for now
-                # filename = filepath + FILENAME.format(date=date_str, label=label)
-                # store_json = json.dumps({label: avg}).encode("utf-8")
-                # store(filename, store_json, client=client)
-
-    # this is in seconds
-    recap["lambda_time"] = round(time.time() - lambda_time_start)  # in seconds
+    _update_weekly_recap = _update_weekly_recap_curry(window, interval)
+    _for_tag_textkey_region_events(
+        region2events, textkey2label, recap, _update_weekly_recap
+    )
+    print("Finished analysis.")
 
     recap_json = json.dumps(recap).encode("utf-8")
-    recap_filename = RECAP + datetime.now().strftime("%Y%m%d")
+    recap_filename = WEEKLY_RECAP + datetime.now().strftime("%Y%m%d") + ".json"
     store(recap_filename, recap_json, client=client)
+    print("Stored file.")
 
 
+# TODO also write to datadog event stream or something else
 # todo clean this up depending on how we want to do it
 def store(filename, binary_data, client=None):
     if not client:
@@ -183,4 +267,6 @@ def store(filename, binary_data, client=None):
 
 
 if __name__ == "__main__":
-    store_averages_to_files()
+    # TODO make an argparse in the future
+    store_averages_to_files_by_interval()  # this is going to be run by the workflow
+    store_average_each_window()

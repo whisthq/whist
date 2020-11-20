@@ -15,18 +15,13 @@ def interval_avg(events, textkey, window, interval):
     # we return with timestamps by latest event in the interval
     window = []
     try:
-        try:
-            # if it's a list
-            end_time = events[0]["date_happened"]
-        except TypeError:
-            # if it's a generator/iterator (for filter and map etc)
-            # good for cpu utilization or something idk
-            first_event = next(events)
-            end_time = first_event["date_happend"]
-            window.append(first_event)
+        if not type(events) == list:
+            events = list(events)
+
+        end_time = events[0]["date_happened"]
 
         for event in events:
-            if end_time - event["date_happened"] < interval_length:
+            if end_time - event["date_happened"] < interval:
                 window.append(event)
             else:
                 yield end_time, avg(window, textkey)
@@ -38,8 +33,10 @@ def interval_avg(events, textkey, window, interval):
             yield end_time, avg(window, textkey)
     # these two are for when there is nothing basically
     except IndexError:
-        pass
-    except StopIteration:
+        # this happens when [0] -> len == 0 so error
+        # and we in that case want to yield nothing (i.e. it's empty, the data
+        # structures using this function already have that assumped i.e. as if there
+        # was no data, it's only when there is data that they change)
         pass
 
 
@@ -52,20 +49,24 @@ def event_val_num(event, textkey):
         # in our case should happen in the case of a datetime object (really timedelta)3
         # because we can only strptime with datetime we do this (get a timedelta td):
         td = datetime.strptime("0:01:13.964650", "%H:%M:%S.%f")
-        td = datetime(
+        td = td - datetime(
             year=td.year, month=td.month, day=td.day
         )  # normally will be 1900, 1, 1
         return td.total_seconds()
 
 
 def avg(events, textkey):
-    return np.avg(list(map(lambda event: event_val_num(event, textkey), events)))
+    return np.average(list(map(lambda event: event_val_num(event, textkey), events)))
 
 
 def right_format(event, format_version):
     try:
-        return parse_event_text(event["text"])["format_version"] == format_version
-    except:
+        text = event["text"]
+        parsed_format = parse_event_text(text)["format_version"]
+        # print("parseable!")
+        return parsed_format == format_version
+    except Exception as e:
+        # print(f"exception ->> {str(e)} <<- with an event")
         # this should happen for really old events basically
         return False
 
@@ -80,17 +81,38 @@ def fetch(previous_time, tag_by, time_step=3600, format_version="1.0"):
         end_time, start_time = current_time, max(
             current_time - time_step, previous_time
         )
-        yield from filter(
-            # important so that we only get the ones which have the right format for our fetch type
-            lambda event: right_format(event, format_version),
-            api.Event.query(
+
+        # unfortunately datadog docs are a bit misleading
+        # it looks like the list of tags is an AND and not an OR
+        # as it is in the event stream
+        for tag in tag_by:
+            events = api.Event.query(
                 start=start_time,
                 end=end_time,
                 # sources ?
-                tags=tag_by,
+                tags=[tag],  # tag_by,
                 unaggregated=True,
-            )["events"],
-        )
+            )
+
+            if type(events) == dict:
+                events = events["events"]
+            if type(events) == tuple:
+                events = events[0] if len(events) > 0 else []
+
+            # unfortunately we might need to sort again
+            # because we are doing this by tags
+            # it might not be necessary since only the already-sorted subsequences
+            # are observed
+            yield from sorted(
+                filter(
+                    # important so that we only get the ones which have the right format for our fetch type
+                    lambda event: right_format(event, format_version),
+                    events,
+                ),
+                key=lambda event: event["date_happened"],
+                reverse=True,
+            )
+
         current_time -= time_step
 
 
