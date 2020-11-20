@@ -3,6 +3,6 @@
 
 #include "../core/fractal.h"
 
-extern RGB_Color mouse_colors[MAX_NUM_CLIENTS];
+extern FractalRGBColor mouse_colors[MAX_NUM_CLIENTS];
 
 #endif  // MOUSE_H

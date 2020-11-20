@@ -62,8 +62,29 @@ volatile bool pending_resize_render = false;
 #define CURSORIMAGE_G 0x0000ff00
 #define CURSORIMAGE_B 0x000000ff
 
+typedef struct FrameData {
+    char* frame_buffer;
+    int frame_size;
+    int id;
+    int packets_received;
+    int num_packets;
+    bool received_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
+    bool nacked_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
+    bool rendered;
+
+    int num_times_nacked;
+
+    int last_nacked_index;
+
+    clock last_nacked_timer;
+
+    clock last_packet_timer;
+
+    clock frame_creation_timer;
+} FrameData;
+
 struct VideoData {
-    struct FrameData* pending_ctx;
+    FrameData* pending_ctx;
     int frames_received;
     int bytes_transferred;
     clock frame_timer;
@@ -94,37 +115,16 @@ typedef struct SDLVideoContext {
     Uint8* data[4];
     int linesize[4];
 
-    video_decoder_t* decoder;
+    VideoDecoder* decoder;
     struct SwsContext* sws;
 } SDLVideoContext;
 SDLVideoContext video_context;
-
-typedef struct FrameData {
-    char* frame_buffer;
-    int frame_size;
-    int id;
-    int packets_received;
-    int num_packets;
-    bool received_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
-    bool nacked_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
-    bool rendered;
-
-    int num_times_nacked;
-
-    int last_nacked_index;
-
-    clock last_nacked_timer;
-
-    clock last_packet_timer;
-
-    clock frame_creation_timer;
-} FrameData;
 
 // mbps that currently works
 volatile double working_mbps;
 
 // Context of the frame that is currently being rendered
-volatile struct FrameData render_context;
+volatile FrameData render_context;
 
 // True if RenderScreen is currently rendering a frame
 volatile bool rendering = false;
@@ -135,7 +135,7 @@ SDL_mutex* render_mutex;
 
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 275
-struct FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
+FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
 char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
 
 bool has_rendered_yet = false;
@@ -183,7 +183,7 @@ static enum AVPixelFormat sws_input_fmt;
 
 void update_sws_context() {
     LOG_INFO("Updating SWS Context");
-    video_decoder_t* decoder = video_context.decoder;
+    VideoDecoder* decoder = video_context.decoder;
 
     sws_input_fmt = decoder->sw_frame->format;
 
@@ -244,7 +244,7 @@ void update_decoder_parameters(int width, int height, CodecType codec_type) {
         destroy_video_decoder(video_context.decoder);
     }
 
-    video_decoder_t* decoder = create_video_decoder(width, height, USE_HARDWARE, codec_type);
+    VideoDecoder* decoder = create_video_decoder(width, height, USE_HARDWARE, codec_type);
 
     video_context.decoder = decoder;
     if (!decoder) {
@@ -751,7 +751,7 @@ void update_video() {
 
         int index = next_render_id % RECV_FRAMES_BUFFER_SIZE;
 
-        struct FrameData* ctx = &receiving_frames[index];
+        FrameData* ctx = &receiving_frames[index];
 
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
@@ -767,7 +767,7 @@ void update_video() {
 
                 int after_render_id = next_render_id + 1;
                 int after_index = after_render_id % RECV_FRAMES_BUFFER_SIZE;
-                struct FrameData* after_ctx = &receiving_frames[after_index];
+                FrameData* after_ctx = &receiving_frames[after_index];
 
                 if (after_ctx->id == after_render_id &&
                     after_ctx->packets_received == after_ctx->num_packets) {
@@ -809,7 +809,7 @@ void update_video() {
         }
 
         if (!rendering) {
-            // struct FrameData* cur_ctx =
+            // FrameData* cur_ctx =
             // &receiving_frames[VideoData.last_rendered_id %
             // RECV_FRAMES_BUFFER_SIZE];
 
@@ -841,7 +841,7 @@ int32_t receive_video(FractalPacket* packet) {
 
     int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
 
-    struct FrameData* ctx = &receiving_frames[index];
+    FrameData* ctx = &receiving_frames[index];
 
     // Check if we have to initialize the frame buffer
     if (packet->id < ctx->id) {

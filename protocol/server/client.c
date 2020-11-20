@@ -33,7 +33,7 @@ int init_clients(void) {
         clients[id].UDP_port = BASE_UDP_PORT + id;
         clients[id].TCP_port = BASE_TCP_PORT + id;
 
-        memcpy(&(clients[id].mouse.color), &(mouse_colors[id]), sizeof(RGB_Color));
+        memcpy(&(clients[id].mouse.color), &(mouse_colors[id]), sizeof(FractalRGBColor));
     }
     return 0;
 }
@@ -144,7 +144,7 @@ int fill_peer_update_messages(PeerUpdateMessage *msgs, size_t *num_msgs) {
             msgs->x = clients[id].mouse.x;
             msgs->y = clients[id].mouse.y;
             msgs->is_controlling = clients[id].is_controlling;
-            memcpy(&(msgs->color), &(clients[id].mouse.color), sizeof(RGB_Color));
+            memcpy(&(msgs->color), &(clients[id].mouse.color), sizeof(FractalRGBColor));
             msgs++;
             (*num_msgs)++;
         }

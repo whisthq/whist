@@ -64,13 +64,13 @@ static volatile SDL_mutex *logger_mutex;
 
 // logger queue
 
-typedef struct logger_queue_item {
+typedef struct LoggerQueueItem {
     int id;
     bool log;
     char buf[LOGGER_BUF_SIZE];
-} logger_queue_item;
-static volatile logger_queue_item logger_queue[LOGGER_QUEUE_SIZE];
-static volatile logger_queue_item logger_queue_cache[LOGGER_QUEUE_SIZE];
+} LoggerQueueItem;
+static volatile LoggerQueueItem logger_queue[LOGGER_QUEUE_SIZE];
+static volatile LoggerQueueItem logger_queue_cache[LOGGER_QUEUE_SIZE];
 static volatile int logger_queue_index = 0;
 static volatile int logger_queue_size = 0;
 static volatile int logger_global_id = 0;
@@ -807,15 +807,15 @@ int send_connection_history(char *host, char *identifier, char *hex_aes_private_
     return true;
 }
 
-typedef struct update_status_data {
+typedef struct UpdateStatusData {
     bool is_connected;
     char *host;
     char *identifier;
     char *hex_aes_private_key;
-} update_status_data_t;
+} UpdateStatusData;
 
 int32_t multithreaded_update_server_status(void *data) {
-    update_status_data_t *d = data;
+    UpdateStatusData *d = data;
 
     char json[1000];
     snprintf(json, sizeof(json),
@@ -834,7 +834,7 @@ int32_t multithreaded_update_server_status(void *data) {
 void update_server_status(bool is_connected, char *host, char *identifier,
                         char *hex_aes_private_key) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
-    update_status_data_t *d = malloc(sizeof(update_status_data_t));
+    UpdateStatusData *d = malloc(sizeof(UpdateStatusData));
     d->is_connected = is_connected;
     d->host = host;
     d->identifier = identifier;

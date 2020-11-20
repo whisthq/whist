@@ -44,13 +44,13 @@ Custom Types
 ============================
 */
 
-typedef struct audio_decoder_t {
+typedef struct AudioDecoder {
     AVCodec* pCodec;
     AVCodecContext* pCodecCtx;
     AVFrame* pFrame;
     SwrContext* pSwrContext;
     uint8_t* out_buffer;
-} audio_decoder_t;
+} AudioDecoder;
 
 /*
 ============================
@@ -67,7 +67,7 @@ Public Functions
  *
  * @returns                        The initialized FFmpeg AAC audio decoder
  */
-audio_decoder_t* create_audio_decoder(int sample_rate);
+AudioDecoder* create_audio_decoder(int sample_rate);
 
 /**
  * @brief                          Initialize an AVFrame to receive a decoded
@@ -78,7 +78,7 @@ audio_decoder_t* create_audio_decoder(int sample_rate);
  *
  * @returns                        0 if success, else -1
  */
-int init_av_frame(audio_decoder_t* decoder);
+int init_av_frame(AudioDecoder* decoder);
 
 /**
  * @brief                          Retrieve the size of an audio frame
@@ -88,7 +88,7 @@ int init_av_frame(audio_decoder_t* decoder);
  *
  * @returns                        The size of the audio frame, in bytes
  */
-int audio_decoder_get_frame_data_size(audio_decoder_t* decoder);
+int audio_decoder_get_frame_data_size(AudioDecoder* decoder);
 
 /**
  * @brief                          Read a decoded audio packet from the decoder
@@ -98,7 +98,7 @@ int audio_decoder_get_frame_data_size(audio_decoder_t* decoder);
  *                                 packet
  * @param data                     Data buffer to receive the decoded audio data
  */
-void audio_decoder_packet_readout(audio_decoder_t* decoder, uint8_t* data);
+void audio_decoder_packet_readout(AudioDecoder* decoder, uint8_t* data);
 
 /**
  * @brief                          Decode an AAC encoded audio packet
@@ -110,7 +110,7 @@ void audio_decoder_packet_readout(audio_decoder_t* decoder, uint8_t* data);
  * @returns                        0 if success, else -1
  */
 
-int audio_decoder_decode_packet(audio_decoder_t* decoder, AVPacket* encoded_packet);
+int audio_decoder_decode_packet(AudioDecoder* decoder, AVPacket* encoded_packet);
 
 /**
  * @brief                          Destroy a FFmpeg AAC audio decoder, and free
@@ -118,6 +118,6 @@ int audio_decoder_decode_packet(audio_decoder_t* decoder, AVPacket* encoded_pack
  *
  * @param decoder                  The audio decoder to destroy
  */
-void destroy_audio_decoder(audio_decoder_t* decoder);
+void destroy_audio_decoder(AudioDecoder* decoder);
 
 #endif  // DECODE_H

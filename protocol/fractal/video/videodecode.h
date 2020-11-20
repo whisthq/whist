@@ -32,7 +32,7 @@ typedef enum DecodeType {
     DECODE_TYPE_HARDWARE_OLDER = 4,
 } DecodeType;
 
-typedef struct video_decoder_t {
+typedef struct VideoDecoder {
     int width;
     int height;
     bool can_use_hardware;
@@ -45,7 +45,7 @@ typedef struct video_decoder_t {
     DecodeType type;
     CodecType codec_type;
     enum AVHWDeviceType device_type;
-} video_decoder_t;
+} VideoDecoder;
 
 /*
 ============================
@@ -65,7 +65,7 @@ Public Functions
  *
  * @returns                        The FFmpeg video decoder struct
  */
-video_decoder_t* create_video_decoder(int width, int height, bool use_hardware,
+VideoDecoder* create_video_decoder(int width, int height, bool use_hardware,
                                       CodecType codec_type);
 
 /**
@@ -74,7 +74,7 @@ video_decoder_t* create_video_decoder(int width, int height, bool use_hardware,
  *
  * @param decoder                  The FFmpeg video decoder to destroy
  */
-void destroy_video_decoder(video_decoder_t* decoder);
+void destroy_video_decoder(VideoDecoder* decoder);
 
 /**
  * @brief                          Decode a compressed video frame using the
@@ -87,6 +87,6 @@ void destroy_video_decoder(video_decoder_t* decoder);
  *
  * @returns                        True if it decoded successfully, else False
  */
-bool video_decoder_decode(video_decoder_t* decoder, void* buffer, int buffer_size);
+bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size);
 
 #endif  // VIDEO_DECODE_H

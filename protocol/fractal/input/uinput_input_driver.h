@@ -24,13 +24,13 @@ Custom Types
 ============================
 */
 
-typedef struct input_device_t {
+typedef struct InputDevice {
     int fd_absmouse;
     int fd_relmouse;
     int fd_keyboard;
     int keyboard_state[NUM_KEYCODES];
     bool caps_lock;
     bool num_lock;
-} input_device_t;
+} InputDevice;
 
 #endif  // UINPUT_INPUT_DRIVER_H
