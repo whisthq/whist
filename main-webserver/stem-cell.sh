@@ -16,7 +16,7 @@ case "$1" in
 	if [ -n "$HOT_RELOAD" ]; then
 	    FLASK_ENV=development flask run --host "0.0.0.0" --port "$PORT"
 	else
-	    waitress-serve --port="$PORT" app:app
+	    waitress-serve --port="$PORT" --url-scheme=https app:app
 	fi ;;
     "celery")
 	# The two containers share the same requirements.txt file, but we only
