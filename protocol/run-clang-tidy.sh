@@ -1,9 +1,9 @@
 #!/bin/bash
 # this can only be run if compile_commands.json exists:
 #   set(CMAKE_EXPORT_COMPILE_COMMANDS ON) must be set in CMakeLists.txt
+# this must be run after calling make within desktop (and server, if applicable)
 
-# run wtih option -c for CI check without replacement option
-
+# run with option -c for CI check without replacement option
 OPTIND=1
 CICheck=0
 
@@ -18,6 +18,16 @@ done
 shift $((OPTIND-1))
 
 [ "${1:-}" = "--" ] && shift
+
+# find machine type (necessary for pwd behavior)
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine="Linux";;
+    Darwin*)    machine="Mac";;
+    CYGWIN*)    machine="Windows";;
+    MINGW*)     machine="Windows";;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
 
 # array of all folders to be checked and modified
 declare -a includeFolders=(
@@ -58,15 +68,12 @@ echo "Deleting all clang-diagnostic-error entries"
 yq d -i $yamlFolder/$fixesFilename 'Diagnostics.(DiagnosticName==clang-diagnostic-error)'
 
 IFS=$'\n'
-# normalizes any paths that have '..'
+# normalizes all paths to get rid of '..'
 echo "Normalizing paths"
 for pathPair in $(yq r --printMode pv $yamlFolder/$fixesFilename 'Diagnostics.[*].**.FilePath')
 do
     arr=( $(perl -E 'say for split quotemeta shift, shift' -- ": " "$pathPair" | tr -d \') )
-    if [[ "${arr[1]}" == *".."* ]]
-    then
-        yq w -i $yamlFolder/$fixesFilename ${arr[0]} $(realpath ${arr[1]})
-    fi
+    yq w -i $yamlFolder/$fixesFilename ${arr[0]} $(realpath ${arr[1]})
 done
 
 # remove any diagnostic entries with excluded folder paths - some remain because of roundabout access (..)
@@ -80,9 +87,16 @@ declare -a excludeFolders=(
     "fractal/video/nvidia-linux"
 )
 
+if [[ machine == "Windows" ]]
+then
+    thisDirectory=$(cmd '/C echo %cd%')
+else
+    thisDirectory=$(pwd)
+fi
+
 for excludeFolder in "${excludeFolders[@]}"
 do
-    pathExpression="Diagnostics.(DiagnosticMessage.FilePath==$(pwd)/${excludeFolder}/*)"
+    pathExpression="Diagnostics.(DiagnosticMessage.FilePath==${thisDirectory}/${excludeFolder}/*)"
     yq d -i $yamlFolder/$fixesFilename $pathExpression
 done
 
