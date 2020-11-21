@@ -18,8 +18,8 @@ extern volatile int output_height;
 extern volatile SDL_Window* window;
 
 #if defined(_WIN32)
-HHOOK g_hKeyboardHook;
-LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam);
+HHOOK g_h_keyboard_hook;
+LRESULT CALLBACK low_level_keyboard_proc(INT nCode, WPARAM wParam, LPARAM lParam);
 #endif
 
 // Send a key to SDL event queue, presumably one that is captured and wouldn't
@@ -124,7 +124,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 void destroy_sdl(SDL_Window* window_param) {
     LOG_INFO("Destroying SDL");
 #if defined(_WIN32)
-    UnhookWindowsHookEx(g_hKeyboardHook);
+    UnhookWindowsHookEx(g_h_keyboard_hook);
 #endif
     if (window_param) {
         SDL_DestroyWindow((SDL_Window*)window_param);
@@ -139,7 +139,7 @@ void destroy_sdl(SDL_Window* window_param) {
 // keys can still be streamed over to the host
 
 HHOOK mule;
-LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK low_level_keyboard_proc(INT nCode, WPARAM wParam, LPARAM lParam) {
     // By returning a non-zero value from the hook procedure, the
     // message does not get passed to the target window
     KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)lParam;
@@ -148,8 +148,8 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam) {
         switch (nCode) {
             case HC_ACTION: {
                 // Check to see if the CTRL key is pressed
-                BOOL bControlKeyDown = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
-                BOOL bAltKeyDown = pkbhs->flags & LLKHF_ALTDOWN;
+                BOOL b_control_key_down = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
+                BOOL b_alt_key_down = pkbhs->flags & LLKHF_ALTDOWN;
 
                 int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
                 int time = pkbhs->time;
@@ -167,25 +167,25 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam) {
                 }
 
                 // Disable CTRL+ESC
-                if (pkbhs->vkCode == VK_ESCAPE && bControlKeyDown) {
+                if (pkbhs->vkCode == VK_ESCAPE && b_control_key_down) {
                     send_captured_key(SDLK_ESCAPE, type, time);
                     return 1;
                 }
 
                 // Disable ALT+ESC
-                if (pkbhs->vkCode == VK_ESCAPE && bAltKeyDown) {
+                if (pkbhs->vkCode == VK_ESCAPE && b_alt_key_down) {
                     send_captured_key(SDLK_ESCAPE, type, time);
                     return 1;
                 }
 
                 // Disable ALT+TAB
-                if (pkbhs->vkCode == VK_TAB && bAltKeyDown) {
+                if (pkbhs->vkCode == VK_TAB && b_alt_key_down) {
                     send_captured_key(SDLK_TAB, type, time);
                     return 1;
                 }
 
                 // Disable ALT+F4
-                if (pkbhs->vkCode == VK_F4 && bAltKeyDown) {
+                if (pkbhs->vkCode == VK_F4 && b_alt_key_down) {
                     send_captured_key(SDLK_F4, type, time);
                     return 1;
                 }
