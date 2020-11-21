@@ -40,12 +40,12 @@ void print_os_info() {
         buildlab[0] = '\0';
     }
 
-    char winOSstring[512];
-    snprintf(winOSstring, sizeof(winOSstring), "%s %s.%s", product, version, buildlab);
+    char win_o_sstring[512];
+    snprintf(win_o_sstring, sizeof(win_o_sstring), "%s %s.%s", product, version, buildlab);
 #endif
 
 #ifdef _WIN32
-    snprintf(buf, sizeof(buf), "32-bit %s", winOSstring);
+    snprintf(buf, sizeof(buf), "32-bit %s", win_o_sstring);
     LOG_INFO("  OS: %s", buf);
 #elif _WIN64
     snprintf(buf, sizeof(buf), "64-bit %s", winOSstring);
@@ -191,20 +191,20 @@ void print_monitors() {
             LOG_INFO("Found monitor %d on adapter %lu. Monitor %d named %S", j, i, j,
                      output_desc.DeviceName);
 
-            HMONITOR hMonitor = output_desc.Monitor;
-            MONITORINFOEXW monitorInfo;
-            monitorInfo.cbSize = sizeof(MONITORINFOEXW);
-            GetMonitorInfoW(hMonitor, (LPMONITORINFO)&monitorInfo);
-            DEVMODE devMode = {0};
-            devMode.dmSize = sizeof(DEVMODE);
-            devMode.dmDriverExtra = 0;
-            EnumDisplaySettingsW(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode);
+            HMONITOR h_monitor = output_desc.Monitor;
+            MONITORINFOEXW monitor_info;
+            monitor_info.cbSize = sizeof(MONITORINFOEXW);
+            GetMonitorInfoW(h_monitor, (LPMONITORINFO)&monitor_info);
+            DEVMODE dev_mode = {0};
+            dev_mode.dmSize = sizeof(DEVMODE);
+            dev_mode.dmDriverExtra = 0;
+            EnumDisplaySettingsW(monitor_info.szDevice, ENUM_CURRENT_SETTINGS, &dev_mode);
 
-            UINT dpiX, dpiY;
-            hr = GetDpiForMonitor(hMonitor, MDT_DEFAULT, &dpiX, &dpiY);
+            UINT dpi_x, dpi_y;
+            hr = GetDpiForMonitor(h_monitor, MDT_DEFAULT, &dpi_x, &dpi_y);
 
             char* orientation = NULL;
-            switch (devMode.dmDisplayOrientation) {
+            switch (dev_mode.dmDisplayOrientation) {
                 case DMDO_DEFAULT:
                     orientation = "default";
                     break;
@@ -218,7 +218,7 @@ void print_monitors() {
                     orientation = "270 degrees";
                     break;
                 default:
-                    LOG_WARNING("Orientation did not match: %d", devMode.dmDisplayOrientation);
+                    LOG_WARNING("Orientation did not match: %d", dev_mode.dmDisplayOrientation);
                     orientation = "";
                     break;
             }
@@ -226,8 +226,8 @@ void print_monitors() {
             LOG_INFO(
                 "Resolution of %dx%d, Refresh Rate of %d, DPI %d, location "
                 "(%d,%d), orientation %s",
-                devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmDisplayFrequency, dpiX,
-                devMode.dmPosition.x, devMode.dmPosition.y, orientation);
+                dev_mode.dmPelsWidth, dev_mode.dmPelsHeight, dev_mode.dmDisplayFrequency, dpi_x,
+                dev_mode.dmPosition.x, dev_mode.dmPosition.y, orientation);
         }
     }
 #endif
@@ -283,21 +283,21 @@ void print_ram_info() {
 
 void print_memory_info() {
 #if defined(_WIN32)
-    DWORD processID = GetCurrentProcessId();
-    HANDLE hProcess;
+    DWORD process_id = GetCurrentProcessId();
+    HANDLE h_process;
     PROCESS_MEMORY_COUNTERS pmc;
 
     // Print information about the memory usage of the process.
 
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
-    if (NULL == hProcess) return;
+    h_process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, process_id);
+    if (NULL == h_process) return;
 
-    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
+    if (GetProcessMemoryInfo(h_process, &pmc, sizeof(pmc))) {
         LOG_INFO("PeakWorkingSetSize: %lld", (long long)pmc.PeakWorkingSetSize);
         LOG_INFO("WorkingSetSize: %lld", (long long)pmc.WorkingSetSize);
     }
 
-    CloseHandle(hProcess);
+    CloseHandle(h_process);
 #endif
 }
 // End Print Memory Info

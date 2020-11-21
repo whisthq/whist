@@ -28,9 +28,9 @@ void log_to_file(char* msg, char* filename) {
 
 // @brief Attaches the current thread to the current input desktop.
 // @details Uses OpenInputDesktop and SetThreadDesktop from WinAPI.
-int set_current_input_desktop(HDESK currentInputDesktop) {
+int set_current_input_desktop(HDESK current_input_desktop) {
     // Set current thread to the current user input desktop
-    if (!SetThreadDesktop(currentInputDesktop)) {
+    if (!SetThreadDesktop(current_input_desktop)) {
         LOG_WARNING("SetThreadDesktop failed w/ error code: %d.\n", GetLastError());
         return -2;
     }
@@ -48,14 +48,14 @@ DesktopContext open_new_desktop(WCHAR* desktop_name, bool get_name, bool set_thr
     }
 
     if (set_thread) {
-        set_current_input_desktop(init_desktop);
+        set_current_input_desktop(new_desktop);
     }
 
     if (get_name) {
-        TCHAR szName[1000];
-        DWORD dwLen;
-        GetUserObjectInformationW(new_desktop, UOI_NAME, szName, sizeof(szName), &dwLen);
-        memcpy(context.desktop_name, szName, dwLen);
+        TCHAR sz_name[1000];
+        DWORD dw_len;
+        GetUserObjectInformationW(new_desktop, UOI_NAME, sz_name, sizeof(sz_name), &dw_len);
+        memcpy(context.desktop_name, sz_name, dw_len);
     }
 
     context.desktop_handle = new_desktop;

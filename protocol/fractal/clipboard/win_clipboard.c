@@ -59,16 +59,16 @@ void unsafe_destroy_clipboard() {}
 WCHAR* lclipboard_directory() {
     static WCHAR* directory = NULL;
     if (directory == NULL) {
-        static WCHAR szPath[MAX_PATH];
+        static WCHAR sz_path[MAX_PATH];
         WCHAR* path;
         if (SUCCEEDED(SHGetKnownFolderPath(&FOLDERID_ProgramData,
                                            CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, 0, &path))) {
-            wcscpy(szPath, path);
+            wcscpy(sz_path, path);
             CoTaskMemFree(path);
-            PathAppendW(szPath, L"FractalCache");
-            if (!PathFileExistsW(szPath)) {
-                if (!CreateDirectoryW(szPath, NULL)) {
-                    LOG_ERROR("Could not create directory: %S (Error %d)", szPath, GetLastError());
+            PathAppendW(sz_path, L"FractalCache");
+            if (!PathFileExistsW(sz_path)) {
+                if (!CreateDirectoryW(sz_path, NULL)) {
+                    LOG_ERROR("Could not create directory: %S (Error %d)", sz_path, GetLastError());
                     return NULL;
                 }
             }
@@ -76,7 +76,7 @@ WCHAR* lclipboard_directory() {
             LOG_ERROR("Could not SHGetKnownFolderPath");
             return NULL;
         }
-        directory = szPath;
+        directory = sz_path;
     }
     LOG_INFO("Directory: %S", directory);
     return directory;
@@ -121,19 +121,19 @@ typedef struct {
     WORD ReparseTargetMaximumLength;
     WORD Reserved1;
     WCHAR ReparseTarget[1];
-} REPARSE_MOUNTPOINT_DATA_BUFFER, *PREPARSE_MOUNTPOINT_DATA_BUFFER;
+} ReparseMountpointDataBuffer;
 
 #include <winioctl.h>
 
 bool create_junction(WCHAR* szJunction, WCHAR* szPath);
 
 bool create_junction(WCHAR* szJunction, WCHAR* szPath) {
-    BYTE buf[sizeof(REPARSE_MOUNTPOINT_DATA_BUFFER) + MAX_PATH * sizeof(WCHAR)];
-    REPARSE_MOUNTPOINT_DATA_BUFFER* ReparseBuffer = (REPARSE_MOUNTPOINT_DATA_BUFFER*)buf;
-    WCHAR szTarget[MAX_PATH] = L"\\??\\";
+    BYTE buf[sizeof(ReparseMountpointDataBuffer) + MAX_PATH * sizeof(WCHAR)];
+    ReparseMountpointDataBuffer* reparse_buffer = (ReparseMountpointDataBuffer*)buf;
+    WCHAR sz_target[MAX_PATH] = L"\\??\\";
 
-    wcscat(szTarget, szPath);
-    wcscat(szTarget, L"\\");
+    wcscat(sz_target, szPath);
+    wcscat(sz_target, L"\\");
 
     if (!CreateDirectoryW(szJunction, NULL)) {
         LOG_ERROR("CreateDirectoryW Error: %d", GetLastError());
@@ -141,9 +141,9 @@ bool create_junction(WCHAR* szJunction, WCHAR* szPath) {
     }
 
     // Obtain SE_RESTORE_NAME privilege (required for opening a directory)
-    HANDLE hToken = NULL;
+    HANDLE h_token = NULL;
     TOKEN_PRIVILEGES tp;
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken)) {
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &h_token)) {
         LOG_ERROR("OpenProcessToken Error: %d", GetLastError());
         return false;
     }
@@ -153,40 +153,40 @@ bool create_junction(WCHAR* szJunction, WCHAR* szPath) {
     }
     tp.PrivilegeCount = 1;
     tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-    if (!AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), NULL, NULL)) {
+    if (!AdjustTokenPrivileges(h_token, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), NULL, NULL)) {
         LOG_ERROR("AdjustTokenPrivileges Error: %d", GetLastError());
         return false;
     }
-    if (hToken) CloseHandle(hToken);
+    if (h_token) CloseHandle(h_token);
     // End Obtain SE_RESTORE_NAME privilege
 
-    HANDLE hDir = CreateFileW(szJunction, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+    HANDLE h_dir = CreateFileW(szJunction, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
                               FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL);
-    if (hDir == INVALID_HANDLE_VALUE) {
+    if (h_dir == INVALID_HANDLE_VALUE) {
         LOG_ERROR("CreateFileW Error: %d", GetLastError());
         return false;
     }
 
     memset(buf, 0, sizeof(buf));
-    ReparseBuffer->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
-    int len = (int)wcslen(szTarget);
-    wcscpy(ReparseBuffer->ReparseTarget, szTarget);
-    ReparseBuffer->ReparseTargetMaximumLength = (WORD)len * sizeof(WCHAR);
-    ReparseBuffer->ReparseTargetLength = (WORD)(len - 1) * sizeof(WCHAR);
-    ReparseBuffer->ReparseDataLength = ReparseBuffer->ReparseTargetLength + 12;
+    reparse_buffer->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+    int len = (int)wcslen(sz_target);
+    wcscpy(reparse_buffer->ReparseTarget, sz_target);
+    reparse_buffer->ReparseTargetMaximumLength = (WORD)len * sizeof(WCHAR);
+    reparse_buffer->ReparseTargetLength = (WORD)(len - 1) * sizeof(WCHAR);
+    reparse_buffer->ReparseDataLength = reparse_buffer->ReparseTargetLength + 12;
 
-    DWORD dwRet;
-    if (!DeviceIoControl(hDir, FSCTL_SET_REPARSE_POINT, ReparseBuffer,
-                         ReparseBuffer->ReparseDataLength + REPARSE_MOUNTPOINT_HEADER_SIZE, NULL, 0,
-                         &dwRet, NULL)) {
-        CloseHandle(hDir);
+    DWORD dw_ret;
+    if (!DeviceIoControl(h_dir, FSCTL_SET_REPARSE_POINT, reparse_buffer,
+                         reparse_buffer->ReparseDataLength + REPARSE_MOUNTPOINT_HEADER_SIZE, NULL, 0,
+                         &dw_ret, NULL)) {
+        CloseHandle(h_dir);
         RemoveDirectoryW(szJunction);
 
         LOG_ERROR("DeviceIoControl Error: %d", GetLastError());
         return false;
     }
 
-    CloseHandle(hDir);
+    CloseHandle(h_dir);
 
     return true;
 }
@@ -455,25 +455,25 @@ HGLOBAL get_global_alloc(void* buf, int len, bool null_char) {
     */
 
     int alloc_len = null_char ? len + 1 : len;
-    HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, alloc_len);
-    if (!hMem) {
+    HGLOBAL h_mem = GlobalAlloc(GMEM_MOVEABLE, alloc_len);
+    if (!h_mem) {
         LOG_ERROR("GlobalAlloc failed!");
-        return hMem;
+        return h_mem;
     }
-    LPTSTR lptstr = GlobalLock(hMem);
+    LPTSTR lptstr = GlobalLock(h_mem);
 
     if (lptstr == NULL) {
         LOG_ERROR("get_global_alloc GlobalLock failed! Size %d", alloc_len);
-        return hMem;
+        return h_mem;
     }
 
     memcpy(lptstr, buf, len);
     if (null_char) {
         memset(lptstr + len, 0, 1);
     }
-    GlobalUnlock(hMem);
+    GlobalUnlock(h_mem);
 
-    return hMem;
+    return h_mem;
 }
 
 void unsafe_set_clipboard(ClipboardData* cb) {
@@ -482,14 +482,14 @@ void unsafe_set_clipboard(ClipboardData* cb) {
     }
 
     int cf_type = -1;
-    HGLOBAL hMem = NULL;
+    HGLOBAL h_mem = NULL;
 
     switch (cb->type) {
         case CLIPBOARD_TEXT:
             LOG_INFO("SetClipboard to Text: %s", cb->data);
             if (cb->size > 0) {
                 cf_type = CF_TEXT;
-                hMem = get_global_alloc(cb->data, cb->size, true);  // add null char at end (true)
+                h_mem = get_global_alloc(cb->data, cb->size, true);  // add null char at end (true)
             }
             break;
         case CLIPBOARD_IMAGE:
@@ -508,7 +508,7 @@ void unsafe_set_clipboard(ClipboardData* cb) {
                 memcpy(cb->data, pkt.data + 14, pkt.size - 14);
                 cb->size = pkt.size - 14;
                 cf_type = CF_DIB;
-                hMem = get_global_alloc(cb->data, cb->size, false);  // no null char at end (false)
+                h_mem = get_global_alloc(cb->data, cb->size, false);  // no null char at end (false)
 
                 av_packet_unref(&pkt);
             }
@@ -589,12 +589,12 @@ void unsafe_set_clipboard(ClipboardData* cb) {
 
     if (cf_type != -1) {
         if (!OpenClipboard(NULL)) {
-            GlobalFree(hMem);
+            GlobalFree(h_mem);
             return;
         }
         EmptyClipboard();
-        if (!SetClipboardData(cf_type, hMem)) {
-            GlobalFree(hMem);
+        if (!SetClipboardData(cf_type, h_mem)) {
+            GlobalFree(h_mem);
             LOG_WARNING("Failed to SetClipboardData");
         }
 

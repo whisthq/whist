@@ -116,9 +116,9 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         LOG_WARNING("Could not GetDisplayModeList: %X", hr);
     }
 
-    DXGI_MODE_DESC* pDescs = malloc(sizeof(DXGI_MODE_DESC) * num_display_modes);
+    DXGI_MODE_DESC* p_descs = malloc(sizeof(DXGI_MODE_DESC) * num_display_modes);
     hardware->output->lpVtbl->GetDisplayModeList(hardware->output, format, flags,
-                                                 &num_display_modes, pDescs);
+                                                 &num_display_modes, p_descs);
     if (FAILED(hr)) {
         LOG_WARNING("Could not GetDisplayModeList: %X", hr);
     }
@@ -130,49 +130,49 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     LOG_INFO("Number of display modes: %d", num_display_modes);
     for (UINT k = 0; k < num_display_modes; k++) {
         double current_ratio_closeness =
-            fabs(1.0 * pDescs[k].Width / pDescs[k].Height - 1.0 * width / height) + 0.001;
+            fabs(1.0 * p_descs[k].Width / p_descs[k].Height - 1.0 * width / height) + 0.001;
         ratio_closeness = min(ratio_closeness, current_ratio_closeness);
 
-        if (pDescs[k].Width == width && pDescs[k].Height == height) {
+        if (p_descs[k].Width == width && p_descs[k].Height == height) {
             LOG_INFO("Exact resolution found!");
-            set_width = pDescs[k].Width;
-            set_height = pDescs[k].Height;
+            set_width = p_descs[k].Width;
+            set_height = p_descs[k].Height;
             ratio_closeness = 0.0;
-            LOG_INFO("FPS: %d/%d", pDescs[k].RefreshRate.Numerator,
-                     pDescs[k].RefreshRate.Denominator);
+            LOG_INFO("FPS: %d/%d", p_descs[k].RefreshRate.Numerator,
+                     p_descs[k].RefreshRate.Denominator);
         }
     }
 
     for (UINT k = 0; k < num_display_modes && ratio_closeness > 0.0; k++) {
-        LOG_INFO("Possible Resolution: %dx%d", pDescs[k].Width, pDescs[k].Height);
+        LOG_INFO("Possible Resolution: %dx%d", p_descs[k].Width, p_descs[k].Height);
 
         double current_ratio_closeness =
-            fabs(1.0 * pDescs[k].Width / pDescs[k].Height - 1.0 * width / height) + 0.001;
+            fabs(1.0 * p_descs[k].Width / p_descs[k].Height - 1.0 * width / height) + 0.001;
         if (fabs(current_ratio_closeness - ratio_closeness) / ratio_closeness < 0.01) {
-            LOG_INFO("Ratio match found with %dx%d!", pDescs[k].Width, pDescs[k].Height);
-            LOG_INFO("FPS: %d/%d", pDescs[k].RefreshRate.Numerator,
-                     pDescs[k].RefreshRate.Denominator);
+            LOG_INFO("Ratio match found with %dx%d!", p_descs[k].Width, p_descs[k].Height);
+            LOG_INFO("FPS: %d/%d", p_descs[k].RefreshRate.Numerator,
+                     p_descs[k].RefreshRate.Denominator);
 
             if (set_width == 0) {
                 LOG_INFO("Will try using this resolution");
-                set_width = pDescs[k].Width;
-                set_height = pDescs[k].Height;
+                set_width = p_descs[k].Width;
+                set_height = p_descs[k].Height;
             }
 
             // We'd prefer a higher resolution if possible, if the current
             // resolution still isn't high enough
-            if (set_width < pDescs[k].Width && set_width < width) {
+            if (set_width < p_descs[k].Width && set_width < width) {
                 LOG_INFO("This resolution is higher, let's use it");
-                set_width = pDescs[k].Width;
-                set_height = pDescs[k].Height;
+                set_width = p_descs[k].Width;
+                set_height = p_descs[k].Height;
             }
 
             // We'd prefer a lower resolution if possible, if the potential
             // resolution is indeed high enough
-            if (pDescs[k].Width < set_width && width < pDescs[k].Width) {
+            if (p_descs[k].Width < set_width && width < p_descs[k].Width) {
                 LOG_INFO("This resolution is lower, let's use it");
-                set_width = pDescs[k].Width;
-                set_height = pDescs[k].Height;
+                set_width = p_descs[k].Width;
+                set_height = p_descs[k].Height;
             }
         }
     }
@@ -182,26 +182,26 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     height = set_height;
     LOG_INFO("Found Resolution: %dx%d", width, height);
 
-    free(pDescs);
+    free(p_descs);
 
-    HMONITOR hMonitor = output_desc.Monitor;
-    MONITORINFOEXW monitorInfo;
-    monitorInfo.cbSize = sizeof(MONITORINFOEXW);
-    GetMonitorInfoW(hMonitor, (LPMONITORINFO)&monitorInfo);
-    device->monitorInfo = monitorInfo;
+    HMONITOR h_monitor = output_desc.Monitor;
+    MONITORINFOEXW monitor_info;
+    monitor_info.cbSize = sizeof(MONITORINFOEXW);
+    GetMonitorInfoW(h_monitor, (LPMONITORINFO)&monitor_info);
+    device->monitorInfo = monitor_info;
 
     DEVMODE dm;
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
-    LOG_INFO("Device Name: %S", monitorInfo.szDevice);
-    if (0 != EnumDisplaySettingsW(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &dm)) {
+    LOG_INFO("Device Name: %S", monitor_info.szDevice);
+    if (0 != EnumDisplaySettingsW(monitor_info.szDevice, ENUM_CURRENT_SETTINGS, &dm)) {
         if (dm.dmPelsWidth != width || dm.dmPelsHeight != height) {
             dm.dmPelsWidth = width;
             dm.dmPelsHeight = height;
             dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
             // dm.dmDisplayFrequency =
 
-            int ret = ChangeDisplaySettingsExW(monitorInfo.szDevice, &dm, NULL,
+            int ret = ChangeDisplaySettingsExW(monitor_info.szDevice, &dm, NULL,
                                                CDS_SET_PRIMARY | CDS_UPDATEREGISTRY, 0);
             LOG_INFO("ChangeDisplaySettingsCode: %d", ret);
         }
@@ -262,25 +262,25 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
 }
 
 void get_bitmap_screenshot(CaptureDevice* device) {
-    HDC hScreenDC = CreateDCW(device->monitorInfo.szDevice, NULL, NULL, NULL);
-    HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
+    HDC h_screen_dc = CreateDCW(device->monitorInfo.szDevice, NULL, NULL, NULL);
+    HDC h_memory_dc = CreateCompatibleDC(h_screen_dc);
 
-    HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, device->width, device->height);
-    HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemoryDC, hBitmap);
+    HBITMAP h_bitmap = CreateCompatibleBitmap(h_screen_dc, device->width, device->height);
+    HBITMAP h_old_bitmap = (HBITMAP)SelectObject(h_memory_dc, h_bitmap);
 
-    BitBlt(hMemoryDC, 0, 0, device->width, device->height, hScreenDC, 0, 0, SRCCOPY);
-    hBitmap = (HBITMAP)SelectObject(hMemoryDC, hOldBitmap);
+    BitBlt(h_memory_dc, 0, 0, device->width, device->height, h_screen_dc, 0, 0, SRCCOPY);
+    h_bitmap = (HBITMAP)SelectObject(h_memory_dc, h_old_bitmap);
 
-    DeleteDC(hMemoryDC);
-    DeleteDC(hScreenDC);
+    DeleteDC(h_memory_dc);
+    DeleteDC(h_screen_dc);
 
     int bitmap_size = 10000000;
     if (!device->bitmap) {
         device->bitmap = malloc(bitmap_size);
     }
-    GetBitmapBits(hBitmap, bitmap_size, device->bitmap);
+    GetBitmapBits(h_bitmap, bitmap_size, device->bitmap);
 
-    DeleteObject(hBitmap);
+    DeleteObject(h_bitmap);
 
     device->frame_data = device->bitmap;
     device->pitch = device->width * 4;
@@ -292,20 +292,20 @@ ID3D11Texture2D* create_texture(CaptureDevice* device) {
 
     DisplayHardware* hardware = device->hardware;
 
-    D3D11_TEXTURE2D_DESC tDesc;
+    D3D11_TEXTURE2D_DESC t_desc;
 
     // Texture to store GPU pixels
-    tDesc.Width = hardware->final_output_desc.DesktopCoordinates.right;
-    tDesc.Height = hardware->final_output_desc.DesktopCoordinates.bottom;
-    tDesc.MipLevels = 1;
-    tDesc.ArraySize = 1;
-    tDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    tDesc.SampleDesc.Count = 1;
-    tDesc.SampleDesc.Quality = 0;
-    tDesc.Usage = D3D11_USAGE_STAGING;
-    tDesc.BindFlags = 0;
-    tDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-    tDesc.MiscFlags = 0;
+    t_desc.Width = hardware->final_output_desc.DesktopCoordinates.right;
+    t_desc.Height = hardware->final_output_desc.DesktopCoordinates.bottom;
+    t_desc.MipLevels = 1;
+    t_desc.ArraySize = 1;
+    t_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    t_desc.SampleDesc.Count = 1;
+    t_desc.SampleDesc.Quality = 0;
+    t_desc.Usage = D3D11_USAGE_STAGING;
+    t_desc.BindFlags = 0;
+    t_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    t_desc.MiscFlags = 0;
 
     device->Box.top = hardware->final_output_desc.DesktopCoordinates.top;
     device->Box.left = hardware->final_output_desc.DesktopCoordinates.left;
@@ -315,7 +315,7 @@ ID3D11Texture2D* create_texture(CaptureDevice* device) {
     device->Box.back = 1;
 
     ID3D11Texture2D* texture;
-    hr = device->D3D11device->lpVtbl->CreateTexture2D(device->D3D11device, &tDesc, NULL, &texture);
+    hr = device->D3D11device->lpVtbl->CreateTexture2D(device->D3D11device, &t_desc, NULL, &texture);
     if (FAILED(hr)) {
         LOG_ERROR("Failed to create Texture2D 0x%X %d", hr, GetLastError());
         return NULL;
