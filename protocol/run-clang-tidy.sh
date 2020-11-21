@@ -14,19 +14,18 @@ do
             CICheck=1
     esac
 done
+echo $CICheck
 
 shift $((OPTIND-1))
 
 [ "${1:-}" = "--" ] && shift
 
 # find machine type (necessary for pwd behavior)
+isWindows=0
 unameOut="$(uname -s)"
 case "${unameOut}" in
-    Linux*)     machine="Linux";;
-    Darwin*)    machine="Mac";;
-    CYGWIN*)    machine="Windows";;
-    MINGW*)     machine="Windows";;
-    *)          machine="UNKNOWN:${unameOut}"
+    CYGWIN*)    isWindows=1;;
+    MINGW*)     isWindows=1;;
 esac
 
 # array of all folders to be checked and modified
@@ -67,13 +66,28 @@ clang-tidy -header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixe
 echo "Deleting all clang-diagnostic-error entries"
 yq d -i $yamlFolder/$fixesFilename 'Diagnostics.(DiagnosticName==clang-diagnostic-error)'
 
+# get current directory path based on OS
+if [[ isWindows==1 ]]
+then
+    echo here
+    thisDirectory=$(cmd '/C echo %cd%
+    ')
+    thisDirectory=$(realpath "$thisDirectory")
+else
+    echo there
+    thisDirectory=$(pwd)
+fi
+thisDirectory="${thisDirectory}/"
+
 IFS=$'\n'
-# normalizes all paths to get rid of '..'
+# normalizes all paths to get rid of '..' and make paths relative to current directory
 echo "Normalizing paths"
 for pathPair in $(yq r --printMode pv $yamlFolder/$fixesFilename 'Diagnostics.[*].**.FilePath')
 do
     arr=( $(perl -E 'say for split quotemeta shift, shift' -- ": " "$pathPair" | tr -d \') )
-    yq w -i $yamlFolder/$fixesFilename ${arr[0]} $(realpath ${arr[1]})
+    replacePath=$(realpath ${arr[1]})
+    replacePath=${replacePath#"$thisDirectory"}
+    yq w -i $yamlFolder/$fixesFilename ${arr[0]} $replacePath
 done
 
 # remove any diagnostic entries with excluded folder paths - some remain because of roundabout access (..)
@@ -87,16 +101,9 @@ declare -a excludeFolders=(
     "fractal/video/nvidia-linux"
 )
 
-if [[ machine == "Windows" ]]
-then
-    thisDirectory=$(cmd '/C echo %cd%')
-else
-    thisDirectory=$(pwd)
-fi
-
 for excludeFolder in "${excludeFolders[@]}"
 do
-    pathExpression="Diagnostics.(DiagnosticMessage.FilePath==${thisDirectory}/${excludeFolder}/*)"
+    pathExpression="Diagnostics.(DiagnosticMessage.FilePath==${excludeFolder}/*)"
     yq d -i $yamlFolder/$fixesFilename $pathExpression
 done
 
@@ -114,7 +121,7 @@ else
     echo "----->       THEN TYPE 'c' TO REPLACE. ANY OTHER KEY WILL QUIT       <-----"
 
     read -n 1 -p "'c' to replace, ano other key to quit without replacing: " k
-    if [[ $k = c ]]
+    if [[ $k == c ]]
     then
         echo
         echo "Running clang-apply-replacements"
@@ -130,4 +137,4 @@ else
 fi
 
 # cleanup
-rm -rf $yamlFolder
+# rm -rf $yamlFolder
