@@ -450,27 +450,27 @@ void enter_win_string(enum FractalKeycode* keycodes, int len) {
     // get screen width and height for mouse cursor
     int i, index = 0;
     enum FractalKeycode keycode;
-    INPUT Event[200];
+    INPUT event[200];
 
     for (i = 0; i < len; i++) {
         keycode = keycodes[i];
-        Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
-        Event[index].type = INPUT_KEYBOARD;
-        Event[index].ki.wScan = 0;
-        Event[index].ki.time = 0;  // system supplies timestamp
-        Event[index].ki.dwFlags = 0;
+        event[index].ki.wVk = (WORD)windows_keycodes[keycode];
+        event[index].type = INPUT_KEYBOARD;
+        event[index].ki.wScan = 0;
+        event[index].ki.time = 0;  // system supplies timestamp
+        event[index].ki.dwFlags = 0;
 
         index++;
 
-        Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
-        Event[index].type = INPUT_KEYBOARD;
-        Event[index].ki.wScan = 0;
-        Event[index].ki.time = 0;  // system supplies timestamp
-        Event[index].ki.dwFlags = KEYEVENTF_KEYUP;
+        event[index].ki.wVk = (WORD)windows_keycodes[keycode];
+        event[index].type = INPUT_KEYBOARD;
+        event[index].ki.wScan = 0;
+        event[index].ki.time = 0;  // system supplies timestamp
+        event[index].ki.dwFlags = KEYEVENTF_KEYUP;
 
         index++;
     }
 
     // send FMSG mapped to Windows event to Windows and return
-    SendInput(index, Event, sizeof(INPUT));
+    SendInput(index, event, sizeof(INPUT));
 }

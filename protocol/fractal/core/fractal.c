@@ -81,38 +81,38 @@ void free_dynamic_buffer(DynamicBuffer* db) {
 
 int runcmd(const char* cmdline, char** response) {
 #ifdef _WIN32
-    HANDLE hChildStd_IN_Rd = NULL;
-    HANDLE hChildStd_IN_Wr = NULL;
-    HANDLE hChildStd_OUT_Rd = NULL;
-    HANDLE hChildStd_OUT_Wr = NULL;
+    HANDLE h_child_std_in_rd = NULL;
+    HANDLE h_child_std_in_wr = NULL;
+    HANDLE h_child_std_out_rd = NULL;
+    HANDLE h_child_std_out_wr = NULL;
 
-    SECURITY_ATTRIBUTES saAttr;
+    SECURITY_ATTRIBUTES sa_attr;
 
     // Set the bInheritHandle flag so pipe handles are inherited.
 
-    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-    saAttr.bInheritHandle = TRUE;
-    saAttr.lpSecurityDescriptor = NULL;
+    sa_attr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa_attr.bInheritHandle = TRUE;
+    sa_attr.lpSecurityDescriptor = NULL;
 
     // Create a pipe for the child process's STDOUT.
 
     if (response) {
-        if (!CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0)) {
+        if (!CreatePipe(&h_child_std_out_rd, &h_child_std_out_wr, &sa_attr, 0)) {
             LOG_ERROR("StdoutRd CreatePipe failed");
             *response = NULL;
             return -1;
         }
-        if (!SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)) {
+        if (!SetHandleInformation(h_child_std_out_rd, HANDLE_FLAG_INHERIT, 0)) {
             LOG_ERROR("Stdout SetHandleInformation failed");
             *response = NULL;
             return -1;
         }
-        if (!CreatePipe(&hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0)) {
+        if (!CreatePipe(&h_child_std_in_rd, &h_child_std_in_wr, &sa_attr, 0)) {
             LOG_ERROR("Stdin CreatePipe failed");
             *response = NULL;
             return -1;
         }
-        if (!SetHandleInformation(hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0)) {
+        if (!SetHandleInformation(h_child_std_in_wr, HANDLE_FLAG_INHERIT, 0)) {
             LOG_ERROR("Stdin SetHandleInformation failed");
             *response = NULL;
             return -1;
@@ -125,9 +125,9 @@ int runcmd(const char* cmdline, char** response) {
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
     if (response) {
-        si.hStdError = hChildStd_OUT_Wr;
-        si.hStdOutput = hChildStd_OUT_Wr;
-        si.hStdInput = hChildStd_IN_Rd;
+        si.hStdError = h_child_std_out_wr;
+        si.hStdOutput = h_child_std_out_wr;
+        si.hStdInput = h_child_std_in_rd;
         si.dwFlags |= STARTF_USESTDHANDLES;
     }
     ZeroMemory(&pi, sizeof(pi));
@@ -159,24 +159,24 @@ int runcmd(const char* cmdline, char** response) {
     }
 
     if (response) {
-        CloseHandle(hChildStd_OUT_Wr);
-        CloseHandle(hChildStd_IN_Rd);
+        CloseHandle(h_child_std_out_wr);
+        CloseHandle(h_child_std_in_rd);
 
-        CloseHandle(hChildStd_IN_Wr);
+        CloseHandle(h_child_std_in_wr);
 
-        DWORD dwRead;
-        CHAR chBuf[2048];
-        BOOL bSuccess = FALSE;
+        DWORD dw_read;
+        CHAR ch_buf[2048];
+        BOOL b_success = FALSE;
 
         DynamicBuffer* db = init_dynamic_buffer();
         for (;;) {
-            bSuccess = ReadFile(hChildStd_OUT_Rd, chBuf, sizeof(chBuf), &dwRead, NULL);
-            if (!bSuccess || dwRead == 0) break;
+            b_success = ReadFile(h_child_std_out_rd, ch_buf, sizeof(ch_buf), &dw_read, NULL);
+            if (!b_success || dw_read == 0) break;
 
             int original_size = db->size;
-            resize_dynamic_buffer(db, original_size + dwRead);
-            memcpy(db->buf + original_size, chBuf, dwRead);
-            if (!bSuccess) break;
+            resize_dynamic_buffer(db, original_size + dw_read);
+            memcpy(db->buf + original_size, ch_buf, dw_read);
+            if (!b_success) break;
         }
 
         WaitForSingleObject(pi.hProcess, INFINITE);
@@ -191,9 +191,9 @@ int runcmd(const char* cmdline, char** response) {
         free(db);
         return size;
     } else {
-        CloseHandle(hChildStd_OUT_Wr);
-        CloseHandle(hChildStd_IN_Rd);
-        CloseHandle(hChildStd_IN_Wr);
+        CloseHandle(h_child_std_out_wr);
+        CloseHandle(h_child_std_in_rd);
+        CloseHandle(h_child_std_in_wr);
 
         WaitForSingleObject(pi.hProcess, INFINITE);
         CloseHandle(pi.hProcess);

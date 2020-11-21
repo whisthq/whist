@@ -100,14 +100,14 @@ AudioDevice *create_audio_device() {
 void start_audio_device(AudioDevice *audio_device) {
     audio_device->hWakeUp = CreateWaitableTimer(NULL, FALSE, NULL);
 
-    LARGE_INTEGER liFirstFire;
-    liFirstFire.QuadPart =
+    LARGE_INTEGER li_first_fire;
+    li_first_fire.QuadPart =
         -1 * audio_device->hnsDefaultDevicePeriod / 2;  // negative means relative time
-    LONG lTimeBetweenFires =
+    LONG l_time_between_fires =
         (LONG)audio_device->hnsDefaultDevicePeriod / 2 / 10000;  // convert to milliseconds
-    BOOL bOK =
-        SetWaitableTimer(audio_device->hWakeUp, &liFirstFire, lTimeBetweenFires, NULL, NULL, FALSE);
-    if (bOK == 0) {
+    BOOL b_ok =
+        SetWaitableTimer(audio_device->hWakeUp, &li_first_fire, l_time_between_fires, NULL, NULL, FALSE);
+    if (b_ok == 0) {
         LOG_WARNING("Failed to SetWaitableTimer");
         return;
     }
