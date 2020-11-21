@@ -14,7 +14,10 @@ class UserContainer(db.Model):
     state = db.Column(db.String(250), nullable=False)
     lock = db.Column(db.Boolean, nullable=False, default=False)
     user_id = db.Column(db.ForeignKey("users.user_id"))
+    is_assigned = db.Column(db.Boolean, nullable=False, default=False)
     user = relationship("User", back_populates="containers")
+    task_definition = db.Column(db.ForeignKey("hardware.supported_app_images.task_definition"))
+    app = relationship("SupportedAppImages", back_populates="containers")
     port_32262 = db.Column(db.Integer, nullable=False)
     port_32263 = db.Column(db.Integer, nullable=False)
     port_32273 = db.Column(db.Integer, nullable=False)
@@ -25,6 +28,7 @@ class UserContainer(db.Model):
     branch = db.Column(db.String(250), nullable=False, default="master")
     allow_autoupdate = db.Column(db.Boolean, nullable=False, default=True)
     temporary_lock = db.Column(db.Integer)
+    dpi = db.Column(db.Integer)
     secret_key = db.Column(db.String(32), nullable=False)
 
 
@@ -99,6 +103,12 @@ class SupportedAppImages(db.Model):
     url = db.Column(db.String(250))
     tos = db.Column(db.String(250))
     active = db.Column(db.Boolean, nullable=False, default=False)
+    containers = relationship(
+        "UserContainer",
+        back_populates="app",
+        lazy="dynamic",
+        passive_deletes=True,
+    )
 
 
 class Banners(db.Model):
