@@ -17,7 +17,7 @@ void update_webserver_parameters() {
     */
 
     // Don't need to check more than once every 30 sec, unless no meaningful response
-    if (already_obtained_vm_type && get_timer(last_vm_info_check_time) < 30.0) {
+    if (container_id && get_timer(last_protocol_info_check_time) < 30.0) {
         return;
     }
 
