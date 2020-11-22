@@ -2,7 +2,7 @@ export const LOGIN_USER = "LOGIN_USER"
 export const GOOGLE_LOGIN = "GOOGLE_LOGIN"
 export const REMEMBER_ME_LOGIN = "REMEMBER_ME_LOGIN"
 
-export const FETCH_CONTAINER = "FETCH_CONTAINER"
+export const CREATE_CONTAINER = "CREATE_CONTAINER"
 
 export const SUBMIT_FEEDBACK = "SUBMIT_FEEDBACK"
 
@@ -34,9 +34,9 @@ export function rememberMeLogin(username: string) {
     }
 }
 
-export function fetchContainer(app: string, url: string) {
+export function createContainer(app: string, url: string) {
     return {
-        type: FETCH_CONTAINER,
+        type: CREATE_CONTAINER,
         app,
         url,
     }

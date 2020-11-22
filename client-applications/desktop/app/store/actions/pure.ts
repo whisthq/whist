@@ -31,6 +31,8 @@ export function updateContainer(body: {
     secretKey: string
     desiredAppID: string
     currentAppID: string
+    launches: number
+    launchURL: string
 }) {
     return {
         type: UPDATE_CONTAINER,

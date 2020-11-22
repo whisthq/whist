@@ -40,14 +40,10 @@ const Banner = (props: any) => {
         },
     })
 
-    console.log(error)
-
     const bannerData = data ? data.hardware_banners : []
     const bannerBackgrounds = bannerData.map(
         (bannerItem: any) => bannerItem.background
     )
-
-    console.log(error)
 
     const [index, setIndex] = useState(0)
 

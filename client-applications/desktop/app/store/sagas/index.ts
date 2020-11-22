@@ -176,19 +176,18 @@ function* rememberMeLogin(action: any) {
 }
 
 function* fetchPaymentInfo(action: any) {
-    const state = yield select()
-    const { json } = yield call(
-        apiPost,
-        `/stripe/retrieve`,
-        {
-            username: action.username,
-        },
-        state.MainReducer.auth.accessToken
-    )
-
-    if (json && json.accountLocked) {
-        yield put(Action.updatePayment({ accountLocked: json.accountLocked }))
-    }
+    // const state = yield select()
+    // const { json } = yield call(
+    //     apiPost,
+    //     `/stripe/retrieve`,
+    //     {
+    //         email: action.username,
+    //     },
+    //     state.MainReducer.auth.accessToken
+    // )
+    // if (json && json.accountLocked) {
+    //     yield put(Action.updatePayment({ accountLocked: json.accountLocked }))
+    // }
 }
 
 function* getPromoCode(action: any) {
@@ -204,14 +203,13 @@ function* getPromoCode(action: any) {
     }
 }
 
-function* fetchContainer(action: any) {
+function* createContainer(action: any) {
     yield put(
         Action.updateContainer({
             desiredAppID: action.app,
         })
     )
 
-    history.push("/loading")
     const state = yield select()
     const username = state.MainReducer.auth.username
 
@@ -245,7 +243,7 @@ function* fetchContainer(action: any) {
 
     if (response.status === 401 || response.status === 422) {
         yield call(refreshAccess)
-        yield call(fetchContainer, action)
+        yield call(createContainer, action)
         return
     }
 
@@ -396,7 +394,7 @@ export default function* rootSaga() {
         takeEvery(SideEffect.LOGIN_USER, loginUser),
         takeEvery(SideEffect.GOOGLE_LOGIN, googleLogin),
         takeEvery(SideEffect.REMEMBER_ME_LOGIN, rememberMeLogin),
-        takeEvery(SideEffect.FETCH_CONTAINER, fetchContainer),
+        takeEvery(SideEffect.CREATE_CONTAINER, createContainer),
         takeEvery(SideEffect.SUBMIT_FEEDBACK, submitFeedback),
     ])
 }
