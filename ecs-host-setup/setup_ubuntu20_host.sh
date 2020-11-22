@@ -87,6 +87,11 @@ echo "================================================"
 sudo apt install awscli
 
 echo "================================================"
+echo "Installing Cloud Storage Dependencies..."
+echo "================================================"
+sudo apt install rclone openssl
+
+echo "================================================"
 echo "Cleaning up the image a bit..."
 echo "================================================"
 sudo apt autoremove

@@ -7,11 +7,11 @@ First, create an Ubuntu 20.04 g3s.xlarge EC2 instance (which will later be linke
 Then, run the following commands on the EC2 instance, via AWS Session Manager (SSM):
 
 ```
-curl https://raw.githubusercontent.com/fractalcomputers/ecs-host-setup/master/setup_ubuntu20_host.sh?token=AGNK4MD4UVYRUQR4425K64C7TN3MU > setup_host.sh
+curl https://raw.githubusercontent.com/fractal/ecs-host-setup/master/setup_ubuntu20_host.sh?token=AGNK4MD4UVYRUQR4425K64C7TN3MU > setup_host.sh
 chmod +x setup_host.sh
 ./setup_host.sh
 sudo reboot
-git clone https://github.com/fractalcomputers/container-images
+git clone https://github.com/fractal/container-images
 cd container-images/
 git checkout dev
 git submodule init
@@ -30,4 +30,4 @@ Now, from a Fractal client, try connecting to the IP given by running `curl ipin
 
 We have made the decision to make the host service start up the Docker daemon when it is ready (i.e. after the handshake with the webserver is complete). Previously, the Docker daemon and ECS agent would start up on host machine boot, and our host service would have to race to initialize before the host became marked as ready to accept new tasks. Now, we start the Docker daemon and the ECS agent only when we're ready to process Docker events, and we guarantee that the host service never misses the startup of a container. Furthermore, by waiting for the authentication handshake with the webserver to complete before starting the ECS agent, we ensure that a host that failed to authenticate (and therefore fails to deliver heartbeats, thus getting killed by the webserver in a few minutes) does not accept any tasks.
 
-__NOTE__: If you want to see the actual userdata that gets passed into the EC2 hosts, it's in the repository [`main-webserver`](https://github.com/fractalcomputers/main-webserver); it is the string in [`app/helpers/utils/aws/base_ecs_client.py`](https://github.com/fractalcomputers/main-webserver/blob/dev/app/helpers/utils/aws/base_ecs_client.py). Search in that file for the multi-line string starting with `#!/bin/bash`.
+__NOTE__: If you want to see the actual userdata that gets passed into the EC2 hosts, it's in the repository [`main-webserver`](https://github.com/fractal/main-webserver); it is the file [`app/helpers/utils/aws/base_userdata_template.sh`](https://github.com/fractal/main-webserver/blob/master/app/helpers/utils/aws/base_userdata_template.sh).
