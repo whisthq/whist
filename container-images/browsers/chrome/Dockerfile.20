@@ -39,6 +39,7 @@ RUN su - fractal -c \
     && xdg-mime default google-chrome.desktop x-scheme-handler/https \
     && xdg-mime default google-chrome.desktop x-scheme-handler/about"
 
+# Install extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh
 RUN chmod +x /usr/bin/install-extensions.sh
 RUN /usr/bin/install-extensions.sh
