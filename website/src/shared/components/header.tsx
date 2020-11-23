@@ -110,20 +110,14 @@ const Header = (props: {
                                 About
                             </Link>
                             <a
-                                href="mailto: support@fractalcomputers.com"
-                                className={
-                                    dark ? "header-link-light" : "header-link"
-                                }
-                                style={{ color: dark ? "white" : "black" }}
+                                href="mailto: support@tryfractal.com"
+                                className="header-link"
                             >
                                 Support
                             </a>
                             <a
-                                href="mailto: careers@fractalcomputers.com"
-                                className={
-                                    dark ? "header-link-light" : "header-link"
-                                }
-                                style={{ color: dark ? "white" : "black" }}
+                                href="mailto: careers@tryfractal.com"
+                                className="header-link"
                             >
                                 Careers
                             </a>
