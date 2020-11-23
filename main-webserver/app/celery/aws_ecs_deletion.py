@@ -11,14 +11,14 @@ from app.constants.http_codes import (
     SUCCESS,
 )
 from app.helpers.utils.aws.aws_resource_locks import (
-    lockContainerAndUpdate,
-    spinLock,
+    lock_container_and_update,
+    spin_lock,
 )
 from app.helpers.utils.aws.base_ecs_client import ECSClient
-from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import (
-    fractalSQLCommit,
-    fractalSQLUpdate,
+    fractal_sql_commit,
+    fractal_sql_update,
 )
 from app.models import db
 from app.serializers.hardware import ClusterInfo, UserContainer
@@ -30,7 +30,7 @@ from app.helpers.utils.datadog.events import (
 
 
 @shared_task(bind=True)
-def deleteContainer(self, container_name, aes_key):
+def delete_container(self, container_name, aes_key):
     """Delete a container.
 
     Args:
@@ -43,11 +43,11 @@ def deleteContainer(self, container_name, aes_key):
     """
     task_start_time = time.time()
 
-    if spinLock(container_name) < 0:
-        fractalLog(
-            function="deleteContainer",
+    if spin_lock(container_name) < 0:
+        fractal_log(
+            function="delete_container",
             label=container_name,
-            logs="spinLock took too long.",
+            logs="spin_lock took too long.",
             level=logging.ERROR,
         )
 
@@ -61,8 +61,8 @@ def deleteContainer(self, container_name, aes_key):
         else:
             message = f"Container {container_name} does not exist."
 
-        fractalLog(
-            function="deleteContainer",
+        fractal_log(
+            function="delete_container",
             label=container_name,
             logs=message,
             level=logging.ERROR,
@@ -70,15 +70,15 @@ def deleteContainer(self, container_name, aes_key):
 
         raise Exception("The requested container does not exist.")
 
-    fractalLog(
-        function="deleteContainer",
+    fractal_log(
+        function="delete_container",
         label=str(container_name),
         logs="Beginning to delete Container {container_name}. Goodbye, {container_name}!".format(
             container_name=container_name
         ),
     )
 
-    lockContainerAndUpdate(
+    lock_container_and_update(
         container_name=container_name, state="DELETING", lock=True, temporary_lock=10
     )
 
@@ -100,25 +100,25 @@ def deleteContainer(self, container_name, aes_key):
             },
         )
         ecs_client.spin_til_done(offset=0)
-    fractalSQLCommit(db, lambda db, x: db.session.delete(x), container)
+    fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
 
     cluster_info = ClusterInfo.query.get(container_cluster)
     if not cluster_info:
-        fractalSQLCommit(
+        fractal_sql_commit(
             db, lambda db, x: db.session.add(x), ClusterInfo(cluster=container_cluster)
         )
         cluster_info = ClusterInfo.query.filter_by(cluster=container_cluster).first()
     cluster_usage = ecs_client.get_clusters_usage(clusters=[container_cluster])[container_cluster]
-    cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
+    cluster_sql = fractal_sql_commit(db, fractal_sql_update, cluster_info, cluster_usage)
     if cluster_sql:
-        fractalLog(
-            function="deleteContainer",
+        fractal_log(
+            function="delete_container",
             label=container_name,
             logs=f"Removed task from cluster {container_cluster} and updated cluster info",
         )
     else:
-        fractalLog(
-            function="deleteContainer",
+        fractal_log(
+            function="delete_container",
             label=container_name,
             logs="Failed to update cluster resources.",
         )
@@ -133,19 +133,19 @@ def deleteContainer(self, container_name, aes_key):
 
 
 @shared_task(bind=True)
-def drainContainer(self, container_name):
-    if spinLock(container_name) < 0:
+def drain_container(self, container_name):
+    if spin_lock(container_name) < 0:
         return {"status": REQUEST_TIMEOUT}
     container = UserContainer.query.get(container_name)
-    fractalLog(
-        function="deleteContainer",
+    fractal_log(
+        function="delete_container",
         label=str(container_name),
         logs="Beginning to drain Container {container_name}. Goodbye, {container_name}!".format(
             container_name=container_name
         ),
     )
 
-    lockContainerAndUpdate(
+    lock_container_and_update(
         container_name=container_name, state="DRAINING", lock=True, temporary_lock=10
     )
     container_cluster = container.cluster
@@ -156,8 +156,8 @@ def drainContainer(self, container_name):
         )
         ecs_client.set_containers_to_draining([container_arn], cluster=container_cluster)
     except Exception as e:
-        fractalLog(
-            function="drainContainer",
+        fractal_log(
+            function="drain_container",
             label=str(container_name),
             logs="ran into deletion error {}".format(e),
         )
@@ -184,7 +184,7 @@ def delete_cluster(self, cluster, region_name):
             "taskArns"
         ]
         if running_tasks:
-            fractalLog(
+            fractal_log(
                 function="delete_cluster",
                 label=cluster,
                 logs=(
@@ -198,7 +198,7 @@ def delete_cluster(self, cluster, region_name):
                 meta={"msg": "Cannot delete clusters with running tasks"},
             )
         else:
-            fractalLog(
+            fractal_log(
                 function="delete_cluster",
                 label=cluster,
                 logs="Deleting cluster {} in region {} and all associated instances".format(
@@ -215,7 +215,7 @@ def delete_cluster(self, cluster, region_name):
                 },
             )
             cluster_info = ClusterInfo.query.filter_by(cluster=cluster)
-            fractalSQLCommit(db, lambda _, x: x.update({"status": "INACTIVE"}), cluster_info)
+            fractal_sql_commit(db, lambda _, x: x.update({"status": "INACTIVE"}), cluster_info)
             ecs_client.spin_til_no_containers(cluster)
 
             asg_name = ecs_client.describe_auto_scaling_groups_in_cluster(cluster)[0][
@@ -223,7 +223,7 @@ def delete_cluster(self, cluster, region_name):
             ]
             cluster_info = ClusterInfo.query.get(cluster)
 
-            fractalSQLCommit(db, lambda db, x: db.session.delete(x), cluster_info)
+            fractal_sql_commit(db, lambda db, x: db.session.delete(x), cluster_info)
             ecs_client.auto_scaling_client.delete_auto_scaling_group(
                 AutoScalingGroupName=asg_name, ForceDelete=True
             )
@@ -231,7 +231,7 @@ def delete_cluster(self, cluster, region_name):
     except Exception as error:
         traceback_str = "".join(traceback.format_tb(error.__traceback__))
         print(traceback_str)
-        fractalLog(
+        fractal_log(
             function="delete_cluster",
             label="None",
             logs=f"Encountered error: {error}, Traceback: {traceback_str}",

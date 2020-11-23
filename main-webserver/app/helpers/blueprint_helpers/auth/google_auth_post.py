@@ -9,10 +9,10 @@ from flask import current_app
 from app.constants.bad_words_hashed import BAD_WORDS_HASHED
 from app.constants.http_codes import BAD_REQUEST, FORBIDDEN, SUCCESS
 from app.helpers.utils.general.tokens import (
-    generateToken,
-    generateUniquePromoCode,
-    getAccessTokens,
-    getGoogleTokens,
+    generate_token,
+    generate_unique_promo_code,
+    get_access_tokens,
+    get_google_tokens,
 )
 from app.models import db, User
 
@@ -22,7 +22,7 @@ from app.helpers.utils.datadog.events import (
 )
 
 
-def registerGoogleUser(
+def register_google_user(
     username, name, token, reason_for_signup=None
 ):  # pylint: disable=unused-argument
     """Registers a user, and stores it in the users table
@@ -35,7 +35,7 @@ def registerGoogleUser(
     Returns:
         int: 200 on success, 400 on fail
     """
-    promo_code = generateUniquePromoCode()
+    promo_code = generate_unique_promo_code()
     username_encoding = username.lower().encode("utf-8")
     if hashlib.md5(
         username_encoding
@@ -61,12 +61,12 @@ def registerGoogleUser(
         return {"status": BAD_REQUEST}
 
 
-def loginHelper(code, clientApp):
-    userObj = getGoogleTokens(code, clientApp)
+def login_helper(code, client_app):
+    user_obj = get_google_tokens(code, client_app)
 
-    username, name = userObj["email"], userObj["name"]
-    token = generateToken(username)
-    access_token, refresh_token = getAccessTokens(username)
+    username, name = user_obj["email"], user_obj["name"]
+    token = generate_token(username)
+    access_token, refresh_token = get_access_tokens(username)
 
     user = User.query.get(username)
 
@@ -90,10 +90,10 @@ def loginHelper(code, clientApp):
         else:
             return {"status": FORBIDDEN, "error": "Try using non-Google login"}
 
-    # if clientApp:
+    # if client_app:
     #     return {"status": UNAUTHORIZED, "error": "User has not registered"}
 
-    output = registerGoogleUser(username, name, token)
+    output = register_google_user(username, name, token)
 
     if output["status"] == SUCCESS:
         status = 200
@@ -114,7 +114,7 @@ def loginHelper(code, clientApp):
     }
 
 
-def reasonHelper(username, reason_for_signup):
+def reason_helper(username, reason_for_signup):
     user = User.query.get(username)
     user.reason_for_signup = reason_for_signup
 

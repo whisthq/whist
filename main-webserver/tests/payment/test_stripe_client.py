@@ -17,11 +17,11 @@ easy to simply use the test key given to us by stripe.
 import stripe
 import pytest
 
-from tests.helpers.general.logs import fractalLog
+from tests.helpers.general.logs import fractal_log
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from app.helpers.utils.general.time import dateToUnix
+from app.helpers.utils.general.time import date_to_unix
 
 from app.helpers.utils.payment.stripe_client import (
     StripeClient,
@@ -54,8 +54,8 @@ dummy_invalid_referral_code = "asdofhasiuldofjlasnklfd23980q9wsiojdnh"
 
 # datetime evaluated once at the start so that we can check precisely the lengths
 # these are used for referral codes
-week = dateToUnix(datetime.now() + relativedelta(weeks=1))
-month = dateToUnix(datetime.now() + relativedelta(months=1))
+week = date_to_unix(datetime.now() + relativedelta(weeks=1))
+month = date_to_unix(datetime.now() + relativedelta(months=1))
 
 
 @pytest.fixture(scope="session")
@@ -108,7 +108,7 @@ def _generate_token(number=stripe_no_auth_card, zipcode=dummy_zip_us, malformed=
 
 
 # for i in range(100):
-#     fractalLog("Generated Token:", f"{i}", _generate_token())
+#     fractal_log("Generated Token:", f"{i}", _generate_token())
 
 
 def _remove_stripe_customer(email):
