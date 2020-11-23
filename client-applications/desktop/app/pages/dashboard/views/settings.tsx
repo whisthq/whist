@@ -7,8 +7,16 @@ import styles from "styles/dashboard.css"
 
 import Wifi from "assets/images/wifi.svg"
 import Speedometer from "assets/images/speedometer.svg"
+import Fractal from "assets/images/fractal.svg"
 
-const Settings = (props: any) => {
+const Settings = (props: { username: string; dispatch: any }) => {
+    const { username, dispatch } = props
+
+    const adminUsername =
+        username &&
+        username.indexOf("@") > -1 &&
+        username.split("@")[1] == "tryfractal.com"
+
     const [lowInternetMode, setLowInternetMode] = useState(false)
     const [bandwidth, setBandwidth] = useState(500)
     const [showSavedAlert, setShowSavedAlert] = useState(false)
@@ -112,7 +120,6 @@ const Settings = (props: any) => {
                     display: "flex",
                     flexDirection: "row",
                     marginTop: 50,
-                    marginBottom: 25,
                 }}
             >
                 <div style={{ width: "75%" }}>
@@ -201,6 +208,56 @@ const Settings = (props: any) => {
                     </div>
                 </div>
             </Row>
+            {adminUsername && (
+                <Row
+                    style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        marginTop: 50,
+                        marginBottom: 25,
+                    }}
+                >
+                    <div style={{ width: "75%" }}>
+                        <div
+                            style={{
+                                color: "#111111",
+                                fontSize: 16,
+                                fontWeight: "bold",
+                            }}
+                        >
+                            <img
+                                src={Fractal}
+                                style={{
+                                    color: "#111111",
+                                    height: 14,
+                                    marginRight: 12,
+                                    position: "relative",
+                                    top: 2,
+                                    width: 16,
+                                }}
+                            />
+                            (Admin Only) Test Settings
+                        </div>
+                        <div
+                            style={{
+                                fontSize: 13,
+                                color: "#333333",
+                                marginTop: 10,
+                                marginLeft: 28,
+                                lineHeight: 1.4,
+                            }}
+                        >
+                            Give a region, webserver and task to run. When you
+                            launch, the app will connect to said webserver and
+                            open said task in said region. More options will be
+                            added in the future.
+                        </div>
+                        {/* <input />
+                        <input />
+                        <input /> */}
+                    </div>
+                </Row>
+            )}
             {showSavedAlert && (
                 <Row>
                     <Alert
@@ -234,7 +291,9 @@ const Settings = (props: any) => {
 }
 
 const mapStateToProps = (state: any) => {
-    return {}
+    return {
+        username: state.MainReducer.auth.username,
+    }
 }
 
 export default connect(mapStateToProps)(Settings)

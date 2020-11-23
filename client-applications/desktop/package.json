@@ -11,7 +11,7 @@
         "afterSign": "build/notarize.js",
         "appId": "com.fractalcomputers.fractal",
         "artifactName": "Fractal.${ext}",
-        "copyright": "Copyright \ufffd Fractal Computers, Inc.",
+        "copyright": "Copyright � Fractal Computers, Inc.",
         "deb": {
             "icon": "build/icon.png",
             "vendor": "Fractal Computers, Inc."
