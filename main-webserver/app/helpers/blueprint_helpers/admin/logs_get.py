@@ -3,7 +3,7 @@ from app.models import ProtocolLog
 from app.serializers.logs import ProtocolLogSchema
 
 
-def logsHelper(connection_id, username, bookmarked):
+def logs_helper(connection_id, username, bookmarked):
     log_schema = ProtocolLogSchema()
 
     if bookmarked:

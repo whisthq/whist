@@ -2,7 +2,7 @@ import logging
 import os
 
 
-def fractalLog(function, label, logs, level=logging.INFO):
+def fractal_log(function, label, logs, level=logging.INFO):
     format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
 
     logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")

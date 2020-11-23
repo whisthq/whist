@@ -5,7 +5,7 @@ import pandas as pd
 
 from flask import jsonify
 
-from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.logs import fractal_log
 
 
 def analyticsLogsHelper(body):
@@ -63,7 +63,7 @@ def analyticsLogsHelper(body):
         df.time = pd.to_datetime(r, errors="coerce")
         cleaned_df = df[df.time.notnull()]
     except Exception as e:
-        fractalLog(
+        fractal_log(
             function="analyticsLogsHelper",
             label="",
             logs="Error reading {filename}".format(filename=body["filename"]),

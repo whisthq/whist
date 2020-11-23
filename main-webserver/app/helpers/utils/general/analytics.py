@@ -2,7 +2,7 @@ from datetime import datetime as dt
 
 import numpy as np
 
-from app.helpers.utils.general.time import unixToDate
+from app.helpers.utils.general.time import unix_to_date
 
 
 def totalMinutes(report):
@@ -38,8 +38,8 @@ def loginsToMinutes(report):
     minutesOnline = 0
 
     while report is not None and index < len(report):
-        earlyTime = unixToDate(report[index - 1]["timestamp"])
-        lateTime = unixToDate(report[index]["timestamp"])
+        earlyTime = unix_to_date(report[index - 1]["timestamp"])
+        lateTime = unix_to_date(report[index]["timestamp"])
 
         if earlyTime.date() == lateTime.date():  # Same day
             if report[index]["action"] != report[index - 1]["action"]:
@@ -59,7 +59,7 @@ def loginsToMinutes(report):
                 output.append(
                     {
                         "timestamp": int(dt.timestamp(earlyTime)),
-                        "timestamp_datetime": unixToDate(int(dt.timestamp(earlyTime))),
+                        "timestamp_datetime": unix_to_date(int(dt.timestamp(earlyTime))),
                         "minutes": int(minutesOnline),
                     }
                 )
@@ -77,7 +77,7 @@ def loginsToMinutes(report):
                 output.append(
                     {
                         "timestamp": int(dt.timestamp(earlyTime)),
-                        "timestamp_datetime": unixToDate(int(dt.timestamp(earlyTime))),
+                        "timestamp_datetime": unix_to_date(int(dt.timestamp(earlyTime))),
                         "minutes": int(minutesOnline),
                     }
                 )

@@ -4,7 +4,7 @@ import os
 import pytest
 
 from app.constants.http_codes import SUCCESS
-from app.helpers.blueprint_helpers.aws.aws_container_post import pingHelper
+from app.helpers.blueprint_helpers.aws.aws_container_post import ping_helper
 from app.models import db
 
 from ..patches import Patch
@@ -42,7 +42,7 @@ def test_not_found(client, monkeypatch):
     code = 404
 
     monkeypatch.setattr(Patch, "status_code", code, raising=False)
-    monkeypatch.setattr(pingHelper, "__code__", status_code.__code__)
+    monkeypatch.setattr(ping_helper, "__code__", status_code.__code__)
 
     response = client.post(
         "/container/ping", json=dict(available=True, identifier=0, private_key="aes_secret_key")
@@ -55,7 +55,7 @@ def test_successful(client, monkeypatch):
     code = 200
 
     monkeypatch.setattr(Patch, "status_code", code, raising=False)
-    monkeypatch.setattr(pingHelper, "__code__", status_code.__code__)
+    monkeypatch.setattr(ping_helper, "__code__", status_code.__code__)
 
     response = client.post(
         "/container/ping", json=dict(available=True, identifier=0, private_key="aes_secret_key")
@@ -65,14 +65,14 @@ def test_successful(client, monkeypatch):
 
 
 def test_no_container():
-    data, status = pingHelper(True, "x.x.x.x", 0, "garbage!")
+    data, status = ping_helper(True, "x.x.x.x", 0, "garbage!")
 
     assert status == 404
 
 
 def test_wrong_key(container):
     with container("RUNNING_AVAILABLE") as c:
-        data, status = pingHelper(True, c.ip, c.port_32262, "garbage!")
+        data, status = ping_helper(True, c.ip, c.port_32262, "garbage!")
 
     assert status == 404
 
@@ -92,7 +92,7 @@ def test_wrong_key(container):
 )
 def test_ping_helper(available, container, final_state, initial_state):
     with container(initial_state) as c:
-        data, status = pingHelper(available, c.ip, c.port_32262, c.secret_key)
+        data, status = ping_helper(available, c.ip, c.port_32262, c.secret_key)
 
         assert data.pop("status", None) == "OK"
         assert not data
