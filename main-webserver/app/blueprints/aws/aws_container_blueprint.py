@@ -3,7 +3,12 @@ from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
 from app import fractalPreProcess
-from app.celery.aws_ecs_creation import create_new_cluster, create_new_container, send_commands
+from app.celery.aws_ecs_creation import (
+    assign_container,
+    create_new_cluster,
+    create_new_container,
+    send_commands,
+)
 from app.celery.aws_ecs_deletion import delete_cluster, deleteContainer, drainContainer
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
@@ -54,20 +59,11 @@ def test_endpoint(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "create_container":
-        (
-            username,
-            cluster_name,
-            region_name,
-            task_definition_arn,
-            use_launch_type,
-            network_configuration,
-        ) = (
+        (username, cluster_name, region_name, task_definition_arn) = (
             kwargs["body"]["username"],
             kwargs["body"]["cluster_name"],
             kwargs["body"].get("region_name", None),
             kwargs["body"]["task_definition_arn"],
-            kwargs["body"]["use_launch_type"],
-            kwargs["body"].get("network_configuration"),
         )
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
         task = create_new_container.apply_async(
@@ -75,8 +71,6 @@ def test_endpoint(action, **kwargs):
             {
                 "cluster_name": cluster_name,
                 "region_name": region_name,
-                "use_launch_type": use_launch_type,
-                "network_configuration": network_configuration,
                 "webserver_url": kwargs["webserver_url"],
             },
         )
@@ -201,6 +195,31 @@ def aws_container_post(action, **kwargs):
                         task_arn,
                         region_name=region,
                         cluster_name=sample_cluster,
+                        webserver_url=kwargs["webserver_url"],
+                        dpi=dpi,
+                    )
+                    response = jsonify({"ID": task.id}), ACCEPTED
+        elif action == "assign":
+            try:
+                app = body.pop("app")
+                region = body.pop("region")
+                dpi = body.get("dpi", 96)
+                if region not in allowed_regions:
+                    response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+                    return response
+            except KeyError:
+                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+            else:
+                # assign a container.
+                try:
+                    task_arn, _, _ = preprocess_task_info(app)
+                except BadAppError:
+                    response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+                else:
+                    task = assign_container.delay(
+                        user,
+                        task_arn,
+                        region_name=region,
                         webserver_url=kwargs["webserver_url"],
                         dpi=dpi,
                     )
