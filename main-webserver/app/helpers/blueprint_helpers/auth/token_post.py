@@ -4,7 +4,7 @@ from flask_jwt_extended import decode_token
 from app.constants.http_codes import SUCCESS, UNAUTHORIZED
 
 
-def validateTokenHelper(token):
+def validate_token_helper(token):
     if token:
         try:
             payload = decode_token(token)

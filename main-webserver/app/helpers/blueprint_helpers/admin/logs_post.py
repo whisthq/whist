@@ -2,7 +2,7 @@ from app.constants.http_codes import SUCCESS
 from app.models import db, ProtocolLog
 
 
-def bookmarkHelper(connection_id):
+def bookmark_helper(connection_id):
 
     log = ProtocolLog.query.filter_by(connection_id=str(connection_id)).first()
     log.bookmarked = True
@@ -11,7 +11,7 @@ def bookmarkHelper(connection_id):
     return {"status": SUCCESS}
 
 
-def unbookmarkHelper(connection_id):
+def unbookmark_helper(connection_id):
     log = ProtocolLog.query.filter_by(connection_id=str(connection_id)).first()
     log.bookmarked = False
     db.session.commit()

@@ -7,7 +7,7 @@ from app.serializers.public import UserSchema
 user_schema = UserSchema()
 
 
-def codeHelper(username):
+def code_helper(username):
     """Fetches a user's promo code
 
     Parameters:
@@ -32,7 +32,7 @@ def codeHelper(username):
         return {"code": None, "status": BAD_REQUEST}
 
 
-def fetchUserHelper(username):
+def fetch_user_helper(username):
     """Returns the user's entire info
 
     Args:
@@ -50,7 +50,7 @@ def fetchUserHelper(username):
         return jsonify({"user": None, "status": BAD_REQUEST}), BAD_REQUEST
 
 
-def verifiedHelper(username):
+def verified_helper(username):
     """Checks if a user's email has been verified
 
     Parameters:

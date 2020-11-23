@@ -7,11 +7,11 @@ from flask import current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
 from app.constants.http_codes import UNAUTHORIZED
-from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.logs import fractal_log
 
 
-def fractalAuth(f):
-    @wraps(f)
+def fractal_auth(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         username = None
 
@@ -25,7 +25,7 @@ def fractalAuth(f):
             elif request.method == "GET":
                 username = request.args.get("username")
         except Exception as e:
-            fractalLog(
+            fractal_log(
                 function="",
                 label="",
                 logs="Bearer error: {error}".format(error=str(e)),
@@ -64,13 +64,13 @@ def fractalAuth(f):
                 UNAUTHORIZED,
             )
 
-        return f(*args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
 
 
-def adminRequired(f):
-    @wraps(f)
+def admin_required(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         current_user = get_jwt_identity()
         if current_app.config["DASHBOARD_USERNAME"] not in current_user:
@@ -86,6 +86,6 @@ def adminRequired(f):
                 UNAUTHORIZED,
             )
 
-        return f(*args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper

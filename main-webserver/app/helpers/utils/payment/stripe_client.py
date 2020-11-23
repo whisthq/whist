@@ -16,8 +16,8 @@ from pyzipcode import ZipCodeDatabase
 # { state_code : state_name } for all states
 from app.constants.states import STATE_LIST
 
-from app.helpers.utils.general.logs import fractalLog
-from app.helpers.utils.general.time import dateToUnix, getToday
+from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.time import date_to_unix, get_today
 
 # TODO we may want to move this out of the client? not sure
 from app.helpers.utils.mail.stripe_mail import creditAppliedMail, planChangeMail
@@ -45,7 +45,7 @@ Assumptions:
 5. Product names are unique.
 6. Prices have, inside their metadata (look at the key-value metadata in the stripe dashboard) an item
     of the form "name" : "some stripe name"
-7. The Stripe prices we use are: 
+7. The Stripe prices we use are:
     7.1 "Fractal Hourly" (used to charge an additional subscription at a lower rate than the other ones)
     7.2 "Fractal Hourly Per Hour" (used to calculate how much to charge per hour of use)
     7.3 "Fractal Monthly" (used to charge a monthly subscription; all subscriptions are monthly)
@@ -270,7 +270,7 @@ class StripeClient:
 
             if subscription and subscription["data"] and len(subscription["data"]) > 0:
                 subscription = subscription["data"][0]
-                account_locked = subscription["trial_end"] < dateToUnix(getToday())
+                account_locked = subscription["trial_end"] < date_to_unix(get_today())
             else:
                 subscription = None
                 account_locked = False
@@ -361,10 +361,10 @@ class StripeClient:
             # they are rewarded by another request to discount by the client where they get credits
 
             if referrer:
-                trial_end = dateToUnix(datetime.now() + relativedelta(months=1))
+                trial_end = date_to_unix(datetime.now() + relativedelta(months=1))
                 self.discount(referrer)
             else:
-                trial_end = dateToUnix(datetime.now() + timedelta(weeks=1))
+                trial_end = date_to_unix(datetime.now() + timedelta(weeks=1))
 
             subscribed = False
 
@@ -372,7 +372,7 @@ class StripeClient:
             user.credits_outstanding = 0
             db.session.commit()
 
-            fractalLog(
+            fractal_log(
                 function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer added successful",
@@ -380,14 +380,14 @@ class StripeClient:
         else:
             subscriptions = stripe.Subscription.list(customer=stripe_customer_id)["data"]
             if len(subscriptions) == 0:
-                trial_end = dateToUnix(datetime.now() + relativedelta(weeks=1))
+                trial_end = date_to_unix(datetime.now() + relativedelta(weeks=1))
                 subscribed = False
 
         # if they had a subscription modify it, don't make a new one
         # else make a new one with the corresponding params
         if subscriptions:
             stripe.SubscriptionItem.modify(subscriptions[0]["items"]["data"][0]["id"], plan=plan)
-            fractalLog(
+            fractal_log(
                 function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer updated successful",
@@ -405,7 +405,7 @@ class StripeClient:
                 trial_from_plan=False,
                 default_tax_rates=[tax_rate],
             )
-            fractalLog(
+            fractal_log(
                 function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer subscription created successful",
@@ -443,7 +443,7 @@ class StripeClient:
             raise InvalidOperation
         else:
             stripe.Subscription.delete(subscription[0]["id"])
-            fractalLog(
+            fractal_log(
                 function="StripeClient.cancel_subscription",
                 label=email,
                 logs="Cancelled stripe subscription for {}".format(email),
@@ -540,7 +540,7 @@ class StripeClient:
             referrer.credits_outstanding = credits_outstanding + 1
             db.session.commit()
 
-            fractalLog(
+            fractal_log(
                 function="StripeClient.discount",
                 label=email,
                 logs="Applied discount and updated credits outstanding",
@@ -611,7 +611,7 @@ class StripeClient:
             user_price = up("plan")
 
         if user_price != hourly_price:
-            fractalLog(
+            fractal_log(
                 function="StripeClient.charge_hourly",
                 label=email,
                 logs="{username} is not an hourly price subscriber. Why are we charging them hourly?".format(
@@ -628,7 +628,7 @@ class StripeClient:
         )
 
         if latest_user_activity.action != "logon":
-            fractalLog(
+            fractal_log(
                 function="StripeClient.charge_hourly",
                 label=email,
                 logs="{username} logged off and is an hourly subscriber, but no logon was found".format(
@@ -677,7 +677,7 @@ class StripeClient:
                 ),
             )
 
-            fractalLog(
+            fractal_log(
                 function="StripeClient.charge_hourly",
                 label=email,
                 logs="{username} used Fractal for {hours_used} hours and is an hourly subscriber. Charged {amount} cents".format(

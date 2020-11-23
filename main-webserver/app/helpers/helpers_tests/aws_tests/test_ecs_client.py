@@ -20,13 +20,13 @@ def test_setup_vpc():
         family="multimessage",
     )
     testclient.get_vpc()
-    networkConfiguration = {
+    network_configuration = {
         "awsvpcConfiguration": {
             "subnets": testclient.pick_subnets(),
             "securityGroups": testclient.pick_security_groups(),
         }
     }
-    testclient.run_task(networkConfiguration=networkConfiguration)
+    testclient.run_task(network_configuration=network_configuration)
     testclient.spin_til_done(time_delay=2)
 
 
@@ -41,7 +41,7 @@ def test_network_build():
         ["/bin/bash", "-c"],
         family="multimessage",
     )
-    testclient.run_task(networkConfiguration=testclient.build_network_config())
+    testclient.run_task(network_configuration=testclient.build_network_config())
     testclient.spin_til_running(time_delay=2)
     assert "." in testclient.task_ips.get(0, "-1")
 
@@ -69,7 +69,7 @@ def test_partial_works():
     testclient.set_and_register_task(
         ["echo start"], ["/bin/bash", "-c"], family="multimessage", basedict=basedict
     )
-    networkConfiguration = {
+    network_configuration = {
         "awsvpcConfiguration": {
             "subnets": [
                 "subnet-0dc1b0c43c4d47945",
@@ -79,7 +79,7 @@ def test_partial_works():
             ],
         }
     }
-    testclient.run_task(networkConfiguration=networkConfiguration)
+    testclient.run_task(network_configuration=network_configuration)
     testclient.spin_til_running(time_delay=2)
     assert "." in testclient.task_ips.get(0, "-1")
 
@@ -107,7 +107,7 @@ def test_full_base_config():
     }
     testclient = ECSClient(base_cluster="basetest2")
     testclient.set_and_register_task(family="multimessage", basedict=basedict)
-    networkConfiguration = {
+    network_configuration = {
         "awsvpcConfiguration": {
             "subnets": [
                 "subnet-0dc1b0c43c4d47945",
@@ -117,7 +117,7 @@ def test_full_base_config():
             ],
         }
     }
-    testclient.run_task(networkConfiguration=networkConfiguration)
+    testclient.run_task(network_configuration=network_configuration)
     testclient.spin_til_running(time_delay=2)
     assert "." in testclient.task_ips.get(0, "-1")
 
@@ -211,7 +211,7 @@ def test_basic_ecs_client():
     )
 
     # pylint: disable=unused-variable
-    networkConfiguration = {
+    network_configuration = {
         "awsvpcConfiguration": {
             "subnets": [
                 "subnet-0dc1b0c43c4d47945",
