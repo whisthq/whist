@@ -125,17 +125,17 @@ typedef struct {
 
 #include <winioctl.h>
 
-bool create_junction(WCHAR* szJunction, WCHAR* szPath);
+bool create_junction(WCHAR* sz_junction, WCHAR* sz_path);
 
-bool create_junction(WCHAR* szJunction, WCHAR* szPath) {
+bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
     BYTE buf[sizeof(ReparseMountpointDataBuffer) + MAX_PATH * sizeof(WCHAR)];
     ReparseMountpointDataBuffer* reparse_buffer = (ReparseMountpointDataBuffer*)buf;
     WCHAR sz_target[MAX_PATH] = L"\\??\\";
 
-    wcscat(sz_target, szPath);
+    wcscat(sz_target, sz_path);
     wcscat(sz_target, L"\\");
 
-    if (!CreateDirectoryW(szJunction, NULL)) {
+    if (!CreateDirectoryW(sz_junction, NULL)) {
         LOG_ERROR("CreateDirectoryW Error: %d", GetLastError());
         return false;
     }
@@ -160,7 +160,7 @@ bool create_junction(WCHAR* szJunction, WCHAR* szPath) {
     if (h_token) CloseHandle(h_token);
     // End Obtain SE_RESTORE_NAME privilege
 
-    HANDLE h_dir = CreateFileW(szJunction, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+    HANDLE h_dir = CreateFileW(sz_junction, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
                               FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL);
     if (h_dir == INVALID_HANDLE_VALUE) {
         LOG_ERROR("CreateFileW Error: %d", GetLastError());
@@ -180,7 +180,7 @@ bool create_junction(WCHAR* szJunction, WCHAR* szPath) {
                          reparse_buffer->ReparseDataLength + REPARSE_MOUNTPOINT_HEADER_SIZE, NULL, 0,
                          &dw_ret, NULL)) {
         CloseHandle(h_dir);
-        RemoveDirectoryW(szJunction);
+        RemoveDirectoryW(sz_junction);
 
         LOG_ERROR("DeviceIoControl Error: %d", GetLastError());
         return false;

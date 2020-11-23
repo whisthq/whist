@@ -145,7 +145,6 @@ extern int getopt_long_only(int __argc, char *const *__argv, const char *__short
                             const struct option *__longopts, int *__longind);
 
 /* Internal only.  Users should not call this directly.  */
-// NOLINTNEXTLINE
 extern int _getopt_internal(int __argc, char *const *__argv, const char *__shortopts,
                             const struct option *__longopts, int *__longind, int __long_only);
 #endif
@@ -155,7 +154,6 @@ extern int getopt();
 extern int getopt_long();
 extern int getopt_long_only();
 
-// NOLINTNEXTLINE
 extern int _getopt_internal();
 #endif
 #endif /* __STDC__ */

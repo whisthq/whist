@@ -149,9 +149,9 @@ int get_time_data(FractalTimeData* time_data) {
     time_data->use_win_name = 0;
     time_data->use_linux_name = 1;
 
-    time_data->UTC_Offset = get_utc_offset();
-    LOG_INFO("Sending UTC offset %d", time_data->UTC_Offset);
-    time_data->DST_flag = get_dst();
+    time_data->utc_offset = get_utc_offset();
+    LOG_INFO("Sending UTC offset %d", time_data->utc_offset);
+    time_data->dst_flag = get_dst();
 
     char* response = NULL;
     runcmd(
@@ -166,9 +166,9 @@ int get_time_data(FractalTimeData* time_data) {
     time_data->use_win_name = 0;
     time_data->use_linux_name = 1;
 
-    time_data->UTC_Offset = get_utc_offset();
-    LOG_INFO("Sending UTC offset %d", time_data->UTC_Offset);
-    time_data->DST_flag = get_dst();
+    time_data->utc_offset = get_utc_offset();
+    LOG_INFO("Sending UTC offset %d", time_data->utc_offset);
+    time_data->dst_flag = get_dst();
 
     char* response = NULL;
     runcmd("cat /etc/timezone", &response);
@@ -209,7 +209,7 @@ void set_timezone_from_windows_name(char* win_tz_name) {
     return;
 }
 
-void set_timezone_from_utc(int utc, int DST_flag) {
+void set_timezone_from_utc(int utc, int dst_flag) {
 #ifndef _WIN32
     // TODO come back to this when we have sudo password on linux server
     //    char cmd[5000];
@@ -219,7 +219,7 @@ void set_timezone_from_utc(int utc, int DST_flag) {
     //    -1*utc);
     return;
 #else
-    if (DST_flag > 0) {
+    if (dst_flag > 0) {
         LOG_INFO("DST active");
         utc = utc - 1;
     }
