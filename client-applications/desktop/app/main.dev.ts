@@ -52,7 +52,7 @@ const createWindow = async () => {
         mainWindow = new BrowserWindow({
             show: false,
             width: 1000,
-            height: 680,
+            height: 800,
             frame: false,
             center: true,
             resizable: false,
@@ -64,7 +64,7 @@ const createWindow = async () => {
         mainWindow = new BrowserWindow({
             show: false,
             width: 1000,
-            height: 680,
+            height: 800,
             titleBarStyle: "hidden",
             center: true,
             resizable: false,
@@ -78,7 +78,7 @@ const createWindow = async () => {
         mainWindow = new BrowserWindow({
             show: false,
             width: 1000,
-            height: 680,
+            height: 800,
             titleBarStyle: "hidden",
             center: true,
             resizable: false,

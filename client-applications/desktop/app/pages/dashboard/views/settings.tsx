@@ -12,14 +12,21 @@ import Fractal from "assets/images/fractal.svg"
 const Settings = (props: { username: string; dispatch: any }) => {
     const { username, dispatch } = props
 
+    const [lowInternetMode, setLowInternetMode] = useState(false)
+    const [bandwidth, setBandwidth] = useState(500)
+    const [showSavedAlert, setShowSavedAlert] = useState(false)
+
+    // these are used to allow admins to do integration testing 
+    // with the client app with
+    // various different remotes
     const adminUsername =
         username &&
         username.indexOf("@") > -1 &&
         username.split("@")[1] == "tryfractal.com"
-
-    const [lowInternetMode, setLowInternetMode] = useState(false)
-    const [bandwidth, setBandwidth] = useState(500)
-    const [showSavedAlert, setShowSavedAlert] = useState(false)
+    
+    const [admin_region, admin_setRegion] = useState("")
+    const [admin_task, admin_setTask] = useState("")
+    const [admin_webserver, admin_setWebserver] = useState("")
 
     useEffect(() => {
         const storage = require("electron-json-storage")
@@ -39,6 +46,35 @@ const Settings = (props: { username: string; dispatch: any }) => {
     const changeBandwidth = (mbps: number) => {
         setBandwidth(mbps)
     }
+
+    const admin_updateRegion = (evt: any) => {
+        admin_setRegion(evt.target.value)
+    }
+
+    const admin_updateTask = (evt: any) => {
+        admin_setTask(evt.target.value)
+    }
+
+    const admin_updateWebserver = (evt: any) => {
+        admin_setWebserver(evt.target.value)
+    }
+
+    const adminInput = (value: string, placeholder: string, onChange: any) => (
+        <input value={value}
+            placeholder={placeholder}
+            onChange={onChange}
+            style={{
+                marginTop: 20,
+                //width: "100%",
+                background: "#F2F6FB",
+                border: "none",
+                outline: "none",
+                fontSize: 14,
+                color: "#black",
+                //height: "160px",
+            }}
+        />
+    )
 
     const handleSave = () => {
         const storage = require("electron-json-storage")
@@ -212,7 +248,7 @@ const Settings = (props: { username: string; dispatch: any }) => {
                 <Row
                     style={{
                         display: "flex",
-                        flexDirection: "row",
+                        flexDirection: "column",
                         marginTop: 50,
                         marginBottom: 25,
                     }}
@@ -252,9 +288,22 @@ const Settings = (props: { username: string; dispatch: any }) => {
                             open said task in said region. More options will be
                             added in the future.
                         </div>
-                        {/* <input />
-                        <input />
-                        <input /> */}
+                    </div>
+                    <div
+                        style={{
+                            width: "25%",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-around",
+                            alignItems: "flex-end",
+                            padding: "10px 0px",
+                        }}
+                    >
+                        <div style={{ float: "right" }}>
+                            {adminInput(admin_region, "AWS Region", admin_updateRegion)}
+                            {adminInput(admin_task, "Task Def", admin_updateTask)}
+                            {adminInput(admin_webserver, "Webserver", admin_updateWebserver)}
+                        </div>
                     </div>
                 </Row>
             )}
