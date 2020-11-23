@@ -293,4 +293,6 @@ if __name__ == "__main__":
     elif (args.interval).lower() == "daily":
         store_average_each_window()
     else:
-        raise RuntimeError("Interval argument must be 'weekly' or 'daily' caps ignored.")
+        raise RuntimeError(
+            "Interval argument must be 'weekly' or 'daily' caps ignored."
+        )
