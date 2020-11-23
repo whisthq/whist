@@ -368,7 +368,7 @@ jobs:
 
             - name: Run clang-tidy
               run: |
-                  ./run-clang-tidy.sh
+                  ./run-clang-tidy.sh -c
 
             - name: Get latest sentry-cli
               uses: rpadaki/setup-sentry-cli@master
