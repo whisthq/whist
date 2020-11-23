@@ -19,7 +19,7 @@ extern volatile SDL_Window* window;
 
 #if defined(_WIN32)
 HHOOK g_h_keyboard_hook;
-LRESULT CALLBACK low_level_keyboard_proc(INT nCode, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param);
 #endif
 
 // Send a key to SDL event queue, presumably one that is captured and wouldn't
@@ -139,13 +139,13 @@ void destroy_sdl(SDL_Window* window_param) {
 // keys can still be streamed over to the host
 
 HHOOK mule;
-LRESULT CALLBACK low_level_keyboard_proc(INT nCode, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param) {
     // By returning a non-zero value from the hook procedure, the
     // message does not get passed to the target window
-    KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)lParam;
+    KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)l_param;
     int flags = SDL_GetWindowFlags((SDL_Window*)window);
     if ((flags & SDL_WINDOW_INPUT_FOCUS)) {
-        switch (nCode) {
+        switch (n_code) {
             case HC_ACTION: {
                 // Check to see if the CTRL key is pressed
                 BOOL b_control_key_down = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
@@ -196,6 +196,6 @@ LRESULT CALLBACK low_level_keyboard_proc(INT nCode, WPARAM wParam, LPARAM lParam
                 break;
         }
     }
-    return CallNextHookEx(mule, nCode, wParam, lParam);
+    return CallNextHookEx(mule, n_code, w_param, l_param);
 }
 #endif

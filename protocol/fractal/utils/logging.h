@@ -127,9 +127,9 @@ Public Functions
 ============================
 */
 
-void sentry_send_bread_crumb(char* tag, const char* fmtStr, ...);
+void sentry_send_bread_crumb(char* tag, const char* fmt_str, ...);
 
-void sentry_send_event(const char* fmtStr, ...);
+void sentry_send_event(const char* fmt_str, ...);
 
 /**
  * @brief                          Initialize the logger
@@ -143,9 +143,9 @@ void init_logger(char* log_directory);
 /**
  * @brief                          Log the given format string
  *
- * @param fmtStr                   The directory to store the log files in
+ * @param fmt_str                  The directory to store the log files in
  */
-void mprintf(const char* fmtStr, ...);
+void mprintf(const char* fmt_str, ...);
 
 /**
  * @brief                          Destroy the logger object

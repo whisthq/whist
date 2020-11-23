@@ -15,9 +15,7 @@ cmake_minimum_required(VERSION 3.15)
 #See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
 cmake_policy(SET CMP0091 NEW)
 
-#set default compiler flags
-set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
-
+# export compile commands database - comment this out if not running clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(FractalProtocol LANGUAGES C)
@@ -272,4 +270,3 @@ if (${BUILD_SERVER} MATCHES "ON" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
     add_subdirectory(server)
 endif()
 
-set(CMAKE_C_CLANG_TIDY clang-tidy --header-filter=".*" --line-filter='[{"name":"include/*","lines":[[9999999,9999999]]}, {"name":".c"}]')

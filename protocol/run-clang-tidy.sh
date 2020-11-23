@@ -14,7 +14,6 @@ do
             CICheck=1
     esac
 done
-echo $CICheck
 
 shift $((OPTIND-1))
 
@@ -67,14 +66,12 @@ echo "Deleting all clang-diagnostic-error entries"
 yq d -i $yamlFolder/$fixesFilename 'Diagnostics.(DiagnosticName==clang-diagnostic-error)'
 
 # get current directory path based on OS
-if [[ isWindows==1 ]]
+if [[ $isWindows == 1 ]]
 then
-    echo here
     thisDirectory=$(cmd '/C echo %cd%
     ')
     thisDirectory=$(realpath "$thisDirectory")
 else
-    echo there
     thisDirectory=$(pwd)
 fi
 thisDirectory="${thisDirectory}/"
@@ -107,7 +104,18 @@ do
     yq d -i $yamlFolder/$fixesFilename $pathExpression
 done
 
-if [[ CICheck == 1 ]]
+# array of specific files to exclude
+declare -a excludeFiles=(
+    "fractal/core/fractalgetopt.*"
+)
+
+for excludeFile in "${excludeFiles[@]}"
+do
+    pathExpression="Diagnostics.(DiagnosticMessage.FilePath==${excludeFile})"
+    yq d -i $yamlFolder/$fixesFilename $pathExpression
+done
+
+if [[ $CICheck == 1 ]]
 then
     numSuggestions=$(yq r -l ${yamlFolder}/${fixesFilename} Diagnostics)
     if [[ $numSuggestions != 0 ]]
@@ -133,8 +141,10 @@ else
         else
             clang-apply-replacements-10 $yamlFolder
         fi
+    else
+        exit
     fi
 fi
 
 # cleanup
-# rm -rf $yamlFolder
+rm -rf $yamlFolder

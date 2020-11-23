@@ -366,6 +366,10 @@ jobs:
 
                   execute_process(COMMAND ccache -s)
 
+            - name: Run clang-tidy
+              run: |
+                  ./run-clang-tidy.sh
+
             - name: Get latest sentry-cli
               uses: rpadaki/setup-sentry-cli@master
             - name: Upload debug information to sentry

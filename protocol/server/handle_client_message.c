@@ -378,8 +378,8 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
         LOG_INFO("Setting time from windows time zone %s", time_data.win_tz_name);
         set_timezone_from_windows_name(time_data.win_tz_name);
     } else {
-        LOG_INFO("Setting time from UTC offset %d", time_data.UTC_Offset);
-        set_timezone_from_utc(time_data.UTC_Offset, time_data.DST_flag);
+        LOG_INFO("Setting time from UTC offset %d", time_data.utc_offset);
+        set_timezone_from_utc(time_data.utc_offset, time_data.dst_flag);
     }
 #else
     if (time_data.use_linux_name) {
@@ -387,7 +387,7 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
         set_timezone_from_iana_name(time_data.win_tz_name, get_vm_password());
     } else {
         LOG_INFO("Setting time from UTC offset %d", time_data.win_tz_name);
-        set_timezone_from_utc(time_data.UTC_Offset, time_data.DST_flag);
+        set_timezone_from_utc(time_data.utc_offset, time_data.dst_flag);
     }
 #endif
 
