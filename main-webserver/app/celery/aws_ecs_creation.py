@@ -169,7 +169,7 @@ def select_cluster(region_name):
     return cluster_name
 
 
-def start_container(webserver_url, region_name, cluster_name, task_definition_arn):
+def start_container(webserver_url, region_name, cluster_name, task_definition_arn, dpi):
     """
     This helper function configures and starts a container running
 
@@ -189,6 +189,7 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
                 "name": "fractal-container",
                 "environment": [
                     {"name": "FRACTAL_AES_KEY", "value": aeskey},
+                    {"name": "FRACTAL_DPI", "value": str(dpi)},
                     {
                         "name": "WEBSERVER_URL",
                         "value": (webserver_url if webserver_url is not None else ""),
@@ -286,7 +287,7 @@ def assign_container(
         )
         fractalLog(function="create_new_container", label="None", logs=message)
         task_id, curr_ip, curr_network_binding, aeskey = start_container(
-            webserver_url, region_name, cluster_name, task_definition_arn
+            webserver_url, region_name, cluster_name, task_definition_arn, dpi
         )
         # TODO:  Get this right
         if curr_ip == -1 or curr_network_binding == -1:
@@ -467,7 +468,7 @@ def create_new_container(
     )
     fractalLog(function="create_new_container", label="None", logs=message)
     task_id, curr_ip, curr_network_binding, aeskey = start_container(
-        webserver_url, region_name, cluster_name, task_definition_arn
+        webserver_url, region_name, cluster_name, task_definition_arn, dpi
     )
     # TODO:  Get this right
     if curr_ip == -1 or curr_network_binding == -1:
