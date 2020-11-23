@@ -4,6 +4,6 @@ This subfolder contains the Dockerfiles for the creative applications (2D, 3D, v
 
 ## Applications
 
-- Blender
-- Blockbench
-- Figma
+-   Blender
+-   Blockbench
+-   Figma

@@ -12,7 +12,7 @@ rm -f tmpfile
 apps=()
 for path in "${dockerfile_paths[@]}"
 do
-   : 
+    :
     path=${path%/Dockerfile.20}
     path=${path#"./"}
     apps+=($path)
