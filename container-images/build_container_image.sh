@@ -2,6 +2,9 @@
 
 set -Eeuo pipefail
 
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 # Function to build a specific image
 # Usage: build_specific_image $app_path $tag $always_show_output
 # e.g. build_specific_image browsers/firefox current-build false
@@ -88,4 +91,24 @@ app_path=${1:-base}
 app_path=${app_path%/}
 force_output=${2:-false}
 
+# Check if protocol has been built
+cd "$DIR"
+if [ ! -f ../protocol/server/build64/libsentry.so ]; then
+  echo "Could not find $DIR/../protocol/server/build64/libsentry.so... building protocol"
+  ../protocol/build_protocol.sh
+fi
+if [ ! -f ../protocol/server/build64/FractalServer ]; then
+  echo "Could not find $DIR/../protocol/server/build64/FractalServer... building protocol"
+  ../protocol/build_protocol.sh
+fi
+
+echo "A protocol build exists, though it is not guaranteed to be up-to-date."
+
+mkdir "base/build_temp"
+cp ../protocol/server/build64/libsentry.so base/build_temp
+cp ../protocol/server/build64/FractalServer base/build_temp
+
 build_image_with_deps "$app_path" "$local_tag" "$force_output"
+
+echo "Cleaning up..."
+rm -rf "base/build_temp"
