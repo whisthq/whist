@@ -78,6 +78,9 @@ const Loading = (props: any) => {
 
         execChmodUnix("chmod +x FractalClient", path, os.platform()).then(
             () => {
+                const ipc = require("electron").ipcRenderer
+                ipc.sendSync("canClose", false)
+
                 var port_info = `32262:${port32262}.32263:${port32263}.32273:${port32273}`
                 var parameters = [
                     "-w",
@@ -90,20 +93,19 @@ const Loading = (props: any) => {
                     secretKey,
                     ip,
                 ]
-                console.log(parameters)
 
                 // Starts the protocol
                 const protocol = child(executable, parameters, {
                     cwd: path,
-                    detached: true,
+                    detached: false,
                     stdio: "ignore",
+                    // env: { ELECTRON_RUN_AS_NODE: 1 },
                     // optional:
                     //env: {
                     //    PATH: process.env.PATH,
                     //},
                 })
                 protocol.on("close", () => {
-                    console.log("Stream exit detected")
                     dispatch(
                         updateContainer({
                             container_id: null,
@@ -113,6 +115,8 @@ const Loading = (props: any) => {
                             port32273: null,
                             publicIP: null,
                             secretKey: null,
+                            launches: 0,
+                            launchURL: null,
                         })
                     )
                     dispatch(
@@ -122,6 +126,7 @@ const Loading = (props: any) => {
                         })
                     )
                     setLaunches(0)
+                    ipc.sendSync("canClose", true)
                     history.push("/dashboard")
                 })
             }

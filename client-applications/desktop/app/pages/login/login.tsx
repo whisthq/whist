@@ -3,9 +3,7 @@ import { connect } from "react-redux"
 import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { parse } from "url"
-import { useQuery } from "@apollo/client"
 
-import UpdateScreen from "pages/dashboard/components/update"
 import BackgroundView from "pages/login/views/backgroundView"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {
@@ -22,12 +20,9 @@ import {
     loginUser,
     rememberMeLogin,
 } from "store/actions/sideEffects"
-import { debugLog } from "shared/utils/logging"
 import { config } from "shared/constants/config"
-import { fetchContainer } from "store/actions/sideEffects"
-import { execChmodUnix } from "shared/utils/exec"
-import { GET_FEATURED_APPS } from "shared/constants/graphql"
-import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
+import { findDPI } from "pages/login/constants/helpers"
+import { setAWSRegion } from "shared/utils/exec"
 
 const Login = (props: any) => {
     const {
@@ -35,29 +30,17 @@ const Login = (props: any) => {
         os,
         loginWarning,
         loginMessage,
-        launchImmediately,
-        launchURL,
         accessToken,
-        refreshToken,
+        launchURL,
     } = props
-
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [loggingIn, setLoggingIn] = useState(false)
     const [version, setVersion] = useState("1.0.0")
     const [rememberMe, setRememberMe] = useState(false)
-    const [updatePingReceived, setUpdatePingReceived] = useState(false)
-    const [needsAutoupdate, setNeedsAutoupdate] = useState(false)
-    const [fetchedCredentials, setFetchedCredentials] = useState(false)
-    const [launches, setLaunches] = useState(0)
     const live = useState(true)
 
     const storage = require("electron-json-storage")
-
-    const { data } = useQuery(GET_FEATURED_APPS)
-    const featuredAppData = data
-        ? data.hardware_supported_app_images.filter(checkActive)
-        : []
 
     const updateUsername = (evt: any) => {
         setUsername(evt.target.value)
@@ -67,64 +50,10 @@ const Login = (props: any) => {
         setPassword(evt.target.value)
     }
 
-    const setAWSRegion = () => {
-        return new Promise((resolve, reject) => {
-            const { spawn } = require("child_process")
-            const os = require("os")
-            var appRootDir = require("electron").remote.app.getAppPath()
-            var executable = ""
-            var path = ""
-
-            if (os.platform() === "darwin") {
-                path = appRootDir + "/binaries/"
-                path = path.replace("/Resources/app.asar", "")
-                path = path.replace("/app", "")
-                executable = "./awsping_osx"
-            } else if (os.platform() === "linux") {
-                path = process.cwd() + "/binaries/"
-                path = path.replace("/release", "")
-                executable = "./awsping_linux"
-            } else if (os.platform() === "win32") {
-                path = appRootDir + "\\binaries"
-                path = path.replace("\\resources\\app.asar", "")
-                path = path.replace("\\app", "")
-                executable = "awsping_windows.exe"
-            } else {
-                console.log(
-                    `no suitable os found, instead got ${os.platform()}`
-                )
-            }
-
-            execChmodUnix("chmod +x awsping_osx", path, os.platform()).then(
-                () => {
-                    const regions = spawn(executable, ["-n", "3"], {
-                        cwd: path,
-                    }) // ping via TCP
-                    regions.stdout.setEncoding("utf8")
-
-                    regions.stdout.on("data", (data: any) => {
-                        // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
-                        const line = data.split(/\r?\n/)[0].replace(/  +/g, " ")
-                        const items = line.split(" ")
-                        // In case data is split and sent separately, only use closest AWS region which has index of 0
-                        if (items[1] == "1.") {
-                            const region = items[2].slice(1, -1)
-                            // console.log("Ping detected " + region.toString())
-                            dispatch(updateClient({ region: region }))
-                        } else {
-                            debugLog("Late packet")
-                        }
-
-                        resolve()
-                    })
-                }
-            )
-        })
-    }
-
     const handleLoginUser = () => {
         setLoggingIn(true)
-        setAWSRegion().then(() => {
+        setAWSRegion().then((region) => {
+            dispatch(updateClient({ region: region }))
             dispatch(updateAuth({ loginWarning: false, loginMessage: null }))
             if (!rememberMe) {
                 storage.set("credentials", {
@@ -206,13 +135,6 @@ const Login = (props: any) => {
     useEffect(() => {
         dispatch(updateAuth({ loginWarning: false }))
 
-        const ipc = require("electron").ipcRenderer
-
-        ipc.on("update", (_: any, update: any) => {
-            setUpdatePingReceived(true)
-            setNeedsAutoupdate(update)
-        })
-
         const appVersion = require("../../package.json").version
         const dpi = findDPI()
         const os = require("os")
@@ -239,7 +161,6 @@ const Login = (props: any) => {
                     )
                     setRememberMe(true)
                     setUsername(data.username)
-                    setFetchedCredentials(true)
                     dispatch(rememberMeLogin(data.username))
                 }
             }
@@ -248,38 +169,7 @@ const Login = (props: any) => {
 
     useEffect(() => {
         if (
-            updatePingReceived &&
-            !needsAutoupdate &&
-            (username || props.username) &&
-            accessToken &&
-            refreshToken &&
-            launchImmediately &&
-            featuredAppData.length > 0
-        ) {
-            setLaunches(launches + 1)
-        }
-    }, [
-        updatePingReceived,
-        fetchedCredentials,
-        props.username,
-        accessToken,
-        featuredAppData,
-    ])
-
-    useEffect(() => {
-        if (launches === 1) {
-            setAWSRegion().then(() => {
-                const { app_id, url } = Object(
-                    urlToApp(launchURL.toLowerCase(), featuredAppData)
-                )
-                dispatch(fetchContainer(app_id, url))
-            })
-        }
-    }, [launches])
-
-    useEffect(() => {
-        if (
-            !launchImmediately &&
+            !launchURL &&
             props.username &&
             props.accessToken &&
             props.accessToken !== ""
@@ -290,7 +180,6 @@ const Login = (props: any) => {
 
     return (
         <div className={styles.container} data-tid="container">
-            <UpdateScreen />
             <div
                 style={{
                     position: "absolute",

@@ -1,7 +1,8 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
 import styles from "styles/dashboard.css"
 import Titlebar from "react-electron-titlebar"
+import { Redirect } from "react-router-dom"
 
 import NavBar from "pages/dashboard/components/navBar"
 import Discover from "pages/dashboard/views/discover"
@@ -9,9 +10,13 @@ import Settings from "pages/dashboard/views/settings"
 import Support from "pages/dashboard/views/support"
 
 const Dashboard = (props: any) => {
-    const { dispatch, username, os } = props
+    const { launchURL, os } = props
     const [currentTab, setCurrentTab] = useState("Discover")
     const [search, setSearch] = useState("")
+
+    if (launchURL) {
+        return <Redirect to="/loading" />
+    }
 
     return (
         <div className={styles.container}>
@@ -60,6 +65,7 @@ const mapStateToProps = (state: any) => {
     return {
         username: state.MainReducer.auth.username,
         os: state.MainReducer.client.os,
+        launchURL: state.MainReducer.container.launchURL,
     }
 }
 
