@@ -1,0 +1,48 @@
+FROM fractal/base:current-build
+
+# Install Google Chrome dependencies explicitly
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    libappindicator3-1 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatspi2.0-0 \
+    libcups2 \
+    libgdk-pixbuf2.0-0 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxi6 \
+    fonts-liberation \
+    xdg-utils \
+    && apt-get autoremove -y \
+    && apt-get clean  
+
+# Install Google Chrome
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable \
+    && apt-get autoremove -y \
+    && apt-get clean 
+
+# Set default browser
+RUN su - fractal -c \
+    "xdg-mime default google-chrome.desktop text/html \
+    && xdg-mime default google-chrome.desktop x-scheme-handler/http \
+    && xdg-mime default google-chrome.desktop x-scheme-handler/https \
+    && xdg-mime default google-chrome.desktop x-scheme-handler/about"
+
+# Don't show first run popup
+RUN su - fractal -c "mkdir -p /home/fractal/.config/google-chrome \
+    && touch /home/fractal/.config/google-chrome/'First Run'"
+
+# Setup Fractal application symlink
+RUN ln -sf $(which google-chrome) /usr/bin/fractal-application
+

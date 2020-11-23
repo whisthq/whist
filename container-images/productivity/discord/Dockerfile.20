@@ -1,0 +1,18 @@
+FROM fractal/base:current-build
+
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    libgconf-2-4 \
+    libappindicator1 \
+    libc++1 \
+    wget \
+    && apt-get autoremove -y \
+    && apt-get clean
+
+# Install Discord
+RUN wget -qO /usr/bin/discord.deb "https://discordapp.com/api/download?platform=linux&format=deb" \
+    && cd /usr/bin \
+    && dpkg -i /usr/bin/discord.deb \
+    && rm -rf /usr/bin/discord*.deb
+
+# Setup Fractal application symlink
+RUN ln -sf /usr/bin/discord /usr/bin/fractal-application

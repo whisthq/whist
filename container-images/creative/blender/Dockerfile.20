@@ -1,0 +1,24 @@
+FROM fractal/base:current-build
+
+RUN apt-get update && \
+	apt-get install -y \
+	curl \
+	libfreetype6 \
+	libxi6 \
+	libxrender1 \
+	unzip \
+	xz-utils && \
+	apt-get -y autoremove && \
+	rm -rf /var/lib/apt/lists/*
+
+ENV BLENDER_MAJOR 2.82
+ENV BLENDER_VERSION 2.82a
+ENV BLENDER_URL https://download.blender.org/release/Blender${BLENDER_MAJOR}/blender-${BLENDER_VERSION}-linux64.tar.xz
+
+RUN curl -L ${BLENDER_URL} | tar -xJ -C /usr/local/ && \
+	mv /usr/local/blender-${BLENDER_VERSION}-linux64 /usr/local/blender
+
+RUN wget -P /usr/local/ https://cloud.blender.org/r/downloads/blender_cloud-latest-addon.zip && unzip /usr/local/blender_cloud-latest-addon.zip 
+
+# Setup Fractal application symlink
+RUN ln -sf /usr/local/blender/blender /usr/bin/fractal-application

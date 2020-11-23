@@ -1,0 +1,28 @@
+repos:
+    - repo: git://github.com/pre-commit/pre-commit-hooks
+      rev: v3.2.0
+      hooks:
+        - id: check-case-conflict
+        - id: check-merge-conflict
+        - id: check-symlinks
+        - id: detect-private-key
+
+    - repo: local
+      hooks:
+        # https://github.com/hadolint/hadolint
+        - id: dockerfile-lint
+          name: Dockerfile Lint
+          language: docker_image
+          entry: hadolint/hadolint:v1.18.0 hadolint
+          args: [base/Dockerfile.20
+                 browsers/chrome/Dockerfile.20
+                 browsers/firefox/Dockerfile.20
+                 browsers/brave/Dockerfile.20
+                 browsers/sidekick/Dockerfile.20
+                 productivity/slack/Dockerfile.20
+                 productivity/discord/Dockerfile.20
+                 productivity/notion/Dockerfile.20
+                 creative/blockbench/Dockerfile.20
+                 creative/blender/Dockerfile.20
+                 creative/figma/Dockerfile.20
+                 creative/gimp/Dockerfile.20]

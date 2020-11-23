@@ -1,0 +1,16 @@
+FROM fractal/base:current-build
+
+RUN apt-get update && \
+  apt-get install -y \
+    libgimp2.0 \
+    gimp && \
+	apt-get -y autoremove && \
+	rm -rf /var/lib/apt/lists/*
+
+# Set GIMP GTK theme (see comment in gimprc)
+COPY --chown=fractal gimprc /home/fractal/.config/GIMP/2.10/gimprc
+COPY gimprc /root/.config/GIMP/2.10/gimprc
+
+# Application startup script
+
+RUN ln -sf $(which gimp) /usr/bin/fractal-application

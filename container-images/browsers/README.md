@@ -1,0 +1,9 @@
+# Browser Applications
+
+This subfolder contains the Dockerfiles for the web browsers that Fractal streams containerized. They are based on `/base/Dockerfile.20`, which runs Ubuntu 20.04. See `/base/README.md` for further details on the base Dockerfile, and `/README.md` for details on the container images deployment pipeline.
+
+## Applications
+
+- Google Chrome
+- Mozilla Firefox
+- Brave Browser

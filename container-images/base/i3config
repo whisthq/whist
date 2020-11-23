@@ -1,0 +1,106 @@
+# i3 config file (v4)
+#
+# Please see https://i3wm.org/docs/userguide.html for a complete reference!
+#
+# This config file uses keycodes (bindsym) and was written for the QWERTY
+# layout.
+#
+# To get a config file with the same key positions, but for your current
+# layout, use the i3-config-wizard
+#
+
+# Font for window titles. Will also be used by the bar unless a different font
+# is used in the bar {} block below.
+font pango:monospace 8
+
+# This font is widely installed, provides lots of unicode glyphs, right-to-left
+# text rendering and scalability on retina/hidpi displays (thanks to pango).
+#font pango:DejaVu Sans Mono 8
+
+# Before i3 v4.8, we used to recommend this one as the default:
+# font -misc-fixed-medium-r-normal--13-120-75-75-C-70-iso10646-1
+# The font above is very space-efficient, that is, it looks good, sharp and
+# clear in small sizes. However, its unicode glyph coverage is limited, the old
+# X core fonts rendering does not support right-to-left and this being a bitmap
+# font, it doesn’t scale on retina/hidpi displays.
+
+# use these keys for focus, movement, and resize directions when reaching for
+# the arrows is not convenient
+set $up l
+set $down k
+set $left j
+set $right semicolon
+
+# focus follows click, not hover
+focus_follows_mouse no
+
+# use Mouse+Mod1 to drag floating windows to their wanted position
+floating_modifier Mod1
+
+# kill focused window
+bindsym Mod1+F4 kill
+bindsym Mod4+w kill
+
+# change focus
+bindsym Mod1+$left focus left
+bindsym Mod1+$down focus down
+bindsym Mod1+$up focus up
+bindsym Mod1+$right focus right
+
+# alternatively, you can use the cursor keys:
+bindsym Mod1+Left focus left
+bindsym Mod1+Down focus down
+bindsym Mod1+Up focus up
+bindsym Mod1+Right focus right
+
+# move focused window
+bindsym Mod1+Shift+$left move left
+bindsym Mod1+Shift+$down move down
+bindsym Mod1+Shift+$up move up
+bindsym Mod1+Shift+$right move right
+
+# alternatively, you can use the cursor keys:
+bindsym Mod1+Shift+Left move left
+bindsym Mod1+Shift+Down move down
+bindsym Mod1+Shift+Up move up
+bindsym Mod1+Shift+Right move right
+
+# enter fullscreen mode for the focused container
+bindsym Mod1+f fullscreen toggle
+
+# toggle tiling / floating
+bindsym Mod1+Shift+space floating toggle
+
+# get rid of titlebars for maximized windows
+default_border pixel
+default_floating_border normal
+hide_edge_borders both
+
+#
+# Make pop-up windows actually appear as pop-ups, rather than tiled
+#
+# The following will account for a lot of them. For those that slip through,
+# we need to enter a per item entry in the config along the lines of
+# for_window [title="Event Tester"]                       floating enable
+# for_window [class="Youtube-dl-gui"]                     floating enable
+# replacing the title or class by that of the application window desired
+#
+# Sometimes a combination of title and class is needed. We can also use 
+# the for_window setting to force size and position, if needed.
+for_window [window_role="pop-up"]                       floating enable
+for_window [window_role="bubble"]                       floating enable 
+for_window [window_role="task_dialog"]                  floating enable
+for_window [window_role="Preferences"]                  floating enable
+for_window [window_type="dialog"]                       floating enable 
+for_window [window_type="menu"]                         floating enable
+
+# Make borders for floating windows look more modern
+# class                 border  backgr. text    indicator child_border
+client.focused          #656864 #656864 #ffffff #000000   #656864
+client.focused_inactive #9da09c #9da09c #ffffff #000000   #9da09c
+client.unfocused        #9da09c #9da09c #888888 #000000   #9da09c
+client.urgent           #2f343a #900000 #ffffff #000000   #900000
+client.placeholder      #000000 #0c0c0c #ffffff #000000   #0c0c0c
+client.background       #ffffff
+
+font pango:Ubuntu 9
