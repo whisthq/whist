@@ -1,0 +1,24 @@
+# Lines starting with '#' are comments.
+# Each line is a file pattern followed by one or more owners.
+
+# More details are here: https://help.github.com/articles/about-codeowners/
+
+# The '*' pattern is global owners.
+# Global rule:
+*                       @rpadaki @djsavvy @philippemnoel @fractal/code-standard-reviewers
+
+# Order is important. The last matching pattern has the most precedence.
+# The folders are ordered as follows:
+
+/client-applications/   @mingy98 @philippemnoel @fractal/code-standard-reviewers
+/container-images/      @rpadaki @djsavvy @philippemnoel @fractal/code-standard-reviewers
+/ecs-host-service/      @rpadaki @djsavvy @fractal/code-standard-reviewers
+/ecs-host-setup/        @rpadaki @djsavvy @fractal/code-standard-reviewers
+/ecs-task-definitions/  @rpadaki @djsavvy @fractal/code-standard-reviewers
+/log-analysis/          @rpadaki @djsavvy @fractal/code-standard-reviewers
+/main-webserver/        @mingy98 @FishmanL @fractal/code-standard-reviewers
+/protocol/              @npip99 @rpadaki @fractal/code-standard-reviewers
+
+# In each subsection folders are ordered first by depth, then alphabetically.
+# This should make it easy to add new rules without breaking existing ones.
+
