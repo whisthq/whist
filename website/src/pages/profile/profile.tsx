@@ -36,7 +36,7 @@ const Profile = (props: any) => {
     } else {
         return (
             <div className="fractalContainer">
-                <Header color="black" account />
+                <Header dark={false} account />
                 <div
                     style={{
                         width: 500,

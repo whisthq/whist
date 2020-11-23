@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react"
 import MainContext from "shared/context/mainContext"
 
-function FloatingLogo(props: any) {
+const FloatingLogo = (props: any) => {
     const { appHighlight, setAppHighlight } = useContext(MainContext)
     const [hover, setHover] = useState(false)
 
@@ -43,24 +43,24 @@ function FloatingLogo(props: any) {
             }}
             style={{
                 borderRadius: 4,
+                background:
+                    props.currentIndex === props.textIndex ||
+                    hover ||
+                    props.currentIndex === 6
+                        ? "rgba(239,244,254,0.8)"
+                        : "white",
                 boxShadow:
                     props.currentIndex === props.textIndex ||
                     hover ||
                     props.currentIndex === 6
                         ? props.boxShadow
-                        : "0px 4px 20px rgba(0,0,0,0.05)",
+                        : "0px 4px 20px rgba(0,0,0,0.1)",
                 padding: padding,
                 width: size,
                 height: size,
                 position: "absolute",
                 top: props.top,
                 left: props.left,
-                background:
-                    props.currentIndex === props.textIndex ||
-                    hover ||
-                    props.currentIndex === 6
-                        ? props.background
-                        : "white",
                 animationDelay: props.animationDelay,
             }}
             onMouseEnter={() => setHover(true)}

@@ -52,14 +52,14 @@ const Auth = (props: {
     if (mode === "Log in") {
         return (
             <div className="fractalContainer">
-                <Header color="black" />
+                <Header dark={false} />
                 <LoginView />
             </div>
         )
     } else if (mode === "Sign up") {
         return (
             <div className="fractalContainer">
-                <Header color="black" />
+                <Header dark={false} />
 
                 <SignupView />
             </div>
@@ -67,7 +67,7 @@ const Auth = (props: {
     } else if (mode === "Forgot") {
         return (
             <div className="fractalContainer">
-                <Header color="black" />
+                <Header dark={false} />
                 <ForgotView />
             </div>
         )
