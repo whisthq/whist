@@ -1,0 +1,27 @@
+[package]
+name = "figma-font-bindings"
+version = "0.1.1"
+authors = ["Fractal"]
+edition = "2018"
+license = "GPL-2.0-only"
+build = "build.rs"
+exclude = ["artifacts.json", "index.node"]
+
+description = "Reads fonts in passed directories and return objects of fonts for Figma Font Helper"
+homepage = "https://github.com/fractal/figma-font-bindings"
+repository = "https://github.com/fractal/figma-font-bindings"
+
+keywords = ["System", "Fonts", "Figma"]
+categories = ["filesystem"]
+
+[lib]
+name = "figma_font_bindings"
+crate-type = ["dylib"]
+
+[build-dependencies]
+neon-build = "0.3.3"
+
+[dependencies]
+neon = "0.4.0"
+libfonthelper = "0.2.8"
+log = "0.4"
