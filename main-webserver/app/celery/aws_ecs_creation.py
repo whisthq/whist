@@ -241,6 +241,28 @@ def assign_container(
     dpi=96,
     webserver_url=None,
 ):
+    """
+    Assigns a running container to a user, or creates one if none exists
+
+    :param self: the celery instance running the task
+    :param username: the username of the requesting user
+    :param task_definition_arn: which taskdef the user needs a container for
+    :param region_name: which region the user needs a container for
+    :param dpi: the user's DPI
+    :param webserver_url: the webserver originating the request
+    :return: the generated container, in json form
+    """
+    #first, we check for a preexisting container with the correct user and pass it back:
+    existing_container = (
+        UserContainer.query()
+        .filter_by(is_assigned=True, user_id = username, task_definition=task_definition_arn, region_name=region_name)
+        .limit(1)
+    )
+    if existing_container:
+        if _poll(existing_container.container_id):
+            return user_container_schema.dump(existing_container)
+    
+    #otherwise, we see if there's an unassigned container
     base_container = (
         UserContainer.query()
         .filter_by(is_assigned=False, task_definition=task_definition_arn, region_name=region_name)
@@ -368,7 +390,10 @@ def assign_container(
             )
             raise Ignore
 
-    send_dpi_info_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
+    try:
+        send_dpi_info_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
+    except requests.exceptions.ConnectionError:
+        pass
     time.sleep(5)
     if not _poll(base_container.container_id):
         fractalLog(
