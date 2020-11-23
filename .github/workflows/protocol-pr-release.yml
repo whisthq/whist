@@ -3,6 +3,8 @@ name: Auto release PRs
 on:
   pull_request:
     types: [ opened, reopened, synchronize ]
+    paths:
+    - '/protocol/**'
 
 jobs:
   trigger-release:
