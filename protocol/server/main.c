@@ -1264,7 +1264,7 @@ int main(int argc, char* argv[]) {
 
     update_server_status(false, webserver_url, identifier, hex_aes_private_key);
 
-    // webserver will not know about this container until updateServerStatus is called above
+    // webserver will not know about this container until update_server_status is called above
     update_webserver_parameters();
 
     clock startup_time;

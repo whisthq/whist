@@ -192,3 +192,7 @@ choco install yq
 
 Running `./run-clang-tidy.sh` will find all code standard violations and give you the option to modify and accept or reject changes.
 Running './run-clang-tidy.sh -c' will find whether there are any code standard violations and exit with status 1 if there are (designed for CI usage).
+
+If you want any lines to be exempted from the clang-tidy check, either place `// NOLINTNEXTLINE` in the line above or `// NOLINT` at the end of the line.
+
+Macro constants will NOT be checked by this script because of the variety of implementations of `#define`. Please be sure to follow appropriate standards for `#define`s when committing code.

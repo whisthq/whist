@@ -58,7 +58,7 @@ Public Functions
  * @returns                        Will return -2 on failure, will return 0 on
  *                                 success
  */
-int set_current_input_desktop(HDESK currentInputDesktop);
+int set_current_input_desktop(HDESK current_input_desktop);
 
 /**
  * @brief                          Open current or specified Desktop and set its

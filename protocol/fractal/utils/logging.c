@@ -79,7 +79,7 @@ static volatile int logger_global_id = 0;
 SDL_Thread *mprintf_thread = NULL;
 static volatile bool run_multithreaded_printf;
 int multi_threaded_printf(void *opaque);
-void real_mprintf(bool log, const char *fmtStr, va_list args);
+void real_mprintf(bool log, const char *fmt_str, va_list args);
 clock mprintf_timer;
 FILE *mprintf_log_file = NULL;
 FILE *mprintf_log_connection_file = NULL;
@@ -186,11 +186,11 @@ void destroy_logger() {
     }
 }
 
-void sentry_send_bread_crumb(char *tag, const char *fmtStr, ...) {
+void sentry_send_bread_crumb(char *tag, const char *fmt_str, ...) {
     va_list args;
-    va_start(args, fmtStr);
+    va_start(args, fmt_str);
     char sentry_str[LOGGER_BUF_SIZE];
-    sprintf(sentry_str, fmtStr, args);
+    sprintf(sentry_str, fmt_str, args);
     sentry_value_t crumb = sentry_value_new_breadcrumb("default", sentry_str);
     sentry_value_set_by_key(crumb, "category", sentry_value_new_string("protocol-logs"));
     sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));
@@ -198,11 +198,11 @@ void sentry_send_bread_crumb(char *tag, const char *fmtStr, ...) {
     va_end(args);
 }
 
-void sentry_send_event(const char *fmtStr, ...) {
+void sentry_send_event(const char *fmt_str, ...) {
     va_list args;
-    va_start(args, fmtStr);
+    va_start(args, fmt_str);
     char sentry_str[LOGGER_BUF_SIZE];
-    sprintf(sentry_str, fmtStr, args);
+    sprintf(sentry_str, fmt_str, args);
     va_end(args);
     sentry_value_t event = sentry_value_new_message_event(
         /*   level */ SENTRY_LEVEL_ERROR,
@@ -414,18 +414,18 @@ char *escape_string(char *old_string, bool escape_all) {
     return new_string;
 }
 
-void mprintf(const char *fmtStr, ...) {
+void mprintf(const char *fmt_str, ...) {
     va_list args;
-    va_start(args, fmtStr);
+    va_start(args, fmt_str);
 
-    real_mprintf(WRITE_MPRINTF_TO_LOG, fmtStr, args);
+    real_mprintf(WRITE_MPRINTF_TO_LOG, fmt_str, args);
     va_end(args);
 }
 
-void real_mprintf(bool log, const char *fmtStr, va_list args) {
+void real_mprintf(bool log, const char *fmt_str, va_list args) {
     if (mprintf_thread == NULL) {
         printf("initLogger has not been called! Printing below...\n");
-        vprintf(fmtStr, args);
+        vprintf(fmt_str, args);
         return;
     }
 
@@ -455,11 +455,11 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
             // undefined so we copy
             va_list args_copy;
             va_copy(args_copy, args);
-            int len = vsnprintf(NULL, 0, fmtStr, args) + 1;
+            int len = vsnprintf(NULL, 0, fmt_str, args) + 1;
 
             // print to a temp buf so we can split on \n
             char *temp_buf = malloc(sizeof(char) * (len + 1));
-            vsnprintf(temp_buf, len, fmtStr, args_copy);
+            vsnprintf(temp_buf, len, fmt_str, args_copy);
             // use strtok_r over strtok due to thread safety
             char *strtok_context = NULL;  // strtok_r context var
             // Log the first line out of the loop because we log it with
@@ -557,7 +557,7 @@ void print_stacktrace() {
 }
 
 #ifdef _WIN32
-LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS *ExceptionInfo) {
+LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS *ExceptionInfo) { // NOLINT
     SDL_Delay(250);
     fprintf(stderr, "\n");
     switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {

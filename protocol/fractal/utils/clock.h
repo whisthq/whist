@@ -47,8 +47,8 @@ typedef struct FractalTimeData {
     // UTC offset for setting time
     int use_win_name;        /**< Flag if win_tz_name is to be used */
     int use_linux_name;      /**< FLag if linux_tz_name is to be used */
-    int UTC_Offset;          /**< UTC offset for osx/linux -> windows */
-    int DST_flag;            /**< DST flag, 1 DST, 0 no DST used in conjunction with UTC
+    int utc_offset;          /**< UTC offset for osx/linux -> windows */
+    int dst_flag;            /**< DST flag, 1 DST, 0 no DST used in conjunction with UTC
                                 offset */
     char win_tz_name[200];   /**< A windows timezone name: e.g Eastern Standard
                                 Time */
@@ -113,6 +113,6 @@ void set_timezone_from_iana_name(char* linux_tz_name, char* password);
 
 void set_timezone_from_windows_name(char* win_tz_name);
 
-void set_timezone_from_utc(int utc, int DST_flag);
+void set_timezone_from_utc(int utc, int dst_flag);
 
 #endif
