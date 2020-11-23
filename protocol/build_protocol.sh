@@ -12,8 +12,8 @@ fi
 # build protocol
 # note: we clean build to prevent cmake caching issues, for example when
 # switching container base from Ubuntu 18 to Ubuntu 20 and back
-( cd base/protocol && ./docker-create-builder.sh )
-base/protocol/docker-run-builder-shell.sh \
+./docker-create-builder.sh
+./docker-run-builder-shell.sh \
     $(pwd) \
     " \
     cd base/protocol && \
