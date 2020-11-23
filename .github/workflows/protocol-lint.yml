@@ -1,10 +1,12 @@
 # Format C/C++ code via clang-format
 
-name: Linter
+name: Protocol Linter
 
 on:
   pull_request:
     types: [ opened, reopened, synchronize ]
+  paths:
+  - '/protocol/**'
 
 env:
   CMAKE_VERSION: 3.15.7
@@ -24,11 +26,11 @@ jobs:
       - name: Install linux dependencies
         run: |
           sudo apt-get update -y
-          ${{ github.workspace }}/desktop/linux-client-setup.sh
+          ${{ github.workspace }}/protocol/desktop/linux-client-setup.sh
       - name: cmake build
-        run: cmake -DBUILD_SERVER=OFF -DBUILD_CLIENT=OFF -DBUILD_TESTS=OFF .
+        run: cd protocol && cmake -DBUILD_SERVER=OFF -DBUILD_CLIENT=OFF -DBUILD_TESTS=OFF .
       - name: clang-format
         run: |
-          make clang-format
-          git diff-index --quiet HEAD --
+          cd protocol && make clang-format
+          cd protocol && git diff-index --quiet HEAD --
 
