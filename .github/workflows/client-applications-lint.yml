@@ -1,10 +1,12 @@
 # Workflow to lint an Electron app with Prettier
 
-name: Linter
+name: Lint client-applications
 
 on:
   pull_request:
     branches: [ master, dev ]
+    paths:
+    - '/client-applications/**'
 
 jobs:
   lint:
@@ -23,15 +25,15 @@ jobs:
           node-version: 12
 
       - name: Run yarn -i in /desktop
-        run: cd desktop && yarn -i
+        run: cd client-applications/desktop && yarn -i
 
       - name: Format with Prettier in /desktop
-        run: cd desktop && yarn format
-  
+        run: cd client-applications/desktop && yarn format
+
       - name: Check if code is linted with Prettier
         run: |
-          result=$(cd desktop && yarn format-check) # checks if code is linted via prettier --check          
-          if [ "$result" -ne "0" ]; then        
+          result=$(cd client-applications/desktop && yarn format-check) # checks if code is linted via prettier --check
+          if [ "$result" -ne "0" ]; then
             (echo "To pass this check please lint the code with Prettier" && false)
           else
             (echo "Code is linted with Prettier" && true)
