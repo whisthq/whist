@@ -107,6 +107,18 @@ def _generate_token(number=stripe_no_auth_card, zipcode=dummy_zip_us, malformed=
     )  # an arbitrary not a token string
 
 
+def _generate_source(number=stripe_no_auth_card, zipcode=dummy_zip_us, malformed=False):
+    token = _generate_token(number, zipcode, malformed)
+    return (
+        stripe.Source.create(type="card", token=token)
+        if not malformed
+        else {
+            "id": "3489weji456rdfdfdbhjiosdn",
+            "card": {"brand": "Invalid brand", "last4": "1234"},
+        }
+    )  # invalid source json
+
+
 # for i in range(100):
 #     fractal_log("Generated Token:", f"{i}", _generate_token())
 
@@ -357,12 +369,12 @@ stripe customer ids.
 
 
 def test_add_card(client, not_customer):
-    dummy_token = _generate_token()
+    dummy_source = _generate_source()
     get = lambda: User.query.get(dummy_email)
     info = lambda: stripe.Customer.retrieve(user.stripe_customer_id, expand=["sources"])
 
     # test for a user that does not have a customer id
-    client.add_card(dummy_email, dummy_token)
+    client.add_card(dummy_email, dummy_source)
     user = get()
 
     assert user.stripe_customer_id
@@ -375,8 +387,8 @@ def test_add_card(client, not_customer):
     # probably because it's not being charged
     # anyways this card supposedly requires auth, but I needed another test card to see if this
     # would work :P
-    dummy_token = _generate_token(number=stripe_auth_req_card)
-    client.add_card(dummy_email, dummy_token)
+    dummy_source = _generate_source(number=stripe_auth_req_card)
+    client.add_card(dummy_email, dummy_source)
 
     customer_info = info()
     cards = customer_info["sources"]["data"]
