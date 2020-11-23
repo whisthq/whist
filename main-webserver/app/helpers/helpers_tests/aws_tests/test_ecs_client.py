@@ -26,7 +26,7 @@ def test_setup_vpc():
             "securityGroups": testclient.pick_security_groups(),
         }
     }
-    testclient.run_task(network_configuration=network_configuration)
+    testclient.run_task(networkConfiguration=network_configuration)
     testclient.spin_til_done(time_delay=2)
 
 
@@ -41,7 +41,7 @@ def test_network_build():
         ["/bin/bash", "-c"],
         family="multimessage",
     )
-    testclient.run_task(network_configuration=testclient.build_network_config())
+    testclient.run_task(networkConfiguration=testclient.build_network_config())
     testclient.spin_til_running(time_delay=2)
     assert "." in testclient.task_ips.get(0, "-1")
 
@@ -79,7 +79,7 @@ def test_partial_works():
             ],
         }
     }
-    testclient.run_task(network_configuration=network_configuration)
+    testclient.run_task(networkConfiguration=network_configuration)
     testclient.spin_til_running(time_delay=2)
     assert "." in testclient.task_ips.get(0, "-1")
 
@@ -117,7 +117,7 @@ def test_full_base_config():
             ],
         }
     }
-    testclient.run_task(network_configuration=network_configuration)
+    testclient.run_task(networkConfiguration=network_configuration)
     testclient.spin_til_running(time_delay=2)
     assert "." in testclient.task_ips.get(0, "-1")
 
