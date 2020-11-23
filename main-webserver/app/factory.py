@@ -40,6 +40,7 @@ def create_app(app_name=PKG_NAME, **kwargs):
         SENDGRID_API_KEY,
         DATADOG_API_KEY,
         DATADOG_APP_KEY,
+        HOST_SERVICE_SECRET,
     )
 
     app = Flask(app_name, template_folder=template_dir)
@@ -51,6 +52,7 @@ def create_app(app_name=PKG_NAME, **kwargs):
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["DATADOG_API_KEY"] = DATADOG_API_KEY
     app.config["DATADOG_APP_KEY"] = DATADOG_APP_KEY
+    app.config["HOST_SERVICE_SECRET"] = HOST_SERVICE_SECRET
 
     if kwargs.get("celery"):
         init_celery(kwargs.get("celery"), app)

@@ -149,6 +149,8 @@ def protocol_info(address, port, aeskey):
             "using_stun",
             "container_id",
             "user_id",
+            "is_assigned",
+            "dpi",
             "state",
         )
     )

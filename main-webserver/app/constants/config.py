@@ -52,13 +52,17 @@ except:
     DATABASE_URL = os.getenv(app_to_env["dev-webserver"]["database"])
 
 # Stripe
-STRIPE_SECRET = getEnvVar("STRIPE_SECRET")
+try:
+    STRIPE_SECRET = getEnvVar("STRIPE_RESTRICTED")  # this one has less permissions basically
+except:
+    STRIPE_SECRET = getEnvVar("STRIPE_SECRET")
 
 # Auth
 JWT_SECRET_KEY = getEnvVar("JWT_SECRET_KEY")
 DASHBOARD_USERNAME = getEnvVar("DASHBOARD_USERNAME")
 DASHBOARD_PASSWORD = getEnvVar("DASHBOARD_PASSWORD")
 SHA_SECRET_KEY = getEnvVar("SHA_SECRET_KEY")
+HOST_SERVICE_SECRET = getEnvVar("HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET")
 
 # AWS
 AWS_ACCESS_KEY = getEnvVar("AWS_ACCESS_KEY")
