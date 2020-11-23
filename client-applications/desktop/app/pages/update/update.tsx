@@ -5,10 +5,9 @@ import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
-const UpdateScreen = (props: any) => {
-    const { os } = props
+const Update = (props: any) => {
+    const { os, needsUpdate } = props
 
-    const [updateScreen, setUpdateScreen] = useState(false)
     const [percentageLeft, setPercentageLeft] = useState(500)
     const [percentageDownloaded, setPercentageDownloaded] = useState(0)
     const [downloadSpeed, setDownloadSpeed] = useState("0")
@@ -16,22 +15,8 @@ const UpdateScreen = (props: any) => {
     const [total, setTotal] = useState("0")
     const [downloadError, setDownloadError] = useState("")
 
-    const forgotPassword = () => {
-        const { shell } = require("electron")
-        shell.openExternal("https://www.tryfractal.com/reset")
-    }
-
-    const signUp = () => {
-        const { shell } = require("electron")
-        shell.openExternal("https://www.tryfractal.com/auth")
-    }
-
     useEffect(() => {
         const ipc = require("electron").ipcRenderer
-
-        ipc.on("update", (_: any, update: any) => {
-            setUpdateScreen(update)
-        })
 
         ipc.on("percent", (_: any, percent: any) => {
             percent = percent * 3
@@ -60,7 +45,7 @@ const UpdateScreen = (props: any) => {
 
     return (
         <div>
-            {updateScreen ? (
+            {needsUpdate ? (
                 <div
                     style={{
                         position: "fixed",
@@ -180,4 +165,4 @@ function mapStateToProps(state: any) {
     }
 }
 
-export default connect(mapStateToProps)(UpdateScreen)
+export default connect(mapStateToProps)(Update)

@@ -8,6 +8,7 @@ import { faAngleRight, faAngleLeft } from "@fortawesome/free-solid-svg-icons"
 import styles from "styles/dashboard.css"
 
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
+import { PuffAnimation } from "shared/components/loadingAnimations"
 
 import Banner from "pages/dashboard/components/banner"
 import App from "pages/dashboard/components/app"
@@ -25,7 +26,7 @@ const Discover = (props: any) => {
         return app.app_id.toLowerCase().startsWith(search.toLowerCase())
     }
 
-    const { data } = useQuery(GET_FEATURED_APPS, {
+    const { data, loading } = useQuery(GET_FEATURED_APPS, {
         context: {
             headers: {
                 Authorization: `Bearer ${props.accessToken}`,
@@ -86,6 +87,13 @@ const Discover = (props: any) => {
         />
     )
 
+    if (loading) {
+        return (
+            <div>
+                <PuffAnimation />
+            </div>
+        )
+    }
     return (
         <div style={{ flex: 1 }}>
             {search ? (

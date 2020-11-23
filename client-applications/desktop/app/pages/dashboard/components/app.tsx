@@ -1,14 +1,17 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { Modal } from "react-bootstrap"
 import styles from "styles/dashboard.css"
 
-import { fetchContainer } from "store/actions/sideEffects"
+import { createContainer } from "store/actions/sideEffects"
+import { updateContainer } from "store/actions/pure"
+import { history } from "store/configureStore"
 
 const App = (props: any) => {
-    const { dispatch, app } = props
+    const { dispatch, app, launches } = props
 
     const [showModal, setShowModal] = useState(false)
+    const [launched, setLaunched] = useState(false)
 
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
@@ -19,8 +22,17 @@ const App = (props: any) => {
     }
 
     const handleLaunch = () => {
-        dispatch(fetchContainer(app.app_id))
+        setLaunched(true)
+        dispatch(updateContainer({ launches: launches + 1 }))
     }
+
+    useEffect(() => {
+        if (launches === 1 && launched) {
+            history.push("/loading")
+            dispatch(createContainer(app.app_id))
+            setLaunched(false)
+        }
+    }, [launches, launched])
 
     return (
         <>
@@ -113,7 +125,9 @@ const App = (props: any) => {
 }
 
 const mapStateToProps = (state: any) => {
-    return {}
+    return {
+        launches: state.MainReducer.container.launches,
+    }
 }
 
 export default connect(mapStateToProps)(App)

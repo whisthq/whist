@@ -18,6 +18,8 @@ export const DEFAULT = {
         secretKey: null,
         currentAppID: null,
         desiredAppID: null,
+        launches: 0,
+        launchURL: null,
     },
     client: {
         os: null,
