@@ -53,7 +53,7 @@ Defines
 
 #define LOGGER_QUEUE_SIZE 1000
 #define LOGGER_BUF_SIZE 1000
-#define _FILE strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__
+#define _FILE ((sizeof(__ROOT_FILE__) < sizeof(__FILE__)) ? (&__FILE__[sizeof(__ROOT_FILE__)]) : "")
 #define NO_LOG 0x00
 #define ERROR_LEVEL 0x01
 #define WARNING_LEVEL 0x02
@@ -75,7 +75,7 @@ Defines
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
 #define SENTRYBREADCRUMB(tag, format, ...) sentry_send_bread_crumb(tag, format, ##__VA_ARGS__)
 #define SENTRYEVENT(format, ...) sentry_send_event(format, ##__VA_ARGS__)
-#define LOG_FMT "%s | %-7s | %-15s | %30s:%-5d | "
+#define LOG_FMT "%s | %-7s | %-35s | %-30s:%-5d | "
 #define LOG_ARGS(LOG_TAG) CurrentTimeStr(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE "\n"

@@ -90,7 +90,7 @@ char* CurrentTimeStr() {
 #if defined(_WIN32)
     SYSTEMTIME time_now;
     GetSystemTime(&time_now);
-    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i:%03i", time_now.wHour, time_now.wMinute,
+    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%03i", time_now.wHour, time_now.wMinute,
              time_now.wSecond, time_now.wMilliseconds);
 #else
     struct tm* time_str_tm;

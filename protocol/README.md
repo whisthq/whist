@@ -1,8 +1,8 @@
 # Fractal Protocol
 
-|Master Status|Dev Status|Nightly Connectivity Testing
-|:--:|:--:|:--:|
-|![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=master)|![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=dev)|![Dev Nightly testing](https://github.com/fractalcomputers/protocol/workflows/Nightly%20testing/badge.svg)|
+|                                                        Master Status                                                         |                                                        Dev Status                                                         |                                        Nightly Connectivity Testing                                        |
+| :--------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------: |
+| ![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=master) | ![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=dev) | ![Dev Nightly testing](https://github.com/fractalcomputers/protocol/workflows/Nightly%20testing/badge.svg) |
 
 This repository contains the source code for the Fractal Protocol, which is a low-latency interactive streaming technology that streams audio/video/inputs between an OS-like device, whether it is a virtual machine, a container or a regular computer, and a client computer or mobile device.
 
@@ -36,8 +36,8 @@ We use Cmake to compile, format and run tests. You first need to make sure Cmake
 
 #### Linux
 
-If you are using a rolling release distro, e.g. Arch, then you can likely install the newest version using pacman or your 
-distro's package manager. If you are running 20.04 the version in the Ubuntu package lists is fine.  If you are running 18.04 the package lists only has 3.11. You can install the newest version from the developer with:
+If you are using a rolling release distro, e.g. Arch, then you can likely install the newest version using pacman or your
+distro's package manager. If you are running 20.04 the version in the Ubuntu package lists is fine. If you are running 18.04 the package lists only has 3.11. You can install the newest version from the developer with:
 
 ```
 sudo apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget -y
@@ -70,14 +70,17 @@ After doing this, you might have to restart your terminal or IDE, after which yo
 ### Building
 
 If you are on Linux Ubuntu, run `desktop/linux-client-setup.sh` to install the system dependencies.
+
 #### Sentry
-To build you will need to install the sentry-native sdk. This can be done by running the python script get_latest_sentry.py in the root directory of this repo. 
-The SDK is a CMake project which we load in our root CMakeLists.txt. 
+
+To build you will need to install the sentry-native sdk. This can be done by running the python script get_latest_sentry.py in the root directory of this repo.
+The SDK is a CMake project which we load in our root CMakeLists.txt.
+
 #### IDE
 
-We use CMake to build. If you are using VS code, VS or Clion, this is pretty easy to use. You need to either open the root repo folder as a project, or open the root `CMakelist.txt` as a project. On CLion and VS there is a menu to build at the top, on VS code you need the CMake extension and the build command is at the bottom. CMake currently has two types of builds, Debug and Release. You probably want to be building debug builds while developing, since they log more aggressively (Warning levels: Info and above). 
+We use CMake to build. If you are using VS code, VS or Clion, this is pretty easy to use. You need to either open the root repo folder as a project, or open the root `CMakelist.txt` as a project. On CLion and VS there is a menu to build at the top, on VS code you need the CMake extension and the build command is at the bottom. CMake currently has two types of builds, Debug and Release. You probably want to be building debug builds while developing, since they log more aggressively (Warning levels: Info and above).
 
-Currently, we use the same compiler flags for Debug and Release because we distribute binaries with debug flags, to better troubleshoot errors and bugs. 
+Currently, we use the same compiler flags for Debug and Release because we distribute binaries with debug flags, to better troubleshoot errors and bugs.
 
 The build target for desktop is "FractalClient" and the sever is "FractalServer".
 
@@ -92,9 +95,9 @@ Install cmake and ccmake; ccmake is a TUI for configuring the build. From the ro
 Next hit `c` again to reconfigure with your possibly new settings, then hit `g` to generate the makefile. This makefile has all of the build targets, including FractalClient, FractalServer and all of our libraries. It also includes CMake targets such as clean, edit_cache and rebuild cache.
 
 Only running `make` defaults to building FractalClient and FractalServer if you set both of these to ON in your configuration.
-GCC only supports one type of build at a time, so if you are currently building Release, but want to build Debug, you need to edit the cache and regenerate the makefile.  
+GCC only supports one type of build at a time, so if you are currently building Release, but want to build Debug, you need to edit the cache and regenerate the makefile.
 
-If you would like to keep your repo cleaner, make a build folder in `/protocol` and run `cmake` from there, e.g. `cd "build & cmake ../."`. This way, you can just delete the contents of the build folder to start over. 
+If you would like to keep your repo cleaner, make a build folder in `/protocol` and run `cmake` from there, e.g. `cd "build & cmake ../."`. This way, you can just delete the contents of the build folder to start over.
 
 #### Windows CLI
 
@@ -109,9 +112,10 @@ More documentation is in our [Google Drive](https://docs.google.com/document/d/1
 ### Continuous Deployment
 
 Every commit to `dev`, `staging` and `master`, as well as each new PR opened or updated, results in a new build being created an uploaded to GitHub Releases. These builds are versioned using the following scheme `GITREF-YYYYMMDD.#`, where
-- `GITREF` is either the branch name (such as `dev`) or the PR info (such as `pr255merge` for the merge commit on PR #255)
-- `YYYYMMDD` is the current UTC date
-- `#` is an incrementing integer to disambiguate multiple releases on the same date
+
+-   `GITREF` is either the branch name (such as `dev`) or the PR info (such as `pr255merge` for the merge commit on PR #255)
+-   `YYYYMMDD` is the current UTC date
+-   `#` is an incrementing integer to disambiguate multiple releases on the same date
 
 A build of the `client-applications` will also be triggered for each new `protocol` build. See that repository's README for more information.
 
@@ -121,7 +125,7 @@ These builds will also have `cppcheck` run against them which is a static analys
 
 These builds will also (TODO) be tested against a live server VM. This workflow will spin up an Azure VM, upload the server build to it, and then use GitHub Actions VMs on Windows, MacOS and Linux Ubuntu as clients to connect and stream via the protocol for one minute. This will also occur nightly against the `dev` branch, but these builds will not be released (this can be removed once testing is stable and re-enabled on all commits).
 
-To see the warnings in context go to the Actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log, where you can clearly see the warnings/errors generated. 
+To see the warnings in context go to the Actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log, where you can clearly see the warnings/errors generated.
 
 ### Testing on VMs
 

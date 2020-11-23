@@ -14,15 +14,14 @@ cmake_minimum_required(VERSION 3.15)
 #We need CMP0091 to select the MSVC_RUNTIME_LIBRARY
 #See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
 cmake_policy(SET CMP0091 NEW)
-
-#set default compiler flags
-set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
-
 project(FractalProtocol LANGUAGES C)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     enable_language(CUDA)
 endif()
+
+#set default compiler flags
+include(cmake/CompilerOptions.cmake)
 
 set(META_PROJECT_NAME        "FractalProtocol")
 set(META_PROJECT_DESCRIPTION "CMake Project for the Fractal client protocol clients on mac, linux and windows
@@ -49,8 +48,10 @@ option(BUILD_CLIENT "build FractalClient" ON)
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
     add_definitions(-DLOG_LEVEL=5)
 elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
-    add_definitions(-DLOG_LEVEL=2)
+    # For now, always show all logs
+    add_definitions(-DLOG_LEVEL=5)
 endif()
+add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 
 # static analysis during build defaults to off, but we set to on in github actions
 # you can also use this locally if you like, but will need to install cppcheck.
@@ -62,17 +63,23 @@ else()
     message(STATUS "cppcheck not found")
 endif()
 
-if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
-    message(STATUS CPPCHECKON)
+if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    message(STATUS "cppcheck active")
     set(CMAKE_C_CPPCHECK "${CPPCHECK}"
-            "--template=cppcheck:{file}:{line}:{severity}: cppcheck: {file}:{line} {message}"
+            "--template=\"cppcheck: {file}:{line} ({severity}) {message}\""
             "--enable=performance,portability"
             "--verbose"
             "--std=c99"
+            "-j 8" # Run in 8 threads
+            "--error-exitcode=1" # Propagate cppcheck errors to cmake
             "--suppress=shiftTooManyBitsSigned"
-            "--suppress=*:../fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
-            "--inline-suppr"
+            "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
+            "--suppress=*:*/sentry-native/*.c" # Ignore errors that occur in sentry-native c files. We shouldn't ignore errors in sentry-native h files
+            "-D__linux" # Needed for sentry.h to pass
+            "--inline-suppr" # Allow cppcheck-suppress comments in code
             )
+else()
+    message(STATUS "cppcheck inactive")
 endif()
 
 
@@ -231,6 +238,7 @@ endif()
 
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    target_compile_options(sentry PRIVATE -Wno-error)
     set(CMAKE_C_COMPILER clang)
     if(DEFINED ENV{FRACTAL_OSX_SYSROOT})
         set(CMAKE_OSX_SYSROOT $ENV{FRACTAL_OSX_SYSROOT})

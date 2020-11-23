@@ -240,6 +240,7 @@ int SendContainerDestroyMessage() {
     char* container_id = get_container_id();
     if (!container_id) {
         // If container_id is not found, then get protocol_info again
+        LOG_INFO("Container ID not found, re-requesting protocol_info");
         update_webserver_parameters();
         container_id = get_container_id();
 
@@ -784,22 +785,6 @@ int32_t SendAudio(void* opaque) {
     return 0;
 }
 
-void update() {
-    update_webserver_parameters();
-
-    if (allow_autoupdate()) {
-        LOG_INFO("dev vm - not auto-updating");
-        sentry_set_tag("environment", "dev");
-    } else {
-        if (!get_branch()) {
-            LOG_ERROR("COULD NOT GET BRANCH");
-            return;
-        }
-        LOG_INFO("setting sentry environment");
-        sentry_set_tag("environment", get_branch());
-    }
-}
-
 #include <time.h>
 
 int doDiscoveryHandshake(SocketContext* context, int* client_id) {
@@ -966,7 +951,7 @@ int MultithreadedManageClients(void* opaque) {
 
             if (trying_to_update) {
                 if (GetTimer(last_update_timer) > 10.0) {
-                    update();
+                    update_webserver_parameters();
                     StartTimer(&last_update_timer);
                 }
             } else {
@@ -995,7 +980,7 @@ int MultithreadedManageClients(void* opaque) {
             // client has connected to server for the first time
             // update webserver parameters the first time a client connects
             if (!first_client_connected) {
-                update();
+                update_webserver_parameters();
                 first_client_connected = true;
             }
 
@@ -1253,8 +1238,6 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
-    update_webserver_parameters();
-
     input_device = CreateInputDevice();
     if (!input_device) {
         LOG_WARNING("Failed to create input device for playback.");
@@ -1279,9 +1262,10 @@ int main(int argc, char* argv[]) {
     XSetIOErrorHandler(xioerror_handler);
 #endif
 
-    update();
-
     updateServerStatus(false, webserver_url, identifier, hex_aes_private_key);
+
+    // webserver will not know about this container until updateServerStatus is called above
+    update_webserver_parameters();
 
     clock startup_time;
     StartTimer(&startup_time);

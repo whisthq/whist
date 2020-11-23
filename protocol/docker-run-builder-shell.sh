@@ -1,7 +1,7 @@
 #!/bin/bash
-container_name=protocol-builder-$(date +"%s")
+container_name=fractal-protocol-builder-$(date +"%s")
 mount_directory=$(cd ${1:-.}; pwd)
-username=$(id -u ${USER})
+username=fractal-builder
 command=${2:-'/bin/bash'}
 if [ -z "$2" ]
 then
@@ -12,5 +12,5 @@ docker run $docker_run_flags \
     --mount type=bind,source=$mount_directory,destination=/workdir \
     --name $container_name \
     --user $username \
-    protocol-builder-ubuntu20 \
+    fractal/protocol-builder \
     sh -c "$command"

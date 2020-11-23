@@ -1,10 +1,9 @@
 ---
 name: New Feature
 about: Describe a new feature to improve this project
-title: ''
-labels: ''
-assignees: ''
-
+title: ""
+labels: ""
+assignees: ""
 ---
 
 **Feature Name & Description**
