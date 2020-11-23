@@ -1,9 +1,11 @@
 # Workflow to build Docker images for basic testing
-name: Dockerfiles Building
+name: Container-Images Build Dockerfiles
 
 on:
   pull_request:
     branches: [ master, dev ]
+    paths:
+    - '/container-images/**'
 
 jobs:
     build-dockerfiles:
@@ -20,14 +22,14 @@ jobs:
                   submodules: recursive
 
             - name: Walk repo to find all dockerfiles and store path as env variable
-              run: echo "apps=$(./find_images_in_git_repo.sh)" >> $GITHUB_ENV
+              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
             - name: Build debug protocol
-              run: ./build_protocol.sh
+              run: ./container-images/build_protocol.sh
 
             - name: Build container images
               run: |
                 for app in ${{ env.apps }}
                 do
-                  ./build_container_image.sh $app
+                  ./container-images/build_container_image.sh $app
                 done
