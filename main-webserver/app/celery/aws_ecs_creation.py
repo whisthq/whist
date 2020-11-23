@@ -198,7 +198,7 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
             },
         ],
     }
-    kwargs = {"network_configuration": None, "overrides": container_overrides}
+    kwargs = {"networkConfiguration": None, "overrides": container_overrides}
 
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
