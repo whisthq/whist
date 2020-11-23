@@ -9,11 +9,13 @@ GOGET        = $(GOCMD) get
 BUILD_FOLDER = build
 BINARY_NAME  = ecs-host-service
 
+GIT_COMMIT := $(shell git rev-list -1 HEAD)
+
 all: deps build
 
 build:
 	$(info building in $(BUILD_FOLDER)...)
-	$(GOBUILD) -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
+	$(GOBUILD) -ldflags "-X 'github.com/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
 
 clean:
 	$(GOCLEAN)
