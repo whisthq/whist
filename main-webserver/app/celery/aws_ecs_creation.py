@@ -252,17 +252,22 @@ def assign_container(
     :param webserver_url: the webserver originating the request
     :return: the generated container, in json form
     """
-    #first, we check for a preexisting container with the correct user and pass it back:
+    # first, we check for a preexisting container with the correct user and pass it back:
     existing_container = (
         UserContainer.query()
-        .filter_by(is_assigned=True, user_id = username, task_definition=task_definition_arn, region_name=region_name)
+        .filter_by(
+            is_assigned=True,
+            user_id=username,
+            task_definition=task_definition_arn,
+            region_name=region_name,
+        )
         .limit(1)
     )
     if existing_container:
         if _poll(existing_container.container_id):
             return user_container_schema.dump(existing_container)
-    
-    #otherwise, we see if there's an unassigned container
+
+    # otherwise, we see if there's an unassigned container
     base_container = (
         UserContainer.query()
         .filter_by(is_assigned=False, task_definition=task_definition_arn, region_name=region_name)
