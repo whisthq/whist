@@ -1,0 +1,25 @@
+repos:
+    - repo: git://github.com/pre-commit/pre-commit-hooks
+      rev: v3.2.0
+      hooks:
+          - id: check-case-conflict
+          - id: check-merge-conflict
+          - id: check-symlinks
+          - id: detect-private-key
+
+    - repo: git://github.com/dnephin/pre-commit-golang
+      rev: master
+      hooks:
+        - id: go-fmt
+        - id: go-vet
+        # - id: go-lint
+        - id: go-imports
+        - id: go-cyclo
+          args: [-over=25]
+        - id: validate-toml
+        - id: no-go-testing
+        - id: golangci-lint
+        - id: go-critic
+        - id: go-unit-tests
+        - id: go-build
+        - id: go-mod-tidy
