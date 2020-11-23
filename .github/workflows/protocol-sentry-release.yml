@@ -1,8 +1,11 @@
 name: Sentry Release
 
 on:
-  release:
-    types: [ published ]
+  push:
+    branches: [ master ]
+    paths:
+    - '/protocol/**'
+    - '!/protocol/README.md'
 
 
 jobs:
