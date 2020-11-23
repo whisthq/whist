@@ -2,6 +2,7 @@ import boto3
 import time
 import json
 import os
+import argparse
 
 from functools import reduce
 
@@ -69,7 +70,7 @@ TAGS_TEXTKEYS = [
     (CONTAINER_LIFECYCLE, LIFETIME),
 ]
 
-REGIONS = ["us-east-1", "ca-central-1"]
+REGIONS = ["us-east-1", "ca-central-1", "us-west-1"]
 
 
 def initialize_datadog():
@@ -281,6 +282,15 @@ def store(filename, binary_data, client=None):
 
 
 if __name__ == "__main__":
-    # will want to be an argparse if we make this more complicated
-    # store_averages_to_files_by_interval()  # this is going to be run by the workflow
-    store_average_each_window()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "interval",
+        help="The interval at which this will be run. Can be weekly or daily.",
+    )
+    args = parser.parse_args()
+    if (args.interval).lower() == "weekly":
+        store_averages_to_files_by_interval()
+    elif (args.interval).lower() == "daily":
+        store_average_each_window()
+    else:
+        raise RuntimeError("Interval argument must be 'weekly' or 'daily' caps ignored.")
