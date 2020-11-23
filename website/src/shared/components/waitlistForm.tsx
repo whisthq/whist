@@ -25,8 +25,8 @@ import { DEFAULT } from "store/reducers/auth/default"
 import "styles/landing.css"
 import { checkEmail } from "pages/auth/constants/authHelpers"
 
-function WaitlistForm(props: any) {
-    const { dispatch, waitlist, waitlistUser, user, isAction } = props
+const WaitlistForm = (props: any) => {
+    const { dispatch, waitlist, waitlistUser, user, dark, isAction } = props
     const { width, referralCode } = useContext(MainContext)
 
     const [email, setEmail] = useState("")
@@ -198,7 +198,7 @@ function WaitlistForm(props: any) {
             {waitlistUser && waitlistUser.user_id ? (
                 <div>
                     <button
-                        className="white-button"
+                        className={dark ? "white-button-light" : "white-button"}
                         style={{ textTransform: "uppercase" }}
                         onClick={logout}
                     >
@@ -228,7 +228,11 @@ function WaitlistForm(props: any) {
                                 </div>
                             </button>
                         ) : (
-                            <button className="white-button">
+                            <button
+                                className={
+                                    dark ? "white-button-light" : "white-button"
+                                }
+                            >
                                 JOIN WAITLIST
                             </button>
                         )

@@ -151,7 +151,7 @@ const Dashboard = (props: {
         } else if (!user.canLogin && !canLogin) {
             return (
                 <div className="fractalContainer">
-                    <Header color="black" account />
+                    <Header dark={false} account />
                     <div
                         style={{
                             width: 400,
@@ -198,7 +198,7 @@ const Dashboard = (props: {
             // for now it wil lalways be loading
             return (
                 <div className="fractalContainer">
-                    <Header color="black" account />
+                    <Header dark={false} account />
                     <div
                         style={{
                             width: 400,

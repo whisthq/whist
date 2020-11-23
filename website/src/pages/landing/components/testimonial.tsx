@@ -3,7 +3,7 @@ import { FaStar } from "react-icons/fa"
 
 import "styles/landing.css"
 
-function Testimonial(props: any) {
+const Testimonial = (props: any) => {
     return (
         <div
             style={{
