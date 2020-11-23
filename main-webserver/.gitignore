@@ -1,0 +1,32 @@
+# Python
+.env*
+*.egg-info/
+env/
+Test-Environment
+*.pyc
+*.py[cod]
+env3.6
+.venv/
+venv/
+__pycache__/
+
+# Heroku
+herokulogs.txt
+
+# Vagrant
+.vagrant
+ubuntu-bionic-18.04-cloudimg-console.log
+*.box
+
+.idea/*
+# VS Code
+.vscode/*
+.vscode
+
+# MacOS
+.DS_Store
+app/.DS_Store
+docker/.DS_Store
+
+# GitHub
+tags
