@@ -1,0 +1,375 @@
+.dashboardContainer {
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.signoutButton {
+    font-family: "Maven Pro";
+    font-weight: bold;
+    padding: 10px 25px;
+    background: white;
+    color: black;
+    font-size: 11px;
+    width: 100%;
+    margin-top: 10px;
+    border: solid 0.8px #cccccc;
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: row;
+    opacity: 1 !important;
+}
+
+.userInfo:hover {
+    cursor: pointer;
+}
+
+.feedbackButton,
+.noFeedbackButton {
+    font-family: "Maven Pro";
+    font-weight: bold;
+    padding: 10px 25px;
+    width: 150px;
+    border: solid 0.8px #cccccc;
+    background: white;
+    color: black;
+    font-size: 13px;
+    float: right;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.noFeedbackButton {
+    background: #eeeeee;
+    border: solid 0.8px #eeeeee;
+}
+
+.signoutButton:hover,
+.launchButton:hover,
+.expandButton:hover,
+.modalButton:hover,
+.feedbackButton:hover {
+    background: #93f1d9;
+    border: solid 0.8px #93f1d9;
+    cursor: pointer;
+}
+
+.navBar {
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 100vw;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 50px;
+    z-index: 2;
+}
+
+.logoTitle {
+    color: black;
+    font-family: "Maven Pro";
+    font-size: 20px !important;
+    letter-spacing: 1.5px;
+}
+
+.navTitle,
+.selectedNavTitle {
+    font-size: 16px;
+    color: #111111;
+    margin-left: 20px;
+    position: relative;
+    top: 2px;
+}
+
+.selectedNavTitle {
+    font-family: "Maven Pro SemiBold";
+    font-size: 17px;
+    color: #111111;
+    margin-left: 20px;
+}
+
+.navTitle:hover,
+.selectedNavTitle:hover {
+    cursor: pointer;
+}
+
+.name {
+    font-family: "Maven Pro SemiBold";
+    font-size: 13px;
+}
+
+.email {
+    font-size: 11px;
+    color: #999999;
+}
+
+.macTitleBar {
+    -webkit-app-region: drag;
+    margin-top: 22px;
+}
+
+.removeDrag {
+    -webkit-app-region: no-drag;
+}
+
+.page {
+    flex: 1;
+    padding: 35px 125px;
+}
+
+.carouselRow {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+.select {
+    height: 38px;
+    width: 7px;
+    background: #1c2a45;
+    position: absolute;
+    right: 0px;
+}
+
+.row {
+    flex-wrap: nowrap;
+    margin: 0;
+}
+
+.appContainer {
+    width: 290px;
+    height: 185px;
+    display: flex;
+    flex-direction: column;
+    padding: 25px;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 5px;
+    box-shadow: 0px 1px 8px #dddddd;
+    margin: 5px;
+    transition: all 0.2s ease-in-out;
+}
+
+.appContainer:hover {
+    cursor: pointer;
+    transform: scale(1.05);
+    z-index: 2;
+    box-shadow: 0px 1px 12px #cccccc;
+    background: white;
+}
+
+.appImage {
+    width: 50px;
+    height: 50px;
+}
+
+.appHeading {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.appName {
+    font-size: 19px;
+    font-family: "Maven Pro Medium";
+    text-transform: uppercase;
+    margin-left: 20px;
+}
+
+.appDescription {
+    font-size: 13px;
+    margin-top: 18px;
+    transition: all 0.2s ease-in-out;
+}
+
+.appButtons {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    position: absolute;
+    bottom: 25px;
+    right: 25px;
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+}
+
+.launchButton {
+    position: absolute;
+    bottom: 17px;
+    right: 17px;
+    font-size: 11px;
+    padding: 4px 10px;
+    width: 100px;
+    color: #111111;
+    border: solid 0.8px #cccccc;
+    outline: none;
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+}
+
+.appContainer:hover .launchButton {
+    opacity: 100;
+}
+
+.expandButton {
+    border: solid 0.8px #cccccc;
+    border-left: none;
+    padding: 3px 7px 6px 7px;
+    width: 27px;
+    outline: none;
+}
+
+.expandButton:hover {
+    border-left: none;
+}
+
+.modalAppImage {
+    height: 100px;
+}
+
+.modalButton {
+    position: absolute;
+    right: 40px;
+    bottom: 40px;
+    text-align: center;
+    padding: 10px 30px;
+    border: solid 0.8px #cccccc;
+    color: black;
+    font-weight: bold;
+    width: 200px;
+}
+
+.appLink {
+    color: #5ec4eb;
+    margin-left: 30px;
+}
+
+.tos {
+    position: absolute;
+    left: 40px;
+    bottom: 40px;
+    font-size: 11px;
+    color: #999999;
+}
+
+.tosLink {
+    color: #5ec4eb;
+}
+
+.appLink:hover,
+.tosLink:hover {
+    cursor: pointer;
+}
+
+.container {
+    background: white;
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-family: "Maven Pro";
+    margin: 0px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    -webkit-app-region: drag;
+    user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
+}
+
+.bannerText {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 525px;
+    height: 275px;
+    margin: 15px 0 0 90px;
+    z-index: 1;
+}
+
+.category {
+    padding: 5px 25px;
+    border: solid 0.8px black;
+    font-weight: bold;
+    width: max-content;
+    font-size: 13px;
+    z-index: 2;
+}
+
+.heading {
+    letter-spacing: 2px;
+    z-index: 2;
+}
+
+.subheading {
+    font-size: 16px;
+    color: #333333;
+    z-index: 2;
+}
+
+.carousel-indicators {
+    bottom: -20px;
+}
+
+.bannerLink:hover {
+    cursor: pointer;
+}
+
+select {
+    background: #f2f6fb;
+    width: 100%;
+    border-radius: 0px;
+    border: none;
+    text-indent: 11px;
+    height: 58px;
+    outline: 3px solid #f2f6fb;
+    outline-offset: -3px;
+    color: black;
+}
+
+select:required:invalid {
+    color: #9eb1e6;
+}
+
+::placeholder {
+    color: #9eb1e6;
+}
+
+.searchBar {
+    width: 280px;
+    border-radius: 5px;
+    /* box-shadow: 0px 1px 8px #dddddd; */
+    margin-right: 15px;
+    z-index: 1;
+    outline: none;
+    border: none;
+    padding: 5px;
+    text-indent: 5px;
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    height: 35px;
+}
+
+.searchBar:focus,
+.searchBar:active {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.searchBar::placeholder {
+    color: #999999;
+}
+
+.contactFormLink {
+    color: #5ec4eb;
+}
+
+.contactFormLink:hover {
+    cursor: pointer;
+}

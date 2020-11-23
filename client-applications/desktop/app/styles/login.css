@@ -1,0 +1,369 @@
+button {
+    outline: none;
+}
+
+.pointerOnHover:hover {
+    cursor: pointer;
+}
+
+.windowControl:hover {
+    cursor: pointer;
+    color: #5ec4eb !important;
+}
+
+.container {
+    background: white;
+    position: absolute;
+    text-align: center;
+    width: 100vw;
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-family: "Maven Pro";
+    margin: 0px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    -webkit-app-region: drag;
+    user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
+}
+
+.container h2 {
+    font-size: 5rem;
+}
+
+.container a {
+    font-size: 1.4rem;
+}
+
+.landingHeader {
+    padding: 30px;
+    padding-top: 20px;
+    display: flex;
+}
+
+.landingHeaderLeft {
+    width: 40%;
+    text-align: left;
+}
+
+.landingHeaderRight {
+    width: 60%;
+    text-align: right;
+    font-size: 12px;
+    color: #d3d3d3;
+}
+
+.logoTitle {
+    color: black;
+    font-family: "Maven Pro";
+    position: absolute;
+    top: 42px;
+    left: 42px;
+    font-size: 20px !important;
+    letter-spacing: 1.5px;
+}
+
+.signupButton,
+.loginButton,
+.googleButton {
+    font-family: "Maven Pro";
+    border: solid 0.8px #cccccc;
+    background: white;
+    font-weight: bold;
+    padding: 12px 30px;
+    color: black;
+    margin-left: 10px;
+    font-size: 15px;
+}
+
+.loginButton {
+    margin-left: 0px;
+    width: 350px;
+}
+
+.processingButton {
+    font-family: "Maven Pro";
+    font-weight: bold;
+    padding: 12px 30px;
+    font-size: 15px;
+    color: black;
+    margin-left: 0px;
+    width: 350px;
+    background: #93f1d9;
+    border: solid 0.8px #93f1d9;
+}
+
+.googleButton {
+    border: none;
+    color: white;
+    background: rgba(66, 133, 244, 0.75);
+    margin-left: 0px;
+    width: 350px;
+    margin-top: 20px;
+    padding-top: 11px;
+}
+
+.signupButton:hover,
+.loginButton:hover {
+    background: #93f1d9;
+    border: solid 0.8px #93f1d9;
+    cursor: pointer;
+}
+
+.googleButton:hover {
+    cursor: pointer;
+}
+
+.loginContainer {
+    text-align: center;
+}
+
+.welcomeBack {
+    font-weight: bold;
+    font-size: 25px;
+    color: black;
+    margin-bottom: 20px;
+}
+
+.inputBox {
+    width: 350px;
+    background: #f7f7fc;
+    padding: 14px 35px 14px 45px;
+    border: none;
+    outline: none !important;
+    color: #555555;
+    font-family: "Maven Pro";
+    font-size: 15px;
+    margin-bottom: 20px;
+}
+
+input.inputBox::placeholder {
+    color: #555555;
+}
+
+.inputIcon {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    margin-top: 18px;
+    margin-left: 20px;
+}
+
+.labelContainer {
+    margin: auto;
+    margin-bottom: 5px;
+    width: 350px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #555555;
+    align-items: flex-start;
+}
+
+.usernameLabel {
+    align-items: flex-start;
+}
+
+.bottomBox {
+    position: absolute;
+    bottom: 3%;
+    right: 2%;
+}
+#internetSpeed,
+#location,
+#cores {
+    background-color: rgba(25, 25, 25, 0.6);
+    border-radius: 10px;
+    padding: 10px 15px;
+    color: white;
+    font-size: 13px;
+    font-family: "Maven Pro";
+    margin-top: 10px;
+    max-width: 250px;
+}
+
+.notificationText {
+    padding-left: 10px;
+    font-size: 12px;
+}
+
+.internetSpeedText {
+    font-family: "Maven Pro";
+    font-size: 12px;
+    margin-top: 10px;
+    color: #d3d3d3;
+}
+
+.forgotButton:hover {
+    cursor: pointer;
+}
+
+.rememberMeContainer {
+    margin-top: 20px;
+    color: white;
+    font-size: 14px;
+}
+
+.rememberMe {
+    margin-right: 5px;
+    position: relative;
+    top: 3px;
+}
+
+.tabHeader:hover {
+    cursor: pointer;
+}
+
+.termsContainer {
+    display: block;
+    position: relative;
+    padding-left: 25px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 22px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.termsContainer input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 12px;
+    width: 12px;
+    background-color: white;
+    border: solid 0.8px #cccccc;
+}
+
+/* On mouse-over, add a grey background color */
+.termsContainer:hover input ~ .checkmark {
+    background-color: #ccc;
+}
+
+/* When the checkbox is checked, add a blue background */
+.termsContainer input:checked ~ .checkmark {
+    background-color: #5ec3eb;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* Show the checkmark when checked */
+.termsContainer input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* Style the checkmark/indicator */
+.termsContainer .checkmark:after {
+    top: 2px;
+    left: 4px;
+    width: 3px;
+    height: 6px;
+    border: solid white;
+    border-width: 0 1.2px 1.2px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+.macTitleBar {
+    -webkit-app-region: drag;
+    margin-top: 22px;
+}
+
+.removeDrag {
+    -webkit-app-region: no-drag;
+}
+
+.loadingBar {
+    height: 6px;
+    background: #93f1d9;
+}
+
+.bounce {
+    animation: bounce 5s infinite;
+    -webkit-animation: bounce 5s infinite;
+    -moz-animation: bounce 5s infinite;
+    -o-animation: bounce 5s infinite;
+}
+
+@-webkit-keyframes bounce {
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        -webkit-transform: translateY(0);
+    }
+    30% {
+        -webkit-transform: translateY(-5px);
+    }
+    60% {
+        -webkit-transform: translateY(-8px);
+    }
+}
+
+@-moz-keyframes bounce {
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        -moz-transform: translateY(0);
+    }
+    30% {
+        -moz-transform: translateY(-5px);
+    }
+    60% {
+        -moz-transform: translateY(-8px);
+    }
+}
+
+@-o-keyframes bounce {
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        -o-transform: translateY(0);
+    }
+    30% {
+        -o-transform: translateY(-5px);
+    }
+    60% {
+        -o-transform: translateY(-8px);
+    }
+}
+@keyframes bounce {
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-5px);
+    }
+    60% {
+        transform: translateY(-8px);
+    }
+}
