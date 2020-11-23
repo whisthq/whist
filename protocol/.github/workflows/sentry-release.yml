@@ -1,37 +1,52 @@
+# Automatically push a new Sentry release
+# You need this GitHub repository to be linked in the Settings section of the Sentry organization
+# for this workflow to execute properly
 name: Sentry Release
 
 on:
-  release:
-    types: [ published ]
-
+  push:
+    branches: [ master ]
+    paths-ignore:
+    - '**/README.md'
+  workflow_dispatch:
 
 jobs:
   createSentryRelease:
+    name: Create and Upload Sentry Release
     runs-on: ubuntu-latest
+    env:
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: fractalcomputers
+      SENTRY_PROJECT: protocol
+      SENTRY_DEPLOY_ENVIRONMENT: production
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@master
-      - name: Set git short sha
-        id: vars
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-      - name: Install Python
-        uses: actions/setup-python@v2
+      - name: Checkout Git repository
+        uses: actions/checkout@v2
         with:
-          python-version: '3.8'
-      - name: Install Python requests (for sentry download)
-        uses: actions/setup-python@v2
-      - name: install python requests
-        run: pip3 install requests
-      - name: Set Sentry Environment
-        id: sentry_env
-        run: python3 sentry_env_from_release.py ${{ github.event.release.tag_name }}
-      - name: Create a Sentry.io release
-        uses: tclindner/sentry-releases-action@v1.2.0
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: Fractal
-          SENTRY_PROJECT: protocol
-        with:
-          tagName: ${{ steps.vars.outputs.sha_short }}
-          releaseNamePrefix: fractal-protocol@
-          environment: ${{ steps.sentry_env.outputs.sentry_env }}
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+      - name: Set Git repository URL to enable sentry-cli automatic commit tagging
+        run: |
+          git remote set-url origin https://github.com/fractal/protocol
+
+      - name: Create new Sentry release
+        run: |
+          # Install Sentry CLI
+          curl -sL https://sentry.io/get-cli/ | bash
+
+          # Create new Sentry release
+          export SENTRY_RELEASE=$(sentry-cli releases propose-version)
+          sentry-cli releases new -p $SENTRY_PROJECT $SENTRY_RELEASE
+          sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
+          sentry-cli releases finalize $SENTRY_RELEASE
+
+          # Create new deploy for this Sentry release
+          sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
+
+      - name: Notify Slack
+        run: |
+          curl -X POST \
+          --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Protocol Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+          https://hooks.slack.com/services/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
