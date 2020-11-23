@@ -1,10 +1,14 @@
 # Automatically push a new Sentry release
 
-name: Sentry Release
+name: ECS Host Service Sentry Release
 
 on:
   push:
     branches: [ master ]
+    paths:
+    - '/ecs-host-service/**'
+    - '!/ecs-host-service/README.md'
+
 
 jobs:
   createSentryRelease:
@@ -24,7 +28,7 @@ jobs:
 
       - name: Set Git repository URL to enable sentry-cli automatic commit tagging
         run: |
-          git remote set-url origin https://github.com/fractal/ecs-host-service
+          git remote set-url origin https://github.com/fractal/fractal
 
       - name: Create new Sentry release
         run: |
