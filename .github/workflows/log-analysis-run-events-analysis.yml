@@ -28,7 +28,7 @@ jobs:
           pip install python-dotenv numpy datadog boto3
 
       - name: Run Webserver Events Analysis Python Script
-        run: python webserver/datadog/analyze.py
+        run: python log-analysis/webserver/datadog/analyze.py
 
       - name: Notify Slack
         run: |
