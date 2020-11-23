@@ -1,11 +1,12 @@
 # Deploy Docker images to AWS ECR
-name: Push images
+name: Container-Images Push images
 
 # Publish on update to master branch
 on:
     push:
         branches: [master]
-    workflow_dispatch:
+        paths:
+        - '/container-images/**'
 
 env:
     aws-placeholder-region: us-east-1
@@ -37,16 +38,16 @@ jobs:
                   aws-region: ${{ env.aws-placeholder-region }}
 
             - name: Walk repo to find all dockerfiles and store path as env variable
-              run: echo "apps=$(./find_images_in_git_repo.sh)" >> $GITHUB_ENV
+              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
             - name: Build release protocol
-              run: ./build_protocol.sh release
+              run: ./container-images/build_protocol.sh release
 
             - name: Build container images
               run: |
                   for app in ${{ env.apps }}
                   do
-                    ./build_container_image.sh $app
+                    ./container-images/build_container_image.sh $app
                   done
 
             - name: Push container images
@@ -55,7 +56,7 @@ jobs:
                   do
                     for app in ${{ env.apps }}
                     do
-                      ./push_container_image.sh $app $region
+                      ./container-images/push_container_image.sh $app $region
                     done
                   done
 
@@ -65,7 +66,7 @@ jobs:
                   do
                     for app in ${{ env.apps }}
                     do
-                      ./apply_ecr_lifecycle_policy.sh $app $region
+                      ./container-images/apply_ecr_lifecycle_policy.sh $app $region
                     done
                   done
 
