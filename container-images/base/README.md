@@ -16,9 +16,9 @@ The base container, specified by Dockerfile.20, is oriented around **systemd**, 
 
 ### Services
 
-The services `fractal-entrypoint.service`, `fractal-display.service`, `fractal-audio.service` and `fractal-protocol.service` must run successfully for the container to be functional. These services run in the order written above and are run by systemd on container start. 
+The services `fractal-entrypoint.service`, `fractal-display.service`, `fractal-audio.service` and `fractal-protocol.service` must run successfully for the container to be functional. These services run in the order written above and are run by systemd on container start.
 
-`fractal-entrypoint.service` runs the contents of the `entry.sh` script as root -- this is where configuration that has to occur during runtime can normally go. 
+`fractal-entrypoint.service` runs the contents of the `entry.sh` script as root -- this is where configuration that has to occur during runtime can normally go.
 
 `fractal-display.service` starts an X Server with the proper configuration that we need. Note that this starts an X Server that is powered by an Nvidia GPU, meaning our containers can only be run on GPU-powered hosts.
 
@@ -28,7 +28,7 @@ The services `fractal-entrypoint.service`, `fractal-display.service`, `fractal-a
 
 ### Useful Debugging Practices
 
-You can run `systemctl status` to see all the running services in the container. To be more precise, if you run it inside the container, you'll see all the services running in the container and the subprocesses they've started. If you run it outside the container on a Linux host machine, you'll see all the host services mixed in together with the container's services. 
+You can run `systemctl status` to see all the running services in the container. To be more precise, if you run it inside the container, you'll see all the services running in the container and the subprocesses they've started. If you run it outside the container on a Linux host machine, you'll see all the host services mixed in together with the container's services.
 
 `journalctl -e` shows the end of the systemd logs (you can page further backwards by hitting `b`).
 

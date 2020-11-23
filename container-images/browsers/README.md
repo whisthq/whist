@@ -4,6 +4,6 @@ This subfolder contains the Dockerfiles for the web browsers that Fractal stream
 
 ## Applications
 
-- Google Chrome
-- Mozilla Firefox
-- Brave Browser
+-   Google Chrome
+-   Mozilla Firefox
+-   Brave Browser
