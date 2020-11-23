@@ -1,0 +1,8 @@
+add_subdirectory(audio)
+add_subdirectory(clipboard)
+add_subdirectory(core)
+add_subdirectory(cursor)
+add_subdirectory(input)
+add_subdirectory(network)
+add_subdirectory(utils)
+add_subdirectory(video)
