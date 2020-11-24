@@ -2,7 +2,7 @@ name: Auto release primary branches (dev, staging, master)
 
 on:
     push:
-        branches: [dev, staging, master]
+        branches: [dev, staging, master, eric/add-wf]
 
 jobs:
     trigger-release:
