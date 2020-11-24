@@ -21,7 +21,7 @@ jobs:
                   submodules: recursive
             
             - name: Build protocol
-              run: cd protocol && ./build-protocol.sh release
+              run: cd protocol && ls && ./build-protocol.sh release
             
             - name: Publish the client-application
               run: ./publish-version.sh release
