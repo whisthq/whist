@@ -4,7 +4,6 @@ import boto3
 
 from celery import shared_task
 
-from app.constants.config import AWS_ACCESS_KEY, AWS_SECRET_KEY
 from app.constants.http_codes import SUCCESS
 from app.helpers.utils.general.logs import fractalLog
 from app.models import db, ProtocolLog
@@ -29,8 +28,6 @@ def deleteLogsFromS3(connection_id):
         s3 = boto3.resource(
             "s3",
             region_name="us-east-1",
-            aws_access_key_id=AWS_ACCESS_KEY,
-            aws_secret_access_key=AWS_SECRET_KEY,
         )
 
         try:
