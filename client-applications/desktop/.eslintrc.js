@@ -22,12 +22,6 @@ module.exports = {
         "no-shadow": 1,
         "react/jsx-props-no-spreading": 1,
         "react/jsx-one-expression-per-line": 1,
-
-        //temp
-        "jsx-a11y/click-events-have-key-events": 1,
-        "jsx-a11y/no-static-element-interactions": 1,
-        "jsx-a11y/label-has-associated-control": 1,
-        "react/jsx-one-expression-per-line": 0,
     },
     settings: {
         "import/resolver": {
