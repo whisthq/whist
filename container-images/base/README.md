@@ -6,7 +6,7 @@ This subfolders conforms to the **Styling** and **Continous Integration** practi
 
 ## Development
 
-This repository calls the Fractal [Protocol](https://github.com/fractalcomputers/protocol) repository as a Git submodule for integrating our streaming technology in the Dockerfile. Refer to the outer README for instructions on fetching the protocol Git submodule and building it into the Dockerfile.
+This repository calls the Fractal [Protocol](https://github.com/fractal/protocol) repository as a Git submodule for integrating our streaming technology in the Dockerfile. Refer to the outer README for instructions on fetching the protocol Git submodule and building it into the Dockerfile.
 
 Any Linux services needed for the containers to function properly should be developed and hosted as part of this project subfolder. For any details on continuous integration and styling, refer to the outer README of this project.
 

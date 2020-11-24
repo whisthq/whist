@@ -5,10 +5,10 @@ name: Sentry Release
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
     paths:
-    - '/main-webserver/**'
-    - '!/main-webserver/README.md'
+      - "/main-webserver/**"
+      - "!/main-webserver/README.md"
 
 jobs:
   createSentryRelease:
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      SENTRY_ORG: fractalcomputers
+      SENTRY_ORG: tryfractal
       SENTRY_PROJECT: main-webserver
       SENTRY_DEPLOY_ENVIRONMENT: production
 
