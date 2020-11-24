@@ -47,7 +47,7 @@ else
      cd protocol-build
      mkdir desktop
      cd ..
-     ls && echo 'hello'
+     ls && echo 'hello1'
      cp protocol/desktop/build64/Darwin/FractalClient protocol-build/desktop
      cp -R protocol/desktop/build64/Darwin/loading protocol-build/desktop
      if [[ "$OSTYPE" == "linux-gnu" ]]; then
