@@ -5,6 +5,10 @@ import ToggleButton from "react-toggle-button"
 import Slider from "react-input-slider"
 import styles from "styles/dashboard.css"
 
+import { webserver_urls } from "shared/constants/config"
+
+import { updateClient } from "store/actions/pure"
+
 import Wifi from "assets/images/wifi.svg"
 import Speedometer from "assets/images/speedometer.svg"
 import Fractal from "assets/images/fractal.svg"
@@ -25,7 +29,7 @@ const Settings = (props: { username: string; dispatch: any }) => {
         username.split("@")[1] == "tryfractal.com"
     
     const [admin_region, admin_setRegion] = useState("")
-    const [admin_task, admin_setTask] = useState("")
+    //const [admin_task, admin_setTask] = useState("")
     const [admin_webserver, admin_setWebserver] = useState("")
 
     useEffect(() => {
@@ -51,9 +55,9 @@ const Settings = (props: { username: string; dispatch: any }) => {
         admin_setRegion(evt.target.value)
     }
 
-    const admin_updateTask = (evt: any) => {
-        admin_setTask(evt.target.value)
-    }
+    // const admin_updateTask = (evt: any) => {
+    //     admin_setTask(evt.target.value)
+    // }
 
     const admin_updateWebserver = (evt: any) => {
         admin_setWebserver(evt.target.value)
@@ -84,6 +88,29 @@ const Settings = (props: { username: string; dispatch: any }) => {
             bandwidth: mbps,
         })
         setShowSavedAlert(true)
+
+        if (["us-east-1", "us-west-1", "ca-central-1"].indexOf(admin_region) > -1) {
+            dispatch(updateClient({
+                region : admin_region
+            }))
+        }
+
+        let webserver = admin_webserver.toLowerCase()
+
+        if (webserver == "dev" || webserver == "develop") {
+            webserver = webserver_urls.dev
+        } else if (webserver == "staging") {
+            webserver = webserver_urls.staging
+        } else if (webserver == "prod" || webserver == "production") {
+            webserver = webserver_urls.production
+        } else if (webserver == "local") {
+            webserver = webserver = webserver_urls.local
+        }
+        
+        // if we didn't change it and had this length it was probably a url
+        if (webserver.length > 10 ){
+            // do something to connect to this bad boy instead
+        }
     }
 
     return (
@@ -283,10 +310,10 @@ const Settings = (props: { username: string; dispatch: any }) => {
                                 lineHeight: 1.4,
                             }}
                         >
-                            Give a region, webserver and task to run. When you
-                            launch, the app will connect to said webserver and
-                            open said task in said region. More options will be
-                            added in the future.
+                            Give a region (like us-east-1) and a webserver version 
+                            (local, dev, staging, prod, or a url) and save them to choose where
+                            to connect to. In future may support different task defs. If the region
+                            is not a valid region the change does not go through (silently).
                         </div>
                     </div>
                     <div
@@ -301,7 +328,6 @@ const Settings = (props: { username: string; dispatch: any }) => {
                     >
                         <div style={{ float: "right" }}>
                             {adminInput(admin_region, "AWS Region", admin_updateRegion)}
-                            {adminInput(admin_task, "Task Def", admin_updateTask)}
                             {adminInput(admin_webserver, "Webserver", admin_updateWebserver)}
                         </div>
                     </div>

@@ -90,3 +90,12 @@ export const config: any =
     process.env.NODE_ENV === "development"
         ? environment.development
         : environment.production
+
+// this may have to be updated
+// this will be useful for integration testing
+export const webserver_urls = {
+    local: "http://127.0.0.1:7730",
+    dev: "https://dev-webserver.herokuapp.com",
+    staging: "https://staging-webserver.tryfractal.com",
+    production: "https://main-webserver.herokuapp.com",
+}
