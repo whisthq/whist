@@ -49,7 +49,7 @@ else
      cd ..
      ls && echo 'hello1'
      cp protocol/desktop/build64/Darwin/FractalClient protocol-build/desktop
-     cp -R protocol/desktop/build64/Darwin/loading protocol-build/desktop
+     # cp -R protocol/desktop/build64/Darwin/loading protocol-build/desktop
      if [[ "$OSTYPE" == "linux-gnu" ]]; then
      # Linux Ubuntu
      sudo chmod +x protocol-build/desktop/FractalClient
@@ -75,6 +75,7 @@ else
      # codesign the FractalClient executable
      codesign -s "Fractal Computers, Inc." protocol-build/desktop/FractalClient
      fi
+     cd client-applications
      yarn -i
 
      if [[ "$publish" == "true" ]]
