@@ -5,7 +5,7 @@ import os
 from functools import wraps
 
 from celery import Celery
-from flask import request
+from flask import current_app, request
 from flask_sendgrid import SendGrid
 
 from .factory import create_app, jwtManager, ma, mail
@@ -37,9 +37,7 @@ def fractalPreProcess(f):
 
         silence = False
 
-        from .constants.config import SILENCED_ENDPOINTS
-
-        for endpoint in SILENCED_ENDPOINTS:
+        for endpoint in current_app.config["SILENCED_ENDPOINTS"]:
             if endpoint in request.url:
                 silence = True
                 break

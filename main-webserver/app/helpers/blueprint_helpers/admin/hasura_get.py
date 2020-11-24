@@ -1,6 +1,6 @@
+from flask import current_app
 from jose import jwt
 
-from app.constants.config import JWT_SECRET_KEY
 from app.models import User
 
 
@@ -12,7 +12,7 @@ def authHelper(token):
         current_user = ""
 
         try:
-            decoded_key = jwt.decode(token, JWT_SECRET_KEY)
+            decoded_key = jwt.decode(token, current_app.config["JWT_SECRET_KEY"])
             if decoded_key:
                 current_user = decoded_key["identity"]
         except Exception:
