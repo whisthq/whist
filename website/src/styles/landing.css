@@ -251,3 +251,76 @@ thead tr th {
     margin-top: 25px;
     border: none;
 }
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    5% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 1;
+    }
+    55% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes fadeInAlt {
+    0% {
+        opacity: 1;
+    }
+    5% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 0;
+    }
+    55% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes imageFadeIn {
+    from {
+        opacity: 0.2;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes imageFadeIn {
+    from {
+        opacity: 0.2;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.animate-flicker {
+    animation: fadeIn 10s infinite;
+}
+
+.animate-flicker-alt {
+    animation: fadeInAlt 10s infinite;
+}
+
+.website-background {
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+    position: relative;
+    background-size: cover;
+    padding-bottom: 50px;
+    -webkit-animation: imageFadeIn 5s;
+    animation: imageFadeIn 5s;
+}

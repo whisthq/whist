@@ -239,14 +239,25 @@ a {
     overflow-x: hidden;
 }
 
-.white-button {
+.white-button,
+.white-button-light {
     padding: 15px 50px;
     font-size: 18px;
     outline: none !important;
     letter-spacing: 1.1px;
     border: solid 0.8px #cccccc;
-    background: white;
+    background: rgba(0, 0, 0, 0);
     color: #111111;
+}
+
+.white-button-light {
+    color: white;
+    border: solid 0.8px white;
+}
+
+.white-button-light:hover {
+    border: solid 0.8px #93f1d9;
+    color: #93f1d9;
 }
 
 .white-button:hover {
@@ -256,7 +267,9 @@ a {
 }
 
 .header-link,
-.account-button {
+.header-link-light,
+.account-button,
+.account-button-light {
     outline: none !important;
     text-decoration: none !important;
     margin-right: 30px;
@@ -269,13 +282,27 @@ a {
     background: none;
 }
 
-.account-button {
+.account-button,
+.account-button-light {
     margin-right: 0px;
     font-weight: bold;
 }
 
+.account-button-light {
+    color: white;
+}
+
 .account-button:hover {
     color: #3930b8;
+}
+
+.header-link-light {
+    color: white;
+}
+
+.header-link-light:hover {
+    color: #93f1d9 !important;
+    cursor: pointer;
 }
 
 .header-link:hover {

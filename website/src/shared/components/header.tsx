@@ -11,12 +11,12 @@ import { DEFAULT } from "store/reducers/auth/default"
 const Header = (props: {
     dispatch: any
     user: any
-    color: string
+    dark: boolean
     account?: boolean
 }) => {
     const { width } = useContext(MainContext)
 
-    const { dispatch, user, account, color } = props
+    const { dispatch, user, account, dark } = props
 
     const handleSignOut = () => {
         dispatch(PureAuthAction.updateUser(deepCopy(DEFAULT.user)))
@@ -32,6 +32,7 @@ const Header = (props: {
                     paddingBottom: 0,
                     paddingTop: 25,
                     borderBottom: "solid 1px #DFDFDF",
+                    background: dark ? "black" : "white",
                 }}
             >
                 <Link
@@ -46,7 +47,7 @@ const Header = (props: {
                         className="logo"
                         style={{
                             marginBottom: 20,
-                            color: color ? color : "white",
+                            color: dark ? "white" : "black",
                         }}
                     >
                         Fractal
@@ -64,6 +65,7 @@ const Header = (props: {
                     paddingBottom: 0,
                     paddingTop: 25,
                     borderBottom: "solid 1px #DFDFDF",
+                    background: dark ? "black" : "white",
                 }}
             >
                 <div
@@ -83,7 +85,7 @@ const Header = (props: {
                             className="logo"
                             style={{
                                 marginBottom: 20,
-                                color: color ? color : "white",
+                                color: dark ? "white" : "black",
                             }}
                         >
                             Fractal
@@ -92,18 +94,29 @@ const Header = (props: {
                     {account ? (
                         <div></div>
                     ) : (
-                        <div style={{ display: "flex" }}>
-                            <Link to="/about" className="header-link">
+                        <div
+                            style={{
+                                display: "flex",
+                                color: dark ? "white" : "black",
+                            }}
+                        >
+                            <Link
+                                to="/about"
+                                className={
+                                    dark ? "header-link-light" : "header-link"
+                                }
+                                style={{ color: dark ? "white" : "black" }}
+                            >
                                 About
                             </Link>
                             <a
-                                href="mailto: support@fractalcomputers.com"
+                                href="mailto: support@tryfractal.com"
                                 className="header-link"
                             >
                                 Support
                             </a>
                             <a
-                                href="mailto: careers@fractalcomputers.com"
+                                href="mailto: careers@tryfractal.com"
                                 className="header-link"
                             >
                                 Careers
@@ -116,7 +129,11 @@ const Header = (props: {
                         <>
                             <DropdownButton
                                 title="My Account"
-                                bsPrefix="account-button"
+                                bsPrefix={
+                                    dark
+                                        ? "account-button-light"
+                                        : "account-button"
+                                }
                                 menuAlign="right"
                             >
                                 <Dropdown.Item href="/dashboard">
@@ -133,7 +150,9 @@ const Header = (props: {
                     ) : (
                         <Link
                             to="/auth/bypass"
-                            className="header-link"
+                            className={
+                                dark ? "header-link-light" : "header-link"
+                            }
                             style={{
                                 fontWeight: "bold",
                                 marginRight: 0,

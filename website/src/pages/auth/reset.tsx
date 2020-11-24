@@ -25,7 +25,7 @@ const Reset = (props: any) => {
     } else {
         return (
             <div className="fractalContainer">
-                <Header color="black" />
+                <Header dark={false} />
                 <ResetView token={token} validToken={valid_token} />
             </div>
         )

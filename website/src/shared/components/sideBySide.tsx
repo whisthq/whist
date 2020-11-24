@@ -11,38 +11,45 @@ import {
     EASTEREGG_RAND,
 } from "shared/utils/points"
 
-import Gaming from "assets/largeGraphics/gaming.svg"
-import Graphics from "assets/largeGraphics/graphics.svg"
-import Productivity from "assets/largeGraphics/productivity.svg"
-
-import DemoVideo from "pages/landing/components/demoVideo"
+import GraphicsImage from "assets/largeGraphics/graphics.svg"
+import SpeedTestBackground from "assets/largeGraphics/speedTestBackground.svg"
+import SpeedTest from "assets/gifs/speedTest.gif"
+import DemoBackground from "assets/largeGraphics/demoBackground.svg"
+import BlenderDemo from "assets/gifs/blenderDemo.gif"
+import ChromeShadow from "assets/largeGraphics/chromeShadow.svg"
+import FirefoxShadow from "assets/largeGraphics/firefoxShadow.svg"
+import FigmaShadow from "assets/largeGraphics/figmaShadow.svg"
+import BlenderShadow from "assets/largeGraphics/blenderShadow.svg"
+import MayaShadow from "assets/largeGraphics/mayaShadow.svg"
+import UnityShadow from "assets/largeGraphics/unityShadow.svg"
 
 function SideBySide(props: any) {
     const { appHighlight } = useContext(MainContext)
 
-    const videoCases: Set<string> = new Set(["DemoVideo"])
-
     const yourApps = appHighlight ? appHighlight : "your apps"
-    const yourApplications = appHighlight ? appHighlight : "your applications"
+    const yourApplications = appHighlight ? appHighlight : "your apps"
     const theyUse = appHighlight ? "it uses" : "they use"
     const access = appHighlight ? "accesses" : "access"
-    const theApp = appHighlight ? appHighlight : "the app"
+    const theApp = appHighlight ? appHighlight : "your app"
 
     const descriptions: any = {
         Productivity:
-            "Fractal is like Google Stadia for your creative and productivity apps. When you run " +
+            "When you run " +
             yourApps +
             " through Fractal, " +
             theyUse +
             " 10x less RAM and " +
             access +
-            " gigabyte Internet speeds.",
-        Graphics:
-            "Fractal runs " +
-            yourApplications +
-            " on dedicated cloud GPUs and streams them to you at 60FPS, similar to how Netflix streams you movies. Unlike traditional virtual desktops, Fractal streams you just the application, so using " +
-            theApp +
-            " feels completely native.",
+            " gigabit Internet speeds.",
+        Graphics: (
+            <div>
+                <div>
+                    Fractal runs {yourApplications} on cloud GPUs. Unlike
+                    virtual desktops, Fractal streams just the app, so using{" "}
+                    {theApp} feels native.
+                </div>
+            </div>
+        ),
         Gaming: (
             <div>
                 <div>
@@ -57,35 +64,173 @@ function SideBySide(props: any) {
                 </div>
             </div>
         ),
-        DemoVideo: (
-            <div>
-                <div>
-                    Curious to see what using fractal feels like? Watch the demo
-                    to see how running on Fractal compares to running natively
-                    on various apps.
-                </div>
-                <div style={{ marginTop: 20 }}>
-                    Our home-grown streaming technology allows you to run laggy
-                    applications fast on the cloud while controlling them
-                    locally.
-                </div>
-            </div>
-        ),
     }
+
+    const Productivity = (
+        <div
+            style={{
+                width: "100%",
+                margin: "auto",
+                position: "relative",
+                bottom: 40,
+            }}
+        >
+            <img
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    display: "inline-block",
+                }}
+                src={SpeedTestBackground}
+                alt=""
+            />
+            <img
+                style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-53%, 25%)",
+                    width: "50%",
+                    display: "inline-block",
+                }}
+                src={SpeedTest}
+                alt=""
+            />
+            <img
+                style={{
+                    position: "absolute",
+                    top: props.width < 700 ? "20px" : "40px",
+                    right: props.width < 700 ? "-20px" : "-40px",
+                    width: props.width < 700 ? "60px" : "100px",
+                    animationDelay: "0.2s",
+                    display: "inline-block",
+                }}
+                src={ChromeShadow}
+                className="bounce"
+                alt=""
+            />
+            <img
+                style={{
+                    position: "absolute",
+                    top: props.width < 700 ? "90px" : "140px",
+                    right: props.width < 700 ? "-20px" : "-40px",
+                    width: props.width < 700 ? "60px" : "100px",
+                    display: "inline-block",
+                }}
+                src={FirefoxShadow}
+                className="bounce"
+                alt=""
+            />
+            <img
+                style={{
+                    position: "absolute",
+                    top: props.width < 700 ? "170px" : "260px",
+                    right: props.width < 700 ? "-20px" : "-40px",
+                    width: props.width < 700 ? "60px" : "95px",
+                    animationDelay: "0.4s",
+                    display: "inline-block",
+                }}
+                className="bounce"
+                src={FigmaShadow}
+                alt=""
+            />
+        </div>
+    )
+
+    const Graphics = (
+        <div
+            style={{
+                width: "100%",
+                margin: "auto",
+                position: "relative",
+                bottom: props.width < 700 ? 50 : 20,
+            }}
+        >
+            <div>
+                <img
+                    style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                    }}
+                    src={DemoBackground}
+                    alt=""
+                />
+                <img
+                    style={{
+                        position: "absolute",
+                        top: "23px",
+                        left: "21px",
+                        width: "97%",
+                        maxHeight: "475px",
+                        boxShadow: "0px 4px 20px rgba(0,0,0,0.25)",
+                        borderRadius: "0px 0px 5px 5px",
+                    }}
+                    src={BlenderDemo}
+                    alt=""
+                />
+                <img
+                    style={{
+                        position: "absolute",
+                        top: props.width < 700 ? "20px" : "40px",
+                        left: props.width < 700 ? "-20px" : "-40px",
+                        width: props.width < 700 ? "60px" : "100px",
+                        animationDelay: "0.2s",
+                    }}
+                    src={BlenderShadow}
+                    className="bounce"
+                    alt=""
+                />
+                <img
+                    style={{
+                        position: "absolute",
+                        top: props.width < 700 ? "90px" : "140px",
+                        left: props.width < 700 ? "-20px" : "-40px",
+                        width: props.width < 700 ? "60px" : "100px",
+                    }}
+                    src={MayaShadow}
+                    className="bounce"
+                    alt=""
+                />
+                <img
+                    style={{
+                        position: "absolute",
+                        top: props.width < 700 ? "170px" : "260px",
+                        left: props.width < 700 ? "-10px" : "-25px",
+                        width: props.width < 700 ? "40px" : "70px",
+                        animationDelay: "0.4s",
+                    }}
+                    className="bounce"
+                    src={UnityShadow}
+                    alt=""
+                />
+            </div>
+        </div>
+    )
+
+    const Gaming = (
+        <div>
+            <img
+                src={GraphicsImage}
+                style={{ width: "100%", margin: "auto" }}
+                alt=""
+            />
+        </div>
+    )
 
     const images: any = {
         Productivity: Productivity,
         Gaming: Gaming,
         Graphics: Graphics,
-        DemoVideo: Graphics, // hopefully a good background
     }
 
     const headers: any = {
-        Productivity:
-            "Give " + yourApps + " more RAM and blazing-fast Internet.",
+        Productivity: "Unlock more RAM and blazing-fast Internet.",
         Gaming: "How It Works",
         Graphics: "No GPU? No problem.",
-        DemoVideo: "Watch It In Action",
     }
 
     return (
@@ -98,29 +243,12 @@ function SideBySide(props: any) {
             <Row>
                 <Col
                     md={{
-                        span: 6,
+                        span: props.reverse ? 7 : 6,
                         order: props.reverse ? 2 : 1,
                     }}
                 >
                     <div style={{ position: "relative" }}>
-                        {videoCases.has(props.case) ? (
-                            <div style={{ position: "relative", zIndex: 2 }}>
-                                <DemoVideo />
-                            </div>
-                        ) : (
-                            <img
-                                style={{
-                                    zIndex: 0, // before the pretty grey box
-                                    width: "100%",
-                                    margin: "auto",
-                                    borderRadius: 3,
-                                    boxShadow:
-                                        "0px 4px 20px rgba(0, 0, 0, 0.2)",
-                                }}
-                                src={images[props.case]}
-                                alt=""
-                            />
-                        )}
+                        <div>{images[props.case]}</div>
                         <div
                             style={{
                                 position: "absolute",
@@ -135,17 +263,22 @@ function SideBySide(props: any) {
                         />
                     </div>
                 </Col>
-                <Col md={{ span: 6, order: props.reverse ? 1 : 2 }}>
+                <Col
+                    md={{
+                        span: props.reverse ? 5 : 6,
+                        order: props.reverse ? 1 : 2,
+                    }}
+                >
                     <div
                         style={{
                             display: "flex",
                             flexDirection: "column",
                             justifyContent: "flex-end",
                             paddingLeft:
-                                props.reverse || props.width < 700 ? 0 : 150,
+                                props.reverse || props.width < 775 ? 0 : 100,
                             paddingRight:
-                                props.reverse && props.width > 700 ? 150 : 0,
-                            marginTop: props.width < 700 ? 30 : 0,
+                                props.reverse && props.width > 775 ? 100 : 0,
+                            marginTop: props.width < 775 ? "55vw" : 0,
                         }}
                     >
                         <h2
