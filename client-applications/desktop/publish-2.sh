@@ -40,11 +40,6 @@ else
 
      python3 setVersion.gyp $bucket $version
 
-     cd ../../protocol
-     cmake . 
-     make FractalClient
-     cd ..
-     rm -rf protocol-build 
      mkdir protocol-build 
      cd protocol-build
      mkdir desktop
