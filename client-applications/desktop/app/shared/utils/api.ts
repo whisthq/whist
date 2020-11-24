@@ -3,7 +3,7 @@ import { debugLog } from "shared/utils/logging"
 
 export async function apiPost(endpoint: any, body: any, token: any) {
     try {
-        const response = await fetch(config.url.WEBSERVER_URL + endpoint, {
+        const response = await fetch(config.url.WEBSERVER_URL() + endpoint, {
             method: "POST",
             mode: "cors",
             headers: {
@@ -22,7 +22,7 @@ export async function apiPost(endpoint: any, body: any, token: any) {
 
 export async function apiGet(endpoint: any, token: any) {
     try {
-        const response = await fetch(config.url.WEBSERVER_URL + endpoint, {
+        const response = await fetch(config.url.WEBSERVER_URL() + endpoint, {
             method: "GET",
             mode: "cors",
             headers: {

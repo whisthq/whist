@@ -73,9 +73,9 @@ export function updateLoading(body: {
 }
 
 export function updateAdmin(body: {
-    webserver_url?: string,
-    task_arn?: string,
-    region?: string,
+    webserver_url?: null | string
+    task_arn?: null | string
+    region?: null | string
 }) {
     return {
         type: UPDATE_ADMIN,

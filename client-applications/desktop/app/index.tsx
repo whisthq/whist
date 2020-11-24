@@ -3,7 +3,8 @@ import { render } from "react-dom"
 import { Provider } from "react-redux"
 import { ConnectedRouter } from "connected-react-router"
 import { AppContainer as ReactHotAppContainer } from "react-hot-loader"
-import { configureStore, history } from "./store/configureStore"
+import { history } from "store/configureStore"
+import { store } from "store/store"
 import {
     ApolloProvider,
     ApolloClient,
@@ -18,8 +19,6 @@ import RootApp from "rootApp"
 
 import "./app.global.css"
 import { config } from "shared/constants/config"
-
-const store = configureStore()
 
 const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer
 

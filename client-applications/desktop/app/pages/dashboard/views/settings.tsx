@@ -5,9 +5,7 @@ import ToggleButton from "react-toggle-button"
 import Slider from "react-input-slider"
 import styles from "styles/dashboard.css"
 
-import { webserver_urls } from "shared/constants/config"
-
-import { updateAdmin, updateClient } from "store/actions/pure"
+import { updateAdmin } from "store/actions/pure"
 
 import Wifi from "assets/images/wifi.svg"
 import Speedometer from "assets/images/speedometer.svg"
@@ -20,14 +18,14 @@ const Settings = (props: { username: string; dispatch: any }) => {
     const [bandwidth, setBandwidth] = useState(500)
     const [showSavedAlert, setShowSavedAlert] = useState(false)
 
-    // these are used to allow admins to do integration testing 
+    // these are used to allow admins to do integration testing
     // with the client app with
     // various different remotes
     const adminUsername =
         username &&
         username.indexOf("@") > -1 &&
         username.split("@")[1] == "tryfractal.com"
-    
+
     const [admin_region, admin_setRegion] = useState("")
     const [admin_task, admin_setTask] = useState("")
     const [admin_webserver, admin_setWebserver] = useState("")
@@ -64,7 +62,8 @@ const Settings = (props: { username: string; dispatch: any }) => {
     }
 
     const adminInput = (value: string, placeholder: string, onChange: any) => (
-        <input value={value}
+        <input
+            value={value}
             placeholder={placeholder}
             onChange={onChange}
             style={{
@@ -92,37 +91,52 @@ const Settings = (props: { username: string; dispatch: any }) => {
         // below here is a bunch of admin stuff that allows us to integration test better
         if (adminUsername) {
             // update region if it's valid
-            if (["us-east-1", "us-west-1", "ca-central-1"].indexOf(admin_region) > -1) {
-                dispatch(updateAdmin({
-                    region: admin_region,
-                }))
+            if (
+                ["us-east-1", "us-west-1", "ca-central-1"].indexOf(
+                    admin_region
+                ) > -1
+            ) {
+                dispatch(
+                    updateAdmin({
+                        region: admin_region,
+                    })
+                )
+            } else if (admin_region.toLowerCase() == "reset") {
+                dispatch(
+                    updateAdmin({
+                        region: null,
+                    })
+                )
             }
 
             // update webserver url if it's valid
-            let webserver = admin_webserver.toLowerCase()
+            let webserver: null | string = admin_webserver.toLowerCase()
 
-            if (webserver == "dev" || webserver == "develop") {
-                webserver = webserver_urls.dev
-            } else if (webserver == "staging") {
-                webserver = webserver_urls.staging
-            } else if (webserver == "prod" || webserver == "production") {
-                webserver = webserver_urls.production
-            } else if (webserver == "local") {
-                webserver = webserver = webserver_urls.local
+            // should be dev, prod, staging, or local
+            if (webserver == "reset") {
+                webserver = null
             }
-            
-            // if we didn't change it and had this length it was probably a url
-            if (webserver.length > 10 ){
-                dispatch(updateAdmin({
+
+            dispatch(
+                updateAdmin({
                     webserver_url: webserver,
-                }))
-            }
+                })
+            )
 
             //update task arn if it's valid
-            if (admin_task.length > 10){
-                dispatch(updateAdmin({
-                    task_arn : admin_task,
-                }))
+            //we want to copy the exact arn
+            if (admin_task.toLowerCase() == "reset") {
+                dispatch(
+                    updateAdmin({
+                        task_arn: null,
+                    })
+                )
+            } else {
+                dispatch(
+                    updateAdmin({
+                        task_arn: admin_task,
+                    })
+                )
             }
         }
     }
@@ -324,10 +338,12 @@ const Settings = (props: { username: string; dispatch: any }) => {
                                 lineHeight: 1.4,
                             }}
                         >
-                            Give a region (like us-east-1) and a webserver version 
-                            (local, dev, staging, prod, or a url) and save them to choose where
-                            to connect to. In future may support different task defs. If the region
-                            is not a valid region the change does not go through (silently).
+                            Give a region (like us-east-1) and a webserver
+                            version (local, dev, staging, prod, or a url) and
+                            save them to choose where to connect to. In future
+                            may support different task defs. If the region is
+                            not a valid region the change does not go through
+                            (silently).
                         </div>
                     </div>
                     <div
@@ -341,9 +357,21 @@ const Settings = (props: { username: string; dispatch: any }) => {
                         }}
                     >
                         <div style={{ float: "right" }}>
-                            {adminInput(admin_region, "AWS Region", admin_updateRegion)}
-                            {adminInput(admin_webserver, "Webserver", admin_updateWebserver)}
-                            {adminInput(admin_task, "Task ARN", admin_updateTask)}
+                            {adminInput(
+                                admin_region,
+                                "AWS Region",
+                                admin_updateRegion
+                            )}
+                            {adminInput(
+                                admin_webserver,
+                                "Webserver",
+                                admin_updateWebserver
+                            )}
+                            {adminInput(
+                                admin_task,
+                                "Task ARN",
+                                admin_updateTask
+                            )}
                         </div>
                     </div>
                 </Row>
