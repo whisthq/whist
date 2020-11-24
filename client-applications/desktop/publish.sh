@@ -3,8 +3,6 @@
 function printhelp {
     echo "Usage: build [OPTION 1] [OPTION 2] ...\n"
     echo "Note: Make sure to run this script in a terminal on Mac."
-    echo "  --branch BRANCH                set the Github protocol branch that you"
-    echo "                                  want the client app to run"
     echo "  --version VERSION              set the version number of the client app"
     echo "                                  must be greater than the current version"
     echo "                                  in S3 bucket"
@@ -24,7 +22,6 @@ if [[ "$1" == "--help" ]]
 then 
      printhelp 
 else
-     branch=${branch:-dev}
      version=${version:-1.0.0}
      bucket=${bucket:-fractal-mac-application-testing}
      publish=${publish:-false}
