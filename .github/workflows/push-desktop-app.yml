@@ -26,8 +26,8 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
-            - name: Build protocol
-              run: cd protocol && ls && ./build_protocol.sh release
+            # - name: Build protocol
+            #   run: cd protocol && ls && ./build_protocol.sh release
             
             - name: Publish the client-application
               run: cd client-applications && cd desktop && ./publish.sh release

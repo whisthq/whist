@@ -41,8 +41,9 @@ else
      python3 setVersion.gyp $bucket $version
 
      rm -rf .protocol
-     git clone --depth 1 https://github.com/fractal/protocol .protocol
-     cd .protocol
+     # git clone --depth 1 https://github.com/fractal/protocol .protocol
+     # cd .protocol
+     cd ../../protocol
      git reset --hard
      git fetch --depth 25 origin $branch:$branch 
      git checkout $branch
@@ -54,8 +55,8 @@ else
      cd protocol-build
      mkdir desktop
      cd ..
-     cp .protocol/desktop/build64/Darwin/FractalClient protocol-build/desktop
-     cp -R .protocol/desktop/build64/Darwin/loading protocol-build/desktop
+     cp protocol/desktop/build64/Darwin/FractalClient protocol-build/desktop
+     cp -R protocol/desktop/build64/Darwin/loading protocol-build/desktop
      if [[ "$OSTYPE" == "linux-gnu" ]]; then
      # Linux Ubuntu
      sudo chmod +x protocol-build/desktop/FractalClient
@@ -68,15 +69,15 @@ else
      SetFile -a C protocol-build/desktop/FractalClient # use the resource to set the icon
      rm tmpicns.rsrc # clean up
      # copy over the Unison executable and FFmpeg dylibs
-     cp .protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol-build/desktop
-     cp .protocol/lib/64/ffmpeg/Darwin/libavdevice.58.dylib protocol-build/desktop
-     cp .protocol/lib/64/ffmpeg/Darwin/libavfilter.7.dylib protocol-build/desktop
-     cp .protocol/lib/64/ffmpeg/Darwin/libavformat.58.dylib protocol-build/desktop
-     cp .protocol/lib/64/ffmpeg/Darwin/libavutil.56.dylib protocol-build/desktop
-     cp .protocol/lib/64/ffmpeg/Darwin/libpostproc.55.dylib protocol-build/desktop
-     cp .protocol/lib/64/ffmpeg/Darwin/libswresample.3.dylib protocol-build/desktop
-     cp .protocol/lib/64/ffmpeg/Darwin/libswscale.5.dylib protocol-build/desktop
-     cp .protocol/desktop/build64/Darwin/libsentry.dylib protocol-build/desktop
+     cp protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol-build/desktop
+     cp protocol/lib/64/ffmpeg/Darwin/libavdevice.58.dylib protocol-build/desktop
+     cp protocol/lib/64/ffmpeg/Darwin/libavfilter.7.dylib protocol-build/desktop
+     cp protocol/lib/64/ffmpeg/Darwin/libavformat.58.dylib protocol-build/desktop
+     cp protocol/lib/64/ffmpeg/Darwin/libavutil.56.dylib protocol-build/desktop
+     cp protocol/lib/64/ffmpeg/Darwin/libpostproc.55.dylib protocol-build/desktop
+     cp protocol/lib/64/ffmpeg/Darwin/libswresample.3.dylib protocol-build/desktop
+     cp protocol/lib/64/ffmpeg/Darwin/libswscale.5.dylib protocol-build/desktop
+     cp protocol/desktop/build64/Darwin/libsentry.dylib protocol-build/desktop
      # codesign the FractalClient executable
      codesign -s "Fractal Computers, Inc." protocol-build/desktop/FractalClient
      fi
