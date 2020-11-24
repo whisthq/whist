@@ -8,7 +8,7 @@ export async function apiPost(endpoint: any, body: any, token: any) {
             mode: "cors",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
+                Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(body),
         })
@@ -27,7 +27,7 @@ export async function apiGet(endpoint: any, token: any) {
             mode: "cors",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
+                Authorization: `Bearer ${token}`,
             },
         })
         const json = await response.json()

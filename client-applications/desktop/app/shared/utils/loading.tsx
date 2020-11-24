@@ -22,7 +22,7 @@ const loadingMessages = [
         .
     </div>,
     <div>
-        If you make cool artwork on Fractal, tweet us @tryfractal and we'll
+        If you make cool artwork on Fractal, tweet us @tryfractal and we’ll
         share it!
     </div>,
     <div>
