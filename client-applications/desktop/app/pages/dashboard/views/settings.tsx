@@ -7,7 +7,7 @@ import styles from "styles/dashboard.css"
 
 import { webserver_urls } from "shared/constants/config"
 
-import { updateClient } from "store/actions/pure"
+import { updateAdmin, updateClient } from "store/actions/pure"
 
 import Wifi from "assets/images/wifi.svg"
 import Speedometer from "assets/images/speedometer.svg"
@@ -29,7 +29,7 @@ const Settings = (props: { username: string; dispatch: any }) => {
         username.split("@")[1] == "tryfractal.com"
     
     const [admin_region, admin_setRegion] = useState("")
-    //const [admin_task, admin_setTask] = useState("")
+    const [admin_task, admin_setTask] = useState("")
     const [admin_webserver, admin_setWebserver] = useState("")
 
     useEffect(() => {
@@ -55,9 +55,9 @@ const Settings = (props: { username: string; dispatch: any }) => {
         admin_setRegion(evt.target.value)
     }
 
-    // const admin_updateTask = (evt: any) => {
-    //     admin_setTask(evt.target.value)
-    // }
+    const admin_updateTask = (evt: any) => {
+        admin_setTask(evt.target.value)
+    }
 
     const admin_updateWebserver = (evt: any) => {
         admin_setWebserver(evt.target.value)
@@ -89,27 +89,41 @@ const Settings = (props: { username: string; dispatch: any }) => {
         })
         setShowSavedAlert(true)
 
-        if (["us-east-1", "us-west-1", "ca-central-1"].indexOf(admin_region) > -1) {
-            dispatch(updateClient({
-                region : admin_region
-            }))
-        }
+        // below here is a bunch of admin stuff that allows us to integration test better
+        if (adminUsername) {
+            // update region if it's valid
+            if (["us-east-1", "us-west-1", "ca-central-1"].indexOf(admin_region) > -1) {
+                dispatch(updateAdmin({
+                    region: admin_region,
+                }))
+            }
 
-        let webserver = admin_webserver.toLowerCase()
+            // update webserver url if it's valid
+            let webserver = admin_webserver.toLowerCase()
 
-        if (webserver == "dev" || webserver == "develop") {
-            webserver = webserver_urls.dev
-        } else if (webserver == "staging") {
-            webserver = webserver_urls.staging
-        } else if (webserver == "prod" || webserver == "production") {
-            webserver = webserver_urls.production
-        } else if (webserver == "local") {
-            webserver = webserver = webserver_urls.local
-        }
-        
-        // if we didn't change it and had this length it was probably a url
-        if (webserver.length > 10 ){
-            // do something to connect to this bad boy instead
+            if (webserver == "dev" || webserver == "develop") {
+                webserver = webserver_urls.dev
+            } else if (webserver == "staging") {
+                webserver = webserver_urls.staging
+            } else if (webserver == "prod" || webserver == "production") {
+                webserver = webserver_urls.production
+            } else if (webserver == "local") {
+                webserver = webserver = webserver_urls.local
+            }
+            
+            // if we didn't change it and had this length it was probably a url
+            if (webserver.length > 10 ){
+                dispatch(updateAdmin({
+                    webserver_url: webserver,
+                }))
+            }
+
+            //update task arn if it's valid
+            if (admin_task.length > 10){
+                dispatch(updateAdmin({
+                    task_arn : admin_task,
+                }))
+            }
         }
     }
 
@@ -329,6 +343,7 @@ const Settings = (props: { username: string; dispatch: any }) => {
                         <div style={{ float: "right" }}>
                             {adminInput(admin_region, "AWS Region", admin_updateRegion)}
                             {adminInput(admin_webserver, "Webserver", admin_updateWebserver)}
+                            {adminInput(admin_task, "Task ARN", admin_updateTask)}
                         </div>
                     </div>
                 </Row>
