@@ -75,7 +75,7 @@ else
      # codesign the FractalClient executable
      codesign -s "Fractal Computers, Inc." protocol-build/desktop/FractalClient
      fi
-     cd client-applications
+     cd client-applications/desktop
      yarn -i
 
      if [[ "$publish" == "true" ]]
