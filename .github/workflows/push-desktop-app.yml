@@ -16,7 +16,7 @@ env:
 jobs:
     build-desktop-app:
         name: Build-desktop-app
-        runs-on: ubuntu-20.04
+        runs-on: macos-10.14
 
         steps:
             - name: Checkout Git repository
@@ -30,7 +30,6 @@ jobs:
             #   run: cd protocol/desktop && ls && ./linux-client-setup.sh release
             
             - name: Publish the client-application
-              os: macos-10.14
               run: cd client-applications && cd desktop && ./publish.sh release
             # - name: Build release protocol
             #   run: ./build_protocol.sh release
