@@ -71,7 +71,7 @@ else
      cp protocol/lib/64/ffmpeg/Darwin/libpostproc.55.dylib protocol-build/desktop
      cp protocol/lib/64/ffmpeg/Darwin/libswresample.3.dylib protocol-build/desktop
      cp protocol/lib/64/ffmpeg/Darwin/libswscale.5.dylib protocol-build/desktop
-     cp protocol/desktop/build64/Darwin/libsentry.dylib protocol-build/desktop
+     # cp protocol/desktop/build64/Darwin/libsentry.dylib protocol-build/desktop
      # codesign the FractalClient executable
      codesign -s "Fractal Computers, Inc." protocol-build/desktop/FractalClient
      fi
