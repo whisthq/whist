@@ -474,16 +474,22 @@ class StripeClient:
 
         stripe_customer_id = user.stripe_customer_id
         if not stripe_customer_id or not self.validate_customer_id(stripe_customer_id, user):
-            customer = stripe.Customer.create(email=email, source=source_id)
-            user.stripe_customer_id = customer["id"]
-            user.card_brand = brand
-            user.card_last_four = last4
-            db.session.commit()
+            try:
+                customer = stripe.Customer.create(email=email, source=source_id)
+                user.stripe_customer_id = customer["id"]
+                user.card_brand = brand
+                user.card_last_four = last4
+                db.session.commit()
+            except:
+                raise InvalidStripeToken
         else:
-            stripe.Customer.create_source(stripe_customer_id, source=source_id)
-            user.card_brand = brand
-            user.card_last_four = last4
-            db.session.commit()
+            try:
+                stripe.Customer.create_source(stripe_customer_id, source=source_id)
+                user.card_brand = brand
+                user.card_last_four = last4
+                db.session.commit()
+            except: 
+                raise InvalidStripeToken
 
     def delete_card(self, email, source):
         """Deletes a card (source) for a customer. This is not a recommended
