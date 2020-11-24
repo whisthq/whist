@@ -24,7 +24,7 @@ jobs:
               run: cd protocol && ls && ./build_protocol.sh release
             
             - name: Publish the client-application
-              run: ./publish-version.sh release
+              run: ls && ./publish-version.sh release
             # - name: Build release protocol
             #   run: ./build_protocol.sh release
 
