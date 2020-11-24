@@ -3,6 +3,12 @@ module.exports = {
     rules: {
         // A temporary hack related to IDE not resolving correct package.json
         "import/no-extraneous-dependencies": "off",
+        // camelcase is a default typescript setting
+        "@typescript-eslint/camelcase": ["error", {"ignoreImports": true}],
+        // disable the below checks
+        "@typescript-eslint/no-explicit-any": 0,
+        "global-require": 0,
+        "object-shorthand": 0
     },
     settings: {
         "import/resolver": {
