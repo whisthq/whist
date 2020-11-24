@@ -13,6 +13,7 @@ const Header = (props: {
     user: any
     dark: boolean
     account?: boolean
+    waitlistUser: any
 }) => {
     const { width } = useContext(MainContext)
 
@@ -148,18 +149,21 @@ const Header = (props: {
                             </DropdownButton>
                         </>
                     ) : (
-                        <Link
-                            to="/auth/bypass"
-                            className={
-                                dark ? "header-link-light" : "header-link"
-                            }
-                            style={{
-                                fontWeight: "bold",
-                                marginRight: 0,
-                            }}
-                        >
-                            Sign In
-                        </Link>
+                        props.waitlistUser &&
+                        props.waitlistUser.user_id && (
+                            <div>
+                                <Link
+                                    to="/auth/bypass"
+                                    className="header-link"
+                                    style={{
+                                        fontWeight: "bold",
+                                        marginRight: 0,
+                                    }}
+                                >
+                                    Sign In
+                                </Link>
+                            </div>
+                        )
                     )}
                 </div>
             </div>
@@ -169,9 +173,11 @@ const Header = (props: {
 
 const mapStateToProps = (state: {
     AuthReducer: { user: any; authFlow: any }
+    WaitlistReducer: { waitlistUser: any }
 }) => {
     return {
         user: state.AuthReducer.user,
+        waitlistUser: state.WaitlistReducer.waitlistUser,
     }
 }
 
