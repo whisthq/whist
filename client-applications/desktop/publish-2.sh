@@ -40,12 +40,7 @@ else
 
      python3 setVersion.gyp $bucket $version
 
-     rm -rf .protocol
-     git clone --depth 1 https://github.com/fractal/protocol .protocol
-     cd .protocol
-     git reset --hard
-     git fetch --depth 25 origin $branch:$branch 
-     git checkout $branch
+     cd ../../protocol
      cmake . -DCMAKE_BUILD_TYPE=Release
      make FractalClient
      cd ..
