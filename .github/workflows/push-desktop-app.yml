@@ -4,7 +4,7 @@ name: Push images
 # Publish on update to master branch
 on:
     push:
-        branches: [eric/script-automate]
+        branches: [eric/add-wf]
     workflow_dispatch:
 
 jobs:
