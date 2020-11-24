@@ -22,7 +22,7 @@ export function updateAuth(body: {
 
 export function updateContainer(body: {
     publicIP: string
-    container_id: string
+    containerID: string
     cluster: string
     port32262: string
     port32263: string
