@@ -41,6 +41,7 @@ else
      python3 setVersion.gyp $bucket $version
      
      ls
+     cd ../../protocol
      cmake . -DCMAKE_BUILD_TYPE=Release
      make FractalClient
      cd ..
