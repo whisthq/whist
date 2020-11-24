@@ -27,7 +27,7 @@ jobs:
                   submodules: recursive
 
             - name: Build protocol
-              run: cd protocol/desktop && ls && ./linux-client.sh release
+              run: cd protocol/desktop && ls && ./linux-client-setup.sh release
             
             - name: Publish the client-application
               run: cd client-applications && cd desktop && ./publish.sh release
