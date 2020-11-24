@@ -19,7 +19,7 @@ const Update = (props: any) => {
         const ipc = require("electron").ipcRenderer
 
         ipc.on("percent", (_: any, percent: any) => {
-            percent = percent * 3
+            percent *= 3
             setPercentageLeft(500 - percent)
             setPercentageDownloaded(percent)
         })
@@ -62,7 +62,7 @@ const Update = (props: any) => {
                             <Titlebar backgroundColor="#000000" />
                         </div>
                     ) : (
-                        <div style={{ marginTop: 10 }}></div>
+                        <div style={{ marginTop: 10 }} />
                     )}
                     <div className={styles.landingHeader}>
                         <div className={styles.landingHeaderLeft}>
@@ -91,14 +91,14 @@ const Update = (props: any) => {
                                         height: 6,
                                         background: "#EFEFEF",
                                     }}
-                                ></div>
+                                />
                                 <div
                                     style={{
                                         width: `${percentageLeft}px`,
                                         height: 6,
                                         background: "#111111",
                                     }}
-                                ></div>
+                                />
                             </div>
                             {downloadError === "" ? (
                                 <div
@@ -147,13 +147,13 @@ const Update = (props: any) => {
                                     marginTop: 5,
                                 }}
                             >
-                                {transferred} / {total} MB Downloaded
+                                {transferred} /{total} MB Downloaded
                             </div>
                         </div>
                     </div>
                 </div>
             ) : (
-                <div></div>
+                <div />
             )}
         </div>
     )
