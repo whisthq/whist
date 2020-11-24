@@ -4,9 +4,9 @@ name: Python Linters
 
 on:
   pull_request:
-    branches: [ master, dev ]
+    branches: [master, dev]
     paths:
-    - '/main-webserver/**'
+      - "/main-webserver/**"
 
 jobs:
   lint:

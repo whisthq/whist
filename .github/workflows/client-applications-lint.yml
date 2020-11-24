@@ -4,9 +4,9 @@ name: Lint client-applications
 
 on:
   pull_request:
-    branches: [ master, dev ]
+    branches: [master, dev]
     paths:
-    - '/client-applications/**'
+      - "/client-applications/**"
 
 jobs:
   lint:
