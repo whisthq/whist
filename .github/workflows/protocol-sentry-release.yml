@@ -2,11 +2,10 @@ name: Sentry Release
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
     paths:
-    - '/protocol/**'
-    - '!/protocol/README.md'
-
+      - "/protocol/**"
+      - "!/protocol/README.md"
 
 jobs:
   createSentryRelease:
@@ -20,7 +19,7 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: "3.8"
       - name: Install Python requests (for sentry download)
         uses: actions/setup-python@v2
       - name: install python requests

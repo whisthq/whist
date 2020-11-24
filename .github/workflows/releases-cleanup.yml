@@ -1,15 +1,16 @@
 # This workflow deletes GitHub Releases/Tags every 7 days, keeping the 5 latest Releases/Tags
 
-name: 'Delete old releases'
+name: "Delete Old GitHub Releases & Tags"
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # every 7 days
+    - cron: "0 0 * * 0" # every 7 days
 
 jobs:
   delete-releases:
+    name: "Delete Releases"
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Purge releases/tags over 7 days old, keeping the 5 latest
         uses: dev-drprasad/delete-older-releases@v0.1.0

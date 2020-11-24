@@ -302,7 +302,7 @@
                        "npm":  "\u003e=4.x",
                        "yarn":  "\u003e=0.21.3"
                    },
-    "homepage":  "https://www.fractalcomputers.com",
+    "homepage":  "https://www.tryfractal.com",
     "jest":  {
                  "moduleDirectories":  [
                                            "node_modules",
@@ -348,7 +348,7 @@
     "productName":  "Fractal",
     "repository":  {
                        "type":  "git",
-                       "url":  "git://github.com/fractalcomputers/client-applications.git"
+                       "url":  "git://github.com/fractal/client-applications.git"
                    },
     "scripts":  {
                     "build":  "concurrently \"yarn build-main\" \"yarn build-renderer\"",

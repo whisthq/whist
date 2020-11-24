@@ -4,18 +4,17 @@ name: ECS Host Service Sentry Release
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
     paths:
-    - '/ecs-host-service/**'
-    - '!/ecs-host-service/README.md'
-
+      - "/ecs-host-service/**"
+      - "!/ecs-host-service/README.md"
 
 jobs:
   createSentryRelease:
     runs-on: ubuntu-latest
     env:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      SENTRY_ORG: fractalcomputers
+      SENTRY_ORG: tryfractal
       SENTRY_PROJECT: ecs-host-service
       SENTRY_DEPLOY_ENVIRONMENT: production
 

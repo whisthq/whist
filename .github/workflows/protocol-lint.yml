@@ -5,7 +5,7 @@ name: Protocol Linter
 on:
   pull_request:
   paths:
-  - '/protocol/**'
+    - "/protocol/**"
 
 env:
   CMAKE_VERSION: 3.15.7
@@ -32,4 +32,3 @@ jobs:
         run: |
           cd protocol && make clang-format
           cd protocol && git diff-index --quiet HEAD --
-

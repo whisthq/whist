@@ -74,7 +74,7 @@ This repository has basic continuous integration through GitHub Actions. For eve
 
 New builds from the `dev` will also be pushed out on the `testing` channel.
 
-Moreover, new builds from [fractal/protocol](https://github.com/fractalcomputers/protocol) will trigger builds in this repository on their corresponding branch (or on `dev` if there is no appropriate corresponding branch). Similarly, new protocol builds on `dev` will also trigger a new build to be sent out on the `testing` channel.
+Moreover, new builds from [fractal/protocol](https://github.com/fractal/protocol) will trigger builds in this repository on their corresponding branch (or on `dev` if there is no appropriate corresponding branch). Similarly, new protocol builds on `dev` will also trigger a new build to be sent out on the `testing` channel.
 
 Additionally, [style](#Styling) checks will be run to verify that you formatted your code via Prettier. You should make sure that all tests pass under the Actions tab.
 
