@@ -60,6 +60,7 @@ else
      Rez -append tmpicns.rsrc -o protocol-build/desktop/FractalClient # append this resource to the file you want to icon-ize
      SetFile -a C protocol-build/desktop/FractalClient # use the resource to set the icon
      rm tmpicns.rsrc # clean up
+     ls
      # copy over the Unison executable and FFmpeg dylibs
      cp protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol-build/desktop
      cp protocol/lib/64/ffmpeg/Darwin/libavdevice.58.dylib protocol-build/desktop
