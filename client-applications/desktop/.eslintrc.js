@@ -8,7 +8,14 @@ module.exports = {
         // disable the below checks
         "@typescript-eslint/no-explicit-any": 0,
         "global-require": 0,
-        "object-shorthand": 0
+        "object-shorthand": 0,
+        "no-param-reassign": 0,
+        "prefer-destructuring": 0,
+        "react/jsx-indent": 0, // we use prettier's indent rules
+        "react/jsx-indent-props": 0, // we use prettier's indent rules
+        // demote the below checks to warning instead of error
+        "no-shadow": 1,
+        "react/jsx-props-no-spreading": 1,
     },
     settings: {
         "import/resolver": {

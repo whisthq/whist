@@ -3,7 +3,6 @@ import { render } from "react-dom"
 import { Provider } from "react-redux"
 import { ConnectedRouter } from "connected-react-router"
 import { AppContainer as ReactHotAppContainer } from "react-hot-loader"
-import { configureStore, history } from "./store/configureStore"
 import {
     ApolloProvider,
     ApolloClient,
@@ -16,8 +15,10 @@ import { WebSocketLink } from "@apollo/client/link/ws"
 
 import RootApp from "rootApp"
 
-import "./app.global.css"
 import { config } from "shared/constants/config"
+import { configureStore, history } from "./store/configureStore"
+
+import "./app.global.css"
 
 const store = configureStore()
 
