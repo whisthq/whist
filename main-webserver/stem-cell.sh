@@ -13,7 +13,7 @@
 
 case "$1" in
     "web")
-	if [ "$HOT_RELOAD" = "true" ]; then
+	if [ -n "$HOT_RELOAD" ]; then
 	    FLASK_ENV=development flask run --host "0.0.0.0" --port "$PORT"
 	else
 	    waitress-serve --port="$PORT" app:app
@@ -21,7 +21,7 @@ case "$1" in
     "celery")
 	# The two containers share the same requirements.txt file, but we only
 	# want the watchmedo utility to be installed in the Celery container.
-	$([ "$HOT_RELOAD" = "true" ] && \
+	$([ -n "$HOT_RELOAD" ] && \
 	      (pip install watchdog[watchmedo] >&2
 	       echo "watchmedo auto-restart -R -d . --")) \
 		   celery --app=celery_worker.celery_instance worker ;;
