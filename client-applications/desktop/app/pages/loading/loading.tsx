@@ -10,6 +10,7 @@ import { debugLog } from "shared/utils/logging"
 import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/configureStore"
 import { execChmodUnix } from "shared/utils/exec"
+import { delay } from "redux-saga/effects"
 
 const Loading = (props: any) => {
     const {
@@ -46,6 +47,8 @@ const Loading = (props: any) => {
 
     useEffect(() => {
         if (launches === 1) {
+            console.log("LAUNCH PROTOCOL")
+            delay(1000)
             LaunchProtocol()
         }
     }, [launches])

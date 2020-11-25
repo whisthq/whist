@@ -210,7 +210,7 @@ function* createTestContainer(action: any) {
     // TODO what to do about this? is this necessary for not breaking stuff?
     yield put(
         Action.updateContainer({
-            desiredAppID: "Test App",
+            desiredAppID: action.app,
         })
     )
 
@@ -221,7 +221,9 @@ function* createTestContainer(action: any) {
     const region = state.MainReducer.admin.region
     const webserver = state.MainReducer.admin.webserver_url
 
-    console.log(`launching test container for user ${username} with task arn ${task_arn} in region ${region} with webserver ${webserver}`)
+    console.log(
+        `launching test container for user ${username} with task arn ${task_arn} in region ${region} with webserver ${webserver}`
+    )
 
     if (!username || username === "None" || username === "") {
         history.push("/")
@@ -241,13 +243,6 @@ function* createTestContainer(action: any) {
         state.MainReducer.auth.accessToken,
         webserver // webserver_url
     )
-
-    // might want to remove this
-    // if (response.status === 401 || response.status === 422) {
-    //     yield call(refreshAccess)
-    //     yield call(createTestContainer, action)
-    //     return
-    // }
 
     if (response.status === 202) {
         const id = json.ID
@@ -273,6 +268,10 @@ function* createTestContainer(action: any) {
         )
 
         while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
+            console.log(
+                `was able to get status for ${id} and json.state was ${json.state}`
+            )
+
             if (secondsPassed % 1 === 0) {
                 var { json, response } = yield call(
                     apiGet,
@@ -318,7 +317,10 @@ function* createTestContainer(action: any) {
         }
         // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
         if (json && json.state && json.state === "SUCCESS") {
+            console.log(`success status!`)
+
             if (json.output) {
+                console.log(`got output! it was ${JSON.stringify(json.output)}`)
                 yield put(
                     Action.updateContainer({
                         container_id: json.output.container_id,

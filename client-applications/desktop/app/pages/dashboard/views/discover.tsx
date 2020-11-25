@@ -65,7 +65,11 @@ const Discover = (props: any) => {
         const results = featuredAppData.filter(getSearchResults)
         setSearchResults(
             results.map((app: any) => (
-                <App key={app.app_id} app={app} admin={app.app_id === "Test App"} />
+                <App
+                    key={app.app_id}
+                    app={app}
+                    admin={app.app_id === "Test App"}
+                />
             ))
         )
     }, [search])
@@ -84,7 +88,11 @@ const Discover = (props: any) => {
                     }}
                 >
                     {appGroup.map((app: any) => (
-                        <App key={app.app_id} app={app} admin={app.app_id === "Test App"} />
+                        <App
+                            key={app.app_id}
+                            app={app}
+                            admin={app.app_id === "Test App"}
+                        />
                     ))}
                 </Row>
             </Carousel.Item>

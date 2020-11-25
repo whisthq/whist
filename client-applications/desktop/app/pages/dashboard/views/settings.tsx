@@ -94,7 +94,8 @@ const Settings = (props: { username: string; dispatch: any }) => {
             if (
                 ["us-east-1", "us-west-1", "ca-central-1"].indexOf(
                     admin_region
-                ) > -1
+                ) > -1 &&
+                admin_region.trim() !== ""
             ) {
                 dispatch(
                     updateAdmin({
@@ -117,11 +118,13 @@ const Settings = (props: { username: string; dispatch: any }) => {
                 webserver = null
             }
 
-            dispatch(
-                updateAdmin({
-                    webserver_url: webserver,
-                })
-            )
+            if (!webserver || webserver.trim() !== "") {
+                dispatch(
+                    updateAdmin({
+                        webserver_url: webserver,
+                    })
+                )
+            }
 
             //update task arn if it's valid
             //we want to copy the exact arn
@@ -131,7 +134,7 @@ const Settings = (props: { username: string; dispatch: any }) => {
                         task_arn: null,
                     })
                 )
-            } else {
+            } else if (admin_task.trim() !== "") {
                 dispatch(
                     updateAdmin({
                         task_arn: admin_task,

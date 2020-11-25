@@ -43,9 +43,10 @@ export function createContainer(app: string, url: string) {
     }
 }
 
-export function createTestContainer() {
+export function createTestContainer(app: string) {
     return {
         type: CREATE_TEST_CONTAINER,
+        app,
     }
 }
 

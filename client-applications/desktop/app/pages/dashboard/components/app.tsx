@@ -30,7 +30,7 @@ const App = (props: any) => {
         if (launches === 1 && launched) {
             history.push("/loading")
             if (admin) {
-                dispatch(createTestContainer())
+                dispatch(createTestContainer(app.app_id))
             } else {
                 dispatch(createContainer(app.app_id))
             }
