@@ -479,9 +479,9 @@ class StripeClient:
                 function="StripeClient.add_card",
                 label=email,
                 logs="Unable to add card to user",
-                level=logging.ERROR
+                level=logging.ERROR,
             )
-        
+
         try:
             postal_code = source["owner"]["address"]["postal_code"]
         except:
@@ -490,7 +490,7 @@ class StripeClient:
                 function="StripeClient.add_card",
                 label=email,
                 logs="Unable to add postal code to user",
-                level=logging.ERROR
+                level=logging.ERROR,
             )
 
         stripe_customer_id = user.stripe_customer_id
@@ -511,7 +511,7 @@ class StripeClient:
                 user.card_last_four = last4
                 user.postal_code = postal_code
                 db.session.commit()
-            except: 
+            except:
                 raise InvalidStripeToken
 
     def delete_card(self, email, source):
