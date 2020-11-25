@@ -4,7 +4,6 @@ import { Provider } from "react-redux"
 import { ConnectedRouter } from "connected-react-router"
 import { AppContainer as ReactHotAppContainer } from "react-hot-loader"
 import { history, configureStore } from "store/configureStore"
-//import { store } from "store/store"
 import {
     ApolloProvider,
     ApolloClient,
