@@ -208,11 +208,11 @@ function* getPromoCode(action: any) {
 // to test specific stuff that's not exposed to regular customers
 function* createTestContainer(action: any) {
     // TODO what to do about this? is this necessary for not breaking stuff?
-    // yield put(
-    //     Action.updateContainer({
-    //         desiredAppID: action.app,
-    //     })
-    // )
+    yield put(
+        Action.updateContainer({
+            desiredAppID: "Test App",
+        })
+    )
 
     const state = yield select()
 
@@ -220,6 +220,8 @@ function* createTestContainer(action: any) {
     const task_arn = state.MainReducer.admin.task_arn
     const region = state.MainReducer.admin.region
     const webserver = state.MainReducer.admin.webserver_url
+
+    console.log(`launching test container for user ${username} with task arn ${task_arn} in region ${region} with webserver ${webserver}`)
 
     if (!username || username === "None" || username === "") {
         history.push("/")
@@ -241,14 +243,16 @@ function* createTestContainer(action: any) {
     )
 
     // might want to remove this
-    if (response.status === 401 || response.status === 422) {
-        yield call(refreshAccess)
-        yield call(createTestContainer, action)
-        return
-    }
+    // if (response.status === 401 || response.status === 422) {
+    //     yield call(refreshAccess)
+    //     yield call(createTestContainer, action)
+    //     return
+    // }
 
     if (response.status === 202) {
         const id = json.ID
+
+        console.log(`container creation succeeded with id ${id}`)
 
         // TODO not sure if this is as desired?
         var { json, response } = yield call(
@@ -264,7 +268,7 @@ function* createTestContainer(action: any) {
         yield put(
             Action.updateLoading({
                 percentLoaded: progressSoFar,
-                statusMessage: "Preparing to stream " + action.app,
+                statusMessage: "Preparing to stream test app",
             })
         )
 

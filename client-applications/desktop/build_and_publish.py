@@ -42,10 +42,11 @@ default_channel_s3_buckets = {
 
 
 def select_protocol_binary(platform: str, protocol_id: str, protocol_dir: Path) -> Path:
-    valid_protocols = protocol_dir.glob(f"*{platform}*.*")
+    valid_protocols = protocol_dir.glob("*{platform}*.*".format(platform=platform))
     mtime_sorted_protocols = sorted(
         map(lambda p: (p, p.stat().st_mtime), valid_protocols), key=lambda b: b[1],
     )
+    print(mtime_sorted_protocols)
     if len(mtime_sorted_protocols) < 1:
         raise Exception(
             f"Unable to find any protocol packages for {platform} in {str(protocol_dir)}. Maybe you need to run `retrieve_protocol_packages.py` to download one for this platform."
@@ -89,7 +90,7 @@ def run_cmd(cmd: List[str], **kwargs):
 
 
 def prep_unix(protocol_dir: Path) -> None:  # Shared by Linux and macOS
-    (protocol_dir / "sshkey").chmod(0o600)
+    #(protocol_dir / "sshkey").chmod(0o600)
     (protocol_dir / "FractalClient").chmod(0o744)
 
 
@@ -236,7 +237,7 @@ if __name__ == "__main__":
     # #####
     shutil.rmtree(protocol_dir, ignore_errors=True)
     print(f"Unpacking '{protocol}' to '{protocol_dir}'")
-    # shutil.unpack_archive(protocol, protocol_dir)
+    shutil.unpack_archive(protocol, protocol_dir)
     cleanup_list.append(protocol_dir)
     # Depending on how the archive was created it may place the files (like "FractalClient") directly
     # in the root of the destination (ie. protocol_dir), or it might create an intermediate folder
@@ -261,6 +262,7 @@ if __name__ == "__main__":
         and len(list(protocol_dir.glob("FractalClient*"))) != 3
     ):
         print(list(protocol_dir.glob("FractalClient*")))
+        #print(list(protocol_dir.glob("*")))
         raise Exception(
             f"The unpacked protocol does not match the expected format in '{protocol_dir}'"
         )
