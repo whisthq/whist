@@ -13,6 +13,21 @@ import { PuffAnimation } from "shared/components/loadingAnimations"
 import Banner from "pages/dashboard/components/banner"
 import App from "pages/dashboard/components/app"
 
+import FractalImg from "assets/images/fractal.svg"
+
+/// here is a constant test app we add at the beginning
+const adminApp = {
+    app_id: "Test App",
+    logo_url: FractalImg,
+    category: "Test",
+    description: "Test app for Fractal admins",
+    long_description:
+        "You can use the admin app to test if you are a Fractal admin (i.e. your email ends with @tryfractal). Go to settings and where the admin settings are set a task ARN, webserver (dev | local | staging | prod | a url), and region (us-east-1 | us-west-1 | ca-central-1). In any field you can enter reset to reset it to null. If you try to launch without setting then it will not work since it will be null (or your previous settings if you change one).",
+    url: "tryfractal.com",
+    tos: "https://www.tryfractal.com/termsofservice",
+    active: true, // not used
+}
+
 const Discover = (props: any) => {
     const { updateCurrentTab, accessToken, username, search } = props
 
@@ -41,6 +56,10 @@ const Discover = (props: any) => {
     const featuredAppData = data
         ? data.hardware_supported_app_images.filter(checkActive)
         : []
+
+    if (adminUsername) {
+        featuredAppData.push(adminApp)
+    }
 
     useEffect(() => {
         const results = featuredAppData.filter(getSearchResults)
@@ -157,11 +176,6 @@ const Discover = (props: any) => {
                                 zIndex: 2,
                             }}
                         >
-                            {adminUsername && (
-                                <Carousel.Item>
-                                    <App admin={true} />
-                                </Carousel.Item>
-                            )}
                             {featuredApps}
                         </Carousel>
                     </Row>
