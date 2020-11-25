@@ -34,7 +34,7 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
 
     if env is not None:
         sentry_sdk.init(
-            dsn="https://3d228295baab4919a7e4fa8163c72098@o400459.ingest.sentry.io/5394545",
+            dsn="https://9b796075e3f44ebca47c2a59c12251ca@o400459.ingest.sentry.io/5394545",
             integrations=[FlaskIntegration(), CeleryIntegration()],
             environment=env,
             release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),
