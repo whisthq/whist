@@ -469,8 +469,29 @@ class StripeClient:
             raise NonexistentUser
 
         source_id = source["id"]
-        brand = source["card"]["brand"]
-        last4 = source["card"]["last4"]
+        try:
+            brand = source["card"]["brand"]
+            last4 = source["card"]["last4"]
+        except:
+            brand = None
+            last4 = None
+            fractalLog(
+                function="StripeClient.add_card",
+                label=email,
+                logs="Unable to add card to user",
+                level=logging.ERROR
+            )
+        
+        try:
+            postal_code = source["owner"]["address"]["postal_code"]
+        except:
+            postal_code = None
+            fractalLog(
+                function="StripeClient.add_card",
+                label=email,
+                logs="Unable to add postal code to user",
+                level=logging.ERROR
+            )
 
         stripe_customer_id = user.stripe_customer_id
         if not stripe_customer_id or not self.validate_customer_id(stripe_customer_id, user):
@@ -479,6 +500,7 @@ class StripeClient:
                 user.stripe_customer_id = customer["id"]
                 user.card_brand = brand
                 user.card_last_four = last4
+                user.postal_code = postal_code
                 db.session.commit()
             except:
                 raise InvalidStripeToken
@@ -487,6 +509,7 @@ class StripeClient:
                 stripe.Customer.create_source(stripe_customer_id, source=source_id)
                 user.card_brand = brand
                 user.card_last_four = last4
+                user.postal_code = postal_code
                 db.session.commit()
             except: 
                 raise InvalidStripeToken
