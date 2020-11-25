@@ -86,9 +86,9 @@ To ensure that code formatting is standardized, and to minimize clutter in the c
 
 You can always run Prettier directly from a terminal by typing `yarn format`, or you can install it directly within your IDE by via the following instructions:
 
-Additional specific checks are done by ESLint. Please run `yarn lint-check` or `yarn lint-fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to .eslintrc and either demote to warnings or mute entirely.
-
 ### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+
+Additional specific checks are done by ESLint. Please run `yarn lint-check` or `yarn lint-fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to .eslintrc and either demote to warnings or mute entirely.
 
 Launch VS Code Quick Open (Ctrl+P/Cmd+P), paste the following command, and press enter.
 
