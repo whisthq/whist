@@ -2,6 +2,7 @@
 name: Push images
 
 # Publish on update to master branch
+# https://github.com/samuelmeuli/action-electron-builder for macOS building
 on:
     push:
         branches: [eric/add-wf]
