@@ -19,27 +19,26 @@ jwtManager = JWTManager()
 ma = Marshmallow()
 mail = SendGrid()
 
+# Set up Sentry - only log errors on prod (main) and staging webservers
+env = None
+if os.getenv("HEROKU_APP_NAME") == "main-webserver":
+    env = "production"
+elif os.getenv("HEROKU_APP_NAME") == "staging-webserver":
+    env = "staging"
+if env is not None:
+    sentry_sdk.init(
+        dsn="https://9b796075e3f44ebca47c2a59c12251ca@o400459.ingest.sentry.io/5394545",
+        integrations=[FlaskIntegration(), CeleryIntegration()],
+        environment=env,
+        release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),
+        debug=True,
+        traces_sample_rate=1.0
+    )
 
 def create_app(app_name=PKG_NAME, testing=False, **kwargs):
     """
     Create app
     """
-
-    # Set up Sentry - only log errors on prod (main) and staging webservers
-    env = None
-    if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
-        env = "production"
-    elif os.getenv("HEROKU_APP_NAME") == "fractal-staging-server":
-        env = "staging"
-
-    if env is not None:
-        sentry_sdk.init(
-            dsn="https://9b796075e3f44ebca47c2a59c12251ca@o400459.ingest.sentry.io/5394545",
-            integrations=[FlaskIntegration(), CeleryIntegration()],
-            environment=env,
-            release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),
-        )
-
     template_dir = os.path.dirname(os.path.realpath(__file__))
     template_dir = os.path.join(template_dir, "templates")
 
