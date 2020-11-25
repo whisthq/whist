@@ -15,6 +15,7 @@ module.exports = {
         "react/jsx-indent": 0, // we use prettier's indent rules
         "react/jsx-indent-props": 0, // we use prettier's indent rules
         "react/jsx-key": 0,
+        "react/jsx-one-expression-per-line": 0,
         "vars-on-top": 0,
 
         // demote the below checks to warning instead of error
