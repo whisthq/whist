@@ -90,3 +90,6 @@ export const config: any =
     process.env.NODE_ENV === "development"
         ? environment.development
         : environment[LIVE_ENV]
+
+// meant to help us easily integrate a video later
+export const VIDEO_READY: boolean = false

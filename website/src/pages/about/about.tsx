@@ -11,6 +11,8 @@ import MainContext from "shared/context/mainContext"
 
 import { teamData } from "pages/about/constants/team"
 
+import { VIDEO_READY } from "shared/constants/config"
+
 import "styles/about.css"
 
 const About = (props: any) => {
@@ -47,6 +49,11 @@ const About = (props: any) => {
                 <div style={{ marginTop: 50 }}>
                     <SideBySide case={"Gaming"} width={width} />
                 </div>
+                {VIDEO_READY && (
+                    <div style={{ paddingTop: 50 }}>
+                        <SideBySide case={"DemoVideo"} width={width} reverse />
+                    </div>
+                )}
                 <Row>
                     <Col md={12} style={{ textAlign: "left", marginTop: 100 }}>
                         <h2>Our Stories</h2>

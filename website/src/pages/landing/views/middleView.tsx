@@ -20,11 +20,6 @@ const MiddleView = (props: any) => {
                 </div>
             </div>
             <DemoVideo width={width} />
-            {/* <div style={{ position: "relative", width: "100%" }}>
-                <div style={{ paddingTop: width > 720 ? 80 : 0 }}>
-                    <SideBySide case={"DemoVideo"} width={width} />
-                </div>
-            </div> */}
             <Row
                 style={{
                     marginTop: width > 720 ? 175 : 75,
