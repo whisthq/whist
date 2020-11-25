@@ -43,10 +43,10 @@ const App = (props: any) => {
         return (
             <div className={styles.appContainer} onClick={() => null}>
                 <div className={styles.appHeading}>
-                    <img src={} className={styles.appImage} />
-                    <div className={styles.appName}>{app.app_id}</div>
+                    <img src={FractalImg} className={styles.appImage} />
+                    <div className={styles.appName}>Test app</div>
                 </div>
-                <div className={styles.appDescription}>{app.description}</div>
+                <div className={styles.appDescription}>A test app for Fractal admins.</div>
                 <button className={styles.launchButton} onClick={handleLaunch}>
                     LAUNCH
                 </button>
@@ -57,16 +57,11 @@ const App = (props: any) => {
             <>
                 <div className={styles.appContainer} onClick={handleOpenModal}>
                     <div className={styles.appHeading}>
-                        <img src={FractalImg} className={styles.appImage} />
-                        <div className={styles.appName}>Test App</div>
+                        <img src={app.logo_url} className={styles.appImage} />
+                        <div className={styles.appName}>{app.app_id}</div>
                     </div>
-                    <div className={styles.appDescription}>
-                        A test app for @tryfractal.com admins.
-                    </div>
-                    <button
-                        className={styles.launchButton}
-                        onClick={handleLaunch}
-                    >
+                    <div className={styles.appDescription}>{app.description}</div>
+                    <button className={styles.launchButton} onClick={handleLaunch}>
                         LAUNCH
                     </button>
                 </div>
@@ -89,10 +84,7 @@ const App = (props: any) => {
                     >
                         <div style={{ display: "flex", flexDirection: "row" }}>
                             <div
-                                style={{
-                                    minWidth: "120px",
-                                    paddingRight: "20px",
-                                }}
+                                style={{ minWidth: "120px", paddingRight: "20px" }}
                             >
                                 <img
                                     src={app.logo_url}
