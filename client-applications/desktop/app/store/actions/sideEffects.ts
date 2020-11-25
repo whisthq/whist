@@ -3,6 +3,7 @@ export const GOOGLE_LOGIN = "GOOGLE_LOGIN"
 export const REMEMBER_ME_LOGIN = "REMEMBER_ME_LOGIN"
 
 export const CREATE_CONTAINER = "CREATE_CONTAINER"
+export const CREATE_TEST_CONTAINER = "CREATE_TEST_CONTAINER"
 
 export const SUBMIT_FEEDBACK = "SUBMIT_FEEDBACK"
 
@@ -39,6 +40,12 @@ export function createContainer(app: string, url: string) {
         type: CREATE_CONTAINER,
         app,
         url,
+    }
+}
+
+export function createTestContainer() {
+    return {
+        type: CREATE_TEST_CONTAINER,
     }
 }
 

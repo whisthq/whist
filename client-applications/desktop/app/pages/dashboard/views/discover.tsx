@@ -14,7 +14,12 @@ import Banner from "pages/dashboard/components/banner"
 import App from "pages/dashboard/components/app"
 
 const Discover = (props: any) => {
-    const { updateCurrentTab, search } = props
+    const { updateCurrentTab, accessToken, username, search } = props
+
+    const adminUsername =
+        username &&
+        username.indexOf("@") > -1 &&
+        username.split("@")[1] == "tryfractal.com"
 
     const [searchResults, setSearchResults] = useState([])
 
@@ -29,7 +34,7 @@ const Discover = (props: any) => {
     const { data, loading } = useQuery(GET_FEATURED_APPS, {
         context: {
             headers: {
-                Authorization: `Bearer ${props.accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
             },
         },
     })
@@ -40,7 +45,9 @@ const Discover = (props: any) => {
     useEffect(() => {
         const results = featuredAppData.filter(getSearchResults)
         setSearchResults(
-            results.map((app: any) => <App key={app.app_id} app={app} />)
+            results.map((app: any) => (
+                <App key={app.app_id} app={app} admin={false} />
+            ))
         )
     }, [search])
 
@@ -58,7 +65,7 @@ const Discover = (props: any) => {
                     }}
                 >
                     {appGroup.map((app: any) => (
-                        <App key={app.app_id} app={app} />
+                        <App key={app.app_id} app={app} admin={false} />
                     ))}
                 </Row>
             </Carousel.Item>
@@ -150,6 +157,11 @@ const Discover = (props: any) => {
                                 zIndex: 2,
                             }}
                         >
+                            {adminUsername && (
+                                <Carousel.Item>
+                                    <App admin={true} />
+                                </Carousel.Item>
+                            )}
                             {featuredApps}
                         </Carousel>
                     </Row>
@@ -161,6 +173,7 @@ const Discover = (props: any) => {
 
 const mapStateToProps = (state: any) => {
     return {
+        username: state.MainReducer.auth.username,
         accessToken: state.MainReducer.auth.accessToken,
     }
 }
