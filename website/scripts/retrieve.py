@@ -14,7 +14,7 @@ AWS_REGION = "us-east-1"
 
 # local filenames by the types
 TYPES_LOCAL = {
-    "env" : ".env"
+    "env" : "../.env"
 }
 
 def get_upload_filename(repo, filetype, timestamp=None):
