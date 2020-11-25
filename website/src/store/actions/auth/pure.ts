@@ -15,6 +15,8 @@ export function updateUser(body: {
     canLogin?: boolean
     waitlistToken?: string
     usingGoogleLogin?: boolean
+    cardBrand?: string | null
+    cardLastFour?: string | null
 }) {
     return {
         type: UPDATE_USER,

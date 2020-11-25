@@ -14,6 +14,8 @@ export const DEFAULT = {
         canLogin: false, // are they off the waitlist?
         waitlistToken: null,
         usingGoogleLogin: false, // if the user signed in using Google
+        cardBrand: null, // brand of card the user has added
+        cardLastFour: null, // last four digits of the card the user has added
     },
     authFlow: {
         mode: "Sign up", // what auth is doing right now (todo in the future make it an enum)

@@ -195,7 +195,6 @@ const Dashboard = (props: {
                 </div>
             )
         } else {
-            // for now it wil lalways be loading
             return (
                 <div className="fractalContainer">
                     <Header dark={false} account />
@@ -206,25 +205,28 @@ const Dashboard = (props: {
                             marginTop: 70,
                         }}
                     >
-                        <div
-                            style={{
-                                color: "#111111",
-                                fontSize: 32,
-                                fontWeight: "bold",
-                            }}
-                        >
-                            Congratulations{name.length < 7 ? " " + name : ""}!
+                        <div>
+                            <div
+                                style={{
+                                    color: "#111111",
+                                    fontSize: 32,
+                                    fontWeight: "bold",
+                                }}
+                            >
+                                Congratulations
+                                {name.length < 7 ? " " + name : ""}!
+                            </div>
+                            <div
+                                style={{
+                                    marginTop: 20,
+                                    color: "#333333",
+                                }}
+                            >
+                                You've been selected to join our private beta!
+                                Click the button below to download Fractal.
+                            </div>
+                            <DownloadBox />
                         </div>
-                        <div
-                            style={{
-                                marginTop: 20,
-                                color: "#333333",
-                            }}
-                        >
-                            You've been selected to join our private beta! Click
-                            the button below to download Fractal.
-                        </div>
-                        <DownloadBox />
                     </div>
                 </div>
             )

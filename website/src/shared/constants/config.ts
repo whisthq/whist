@@ -18,6 +18,7 @@ const environment: any = {
             Windows:
                 "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe",
         },
+        payment_enabled: true,
     },
     development: {
         url: {
@@ -38,6 +39,7 @@ const environment: any = {
             Windows:
                 "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe   ",
         },
+        payment_enabled: true,
     },
     staging: {
         url: {
@@ -59,6 +61,7 @@ const environment: any = {
             Windows:
                 "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
         },
+        payment_enabled: false,
     },
     production: {
         url: {
@@ -79,6 +82,7 @@ const environment: any = {
             Windows:
                 "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
         },
+        payment_enabled: false,
     },
 }
 
@@ -86,7 +90,8 @@ const LIVE_ENV = process.env.REACT_APP_ENVIRONMENT
     ? process.env.REACT_APP_ENVIRONMENT.toString()
     : "development"
 
+// export const config: any = environment.local
 export const config: any =
     process.env.NODE_ENV === "development"
-        ? environment.development
+        ? environment.local
         : environment[LIVE_ENV]
