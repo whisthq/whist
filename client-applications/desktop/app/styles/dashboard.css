@@ -143,17 +143,19 @@
 }
 
 .appContainer {
-    width: 290px;
+    width: 280px;
     height: 185px;
     display: flex;
     flex-direction: column;
     padding: 25px;
     z-index: 1;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 5px;
-    box-shadow: 0px 1px 8px #dddddd;
+    background: white;
+    border-radius: 0px;
+    /* box-shadow: 0px 1px 20px #dddddd; */
     margin: 5px;
+    margin-bottom: 10px;
     transition: all 0.2s ease-in-out;
+    border: solid 0.5px #999999;
 }
 
 .appContainer:hover {
@@ -274,7 +276,7 @@
     width: 100vw;
     height: 100vh;
     overflow-x: hidden;
-    overflow-y: hidden;
+    overflow-y: scroll;
     font-family: "Maven Pro";
     margin: 0px;
     background-size: cover;
@@ -290,7 +292,7 @@
     justify-content: space-around;
     width: 525px;
     height: 275px;
-    margin: 15px 0 0 90px;
+    margin: 15px 0 0 50px;
     z-index: 1;
 }
 

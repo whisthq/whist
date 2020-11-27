@@ -44,26 +44,24 @@ const Discover = (props: any) => {
         )
     }, [search])
 
+    console.log(featuredAppData)
+
     let featuredApps = []
-    for (var i = 0; i < featuredAppData.length; i += 3) {
-        let appGroup = featuredAppData.slice(i, i + 3)
-        featuredApps.push(
-            <Carousel.Item style={{ width: "100%" }} key={i}>
-                <Row
-                    style={{
-                        display: "flex",
-                        flexDirection: "row",
-                        alignItems: "flex-start",
-                        margin: "50px 60px",
-                    }}
-                >
-                    {appGroup.map((app: any) => (
-                        <App key={app.app_id} app={app} />
-                    ))}
-                </Row>
-            </Carousel.Item>
-        )
-    }
+    // let appGroup = featuredAppData.slice(i, i + 3)
+    featuredApps.push(
+        <div style={{ width: "100%" }}>
+            <Row
+                style={{
+                    width: "100%",
+                    padding: "50px 60px",
+                }}
+            >
+                {featuredAppData.map((app: any) => (
+                    <App key={app.app_id} app={app} />
+                ))}
+            </Row>
+        </div>
+    )
 
     const nextArrow = (
         <FontAwesomeIcon
@@ -136,13 +134,7 @@ const Discover = (props: any) => {
                             flexDirection: "row",
                         }}
                     >
-                        <Carousel
-                            controls
-                            indicators={false}
-                            interval={null}
-                            wrap={false}
-                            nextIcon={nextArrow}
-                            prevIcon={prevArrow}
+                        <div
                             style={{
                                 width: "100%",
                                 position: "relative",
@@ -151,7 +143,7 @@ const Discover = (props: any) => {
                             }}
                         >
                             {featuredApps}
-                        </Carousel>
+                        </div>
                     </Row>
                 </>
             )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react"
+import { Col } from "react-bootstrap"
 import { connect } from "react-redux"
 import { Modal } from "react-bootstrap"
 import styles from "styles/dashboard.css"
@@ -35,7 +36,7 @@ const App = (props: any) => {
     }, [launches, launched])
 
     return (
-        <>
+        <Col xs={4}>
             <div className={styles.appContainer} onClick={handleOpenModal}>
                 <div className={styles.appHeading}>
                     <img src={app.logo_url} className={styles.appImage} />
@@ -120,7 +121,7 @@ const App = (props: any) => {
                     </button>
                 </Modal.Body>
             </Modal>
-        </>
+        </Col>
     )
 }
 
