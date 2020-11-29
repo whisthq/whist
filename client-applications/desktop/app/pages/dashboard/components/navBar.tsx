@@ -39,15 +39,16 @@ const NavBar = (props: any) => {
     const [showProfile, setShowProfile] = useState(false)
 
     const handleSignout = () => {
-        const storage = require("electron-json-storage")
-        storage.set(
-            "credentials",
-            { username: "", accessToken: "", refreshToken: "" },
-            () => {
-                dispatch(resetState())
-                history.push("/")
-            }
-        )
+        const Store = require("electron-store")
+        const storage = new Store()
+
+        new Promise((resolve, _) => {
+            storage.set("accessToken", null)
+            resolve()
+        }).then(() => {
+            dispatch(resetState())
+            history.push("/")
+        })
     }
 
     return (
