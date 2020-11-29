@@ -37,6 +37,13 @@ if (
     require("electron-debug")()
 }
 
+var myEmitter = new (require("events").EventEmitter)()
+
+// add this handler before emitting any events
+process.on("uncaughtException", function (err) {
+    console.log("UNCAUGHT EXCEPTION - keeping process alive:", err) // err.message is "foobar"
+})
+
 // Custom logging to hide console logs in prod
 const debugLog = (callback: any) => {
     debugLog(process.env.NODE_ENV)
@@ -90,7 +97,7 @@ const createWindow = async () => {
         })
     }
     mainWindow.loadURL(`file://${__dirname}/app.html`)
-    // mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools()
 
     // @TODO: Use 'ready-to-show' event
     //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
