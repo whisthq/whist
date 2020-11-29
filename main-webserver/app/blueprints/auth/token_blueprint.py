@@ -7,6 +7,7 @@ from app.helpers.utils.general.tokens import getAccessTokens
 
 token_bp = Blueprint("token_bp", __name__)
 
+
 @token_bp.route("/token/refresh", methods=["POST"])
 @jwt_refresh_token_required
 @fractalPreProcess
@@ -29,7 +30,7 @@ def token(**kwargs):  # pylint: disable=unused-argument
 
 @token_bp.route("/token/validate", methods=["GET"])
 @fractalPreProcess
-@jwt_required  
+@jwt_required
 def validateToken(**kwargs):
     output = validateTokenHelper()
     return jsonify(output), output["status"]
