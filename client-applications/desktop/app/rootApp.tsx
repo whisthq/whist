@@ -44,6 +44,7 @@ const RootApp = (props: any) => {
 
         // Custom URL listener
         ipc.on("customURL", (_: any, customURL: string) => {
+            console.log(customURL)
             if (customURL && customURL.toString().includes("fractal://")) {
                 customURL = "fractal://" + customURL.split("fractal://")[1]
                 // Convert URL to URL object so it can be parsed
@@ -52,7 +53,7 @@ const RootApp = (props: any) => {
 
                 // Check to see if this is an auth request
                 accessToken = urlObj.searchParams.get("accessToken")
-                console.log("Read from fractal:// that access token is")
+                console.log("Read from URL that access token is")
                 console.log(accessToken)
                 if (accessToken) {
                     setAccessToken(accessToken)
