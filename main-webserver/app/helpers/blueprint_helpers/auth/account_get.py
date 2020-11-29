@@ -49,7 +49,7 @@ def fetchUserHelper(username):
         access_token, refresh_token = getAccessTokens(username)
         output = user_schema.dump(user)
         output["access_token"] = access_token
-        output["refresh_token"] = refresh_token 
+        output["refresh_token"] = refresh_token
         return {"user": output, "status": SUCCESS}
     else:
         return {"user": None, "status": BAD_REQUEST}
