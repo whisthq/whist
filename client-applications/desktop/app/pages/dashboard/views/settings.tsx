@@ -14,14 +14,18 @@ const Settings = (props: any) => {
     const [showSavedAlert, setShowSavedAlert] = useState(false)
 
     useEffect(() => {
-        const storage = require("electron-json-storage")
-        storage.get("settings", (error: any, data: any) => {
-            if (error) throw error
-            if (data && data.lowInternetMode && data.bandwidth) {
-                setLowInternetMode(data.lowInternetMode)
-                setBandwidth(data.bandwidth)
-            }
-        })
+        const Store = require("electron-store")
+        const storage = new Store()
+
+        const lowInternetMode = storage.get("lowInternetMode")
+        const bandwidth = storage.get("bandwidth")
+
+        if (lowInternetMode) {
+            setLowInternetMode(lowInternetMode)
+        }
+        if (bandwidth) {
+            setBandwidth(bandwidth)
+        }
     }, [])
 
     const toggleLowInternetMode = (mode: boolean) => {
@@ -33,12 +37,13 @@ const Settings = (props: any) => {
     }
 
     const handleSave = () => {
-        const storage = require("electron-json-storage")
+        const Store = require("electron-store")
+        const storage = new Store()
         const mbps = bandwidth === 50 ? 500 : bandwidth
-        storage.set("settings", {
-            lowInternetMode: lowInternetMode,
-            bandwidth: mbps,
-        })
+
+        storage.set("lowInternetMode", lowInternetMode)
+        storage.set("bandwidth", mbps)
+
         setShowSavedAlert(true)
     }
 

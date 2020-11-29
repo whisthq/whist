@@ -21,7 +21,6 @@ const RootApp = (props: any) => {
     const [needsUpdate, setNeedsUpdate] = useState(false)
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [launched, setLaunched] = useState(false)
-    const [loggedIn, setLoggedIn] = useState(false)
     const [accessToken, setAccessToken] = useState("")
 
     const { data } = useQuery(GET_FEATURED_APPS)
@@ -46,6 +45,7 @@ const RootApp = (props: any) => {
         // Custom URL listener
         ipc.on("customURL", (_: any, customURL: string) => {
             if (customURL && customURL.toString().includes("fractal://")) {
+                customURL = "fractal://" + customURL.split("fractal://")[1]
                 // Convert URL to URL object so it can be parsed
                 const urlObj = new URL(customURL.toString())
                 urlObj.protocol = "https"
@@ -56,6 +56,7 @@ const RootApp = (props: any) => {
                 console.log(accessToken)
                 if (accessToken) {
                     setAccessToken(accessToken)
+                    dispatch(updateContainer({ launchURL: null }))
                 } else {
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
                 }
@@ -64,8 +65,6 @@ const RootApp = (props: any) => {
 
         // If already logged in, redirect to dashboard
         accessToken = storage.get("accessToken")
-        console.log("Electron storage access token is")
-        console.log(accessToken)
         if (accessToken) {
             setAccessToken(accessToken)
         }
@@ -74,8 +73,6 @@ const RootApp = (props: any) => {
     // If there's an access token, validate it
     useEffect(() => {
         if (accessToken && accessToken !== "") {
-            console.log("Use effect validating access token")
-            console.log(accessToken)
             dispatch(validateAccessToken(accessToken))
         }
     }, [accessToken])
@@ -135,7 +132,6 @@ const RootApp = (props: any) => {
     }, [
         needsUpdate,
         updatePingReceived,
-        loggedIn,
         launchURL,
         launches,
         props.username,
