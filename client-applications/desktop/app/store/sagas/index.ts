@@ -34,28 +34,25 @@ function* refreshAccess() {
 
 function* validateAccessToken(action: any) {
     const { json, response } = yield call(
-        apiPost,
-        `/token/validate`,
-        {
-            token: action.accessToken,
-        },
-        ""
+        apiGet,
+        "/token/validate",
+        action.accessToken
     )
 
     console.log("Token validate POST retured")
     console.log(json)
 
-    if (response.status === 200 && json) {
+    if (response && response.status === 200 && json && json.user) {
         const Store = require("electron-store")
         const storage = new Store()
 
-        storage.set("accessToken", accessToken)
+        storage.set("accessToken", action.accessToken)
 
         yield put(
             Action.updateAuth({
-                username: json.user,
+                username: json.user.user_id,
                 accessToken: action.accessToken,
-                refreshToken: null,
+                refreshToken: json.user.refresh_token,
             })
         )
     } else {
