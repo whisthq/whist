@@ -9,19 +9,20 @@ import Dashboard from "pages/dashboard/dashboard"
 import Update from "pages/update/update"
 
 import { history } from "store/configureStore"
-import { createContainer } from "store/actions/sideEffects"
-import { updateClient, updateContainer } from "store/actions/pure"
+import { createContainer, validateAccessToken } from "store/actions/sideEffects"
+import { updateClient, updateContainer, updateAuth } from "store/actions/pure"
 import { setAWSRegion } from "shared/utils/exec"
 import { checkActive, urlToApp } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
-import { debugLog } from "shared/utils/logging"
 
 const RootApp = (props: any) => {
-    const { username, accessToken, launches, launchURL, dispatch } = props
+    const { launches, launchURL, dispatch } = props
 
     const [needsUpdate, setNeedsUpdate] = useState(false)
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [launched, setLaunched] = useState(false)
+    const [loggedIn, setLoggedIn] = useState(false)
+    const [accessToken, setAccessToken] = useState("")
 
     const { data } = useQuery(GET_FEATURED_APPS)
 
@@ -29,59 +30,117 @@ const RootApp = (props: any) => {
         ? data.hardware_supported_app_images.filter(checkActive)
         : []
 
+    const Store = require("electron-store")
+    const storage = new Store()
+
     useEffect(() => {
         const ipc = require("electron").ipcRenderer
+        var accessToken: string | null = null
 
+        // Update listener
         ipc.on("update", (_: any, update: any) => {
             setNeedsUpdate(update)
             setUpdatePingReceived(true)
         })
 
-        ipc.on("customURL", (_: any, customURL: any) => {
+        // Custom URL listener
+        ipc.on("customURL", (_: any, customURL: string) => {
             if (customURL && customURL.toString().includes("fractal://")) {
-                customURL = customURL.split("fractal://")[1]
-                dispatch(updateContainer({ launchURL: customURL }))
+                // Convert URL to URL object so it can be parsed
+                const urlObj = new URL(customURL.toString())
+                urlObj.protocol = "https"
+
+                // Check to see if this is an auth request
+                accessToken = urlObj.searchParams.get("accessToken")
+                console.log("Read from fractal:// that access token is")
+                console.log(accessToken)
+                if (accessToken) {
+                    setAccessToken(accessToken)
+                } else {
+                    dispatch(updateContainer({ launchURL: urlObj.hostname }))
+                }
             }
         })
+
+        // If already logged in, redirect to dashboard
+        accessToken = storage.get("accessToken")
+        console.log("Electron storage access token is")
+        console.log(accessToken)
+        if (accessToken) {
+            setAccessToken(accessToken)
+        }
     }, [])
 
+    // If there's an access token, validate it
+    useEffect(() => {
+        if (accessToken && accessToken !== "") {
+            console.log("Use effect validating access token")
+            console.log(accessToken)
+            dispatch(validateAccessToken(accessToken))
+        }
+    }, [accessToken])
+
+    // If does not need update, logged in and ready to launch
     useEffect(() => {
         if (
             updatePingReceived &&
             !needsUpdate &&
             launchURL &&
-            username &&
-            accessToken
+            props.username &&
+            props.accessToken
         ) {
+            console.log("Updating container")
             dispatch(updateContainer({ launches: launches + 1 }))
             setLaunched(true)
         }
-    }, [username, accessToken, launchURL, updatePingReceived, needsUpdate])
+    }, [
+        props.username,
+        props.accessToken,
+        launchURL,
+        updatePingReceived,
+        needsUpdate,
+    ])
 
+    // If there's an update, redirect to update screen
     useEffect(() => {
         if (needsUpdate && updatePingReceived) {
             history.push("/update")
+        } else {
+            if (!launchURL && props.username && props.accessToken) {
+                history.push("/dashboard")
+            } else if (
+                launches === 1 &&
+                launched &&
+                launchURL &&
+                data &&
+                props.username &&
+                props.accessToken
+            ) {
+                setAWSRegion()
+                    .then((region) => {
+                        dispatch(updateClient({ region: region }))
+                    })
+                    .then(() => {
+                        const { app_id, url } = Object(
+                            urlToApp(launchURL.toLowerCase(), featuredAppData)
+                        )
+                        dispatch(createContainer(app_id, url))
+                        setLaunched(false)
+                    })
+                    .then(() => {
+                        history.push("/loading")
+                    })
+            }
         }
-    }, [needsUpdate, updatePingReceived])
-
-    useEffect(() => {
-        if (launches === 1 && launched && launchURL && data) {
-            setAWSRegion()
-                .then((region) => {
-                    dispatch(updateClient({ region: region }))
-                })
-                .then(() => {
-                    const { app_id, url } = Object(
-                        urlToApp(launchURL.toLowerCase(), featuredAppData)
-                    )
-                    dispatch(createContainer(app_id, url))
-                    setLaunched(false)
-                })
-                .then(() => {
-                    history.push("/loading")
-                })
-        }
-    }, [launches, launched, data, launchURL])
+    }, [
+        needsUpdate,
+        updatePingReceived,
+        loggedIn,
+        launchURL,
+        launches,
+        props.username,
+        props.accessToken,
+    ])
 
     return (
         <div>
@@ -104,6 +163,7 @@ const mapStateToProps = (state: any) => {
     return {
         username: state.MainReducer.auth.username,
         accessToken: state.MainReducer.auth.accessToken,
+        refreshToken: state.MainReducer.auth.refreshToken,
         launches: state.MainReducer.container.launches,
         launchURL: state.MainReducer.container.launchURL,
     }

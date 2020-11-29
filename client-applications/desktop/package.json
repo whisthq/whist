@@ -11,7 +11,7 @@
         "afterSign": "build/notarize.js",
         "appId": "com.fractalcomputers.fractal",
         "artifactName": "Fractal.${ext}",
-        "copyright": "Copyright \ufffd Fractal Computers, Inc.",
+        "copyright": "Copyright � Fractal Computers, Inc.",
         "deb": {
             "icon": "build/icon.png",
             "vendor": "Fractal Computers, Inc."
@@ -111,8 +111,8 @@
         }
     ],
     "dependencies": {
-        "-": "^0.0.1",
         "3": "^2.1.0",
+        "-": "^0.0.1",
         "@apollo/client": "^3.2.4",
         "@fortawesome/fontawesome-free": "^5.12.1",
         "@fortawesome/fontawesome-svg-core": "^1.2.27",
@@ -130,7 +130,7 @@
         "electron-debug": "^3.0.1",
         "electron-json-storage": "^4.1.8",
         "electron-log": "^4.0.7",
-        "electron-store": "^5.1.1",
+        "electron-store": "^6.0.1",
         "electron-titlebar": "^0.0.3",
         "electron-updater": "^4.2.5",
         "eslint-config-airbnb-typescript": "^6.3.1",

@@ -32,146 +32,39 @@ function* refreshAccess() {
     }
 }
 
-function* loginUser(action: any) {
-    if (action.username !== "" && action.password !== "") {
-        const { json } = yield call(apiPost, `/account/login`, {
-            username: action.username,
-            password: action.password,
-        })
+function* validateAccessToken(action: any) {
+    const { json, response } = yield call(
+        apiPost,
+        `/token/validate`,
+        {
+            token: action.accessToken,
+        },
+        ""
+    )
 
-        if (
-            json &&
-            json.verified &&
-            (json.can_login || action.username.includes("@tryfractal.com"))
-        ) {
-            yield put(
-                Action.updateAuth({
-                    accessToken: json.access_token,
-                    refreshToken: json.refresh_token,
-                    username: action.username,
-                    name: json.name,
-                })
-            )
-            if (action.rememberMe) {
-                const storage = require("electron-json-storage")
-                storage.set("credentials", {
-                    username: action.username,
-                    accessToken: json.access_token,
-                    refreshToken: json.refresh_token,
-                })
-            }
-            yield call(fetchPaymentInfo, action)
-            yield call(getPromoCode, action)
-        } else {
-            yield put(Action.updateAuth({ loginWarning: true }))
-            if (json.access_token) {
-                if (!json.verified) {
-                    yield put(
-                        Action.updateAuth({
-                            loginMessage:
-                                "You have not verified your email. Check your email for a verification email.",
-                        })
-                    )
+    console.log("Token validate POST retured")
+    console.log(json)
 
-                    yield call(sendVerificationEmail, {
-                        email: action.username,
-                        token: json.verification_token,
-                    })
-                } else if (
-                    !json.can_login &&
-                    !action.username.includes("@tryfractal.com")
-                ) {
-                    yield put(
-                        Action.updateAuth({
-                            loginMessage:
-                                "You are still on the waitlist. We will email you when you've been selected!",
-                        })
-                    )
-                }
-            }
-        }
-    }
-}
+    if (response.status === 200 && json) {
+        const Store = require("electron-store")
+        const storage = new Store()
 
-function* googleLogin(action: any) {
-    yield select()
+        storage.set("accessToken", accessToken)
 
-    if (action.code) {
-        const { json, response } = yield call(apiPost, `/google/login`, {
-            code: action.code,
-            clientApp: true,
-        })
-        if (json) {
-            if (response.status === 200) {
-                if (!json.can_login) {
-                    yield put(
-                        Action.updateAuth({
-                            loginWarning: true,
-                            loginMessage:
-                                "You are still on the waitlist. We will email you when you've been selected!",
-                        })
-                    )
-                    return
-                }
-                yield put(
-                    Action.updateAuth({
-                        accessToken: json.access_token,
-                        refreshToken: json.refresh_token,
-                        username: json.username,
-                        name: json.name,
-                    })
-                )
-
-                if (action.rememberMe) {
-                    const storage = require("electron-json-storage")
-                    storage.set("credentials", {
-                        username: json.username,
-                        accessToken: json.access_token,
-                        refreshToken: json.refresh_token,
-                    })
-                }
-                yield call(fetchPaymentInfo, { username: json.username })
-                yield call(getPromoCode, { username: json.username })
-                history.push("/dashboard")
-            } else {
-                yield put(
-                    Action.updateAuth({
-                        loginWarning: true,
-                        loginMessage: "Try using non-Google login.",
-                    })
-                )
-            }
-        } else {
-            yield put(Action.updateAuth({ loginWarning: true }))
-        }
+        yield put(
+            Action.updateAuth({
+                username: json.user,
+                accessToken: action.accessToken,
+                refreshToken: null,
+            })
+        )
     } else {
-        yield put(Action.updateAuth({ loginWarning: true }))
-    }
-}
-
-function* rememberMeLogin(action: any) {
-    const { json } = yield call(apiPost, `/account/auto_login`, {
-        username: action.username,
-    })
-
-    if (json) {
-        if (json.status === 200) {
-            yield put(
-                Action.updateAuth({
-                    accessToken: json.access_token,
-                    refreshToken: json.refresh_token,
-                    username: action.username,
-                    name: json.name,
-                })
-            )
-            yield call(fetchPaymentInfo, action)
-            yield call(getPromoCode, action)
-            history.push("/dashboard")
-        } else {
-            yield put(Action.updateAuth({ loginWarning: true }))
-        }
-    } else {
-        yield put(Action.updateAuth({ loginWarning: true }))
+        yield put(
+            Action.updateAuth({
+                loginWarning: true,
+                loginMessage: "Login unsuccessful. Please try again.",
+            })
+        )
     }
 }
 
@@ -188,19 +81,6 @@ function* fetchPaymentInfo(action: any) {
     // if (json && json.accountLocked) {
     //     yield put(Action.updatePayment({ accountLocked: json.accountLocked }))
     // }
-}
-
-function* getPromoCode(action: any) {
-    const state = yield select()
-    const { json } = yield call(
-        apiGet,
-        `/account/code?username=${action.username}`,
-        state.MainReducer.auth.accessToken
-    )
-
-    if (json && json.status === 200) {
-        yield put(Action.updatePayment({ promoCode: json.code }))
-    }
 }
 
 function* createContainer(action: any) {
@@ -375,26 +255,10 @@ function* submitFeedback(action: any) {
     }
 }
 
-function* sendVerificationEmail(action: any) {
-    if (action.email !== "" && action.token !== "") {
-        yield call(
-            apiPost,
-            "/mail/verification",
-            {
-                username: action.email,
-                token: action.token,
-            },
-            ""
-        )
-    }
-}
-
 export default function* rootSaga() {
     yield all([
-        takeEvery(SideEffect.LOGIN_USER, loginUser),
-        takeEvery(SideEffect.GOOGLE_LOGIN, googleLogin),
-        takeEvery(SideEffect.REMEMBER_ME_LOGIN, rememberMeLogin),
         takeEvery(SideEffect.CREATE_CONTAINER, createContainer),
         takeEvery(SideEffect.SUBMIT_FEEDBACK, submitFeedback),
+        takeEvery(SideEffect.VALIDATE_ACCESS_TOKEN, validateAccessToken),
     ])
 }
