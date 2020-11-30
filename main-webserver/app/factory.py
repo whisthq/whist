@@ -23,18 +23,6 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
     """
     Create app
     """
-    template_dir = os.path.dirname(os.path.realpath(__file__))
-    template_dir = os.path.join(template_dir, "templates")
-
-    from .constants.config import (
-        DATABASE_URL,
-        JWT_SECRET_KEY,
-        SENDGRID_API_KEY,
-        DATADOG_API_KEY,
-        DATADOG_APP_KEY,
-        HOST_SERVICE_SECRET,
-    )
-
     # Set up Sentry - only log errors on prod (main) and staging webservers
     env = None
     if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
@@ -50,6 +38,18 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
             debug=True,
             traces_sample_rate=1.0
         )
+
+    template_dir = os.path.dirname(os.path.realpath(__file__))
+    template_dir = os.path.join(template_dir, "templates")
+
+    from .constants.config import (
+        DATABASE_URL,
+        JWT_SECRET_KEY,
+        SENDGRID_API_KEY,
+        DATADOG_API_KEY,
+        DATADOG_APP_KEY,
+        HOST_SERVICE_SECRET,
+    )
 
     app = Flask(app_name, template_folder=template_dir)
 
