@@ -22,16 +22,12 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
 from app.helpers.utils.general.auth import fractalAuth
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
-import sentry_sdk
-
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
 
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
 @fractalPreProcess
 def test_endpoint(action, **kwargs):
-    x = {}
-    y = x['a']
     if action == "create_cluster":
         cluster_name, instance_type, ami, region_name, max_size, min_size = (
             kwargs["body"]["cluster_name"],
