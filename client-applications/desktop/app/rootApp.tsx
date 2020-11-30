@@ -44,7 +44,6 @@ const RootApp = (props: any) => {
 
         // Custom URL listener
         ipc.on("customURL", (_: any, customURL: string) => {
-            console.log(customURL)
             if (customURL && customURL.toString().includes("fractal://")) {
                 customURL = "fractal://" + customURL.split("fractal://")[1]
                 // Convert URL to URL object so it can be parsed
@@ -53,14 +52,11 @@ const RootApp = (props: any) => {
 
                 // Check to see if this is an auth request
                 localAccessToken = urlObj.searchParams.get("accessToken")
-                console.log("Read from URL that access token is")
-                console.log(localAccessToken)
                 if (localAccessToken) {
-                    console.log("setting access token")
                     setAccessToken(localAccessToken)
                     dispatch(updateContainer({ launchURL: null }))
                 } else {
-                    console.log("launch URL")
+                    console.log("launch URL is")
                     console.log(urlObj.hostname)
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
                 }
@@ -69,8 +65,6 @@ const RootApp = (props: any) => {
 
         // If already logged in, redirect to dashboard
         localAccessToken = storage.get("accessToken")
-        console.log("storage acces token is")
-        console.log(localAccessToken)
         if (localAccessToken) {
             setAccessToken(localAccessToken)
         }
@@ -78,8 +72,6 @@ const RootApp = (props: any) => {
 
     // If there's an access token, validate it
     useEffect(() => {
-        console.log("access token use effect")
-        console.log(accessToken)
         if (accessToken && accessToken !== "") {
             dispatch(validateAccessToken(accessToken))
         }
@@ -87,6 +79,7 @@ const RootApp = (props: any) => {
 
     // If does not need update, logged in and ready to launch
     useEffect(() => {
+        console.log("launch plus 1 use effect")
         if (
             updatePingReceived &&
             !needsUpdate &&
@@ -94,7 +87,7 @@ const RootApp = (props: any) => {
             props.username &&
             props.accessToken
         ) {
-            console.log("Updating container")
+            console.log("updating in if statement")
             dispatch(updateContainer({ launches: launches + 1 }))
             setLaunched(true)
         }
@@ -108,6 +101,14 @@ const RootApp = (props: any) => {
 
     // If there's an update, redirect to update screen
     useEffect(() => {
+        console.log("USE EFFECT")
+        console.log(launches)
+        console.log(launched)
+        console.log(launchURL)
+        console.log(data)
+        console.log(props.username)
+        console.log(props.accessToken)
+
         if (needsUpdate && updatePingReceived) {
             history.push("/update")
         } else {
@@ -145,6 +146,7 @@ const RootApp = (props: any) => {
         launches,
         props.username,
         props.accessToken,
+        data,
     ])
 
     return (
