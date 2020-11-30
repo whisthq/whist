@@ -19,12 +19,22 @@ import BlenderDemo from "assets/gifs/blenderDemo.gif"
 
 const DemoVideo = (props: any) => {
     // icons should have length 3
-    const { width, heading, text, icons, component, marginTop } = props
+    const { width, heading, text, icons, component, first } = props
 
     return (
-        <div style={{ position: "relative", width: "100%", marginTop: marginTop }}>
+        <div
+            style={{
+                position: "relative",
+                width: "100%",
+                marginTop: first ? 75 : 25,
+            }}
+        >
             <div style={{ height: width > 1400 ? 75 : 0 }}></div>
-            <div style={{ paddingTop: width > 720 ? 125 : 0 }}>
+            <div
+                style={{
+                    paddingTop: first ? (width > 720 ? 125 : 0) : 15,
+                }}
+            >
                 <h2
                     style={{
                         fontSize: 50,
@@ -42,7 +52,6 @@ const DemoVideo = (props: any) => {
                     width: "100%",
                     maxWidth: 975,
                     marginTop: 40,
-                    marginLeft: 0,
                 }}
             >
                 <Col
@@ -221,15 +230,29 @@ const DemoVideos = (props: any) => {
     const demoText =
         "Curious to see what using Fractal feels like? Watch it's performance side by side with that of native apps and learn from our team about how to seamlessly integrate it with your workflow."
     const demoIcons = [
-        [AnimatedCheckmark, "Find the App for you"],
-        [AnimatedChatbox, "Ask Anything to Our Team and Community"],
-        [AnimatedRocket, "Start Anew"],
+        [AnimatedCheckmark, "Run your graphical application seamlessly"],
+        [AnimatedChatbox, "Recieve support from our team and community"],
+        [AnimatedRocket, "Supercharge your computer"],
     ]
 
-    // DAFUQ
+    // huh?!
     const demoComponent = (
-        <div style={{width: width, height: Math.round(width * 9.0/16.0)}}>
+        <div
+            style={{
+                width: "100%",
+                paddingTop: "56.25%",
+                position: "relative",
+                marginTop: 40,
+            }}
+        >
             <ReactPlayer
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    right: 0,
+                }}
                 width="100%"
                 height="100%"
                 url="https://www.youtube.com/watch?v=PhhC_N6Bm_s"
@@ -246,7 +269,7 @@ const DemoVideos = (props: any) => {
                 text={gifText}
                 icons={gifIcons}
                 component={gifComponent}
-                marginTop={75}
+                first
             />
             {VIDEO_READY && (
                 <DemoVideo
@@ -255,7 +278,6 @@ const DemoVideos = (props: any) => {
                     text={demoText}
                     icons={demoIcons}
                     component={demoComponent}
-                    marginTop={0}
                 />
             )}
         </div>
