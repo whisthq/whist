@@ -91,6 +91,7 @@ volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
 InputDevice* input_device = NULL;
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+extern bool using_sentry;
 char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
 
 #define VIDEO_BUFFER_SIZE 25
@@ -1091,7 +1092,7 @@ const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k
                                      {0, 0, 0, 0}};
 
 // i: means --identifier MUST take an argument
-#define OPTION_STRING "k:i:w:"
+#define OPTION_STRING "k:i:w:e:"
 
 int parse_args(int argc, char* argv[]) {
     // TODO: replace `server` with argv[0]
@@ -1109,6 +1110,8 @@ int parse_args(int argc, char* argv[]) {
         "                                  the protocol code\n"
         "  -i, --identifier=ID           Pass in the unique identifier for this\n"
         "                                  server as a hexadecimal string\n"
+        "  -e, --environment=ENV         The sentry environment the protocol is running in,\n"
+        "                                  e.g master, staging. Default: none\n"
         "  -w, --webserver=WS_URL        Pass in the webserver url for this\n"
         "                                  server's requests\n"
         // special options should be indented further to the left
@@ -1157,6 +1160,15 @@ int parse_args(int argc, char* argv[]) {
                 }
                 strncpy(webserver_url, optarg, MAX_WEBSERVER_URL_LEN);
                 webserver_url[MAX_WEBSERVER_URL_LEN] = 0;
+                break;
+            }
+            case 'e':
+            {
+                // only log "production" and "staging" env sentry events
+                if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
+                    strcpy(sentry_environment, optarg);
+                    using_sentry = true;
+                }
                 break;
             }
             case FRACTAL_GETOPT_HELP_CHAR: {
@@ -1215,8 +1227,6 @@ int main(int argc, char* argv[]) {
 
     srand((unsigned int)time(NULL));
     connection_id = rand();
-    // set env to dev and update later
-    strcpy(sentry_environment, "dev");
 #ifdef _WIN32
     init_logger("C:\\ProgramData\\FractalCache");
 #else

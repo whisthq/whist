@@ -57,6 +57,7 @@ void init_backtrace_handler();
 
 extern int connection_id;
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+extern bool using_sentry;
 
 // logger Semaphores and Mutexes
 static volatile SDL_sem *logger_semaphore;
@@ -99,16 +100,19 @@ void start_connection_log();
 // Initializes the logger and starts a connection log
 void init_logger(char *log_dir) {
     init_backtrace_handler();
-    sentry_options_t *options = sentry_options_new();
-    //    sentry_options_set_debug(options, true); //if sentry is playing up uncomment this
-    sentry_options_set_dsn(options, SENTRY_DSN);
-    // These are used by sentry to classify events and so we can keep track of version specific
-    // issues.
-    char release[200];
-    sprintf(release, "fractal-protocol@%s", FRACTAL_GIT_REVISION);
-    sentry_options_set_release(options, release);
-    sentry_options_set_environment(options, sentry_environment);
-    sentry_init(options);
+
+    if (using_sentry) {
+        sentry_options_t *options = sentry_options_new();
+        //    sentry_options_set_debug(options, true); //if sentry is playing up uncomment this
+        sentry_options_set_dsn(options, SENTRY_DSN);
+        // These are used by sentry to classify events and so we can keep track of version specific
+        // issues.
+        char release[200];
+        sprintf(release, "fractal-protocol@%s", FRACTAL_GIT_REVISION);
+        sentry_options_set_release(options, release);
+        sentry_options_set_environment(options, sentry_environment);
+        sentry_init(options);
+    }
 
     logger_history_len = 0;
     char f[1000] = "";
@@ -167,7 +171,9 @@ void start_connection_log() {
 void destroy_logger() {
     // Wait for any remaining printfs to execute
     SDL_Delay(50);
-    sentry_shutdown();
+    if (using_sentry){
+        sentry_shutdown();
+    }
     run_multithreaded_printf = false;
     SDL_SemPost((SDL_sem *)logger_semaphore);
 
@@ -187,6 +193,8 @@ void destroy_logger() {
 }
 
 void sentry_send_bread_crumb(char *tag, const char *fmt_str, ...) {
+    if (!using_sentry) return;
+
     va_list args;
     va_start(args, fmt_str);
     char sentry_str[LOGGER_BUF_SIZE];
@@ -199,6 +207,8 @@ void sentry_send_bread_crumb(char *tag, const char *fmt_str, ...) {
 }
 
 void sentry_send_event(const char *fmt_str, ...) {
+    if (!using_sentry) return;
+
     va_list args;
     va_start(args, fmt_str);
     char sentry_str[LOGGER_BUF_SIZE];
@@ -700,10 +710,10 @@ void save_connection_id(int connection_id_int) {
     fprintf(connection_id_file, "%d", connection_id_int);
     fclose(connection_id_file);
 
-    // send connection id to sentry as a tag, client also does this
-    char str_connection_id[100];
-    sprintf(str_connection_id, "%d", connection_id_int);
-    sentry_set_tag("connection_id", str_connection_id);
+    // // send connection id to sentry as a tag, client also does this
+    // char str_connection_id[100];
+    // sprintf(str_connection_id, "%d", connection_id_int);
+    // sentry_set_tag("connection_id", str_connection_id);
 }
 
 // The first time this is called will include the initial log messages,

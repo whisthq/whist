@@ -13,6 +13,7 @@
 
 #define UNUSED(x) (void)(x)
 char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+bool using_sentry = false;
 
 // Print Memory Info
 
