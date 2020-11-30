@@ -54,7 +54,6 @@ const RootApp = (props: any) => {
                 localAccessToken = urlObj.searchParams.get("accessToken")
                 if (localAccessToken) {
                     setAccessToken(localAccessToken)
-                    dispatch(updateContainer({ launchURL: null }))
                 } else {
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
                 }
@@ -77,6 +76,12 @@ const RootApp = (props: any) => {
 
     // If does not need update, logged in and ready to launch
     useEffect(() => {
+        console.log("CONTAINER UPDATE 1 USE EFFECT")
+        console.log(updatePingReceived)
+        console.log(needsUpdate)
+        console.log(launchURL)
+        console.log(props.username)
+        console.log(props.accessToken)
         if (
             updatePingReceived &&
             !needsUpdate &&

@@ -10,13 +10,9 @@ import Settings from "pages/dashboard/views/settings"
 import Support from "pages/dashboard/views/support"
 
 const Dashboard = (props: any) => {
-    const { launchURL, os } = props
+    const { os } = props
     const [currentTab, setCurrentTab] = useState("Discover")
     const [search, setSearch] = useState("")
-
-    if (launchURL) {
-        return <Redirect to="/loading" />
-    }
 
     return (
         <div className={styles.container}>
