@@ -367,7 +367,7 @@ jobs:
                   execute_process(COMMAND ccache -s)
 
             - name: Get latest sentry-cli
-              uses: rpadaki/setup-sentry-cli@master
+              uses: mathrix-education/setup-sentry-cli@master
             - name: Upload debug information to sentry
               run: |
                   sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
