@@ -5,9 +5,12 @@ import { Redirect } from "react-router"
 import Header from "shared/components/header"
 import NameForm from "pages/profile/components/nameForm"
 import PasswordForm from "pages/profile/components/passwordForm"
+import PaymentForm from "pages/profile/components/paymentForm"
 import * as PureAuthAction from "store/actions/auth/pure"
 import { deepCopy } from "shared/utils/reducerHelpers"
 import { DEFAULT } from "store/reducers/auth/default"
+
+import { config } from "shared/constants/config"
 
 import "styles/profile.css"
 
@@ -49,6 +52,7 @@ const Profile = (props: any) => {
                     <div className="section-info">{user.user_id}</div>
                     <NameForm />
                     <PasswordForm />
+                    {config.payment_enabled && <PaymentForm />}
                     <button
                         className="white-button"
                         style={{
