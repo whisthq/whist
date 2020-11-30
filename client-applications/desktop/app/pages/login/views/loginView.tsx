@@ -54,7 +54,7 @@ const LoginView = (props: any) => {
                         style={{ fontWeight: "bold", cursor: "pointer" }}
                     >
                         here
-                    </span>
+                    </span>{" "}
                     if it doesn't appear. Once you've logged in, this page will
                     automatically redirect.
                 </div>
