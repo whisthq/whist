@@ -39,9 +39,6 @@ function* validateAccessToken(action: any) {
         action.accessToken
     )
 
-    console.log("Token validate POST retured")
-    console.log(json)
-
     if (response && response.status === 200 && json && json.user) {
         const Store = require("electron-store")
         const storage = new Store()
