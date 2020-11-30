@@ -402,12 +402,14 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
 #endif
 
     // Handle init email email
-    if (client_id == host_id) {
-        sentry_value_t user = sentry_value_new_object();
-        sentry_value_set_by_key(user, "email", sentry_value_new_string(fmsg.user_email));
-        sentry_set_user(user);
-    } else {
-        sentry_send_bread_crumb("info", "non host email: %s", fmsg.user_email);
+    if (using_sentry) {
+        if (client_id == host_id) {
+            sentry_value_t user = sentry_value_new_object();
+            sentry_value_set_by_key(user, "email", sentry_value_new_string(fmsg.user_email));
+            sentry_set_user(user);
+        } else {
+            sentry_send_bread_crumb("info", "non host email: %s", fmsg.user_email);
+        }
     }
 
     return 0;
