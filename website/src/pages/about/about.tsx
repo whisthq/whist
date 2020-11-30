@@ -1,5 +1,6 @@
 import React, { useContext } from "react"
 import { Row, Col, Carousel } from "react-bootstrap"
+import ReactPlayer from "react-player"
 
 import InvestorBox from "pages/about/components/investorBox"
 import EmployeeBox from "pages/about/components/employeeBox"
@@ -50,8 +51,19 @@ const About = (props: any) => {
                     <SideBySide case={"Gaming"} width={width} />
                 </div>
                 {VIDEO_READY && (
-                    <div style={{ paddingTop: 50 }}>
-                        <SideBySide case={"DemoVideo"} width={width} reverse />
+                    <div style={{ /*zIndex: 3,*/ position: "relative" }}>
+                        <ReactPlayer
+                            width="100%"
+                            //height="auto"
+                            url="https://www.youtube.com/watch?v=PhhC_N6Bm_s"
+                            controls
+                        />
+                        <div>
+                            Curious to see what using Fractal feels like? Watch
+                            it's performance side by side with that of native
+                            apps and learn from our team about how to seamlessly
+                            integrate it with your workflow.
+                        </div>
                     </div>
                 )}
                 <Row>

@@ -1,8 +1,6 @@
 import React, { useContext } from "react"
 import { Row, Col } from "react-bootstrap"
 
-import ReactPlayer from "react-player"
-
 import WaitlistForm from "shared/components/waitlistForm"
 import MainContext from "shared/context/mainContext"
 
@@ -63,16 +61,6 @@ function SideBySide(props: any) {
                     normally. We handle all the complexity so that your
                     experience is seamless. All that's required to run Fractal
                     is an 8 Mbps Internet connection.
-                </div>
-            </div>
-        ),
-        DemoVideo: (
-            <div>
-                <div>
-                    Curious to see what using Fractal feels like? Watch it's
-                    performance side by side with that of native apps and learn
-                    from our team about how to seamlessly integrate it with your
-                    workflow.
                 </div>
             </div>
         ),
@@ -222,18 +210,6 @@ function SideBySide(props: any) {
             </div>
         </div>
     )
-
-    const DemoVideo = (
-        <div style={{ zIndex: 3, position: "relative" }}>
-            <ReactPlayer
-                width="100%"
-                //height="auto"
-                url="https://www.youtube.com/watch?v=PhhC_N6Bm_s"
-                controls
-            />
-        </div>
-    )
-
     const Gaming = (
         <div>
             <img
@@ -248,14 +224,12 @@ function SideBySide(props: any) {
         Productivity: Productivity,
         Gaming: Gaming,
         Graphics: Graphics,
-        DemoVideo: DemoVideo,
     }
 
     const headers: any = {
         Productivity: "Unlock more RAM and blazing-fast Internet.",
         Gaming: "How It Works",
         Graphics: "No GPU? No problem.",
-        DemoVideo: "Watch It In Action",
     }
 
     return (
