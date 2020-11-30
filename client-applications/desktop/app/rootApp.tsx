@@ -56,8 +56,6 @@ const RootApp = (props: any) => {
                     setAccessToken(localAccessToken)
                     dispatch(updateContainer({ launchURL: null }))
                 } else {
-                    console.log("launch URL is")
-                    console.log(urlObj.hostname)
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
                 }
             }
@@ -79,7 +77,6 @@ const RootApp = (props: any) => {
 
     // If does not need update, logged in and ready to launch
     useEffect(() => {
-        console.log("launch plus 1 use effect")
         if (
             updatePingReceived &&
             !needsUpdate &&
@@ -87,7 +84,6 @@ const RootApp = (props: any) => {
             props.username &&
             props.accessToken
         ) {
-            console.log("updating in if statement")
             dispatch(updateContainer({ launches: launches + 1 }))
             setLaunched(true)
         }
@@ -101,14 +97,6 @@ const RootApp = (props: any) => {
 
     // If there's an update, redirect to update screen
     useEffect(() => {
-        console.log("USE EFFECT")
-        console.log(launches)
-        console.log(launched)
-        console.log(launchURL)
-        console.log(data)
-        console.log(props.username)
-        console.log(props.accessToken)
-
         if (needsUpdate && updatePingReceived) {
             history.push("/update")
         } else {
