@@ -34,7 +34,7 @@ const RootApp = (props: any) => {
 
     useEffect(() => {
         const ipc = require("electron").ipcRenderer
-        var accessToken: string | null = null
+        var localAccessToken: string | null = null
 
         // Update listener
         ipc.on("update", (_: any, update: any) => {
@@ -52,27 +52,34 @@ const RootApp = (props: any) => {
                 urlObj.protocol = "https"
 
                 // Check to see if this is an auth request
-                accessToken = urlObj.searchParams.get("accessToken")
+                localAccessToken = urlObj.searchParams.get("accessToken")
                 console.log("Read from URL that access token is")
-                console.log(accessToken)
-                if (accessToken) {
-                    setAccessToken(accessToken)
+                console.log(localAccessToken)
+                if (localAccessToken) {
+                    console.log("setting access token")
+                    setAccessToken(localAccessToken)
                     dispatch(updateContainer({ launchURL: null }))
                 } else {
+                    console.log("launch URL")
+                    console.log(urlObj.hostname)
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
                 }
             }
         })
 
         // If already logged in, redirect to dashboard
-        accessToken = storage.get("accessToken")
-        if (accessToken) {
-            setAccessToken(accessToken)
+        localAccessToken = storage.get("accessToken")
+        console.log("storage acces token is")
+        console.log(localAccessToken)
+        if (localAccessToken) {
+            setAccessToken(localAccessToken)
         }
     }, [])
 
     // If there's an access token, validate it
     useEffect(() => {
+        console.log("access token use effect")
+        console.log(accessToken)
         if (accessToken && accessToken !== "") {
             dispatch(validateAccessToken(accessToken))
         }
@@ -105,6 +112,7 @@ const RootApp = (props: any) => {
             history.push("/update")
         } else {
             if (!launchURL && props.username && props.accessToken) {
+                setAccessToken("")
                 history.push("/dashboard")
             } else if (
                 launches === 1 &&
