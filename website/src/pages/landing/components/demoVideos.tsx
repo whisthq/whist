@@ -255,7 +255,7 @@ const DemoVideos = (props: any) => {
                 }}
                 width="100%"
                 height="100%"
-                url="https://www.youtube.com/watch?v=PhhC_N6Bm_s"
+                url="https://www.youtube.com/watch?v=LXb3EKWsInQ" //subject to change/ should be hd
                 controls
             />
         </div>

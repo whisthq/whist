@@ -97,4 +97,4 @@ export const config: any =
         : environment[LIVE_ENV]
 
 // meant to help us easily integrate a video later
-export const VIDEO_READY: boolean = true
+export const VIDEO_READY: boolean = false
