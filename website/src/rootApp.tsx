@@ -13,6 +13,8 @@ import Verify from "pages/auth/verify"
 import Reset from "pages/auth/reset"
 import Dashboard from "pages/dashboard/dashboard"
 import Profile from "pages/profile/profile"
+import Plan from "pages/plan/plan"
+import Payment from "pages/payment/payment"
 
 import withTracker from "shared/utils/withTracker"
 
@@ -64,6 +66,8 @@ const RootApp = (props: any) => {
                     component={withTracker(Dashboard)}
                 />
                 <Route exact path="/profile" component={withTracker(Profile)} />
+                <Route exact path="/plan" component={withTracker(Plan)} />
+                <Route exact path="/payment" component={withTracker(Payment)} />
                 <Route
                     exact
                     path="/:first?/:second?"

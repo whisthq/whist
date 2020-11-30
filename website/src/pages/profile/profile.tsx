@@ -6,9 +6,12 @@ import Header from "shared/components/header"
 import NameForm from "pages/profile/components/nameForm"
 import PasswordForm from "pages/profile/components/passwordForm"
 import PaymentForm from "pages/profile/components/paymentForm"
+import PlanForm from "pages/profile/components/planForm"
 import * as PureAuthAction from "store/actions/auth/pure"
+import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 import { deepCopy } from "shared/utils/reducerHelpers"
-import { DEFAULT } from "store/reducers/auth/default"
+import { DEFAULT as AUTH_DEFAULT } from "store/reducers/auth/default"
+import { DEFAULT as DASHBOARD_DEFAULT } from "store/reducers/dashboard/default"
 
 import { config } from "shared/constants/config"
 
@@ -20,8 +23,18 @@ const Profile = (props: any) => {
     const valid_user = user.user_id && user.user_id !== ""
 
     const handleSignOut = () => {
-        dispatch(PureAuthAction.updateUser(deepCopy(DEFAULT.user)))
-        dispatch(PureAuthAction.updateAuthFlow(deepCopy(DEFAULT.authFlow)))
+        dispatch(PureAuthAction.updateUser(deepCopy(AUTH_DEFAULT.user)))
+        dispatch(PureAuthAction.updateAuthFlow(deepCopy(AUTH_DEFAULT.authFlow)))
+        dispatch(
+            PaymentPureAction.updateStripeInfo(
+                deepCopy(DASHBOARD_DEFAULT.stripeInfo)
+            )
+        )
+        dispatch(
+            PaymentPureAction.updatePaymentFlow(
+                deepCopy(DASHBOARD_DEFAULT.paymentFlow)
+            )
+        )
     }
 
     // Clear redux values on page load that will be set when editing password
@@ -52,7 +65,12 @@ const Profile = (props: any) => {
                     <div className="section-info">{user.user_id}</div>
                     <NameForm />
                     <PasswordForm />
-                    {config.payment_enabled && <PaymentForm />}
+                    {config.payment_enabled && (
+                        <>
+                            <PlanForm />
+                            <PaymentForm />
+                        </>
+                    )}
                     <button
                         className="white-button"
                         style={{

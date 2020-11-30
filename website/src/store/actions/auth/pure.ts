@@ -17,6 +17,8 @@ export function updateUser(body: {
     usingGoogleLogin?: boolean
     cardBrand?: string | null
     cardLastFour?: string | null
+    postalCode?: string
+    plan?: string | null
 }) {
     return {
         type: UPDATE_USER,

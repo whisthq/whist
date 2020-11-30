@@ -15,7 +15,9 @@ export const DEFAULT = {
         waitlistToken: null,
         usingGoogleLogin: false, // if the user signed in using Google
         cardBrand: null, // brand of card the user has added
-        cardLastFour: null, // last four digits of the card the user has added
+        cardLastFour: null, // last four digits of the card the user has added, should be a string
+        postalCode: null, // two character code for billing state used to get tax rate
+        plan: null, // name of plan user is subscribed to, null || "hourly" | "unlimited"
     },
     authFlow: {
         mode: "Sign up", // what auth is doing right now (todo in the future make it an enum)

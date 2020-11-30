@@ -23,30 +23,13 @@
     letter-spacing: 1.1px;
 }
 
-.saved {
-    font-style: italic;
-    margin-right: 15px;
-    animation: FadeAnimation 0.5s ease-in 1s forwards;
+.add {
+    font-size: 14px;
+    color: #4285ff;
 }
 
-@keyframes FadeAnimation {
-    0% {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    100% {
-        opacity: 0;
-        visibility: hidden;
-    }
-}
-
-.add-name {
-    display: flex;
-    flex-direction: row;
-}
-
-.add-name:hover {
+.add:hover,
+.edit:hover {
     cursor: pointer;
 }
 

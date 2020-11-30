@@ -94,21 +94,13 @@ const NameForm = (props: any) => {
                             <div>{user.name} </div>
                         ) : (
                             <div
-                                className="add-name"
+                                className="add"
                                 onClick={() => {
                                     setEditingName(true)
                                     setSavedName(false)
                                 }}
                             >
-                                <FaEdit style={{ fontSize: "20px" }} />
-                                <div
-                                    style={{
-                                        marginLeft: "15px",
-                                        fontStyle: "italic",
-                                    }}
-                                >
-                                    Add your name
-                                </div>
+                                + Add your name
                             </div>
                         )}
                         {user.name && (
@@ -122,7 +114,7 @@ const NameForm = (props: any) => {
                                     <div className="saved">Saved!</div>
                                 )}
                                 <FaEdit
-                                    className="add-name"
+                                    className="edit"
                                     onClick={() => {
                                         setEditingName(true)
                                         setSavedName(false)

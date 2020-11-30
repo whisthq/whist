@@ -180,7 +180,7 @@ const PasswordForm = (props: any) => {
                                 <div className="saved">Saved!</div>
                             )}
                             <FaEdit
-                                className="add-name"
+                                className="edit"
                                 onClick={() => setChangingPassword(true)}
                                 style={{ fontSize: "20px" }}
                             />

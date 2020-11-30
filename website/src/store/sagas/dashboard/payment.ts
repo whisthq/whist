@@ -37,10 +37,16 @@ function* addCard(action: any) {
                 PaymentPureAction.updateStripeInfo({
                     stripeRequestRecieved: true,
                     stripeStatus: "failure",
-                    cards: state.DashboardReducer.stripeInfo.cards + 1,
                 })
             )
         }
+    } else {
+        yield put(
+            PaymentPureAction.updateStripeInfo({
+                stripeRequestRecieved: true,
+                stripeStatus: "failure",
+            })
+        )
     }
 }
 

@@ -11,4 +11,7 @@ export const DEFAULT = {
         stripeRequestRecieved: false, // TODO: potentially remove stripeRequestRecieved and just keep stripeStatus
         stripeStatus: null, // null | "success" | "failure"
     },
+    paymentFlow: {
+        plan: null, // plan user has selected while going through checkout flow
+    },
 }

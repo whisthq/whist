@@ -5,8 +5,10 @@ import { Dropdown, DropdownButton } from "react-bootstrap"
 
 import MainContext from "shared/context/mainContext"
 import * as PureAuthAction from "store/actions/auth/pure"
+import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 import { deepCopy } from "shared/utils/reducerHelpers"
-import { DEFAULT } from "store/reducers/auth/default"
+import { DEFAULT as AUTH_DEFAULT } from "store/reducers/auth/default"
+import { DEFAULT as DASHBOARD_DEFAULT } from "store/reducers/dashboard/default"
 
 const Header = (props: {
     dispatch: any
@@ -19,7 +21,17 @@ const Header = (props: {
     const { dispatch, user, account, dark } = props
 
     const handleSignOut = () => {
-        dispatch(PureAuthAction.updateUser(deepCopy(DEFAULT.user)))
+        dispatch(PureAuthAction.updateUser(deepCopy(AUTH_DEFAULT.user)))
+        dispatch(
+            PaymentPureAction.updateStripeInfo(
+                deepCopy(DASHBOARD_DEFAULT.stripeInfo)
+            )
+        )
+        dispatch(
+            PaymentPureAction.updatePaymentFlow(
+                deepCopy(DASHBOARD_DEFAULT.paymentFlow)
+            )
+        )
     }
 
     // Only render navigation links for desktops and tablets

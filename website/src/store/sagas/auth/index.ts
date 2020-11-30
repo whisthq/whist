@@ -34,6 +34,7 @@ function* emailLogin(action: any) {
                 emailVerificationToken: json.verification_token,
                 cardBrand: json.card_brand,
                 cardLastFour: json.card_last_four,
+                postalCode: json.postal_code,
             })
         )
         yield put(
@@ -85,6 +86,7 @@ function* googleLogin(action: any) {
                         usingGoogleLogin: json.using_google_login,
                         cardBrand: json.card_brand,
                         cardLastFour: json.card_last_four,
+                        postalCode: json.postal_code,
                     })
                 )
 

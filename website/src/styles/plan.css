@@ -1,0 +1,121 @@
+.plan {
+    max-width: 800px;
+    margin: auto;
+    margin-top: 70px;
+}
+
+.priceBox-container {
+    padding: 30px;
+    height: 260px;
+    margin-bottom: 20px;
+    border: solid 0.8px #cccccc;
+    width: 100%;
+}
+
+.priceBox-container:hover {
+    cursor: pointer;
+}
+
+.priceBox-name {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.priceBox-checkbox {
+    float: right;
+    width: 15px;
+    height: 15px;
+    border-radius: 8px;
+    border: solid 0.5px #555555;
+    position: relative;
+    top: 9px;
+}
+
+.priceBox-subText {
+    font-size: 12px;
+    color: #555555;
+}
+
+.priceBox-priceContainer {
+    margin-top: 20px;
+    margin-bottom: 25px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.priceBox-dollarSign {
+    display: inline;
+    position: relative;
+    margin-right: 5px;
+    top: 10px;
+}
+
+.priceBox-price {
+    display: inline;
+    position: relative;
+    font-size: 40px;
+    font-weight: 500;
+}
+
+.priceBox-mo {
+    display: inline;
+    position: relative;
+    margin-left: 8px;
+    top: 30px;
+    font-size: 14px;
+}
+
+.priceBox-details {
+    color: #333333;
+    display: block;
+    position: relative;
+    bottom: 5px;
+    font-size: 14px;
+}
+
+.priceBoxes {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.priceBox-wrapper {
+    width: 30%;
+}
+
+.next-button {
+    float: right;
+    width: 200px;
+    background: #3930b8;
+    border: none;
+    color: white;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    text-align: center;
+    margin-top: 30px;
+}
+
+@media only screen and (max-width: 600px) {
+    .plan {
+        width: 100%;
+        margin-top: 40px;
+    }
+
+    .priceBoxes {
+        flex-direction: column;
+    }
+
+    .priceBox-wrapper {
+        width: 100%;
+    }
+
+    .priceBox-container {
+        width: 100%;
+    }
+
+    .next-button {
+        width: 100%;
+    }
+}

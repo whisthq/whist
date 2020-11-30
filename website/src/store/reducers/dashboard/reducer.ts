@@ -12,6 +12,11 @@ export default function (state = DEFAULT, action: any) {
                 ...stateCopy,
                 stripeInfo: Object.assign(stateCopy.stripeInfo, action.body),
             }
+        case PaymentPureAction.UPDATE_PAYMENT_FLOW:
+            return {
+                ...stateCopy,
+                paymentFlow: Object.assign(stateCopy.paymentFlow, action.body),
+            }
         default:
             return state
     }

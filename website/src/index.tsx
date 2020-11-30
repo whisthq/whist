@@ -16,12 +16,15 @@ import { ApolloProvider } from "@apollo/react-hooks"
 import { ApolloClient, InMemoryCache, HttpLink, split } from "@apollo/client"
 import { getMainDefinition } from "@apollo/client/utilities"
 import { WebSocketLink } from "@apollo/client/link/ws"
+import { loadStripe } from "@stripe/stripe-js"
+import { Elements } from "@stripe/react-stripe-js"
 
 import history from "shared/utils/history"
 import { MainProvider } from "shared/context/mainContext"
 import { config } from "shared/constants/config"
 import rootReducer from "store/reducers/root"
 import * as serviceWorker from "serviceWorker"
+import { STRIPE_OPTIONS } from "shared/constants/stripe"
 
 import "styles/shared.css"
 import "bootstrap/dist/css/bootstrap.min.css"
@@ -86,15 +89,22 @@ const apolloClient = new ApolloClient({
     cache: new InMemoryCache(),
 })
 
+const stripePromise = loadStripe(config.keys.STRIPE_PUBLIC_KEY)
+
 ReactDOM.render(
     <React.StrictMode>
         <Router history={history}>
             <Provider store={store}>
                 <PersistGate loading={null} persistor={persistor}>
                     <ApolloProvider client={apolloClient}>
-                        <MainProvider>
-                            <RootApp />
-                        </MainProvider>
+                        <Elements
+                            stripe={stripePromise}
+                            options={STRIPE_OPTIONS}
+                        >
+                            <MainProvider>
+                                <RootApp />
+                            </MainProvider>
+                        </Elements>
                     </ApolloProvider>
                 </PersistGate>
             </Provider>

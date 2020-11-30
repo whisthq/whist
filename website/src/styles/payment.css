@@ -1,0 +1,89 @@
+.payment-container {
+    max-width: 800px;
+    margin: auto;
+    margin-top: 70px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.paymentMethod {
+    width: 50%;
+    margin-right: 50px;
+    position: relative;
+}
+
+.card-title {
+    margin-top: 40px;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.update {
+    font-size: 14px;
+    color: #4285ff;
+}
+
+.update:hover {
+    cursor: pointer;
+}
+
+.checkout {
+    border: solid 0.8px #cccccc;
+    width: 45%;
+    padding: 30px;
+}
+
+.price {
+    font-weight: 500;
+    float: right;
+}
+
+.line {
+    width: 100%;
+    border-bottom: solid 0.8px #cccccc;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.pay-button {
+    width: 100%;
+    background: #3930b8;
+    border: none;
+    color: white;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    text-align: center;
+    margin-top: 40px;
+}
+
+@media only screen and (max-width: 600px) {
+    .payment-container {
+        flex-direction: column;
+        width: 100%;
+        margin-top: 40px;
+    }
+
+    .paymentMethod {
+        width: 100%;
+        margin-bottom: 40px;
+    }
+
+    .checkout {
+        width: 100%;
+    }
+}
+
+.bold {
+    font-weight: 500;
+}
+
+.back {
+    color: #555555;
+    position: absolute;
+    top: -40px;
+}
+
+.back:hover {
+    cursor: pointer;
+}
