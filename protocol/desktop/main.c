@@ -73,6 +73,7 @@ int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
 char user_email[USER_EMAIL_MAXLEN];
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+char icon_png_filename[ICON_PNG_FILENAME_MAXLEN];
 bool using_stun = true;
 
 int udp_port = -1;
@@ -551,7 +552,8 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the SDL window
-    window = init_sdl(output_width, output_height, (char*)program_name);
+    window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
+
     if (!window) {
         LOG_ERROR("Failed to initialize SDL");
         destroy_socket_library();

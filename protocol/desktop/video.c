@@ -13,6 +13,7 @@ packet), before being saved in a proper video frame format.
 */
 
 #include "video.h"
+#include "sdl_utils.h"
 
 #include <stdio.h>
 
@@ -511,13 +512,20 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
 
     SDL_RWops* rw = SDL_RWFromMem(pkt.data, pkt.size);
 
+    // second parameter nonzero means free the rw after reading it, no need to free rw ourselves
     SDL_Surface* loading_screen = SDL_LoadBMP_RW(rw, 1);
     if (loading_screen == NULL) {
         LOG_INFO("IMG_Load");
         return;
     }
+
+    // free pkt.data which is initialized by calloc in png_file_to_bmp
     free(pkt.data);
+
     SDL_Texture* loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
+
+    // surface can now be freed
+    SDL_FreeSurface(loading_screen);
 
     int w = 200;
     int h = 200;
@@ -533,6 +541,8 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
     SDL_RenderPresent(renderer);
+
+    // texture may now be destroyed
     SDL_DestroyTexture(loading_screen_texture);
 
     int remaining_ms = 30 - (int)get_timer(c);
