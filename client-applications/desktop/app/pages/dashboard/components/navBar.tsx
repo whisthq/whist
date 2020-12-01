@@ -81,12 +81,8 @@ const NavBar = (props: any) => {
                             className={styles.searchBar}
                             style={{
                                 width: showSearchBar ? 325 : 0,
-                                visibility: showSearchBar
-                                    ? "visible"
-                                    : "hidden",
-                                padding: showSearchBar
-                                    ? "5px 10px"
-                                    : "5px 20px",
+                                opacity: showSearchBar ? "1.0" : "0.0",
+                                padding: showSearchBar ? "5px 10px" : "5px 0px",
                             }}
                         />
                     )}
@@ -98,7 +94,7 @@ const NavBar = (props: any) => {
                             cursor: "pointer",
                             fontSize: 29,
                             padding: 6,
-                            color: "#555555",
+                            color: showSearchBar ? "#111111" : "#555555",
                             zIndex: 2,
                             right: showSearchBar ? 5 : 0,
                             transition: "1.5s",
