@@ -49,7 +49,6 @@ const Settings = (props: any) => {
 
     return (
         <div className={styles.page}>
-            <h2>App Settings </h2>
             <Row
                 style={{
                     display: "flex",

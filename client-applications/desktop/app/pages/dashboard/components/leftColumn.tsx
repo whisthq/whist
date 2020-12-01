@@ -1,7 +1,8 @@
 import React from "react"
 import { Col } from "react-bootstrap"
-import { FaGlobeEurope, FaBook } from "react-icons/fa"
+import { FaGlobeEurope, FaBook, FaPalette, FaLayerGroup } from "react-icons/fa"
 
+import CategoryIcon from "pages/dashboard/components/categoryIcon"
 import styles from "styles/dashboard.css"
 
 const LeftColumn = (props: {
@@ -13,44 +14,70 @@ const LeftColumn = (props: {
     return (
         <>
             <Col xs={1}>
-                <div
-                    className={styles.categoryIcon}
-                    style={{
-                        boxShadow:
-                            selectedCategory === "All"
-                                ? "0px 4px 10px rgba(0,0,0,0.25)"
-                                : "0px 4px 10px rgba(0,0,0,0.1)",
-                    }}
-                    onClick={() => callback("All")}
-                >
-                    <FaGlobeEurope
-                        style={{
-                            color:
-                                selectedCategory === "All"
-                                    ? "#111111"
-                                    : "#EFEFEF",
-                            fontSize: 18,
-                        }}
+                <div style={{ position: "sticky", top: 25 }}>
+                    <CategoryIcon
+                        icon={
+                            <FaLayerGroup
+                                style={{
+                                    color:
+                                        selectedCategory === "All"
+                                            ? "#3930b8"
+                                            : "#EFEFEF",
+                                    fontSize: 18,
+                                }}
+                            />
+                        }
+                        callback={callback}
+                        selectedCategory={selectedCategory}
+                        category="All"
                     />
-                </div>
-                <div
-                    className={styles.categoryIcon}
-                    style={{
-                        boxShadow:
-                            selectedCategory === "Productivity"
-                                ? "0px 4px 10px rgba(0,0,0,0.25)"
-                                : "0px 4px 10px rgba(0,0,0,0.1)",
-                    }}
-                    onClick={() => callback("Productivity")}
-                >
-                    <FaBook
-                        style={{
-                            color:
-                                selectedCategory === "Productivity"
-                                    ? "#111111"
-                                    : "#EFEFEF",
-                            fontSize: 18,
-                        }}
+                    <CategoryIcon
+                        icon={
+                            <FaGlobeEurope
+                                style={{
+                                    color:
+                                        selectedCategory === "Browser"
+                                            ? "#3930b8"
+                                            : "#EFEFEF",
+                                    fontSize: 18,
+                                }}
+                            />
+                        }
+                        callback={callback}
+                        selectedCategory={selectedCategory}
+                        category="Browser"
+                    />
+                    <CategoryIcon
+                        icon={
+                            <FaPalette
+                                style={{
+                                    color:
+                                        selectedCategory === "Creative"
+                                            ? "#3930b8"
+                                            : "#EFEFEF",
+                                    fontSize: 18,
+                                }}
+                            />
+                        }
+                        callback={callback}
+                        selectedCategory={selectedCategory}
+                        category="Creative"
+                    />
+                    <CategoryIcon
+                        icon={
+                            <FaBook
+                                style={{
+                                    color:
+                                        selectedCategory === "Productivity"
+                                            ? "#3930b8"
+                                            : "#EFEFEF",
+                                    fontSize: 18,
+                                }}
+                            />
+                        }
+                        callback={callback}
+                        selectedCategory={selectedCategory}
+                        category="Productivity"
                     />
                 </div>
             </Col>
