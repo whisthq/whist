@@ -113,7 +113,7 @@ int handle_sdl_event(SDL_Event *event) {
             }
             break;
         case SDL_QUIT:
-            LOG_ERROR("Forcefully Quitting...");
+            LOG_INFO("Forcefully Quitting...");
             exiting = true;
             break;
     }

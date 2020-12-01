@@ -103,7 +103,7 @@ void init_logger(char *log_dir) {
 
     if (using_sentry) {
         sentry_options_t *options = sentry_options_new();
-        //    sentry_options_set_debug(options, true); //if sentry is playing up uncomment this
+        // sentry_options_set_debug(options, true); //if sentry is playing up uncomment this
         sentry_options_set_dsn(options, SENTRY_DSN);
         // These are used by sentry to classify events and so we can keep track of version specific
         // issues.
@@ -710,10 +710,13 @@ void save_connection_id(int connection_id_int) {
     fprintf(connection_id_file, "%d", connection_id_int);
     fclose(connection_id_file);
 
-    // // send connection id to sentry as a tag, client also does this
-    // char str_connection_id[100];
-    // sprintf(str_connection_id, "%d", connection_id_int);
-    // sentry_set_tag("connection_id", str_connection_id);
+    // send connection id to sentry as a tag, client also does this
+    if (using_sentry) {
+        char str_connection_id[100];
+        sprintf(str_connection_id, "%d", connection_id_int);
+        sentry_set_tag("connection_id", str_connection_id);
+        sentry_set_tag("protocol-type", "server");
+    }
 }
 
 // The first time this is called will include the initial log messages,

@@ -1167,6 +1167,7 @@ int parse_args(int argc, char* argv[]) {
                 // only log "production" and "staging" env sentry events
                 if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
                     strcpy(sentry_environment, optarg);
+                    sentry_set_tag("runner", "server");
                     using_sentry = true;
                 }
                 break;
