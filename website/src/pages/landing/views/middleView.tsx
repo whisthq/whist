@@ -5,7 +5,7 @@ import MainContext from "shared/context/mainContext"
 
 import SideBySide from "shared/components/sideBySide"
 import Testimonial from "pages/landing/components/testimonial"
-import DemoVideo from "pages/landing/components/demoVideo"
+import DemoVideos from "pages/landing/components/demoVideos"
 
 import "styles/landing.css"
 
@@ -19,12 +19,7 @@ const MiddleView = (props: any) => {
                     <SideBySide case={"Productivity"} width={width} />
                 </div>
             </div>
-            <DemoVideo width={width} />
-            {/* <div style={{ position: "relative", width: "100%" }}>
-                <div style={{ paddingTop: width > 720 ? 80 : 0 }}>
-                    <SideBySide case={"DemoVideo"} width={width} />
-                </div>
-            </div> */}
+            <DemoVideos width={width} />
             <Row
                 style={{
                     marginTop: width > 720 ? 175 : 75,

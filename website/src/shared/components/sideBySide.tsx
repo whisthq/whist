@@ -210,7 +210,6 @@ function SideBySide(props: any) {
             </div>
         </div>
     )
-
     const Gaming = (
         <div>
             <img
