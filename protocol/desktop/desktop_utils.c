@@ -337,7 +337,10 @@ int log_connection_id(int connection_id) {
     char *str_connection_id = malloc(sizeof(char) * 100);
     sprintf(str_connection_id, "%d", connection_id);
     // send connection id to sentry as a tag, server also does this
-    // sentry_set_tag("connection_id", str_connection_id);
+    if (using_sentry) {
+        sentry_set_tag("connection_id", str_connection_id);
+        sentry_set_tag("protocol-type", "client");
+    }
 
     char *path;
 #ifdef _WIN32

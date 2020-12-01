@@ -218,15 +218,16 @@ if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
             STATUS sentry_dl_status)
     MESSAGE(VERBOSE ${sentry_dl_status})
     file(MAKE_DIRECTORY ${sentry_dir})
+
+    execute_process(
+            COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${sentry_dir}
+    )
+    execute_process(
+            COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
+    )
 endif()
 
-execute_process(
-        COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${sentry_dir}
-)
-execute_process(
-        COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
-)
 # Do this before setting the OSX compiler so we do not mess with the sentry-native build
 set(SENTRY_BUILD_RUNTIMESTATIC ON)
 add_subdirectory(sentry-native)
