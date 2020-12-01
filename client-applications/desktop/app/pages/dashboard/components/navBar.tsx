@@ -111,14 +111,11 @@ const NavBar = (props: any) => {
                     </div>
                 </div>
             </div>
-            <div>
+            <div style={{ marginTop: 10, paddingLeft: 45 }}>
                 <NavTitle
                     selected={currentTab == "App Store"}
                     text="App Store"
                     onClick={() => updateCurrentTab("App Store")}
-                    style={{
-                        marginLeft: 50,
-                    }}
                 />
                 <NavTitle
                     selected={currentTab == "Settings"}

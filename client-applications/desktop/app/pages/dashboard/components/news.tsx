@@ -10,7 +10,7 @@ const News = (props: any) => {
     if (mediaData && mediaData.length > 0) {
         return (
             <Col
-                xs={4}
+                xs={5}
                 style={{
                     width: "100%",
                     height: 225,
