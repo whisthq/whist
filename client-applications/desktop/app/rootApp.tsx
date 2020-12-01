@@ -16,6 +16,8 @@ import { checkActive, urlToApp } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { findDPI } from "pages/login/constants/helpers"
 
+import createShortcut from "shared/utils/createShortcut"
+
 const RootApp = (props: any) => {
     const {
         launches,
@@ -152,6 +154,13 @@ const RootApp = (props: any) => {
         props.accessToken,
         data,
     ])
+
+    useEffect(() => {
+        if (featuredAppData && featuredAppData[0]) {
+            console.log(featuredAppData[0])
+            createShortcut(featuredAppData[0])
+        }
+    }, [featuredAppData])
 
     return (
         <div>
