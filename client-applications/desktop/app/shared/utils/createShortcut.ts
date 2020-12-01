@@ -8,7 +8,6 @@ export default async (app: any) => {
     } else if (platform === "linux") {
         console.log("linux shortcuts not yet implemented")
     } else if (platform === "win32") {
-        console.log("Windows detected")
         var path =
             require("electron").remote.app.getAppPath() +
             "\\node_modules\\@amdglobal\\create-desktop-shortcuts\\src\\windows.vbs"
