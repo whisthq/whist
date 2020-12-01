@@ -702,8 +702,6 @@ int main(int argc, char* argv[]) {
         sentry_capture_event(event);
     }
 
-    LOG_ERROR("TEST ERROR - MACOS DESKTOP");
-
     LOG_INFO("Closing Client...");
     destroy_video();
     destroy_sdl((SDL_Window*)window);
