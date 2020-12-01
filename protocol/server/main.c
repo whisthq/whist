@@ -1085,6 +1085,7 @@ int multithreaded_manage_clients(void* opaque) {
 const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k'},
                                      {"identifier", required_argument, NULL, 'i'},
                                      {"webserver", required_argument, NULL, 'w'},
+                                     {"environment", required_argument, NULL, 'e'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
