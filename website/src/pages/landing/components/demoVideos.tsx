@@ -273,7 +273,7 @@ const DemoVideos = (props: any) => {
                 component={gifComponent}
                 first
             />
-            {config.video_ready && (
+            {config.video_enabled && (
                 <DemoVideo
                     width={width}
                     heading={demoHeading}

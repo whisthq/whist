@@ -19,7 +19,7 @@ const environment: any = {
                 "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe",
         },
         payment_enabled: true,
-        video_ready: true,
+        video_enabled: true,
     },
     development: {
         url: {
@@ -41,7 +41,7 @@ const environment: any = {
                 "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe   ",
         },
         payment_enabled: true,
-        video_ready: true,
+        video_enabled: true,
     },
     staging: {
         url: {
@@ -63,7 +63,7 @@ const environment: any = {
             Windows:
                 "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
         },
-        video_ready: false,
+        video_enabled: false,
         payment_enabled: false,
     },
     production: {
@@ -86,7 +86,7 @@ const environment: any = {
                 "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
         },
         payment_enabled: false,
-        video_ready: false,
+        video_enabled: false,
     },
 }
 
