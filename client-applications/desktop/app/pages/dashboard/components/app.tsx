@@ -23,11 +23,14 @@ const App = (props: any) => {
     }
 
     const handleLaunch = () => {
+        console.log("launch")
         setLaunched(true)
         dispatch(updateContainer({ launches: launches + 1 }))
     }
 
     useEffect(() => {
+        console.log(launches)
+        console.log(launched)
         if (launches === 1 && launched) {
             history.push("/loading")
             dispatch(createContainer(app.app_id))
@@ -37,7 +40,7 @@ const App = (props: any) => {
 
     return (
         <Col xs={3}>
-            <div className={styles.appContainer}>
+            <div>
                 <div className={styles.playButton} onClick={handleLaunch}>
                     <div style={{ position: "relative" }}>
                         <div
@@ -45,18 +48,28 @@ const App = (props: any) => {
                                 position: "absolute",
                                 top: "50%",
                                 left: "50%",
-                                transform: "translate(-45%, 5%)",
+                                transform: "translate(-45%, -5%)",
                             }}
                         >
                             <FaPlay className={styles.faPlayButton} />
                         </div>
                     </div>
                 </div>
-                <div className={styles.appHeading} onClick={handleOpenModal}>
-                    <img src={app.logo_url} className={styles.appImage} />
-                    <div className={styles.appName}>{app.app_id}</div>
-                    <div className={styles.appDescription}>
-                        {app.description}
+                <div style={{ height: 220, paddingBottom: 20 }}>
+                    <div className={styles.appContainer}>
+                        <div
+                            className={styles.appHeading}
+                            onClick={handleOpenModal}
+                        >
+                            <img
+                                src={app.logo_url}
+                                className={styles.appImage}
+                            />
+                            <div className={styles.appName}>{app.app_id}</div>
+                            <div className={styles.appDescription}>
+                                {app.description}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
