@@ -1,8 +1,8 @@
 import React, { useState } from "react"
 import { connect } from "react-redux"
 import { Collapse } from "react-bootstrap"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faUser } from "@fortawesome/free-solid-svg-icons"
+import { FaSearch, FaUser } from "react-icons/fa"
+
 import { history } from "store/configureStore"
 import styles from "styles/dashboard.css"
 
@@ -15,6 +15,7 @@ const NavTitle = (props: {
     style?: any
 }) => {
     const { selected, text, onClick, style } = props
+
     return (
         <div
             className={selected ? styles.selectedNavTitle : styles.navTitle}
@@ -37,6 +38,11 @@ const NavBar = (props: any) => {
         updateSearch,
     } = props
     const [showProfile, setShowProfile] = useState(false)
+    const [showSearchBar, setShowSearchBar] = useState(false)
+
+    const toggleSearch = () => {
+        setShowSearchBar(!showSearchBar)
+    }
 
     const handleSignout = () => {
         const Store = require("electron-store")
@@ -73,15 +79,38 @@ const NavBar = (props: any) => {
                             }
                             placeholder="Search for an app"
                             className={styles.searchBar}
+                            style={{
+                                width: showSearchBar ? 325 : 0,
+                                visibility: showSearchBar
+                                    ? "visible"
+                                    : "hidden",
+                                padding: showSearchBar
+                                    ? "5px 10px"
+                                    : "5px 20px",
+                            }}
                         />
                     )}
+                    <FaSearch
+                        style={{
+                            position: "relative",
+                            top: 3,
+                            marginRight: 12,
+                            cursor: "pointer",
+                            fontSize: 29,
+                            padding: 6,
+                            color: "#555555",
+                            zIndex: 2,
+                            right: showSearchBar ? 5 : 0,
+                            transition: "1.5s",
+                        }}
+                        onClick={toggleSearch}
+                    />
                     <div style={{ display: "flex", flexDirection: "column" }}>
                         <div
                             className={styles.userInfo}
                             onClick={() => setShowProfile(!showProfile)}
                         >
-                            <FontAwesomeIcon
-                                icon={faUser}
+                            <FaUser
                                 style={{
                                     color: "#111111",
                                     fontSize: 30,
