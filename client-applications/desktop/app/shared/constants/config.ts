@@ -86,6 +86,8 @@ const environment: any = {
     },
 }
 
+console.log(process.execPath)
+
 export const config: any =
     process.env.NODE_ENV === "development"
         ? environment.local
