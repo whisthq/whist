@@ -205,7 +205,7 @@ class StripeClient:
         for product_name in product_names:
             yield product_name, None
 
-    def get_prices(self, products=["Fractal"]):
+    def get_prices(self, products=["Hourly Plan", "Monthly Plan", "Unlimited Plan"]):
         """Fetch the prices of said products. This is a generator. Pass None as products for all.
 
         Precondition:
