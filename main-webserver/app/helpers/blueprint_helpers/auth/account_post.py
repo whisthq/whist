@@ -62,6 +62,7 @@ def login_helper(email, password):
                 "card_brand": None,
                 "card_last_four": None,
                 "postal_code": None,
+                "plan": None,
             }
 
     # Fetch the JWT tokens
@@ -82,6 +83,7 @@ def login_helper(email, password):
         "card_brand": user.card_brand,
         "card_last_four": user.card_last_four,
         "postal_code": user.postal_code,
+        "plan": user.plan,
     }
 
 

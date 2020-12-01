@@ -78,7 +78,7 @@ def payment(action, **kwargs):
 
     # these add a subscription or remove (or modify)
     if action == "addSubscription" or action == "modifySubscription":
-        return addSubscriptionHelper(body["token"], body["email"], body["plan"], body["code"])
+        return addSubscriptionHelper(body["email"], body["plan"])
     elif action == "deleteSubscription":
         return deleteSubscriptionHelper(body["email"])
     # these will add a card as a source or remove (or modify) for future payment
