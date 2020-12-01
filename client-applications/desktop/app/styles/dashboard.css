@@ -33,18 +33,17 @@
     font-weight: bold;
     padding: 10px 25px;
     width: 150px;
-    border: solid 0.8px #cccccc;
-    background: white;
-    color: black;
+    background: #3930b8;
+    color: white;
     font-size: 13px;
     float: right;
     margin-top: 15px;
     text-align: center;
+    border-radius: 5px;
 }
 
 .noFeedbackButton {
-    background: #eeeeee;
-    border: solid 0.8px #eeeeee;
+    opacity: 0.7;
 }
 
 .signoutButton:hover,

@@ -230,7 +230,7 @@ const Settings = (props: any) => {
                     style={{ width: 110, marginTop: 25 }}
                     onClick={handleSave}
                 >
-                    SAVE
+                    Save
                 </div>
             </Row>
         </div>
