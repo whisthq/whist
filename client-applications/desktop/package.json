@@ -8,6 +8,8 @@
         "extends browserslist-config-erb"
     ],
     "build": {
+        "asar": true,
+        "asarUnpack": "node_modules/@amdglobal/create-desktop-shortcuts/**/*",
         "afterSign": "build/notarize.js",
         "appId": "com.fractalcomputers.fractal",
         "artifactName": "Fractal.${ext}",
