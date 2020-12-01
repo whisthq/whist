@@ -171,7 +171,7 @@ void start_connection_log() {
 void destroy_logger() {
     // Wait for any remaining printfs to execute
     SDL_Delay(50);
-    if (using_sentry){
+    if (using_sentry) {
         sentry_shutdown();
     }
     run_multithreaded_printf = false;

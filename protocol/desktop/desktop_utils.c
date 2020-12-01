@@ -127,8 +127,7 @@ int parse_args(int argc, char *argv[]) {
         }
         errno = 0;
         switch (opt) {
-            case 'w':
-            {
+            case 'w': {
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -137,8 +136,7 @@ int parse_args(int argc, char *argv[]) {
                 output_width = (int)ret;
                 break;
             }
-            case 'h':
-            {
+            case 'h': {
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -147,8 +145,7 @@ int parse_args(int argc, char *argv[]) {
                 output_height = (int)ret;
                 break;
             }
-            case 'b':
-            {
+            case 'b': {
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -157,8 +154,7 @@ int parse_args(int argc, char *argv[]) {
                 max_bitrate = (int)ret;
                 break;
             }
-            case 'c':
-            {
+            case 'c': {
                 if (!strcmp(optarg, "h264")) {
                     output_codec_type = CODEC_TYPE_H264;
                 } else if (!strcmp(optarg, "h265")) {
@@ -170,8 +166,7 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'k':
-            {
+            case 'k': {
                 if (!read_hexadecimal_private_key(optarg, (char *)binary_aes_private_key,
                                                   (char *)hex_aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
@@ -180,13 +175,11 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'u':
-            {
+            case 'u': {
                 strcpy(user_email, optarg);
                 break;
             }
-            case 'e':
-            {
+            case 'e': {
                 // only log "production" and "staging" env sentry events
                 if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
                     strcpy(sentry_environment, optarg);
@@ -235,8 +228,7 @@ int parse_args(int argc, char *argv[]) {
                 running_ci = 1;
                 break;
             }
-            case 'z':
-            {
+            case 'z': {
                 if (!strcmp(optarg, "STUN")) {
                     using_stun = true;
                 } else if (!strcmp(optarg, "DIRECT")) {
@@ -248,24 +240,20 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'n':
-            {
+            case 'n': {
                 program_name = calloc(sizeof(char), strlen(optarg));
                 strcpy((char *)program_name, optarg);
                 break;
             }
-            case FRACTAL_GETOPT_HELP_CHAR:
-            {
+            case FRACTAL_GETOPT_HELP_CHAR: {
                 printf("%s", usage_details);
                 return 1;
             }
-            case FRACTAL_GETOPT_VERSION_CHAR:
-            {
+            case FRACTAL_GETOPT_VERSION_CHAR: {
                 printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
                 return 1;
             }
-            default:
-            {
+            default: {
                 if (opt != -1) {
                     // illegal option
                     printf("%s", usage);

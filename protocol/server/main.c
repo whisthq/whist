@@ -1163,8 +1163,7 @@ int parse_args(int argc, char* argv[]) {
                 webserver_url[MAX_WEBSERVER_URL_LEN] = 0;
                 break;
             }
-            case 'e':
-            {
+            case 'e': {
                 // only log "production" and "staging" env sentry events
                 if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
                     strcpy(sentry_environment, optarg);
