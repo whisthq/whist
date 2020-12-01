@@ -14,9 +14,10 @@ import { updateClient, updateContainer, updateAuth } from "store/actions/pure"
 import { setAWSRegion } from "shared/utils/exec"
 import { checkActive, urlToApp } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
+import { findDPI } from "pages/login/constants/helpers"
 
 const RootApp = (props: any) => {
-    const { launches, launchURL, dispatch } = props
+    const { launches, launchURL, os, dpi, dispatch } = props
 
     const [needsUpdate, setNeedsUpdate] = useState(false)
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
@@ -67,6 +68,14 @@ const RootApp = (props: any) => {
         }
     }, [])
 
+    useEffect(() => {
+        if (!os || !dpi) {
+            const dpi = findDPI()
+            const os = require("os")
+            dispatch(updateClient({ os: os.platform(), dpi: dpi }))
+        }
+    }, [os, dpi])
+
     // If there's an access token, validate it
     useEffect(() => {
         if (accessToken && accessToken !== "") {
@@ -76,12 +85,6 @@ const RootApp = (props: any) => {
 
     // If does not need update, logged in and ready to launch
     useEffect(() => {
-        console.log("CONTAINER UPDATE 1 USE EFFECT")
-        console.log(updatePingReceived)
-        console.log(needsUpdate)
-        console.log(launchURL)
-        console.log(props.username)
-        console.log(props.accessToken)
         if (
             updatePingReceived &&
             !needsUpdate &&
@@ -147,7 +150,14 @@ const RootApp = (props: any) => {
             <Switch>
                 <Route path="/dashboard" component={Dashboard} />
                 <Route path="/loading" component={Loading} />
-                <Route path="/" component={Login} />
+                <Route
+                    path="/"
+                    component={
+                        process.env.NODE_ENV === "development"
+                            ? Dashboard
+                            : Login
+                    }
+                />
                 <Route
                     path="/update"
                     render={(props) => (
@@ -166,6 +176,8 @@ const mapStateToProps = (state: any) => {
         refreshToken: state.MainReducer.auth.refreshToken,
         launches: state.MainReducer.container.launches,
         launchURL: state.MainReducer.container.launchURL,
+        os: state.MainReducer.client.os,
+        dpi: state.MainReducer.client.dpi,
     }
 }
 

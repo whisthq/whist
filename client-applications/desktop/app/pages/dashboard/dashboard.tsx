@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { connect } from "react-redux"
 import styles from "styles/dashboard.css"
 import Titlebar from "react-electron-titlebar"
-import { Redirect } from "react-router-dom"
 
 import NavBar from "pages/dashboard/components/navBar"
 import Discover from "pages/dashboard/views/discover"
@@ -11,7 +10,7 @@ import Support from "pages/dashboard/views/support"
 
 const Dashboard = (props: any) => {
     const { os } = props
-    const [currentTab, setCurrentTab] = useState("Discover")
+    const [currentTab, setCurrentTab] = useState("App Store")
     const [search, setSearch] = useState("")
 
     return (
@@ -44,12 +43,7 @@ const Dashboard = (props: any) => {
                     search={search}
                     updateSearch={setSearch}
                 />
-                {currentTab === "Discover" && (
-                    <Discover
-                        updateCurrentTab={setCurrentTab}
-                        search={search}
-                    />
-                )}
+                {currentTab === "App Store" && <Discover />}
                 {currentTab === "Settings" && <Settings />}
                 {currentTab === "Support" && <Support />}
             </div>

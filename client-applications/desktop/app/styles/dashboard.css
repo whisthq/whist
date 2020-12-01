@@ -53,8 +53,8 @@
 .modalButton:hover,
 .feedbackButton:hover {
     background: #93f1d9;
-    border: solid 0.8px #93f1d9;
     cursor: pointer;
+    color: #111111;
 }
 
 .navBar {
@@ -73,24 +73,28 @@
 .logoTitle {
     color: black;
     font-family: "Maven Pro";
-    font-size: 20px !important;
-    letter-spacing: 1.5px;
+    font-size: 18px !important;
+    letter-spacing: 1.7px;
+    font-weight: bold;
 }
 
 .navTitle,
 .selectedNavTitle {
-    font-size: 16px;
     color: #111111;
-    margin-left: 20px;
-    position: relative;
-    top: 2px;
+    background: white;
+    font-weight: bold;
+    border-radius: 5px;
+    padding: 7px 35px;
+    margin-right: 35px;
+    display: inline-block;
+    letter-spacing: 1.2px;
+    font-size: 14px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .selectedNavTitle {
-    font-family: "Maven Pro SemiBold";
-    font-size: 17px;
-    color: #111111;
-    margin-left: 20px;
+    color: white;
+    background: #111111;
 }
 
 .navTitle:hover,
@@ -132,7 +136,7 @@
 .select {
     height: 38px;
     width: 7px;
-    background: #1c2a45;
+    background: #111111;
     position: absolute;
     right: 0px;
 }
@@ -143,50 +147,46 @@
 }
 
 .appContainer {
-    width: 290px;
-    height: 185px;
+    width: 100%;
+    height: 200px;
     display: flex;
     flex-direction: column;
-    padding: 25px;
+    padding: 20px;
     z-index: 1;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 5px;
-    box-shadow: 0px 1px 8px #dddddd;
-    margin: 5px;
+    background: white;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     transition: all 0.2s ease-in-out;
+    border-radius: 10px;
+    margin-top: 25px;
 }
 
 .appContainer:hover {
     cursor: pointer;
-    transform: scale(1.05);
     z-index: 2;
-    box-shadow: 0px 1px 12px #cccccc;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
     background: white;
 }
 
 .appImage {
-    width: 50px;
-    height: 50px;
+    width: 45px;
+    height: 45px;
 }
 
 .appHeading {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
+    text-align: left;
 }
 
 .appName {
-    font-size: 19px;
-    font-family: "Maven Pro Medium";
-    text-transform: uppercase;
-    margin-left: 20px;
+    font-size: 16px;
+    margin-top: 25px;
+    font-weight: bold;
 }
 
 .appDescription {
-    font-size: 13px;
-    margin-top: 18px;
+    font-size: 12px;
+    margin-top: 10px;
     transition: all 0.2s ease-in-out;
+    color: #666666;
 }
 
 .appButtons {
@@ -240,14 +240,17 @@
     bottom: 40px;
     text-align: center;
     padding: 10px 30px;
-    border: solid 0.8px #cccccc;
-    color: black;
+    color: white;
     font-weight: bold;
     width: 200px;
+    background: #3930b8;
+    border: none;
+    box-shadow: none;
+    border-radius: 5px;
 }
 
 .appLink {
-    color: #5ec4eb;
+    color: #3930b8;
     margin-left: 30px;
 }
 
@@ -260,7 +263,7 @@
 }
 
 .tosLink {
-    color: #5ec4eb;
+    color: #3930b8;
 }
 
 .appLink:hover,
@@ -269,7 +272,7 @@
 }
 
 .container {
-    background: white;
+    background: rgba(237, 240, 247, 0.75);
     position: absolute;
     width: 100vw;
     height: 100vh;
@@ -323,13 +326,13 @@
 }
 
 select {
-    background: #f2f6fb;
+    background: white;
     width: 100%;
     border-radius: 0px;
     border: none;
     text-indent: 11px;
     height: 58px;
-    outline: 3px solid #f2f6fb;
+    outline: 3px solid white;
     outline-offset: -3px;
     color: black;
 }
@@ -350,16 +353,16 @@ select:required:invalid {
     z-index: 1;
     outline: none;
     border: none;
-    padding: 5px;
+    padding: 5px 10px;
     text-indent: 5px;
     font-size: 12px;
-    background: rgba(0, 0, 0, 0.05);
+    background: white;
     height: 35px;
 }
 
 .searchBar:focus,
 .searchBar:active {
-    background: rgba(0, 0, 0, 0.1);
+    background: white;
 }
 
 .searchBar::placeholder {
@@ -372,4 +375,39 @@ select:required:invalid {
 
 .contactFormLink:hover {
     cursor: pointer;
+}
+
+::-webkit-scrollbar {
+    width: 0px;
+}
+
+.faPlayButton {
+    font-size: 9px;
+    color: #3930b8;
+}
+
+.playButton {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    background: white;
+    border: solid 5px rgba(237, 240, 247, 0.75);
+    bottom: -20px;
+    right: -5px;
+    z-index: 100px;
+}
+
+.playButton:hover {
+    cursor: pointer;
+    background: #3930b8;
+}
+
+.playButton:hover .faPlayButton {
+    color: white;
+}
+
+.playButton:hover .appContainer {
+    background: white;
+    box-shadow: none;
 }
