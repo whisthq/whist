@@ -41,5 +41,5 @@ repos:
     #                 creative/blender/Dockerfile.20
     #                 creative/figma/Dockerfile.20
     #                 creative/lightworks/Dockerfile.20
-    #                 creative/gimp/Dockerfile.20,
-    #             ]
+    #                 creative/gimp/Dockerfile.20
+    #                 creative/inkscape/Dockerfile.20,]
