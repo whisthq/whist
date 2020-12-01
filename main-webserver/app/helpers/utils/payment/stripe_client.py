@@ -71,7 +71,14 @@ Future TODO/Tech Debt:
 
 class NonexistentUser(Exception):
     """This exception is raised when the user (customer) does not exist on a charge or
-    simiar transaction."""
+    similar transaction."""
+
+    pass
+
+
+class NonexistentStripeCustomer(Exception):
+    """This exception is raised when the user is not already a stripe customer, and needs to be (typically
+    in order to access a payment method to incur a charge)."""
 
     pass
 
@@ -285,16 +292,15 @@ class StripeClient:
         else:
             return None
 
-    def create_subscription(self, token, email, plan, code=None):
+    def create_subscription(self, email, plan, price, code=None):
         """This will create a new subscription for a client with the given email
         and a code if it exists. This is similar to what was previously stripe_post's "chargeHelper."
         It will return true on a succes run.
 
         Args:
-            token (str): A stripe token that can be used to get credit card information etc by stripe.  It
-                can be none to use the default source of an existing user.
             email (str): The user's email.
-            plan (str): The plan they have purchased (can by our standard, or unlimited etc).
+            plan (str): The name of the plan (Hourly | Monthly | Unlimited)
+            price (str): Stripe price id corresponding to the plan
             code (str, optional): A promo/referall code if they were referred. None by default indicates
                 not referrer and will not give them any referall advantages. A referred individual gets
                 their first month free, while a regular user only gets one week (due to the stripe
@@ -303,6 +309,8 @@ class StripeClient:
         Raises:
             NonexistentUser: If this is not a user i.e. does not have an account. Users who don't have
                 a subscription already ARE users. This is for people who've never logged in to our site.
+            NonexistentStripeCustomer: This user is not a stripe customer, and therefore does not have a source that
+                can be charged.
             InvalidStripeToken: The token is invalid or malformatted.
             RegionNotSupported: The region is not supported. We only support NA (really US) right now.
 
@@ -310,24 +318,19 @@ class StripeClient:
         """
 
         # get the customer and whether they exist
+        # raiase NonexistentUser error if user does not exist or is not a stripe customer (does not have a payment method)
         user = User.query.get(email)
         if not user:
             raise NonexistentUser
 
-        # if they pass an invalid string token then we raise an error otherwise we set it to
-        # the token object (i.e. with the info etc)
-        if not token is None:
-            try:
-                token = stripe.Token.retrieve(token)
-            except:
-                raise InvalidStripeToken
-
         stripe_customer_id = user.stripe_customer_id
-        if not self.validate_customer_id(stripe_customer_id, user):
-            stripe_customer_id = None
+        if not stripe_customer_id:
+            raise NonexistentStripeCustomer
+        elif not self.validate_customer_id(stripe_customer_id, user):
+            raise NonexistentStripeCustomer
 
         # get the zipcode/region
-        zipcode = token["card"]["address_zip"]
+        zipcode = user.postal_code
 
         try:
             purchase_region_code = self.zipcode_db[zipcode].state
@@ -345,49 +348,57 @@ class StripeClient:
             lambda acc, tax: tax["id"] if tax["region"] == purchase_region else acc, tax_rates, None
         )
 
+        # This commented out code block was previously used to handle referrals, can be added back
+        # if we choose to give extended trials for referrals in the future:
         # if they are a new customer initialize them
         # in either case find it whether we need to make a new subscription
-        subscribed = True
+        # subscribed = True
 
-        if not stripe_customer_id:
-            # if they are not a customer they require a token
-            if token is None:
-                raise InvalidStripeToken
+        # if not stripe_customer_id:
+        #     # if they are not a customer they require a token
+        #     if token is None:
+        #         raise InvalidStripeToken
 
-            subscriptions = None  # this is necessary since if <unbound> != if None (i.e. false)
-            customer = stripe.Customer.create(email=email, source=token)
-            stripe_customer_id = customer["id"]
-            referrer = User.query.filter_by(referral_code=code).first() if code else None
-            # they are rewarded by another request to discount by the client where they get credits
+        #     subscriptions = None  # this is necessary since if <unbound> != if None (i.e. false)
+        #     customer = stripe.Customer.create(email=email, source=token)
+        #     stripe_customer_id = customer["id"]
+        #     referrer = User.query.filter_by(referral_code=code).first() if code else None
+        #     # they are rewarded by another request to discount by the client where they get credits
 
-            if referrer:
-                trial_end = date_to_unix(datetime.now() + relativedelta(months=1))
-                self.discount(referrer)
-            else:
-                trial_end = date_to_unix(datetime.now() + timedelta(weeks=1))
+        #     if referrer:
+        #         trial_end = dateToUnix(datetime.now() + relativedelta(months=1))
+        #         self.discount(referrer)
+        #     else:
+        #         trial_end = dateToUnix(datetime.now() + timedelta(weeks=1))
 
-            subscribed = False
+        #     subscribed = False
 
-            user.stripe_customer_id = stripe_customer_id
-            user.credits_outstanding = 0
-            db.session.commit()
+        #     user.stripe_customer_id = stripe_customer_id
+        #     user.credits_outstanding = 0
+        #     db.session.commit()
 
-            fractal_log(
-                function="StripeClient.create_subscription",
-                label=email,
-                logs="Customer added successful",
-            )
-        else:
-            subscriptions = stripe.Subscription.list(customer=stripe_customer_id)["data"]
-            if len(subscriptions) == 0:
-                trial_end = date_to_unix(datetime.now() + relativedelta(weeks=1))
-                subscribed = False
+        #     fractalLog(
+        #         function="StripeClient.create_subscription",
+        #         label=email,
+        #         logs="Customer added successful",
+        #     )
+        # else:
+        #     subscriptions = stripe.Subscription.list(customer=stripe_customer_id)["data"]
+        #     if len(subscriptions) == 0:
+        #         trial_end = dateToUnix(datetime.now() + relativedelta(weeks=1))
+
+        # check if customer already has subscriptions
+        subscriptions = stripe.Subscription.list(customer=stripe_customer_id)["data"]
+        if len(subscriptions) == 0:
+            trial_end = dateToUnix(datetime.now() + relativedelta(weeks=1))
 
         # if they had a subscription modify it, don't make a new one
         # else make a new one with the corresponding params
         if subscriptions:
-            stripe.SubscriptionItem.modify(subscriptions[0]["items"]["data"][0]["id"], plan=plan)
-            fractal_log(
+            stripe.SubscriptionItem.modify(subscriptions[0]["items"]["data"][0]["id"], price=price)
+            user.plan = plan
+            db.session.commit()
+            fractalLog(
                 function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer updated successful",
@@ -400,12 +411,17 @@ class StripeClient:
             # their customer object
             stripe.Subscription.create(
                 customer=stripe_customer_id,
-                items=[{"plan": plan}],
+                items=[{"price": price}],
                 trial_end=trial_end,
-                trial_from_plan=False,
                 default_tax_rates=[tax_rate],
             )
+<<<<<<< HEAD
             fractal_log(
+=======
+            user.plan = plan
+            db.session.commit()
+            fractalLog(
+>>>>>>> 462d73ffc... handle subscriptions and update tests
                 function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer subscription created successful",
@@ -443,7 +459,9 @@ class StripeClient:
             raise InvalidOperation
         else:
             stripe.Subscription.delete(subscription[0]["id"])
-            fractal_log(
+            user.plan = None
+            db.session.commit()
+            fractalLog(
                 function="StripeClient.cancel_subscription",
                 label=email,
                 logs="Cancelled stripe subscription for {}".format(email),
@@ -507,6 +525,7 @@ class StripeClient:
         else:
             try:
                 stripe.Customer.create_source(stripe_customer_id, source=source_id)
+                stripe.Customer.modify(stripe_customer_id, default_source=source_id)
                 user.card_brand = brand
                 user.card_last_four = last4
                 user.postal_code = postal_code
@@ -523,7 +542,7 @@ class StripeClient:
 
         Args:
             email (str): Email for the user.
-            card (str): Card token (or "id") for the card we want to remove.
+            source (str): Card source id for the card we want to remove.
 
         Raises:
             NonexistentUser: If the user doesn't exist.
@@ -538,18 +557,18 @@ class StripeClient:
         if not stripe_customer_id or not self.validate_customer_id(stripe_customer_id, user):
             raise InvalidOperation
 
-        card = stripe.Token.retrieve(source)["card"]
+        card = stripe.Source.retrieve(source)["card"]
         last4 = card["last4"]
 
         remove_ids = set()
 
         # if we make get customer info more flexible use it here
         customer_info = stripe.Customer.retrieve(stripe_customer_id, expand=["sources"])
-        cards = customer_info["sources"]["data"]
+        sources = customer_info["sources"]["data"]
 
-        for card in cards:
-            if card["last4"] == last4:
-                remove_ids.add(card["id"])
+        for source in sources:
+            if source["card"]["last4"] == last4:
+                remove_ids.add(source["id"])
 
         for card in remove_ids:
             stripe.Customer.delete_source(user.stripe_customer_id, card)
