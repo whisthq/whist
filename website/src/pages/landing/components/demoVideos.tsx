@@ -13,7 +13,7 @@ import PerformanceChartAfter from "assets/largeGraphics/performanceChartAfter.sv
 import PerformanceChartBefore from "assets/largeGraphics/performanceChartBefore.svg"
 
 import ReactPlayer from "react-player"
-import { VIDEO_READY } from "shared/constants/config"
+import { config } from "shared/constants/config"
 
 import BlenderDemo from "assets/gifs/blenderDemo.gif"
 
@@ -52,6 +52,7 @@ const DemoVideo = (props: any) => {
                     width: "100%",
                     maxWidth: 975,
                     marginTop: 40,
+                    marginLeft: 0,
                 }}
             >
                 <Col
@@ -243,6 +244,7 @@ const DemoVideos = (props: any) => {
                 paddingTop: "56.25%",
                 position: "relative",
                 marginTop: 40,
+                marginLeft: 0,
             }}
         >
             <ReactPlayer
@@ -271,7 +273,7 @@ const DemoVideos = (props: any) => {
                 component={gifComponent}
                 first
             />
-            {VIDEO_READY && (
+            {config.video_ready && (
                 <DemoVideo
                     width={width}
                     heading={demoHeading}

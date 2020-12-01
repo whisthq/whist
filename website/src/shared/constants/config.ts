@@ -19,6 +19,7 @@ const environment: any = {
                 "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe",
         },
         payment_enabled: true,
+        video_ready: true,
     },
     development: {
         url: {
@@ -40,6 +41,7 @@ const environment: any = {
                 "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe   ",
         },
         payment_enabled: true,
+        video_ready: true,
     },
     staging: {
         url: {
@@ -61,6 +63,7 @@ const environment: any = {
             Windows:
                 "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
         },
+        video_ready: false,
         payment_enabled: false,
     },
     production: {
@@ -83,6 +86,7 @@ const environment: any = {
                 "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
         },
         payment_enabled: false,
+        video_ready: false,
     },
 }
 
@@ -95,6 +99,3 @@ export const config: any =
     process.env.NODE_ENV === "development"
         ? environment.local
         : environment[LIVE_ENV]
-
-// meant to help us easily integrate a video later
-export const VIDEO_READY: boolean = false
