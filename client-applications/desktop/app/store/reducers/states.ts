@@ -1,6 +1,7 @@
 export const DEFAULT = {
     auth: {
         username: null,
+        candidateAccessToken: null,
         accessToken: null,
         refreshToken: null,
         loginWarning: false,
