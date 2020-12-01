@@ -30,7 +30,7 @@ def addSubscriptionHelper(email, plan):
         logs="Signing {} up for plan {}".format(email, plan),
     )
     client = StripeClient(current_app.config["STRIPE_SECRET"])
-    plans = client.get_prices(["Hourly Plan", "Monthly Plan", "Unlimited Plan"])
+    plans = client.get_prices()
 
     price = reduce(lambda acc, pl: acc if pl[0] != plan else pl[1], plans, None)
 
