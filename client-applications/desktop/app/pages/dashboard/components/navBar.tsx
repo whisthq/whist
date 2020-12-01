@@ -71,36 +71,40 @@ const NavBar = (props: any) => {
                         maxWidth: 540,
                     }}
                 >
-                    {currentTab == "App Store" && (
-                        <input
-                            value={search}
-                            onChange={(evt: any) =>
-                                updateSearch(evt.target.value)
-                            }
-                            placeholder="Search for an app"
-                            className={styles.searchBar}
+                    <div style={{ maxWidth: 400, display: "flex" }}>
+                        {currentTab == "App Store" && (
+                            <input
+                                value={search}
+                                onChange={(evt: any) =>
+                                    updateSearch(evt.target.value)
+                                }
+                                placeholder="Search for an app"
+                                className={styles.searchBar}
+                                style={{
+                                    width: showSearchBar ? 325 : 0,
+                                    opacity: showSearchBar ? "1.0" : "0.0",
+                                    padding: showSearchBar
+                                        ? "5px 10px"
+                                        : "5px 0px",
+                                }}
+                            />
+                        )}
+                        <FaSearch
                             style={{
-                                width: showSearchBar ? 325 : 0,
-                                opacity: showSearchBar ? "1.0" : "0.0",
-                                padding: showSearchBar ? "5px 10px" : "5px 0px",
+                                position: "relative",
+                                top: 3,
+                                marginRight: 12,
+                                cursor: "pointer",
+                                fontSize: 29,
+                                padding: 6,
+                                color: showSearchBar ? "#111111" : "#555555",
+                                zIndex: 2,
+                                right: showSearchBar ? 5 : 0,
+                                transition: "1.5s",
                             }}
+                            onClick={toggleSearch}
                         />
-                    )}
-                    <FaSearch
-                        style={{
-                            position: "relative",
-                            top: 3,
-                            marginRight: 12,
-                            cursor: "pointer",
-                            fontSize: 29,
-                            padding: 6,
-                            color: showSearchBar ? "#111111" : "#555555",
-                            zIndex: 2,
-                            right: showSearchBar ? 5 : 0,
-                            transition: "1.5s",
-                        }}
-                        onClick={toggleSearch}
-                    />
+                    </div>
                     <div style={{ display: "flex", flexDirection: "column" }}>
                         <div
                             className={styles.userInfo}

@@ -333,11 +333,11 @@ select {
 }
 
 select:required:invalid {
-    color: #9eb1e6;
+    color: #555555;
 }
 
 ::placeholder {
-    color: #9eb1e6;
+    color: #555555;
 }
 
 .searchBar {
