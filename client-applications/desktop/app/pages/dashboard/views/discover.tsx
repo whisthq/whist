@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react"
-import { Row, Col, Carousel } from "react-bootstrap"
+import { Row, Col } from "react-bootstrap"
 import { connect } from "react-redux"
 import { useQuery } from "@apollo/client"
 
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { PuffAnimation } from "shared/components/loadingAnimations"
-
+import { GET_BANNERS } from "shared/constants/graphql"
 import App from "pages/dashboard/components/app"
 import LeftColumn from "pages/dashboard/components/leftColumn"
 import Banner from "pages/dashboard/components/banner"
+import News from "pages/dashboard/components/news"
 
 const Discover = (props: any) => {
     const { updateCurrentTab, search } = props
@@ -26,15 +27,36 @@ const Discover = (props: any) => {
         }
     }
 
-    const { data, loading } = useQuery(GET_FEATURED_APPS, {
+    const appQuery = useQuery(GET_FEATURED_APPS, {
         context: {
             headers: {
                 Authorization: `Bearer ${props.accessToken}`,
             },
         },
     })
-    const featuredAppData = data
-        ? data.hardware_supported_app_images.filter(checkActive)
+
+    const bannerQuery = useQuery(GET_BANNERS, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${props.accessToken}`,
+            },
+        },
+    })
+
+    const bannerData = bannerQuery.data
+        ? bannerQuery.data.hardware_banners.filter(
+              (bannerData: any) => bannerData.category === "News"
+          )
+        : []
+
+    const mediaData = bannerQuery.data
+        ? bannerQuery.data.hardware_banners.filter(
+              (bannerData: any) => bannerData.category === "Media"
+          )
+        : []
+
+    const featuredAppData = appQuery.data
+        ? appQuery.data.hardware_supported_app_images.filter(checkActive)
         : []
 
     const setCategory = (category: string): void => {
@@ -57,7 +79,7 @@ const Discover = (props: any) => {
         </>
     )
 
-    if (loading) {
+    if (appQuery.loading || bannerQuery.loading) {
         return (
             <div>
                 <PuffAnimation />
@@ -72,7 +94,11 @@ const Discover = (props: any) => {
             />
             <Col
                 xs={11}
-                style={{ overflowY: "scroll", height: 500, paddingBottom: 50 }}
+                style={{
+                    overflowY: "scroll",
+                    height: 500,
+                    paddingBottom: 50,
+                }}
             >
                 <Row>
                     <Col
@@ -84,26 +110,11 @@ const Discover = (props: any) => {
                             borderRadius: 10,
                         }}
                     >
-                        <Banner />
+                        <Banner bannerData={bannerData} />
                     </Col>
-                    <Col
-                        xs={4}
-                        style={{
-                            width: "100%",
-                            height: 225,
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: "100%",
-                                height: "100%",
-                                background: "white",
-                                borderRadius: 10,
-                            }}
-                        ></div>
-                    </Col>
+                    <News mediaData={mediaData} />
                 </Row>
-                <Row style={{ marginTop: 15 }}>{featuredApps}</Row>
+                <Row style={{ marginTop: 25 }}>{featuredApps}</Row>
             </Col>
         </Row>
     )
