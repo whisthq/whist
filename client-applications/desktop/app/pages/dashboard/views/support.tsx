@@ -30,7 +30,6 @@ const Settings = (props: any) => {
 
     return (
         <div className={styles.page}>
-            <h2>Contact Us</h2>
             <div style={{ marginTop: 30, fontSize: 15 }}>
                 If you have any feedback to make Fractal better, or need to
                 contact our team, please fill out the form below, and we'll get

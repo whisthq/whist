@@ -16,9 +16,18 @@ const Discover = (props: any) => {
 
     const [searchResults, setSearchResults] = useState([])
     const [selectedCategory, setSelectedCategory] = useState("All")
+    const [featuredAppData, setFeaturedAppData] = useState([])
 
     const checkActive = (app: any) => {
         return app.active
+    }
+
+    const checkCategory = (app: any) => {
+        if (selectedCategory === "All") {
+            return true
+        } else {
+            return app.category === selectedCategory
+        }
     }
 
     const getSearchResults = (app: any) => {
@@ -55,13 +64,11 @@ const Discover = (props: any) => {
           )
         : []
 
-    const featuredAppData = appQuery.data
-        ? appQuery.data.hardware_supported_app_images.filter(checkActive)
-        : []
-
     const setCategory = (category: string): void => {
         setSelectedCategory(category)
     }
+
+    let featuredApps = []
 
     useEffect(() => {
         const results = featuredAppData.filter(getSearchResults)
@@ -70,14 +77,19 @@ const Discover = (props: any) => {
         )
     }, [search])
 
-    let featuredApps = []
-    featuredApps.push(
-        <>
-            {featuredAppData.map((app: any) => (
-                <App key={app.app_id} app={app} />
-            ))}
-        </>
-    )
+    useEffect(() => {
+        if (appQuery.data) {
+            var newAppData = appQuery.data
+                ? appQuery.data.hardware_supported_app_images.filter(
+                      checkActive
+                  )
+                : []
+            if (selectedCategory) {
+                newAppData = newAppData ? newAppData.filter(checkCategory) : []
+            }
+            setFeaturedAppData(newAppData)
+        }
+    }, [appQuery.data, selectedCategory])
 
     if (appQuery.loading || bannerQuery.loading) {
         return (
@@ -87,36 +99,43 @@ const Discover = (props: any) => {
         )
     }
     return (
-        <Row style={{ padding: "0px 50px", marginTop: 50 }}>
-            <LeftColumn
-                callback={setCategory}
-                selectedCategory={selectedCategory}
-            />
-            <Col
-                xs={11}
-                style={{
-                    overflowY: "scroll",
-                    height: 500,
-                    paddingBottom: 50,
-                }}
-            >
-                <Row>
-                    <Col
-                        xs={8}
-                        style={{
-                            width: "100%",
-                            height: 225,
-                            paddingRight: 15,
-                            borderRadius: 10,
-                        }}
-                    >
-                        <Banner bannerData={bannerData} />
-                    </Col>
-                    <News mediaData={mediaData} />
-                </Row>
-                <Row style={{ marginTop: 25 }}>{featuredApps}</Row>
-            </Col>
-        </Row>
+        <div
+            style={{
+                overflowX: "hidden",
+                overflowY: "scroll",
+                maxHeight: 525,
+                paddingBottom: 25,
+                marginTop: 25,
+            }}
+        >
+            <Row style={{ padding: "0px 45px", marginTop: 25 }}>
+                <Col
+                    xs={7}
+                    style={{
+                        width: "100%",
+                        height: 225,
+                        paddingRight: 15,
+                        borderRadius: 10,
+                    }}
+                >
+                    <Banner bannerData={bannerData} />
+                </Col>
+                <News mediaData={mediaData} />
+            </Row>
+            <Row style={{ marginTop: 35, padding: "0px 45px" }}>
+                <LeftColumn
+                    callback={setCategory}
+                    selectedCategory={selectedCategory}
+                />
+                <Col xs={11}>
+                    <Row>
+                        {featuredAppData.map((app: any) => (
+                            <App key={app.app_id} app={app} />
+                        ))}
+                    </Row>
+                </Col>
+            </Row>
+        </div>
     )
 }
 

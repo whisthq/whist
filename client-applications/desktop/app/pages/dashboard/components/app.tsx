@@ -29,8 +29,6 @@ const App = (props: any) => {
     }
 
     useEffect(() => {
-        console.log(launches)
-        console.log(launched)
         if (launches === 1 && launched) {
             history.push("/loading")
             dispatch(createContainer(app.app_id))
@@ -55,7 +53,9 @@ const App = (props: any) => {
                         </div>
                     </div>
                 </div>
-                <div style={{ height: 220, paddingBottom: 20 }}>
+                <div
+                    style={{ height: 220, paddingBottom: 20, marginBottom: 10 }}
+                >
                     <div className={styles.appContainer}>
                         <div
                             className={styles.appHeading}
