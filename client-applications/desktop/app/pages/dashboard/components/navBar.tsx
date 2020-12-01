@@ -52,73 +52,84 @@ const NavBar = (props: any) => {
     }
 
     return (
-        <div className={styles.navBar}>
-            <div className={styles.logoTitle}>Fractal</div>
-            <NavTitle
-                selected={currentTab == "Discover"}
-                text="Discover"
-                onClick={() => updateCurrentTab("Discover")}
-                style={{
-                    marginLeft: 50,
-                }}
-            />
-            <NavTitle
-                selected={currentTab == "Settings"}
-                text="Settings"
-                onClick={() => updateCurrentTab("Settings")}
-            />
-            <NavTitle
-                selected={currentTab == "Support"}
-                text="Support"
-                onClick={() => updateCurrentTab("Support")}
-            />
-            <div
-                style={{
-                    position: "absolute",
-                    right: "50px",
-                    top: "15px",
-                    display: "flex",
-                    flexDirection: "row",
-                    maxWidth: 540,
-                }}
-            >
-                {currentTab == "Discover" && (
-                    <input
-                        value={search}
-                        onChange={(evt: any) => updateSearch(evt.target.value)}
-                        placeholder="Search for an app"
-                        className={styles.searchBar}
-                    />
-                )}
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                    <div
-                        className={styles.userInfo}
-                        onClick={() => setShowProfile(!showProfile)}
-                    >
-                        <FontAwesomeIcon
-                            icon={faUser}
-                            style={{
-                                color: "#111111",
-                                fontSize: 30,
-                                padding: 6,
-                                position: "relative",
-                                top: 2,
-                                marginRight: 4,
-                            }}
+        <div>
+            <div className={styles.navBar}>
+                <div className={styles.logoTitle}>Fractal</div>
+                <div
+                    style={{
+                        position: "absolute",
+                        right: "50px",
+                        top: "15px",
+                        display: "flex",
+                        flexDirection: "row",
+                        maxWidth: 540,
+                    }}
+                >
+                    {currentTab == "App Store" && (
+                        <input
+                            value={search}
+                            onChange={(evt: any) =>
+                                updateSearch(evt.target.value)
+                            }
+                            placeholder="Search for an app"
+                            className={styles.searchBar}
                         />
+                    )}
+                    <div style={{ display: "flex", flexDirection: "column" }}>
                         <div
-                            style={{ display: "flex", flexDirection: "column" }}
+                            className={styles.userInfo}
+                            onClick={() => setShowProfile(!showProfile)}
                         >
-                            <span className={styles.name}>{name}</span>
-                            <span className={styles.email}>{username}</span>
+                            <FontAwesomeIcon
+                                icon={faUser}
+                                style={{
+                                    color: "#111111",
+                                    fontSize: 30,
+                                    padding: 6,
+                                    position: "relative",
+                                    top: 2,
+                                    marginRight: 4,
+                                }}
+                            />
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                }}
+                            >
+                                <span className={styles.name}>{name}</span>
+                                <span className={styles.email}>{username}</span>
+                            </div>
                         </div>
+                        <Collapse in={showProfile}>
+                            <div onClick={handleSignout}>
+                                <div className={styles.signoutButton}>
+                                    Sign Out
+                                </div>
+                            </div>
+                        </Collapse>
                     </div>
-                    <Collapse in={showProfile}>
-                        <div onClick={handleSignout}>
-                            <div className={styles.signoutButton}>Sign Out</div>
-                        </div>
-                    </Collapse>
                 </div>
+            </div>
+            <div>
+                <NavTitle
+                    selected={currentTab == "App Store"}
+                    text="App Store"
+                    onClick={() => updateCurrentTab("App Store")}
+                    style={{
+                        marginLeft: 50,
+                    }}
+                />
+                <NavTitle
+                    selected={currentTab == "Settings"}
+                    text="Settings"
+                    onClick={() => updateCurrentTab("Settings")}
+                />
+                <NavTitle
+                    selected={currentTab == "Support"}
+                    text="Support"
+                    onClick={() => updateCurrentTab("Support")}
+                />
             </div>
         </div>
     )

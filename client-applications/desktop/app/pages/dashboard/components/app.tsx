@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import { Modal } from "react-bootstrap"
+import { Col, Modal } from "react-bootstrap"
 import styles from "styles/dashboard.css"
+import { FaPlay } from "react-icons/fa"
 
 import { createContainer } from "store/actions/sideEffects"
 import { updateContainer } from "store/actions/pure"
@@ -35,16 +36,29 @@ const App = (props: any) => {
     }, [launches, launched])
 
     return (
-        <>
-            <div className={styles.appContainer} onClick={handleOpenModal}>
-                <div className={styles.appHeading}>
+        <Col xs={3}>
+            <div className={styles.appContainer}>
+                <div className={styles.playButton} onClick={handleLaunch}>
+                    <div style={{ position: "relative" }}>
+                        <div
+                            style={{
+                                position: "absolute",
+                                top: "50%",
+                                left: "50%",
+                                transform: "translate(-45%, 5%)",
+                            }}
+                        >
+                            <FaPlay className={styles.faPlayButton} />
+                        </div>
+                    </div>
+                </div>
+                <div className={styles.appHeading} onClick={handleOpenModal}>
                     <img src={app.logo_url} className={styles.appImage} />
                     <div className={styles.appName}>{app.app_id}</div>
+                    <div className={styles.appDescription}>
+                        {app.description}
+                    </div>
                 </div>
-                <div className={styles.appDescription}>{app.description}</div>
-                <button className={styles.launchButton} onClick={handleLaunch}>
-                    LAUNCH
-                </button>
             </div>
             <Modal
                 show={showModal}
@@ -61,6 +75,7 @@ const App = (props: any) => {
                         display: "flex",
                         flexDirection: "column",
                         padding: "0px 40px 40px 40px",
+                        border: "none",
                     }}
                 >
                     <div style={{ display: "flex", flexDirection: "row" }}>
@@ -112,15 +127,10 @@ const App = (props: any) => {
                             terms of service.
                         </span>
                     </div>
-                    <button
-                        className={styles.modalButton}
-                        onClick={handleLaunch}
-                    >
-                        LAUNCH
-                    </button>
+                    <button className={styles.modalButton}>Download</button>
                 </Modal.Body>
             </Modal>
-        </>
+        </Col>
     )
 }
 

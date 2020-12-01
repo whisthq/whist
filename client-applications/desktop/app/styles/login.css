@@ -75,6 +75,7 @@ button {
     color: black;
     margin-left: 10px;
     font-size: 15px;
+    outline: none !important;
 }
 
 .loginButton {
@@ -121,9 +122,9 @@ button {
 
 .welcomeBack {
     font-weight: bold;
-    font-size: 25px;
+    font-size: 30px;
     color: black;
-    margin-bottom: 20px;
+    margin-bottom: 5px;
 }
 
 .inputBox {

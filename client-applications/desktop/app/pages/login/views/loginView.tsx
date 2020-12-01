@@ -26,10 +26,8 @@ const LoginView = (props: any) => {
     if (!loggingIn) {
         return (
             <div style={{ marginTop: 150 }}>
-                <div className={styles.welcomeBack}>
-                    Welcome Back! <br />
-                    You've been signed out.
-                </div>
+                <div className={styles.welcomeBack}>Welcome Back!</div>
+                <div>You've been signed out.</div>
                 <div style={{ marginTop: 30 }}>
                     <button
                         onClick={handleLoginUser}
@@ -44,7 +42,7 @@ const LoginView = (props: any) => {
         )
     } else {
         return (
-            <div>
+            <div style={{ marginTop: 150 }}>
                 <PuffLoader css={"marginTop: 300px; margin: auto;"} size={75} />
                 <div style={{ margin: "auto", marginTop: 50, maxWidth: 450 }}>
                     A browser window should open momentarily where you can

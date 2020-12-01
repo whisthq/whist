@@ -1,38 +1,12 @@
-import React, { useState } from "react"
+import React from "react"
 import { Carousel } from "react-bootstrap"
 import { connect } from "react-redux"
 import { useQuery } from "@apollo/client"
 
 import { GET_BANNERS } from "shared/constants/graphql"
 
-import styles from "styles/dashboard.css"
-
-const BannerItem = (props: any) => {
-    const { bannerItem } = props
-
-    const handleClick = () => {
-        if (bannerItem.url) {
-            const { shell } = require("electron")
-            shell.openExternal(bannerItem.url)
-        }
-    }
-
-    return (
-        <div
-            onClick={handleClick}
-            className={bannerItem.url ? styles.bannerLink : ""}
-        >
-            <div className={styles.bannerText}>
-                <div className={styles.category}>{bannerItem.category}</div>
-                <h2 className={styles.heading}>{bannerItem.heading}</h2>
-                <div className={styles.subheading}>{bannerItem.subheading}</div>
-            </div>
-        </div>
-    )
-}
-
 const Banner = (props: any) => {
-    const { data, error } = useQuery(GET_BANNERS, {
+    const { data } = useQuery(GET_BANNERS, {
         context: {
             headers: {
                 Authorization: `Bearer ${props.accessToken}`,
@@ -40,58 +14,49 @@ const Banner = (props: any) => {
         },
     })
 
-    const bannerData = data ? data.hardware_banners : []
-    const bannerBackgrounds = bannerData.map(
-        (bannerItem: any) => bannerItem.background
-    )
+    const bannerData = data
+        ? data.hardware_banners.filter(
+              (bannerData: any) => bannerData.category === "News"
+          )
+        : []
 
-    const [index, setIndex] = useState(0)
-
-    const handleSelect = (selectedIndex: number) => {
-        setIndex(selectedIndex)
+    const handleClick = (url: string) => {
+        if (url) {
+            const { shell } = require("electron")
+            shell.openExternal(url)
+        }
     }
 
-    return (
-        <>
-            <Carousel
-                controls={false}
-                interval={8000}
-                style={{ height: 335, zIndex: 1 }}
-                onSelect={handleSelect}
-            >
+    if (bannerData && bannerData.length > 0) {
+        return (
+            <Carousel style={{ width: "100%", height: "100%" }}>
                 {bannerData.map((bannerItem: any) => (
-                    <Carousel.Item key={bannerItem.heading}>
-                        <BannerItem bannerItem={bannerItem} />
-                    </Carousel.Item>
-                ))}
-            </Carousel>
-            <Carousel
-                activeIndex={index}
-                controls={false}
-                indicators={false}
-                style={{
-                    position: "fixed",
-                    top: 0,
-                    left: 0,
-                    zIndex: 0,
-                    height: "100vh",
-                }}
-            >
-                {bannerBackgrounds.map((background: any) => (
-                    <Carousel.Item key={background}>
+                    <Carousel.Item
+                        key={bannerItem.background}
+                        onClick={() => handleClick(bannerItem.url)}
+                    >
                         <div
                             style={{
-                                zIndex: 0,
-                                height: "100vh",
+                                backgroundImage: `url(${bannerItem.background})`,
+                                backgroundSize: "cover",
+                                width: "100%",
+                                height: 225,
+                                borderRadius: 10,
+                                borderLeft: "none",
+                                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
                             }}
-                        >
-                            <img src={background} style={{ width: "100%" }} />
-                        </div>
+                        ></div>
                     </Carousel.Item>
                 ))}
             </Carousel>
-        </>
-    )
+        )
+    } else {
+        return (
+            <div
+                style={{ width: "100%", height: "100%", background: "#f4f5ff" }}
+            ></div>
+        )
+    }
 }
 
 const mapStateToProps = (state: any) => {

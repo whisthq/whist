@@ -6,18 +6,12 @@ import Titlebar from "react-electron-titlebar"
 import BackgroundView from "pages/login/views/backgroundView"
 import LoginView from "pages/login/views/loginView"
 
-import { updateClient } from "store/actions/pure"
-import { findDPI } from "pages/login/constants/helpers"
-
 const Login = (props: any) => {
     const { dispatch, os, loginWarning } = props
     const [version, setVersion] = useState("1.0.0")
 
     useEffect(() => {
         const appVersion = require("../../package.json").version
-        const dpi = findDPI()
-        const os = require("os")
-        dispatch(updateClient({ os: os.platform(), dpi: dpi }))
         setVersion(appVersion)
     }, [])
 
