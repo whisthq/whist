@@ -138,6 +138,10 @@ const Loading = (props: any) => {
         // this should be done AFTER the endpoint to connect to EXISTS
     }
 
+    if (typeof status === "string") {
+        console.log(`status ${status} and ${status.toLowerCase().includes("unexpected")}`)
+    }
+
     return (
         <div
             style={{
@@ -211,6 +215,11 @@ const Loading = (props: any) => {
                     </div>
                 </div>
             </div>
+            {(status && typeof status === "string" && status.toLowerCase().includes("unexpected")) && (
+                <button>
+                    hey there
+                </button>
+            )}
         </div>
     )
 }
