@@ -27,6 +27,7 @@ const Banner = (props: any) => {
                                 width: "100%",
                                 height: 225,
                                 borderRadius: 12,
+                                cursor: "pointer",
                             }}
                         ></div>
                     </Carousel.Item>
