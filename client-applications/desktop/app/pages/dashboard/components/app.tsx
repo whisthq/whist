@@ -56,11 +56,11 @@ const App = (props: any) => {
                 <div
                     style={{ height: 220, paddingBottom: 20, marginBottom: 10 }}
                 >
-                    <div className={styles.appContainer}>
-                        <div
-                            className={styles.appHeading}
-                            onClick={handleOpenModal}
-                        >
+                    <div
+                        className={styles.appContainer}
+                        onClick={handleOpenModal}
+                    >
+                        <div className={styles.appHeading}>
                             <img
                                 src={app.logo_url}
                                 className={styles.appImage}
