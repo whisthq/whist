@@ -12,7 +12,7 @@ import Banner from "pages/dashboard/components/banner"
 import News from "pages/dashboard/components/news"
 
 const Discover = (props: any) => {
-    const { updateCurrentTab, search } = props
+    const { search } = props
 
     const [searchResults, setSearchResults] = useState([])
     const [selectedCategory, setSelectedCategory] = useState("All")
@@ -32,7 +32,7 @@ const Discover = (props: any) => {
 
     const getSearchResults = (app: any) => {
         if (app && app.app_id && search) {
-            return app.app_id.toLowerCase().startsWith(search.toLowerCase())
+            return app.app_id.toLowerCase().includes(search.toLowerCase())
         }
     }
 
@@ -68,8 +68,6 @@ const Discover = (props: any) => {
         setSelectedCategory(category)
     }
 
-    let featuredApps = []
-
     useEffect(() => {
         const results = featuredAppData.filter(getSearchResults)
         setSearchResults(
@@ -97,46 +95,53 @@ const Discover = (props: any) => {
                 <PuffAnimation />
             </div>
         )
-    }
-    return (
-        <div
-            style={{
-                overflowX: "hidden",
-                overflowY: "scroll",
-                maxHeight: 525,
-                paddingBottom: 25,
-                marginTop: 25,
-            }}
-        >
+    } else if (search && searchResults.length > 0) {
+        return (
             <Row style={{ padding: "0px 45px", marginTop: 25 }}>
-                <Col
-                    xs={7}
-                    style={{
-                        width: "100%",
-                        height: 225,
-                        paddingRight: 15,
-                        borderRadius: 10,
-                    }}
-                >
-                    <Banner bannerData={bannerData} />
-                </Col>
-                <News mediaData={mediaData} />
+                {searchResults}
             </Row>
-            <Row style={{ marginTop: 35, padding: "0px 45px" }}>
-                <LeftColumn
-                    callback={setCategory}
-                    selectedCategory={selectedCategory}
-                />
-                <Col xs={11}>
-                    <Row>
-                        {featuredAppData.map((app: any) => (
-                            <App key={app.app_id} app={app} />
-                        ))}
-                    </Row>
-                </Col>
-            </Row>
-        </div>
-    )
+        )
+    } else {
+        return (
+            <div
+                style={{
+                    overflowX: "hidden",
+                    overflowY: "scroll",
+                    maxHeight: 525,
+                    paddingBottom: 25,
+                    marginTop: 25,
+                }}
+            >
+                <Row style={{ padding: "0px 45px", marginTop: 25 }}>
+                    <Col
+                        xs={7}
+                        style={{
+                            width: "100%",
+                            height: 225,
+                            paddingRight: 15,
+                            borderRadius: 10,
+                        }}
+                    >
+                        <Banner bannerData={bannerData} />
+                    </Col>
+                    <News mediaData={mediaData} />
+                </Row>
+                <Row style={{ marginTop: 35, padding: "0px 45px" }}>
+                    <LeftColumn
+                        callback={setCategory}
+                        selectedCategory={selectedCategory}
+                    />
+                    <Col xs={11}>
+                        <Row>
+                            {featuredAppData.map((app: any) => (
+                                <App key={app.app_id} app={app} />
+                            ))}
+                        </Row>
+                    </Col>
+                </Row>
+            </div>
+        )
+    }
 }
 
 const mapStateToProps = (state: any) => {
