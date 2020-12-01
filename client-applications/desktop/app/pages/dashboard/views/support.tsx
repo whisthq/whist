@@ -98,10 +98,10 @@ const Settings = (props: any) => {
             )}
             {type && feedback ? (
                 <div className={styles.feedbackButton} onClick={handleSubmit}>
-                    SUBMIT
+                    Submit
                 </div>
             ) : (
-                <div className={styles.noFeedbackButton}>SUBMIT</div>
+                <div className={styles.noFeedbackButton}>Submit</div>
             )}
         </div>
     )
