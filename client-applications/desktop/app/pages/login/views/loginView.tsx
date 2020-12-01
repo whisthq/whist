@@ -11,6 +11,7 @@ import { config } from "shared/constants/config"
 const LoginView = (props: any) => {
     const { dispatch } = props
     const [loggingIn, setLoggingIn] = useState(false)
+    const [accessToken, setAccessToken] = useState("")
 
     const handleLoginUser = () => {
         setLoggingIn(true)
@@ -21,6 +22,17 @@ const LoginView = (props: any) => {
                 config.url.FRONTEND_URL + "/auth/bypass?callback=fractal://auth"
             )
         })
+    }
+
+    const changeAccessToken = (evt: any) => {
+        evt.persist()
+        setAccessToken(evt.target.value)
+    }
+
+    const onKeyPress = (evt: any) => {
+        if (evt.key === "Enter") {
+            dispatch(updateAuth({ candidateAccessToken: accessToken }))
+        }
     }
 
     if (!loggingIn) {
@@ -56,6 +68,25 @@ const LoginView = (props: any) => {
                     if it doesn't appear. Once you've logged in, this page will
                     automatically redirect.
                 </div>
+                {config.sentry_env === "development" && (
+                    <div style={{ marginTop: 40 }}>
+                        <input
+                            type="text"
+                            onChange={changeAccessToken}
+                            onKeyPress={onKeyPress}
+                            style={{
+                                width: 400,
+                                border: "none",
+                                boxShadow: "none",
+                                margin: "auto",
+                                background: "rgba(237, 240, 247, 0.75)",
+                                padding: "5px 20px",
+                                borderRadius: 5,
+                                outline: "none",
+                            }}
+                        />
+                    </div>
+                )}
             </div>
         )
     }
