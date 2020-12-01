@@ -7,7 +7,9 @@ export const urlToApp = (url: string, featuredAppData: any): any => {
         if (
             url
                 .toLowerCase()
-                .includes(featuredAppData[i].app_id.toLowerCase()) &&
+                .includes(
+                    featuredAppData[i].app_id.toLowerCase().replace(/\s+/g, "-")
+                ) &&
             featuredAppData[i].app_id !== "Google Chrome"
         ) {
             return { app_id: featuredAppData[i].app_id, url: null }
