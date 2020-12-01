@@ -183,7 +183,13 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 		return logger.MakeError("Error raw-unmarshalling JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
 	}
 	var requestAuthSecret string
-	err = json.Unmarshal(*rawmap["auth_secret"], &requestAuthSecret)
+	err = func() error {
+		if value, ok := rawmap["auth_secret"]; ok {
+			return json.Unmarshal(*value, &requestAuthSecret)
+		} else {
+			return logger.MakeError("Request body had no \"auth_secret\" field.")
+		}
+	}()
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return logger.MakeError("Error getting auth_secret from JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
