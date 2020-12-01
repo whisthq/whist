@@ -21,12 +21,11 @@ const News = (props: any) => {
                         padding: 15,
                         background: "white",
                         borderRadius: 10,
-                        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
                         cursor: "pointer",
                     }}
                 >
                     <Carousel
-                        style={{ width: "100%", height: "100%" }}
+                        style={{ width: "100%", height: "100%", zIndex: 1 }}
                         prevIcon={<div></div>}
                         nextIcon={<div></div>}
                         indicators={false}
@@ -55,18 +54,38 @@ const News = (props: any) => {
                                             marginTop: 30,
                                             fontWeight: "bold",
                                             fontSize: 14,
+                                            display: "flex",
                                         }}
                                     >
-                                        {mediaItem.heading}
-                                    </div>
-                                    <div
-                                        style={{
-                                            marginTop: 10,
-                                            color: "#333333",
-                                            fontSize: 12,
-                                        }}
-                                    >
-                                        {mediaItem.subheading}
+                                        <div
+                                            style={{
+                                                color: "white",
+                                                background: "#111111",
+                                                padding: "4px 12px",
+                                                borderRadius: 4,
+                                                fontSize: 12,
+                                                marginRight: 15,
+                                                fontWeight: "bold",
+                                                height: 25,
+                                                position: "relative",
+                                                top: 3,
+                                            }}
+                                        >
+                                            Media
+                                        </div>
+                                        <div>
+                                            {mediaItem.heading}
+                                            <div
+                                                style={{
+                                                    marginTop: 10,
+                                                    color: "#333333",
+                                                    fontSize: 12,
+                                                    fontWeight: "normal",
+                                                }}
+                                            >
+                                                {mediaItem.subheading}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </Carousel.Item>
