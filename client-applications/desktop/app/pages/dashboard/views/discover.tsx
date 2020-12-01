@@ -112,7 +112,7 @@ const Discover = (props: any) => {
                     marginTop: 25,
                 }}
             >
-                <Row style={{ padding: "0px 45px", marginTop: 25 }}>
+                <Row style={{ padding: "0px 45px", marginTop: 20 }}>
                     <Col
                         xs={7}
                         style={{
