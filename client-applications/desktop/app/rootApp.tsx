@@ -150,14 +150,7 @@ const RootApp = (props: any) => {
             <Switch>
                 <Route path="/dashboard" component={Dashboard} />
                 <Route path="/loading" component={Loading} />
-                <Route
-                    path="/"
-                    component={
-                        process.env.NODE_ENV === "development"
-                            ? Dashboard
-                            : Login
-                    }
-                />
+                <Route path="/" component={Login} />
                 <Route
                     path="/update"
                     render={(props) => (

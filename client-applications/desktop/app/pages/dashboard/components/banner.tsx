@@ -1,39 +1,24 @@
 import React from "react"
 import { Carousel } from "react-bootstrap"
 import { connect } from "react-redux"
-import { useQuery } from "@apollo/client"
 
-import { GET_BANNERS } from "shared/constants/graphql"
+import { openExternal } from "shared/utils/helpers"
 
 const Banner = (props: any) => {
-    const { data } = useQuery(GET_BANNERS, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${props.accessToken}`,
-            },
-        },
-    })
-
-    const bannerData = data
-        ? data.hardware_banners.filter(
-              (bannerData: any) => bannerData.category === "News"
-          )
-        : []
-
-    const handleClick = (url: string) => {
-        if (url) {
-            const { shell } = require("electron")
-            shell.openExternal(url)
-        }
-    }
+    const { bannerData } = props
 
     if (bannerData && bannerData.length > 0) {
         return (
-            <Carousel style={{ width: "100%", height: "100%" }}>
+            <Carousel
+                style={{ width: "100%", height: "100%" }}
+                prevIcon={<div></div>}
+                nextIcon={<div></div>}
+                indicators={false}
+            >
                 {bannerData.map((bannerItem: any) => (
                     <Carousel.Item
                         key={bannerItem.background}
-                        onClick={() => handleClick(bannerItem.url)}
+                        onClick={() => openExternal(bannerItem.url)}
                     >
                         <div
                             style={{
@@ -41,9 +26,7 @@ const Banner = (props: any) => {
                                 backgroundSize: "cover",
                                 width: "100%",
                                 height: 225,
-                                borderRadius: 10,
-                                borderLeft: "none",
-                                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+                                borderRadius: 12,
                             }}
                         ></div>
                     </Carousel.Item>
