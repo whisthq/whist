@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 
-	logger "github.com/fractal/ecs-host-service/fractallogger"
+	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
 // Variables for the auth_secret used to communicate between the webserver and
