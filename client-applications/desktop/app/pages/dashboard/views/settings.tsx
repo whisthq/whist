@@ -4,6 +4,7 @@ import { connect } from "react-redux"
 import ToggleButton from "react-toggle-button"
 import Slider from "react-input-slider"
 import styles from "styles/dashboard.css"
+import { FaWifi, FaNetworkWired } from "react-icons/fa"
 
 import Wifi from "assets/images/wifi.svg"
 import Speedometer from "assets/images/speedometer.svg"
@@ -64,15 +65,12 @@ const Settings = (props: any) => {
                             fontWeight: "bold",
                         }}
                     >
-                        <img
-                            src={Wifi}
+                        <FaWifi
                             style={{
                                 color: "#111111",
-                                height: 14,
+                                fontSize: 14,
                                 marginRight: 12,
                                 position: "relative",
-                                top: 2,
-                                width: 16,
                             }}
                         />
                         Low Internet Mode
@@ -127,15 +125,12 @@ const Settings = (props: any) => {
                             fontWeight: "bold",
                         }}
                     >
-                        <img
-                            src={Speedometer}
+                        <FaNetworkWired
                             style={{
                                 color: "#111111",
-                                height: 14,
+                                fontSize: 14,
                                 marginRight: 12,
                                 position: "relative",
-                                top: 2,
-                                width: 16,
                             }}
                         />
                         Maximum Bandwidth
