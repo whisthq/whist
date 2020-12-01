@@ -43,7 +43,7 @@ const Dashboard = (props: any) => {
                     search={search}
                     updateSearch={setSearch}
                 />
-                {currentTab === "App Store" && <Discover />}
+                {currentTab === "App Store" && <Discover search={search} />}
                 {currentTab === "Settings" && <Settings />}
                 {currentTab === "Support" && <Support />}
             </div>
