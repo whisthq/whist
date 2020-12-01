@@ -25,6 +25,7 @@ class User(db.Model):
     card_brand = db.Column(db.String(250))
     card_last_four = db.Column(db.String(250))
     postal_code = db.Column(db.String(250))
+    plan = db.Column(db.String(250))
 
     # Setting passive_deletes causes SQLAlchemy to defer to the database to
     # handle, e.g., cascade deletes. Setting the value to "all" may work as

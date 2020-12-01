@@ -16,30 +16,31 @@ from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.payment.stripe_client import (
     StripeClient,
     NonexistentUser,
+    NonexistentStripeCustomer,
     RegionNotSupported,
     InvalidStripeToken,
     InvalidOperation,
 )
 
 # TODO (optional) make templates for boilerplate
-def addSubscriptionHelper(token, email, plan, code):
-    fractal_log(
+def addSubscriptionHelper(email, plan):
+    fractalLog(
         function="addSubscriptionHelper",
         label=email,
-        logs="Signing {} up for plan {}, with code {}, token {}".format(
-            email, plan, code, str(token)
-        ),
+        logs="Signing {} up for plan {}".format(email, plan),
     )
     client = StripeClient(current_app.config["STRIPE_SECRET"])
-    plans = client.get_prices()  # product Fractal by default
+    plans = client.get_prices(["Hourly Plan", "Monthly Plan", "Unlimited Plan"])
 
-    plan = reduce(lambda acc, pl: acc if pl[0] != plan else pl[1], plans, None)
+    price = reduce(lambda acc, pl: acc if pl[0] != plan else pl[1], plans, None)
 
-    if plan:
+    if price:
         try:
-            client.create_subscription(token, email, plan, code=code)
+            client.create_subscription(email, plan, price)
             status = SUCCESS
         except NonexistentUser:
+            status = FORBIDDEN
+        except NonexistentStripeCustomer:
             status = FORBIDDEN
         except RegionNotSupported:
             status = BAD_REQUEST

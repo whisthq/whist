@@ -89,6 +89,7 @@ def login_helper(code, client_app):
                 "card_brand": user.card_brand,
                 "card_last_four": user.card_last_four,
                 "postal_code": user.postal_code,
+                "plan": user.plan,
             }
         else:
             return {"status": FORBIDDEN, "error": "Try using non-Google login"}
@@ -117,6 +118,7 @@ def login_helper(code, client_app):
         "card_brand": None,
         "card_last_four": None,
         "postal_code": None,
+        "plan": none,
     }
 
 
