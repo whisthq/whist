@@ -231,7 +231,7 @@ def user(request):
     """
 
     if "_retrieve_user" not in request.fixturenames:
-        u = User(user_id=f"test-user-{uuid.uuid4()}@gmail.com", password="")
+        u = User(user_id=f"test-user+{uuid.uuid4()}@tryfractal.com", password="")
 
         db.session.add(u)
         db.session.commit()
