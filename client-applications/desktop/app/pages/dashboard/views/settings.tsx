@@ -29,6 +29,7 @@ const Settings = (props: { username: string; dispatch: any }) => {
     const [admin_region, admin_setRegion] = useState("")
     const [admin_task, admin_setTask] = useState("")
     const [admin_webserver, admin_setWebserver] = useState("")
+    const [admin_cluster, admin_setCluster] = useState("")
 
     useEffect(() => {
         const storage = require("electron-json-storage")
@@ -59,6 +60,10 @@ const Settings = (props: { username: string; dispatch: any }) => {
 
     const admin_updateWebserver = (evt: any) => {
         admin_setWebserver(evt.target.value)
+    }
+
+    const admin_updateCluster = (evt: any) => {
+        admin_setCluster(evt.target.value)
     }
 
     const adminInput = (value: string, placeholder: string, onChange: any) => (
@@ -122,6 +127,20 @@ const Settings = (props: { username: string; dispatch: any }) => {
                 dispatch(
                     updateAdmin({
                         webserver_url: webserver,
+                    })
+                )
+            }
+
+            if (admin_cluster.toLowerCase() == "reset") {
+                dispatch(
+                    updateAdmin({
+                        cluster: null,
+                    })
+                )
+            } else if (admin_cluster.trim() !== "") {
+                dispatch(
+                    updateAdmin({
+                        cluster: admin_cluster,
                     })
                 )
             }
@@ -369,6 +388,11 @@ const Settings = (props: { username: string; dispatch: any }) => {
                                 admin_webserver,
                                 "Webserver",
                                 admin_updateWebserver
+                            )}
+                            {adminInput(
+                                admin_cluster,
+                                "Cluster (optional)",
+                                admin_updateCluster
                             )}
                             {adminInput(
                                 admin_task,

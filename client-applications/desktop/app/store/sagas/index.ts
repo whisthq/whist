@@ -217,9 +217,11 @@ function* createTestContainer(action: any) {
     const state = yield select()
 
     const username = state.MainReducer.auth.username
+
     const task_arn = state.MainReducer.admin.task_arn
     const region = state.MainReducer.admin.region
     const webserver = state.MainReducer.admin.webserver_url
+    const cluster_name = state.MainReducer.admin.cluster
 
     console.log(
         `launching test container for user ${username} with task arn ${task_arn} in region ${region} with webserver ${webserver}`
@@ -235,7 +237,7 @@ function* createTestContainer(action: any) {
         `/aws_container/create_container`,
         {
             username: username,
-            cluster_name: null,
+            cluster_name: cluster_name,
             region_name: region,
             task_definition_arn: task_arn,
             //dpi not supported yet

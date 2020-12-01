@@ -38,5 +38,6 @@ export const DEFAULT = {
         webserver_url: null,
         task_arn: null,
         region: null,
+        cluster: null,
     },
 }

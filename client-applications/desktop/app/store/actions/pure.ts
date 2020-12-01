@@ -76,6 +76,7 @@ export function updateAdmin(body: {
     webserver_url?: null | string
     task_arn?: null | string
     region?: null | string
+    cluster?: null | string
 }) {
     return {
         type: UPDATE_ADMIN,
