@@ -39,9 +39,18 @@ const Settings = (props: any) => {
                 style={{
                     marginTop: 40,
                     fontSize: 14,
+                    borderRadius: 5,
+                    boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
                 }}
             >
-                <select required onChange={handleSelect} defaultValue={type}>
+                <select
+                    required
+                    onChange={handleSelect}
+                    defaultValue={type}
+                    style={{
+                        paddingLeft: 10,
+                    }}
+                >
                     <option selected value="">
                         Category
                     </option>
@@ -58,13 +67,16 @@ const Settings = (props: any) => {
                 style={{
                     marginTop: 20,
                     width: "100%",
-                    background: "#F2F6FB",
+                    background: "white",
                     border: "none",
+                    borderRadius: 5,
                     outline: "none",
                     padding: "20px",
                     fontSize: 14,
                     color: "#black",
                     height: "160px",
+                    resize: "none",
+                    boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
                 }}
             />
             {showSubmittedAlert && (
