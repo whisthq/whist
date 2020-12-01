@@ -17,12 +17,18 @@ import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { findDPI } from "pages/login/constants/helpers"
 
 const RootApp = (props: any) => {
-    const { launches, launchURL, os, dpi, dispatch } = props
+    const {
+        launches,
+        launchURL,
+        os,
+        dpi,
+        candidateAccessToken,
+        dispatch,
+    } = props
 
     const [needsUpdate, setNeedsUpdate] = useState(false)
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [launched, setLaunched] = useState(false)
-    const [accessToken, setAccessToken] = useState("")
 
     const { data } = useQuery(GET_FEATURED_APPS)
 
@@ -54,7 +60,9 @@ const RootApp = (props: any) => {
                 // Check to see if this is an auth request
                 localAccessToken = urlObj.searchParams.get("accessToken")
                 if (localAccessToken) {
-                    setAccessToken(localAccessToken)
+                    dispatch(
+                        updateAuth({ candidateAccessToken: localAccessToken })
+                    )
                 } else {
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
                 }
@@ -64,7 +72,7 @@ const RootApp = (props: any) => {
         // If already logged in, redirect to dashboard
         localAccessToken = storage.get("accessToken")
         if (localAccessToken) {
-            setAccessToken(localAccessToken)
+            dispatch(updateAuth({ candidateAccessToken: localAccessToken }))
         }
     }, [])
 
@@ -78,10 +86,10 @@ const RootApp = (props: any) => {
 
     // If there's an access token, validate it
     useEffect(() => {
-        if (accessToken && accessToken !== "") {
-            dispatch(validateAccessToken(accessToken))
+        if (candidateAccessToken && candidateAccessToken !== "") {
+            dispatch(validateAccessToken(candidateAccessToken))
         }
-    }, [accessToken])
+    }, [candidateAccessToken])
 
     // If does not need update, logged in and ready to launch
     useEffect(() => {
@@ -109,7 +117,7 @@ const RootApp = (props: any) => {
             history.push("/update")
         } else {
             if (!launchURL && props.username && props.accessToken) {
-                setAccessToken("")
+                updateAuth({ candidateAccessToken: "" })
                 history.push("/dashboard")
             } else if (
                 launches === 1 &&
@@ -165,6 +173,7 @@ const RootApp = (props: any) => {
 const mapStateToProps = (state: any) => {
     return {
         username: state.MainReducer.auth.username,
+        candidateAccessToken: state.MainReducer.auth.candidateAccessToken,
         accessToken: state.MainReducer.auth.accessToken,
         refreshToken: state.MainReducer.auth.refreshToken,
         launches: state.MainReducer.container.launches,

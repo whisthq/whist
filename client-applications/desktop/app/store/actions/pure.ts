@@ -7,12 +7,13 @@ export const UPDATE_LOADING = "UPDATE_LOADING"
 export const RESET_STATE = "RESET_STATE"
 
 export function updateAuth(body: {
-    username?: string
-    accessToken?: string
-    refreshToken?: string
+    username?: string | null
+    candidateAccessToken?: string | null
+    accessToken?: string | null
+    refreshToken?: string | null
     loginWarning?: boolean
-    loginMessage?: string
-    name?: string
+    loginMessage?: string | null
+    name?: string | null
 }) {
     return {
         type: UPDATE_AUTH,
@@ -21,18 +22,18 @@ export function updateAuth(body: {
 }
 
 export function updateContainer(body: {
-    publicIP: string
-    container_id: string
-    cluster: string
-    port32262: string
-    port32263: string
-    port32273: string
-    location: string
-    secretKey: string
-    desiredAppID: string
-    currentAppID: string
+    publicIP: string | null
+    container_id: string | null
+    cluster: string | null
+    port32262: string | null
+    port32263: string | null
+    port32273: string | null
+    location: string | null
+    secretKey: string | null
+    desiredAppID: string | null
+    currentAppID: string | null
     launches: number
-    launchURL: string
+    launchURL: string | null
 }) {
     return {
         type: UPDATE_CONTAINER,
