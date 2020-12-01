@@ -23,29 +23,30 @@ export const setAWSRegion = () => {
     return new Promise((resolve, reject) => {
         const { spawn } = require("child_process")
         const os = require("os")
+        const platform = os.platform()
         var appRootDir = require("electron").remote.app.getAppPath()
         var executable = ""
         var path = ""
 
-        if (os.platform() === "darwin") {
+        if (platform === "darwin") {
             path = appRootDir + "/binaries/"
             path = path.replace("/Resources/app.asar", "")
             path = path.replace("/app", "")
             executable = "./awsping_osx"
-        } else if (os.platform() === "linux") {
+        } else if (platform === "linux") {
             path = process.cwd() + "/binaries/"
             path = path.replace("/release", "")
             executable = "./awsping_linux"
-        } else if (os.platform() === "win32") {
+        } else if (platform === "win32") {
             path = appRootDir + "\\binaries"
             path = path.replace("\\resources\\app.asar", "")
             path = path.replace("\\app", "")
             executable = "awsping_windows.exe"
         } else {
-            console.log(`no suitable os found, instead got ${os.platform()}`)
+            console.log(`no suitable os found, instead got ${platform}`)
         }
 
-        execChmodUnix("chmod +x awsping_osx", path, os.platform()).then(() => {
+        execChmodUnix("chmod +x awsping_osx", path, platform).then(() => {
             const regions = spawn(executable, ["-n", "3"], {
                 cwd: path,
             }) // ping via TCP

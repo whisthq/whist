@@ -187,7 +187,8 @@
         "source-map-support": "^0.5.16",
         "spawn-sync": "^2.0.0",
         "subscriptions-transport-ws": "^0.9.18",
-        "systeminformation": "^4.22.3"
+        "systeminformation": "^4.22.3",
+        "windows-shortcuts": "^0.1.6"
     },
     "description": "Fractal Desktop Application",
     "devDependencies": {
