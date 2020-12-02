@@ -1,10 +1,8 @@
 @import "/app.global.css";
 
-.dashboardContainer {
-    background: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.page {
+    flex: 1;
+    padding: 35px 60px;
 }
 
 .feedbackButton,
@@ -26,11 +24,23 @@
     opacity: 0.7;
 }
 
+.feedbackButton:hover {
+    background: #93f1d9;
+    cursor: pointer;
+    color: #111111;
+}
+
+.dashboardContainer {
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .signoutButton:hover,
 .launchButton:hover,
 .expandButton:hover,
-.modalButton:hover,
-.feedbackButton:hover {
+.modalButton:hover {
     background: #93f1d9;
     cursor: pointer;
     color: #111111;
@@ -43,11 +53,6 @@
 
 .removeDrag {
     -webkit-app-region: no-drag;
-}
-
-.page {
-    flex: 1;
-    padding: 35px 60px;
 }
 
 .carouselRow {

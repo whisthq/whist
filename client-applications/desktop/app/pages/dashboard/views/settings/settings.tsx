@@ -5,9 +5,12 @@ import ToggleButton from "react-toggle-button"
 import Slider from "react-input-slider"
 import { FaWifi, FaNetworkWired } from "react-icons/fa"
 
-import styles from "pages/dashboard/dashboard.css"
+import { FractalClientCache } from "shared/enums/cache"
 
-const Settings = (props: any) => {
+import styles from "pages/dashboard/views/settings/settings.css"
+import dashboardStyles from "pages/dashboard/dashboard.css"
+
+const Settings = <T extends {}>(props: T) => {
     const [lowInternetMode, setLowInternetMode] = useState(false)
     const [bandwidth, setBandwidth] = useState(500)
     const [showSavedAlert, setShowSavedAlert] = useState(false)
@@ -16,8 +19,10 @@ const Settings = (props: any) => {
         const Store = require("electron-store")
         const storage = new Store()
 
-        const lowInternetMode = storage.get("lowInternetMode")
-        const bandwidth = storage.get("bandwidth")
+        const lowInternetMode = storage.get(
+            FractalClientCache.LOW_INTERNET_MODE
+        )
+        const bandwidth = storage.get(FractalClientCache.BANDWIDTH)
 
         if (lowInternetMode) {
             setLowInternetMode(lowInternetMode)
@@ -40,52 +45,24 @@ const Settings = (props: any) => {
         const storage = new Store()
         const mbps = bandwidth === 50 ? 500 : bandwidth
 
-        storage.set("lowInternetMode", lowInternetMode)
-        storage.set("bandwidth", mbps)
+        storage.set(FractalClientCache.LOW_INTERNET_MODE, lowInternetMode)
+        storage.set(FractalClientCache.BANDWIDTH, mbps)
 
         setShowSavedAlert(true)
     }
 
     return (
-        <div className={styles.page}>
-            <Row
-                style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    marginTop: 50,
-                }}
-            >
+        <div className={dashboardStyles.page}>
+            <Row className={styles.row}>
                 <div style={{ width: "75%" }}>
-                    <div
-                        style={{
-                            color: "#111111",
-                            fontSize: 16,
-                            fontWeight: "bold",
-                        }}
-                    >
-                        <FaWifi
-                            style={{
-                                color: "#111111",
-                                fontSize: 14,
-                                marginRight: 12,
-                                position: "relative",
-                            }}
-                        />
+                    <div className={styles.header}>
+                        <FaWifi className={styles.faIcon} />
                         Low Internet Mode
                     </div>
-                    <div
-                        style={{
-                            fontSize: 13,
-                            color: "#333333",
-                            marginTop: 10,
-                            marginLeft: 28,
-                            lineHeight: 1.4,
-                        }}
-                    >
-                        If you have low Internet speeds (less than 15 Mbps) and
-                        are experiencing stuttering, low Internet mode will
-                        reduce Fractal's Internet speed requirement. Note that
-                        this will increase your latency by a very small amount,
+                    <div className={styles.text}>
+                        If you have low Internet speeds (less than 15 Mbps), low
+                        Internet mode will reduce Fractal's Internet speed
+                        requirement. This will increase your latency slightly,
                         so we don't recommend activating it unless necessary.
                     </div>
                 </div>
@@ -108,55 +85,23 @@ const Settings = (props: any) => {
                 </div>
             </Row>
             <Row
+                className={styles.row}
                 style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    marginTop: 50,
                     marginBottom: 25,
                 }}
             >
                 <div style={{ width: "75%" }}>
-                    <div
-                        style={{
-                            color: "#111111",
-                            fontSize: 16,
-                            fontWeight: "bold",
-                        }}
-                    >
-                        <FaNetworkWired
-                            style={{
-                                color: "#111111",
-                                fontSize: 14,
-                                marginRight: 12,
-                                position: "relative",
-                            }}
-                        />
+                    <div className={styles.header}>
+                        <FaNetworkWired className={styles.faIcon} />
                         Maximum Bandwidth
                     </div>
-                    <div
-                        style={{
-                            fontSize: 13,
-                            color: "#333333",
-                            marginTop: 10,
-                            marginLeft: 28,
-                            lineHeight: 1.4,
-                        }}
-                    >
+                    <div className={styles.text}>
                         Toggle the maximum bandwidth (Mbps) that Fractal
                         consumes. We recommend adjusting this setting only if
                         you are also running other, bandwidth-consuming apps.
                     </div>
                 </div>
-                <div
-                    style={{
-                        width: "25%",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-around",
-                        alignItems: "flex-end",
-                        padding: "10px 0px",
-                    }}
-                >
+                <div className={styles.sliderWrapper}>
                     <div style={{ float: "right" }}>
                         <Slider
                             axis="x"
@@ -182,14 +127,7 @@ const Settings = (props: any) => {
                             }}
                         />
                     </div>
-                    <div
-                        style={{
-                            fontSize: 11,
-                            color: "#333333",
-                            float: "right",
-                            textAlign: "right",
-                        }}
-                    >
+                    <div className={styles.sliderPopup}>
                         {bandwidth < 50 ? (
                             <div>{bandwidth} mbps</div>
                         ) : (
@@ -204,14 +142,7 @@ const Settings = (props: any) => {
                         variant="success"
                         onClose={() => setShowSavedAlert(false)}
                         dismissible
-                        style={{
-                            width: "100%",
-                            fontSize: 14,
-                            borderRadius: 0,
-                            border: "none",
-                            padding: 20,
-                            marginBottom: 0,
-                        }}
+                        className={styles.alert}
                     >
                         Your settings have been saved!
                     </Alert>
@@ -219,7 +150,7 @@ const Settings = (props: any) => {
             )}
             <Row style={{ justifyContent: "flex-end" }}>
                 <div
-                    className={styles.feedbackButton}
+                    className={dashboardStyles.feedbackButton}
                     style={{ width: 110, marginTop: 25 }}
                     onClick={handleSave}
                 >

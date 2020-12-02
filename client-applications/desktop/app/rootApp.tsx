@@ -17,7 +17,13 @@ import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { findDPI } from "pages/login/constants/helpers"
 import { FractalRoute } from "shared/enums/navigation"
 
-const RootApp = (props: any) => {
+const RootApp = (props: {
+    launches: number
+    launchURL: string
+    os: string
+    dpi: number
+    candidateAccessToken: string
+}) => {
     const {
         launches,
         launchURL,
@@ -45,13 +51,13 @@ const RootApp = (props: any) => {
         var localAccessToken: string | null = null
 
         // Update listener
-        ipc.on("update", (_: any, update: any) => {
+        ipc.on("update", (_: IpcRendererEvent, update: boolean) => {
             setNeedsUpdate(update)
             setUpdatePingReceived(true)
         })
 
         // Custom URL listener
-        ipc.on("customURL", (_: any, customURL: string) => {
+        ipc.on("customURL", (_: IpcRendererEvent, customURL: string) => {
             if (customURL && customURL.toString().includes("fractal://")) {
                 customURL = "fractal://" + customURL.split("fractal://")[1]
                 // Convert URL to URL object so it can be parsed

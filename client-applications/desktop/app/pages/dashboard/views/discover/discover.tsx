@@ -3,38 +3,55 @@ import { Row, Col } from "react-bootstrap"
 import { connect } from "react-redux"
 import { useQuery } from "@apollo/client"
 
-import { GET_FEATURED_APPS } from "shared/constants/graphql"
-import { PuffAnimation } from "shared/components/loadingAnimations"
-import { GET_BANNERS } from "shared/constants/graphql"
-import App from "pages/dashboard/components/app/app"
 import LeftColumn from "pages/dashboard/components/leftColumn/leftColumn"
 import Banner from "pages/dashboard/components/banner/banner"
 import News from "pages/dashboard/components/news/news"
+import App from "pages/dashboard/components/app/app"
 
-const Discover = (props: any) => {
+import { GET_FEATURED_APPS } from "shared/constants/graphql"
+import { PuffAnimation } from "shared/components/loadingAnimations"
+import { GET_BANNERS } from "shared/constants/graphql"
+import { FractalBannerCategory } from "shared/enums/navigation"
+import { FractalApp } from "shared/types/ui"
+
+import styles from "pages/dashboard/views/discover/discover.css"
+
+const Discover = (props: { search: string }) => {
     const { search } = props
 
+    // Define local state
+
     const [searchResults, setSearchResults] = useState([])
-    const [selectedCategory, setSelectedCategory] = useState("All")
+    const [selectedCategory, setSelectedCategory] = useState(
+        FractalBannerCategory.ALL
+    )
     const [featuredAppData, setFeaturedAppData] = useState([])
 
-    const checkActive = (app: any) => {
+    // Helper functions to filter apps by category, active, search results
+
+    const checkActive = (app: FractalApp) => {
         return app.active
     }
 
-    const checkCategory = (app: any) => {
-        if (selectedCategory === "All") {
+    const checkCategory = (app: FractalApp) => {
+        if (selectedCategory === FractalBannerCategory.ALL) {
             return true
         } else {
             return app.category === selectedCategory
         }
     }
 
-    const getSearchResults = (app: any) => {
+    const getSearchResults = (app: FractalApp) => {
         if (app && app.app_id && search) {
             return app.app_id.toLowerCase().includes(search.toLowerCase())
         }
     }
+
+    const setCategory = (category: string): void => {
+        setSelectedCategory(category)
+    }
+
+    // GraphQL queries to get Fractal apps and banners
 
     const appQuery = useQuery(GET_FEATURED_APPS, {
         context: {
@@ -52,21 +69,23 @@ const Discover = (props: any) => {
         },
     })
 
+    // Filter data queried from GraphQL above
+
     const bannerData = bannerQuery.data
         ? bannerQuery.data.hardware_banners.filter(
-              (bannerData: any) => bannerData.category === "News"
+              (bannerData: any) =>
+                  bannerData.category === FractalBannerCategory.NEWS
           )
         : []
 
     const mediaData = bannerQuery.data
         ? bannerQuery.data.hardware_banners.filter(
-              (bannerData: any) => bannerData.category === "Media"
+              (bannerData: any) =>
+                  bannerData.category === FractalBannerCategory.MEDIA
           )
         : []
 
-    const setCategory = (category: string): void => {
-        setSelectedCategory(category)
-    }
+    // If user searches for an app, filter apps
 
     useEffect(() => {
         const results = featuredAppData.filter(getSearchResults)
@@ -74,6 +93,8 @@ const Discover = (props: any) => {
             results.map((app: any) => <App key={app.app_id} app={app} />)
         )
     }, [search])
+
+    // If apps are queried via GraphQL, update local state and filter accordingly
 
     useEffect(() => {
         if (appQuery.data) {
@@ -89,6 +110,7 @@ const Discover = (props: any) => {
         }
     }, [appQuery.data, selectedCategory])
 
+    // Display loading screen until GraphQL queries finish
     if (appQuery.loading || bannerQuery.loading) {
         return (
             <div>
@@ -103,25 +125,9 @@ const Discover = (props: any) => {
         )
     } else {
         return (
-            <div
-                style={{
-                    overflowX: "hidden",
-                    overflowY: "scroll",
-                    maxHeight: 525,
-                    paddingBottom: 25,
-                    marginTop: 25,
-                }}
-            >
+            <div className={styles.scrollWrapper}>
                 <Row style={{ padding: "0px 45px", marginTop: 20 }}>
-                    <Col
-                        xs={7}
-                        style={{
-                            width: "100%",
-                            height: 225,
-                            paddingRight: 15,
-                            borderRadius: 10,
-                        }}
-                    >
+                    <Col xs={7} className={styles.bannerWrapper}>
                         <Banner bannerData={bannerData} />
                     </Col>
                     <News mediaData={mediaData} />
