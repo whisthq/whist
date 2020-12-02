@@ -223,7 +223,7 @@ function* createTestContainer(action: any) {
         } else {
             var warning =
                 `(${moment().format("hh:mm:ss")}) ` +
-                `Unexpectedly lost connection with server. Trying again...`
+                `Unexpectedly lost connection with server. Cancelling...`
             progressSoFar = 0
             yield put(
                 Action.updateLoading({
@@ -376,7 +376,7 @@ function* createContainer(action: any) {
         } else {
             var warning =
                 `(${moment().format("hh:mm:ss")}) ` +
-                `Unexpectedly lost connection with server. Trying again...`
+                `Unexpectedly lost connection with server. Cancelling...`
             progressSoFar = 0
             yield put(
                 Action.updateLoading({

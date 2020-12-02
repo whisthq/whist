@@ -51,6 +51,28 @@ const Loading = (props: any) => {
         }
     }, [launches])
 
+    const resetLaunchRedux = () => {
+        dispatch(
+            updateContainer({
+                container_id: null,
+                cluster: null,
+                port32262: null,
+                port32263: null,
+                port32273: null,
+                publicIP: null,
+                secretKey: null,
+                launches: 0,
+                launchURL: null,
+            })
+        )
+        dispatch(
+            updateLoading({
+                statusMessage: "Powering up your app",
+                percentLoaded: 0,
+            })
+        )
+    }
+
     const LaunchProtocol = () => {
         var child = require("child_process").spawn
         var appRootDir = require("electron").remote.app.getAppPath()
@@ -107,25 +129,7 @@ const Loading = (props: any) => {
                     //},
                 })
                 protocol.on("close", () => {
-                    dispatch(
-                        updateContainer({
-                            container_id: null,
-                            cluster: null,
-                            port32262: null,
-                            port32263: null,
-                            port32273: null,
-                            publicIP: null,
-                            secretKey: null,
-                            launches: 0,
-                            launchURL: null,
-                        })
-                    )
-                    dispatch(
-                        updateLoading({
-                            statusMessage: "Powering up your app",
-                            percentLoaded: 0,
-                        })
-                    )
+                    resetLaunchRedux()
                     setLaunches(0)
                     ipc.sendSync("canClose", true)
                     history.push("/dashboard")
@@ -134,6 +138,12 @@ const Loading = (props: any) => {
         )
         // TODO (adriano) graceful exit vs non graceful exit code
         // this should be done AFTER the endpoint to connect to EXISTS
+    }
+
+    const returnToDashboard = () => {
+        resetLaunchRedux()
+        setLaunches(0)
+        history.push("/dashboard")
     }
 
     return (
@@ -207,15 +217,21 @@ const Loading = (props: any) => {
                             {status}
                         </div>
                     </div>
+                    <div style={{ display: "flex", justifyContent: "center" }}>
+                        {status && // a little bit hacky, but gets the job done
+                            typeof status === "string" &&
+                            status.toLowerCase().includes("unexpected") && (
+                                <div
+                                    className={styles.feedbackButton}
+                                    style={{ width: 220, marginTop: 25 }}
+                                    onClick={returnToDashboard}
+                                >
+                                    BACK TO DASHBOARD
+                                </div>
+                            )}
+                    </div>
                 </div>
             </div>
-            {status && // TODO
-                typeof status === "string" &&
-                status.toLowerCase().includes("unexpected") && (
-                    <button onClick={() => history.push("/dashboard")}>
-                        hey there
-                    </button>
-                )}
         </div>
     )
 }
