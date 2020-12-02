@@ -27,7 +27,7 @@ set(META_PROJECT_NAME        "FractalProtocol")
 set(META_PROJECT_DESCRIPTION "CMake Project for the Fractal client protocol clients on mac, linux and windows
                               and servers on windows and linux.")
 set(META_AUTHOR_ORGANIZATION "Fractal")
-set(META_AUTHOR_DOMAIN       "https://github.com/fractalcomputers/protocol")
+set(META_AUTHOR_DOMAIN       "https://github.com/fractal/protocol")
 
 set(CMAKE_C_STANDARD 99)
 

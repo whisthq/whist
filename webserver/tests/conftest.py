@@ -64,8 +64,7 @@ def app():
         An instance of the Flask application for testing.
     """
 
-    _app = create_app()
-    _app.testing = True
+    _app = create_app(testing=True)
 
     return _app
 
