@@ -1,10 +1,11 @@
-import React, { useState } from "react"
+import React, { useState, ChangeEvent } from "react"
 import { connect } from "react-redux"
 import { Alert, Row } from "react-bootstrap"
 
 import { submitFeedback } from "store/actions/sideEffects"
 
-import styles from "pages/dashboard/dashboard.css"
+import styles from "pages/dashboard/views/support/support.css"
+import dashboardStyles from "pages/dashboard/dashboard.css"
 
 const Settings = <T extends {}>(props: T) => {
     const { dispatch } = props
@@ -13,11 +14,11 @@ const Settings = <T extends {}>(props: T) => {
     const [type, setType] = useState("")
     const [showSubmittedAlert, setShowSubmittedAlert] = useState(false)
 
-    const updateFeedback = (evt: any) => {
+    const updateFeedback = (evt: ChangeEvent) => {
         setFeedback(evt.target.value)
     }
 
-    const handleSelect = (evt: any) => {
+    const handleSelect = (evt: ChangeEvent) => {
         setType(evt.target.value)
     }
 
@@ -29,22 +30,14 @@ const Settings = <T extends {}>(props: T) => {
     }
 
     return (
-        <div className={styles.page}>
+        <div className={dashboardStyles.page}>
             <Row>
                 <div style={{ marginTop: 30, fontSize: 15 }}>
                     If you have any feedback to make Fractal better, or need to
                     contact our team, please fill out the form below, and we'll
                     get back to you as soon as possible!
                 </div>
-                <form
-                    style={{
-                        marginTop: 40,
-                        fontSize: 14,
-                        borderRadius: 5,
-                        boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
-                        width: "100%",
-                    }}
-                >
+                <form className={styles.form}>
                     <select
                         required
                         onChange={handleSelect}
@@ -68,48 +61,29 @@ const Settings = <T extends {}>(props: T) => {
                     placeholder="Your feedback here!"
                     onChange={updateFeedback}
                     wrap="soft"
-                    style={{
-                        marginTop: 20,
-                        marginBottom: 10,
-                        width: "100%",
-                        background: "white",
-                        border: "none",
-                        borderRadius: 5,
-                        outline: "none",
-                        padding: "20px",
-                        fontSize: 14,
-                        color: "#111111",
-                        height: "160px",
-                        resize: "none",
-                        boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
-                    }}
+                    className={styles.textBox}
                 />
                 {showSubmittedAlert && (
                     <Alert
                         variant="success"
                         onClose={() => setShowSubmittedAlert(false)}
                         dismissible
-                        style={{
-                            marginTop: 11,
-                            fontSize: 14,
-                            marginBottom: 0,
-                            borderRadius: 0,
-                            border: "none",
-                            padding: 20,
-                        }}
+                        className={styles.alert}
                     >
                         Your feedback has been submitted!
                     </Alert>
                 )}
                 {type && feedback ? (
                     <div
-                        className={styles.feedbackButton}
+                        className={dashboardStyles.feedbackButton}
                         onClick={handleSubmit}
                     >
                         Submit
                     </div>
                 ) : (
-                    <div className={styles.noFeedbackButton}>Submit</div>
+                    <div className={dashboardStyles.noFeedbackButton}>
+                        Submit
+                    </div>
                 )}
             </Row>
         </div>

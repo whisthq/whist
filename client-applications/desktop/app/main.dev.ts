@@ -43,7 +43,7 @@ process.on("uncaughtException", function (err) {
 })
 
 // Custom logging to hide console logs in prod
-const debugLog = (callback: any) => {
+const debugLog = <T>(callback: T): void => {
     debugLog(process.env.NODE_ENV)
     if (process.env.NODE_ENV === "development") {
         debugLog(callback)

@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, KeyboardEvent } from "react"
 import { FaSearch } from "react-icons/fa"
 
 import styles from "pages/dashboard/components/searchBar/searchBar.css"

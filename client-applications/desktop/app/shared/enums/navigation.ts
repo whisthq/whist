@@ -17,3 +17,9 @@ export enum FractalAppCategory {
     CREATIVE = "Creative",
     PRODUCTIVITY = "Productivity",
 }
+
+export enum FractalBannerCategory {
+    ALL = "All",
+    MEDIA = "Media",
+    NEWS = "News",
+}
