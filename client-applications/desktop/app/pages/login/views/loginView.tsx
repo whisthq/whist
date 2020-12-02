@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent, KeyboardEvent } from "react"
 import { connect } from "react-redux"
-import styles from "shared/styles/login.css"
+import styles from "pages/login/login.css"
 import PuffLoader from "react-spinners/PuffLoader"
 
 import { updateClient, updateAuth } from "store/actions/pure"

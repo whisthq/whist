@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { useSpring, animated } from "react-spring"
-import styles from "shared/styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
@@ -12,6 +11,8 @@ import { history } from "store/configureStore"
 import { execChmodUnix } from "shared/utils/exec"
 import { FractalRoute } from "shared/enums/navigation"
 import { OperatingSystem } from "shared/enums/client"
+
+import styles from "pages/login/login.css"
 
 const Loading = (props: {
     os: string

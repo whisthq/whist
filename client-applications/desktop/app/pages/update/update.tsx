@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 import { OperatingSystem } from "shared/enums/client"
-import styles from "shared/styles/login.css"
+import styles from "pages/login/login.css"
 
 const Update = (props: { os: string; needsUpdate: boolean }) => {
     const { os, needsUpdate } = props
