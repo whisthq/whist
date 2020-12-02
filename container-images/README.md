@@ -16,7 +16,7 @@ All of the following applications are based off of the **Ubuntu 20.04 Base Image
 | Sidekick Browser | TextureLab |              |
 |                  | Gimp       |              |
 |                  | Lightworks |              |
-|		   | Inkscape   | 	       |
+|		               | Inkscape   | 	           |
 
 See [Adding New Applications](#Adding-New-Applications) for details on how to add support for new applications and integrate them with our continuous delivery pipeline.
 
