@@ -10,6 +10,7 @@ import { debugLog } from "shared/utils/logging"
 import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/configureStore"
 import { execChmodUnix } from "shared/utils/exec"
+import { FractalRoute } from "shared/enums/navigation"
 
 const Loading = (props: any) => {
     const {
@@ -127,7 +128,7 @@ const Loading = (props: any) => {
                     )
                     setLaunches(0)
                     ipc.sendSync("canClose", true)
-                    history.push("/dashboard")
+                    history.push(FractalRoute.DASHBOARD)
                 })
             }
         )

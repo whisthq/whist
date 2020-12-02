@@ -35,4 +35,9 @@ export const DEFAULT = {
         statusMessage: "Powering up your app",
         percentLoaded: 0,
     },
+    apps: {
+        notInstalled: [],
+        installing: [],
+        installed: [],
+    },
 }

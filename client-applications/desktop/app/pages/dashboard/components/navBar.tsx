@@ -1,12 +1,13 @@
 import React, { useState } from "react"
 import { connect } from "react-redux"
 import { Collapse } from "react-bootstrap"
-import { FaSearch, FaUser } from "react-icons/fa"
+import { FaUser } from "react-icons/fa"
 
 import { history } from "store/configureStore"
 import styles from "styles/dashboard.css"
 import { resetState } from "store/actions/pure"
 import SearchBar from "pages/dashboard/components/searchBar"
+import { FractalRoute, FractalDashboardTab } from "shared/enums/navigation"
 
 const NavTitle = (props: {
     selected: boolean
@@ -40,10 +41,6 @@ const NavBar = (props: any) => {
     const [showProfile, setShowProfile] = useState(false)
     const [showSearchBar, setShowSearchBar] = useState(false)
 
-    const toggleSearch = () => {
-        setShowSearchBar(!showSearchBar)
-    }
-
     const handleSignout = () => {
         const Store = require("electron-store")
         const storage = new Store()
@@ -53,7 +50,7 @@ const NavBar = (props: any) => {
             resolve()
         }).then(() => {
             dispatch(resetState())
-            history.push("/")
+            history.push(FractalRoute.LOGIN)
         })
     }
 
@@ -118,19 +115,25 @@ const NavBar = (props: any) => {
             </div>
             <div style={{ marginTop: 10, paddingLeft: 45 }}>
                 <NavTitle
-                    selected={currentTab == "App Store"}
-                    text="App Store"
-                    onClick={() => updateCurrentTab("App Store")}
+                    selected={currentTab == FractalDashboardTab.APP_STORE}
+                    text={FractalDashboardTab.APP_STORE}
+                    onClick={() =>
+                        updateCurrentTab(FractalDashboardTab.APP_STORE)
+                    }
                 />
                 <NavTitle
-                    selected={currentTab == "Settings"}
-                    text="Settings"
-                    onClick={() => updateCurrentTab("Settings")}
+                    selected={currentTab == FractalDashboardTab.SETTINGS}
+                    text={FractalDashboardTab.SETTINGS}
+                    onClick={() =>
+                        updateCurrentTab(FractalDashboardTab.SETTINGS)
+                    }
                 />
                 <NavTitle
-                    selected={currentTab == "Support"}
-                    text="Support"
-                    onClick={() => updateCurrentTab("Support")}
+                    selected={currentTab == FractalDashboardTab.SUPPORT}
+                    text={FractalDashboardTab.SUPPORT}
+                    onClick={() =>
+                        updateCurrentTab(FractalDashboardTab.SUPPORT)
+                    }
                 />
             </div>
         </div>

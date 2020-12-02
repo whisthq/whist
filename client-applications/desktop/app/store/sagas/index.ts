@@ -1,28 +1,32 @@
 import { put, takeEvery, all, call, select, delay } from "redux-saga/effects"
-import { apiPost, apiGet } from "shared/utils/api"
+import moment from "moment"
+
 import * as Action from "store/actions/pure"
 import * as SideEffect from "store/actions/sideEffects"
+
+import { apiPost, apiGet } from "shared/utils/api"
 import { history } from "store/configureStore"
 import { generateMessage } from "shared/utils/loading"
-
-import moment from "moment"
+import { FractalRoute } from "shared/enums/navigation"
+import { FractalAPI } from "shared/enums/api"
+import { AWSRegion } from "shared/enums/aws"
 
 function* refreshAccess() {
     const state = yield select()
     const username = state.MainReducer.auth.username
 
     if (!username || username === "None" || username === "") {
-        history.push("/")
+        history.push(FractalRoute.LOGIN)
         return
     }
 
-    const { json } = yield call(
+    const { json, success } = yield call(
         apiPost,
-        `/token/refresh`,
+        FractalAPI.TOKEN.REFRESH,
         {},
         state.MainReducer.auth.refreshToken
     )
-    if (json) {
+    if (success) {
         yield put(
             Action.updateAuth({
                 accessToken: json.access_token,
@@ -33,13 +37,13 @@ function* refreshAccess() {
 }
 
 function* validateAccessToken(action: any) {
-    const { json, response } = yield call(
+    const { json, success } = yield call(
         apiGet,
-        "/token/validate",
+        FractalAPI.TOKEN.VALIDATE,
         action.accessToken
     )
 
-    if (response && response.status === 200 && json && json.user) {
+    if (success && json.user) {
         const Store = require("electron-store")
         const storage = new Store()
 
@@ -62,21 +66,6 @@ function* validateAccessToken(action: any) {
     }
 }
 
-function* fetchPaymentInfo(action: any) {
-    // const state = yield select()
-    // const { json } = yield call(
-    //     apiPost,
-    //     `/stripe/retrieve`,
-    //     {
-    //         email: action.username,
-    //     },
-    //     state.MainReducer.auth.accessToken
-    // )
-    // if (json && json.accountLocked) {
-    //     yield put(Action.updatePayment({ accountLocked: json.accountLocked }))
-    // }
-}
-
 function* createContainer(action: any) {
     yield put(
         Action.updateContainer({
@@ -89,22 +78,22 @@ function* createContainer(action: any) {
 
     var region = state.MainReducer.client.region
         ? state.MainReducer.client.region
-        : "us-east-1"
-    if (region === "us-east-2") {
-        region = "us-east-1"
+        : AWSRegion.US_EAST_1
+    if (region === AWSRegion.US_EAST_2) {
+        region = AWSRegion.US_EAST_1
     }
-    if (region === "us-west-2") {
-        region = "us-west-1"
+    if (region === AWSRegion.US_WEST_2) {
+        region = AWSRegion.US_WEST_1
     }
 
     if (!username || username === "None" || username === "") {
-        history.push("/")
+        history.push(FractalRoute.LOGIN)
         return
     }
 
-    var { json, response } = yield call(
+    var { json, success } = yield call(
         apiPost,
-        `/container/create`,
+        FractalAPI.CONTAINER.CREATE,
         {
             username: username,
             region: region,
@@ -115,116 +104,107 @@ function* createContainer(action: any) {
         state.MainReducer.auth.accessToken
     )
 
-    if (response.status === 401 || response.status === 422) {
+    if (!success) {
         yield call(refreshAccess)
         yield call(createContainer, action)
         return
     }
 
-    if (response.status === 202) {
-        const id = json.ID
-        var { json, response } = yield call(
-            apiGet,
-            `/status/` + id,
-            state.MainReducer.auth.accessToken
-        )
+    const id = json.ID
+    var { json, response } = yield call(
+        apiGet,
+        `/status/` + id,
+        state.MainReducer.auth.accessToken
+    )
 
-        var progressSoFar = 0
-        var secondsPassed = 0
+    var progressSoFar = 0
+    var secondsPassed = 0
 
+    yield put(
+        Action.updateLoading({
+            percentLoaded: progressSoFar,
+            statusMessage: "Preparing to stream " + action.app,
+        })
+    )
+
+    while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
+        if (secondsPassed % 1 === 0) {
+            var { json, response } = yield call(
+                apiGet,
+                `/status/` + id,
+                state.MainReducer.auth.accessToken
+            )
+
+            if (response && response.status && response.status === 500) {
+                const warning =
+                    `(${moment().format("hh:mm:ss")}) ` +
+                    "Unexpectedly lost connection with server. Please close the app and try again."
+
+                progressSoFar = 0
+                yield put(
+                    Action.updateLoading({
+                        percentLoaded: progressSoFar,
+                        statusMessage: warning,
+                    })
+                )
+            }
+        }
+
+        // Update status message every six seconds
+        if (secondsPassed > 0 && secondsPassed % 6 === 0) {
+            yield put(
+                Action.updateLoading({
+                    statusMessage: generateMessage(),
+                })
+            )
+        }
+
+        // Update loading bar every second
         yield put(
             Action.updateLoading({
                 percentLoaded: progressSoFar,
-                statusMessage: "Preparing to stream " + action.app,
             })
         )
+        progressSoFar = Math.min(99, progressSoFar + 1)
 
-        while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
-            if (secondsPassed % 1 === 0) {
-                var { json, response } = yield call(
-                    apiGet,
-                    `/status/` + id,
-                    state.MainReducer.auth.accessToken
-                )
-
-                if (response && response.status && response.status === 500) {
-                    const warning =
-                        `(${moment().format("hh:mm:ss")}) ` +
-                        "Unexpectedly lost connection with server. Please close the app and try again."
-
-                    progressSoFar = 0
-                    yield put(
-                        Action.updateLoading({
-                            percentLoaded: progressSoFar,
-                            statusMessage: warning,
-                        })
-                    )
-                }
-            }
-
-            // Update status message every six seconds
-            if (secondsPassed > 0 && secondsPassed % 6 === 0) {
-                yield put(
-                    Action.updateLoading({
-                        statusMessage: generateMessage(),
-                    })
-                )
-            }
-
-            // Update loading bar every second
+        yield delay(1000)
+        secondsPassed += 1
+    }
+    // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
+    if (json && json.state && json.state === "SUCCESS") {
+        if (json.output) {
             yield put(
-                Action.updateLoading({
-                    percentLoaded: progressSoFar,
-                })
-            )
-            progressSoFar = Math.min(99, progressSoFar + 1)
-
-            yield delay(1000)
-            secondsPassed += 1
-        }
-        // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
-        if (json && json.state && json.state === "SUCCESS") {
-            if (json.output) {
-                yield put(
-                    Action.updateContainer({
-                        container_id: json.output.container_id,
-                        cluster: json.output.cluster,
-                        port32262: json.output.port_32262,
-                        port32263: json.output.port_32263,
-                        port32273: json.output.port_32273,
-                        location: json.output.location,
-                        publicIP: json.output.ip,
-                        secretKey: json.output.secret_key,
-                        currentAppID: action.app,
-                    })
-                )
-            }
-
-            progressSoFar = 100
-
-            yield put(
-                Action.updateLoading({
-                    statusMessage: "Stream successfully started.",
-                    percentLoaded: progressSoFar,
-                })
-            )
-        } else {
-            var warning =
-                `(${moment().format("hh:mm:ss")}) ` +
-                `Unexpectedly lost connection with server. Trying again...`
-            progressSoFar = 0
-            yield put(
-                Action.updateLoading({
-                    statusMessage: warning,
-                    percentLoaded: progressSoFar,
+                Action.updateContainer({
+                    container_id: json.output.container_id,
+                    cluster: json.output.cluster,
+                    port32262: json.output.port_32262,
+                    port32263: json.output.port_32263,
+                    port32273: json.output.port_32273,
+                    location: json.output.location,
+                    publicIP: json.output.ip,
+                    secretKey: json.output.secret_key,
+                    currentAppID: action.app,
                 })
             )
         }
-    } else {
+
+        progressSoFar = 100
+
         yield put(
             Action.updateLoading({
-                statusMessage:
-                    "Server unexpectedly not responding. Close the app and try again.",
+                statusMessage: "Stream successfully started.",
+                percentLoaded: progressSoFar,
+            })
+        )
+    } else {
+        var warning =
+            `(${moment().format("hh:mm:ss")}) ` +
+            `Unexpectedly lost connection with server. Trying again...`
+        progressSoFar = 0
+        yield put(
+            Action.updateLoading({
+                statusMessage: warning,
+                percentLoaded: progressSoFar,
             })
         )
     }
@@ -232,9 +212,9 @@ function* createContainer(action: any) {
 
 function* submitFeedback(action: any) {
     const state = yield select()
-    const { response } = yield call(
+    const { _, success } = yield call(
         apiPost,
-        `/mail/feedback`,
+        FractalAPI.MAIL.FEEDBACK,
         {
             username: state.MainReducer.auth.username,
             feedback: action.feedback,
@@ -243,7 +223,7 @@ function* submitFeedback(action: any) {
         state.MainReducer.auth.accessToken
     )
 
-    if (response.status === 401 || response.status === 422) {
+    if (!success) {
         yield call(refreshAccess)
         yield call(submitFeedback, action)
     }

@@ -3,6 +3,7 @@ export const UPDATE_CONTAINER = "UPDATE_CONTAINER"
 export const UPDATE_CLIENT = "UPDATE_CLIENT"
 export const UPDATE_PAYMENT = "UPDATE_PAYEMNT"
 export const UPDATE_LOADING = "UPDATE_LOADING"
+export const UPDATE_APPS = "UPDATE_APPS"
 
 export const RESET_STATE = "RESET_STATE"
 
@@ -68,6 +69,17 @@ export function updateLoading(body: {
 }) {
     return {
         type: UPDATE_LOADING,
+        body,
+    }
+}
+
+export function updateApps(body: {
+    notInstalled?: string[]
+    installing?: string[]
+    installed?: string[]
+}) {
+    return {
+        type: UPDATE_APPS,
         body,
     }
 }
