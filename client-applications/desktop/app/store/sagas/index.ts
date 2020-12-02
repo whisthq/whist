@@ -36,7 +36,7 @@ function* refreshAccess() {
     }
 }
 
-function* validateAccessToken(action: any) {
+function* validateAccessToken<T extends {}>(action: { body: T }) {
     const { json, success } = yield call(
         apiGet,
         FractalAPI.TOKEN.VALIDATE,
@@ -66,7 +66,7 @@ function* validateAccessToken(action: any) {
     }
 }
 
-function* createContainer(action: any) {
+function* createContainer<T extends {}>(action: { body: T }) {
     yield put(
         Action.updateContainer({
             desiredAppID: action.app,
@@ -210,7 +210,7 @@ function* createContainer(action: any) {
     }
 }
 
-function* submitFeedback(action: any) {
+function* submitFeedback<T extends {}>(action: { body: T }) {
     const state = yield select()
     const { _, success } = yield call(
         apiPost,

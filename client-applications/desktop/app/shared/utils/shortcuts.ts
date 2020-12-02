@@ -1,6 +1,7 @@
 import { OperatingSystem } from "shared/enums/client"
+import { FractalApp } from "shared/enums/ui"
 
-export const createShortcut = (app: any): boolean => {
+export const createShortcut = (app: FractalApp): boolean => {
     const os = require("os")
     const platform = os.platform()
     const app_url = `fractal://${app.app_id.toLowerCase().replace(/\s+/g, "-")}`
