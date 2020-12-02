@@ -19,7 +19,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     set_stun,
 )
 
-from app.helpers.utils.general.auth import fractal_auth
+from app.helpers.utils.general.auth import admin_required, fractal_auth
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
@@ -28,6 +28,7 @@ aws_container_bp = Blueprint("aws_container_bp", __name__)
 # when we add @admin_required, instead of admin_required use developer_access
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
 @fractal_pre_process
+@admin_required
 def test_endpoint(action, **kwargs):
     if action == "create_cluster":
         cluster_name, instance_type, ami, region_name, max_size, min_size = (
