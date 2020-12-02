@@ -281,7 +281,7 @@ def test_create_subscription_with_customer(client, monthly_plan, not_customer):
     for subscribe in [True, False]:
         _new_customer(email, monthly_plan, subscribe=subscribe)
 
-        trial_end = _assert_create_get_trial_end(email, None, client)
+        trial_end = _assert_create_get_trial_end(email, None, client, monthly_plan)
 
         assert _closest(trial_end, [month, week]) == week
 
