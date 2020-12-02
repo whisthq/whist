@@ -398,6 +398,7 @@ eventLoop:
 
 		case serverevent := <-serverEvents:
 			logger.Info("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
+			serverevent.ReturnResult("ez game ez life", nil)
 		}
 	}
 }
