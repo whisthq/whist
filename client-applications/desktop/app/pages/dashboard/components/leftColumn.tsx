@@ -3,6 +3,8 @@ import { Col } from "react-bootstrap"
 import { FaGlobeEurope, FaBook, FaPalette, FaLayerGroup } from "react-icons/fa"
 
 import CategoryIcon from "pages/dashboard/components/categoryIcon"
+import { FractalAppCategory } from "shared/enums/navigation"
+
 import styles from "styles/dashboard.css"
 
 const LeftColumn = (props: {
@@ -20,7 +22,8 @@ const LeftColumn = (props: {
                             <FaLayerGroup
                                 style={{
                                     color:
-                                        selectedCategory === "All"
+                                        selectedCategory ===
+                                        FractalAppCategory.ALL
                                             ? "#3930b8"
                                             : "#EFEFEF",
                                     fontSize: 18,
@@ -29,14 +32,15 @@ const LeftColumn = (props: {
                         }
                         callback={callback}
                         selectedCategory={selectedCategory}
-                        category="All"
+                        category={FractalAppCategory.ALL}
                     />
                     <CategoryIcon
                         icon={
                             <FaGlobeEurope
                                 style={{
                                     color:
-                                        selectedCategory === "Browser"
+                                        selectedCategory ===
+                                        FractalAppCategory.BROWSER
                                             ? "#3930b8"
                                             : "#EFEFEF",
                                     fontSize: 18,
@@ -45,14 +49,15 @@ const LeftColumn = (props: {
                         }
                         callback={callback}
                         selectedCategory={selectedCategory}
-                        category="Browser"
+                        category={FractalAppCategory.BROWSER}
                     />
                     <CategoryIcon
                         icon={
                             <FaPalette
                                 style={{
                                     color:
-                                        selectedCategory === "Creative"
+                                        selectedCategory ===
+                                        FractalAppCategory.CREATIVE
                                             ? "#3930b8"
                                             : "#EFEFEF",
                                     fontSize: 18,
@@ -61,14 +66,15 @@ const LeftColumn = (props: {
                         }
                         callback={callback}
                         selectedCategory={selectedCategory}
-                        category="Creative"
+                        category={FractalAppCategory.CREATIVE}
                     />
                     <CategoryIcon
                         icon={
                             <FaBook
                                 style={{
                                     color:
-                                        selectedCategory === "Productivity"
+                                        selectedCategory ===
+                                        FractalAppCategory.PRODUCTIVITY
                                             ? "#3930b8"
                                             : "#EFEFEF",
                                     fontSize: 18,
@@ -77,7 +83,7 @@ const LeftColumn = (props: {
                         }
                         callback={callback}
                         selectedCategory={selectedCategory}
-                        category="Productivity"
+                        category={FractalAppCategory.PRODUCTIVITY}
                     />
                 </div>
             </Col>

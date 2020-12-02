@@ -15,6 +15,7 @@ import { setAWSRegion } from "shared/utils/exec"
 import { checkActive, urlToApp } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { findDPI } from "pages/login/constants/helpers"
+import { FractalRoute } from "shared/enums/navigation"
 
 const RootApp = (props: any) => {
     const {
@@ -114,11 +115,11 @@ const RootApp = (props: any) => {
     // If there's an update, redirect to update screen
     useEffect(() => {
         if (needsUpdate && updatePingReceived) {
-            history.push("/update")
+            history.push(FractalRoute.UPDATE)
         } else {
             if (!launchURL && props.username && props.accessToken) {
                 updateAuth({ candidateAccessToken: "" })
-                history.push("/dashboard")
+                history.push(FractalRoute.DASHBOARD)
             } else if (
                 launches === 1 &&
                 launched &&
@@ -139,7 +140,7 @@ const RootApp = (props: any) => {
                         setLaunched(false)
                     })
                     .then(() => {
-                        history.push("/loading")
+                        history.push(FractalRoute.LOADING)
                     })
             }
         }
@@ -156,11 +157,11 @@ const RootApp = (props: any) => {
     return (
         <div>
             <Switch>
-                <Route path="/dashboard" component={Dashboard} />
-                <Route path="/loading" component={Loading} />
-                <Route path="/" component={Login} />
+                <Route path={FractalRoute.DASHBOARD} component={Dashboard} />
+                <Route path={FractalRoute.LOADING} component={Loading} />
+                <Route path={FractalRoute.LOGIN} component={Login} />
                 <Route
-                    path="/update"
+                    path={FractalRoute.UPDATE}
                     render={(props) => (
                         <Update {...props} needsUpdate={needsUpdate} />
                     )}

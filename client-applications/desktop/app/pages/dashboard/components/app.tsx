@@ -7,6 +7,7 @@ import { FaPlay } from "react-icons/fa"
 import { createContainer } from "store/actions/sideEffects"
 import { updateContainer } from "store/actions/pure"
 import { history } from "store/configureStore"
+import { FractalRoute } from "shared/enums/navigation"
 
 const App = (props: any) => {
     const { dispatch, app, launches } = props
@@ -30,7 +31,7 @@ const App = (props: any) => {
 
     useEffect(() => {
         if (launches === 1 && launched) {
-            history.push("/loading")
+            history.push(FractalRoute.LOADING)
             dispatch(createContainer(app.app_id))
             setLaunched(false)
         }
