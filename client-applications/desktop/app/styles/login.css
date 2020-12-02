@@ -16,6 +16,12 @@ button {
     text-align: center;
 }
 
+.feedbackButton:hover {
+    background: #93f1d9;
+    cursor: pointer;
+    color: #111111;
+}
+
 .pointerOnHover:hover {
     cursor: pointer;
 }

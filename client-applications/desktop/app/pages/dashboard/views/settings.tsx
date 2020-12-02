@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Row, Alert } from "react-bootstrap"
+import { Row, Form, Button, Alert, Dropdown } from "react-bootstrap"
 import { connect } from "react-redux"
 import ToggleButton from "react-toggle-button"
 import Slider from "react-input-slider"
@@ -11,120 +11,164 @@ import Wifi from "assets/images/wifi.svg"
 import Speedometer from "assets/images/speedometer.svg"
 import Fractal from "assets/images/fractal.svg"
 
-const AdminSettings = (props: any) => {
-    const { dispatch } = props
+import { DEFAULT } from "store/reducers/states"
 
-    const [region, setRegion] = useState("")
-    const [task, setTask] = useState("")
-    const [webserver, setWebserver] = useState("")
-    const [cluster, setCluster] = useState("")
+const AdminDropdown = (props: {
+    // how to modify the state
+    onClick: (value: any) => any
+    // it will display these plus a text box plus a reset button
+    // the reset button will set the value to the defaultValue
+    options: string[]
+    defaultValue: string | null
+    // value is what will be the dropdown value to be selected at this moment
+    value: string | null
+    // title will basically say what type it is i.e. webserver or cluster or etc...
+    title: string
+}) => {
+    const { onClick, options, defaultValue, value, title } = props
+    const reset = "Reset"
+    const displayOptions = [...options]
+    displayOptions.push(reset)
 
-    const [showSavedAlert, setShowSavedAlert] = useState(false)
+    const [customValue, setCustomValue] = useState("")
+    const validCustomValue = customValue.trim() !== "" && customValue.length > 3
 
-    const Input = (value: string, placeholder: string, onChange: any) => (
-        <input
-            value={value}
-            placeholder={placeholder}
-            onChange={onChange}
-            style={{
-                marginTop: 20,
-                //width: "100%",
-                background: "#F2F6FB",
-                border: "none",
-                outline: "none",
-                fontSize: 14,
-                color: "#black",
-                //height: "160px",
-            }}
-        />
+    const changeCustomValue = (evt: any) => {
+        console.log(`hey ${evt.target.value}`)
+        setCustomValue(evt.target.value)
+    }
+
+    const handleDropdownClick = (option: string) => {
+        //console.log(`option ${option} was clicked!`)
+        if (option == reset) {
+            console.log(
+                `resetting ${title} to default value of ${defaultValue}`
+            )
+            onClick(defaultValue)
+        } else {
+            console.log(`setting to ${option}`)
+            onClick(option)
+        }
+    }
+
+    const handleCustomClick = () => {
+        if (validCustomValue) {
+            onClick(customValue)
+        }
+    }
+
+    return (
+        <div style={{ marginTop: 20, width: "200%" }}>
+            <Dropdown>
+                <Dropdown.Toggle variant="primary" id={title}>
+                    {title}
+                </Dropdown.Toggle>
+
+                <Dropdown.Menu>
+                    {displayOptions.map((option: string) => (
+                        <Dropdown.Item
+                            key={option}
+                            active={option == value}
+                            onClick={() => handleDropdownClick(option)}
+                        >
+                            {option}
+                        </Dropdown.Item>
+                    ))}
+                </Dropdown.Menu>
+            </Dropdown>
+            <Form>
+                <Form.Group controlId={title + "CustomValue"}>
+                    <Form.Label>Custom Value</Form.Label>
+                    <Form.Control
+                        placeholder="Enter Custom Value"
+                        value={customValue}
+                        onChange={changeCustomValue}
+                    />
+                    <Form.Text className="text-muted">
+                        {title}: At least three non-whitespace characters.
+                    </Form.Text>
+                </Form.Group>
+                <Button
+                    variant="primary"
+                    onClick={handleCustomClick}
+                    disabled={!validCustomValue}
+                >
+                    Set Custom Value
+                </Button>
+            </Form>
+        </div>
     )
+}
 
-    const updateRegion = (evt: any) => {
-        setRegion(evt.target.value)
+const AdminSettings = (props: any) => {
+    const { dispatch, adminState } = props
+
+    const [region, setRegion] = useState(adminState.region)
+    const [task, setTask] = useState(adminState.task_arn)
+    const [webserver, setWebserver] = useState(adminState.webserver_url)
+    const [cluster, setCluster] = useState(adminState.cluster)
+
+    //here are some preset options for the dropdown
+    const regions = ["us-east-1", "us-west-1", "ca-central-1"]
+
+    const webservers = ["local", "dev", "staging", "prod"]
+
+    // no cluster defaults
+
+    const tasks = [
+        // browsers
+        "fractal-browsers-brave",
+        "fractal-browsers-chrome",
+        "fractal-browsers-firefox",
+        "fractal-browsers-sidekick",
+        //creative
+        "fractal-creative-blender",
+        "fractal-creative-blockbench",
+        "fractal-creative-figma",
+        "fractal-creative-gimp",
+        "fractal-creative-lightworks",
+        "fractal-creative-texturelab",
+        //productivity
+        "fractal-productivity-discord",
+        "fractal-productivity-notion",
+        "fractal-productivity-slack",
+    ]
+
+    const handleSaveTask = (value: any) => {
+        setTask(value)
+        dispatch(
+            updateAdmin({
+                task_arn: value,
+            })
+        )
     }
 
-    const updateTask = (evt: any) => {
-        setTask(evt.target.value)
+    const handleSaveRegion = (value: any) => {
+        setRegion(value)
+        dispatch(
+            updateAdmin({
+                region: value,
+            })
+        )
     }
 
-    const updateWebserver = (evt: any) => {
-        setWebserver(evt.target.value)
+    const handleSaveWebserver = (value: any) => {
+        setWebserver(value)
+        dispatch(
+            updateAdmin({
+                webserver_url: value,
+            })
+        )
     }
 
-    const updateCluster = (evt: any) => {
-        setCluster(evt.target.value)
+    const handleSaveCluster = (value: any) => {
+        setCluster(value)
+        dispatch(
+            updateAdmin({
+                cluster: value,
+            })
+        )
     }
-
-    // admin settings that only admins will use
-    // this should not be allowed to be called by randos
-    const handleSave = () => {
-        // update region if it's valid
-        if (
-            ["us-east-1", "us-west-1", "ca-central-1"].indexOf(region) > -1 &&
-            region.trim() !== ""
-        ) {
-            dispatch(
-                updateAdmin({
-                    region: region,
-                })
-            )
-        } else if (region.toLowerCase() == "reset") {
-            dispatch(
-                updateAdmin({
-                    region: null,
-                })
-            )
-        }
-
-        // update webserver url if it's valid
-        let webserver_name: null | string = webserver.toLowerCase()
-
-        // should be dev, prod, staging, or local
-        if (webserver_name == "reset") {
-            webserver_name = null
-        }
-
-        if (!webserver || webserver.trim() !== "") {
-            dispatch(
-                updateAdmin({
-                    webserver_url: webserver,
-                })
-            )
-        }
-
-        if (cluster.toLowerCase() == "reset") {
-            dispatch(
-                updateAdmin({
-                    cluster: null,
-                })
-            )
-        } else if (cluster.trim() !== "") {
-            dispatch(
-                updateAdmin({
-                    cluster: cluster,
-                })
-            )
-        }
-
-        //update task arn if it's valid
-        //we want to copy the exact arn
-        if (task.toLowerCase() == "reset") {
-            dispatch(
-                updateAdmin({
-                    task_arn: null,
-                })
-            )
-        } else if (task.trim() !== "") {
-            dispatch(
-                updateAdmin({
-                    task_arn: task,
-                })
-            )
-        }
-
-        setShowSavedAlert(true)
-    }
-
     return (
         <div>
             <Row
@@ -183,48 +227,47 @@ const AdminSettings = (props: any) => {
                     }}
                 >
                     <div style={{ float: "right" }}>
-                        {Input(region, "AWS Region", updateRegion)}
-                        {Input(webserver, "Webserver", updateWebserver)}
-                        {Input(cluster, "Cluster (optional)", updateCluster)}
-                        {Input(task, "Task ARN", updateTask)}
+                        <AdminDropdown
+                            onClick={handleSaveWebserver}
+                            options={webservers}
+                            title="Webserver"
+                            defaultValue={DEFAULT.admin.webserver_url}
+                            value={webserver}
+                        />
+                        <AdminDropdown
+                            onClick={handleSaveRegion}
+                            options={regions}
+                            title="Region"
+                            defaultValue={DEFAULT.admin.region}
+                            value={region}
+                        />
+                        <AdminDropdown
+                            onClick={handleSaveTask}
+                            options={tasks}
+                            title="Task"
+                            defaultValue={DEFAULT.admin.task_arn}
+                            value={task}
+                        />
+                        <AdminDropdown
+                            onClick={handleSaveCluster}
+                            options={[]}
+                            title="Cluster"
+                            defaultValue={DEFAULT.admin.cluster}
+                            value={cluster}
+                        />
                     </div>
-                </div>
-            </Row>
-            {showSavedAlert && (
-                // kind of just a copy of the way settings does it
-                <Row>
-                    <Alert
-                        variant="primary" // fractal colors sort of
-                        onClose={() => setShowSavedAlert(false)}
-                        dismissible
-                        style={{
-                            width: "100%",
-                            fontSize: 14,
-                            borderRadius: 0,
-                            border: "none",
-                            padding: 20,
-                            marginBottom: 0,
-                        }}
-                    >
-                        Your admin settings have been saved. Happy testing!
-                    </Alert>
-                </Row>
-            )}
-            <Row style={{ justifyContent: "flex-end" }}>
-                <div
-                    className={styles.feedbackButton}
-                    style={{ width: 110, marginTop: 25 }}
-                    onClick={handleSave}
-                >
-                    SAVE
                 </div>
             </Row>
         </div>
     )
 }
 
-const Settings = (props: { username: string; dispatch: any }) => {
-    const { username, dispatch } = props
+const Settings = (props: {
+    username: string
+    dispatch: any
+    adminState: any
+}) => {
+    const { username, dispatch, adminState } = props
 
     const [lowInternetMode, setLowInternetMode] = useState(false)
     const [bandwidth, setBandwidth] = useState(500)
@@ -271,6 +314,8 @@ const Settings = (props: { username: string; dispatch: any }) => {
 
         setShowSavedAlert(true)
     }
+
+    //console.log(`admin state is ${adminState}`)
 
     return (
         <div
@@ -463,7 +508,9 @@ const Settings = (props: { username: string; dispatch: any }) => {
                     SAVE
                 </div>
             </Row>
-            {adminUsername && <AdminSettings dispatch={dispatch} />}
+            {adminUsername && (
+                <AdminSettings dispatch={dispatch} adminState={adminState} />
+            )}
         </div>
     )
 }
@@ -471,6 +518,7 @@ const Settings = (props: { username: string; dispatch: any }) => {
 const mapStateToProps = (state: any) => {
     return {
         username: state.MainReducer.auth.username,
+        adminState: state.MainReducer.admin,
     }
 }
 

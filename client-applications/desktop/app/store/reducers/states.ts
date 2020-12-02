@@ -36,9 +36,9 @@ export const DEFAULT = {
         percentLoaded: 0,
     },
     admin: {
-        webserver_url: null,
-        task_arn: null,
-        region: null,
+        webserver_url: "dev",
+        task_arn: "fractal-browsers-chrome",
+        region: "us-east-1",
         cluster: null,
     },
 }
