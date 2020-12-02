@@ -213,3 +213,10 @@ select:required:invalid {
 ::-webkit-scrollbar {
     width: 0px;
 }
+
+.titleBar {
+    z-index: var(--top-layer);
+    position: fixed;
+    top: 0px;
+    right: 0px;
+}
