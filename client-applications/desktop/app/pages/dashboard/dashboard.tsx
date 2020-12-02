@@ -12,15 +12,15 @@ import { OperatingSystem } from "shared/enums/client"
 
 import styles from "pages/dashboard/dashboard.css"
 
-const Dashboard = (props: { os: string }) => {
-    const { os } = props
+const Dashboard = (props: { clientOS: string }) => {
+    const { clientOS } = props
 
     const [currentTab, setCurrentTab] = useState(FractalDashboardTab.APP_STORE)
     const [search, setSearch] = useState("")
 
     return (
         <div className={styles.container}>
-            {os === OperatingSystem.WINDOWS ? (
+            {clientOS === OperatingSystem.WINDOWS ? (
                 <div className={styles.titleBar}>
                     <Titlebar backgroundColor="#000000" />
                 </div>
@@ -53,7 +53,7 @@ const Dashboard = (props: { os: string }) => {
 
 const mapStateToProps = <T extends {}>(state: T): T => {
     return {
-        os: state.MainReducer.client.os,
+        clientOS: state.MainReducer.client.clientOS,
     }
 }
 

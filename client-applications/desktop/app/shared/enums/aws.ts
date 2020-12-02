@@ -6,3 +6,6 @@ export enum AWSRegion {
     CA_CENTRAL_1 = "ca-central-1",
     SA_EAST_1 = "sa-east-1",
 }
+
+// default export until we have multiple exports
+export default AWSRegion

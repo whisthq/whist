@@ -7,8 +7,8 @@ import BackgroundView from "pages/login/views/backgroundView"
 import LoginView from "pages/login/views/loginView"
 import { OperatingSystem } from "shared/enums/client"
 
-const Login = (props: { os: string; loginWarning: string }) => {
-    const { os, loginWarning } = props
+const Login = (props: { clientOS: string; loginWarning: string }) => {
+    const { clientOS, loginWarning } = props
     const [version, setVersion] = useState("1.0.0")
 
     useEffect(() => {
@@ -29,7 +29,7 @@ const Login = (props: { os: string; loginWarning: string }) => {
             >
                 Version: {version}
             </div>
-            {os === OperatingSystem.WINDOWS ? (
+            {clientOS === OperatingSystem.WINDOWS ? (
                 <div>
                     <Titlebar backgroundColor="#000000" />
                 </div>
@@ -57,7 +57,7 @@ export const mapStateToProps = <T extends {}>(state: T) => {
     return {
         loginWarning: state.MainReducer.auth.loginWarning,
         loginMessage: state.MainReducer.auth.loginMessage,
-        os: state.MainReducer.client.os,
+        clientOS: state.MainReducer.client.clientOS,
     }
 }
 

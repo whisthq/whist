@@ -7,8 +7,8 @@ import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 import { OperatingSystem } from "shared/enums/client"
 import styles from "pages/login/login.css"
 
-const Update = (props: { os: string; needsUpdate: boolean }) => {
-    const { os, needsUpdate } = props
+const Update = (props: { clientOS: string; needsUpdate: boolean }) => {
+    const { clientOS, needsUpdate } = props
 
     const [percentageLeft, setPercentageLeft] = useState(500)
     const [percentageDownloaded, setPercentageDownloaded] = useState(0)
@@ -21,7 +21,7 @@ const Update = (props: { os: string; needsUpdate: boolean }) => {
         const ipc = require("electron").ipcRenderer
 
         ipc.on("percent", (_: IpcRendererEvent, percent: number) => {
-            percent = percent * 3
+            percent *= 3
             setPercentageLeft(500 - percent)
             setPercentageDownloaded(percent)
         })
@@ -30,12 +30,15 @@ const Update = (props: { os: string; needsUpdate: boolean }) => {
             setDownloadSpeed((speed / 1000000).toFixed(2))
         })
 
-        ipc.on("transferred", (_: IpcRendererEvent, transferred: number) => {
-            setTransferred((transferred / 1000000).toFixed(2))
-        })
+        ipc.on(
+            "transferred",
+            (_: IpcRendererEvent, reportedTransferred: number) => {
+                setTransferred((reportedTransferred / 1000000).toFixed(2))
+            }
+        )
 
-        ipc.on("total", (_: IpcRendererEvent, total: number) => {
-            setTotal((total / 1000000).toFixed(2))
+        ipc.on("total", (_: IpcRendererEvent, reportedTotal: number) => {
+            setTotal((reportedTotal / 1000000).toFixed(2))
         })
 
         ipc.on("error", (_: IpcRendererEvent, error: string) => {
@@ -59,12 +62,12 @@ const Update = (props: { os: string; needsUpdate: boolean }) => {
                         zIndex: 1000,
                     }}
                 >
-                    {os === OperatingSystem.WINDOWS ? (
+                    {clientOS === OperatingSystem.WINDOWS ? (
                         <div>
                             <Titlebar backgroundColor="#000000" />
                         </div>
                     ) : (
-                        <div style={{ marginTop: 10 }}></div>
+                        <div style={{ marginTop: 10 }} />
                     )}
                     <div className={styles.landingHeader}>
                         <div className={styles.landingHeaderLeft}>
@@ -93,14 +96,14 @@ const Update = (props: { os: string; needsUpdate: boolean }) => {
                                         height: 6,
                                         background: "#EFEFEF",
                                     }}
-                                ></div>
+                                />
                                 <div
                                     style={{
                                         width: `${percentageLeft}px`,
                                         height: 6,
                                         background: "#111111",
                                     }}
-                                ></div>
+                                />
                             </div>
                             {downloadError === "" ? (
                                 <div
@@ -149,13 +152,13 @@ const Update = (props: { os: string; needsUpdate: boolean }) => {
                                     marginTop: 5,
                                 }}
                             >
-                                {transferred} / {total} MB Downloaded
+                                {transferred} /{total} MB Downloaded
                             </div>
                         </div>
                     </div>
                 </div>
             ) : (
-                <div></div>
+                <div />
             )}
         </div>
     )
@@ -163,7 +166,7 @@ const Update = (props: { os: string; needsUpdate: boolean }) => {
 
 export const mapStateToProps = <T extends {}>(state: T) => {
     return {
-        os: state.MainReducer.os,
+        clientOS: state.MainReducer.clientOS,
     }
 }
 

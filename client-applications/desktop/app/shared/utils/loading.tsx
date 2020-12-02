@@ -15,6 +15,20 @@ const loadingMessages = [
         Join our Discord to chat with Fractal users and engineers:
         <div
             onClick={() => shell.openExternal("https://discord.gg/PDNpHjy")}
+            /*
+             * accessibility enforcement
+             * - role="link" tells client machines how to use this div
+             * - tabIndex allows link to be selected with tab key
+             * - onKeyDown allows link to be opened with enter key
+             */
+            role="link"
+            tabIndex={0}
+            onKeyDown={(ev) => {
+                // enter key
+                if (ev.keyCode === 13) {
+                    shell.openExternal("https://discord.gg/PDNpHjy")
+                }
+            }}
             style={{ cursor: "pointer" }}
         >
             https://discord.gg/PDNpHjy
@@ -22,7 +36,7 @@ const loadingMessages = [
         .
     </div>,
     <div>
-        If you make cool artwork on Fractal, tweet us @tryfractal and we'll
+        If you make cool artwork on Fractal, tweet us @tryfractal and we’ll
         share it!
     </div>,
     <div>
@@ -35,3 +49,6 @@ const loadingMessages = [
 export const generateMessage = (): string => {
     return _.shuffle(loadingMessages)[0]
 }
+
+// default export until we have multiple exports
+export default generateMessage

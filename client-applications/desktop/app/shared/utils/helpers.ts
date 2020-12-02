@@ -4,7 +4,7 @@ export const openExternal = (url: string) => {
 }
 
 export const varOrNull = <T>(variable: T): T => {
-    return variable ? variable : null
+    return variable || null
 }
 
 export const isNullString = (str: string): boolean => {

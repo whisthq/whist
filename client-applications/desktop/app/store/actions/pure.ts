@@ -24,7 +24,7 @@ export function updateAuth(body: {
 
 export function updateContainer(body: {
     publicIP: string | null
-    container_id: string | null
+    containerID: string | null
     cluster: string | null
     port32262: string | null
     port32263: string | null
@@ -43,7 +43,7 @@ export function updateContainer(body: {
 }
 
 export function updateClient(body: {
-    os?: string
+    clientOS?: string
     region?: string
     dpi?: number
 }) {

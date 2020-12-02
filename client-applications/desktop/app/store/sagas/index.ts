@@ -5,7 +5,7 @@ import * as Action from "store/actions/pure"
 import * as SideEffect from "store/actions/sideEffects"
 
 import { apiPost, apiGet } from "shared/utils/api"
-import { history } from "store/configureStore"
+import { history } from "store/history"
 import { generateMessage } from "shared/utils/loading"
 import { FractalRoute } from "shared/enums/navigation"
 import { FractalAPI } from "shared/enums/api"
@@ -76,7 +76,7 @@ function* createContainer<T extends {}>(action: { body: T }) {
     const state = yield select()
     const username = state.MainReducer.auth.username
 
-    var region = state.MainReducer.client.region
+    let region = state.MainReducer.client.region
         ? state.MainReducer.client.region
         : AWSRegion.US_EAST_1
     if (region === AWSRegion.US_EAST_2) {
@@ -91,7 +91,7 @@ function* createContainer<T extends {}>(action: { body: T }) {
         return
     }
 
-    var { json, success } = yield call(
+    const data = yield call(
         apiPost,
         FractalAPI.CONTAINER.CREATE,
         {
@@ -104,6 +104,9 @@ function* createContainer<T extends {}>(action: { body: T }) {
         state.MainReducer.auth.accessToken
     )
 
+    let { json } = data
+    const { success } = data
+
     if (!success) {
         yield call(refreshAccess)
         yield call(createContainer, action)
@@ -111,29 +114,29 @@ function* createContainer<T extends {}>(action: { body: T }) {
     }
 
     const id = json.ID
-    var { json, response } = yield call(
+    ;({ json, response } = yield call(
         apiGet,
-        `/status/` + id,
+        `/status/${id}`,
         state.MainReducer.auth.accessToken
-    )
+    ))
 
-    var progressSoFar = 0
-    var secondsPassed = 0
+    let progressSoFar = 0
+    let secondsPassed = 0
 
     yield put(
         Action.updateLoading({
             percentLoaded: progressSoFar,
-            statusMessage: "Preparing to stream " + action.app,
+            statusMessage: `Preparing to stream ${action.app}`,
         })
     )
 
     while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
         if (secondsPassed % 1 === 0) {
-            var { json, response } = yield call(
+            ;({ response } = yield call(
                 apiGet,
-                `/status/` + id,
+                `/status/${id}`,
                 state.MainReducer.auth.accessToken
-            )
+            ))
 
             if (response && response.status && response.status === 500) {
                 const warning =
@@ -175,7 +178,7 @@ function* createContainer<T extends {}>(action: { body: T }) {
         if (json.output) {
             yield put(
                 Action.updateContainer({
-                    container_id: json.output.container_id,
+                    containerID: json.output.containerID,
                     cluster: json.output.cluster,
                     port32262: json.output.port_32262,
                     port32263: json.output.port_32263,
@@ -197,7 +200,7 @@ function* createContainer<T extends {}>(action: { body: T }) {
             })
         )
     } else {
-        var warning =
+        const warning =
             `(${moment().format("hh:mm:ss")}) ` +
             `Unexpectedly lost connection with server. Trying again...`
         progressSoFar = 0
@@ -212,13 +215,13 @@ function* createContainer<T extends {}>(action: { body: T }) {
 
 function* submitFeedback<T extends {}>(action: { body: T }) {
     const state = yield select()
-    const { _, success } = yield call(
+    const { success } = yield call(
         apiPost,
         FractalAPI.MAIL.FEEDBACK,
         {
             username: state.MainReducer.auth.username,
             feedback: action.feedback,
-            type: action.feedback_type,
+            type: action.feedbackType,
         },
         state.MainReducer.auth.accessToken
     )

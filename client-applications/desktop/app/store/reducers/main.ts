@@ -4,7 +4,7 @@ import { DEFAULT } from "store/reducers/states"
 import { deep_copy } from "shared/utils/reducerHelpers"
 
 const MainReducer = <T extends {}>(state = DEFAULT, action: T) => {
-    var stateCopy = deep_copy(state)
+    const stateCopy = deep_copy(state)
     switch (action.type) {
         case MainAction.RESET_STATE:
             return DEFAULT

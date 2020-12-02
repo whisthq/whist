@@ -8,26 +8,29 @@ import Loading from "pages/loading/loading"
 import Dashboard from "pages/dashboard/dashboard"
 import Update from "pages/update/update"
 
-import { history } from "store/configureStore"
+import { history } from "store/history"
 import { createContainer, validateAccessToken } from "store/actions/sideEffects"
 import { updateClient, updateContainer, updateAuth } from "store/actions/pure"
 import { setAWSRegion } from "shared/utils/exec"
-import { checkActive, urlToApp } from "pages/login/constants/helpers"
+import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
-import { findDPI } from "pages/login/constants/helpers"
+
 import { FractalRoute } from "shared/enums/navigation"
 
 const RootApp = (props: {
     launches: number
     launchURL: string
-    os: string
+    clientOS: string
     dpi: number
     candidateAccessToken: string
+    dispatch: Dispatch
+    username: string
+    accessToken: string
 }) => {
     const {
         launches,
         launchURL,
-        os,
+        clientOS,
         dpi,
         candidateAccessToken,
         dispatch,
@@ -48,7 +51,7 @@ const RootApp = (props: {
 
     useEffect(() => {
         const ipc = require("electron").ipcRenderer
-        var localAccessToken: string | null = null
+        let localAccessToken: string | null = null
 
         // Update listener
         ipc.on("update", (_: IpcRendererEvent, update: boolean) => {
@@ -59,7 +62,7 @@ const RootApp = (props: {
         // Custom URL listener
         ipc.on("customURL", (_: IpcRendererEvent, customURL: string) => {
             if (customURL && customURL.toString().includes("fractal://")) {
-                customURL = "fractal://" + customURL.split("fractal://")[1]
+                customURL = `fractal://${customURL.split("fractal://")[1]}`
                 // Convert URL to URL object so it can be parsed
                 const urlObj = new URL(customURL.toString())
                 urlObj.protocol = "https"
@@ -84,12 +87,15 @@ const RootApp = (props: {
     }, [])
 
     useEffect(() => {
-        if (!os || !dpi) {
-            const dpi = findDPI()
-            const os = require("os")
-            dispatch(updateClient({ os: os.platform(), dpi: dpi }))
+        if (!clientOS || !dpi) {
+            dispatch(
+                updateClient({
+                    clientOS: require("os").platform(),
+                    dpi: findDPI(),
+                })
+            )
         }
-    }, [os, dpi])
+    }, [clientOS, dpi])
 
     // If there's an access token, validate it
     useEffect(() => {
@@ -122,33 +128,37 @@ const RootApp = (props: {
     useEffect(() => {
         if (needsUpdate && updatePingReceived) {
             history.push(FractalRoute.UPDATE)
-        } else {
-            if (!launchURL && props.username && props.accessToken) {
-                updateAuth({ candidateAccessToken: "" })
-                history.push(FractalRoute.DASHBOARD)
-            } else if (
-                launches === 1 &&
-                launched &&
-                launchURL &&
-                data &&
-                props.username &&
-                props.accessToken
-            ) {
-                setAWSRegion()
-                    .then((region) => {
-                        dispatch(updateClient({ region: region }))
-                    })
-                    .then(() => {
-                        const { app_id, url } = Object(
-                            urlToApp(launchURL.toLowerCase(), featuredAppData)
-                        )
-                        dispatch(createContainer(app_id, url))
-                        setLaunched(false)
-                    })
-                    .then(() => {
-                        history.push(FractalRoute.LOADING)
-                    })
-            }
+        } else if (!launchURL && props.username && props.accessToken) {
+            updateAuth({ candidateAccessToken: "" })
+            history.push(FractalRoute.DASHBOARD)
+        } else if (
+            launches === 1 &&
+            launched &&
+            launchURL &&
+            data &&
+            props.username &&
+            props.accessToken
+        ) {
+            setAWSRegion()
+                .then((region) => {
+                    dispatch(updateClient({ region: region }))
+                    return null
+                })
+                .then(() => {
+                    const { app_id: appId, url } = Object(
+                        urlToApp(launchURL.toLowerCase(), featuredAppData)
+                    )
+                    dispatch(createContainer(appId, url))
+                    setLaunched(false)
+                    return null
+                })
+                .then(() => {
+                    history.push(FractalRoute.LOADING)
+                    return null
+                })
+                .catch((err) => {
+                    throw err
+                })
         }
     }, [
         needsUpdate,
@@ -168,9 +178,7 @@ const RootApp = (props: {
                 <Route path={FractalRoute.LOGIN} component={Login} />
                 <Route
                     path={FractalRoute.UPDATE}
-                    render={(props) => (
-                        <Update {...props} needsUpdate={needsUpdate} />
-                    )}
+                    render={() => <Update needsUpdate={needsUpdate} />}
                 />
             </Switch>
         </div>
@@ -185,7 +193,7 @@ const mapStateToProps = <T extends {}>(state: T): T => {
         refreshToken: state.MainReducer.auth.refreshToken,
         launches: state.MainReducer.container.launches,
         launchURL: state.MainReducer.container.launchURL,
-        os: state.MainReducer.client.os,
+        clientOS: state.MainReducer.client.clientOS,
         dpi: state.MainReducer.client.dpi,
     }
 }

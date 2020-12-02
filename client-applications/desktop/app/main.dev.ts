@@ -18,9 +18,9 @@ let mainWindow: BrowserWindow | null = null
 // Detects whether there's an auto-update
 let updating = false
 // Detects whether fractal:// has been typed into a browser
-var customURL = null
+let customURL = null
 // Toggles whether the desktop app is allowed to quit (to prevent concurrent apps)
-var canClose = true
+let canClose = true
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 process.env.GOOGLE_API_KEY = "AIzaSyA2FUwAOXKqIWMqKN5DNPBUaqYMOWdBADQ"
@@ -38,17 +38,9 @@ if (
 }
 
 // add this handler before emitting any events
-process.on("uncaughtException", function (err) {
+process.on("uncaughtException", (err) => {
     console.log("UNCAUGHT EXCEPTION - keeping process alive:", err) // err.message is "foobar"
 })
-
-// Custom logging to hide console logs in prod
-const debugLog = <T>(callback: T): void => {
-    debugLog(process.env.NODE_ENV)
-    if (process.env.NODE_ENV === "development") {
-        debugLog(callback)
-    }
-}
 
 // Function to create the browser window
 const createWindow = async () => {
@@ -107,10 +99,8 @@ const createWindow = async () => {
 
             const url = process.argv.slice(1)
             mainWindow.webContents.send("customURL", url.toString())
-        } else {
-            if (customURL) {
-                mainWindow.webContents.send("customURL", customURL)
-            }
+        } else if (customURL) {
+            mainWindow.webContents.send("customURL", customURL)
         }
         // Open dev tools in development
         if (
@@ -208,7 +198,7 @@ app.on("window-all-closed", () => {
 app.setAsDefaultProtocolClient("fractal")
 
 // Set up launch from browser with fractal:// protocol for Mac
-app.on("open-url", function (event, data) {
+app.on("open-url", (event, data) => {
     event.preventDefault()
     customURL = data.toString()
     if (mainWindow && mainWindow.webContents) {

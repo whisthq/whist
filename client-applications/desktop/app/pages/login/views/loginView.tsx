@@ -68,7 +68,7 @@ const LoginView = <T extends {}>(props: T) => {
                     if it doesn't appear. Once you've logged in, this page will
                     automatically redirect.
                 </div>
-                {config.sentry_env === "development" && (
+                {config.sentryEnv === "development" && (
                     <div style={{ marginTop: 40 }}>
                         <input
                             type="text"

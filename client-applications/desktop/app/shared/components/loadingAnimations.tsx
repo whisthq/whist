@@ -14,10 +14,11 @@ export const PuffAnimation = () => (
         }}
     >
         <PuffLoader
-            css={
-                "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
-            }
+            css="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
             size={75}
         />
     </div>
 )
+
+// default export until we have multiple exports
+export default PuffAnimation
