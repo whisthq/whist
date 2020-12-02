@@ -44,13 +44,10 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
         ".lnk"
 
     try {
-        if (platform === "darwin") {
+        if (platform === OperatingSystem.MAC) {
             console.log("mac shortcuts not yet implemented")
             return false
-        } else if (platform === "linux") {
-            console.log("linux shortcuts not yet implemented")
-            return false
-        } else if (platform === "win32") {
+        } else if (platform === OperatingSystem.WINDOWS) {
             const exists =
                 fs.existsSync(desktopPath) || fs.existsSync(startMenuPath)
             return exists

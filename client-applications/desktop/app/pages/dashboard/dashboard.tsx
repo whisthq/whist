@@ -21,14 +21,7 @@ const Dashboard = (props: { os: string }) => {
     return (
         <div className={styles.container}>
             {os === OperatingSystem.WINDOWS ? (
-                <div
-                    style={{
-                        zIndex: 9999,
-                        position: "fixed",
-                        top: 0,
-                        right: 0,
-                    }}
-                >
+                <div className={styles.titleBar}>
                     <Titlebar backgroundColor="#000000" />
                 </div>
             ) : (
