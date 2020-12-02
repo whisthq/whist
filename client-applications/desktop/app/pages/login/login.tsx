@@ -52,20 +52,28 @@ const Login = (props: any) => {
 
     const handleLoginUser = () => {
         setLoggingIn(true)
-        setAWSRegion().then((region) => {
-            dispatch(updateClient({ region: region }))
-            dispatch(updateAuth({ loginWarning: false, loginMessage: null }))
-            if (!rememberMe) {
-                storage.set("credentials", {
-                    username: "",
-                    accessToken: "",
-                    refreshToken: "",
-                })
-            }
-            setUsername(username)
-            setPassword(password)
-            dispatch(loginUser(username.trim(), password, rememberMe))
-        })
+        setAWSRegion()
+            .then((region) => {
+                dispatch(updateClient({ region: region }))
+                dispatch(
+                    updateAuth({ loginWarning: false, loginMessage: null })
+                )
+                if (!rememberMe) {
+                    storage.set("credentials", {
+                        username: "",
+                        accessToken: "",
+                        refreshToken: "",
+                    })
+                }
+                setUsername(username)
+                setPassword(password)
+                return dispatch(
+                    loginUser(username.trim(), password, rememberMe)
+                )
+            })
+            .catch((error) => {
+                "setAWSRegion() failed"
+            })
     }
 
     const loginKeyPress = (event: any) => {
@@ -99,9 +107,13 @@ const Login = (props: any) => {
                     setLoggingIn(true)
                     authWindow.removeAllListeners("closed")
                     setImmediate(() => authWindow.close())
-                    setAWSRegion().then(() => {
-                        dispatch(googleLogin(query.code, rememberMe))
-                    })
+                    setAWSRegion()
+                        .then(() => {
+                            return dispatch(googleLogin(query.code, rememberMe))
+                        })
+                        .catch((error) => {
+                            "setAWSRegion() failed"
+                        })
                 }
             }
         }
@@ -278,7 +290,7 @@ const Login = (props: any) => {
                                     onChange={updateUsername}
                                     type="text"
                                     className={styles.inputBox}
-                                    placeholder={username ? username : ""}
+                                    placeholder={username || ""}
                                     id="username"
                                 />
                             </div>

@@ -9,7 +9,7 @@ export const DEFAULT = {
     },
     container: {
         publicIP: null,
-        container_id: null,
+        containerID: null,
         cluster: null,
         port32262: null,
         port32263: null,
