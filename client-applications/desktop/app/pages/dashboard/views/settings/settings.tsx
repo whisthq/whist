@@ -5,7 +5,7 @@ import ToggleButton from "react-toggle-button"
 import Slider from "react-input-slider"
 import { FaWifi, FaNetworkWired } from "react-icons/fa"
 
-import styles from "styles/dashboard.css"
+import styles from "pages/dashboard/dashboard.css"
 
 const Settings = (props: any) => {
     const [lowInternetMode, setLowInternetMode] = useState(false)
@@ -230,7 +230,7 @@ const Settings = (props: any) => {
     )
 }
 
-const mapStateToProps = <T,>(state: T): T => {
+const mapStateToProps = <T extends {}>(state: T): T => {
     return {}
 }
 

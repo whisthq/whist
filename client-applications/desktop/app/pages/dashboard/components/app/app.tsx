@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { Col, Modal } from "react-bootstrap"
-import styles from "styles/dashboard.css"
 import { FaPlay } from "react-icons/fa"
 
 import { createContainer } from "store/actions/sideEffects"
 import { updateContainer } from "store/actions/pure"
 import { history } from "store/configureStore"
 import { FractalRoute } from "shared/enums/navigation"
+import { openExternal } from "shared/utils/helpers"
+import { FractalApp } from "shared/types/ui"
 
-const App = (props: any) => {
-    const { dispatch, app, launches } = props
+import styles from "pages/dashboard/components/app/app.css"
+import dashboardStyles from "pages/dashboard/dashboard.css"
+
+const App = (props: { app: FractalApp; launches: number }) => {
+    const { app, launches, dispatch } = props
 
     const [showModal, setShowModal] = useState(false)
     const [launched, setLaunched] = useState(false)
@@ -19,12 +23,10 @@ const App = (props: any) => {
     const handleCloseModal = () => setShowModal(false)
 
     const handleLinkClick = (url: string) => {
-        const { shell } = require("electron")
-        shell.openExternal(url)
+        openExternal(url)
     }
 
     const handleLaunch = () => {
-        console.log("launch")
         setLaunched(true)
         dispatch(updateContainer({ launches: launches + 1 }))
     }
@@ -141,14 +143,16 @@ const App = (props: any) => {
                             terms of service.
                         </span>
                     </div>
-                    <button className={styles.modalButton}>Download</button>
+                    <button className={dashboardStyles.modalButton}>
+                        Download
+                    </button>
                 </Modal.Body>
             </Modal>
         </Col>
     )
 }
 
-const mapStateToProps = <T,>(state: T): T => {
+const mapStateToProps = <T extends {}>(state: T): T => {
     return {
         launches: state.MainReducer.container.launches,
     }

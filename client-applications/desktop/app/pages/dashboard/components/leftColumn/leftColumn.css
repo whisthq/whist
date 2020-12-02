@@ -1,0 +1,10 @@
+@import "/app.global.css";
+
+.faIcon {
+    font-size: 18px;
+    color: #efefef;
+}
+
+.faIconSelected {
+    color: var(--primary-color);
+}

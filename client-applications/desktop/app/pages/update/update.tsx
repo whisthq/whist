@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
+
+import { OperatingSystem } from "shared/enums/client"
+import styles from "shared/styles/login.css"
 
 const Update = (props: any) => {
     const { os, needsUpdate } = props
@@ -57,7 +59,7 @@ const Update = (props: any) => {
                         zIndex: 1000,
                     }}
                 >
-                    {os === "win32" ? (
+                    {os === OperatingSystem.WINDOWS ? (
                         <div>
                             <Titlebar backgroundColor="#000000" />
                         </div>

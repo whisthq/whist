@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { useSpring, animated } from "react-spring"
-import styles from "styles/login.css"
+import styles from "shared/styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
@@ -11,6 +11,7 @@ import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/configureStore"
 import { execChmodUnix } from "shared/utils/exec"
 import { FractalRoute } from "shared/enums/navigation"
+import { OperatingSystem } from "shared/enums/client"
 
 const Loading = (props: any) => {
     const {
@@ -59,16 +60,12 @@ const Loading = (props: any) => {
 
         const os = require("os")
 
-        if (os.platform() === "darwin") {
+        if (os.platform() === OperatingSystem.MAC) {
             path = appRootDir + "/protocol-build/desktop/"
             path = path.replace("/app", "")
             path = path.replace("/Resources.asar", "")
             executable = "./FractalClient"
-        } else if (os.platform() === "linux") {
-            path = process.cwd() + "/protocol-build"
-            path = path.replace("/release", "")
-            executable = "./FractalClient"
-        } else if (os.platform() === "win32") {
+        } else if (os.platform() === OperatingSystem.WINDOWS) {
             path = appRootDir + "\\protocol-build\\desktop"
             path = path.replace("\\resources\\app.asar", "")
             path = path.replace("\\app\\protocol-build", "\\protocol-build")
@@ -147,7 +144,7 @@ const Loading = (props: any) => {
                 zIndex: 1000,
             }}
         >
-            {os === "win32" ? (
+            {os === OperatingSystem.WINDOWS ? (
                 <div>
                     <Titlebar backgroundColor="#000000" />
                 </div>

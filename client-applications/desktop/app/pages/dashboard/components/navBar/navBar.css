@@ -1,0 +1,105 @@
+@import "/app.global.css";
+
+.navBar {
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 100vw;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 45px;
+    z-index: 2;
+}
+
+.navTitle,
+.selectedNavTitle {
+    color: var(--primary-text-color);
+    background: var(--text-background-color);
+    font-weight: bold;
+    border-radius: 5px;
+    padding: 8px 35px;
+    margin-right: 30px;
+    display: inline-block;
+    letter-spacing: 1.2px;
+    font-size: 14px;
+    box-shadow: var(--light-box-shadow);
+}
+
+.selectedNavTitle {
+    color: var(--text-background-color);
+    background: var(--primary-text-color);
+}
+
+.navTitle:hover,
+.selectedNavTitle:hover {
+    cursor: pointer;
+}
+
+.logoTitle {
+    color: var(--primary-text-color);
+    font-family: "Maven Pro";
+    font-size: 18px !important;
+    letter-spacing: 1.7px;
+    font-weight: bold;
+}
+
+.wrapper {
+    position: absolute;
+    right: 50px;
+    top: 15px;
+    display: flex;
+    flex-direction: row;
+    max-width: 540px;
+}
+
+.columnFlex {
+    display: flex;
+    flex-direction: column;
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: row;
+    opacity: 1 !important;
+}
+
+.userInfo:hover {
+    cursor: pointer;
+}
+
+.faUser {
+    color: #111111;
+    font-size: 30px;
+    padding: 6px;
+    position: relative;
+    top: 2px;
+    margin-right: 4px;
+}
+
+.name {
+    font-family: "Maven Pro SemiBold";
+    font-size: 13px;
+}
+
+.email {
+    font-size: 11px;
+    color: var(--light-text-color);
+}
+
+.signoutButton {
+    font-family: "Maven Pro";
+    font-weight: bold;
+    padding: 10px 25px;
+    background: var(--text-background-color);
+    color: var(--primary-text-color);
+    font-size: 11px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.tabWrapper {
+    margin-top: 10px;
+    padding-left: 45px !important;
+}

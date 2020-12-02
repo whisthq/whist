@@ -1,0 +1,23 @@
+@import "/app.global.css";
+
+.bannerImage {
+    background-size: cover;
+    width: 100%;
+    height: 225px;
+    border-radius: 12px;
+}
+
+.bannerImage:hover {
+    cursor: pointer;
+}
+
+.carousel {
+    width: 100%;
+    height: 100%;
+}
+
+.emptyBanner {
+    width: 100%;
+    height: 225px;
+    background: var(--text-background-color);
+}

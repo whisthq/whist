@@ -1,15 +1,14 @@
+import { OperatingSystem } from "shared/enums/client"
+
 export const createShortcut = (app: any): boolean => {
     const os = require("os")
     const platform = os.platform()
     const app_url = `fractal://${app.app_id.toLowerCase().replace(/\s+/g, "-")}`
 
-    if (platform === "darwin") {
+    if (platform === OperatingSystem.MAC) {
         console.log("mac shortcuts not yet implemented")
         return false
-    } else if (platform === "linux") {
-        console.log("linux shortcuts not yet implemented")
-        return false
-    } else if (platform === "win32") {
+    } else if (platform === OperatingSystem.WINDOWS) {
         var path =
             require("electron").remote.app.getAppPath() +
             "\\node_modules\\@amdglobal\\create-desktop-shortcuts\\src\\windows.vbs"

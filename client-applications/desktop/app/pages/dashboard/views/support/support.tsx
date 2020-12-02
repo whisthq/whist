@@ -1,11 +1,12 @@
 import React, { useState } from "react"
 import { connect } from "react-redux"
 import { Alert, Row } from "react-bootstrap"
-import styles from "styles/dashboard.css"
 
 import { submitFeedback } from "store/actions/sideEffects"
 
-const Settings = (props: any) => {
+import styles from "pages/dashboard/dashboard.css"
+
+const Settings = <T extends {}>(props: T) => {
     const { dispatch } = props
 
     const [feedback, setFeedback] = useState("")
@@ -18,7 +19,6 @@ const Settings = (props: any) => {
 
     const handleSelect = (evt: any) => {
         setType(evt.target.value)
-        console.log(type)
     }
 
     const handleSubmit = () => {
@@ -55,9 +55,7 @@ const Settings = (props: any) => {
                             borderRadius: 5,
                         }}
                     >
-                        <option selected value="">
-                            Category
-                        </option>
+                        <option value="">Category</option>
                         <option value="Bug">Bug</option>
                         <option value="Question">Question</option>
                         <option value="General Feedback">
@@ -118,7 +116,7 @@ const Settings = (props: any) => {
     )
 }
 
-const mapStateToProps = <T,>(state: T): T => {
+const mapStateToProps = <T extends {}>(state: T): T => {
     return {}
 }
 

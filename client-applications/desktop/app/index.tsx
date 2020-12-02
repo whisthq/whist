@@ -16,7 +16,7 @@ import { WebSocketLink } from "@apollo/client/link/ws"
 
 import RootApp from "rootApp"
 
-import "./app.global.css"
+import "app.global.css"
 import { config } from "shared/constants/config"
 
 const store = configureStore()

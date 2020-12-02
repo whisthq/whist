@@ -1,21 +1,26 @@
 import React, { useState } from "react"
 import { connect } from "react-redux"
-import styles from "styles/dashboard.css"
 import Titlebar from "react-electron-titlebar"
 
-import NavBar from "pages/dashboard/components/navBar"
-import Discover from "pages/dashboard/views/discover"
-import Settings from "pages/dashboard/views/settings"
-import Support from "pages/dashboard/views/support"
+import NavBar from "pages/dashboard/components/navBar/navBar"
+import Discover from "pages/dashboard/views/discover/discover"
+import Settings from "pages/dashboard/views/settings/settings"
+import Support from "pages/dashboard/views/support/support"
 
-const Dashboard = (props: any) => {
+import { FractalDashboardTab } from "shared/enums/navigation"
+import { OperatingSystem } from "shared/enums/client"
+
+import styles from "pages/dashboard/dashboard.css"
+
+const Dashboard = (props: { os: string }) => {
     const { os } = props
-    const [currentTab, setCurrentTab] = useState("App Store")
+
+    const [currentTab, setCurrentTab] = useState(FractalDashboardTab.APP_STORE)
     const [search, setSearch] = useState("")
 
     return (
         <div className={styles.container}>
-            {os === "win32" ? (
+            {os === OperatingSystem.WINDOWS ? (
                 <div
                     style={{
                         zIndex: 9999,
@@ -43,19 +48,19 @@ const Dashboard = (props: any) => {
                     search={search}
                     updateSearch={setSearch}
                 />
-                {currentTab === "App Store" && <Discover search={search} />}
-                {currentTab === "Settings" && <Settings />}
-                {currentTab === "Support" && <Support />}
+                {currentTab === FractalDashboardTab.APP_STORE && (
+                    <Discover search={search} />
+                )}
+                {currentTab === FractalDashboardTab.SETTINGS && <Settings />}
+                {currentTab === FractalDashboardTab.SUPPORT && <Support />}
             </div>
         </div>
     )
 }
 
-const mapStateToProps = <T,>(state: T): T => {
+const mapStateToProps = <T extends {}>(state: T): T => {
     return {
-        username: state.MainReducer.auth.username,
         os: state.MainReducer.client.os,
-        launchURL: state.MainReducer.container.launchURL,
     }
 }
 

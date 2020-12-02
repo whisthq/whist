@@ -1,6 +1,6 @@
 import React from "react"
 
-import styles from "styles/login.css"
+import styles from "shared/styles/login.css"
 
 import Blender from "assets/images/login/blender.svg"
 import Chrome from "assets/images/login/chrome.svg"

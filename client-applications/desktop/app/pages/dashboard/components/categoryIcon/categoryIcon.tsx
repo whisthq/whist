@@ -1,7 +1,7 @@
 import React from "react"
 import { Tooltip, OverlayTrigger } from "react-bootstrap"
 
-import styles from "styles/dashboard.css"
+import styles from "pages/dashboard/components/categoryIcon/categoryIcon.css"
 
 const CategoryIcon = (props: {
     callback: (category: string) => void
@@ -13,15 +13,7 @@ const CategoryIcon = (props: {
 
     const renderTooltip = (props: any) => (
         <Tooltip id="button-tooltip" {...props}>
-            <div
-                style={{
-                    fontFamily: "Maven Pro",
-                    paddingLeft: 8,
-                    paddingRight: 8,
-                }}
-            >
-                {category} Apps
-            </div>
+            <div className={styles.tooltipText}>{category} Apps</div>
         </Tooltip>
     )
 
@@ -29,13 +21,11 @@ const CategoryIcon = (props: {
         <div>
             <OverlayTrigger placement="right" overlay={renderTooltip}>
                 <div
-                    className={styles.categoryIcon}
-                    style={{
-                        boxShadow:
-                            selectedCategory === category
-                                ? "0px 4px 10px rgba(0,0,0,0.25)"
-                                : "0px 4px 10px rgba(0,0,0,0.1)",
-                    }}
+                    className={
+                        selectedCategory === category
+                            ? styles.categoryIconSelected
+                            : styles.categoryIcon
+                    }
                     onClick={() => callback(category)}
                 >
                     {icon}

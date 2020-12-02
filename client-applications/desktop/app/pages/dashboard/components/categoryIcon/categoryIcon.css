@@ -1,0 +1,24 @@
+@import "/app.global.css";
+
+.categoryIcon,
+.categoryIconSelected {
+    background: var(--text-background-color);
+    margin-bottom: 30px;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 45px;
+    height: 45px;
+    text-align: center;
+    padding-top: 10px;
+    box-shadow: var(--light-box-shadow);
+}
+
+.categoryIconSelected {
+    box-shadow: var(--heavy-box-shadow);
+}
+
+.tooltipText {
+    font-family: "Maven Pro";
+    padding-left: 8px;
+    padding-right: 8px;
+}

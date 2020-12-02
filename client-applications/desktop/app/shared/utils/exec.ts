@@ -1,10 +1,12 @@
+import { OperatingSystem } from "shared/enums/client"
+
 export const execChmodUnix = (
     command: string,
     path: string,
     platform: string
 ) => {
     return new Promise((resolve, reject) => {
-        if (platform !== "win32") {
+        if (platform !== OperatingSystem.WINDOWS) {
             const { exec } = require("child_process")
             exec(command, { cwd: path }, (error, stdout, stderr) => {
                 if (error) {
@@ -28,16 +30,12 @@ export const setAWSRegion = () => {
         var executable = ""
         var path = ""
 
-        if (platform === "darwin") {
+        if (platform === OperatingSystem.MAC) {
             path = appRootDir + "/binaries/"
             path = path.replace("/Resources/app.asar", "")
             path = path.replace("/app", "")
             executable = "./awsping_osx"
-        } else if (platform === "linux") {
-            path = process.cwd() + "/binaries/"
-            path = path.replace("/release", "")
-            executable = "./awsping_linux"
-        } else if (platform === "win32") {
+        } else if (platform === OperatingSystem.WINDOWS) {
             path = appRootDir + "\\binaries"
             path = path.replace("\\resources\\app.asar", "")
             path = path.replace("\\app", "")
