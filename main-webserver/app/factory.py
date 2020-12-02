@@ -11,6 +11,7 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
 
 from .celery_utils import init_celery
+from .config import CONFIG_MATRIX
 
 PKG_NAME = os.path.dirname(os.path.realpath(__file__)).split("/")[-1]
 
@@ -19,40 +20,30 @@ ma = Marshmallow()
 mail = SendGrid()
 
 
-def create_app(app_name=PKG_NAME, **kwargs):
-    if os.getenv("HEROKU_APP_NAME") == "main-webserver":
+def create_app(app_name=PKG_NAME, testing=False, **kwargs):
+    if os.environ.get("HEROKU_APP_NAME") == "fractal-prod-server":
         env = "prod"
     else:
         env = "staging"
+
     sentry_sdk.init(
         dsn="https://3d228295baab4919a7e4fa8163c72098@o400459.ingest.sentry.io/5394545",
         integrations=[FlaskIntegration(), CeleryIntegration()],
         environment=env,
-        release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),
+        release="main-webserver@" + os.environ.get("HEROKU_SLUG_COMMIT", "local"),
     )
 
     template_dir = os.path.dirname(os.path.realpath(__file__))
     template_dir = os.path.join(template_dir, "templates")
 
-    from .constants.config import (
-        DATABASE_URL,
-        JWT_SECRET_KEY,
-        SENDGRID_API_KEY,
-        DATADOG_API_KEY,
-        DATADOG_APP_KEY,
-        HOST_SERVICE_SECRET,
-    )
-
     app = Flask(app_name, template_folder=template_dir)
-    app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
-    app.config["ROOT_DIRECTORY"] = os.path.dirname(os.path.abspath(__file__))
-    app.config["SENDGRID_API_KEY"] = SENDGRID_API_KEY
-    app.config["SENDGRID_DEFAULT_FROM"] = "noreply@tryfractal.com"
-    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["DATADOG_API_KEY"] = DATADOG_API_KEY
-    app.config["DATADOG_APP_KEY"] = DATADOG_APP_KEY
-    app.config["HOST_SERVICE_SECRET"] = HOST_SERVICE_SECRET
+
+    # We want to look up CONFIG_MATRIX.location.action
+    action = "test" if testing else "serve"
+    location = "deployment" if "DYNO" in os.environ else "local"
+    config = getattr(getattr(CONFIG_MATRIX, location), action)
+
+    app.config.from_object(config())
 
     if kwargs.get("celery"):
         init_celery(kwargs.get("celery"), app)

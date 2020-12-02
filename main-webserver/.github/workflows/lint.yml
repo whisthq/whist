@@ -18,10 +18,10 @@ jobs:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
-      - name: Set up Python 3.6
+      - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: 3.6
+          python-version: 3.8
 
       - name: Upgrade pip
         run: pip install --upgrade pip
