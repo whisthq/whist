@@ -18,8 +18,9 @@ export const createShortcut = (app: FractalApp): boolean => {
         const createDesktopShortcut = require("@amdglobal/create-desktop-shortcuts")
         const shortcutsCreated = createDesktopShortcut({
             windows: {
-                filePath: "C:\\Windows\\system32\\notepad.exe",
-                vbsPath: process.env.NODE_ENV === "development" ? null : path,
+                filePath: app_url,
+                name: app.app_id + " on Fractal",
+                vbsPath: process.env.NODE_ENV === "development" ? "" : vbsPath,
             },
         })
         return shortcutsCreated
