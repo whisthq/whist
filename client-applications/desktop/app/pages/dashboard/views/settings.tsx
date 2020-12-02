@@ -3,11 +3,9 @@ import { Row, Alert } from "react-bootstrap"
 import { connect } from "react-redux"
 import ToggleButton from "react-toggle-button"
 import Slider from "react-input-slider"
-import styles from "styles/dashboard.css"
 import { FaWifi, FaNetworkWired } from "react-icons/fa"
 
-import Wifi from "assets/images/wifi.svg"
-import Speedometer from "assets/images/speedometer.svg"
+import styles from "styles/dashboard.css"
 
 const Settings = (props: any) => {
     const [lowInternetMode, setLowInternetMode] = useState(false)
@@ -232,7 +230,7 @@ const Settings = (props: any) => {
     )
 }
 
-const mapStateToProps = (state: any) => {
+const mapStateToProps = <T,>(state: T): T => {
     return {}
 }
 

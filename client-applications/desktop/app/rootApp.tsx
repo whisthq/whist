@@ -171,7 +171,7 @@ const RootApp = (props: any) => {
     )
 }
 
-const mapStateToProps = (state: any) => {
+const mapStateToProps = <T,>(state: T): T => {
     return {
         username: state.MainReducer.auth.username,
         candidateAccessToken: state.MainReducer.auth.candidateAccessToken,

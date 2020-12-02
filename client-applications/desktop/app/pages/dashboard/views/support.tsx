@@ -118,7 +118,7 @@ const Settings = (props: any) => {
     )
 }
 
-const mapStateToProps = (state: any) => {
+const mapStateToProps = <T,>(state: T): T => {
     return {}
 }
 

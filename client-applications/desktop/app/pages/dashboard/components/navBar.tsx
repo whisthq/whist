@@ -140,7 +140,7 @@ const NavBar = (props: any) => {
     )
 }
 
-const mapStateToProps = (state: any) => {
+const mapStateToProps = <T,>(state: T): T => {
     return {
         username: state.MainReducer.auth.username,
         name: state.MainReducer.auth.name,
