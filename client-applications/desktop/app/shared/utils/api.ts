@@ -16,7 +16,7 @@ const checkResponse = (response: { status: number }): boolean => {
 }
 
 const checkJSON = <T>(json: T): boolean => {
-    return json ? true : false
+    return !!json
 }
 
 export const apiPost = async <T>(
@@ -30,7 +30,7 @@ export const apiPost = async <T>(
             mode: "cors",
             headers: {
                 "Content-Type": FractalHTTPContent.JSON,
-                Authorization: "Bearer " + token,
+                Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(body),
         })
@@ -50,7 +50,7 @@ export const apiGet = async <T>(endpoint: string, token: string): T => {
             mode: "cors",
             headers: {
                 "Content-Type": FractalHTTPContent.JSON,
-                Authorization: "Bearer " + token,
+                Authorization: `Bearer ${token}`,
             },
         })
         const json = await response.json()

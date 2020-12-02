@@ -11,8 +11,8 @@ export type FractalConfig = {
         GOOGLE_CLIENT_ID: string
         GOOGLE_ANALYTICS_TRACKING_CODES: string
     }
-    sentry_env: string
-    client_download_urls: {
+    sentryEnv: string
+    clientDownloadURLs: {
         MacOS: string
         Windows: string
     }

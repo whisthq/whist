@@ -27,10 +27,10 @@ export function validateAccessToken(accessToken: string) {
     }
 }
 
-export function submitFeedback(feedback: string, feedback_type: string) {
+export function submitFeedback(feedback: string, feedbackType: string) {
     return {
         type: SUBMIT_FEEDBACK,
         feedback,
-        feedback_type,
+        feedbackType,
     }
 }

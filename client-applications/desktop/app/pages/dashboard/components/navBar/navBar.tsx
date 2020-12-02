@@ -3,7 +3,7 @@ import { connect } from "react-redux"
 import { Collapse } from "react-bootstrap"
 import { FaUser } from "react-icons/fa"
 
-import { history } from "store/configureStore"
+import { history } from "store/history"
 import { resetState } from "store/actions/pure"
 import SearchBar from "pages/dashboard/components/searchBar/searchBar"
 import { FractalRoute, FractalDashboardTab } from "shared/enums/navigation"

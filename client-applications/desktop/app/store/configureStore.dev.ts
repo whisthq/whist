@@ -1,6 +1,6 @@
 import { createStore, applyMiddleware, compose } from "redux"
 import createSagaMiddleware from "redux-saga"
-import { createHashHistory } from "history"
+import { history } from "./history"
 import { routerMiddleware, routerActions } from "connected-react-router"
 import { createLogger } from "redux-logger"
 import createRootReducer from "store/reducers/index"
@@ -21,8 +21,6 @@ declare global {
         }
     }
 }
-
-const history = createHashHistory()
 
 const rootReducer = createRootReducer(history)
 
@@ -85,4 +83,4 @@ const configureStore = (initialState?: mainStateType) => {
     return store
 }
 
-export default { configureStore, history }
+export default { configureStore }

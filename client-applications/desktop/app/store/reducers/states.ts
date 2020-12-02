@@ -10,7 +10,7 @@ export const DEFAULT = {
     },
     container: {
         publicIP: null,
-        container_id: null,
+        containerID: null,
         cluster: null,
         port32262: null,
         port32263: null,
@@ -23,7 +23,7 @@ export const DEFAULT = {
         launchURL: null,
     },
     client: {
-        os: null,
+        clientOS: null,
         region: null,
         dpi: null,
     },
@@ -41,3 +41,6 @@ export const DEFAULT = {
         installed: [],
     },
 }
+
+// default export until we have multiple exports
+export default DEFAULT

@@ -40,7 +40,7 @@ const Banner = (props: { bannerData: FractalBanner[] }) => {
 
 const mapStateToProps = <T extends {}>(state: T): T => {
     return {
-        os: state.MainReducer.client.os,
+        clientOS: state.MainReducer.client.clientOS,
         accessToken: state.MainReducer.auth.accessToken,
     }
 }

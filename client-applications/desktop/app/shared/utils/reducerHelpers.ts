@@ -1,5 +1,6 @@
+/* eslint-disable */
 // may wanna replace with rfdc - really fast deep copy
-var _ = require("lodash") // alternatively use a recursive ... function
+const _ = require("lodash") // alternatively use a recursive ... function
 
 // deep copy an object so that there is no aliasing
 export const deep_copy = <T extends {}>(obj: T) => _.cloneDeep(obj)
@@ -24,12 +25,10 @@ export const modified = <T extends {}>(
             } else {
                 prop_func.apply(y, prop_func_args)
             }
+        } else if (typeof prop_func === "string") {
+            y[prop_func].apply(y, prop_func_args)
         } else {
-            if (typeof prop_func === "string") {
-                y[prop_func].apply(y, prop_func_args)
-            } else {
-                // throw "For deep copy type must be string."
-            }
+            // throw "For deep copy type must be string."
         }
     } else {
         y.prop_func()
@@ -49,10 +48,10 @@ export const modified = <T extends {}>(
 export const if_exists_spread = (
     obj: any,
     key_values: any,
-    copy: boolean = true,
-    deepcopy: boolean = false
+    copy = true,
+    deepcopy = false
 ) => {
-    let key_valuefs = deep_copy(key_values)
+    const key_valuefs = deep_copy(key_values)
     for (const key in key_values) {
         key_valuefs[key] = (obj: any) => key_values[key]
     }
@@ -66,17 +65,11 @@ export const if_exists_spread = (
 export const if_exists_spread_f = (
     obj: any,
     key_valuefs: any,
-    copy: boolean = true,
-    deepcopy: boolean = false
+    copy = true,
+    deepcopy = false
 ) => {
     const new_obj =
-        deepcopy && obj
-            ? deep_copy(obj)
-            : copy && obj
-            ? { ...obj }
-            : obj
-            ? obj
-            : {}
+        deepcopy && obj ? deep_copy(obj) : copy && obj ? { ...obj } : obj || {}
 
     if (obj) {
         for (const key in key_valuefs) {
@@ -108,7 +101,7 @@ const merge_f = (
     otherwise_in: any | undefined = undefined
 ) => {
     for (const key in new_key_values) {
-        if (!(key in new_obj) && typeof new_key_values[key] != "function") {
+        if (!(key in new_obj) && typeof new_key_values[key] !== "function") {
             // if it's not a function we need to create recursivelly
             new_obj[key] = {}
         }
@@ -171,7 +164,7 @@ export const if_exists_else = (
 ) => {
     let search_obj: any = obj
     for (const i in indices) {
-        let index = indices[i]
+        const index = indices[i]
         if (index in search_obj) {
             search_obj = search_obj[index]
         } else {
@@ -179,5 +172,5 @@ export const if_exists_else = (
         }
     }
 
-    return search_obj ? search_obj : otherwise
+    return search_obj || otherwise
 }
