@@ -3,10 +3,10 @@
 This repository contains the code for the Fractal mobile applications running on Android/Chromebooks and iOS/iPads. This repository contains all the directions for building the applications locally and for publishing them for production on each of the following OSes:
 
 - Android/ChromeOS
-    - x86_64
-    - x86
-    - arm64-v8a
-    - armeabi-v7a
+  - x86_64
+  - x86
+  - arm64-v8a
+  - armeabi-v7a
 - iOS/iPadOS
 
 ## Starting Development
@@ -19,7 +19,7 @@ This repository contains the code for the Fractal mobile applications running on
 
 4. Once Android Studio is downloaded, create a new project and accept all of the default options. Once your new blank project has loaded, navigate to the top right-hand corner and click on the icon for the "AVD Manager."
 
-5. From the AVD Manager, select the Android device you want to emulate. You'll have to follow the setup process to download the operating system of that Android device, which will take some time. 
+5. From the AVD Manager, select the Android device you want to emulate. You'll have to follow the setup process to download the operating system of that Android device, which will take some time.
 
 6. After downloading the operating system and finishing the above setup process, you should see an emulated Android device with a black screen appear. Wait about 5-10 minutes for the device to boot up (this will happen automatically).
 
