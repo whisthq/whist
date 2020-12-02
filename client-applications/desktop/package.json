@@ -155,6 +155,8 @@
         "network-speed": "^2.0.6",
         "node-forge": "^0.10.0",
         "popper.js": "^1.16.1",
+        "postcss-import": "^13.0.0",
+        "postcss-loader": "^4.1.0",
         "prettier": "^2.0.5",
         "prop-types": "^15.6.0",
         "react": "^16.12.0",

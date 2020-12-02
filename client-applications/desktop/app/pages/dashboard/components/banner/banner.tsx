@@ -4,13 +4,15 @@ import { connect } from "react-redux"
 
 import { openExternal } from "shared/utils/helpers"
 
+import styles from "pages/dashboard/components/banner/banner.css"
+
 const Banner = (props: any) => {
     const { bannerData } = props
 
     if (bannerData && bannerData.length > 0) {
         return (
             <Carousel
-                style={{ width: "100%", height: "100%" }}
+                className={styles.carousel}
                 prevIcon={<div></div>}
                 nextIcon={<div></div>}
                 indicators={false}
@@ -23,27 +25,19 @@ const Banner = (props: any) => {
                         <div
                             style={{
                                 backgroundImage: `url(${bannerItem.background})`,
-                                backgroundSize: "cover",
-                                width: "100%",
-                                height: 225,
-                                borderRadius: 12,
-                                cursor: "pointer",
                             }}
+                            className={styles.bannerImage}
                         ></div>
                     </Carousel.Item>
                 ))}
             </Carousel>
         )
     } else {
-        return (
-            <div
-                style={{ width: "100%", height: "100%", background: "#f4f5ff" }}
-            ></div>
-        )
+        return <div className={styles.emptyBanner}></div>
     }
 }
 
-const mapStateToProps = <T,>(state: T): T => {
+const mapStateToProps = <T extends {}>(state: T): T => {
     return {
         os: state.MainReducer.client.os,
         accessToken: state.MainReducer.auth.accessToken,

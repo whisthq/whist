@@ -6,10 +6,10 @@ import { useQuery } from "@apollo/client"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import { GET_BANNERS } from "shared/constants/graphql"
-import App from "pages/dashboard/components/app"
-import LeftColumn from "pages/dashboard/components/leftColumn"
-import Banner from "pages/dashboard/components/banner"
-import News from "pages/dashboard/components/news"
+import App from "pages/dashboard/components/app/app"
+import LeftColumn from "pages/dashboard/components/leftColumn/leftColumn"
+import Banner from "pages/dashboard/components/banner/banner"
+import News from "pages/dashboard/components/news/news"
 
 const Discover = (props: any) => {
     const { search } = props
@@ -144,7 +144,7 @@ const Discover = (props: any) => {
     }
 }
 
-const mapStateToProps = <T,>(state: T): T => {
+const mapStateToProps = <T extends {}>(state: T): T => {
     return {
         accessToken: state.MainReducer.auth.accessToken,
     }

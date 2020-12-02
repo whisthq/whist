@@ -2,10 +2,10 @@ import React from "react"
 import { Col } from "react-bootstrap"
 import { FaGlobeEurope, FaBook, FaPalette, FaLayerGroup } from "react-icons/fa"
 
-import CategoryIcon from "pages/dashboard/components/categoryIcon"
+import CategoryIcon from "pages/dashboard/components/categoryIcon/categoryIcon"
 import { FractalAppCategory } from "shared/enums/navigation"
 
-import styles from "styles/dashboard.css"
+import styles from "pages/dashboard/components/leftColumn/leftColumn.css"
 
 const LeftColumn = (props: {
     callback: (category: string) => void
@@ -20,14 +20,11 @@ const LeftColumn = (props: {
                     <CategoryIcon
                         icon={
                             <FaLayerGroup
-                                style={{
-                                    color:
-                                        selectedCategory ===
-                                        FractalAppCategory.ALL
-                                            ? "#3930b8"
-                                            : "#EFEFEF",
-                                    fontSize: 18,
-                                }}
+                                className={
+                                    selectedCategory === FractalAppCategory.ALL
+                                        ? styles.faIconSelected
+                                        : styles.faIcon
+                                }
                             />
                         }
                         callback={callback}
@@ -37,14 +34,12 @@ const LeftColumn = (props: {
                     <CategoryIcon
                         icon={
                             <FaGlobeEurope
-                                style={{
-                                    color:
-                                        selectedCategory ===
-                                        FractalAppCategory.BROWSER
-                                            ? "#3930b8"
-                                            : "#EFEFEF",
-                                    fontSize: 18,
-                                }}
+                                className={
+                                    selectedCategory ===
+                                    FractalAppCategory.BROWSER
+                                        ? styles.faIconSelected
+                                        : styles.faIcon
+                                }
                             />
                         }
                         callback={callback}
@@ -54,14 +49,12 @@ const LeftColumn = (props: {
                     <CategoryIcon
                         icon={
                             <FaPalette
-                                style={{
-                                    color:
-                                        selectedCategory ===
-                                        FractalAppCategory.CREATIVE
-                                            ? "#3930b8"
-                                            : "#EFEFEF",
-                                    fontSize: 18,
-                                }}
+                                className={
+                                    selectedCategory ===
+                                    FractalAppCategory.CREATIVE
+                                        ? styles.faIconSelected
+                                        : styles.faIcon
+                                }
                             />
                         }
                         callback={callback}
@@ -71,14 +64,12 @@ const LeftColumn = (props: {
                     <CategoryIcon
                         icon={
                             <FaBook
-                                style={{
-                                    color:
-                                        selectedCategory ===
-                                        FractalAppCategory.PRODUCTIVITY
-                                            ? "#3930b8"
-                                            : "#EFEFEF",
-                                    fontSize: 18,
-                                }}
+                                className={
+                                    selectedCategory ===
+                                    FractalAppCategory.PRODUCTIVITY
+                                        ? styles.faIconSelected
+                                        : styles.faIcon
+                                }
                             />
                         }
                         callback={callback}

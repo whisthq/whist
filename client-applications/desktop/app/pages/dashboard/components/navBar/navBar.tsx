@@ -4,10 +4,11 @@ import { Collapse } from "react-bootstrap"
 import { FaUser } from "react-icons/fa"
 
 import { history } from "store/configureStore"
-import styles from "styles/dashboard.css"
 import { resetState } from "store/actions/pure"
-import SearchBar from "pages/dashboard/components/searchBar"
+import SearchBar from "pages/dashboard/components/searchBar/searchBar"
 import { FractalRoute, FractalDashboardTab } from "shared/enums/navigation"
+
+import styles from "pages/dashboard/components/navBar/navBar.css"
 
 const NavTitle = (props: {
     selected: boolean
@@ -28,18 +29,24 @@ const NavTitle = (props: {
     )
 }
 
-const NavBar = (props: any) => {
+const NavBar = (props: {
+    username: string
+    name: string
+    currentTab: string
+    search: string
+    updateCurrentTab: (currentTab: string) => void
+    updateSearch: (search: string) => void
+}) => {
     const {
-        dispatch,
-        updateCurrentTab,
         username,
         name,
         currentTab,
         search,
+        updateCurrentTab,
         updateSearch,
+        dispatch,
     } = props
     const [showProfile, setShowProfile] = useState(false)
-    const [showSearchBar, setShowSearchBar] = useState(false)
 
     const handleSignout = () => {
         const Store = require("electron-store")
@@ -58,17 +65,8 @@ const NavBar = (props: any) => {
         <div>
             <div className={styles.navBar}>
                 <div className={styles.logoTitle}>Fractal</div>
-                <div
-                    style={{
-                        position: "absolute",
-                        right: "50px",
-                        top: "15px",
-                        display: "flex",
-                        flexDirection: "row",
-                        maxWidth: 540,
-                    }}
-                >
-                    {currentTab === "App Store" && (
+                <div className={styles.wrapper}>
+                    {currentTab === FractalDashboardTab.APP_STORE && (
                         <div>
                             <SearchBar
                                 search={search}
@@ -78,27 +76,13 @@ const NavBar = (props: any) => {
                             />
                         </div>
                     )}
-                    <div style={{ display: "flex", flexDirection: "column" }}>
+                    <div className={styles.columnFlex}>
                         <div
                             className={styles.userInfo}
                             onClick={() => setShowProfile(!showProfile)}
                         >
-                            <FaUser
-                                style={{
-                                    color: "#111111",
-                                    fontSize: 30,
-                                    padding: 6,
-                                    position: "relative",
-                                    top: 2,
-                                    marginRight: 4,
-                                }}
-                            />
-                            <div
-                                style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                }}
-                            >
+                            <FaUser className={styles.faUser} />
+                            <div className={styles.columnFlex}>
                                 <span className={styles.name}>{name}</span>
                                 <span className={styles.email}>{username}</span>
                             </div>
@@ -113,7 +97,7 @@ const NavBar = (props: any) => {
                     </div>
                 </div>
             </div>
-            <div style={{ marginTop: 10, paddingLeft: 45 }}>
+            <div className={styles.tabWrapper}>
                 <NavTitle
                     selected={currentTab == FractalDashboardTab.APP_STORE}
                     text={FractalDashboardTab.APP_STORE}
@@ -140,7 +124,7 @@ const NavBar = (props: any) => {
     )
 }
 
-const mapStateToProps = <T,>(state: T): T => {
+const mapStateToProps = <T extends {}>(state: T): T => {
     return {
         username: state.MainReducer.auth.username,
         name: state.MainReducer.auth.name,

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import styles from "styles/login.css"
+import styles from "shared/styles/login.css"
 import Titlebar from "react-electron-titlebar"
 
 import BackgroundView from "pages/login/views/backgroundView"
 import LoginView from "pages/login/views/loginView"
+import { OperatingSystem } from "shared/enums/client"
 
 const Login = (props: any) => {
     const { dispatch, os, loginWarning } = props
@@ -28,7 +29,7 @@ const Login = (props: any) => {
             >
                 Version: {version}
             </div>
-            {os === "win32" ? (
+            {os === OperatingSystem.WINDOWS ? (
                 <div>
                     <Titlebar backgroundColor="#000000" />
                 </div>

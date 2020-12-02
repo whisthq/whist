@@ -1,0 +1,210 @@
+@import "/app.global.css";
+
+.dashboardContainer {
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.feedbackButton,
+.noFeedbackButton {
+    font-family: "Maven Pro";
+    font-weight: bold;
+    padding: 10px 25px;
+    width: 150px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 13px;
+    float: right;
+    margin-top: 15px;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.noFeedbackButton {
+    opacity: 0.7;
+}
+
+.signoutButton:hover,
+.launchButton:hover,
+.expandButton:hover,
+.modalButton:hover,
+.feedbackButton:hover {
+    background: #93f1d9;
+    cursor: pointer;
+    color: #111111;
+}
+
+.macTitleBar {
+    -webkit-app-region: drag;
+    margin-top: 22px;
+}
+
+.removeDrag {
+    -webkit-app-region: no-drag;
+}
+
+.page {
+    flex: 1;
+    padding: 35px 60px;
+}
+
+.carouselRow {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+.select {
+    height: 38px;
+    width: 7px;
+    background: #111111;
+    position: absolute;
+    right: 0px;
+}
+
+.row {
+    flex-wrap: nowrap;
+    margin: 0;
+}
+
+.appButtons {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    position: absolute;
+    bottom: 25px;
+    right: 25px;
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+}
+
+.launchButton {
+    position: absolute;
+    bottom: 17px;
+    right: 17px;
+    font-size: 11px;
+    padding: 4px 10px;
+    width: 100px;
+    color: #111111;
+    border: solid 0.8px #cccccc;
+    outline: none;
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+}
+
+.appContainer:hover .launchButton {
+    opacity: 100;
+}
+
+.expandButton {
+    border: solid 0.8px #cccccc;
+    border-left: none;
+    padding: 3px 7px 6px 7px;
+    width: 27px;
+    outline: none;
+}
+
+.expandButton:hover {
+    border-left: none;
+}
+
+.modalButton {
+    position: absolute;
+    right: 40px;
+    bottom: 40px;
+    text-align: center;
+    padding: 10px 30px;
+    color: white;
+    font-weight: bold;
+    width: 200px;
+    background: var(--primary-color);
+    border: none;
+    box-shadow: none;
+    border-radius: 5px;
+}
+
+.container {
+    background: rgba(237, 240, 247, 0.75);
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-family: "Maven Pro";
+    margin: 0px;
+    -webkit-app-region: drag;
+    user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
+}
+
+.bannerText {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 525px;
+    height: 275px;
+    margin: 15px 0 0 90px;
+    z-index: 1;
+}
+
+.category {
+    padding: 5px 25px;
+    border: solid 0.8px black;
+    font-weight: bold;
+    width: max-content;
+    font-size: 13px;
+    z-index: 2;
+}
+
+.heading {
+    letter-spacing: 2px;
+    z-index: 2;
+}
+
+.subheading {
+    font-size: 16px;
+    color: #333333;
+    z-index: 2;
+}
+
+.carousel-indicators {
+    bottom: -20px;
+}
+
+.bannerLink:hover {
+    cursor: pointer;
+}
+
+select {
+    background: white;
+    width: 100%;
+    border-radius: 0px;
+    border: none;
+    text-indent: 11px;
+    height: 58px;
+    outline: 3px solid white;
+    outline-offset: -3px;
+    color: black;
+}
+
+select:required:invalid {
+    color: #555555;
+}
+
+::placeholder {
+    color: #555555;
+}
+
+.contactFormLink {
+    color: #5ec4eb;
+}
+
+.contactFormLink:hover {
+    cursor: pointer;
+}
+
+::-webkit-scrollbar {
+    width: 0px;
+}

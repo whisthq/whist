@@ -30,6 +30,21 @@
     font-style: normal;
 }
 
+:root {
+    --background-color: #edf0f7bf;
+    --primary-color: #3930b8;
+    --accent-color: #93f1d9;
+    --primary-text-color: #111111;
+    --light-text-color: #555555;
+    --text-background-color: #ffffff;
+    --light-box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    --heavy-box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
+    --bottom-layer: 0;
+    --first-layer: 1;
+    --second-layer: 2;
+    --top-layer: 9999;
+}
+
 body {
     position: relative;
     color: black;
