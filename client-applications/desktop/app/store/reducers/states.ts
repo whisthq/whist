@@ -35,4 +35,10 @@ export const DEFAULT = {
         statusMessage: "Powering up your app",
         percentLoaded: 0,
     },
+    admin: {
+        webserver_url: null,
+        task_arn: null,
+        region: null,
+        cluster: null,
+    },
 }

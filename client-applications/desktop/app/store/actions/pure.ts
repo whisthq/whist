@@ -3,6 +3,7 @@ export const UPDATE_CONTAINER = "UPDATE_CONTAINER"
 export const UPDATE_CLIENT = "UPDATE_CLIENT"
 export const UPDATE_PAYMENT = "UPDATE_PAYEMNT"
 export const UPDATE_LOADING = "UPDATE_LOADING"
+export const UPDATE_ADMIN = "UPDATE_ADMIN"
 
 export const RESET_STATE = "RESET_STATE"
 
@@ -68,6 +69,18 @@ export function updateLoading(body: {
 }) {
     return {
         type: UPDATE_LOADING,
+        body,
+    }
+}
+
+export function updateAdmin(body: {
+    webserver_url?: null | string
+    task_arn?: null | string
+    region?: null | string
+    cluster?: null | string
+}) {
+    return {
+        type: UPDATE_ADMIN,
         body,
     }
 }

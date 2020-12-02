@@ -10,6 +10,7 @@ import { debugLog } from "shared/utils/logging"
 import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/configureStore"
 import { execChmodUnix } from "shared/utils/exec"
+import { delay } from "redux-saga/effects"
 
 const Loading = (props: any) => {
     const {
@@ -46,6 +47,8 @@ const Loading = (props: any) => {
 
     useEffect(() => {
         if (launches === 1) {
+            console.log("LAUNCH PROTOCOL")
+            delay(1000)
             LaunchProtocol()
         }
     }, [launches])
@@ -135,6 +138,14 @@ const Loading = (props: any) => {
         // this should be done AFTER the endpoint to connect to EXISTS
     }
 
+    if (typeof status === "string") {
+        console.log(
+            `status ${status} and ${status
+                .toLowerCase()
+                .includes("unexpected")}`
+        )
+    }
+
     return (
         <div
             style={{
@@ -208,6 +219,11 @@ const Loading = (props: any) => {
                     </div>
                 </div>
             </div>
+            {status &&
+                typeof status === "string" &&
+                status.toLowerCase().includes("unexpected") && (
+                    <button onClick={() => history.push("/")}>hey there</button>
+                )}
         </div>
     )
 }

@@ -33,6 +33,11 @@ export default function MainReducer(state = DEFAULT, action: any) {
                 ...stateCopy,
                 payment: Object.assign(stateCopy.payment, action.body),
             }
+        case MainAction.UPDATE_ADMIN:
+            return {
+                ...stateCopy,
+                admin: Object.assign(stateCopy.admin, action.body),
+            }
         default:
             return state
     }

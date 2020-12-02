@@ -3,7 +3,7 @@ import { render } from "react-dom"
 import { Provider } from "react-redux"
 import { ConnectedRouter } from "connected-react-router"
 import { AppContainer as ReactHotAppContainer } from "react-hot-loader"
-import { configureStore, history } from "./store/configureStore"
+import { history, configureStore } from "store/configureStore"
 import {
     ApolloProvider,
     ApolloClient,

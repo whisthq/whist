@@ -11,8 +11,28 @@ import LeftColumn from "pages/dashboard/components/leftColumn"
 import Banner from "pages/dashboard/components/banner"
 import News from "pages/dashboard/components/news"
 
+import FractalImg from "assets/images/fractal.svg"
+
+/// here is a constant test app we add at the beginning
+const adminApp = {
+    app_id: "Test App",
+    logo_url: FractalImg,
+    category: "Test",
+    description: "Test app for Fractal admins",
+    long_description:
+        "You can use the admin app to test if you are a Fractal admin (i.e. your email ends with @tryfractal). Go to settings and where the admin settings are set a task ARN, webserver (dev | local | staging | prod | a url), and region (us-east-1 | us-west-1 | ca-central-1). In any field you can enter reset to reset it to null. If you try to launch without setting then it will not work since it will be null (or your previous settings if you change one).",
+    url: "tryfractal.com",
+    tos: "https://www.tryfractal.com/termsofservice",
+    active: true, // not used
+}
+
 const Discover = (props: any) => {
-    const { search } = props
+    const { accessToken, username, search } = props
+
+    const adminUsername =
+        username &&
+        username.indexOf("@") > -1 &&
+        username.split("@")[1] == "tryfractal.com"
 
     const [searchResults, setSearchResults] = useState([])
     const [selectedCategory, setSelectedCategory] = useState("All")
@@ -47,7 +67,7 @@ const Discover = (props: any) => {
     const bannerQuery = useQuery(GET_BANNERS, {
         context: {
             headers: {
-                Authorization: `Bearer ${props.accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
             },
         },
     })
@@ -68,12 +88,18 @@ const Discover = (props: any) => {
         setSelectedCategory(category)
     }
 
-    useEffect(() => {
-        const results = featuredAppData.filter(getSearchResults)
-        setSearchResults(
-            results.map((app: any) => <App key={app.app_id} app={app} />)
-        )
-    }, [search])
+    // useEffect(() => {
+    //     const results = featuredAppData.filter(getSearchResults)
+    //     setSearchResults(
+    //         results.map((app: any) => (
+    //             <App
+    //                 key={app.app_id}
+    //                 app={app}
+    //                 admin={app.app_id === "Test App"}
+    //             />
+    //         ))
+    //     )
+    // }, [search])
 
     useEffect(() => {
         if (appQuery.data) {
@@ -146,6 +172,7 @@ const Discover = (props: any) => {
 
 const mapStateToProps = (state: any) => {
     return {
+        username: state.MainReducer.auth.username,
         accessToken: state.MainReducer.auth.accessToken,
     }
 }

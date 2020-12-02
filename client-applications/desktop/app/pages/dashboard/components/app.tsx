@@ -4,12 +4,12 @@ import { Col, Modal } from "react-bootstrap"
 import styles from "styles/dashboard.css"
 import { FaPlay } from "react-icons/fa"
 
-import { createContainer } from "store/actions/sideEffects"
+import { createContainer, createTestContainer } from "store/actions/sideEffects"
 import { updateContainer } from "store/actions/pure"
 import { history } from "store/configureStore"
 
 const App = (props: any) => {
-    const { dispatch, app, launches } = props
+    const { dispatch, app, launches, admin } = props
 
     const [showModal, setShowModal] = useState(false)
     const [launched, setLaunched] = useState(false)
@@ -31,7 +31,11 @@ const App = (props: any) => {
     useEffect(() => {
         if (launches === 1 && launched) {
             history.push("/loading")
-            dispatch(createContainer(app.app_id))
+            if (admin) {
+                dispatch(createTestContainer(app.app_id))
+            } else {
+                dispatch(createContainer(app.app_id))
+            }
             setLaunched(false)
         }
     }, [launches, launched])
