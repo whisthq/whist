@@ -35,8 +35,6 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
             integrations=[FlaskIntegration(), CeleryIntegration()],
             environment=env,
             release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),
-            debug=True,
-            traces_sample_rate=1.0
         )
 
     template_dir = os.path.dirname(os.path.realpath(__file__))
