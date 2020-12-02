@@ -126,7 +126,7 @@ def retrieveHelper(email):
                 {
                     "status": PAYMENT_REQUIRED,
                     "subscription": {},
-                    "cards": [],
+                    "source": None,
                     "creditsOutstanding": 0,
                     "account_locked": False,
                     "customer": {},

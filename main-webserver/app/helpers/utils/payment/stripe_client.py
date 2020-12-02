@@ -270,8 +270,8 @@ class StripeClient:
 
         # return a valid object if they exist else None
         if stripe_customer_id and self.validate_customer_id(stripe_customer_id, user):
-            customer_info = stripe.Customer.retrieve(stripe_customer_id, expand=["sources"])
-            cards = customer_info["sources"]["data"]
+            customer_info = stripe.Customer.retrieve(stripe_customer_id)
+            source = stripe.Source.retrieve(customer_info["default_source"])
 
             subscription = stripe.Subscription.list(customer=stripe_customer_id)
 
@@ -284,7 +284,7 @@ class StripeClient:
 
             return {
                 "subscription": subscription,
-                "cards": cards,
+                "source": source,
                 "creditsOutstanding": credits_outstanding,
                 "account_locked": account_locked,
                 "customer": customer,
@@ -330,7 +330,9 @@ class StripeClient:
             raise NonexistentStripeCustomer
 
         # get the zipcode/region
-        zipcode = user.postal_code
+        customer_info = stripe.Customer.retrieve(stripe_customer_id)
+        source = stripe.Source.retrieve(customer_info["default_source"])
+        zipcode = source["owner"]["address"]["postal_code"]
 
         try:
             purchase_region_code = self.zipcode_db[zipcode].state
@@ -487,38 +489,12 @@ class StripeClient:
             raise NonexistentUser
 
         source_id = source["id"]
-        try:
-            brand = source["card"]["brand"]
-            last4 = source["card"]["last4"]
-        except:
-            brand = None
-            last4 = None
-            fractalLog(
-                function="StripeClient.add_card",
-                label=email,
-                logs="Unable to add card to user",
-                level=logging.ERROR,
-            )
-
-        try:
-            postal_code = source["owner"]["address"]["postal_code"]
-        except:
-            postal_code = None
-            fractalLog(
-                function="StripeClient.add_card",
-                label=email,
-                logs="Unable to add postal code to user",
-                level=logging.ERROR,
-            )
 
         stripe_customer_id = user.stripe_customer_id
         if not stripe_customer_id or not self.validate_customer_id(stripe_customer_id, user):
             try:
                 customer = stripe.Customer.create(email=email, source=source_id)
                 user.stripe_customer_id = customer["id"]
-                user.card_brand = brand
-                user.card_last_four = last4
-                user.postal_code = postal_code
                 db.session.commit()
             except:
                 raise InvalidStripeToken
@@ -526,10 +502,6 @@ class StripeClient:
             try:
                 stripe.Customer.create_source(stripe_customer_id, source=source_id)
                 stripe.Customer.modify(stripe_customer_id, default_source=source_id)
-                user.card_brand = brand
-                user.card_last_four = last4
-                user.postal_code = postal_code
-                db.session.commit()
             except:
                 raise InvalidStripeToken
 
