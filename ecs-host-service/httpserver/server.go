@@ -70,13 +70,11 @@ type MountCloudStorageRequest struct {
 // ReturnResult is called to pass the result of a request back to the the HTTP
 // request handler
 func (s *MountCloudStorageRequest) ReturnResult(result string, err error) {
-	logger.Info("entered returnresult for cloud storage request")
 	s.resultChan <- requestResult{result, err}
-	logger.Info("exited returnresult for cloud storage request")
 }
 
 func (s *MountCloudStorageRequest) createResultChan() {
-	if s.resultChan != nil {
+	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
 	}
 }
@@ -96,10 +94,7 @@ func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, que
 
 	// Send request to queue, then wait for result
 	queue <- &reqdata
-	logger.Info("waiting for resultChan")
 	res := <-reqdata.resultChan
-
-	logger.Info("Got back result from front-end for a cloud storage request!")
 
 	res.send(w)
 }
@@ -118,7 +113,7 @@ func (s *SetContainerDPIRequest) ReturnResult(result string, err error) {
 }
 
 func (s *SetContainerDPIRequest) createResultChan() {
-	if s.resultChan != nil {
+	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
 	}
 }
