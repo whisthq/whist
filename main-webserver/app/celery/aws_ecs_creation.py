@@ -169,7 +169,7 @@ def select_cluster(region_name):
     return cluster_name
 
 
-def start_container(webserver_url, region_name, cluster_name, task_definition_arn):
+def start_container(webserver_url, region_name, cluster_name, task_definition_arn, dpi):
     """
     This helper function configures and starts a container running
 
@@ -189,6 +189,7 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
                 "name": "fractal-container",
                 "environment": [
                     {"name": "FRACTAL_AES_KEY", "value": aeskey},
+                    {"name": "FRACTAL_DPI", "value": str(dpi)},
                     {
                         "name": "WEBSERVER_URL",
                         "value": (webserver_url if webserver_url is not None else ""),
@@ -240,6 +241,33 @@ def assign_container(
     dpi=96,
     webserver_url=None,
 ):
+    """
+    Assigns a running container to a user, or creates one if none exists
+
+    :param self: the celery instance running the task
+    :param username: the username of the requesting user
+    :param task_definition_arn: which taskdef the user needs a container for
+    :param region_name: which region the user needs a container for
+    :param dpi: the user's DPI
+    :param webserver_url: the webserver originating the request
+    :return: the generated container, in json form
+    """
+    # first, we check for a preexisting container with the correct user and pass it back:
+    existing_container = (
+        UserContainer.query()
+        .filter_by(
+            is_assigned=True,
+            user_id=username,
+            task_definition=task_definition_arn,
+            region_name=region_name,
+        )
+        .limit(1)
+    )
+    if existing_container:
+        if _poll(existing_container.container_id):
+            return user_container_schema.dump(existing_container)
+
+    # otherwise, we see if there's an unassigned container
     base_container = (
         UserContainer.query()
         .filter_by(is_assigned=False, task_definition=task_definition_arn, region_name=region_name)
@@ -286,7 +314,7 @@ def assign_container(
         )
         fractalLog(function="create_new_container", label="None", logs=message)
         task_id, curr_ip, curr_network_binding, aeskey = start_container(
-            webserver_url, region_name, cluster_name, task_definition_arn
+            webserver_url, region_name, cluster_name, task_definition_arn, dpi
         )
         # TODO:  Get this right
         if curr_ip == -1 or curr_network_binding == -1:
@@ -367,7 +395,10 @@ def assign_container(
             )
             raise Ignore
 
-    send_dpi_info_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
+    try:
+        send_dpi_info_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
+    except requests.exceptions.ConnectionError:
+        pass
     time.sleep(5)
     if not _poll(base_container.container_id):
         fractalLog(
@@ -467,7 +498,7 @@ def create_new_container(
     )
     fractalLog(function="create_new_container", label="None", logs=message)
     task_id, curr_ip, curr_network_binding, aeskey = start_container(
-        webserver_url, region_name, cluster_name, task_definition_arn
+        webserver_url, region_name, cluster_name, task_definition_arn, dpi
     )
     # TODO:  Get this right
     if curr_ip == -1 or curr_network_binding == -1:
