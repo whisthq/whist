@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import styles from "shared/styles/login.css"
+import styles from "pages/login/login.css"
 import Titlebar from "react-electron-titlebar"
 
 import BackgroundView from "pages/login/views/backgroundView"

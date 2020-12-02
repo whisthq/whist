@@ -4,6 +4,6 @@ export enum OperatingSystem {
     LINUX = "linux",
 }
 
-export enum AppName {
+export enum FractalAppName {
     CHROME = "Google Chrome",
 }
