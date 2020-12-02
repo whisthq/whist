@@ -1,3 +1,4 @@
+/* eslint-disable */
 // may wanna replace with rfdc - really fast deep copy
 var _ = require("lodash") // alternatively use a recursive ... function
 

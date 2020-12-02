@@ -79,7 +79,7 @@ const LoginView = (props: any) => {
     // should trigger when they successfully log in... be it with google or with email
     useEffect(() => {
         setProcessing(false)
-    }, [dispatch, user.user_id, authFlow])
+    }, [dispatch, user.userID, authFlow])
 
     if (processing) {
         // Conditionally render the loading screen as we wait for signup API call to return

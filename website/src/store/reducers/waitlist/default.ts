@@ -1,6 +1,6 @@
 export const DEFAULT = {
     waitlistUser: {
-        user_id: null,
+        userID: null,
         name: null,
         referrals: 0,
         points: 0,

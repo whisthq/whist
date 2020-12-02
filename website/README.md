@@ -25,6 +25,8 @@ You can always run Prettier directly from a terminal by typing `npm run format`,
 
 ### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 
+Additional specific checks are done by ESLint. Please run `npm run lint-check` or `npm run lint-fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to .eslintrc and either demote to warnings or mute entirely.
+
 Launch VS Code Quick Open (Ctrl+P), paste the following command, and press enter.
 
 ```

@@ -48,7 +48,7 @@ function SecretPoints(props: {
         // get the real status from the firebase database
         const newEastereggsDocument = await db
             .collection("eastereggs")
-            .doc(waitlistUser.user_id)
+            .doc(waitlistUser.userID)
             .get()
         const data = newEastereggsDocument.data()
 
@@ -69,7 +69,7 @@ function SecretPoints(props: {
             )
 
             // update remote state which tells us what the "truth" really is
-            db.collection("eastereggs").doc(waitlistUser.user_id).set({
+            db.collection("eastereggs").doc(waitlistUser.userID).set({
                 available: newEastereggs,
             })
 
@@ -78,7 +78,7 @@ function SecretPoints(props: {
             if (getPoints) {
                 updatePoints({
                     variables: {
-                        user_id: waitlistUser.user_id,
+                        userID: waitlistUser.userID,
                         points: waitlistUser.points + points,
                     },
                     optimisticResponse: true,
@@ -114,7 +114,7 @@ function SecretPoints(props: {
 function mapStateToProps(state: {
     WaitlistReducer: {
         waitlistUser: {
-            user_id: string
+            userID: string
             points: number
             eastereggsAvailable: any
         }

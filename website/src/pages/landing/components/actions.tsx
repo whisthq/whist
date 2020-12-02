@@ -67,7 +67,7 @@ const CustomAction = (props: {
 const Actions = (props: {
     dispatch: any
     waitlistUser: {
-        user_id: string
+        userID: string
         referralCode: string
         points: number
         referrals: number
@@ -103,7 +103,7 @@ const Actions = (props: {
     }
 
     const sendReferralEmail = () => {
-        if (waitlistUser.user_id && recipientEmail) {
+        if (waitlistUser.userID && recipientEmail) {
             dispatch(SideEffectWaitlistAction.sendReferralEmail(recipientEmail))
             setSentEmail(recipientEmail)
             setShowEmailSentAlert(true)
@@ -113,7 +113,7 @@ const Actions = (props: {
     }
 
     const renderActions = () => {
-        if (waitlistUser && waitlistUser.user_id) {
+        if (waitlistUser && waitlistUser.userID) {
             return (
                 <div style={{ width: "100%" }}>
                     {!waitlistUser.authEmail && (

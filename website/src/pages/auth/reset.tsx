@@ -13,9 +13,9 @@ const Reset = (props: any) => {
     const { dispatch } = props
     const search = useLocation().search
     const token = search.substring(1, search.length)
-    const valid_token = token && token.length >= 1
+    const validToken = token && token.length >= 1
 
-    if (!valid_token) {
+    if (!validToken) {
         dispatch(
             updateAuthFlow({
                 mode: "Forgot",
@@ -26,7 +26,7 @@ const Reset = (props: any) => {
         return (
             <div className="fractalContainer">
                 <Header dark={false} />
-                <ResetView token={token} validToken={valid_token} />
+                <ResetView token={token} validToken={validToken} />
             </div>
         )
     }

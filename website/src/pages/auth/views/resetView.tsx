@@ -165,7 +165,7 @@ const ResetView = (props: {
                             fontWeight: "normal",
                         }}
                     >
-                        Please Enter Your New Password {props.user.user_id}
+                        Please Enter Your New Password
                     </h2>
                     <PasswordConfirmForm
                         changePassword={changePassword}

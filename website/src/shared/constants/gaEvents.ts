@@ -1,3 +1,4 @@
+/* eslint-disable */
 export const categories = {
     // auth, joining the waitlist, etcetera
     USER: "User",

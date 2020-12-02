@@ -1,17 +1,17 @@
 import { gql } from "@apollo/client"
 
 export const SUBSCRIBE_USER = gql`
-    subscription SubscribeUser($user_id: String!) {
-        users(where: { user_id: { _eq: $user_id } }) {
+    subscription SubscribeUser($userID: String!) {
+        users(where: { user_id: { _eq: $userID } }) {
             can_login
         }
     }
 `
 
 export const GET_WAITLIST_USER_FROM_TOKEN = gql`
-    query GetWaitlistUserFromToken($waitlist_access_token: String!) {
+    query GetWaitlistUserFromToken($waitlistAccessToken: String!) {
         waitlist(
-            where: { waitlist_access_token: { _eq: $waitlist_access_token } }
+            where: { waitlist_access_token: { _eq: $waitlistAccessToken } }
         ) {
             user_id
         }
@@ -19,9 +19,9 @@ export const GET_WAITLIST_USER_FROM_TOKEN = gql`
 `
 
 export const NULLIFY_WAITLIST_TOKEN = gql`
-    mutation NullifyWaitlistToken($user_id: String!) {
+    mutation NullifyWaitlistToken($userID: String!) {
         update_waitlist(
-            where: { user_id: { _eq: $user_id } }
+            where: { user_id: { _eq: $userID } }
             _set: { waitlist_access_token: null }
         ) {
             affected_rows
@@ -30,9 +30,9 @@ export const NULLIFY_WAITLIST_TOKEN = gql`
 `
 
 export const UPDATE_USER_CAN_LOGIN = gql`
-    mutation UpdateUserCanLogin($user_id: String!) {
+    mutation UpdateUserCanLogin($userID: String!) {
         update_users(
-            where: { user_id: { _eq: $user_id } }
+            where: { user_id: { _eq: $userID } }
             _set: { can_login: true }
         ) {
             affected_rows

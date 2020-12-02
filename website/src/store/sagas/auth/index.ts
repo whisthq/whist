@@ -25,7 +25,7 @@ function* emailLogin(action: any) {
     if (json && json.access_token) {
         yield put(
             AuthPureAction.updateUser({
-                user_id: action.email,
+                userID: action.email,
                 name: json.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
@@ -77,7 +77,7 @@ function* googleLogin(action: any) {
             if (response.status === 200) {
                 yield put(
                     AuthPureAction.updateUser({
-                        user_id: json.username,
+                        userID: json.username,
                         name: json.name, //might want to change this later
                         accessToken: json.access_token,
                         refreshToken: json.refreshToken,
@@ -97,13 +97,13 @@ function* googleLogin(action: any) {
                     })
                 )
 
-                if (state.WaitlistReducer.waitlistUser.user_id) {
+                if (state.WaitlistReducer.waitlistUser.userID) {
                     yield call(
                         graphQLPost,
                         UPDATE_WAITLIST_AUTH_EMAIL,
                         "UpdateWaitlistAuthEmail",
                         {
-                            user_id: state.WaitlistReducer.waitlistUser.user_id,
+                            userID: state.WaitlistReducer.waitlistUser.userID,
                             authEmail: json.username,
                         }
                     )
@@ -113,7 +113,7 @@ function* googleLogin(action: any) {
                         UPDATE_WAITLIST_REFERRALS,
                         "UpdateWaitlistReferrals",
                         {
-                            user_id: state.WaitlistReducer.waitlistUser.user_id,
+                            userID: state.WaitlistReducer.waitlistUser.userID,
                             points:
                                 state.WaitlistReducer.waitlistUser.points +
                                 SIGNUP_POINTS,
@@ -165,7 +165,7 @@ function* emailSignup(action: any) {
     if (json && response.status === 200) {
         yield put(
             AuthPureAction.updateUser({
-                user_id: action.email,
+                userID: action.email,
                 name: action.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
@@ -228,7 +228,7 @@ function* validateVerificationToken(action: any) {
         apiPost,
         "/account/verify",
         {
-            username: state.AuthReducer.user.user_id,
+            username: state.AuthReducer.user.userID,
             token: action.token,
         },
         state.AuthReducer.user.accessToken,
@@ -247,13 +247,13 @@ function* validateVerificationToken(action: any) {
                 emailVerified: true,
             })
         )
-        if (state.WaitlistReducer.waitlistUser.user_id) {
+        if (state.WaitlistReducer.waitlistUser.userID) {
             yield call(
                 graphQLPost,
                 UPDATE_WAITLIST_REFERRALS,
                 "UpdateWaitlistReferrals",
                 {
-                    user_id: state.WaitlistReducer.waitlistUser.user_id,
+                    userID: state.WaitlistReducer.waitlistUser.userID,
                     points:
                         state.WaitlistReducer.waitlistUser.points +
                         SIGNUP_POINTS,
@@ -395,7 +395,7 @@ function* updatePassword(action: any) {
         apiPost,
         "/account/verify_password",
         {
-            username: state.AuthReducer.user.user_id,
+            username: state.AuthReducer.user.userID,
             password: action.currentPassword,
         },
         state.AuthReducer.user.accessToken
@@ -409,7 +409,7 @@ function* updatePassword(action: any) {
                 })
             )
             yield call(resetPassword, {
-                username: state.AuthReducer.user.user_id,
+                username: state.AuthReducer.user.userID,
                 password: action.newPassword,
                 token: state.AuthReducer.user.accessToken,
             })

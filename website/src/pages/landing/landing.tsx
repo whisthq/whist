@@ -37,11 +37,11 @@ const Landing = (props: any) => {
     const getUser = useCallback(
         (waitlist: any) => {
             for (var i = 0; i < waitlist.length; i++) {
-                if (waitlist[i].user_id === waitlistUser.user_id) {
+                if (waitlist[i].userID === waitlistUser.userID) {
                     return {
                         ...waitlist[i],
                         ranking: i + 1,
-                        referralCode: waitlist[i].referral_code,
+                        referralCode: waitlist[i].referralCode,
                     }
                 }
             }
@@ -53,7 +53,7 @@ const Landing = (props: any) => {
     const updateWaitlistUser = useCallback(() => {
         if (data && data.waitlist) {
             const waitlist = data.waitlist
-            if (waitlistUser && waitlistUser.user_id) {
+            if (waitlistUser && waitlistUser.userID) {
                 const newUser = getUser(waitlist)
                 if (newUser) {
                     if (

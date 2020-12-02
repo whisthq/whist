@@ -8,12 +8,12 @@ import * as SideEffectWaitlistAction from "store/actions/waitlist/sideEffects"
 
 // function* insertWaitlist(action: any) {
 //     const date = moment(action.closingDate).format("MMMM Do, YYYY")
-//     if (action.user_id && JOIN_EMAIL_ENABLED) {
+//     if (action.userID && JOIN_EMAIL_ENABLED) {
 //         yield call(
 //             apiPost,
 //             "/mail/joinWaitlist",
 //             {
-//                 email: action.user_id,
+//                 email: action.userID,
 //                 name: action.name,
 //                 date: date,
 //             },
@@ -24,12 +24,12 @@ import * as SideEffectWaitlistAction from "store/actions/waitlist/sideEffects"
 
 function* sendReferralEmail(action: any) {
     const state = yield select()
-    if (state.WaitlistReducer.waitlistUser.user_id) {
+    if (state.WaitlistReducer.waitlistUser.userID) {
         yield call(
             apiPost,
             "/mail/waitlistReferral",
             {
-                email: state.WaitlistReducer.waitlistUser.user_id,
+                email: state.WaitlistReducer.waitlistUser.userID,
                 name: state.WaitlistReducer.waitlistUser.name,
                 code: state.WaitlistReducer.waitlistUser.referralCode,
                 recipient: action.recipient,

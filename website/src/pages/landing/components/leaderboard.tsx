@@ -118,7 +118,7 @@ const Leaderboard = (props: { waitlist: any[]; waitlistUser: any }) => {
         if (!props.waitlist) {
             return <tr>No data to show.</tr>
         } else if (
-            !props.waitlistUser.user_id ||
+            !props.waitlistUser.userID ||
             props.waitlistUser.ranking <= 5
         ) {
             const bottomThree = topSix.slice(3, 6)

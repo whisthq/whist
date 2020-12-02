@@ -26,25 +26,25 @@ const Verify = (props: any) => {
     const token = search.substring(1, search.length)
 
     // logic to process the token if it exists
-    const valid_token = token && token.length >= 1 ? true : false
-    const valid_user = user.user_id && user.user_id !== ""
+    const validToken = token && token.length >= 1 ? true : false
+    const validUser = user.userID && user.userID !== ""
 
     useEffect(() => {
         if (
             authFlow.signupSuccess &&
             !waitlistUser.authEmail &&
-            waitlistUser.user_id
+            waitlistUser.userID
         ) {
             updateWaitlistAuthEmail({
                 variables: {
-                    user_id: waitlistUser.user_id,
-                    authEmail: user.user_id,
+                    userID: waitlistUser.userID,
+                    authEmail: user.userID,
                 },
                 optimisticResponse: true,
             })
             dispatch(
                 PureWaitlistAction.updateWaitlistUser({
-                    authEmail: user.user_id,
+                    authEmail: user.userID,
                 })
             )
         }
@@ -57,7 +57,7 @@ const Verify = (props: any) => {
     ])
 
     // return visuals
-    if (!valid_user) {
+    if (!validUser) {
         return <Redirect to="/" />
     } else if (user.emailVerified) {
         return <Redirect to="/dashboard" />
@@ -65,7 +65,7 @@ const Verify = (props: any) => {
         return (
             <div className="fractalContainer">
                 <Header dark={false} />
-                <VerifyView token={token} validToken={valid_token} />
+                <VerifyView token={token} validToken={validToken} />
             </div>
         )
     }

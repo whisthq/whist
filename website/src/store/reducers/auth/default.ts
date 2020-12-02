@@ -1,7 +1,7 @@
 export const DEFAULT = {
     user: {
         // identifiers
-        user_id: null, // email
+        userID: null, // email
         name: null, // not really used except for waitlist
         // session auth tokens
         accessToken: null, // access token that lets you talk to the server when logged in

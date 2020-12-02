@@ -1,0 +1,67 @@
+mutation UpdateWaitlistReferrals(
+    $userID: String
+    $points: Int
+    $referrals: Int
+) {
+    update_waitlist(
+        where: { user_id: { _eq: $userID } }
+        _set: { points: $points, referrals: $referrals }
+    ) {
+        affected_rows
+    }
+}
+
+mutation InsertWaitlist(
+    $userID: String!
+    $name: String!
+    $points: Int!
+    $referralCode: String!
+    $referrals: Int!
+) {
+    insert_waitlist(
+        objects: {
+            name: $name
+            points: $points
+            real_user: true
+            referral_code: $referralCode
+            referrals: $referrals
+            user_id: $userID
+        }
+        on_conflict: { constraint: waitlist_pkey, update_columns: name }
+    ) {
+        affected_rows
+        returning {
+            name
+            points
+            referral_code
+            referrals
+            user_id
+        }
+    }
+}
+
+subscription SubscribeWaitlist {
+    waitlist(order_by: { points: desc }) {
+        name
+        points
+        user_id
+        referrals
+        referral_code
+        auth_email
+    }
+}
+
+query GetUser($userID: String!) {
+    users(where: { user_id: { _eq: $userID } }) {
+        can_login
+    }
+}
+
+mutation UpdateWaitlistAuthEmail($userID: String, $authEmail: String) {
+    update_waitlist(
+        where: { user_id: { _eq: $userID } }
+        _set: { auth_email: $authEmail }
+    ) {
+        affected_rows
+    }
+}

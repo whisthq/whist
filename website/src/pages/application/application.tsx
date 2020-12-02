@@ -38,7 +38,7 @@ function Application(props: any) {
 
     function submitForm() {
         db.collection("essays")
-            .doc(waitlistUser.user_id)
+            .doc(waitlistUser.userID)
             .set({
                 devices: devices,
                 apps: apps,
@@ -142,7 +142,7 @@ function Application(props: any) {
                     on the waitlist.
                 </h2>
                 <p style={{ marginTop: 50 }}>
-                    You’re registered as {waitlistUser.user_id}. When the
+                    You’re registered as {waitlistUser.userID}. When the
                     countdown reaches zero, we'll invite people to try Fractal.
                     You can signficantly increase your chances of being selected
                     by by{" "}

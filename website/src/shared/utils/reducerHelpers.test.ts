@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
     deep_copy,
     modified,

@@ -6,7 +6,7 @@ export const UPDATE_AUTH_FLOW = "UPDATE_AUTH_FLOW"
 export const RESET_USER = "RESET_USER"
 
 export function updateUser(body: {
-    user_id?: string
+    userID?: string
     name?: string
     accessToken?: string
     refreshToken?: string

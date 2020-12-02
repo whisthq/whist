@@ -53,8 +53,8 @@ const VerifyView = (props: {
 
     // logic
     const validUser =
-        user.user_id &&
-        user.user_id !== "" &&
+        user.userID &&
+        user.userID !== "" &&
         user.accessToken &&
         user.accessToken !== ""
 
@@ -84,7 +84,7 @@ const VerifyView = (props: {
             })
         )
         dispatch(
-            sendVerificationEmail(user.user_id, user.emailVerificationToken)
+            sendVerificationEmail(user.userID, user.emailVerificationToken)
         )
         setTimeout(() => {
             // first show them that it's been sent

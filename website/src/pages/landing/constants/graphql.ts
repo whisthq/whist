@@ -2,10 +2,10 @@ import { gql } from "@apollo/client"
 
 export const INSERT_WAITLIST = gql`
     mutation InsertWaitlist(
-        $user_id: String!
+        $userID: String!
         $name: String!
         $points: Int!
-        $referral_code: String!
+        $referralCode: String!
         $referrals: Int!
         $country: String!
     ) {
@@ -14,9 +14,9 @@ export const INSERT_WAITLIST = gql`
                 name: $name
                 points: $points
                 real_user: true
-                referral_code: $referral_code
+                referral_code: $referralCode
                 referrals: $referrals
-                user_id: $user_id
+                user_id: $userID
                 country: $country
             }
             on_conflict: { constraint: waitlist_pkey, update_columns: name }

@@ -137,7 +137,7 @@ const Header = (props: {
                     )}
                 </div>
                 <div>
-                    {user.user_id ? (
+                    {user.userID ? (
                         <>
                             <DropdownButton
                                 title="My Account"

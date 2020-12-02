@@ -90,10 +90,9 @@
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",
-        "format": "prettier --write ."
-    },
-    "eslintConfig": {
-        "extends": "react-app"
+        "format": "prettier --write .",
+        "lint-check": "eslint src/*.ts* && eslint src/pages/**/*.ts* && eslint src/shared/**/*.ts* && eslint src/store/**/*.ts*",
+        "lint-fix": "eslint --fix src/*.ts* && eslint --fix src/pages/**/*.ts* && eslint --fix src/shared/**/*.ts* && eslint --fix src/store/**/*.ts*"
     },
     "browserslist": {
         "production": [

@@ -74,8 +74,8 @@ const WaitlistForm = (props: any) => {
 
         for (var i = 0; i < waitlist.length; i++) {
             if (
-                waitlist[i].referral_code &&
-                waitlist[i].referral_code === referralCode
+                waitlist[i].referralCode &&
+                waitlist[i].referralCode === referralCode
             ) {
                 return waitlist[i]
             }
@@ -90,7 +90,7 @@ const WaitlistForm = (props: any) => {
         }
 
         for (var i = 0; i < waitlist.length; i++) {
-            if (waitlist[i].user_id && waitlist[i].user_id === email) {
+            if (waitlist[i].userID && waitlist[i].userID === email) {
                 return waitlist[i]
             }
         }
@@ -116,10 +116,10 @@ const WaitlistForm = (props: any) => {
             const secretPoints = deep_copy(SECRET_POINTS)
             const referrer = getReferrer()
 
-            if (referrer && referrer.user_id) {
+            if (referrer && referrer.userID) {
                 updatePoints({
                     variables: {
-                        user_id: referrer.user_id,
+                        userID: referrer.userID,
                         points: referrer.points + REFERRAL_POINTS,
                         referrals: referrer.referrals + 1,
                     },
@@ -132,7 +132,7 @@ const WaitlistForm = (props: any) => {
                 PureWaitlistAction.updateWaitlistUser({
                     points: newPoints,
                     referralCode: newReferralCode,
-                    user_id: email,
+                    userID: email,
                     name: name,
                     eastereggsAvailable: secretPoints,
                 })
@@ -145,10 +145,10 @@ const WaitlistForm = (props: any) => {
 
             addWaitlist({
                 variables: {
-                    user_id: email,
+                    userID: email,
                     name: name,
                     points: newPoints,
-                    referral_code: newReferralCode,
+                    referralCode: newReferralCode,
                     referrals: 0,
                     country: country,
                 },
@@ -183,7 +183,7 @@ const WaitlistForm = (props: any) => {
                 PureWaitlistAction.updateWaitlistUser({
                     points: currentUser.points,
                     referralCode: currentUser.referralCode,
-                    user_id: email,
+                    userID: email,
                     name: currentUser.name,
                     eastereggsAvailable: secretPoints,
                 })
@@ -195,7 +195,7 @@ const WaitlistForm = (props: any) => {
 
     return (
         <div style={{ width: isAction ? "100%" : "" }}>
-            {waitlistUser && waitlistUser.user_id ? (
+            {waitlistUser && waitlistUser.userID ? (
                 <div>
                     <button
                         className={dark ? "white-button-light" : "white-button"}

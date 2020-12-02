@@ -5,7 +5,7 @@ export const UPDATE_NAVIGATION = "UPDATE_NAVIGATION"
 export const RESET_WAITLIST_USER = "RESET_WAITLIST_USER"
 
 export function updateWaitlistUser(body: {
-    user_id?: string
+    userID?: string
     name?: string
     referrals?: number
     points?: number

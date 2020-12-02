@@ -20,7 +20,7 @@ import "styles/profile.css"
 const Profile = (props: any) => {
     const { user, dispatch } = props
 
-    const valid_user = user.user_id && user.user_id !== ""
+    const validUser = user.userID && user.userID !== ""
 
     const handleSignOut = () => {
         dispatch(PureAuthAction.updateUser(deepCopy(AUTH_DEFAULT.user)))
@@ -47,7 +47,7 @@ const Profile = (props: any) => {
         )
     }, [dispatch])
 
-    if (!valid_user) {
+    if (!validUser) {
         return <Redirect to="/auth/bypass" />
     } else {
         return (
@@ -62,7 +62,7 @@ const Profile = (props: any) => {
                 >
                     <h2 style={{ marginBottom: "20px" }}>Your Profile</h2>
                     <div className="section-title">Email</div>
-                    <div className="section-info">{user.user_id}</div>
+                    <div className="section-info">{user.userID}</div>
                     <NameForm />
                     <PasswordForm />
                     {config.payment_enabled && (

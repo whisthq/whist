@@ -35,7 +35,7 @@ const NameForm = (props: any) => {
         setEditingName(false)
         updateName({
             variables: {
-                user_id: user.user_id,
+                userID: user.userID,
                 name: newName,
             },
         })

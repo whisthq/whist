@@ -9,27 +9,36 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-        
+
     steps:
       - name: Checkout Git repository
         uses: actions/checkout@v2
         with:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-              
+
       - name: Use Node.js 12
         uses: actions/setup-node@v1
         with:
           node-version: 12
-          
+
       - name: Run npm install
         run: npm install
-          
+
       - name: Install Prettier
         run: npm install --global prettier
 
       - name: Lint with Prettier
         run: npm run format --write
+
+      - name: Check if code follows ESLint standards
+        run: |
+          result=$(npm run lint-check) # checks if code is linted via prettier --check
+          if [ "$result" -ne "0" ]; then
+            (echo "To pass this check please lint the code with ESLint or update .eslintrc.js to ignore unwanted checks" && false)
+          else
+            (echo "Code is linted with ESLint" && true)
+          fi
 
       - name: Commit files
         run: |

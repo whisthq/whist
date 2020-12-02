@@ -28,7 +28,7 @@ import "styles/auth.css"
 const Dashboard = (props: {
     dispatch: any
     user: {
-        user_id: string
+        userID: string
         canLogin: boolean
         accessToken: string
         waitlistToken: string
@@ -40,15 +40,15 @@ const Dashboard = (props: {
 
     //const [copiedtoClip, setCopiedtoClip] = useState(false)
     //const linuxCommands = "sudo apt-get install libavcodec-dev libavdevice-dev libx11-dev libxtst-dev xclip x11-xserver-utils -y"
-    const valid_user = user.user_id && user.user_id !== ""
-    const name = user.user_id ? user.user_id.split("@")[0] : ""
+    const validUser = user.userID && user.userID !== ""
+    const name = user.userID ? user.userID.split("@")[0] : ""
 
     const { data, loading } = useSubscription(SUBSCRIBE_USER, {
-        variables: { user_id: user.user_id },
+        variables: { userID: user.userID },
     })
 
     const waitlistUserData = useQuery(GET_WAITLIST_USER_FROM_TOKEN, {
-        variables: { waitlist_access_token: user.waitlistToken },
+        variables: { waitlistAccessToken: user.waitlistToken },
         context: {
             headers: {
                 Authorization: `Bearer ${user.accessToken}`,
@@ -93,18 +93,18 @@ const Dashboard = (props: {
         ) {
             toggleCanLogin(true)
 
-            const offboardedUserID = waitlistUserData.data.waitlist[0].user_id
-            if (user.user_id) {
+            const offboardedUserID = waitlistUserData.data.waitlist[0].userID
+            if (user.userID) {
                 updateUserCanLogin({
                     variables: {
-                        user_id: user.user_id,
+                        userID: user.userID,
                     },
                 })
             }
             if (offboardedUserID) {
                 nullifyWaitlistToken({
                     variables: {
-                        user_id: offboardedUserID,
+                        userID: offboardedUserID,
                     },
                 })
             }
@@ -114,20 +114,20 @@ const Dashboard = (props: {
         nullifyWaitlistToken,
         updateUserCanLogin,
         toggleCanLogin,
-        user.user_id,
+        user.userID,
     ])
 
     useEffect(() => {
-        if (data && data.users && data.users[0] && user.user_id) {
+        if (data && data.users && data.users[0] && user.userID) {
             toggleCanLogin(
                 data.users[0].can_login ||
-                    user.user_id.includes("@tryfractal.com")
+                    user.userID.includes("@tryfractal.com")
             )
         }
     }, [
         data,
         dispatch,
-        user.user_id,
+        user.userID,
         user.waitlistToken,
         user.emailVerificationToken,
         toggleCanLogin,
@@ -146,7 +146,7 @@ const Dashboard = (props: {
             </div>
         )
     } else {
-        if (!valid_user) {
+        if (!validUser) {
             return <Redirect to="/auth" />
         } else if (!user.canLogin && !canLogin) {
             return (

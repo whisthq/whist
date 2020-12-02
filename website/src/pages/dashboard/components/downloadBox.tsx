@@ -34,16 +34,16 @@ const againstOS = (obWin: any, obMac: any) =>
 const DownloadBox = (props: {
     dispatch: any
     user: {
-        user_id: string
+        userID: string
     }
 }) => {
     const { user } = props
     // need length from some js is dumb stuff
     const [canBig, setCanBig] = useState(
-        user && user.user_id && user.user_id.length > 0
+        user && user.userID && user.userID.length > 0
     )
     const [canSmall, setCanSmall] = useState(
-        user && user.user_id && user.user_id.length > 0
+        user && user.userID && user.userID.length > 0
     )
 
     const largeIcon = withOS(windowsIcon, macIcon)

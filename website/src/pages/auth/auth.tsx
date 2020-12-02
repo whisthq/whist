@@ -15,12 +15,12 @@ import { updateUser } from "store/actions/auth/pure"
 const Auth = (props: {
     dispatch: any
     user: {
-        user_id: string
+        userID: string
         emailVerified: boolean
         canLogin: boolean
     }
     waitlistUser: {
-        user_id: string
+        userID: string
     }
     mode: any
     authFlow: any
@@ -32,16 +32,16 @@ const Auth = (props: {
         const firstParam = match.params.first
         const secondParam = match.params.second
 
-        if (firstParam !== "bypass" && !waitlistUser.user_id) {
+        if (firstParam !== "bypass" && !waitlistUser.userID) {
             history.push("/")
         }
 
         if (secondParam && secondParam !== "") {
             dispatch(updateUser({ waitlistToken: secondParam }))
         }
-    }, [match, waitlistUser.user_id, dispatch])
+    }, [match, waitlistUser.userID, dispatch])
 
-    if (user.user_id && user.user_id !== "") {
+    if (user.userID && user.userID !== "") {
         if (user.emailVerified) {
             return <Redirect to="/dashboard" />
         } else {
