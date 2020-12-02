@@ -3,6 +3,8 @@
 name: "Procedure: Branch Build & Release"
 
 on:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
   # manual/api trigger
   workflow_dispatch:
     inputs:
@@ -105,7 +107,7 @@ jobs:
           description: 'Waiting for builds to complete'
           state: 'pending'
           sha: ${{ github.sha }}
-          target_url: "https://github.com/fractal/protocol/actions/runs/${{ github.run_id }}"
+          target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
 
   build:
     name: ${{ matrix.config.name }}
@@ -154,7 +156,7 @@ jobs:
           description: 'Running build ${{ matrix.config.name }}'
           state: 'pending'
           sha: ${{ github.sha }}
-          target_url: "https://github.com/fractal/protocol/actions/runs/${{ github.run_id }}"
+          target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
 
       - name: Chocolatey install cppcheck
         if: runner.os == 'Windows'
@@ -398,7 +400,7 @@ jobs:
           description: 'Finished build ${{ matrix.config.name }}'
           state: 'success'
           sha: ${{ github.sha }}
-          target_url: "https://github.com/fractal/protocol/actions/runs/${{ github.run_id }}"
+          target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
 
       - name: Set status to failure
         if: ${{ failure() }}
@@ -409,7 +411,7 @@ jobs:
           description: 'Failed to build ${{ matrix.config.name }}'
           state: 'failure'
           sha: ${{ github.sha }}
-          target_url: "https://github.com/fractal/protocol/actions/runs/${{ github.run_id }}"
+          target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
 
   # The server VM start job is kept separate from the server binary deploy job because it can take some
   # time for a VM to come online. Notice that this job has no dependencies (besides the params job) and
@@ -601,15 +603,15 @@ jobs:
             curl \
               -H 'Authorization: Bearer ${{ github.token }}' \
               -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/fractal/protocol/statuses/${{github.sha}} \
-              -d '{"state": "success", "target_url": "https://github.com/fractal/protocol/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Release successfully created"}'
+              https://api.github.com/repos/fractal/fractal/statuses/${{github.sha}} \
+              -d '{"state": "success", "target_url": "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Release successfully created"}'
           else
             echo "Killing release job because builds or tests failed"
             curl \
               -H 'Authorization: Bearer ${{ github.token }}' \
               -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/fractal/protocol/statuses/${{github.sha}} \
-              -d '{"state": "failure", "target_url": "https://github.com/fractal/protocol/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Builds or tests failed"}'
+              https://api.github.com/repos/fractal/fractal/statuses/${{github.sha}} \
+              -d '{"state": "failure", "target_url": "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Builds or tests failed"}'
             exit 1
           fi
           if ! ${{ needs.params.outputs.should_release }}; then
@@ -617,8 +619,8 @@ jobs:
             curl \
               -H 'Authorization: Bearer ${{ github.token }}' \
               -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/fractal/protocol/statuses/${{github.sha}} \
-              -d '{"state": "failure", "target_url": "https://github.com/fractal/protocol/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Did not create release because should_release was false"}'
+              https://api.github.com/repos/fractal/fractal/statuses/${{github.sha}} \
+              -d '{"state": "failure", "target_url": "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Did not create release because should_release was false"}'
             exit 1
           fi
       # TODO convert this into its own Github Action (ie. not embedded in this workflow but as its own published action)
