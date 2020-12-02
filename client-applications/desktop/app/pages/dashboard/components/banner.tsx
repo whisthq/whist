@@ -43,7 +43,7 @@ const Banner = (props: any) => {
     }
 }
 
-const mapStateToProps = (state: any) => {
+const mapStateToProps = <T,>(state: T): T => {
     return {
         os: state.MainReducer.client.os,
         accessToken: state.MainReducer.auth.accessToken,

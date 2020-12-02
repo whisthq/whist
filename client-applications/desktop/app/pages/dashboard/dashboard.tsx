@@ -51,7 +51,7 @@ const Dashboard = (props: any) => {
     )
 }
 
-const mapStateToProps = (state: any) => {
+const mapStateToProps = <T,>(state: T): T => {
     return {
         username: state.MainReducer.auth.username,
         os: state.MainReducer.client.os,

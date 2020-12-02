@@ -148,7 +148,7 @@ const App = (props: any) => {
     )
 }
 
-const mapStateToProps = (state: any) => {
+const mapStateToProps = <T,>(state: T): T => {
     return {
         launches: state.MainReducer.container.launches,
     }
