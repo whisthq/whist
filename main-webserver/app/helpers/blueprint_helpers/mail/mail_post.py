@@ -3,10 +3,9 @@ import logging
 from datetime import timedelta
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from flask import jsonify, render_template
+from flask import current_app, jsonify, render_template
 from flask_jwt_extended import create_access_token
 
-from app.constants.config import FRONTEND_URL, SENDGRID_API_KEY, SENDGRID_EMAIL
 from app.constants.http_codes import NOT_FOUND, SUCCESS, UNAUTHORIZED
 from app.helpers.utils.general.logs import fractalLog
 from app.models import User
@@ -20,14 +19,14 @@ def forgotPasswordHelper(username):
 
         try:
             message = Mail(
-                from_email=SENDGRID_EMAIL,
+                from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
                 to_emails=username,
                 subject="Reset Your Password",
                 html_content=render_template(
-                    "on_password_forget.html", url=FRONTEND_URL, token=token
+                    "on_password_forget.html", url=current_app.config["FRONTEND_URL"], token=token
                 ),
             )
-            sg = SendGridAPIClient(SENDGRID_API_KEY)
+            sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
             sg.send(message)
         except Exception as e:
@@ -49,12 +48,12 @@ def cancelHelper(user, feedback):
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails="support@tryfractal.com",
             subject=title,
             html_content=feedback,
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sg.send(message)
     except Exception as e:
@@ -71,17 +70,17 @@ def cancelHelper(user, feedback):
 
 def verificationHelper(user, token):
     title = "[Fractal] Please Verify Your Email"
-    url = FRONTEND_URL + "/verify?" + token
+    url = current_app.config["FRONTEND_URL"] + "/verify?" + token
     # url = "https://localhost:3000/verify?" + token
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails=user,
             subject=title,
             html_content=render_template("on_email_verification.html", url=url),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sg.send(message)
     except Exception as e:
@@ -106,7 +105,7 @@ def referralMailHelper(user, recipients, code):
             subject=title,
             html_content=render_template("on_referral.html", code=code, user=user),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sg.send(message)
     except Exception as e:
@@ -126,12 +125,12 @@ def feedbackHelper(user, feedback, feedback_type):
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails="support@tryfractal.com",
             subject=title,
             html_content="<div>" + feedback + "</div>",
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sg.send(message)
     except Exception as e:
@@ -149,12 +148,12 @@ def feedbackHelper(user, feedback, feedback_type):
 def trialStartHelper(user, location, code):
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails=user,
             subject="Your Free Trial has Started",
             html_content=render_template("on_purchase.html", location=location, code=code),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sg.send(message)
     except Exception as e:
@@ -168,14 +167,14 @@ def trialStartHelper(user, location, code):
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails="support@tryfractal.com",
             subject="[FREE TRIAL START] A new user, "
             + user
             + ", just signed up for the free trial.",
             html_content="<div>No action needed from our part at this point.</div>",
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sg.send(message)
     except Exception as e:
@@ -195,14 +194,14 @@ def computerReadyHelper(user, date, code, location):
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails=user,
             subject=title,
             html_content=render_template(
                 "on_cloud_pc_ready.html", date=date, code=code, location=location
             ),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sg.send(message)
     except Exception as e:
@@ -216,12 +215,12 @@ def computerReadyHelper(user, date, code, location):
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails="support@tryfractal.com",
             subject="" + user + " has signed up for a Fractal paid plan.",
             html_content="<div>{} has signed up for a Fractal paid plan.</div>".format(user),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sg.send(message)
     except Exception as e:
@@ -241,12 +240,12 @@ def joinWaitlistHelper(email, name, date):
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails=email,
             subject=title,
             html_content=render_template("join_waitlist.html", name=name, date=date),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sg.send(message)
     except Exception as e:
@@ -266,12 +265,12 @@ def waitlistReferralHelper(email, name, code, recipient):
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails=recipient,
             subject=title,
             html_content=render_template("on_waitlist_referral.html", email=email, code=code),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sg.send(message)
     except Exception as e:
