@@ -18,23 +18,27 @@ Before contributing to this project, please read our in-depth coding philosophy 
 
 #### Local Setup
 
-Docker is being leveraged to create a partial-stack deployment of the `main-webserver` components, `web` and `celery`. To do so, it packages the application into an image with all necessary dependencies and then launches the application with the appropriate configurations, depending on if it's `web` or `celery` using `stem-cell.sh`.
+The web application stack is comprised of three main components: the web server itself, an asynchronous task queue, and a database. The web server is written in Python using the [Flask](https://flask.palletsprojects.com/en/1.1.x/) web framework. The task queue is a Redis-backed [Celery](https://docs.celeryproject.org/en/stable/index.html) task queue. As such, the task queue can be broken down into two more granular sub-components: a pool of worker processes and a Redis store. The database is a Postgres instance that is shaared by multiple developers. In summary, there are a total of _four_ components that make up the web application stack: a Flask server, a Celery worker pool, a Redis store, and a PostgreSQL database.
 
-Currently, the full environment is only partially replicated, so `retrieve_config.py` exists for collecting the appropriate environment variables needed to connect to the non-replicated portions of the environment. They are pulled from Heroku.
+We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the web server stack up (the `docker-compose` stack does not include the Postgres database, which is shared between multiple developers and app deployments, as mentioned above) locally for development purposes. `docker-compose` builds Docker images for the Flask server and the Celery worker pool and deploys them alongside containerized Redis. There is also a `pytest` test suite that developers may run locally. Note that it is necessary to spin up each of the components (excluding the Postgres database) manually if you would like to run the test suite.
 
-**1. Retrieve Environment Variables**
+We use environment variables to configure our local development environments. Environment variables should be set by adding lines of the form `KEY=VALUE` to the file `docker/.env`. **The main environment variable that _must_ be set in order to do any kind of local development, whether with the `docker-compose` stack or the `pytest` test suite, is the `CONFIG_DB_URL` environment variable.** `CONFIG_DB_URL` specifies the PostgreSQL connection URI of the Fractal configuration database. This database contains default values for many of the variables that are used to configure the various parts of the web application stack. These default values may be overridden locally by setting alternatives in the same `docker/.env` file.
 
-First, ensure that the CLI tool `heroku`, and then type `heroku login` to log in (if you're not already logged in). Next, use `retrieve_config.py`. It provides a `-h` help menu for understanding parameters. Then, run:
+The following environment variables must also be set in `docker/.env` (neither the test suite nor the `docker-compose` stack will work without them):
+* `POSTGRES_DB` &ndash; The name of the Postgres database to which to connect.
+* `POSTGRES_HOST` &ndash; The hostname or IP address of the development Postgres instance.
+* `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
+* `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
 
-```sh
-# MacOS/Linux
-python retrieve_config.py dev
+Finally, if the Redis instance used for testing is running anywhere other than `redis://localhost:6379/0`, `REDIS_URL` should be set to indicate the correct connection URI. Take a moment to understand that setting `REDIS_URL` has no effect on the Flask instance running in the `docker-compose`; it only affects Flask applications launched manually (e.g. Flask applications created by `pytest` for testing purposes).
 
-# Windows
-py retrieve_config.py dev
-```
+**1. Set environment variables**
 
-You can review `dev-base-config.json` to see which values will be overriden for local development. Currently, none are listed.
+Luckily, there is an easy way to set all of the necessary environment variables using the script `docker/retrieve_config.sh`. To set all of the required environment variables, first make sure you have [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) installed and configured. Then, run
+
+    bash /path/to/docker/retrieve_config.sh
+
+When the `docker/retrieve_config.sh` script terminates, it will print the name of the file containing the fetched environment variables that has been written to standard error.
 
 **2. Spin Up Local Servers**
 
@@ -48,7 +52,7 @@ If you encounter a "daemon not running" error, this likely means that Docker is 
 
 Review `docker-compose.yml` to see which ports the various services are hosted on. For example, `"7810:6379"` means that the Redis service, running on port 6379 internally, will be available on `localhost:7810` from the host machine. Line 25 of `docker-compose.yml` will tell you where the webserver itself is running.
 
-By default, hot-reloading of the Flask web server and Celery task queue is enabled. To disable, set `HOT_RELOAD=false` in your Docker `.env` file.
+By default, hot-reloading of the Flask web server and Celery task queue is disabled (`HOT_RELOAD=`). To enable it, set `HOT_RELOAD` to a non-empty string in your `docker/.env` file.
 
 ### Helper Software Setup
 
@@ -81,12 +85,6 @@ GraphQL is already set up, but here's a [setup doc](https://hasura.io/docs/1.0/g
 We have pytest tests in the `tests` subdirectory. To run tests, just run `pytest` in a terminal. Refer to the [pytest documentation](https://docs.pytest.org/en/stable/contents.html) to learn how to use pytest.
 
 The docker-compose stack does **not** need to be running in order to run tests. However, the tests do need access to Redis. By default, the tests attempt to connect to `redis://localhost:6379/0`. If your Redis service is running elsewhere, expose the correct connection URI to the tests via the environment variable `REDIS_URL`.
-
-If you are observing mysterious test failures, make sure that you have set the correct environment variables. If your terminal displays `AttributeError: 'NoneType' object has no attribute 'upper'`. Be sure that environment variables such as `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD` are set to the correct values. The username and password should match the values stored in the relevant configuration database. You can define environment variables in a `.env` file in the `docker` subdirectory or you can set them directly in your shell.
-
-To get an idea of what environment variables you might be missing, try running `git grep 'os\.getenv'` in the repository root.
-
-> **Tip:** Although we don't use [flake8](https://flake8.pycqa.org/en/latest/) in our CI pipeline, it can be a useful tool to use for development to detect unused and missing imports, as well as unussed and undefined variables.
 
 ## Styling
 
