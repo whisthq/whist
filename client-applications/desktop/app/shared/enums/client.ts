@@ -3,3 +3,7 @@ export enum OperatingSystem {
     MAC = "darwin",
     LINUX = "linux",
 }
+
+export enum AppName {
+    CHROME = "Google Chrome",
+}

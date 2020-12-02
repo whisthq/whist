@@ -1,4 +1,5 @@
 import { FractalApp } from "shared/types/ui"
+import { FractalAppName } from "shared/enums/client"
 
 export const checkActive = (app: FractalApp): boolean => {
     return app.active
@@ -15,12 +16,12 @@ export const urlToApp = (
                 .includes(
                     featuredAppData[i].app_id.toLowerCase().replace(/\s+/g, "-")
                 ) &&
-            featuredAppData[i].app_id !== "Google Chrome"
+            featuredAppData[i].app_id !== FractalAppName.CHROME
         ) {
             return { app_id: featuredAppData[i].app_id, url: null }
         }
     }
-    return { app_id: "Google Chrome", url: url }
+    return { app_id: FractalAppName, url: url }
 }
 
 let counter = 0
