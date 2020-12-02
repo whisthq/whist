@@ -160,7 +160,7 @@ jobs:
         if: runner.os == 'Windows'
         uses: crazy-max/ghaction-chocolatey@v1
         with:
-          args: install "${{ github.workspace }}\.github\choco-install.config" --force
+          args: install "${{ github.workspace }}\.github\protocol\choco-install.config" --force
 
       - name: Install Python (for sentry download)
         uses: actions/setup-python@v2
@@ -175,7 +175,7 @@ jobs:
         shell: powershell
         run: |
           # Install CUDA via a powershell script
-          ${{ github.workspace }}\.github\install_cuda_windows.ps1
+          ${{ github.workspace }}\.github\protocol\install_cuda_windows.ps1
           if ($?) {
           # Set paths for subsequent steps, using $env:CUDA_PATH
           echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
@@ -206,18 +206,18 @@ jobs:
             set(ninja_suffix "win.zip")
             set(cmake_suffix "win64-x64.zip")
             set(cmake_dir "cmake-${cmake_version}-win64-x64/bin")
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\msvc_matcher.json\n")
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\msvc_linker_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\protocol\msvc_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\protocol\msvc_linker_matcher.json\n")
           elseif ("${{ runner.os }}" STREQUAL "Linux")
             set(ninja_suffix "linux.zip")
             set(cmake_suffix "Linux-x86_64.tar.gz")
             set(cmake_dir "cmake-${cmake_version}-Linux-x86_64/bin")
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/gcc_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/protocol/gcc_matcher.json\n")
           elseif ("${{ runner.os }}" STREQUAL "macOS")
             set(ninja_suffix "mac.zip")
             set(cmake_suffix "Darwin-x86_64.tar.gz")
             set(cmake_dir "cmake-${cmake_version}-Darwin-x86_64/CMake.app/Contents/bin")
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/clang_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/protocol/clang_matcher.json\n")
           endif()
 
           set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
@@ -240,8 +240,8 @@ jobs:
             )
           endif()
 
-          message(STATUS "\n::add-matcher::./.github/cppcheck_matcher.json\n")
-          message(STATUS "\n::add-matcher::./.github/cmake_matcher.json\n")
+          message(STATUS "\n::add-matcher::./.github/protocol/cppcheck_matcher.json\n")
+          message(STATUS "\n::add-matcher::./.github/protocol/cmake_matcher.json\n")
 
           if ("${{ runner.os }}" STREQUAL "Linux")
             # install linux dev dependencies
@@ -474,7 +474,7 @@ jobs:
               sleep 30
           done
 
-          ${{ github.workspace }}/.github/deploy_artifact_ssh.sh \
+          ${{ github.workspace }}/.github/protocol/deploy_artifact_ssh.sh \
             --ssh-key ./sshkey \
             --vm-ip "$SERVER_VM_IP" \
             --vm-user "$SERVER_VM_USER" \
