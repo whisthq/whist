@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, ChangeEvent, KeyboardEvent } from "react"
 import { connect } from "react-redux"
 import styles from "shared/styles/login.css"
 import PuffLoader from "react-spinners/PuffLoader"
@@ -8,7 +8,7 @@ import { setAWSRegion } from "shared/utils/exec"
 import { openExternal } from "shared/utils/helpers"
 import { config } from "shared/constants/config"
 
-const LoginView = (props: any) => {
+const LoginView = <T extends {}>(props: T) => {
     const { dispatch } = props
     const [loggingIn, setLoggingIn] = useState(false)
     const [accessToken, setAccessToken] = useState("")
@@ -24,12 +24,12 @@ const LoginView = (props: any) => {
         })
     }
 
-    const changeAccessToken = (evt: any) => {
+    const changeAccessToken = (evt: ChangeEvent) => {
         evt.persist()
         setAccessToken(evt.target.value)
     }
 
-    const onKeyPress = (evt: any) => {
+    const onKeyPress = (evt: KeyboardEvent) => {
         if (evt.key === "Enter") {
             dispatch(updateAuth({ candidateAccessToken: accessToken }))
         }
@@ -92,7 +92,7 @@ const LoginView = (props: any) => {
     }
 }
 
-function mapStateToProps(state: any) {
+export const mapStateToProps = <T extends {}>(state: T) => {
     return {}
 }
 

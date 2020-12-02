@@ -7,8 +7,8 @@ import BackgroundView from "pages/login/views/backgroundView"
 import LoginView from "pages/login/views/loginView"
 import { OperatingSystem } from "shared/enums/client"
 
-const Login = (props: any) => {
-    const { dispatch, os, loginWarning } = props
+const Login = (props: { os: string; loginWarning: string }) => {
+    const { os, loginWarning } = props
     const [version, setVersion] = useState("1.0.0")
 
     useEffect(() => {
@@ -53,7 +53,7 @@ const Login = (props: any) => {
     )
 }
 
-function mapStateToProps(state: any) {
+export const mapStateToProps = <T extends {}>(state: T) => {
     return {
         loginWarning: state.MainReducer.auth.loginWarning,
         loginMessage: state.MainReducer.auth.loginMessage,

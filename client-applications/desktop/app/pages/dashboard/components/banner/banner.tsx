@@ -3,10 +3,11 @@ import { Carousel } from "react-bootstrap"
 import { connect } from "react-redux"
 
 import { openExternal } from "shared/utils/helpers"
+import { FractalBanner } from "shared/types/ui"
 
 import styles from "pages/dashboard/components/banner/banner.css"
 
-const Banner = (props: any) => {
+const Banner = (props: { bannerData: FractalBanner[] }) => {
     const { bannerData } = props
 
     if (bannerData && bannerData.length > 0) {
@@ -17,7 +18,7 @@ const Banner = (props: any) => {
                 nextIcon={<div></div>}
                 indicators={false}
             >
-                {bannerData.map((bannerItem: any) => (
+                {bannerData.map((bannerItem: FractalBanner) => (
                     <Carousel.Item
                         key={bannerItem.background}
                         onClick={() => openExternal(bannerItem.url)}

@@ -10,7 +10,7 @@ import Photoshop from "assets/images/login/photoshop.svg"
 import Slack from "assets/images/login/slack.svg"
 import VSCode from "assets/images/login/vscode.svg"
 
-const BackgroundView = (props: any) => {
+const BackgroundView = () => {
     return (
         <div>
             <img

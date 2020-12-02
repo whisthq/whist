@@ -2,7 +2,7 @@
 var _ = require("lodash") // alternatively use a recursive ... function
 
 // deep copy an object so that there is no aliasing
-export const deep_copy = (obj: any) => _.cloneDeep(obj)
+export const deep_copy = <T extends {}>(obj: T) => _.cloneDeep(obj)
 
 // basically will return obj after obj.prop_func(prop_func_args)
 // i.e. modified(a_set, add, element) = a_set after a_set.add(element)
@@ -10,8 +10,8 @@ export const deep_copy = (obj: any) => _.cloneDeep(obj)
 
 // I encourage you to just use a closure or whatever those are called (delete the params)
 //if you deep copy you'll need to pass the name of the property
-export const modified = (
-    obj: any,
+export const modified = <T extends {}>(
+    obj: T,
     prop_func: any,
     prop_func_args: any[] = [],
     deepcopy = false

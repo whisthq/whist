@@ -13,9 +13,20 @@ import { execChmodUnix } from "shared/utils/exec"
 import { FractalRoute } from "shared/enums/navigation"
 import { OperatingSystem } from "shared/enums/client"
 
-const Loading = (props: any) => {
+const Loading = (props: {
+    os: string
+    percentLoaded: number
+    status: string
+    container_id: string
+    port32262: number
+    port32263: number
+    port32273: number
+    ip: string
+    secretKey: string
+    desiredAppID: string
+    currentAppID: string
+}) => {
     const {
-        dispatch,
         os,
         percentLoaded,
         status,
@@ -27,6 +38,7 @@ const Loading = (props: any) => {
         secretKey,
         desiredAppID,
         currentAppID,
+        dispatch,
     } = props
 
     // figure out how to use useEffect
@@ -210,7 +222,7 @@ const Loading = (props: any) => {
     )
 }
 
-function mapStateToProps(state: any) {
+const mapStateToProps = <T extends {}>(state: T) => {
     return {
         os: state.MainReducer.client.os,
         percentLoaded: state.MainReducer.loading.percentLoaded,

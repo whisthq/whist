@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, KeyboardEvent } from "react"
 import { connect } from "react-redux"
 import { Collapse } from "react-bootstrap"
 import { FaUser } from "react-icons/fa"
@@ -13,8 +13,7 @@ import styles from "pages/dashboard/components/navBar/navBar.css"
 const NavTitle = (props: {
     selected: boolean
     text: string
-    onClick: any
-    style?: any
+    onClick: (currentTab: string) => void
 }) => {
     const { selected, text, onClick, style } = props
 
@@ -22,7 +21,6 @@ const NavTitle = (props: {
         <div
             className={selected ? styles.selectedNavTitle : styles.navTitle}
             onClick={onClick}
-            style={style}
         >
             {text}
         </div>
@@ -70,7 +68,7 @@ const NavBar = (props: {
                         <div>
                             <SearchBar
                                 search={search}
-                                callback={(evt: any) =>
+                                callback={(evt: KeyboardEvent) =>
                                     updateSearch(evt.target.value)
                                 }
                             />

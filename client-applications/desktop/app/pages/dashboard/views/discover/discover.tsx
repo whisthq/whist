@@ -12,7 +12,7 @@ import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import { GET_BANNERS } from "shared/constants/graphql"
 import { FractalBannerCategory } from "shared/enums/navigation"
-import { FractalApp } from "shared/types/ui"
+import { FractalApp, FractalBanner } from "shared/types/ui"
 
 import styles from "pages/dashboard/views/discover/discover.css"
 
@@ -73,14 +73,14 @@ const Discover = (props: { search: string }) => {
 
     const bannerData = bannerQuery.data
         ? bannerQuery.data.hardware_banners.filter(
-              (bannerData: any) =>
+              (bannerData: FractalBanner) =>
                   bannerData.category === FractalBannerCategory.NEWS
           )
         : []
 
     const mediaData = bannerQuery.data
         ? bannerQuery.data.hardware_banners.filter(
-              (bannerData: any) =>
+              (bannerData: FractalBanner) =>
                   bannerData.category === FractalBannerCategory.MEDIA
           )
         : []
@@ -90,7 +90,7 @@ const Discover = (props: { search: string }) => {
     useEffect(() => {
         const results = featuredAppData.filter(getSearchResults)
         setSearchResults(
-            results.map((app: any) => <App key={app.app_id} app={app} />)
+            results.map((app: FractalApp) => <App key={app.app_id} app={app} />)
         )
     }, [search])
 
@@ -139,7 +139,7 @@ const Discover = (props: { search: string }) => {
                     />
                     <Col xs={11}>
                         <Row>
-                            {featuredAppData.map((app: any) => (
+                            {featuredAppData.map((app: FractalApp) => (
                                 <App key={app.app_id} app={app} />
                             ))}
                         </Row>

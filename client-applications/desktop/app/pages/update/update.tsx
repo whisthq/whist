@@ -7,7 +7,7 @@ import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 import { OperatingSystem } from "shared/enums/client"
 import styles from "shared/styles/login.css"
 
-const Update = (props: any) => {
+const Update = (props: { os: string; needsUpdate: boolean }) => {
     const { os, needsUpdate } = props
 
     const [percentageLeft, setPercentageLeft] = useState(500)
@@ -20,25 +20,25 @@ const Update = (props: any) => {
     useEffect(() => {
         const ipc = require("electron").ipcRenderer
 
-        ipc.on("percent", (_: any, percent: any) => {
+        ipc.on("percent", (_: IpcRendererEvent, percent: number) => {
             percent = percent * 3
             setPercentageLeft(500 - percent)
             setPercentageDownloaded(percent)
         })
 
-        ipc.on("download-speed", (_: any, speed: any) => {
+        ipc.on("download-speed", (_: IpcRendererEvent, speed: number) => {
             setDownloadSpeed((speed / 1000000).toFixed(2))
         })
 
-        ipc.on("transferred", (_: any, transferred: any) => {
+        ipc.on("transferred", (_: IpcRendererEvent, transferred: number) => {
             setTransferred((transferred / 1000000).toFixed(2))
         })
 
-        ipc.on("total", (_: any, total: any) => {
+        ipc.on("total", (_: IpcRendererEvent, total: number) => {
             setTotal((total / 1000000).toFixed(2))
         })
 
-        ipc.on("error", (_: any, error: any) => {
+        ipc.on("error", (_: IpcRendererEvent, error: string) => {
             setDownloadError(error)
         })
 
@@ -161,7 +161,7 @@ const Update = (props: any) => {
     )
 }
 
-function mapStateToProps(state: any) {
+export const mapStateToProps = <T extends {}>(state: T) => {
     return {
         os: state.MainReducer.os,
     }

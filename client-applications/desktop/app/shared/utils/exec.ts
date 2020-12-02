@@ -50,7 +50,7 @@ export const setAWSRegion = () => {
             }) // ping via TCP
             regions.stdout.setEncoding("utf8")
 
-            regions.stdout.on("data", (data: any) => {
+            regions.stdout.on("data", (data: string) => {
                 // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
                 const line = data.split(/\r?\n/)[0].replace(/  +/g, " ")
                 const items = line.split(" ")

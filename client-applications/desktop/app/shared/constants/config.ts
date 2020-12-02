@@ -1,4 +1,6 @@
-const environment: any = {
+import { FractalEnvironment, FractalConfig } from "shared/types/config"
+
+const environment: FractalEnvironment = {
     local: {
         url: {
             WEBSERVER_URL: "http://127.0.0.1:7730",
@@ -86,7 +88,7 @@ const environment: any = {
     },
 }
 
-export const config: any =
+export const config: FractalConfig =
     process.env.NODE_ENV === "development"
         ? environment.local
         : environment.local
