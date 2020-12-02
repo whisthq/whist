@@ -40,15 +40,6 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
     template_dir = os.path.dirname(os.path.realpath(__file__))
     template_dir = os.path.join(template_dir, "templates")
 
-    from .constants.config import (
-        DATABASE_URL,
-        JWT_SECRET_KEY,
-        SENDGRID_API_KEY,
-        DATADOG_API_KEY,
-        DATADOG_APP_KEY,
-        HOST_SERVICE_SECRET,
-    )
-
     app = Flask(app_name, template_folder=template_dir)
 
     # We want to look up CONFIG_MATRIX.location.action
