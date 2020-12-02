@@ -35,7 +35,7 @@ def check_test_database():
 @pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_save_user")
-def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
+def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
     cluster_name = cluster_name or pytest.cluster_name
     fractal_log(
         function="test_create_cluster",
@@ -52,7 +52,7 @@ def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
             region_name="us-east-1",
             max_size=1,
             min_size=0,
-            username=authorized.user_id,
+            username=admin.user_id,
         ),
     )
 
@@ -82,7 +82,7 @@ def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
-def test_create_container(client, authorized, monkeypatch):
+def test_create_container(client, admin, monkeypatch):
     monkeypatch.setattr(_poll, "__code__", (lambda *args, **kwargs: True).__code__)
 
     fractal_log(
@@ -93,7 +93,7 @@ def test_create_container(client, authorized, monkeypatch):
     resp = client.post(
         "/aws_container/create_container",
         json=dict(
-            username=authorized.user_id,
+            username=admin.user_id,
             cluster_name=pytest.cluster_name,
             region_name="us-east-1",
             task_definition_arn="fractal-browsers-chrome",
@@ -138,7 +138,8 @@ def test_create_container(client, authorized, monkeypatch):
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
-def test_send_commands(client, authorized):
+@pytest.mark.usefixtures("admin")
+def test_send_commands(client):
     fractal_log(
         function="test_send_commands",
         label="cluster/send_commands",
@@ -216,7 +217,8 @@ def test_delete_container(client):
 @pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_retrieve_user")
-def test_delete_cluster(client, authorized, cluster=pytest.cluster_name):
+@pytest.mark.usefixtures("admin")
+def test_delete_cluster(client, cluster=pytest.cluster_name):
     cluster = cluster or pytest.cluster_name
     fractal_log(
         function="test_delete_cluster",
