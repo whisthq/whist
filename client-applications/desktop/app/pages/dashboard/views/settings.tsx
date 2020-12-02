@@ -60,9 +60,7 @@ const AdminSettings = (props: any) => {
     const handleSave = () => {
         // update region if it's valid
         if (
-            ["us-east-1", "us-west-1", "ca-central-1"].indexOf(
-                region
-            ) > -1 &&
+            ["us-east-1", "us-west-1", "ca-central-1"].indexOf(region) > -1 &&
             region.trim() !== ""
         ) {
             dispatch(
@@ -127,7 +125,6 @@ const AdminSettings = (props: any) => {
         setShowSavedAlert(true)
     }
 
-
     return (
         <div>
             <Row
@@ -168,12 +165,11 @@ const AdminSettings = (props: any) => {
                             lineHeight: 1.4,
                         }}
                     >
-                        Give a region (like us-east-1) and a webserver
-                        version (local, dev, staging, prod, or a url) and
-                        save them to choose where to connect to. In future
-                        may support different task defs. If the region is
-                        not a valid region the change does not go through
-                        (silently).
+                        Give a region (like us-east-1) and a webserver version
+                        (local, dev, staging, prod, or a url) and save them to
+                        choose where to connect to. In future may support
+                        different task defs. If the region is not a valid region
+                        the change does not go through (silently).
                     </div>
                 </div>
                 <div
@@ -187,26 +183,10 @@ const AdminSettings = (props: any) => {
                     }}
                 >
                     <div style={{ float: "right" }}>
-                        {Input(
-                            region,
-                            "AWS Region",
-                            updateRegion
-                        )}
-                        {Input(
-                            webserver,
-                            "Webserver",
-                            updateWebserver
-                        )}
-                        {Input(
-                            cluster,
-                            "Cluster (optional)",
-                            updateCluster
-                        )}
-                        {Input(
-                            task,
-                            "Task ARN",
-                            updateTask
-                        )}
+                        {Input(region, "AWS Region", updateRegion)}
+                        {Input(webserver, "Webserver", updateWebserver)}
+                        {Input(cluster, "Cluster (optional)", updateCluster)}
+                        {Input(task, "Task ARN", updateTask)}
                     </div>
                 </div>
             </Row>
@@ -214,7 +194,7 @@ const AdminSettings = (props: any) => {
                 // kind of just a copy of the way settings does it
                 <Row>
                     <Alert
-                        variant="success"
+                        variant="primary" // fractal colors sort of
                         onClose={() => setShowSavedAlert(false)}
                         dismissible
                         style={{
@@ -226,7 +206,7 @@ const AdminSettings = (props: any) => {
                             marginBottom: 0,
                         }}
                     >
-                        Your settings have been saved!
+                        Your admin settings have been saved. Happy testing!
                     </Alert>
                 </Row>
             )}
@@ -239,7 +219,7 @@ const AdminSettings = (props: any) => {
                     SAVE
                 </div>
             </Row>
-        </div>    
+        </div>
     )
 }
 
@@ -256,7 +236,7 @@ const Settings = (props: { username: string; dispatch: any }) => {
     const adminUsername =
         username &&
         username.indexOf("@") > -1 &&
-        username.split("@")[1] == "tryfractal.com"    
+        username.split("@")[1] == "tryfractal.com"
 
     useEffect(() => {
         const Store = require("electron-store")
@@ -298,7 +278,8 @@ const Settings = (props: { username: string; dispatch: any }) => {
             style={{
                 overflowY: "scroll",
                 maxHeight: 525,
-            }}>
+            }}
+        >
             <Row
                 style={{
                     display: "flex",
@@ -482,9 +463,7 @@ const Settings = (props: { username: string; dispatch: any }) => {
                     SAVE
                 </div>
             </Row>
-            {adminUsername && (
-                <AdminSettings dispatch={dispatch} />
-            )}
+            {adminUsername && <AdminSettings dispatch={dispatch} />}
         </div>
     )
 }

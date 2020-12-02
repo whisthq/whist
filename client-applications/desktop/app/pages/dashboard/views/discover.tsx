@@ -88,18 +88,18 @@ const Discover = (props: any) => {
         setSelectedCategory(category)
     }
 
-    // useEffect(() => {
-    //     const results = featuredAppData.filter(getSearchResults)
-    //     setSearchResults(
-    //         results.map((app: any) => (
-    //             <App
-    //                 key={app.app_id}
-    //                 app={app}
-    //                 admin={app.app_id === "Test App"}
-    //             />
-    //         ))
-    //     )
-    // }, [search])
+    useEffect(() => {
+        const results = featuredAppData.filter(getSearchResults)
+        setSearchResults(
+            results.map((app: any) => (
+                <App
+                    key={app.app_id}
+                    app={app}
+                    admin={app.app_id === "Test App"}
+                />
+            ))
+        )
+    }, [search])
 
     useEffect(() => {
         if (appQuery.data) {
@@ -111,6 +111,11 @@ const Discover = (props: any) => {
             if (selectedCategory) {
                 newAppData = newAppData ? newAppData.filter(checkCategory) : []
             }
+            // admins should get access to the test App
+            if (adminUsername) {
+                newAppData.push(adminApp)
+            }
+
             setFeaturedAppData(newAppData)
         }
     }, [appQuery.data, selectedCategory])
@@ -160,7 +165,11 @@ const Discover = (props: any) => {
                     <Col xs={11}>
                         <Row>
                             {featuredAppData.map((app: any) => (
-                                <App key={app.app_id} app={app} />
+                                <App
+                                    key={app.app_id}
+                                    app={app}
+                                    admin={app.app_id === "Test App"}
+                                />
                             ))}
                         </Row>
                     </Col>

@@ -77,19 +77,6 @@ function* fetchPaymentInfo(action: any) {
     // }
 }
 
-function* getPromoCode(action: any) {
-    const state = yield select()
-    const { json } = yield call(
-        apiGet,
-        `/account/code?username=${action.username}`,
-        state.MainReducer.auth.accessToken
-    )
-
-    if (json && json.status === 200) {
-        yield put(Action.updatePayment({ promoCode: json.code }))
-    }
-}
-
 // an admin redux action that can be used
 // if you set the admin redux state information correctly
 // to test specific stuff that's not exposed to regular customers

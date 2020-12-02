@@ -89,7 +89,7 @@
             ]
         },
         "publish": {
-            "bucket": "fractal: fractal-windows-application-testing",
+            "bucket": "fractal-mac-application-testing",
             "provider": "s3",
             "region": "us-east-1"
         },
