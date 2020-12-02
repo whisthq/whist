@@ -3,10 +3,9 @@ import logging
 
 from functools import wraps
 
-from flask import jsonify, request
+from flask import current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
-from app.constants.config import DASHBOARD_USERNAME
 from app.constants.http_codes import UNAUTHORIZED
 from app.helpers.utils.general.logs import fractalLog
 
@@ -39,7 +38,10 @@ def fractalAuth(f):
 
         current_user = get_jwt_identity()
 
-        if current_user != username and DASHBOARD_USERNAME not in current_user:
+        if (
+            current_user != username
+            and current_app.config["DASHBOARD_USERNAME"] not in current_user
+        ):
             format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
 
             logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
@@ -71,7 +73,7 @@ def adminRequired(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         current_user = get_jwt_identity()
-        if DASHBOARD_USERNAME not in current_user:
+        if current_app.config["DASHBOARD_USERNAME"] not in current_user:
             return (
                 jsonify(
                     {

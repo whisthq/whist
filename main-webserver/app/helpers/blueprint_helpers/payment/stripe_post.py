@@ -1,10 +1,8 @@
 import logging
 
-from flask import jsonify
+from flask import current_app, jsonify
 
 from functools import reduce
-
-from app.constants.config import STRIPE_SECRET
 
 from app.constants.http_codes import (
     BAD_REQUEST,
@@ -32,7 +30,7 @@ def addSubscriptionHelper(token, email, plan, code):
             email, plan, code, str(token)
         ),
     )
-    client = StripeClient(STRIPE_SECRET)
+    client = StripeClient(current_app.config["STRIPE_SECRET"])
     plans = client.get_prices()  # product Fractal by default
 
     plan = reduce(lambda acc, pl: acc if pl[0] != plan else pl[1], plans, None)
@@ -58,7 +56,7 @@ def addSubscriptionHelper(token, email, plan, code):
 
 
 def deleteSubscriptionHelper(email):
-    client = StripeClient(STRIPE_SECRET)
+    client = StripeClient(current_app.config["STRIPE_SECRET"])
     try:
         client.cancel_subscription(email)
         return jsonify({"status": SUCCESS}), SUCCESS
@@ -76,7 +74,7 @@ def deleteSubscriptionHelper(email):
 
 
 def addCardHelper(email, token):
-    client = StripeClient(STRIPE_SECRET)
+    client = StripeClient(current_app.config["STRIPE_SECRET"])
 
     try:
         client.add_card(email, token)
@@ -94,7 +92,7 @@ def addCardHelper(email, token):
 
 
 def deleteCardHelper(email, token):
-    client = StripeClient(STRIPE_SECRET)
+    client = StripeClient(current_app.config["STRIPE_SECRET"])
 
     try:
         client.delete_card(email, token)
@@ -112,7 +110,7 @@ def deleteCardHelper(email, token):
 
 
 def retrieveHelper(email):
-    client = StripeClient(STRIPE_SECRET)
+    client = StripeClient(current_app.config["STRIPE_SECRET"])
 
     try:
         info = client.get_customer_info(email)

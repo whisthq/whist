@@ -1,32 +1,33 @@
 # Docker with `main-webserver`
 
-Docker is being leveraged to create a partial-stack (TBD on full) deployment of the `main-webserver` components, `web` and `celery`. To do so, it packages the application into an image with all necessary dependencies and then launches the application with the appropriate configurations, depending on if it's `web` or `celery` using `stem-cell.sh`.
+This directory contains a Dockerfile used to containerize both the Flask server and the Celery task queue components of the web application stack. Furthermore, `docker-compose` (configured by `docker-compose.yml`) provides a way to deploy a partial web application stack, including the Flask web server, the Celery task queue, and the Redis worker output store, locally with a single command `docker-compose up --build)`.
 
-Currently, the full environment is only partially replicated, so `retrieve_config.py` exists for collecting the appropriate environment variables needed to connect to the non-replicated portions of the environment (they are pulled from Heroku).
+## Deploying the partial stack locally
 
-## Usage
+Before deploying the partial stack with `docker-compose`, it is necessary to save a `.env` file, which contains lines of the form `KEY=VALUE` specifiying environment variables that are used to configure the processes running inside of the containers. Specifically, the following five environment variables must be set (`REDIS_URL` is ignored):
+ - `CONFIG_DB_URL`
+ - `POSTGRES_DB`
+ - `POSTGRES_HOST`
+ - `POSTGRES_PASSWORD`
+ - `POSTGRES_USER`
+
+See `main-webserver/README.md` for a description of each one.
 
 ### 1. Retrieve Environment Variables
 
-Use `retrieve_config.py`. It provides a `-h` help menu for understanding parameters. On Mac/Linux, run
+In many circumstances, you can use the `retrieve_config.sh` script to quickly generate an initial `.env` file. Before running this script, you must have the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) installed and you must be logged into your Heroku account, which must have access to the tryfractal team on Heroku. If you do not meet one or more of these requirements, just ask someone to send you their `.env` file. Otherwise, run the following command:
 
-```sh
-cd docker
-./retrieve_config.py [NAME OF BRANCH]
+    bash /path/to/retrieve_config.sh
+
+Here is an example of what the contents of a `.env` file might look like:
+
 ```
-
-On Windows, run
-
-```sh
-cd docker
-py retrieve_config.py [NAME OF BRANCH]
+CONFIG_DB_URL=postgresql://user@pass:host:port/database
+POSTGRES_DB=dev
+POSTGRES_PASSWORD=p@$$w0rd!
+POSTGRES_USER=owen
+HOT_RELOAD=
 ```
-
-To see the possible NAME_OF_BRANCH options, see Lines 34-38 of `retrieve_config.py`. This command will pull the config variables of NAME_OF_BRANCH and write them to `docker/.env`.
-
-You can review `dev-base-config.json` to see which values will be overriden for local development. For example, the `REDIS_URL` will be changed to use the local Docker version.
-
-This command requires the CLI tool `heroku` to be installed and logged in.
 
 ### 2. Spin Up Local Servers
 
@@ -40,4 +41,4 @@ If you encounter a "daemon not running" error, this likely means that Docker is 
 
 Review `docker-compose.yml` to see which ports the various services are hosted on. For example, `"7810:6379"` means that the Redis service, running on port 6379 internally, will be available on `localhost:7810` from the host machine. Line 25 of `docker-compose.yml` will tell you where the web server itself is running.
 
-If you make a change to the webserver, you'll need to restart docker by first killing the server (Ctrl-C) and re-running `docker-compose up --build`.
+If you make a change to the webserver, you'll need to restart docker by first killing the server (Ctrl-C) and re-running `docker-compose up --build` unless the environment variable `HOT_RELOAD` is set to a non-empty string in your `.env` file.
