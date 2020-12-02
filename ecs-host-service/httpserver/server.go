@@ -229,6 +229,15 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 	// Select the correct environment (dev, staging, prod)
 	logger.Info(webserverAuthSecretDev + "   " + webserverAuthSecretStaging + "   " + webserverAuthSecretProd)
 
+	switch logger.GetAppEnvironment() {
+	case logger.EnvDev:
+		webserverAuthSecret = webserverAuthSecretDev
+	case logger.EnvStaging:
+		webserverAuthSecret = webserverAuthSecretStaging
+	case logger.EnvProd:
+		webserverAuthSecret = webserverAuthSecretProd
+	}
+
 	err := initializeTLS()
 	if err != nil {
 		return nil, logger.MakeError("Error starting HTTP Server: %v", err)

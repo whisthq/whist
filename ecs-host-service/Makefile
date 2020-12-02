@@ -49,10 +49,10 @@ endif
 
 build: checkCI
 	$(GOBUILD) -ldflags "\
-		-X 'github.com/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'\
-		-X 'github.com/fractal/ecs-host-service/httpserver.webserverAuthSecretDev=$(WEBSERVER_AUTH_SECRET_DEV)'\
-		-X 'github.com/fractal/ecs-host-service/httpserver.webserverAuthSecretStaging=$(WEBSERVER_AUTH_SECRET_STAGING)'\
-		-X 'github.com/fractal/ecs-host-service/httpserver.webserverAuthSecretProd=$(WEBSERVER_AUTH_SECRET_PROD)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretDev=$(WEBSERVER_AUTH_SECRET_DEV)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretStaging=$(WEBSERVER_AUTH_SECRET_STAGING)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretProd=$(WEBSERVER_AUTH_SECRET_PROD)'\
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
 
 clean:
