@@ -1,5 +1,5 @@
 import { OperatingSystem } from "shared/enums/client"
-import { FractalApp } from "shared/enums/ui"
+import { FractalApp } from "shared/types/ui"
 
 export const createShortcut = (app: FractalApp): boolean => {
     const os = require("os")
