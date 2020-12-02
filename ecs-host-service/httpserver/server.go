@@ -41,18 +41,34 @@ type requestResult struct {
 }
 
 func (r requestResult) send(w http.ResponseWriter) {
+	var buf []byte
+	var err error
+	var status int
+
 	if r.Err != nil {
 		// Send a 406
-		w.WriteHeader(http.StatusNotAcceptable)
-		buf, err := json.Marshal(r)
-		if err != nil {
-			logger.Errorf("Error marshalling a 406 HTTP Response body: %s", err)
-		}
-		_, _ = w.Write(buf)
+		status = http.StatusNotAcceptable
+		buf, err = json.Marshal(
+			struct {
+				Result string `json:"result"`
+				Error  string `json:"error"`
+			}{r.Result, r.Err.Error()},
+		)
 	} else {
 		// Send a 200 code
-		w.WriteHeader(http.StatusOK)
+		status = http.StatusOK
+		buf, err = json.Marshal(
+			struct {
+				Result string `json:"result"`
+			}{r.Result},
+		)
 	}
+
+	w.WriteHeader(status)
+	if err != nil {
+		logger.Errorf("Error marshalling a %v HTTP Response body: %s", status, err)
+	}
+	_, _ = w.Write(buf)
 }
 
 // MountCloudStorageRequest defines the (unauthenticated) mount_cloud_storage
