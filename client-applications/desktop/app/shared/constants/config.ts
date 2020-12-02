@@ -1,3 +1,4 @@
+/* eslint-disable */
 const environment: any = {
     local: {
         url: {

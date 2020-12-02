@@ -38,3 +38,12 @@ jobs:
           else
             (echo "Code is linted with Prettier" && true)
           fi
+
+      - name: Check if code follows ESLint standards
+        run: |
+          result=$(cd desktop && yarn lint-check) # checks if code is linted via prettier --check
+          if [ "$result" -ne "0" ]; then
+            (echo "To pass this check please lint the code with ESLint or update .eslintrc.js to ignore unwanted checks" && false)
+          else
+            (echo "Code is linted with ESLint" && true)
+          fi
