@@ -35,6 +35,6 @@ jobs:
           curl \
             -u "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}:" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/fractal/protocol/actions/workflows/${{ secrets.PROC_BRANCH_BUILD_RELEASE_ID }}/dispatches \
+            https://api.github.com/repos/fractal/protocol/actions/workflows/${{ secrets.PROTOCOL_PR_BUILD_AND_RELEASE_ID }}/dispatches \
             -d '{"ref": "${{ github.event.pull_request.head.ref }}", "inputs": {"ref": "${{ github.event.pull_request.head.ref }}", "should_test": "false"}}'
 
