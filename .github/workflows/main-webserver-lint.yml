@@ -26,10 +26,10 @@ jobs:
           python-version: 3.8
 
       - name: Upgrade pip
-        run: pip install --upgrade pip
+        run: cd main-webserver && pip install --upgrade pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt -r requirements-test.txt
+        run: cd main-webserver && pip install -r requirements.txt -r requirements-test.txt
 
       - name: Check if code is linted with Python Black
         run: |
@@ -42,4 +42,4 @@ jobs:
           fi
 
       - name: Check if code matches Pylint standards
-        run: pylint app # Returns 0 iff code is not linted
+        run: cd main-webserver && pylint app # Returns 0 iff code is not linted
