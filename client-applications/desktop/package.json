@@ -363,8 +363,6 @@
         "build-renderer": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.renderer.prod.babel.js --colors",
         "dev": "cross-env START_HOT=1 yarn start-renderer-dev",
         "electron-rebuild": "electron-rebuild --parallel --force --types prod,dev,optional --module-dir app",
-        "format": "prettier --write .",
-        "format-check": "prettier --check .",
         "lint": "cross-env NODE_ENV=development eslint . --cache --ext .js,.jsx,.ts,.tsx",
         "lint-check": "yarn eslint app/*.ts* && yarn eslint app/pages/**/*.ts* && yarn eslint app/shared/**/*.ts* && yarn eslint app/store/**/*.ts*",
         "lint-fix": "yarn eslint --fix app/*.ts* && yarn eslint --fix app/pages/**/*.ts* && yarn eslint --fix app/shared/**/*.ts* && yarn eslint --fix app/store/**/*.ts*",
