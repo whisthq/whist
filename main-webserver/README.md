@@ -41,7 +41,15 @@ Luckily, there is an easy way to set all of the necessary environment variables 
 
 When the `docker/retrieve_config.sh` script terminates, it will print the name of the file containing the fetched environment variables that has been written to standard error.
 
-**2. Spin Up Local Servers**
+**2. Set AWS credentials**
+
+Whether you're running tests or the `docker-compose` stack locally, the web server needs to be able to access AWS APIs. You can set your AWS credentials using either the same files in the `~/.aws/` directory or environment variables that you can use to configure [`boto`](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) and the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html). Environment variables set in `docker/.env` will beloaded by `pytest` during test run sessions and set in the execution environment within the containers in the docker-compose stack.
+
+> I recommend downloading the AWS CLI, which may you may find useful in the future, and running `aws configure`.
+>
+> -O
+
+**3. Spin Up Local Servers**
 
 Use `docker-compose` to run the stack locally. First, `cd` into the `docker/` folder. Then, run the `up` command. If you are on Windows, you should run this from a command prompt in Administrator mode.
 
