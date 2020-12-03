@@ -1,22 +1,22 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
-from app import fractalPreProcess
-from app.celery.aws_s3_deletion import deleteLogsFromS3
-from app.celery.aws_s3_modification import uploadLogsToS3
+from app import fractal_pre_process
+from app.celery.aws_s3_deletion import delete_logs_from_s3
+from app.celery.aws_s3_modification import upload_logs_to_s3
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
-from app.helpers.blueprint_helpers.admin.logs_get import logsHelper
+from app.helpers.blueprint_helpers.admin.logs_get import logs_helper
 from app.helpers.blueprint_helpers.admin.logs_post import (
-    bookmarkHelper,
-    unbookmarkHelper,
+    bookmark_helper,
+    unbookmark_helper,
 )
-from app.helpers.utils.general.auth import adminRequired
+from app.helpers.utils.general.auth import admin_required
 
 logs_bp = Blueprint("logs_bp", __name__)
 
 
 @logs_bp.route("/logs/insert", methods=["POST"])
-@fractalPreProcess
+@fractal_pre_process
 def logs_post(**kwargs):
     body = kwargs.pop("body")
 
@@ -33,20 +33,20 @@ def logs_post(**kwargs):
     except KeyError:
         return jsonify({"ID": None}), BAD_REQUEST
 
-    task = uploadLogsToS3.delay(*args)
+    task = upload_logs_to_s3.delay(*args)
 
     return jsonify({"ID": task.id}), ACCEPTED
 
 
 @logs_bp.route("/logs/<action>", methods=("POST",))
-@fractalPreProcess
+@fractal_pre_process
 @jwt_required
-@adminRequired
+@admin_required
 def logs_manage(action, **kwargs):
     if action == "delete":
         connection_id = kwargs["body"]["connection_id"]
 
-        task = deleteLogsFromS3.apply_async([connection_id])
+        task = delete_logs_from_s3.apply_async([connection_id])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
@@ -56,14 +56,14 @@ def logs_manage(action, **kwargs):
     if action == "bookmark":
         connection_id = kwargs["body"]["connection_id"]
 
-        output = bookmarkHelper(connection_id)
+        output = bookmark_helper(connection_id)
 
         return jsonify(output), output["status"]
 
     if action == "unbookmark":
         connection_id = kwargs["body"]["connection_id"]
 
-        output = unbookmarkHelper(connection_id)
+        output = unbookmark_helper(connection_id)
 
         return jsonify(output), output["status"]
 
@@ -71,9 +71,9 @@ def logs_manage(action, **kwargs):
 
 
 @logs_bp.route("/logs", methods=["GET"])
-@fractalPreProcess
+@fractal_pre_process
 @jwt_required
-@adminRequired
+@admin_required
 def logs_get(**kwargs):  # pylint: disable=unused-argument
     connection_id, username, bookmarked = (
         request.args.get("connection_id"),
@@ -83,6 +83,6 @@ def logs_get(**kwargs):  # pylint: disable=unused-argument
 
     bookmarked = str(bookmarked.upper()) == "TRUE" if bookmarked else False
 
-    output = logsHelper(connection_id, username, bookmarked)
+    output = logs_helper(connection_id, username, bookmarked)
 
     return jsonify(output), output["status"]

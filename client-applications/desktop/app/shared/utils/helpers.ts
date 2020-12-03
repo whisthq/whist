@@ -1,5 +1,3 @@
-import { FractalKey } from "shared/types/input"
-
 export const openExternal = (url: string) => {
     const { shell } = require("electron")
     shell.openExternal(url)
@@ -10,5 +8,5 @@ export const varOrNull = <T>(variable: T): T | null => {
 }
 
 export const isNullString = (str: string): boolean => {
-    return str && str !== "" ? true : false
+    return !!(str && str !== "")
 }

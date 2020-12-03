@@ -34,6 +34,7 @@ Custom Types
 ============================
 */
 
+#ifdef __WIN32__  // necessary to keep clang-tidy from converting to snake_case
 DEFINE_GUID(CLSID_MMDeviceEnumerator, 0xBCDE0395, 0xE52F, 0x467C, 0x8E, 0x3D, 0xC4, 0x57, 0x92,
             0x91, 0x69, 0x2E);
 DEFINE_GUID(IID_IMMDeviceEnumerator, 0xA95664D2, 0x9614, 0x4F35, 0xA7, 0x46, 0xDE, 0x8D, 0xB6, 0x36,
@@ -44,8 +45,9 @@ DEFINE_GUID(IID_IAudioClient3, 0x7ed4ee07, 0x8E67, 0x4CD4, 0x8C, 0x1A, 0x2B, 0x7
             0x42);
 DEFINE_GUID(IID_IAudioCaptureClient, 0xc8adbd64, 0xe71e, 0x48a0, 0xa4, 0xde, 0x18, 0x5c, 0x39, 0x5c,
             0xd3, 0x17);
+#endif
 
-typedef struct audio_device_t {
+typedef struct AudioDevice {
     IMMDevice* device;
     IMMDeviceEnumerator* pMMDeviceEnumerator;
     IAudioClient3* pAudioClient;
@@ -62,6 +64,6 @@ typedef struct audio_device_t {
     UINT32 sample_rate;
     UINT32 nNextPacketSize;
     HRESULT hNextPacketResult;
-} audio_device_t;
+} AudioDevice;
 
 #endif  // WASAPICAPTURE_H

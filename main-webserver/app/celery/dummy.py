@@ -6,7 +6,7 @@ from app.constants.http_codes import SUCCESS
 
 
 @shared_task(bind=True)
-def dummyTask(self):
+def dummy_task(self):
     self.update_state(
         state="PENDING",
         meta={

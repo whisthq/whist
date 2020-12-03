@@ -76,7 +76,7 @@ Defines
 #define SENTRYBREADCRUMB(tag, format, ...) sentry_send_bread_crumb(tag, format, ##__VA_ARGS__)
 #define SENTRYEVENT(format, ...) sentry_send_event(format, ##__VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-35s | %-30s:%-5d | "
-#define LOG_ARGS(LOG_TAG) CurrentTimeStr(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
+#define LOG_ARGS(LOG_TAG) current_time_str(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE "\n"
 #define ERROR_TAG "ERROR"
@@ -127,9 +127,9 @@ Public Functions
 ============================
 */
 
-void sentry_send_bread_crumb(char* tag, const char* fmtStr, ...);
+void sentry_send_bread_crumb(char* tag, const char* fmt_str, ...);
 
-void sentry_send_event(const char* fmtStr, ...);
+void sentry_send_event(const char* fmt_str, ...);
 
 /**
  * @brief                          Initialize the logger
@@ -138,19 +138,19 @@ void sentry_send_event(const char* fmtStr, ...);
  *                                 NULL to not store the logs in a log file
  *
  */
-void initLogger(char* log_directory);
+void init_logger(char* log_directory);
 
 /**
  * @brief                          Log the given format string
  *
- * @param fmtStr                   The directory to store the log files in
+ * @param fmt_str                  The directory to store the log files in
  */
-void mprintf(const char* fmtStr, ...);
+void mprintf(const char* fmt_str, ...);
 
 /**
  * @brief                          Destroy the logger object
  */
-void destroyLogger();
+void destroy_logger();
 
 /**
  * @brief                          Send the log history to the webserver
@@ -163,21 +163,21 @@ void destroyLogger();
  * @returns                         0: success -1: failure to send file,
  *                                  sent cache instead   -2: outright failure
  */
-int sendConnectionHistory(char* host, char* identifier, char* hex_aes_private_key);
+int send_connection_history(char* host, char* identifier, char* hex_aes_private_key);
 
 /**
  * @brief                          Set the logger to categorize all logs from now
  *                                  on as a new connection. Only these will be sent
  *                                  on a sendConnectionHistory call.
  */
-void startConnectionLog();
+void start_connection_log();
 
 /**
  * @brief                          Save the current connection id into the log history
  *
  * @param connection_id            The connection id to use
  */
-void saveConnectionID(int connection_id);
+void save_connection_id(int connection_id);
 
 /**
  * @brief                          Tell the server the WinLogon and connection
@@ -191,7 +191,8 @@ void saveConnectionID(int connection_id);
  *                                 instance of the protocol to the webserver.
  * @param hex_aes_private_key      The private key, as a hex string.
  */
-void updateServerStatus(bool is_connected, char* host, char* identifier, char* hex_aes_private_key);
+void update_server_status(bool is_connected, char* host, char* identifier,
+                          char* hex_aes_private_key);
 
 /**
  * @brief                          Get the current server's version number

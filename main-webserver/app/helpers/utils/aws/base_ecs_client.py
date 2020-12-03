@@ -761,13 +761,13 @@ class ECSClient:
             self.pick_subnets()
         if self.security_groups is None:
             self.pick_security_groups()
-        networkConfiguration = {
+        network_configuration = {
             "awsvpcConfiguration": {
                 "subnets": [self.subnet],
                 "securityGroups": self.security_groups,
             }
         }
-        return networkConfiguration
+        return network_configuration
 
     def get_vpc(self):
         container_arns = self.ecs_client.list_container_instances(cluster=self.cluster)[

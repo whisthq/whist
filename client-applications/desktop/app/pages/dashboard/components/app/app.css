@@ -1,4 +1,4 @@
-@import "/app.global.css";
+@import '/app.global.css';
 
 @keyframes ripple {
     0%,
@@ -47,6 +47,7 @@
     flex-direction: column;
     padding: 20px;
     z-index: 1;
+    outline: none;
     background: var(--text-background-color);
     box-shadow: var(--light-box-shadow);
     transition: all 0.2s ease-in-out;
@@ -95,6 +96,7 @@
     left: 40px;
     bottom: 40px;
     font-size: 11px;
+    display: 'flex';
     color: var(--light-text-color);
 }
 

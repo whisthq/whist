@@ -1,5 +1,5 @@
-import chalk from "chalk"
-import { debugLog } from "../../utils/logging.js"
+import chalk from 'chalk'
+import { debugLog } from '../../utils/logging.js'
 
 export default function CheckNodeEnv(expectedEnv) {
     if (!expectedEnv) {

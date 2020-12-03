@@ -16,11 +16,11 @@ audio_encoder_fifo_intake. You can then encode via audio_encoder_encode.
 
 #include "audioencode.h"
 
-audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
+AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
     // initialize the audio encoder
 
-    audio_encoder_t* encoder = (audio_encoder_t*)malloc(sizeof(audio_encoder_t));
-    memset(encoder, 0, sizeof(audio_encoder_t));
+    AudioEncoder* encoder = (AudioEncoder*)malloc(sizeof(AudioEncoder));
+    memset(encoder, 0, sizeof(AudioEncoder));
 
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
@@ -111,7 +111,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
     return encoder;
 }
 
-void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data, int len) {
+void audio_encoder_fifo_intake(AudioEncoder* encoder, uint8_t* data, int len) {
     // convert and add samples to the FIFO
 
     // initialize
@@ -159,7 +159,7 @@ void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data, int len)
     }
 }
 
-int audio_encoder_encode_frame(audio_encoder_t* encoder) {
+int audio_encoder_encode_frame(AudioEncoder* encoder) {
     // encode a single frame from the FIFO data
 
     // read from FIFO to AVFrame
@@ -212,7 +212,7 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
     }
 }
 
-void destroy_audio_encoder(audio_encoder_t* encoder) {
+void destroy_audio_encoder(AudioEncoder* encoder) {
     if (encoder == NULL) {
         LOG_ERROR("Cannot destroy null encoder.\n");
         return;
