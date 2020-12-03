@@ -77,7 +77,7 @@ export function updatePayment(body: {
 }
 
 export function updateLoading(body: {
-    statusMessage: string
+    statusMessage?: string
     percentLoaded?: number
 }) {
     return {

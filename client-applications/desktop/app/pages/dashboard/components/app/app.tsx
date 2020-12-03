@@ -3,7 +3,7 @@ import { connect } from "react-redux"
 import { Col, Modal } from "react-bootstrap"
 import { FaPlay } from "react-icons/fa"
 
-import { createContainer, createTestContainer } from "store/actions/sideEffects"
+import { createContainer } from "store/actions/sideEffects"
 import { updateContainer } from "store/actions/pure"
 import { history } from "store/history"
 import { FractalRoute } from "shared/types/navigation"
@@ -13,7 +13,12 @@ import { FractalApp } from "shared/types/ui"
 import styles from "pages/dashboard/components/app/app.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
 
-const App = (props: { app: FractalApp; launches: number; dispatch: any; admin: boolean }) => {
+const App = (props: {
+    app: FractalApp
+    launches: number
+    dispatch: any
+    admin: boolean
+}) => {
     const { app, launches, admin, dispatch } = props
 
     const [showModal, setShowModal] = useState(false)
@@ -35,9 +40,9 @@ const App = (props: { app: FractalApp; launches: number; dispatch: any; admin: b
         if (launches === 1 && launched) {
             history.push(FractalRoute.LOADING)
             if (admin) {
-                dispatch(createTestContainer(app.app_id))
+                dispatch(createContainer(app.app_id, null, true))
             } else {
-                dispatch(createContainer(app.app_id))
+                dispatch(createContainer(app.app_id, null))
             }
             setLaunched(false)
         }
