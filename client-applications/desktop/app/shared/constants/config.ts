@@ -1,5 +1,6 @@
-/* eslint-disable */
-const environment: any = {
+import { FractalEnvironment, FractalConfig } from "shared/types/config"
+
+const environment: FractalEnvironment = {
     local: {
         url: {
             WEBSERVER_URL: "http://127.0.0.1:7730",
@@ -13,8 +14,8 @@ const environment: any = {
             GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
-        sentry_env: "development",
-        client_download_urls: {
+        sentryEnv: "development",
+        clientDownloadURLs: {
             MacOS:
                 "https://fractal-mac-application-testing.s3.amazonaws.com/Fractal.dmg",
             Windows:
@@ -34,8 +35,8 @@ const environment: any = {
             GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
-        sentry_env: "development",
-        client_download_urls: {
+        sentryEnv: "development",
+        clientDownloadURLs: {
             MacOS:
                 "https://fractal-mac-application-testing.s3.amazonaws.com/Fractal.dmg",
             Windows:
@@ -56,8 +57,8 @@ const environment: any = {
             GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
-        sentry_env: "development",
-        client_download_urls: {
+        sentryEnv: "development",
+        clientDownloadURLs: {
             MacOS:
                 "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
             Windows:
@@ -77,8 +78,8 @@ const environment: any = {
             GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
-        sentry_env: "production",
-        client_download_urls: {
+        sentryEnv: "production",
+        clientDownloadURLs: {
             MacOS:
                 "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
             Windows:
@@ -87,7 +88,10 @@ const environment: any = {
     },
 }
 
-export const config: any =
+export const config: FractalConfig =
     process.env.NODE_ENV === "development"
-        ? environment.development
-        : environment.production
+        ? environment.local
+        : environment.local
+
+// default export until we have multiple exports
+export default config

@@ -335,7 +335,7 @@ if __name__ == "__main__":
         # NOTE: make sure this follows the format defined in the help message of args.version
         version = f"0.0.0-SNAPSHOT-{short_sha}-{'dirty' if dirty else 'clean'}"
 
-    # NOTE: any updates to tracked files must occur after the `git status` calculation to determine
+    # NOTE: updates to tracked files must occur after the `git status` calculation to determine
     # the `dirty`/`clean` status is checked otherwise the working directory will always be determined
     # to be `dirty`
     update_package_info(desktop_dir, version=version, publish_bucket=update_bucket)

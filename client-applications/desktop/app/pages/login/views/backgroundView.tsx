@@ -1,6 +1,6 @@
 import React from "react"
 
-import styles from "styles/login.css"
+import styles from "pages/login/login.css"
 
 import Blender from "assets/images/login/blender.svg"
 import Chrome from "assets/images/login/chrome.svg"
@@ -10,7 +10,7 @@ import Photoshop from "assets/images/login/photoshop.svg"
 import Slack from "assets/images/login/slack.svg"
 import VSCode from "assets/images/login/vscode.svg"
 
-const BackgroundView = (props: any) => {
+const BackgroundView = () => {
     return (
         <div>
             <img
@@ -23,6 +23,7 @@ const BackgroundView = (props: any) => {
                     height: 130,
                     animationDelay: "0.0s",
                 }}
+                alt="Figma"
             />
             <img
                 src={Chrome}
@@ -34,6 +35,7 @@ const BackgroundView = (props: any) => {
                     height: 120,
                     animationDelay: "0.3s",
                 }}
+                alt="Chrome"
             />
             <img
                 src={VSCode}
@@ -45,6 +47,7 @@ const BackgroundView = (props: any) => {
                     height: 120,
                     animationDelay: "0.6s",
                 }}
+                alt="VSCode"
             />
             <img
                 src={Blender}
@@ -56,6 +59,7 @@ const BackgroundView = (props: any) => {
                     height: 115,
                     animationDelay: "0.9s",
                 }}
+                alt="Blender"
             />
             <img
                 src={Slack}
@@ -67,6 +71,7 @@ const BackgroundView = (props: any) => {
                     height: 110,
                     animationDelay: "1.2s",
                 }}
+                alt="Slack"
             />
             <img
                 src={Photoshop}
@@ -78,6 +83,7 @@ const BackgroundView = (props: any) => {
                     height: 110,
                     animationDelay: "1.5s",
                 }}
+                alt="Photoshop"
             />
             <img
                 src={Maya}
@@ -89,6 +95,7 @@ const BackgroundView = (props: any) => {
                     height: 140,
                     animationDelay: "1.8s",
                 }}
+                alt="Maya"
             />
         </div>
     )

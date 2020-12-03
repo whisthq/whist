@@ -1,23 +1,37 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, Dispatch } from "react"
 import { connect } from "react-redux"
 import { useSpring, animated } from "react-spring"
-import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 import { debugLog } from "shared/utils/logging"
 import { updateContainer, updateLoading } from "store/actions/pure"
-import { history } from "store/configureStore"
+import { history } from "store/history"
 import { execChmodUnix } from "shared/utils/exec"
+import { FractalRoute } from "shared/types/navigation"
+import { OperatingSystem } from "shared/types/client"
 
-const Loading = (props: any) => {
+import styles from "pages/login/login.css"
+
+const Loading = (props: {
+    clientOS: string
+    percentLoaded: number
+    status: string
+    port32262: number
+    port32263: number
+    port32273: number
+    ip: string
+    secretKey: string
+    desiredAppID: string
+    currentAppID: string
+    containerID: string
+    dispatch: Dispatch
+}) => {
     const {
-        dispatch,
-        os,
+        clientOS,
         percentLoaded,
         status,
-        containerID,
         port32262,
         port32263,
         port32273,
@@ -25,6 +39,8 @@ const Loading = (props: any) => {
         secretKey,
         desiredAppID,
         currentAppID,
+        containerID,
+        dispatch,
     } = props
 
     // figure out how to use useEffect
@@ -44,16 +60,12 @@ const Loading = (props: any) => {
 
         const os = require("os")
 
-        if (os.platform() === "darwin") {
+        if (os.platform() === OperatingSystem.MAC) {
             path = `${appRootDir}/protocol-build/desktop/`
             path = path.replace("/app", "")
             path = path.replace("/Resources.asar", "")
             executable = "./FractalClient"
-        } else if (os.platform() === "linux") {
-            path = `${process.cwd()}/protocol-build`
-            path = path.replace("/release", "")
-            executable = "./FractalClient"
-        } else if (os.platform() === "win32") {
+        } else if (os.platform() === OperatingSystem.WINDOWS) {
             path = `${appRootDir}\\protocol-build\\desktop`
             path = path.replace("\\resources\\app.asar", "")
             path = path.replace("\\app\\protocol-build", "\\protocol-build")
@@ -113,33 +125,30 @@ const Loading = (props: any) => {
                     )
                     setLaunches(0)
                     ipc.sendSync("canClose", true)
-                    history.push("/dashboard")
+                    history.push(FractalRoute.DASHBOARD)
                 })
             })
             .catch((error) => {
-                "execChmodUnix() failed"
+                throw error
             })
-        // TODO (adriano) graceful exit vs non graceful exit code
-        // this should be done AFTER the endpoint to connect to EXISTS
-
-        useEffect(() => {
-            // Ensures that a container exists, that the protocol has not been launched before, and that
-            // the app we want to launch is the app that will be launched
-            if (
-                containerID &&
-                launches === 0 &&
-                currentAppID === desiredAppID
-            ) {
-                setLaunches(launches + 1)
-            }
-        }, [containerID])
-
-        useEffect(() => {
-            if (launches === 1) {
-                LaunchProtocol()
-            }
-        }, [launches])
     }
+
+    // TODO (adriano) graceful exit vs non graceful exit code
+    // this should be done AFTER the endpoint to connect to EXISTS
+
+    useEffect(() => {
+        // Ensures that a container exists, that the protocol has not been launched before, and that
+        // the app we want to launch is the app that will be launched
+        if (containerID && launches === 0 && currentAppID === desiredAppID) {
+            setLaunches(launches + 1)
+        }
+    }, [containerID])
+
+    useEffect(() => {
+        if (launches === 1) {
+            LaunchProtocol()
+        }
+    }, [launches])
 
     return (
         <div
@@ -152,7 +161,7 @@ const Loading = (props: any) => {
                 zIndex: 1000,
             }}
         >
-            {os === "win32" ? (
+            {clientOS === OperatingSystem.WINDOWS ? (
                 <div>
                     <Titlebar backgroundColor="#000000" />
                 </div>
@@ -218,12 +227,12 @@ const Loading = (props: any) => {
     )
 }
 
-function mapStateToProps(state: any) {
+const mapStateToProps = <T extends {}>(state: T) => {
     return {
-        os: state.MainReducer.client.os,
+        clientOS: state.MainReducer.client.clientOS,
         percentLoaded: state.MainReducer.loading.percentLoaded,
         status: state.MainReducer.loading.statusMessage,
-        containerID: state.MainReducer.container.container_id,
+        containerID: state.MainReducer.container.containerID,
         cluster: state.MainReducer.container.cluster,
         port32262: state.MainReducer.container.port32262,
         port32263: state.MainReducer.container.port32263,

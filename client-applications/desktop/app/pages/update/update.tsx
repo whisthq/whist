@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
-const Update = (props: any) => {
-    const { os, needsUpdate } = props
+import { OperatingSystem } from "shared/types/client"
+import styles from "pages/login/login.css"
+
+const Update = (props: { clientOS: string; needsUpdate: boolean }) => {
+    const { clientOS, needsUpdate } = props
 
     const [percentageLeft, setPercentageLeft] = useState(500)
     const [percentageDownloaded, setPercentageDownloaded] = useState(0)
@@ -18,25 +20,28 @@ const Update = (props: any) => {
     useEffect(() => {
         const ipc = require("electron").ipcRenderer
 
-        ipc.on("percent", (_: any, percent: any) => {
+        ipc.on("percent", (_: IpcRendererEvent, percent: number) => {
             percent *= 3
             setPercentageLeft(500 - percent)
             setPercentageDownloaded(percent)
         })
 
-        ipc.on("download-speed", (_: any, speed: any) => {
+        ipc.on("download-speed", (_: IpcRendererEvent, speed: number) => {
             setDownloadSpeed((speed / 1000000).toFixed(2))
         })
 
-        ipc.on("transferred", (_: any, transferred: any) => {
-            setTransferred((transferred / 1000000).toFixed(2))
+        ipc.on(
+            "transferred",
+            (_: IpcRendererEvent, reportedTransferred: number) => {
+                setTransferred((reportedTransferred / 1000000).toFixed(2))
+            }
+        )
+
+        ipc.on("total", (_: IpcRendererEvent, reportedTotal: number) => {
+            setTotal((reportedTotal / 1000000).toFixed(2))
         })
 
-        ipc.on("total", (_: any, total: any) => {
-            setTotal((total / 1000000).toFixed(2))
-        })
-
-        ipc.on("error", (_: any, error: any) => {
+        ipc.on("error", (_: IpcRendererEvent, error: string) => {
             setDownloadError(error)
         })
 
@@ -57,7 +62,7 @@ const Update = (props: any) => {
                         zIndex: 1000,
                     }}
                 >
-                    {os === "win32" ? (
+                    {clientOS === OperatingSystem.WINDOWS ? (
                         <div>
                             <Titlebar backgroundColor="#000000" />
                         </div>
@@ -159,9 +164,9 @@ const Update = (props: any) => {
     )
 }
 
-function mapStateToProps(state: any) {
+export const mapStateToProps = <T extends {}>(state: T) => {
     return {
-        os: state.MainReducer.os,
+        clientOS: state.MainReducer.clientOS,
     }
 }
 

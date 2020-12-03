@@ -1,6 +1,7 @@
 export const DEFAULT = {
     auth: {
         username: null,
+        candidateAccessToken: null,
         accessToken: null,
         refreshToken: null,
         loginWarning: false,
@@ -22,7 +23,7 @@ export const DEFAULT = {
         launchURL: null,
     },
     client: {
-        os: null,
+        clientOS: null,
         region: null,
         dpi: null,
     },
@@ -34,4 +35,12 @@ export const DEFAULT = {
         statusMessage: "Powering up your app",
         percentLoaded: 0,
     },
+    apps: {
+        notInstalled: [],
+        installing: [],
+        installed: [],
+    },
 }
+
+// default export until we have multiple exports
+export default DEFAULT

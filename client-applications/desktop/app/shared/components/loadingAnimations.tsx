@@ -4,11 +4,7 @@ import PuffLoader from "react-spinners/PuffLoader"
 // in this page we'll have a bunch of small components that get reused to display loading animations
 // (might change later to include other animations and visuals...)
 
-/**
- * A puff loader that takes over the middle of the page.
- * @param props unused
- */
-export const PuffAnimation = (props: any) => (
+export const PuffAnimation = () => (
     <div
         style={{
             position: "relative",
@@ -23,3 +19,6 @@ export const PuffAnimation = (props: any) => (
         />
     </div>
 )
+
+// default export until we have multiple exports
+export default PuffAnimation

@@ -1,12 +1,15 @@
+import { OperatingSystem } from "shared/types/client"
+import { debugLog } from "shared/utils/logging"
+
 export const execChmodUnix = (
     command: string,
     path: string,
     platform: string
 ) => {
     return new Promise((resolve, reject) => {
-        if (platform !== "win32") {
+        if (platform !== OperatingSystem.WINDOWS) {
             const { exec } = require("child_process")
-            exec(command, { cwd: path }, (error, stdout, stderr) => {
+            exec(command, { cwd: path }, (error, stdout) => {
                 if (error) {
                     reject(error)
                     return
@@ -23,36 +26,33 @@ export const setAWSRegion = () => {
     return new Promise((resolve, reject) => {
         const { spawn } = require("child_process")
         const os = require("os")
+        const platform = os.platform()
         const appRootDir = require("electron").remote.app.getAppPath()
         let executable = ""
         let path = ""
 
-        if (os.platform() === "darwin") {
+        if (platform === OperatingSystem.MAC) {
             path = `${appRootDir}/binaries/`
             path = path.replace("/Resources/app.asar", "")
             path = path.replace("/app", "")
             executable = "./awsping_osx"
-        } else if (os.platform() === "linux") {
-            path = `${process.cwd()}/binaries/`
-            path = path.replace("/release", "")
-            executable = "./awsping_linux"
-        } else if (os.platform() === "win32") {
+        } else if (platform === OperatingSystem.WINDOWS) {
             path = `${appRootDir}\\binaries`
             path = path.replace("\\resources\\app.asar", "")
             path = path.replace("\\app", "")
             executable = "awsping_windows.exe"
         } else {
-            console.log(`no suitable os found, instead got ${os.platform()}`)
+            debugLog(`no suitable os found, instead got ${platform}`)
         }
 
-        execChmodUnix("chmod +x awsping_osx", path, os.platform())
+        execChmodUnix("chmod +x awsping_osx", path, platform)
             .then(() => {
                 const regions = spawn(executable, ["-n", "3"], {
                     cwd: path,
                 }) // ping via TCP
                 regions.stdout.setEncoding("utf8")
 
-                return regions.stdout.on("data", (data: any) => {
+                regions.stdout.on("data", (data: string) => {
                     // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
                     const line = data.split(/\r?\n/)[0].replace(/  +/g, " ")
                     const items = line.split(" ")
@@ -60,14 +60,15 @@ export const setAWSRegion = () => {
                     if (items[1] === "1.") {
                         const region = items[2].slice(1, -1)
                         resolve(region)
-                        // console.log("Ping detected " + region.toString())
+                        // debugLog("Ping detected " + region.toString())
                     } else {
                         reject()
                     }
                 })
+                return null
             })
-            .catch((error) => {
-                "execChmodUnix() failed"
+            .catch((err) => {
+                throw err
             })
     })
 }

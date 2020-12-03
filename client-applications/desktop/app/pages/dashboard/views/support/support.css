@@ -1,0 +1,34 @@
+@import '/app.global.css';
+
+.alert {
+    margin-top: 11px;
+    font-size: 14px;
+    margin-bottom: 0px;
+    border-radius: 5px;
+    border: none;
+    padding: 20px;
+}
+
+.textBox {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    width: 100%;
+    background: var(--text-background-color);
+    border: none;
+    border-radius: 5px;
+    outline: none;
+    padding: 20px;
+    font-size: 14px;
+    color: var(--primary-text-color);
+    height: 160px;
+    resize: none;
+    box-shadow: var(--light-box-shadow);
+}
+
+.form {
+    margin-top: 40px;
+    font-size: 14px;
+    border-radius: 5px;
+    box-shadow: var(--light-box-shadow);
+    width: 100%;
+}
