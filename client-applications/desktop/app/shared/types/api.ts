@@ -3,9 +3,11 @@ export class FractalAPI {
         REFRESH: "/token/refresh",
         VALIDATE: "/token/validate",
     }
+
     static CONTAINER = {
         CREATE: "/container/create",
     }
+
     static MAIL = {
         FEEDBACK: "/mail/feedback",
     }

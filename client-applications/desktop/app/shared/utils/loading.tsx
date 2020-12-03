@@ -1,5 +1,5 @@
 import React, { KeyboardEvent } from "react"
-import { FractalKey } from "shared/types/input"
+import FractalKey from "shared/types/input"
 
 const { shell } = require("electron")
 
