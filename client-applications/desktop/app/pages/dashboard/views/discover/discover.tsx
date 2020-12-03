@@ -16,8 +16,28 @@ import { FractalApp, FractalBanner } from "shared/types/ui"
 
 import styles from "pages/dashboard/views/discover/discover.css"
 
+import FractalImg from "assets/images/fractal.svg"
+
+/// here is a constant test app we add at the beginning
+const adminApp: any = {
+    app_id: "Test App",
+    logo_url: FractalImg,
+    category: "Test",
+    description: "Test app for Fractal admins",
+    long_description:
+        "You can use the admin app to test if you are a Fractal admin (i.e. your email ends with @tryfractal). Go to settings and where the admin settings are set a task ARN, webserver (dev | local | staging | prod | a url), and region (us-east-1 | us-west-1 | ca-central-1). In any field you can enter reset to reset it to null. If you try to launch without setting then it will not work since it will be null (or your previous settings if you change one). Cluster is null | string.",
+    url: "tryfractal.com",
+    tos: "https://www.tryfractal.com/termsofservice",
+    active: true, // not used
+}
+
 const Discover = (props: { search: string }) => {
     const { search } = props
+
+    const adminUsername =
+        props.username &&
+        props.username.indexOf("@") > -1 &&
+        props.username.split("@")[1] == "tryfractal.com"
 
     // Define local state
 
@@ -90,7 +110,13 @@ const Discover = (props: { search: string }) => {
     useEffect(() => {
         const results = featuredAppData.filter(getSearchResults)
         setSearchResults(
-            results.map((app: FractalApp) => <App key={app.app_id} app={app} />)
+            results.map((app: FractalApp) => (
+                <App
+                    key={app.app_id}
+                    app={app}
+                    admin={app.app_id === "Test App"}
+                />
+            ))
         )
     }, [search])
 
@@ -106,6 +132,10 @@ const Discover = (props: { search: string }) => {
             if (selectedCategory) {
                 newAppData = newAppData ? newAppData.filter(checkCategory) : []
             }
+            if (adminUsername) {
+                newAppData.push(adminApp)
+            }
+
             setFeaturedAppData(newAppData)
         }
     }, [appQuery.data, selectedCategory])
@@ -140,7 +170,11 @@ const Discover = (props: { search: string }) => {
                     <Col xs={11}>
                         <Row>
                             {featuredAppData.map((app: FractalApp) => (
-                                <App key={app.app_id} app={app} />
+                                <App
+                                    key={app.app_id}
+                                    app={app}
+                                    admin={app.app_id === "Test App"}
+                                />
                             ))}
                         </Row>
                     </Col>
@@ -153,6 +187,7 @@ const Discover = (props: { search: string }) => {
 const mapStateToProps = <T extends {}>(state: T): T => {
     return {
         accessToken: state.MainReducer.auth.accessToken,
+        username: state.MainREducer.auth.username,
     }
 }
 

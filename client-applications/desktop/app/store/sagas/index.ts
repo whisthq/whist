@@ -213,6 +213,139 @@ function* createContainer<T extends {}>(action: { body: T }) {
     }
 }
 
+function* createTestContainer<T extends {}>(action: { body: T }) {
+    yield put(
+        Action.updateContainer({
+            desiredAppID: action.app,
+        })
+    )
+
+    const state = yield select()
+
+    const username = state.MainReducer.auth.username
+
+    const task_arn = state.MainReducer.admin.task_arn
+    const region = state.MainReducer.admin.region
+    const webserver = state.MainReducer.admin.webserver_url
+    const cluster_name = state.MainReducer.admin.cluster
+
+    const data = yield call(
+        apiPost,
+        `/aws_container/create_container`,
+        {
+            username: username,
+            cluster_name: cluster_name,
+            region_name: region,
+            task_definition_arn: task_arn,
+            //dpi not supported yet
+        },
+        state.MainReducer.auth.accessToken,
+        webserver // webserver_url
+    )
+
+    let { json } = data
+    const { success } = data
+
+    const id = json.ID
+    ;({ json, response } = yield call(
+        apiGet,
+        `/status/${id}`,
+        state.MainReducer.auth.accessToken
+    ))
+
+    let progressSoFar = 0
+    let secondsPassed = 0
+
+    yield put(
+        Action.updateLoading({
+            percentLoaded: progressSoFar,
+            statusMessage: `Preparing to stream ${action.app}`,
+        })
+    )
+
+    while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
+        if (secondsPassed % 1 === 0) {
+            ;({ response } = yield call(
+                apiGet,
+                `/status/${id}`,
+                state.MainReducer.auth.accessToken
+            ))
+
+            if (response && response.status && response.status === 500) {
+                const warning =
+                    `(${moment().format("hh:mm:ss")}) ` +
+                    "Unexpectedly lost connection with server. Please close the app and try again."
+
+                progressSoFar = 0
+                yield put(
+                    Action.updateLoading({
+                        percentLoaded: progressSoFar,
+                        statusMessage: warning,
+                    })
+                )
+            }
+        }
+
+        // Update status message every six seconds
+        if (secondsPassed > 0 && secondsPassed % 6 === 0) {
+            yield put(
+                Action.updateLoading({
+                    statusMessage: generateMessage(),
+                })
+            )
+        }
+
+        // Update loading bar every second
+        yield put(
+            Action.updateLoading({
+                percentLoaded: progressSoFar,
+            })
+        )
+        progressSoFar = Math.min(99, progressSoFar + 1)
+
+        yield delay(1000)
+        secondsPassed += 1
+    }
+    // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
+    if (json && json.state && json.state === "SUCCESS") {
+        if (json.output) {
+            yield put(
+                Action.updateContainer({
+                    containerID: json.output.containerID,
+                    cluster: json.output.cluster,
+                    port32262: json.output.port_32262,
+                    port32263: json.output.port_32263,
+                    port32273: json.output.port_32273,
+                    location: json.output.location,
+                    publicIP: json.output.ip,
+                    secretKey: json.output.secret_key,
+                    currentAppID: action.app,
+                })
+            )
+        }
+
+        progressSoFar = 100
+
+        yield put(
+            Action.updateLoading({
+                statusMessage: "Stream successfully started.",
+                percentLoaded: progressSoFar,
+            })
+        )
+    } else {
+        const warning =
+            `(${moment().format("hh:mm:ss")}) ` +
+            `Unexpectedly lost connection with server. Cancelling...`
+        progressSoFar = 0
+        yield put(
+            Action.updateLoading({
+                statusMessage: warning,
+                percentLoaded: progressSoFar,
+            })
+        )
+    }
+}
+
 function* submitFeedback<T extends {}>(action: { body: T }) {
     const state = yield select()
     const { success } = yield call(
@@ -235,6 +368,7 @@ function* submitFeedback<T extends {}>(action: { body: T }) {
 export default function* rootSaga() {
     yield all([
         takeEvery(SideEffect.CREATE_CONTAINER, createContainer),
+        takeEvery(SideEffect.CREATE_TEST_CONTAINER, createTestContainer),
         takeEvery(SideEffect.SUBMIT_FEEDBACK, submitFeedback),
         takeEvery(SideEffect.VALIDATE_ACCESS_TOKEN, validateAccessToken),
     ])

@@ -78,6 +78,26 @@ button {
     outline: none !important;
 }
 
+.dashboardButton {
+    font-family: "Maven Pro";
+    font-weight: bold;
+    padding: 10px 25px;
+    width: 150px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 13px;
+    float: right;
+    margin-top: 15px;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.dashboardButton:hover {
+    background: #93f1d9;
+    cursor: pointer;
+    color: #111111;
+}
+
 .loginButton {
     margin-left: 0px;
     width: 350px;
