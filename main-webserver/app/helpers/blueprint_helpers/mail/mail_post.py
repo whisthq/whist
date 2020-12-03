@@ -51,7 +51,7 @@ def cancel_helper(user, feedback):
     try:
         message = Mail(
             from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
-            to_emails="cidney@tryfractal.com",
+            to_emails="support@tryfractal.com",
             subject=title,
             html_content=feedback,
         )
