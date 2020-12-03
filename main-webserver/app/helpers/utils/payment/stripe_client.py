@@ -350,45 +350,6 @@ class StripeClient:
             lambda acc, tax: tax["id"] if tax["region"] == purchase_region else acc, tax_rates, None
         )
 
-        # This commented out code block was previously used to handle referrals, can be added back
-        # if we choose to give extended trials for referrals in the future:
-        # if they are a new customer initialize them
-        # in either case find it whether we need to make a new subscription
-        # subscribed = True
-
-        # if not stripe_customer_id:
-        #     # if they are not a customer they require a token
-        #     if token is None:
-        #         raise InvalidStripeToken
-
-        #     subscriptions = None  # this is necessary since if <unbound> != if None (i.e. false)
-        #     customer = stripe.Customer.create(email=email, source=token)
-        #     stripe_customer_id = customer["id"]
-        #     referrer = User.query.filter_by(referral_code=code).first() if code else None
-        #     # they are rewarded by another request to discount by the client where they get credits
-
-        #     if referrer:
-        #         trial_end = dateToUnix(datetime.now() + relativedelta(months=1))
-        #         self.discount(referrer)
-        #     else:
-        #         trial_end = dateToUnix(datetime.now() + timedelta(weeks=1))
-
-        #     subscribed = False
-
-        #     user.stripe_customer_id = stripe_customer_id
-        #     user.credits_outstanding = 0
-        #     db.session.commit()
-
-        #     fractalLog(
-        #         function="StripeClient.create_subscription",
-        #         label=email,
-        #         logs="Customer added successful",
-        #     )
-        # else:
-        #     subscriptions = stripe.Subscription.list(customer=stripe_customer_id)["data"]
-        #     if len(subscriptions) == 0:
-        #         trial_end = dateToUnix(datetime.now() + relativedelta(weeks=1))
-
         # check if customer already has subscriptions
         subscriptions = stripe.Subscription.list(customer=stripe_customer_id)["data"]
         if len(subscriptions) == 0:

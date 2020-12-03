@@ -60,6 +60,7 @@ month = date_to_unix(datetime.now() + relativedelta(months=1))
 
 monthly_plan_name = "Monthly"
 
+
 @pytest.fixture(scope="session")
 def monthly_plan(app):
     stripe.api_key = app.config["STRIPE_SECRET"]
@@ -472,8 +473,11 @@ def test_invalid_user_throws(client):
         client.delete_card(dummy_nonexistent_email, "dummy")
 
 
-""" Here are deprecated subscription creation tests. They may be used in the future when we add support for referrals, or if we allow user to create a subscription without having a card first in the future.
+""" Here are deprecated subscription creation tests. They may be used in the future when we add support for 
+referrals, or if we allow user to create a subscription without having a card first in the future."""
 
+
+@pytest.mark.skip
 def test_create_subscription_with_not_customer(client, not_customer):
     email = not_customer
 
@@ -485,6 +489,7 @@ def test_create_subscription_with_not_customer(client, not_customer):
         _remove_stripe_customer(email)
 
 
+@pytest.mark.skip
 def test_create_subscription_with_customer(client, not_customer):
     email = not_customer
 
@@ -502,13 +507,12 @@ def test_create_subscription_with_customer(client, not_customer):
                 )
 
 
+@pytest.mark.skip
 def test_create_subscription_invalid_code(client, monthly_plan, not_customer):
     email = not_customer
     dummy_token = _generate_token()
 
-    assert client.create_subscription(
-        dummy_token, email, monthly_plan, dummy_invalid_referral_code
-    )
+    assert client.create_subscription(dummy_token, email, monthly_plan, dummy_invalid_referral_code)
 
     stripe_customer_id = _get_stripe_customer_id(email)
     trial_end = stripe.Subscription.list(customer=stripe_customer_id)["data"][0]["trial_end"]
@@ -516,6 +520,7 @@ def test_create_subscription_invalid_code(client, monthly_plan, not_customer):
     assert _closest(trial_end, [month, week]) == week
 
 
+@pytest.mark.skip
 def test_invalid_zip_code(client, monthly_plan, not_customer):
     email = not_customer
     dummy_token = _generate_token(zipcode=dummy_zip_uk)
@@ -524,10 +529,10 @@ def test_invalid_zip_code(client, monthly_plan, not_customer):
         client.create_subscription(dummy_token, email, monthly_plan)
 
 
+@pytest.mark.skip
 def test_invalid_token(client, monthly_plan, not_customer):
     email = not_customer
     dummy_token = _generate_token(malformed=True)
 
     with pytest.raises(InvalidStripeToken):
         client.create_subscription(dummy_token, email, monthly_plan)
-"""
