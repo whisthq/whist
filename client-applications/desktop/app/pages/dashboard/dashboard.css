@@ -1,4 +1,4 @@
-@import "/app.global.css";
+@import '/app.global.css';
 
 .page {
     flex: 1;
@@ -7,7 +7,7 @@
 
 .feedbackButton,
 .noFeedbackButton {
-    font-family: "Maven Pro";
+    font-family: 'Maven Pro';
     font-weight: bold;
     padding: 10px 25px;
     width: 150px;
@@ -137,7 +137,7 @@
     height: 100vh;
     overflow-x: hidden;
     overflow-y: hidden;
-    font-family: "Maven Pro";
+    font-family: 'Maven Pro';
     margin: 0px;
     -webkit-app-region: drag;
     user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */

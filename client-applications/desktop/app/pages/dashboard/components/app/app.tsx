@@ -57,7 +57,7 @@ const App = (props: {
                                 position: "absolute",
                                 top: "50%",
                                 left: "50%",
-                                transform: "translate(-45%, -5%)",
+                                transform: "translate(-50%, -50%)",
                             }}
                         >
                             <FaPlay className={styles.faPlayButton} />
@@ -76,6 +76,7 @@ const App = (props: {
                             <img
                                 src={app.logo_url}
                                 className={styles.appImage}
+                                alt="logo"
                             />
                             <div className={styles.appName}>{app.app_id}</div>
                             <div className={styles.appDescription}>
@@ -108,6 +109,7 @@ const App = (props: {
                             style={{ minWidth: "120px", paddingRight: "20px" }}
                         >
                             <img
+                                alt="logo"
                                 src={app.logo_url}
                                 className={styles.modalAppImage}
                             />
@@ -124,12 +126,13 @@ const App = (props: {
                                 <div style={{ color: "#cccccc" }}>
                                     {app.category}
                                 </div>
-                                <span
+                                <button
+                                    type="button"
                                     className={styles.appLink}
                                     onClick={() => handleLinkClick(app.url)}
                                 >
                                     {app.url}
-                                </span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -143,16 +146,22 @@ const App = (props: {
                         {app.long_description}
                     </div>
                     <div className={styles.tos}>
-                        Note: By using this app through Fractal, you are
-                        agreeing to their{" "}
-                        <span
+                        <div>
+                            Note: By using this app through Fractal, you are
+                            agreeing to their{" "}
+                        </div>
+                        <button
+                            type="button"
                             className={styles.tosLink}
                             onClick={() => handleLinkClick(app.tos)}
                         >
                             terms of service.
-                        </span>
+                        </button>
                     </div>
-                    <button className={dashboardStyles.modalButton}>
+                    <button
+                        type="button"
+                        className={dashboardStyles.modalButton}
+                    >
                         Download
                     </button>
                 </Modal.Body>

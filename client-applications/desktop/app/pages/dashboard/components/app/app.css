@@ -1,4 +1,4 @@
-@import "/app.global.css";
+@import '/app.global.css';
 
 @keyframes ripple {
     0%,
@@ -95,6 +95,7 @@
     left: 40px;
     bottom: 40px;
     font-size: 11px;
+    display: 'flex';
     color: var(--light-text-color);
 }
 

@@ -1,13 +1,13 @@
-import { debugLog } from "./logging.js"
+import { debugLog } from './logging.js'
 
 export async function apiPost(endpoint, body, token) {
     try {
         const response = await fetch(endpoint, {
-            method: "POST",
-            mode: "cors",
+            method: 'POST',
+            mode: 'cors',
             headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer ' + token,
             },
             body: JSON.stringify(body),
         })
@@ -22,11 +22,11 @@ export async function apiPost(endpoint, body, token) {
 export async function apiGet(endpoint, token) {
     try {
         const response = await fetch(endpoint, {
-            method: "GET",
-            mode: "cors",
+            method: 'GET',
+            mode: 'cors',
             headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer ' + token,
             },
         })
         const json = await response.json()
