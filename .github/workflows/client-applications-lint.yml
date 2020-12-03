@@ -9,7 +9,7 @@ on:
       - "client-applications/**"
 
 jobs:
-  lint:
+  client-applications-lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,9 +26,6 @@ jobs:
 
       - name: Run yarn -i in /desktop
         run: cd client-applications/desktop && yarn -i
-
-      - name: Format with Prettier in /desktop
-        run: cd client-applications/desktop && yarn format
 
       - name: Check if code is linted with Prettier
         run: |
