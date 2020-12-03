@@ -160,6 +160,7 @@ function* createContainer<T extends {}>(action: { body: T }) {
     )
 
     while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
+        console.log(`json is ${JSON.stringify(json)}\n and json.state is ${json.state}`)
         if (secondsPassed % 1 === 0) {
             ;({ success } = yield call(
                 apiGet,
