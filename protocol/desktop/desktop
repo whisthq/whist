@@ -9,4 +9,7 @@ fi
 cd build64/$file
 ./FractalClient $@
 cd ../..
+<<<<<<< HEAD
 
+=======
+>>>>>>> refs/rewritten/onto

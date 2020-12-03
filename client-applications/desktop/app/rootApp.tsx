@@ -68,17 +68,20 @@ const RootApp = (props: any) => {
         if (launches === 1 && launched && launchURL && data) {
             setAWSRegion()
                 .then((region) => {
-                    dispatch(updateClient({ region: region }))
+                    return dispatch(updateClient({ region: region }))
                 })
                 .then(() => {
-                    const { app_id, url } = Object(
+                    const { appID, url } = Object(
                         urlToApp(launchURL.toLowerCase(), featuredAppData)
                     )
-                    dispatch(createContainer(app_id, url))
-                    setLaunched(false)
+                    dispatch(createContainer(appID, url))
+                    return setLaunched(false)
                 })
                 .then(() => {
-                    history.push("/loading")
+                    return history.push("/loading")
+                })
+                .catch((error) => {
+                    "setAWSRegion() failed"
                 })
         }
     }, [launches, launched, data, launchURL])

@@ -1,6 +1,6 @@
 # Fractal Container Images
 
-![Dockerfiles Building](https://github.com/fractalcomputers/container-images/workflows/Dockerfiles%20Building/badge.svg)
+![Dockerfiles Building](https://github.com/fractal/container-images/workflows/Dockerfiles%20Building/badge.svg)
 
 This repository contains the code for containerizing the various applications that Fractal streams. The base Dockerfile.20 running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
 
@@ -16,6 +16,7 @@ All of the following applications are based off of the **Ubuntu 20.04 Base Image
 | Sidekick Browser | TextureLab |              |
 |                  | Gimp       |              |
 |                  | Lightworks |              |
+|		               | Inkscape   | 	           |
 
 See [Adding New Applications](#Adding-New-Applications) for details on how to add support for new applications and integrate them with our continuous delivery pipeline.
 
@@ -30,17 +31,17 @@ Contributions should be made via pull requests to the `dev` branch, which is the
 When git cloning, ensure that all git submodules are pulled as follows:
 
 ```
-git clone --recurse-submodules --branch $your-container-images-branch https://github.com/fractalcomputers/container-images ~/container-images
+git clone --recurse-submodules --branch $your-container-images-branch https://github.com/fractal/container-images ~/container-images
 cd ~/container-images
 ```
 
 Or, if you have sshkeys:
 
 ```
-git clone --recurse-submodules --branch $your-container-images-branch git@github.com:fractalcomputers/container-images.git ~/container-images
+git clone --recurse-submodules --branch $your-container-images-branch git@github.com:fractal/container-images.git ~/container-images
 ```
 
-Then, setup on your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractalcomputers/ecs-host-setup/) repository:
+Then, setup on your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractal/ecs-host-setup/) repository: 
 
 ```
 ./setup_ubuntu20_host.sh
@@ -113,7 +114,7 @@ Here, `APP` is again the path to the relevant app folder; e.g., `base` or `brows
 
 ### Continous Delivery
 
-This is how we push to production. For every push to `master`, all applications that have a Dockerfile get automatically built and pushed to all AWS regions specified under `aws-regions` in `.github/workflows/push-images.yml`. This will then automatically trigger a new release of all the ECS task definitions in `fractalcomputers/ecs-task-definitions`, which need to be updated in production to point to our new container image tags.
+This is how we push to production. For every push to `master`, all applications that have a Dockerfile get automatically built and pushed to all AWS regions specified under `aws-regions` in `.github/workflows/push-images.yml`. This will then automatically trigger a new release of all the ECS task definitions in `fractal/ecs-task-definitions`, which need to be updated in production to point to our new container image tags.
 
 #### Adding New Applications
 

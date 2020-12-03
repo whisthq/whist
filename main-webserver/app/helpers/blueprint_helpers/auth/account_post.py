@@ -2,11 +2,10 @@ import datetime
 import logging
 
 from datetime import datetime as dt
-from flask import jsonify, current_app
+from flask import current_app, jsonify
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-from app.constants.config import SENDGRID_API_KEY, SENDGRID_EMAIL
 from app.constants.http_codes import BAD_REQUEST, NOT_ACCEPTABLE, SUCCESS, UNAUTHORIZED, NOT_FOUND
 from app.helpers.blueprint_helpers.mail.mail_post import verificationHelper
 from app.helpers.utils.general.crypto import check_value, hash_value
@@ -141,7 +140,7 @@ def registerHelper(username, password, name, reason_for_signup, can_login):
     if status == SUCCESS:
         try:
             message = Mail(
-                from_email=SENDGRID_EMAIL,
+                from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
                 to_emails="support@tryfractal.com",
                 subject=username + " just created an account!",
                 html_content=(
@@ -149,7 +148,8 @@ def registerHelper(username, password, name, reason_for_signup, can_login):
                     f"signup is: {reason_for_signup}. Have a great day.</p>"
                 ),
             )
-            sg = SendGridAPIClient(SENDGRID_API_KEY)
+            sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
+
             sg.send(message)
         except Exception as e:
             fractalLog(

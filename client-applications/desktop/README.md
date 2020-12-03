@@ -14,7 +14,7 @@ Before starting development, you need to install all of the application and deve
 
 If you are still experiencing issues with starting the dev environment, you might need to run `yarn upgrade`, which will upgrade all the dependencies. It's a good idea to do so periodically to keep the application up-to-date. If further issues persist, you can try reinstalling by running `rm -rf node_modules/` then `yarn` again.
 
-To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `yarn cross-env PORT={number} yarn dev`. This will start the Electron application, but will not fetch the Fractal protocol, which means you can only use this to test the application itself, unless you manually cloned and built the protocol yourself. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below. 
+To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `yarn cross-env PORT={number} yarn dev`. This will start the Electron application, but will not fetch the Fractal protocol, which means you can only use this to test the application itself, unless you manually cloned and built the protocol yourself. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below.
 
 This repository has continuous integration through GitHub Actions, which you can learn more about under [Continuous Integration](#Continuous Integration).
 
@@ -54,7 +54,7 @@ Fractal runs two update channels, `production` and `testing`. The `dev` branch s
 
 Any CI generated builds are also stored in GitHub Releases which can be manually downloaded and used.
 
-CI should handle releases, however, 
+CI should handle releases, however,
 
 #### Update Channels
 
@@ -76,7 +76,7 @@ This repository has basic continuous integration through GitHub Actions. For eve
 
 New builds from the `dev` will also be pushed out on the `testing` channel.
 
-Moreover, new builds from [fractal/protocol](https://github.com/fractalcomputers/protocol) will trigger builds in this repository on their corresponding branch (or on `dev` if there is no appropriate corresponding branch). Similarly, new protocol builds on `dev` will also trigger a new build to be sent out on the `testing` channel.
+Moreover, new builds from [fractal/protocol](https://github.com/fractal/protocol) will trigger builds in this repository on their corresponding branch (or on `dev` if there is no appropriate corresponding branch). Similarly, new protocol builds on `dev` will also trigger a new build to be sent out on the `testing` channel.
 
 Additionally, [style](#Styling) checks will be run to verify that you formatted your code via Prettier. You should make sure that all tests pass under the Actions tab.
 
@@ -87,6 +87,8 @@ To ensure that code formatting is standardized, and to minimize clutter in the c
 You can always run Prettier directly from a terminal by typing `yarn format`, or you can install it directly within your IDE by via the following instructions:
 
 ### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+
+Additional specific checks are done by ESLint. Please run `yarn lint-check` or `yarn lint-fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to .eslintrc and either demote to warnings or mute entirely.
 
 Launch VS Code Quick Open (Ctrl+P/Cmd+P), paste the following command, and press enter.
 
