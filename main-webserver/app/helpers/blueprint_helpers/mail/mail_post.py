@@ -45,11 +45,13 @@ def forgot_password_helper(username):
 
 def cancel_helper(user, feedback):
     title = "[CANCELLED PLAN + FEEDBACK] " + user + " has Just Cancelled Their Plan"
+    if not feedback:
+        feedback = "User did not submit feedback."
 
     try:
         message = Mail(
             from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
-            to_emails="support@tryfractal.com",
+            to_emails="cidney@tryfractal.com",
             subject=title,
             html_content=feedback,
         )

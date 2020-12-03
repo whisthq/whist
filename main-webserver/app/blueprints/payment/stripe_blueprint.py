@@ -85,7 +85,7 @@ def payment(action, **kwargs):
     elif action == "addCard" or action == "modifyCard":
         return addCardHelper(body["email"], body["source"])
     elif action == "deleteCard":
-        return deleteCardHelper(body["email"], body["token"])
+        return deleteCardHelper(body["email"], body["source"])
     # Retrieves the stripe subscription of the customer so we can tell them some basic info
     elif action == "retrieve":
         return retrieveHelper(body["email"])

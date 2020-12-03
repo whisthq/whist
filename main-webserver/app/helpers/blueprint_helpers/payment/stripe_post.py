@@ -74,7 +74,7 @@ def deleteSubscriptionHelper(email):
         return jsonify({"status": INTERNAL_SERVER_ERROR}), INTERNAL_SERVER_ERROR
 
 
-def addCardHelper(email, token):
+def addCardHelper(email, source):
     client = StripeClient(current_app.config["STRIPE_SECRET"])
 
     try:
@@ -92,11 +92,11 @@ def addCardHelper(email, token):
     return jsonify({"status": status}), status
 
 
-def deleteCardHelper(email, token):
+def deleteCardHelper(email, source):
     client = StripeClient(current_app.config["STRIPE_SECRET"])
 
     try:
-        client.delete_card(email, token)
+        client.delete_card(email, source)
         status = SUCCESS
     except NonexistentUser:
         status = FORBIDDEN
