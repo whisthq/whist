@@ -42,4 +42,4 @@ jobs:
           fi
 
       - name: Check if code matches Pylint standards
-        run: cd main-webserver && pylint app # Returns 0 iff code is not linted
+        run: cd main-webserver && pylint app # Returns 0 iff code is linted
