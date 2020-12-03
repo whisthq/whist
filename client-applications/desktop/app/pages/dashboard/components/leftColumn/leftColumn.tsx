@@ -3,7 +3,7 @@ import { Col } from "react-bootstrap"
 import { FaGlobeEurope, FaBook, FaPalette, FaLayerGroup } from "react-icons/fa"
 
 import CategoryIcon from "pages/dashboard/components/categoryIcon/categoryIcon"
-import { FractalAppCategory } from "shared/enums/navigation"
+import { FractalAppCategory } from "shared/types/navigation"
 
 import styles from "pages/dashboard/components/leftColumn/leftColumn.css"
 

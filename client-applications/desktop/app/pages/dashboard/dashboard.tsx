@@ -7,8 +7,8 @@ import Discover from "pages/dashboard/views/discover/discover"
 import Settings from "pages/dashboard/views/settings/settings"
 import Support from "pages/dashboard/views/support/support"
 
-import { FractalDashboardTab } from "shared/enums/navigation"
-import { OperatingSystem } from "shared/enums/client"
+import { FractalDashboardTab } from "shared/types/navigation"
+import { OperatingSystem } from "shared/types/client"
 
 import styles from "pages/dashboard/dashboard.css"
 

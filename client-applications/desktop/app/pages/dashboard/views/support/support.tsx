@@ -1,13 +1,14 @@
-import React, { useState, ChangeEvent } from "react"
+import React, { useState, ChangeEvent, KeyboardEvent } from "react"
 import { connect } from "react-redux"
 import { Alert, Row } from "react-bootstrap"
 
 import { submitFeedback } from "store/actions/sideEffects"
+import { FractalKey } from "shared/types/input"
 
 import styles from "pages/dashboard/views/support/support.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
 
-const Settings = <T extends {}>(props: T) => {
+const Support = <T extends {}>(props: T) => {
     const { dispatch } = props
 
     const [feedback, setFeedback] = useState("")
@@ -34,8 +35,8 @@ const Settings = <T extends {}>(props: T) => {
             <Row>
                 <div style={{ marginTop: 30, fontSize: 15 }}>
                     If you have any feedback to make Fractal better, or need to
-                    contact our team, please fill out the form below, and we'll
-                    get back to you as soon as possible!
+                    contact our team, please fill out the form below, and
+                    we&lsquo;ll get back to you as soon as possible!
                 </div>
                 <form className={styles.form}>
                     <select
@@ -75,6 +76,14 @@ const Settings = <T extends {}>(props: T) => {
                 )}
                 {type && feedback ? (
                     <div
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                            // enter key
+                            if (event.key === FractalKey.ENTER) {
+                                handleSubmit()
+                            }
+                        }}
                         className={dashboardStyles.feedbackButton}
                         onClick={handleSubmit}
                     >
@@ -90,8 +99,8 @@ const Settings = <T extends {}>(props: T) => {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
+const mapStateToProps = () => {
     return {}
 }
 
-export default connect(mapStateToProps)(Settings)
+export default connect(mapStateToProps)(Support)

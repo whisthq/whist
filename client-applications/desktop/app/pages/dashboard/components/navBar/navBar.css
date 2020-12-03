@@ -99,6 +99,10 @@
     margin-top: 10px;
 }
 
+.signoutButton:hover {
+    cursor: pointer;
+}
+
 .tabWrapper {
     margin-top: 10px;
     padding-left: 45px !important;

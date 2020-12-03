@@ -15,7 +15,7 @@ import { setAWSRegion } from "shared/utils/exec"
 import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 
-import { FractalRoute } from "shared/enums/navigation"
+import { FractalRoute } from "shared/types/navigation"
 
 const RootApp = (props: {
     launches: number
@@ -145,10 +145,10 @@ const RootApp = (props: {
                     return null
                 })
                 .then(() => {
-                    const { app_id: appId, url } = Object(
+                    const { appID, url } = Object(
                         urlToApp(launchURL.toLowerCase(), featuredAppData)
                     )
-                    dispatch(createContainer(appId, url))
+                    dispatch(createContainer(appID, url))
                     setLaunched(false)
                     return null
                 })

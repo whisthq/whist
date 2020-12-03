@@ -7,9 +7,10 @@ import * as SideEffect from "store/actions/sideEffects"
 import { apiPost, apiGet } from "shared/utils/api"
 import { history } from "store/history"
 import { generateMessage } from "shared/utils/loading"
-import { FractalRoute } from "shared/enums/navigation"
-import { FractalAPI } from "shared/enums/api"
-import { AWSRegion } from "shared/enums/aws"
+import { FractalRoute } from "shared/types/navigation"
+import { FractalAPI } from "shared/types/api"
+import { AWSRegion } from "shared/types/aws"
+import { FractalAuthCache } from "shared/types/cache"
 
 function* refreshAccess() {
     const state = yield select()
@@ -36,7 +37,7 @@ function* refreshAccess() {
     }
 }
 
-function* validateAccessToken<T extends {}>(action: { body: T }) {
+function* validateAccessToken(action: { accessToken: string }) {
     const { json, success } = yield call(
         apiGet,
         FractalAPI.TOKEN.VALIDATE,
@@ -47,7 +48,7 @@ function* validateAccessToken<T extends {}>(action: { body: T }) {
         const Store = require("electron-store")
         const storage = new Store()
 
-        storage.set("accessToken", action.accessToken)
+        storage.set(FractalAuthCache.ACCESS_TOKEN, action.accessToken)
 
         yield put(
             Action.updateAuth({
@@ -91,7 +92,7 @@ function* createContainer<T extends {}>(action: { body: T }) {
         return
     }
 
-    const data = yield call(
+    let { json, success } = yield call(
         apiPost,
         FractalAPI.CONTAINER.CREATE,
         {
@@ -104,9 +105,6 @@ function* createContainer<T extends {}>(action: { body: T }) {
         state.MainReducer.auth.accessToken
     )
 
-    let { json } = data
-    const { success } = data
-
     if (!success) {
         yield call(refreshAccess)
         yield call(createContainer, action)
@@ -114,7 +112,7 @@ function* createContainer<T extends {}>(action: { body: T }) {
     }
 
     const id = json.ID
-    ;({ json, response } = yield call(
+    ;({ json, success } = yield call(
         apiGet,
         `/status/${id}`,
         state.MainReducer.auth.accessToken
@@ -132,13 +130,13 @@ function* createContainer<T extends {}>(action: { body: T }) {
 
     while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
         if (secondsPassed % 1 === 0) {
-            ;({ response } = yield call(
+            ;({ success } = yield call(
                 apiGet,
                 `/status/${id}`,
                 state.MainReducer.auth.accessToken
             ))
 
-            if (response && response.status && response.status === 500) {
+            if (!success) {
                 const warning =
                     `(${moment().format("hh:mm:ss")}) ` +
                     "Unexpectedly lost connection with server. Please close the app and try again."
