@@ -229,7 +229,7 @@ function* createTestContainer<T extends {}>(action: { body: T }) {
 
     const data = yield call(
         apiPost,
-        `/aws_container/create_container`,
+        FractalAPI.CONTAINER.TEST_CREATE,
         {
             username: username,
             cluster_name: cluster_name,
@@ -241,15 +241,15 @@ function* createTestContainer<T extends {}>(action: { body: T }) {
         webserver // webserver_url
     )
 
-    let { json } = data
     const { success } = data
 
-    const id = json.ID
-    ;({ json, response } = yield call(
+    const id = data.json.ID
+    let { json, response } = yield call(
         apiGet,
         `/status/${id}`,
-        state.MainReducer.auth.accessToken
-    ))
+        state.MainReducer.auth.accessToken,
+        webserver,
+    )
 
     let progressSoFar = 0
     let secondsPassed = 0
@@ -266,7 +266,8 @@ function* createTestContainer<T extends {}>(action: { body: T }) {
             ;({ response } = yield call(
                 apiGet,
                 `/status/${id}`,
-                state.MainReducer.auth.accessToken
+                state.MainReducer.auth.accessToken,
+                webserver,
             ))
 
             if (response && response.status && response.status === 500) {

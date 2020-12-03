@@ -442,7 +442,7 @@ const Settings = <T extends {}>(props: T) => {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
+const mapStateToProps = <T extends {}>(state: T) => {
     return {
         username: state.MainReducer.auth.username,
         adminState: state.MainReducer.admin,
