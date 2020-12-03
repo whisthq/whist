@@ -111,6 +111,8 @@ jobs:
     name: ${{ matrix.config.name }}
     needs: [params]
     runs-on: ${{ matrix.config.os }}
+    env:
+      working-directory: ./protocol
     strategy:
       fail-fast: false
       matrix:
@@ -147,6 +149,7 @@ jobs:
           ref: ${{ needs.params.outputs.ref }}
 
       - name: Set status to in progress
+        working-directory: ${{env.working-directory}}
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{ github.token }}
@@ -157,17 +160,20 @@ jobs:
           target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
 
       - name: Chocolatey install cppcheck
+        working-directory: ${{env.working-directory}}
         if: runner.os == 'Windows'
         uses: crazy-max/ghaction-chocolatey@v1
         with:
           args: install "${{ github.workspace }}\.github\protocol\choco-install.config" --force
 
       - name: Install Python (for sentry download)
+        working-directory: ${{env.working-directory}}
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
 
       - name: Install CUDA for windows
+        working-directory: ${{env.working-directory}}
         if: runner.os == 'Windows'
         env:
           visual_studio: "Visual Studio 16 2019"
@@ -184,6 +190,7 @@ jobs:
           echo "::add-path::$env:CUDA_PATH/bin"  }
 
       - name: nvcc check for windows
+        working-directory: ${{env.working-directory}}
         if: runner.os == 'Windows'
         shell: powershell
         run: |
@@ -194,6 +201,7 @@ jobs:
 
       # TODO add actions/cache@v2 around this operation to improve GHA execution time
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
+        working-directory: ${{env.working-directory}}
         # TODO move into a script stored inside the repo to make this workflow easier to read
         id: cmake_and_ninja
         shell: cmake -P {0}
@@ -253,6 +261,7 @@ jobs:
           endif()
 
       - name: Download ccache
+        working-directory: ${{env.working-directory}}
         id: ccache
         shell: cmake -P {0}
         run: |
@@ -261,6 +270,7 @@ jobs:
           execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ccache.tar.xz)
 
       - name: Prepare ccache timestamp
+        working-directory: ${{env.working-directory}}
         id: ccache_cache_timestamp
         shell: cmake -P {0}
         run: |
@@ -268,6 +278,7 @@ jobs:
           message("::set-output name=timestamp::${current_date}")
 
       - name: ccache cache files
+        working-directory: ${{env.working-directory}}
         uses: actions/cache@v1.1.0
         with:
           path: .ccache
@@ -276,6 +287,7 @@ jobs:
             ${{ matrix.config.name }}-ccache-
 
       - name: Configure cmake
+        working-directory: ${{env.working-directory}}
         # TODO move into a script stored inside the repo to make this workflow easier to read
         shell: cmake -P {0}
         run: |
@@ -322,6 +334,7 @@ jobs:
           endif()
 
       - name: Perform build
+        working-directory: ${{env.working-directory}}
         # TODO move into a script stored inside the repo to make this workflow easier to read
         shell: cmake -P {0}
         run: |
@@ -366,17 +379,21 @@ jobs:
           execute_process(COMMAND ccache -s)
 
       - name: Get latest sentry-cli
+        working-directory: ${{env.working-directory}}
         uses: mathrix-education/setup-sentry-cli@master
       - name: Upload debug information to sentry
+        working-directory: ${{env.working-directory}}
         run: |
             sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
         continue-on-error: true
       - name: upload windows pdb
+        working-directory: ${{env.working-directory}}
         if: runner.os == 'Windows'
         run: |
             sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
         continue-on-error: true
       - name: Upload server artifact (if requested on this platform)
+        working-directory: ${{env.working-directory}}
         if: matrix.config.server_artifact_name
         uses: actions/upload-artifact@v2
         with:
@@ -384,6 +401,7 @@ jobs:
           path: ${{ github.workspace }}${{ matrix.config.server_artifact_relpath }}
 
       - name: Upload client artifact
+        working-directory: ${{env.working-directory}}
         if: matrix.config.client_artifact_name
         uses: actions/upload-artifact@v2
         with:
@@ -391,6 +409,7 @@ jobs:
           path: ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}
 
       - name: Set status to success
+        working-directory: ${{env.working-directory}}
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{ github.token }}
@@ -401,6 +420,7 @@ jobs:
           target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
 
       - name: Set status to failure
+        working-directory: ${{env.working-directory}}
         if: ${{ failure() }}
         uses: Sibz/github-status-action@v1
         with:
