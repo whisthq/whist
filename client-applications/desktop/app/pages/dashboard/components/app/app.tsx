@@ -1,14 +1,24 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, Dispatch } from "react"
 import { connect } from "react-redux"
-import { Modal } from "react-bootstrap"
-import styles from "styles/dashboard.css"
+import { Col, Modal } from "react-bootstrap"
+import { FaPlay } from "react-icons/fa"
 
 import { createContainer } from "store/actions/sideEffects"
 import { updateContainer } from "store/actions/pure"
-import { history } from "store/configureStore"
+import { history } from "store/history"
+import { FractalRoute } from "shared/types/navigation"
+import { openExternal } from "shared/utils/helpers"
+import { FractalApp } from "shared/types/ui"
 
-const App = (props: any) => {
-    const { dispatch, app, launches } = props
+import styles from "pages/dashboard/components/app/app.css"
+import dashboardStyles from "pages/dashboard/dashboard.css"
+
+const App = (props: {
+    app: FractalApp
+    launches: number
+    dispatch: Dispatch
+}) => {
+    const { app, launches, dispatch } = props
 
     const [showModal, setShowModal] = useState(false)
     const [launched, setLaunched] = useState(false)
@@ -17,8 +27,7 @@ const App = (props: any) => {
     const handleCloseModal = () => setShowModal(false)
 
     const handleLinkClick = (url: string) => {
-        const { shell } = require("electron")
-        shell.openExternal(url)
+        openExternal(url)
     }
 
     const handleLaunch = () => {
@@ -28,23 +37,54 @@ const App = (props: any) => {
 
     useEffect(() => {
         if (launches === 1 && launched) {
-            history.push("/loading")
+            history.push(FractalRoute.LOADING)
             dispatch(createContainer(app.app_id))
             setLaunched(false)
         }
     }, [launches, launched])
 
     return (
-        <>
-            <div className={styles.appContainer} onClick={handleOpenModal}>
-                <div className={styles.appHeading}>
-                    <img src={app.logo_url} className={styles.appImage} />
-                    <div className={styles.appName}>{app.app_id}</div>
-                </div>
-                <div className={styles.appDescription}>{app.description}</div>
-                <button className={styles.launchButton} onClick={handleLaunch}>
-                    LAUNCH
+        <Col xs={3}>
+            <div>
+                <button
+                    type="button"
+                    className={styles.playButton}
+                    onClick={handleLaunch}
+                >
+                    <div style={{ position: "relative" }}>
+                        <div
+                            style={{
+                                position: "absolute",
+                                top: "50%",
+                                left: "50%",
+                                transform: "translate(-50%, -55%)",
+                            }}
+                        >
+                            <FaPlay className={styles.faPlayButton} />
+                        </div>
+                    </div>
                 </button>
+                <div
+                    style={{ height: 220, paddingBottom: 20, marginBottom: 10 }}
+                >
+                    <button
+                        type="button"
+                        className={styles.appContainer}
+                        onClick={handleOpenModal}
+                    >
+                        <div className={styles.appHeading}>
+                            <img
+                                src={app.logo_url}
+                                className={styles.appImage}
+                                alt="logo"
+                            />
+                            <div className={styles.appName}>{app.app_id}</div>
+                            <div className={styles.appDescription}>
+                                {app.description}
+                            </div>
+                        </div>
+                    </button>
+                </div>
             </div>
             <Modal
                 show={showModal}
@@ -61,6 +101,7 @@ const App = (props: any) => {
                         display: "flex",
                         flexDirection: "column",
                         padding: "0px 40px 40px 40px",
+                        border: "none",
                     }}
                 >
                     <div style={{ display: "flex", flexDirection: "row" }}>
@@ -68,6 +109,7 @@ const App = (props: any) => {
                             style={{ minWidth: "120px", paddingRight: "20px" }}
                         >
                             <img
+                                alt="logo"
                                 src={app.logo_url}
                                 className={styles.modalAppImage}
                             />
@@ -84,12 +126,13 @@ const App = (props: any) => {
                                 <div style={{ color: "#cccccc" }}>
                                     {app.category}
                                 </div>
-                                <span
+                                <button
+                                    type="button"
                                     className={styles.appLink}
                                     onClick={() => handleLinkClick(app.url)}
                                 >
                                     {app.url}
-                                </span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -103,28 +146,31 @@ const App = (props: any) => {
                         {app.long_description}
                     </div>
                     <div className={styles.tos}>
-                        Note: By using this app through Fractal, you are
-                        agreeing to their{" "}
-                        <span
+                        <div>
+                            Note: By using this app through Fractal, you are
+                            agreeing to their
+                        </div>
+                        <button
+                            type="button"
                             className={styles.tosLink}
                             onClick={() => handleLinkClick(app.tos)}
                         >
                             terms of service.
-                        </span>
+                        </button>
                     </div>
                     <button
-                        className={styles.modalButton}
-                        onClick={handleLaunch}
+                        type="button"
+                        className={dashboardStyles.modalButton}
                     >
-                        LAUNCH
+                        Download
                     </button>
                 </Modal.Body>
             </Modal>
-        </>
+        </Col>
     )
 }
 
-const mapStateToProps = (state: any) => {
+const mapStateToProps = <T extends {}>(state: T): T => {
     return {
         launches: state.MainReducer.container.launches,
     }

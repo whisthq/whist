@@ -3,16 +3,18 @@ export const UPDATE_CONTAINER = "UPDATE_CONTAINER"
 export const UPDATE_CLIENT = "UPDATE_CLIENT"
 export const UPDATE_PAYMENT = "UPDATE_PAYEMNT"
 export const UPDATE_LOADING = "UPDATE_LOADING"
+export const UPDATE_APPS = "UPDATE_APPS"
 
 export const RESET_STATE = "RESET_STATE"
 
 export function updateAuth(body: {
-    username?: string
-    accessToken?: string
-    refreshToken?: string
+    username?: string | null
+    candidateAccessToken?: string | null
+    accessToken?: string | null
+    refreshToken?: string | null
     loginWarning?: boolean
-    loginMessage?: string
-    name?: string
+    loginMessage?: string | null
+    name?: string | null
 }) {
     return {
         type: UPDATE_AUTH,
@@ -21,18 +23,18 @@ export function updateAuth(body: {
 }
 
 export function updateContainer(body: {
-    publicIP: string
-    containerID: string
-    cluster: string
-    port32262: string
-    port32263: string
-    port32273: string
-    location: string
-    secretKey: string
-    desiredAppID: string
-    currentAppID: string
+    publicIP: string | null
+    containerID: string | null
+    cluster: string | null
+    port32262: string | null
+    port32263: string | null
+    port32273: string | null
+    location: string | null
+    secretKey: string | null
+    desiredAppID: string | null
+    currentAppID: string | null
     launches: number
-    launchURL: string
+    launchURL: string | null
 }) {
     return {
         type: UPDATE_CONTAINER,
@@ -41,7 +43,7 @@ export function updateContainer(body: {
 }
 
 export function updateClient(body: {
-    os?: string
+    clientOS?: string
     region?: string
     dpi?: number
 }) {
@@ -67,6 +69,17 @@ export function updateLoading(body: {
 }) {
     return {
         type: UPDATE_LOADING,
+        body,
+    }
+}
+
+export function updateApps(body: {
+    notInstalled?: string[]
+    installing?: string[]
+    installed?: string[]
+}) {
+    return {
+        type: UPDATE_APPS,
         body,
     }
 }

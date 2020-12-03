@@ -1,44 +1,54 @@
-export const checkActive = (app: any): boolean => {
+import { FractalApp } from "shared/types/ui"
+import { FractalAppName } from "shared/types/client"
+
+export const checkActive = (app: FractalApp): boolean => {
     return app.active
 }
 
-export const urlToApp = (url: string, featuredAppData: any): any => {
-    for (var i = 0; i < featuredAppData.length; i++) {
+export const urlToApp = (
+    url: string,
+    featuredAppData: FractalApp[]
+): { appID: string; url: string } => {
+    for (let i = 0; i < featuredAppData.length; i += 1) {
         if (
             url
                 .toLowerCase()
-                .includes(featuredAppData[i].app_id.toLowerCase()) &&
-            featuredAppData[i].app_id !== "Google Chrome"
+                .includes(
+                    featuredAppData[i].app_id.toLowerCase().replace(/\s+/g, "-")
+                ) &&
+            featuredAppData[i].app_id !== FractalAppName.CHROME
         ) {
-            return { app_id: featuredAppData[i].app_id, url: null }
+            return { appID: featuredAppData[i].app_id, url: null }
         }
     }
-    return { app_id: "Google Chrome", url: url }
+    return { appID: FractalAppName, url: url }
 }
 
-let counter = 0
-
-export const findDPI = () => {
-    return findFirstPositive(
-        (x: any) => (++counter, matchMedia(`(max-resolution: ${x}dpi)`).matches)
-    )
-}
-
-const findFirstPositive = (fn: any) => {
-    let start = 1
-    while (0 >= fn(start)) start <<= 1
-    return binSearch(fn, start >>> 1, start) | 0
-}
-
-const binSearch = (fn: any, min: number, max: number): number => {
+const binSearch = (
+    fn: (x: number) => boolean,
+    min: number,
+    max: number
+): number => {
     if (max < min) return -1 // not found
 
-    let mid = (min + max) >>> 1
-    if (0 < fn(mid)) {
-        if (mid == min || 0 >= fn(mid - 1)) {
+    const mid = (min + max) / 2
+    if (fn(mid)) {
+        if (mid === min || !fn(mid - 1)) {
             return mid
         }
         return binSearch(fn, min, mid - 1)
     }
     return binSearch(fn, mid + 1, max)
+}
+
+const findFirstMatch = (fn: (x: number) => boolean) => {
+    let start = 1
+    while (!fn(start)) start *= 2
+    return binSearch(fn, start / 2, start)
+}
+
+export const findDPI = () => {
+    return findFirstMatch(
+        (x: number) => matchMedia(`(max-resolution: ${x}dpi)`).matches
+    )
 }

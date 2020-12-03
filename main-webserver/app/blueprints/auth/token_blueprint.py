@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from flask_jwt_extended import get_jwt_identity, jwt_refresh_token_required
+from flask_jwt_extended import get_jwt_identity, jwt_refresh_token_required, jwt_required
 
 from app import fractal_pre_process, jwtManager
 from app.helpers.blueprint_helpers.auth.token_post import validate_token_helper
@@ -28,11 +28,12 @@ def token(**kwargs):  # pylint: disable=unused-argument
     )
 
 
-@token_bp.route("/token/validate", methods=["POST"])
+@token_bp.route("/token/validate", methods=["GET"])
 @fractal_pre_process
-def validate_token(**kwargs):
-    body = kwargs["body"]
-    return validate_token_helper(body["token"])
+@jwt_required
+def validate_token(**kwargs):  # pylint: disable=unused-argument
+    output = validate_token_helper()
+    return jsonify(output), output["status"]
 
 
 @jwtManager.expired_token_loader

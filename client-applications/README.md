@@ -13,6 +13,7 @@ The following platforms are supported by the Fractal applications (links are to 
 For the desktop OS applications listed above, the version requirements come from the Fractal protocol; the Electron-based application should run on older versions as well, if needed for testing.
 
 The following platforms have yet to be supported:
+
 - iOS/iPadOS
 - Android/Chromebook
 - Web (the web client will be hosted on `fractal/website`)

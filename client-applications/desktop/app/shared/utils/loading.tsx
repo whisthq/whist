@@ -1,4 +1,5 @@
-import React from "react"
+import React, { KeyboardEvent } from "react"
+import FractalKey from "shared/types/input"
 
 const { shell } = require("electron")
 
@@ -15,6 +16,19 @@ const loadingMessages = [
         Join our Discord to chat with Fractal users and engineers:
         <div
             onClick={() => shell.openExternal("https://discord.gg/PDNpHjy")}
+            /*
+             * accessibility enforcement
+             * - role="link" tells client machines how to use this div
+             * - tabIndex allows link to be selected with tab key
+             * - onKeyDown allows link to be opened with enter key
+             */
+            role="link"
+            tabIndex={0}
+            onKeyDown={(event: KeyboardEvent) => {
+                if (event.key === FractalKey.ENTER) {
+                    shell.openExternal("https://discord.gg/PDNpHjy")
+                }
+            }}
             style={{ cursor: "pointer" }}
         >
             https://discord.gg/PDNpHjy
@@ -35,3 +49,6 @@ const loadingMessages = [
 export const generateMessage = (): string => {
     return _.shuffle(loadingMessages)[0]
 }
+
+// default export until we have multiple exports
+export default generateMessage

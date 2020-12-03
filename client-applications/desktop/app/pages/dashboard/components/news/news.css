@@ -1,0 +1,68 @@
+@import '/app.global.css';
+
+.newsWrapper {
+    height: 225px;
+    width: 100%;
+}
+
+.carouselWrapper {
+    padding: 15px;
+    background: var(--text-background-color);
+    border-radius: 10px;
+    box-shadow: var(--light-box-shadow);
+}
+
+.carouselWrapper:hover {
+    cursor: pointer;
+}
+
+.carousel {
+    width: 100%;
+    height: 100%;
+    z-index: var(--first-layer);
+}
+
+.scrollWrapper {
+    max-height: 195px !important;
+    overflow-y: scroll !important;
+}
+
+.mediaImage {
+    background-size: cover;
+    width: 100%;
+    height: 125px;
+}
+
+.textWrapper {
+    margin-top: 30px;
+    font-weight: bold;
+    font-size: 14px;
+    display: flex;
+}
+
+.heading {
+    color: var(--text-background-color);
+    background: var(--primary-text-color);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-right: 15px;
+    font-weight: bold;
+    height: 25px;
+    position: relative;
+    top: 3px;
+}
+
+.subheading {
+    margin-top: 10px;
+    color: var(--light-text-color);
+    font-size: 12px;
+    font-weight: normal;
+}
+
+.emptyNews {
+    width: 100%;
+    height: 225px;
+    background: var(--text-background-color);
+    box-shadow: var(--light-box-shadow);
+}

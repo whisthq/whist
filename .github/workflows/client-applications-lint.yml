@@ -6,10 +6,10 @@ on:
   pull_request:
     branches: [master, dev]
     paths:
-      - "/client-applications/**"
+      - "client-applications/**"
 
 jobs:
-  lint:
+  client-applications-lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,21 +27,9 @@ jobs:
       - name: Run yarn -i in /desktop
         run: cd client-applications/desktop && yarn -i
 
-      - name: Format with Prettier in /desktop
-        run: cd client-applications/desktop && yarn format
-
-      - name: Check if code is linted with Prettier
-        run: |
-          result=$(cd client-applications/desktop && yarn format-check) # checks if code is linted via prettier --check
-          if [ "$result" -ne "0" ]; then
-            (echo "To pass this check please lint the code with Prettier" && false)
-          else
-            (echo "Code is linted with Prettier" && true)
-          fi
-
       - name: Check if code follows ESLint standards
         run: |
-          result=$(cd desktop && yarn lint-check) # checks if code is linted via prettier --check
+          result=$(cd client-applications/desktop && yarn lint-check) # checks if code is linted
           if [ "$result" -ne "0" ]; then
             (echo "To pass this check please lint the code with ESLint or update .eslintrc.js to ignore unwanted checks" && false)
           else
