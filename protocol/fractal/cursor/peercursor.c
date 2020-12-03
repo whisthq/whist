@@ -4,7 +4,7 @@
 
 static SDL_Surface *base_cursor_surface;
 
-static void replaceColor(SDL_Surface *sfc, Uint32 old_color, Uint32 new_color) {
+static void replace_color(SDL_Surface *sfc, Uint32 old_color, Uint32 new_color) {
     for (int x = 0; x < sfc->w; x++) {
         for (int y = 0; y < sfc->h; y++) {
             Uint8 *pixel = (Uint8 *)sfc->pixels;
@@ -16,7 +16,7 @@ static void replaceColor(SDL_Surface *sfc, Uint32 old_color, Uint32 new_color) {
     }
 }
 
-static SDL_Surface *duplicateSurface(SDL_Surface *surface) {
+static SDL_Surface *duplicate_surface(SDL_Surface *surface) {
     if (surface == NULL) {
         LOG_ERROR("surface is null");
         exit(1);
@@ -42,7 +42,7 @@ static SDL_Surface *duplicateSurface(SDL_Surface *surface) {
     return new_surface;
 }
 
-int InitPeerCursors(void) {
+int init_peer_cursors(void) {
     base_cursor_surface = SDL_LoadBMP("../../../fractal/cursor/cursor.bmp");
     if (base_cursor_surface == NULL) {
         LOG_ERROR("Failed to load cursor bmp. (Error: %s)", SDL_GetError());
@@ -74,13 +74,13 @@ int InitPeerCursors(void) {
     return 0;
 }
 
-int DestroyPeerCursors(void) {
+int destroy_peer_cursors(void) {
     SDL_FreeSurface(base_cursor_surface);
     return 0;
 }
 
-int drawPeerCursor(SDL_Renderer *renderer, int x, int y, int r, int g, int b) {
-    SDL_Surface *sfc = duplicateSurface(base_cursor_surface);
+int draw_peer_cursor(SDL_Renderer *renderer, int x, int y, int r, int g, int b) {
+    SDL_Surface *sfc = duplicate_surface(base_cursor_surface);
     if (sfc == NULL) {
         LOG_ERROR("Failed to duplicate base cursor surface.");
         return -1;
@@ -96,7 +96,7 @@ int drawPeerCursor(SDL_Renderer *renderer, int x, int y, int r, int g, int b) {
 
     Uint32 black = SDL_MapRGB(sfc->format, 0, 0, 0);
     Uint32 cursor_color = SDL_MapRGB(sfc->format, (Uint8)r, (Uint8)g, (Uint8)b);
-    replaceColor(sfc, black, cursor_color);
+    replace_color(sfc, black, cursor_color);
 
     SDL_Texture *txtr = SDL_CreateTextureFromSurface(renderer, sfc);
     SDL_FreeSurface(sfc);

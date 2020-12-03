@@ -33,7 +33,7 @@ Public Functions
  * @returns                        Returns -1 if no SDL event is available
  *                                 or an error occurs, 0 on success
  */
-int tryHandleSDLEvent(void);
+int try_handle_sdl_event(void);
 
 /**
  * @brief                          Handles a client-side SDL event, on the
@@ -41,6 +41,6 @@ int tryHandleSDLEvent(void);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handleSDLEvent(SDL_Event *event);
+int handle_sdl_event(SDL_Event *event);
 
 #endif  // SDL_EVENT_HANDLER_H
