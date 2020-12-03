@@ -51,9 +51,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean
 
-RUN wget -P /usr/bin/ublock_origin-1.30.6-an+fx.xpi https://addons.mozilla.org/firefox/downloads/file/3663488/ublock_origin-1.30.6-an+fx.xpi 
- 
-# Setup Fractal application symlink
-COPY start-firefox.sh /usr/bin/start-firefox
-RUN chmod +x /usr/bin/start-firefox
-RUN ln -sf /usr/bin/start-firefox /usr/bin/fractal-application
+RUN wget -P /usr/lib/firefox/distribution/extensions/uBlock0@raymondhill.net.xpi https://addons.mozilla.org/firefox/downloads/file/3663488/ublock_origin-1.30.6-an+fx.xpi 
+
+RUN ln -sf /usr/lib/firefox/firefox.sh /usr/bin/fractal-application 
