@@ -208,8 +208,8 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
 endif()
 
 #download and install Sentry CMake project
-# This is fixed to sdk version 0.4.1
-set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.1/sentry-native.zip)
+# This is fixed to sdk version 0.4.4
+set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.4/sentry-native.zip)
 set(sentry_dir sentry-native)
 MESSAGE(VERBOSE ${CMAKE_SOURCE_DIR}/${sentry_dir})
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
@@ -229,7 +229,9 @@ if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
 endif()
 
 # Do this before setting the OSX compiler so we do not mess with the sentry-native build
+set(SENTRY_BUILD_SHARED_LIBS ON)
 set(SENTRY_BUILD_RUNTIMESTATIC ON)
+set(SENTRY_BACKEND inproc)
 add_subdirectory(sentry-native)
 
 # set a standard location for the sentry shared lib so we can copy it into client/server build folders as a post build step
