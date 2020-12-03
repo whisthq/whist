@@ -11,7 +11,7 @@ import FractalKey from "shared/types/input"
 import styles from "pages/dashboard/views/settings/settings.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
 
-const Settings = <T extends {}>() => {
+const Settings = () => {
     const [lowInternetMode, setLowInternetMode] = useState(false)
     const [bandwidth, setBandwidth] = useState(500)
     const [showSavedAlert, setShowSavedAlert] = useState(false)
