@@ -1,4 +1,4 @@
-import { FractalKey } from "shared/enums/input"
+import { FractalKey } from "shared/types/input"
 
 export const openExternal = (url: string) => {
     const { shell } = require("electron")

@@ -9,8 +9,8 @@ import { debugLog } from "shared/utils/logging"
 import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/history"
 import { execChmodUnix } from "shared/utils/exec"
-import { FractalRoute } from "shared/enums/navigation"
-import { OperatingSystem } from "shared/enums/client"
+import { FractalRoute } from "shared/types/navigation"
+import { OperatingSystem } from "shared/types/client"
 
 import styles from "pages/login/login.css"
 

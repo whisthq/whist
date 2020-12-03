@@ -7,7 +7,7 @@ import { updateClient, updateAuth } from "store/actions/pure"
 import { setAWSRegion } from "shared/utils/exec"
 import { openExternal } from "shared/utils/helpers"
 import { config } from "shared/constants/config"
-import { FractalKey } from "shared/enums/input"
+import { FractalKey } from "shared/types/input"
 
 const LoginView = <T extends {}>(props: T) => {
     const { dispatch } = props

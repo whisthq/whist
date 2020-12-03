@@ -5,7 +5,7 @@ import Titlebar from "react-electron-titlebar"
 
 import BackgroundView from "pages/login/views/backgroundView"
 import LoginView from "pages/login/views/loginView"
-import { OperatingSystem } from "shared/enums/client"
+import { OperatingSystem } from "shared/types/client"
 
 const Login = (props: { clientOS: string; loginWarning: string }) => {
     const { clientOS, loginWarning } = props

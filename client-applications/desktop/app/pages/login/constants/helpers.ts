@@ -1,5 +1,5 @@
 import { FractalApp } from "shared/types/ui"
-import { FractalAppName } from "shared/enums/client"
+import { FractalAppName } from "shared/types/client"
 
 export const checkActive = (app: FractalApp): boolean => {
     return app.active

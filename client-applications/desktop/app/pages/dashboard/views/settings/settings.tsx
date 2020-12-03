@@ -5,8 +5,8 @@ import ToggleButton from "react-toggle-button"
 import Slider from "react-input-slider"
 import { FaWifi, FaNetworkWired } from "react-icons/fa"
 
-import { FractalClientCache } from "shared/enums/cache"
-import { FractalKey } from "shared/enums/input"
+import { FractalClientCache } from "shared/types/cache"
+import { FractalKey } from "shared/types/input"
 
 import styles from "pages/dashboard/views/settings/settings.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
