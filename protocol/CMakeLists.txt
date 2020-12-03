@@ -244,7 +244,7 @@ endif()
 
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_compile_options(sentry PRIVATE -Wno-error)
+    target_compile_options(sentry PRIVATE -Wno-error -Wno-typedef-redefinition)
     set(CMAKE_C_COMPILER clang)
     if(DEFINED ENV{FRACTAL_OSX_SYSROOT})
         set(CMAKE_OSX_SYSROOT $ENV{FRACTAL_OSX_SYSROOT})
