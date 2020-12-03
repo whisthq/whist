@@ -19,7 +19,7 @@ const LoginView = <T extends {}>(props: T) => {
             dispatch(updateClient({ region: region }))
             dispatch(updateAuth({ loginWarning: false, loginMessage: null }))
             openExternal(
-                config.url.FRONTEND_URL + "/auth/bypass?callback=fractal://auth"
+                `${config.url.FRONTEND_URL}/auth/bypass?callback=fractal://auth`
             )
         })
     }
@@ -52,44 +52,43 @@ const LoginView = <T extends {}>(props: T) => {
                 </div>
             </div>
         )
-    } else {
-        return (
-            <div style={{ marginTop: 150 }}>
-                <PuffLoader css={"marginTop: 300px; margin: auto;"} size={75} />
-                <div style={{ margin: "auto", marginTop: 50, maxWidth: 450 }}>
-                    A browser window should open momentarily where you can
-                    login. Click{" "}
-                    <span
-                        onClick={handleLoginUser}
-                        style={{ fontWeight: "bold", cursor: "pointer" }}
-                    >
-                        here
-                    </span>{" "}
-                    if it doesn't appear. Once you've logged in, this page will
-                    automatically redirect.
-                </div>
-                {config.sentryEnv === "development" && (
-                    <div style={{ marginTop: 40 }}>
-                        <input
-                            type="text"
-                            onChange={changeAccessToken}
-                            onKeyPress={onKeyPress}
-                            style={{
-                                width: 400,
-                                border: "none",
-                                boxShadow: "none",
-                                margin: "auto",
-                                background: "rgba(237, 240, 247, 0.75)",
-                                padding: "5px 20px",
-                                borderRadius: 5,
-                                outline: "none",
-                            }}
-                        />
-                    </div>
-                )}
-            </div>
-        )
     }
+    return (
+        <div style={{ marginTop: 150 }}>
+            <PuffLoader css="marginTop: 300px; margin: auto;" size={75} />
+            <div style={{ margin: "auto", marginTop: 50, maxWidth: 450 }}>
+                A browser window should open momentarily where you can login.
+                Click{" "}
+                <span
+                    onClick={handleLoginUser}
+                    style={{ fontWeight: "bold", cursor: "pointer" }}
+                >
+                    here
+                </span>{" "}
+                if it doesn't appear. Once you've logged in, this page will
+                automatically redirect.
+            </div>
+            {config.sentryEnv === "development" && (
+                <div style={{ marginTop: 40 }}>
+                    <input
+                        type="text"
+                        onChange={changeAccessToken}
+                        onKeyPress={onKeyPress}
+                        style={{
+                            width: 400,
+                            border: "none",
+                            boxShadow: "none",
+                            margin: "auto",
+                            background: "rgba(237, 240, 247, 0.75)",
+                            padding: "5px 20px",
+                            borderRadius: 5,
+                            outline: "none",
+                        }}
+                    />
+                </div>
+            )}
+        </div>
+    )
 }
 
 export const mapStateToProps = <T extends {}>(state: T) => {

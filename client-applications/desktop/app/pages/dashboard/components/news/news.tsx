@@ -16,8 +16,8 @@ const News = (props: { mediaData: FractalBanner[] }) => {
                 <div className={styles.carouselWrapper}>
                     <Carousel
                         className={styles.carousel}
-                        prevIcon={<div></div>}
-                        nextIcon={<div></div>}
+                        prevIcon={<div />}
+                        nextIcon={<div />}
                         indicators={false}
                     >
                         {mediaData.map((mediaItem: FractalBanner) => (
@@ -31,7 +31,7 @@ const News = (props: { mediaData: FractalBanner[] }) => {
                                             backgroundImage: `url(${mediaItem.background})`,
                                         }}
                                         className={styles.mediaImage}
-                                    ></div>
+                                    />
                                     <div className={styles.textWrapper}>
                                         <div className={styles.heading}>
                                             Media
@@ -50,9 +50,8 @@ const News = (props: { mediaData: FractalBanner[] }) => {
                 </div>
             </Col>
         )
-    } else {
-        return <Col xs={4} className={styles.emptyNews}></Col>
     }
+    return <Col xs={4} className={styles.emptyNews} />
 }
 
 const mapStateToProps = <T extends {}>(state: T): T => {

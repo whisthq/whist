@@ -17,7 +17,8 @@ import RootApp from "rootApp"
 
 import "app.global.css"
 import { config } from "shared/constants/config"
-import { configureStore, history } from "./store/configureStore"
+import { configureStore } from "store/configureStore"
+import { history } from "store/history"
 
 const store = configureStore()
 

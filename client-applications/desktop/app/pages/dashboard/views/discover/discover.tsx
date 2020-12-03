@@ -8,9 +8,9 @@ import Banner from "pages/dashboard/components/banner/banner"
 import News from "pages/dashboard/components/news/news"
 import App from "pages/dashboard/components/app/app"
 
-import { GET_FEATURED_APPS } from "shared/constants/graphql"
+import { GET_FEATURED_APPS, GET_BANNERS } from "shared/constants/graphql"
 import { PuffAnimation } from "shared/components/loadingAnimations"
-import { GET_BANNERS } from "shared/constants/graphql"
+
 import { FractalBannerCategory } from "shared/enums/navigation"
 import { FractalApp, FractalBanner } from "shared/types/ui"
 
@@ -36,9 +36,8 @@ const Discover = (props: { search: string }) => {
     const checkCategory = (app: FractalApp) => {
         if (selectedCategory === FractalBannerCategory.ALL) {
             return true
-        } else {
-            return app.category === selectedCategory
         }
+        return app.category === selectedCategory
     }
 
     const getSearchResults = (app: FractalApp) => {
@@ -98,7 +97,7 @@ const Discover = (props: { search: string }) => {
 
     useEffect(() => {
         if (appQuery.data) {
-            var newAppData = appQuery.data
+            let newAppData = appQuery.data
                 ? appQuery.data.hardware_supported_app_images.filter(
                       checkActive
                   )
@@ -117,37 +116,37 @@ const Discover = (props: { search: string }) => {
                 <PuffAnimation />
             </div>
         )
-    } else if (search && searchResults.length > 0) {
+    }
+    if (search && searchResults.length > 0) {
         return (
             <Row style={{ padding: "0px 45px", marginTop: 25 }}>
                 {searchResults}
             </Row>
         )
-    } else {
-        return (
-            <div className={styles.scrollWrapper}>
-                <Row style={{ padding: "0px 45px", marginTop: 20 }}>
-                    <Col xs={7} className={styles.bannerWrapper}>
-                        <Banner bannerData={bannerData} />
-                    </Col>
-                    <News mediaData={mediaData} />
-                </Row>
-                <Row style={{ marginTop: 35, padding: "0px 45px" }}>
-                    <LeftColumn
-                        callback={setCategory}
-                        selectedCategory={selectedCategory}
-                    />
-                    <Col xs={11}>
-                        <Row>
-                            {featuredAppData.map((app: FractalApp) => (
-                                <App key={app.app_id} app={app} />
-                            ))}
-                        </Row>
-                    </Col>
-                </Row>
-            </div>
-        )
     }
+    return (
+        <div className={styles.scrollWrapper}>
+            <Row style={{ padding: "0px 45px", marginTop: 20 }}>
+                <Col xs={7} className={styles.bannerWrapper}>
+                    <Banner bannerData={bannerData} />
+                </Col>
+                <News mediaData={mediaData} />
+            </Row>
+            <Row style={{ marginTop: 35, padding: "0px 45px" }}>
+                <LeftColumn
+                    callback={setCategory}
+                    selectedCategory={selectedCategory}
+                />
+                <Col xs={11}>
+                    <Row>
+                        {featuredAppData.map((app: FractalApp) => (
+                            <App key={app.app_id} app={app} />
+                        ))}
+                    </Row>
+                </Col>
+            </Row>
+        </div>
+    )
 }
 
 const mapStateToProps = <T extends {}>(state: T): T => {
