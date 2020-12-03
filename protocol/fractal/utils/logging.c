@@ -715,7 +715,6 @@ void save_connection_id(int connection_id_int) {
         char str_connection_id[100];
         sprintf(str_connection_id, "%d", connection_id_int);
         sentry_set_tag("connection_id", str_connection_id);
-        sentry_set_tag("protocol-type", "server");
     }
 }
 
