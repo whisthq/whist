@@ -4,7 +4,7 @@ import {
     FractalHTTPRequest,
     FractalHTTPContent,
     FractalHTTPCode,
-} from "shared/enums/api"
+} from "shared/types/api"
 
 const checkResponse = (response: { status: number }): boolean => {
     return (

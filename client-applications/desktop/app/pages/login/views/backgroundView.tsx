@@ -23,6 +23,7 @@ const BackgroundView = () => {
                     height: 130,
                     animationDelay: "0.0s",
                 }}
+                alt="Figma"
             />
             <img
                 src={Chrome}
@@ -34,6 +35,7 @@ const BackgroundView = () => {
                     height: 120,
                     animationDelay: "0.3s",
                 }}
+                alt="Chrome"
             />
             <img
                 src={VSCode}
@@ -45,6 +47,7 @@ const BackgroundView = () => {
                     height: 120,
                     animationDelay: "0.6s",
                 }}
+                alt="VSCode"
             />
             <img
                 src={Blender}
@@ -56,6 +59,7 @@ const BackgroundView = () => {
                     height: 115,
                     animationDelay: "0.9s",
                 }}
+                alt="Blender"
             />
             <img
                 src={Slack}
@@ -67,6 +71,7 @@ const BackgroundView = () => {
                     height: 110,
                     animationDelay: "1.2s",
                 }}
+                alt="Slack"
             />
             <img
                 src={Photoshop}
@@ -78,6 +83,7 @@ const BackgroundView = () => {
                     height: 110,
                     animationDelay: "1.5s",
                 }}
+                alt="Photoshop"
             />
             <img
                 src={Maya}
@@ -89,6 +95,7 @@ const BackgroundView = () => {
                     height: 140,
                     animationDelay: "1.8s",
                 }}
+                alt="Maya"
             />
         </div>
     )

@@ -1,4 +1,4 @@
-import { OperatingSystem } from "shared/enums/client"
+import { OperatingSystem } from "shared/types/client"
 import { FractalApp } from "shared/types/ui"
 import { debugLog } from "shared/utils/logging"
 

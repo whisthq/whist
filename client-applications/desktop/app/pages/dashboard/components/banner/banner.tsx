@@ -14,8 +14,8 @@ const Banner = (props: { bannerData: FractalBanner[] }) => {
         return (
             <Carousel
                 className={styles.carousel}
-                prevIcon={<div></div>}
-                nextIcon={<div></div>}
+                prevIcon={<div />}
+                nextIcon={<div />}
                 indicators={false}
             >
                 {bannerData.map((bannerItem: FractalBanner) => (
@@ -28,14 +28,13 @@ const Banner = (props: { bannerData: FractalBanner[] }) => {
                                 backgroundImage: `url(${bannerItem.background})`,
                             }}
                             className={styles.bannerImage}
-                        ></div>
+                        />
                     </Carousel.Item>
                 ))}
             </Carousel>
         )
-    } else {
-        return <div className={styles.emptyBanner}></div>
     }
+    return <div className={styles.emptyBanner} />
 }
 
 const mapStateToProps = <T extends {}>(state: T): T => {
