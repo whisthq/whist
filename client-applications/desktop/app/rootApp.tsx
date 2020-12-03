@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, Dispatch } from "react"
 import { connect } from "react-redux"
 import { Route, Switch } from "react-router-dom"
 import { useQuery } from "@apollo/client"
@@ -23,9 +23,9 @@ const RootApp = (props: {
     clientOS: string
     dpi: number
     candidateAccessToken: string
-    dispatch: Dispatch
     username: string
     accessToken: string
+    dispatch: Dispatch
 }) => {
     const {
         launches,
