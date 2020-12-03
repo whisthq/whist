@@ -143,6 +143,8 @@ For every push or PR, the code will be automatically linted via clang-format acc
 
 ## Styling
 
+### clang-format
+
 For `.c` and `.h` files, we are formatting using the clang format `{BasedOnStyle: Google, IndentWidth: 4}`. You can download clang-format via the package manager for your respective OS:
 
 ```
@@ -161,3 +163,36 @@ If using VSCode or Visual Studio, please set this up in your editor to format on
 We have [pre-commit hooks](https://pre-commit.com/) with clang-format support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for clang-format.
 
 We also have a custom build target in the CMake 'clang-format' which will run with this style over all `.c` and `.h` files in `server/` `desktop/` and `fractal/`. You can call it by running `make clang-format`.
+
+### clang-tidy
+
+Make sure your code is following code standards by running the script `./run-clang-tidy.sh`. The dependencies for each OS are listed below:
+
+```
+MacOS:
+# install yq
+brew install yq
+# set up clang-tidy and clang-apply-replacements
+brew install llvm
+ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+ln -s "$(brew --prefix llvm)/bin/clang-apply-replacements" "/usr/local/bin/clang-apply-replacements"
+
+Linux Ubuntu:
+# install yq
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CC86BB64
+sudo add-apt-repository ppa:rmescandon/yq
+sudo apt update
+sudo apt install yq -y
+# clang-tidy and clang-apply-replacements-10 should come installed with clang
+
+Windows:
+choco install yq
+# Go to https://releases.llvm.org/download.html and install the pre-built LLVM binary. In the installation wizard, make sure to select "add to path".
+```
+
+Running `./run-clang-tidy.sh` will find all code standard violations and give you the option to modify and accept or reject changes.
+Running './run-clang-tidy.sh -c' will find whether there are any code standard violations and exit with status 1 if there are (designed for CI usage).
+
+If you want any lines to be exempted from the clang-tidy check, either place `// NOLINTNEXTLINE` in the line above or `// NOLINT` at the end of the line.
+
+Macro constants will NOT be checked by this script because of the variety of implementations of `#define`. Please be sure to follow appropriate standards for `#define`s when committing code.

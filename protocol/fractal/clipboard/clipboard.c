@@ -3,69 +3,69 @@
 
 SDL_mutex* mutex;
 
-void initClipboard() {
+void init_clipboard() {
     mutex = SDL_CreateMutex();
-    unsafe_initClipboard();
+    unsafe_init_clipboard();
 }
 
-ClipboardData* GetClipboard() {
+ClipboardData* get_clipboard() {
     if (!mutex) {
-        LOG_ERROR("initClipboard not called yet!");
+        LOG_ERROR("init_clipboard not called yet!");
         return NULL;
     }
 
     if (SDL_LockMutex(mutex) == 0) {
-        ClipboardData* cb = unsafe_GetClipboard();
+        ClipboardData* cb = unsafe_get_clipboard();
         SDL_UnlockMutex(mutex);
         return cb;
     } else {
-        LOG_WARNING("GetClipboard SDL_LockMutex failed");
+        LOG_WARNING("get_clipboard SDL_LockMutex failed");
         return NULL;
     }
 }
 
-void SetClipboard(ClipboardData* cb) {
+void set_clipboard(ClipboardData* cb) {
     if (!mutex) {
-        LOG_ERROR("initClipboard not called yet!");
+        LOG_ERROR("init_clipboard not called yet!");
         return;
     }
 
     if (SDL_LockMutex(mutex) == 0) {
-        unsafe_SetClipboard(cb);
+        unsafe_set_clipboard(cb);
         // clear out update from filling clipboard
-        unsafe_hasClipboardUpdated();
+        unsafe_has_clipboard_updated();
         SDL_UnlockMutex(mutex);
     } else {
-        LOG_WARNING("SetClipboard SDL_LockMutex failed");
+        LOG_WARNING("set_clipboard SDL_LockMutex failed");
     }
 }
 
-bool hasClipboardUpdated() {
+bool has_clipboard_updated() {
     if (!mutex) {
-        LOG_ERROR("initClipboard not called yet!");
+        LOG_ERROR("init_clipboard not called yet!");
         return false;
     }
 
     if (SDL_TryLockMutex(mutex) == 0) {
-        bool has_clipboard_updated = unsafe_hasClipboardUpdated();
+        bool has_clipboard_updated = unsafe_has_clipboard_updated();
         SDL_UnlockMutex(mutex);
         return has_clipboard_updated;
     } else {
-        // LOG_WARNING("Could not check hasClipboardUpdated, clipboard is busy!");
+        // LOG_WARNING("Could not check has_clipboard_updated, clipboard is busy!");
         return false;
     }
 }
 
-void DestroyClipboard() {
+void destroy_clipboard() {
     if (!mutex) {
-        LOG_ERROR("initClipboard not called yet!");
+        LOG_ERROR("init_clipboard not called yet!");
         return;
     }
 
     if (SDL_LockMutex(mutex) == 0) {
-        unsafe_DestroyClipboard();
+        unsafe_destroy_clipboard();
         SDL_UnlockMutex(mutex);
     } else {
-        LOG_WARNING("DestroyClipboard SDL_LockMutex failed");
+        LOG_WARNING("destroy_clipboard SDL_LockMutex failed");
     }
 }

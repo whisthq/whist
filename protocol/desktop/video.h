@@ -33,7 +33,7 @@ Public Functions
 /**
  * @brief                          Create the SDL video thread
  */
-void initVideo();
+void init_video();
 
 /**
  * @brief                          Free the video thread and VideContext data to
@@ -45,19 +45,19 @@ void initVideo();
  * @returns                        Return -1 if failed to receive packet into
  *                                 video frame, else 0
  */
-int32_t ReceiveVideo(FractalPacket* packet);
+int32_t receive_video(FractalPacket* packet);
 
 /**
  * @brief                          Calculate statistics about bitrate, I-Frame,
  *                                 etc. and request video update from the server
  */
-void updateVideo();
+void update_video();
 
 /**
  * @brief                          Free the video thread and VideContext data to
  *                                 exit
  */
-void destroyVideo();
+void destroy_video();
 
 /**
  * @brief                          Set the global variable 'resizing' to true if

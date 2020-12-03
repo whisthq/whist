@@ -18,7 +18,7 @@ DesktopContext: This type represents a Windows desktop object.
 
 #include "windows_utils.h"
 
-void logToFile(char* msg, char* filename) {
+void log_to_file(char* msg, char* filename) {
     FILE* fp;
     fp = fopen(filename, "a+");
     fprintf(fp, msg);
@@ -28,16 +28,16 @@ void logToFile(char* msg, char* filename) {
 
 // @brief Attaches the current thread to the current input desktop.
 // @details Uses OpenInputDesktop and SetThreadDesktop from WinAPI.
-int setCurrentInputDesktop(HDESK currentInputDesktop) {
+int set_current_input_desktop(HDESK current_input_desktop) {
     // Set current thread to the current user input desktop
-    if (!SetThreadDesktop(currentInputDesktop)) {
+    if (!SetThreadDesktop(current_input_desktop)) {
         LOG_WARNING("SetThreadDesktop failed w/ error code: %d.\n", GetLastError());
         return -2;
     }
     return 0;
 }
 
-DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_thread) {
+DesktopContext open_new_desktop(WCHAR* desktop_name, bool get_name, bool set_thread) {
     DesktopContext context = {0};
     HDESK new_desktop;
 
@@ -48,14 +48,14 @@ DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_threa
     }
 
     if (set_thread) {
-        setCurrentInputDesktop(new_desktop);
+        set_current_input_desktop(new_desktop);
     }
 
     if (get_name) {
-        TCHAR szName[1000];
-        DWORD dwLen;
-        GetUserObjectInformationW(new_desktop, UOI_NAME, szName, sizeof(szName), &dwLen);
-        memcpy(context.desktop_name, szName, dwLen);
+        TCHAR sz_name[1000];
+        DWORD dw_len;
+        GetUserObjectInformationW(new_desktop, UOI_NAME, sz_name, sizeof(sz_name), &dw_len);
+        memcpy(context.desktop_name, sz_name, dw_len);
     }
 
     context.desktop_handle = new_desktop;
@@ -64,17 +64,17 @@ DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_threa
     return context;
 }
 
-void OpenWindow() {
+void open_window() {
     HWINSTA hwinsta = OpenWindowStationW(L"WinSta0", FALSE, GENERIC_ALL);
     SetProcessWindowStation(hwinsta);
 }
 
 // Log into the desktop, and block until the login process finishes
-bool InitDesktop(input_device_t* input_device, char* vm_password) {
+bool init_desktop(InputDevice* input_device, char* vm_password) {
     DesktopContext lock_screen;
 
-    OpenWindow();
-    lock_screen = OpenNewDesktop(NULL, true, true);
+    open_window();
+    lock_screen = open_new_desktop(NULL, true, true);
 
     bool failed = false;
     int attempt = 0;
@@ -92,7 +92,7 @@ bool InitDesktop(input_device_t* input_device, char* vm_password) {
 
         FractalKeycode keycodes1[] = {FK_SPACE, FK_BACKSPACE, FK_BACKSPACE};
 
-        InputKeycodes(input_device, keycodes1, 3);
+        input_keycodes(input_device, keycodes1, 3);
 
         Sleep(500);
 
@@ -118,7 +118,7 @@ bool InitDesktop(input_device_t* input_device, char* vm_password) {
         }
 
         // Type in the password
-        InputKeycodes(input_device, password_keycodes, password_len);
+        input_keycodes(input_device, password_keycodes, password_len);
 
         free(password_keycodes);
 
@@ -126,11 +126,11 @@ bool InitDesktop(input_device_t* input_device, char* vm_password) {
 
         FractalKeycode keycodes2[] = {FK_ENTER, FK_ENTER};
 
-        InputKeycodes(input_device, keycodes2, 2);
+        input_keycodes(input_device, keycodes2, 2);
 
         Sleep(1000);
 
-        lock_screen = OpenNewDesktop(NULL, true, true);
+        lock_screen = open_new_desktop(NULL, true, true);
 
         attempt++;
     }

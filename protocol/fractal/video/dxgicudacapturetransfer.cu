@@ -50,7 +50,7 @@ void dxgi_cuda_close_transfer_context() {
 }
 
 int dxgi_cuda_transfer_capture(CaptureDevice* device,
-                               video_encoder_t* encoder) {
+                               VideoEncoder* encoder) {
     if (cuda_is_available && active_transfer_context) {
         cudaError_t res;
         cudaArray_t mappedArray;
@@ -59,7 +59,7 @@ int dxgi_cuda_transfer_capture(CaptureDevice* device,
         static double time_spent = 0.;
 
         clock dxgi_cuda_transfer_timer;
-        StartTimer(&dxgi_cuda_transfer_timer);
+        start_timer(&dxgi_cuda_transfer_timer);
 
         res = cudaGraphicsResourceSetMapFlags(resource,
                                               cudaGraphicsMapFlagsReadOnly);
@@ -105,7 +105,7 @@ int dxgi_cuda_transfer_capture(CaptureDevice* device,
         }
 
         times_measured++;
-        time_spent += GetTimer(dxgi_cuda_transfer_timer);
+        time_spent += get_timer(dxgi_cuda_transfer_timer);
 
         if (times_measured == 10) {
             LOG_INFO(

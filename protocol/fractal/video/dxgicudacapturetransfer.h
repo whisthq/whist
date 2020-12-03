@@ -90,7 +90,7 @@ void dxgi_cuda_close_transfer_context();
  * @returns                       0 on success, 1 if CUDA is unavailable, and -1
  *                                on error
  */
-int dxgi_cuda_transfer_capture(CaptureDevice* device, video_encoder_t* encoder);
+int dxgi_cuda_transfer_capture(CaptureDevice* device, VideoEncoder* encoder);
 
 END_EXTERN_C
 

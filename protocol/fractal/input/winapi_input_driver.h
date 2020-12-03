@@ -27,6 +27,6 @@ Custom Types
 ============================
 */
 
-typedef char input_device_t;
+typedef char InputDevice;
 
 #endif  // WINAPI_INPUT_DRIVER_H
