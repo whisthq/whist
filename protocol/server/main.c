@@ -89,7 +89,7 @@ volatile int client_dpi = -1;
 volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
-input_device_t* input_device = NULL;
+InputDevice* input_device = NULL;
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
 
@@ -110,7 +110,7 @@ volatile bool update_encoder;
 
 bool pending_encoder;
 bool encoder_finished;
-video_encoder_t* encoder_factory_result = NULL;
+VideoEncoder* encoder_factory_result = NULL;
 
 int encoder_factory_server_w;
 int encoder_factory_server_h;
@@ -131,7 +131,7 @@ Private Functions
  *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int SendContainerDestroyMessage();
+int send_container_destroy_message();
 
 /*
 ============================
@@ -165,47 +165,47 @@ int xioerror_handler(Display* d) {
     //  is a possibility of the quitClients() pipeline happening more than once
     //  if SendContainerDestroyMessage fails and then is called again because
     //  this error handler can be called multiple times.
-    if (SendContainerDestroyMessage() != 1) {
+    if (send_container_destroy_message() != 1) {
         // POSSIBLY below locks are not necessary if we're quitting everything and dying anyway?
 
         // Broadcast client quit message
         FractalServerMessage fmsg_response = {0};
         fmsg_response.type = SMESSAGE_QUIT;
-        if (readLock(&is_active_rwlock) != 0) {
+        if (read_lock(&is_active_rwlock) != 0) {
             LOG_ERROR(
                 "Failed to read-acquire is active RW "
                 "lock.");
         } else {
-            if (broadcastUDPPacket(PACKET_MESSAGE, (uint8_t*)&fmsg_response,
-                                   sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL,
-                                   NULL) != 0) {
+            if (broadcast_udp_packet(PACKET_MESSAGE, (uint8_t*)&fmsg_response,
+                                     sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL,
+                                     NULL) != 0) {
                 LOG_WARNING("Could not send Quit Message");
             }
-            if (readUnlock(&is_active_rwlock) != 0) {
+            if (read_unlock(&is_active_rwlock) != 0) {
                 LOG_ERROR("Failed to read-release is active RW lock.");
             }
         }
 
         // Kick all clients
-        if (writeLock(&is_active_rwlock) != 0) {
+        if (write_lock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-acquire is active RW lock.");
             return -1;
         }
         if (SDL_LockMutex(state_lock) != 0) {
             LOG_ERROR("Failed to lock state lock");
-            if (writeUnlock(&is_active_rwlock) != 0) {
+            if (write_unlock(&is_active_rwlock) != 0) {
                 LOG_ERROR("Failed to write-release is active RW lock.");
             }
             SDL_UnlockMutex(container_destruction_mutex);
             return -1;
         }
-        if (quitClients() != 0) {
+        if (quit_clients() != 0) {
             LOG_ERROR("Failed to quit clients.");
         }
         if (SDL_UnlockMutex(state_lock) != 0) {
             LOG_ERROR("Failed to unlock state lock");
         }
-        if (writeUnlock(&is_active_rwlock) != 0) {
+        if (write_unlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
         }
     }
@@ -216,7 +216,7 @@ int xioerror_handler(Display* d) {
 }
 #endif
 
-int SendContainerDestroyMessage() {
+int send_container_destroy_message() {
     /*
         Sends a message to the webserver to destroy the container on which
         the server is running. This will only work for contianers spun up using
@@ -262,7 +262,7 @@ int SendContainerDestroyMessage() {
     // send destroy request, don't require response -> update this later
     char* resp_buf = NULL;
     size_t resp_buf_maxlen = 4800;
-    SendPostRequest(webserver_url, "/container/delete", payload, &resp_buf, resp_buf_maxlen);
+    send_post_request(webserver_url, "/container/delete", payload, &resp_buf, resp_buf_maxlen);
 
     LOG_INFO("/container/delete response: %s", resp_buf);
 
@@ -271,7 +271,7 @@ int SendContainerDestroyMessage() {
     return 0;
 }
 
-int32_t MultithreadedEncoderFactory(void* opaque) {
+int32_t multithreaded_encoder_factory(void* opaque) {
     opaque;
     encoder_factory_result = create_video_encoder(
         encoder_factory_server_w, encoder_factory_server_h, encoder_factory_client_w,
@@ -279,13 +279,13 @@ int32_t MultithreadedEncoderFactory(void* opaque) {
     encoder_finished = true;
     return 0;
 }
-int32_t MultithreadedDestroyEncoder(void* opaque) {
-    video_encoder_t* encoder = (video_encoder_t*)opaque;
+int32_t multithreaded_destroy_encoder(void* opaque) {
+    VideoEncoder* encoder = (VideoEncoder*)opaque;
     destroy_video_encoder(encoder);
     return 0;
 }
 
-int32_t SendVideo(void* opaque) {
+int32_t send_video(void* opaque) {
     opaque;
     SDL_Delay(500);
 
@@ -298,11 +298,11 @@ int32_t SendVideo(void* opaque) {
     CaptureDevice rdevice;
     CaptureDevice* device = NULL;
 
-    InitCursors();
+    init_cursors();
 
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
-    video_encoder_t* encoder = NULL;
+    VideoEncoder* encoder = NULL;
 
     double worst_fps = 40.0;
     int ideal_bitrate = current_bitrate;
@@ -310,7 +310,7 @@ int32_t SendVideo(void* opaque) {
     int bytes_tested_frames = 0;
 
     clock previous_frame_time;
-    StartTimer(&previous_frame_time);
+    start_timer(&previous_frame_time);
     int previous_frame_size = 0;
 
     // int consecutive_capture_screen_errors = 0;
@@ -318,13 +318,13 @@ int32_t SendVideo(void* opaque) {
     //    int defaultCounts = 1;
 
     clock world_timer;
-    StartTimer(&world_timer);
+    start_timer(&world_timer);
 
     int id = 1;
     update_device = true;
 
     clock last_frame_capture;
-    StartTimer(&last_frame_capture);
+    start_timer(&last_frame_capture);
 
     pending_encoder = false;
     encoder_finished = false;
@@ -349,12 +349,12 @@ int32_t SendVideo(void* opaque) {
 #endif
 
             if (device) {
-                DestroyCaptureDevice(device);
+                destroy_capture_device(device);
                 device = NULL;
             }
 
             device = &rdevice;
-            if (CreateCaptureDevice(device, client_width, client_height, client_dpi) < 0) {
+            if (create_capture_device(device, client_width, client_height, client_dpi) < 0) {
                 LOG_WARNING("Failed to create capture device");
                 device = NULL;
                 update_device = true;
@@ -368,8 +368,8 @@ int32_t SendVideo(void* opaque) {
             while (pending_encoder) {
                 if (encoder_finished) {
                     if (encoder) {
-                        SDL_CreateThread(MultithreadedDestroyEncoder, "MultithreadedDestroyEncoder",
-                                         encoder);
+                        SDL_CreateThread(multithreaded_destroy_encoder,
+                                         "MultithreadedDestroyEncoder", encoder);
                     }
                     encoder = encoder_factory_result;
                     pending_encoder = false;
@@ -380,20 +380,20 @@ int32_t SendVideo(void* opaque) {
             }
             update_encoder = true;
             if (encoder) {
-                MultithreadedDestroyEncoder(encoder);
+                multithreaded_destroy_encoder(encoder);
                 encoder = NULL;
             }
         }
 
         // Update encoder with new parameters
         if (update_encoder) {
-            UpdateCaptureEncoder(device, current_bitrate, client_codec_type);
+            update_capture_encoder(device, current_bitrate, client_codec_type);
             // encoder = NULL;
             if (pending_encoder) {
                 if (encoder_finished) {
                     if (encoder) {
-                        SDL_CreateThread(MultithreadedDestroyEncoder, "MultithreadedDestroyEncoder",
-                                         encoder);
+                        SDL_CreateThread(multithreaded_destroy_encoder,
+                                         "multithreaded_destroy_encoder", encoder);
                     }
                     encoder = encoder_factory_result;
                     pending_encoder = false;
@@ -412,12 +412,12 @@ int32_t SendVideo(void* opaque) {
                 encoder_factory_current_bitrate = current_bitrate;
                 if (encoder == NULL) {
                     // Run on this thread bc we have to wait for it anyway
-                    MultithreadedEncoderFactory(NULL);
+                    multithreaded_encoder_factory(NULL);
                     encoder = encoder_factory_result;
                     pending_encoder = false;
                     update_encoder = false;
                 } else {
-                    SDL_CreateThread(MultithreadedEncoderFactory, "MultithreadedEncoderFactory",
+                    SDL_CreateThread(multithreaded_encoder_factory, "multithreaded_encoder_factory",
                                      NULL);
                 }
             }
@@ -438,8 +438,8 @@ int32_t SendVideo(void* opaque) {
         // Accumulated_frames is equal to how many frames have passed since the
         // last call to CaptureScreen
         int accumulated_frames = 0;
-        if (GetTimer(last_frame_capture) > 1.0 / FPS) {
-            accumulated_frames = CaptureScreen(device);
+        if (get_timer(last_frame_capture) > 1.0 / FPS) {
+            accumulated_frames = capture_screen(device);
             // mprintf( "CaptureScreen: %d\n", accumulated_frames );
         }
 
@@ -447,7 +447,7 @@ int32_t SendVideo(void* opaque) {
         if (accumulated_frames < 0) {
             LOG_WARNING("Failed to capture screen");
 
-            DestroyCaptureDevice(device);
+            destroy_capture_device(device);
             device = NULL;
             update_device = true;
 
@@ -456,14 +456,14 @@ int32_t SendVideo(void* opaque) {
         }
 
         clock server_frame_timer;
-        StartTimer(&server_frame_timer);
+        start_timer(&server_frame_timer);
 
         // Only if we have a frame to render
         if (accumulated_frames > 0 || wants_iframe ||
-            GetTimer(last_frame_capture) > 1.0 / MIN_FPS) {
-            // LOG_INFO( "Frame Time: %f\n", GetTimer( last_frame_capture ) );
+            get_timer(last_frame_capture) > 1.0 / MIN_FPS) {
+            // LOG_INFO( "Frame Time: %f\n", get_timer( last_frame_capture ) );
 
-            StartTimer(&last_frame_capture);
+            start_timer(&last_frame_capture);
 
             if (accumulated_frames > 1) {
                 LOG_INFO("Accumulated Frames: %d", accumulated_frames);
@@ -498,7 +498,7 @@ int32_t SendVideo(void* opaque) {
             }
 
             clock t;
-            StartTimer(&t);
+            start_timer(&t);
 
             int res = video_encoder_encode(encoder);
             if (res < 0) {
@@ -519,8 +519,8 @@ int32_t SendVideo(void* opaque) {
             static double max_frame_size = 0.0;
 
             frame_stat_number++;
-            total_frame_time += GetTimer(t);
-            max_frame_time = max(max_frame_time, GetTimer(t));
+            total_frame_time += get_timer(t);
+            max_frame_time = max(max_frame_time, get_timer(t));
             total_frame_sizes += encoder->encoded_frame_size;
             max_frame_size = max(max_frame_size, encoder->encoded_frame_size);
 
@@ -537,7 +537,7 @@ int32_t SendVideo(void* opaque) {
 
             video_encoder_unset_iframe(encoder);
 
-            // mprintf("Encode Time: %f (%d) (%d)\n", GetTimer(t),
+            // mprintf("Encode Time: %f (%d) (%d)\n", get_timer(t),
             //        frames_since_first_iframe % gop_size,
             //        encoder->encoded_frame_size);
 
@@ -548,8 +548,8 @@ int32_t SendVideo(void* opaque) {
                 double delay = -1.0;
 
                 if (previous_frame_size > 0) {
-                    double frame_time = GetTimer(previous_frame_time);
-                    StartTimer(&previous_frame_time);
+                    double frame_time = get_timer(previous_frame_time);
+                    start_timer(&previous_frame_time);
                     // double mbps = previous_frame_size * 8.0 / 1024.0 /
                     // 1024.0 / frame_time; TODO: bitrate throttling alg
                     // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime
@@ -604,7 +604,7 @@ int32_t SendVideo(void* opaque) {
                     frame->codec_type = encoder->codec_type;
 
                     frame->size = encoder->encoded_frame_size;
-                    frame->cursor = GetCurrentCursor();
+                    frame->cursor = get_current_cursor();
                     // True if this frame does not require previous frames to
                     // render
                     frame->is_iframe = encoder->is_iframe;
@@ -618,23 +618,23 @@ int32_t SendVideo(void* opaque) {
                         (PeerUpdateMessage*)(((char*)frame->compressed_frame) + frame->size);
 
                     size_t num_msgs;
-                    if (readLock(&is_active_rwlock) != 0) {
+                    if (read_lock(&is_active_rwlock) != 0) {
                         LOG_ERROR("Failed to read-acquire is active RW lock.");
                     } else if (SDL_LockMutex(state_lock) != 0) {
                         LOG_ERROR("Failed to lock state lock");
-                        if (readUnlock(&is_active_rwlock) != 0) {
+                        if (read_unlock(&is_active_rwlock) != 0) {
                             LOG_ERROR("Failed to read-release is active RW lock.");
                         }
                     } else {
-                        if (fillPeerUpdateMessages(peer_update_msgs, &num_msgs) != 0) {
+                        if (fill_peer_update_messages(peer_update_msgs, &num_msgs) != 0) {
                             LOG_ERROR("Failed to copy peer update messages.");
                         }
                         frame->num_peer_update_msgs = (int)num_msgs;
 
-                        StartTimer(&t);
+                        start_timer(&t);
 
                         // Send video packet to client
-                        if (broadcastUDPPacket(
+                        if (broadcast_udp_packet(
                                 PACKET_VIDEO, (uint8_t*)frame,
                                 frame_size + sizeof(PeerUpdateMessage) * (int)num_msgs, id,
                                 STARTING_BURST_BITRATE, video_buffer[id % VIDEO_BUFFER_SIZE],
@@ -647,17 +647,17 @@ int32_t SendVideo(void* opaque) {
                         if (SDL_UnlockMutex(state_lock) != 0) {
                             LOG_ERROR("Failed to unlock state lock");
                         }
-                        if (readUnlock(&is_active_rwlock) != 0) {
+                        if (read_unlock(&is_active_rwlock) != 0) {
                             LOG_ERROR("Failed to read-release is active RW lock.");
                         }
                     }
 
                     // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
-                    // GetTimer( t ), frame_size );
+                    // get_timer( t ), frame_size );
 
                     previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time =
-                    // GetTimer(server_frame_timer); mprintf("Server Frame
+                    // get_timer(server_frame_timer); mprintf("Server Frame
                     // Time for ID %d: %f\n", id, server_frame_time);
                 }
             }
@@ -670,9 +670,9 @@ int32_t SendVideo(void* opaque) {
 #else
 // TODO: Linux cursor instead
 #endif
-    DestroyCaptureDevice(device);
+    destroy_capture_device(device);
     device = NULL;
-    MultithreadedDestroyEncoder(encoder);
+    multithreaded_destroy_encoder(encoder);
     encoder = NULL;
 
     return 0;
@@ -680,18 +680,18 @@ int32_t SendVideo(void* opaque) {
 
 static int sample_rate = -1;
 
-int32_t SendAudio(void* opaque) {
+int32_t send_audio(void* opaque) {
     opaque;
     int id = 1;
 
-    audio_device_t* audio_device = CreateAudioDevice();
+    AudioDevice* audio_device = create_audio_device();
     if (!audio_device) {
         LOG_ERROR("Failed to create audio device...");
         return -1;
     }
     LOG_INFO("Created audio device!");
-    StartAudioDevice(audio_device);
-    audio_encoder_t* audio_encoder = create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
+    start_audio_device(audio_device);
+    AudioEncoder* audio_encoder = create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
     int res;
 
     // Tell the client what audio frequency we're using
@@ -702,9 +702,9 @@ int32_t SendAudio(void* opaque) {
 
     while (!exiting) {
         // for each available packet
-        for (GetNextPacket(audio_device); PacketAvailable(audio_device);
-             GetNextPacket(audio_device)) {
-            GetBuffer(audio_device);
+        for (get_next_packet(audio_device); packet_available(audio_device);
+             get_next_packet(audio_device)) {
+            get_buffer(audio_device);
 
             if (audio_device->buffer_size > 10000) {
                 LOG_WARNING("Audio buffer size too large!");
@@ -736,17 +736,17 @@ int32_t SendAudio(void* opaque) {
                     //         audio_encoder->encoded_frame_size);
 
                     // Send packet
-                    if (readLock(&is_active_rwlock) != 0) {
+                    if (read_lock(&is_active_rwlock) != 0) {
                         LOG_ERROR("Failed to read-acquire is active RW lock.");
                     } else {
-                        if (broadcastUDPPacket(
+                        if (broadcast_udp_packet(
                                 PACKET_AUDIO, audio_encoder->encoded_frame_data,
                                 audio_encoder->encoded_frame_size, id, STARTING_BURST_BITRATE,
                                 audio_buffer[id % AUDIO_BUFFER_SIZE],
                                 audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
                             LOG_WARNING("Could not send audio frame");
                         }
-                        if (readUnlock(&is_active_rwlock) != 0) {
+                        if (read_unlock(&is_active_rwlock) != 0) {
                             LOG_ERROR("Failed to read-release is active RW lock.");
                         }
                     }
@@ -758,13 +758,13 @@ int32_t SendAudio(void* opaque) {
                     av_packet_unref(&audio_encoder->packet);
                 }
 #else
-                if (readLock(&is_active_rwlock) != 0) {
+                if (read_lock(&is_active_rwlock) != 0) {
                     LOG_ERROR("Failed to read-acquire is active RW lock.");
                 } else {
-                    if (broadcastUDPPacket(PACKET_AUDIO, audio_device->buffer,
-                                           audio_device->buffer_size, id, STARTING_BURST_BITRATE,
-                                           audio_buffer[id % AUDIO_BUFFER_SIZE],
-                                           audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
+                    if (broadcast_udp_packet(PACKET_AUDIO, audio_device->buffer,
+                                             audio_device->buffer_size, id, STARTING_BURST_BITRATE,
+                                             audio_buffer[id % AUDIO_BUFFER_SIZE],
+                                             audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
                         mprintf("Could not send audio frame\n");
                     }
                     if (readUnlock(&is_active_rwlock) != 0) {
@@ -775,26 +775,26 @@ int32_t SendAudio(void* opaque) {
 #endif
             }
 
-            ReleaseBuffer(audio_device);
+            release_buffer(audio_device);
         }
-        WaitTimer(audio_device);
+        wait_timer(audio_device);
     }
 
     // destroy_audio_encoder(audio_encoder);
-    DestroyAudioDevice(audio_device);
+    destroy_audio_device(audio_device);
     return 0;
 }
 
 #include <time.h>
 
-int doDiscoveryHandshake(SocketContext* context, int* client_id) {
+int do_discovery_handshake(SocketContext* context, int* client_id) {
     FractalPacket* packet;
     clock timer;
-    StartTimer(&timer);
+    start_timer(&timer);
     do {
-        packet = ReadTCPPacket(context, true);
+        packet = read_tcp_packet(context, true);
         SDL_Delay(5);
-    } while (packet == NULL && GetTimer(timer) < CLIENT_PING_TIMEOUT_SEC);
+    } while (packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
     if (packet == NULL) {
         LOG_WARNING("Did not receive discovery request from client.");
         closesocket(context->s);
@@ -804,46 +804,46 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     FractalClientMessage* fcmsg = (FractalClientMessage*)packet->data;
     int username = fcmsg->discoveryRequest.username;
 
-    if (readLock(&is_active_rwlock) != 0) {
+    if (read_lock(&is_active_rwlock) != 0) {
         LOG_ERROR("Failed to read-acquire is active RW lock.");
         return -1;
     }
     bool found;
     int ret;
-    if ((ret = tryFindClientIdByUsername(username, &found, client_id)) != 0) {
+    if ((ret = try_find_client_id_by_username(username, &found, client_id)) != 0) {
         LOG_ERROR(
             "Failed to try to find client ID by username. "
             " (Username: %s)",
             username);
     }
     if (ret == 0 && found) {
-        if (readUnlock(&is_active_rwlock) != 0) {
+        if (read_unlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to read-release is active RW lock.");
             closesocket(context->s);
             return -1;
         }
-        if (writeLock(&is_active_rwlock) != 0) {
+        if (write_lock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-acquire is active RW lock.");
             closesocket(context->s);
             return -1;
         }
-        ret = quitClient(*client_id);
+        ret = quit_client(*client_id);
         if (ret != 0) {
             LOG_ERROR("Failed to quit client. (ID: %d)", *client_id);
         }
-        if (writeUnlock(&is_active_rwlock) != 0) {
+        if (write_unlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
             closesocket(context->s);
             if (ret == 0) ret = -1;
         }
         if (ret != 0) return ret;
     } else {
-        ret = getAvailableClientID(client_id);
+        ret = get_available_client_id(client_id);
         if (ret != 0) {
             LOG_ERROR("Failed to find available client ID.");
             closesocket(context->s);
         }
-        if (readUnlock(&is_active_rwlock) != 0) {
+        if (read_unlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to read-release is active RW lock.");
             return -1;
         }
@@ -854,7 +854,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     LOG_INFO("Found ID for client. (ID: %d)", *client_id);
 
     // TODO: Should check for is_controlling, but happens after this function call
-    handleClientMessage(fcmsg, *client_id, true);
+    handle_client_message(fcmsg, *client_id, true);
 
     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
 
@@ -872,7 +872,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     reply_msg->TCP_port = clients[*client_id].TCP_port;
 
     // Save connection ID
-    saveConnectionID(connection_id);
+    save_connection_id(connection_id);
 
     // Send connection ID to client
     reply_msg->connection_id = connection_id;
@@ -890,7 +890,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
-    if (SendTCPPacket(context, PACKET_MESSAGE, (uint8_t*)fsmsg, (int)fsmsg_size) < 0) {
+    if (send_tcp_packet(context, PACKET_MESSAGE, (uint8_t*)fsmsg, (int)fsmsg_size) < 0) {
         LOG_ERROR("Failed to send send discovery reply message.");
         closesocket(context->s);
         free(fsmsg);
@@ -902,7 +902,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     return 0;
 }
 
-int MultithreadedManageClients(void* opaque) {
+int multithreaded_manage_clients(void* opaque) {
     opaque;
 
     SocketContext discovery_context;
@@ -910,28 +910,28 @@ int MultithreadedManageClients(void* opaque) {
 
     bool trying_to_update = false;
     clock last_update_timer;
-    StartTimer(&last_update_timer);
+    start_timer(&last_update_timer);
 
-    sendConnectionHistory(webserver_url, identifier, hex_aes_private_key);
+    send_connection_history(webserver_url, identifier, hex_aes_private_key);
     connection_id = rand();
-    startConnectionLog();
+    start_connection_log();
     bool have_sent_logs = true;
 
     double nongraceful_grace_period = 600.0;  // 10 min after nongraceful disconn to reconn
     bool first_client_connected = false;      // set to true once the first client has connected
     double begin_time_to_exit = 60.0;  // client 1 min to connect when the server first goes up
     clock first_client_timer;  // start this now and then discard when first client has connected
-    StartTimer(&first_client_timer);
+    start_timer(&first_client_timer);
 
     while (!exiting) {
-        if (readLock(&is_active_rwlock) != 0) {
+        if (read_lock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to read-acquire an active RW lock.");
             continue;
         }
 
         int saved_num_active_clients = num_active_clients;
 
-        if (readUnlock(&is_active_rwlock) != 0) {
+        if (read_unlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to read-release and active RW lock.");
             continue;
         }
@@ -939,7 +939,7 @@ int MultithreadedManageClients(void* opaque) {
         LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
                  have_sent_logs ? "yes" : "no");
         if (saved_num_active_clients == 0 && !have_sent_logs) {
-            sendConnectionHistory(webserver_url, identifier, hex_aes_private_key);
+            send_connection_history(webserver_url, identifier, hex_aes_private_key);
             have_sent_logs = true;
         } else if (saved_num_active_clients > 0 && have_sent_logs) {
             have_sent_logs = false;
@@ -947,15 +947,15 @@ int MultithreadedManageClients(void* opaque) {
 
         if (saved_num_active_clients == 0) {
             connection_id = rand();
-            startConnectionLog();
+            start_connection_log();
 
             if (trying_to_update) {
-                if (GetTimer(last_update_timer) > 10.0) {
+                if (get_timer(last_update_timer) > 10.0) {
                     update_webserver_parameters();
-                    StartTimer(&last_update_timer);
+                    start_timer(&last_update_timer);
                 }
             } else {
-                StartTimer(&last_update_timer);
+                start_timer(&last_update_timer);
                 trying_to_update = true;
             }
 
@@ -969,9 +969,9 @@ int MultithreadedManageClients(void* opaque) {
             //  doesn't matter if we disconnect
             //  * if no clients are connected, it isn't possible for another client to nongracefully
             //  exit and reset the grace period timer
-            if ((first_client_connected || (GetTimer(first_client_timer) > begin_time_to_exit)) &&
+            if ((first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit)) &&
                 (!client_exited_nongracefully ||
-                 (GetTimer(last_nongraceful_exit) > nongraceful_grace_period))) {
+                 (get_timer(last_nongraceful_exit) > nongraceful_grace_period))) {
                 exiting = true;
             }
         } else {
@@ -987,17 +987,17 @@ int MultithreadedManageClients(void* opaque) {
             // nongraceful client grace period has ended, but clients are
             //  connected still - we don't want server to exit yet
             if (client_exited_nongracefully &&
-                GetTimer(last_nongraceful_exit) > nongraceful_grace_period) {
+                get_timer(last_nongraceful_exit) > nongraceful_grace_period) {
                 client_exited_nongracefully = false;
             }
         }
 
-        if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                             get_using_stun(), binary_aes_private_key) < 0) {
+        if (create_tcp_context(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
+                               get_using_stun(), binary_aes_private_key) < 0) {
             continue;
         }
 
-        if (doDiscoveryHandshake(&discovery_context, &client_id) != 0) {
+        if (do_discovery_handshake(&discovery_context, &client_id) != 0) {
             LOG_WARNING("Discovery handshake failed.");
             continue;
         }
@@ -1006,7 +1006,7 @@ int MultithreadedManageClients(void* opaque) {
 
         // Client is not in use so we don't need to worry about anyone else
         // touching it
-        if (connectClient(client_id, binary_aes_private_key) != 0) {
+        if (connect_client(client_id, binary_aes_private_key) != 0) {
             LOG_WARNING(
                 "Failed to establish connection with client. "
                 "(ID: %d)",
@@ -1014,9 +1014,9 @@ int MultithreadedManageClients(void* opaque) {
             continue;
         }
 
-        if (writeLock(&is_active_rwlock) != 0) {
+        if (write_lock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-acquire is active RW lock.");
-            if (quitClient(client_id) != 0) {
+            if (quit_client(client_id) != 0) {
                 LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
             }
             if (host_id == client_id) {
@@ -1045,7 +1045,7 @@ int MultithreadedManageClients(void* opaque) {
 
         if (clients[client_id].is_controlling) {
             // Reset input system when a new input controller arrives
-            ResetInput();
+            reset_input();
         }
 
         // reapTimedOutClients is called within a writeLock(&is_active_rwlock) and therefore this
@@ -1053,18 +1053,18 @@ int MultithreadedManageClients(void* opaque) {
         //  reapTimedOutClients only ever writes client_exited_nongracefully as true. This thread
         //  only writes it as false.
         if (client_exited_nongracefully &&
-            (GetTimer(last_nongraceful_exit) > nongraceful_grace_period)) {
+            (get_timer(last_nongraceful_exit) > nongraceful_grace_period)) {
             client_exited_nongracefully = false;
         }
 
-        StartTimer(&(clients[client_id].last_ping));
+        start_timer(&(clients[client_id].last_ping));
 
         clients[client_id].is_active = true;
 
-        if (writeUnlock(&is_active_rwlock) != 0) {
+        if (write_unlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
             LOG_ERROR("VERY BAD. IRRECOVERABLE.");
-            if (quitClient(client_id) != 0) {
+            if (quit_client(client_id) != 0) {
                 LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
             }
             if (host_id == client_id) {
@@ -1218,9 +1218,9 @@ int main(int argc, char* argv[]) {
     // set env to dev and update later
     strcpy(sentry_environment, "dev");
 #ifdef _WIN32
-    initLogger("C:\\ProgramData\\FractalCache");
+    init_logger("C:\\ProgramData\\FractalCache");
 #else
-    initLogger(".");
+    init_logger(".");
 #endif
     LOG_INFO("Version Number: %s", get_version());
     LOG_INFO("Fractal server revision %s", FRACTAL_GIT_REVISION);
@@ -1233,27 +1233,27 @@ int main(int argc, char* argv[]) {
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
-        destroyLogger();
+        destroy_logger();
         return -1;
     }
 #endif
 
-    input_device = CreateInputDevice();
+    input_device = create_input_device();
     if (!input_device) {
         LOG_WARNING("Failed to create input device for playback.");
     }
 
 #ifdef _WIN32
-    if (!InitDesktop(input_device, get_vm_password())) {
+    if (!init_desktop(input_device, get_vm_password())) {
         LOG_WARNING("Could not winlogon!\n");
-        destroyLogger();
+        destroy_logger();
         return 0;
     }
 #endif
 
-    if (initClients() != 0) {
+    if (init_clients() != 0) {
         LOG_ERROR("Failed to initialize client objects.");
-        destroyLogger();
+        destroy_logger();
         return 1;
     }
 
@@ -1262,121 +1262,121 @@ int main(int argc, char* argv[]) {
     XSetIOErrorHandler(xioerror_handler);
 #endif
 
-    updateServerStatus(false, webserver_url, identifier, hex_aes_private_key);
+    update_server_status(false, webserver_url, identifier, hex_aes_private_key);
 
-    // webserver will not know about this container until updateServerStatus is called above
+    // webserver will not know about this container until update_server_status is called above
     update_webserver_parameters();
 
     clock startup_time;
-    StartTimer(&startup_time);
+    start_timer(&startup_time);
 
     max_mbps = STARTING_BITRATE;
     wants_iframe = false;
     update_encoder = false;
     exiting = false;
 
-    SDL_Thread* manage_clients =
-        SDL_CreateThread(MultithreadedManageClients, "MultithreadedManageClients", NULL);
+    SDL_Thread* manage_clients_thread =
+        SDL_CreateThread(multithreaded_manage_clients, "MultithreadedManageClients", NULL);
     SDL_Delay(500);
 
-    SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", NULL);
-    SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", NULL);
+    SDL_Thread* send_video_thread = SDL_CreateThread(send_video, "send_video", NULL);
+    SDL_Thread* send_audio_thread = SDL_CreateThread(send_audio, "send_audio", NULL);
     LOG_INFO("Sending video and audio...");
 
     clock totaltime;
-    StartTimer(&totaltime);
+    start_timer(&totaltime);
 
     clock last_exit_check;
-    StartTimer(&last_exit_check);
+    start_timer(&last_exit_check);
 
     clock last_ping_check;
-    StartTimer(&last_ping_check);
+    start_timer(&last_ping_check);
 
     LOG_INFO("Receiving packets...");
 
-    initClipboardSynchronizer();
+    init_clipboard_synchronizer();
 
     clock ack_timer;
-    StartTimer(&ack_timer);
+    start_timer(&ack_timer);
 
     while (!exiting) {
-        if (GetTimer(ack_timer) > 5) {
+        if (get_timer(ack_timer) > 5) {
             if (get_using_stun()) {
                 // Broadcast ack
-                if (readLock(&is_active_rwlock) != 0) {
+                if (read_lock(&is_active_rwlock) != 0) {
                     LOG_ERROR("Failed to read-acquire is active RW lock.");
                 } else {
-                    if (broadcastAck() != 0) {
+                    if (broadcast_ack() != 0) {
                         LOG_ERROR("Failed to broadcast acks.");
                     }
-                    if (readUnlock(&is_active_rwlock) != 0) {
+                    if (read_unlock(&is_active_rwlock) != 0) {
                         LOG_ERROR("Failed to read-release is active RW lock.");
                     }
                 }
             }
-            updateServerStatus(num_controlling_clients > 0, webserver_url, identifier,
-                               hex_aes_private_key);
-            StartTimer(&ack_timer);
+            update_server_status(num_controlling_clients > 0, webserver_url, identifier,
+                                 hex_aes_private_key);
+            start_timer(&ack_timer);
         }
 
         // If they clipboard as updated, we should send it over to the
         // client
-        ClipboardData* cb = ClipboardSynchronizerGetNewClipboard();
+        ClipboardData* cb = clipboard_synchronizer_get_new_clipboard();
         if (cb) {
             LOG_INFO("Received clipboard trigger! Sending to client");
             FractalServerMessage* fmsg_response = malloc(sizeof(FractalServerMessage) + cb->size);
             fmsg_response->type = SMESSAGE_CLIPBOARD;
             memcpy(&fmsg_response->clipboard, cb, sizeof(ClipboardData) + cb->size);
-            if (readLock(&is_active_rwlock) != 0) {
+            if (read_lock(&is_active_rwlock) != 0) {
                 LOG_ERROR("Failed to read-acquire is active RW lock.");
             } else {
-                if (broadcastTCPPacket(PACKET_MESSAGE, (uint8_t*)fmsg_response,
-                                       sizeof(FractalServerMessage) + cb->size) < 0) {
+                if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
+                                         sizeof(FractalServerMessage) + cb->size) < 0) {
                     LOG_WARNING("Could not broadcast Clipboard Message");
                 } else {
                     LOG_INFO("Send clipboard message!");
                 }
-                if (readUnlock(&is_active_rwlock) != 0) {
+                if (read_unlock(&is_active_rwlock) != 0) {
                     LOG_ERROR("Failed to read-release is active RW lock.");
                 }
             }
             free(fmsg_response);
         }
 
-        if (GetTimer(last_ping_check) > 20.0) {
+        if (get_timer(last_ping_check) > 20.0) {
             for (;;) {
-                if (readLock(&is_active_rwlock) != 0) {
+                if (read_lock(&is_active_rwlock) != 0) {
                     LOG_ERROR("Failed to read-acquire is active RW lock.");
                     break;
                 }
                 bool exists, should_reap = false;
-                if (existsTimedOutClient(CLIENT_PING_TIMEOUT_SEC, &exists) != 0) {
+                if (exists_timed_out_client(CLIENT_PING_TIMEOUT_SEC, &exists) != 0) {
                     LOG_ERROR("Failed to find if a client has timed out.");
                 } else {
                     should_reap = exists;
                 }
-                if (readUnlock(&is_active_rwlock) != 0) {
+                if (read_unlock(&is_active_rwlock) != 0) {
                     LOG_ERROR("Failed to read-release is active RW lock.");
                     break;
                 }
                 if (should_reap) {
-                    if (writeLock(&is_active_rwlock) != 0) {
+                    if (write_lock(&is_active_rwlock) != 0) {
                         LOG_ERROR("Failed to write-acquire is active RW lock.");
                         break;
                     }
-                    if (reapTimedOutClients(CLIENT_PING_TIMEOUT_SEC) != 0) {
+                    if (reap_timed_out_clients(CLIENT_PING_TIMEOUT_SEC) != 0) {
                         LOG_ERROR("Failed to reap timed out clients.");
                     }
-                    if (writeUnlock(&is_active_rwlock) != 0) {
+                    if (write_unlock(&is_active_rwlock) != 0) {
                         LOG_ERROR("Failed to write-release is active RW lock.");
                     }
                 }
                 break;
             }
-            StartTimer(&last_ping_check);
+            start_timer(&last_ping_check);
         }
 
-        if (readLock(&is_active_rwlock) != 0) {
+        if (read_lock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-acquire is active lock.");
             continue;
         }
@@ -1388,8 +1388,9 @@ int main(int argc, char* argv[]) {
             FractalClientMessage* fmsg;
             FractalClientMessage local_fcmsg;
             size_t fcmsg_size;
-            if (tryGetNextMessageTCP(id, &fmsg, &fcmsg_size) != 0 || fcmsg_size == 0) {
-                if (tryGetNextMessageUDP(id, &local_fcmsg, &fcmsg_size) != 0 || fcmsg_size == 0) {
+            if (try_get_next_message_tcp(id, &fmsg, &fcmsg_size) != 0 || fcmsg_size == 0) {
+                if (try_get_next_message_udp(id, &local_fcmsg, &fcmsg_size) != 0 ||
+                    fcmsg_size == 0) {
                     continue;
                 }
                 fmsg = &local_fcmsg;
@@ -1402,7 +1403,7 @@ int main(int argc, char* argv[]) {
             }
             bool is_controlling = clients[id].is_controlling;
             SDL_UnlockMutex(state_lock);
-            if (handleClientMessage(fmsg, id, is_controlling) != 0) {
+            if (handle_client_message(fmsg, id, is_controlling) != 0) {
                 LOG_ERROR(
                     "Failed to handle message from client. "
                     "(ID: %d)",
@@ -1413,39 +1414,39 @@ int main(int argc, char* argv[]) {
                 // }
             }
         }
-        if (readUnlock(&is_active_rwlock) != 0) {
+        if (read_unlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active lock.");
             continue;
         }
     }
 
-    DestroyInputDevice(input_device);
-    destroyClipboardSynchronizer();
+    destroy_input_device(input_device);
+    destroy_clipboard_synchronizer();
 
-    SDL_WaitThread(send_video, NULL);
-    SDL_WaitThread(send_audio, NULL);
-    SDL_WaitThread(manage_clients, NULL);
+    SDL_WaitThread(send_video_thread, NULL);
+    SDL_WaitThread(send_audio_thread, NULL);
+    SDL_WaitThread(manage_clients_thread, NULL);
 
     SDL_DestroyMutex(packet_mutex);
 
-    if (writeLock(&is_active_rwlock) != 0) {
+    if (write_lock(&is_active_rwlock) != 0) {
         LOG_ERROR("Failed to write-acquire is active RW lock.");
         return -1;
     }
     if (SDL_LockMutex(state_lock) != 0) {
         LOG_ERROR("Failed to lock state lock");
-        if (writeUnlock(&is_active_rwlock) != 0) {
+        if (write_unlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
         }
         return -1;
     }
-    if (quitClients() != 0) {
+    if (quit_clients() != 0) {
         LOG_ERROR("Failed to quit clients.");
     }
     if (SDL_UnlockMutex(state_lock) != 0) {
         LOG_ERROR("Failed to unlock state lock");
     }
-    if (writeUnlock(&is_active_rwlock) != 0) {
+    if (write_unlock(&is_active_rwlock) != 0) {
         LOG_ERROR("Failed to write-release is active RW lock.");
     }
 
@@ -1453,11 +1454,11 @@ int main(int argc, char* argv[]) {
     WSACleanup();
 #endif
 
-    destroyLogger();
-    destroyClients();
+    destroy_logger();
+    destroy_clients();
 
     SDL_LockMutex(container_destruction_mutex);
-    if (SendContainerDestroyMessage() == -1) {
+    if (send_container_destroy_message() == -1) {
         SDL_UnlockMutex(container_destruction_mutex);
         return -1;
     }

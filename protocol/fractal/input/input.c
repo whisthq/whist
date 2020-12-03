@@ -1,13 +1,13 @@
 #include "input_driver.h"
 
-#define KeyUp(input_device, sdl_keycode) EmitKeyEvent(input_device, sdl_keycode, 0)
-#define KeyDown(input_device, sdl_keycode) EmitKeyEvent(input_device, sdl_keycode, 1)
+#define KeyUp(input_device, sdl_keycode) emit_key_event(input_device, sdl_keycode, 0)
+#define KeyDown(input_device, sdl_keycode) emit_key_event(input_device, sdl_keycode, 1)
 
 unsigned int last_input_fmsg_id = 0;
 
-void ResetInput() { last_input_fmsg_id = 0; }
+void reset_input() { last_input_fmsg_id = 0; }
 
-void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fmsg) {
+void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fmsg) {
     if (fmsg->id <= last_input_fmsg_id) {
         // Ignore Old FractalClientMessage
         return;
@@ -21,17 +21,18 @@ void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fms
         return;
     }
 
-    bool server_caps_lock = GetKeyboardModifierState(input_device, FK_CAPSLOCK);
-    bool server_num_lock = GetKeyboardModifierState(input_device, FK_NUMLOCK);
+    bool server_caps_lock = get_keyboard_modifier_state(input_device, FK_CAPSLOCK);
+    bool server_num_lock = get_keyboard_modifier_state(input_device, FK_NUMLOCK);
 
     bool client_caps_lock_holding = fmsg->keyboard_state[FK_CAPSLOCK];
     bool client_num_lock_holding = fmsg->keyboard_state[FK_NUMLOCK];
 
     for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; ++sdl_keycode) {
-        if (!fmsg->keyboard_state[sdl_keycode] && GetKeyboardKeyState(input_device, sdl_keycode)) {
+        if (!fmsg->keyboard_state[sdl_keycode] &&
+            get_keyboard_key_state(input_device, sdl_keycode)) {
             KeyUp(input_device, sdl_keycode);
         } else if (fmsg->keyboard_state[sdl_keycode] &&
-                   !GetKeyboardKeyState(input_device, sdl_keycode)) {
+                   !get_keyboard_key_state(input_device, sdl_keycode)) {
             KeyDown(input_device, sdl_keycode);
 
             if (sdl_keycode == FK_CAPSLOCK) {
@@ -69,7 +70,7 @@ void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fms
     }
 }
 
-bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
+bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
     if (fmsg->id <= last_input_fmsg_id) {
         // Ignore Old FractalClientMessage
         return true;
@@ -79,18 +80,18 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
     int ret = 0;
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
-            ret = EmitKeyEvent(input_device, fmsg->keyboard.code, fmsg->keyboard.pressed);
+            ret = emit_key_event(input_device, fmsg->keyboard.code, fmsg->keyboard.pressed);
             break;
         case MESSAGE_MOUSE_MOTION:
-            ret = EmitMouseMotionEvent(input_device, fmsg->mouseMotion.x, fmsg->mouseMotion.y,
-                                       fmsg->mouseMotion.relative);
+            ret = emit_mouse_motion_event(input_device, fmsg->mouseMotion.x, fmsg->mouseMotion.y,
+                                          fmsg->mouseMotion.relative);
             break;
         case MESSAGE_MOUSE_BUTTON:
-            ret = EmitMouseButtonEvent(input_device, fmsg->mouseButton.button,
-                                       fmsg->mouseButton.pressed);
+            ret = emit_mouse_button_event(input_device, fmsg->mouseButton.button,
+                                          fmsg->mouseButton.pressed);
             break;
         case MESSAGE_MOUSE_WHEEL:
-            ret = EmitMouseWheelEvent(input_device, fmsg->mouseWheel.x, fmsg->mouseWheel.y);
+            ret = emit_mouse_wheel_event(input_device, fmsg->mouseWheel.x, fmsg->mouseWheel.y);
             break;
         case MESSAGE_MULTIGESTURE:
             LOG_WARNING("Multi-touch support not added yet!");
@@ -107,7 +108,7 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
     return true;
 }
 
-size_t InputKeycodes(input_device_t* input_device, FractalKeycode* keycodes, size_t count) {
+size_t input_keycodes(InputDevice* input_device, FractalKeycode* keycodes, size_t count) {
     for (unsigned int i = 0; i < count; ++i) {
         if (KeyDown(input_device, keycodes[i])) {
             LOG_WARNING("Error pressing keycode %d!", keycodes[i]);

@@ -11,28 +11,28 @@ from app.constants.bad_words_hashed import BAD_WORDS_HASHED
 from app.models import User
 
 
-def generatePrivateKey():
+def generate_private_key():
     return secrets.token_hex(16)
 
 
-def generateUniquePromoCode():
+def generate_unique_promo_code():
     users = User.query.all()
     old_codes = []
     if users:
         old_codes = [user.referral_code for user in users]
-    new_code = generatePromoCode()
+    new_code = generate_promo_code()
     while new_code in old_codes:
-        new_code = generatePromoCode()
+        new_code = generate_promo_code()
     return new_code
 
 
-def getAccessTokens(username):
+def get_access_tokens(username):
     access_token = create_access_token(identity=username, expires_delta=False)
     refresh_token = create_refresh_token(identity=username, expires_delta=False)
     return (access_token, refresh_token)
 
 
-def generateToken(username):
+def generate_token(username):
     token = create_access_token(identity=username)
     if len(token) > 15:
         token = token[-15:]
@@ -42,24 +42,24 @@ def generateToken(username):
     return token
 
 
-def generatePromoCode():
-    upperCase = string.ascii_uppercase
+def generate_promo_code():
+    upper_case = string.ascii_uppercase
     numbers = "1234567890"
 
     allowed = False
     while not allowed:
-        c1 = "".join([random.choice(numbers) for _ in range(0, 3)])
-        c2 = "".join([random.choice(upperCase) for _ in range(0, 3)]) + "-" + c1
-        c2_encoding = c2.lower().encode("utf-8")
+        number_segment = "".join([random.choice(numbers) for _ in range(0, 3)])
+        full_code = "".join([random.choice(upper_case) for _ in range(0, 3)]) + "-" + number_segment
+        full_code_encoding = full_code.lower().encode("utf-8")
         if hashlib.md5(
-            c2_encoding
-        ).hexdigest() not in BAD_WORDS_HASHED and not profanity.contains_profanity(c2):
+            full_code_encoding
+        ).hexdigest() not in BAD_WORDS_HASHED and not profanity.contains_profanity(full_code):
             allowed = True
-    return c2
+    return full_code
 
 
-def getGoogleTokens(code, clientApp):
-    if clientApp:
+def get_google_tokens(code, client_app):
+    if client_app:
         client_secret = "secrets/google_client_secret_desktop.json"
         redirect_uri = "com.tryfractal.app:/oauth2Callback"
     else:

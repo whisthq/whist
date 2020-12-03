@@ -22,9 +22,9 @@ static Display* disp;
 
 static uint32_t last_cursor[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT] = {0};
 
-void InitCursors() { disp = XOpenDisplay(NULL); }
+void init_cursors() { disp = XOpenDisplay(NULL); }
 
-FractalCursorImage GetCurrentCursor() {
+FractalCursorImage get_current_cursor() {
     FractalCursorImage image = {0};
     image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
     image.cursor_state = CURSOR_STATE_VISIBLE;

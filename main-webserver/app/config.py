@@ -118,7 +118,7 @@ def getter(key, fetch=True, **kwargs):
     return _getter
 
 
-def _TestConfig(BaseConfig):
+def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
     """Generate a test configuration class that is a subclass of a base configuration class.
 
     Arguments:
@@ -128,7 +128,7 @@ def _TestConfig(BaseConfig):
         A configuration class to be used to configure a Flask application for testing.
     """
 
-    class TestConfig(BaseConfig):
+    class TestConfig(BaseConfig):  # pylint: disable=invalid-name
         """Place the application in testing mode."""
 
         config_table = "dev"
@@ -200,7 +200,7 @@ class LocalConfig(DeploymentConfig):
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
 
     @property
-    def SQLALCHEMY_DATABASE_URI(self):
+    def SQLALCHEMY_DATABASE_URI(self):  # pylint: disable=invalid-name
         return (
             f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
             f"{self.db_name}"

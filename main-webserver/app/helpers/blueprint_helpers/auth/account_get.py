@@ -3,12 +3,12 @@ from flask import jsonify
 from app.constants.http_codes import BAD_REQUEST, SUCCESS
 from app.models import User
 from app.serializers.public import UserSchema
-from app.helpers.utils.general.tokens import getAccessTokens
+from app.helpers.utils.general.tokens import get_access_tokens
 
 user_schema = UserSchema()
 
 
-def codeHelper(username):
+def code_helper(username):
     """Fetches a user's promo code
 
     Parameters:
@@ -33,7 +33,7 @@ def codeHelper(username):
         return {"code": None, "status": BAD_REQUEST}
 
 
-def fetchUserHelper(username):
+def fetch_user_helper(username):
     """Returns the user's entire info
 
     Args:
@@ -46,7 +46,7 @@ def fetchUserHelper(username):
 
     # Return user
     if user:
-        access_token, refresh_token = getAccessTokens(username)
+        access_token, refresh_token = get_access_tokens(username)
         output = user_schema.dump(user)
         output["access_token"] = access_token
         output["refresh_token"] = refresh_token
@@ -55,7 +55,7 @@ def fetchUserHelper(username):
         return {"user": None, "status": BAD_REQUEST}
 
 
-def verifiedHelper(username):
+def verified_helper(username):
     """Checks if a user's email has been verified
 
     Parameters:
