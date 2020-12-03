@@ -9,7 +9,7 @@ export const urlToApp = (
     url: string,
     featuredAppData: FractalApp[]
 ): { app_id: string; url: string } => {
-    for (var i = 0; i < featuredAppData.length; i++) {
+    for (let i = 0; i < featuredAppData.length; i++) {
         if (
             url
                 .toLowerCase()
@@ -36,7 +36,7 @@ export const findDPI = () => {
 
 const findFirstPositive = <T>(fn: (x: number) => T) => {
     let start = 1
-    while (0 >= fn(start)) start <<= 1
+    while (fn(start) <= 0) start <<= 1
     return binSearch(fn, start >>> 1, start) | 0
 }
 
@@ -47,9 +47,9 @@ const binSearch = <T>(
 ): number => {
     if (max < min) return -1 // not found
 
-    let mid = (min + max) >>> 1
-    if (0 < fn(mid)) {
-        if (mid == min || 0 >= fn(mid - 1)) {
+    const mid = (min + max) >>> 1
+    if (fn(mid) > 0) {
+        if (mid == min || fn(mid - 1) <= 0) {
             return mid
         }
         return binSearch(fn, min, mid - 1)

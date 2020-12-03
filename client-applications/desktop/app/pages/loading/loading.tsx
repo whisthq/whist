@@ -25,6 +25,7 @@ const Loading = (props: {
     secretKey: string
     desiredAppID: string
     currentAppID: string
+    containerID: string
     dispatch: Dispatch
 }) => {
     const {
@@ -38,6 +39,7 @@ const Loading = (props: {
         secretKey,
         desiredAppID,
         currentAppID,
+        containerID,
         dispatch,
     } = props
 
