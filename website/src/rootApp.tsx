@@ -13,6 +13,7 @@ import Verify from "pages/auth/verify"
 import Reset from "pages/auth/reset"
 import Dashboard from "pages/dashboard/dashboard"
 import Profile from "pages/profile/profile"
+import AuthCallback from "pages/auth/callback"
 import Plan from "pages/plan/plan"
 import Payment from "pages/payment/payment"
 
@@ -60,6 +61,11 @@ const RootApp = (props: any) => {
                 />
                 <Route exact path="/verify" component={withTracker(Verify)} />
                 <Route exact path="/reset" component={withTracker(Reset)} />
+                <Route
+                    exact
+                    path="/callback"
+                    component={withTracker(AuthCallback)}
+                />
                 <Route
                     exact
                     path="/dashboard"

@@ -36,5 +36,6 @@ export const DEFAULT = {
         passwordResetEmail: null, // forgot password email
         passwordResetToken: null,
         passwordVerified: null, // null | "success" | "failed"
+        callback: null,
     },
 }

@@ -22,6 +22,9 @@ function* emailLogin(action: any) {
         ""
     )
 
+    console.log("LOGGED IN")
+    console.log(json.access_token)
+
     if (json && json.access_token) {
         yield put(
             AuthPureAction.updateUser({

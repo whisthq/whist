@@ -7,6 +7,7 @@ import MainContext from "shared/context/mainContext"
 import * as PureAuthAction from "store/actions/auth/pure"
 import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 import { deepCopy } from "shared/utils/reducerHelpers"
+import history from "shared/utils/history"
 import { DEFAULT as AUTH_DEFAULT } from "store/reducers/auth/default"
 import { DEFAULT as DASHBOARD_DEFAULT } from "store/reducers/dashboard/default"
 
@@ -32,6 +33,7 @@ const Header = (props: {
                 deepCopy(DASHBOARD_DEFAULT.paymentFlow)
             )
         )
+        history.push("/auth/bypass")
     }
 
     // Only render navigation links for desktops and tablets

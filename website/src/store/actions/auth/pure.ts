@@ -40,6 +40,7 @@ export function updateAuthFlow(body: {
     passwordResetEmail?: string | null
     passwordResetToken?: string | null
     passwordVerified?: string | null
+    callback?: string
 }) {
     return {
         type: UPDATE_AUTH_FLOW,
