@@ -11,6 +11,7 @@ import { FractalRoute } from "shared/types/navigation"
 import { FractalAPI } from "shared/types/api"
 import { AWSRegion } from "shared/types/aws"
 import { FractalAuthCache } from "shared/types/cache"
+import { config } from "shared/constants/config"
 
 function* refreshAccess() {
     const state = yield select()
@@ -68,23 +69,52 @@ function* validateAccessToken(action: { accessToken: string }) {
 }
 
 function* createContainer<T extends {}>(action: { body: T }) {
+    const test = action.test
+    const app = action.app
+    const url = action.url
+
     yield put(
         Action.updateContainer({
-            desiredAppID: action.app,
+            desiredAppID: app,
         })
     )
 
     const state = yield select()
     const username = state.MainReducer.auth.username
 
-    let region = state.MainReducer.client.region
-        ? state.MainReducer.client.region
-        : AWSRegion.US_EAST_1
-    if (region === AWSRegion.US_EAST_2) {
-        region = AWSRegion.US_EAST_1
-    }
-    if (region === AWSRegion.US_WEST_2) {
-        region = AWSRegion.US_WEST_1
+    const endpoint = test
+        ? FractalAPI.CONTAINER.TEST_CREATE
+        : FractalAPI.CONTAINER.CREATE
+    const body = test
+        ? {
+              username: username,
+              cluster_name: state.MainReducer.admin.cluster,
+              region_name: state.MainReducer.admin.region,
+              task_definition_arn: state.MainReducer.admin.task_arn,
+              //dpi not supported yet
+          }
+        : {
+              username: username,
+              region: null,
+              app: app,
+              url: url,
+              dpi: state.MainReducer.client.dpi,
+          }
+    const webserver = test
+        ? state.MainReducer.webserver_url
+        : config.url.WEBSERVER_URL
+
+    if (!test) {
+        let region = state.MainReducer.client.region
+            ? state.MainReducer.client.region
+            : AWSRegion.US_EAST_1
+        if (region === AWSRegion.US_EAST_2) {
+            region = AWSRegion.US_EAST_1
+        }
+        if (region === AWSRegion.US_WEST_2) {
+            region = AWSRegion.US_WEST_1
+        }
+        body.region = region
     }
 
     if (!username || username === "None" || username === "") {
@@ -94,15 +124,10 @@ function* createContainer<T extends {}>(action: { body: T }) {
 
     let { json, success } = yield call(
         apiPost,
-        FractalAPI.CONTAINER.CREATE,
-        {
-            username: username,
-            region: region,
-            app: action.app,
-            url: action.url,
-            dpi: state.MainReducer.client.dpi,
-        },
-        state.MainReducer.auth.accessToken
+        endpoint,
+        body,
+        state.MainReducer.auth.accessToken,
+        webserver
     )
 
     if (!success) {
@@ -115,7 +140,8 @@ function* createContainer<T extends {}>(action: { body: T }) {
     ;({ json, success } = yield call(
         apiGet,
         `/status/${id}`,
-        state.MainReducer.auth.accessToken
+        state.MainReducer.auth.accessToken,
+        webserver
     ))
 
     let progressSoFar = 0
@@ -133,7 +159,8 @@ function* createContainer<T extends {}>(action: { body: T }) {
             ;({ success } = yield call(
                 apiGet,
                 `/status/${id}`,
-                state.MainReducer.auth.accessToken
+                state.MainReducer.auth.accessToken,
+                webserver
             ))
 
             if (!success) {
@@ -148,11 +175,14 @@ function* createContainer<T extends {}>(action: { body: T }) {
                         statusMessage: warning,
                     })
                 )
+                // TODO (adriano) we should not have to return in case it can try agin
+                // however, there is no way to exit this loop right if they press the return button
+                return
             }
         }
 
         // Update status message every six seconds
-        if (secondsPassed > 0 && secondsPassed % 6 === 0) {
+        if (success && secondsPassed > 0 && secondsPassed % 6 === 0) {
             yield put(
                 Action.updateLoading({
                     statusMessage: generateMessage(),
@@ -173,6 +203,17 @@ function* createContainer<T extends {}>(action: { body: T }) {
     }
     // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
     if (json && json.state && json.state === "SUCCESS") {
+        progressSoFar = 100
+
+        yield put(
+            Action.updateLoading({
+                statusMessage: "Stream successfully started.",
+                percentLoaded: progressSoFar,
+            })
+        )
+
+        delay(1000) // so they can ready that above
+
         if (json.output) {
             yield put(
                 Action.updateContainer({
@@ -187,154 +228,19 @@ function* createContainer<T extends {}>(action: { body: T }) {
                     currentAppID: action.app,
                 })
             )
+        } else {
+            yield put(
+                Action.updateLoading({
+                    statusMessage:
+                        "Unexpectedly, server didn't send connection info. Please try again.",
+                    percentLoaded: progressSoFar,
+                })
+            )
         }
-
-        progressSoFar = 100
-
-        yield put(
-            Action.updateLoading({
-                statusMessage: "Stream successfully started.",
-                percentLoaded: progressSoFar,
-            })
-        )
     } else {
         const warning =
             `(${moment().format("hh:mm:ss")}) ` +
             `Unexpectedly lost connection with server. Trying again...`
-        progressSoFar = 0
-        yield put(
-            Action.updateLoading({
-                statusMessage: warning,
-                percentLoaded: progressSoFar,
-            })
-        )
-    }
-}
-
-function* createTestContainer<T extends {}>(action: { body: T }) {
-    yield put(
-        Action.updateContainer({
-            desiredAppID: action.app,
-        })
-    )
-
-    const state = yield select()
-
-    const username = state.MainReducer.auth.username
-
-    const task_arn = state.MainReducer.admin.task_arn
-    const region = state.MainReducer.admin.region
-    const webserver = state.MainReducer.admin.webserver_url
-    const cluster_name = state.MainReducer.admin.cluster
-
-    const data = yield call(
-        apiPost,
-        FractalAPI.CONTAINER.TEST_CREATE,
-        {
-            username: username,
-            cluster_name: cluster_name,
-            region_name: region,
-            task_definition_arn: task_arn,
-            //dpi not supported yet
-        },
-        state.MainReducer.auth.accessToken,
-        webserver // webserver_url
-    )
-
-    const { success } = data
-
-    const id = data.json.ID
-    let { json, response } = yield call(
-        apiGet,
-        `/status/${id}`,
-        state.MainReducer.auth.accessToken,
-        webserver,
-    )
-
-    let progressSoFar = 0
-    let secondsPassed = 0
-
-    yield put(
-        Action.updateLoading({
-            percentLoaded: progressSoFar,
-            statusMessage: `Preparing to stream ${action.app}`,
-        })
-    )
-
-    while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
-        if (secondsPassed % 1 === 0) {
-            ;({ response } = yield call(
-                apiGet,
-                `/status/${id}`,
-                state.MainReducer.auth.accessToken,
-                webserver,
-            ))
-
-            if (response && response.status && response.status === 500) {
-                const warning =
-                    `(${moment().format("hh:mm:ss")}) ` +
-                    "Unexpectedly lost connection with server. Please close the app and try again."
-
-                progressSoFar = 0
-                yield put(
-                    Action.updateLoading({
-                        percentLoaded: progressSoFar,
-                        statusMessage: warning,
-                    })
-                )
-            }
-        }
-
-        // Update status message every six seconds
-        if (secondsPassed > 0 && secondsPassed % 6 === 0) {
-            yield put(
-                Action.updateLoading({
-                    statusMessage: generateMessage(),
-                })
-            )
-        }
-
-        // Update loading bar every second
-        yield put(
-            Action.updateLoading({
-                percentLoaded: progressSoFar,
-            })
-        )
-        progressSoFar = Math.min(99, progressSoFar + 1)
-
-        yield delay(1000)
-        secondsPassed += 1
-    }
-    // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
-    if (json && json.state && json.state === "SUCCESS") {
-        if (json.output) {
-            yield put(
-                Action.updateContainer({
-                    containerID: json.output.containerID,
-                    cluster: json.output.cluster,
-                    port32262: json.output.port_32262,
-                    port32263: json.output.port_32263,
-                    port32273: json.output.port_32273,
-                    location: json.output.location,
-                    publicIP: json.output.ip,
-                    secretKey: json.output.secret_key,
-                    currentAppID: action.app,
-                })
-            )
-        }
-
-        progressSoFar = 100
-
-        yield put(
-            Action.updateLoading({
-                statusMessage: "Stream successfully started.",
-                percentLoaded: progressSoFar,
-            })
-        )
-    } else {
-        const warning =
-            `(${moment().format("hh:mm:ss")}) ` +
-            `Unexpectedly lost connection with server. Cancelling...`
         progressSoFar = 0
         yield put(
             Action.updateLoading({
@@ -367,7 +273,6 @@ function* submitFeedback<T extends {}>(action: { body: T }) {
 export default function* rootSaga() {
     yield all([
         takeEvery(SideEffect.CREATE_CONTAINER, createContainer),
-        takeEvery(SideEffect.CREATE_TEST_CONTAINER, createTestContainer),
         takeEvery(SideEffect.SUBMIT_FEEDBACK, submitFeedback),
         takeEvery(SideEffect.VALIDATE_ACCESS_TOKEN, validateAccessToken),
     ])

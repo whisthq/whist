@@ -236,7 +236,7 @@ const Loading = (props: {
                             typeof status === "string" &&
                             status.toLowerCase().includes("unexpected") && (
                                 <div
-                                    className={styles.dashboardbutton}
+                                    className={styles.dashboardButton}
                                     style={{ width: 220, marginTop: 25 }}
                                     onClick={returnToDashboard}
                                 >

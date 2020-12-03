@@ -57,6 +57,7 @@ const AdminDropdown = (props: {
     const handleCustomClick = () => {
         if (validCustomValue) {
             onClick(customValue)
+            setCustomValue("") // it will disable and avoid misclicks
         }
     }
 
