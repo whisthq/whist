@@ -142,7 +142,10 @@ def container_events_by_region(all_events, regions=None):
             container_name = text_keyvals["container_name"]
             region = container_name2region(container_name)
 
-            region2events[region].append(event)
+            if region in region2events:
+                region2events[region].append(event)
+            else:
+                print(f"\tregion {region} was found, but not in desired regions")
 
         return region2events
     else:
@@ -160,7 +163,6 @@ def container_events_by_region(all_events, regions=None):
 # }
 # datadog must be initialized for you to use this
 def datadog_log_metrics_daily(recap):
-    print(recap)
     now = round(time.time())
 
     # we'll be sending daily
@@ -178,16 +180,3 @@ def datadog_log_metrics_daily(recap):
                 api.Metric.send(
                     metric=metric, points=(now, 0 if metric_val is None else metric_val)
                 )
-
-
-if __name__ == "__main__":
-    # TODO this should not be committed blyat
-    options = {
-        "api_key": None,
-        "app_key": None,
-    }
-
-    # initialize(**options) # need to import here too
-
-    # for event in fetch(time.time() - DAY, ["container-lifecycle"]):
-    #     print(event, "\n")

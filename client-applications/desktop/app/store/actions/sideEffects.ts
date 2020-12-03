@@ -42,10 +42,10 @@ export function createContainer(app: string, url: string) {
     }
 }
 
-export function submitFeedback(feedback: string, feedback_type: string) {
+export function submitFeedback(feedback: string, feedbackType: string) {
     return {
         type: SUBMIT_FEEDBACK,
         feedback,
-        feedback_type,
+        feedbackType,
     }
 }

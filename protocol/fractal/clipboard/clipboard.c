@@ -32,6 +32,8 @@ void set_clipboard(ClipboardData* cb) {
 
     if (SDL_LockMutex(mutex) == 0) {
         unsafe_set_clipboard(cb);
+        // clear out update from filling clipboard
+        unsafe_has_clipboard_updated();
         SDL_UnlockMutex(mutex);
     } else {
         LOG_WARNING("set_clipboard SDL_LockMutex failed");

@@ -70,10 +70,9 @@ bool get_clipboard_picture(ClipboardData* cb) {
     /*
     Assume that clipboard stores pictures in png format when getting
     */
-    Atom target_atom;
-    Atom property_atom = XInternAtom(display, "XSEL_DATA", False);
+    Atom target_atom = XInternAtom(display, "image/png", False),
+         property_atom = XInternAtom(display, "XSEL_DATA", False);
 
-    target_atom = XInternAtom(display, "image/png", False);
     if (clipboard_has_target(property_atom, target_atom)) {
         // is PNG
         if (!get_clipboard_data(property_atom, cb, 0)) {
@@ -84,8 +83,7 @@ bool get_clipboard_picture(ClipboardData* cb) {
         return true;
     }
 
-    cb->type = CLIPBOARD_IMAGE;
-
+    // request failed, e.g. owner can't convert to the target format
     LOG_WARNING("Can't convert clipboard image to target format");
     return false;
 }
@@ -102,10 +100,11 @@ bool get_clipboard_string(ClipboardData* cb) {
 
         cb->type = CLIPBOARD_TEXT;
         return true;
-    } else {  // request failed, e.g. owner can't convert to the target format
-        LOG_WARNING("Can't convert clipboard string to target format");
-        return false;
     }
+
+    // request failed, e.g. owner can't convert to the target format
+    LOG_WARNING("Can't convert clipboard string to target format");
+    return false;
 }
 
 bool get_clipboard_files(ClipboardData* cb) {
@@ -253,11 +252,6 @@ void unsafe_set_clipboard(ClipboardData* cb) {
         }
         */
     }
-
-    // Empty call of unsafe_hasClipboardUpdated() in order to prevent hasUpdated from returning true
-    //      just after we've called xclip to set the clipboard
-    unsafe_has_clipboard_updated();
-
     return;
 }
 
@@ -283,12 +277,16 @@ bool unsafe_has_clipboard_updated() {
     // then we return "true". Otherwise, return "false".
     //
 
-    if (!display) return false;
+    if (!display) {
+        return false;
+    }
 
     static bool first = true;  // static, so only sets to true on first call
     int event_base, error_base;
     XEvent event;
-    if (!XFixesQueryExtension(display, &event_base, &error_base)) return false;
+    if (!XFixesQueryExtension(display, &event_base, &error_base)) {
+        return false;
+    }
     XFixesSelectSelectionInput(display, DefaultRootWindow(display), clipboard,
                                XFixesSetSelectionOwnerNotifyMask);
     if (first) {

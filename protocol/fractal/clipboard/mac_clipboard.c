@@ -224,7 +224,4 @@ void unsafe_set_clipboard(ClipboardData* cb) {
             break;
         }
     }
-
-    // Update the status so that this specific update doesn't count
-    unsafe_has_clipboard_updated();
 }

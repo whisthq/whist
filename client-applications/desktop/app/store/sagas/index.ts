@@ -32,6 +32,48 @@ function* refreshAccess() {
     }
 }
 
+function* fetchPaymentInfo(action: any) {
+    // const state = yield select()
+    // const { json } = yield call(
+    //     apiPost,
+    //     `/stripe/retrieve`,
+    //     {
+    //         email: action.username,
+    //     },
+    //     state.MainReducer.auth.accessToken
+    // )
+    // if (json && json.accountLocked) {
+    //     yield put(Action.updatePayment({ accountLocked: json.accountLocked }))
+    // }
+}
+
+function* getPromoCode(action: any) {
+    const state = yield select()
+    const { json } = yield call(
+        apiGet,
+        `/account/code?username=${action.username}`,
+        state.MainReducer.auth.accessToken
+    )
+
+    if (json && json.status === 200) {
+        yield put(Action.updatePayment({ promoCode: json.code }))
+    }
+}
+
+function* sendVerificationEmail(action: any) {
+    if (action.email !== "" && action.token !== "") {
+        yield call(
+            apiPost,
+            "/mail/verification",
+            {
+                username: action.email,
+                token: action.token,
+            },
+            ""
+        )
+    }
+}
+
 function* loginUser(action: any) {
     if (action.username !== "" && action.password !== "") {
         const { json } = yield call(apiPost, `/account/login`, {
@@ -175,34 +217,6 @@ function* rememberMeLogin(action: any) {
     }
 }
 
-function* fetchPaymentInfo(action: any) {
-    // const state = yield select()
-    // const { json } = yield call(
-    //     apiPost,
-    //     `/stripe/retrieve`,
-    //     {
-    //         email: action.username,
-    //     },
-    //     state.MainReducer.auth.accessToken
-    // )
-    // if (json && json.accountLocked) {
-    //     yield put(Action.updatePayment({ accountLocked: json.accountLocked }))
-    // }
-}
-
-function* getPromoCode(action: any) {
-    const state = yield select()
-    const { json } = yield call(
-        apiGet,
-        `/account/code?username=${action.username}`,
-        state.MainReducer.auth.accessToken
-    )
-
-    if (json && json.status === 200) {
-        yield put(Action.updatePayment({ promoCode: json.code }))
-    }
-}
-
 function* createContainer(action: any) {
     yield put(
         Action.updateContainer({
@@ -213,7 +227,7 @@ function* createContainer(action: any) {
     const state = yield select()
     const username = state.MainReducer.auth.username
 
-    var region = state.MainReducer.client.region
+    let region = state.MainReducer.client.region
         ? state.MainReducer.client.region
         : "us-east-1"
     if (region === "us-east-2") {
@@ -228,7 +242,7 @@ function* createContainer(action: any) {
         return
     }
 
-    var { json, response } = yield call(
+    const { json, response } = yield call(
         apiPost,
         `/container/create`,
         {
@@ -249,34 +263,34 @@ function* createContainer(action: any) {
 
     if (response.status === 202) {
         const id = json.ID
-        var { json, response } = yield call(
+        let { json, response } = yield call(
             apiGet,
-            `/status/` + id,
+            `/status/${id}`,
             state.MainReducer.auth.accessToken
         )
 
-        var progressSoFar = 0
-        var secondsPassed = 0
+        let progressSoFar = 0
+        let secondsPassed = 0
 
         yield put(
             Action.updateLoading({
                 percentLoaded: progressSoFar,
-                statusMessage: "Preparing to stream " + action.app,
+                statusMessage: `Preparing to stream ${action.app}`,
             })
         )
 
         while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
             if (secondsPassed % 1 === 0) {
-                var { json, response } = yield call(
+                let { json, response } = yield call(
                     apiGet,
-                    `/status/` + id,
+                    `/status/${id}`,
                     state.MainReducer.auth.accessToken
                 )
 
                 if (response && response.status && response.status === 500) {
-                    const warning =
-                        `(${moment().format("hh:mm:ss")}) ` +
-                        "Unexpectedly lost connection with server. Please close the app and try again."
+                    const warning = `(${moment().format(
+                        "hh:mm:ss"
+                    )}) Unexpectedly lost connection with server. Please close the app and try again.`
 
                     progressSoFar = 0
                     yield put(
@@ -313,7 +327,7 @@ function* createContainer(action: any) {
             if (json.output) {
                 yield put(
                     Action.updateContainer({
-                        container_id: json.output.container_id,
+                        containerID: json.output.container_id,
                         cluster: json.output.cluster,
                         port32262: json.output.port_32262,
                         port32263: json.output.port_32263,
@@ -335,7 +349,7 @@ function* createContainer(action: any) {
                 })
             )
         } else {
-            var warning =
+            const warning =
                 `(${moment().format("hh:mm:ss")}) ` +
                 `Unexpectedly lost connection with server. Trying again...`
             progressSoFar = 0
@@ -372,20 +386,6 @@ function* submitFeedback(action: any) {
     if (response.status === 401 || response.status === 422) {
         yield call(refreshAccess)
         yield call(submitFeedback, action)
-    }
-}
-
-function* sendVerificationEmail(action: any) {
-    if (action.email !== "" && action.token !== "") {
-        yield call(
-            apiPost,
-            "/mail/verification",
-            {
-                username: action.email,
-                token: action.token,
-            },
-            ""
-        )
     }
 }
 
