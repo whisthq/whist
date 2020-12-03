@@ -6,7 +6,8 @@ import { FaUser } from "react-icons/fa"
 import { history } from "store/history"
 import { resetState } from "store/actions/pure"
 import SearchBar from "pages/dashboard/components/searchBar/searchBar"
-import { FractalRoute, FractalDashboardTab } from "shared/enums/navigation"
+import { FractalRoute, FractalDashboardTab } from "shared/types/navigation"
+import { FractalAuthCache } from "shared/types/cache"
 
 import styles from "pages/dashboard/components/navBar/navBar.css"
 
@@ -51,7 +52,7 @@ const NavBar = (props: {
         const storage = new Store()
 
         new Promise((resolve, _) => {
-            storage.set("accessToken", null)
+            storage.set(FractalAuthCache.ACCESS_TOKEN, null)
             resolve()
         }).then(() => {
             dispatch(resetState())
@@ -97,21 +98,21 @@ const NavBar = (props: {
             </div>
             <div className={styles.tabWrapper}>
                 <NavTitle
-                    selected={currentTab == FractalDashboardTab.APP_STORE}
+                    selected={currentTab === FractalDashboardTab.APP_STORE}
                     text={FractalDashboardTab.APP_STORE}
                     onClick={() =>
                         updateCurrentTab(FractalDashboardTab.APP_STORE)
                     }
                 />
                 <NavTitle
-                    selected={currentTab == FractalDashboardTab.SETTINGS}
+                    selected={currentTab === FractalDashboardTab.SETTINGS}
                     text={FractalDashboardTab.SETTINGS}
                     onClick={() =>
                         updateCurrentTab(FractalDashboardTab.SETTINGS)
                     }
                 />
                 <NavTitle
-                    selected={currentTab == FractalDashboardTab.SUPPORT}
+                    selected={currentTab === FractalDashboardTab.SUPPORT}
                     text={FractalDashboardTab.SUPPORT}
                     onClick={() =>
                         updateCurrentTab(FractalDashboardTab.SUPPORT)

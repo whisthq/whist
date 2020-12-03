@@ -4,7 +4,7 @@ import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
-import { OperatingSystem } from "shared/enums/client"
+import { OperatingSystem } from "shared/types/client"
 import styles from "pages/login/login.css"
 
 const Update = (props: { clientOS: string; needsUpdate: boolean }) => {

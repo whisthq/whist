@@ -6,7 +6,7 @@ import { FaPlay } from "react-icons/fa"
 import { createContainer } from "store/actions/sideEffects"
 import { updateContainer } from "store/actions/pure"
 import { history } from "store/history"
-import { FractalRoute } from "shared/enums/navigation"
+import { FractalRoute } from "shared/types/navigation"
 import { openExternal } from "shared/utils/helpers"
 import { FractalApp } from "shared/types/ui"
 

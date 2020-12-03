@@ -1,4 +1,4 @@
-import { OperatingSystem } from "shared/enums/client"
+import { OperatingSystem } from "shared/types/client"
 import { debugLog } from "shared/utils/logging"
 
 export const execChmodUnix = (

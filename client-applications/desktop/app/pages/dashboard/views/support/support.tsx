@@ -3,7 +3,7 @@ import { connect } from "react-redux"
 import { Alert, Row } from "react-bootstrap"
 
 import { submitFeedback } from "store/actions/sideEffects"
-import { FractalKey } from "shared/enums/input"
+import { FractalKey } from "shared/types/input"
 
 import styles from "pages/dashboard/views/support/support.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"

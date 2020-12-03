@@ -1,14 +1,14 @@
-export enum FractalAPI {
-    TOKEN = {
+export class FractalAPI {
+    static TOKEN = {
         REFRESH: "/token/refresh",
         VALIDATE: "/token/validate",
-    },
-    CONTAINER = {
+    }
+    static CONTAINER = {
         CREATE: "/container/create",
-    },
-    MAIL = {
+    }
+    static MAIL = {
         FEEDBACK: "/mail/feedback",
-    },
+    }
 }
 
 export enum FractalHTTPCode {

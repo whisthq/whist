@@ -54,7 +54,7 @@ const News = (props: { mediaData: FractalBanner[] }) => {
     return <Col xs={4} className={styles.emptyNews} />
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
+const mapStateToProps = () => {
     return {}
 }
 

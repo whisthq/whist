@@ -11,13 +11,13 @@ import App from "pages/dashboard/components/app/app"
 import { GET_FEATURED_APPS, GET_BANNERS } from "shared/constants/graphql"
 import { PuffAnimation } from "shared/components/loadingAnimations"
 
-import { FractalBannerCategory } from "shared/enums/navigation"
+import { FractalBannerCategory } from "shared/types/navigation"
 import { FractalApp, FractalBanner } from "shared/types/ui"
 
 import styles from "pages/dashboard/views/discover/discover.css"
 
-const Discover = (props: { search: string }) => {
-    const { search } = props
+const Discover = (props: { search: string; accessToken: string }) => {
+    const { search, accessToken } = props
 
     // Define local state
 
@@ -44,6 +44,7 @@ const Discover = (props: { search: string }) => {
         if (app && app.app_id && search) {
             return app.app_id.toLowerCase().includes(search.toLowerCase())
         }
+        return true
     }
 
     const setCategory = (category: string): void => {
@@ -55,7 +56,7 @@ const Discover = (props: { search: string }) => {
     const appQuery = useQuery(GET_FEATURED_APPS, {
         context: {
             headers: {
-                Authorization: `Bearer ${props.accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
             },
         },
     })
@@ -63,7 +64,7 @@ const Discover = (props: { search: string }) => {
     const bannerQuery = useQuery(GET_BANNERS, {
         context: {
             headers: {
-                Authorization: `Bearer ${props.accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
             },
         },
     })
@@ -72,15 +73,15 @@ const Discover = (props: { search: string }) => {
 
     const bannerData = bannerQuery.data
         ? bannerQuery.data.hardware_banners.filter(
-              (bannerData: FractalBanner) =>
-                  bannerData.category === FractalBannerCategory.NEWS
+              (banner: FractalBanner) =>
+                  banner.category === FractalBannerCategory.NEWS
           )
         : []
 
     const mediaData = bannerQuery.data
         ? bannerQuery.data.hardware_banners.filter(
-              (bannerData: FractalBanner) =>
-                  bannerData.category === FractalBannerCategory.MEDIA
+              (banner: FractalBanner) =>
+                  banner.category === FractalBannerCategory.MEDIA
           )
         : []
 
