@@ -2,6 +2,17 @@
   "environments": {
     "review": {
       "addons": ["heroku-redis:hobby-dev"],
+      "buildpacks": [
+        {
+          "url": "https://github.com/heroku/heroku-buildpack-awscli.git"
+        },
+        {
+          "url": "https://github.com/heroku/heroku-buildpack-inline.git"
+        },
+        {
+          "url": "heroku/python"
+        }
+      ],
       "env": {
         "OAUTHLIB_RELAX_TOKEN_SCOPE": {
           "description": "Don't raise an exception if the requested and granted scopes differ.",
