@@ -15,8 +15,8 @@ typedef struct NvidiaCaptureDevice {
     CodecType codec_type;
 } NvidiaCaptureDevice;
 
-int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecType codec);
-int NvidiaCaptureScreen(NvidiaCaptureDevice* device);
-void DestroyNvidiaCaptureDevice(NvidiaCaptureDevice* device);
+int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, CodecType codec);
+int nvidia_capture_screen(NvidiaCaptureDevice* device);
+void destroy_nvidia_capture_device(NvidiaCaptureDevice* device);
 
 #endif  // CAPTURE_X11NVIDIACAPTURE_H

@@ -14,6 +14,10 @@ cmake_minimum_required(VERSION 3.15)
 #We need CMP0091 to select the MSVC_RUNTIME_LIBRARY
 #See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
 cmake_policy(SET CMP0091 NEW)
+
+# export compile commands database - comment this out if not running clang-tidy
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 project(FractalProtocol LANGUAGES C)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -265,3 +269,4 @@ if (${BUILD_SERVER} MATCHES "ON" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
     message(STATUS building server)
     add_subdirectory(server)
 endif()
+

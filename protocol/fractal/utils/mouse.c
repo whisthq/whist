@@ -1,7 +1,7 @@
 #include "../core/fractal.h"
 #include "mouse.h"
 
-RGB_Color MOUSE_COLORS[MAX_NUM_CLIENTS] = {
+FractalRGBColor mouse_colors[MAX_NUM_CLIENTS] = {
     {.r = 0, .g = 188, .b = 242},   // Process Cyan
     {.r = 236, .g = 0, .b = 140},   // Process Magenta
     {.r = 0, .g = 158, .b = 73},    // Green 355

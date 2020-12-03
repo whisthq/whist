@@ -18,18 +18,18 @@ or to delete files/folders
 #include "logging.h"
 
 int remove_file(const char* fpath, const struct stat* sb, int typeflag, struct FTW* ftwbuf) {
-    int errCode = remove(fpath);
-    if (errCode < 0) {
-        LOG_WARNING("Error from remove: %d", errCode);
+    int err_code = remove(fpath);
+    if (err_code < 0) {
+        LOG_WARNING("Error from remove: %d", err_code);
     }
-    return errCode;
+    return err_code;
 }
 
 void mac_rm_rf(const char* path) {
-    int errCode =
-        nftw(path, remove_file, 64 /* number of simultaneously opened fds*/, FTW_DEPTH | FTW_PHYS);
-    if (errCode < 0) {
-        LOG_WARNING("Error from nftw, remove recursively: %d", errCode);
+    int err_code =
+        nftw(path, remove_file, 64 /* number of simultaneously opened fds*/, FTW_DEPTH | FTW_NS);
+    if (err_code < 0) {
+        LOG_WARNING("Error from nftw, remove recursively: %d", err_code);
     }
 }
 

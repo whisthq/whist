@@ -54,10 +54,10 @@ char *optarg;   /* argument associated with option */
 
 #define _DIAGASSERT(x) assert(x)
 
-static char *__progname __P((char *));
+static char *progname __P((char *));
 int getopt_internal __P((int, char *const *, const char *));
 
-static char *__progname(char *nargv0) {
+static char *progname(char *nargv0) {
     char *tmp;
 
     _DIAGASSERT(nargv0 != NULL);
@@ -105,7 +105,7 @@ int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
         if (optopt == (int)'-') return (-1);
         if (!*place) ++optind;
         if (opterr && *ostr != ':')
-            (void)fprintf(stderr, "%s: illegal option -- %c\n", __progname(nargv[0]), optopt);
+            (void)fprintf(stderr, "%s: illegal option -- %c\n", progname(nargv[0]), optopt);
         return (BADCH);
     }
     if (*++oli != ':') { /* don't need argument */
@@ -124,8 +124,8 @@ int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
         else if (nargc <= ++optind) { /* no arg */
             place = EMSG;
             if ((opterr) && (*ostr != ':'))
-                (void)fprintf(stderr, "%s: option requires an argument -- %c\n",
-                              __progname(nargv[0]), optopt);
+                (void)fprintf(stderr, "%s: option requires an argument -- %c\n", progname(nargv[0]),
+                              optopt);
             return (BADARG);
         } else /* white space */
             optarg = nargv[optind];
@@ -206,12 +206,12 @@ int getopt_long(int nargc, char *const *nargv, const char *options,
                  */
                 if ((opterr) && (*options != ':'))
                     (void)fprintf(stderr, "%s: option requires an argument -- %s\n",
-                                  __progname(nargv[0]), current_argv);
+                                  progname(nargv[0]), current_argv);
                 return (BADARG);
             }
         } else { /* No matching argument */
             if ((opterr) && (*options != ':'))
-                (void)fprintf(stderr, "%s: illegal option -- %s\n", __progname(nargv[0]),
+                (void)fprintf(stderr, "%s: illegal option -- %s\n", progname(nargv[0]),
                               current_argv);
             return (BADCH);
         }

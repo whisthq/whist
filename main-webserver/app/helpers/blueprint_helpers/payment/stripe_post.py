@@ -12,7 +12,7 @@ from app.constants.http_codes import (
     FORBIDDEN,
     INTERNAL_SERVER_ERROR,
 )
-from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.payment.stripe_client import (
     StripeClient,
     NonexistentUser,
@@ -23,7 +23,7 @@ from app.helpers.utils.payment.stripe_client import (
 
 # TODO (optional) make templates for boilerplate
 def addSubscriptionHelper(token, email, plan, code):
-    fractalLog(
+    fractal_log(
         function="addSubscriptionHelper",
         label=email,
         logs="Signing {} up for plan {}, with code {}, token {}".format(
@@ -46,7 +46,7 @@ def addSubscriptionHelper(token, email, plan, code):
         except InvalidStripeToken:
             status = BAD_REQUEST
         except Exception as e:
-            fractalLog("addSubscriptionCardHelper", "", str(e), level=logging.ERROR)
+            fractal_log("addSubscriptionCardHelper", "", str(e), level=logging.ERROR)
 
             status = INTERNAL_SERVER_ERROR
     else:
@@ -68,7 +68,7 @@ def deleteSubscriptionHelper(email):
             NOT_ACCEPTABLE,
         )
     except Exception as e:
-        fractalLog("deleteSubscriptionHelper", "", str(e), level=logging.ERROR)
+        fractal_log("deleteSubscriptionHelper", "", str(e), level=logging.ERROR)
 
         return jsonify({"status": INTERNAL_SERVER_ERROR}), INTERNAL_SERVER_ERROR
 
@@ -84,7 +84,7 @@ def addCardHelper(email, token):
     except InvalidStripeToken:
         status = BAD_REQUEST
     except Exception as e:
-        fractalLog("addCardHelper", "", str(e), level=logging.ERROR)
+        fractal_log("addCardHelper", "", str(e), level=logging.ERROR)
 
         status = INTERNAL_SERVER_ERROR
 
@@ -102,7 +102,7 @@ def deleteCardHelper(email, token):
     except InvalidStripeToken:
         status = BAD_REQUEST
     except Exception as e:
-        fractalLog("deleteCardHelper", "", str(e), level=logging.ERROR)
+        fractal_log("deleteCardHelper", "", str(e), level=logging.ERROR)
 
         status = INTERNAL_SERVER_ERROR
 
@@ -134,6 +134,6 @@ def retrieveHelper(email):
         )
         PAYMENT_REQUIRED,
     except Exception as e:
-        fractalLog("retrieveHelper", "", str(e), level=logging.ERROR)
+        fractal_log("retrieveHelper", "", str(e), level=logging.ERROR)
 
         return jsonify({"status": INTERNAL_SERVER_ERROR}), INTERNAL_SERVER_ERROR

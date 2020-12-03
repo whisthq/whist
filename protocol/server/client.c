@@ -17,12 +17,12 @@ volatile bool client_exited_nongracefully =
 volatile clock last_nongraceful_exit;  // start this after every nongraceful exit
 
 // locks shouldn't matter. they are getting created.
-int initClients(void) {
+int init_clients(void) {
     if ((state_lock = SDL_CreateMutex()) == 0) {
         LOG_ERROR("Failed to create state lock.");
         return -1;
     }
-    if (initRWLock(&is_active_rwlock) != 0) {
+    if (init_rw_lock(&is_active_rwlock) != 0) {
         LOG_ERROR("Failed to create is active read-write lock.");
         SDL_DestroyMutex(state_lock);
         return -1;
@@ -33,15 +33,15 @@ int initClients(void) {
         clients[id].UDP_port = BASE_UDP_PORT + id;
         clients[id].TCP_port = BASE_TCP_PORT + id;
 
-        memcpy(&(clients[id].mouse.color), &(MOUSE_COLORS[id]), sizeof(RGB_Color));
+        memcpy(&(clients[id].mouse.color), &(mouse_colors[id]), sizeof(FractalRGBColor));
     }
     return 0;
 }
 
 // locks shouldn't matter. they are getting trashed.
-int destroyClients(void) {
+int destroy_clients(void) {
     SDL_DestroyMutex(state_lock);
-    if (destroyRWLock(&is_active_rwlock) != 0) {
+    if (destroy_rw_lock(&is_active_rwlock) != 0) {
         LOG_ERROR("Failed to destroy is active read-write lock.");
         return -1;
     }
@@ -49,12 +49,12 @@ int destroyClients(void) {
 }
 
 // Needs write is_active_rwlock and (write) state lock
-int quitClient(int id) {
+int quit_client(int id) {
     clients[id].is_active = false;
     clients[id].mouse.is_active = false;
     num_active_clients--;
     if (clients[id].is_controlling) num_controlling_clients--;
-    if (disconnectClient(id) != 0) {
+    if (disconnect_client(id) != 0) {
         LOG_ERROR("Failed to disconnect client. (ID: %d)", id);
         return -1;
     }
@@ -62,11 +62,11 @@ int quitClient(int id) {
 }
 
 // Needs write is_active_rwlock and (write) state lock
-int quitClients(void) {
+int quit_clients(void) {
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active) {
-            if (quitClient(id) != 0) {
+            if (quit_client(id) != 0) {
                 LOG_ERROR("Failed to quit client. (ID: %d)", id);
                 ret = -1;
             }
@@ -76,10 +76,10 @@ int quitClients(void) {
 }
 
 // needs read is_active_rwlock
-int existsTimedOutClient(double timeout, bool *exists) {
+int exists_timed_out_client(double timeout, bool *exists) {
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active) {
-            if (GetTimer(clients[id].last_ping) > timeout) {
+            if (get_timer(clients[id].last_ping) > timeout) {
                 *exists = true;
                 return 0;
             }
@@ -90,15 +90,15 @@ int existsTimedOutClient(double timeout, bool *exists) {
 }
 
 // Needs write is_active_rwlock and (write) state lock
-int reapTimedOutClients(double timeout) {
+int reap_timed_out_clients(double timeout) {
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
-        if (clients[id].is_active && GetTimer(clients[id].last_ping) > timeout) {
+        if (clients[id].is_active && get_timer(clients[id].last_ping) > timeout) {
             LOG_INFO("Dropping client ID: %d", id);
             // indicate that a client has exited nongracefully and is being reaped
             client_exited_nongracefully = true;
-            StartTimer((clock *)&last_nongraceful_exit);
-            if (quitClient(id) != 0) {
+            start_timer((clock *)&last_nongraceful_exit);
+            if (quit_client(id) != 0) {
                 LOG_ERROR("Failed to quit client. (ID: %d)", id);
                 ret = -1;
             }
@@ -110,7 +110,7 @@ int reapTimedOutClients(double timeout) {
 // Needs read is_active_rwlock
 // You should quit this guy soon after
 // Only searches currently active clients
-int tryFindClientIdByUsername(int username, bool *found, int *id) {
+int try_find_client_id_by_username(int username, bool *found, int *id) {
     *found = false;
     for (int i = 0; i < MAX_NUM_CLIENTS; i++) {
         if (clients[i].is_active && clients[i].username == username) {
@@ -124,7 +124,7 @@ int tryFindClientIdByUsername(int username, bool *found, int *id) {
 
 // Needs read is_active_rwlock
 // Does not set up the client or make it active
-int getAvailableClientID(int *id) {
+int get_available_client_id(int *id) {
     for (int i = 0; i < MAX_NUM_CLIENTS; i++) {
         if (!clients[i].is_active) {
             *id = i;
@@ -136,7 +136,7 @@ int getAvailableClientID(int *id) {
 }
 
 // needs read-is active lock and (read) mouse/is_controlling lock
-int fillPeerUpdateMessages(PeerUpdateMessage *msgs, size_t *num_msgs) {
+int fill_peer_update_messages(PeerUpdateMessage *msgs, size_t *num_msgs) {
     *num_msgs = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active && clients[id].mouse.is_active) {
@@ -144,7 +144,7 @@ int fillPeerUpdateMessages(PeerUpdateMessage *msgs, size_t *num_msgs) {
             msgs->x = clients[id].mouse.x;
             msgs->y = clients[id].mouse.y;
             msgs->is_controlling = clients[id].is_controlling;
-            memcpy(&(msgs->color), &(clients[id].mouse.color), sizeof(RGB_Color));
+            memcpy(&(msgs->color), &(clients[id].mouse.color), sizeof(FractalRGBColor));
             msgs++;
             (*num_msgs)++;
         }

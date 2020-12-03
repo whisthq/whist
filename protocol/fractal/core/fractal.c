@@ -16,37 +16,35 @@ char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 
 // Print Memory Info
 
-int MultithreadedPrintSystemInfo(void* opaque) {
+int multithreaded_print_system_info(void* opaque) {
     UNUSED(opaque);
 
     LOG_INFO("Hardware information:");
 
-    PrintOSInfo();
-    PrintModelInfo();
-    PrintCPUInfo();
-    PrintRAMInfo();
-    PrintMonitors();
-    PrintHardDriveInfo();
+    print_os_info();
+    print_model_info();
+    print_cpu_info();
+    print_ram_info();
+    print_monitors();
+    print_hard_drive_info();
 
     return 0;
 }
 
-void PrintSystemInfo() {
+void print_system_info() {
     SDL_Thread* sysinfo_thread =
-        SDL_CreateThread(MultithreadedPrintSystemInfo, "PrintSystemInfo", NULL);
+        SDL_CreateThread(multithreaded_print_system_info, "print_system_info", NULL);
     SDL_DetachThread(sysinfo_thread);
 }
 
-struct dynamic_buffer_struct {
+typedef struct DynamicBuffer {
     int size;
     int capacity;
     char* buf;
-};
+} DynamicBuffer;
 
-typedef struct dynamic_buffer_struct* dynamic_buffer;
-
-dynamic_buffer init_dynamic_buffer() {
-    dynamic_buffer db = malloc(sizeof(struct dynamic_buffer_struct));
+DynamicBuffer* init_dynamic_buffer() {
+    DynamicBuffer* db = malloc(sizeof(DynamicBuffer));
     db->size = 0;
     db->capacity = 128;
     db->buf = malloc(db->capacity);
@@ -58,7 +56,7 @@ dynamic_buffer init_dynamic_buffer() {
     return db;
 }
 
-void resize_dynamic_buffer(dynamic_buffer db, int new_size) {
+void resize_dynamic_buffer(DynamicBuffer* db, int new_size) {
     if (new_size > db->capacity) {
         int new_capacity = new_size * 2;
         char* new_buffer = realloc(db->buf, new_capacity);
@@ -76,45 +74,45 @@ void resize_dynamic_buffer(dynamic_buffer db, int new_size) {
     }
 }
 
-void free_dynamic_buffer(dynamic_buffer db) {
+void free_dynamic_buffer(DynamicBuffer* db) {
     free(db->buf);
     free(db);
 }
 
 int runcmd(const char* cmdline, char** response) {
 #ifdef _WIN32
-    HANDLE hChildStd_IN_Rd = NULL;
-    HANDLE hChildStd_IN_Wr = NULL;
-    HANDLE hChildStd_OUT_Rd = NULL;
-    HANDLE hChildStd_OUT_Wr = NULL;
+    HANDLE h_child_std_in_rd = NULL;
+    HANDLE h_child_std_in_wr = NULL;
+    HANDLE h_child_std_out_rd = NULL;
+    HANDLE h_child_std_out_wr = NULL;
 
-    SECURITY_ATTRIBUTES saAttr;
+    SECURITY_ATTRIBUTES sa_attr;
 
     // Set the bInheritHandle flag so pipe handles are inherited.
 
-    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-    saAttr.bInheritHandle = TRUE;
-    saAttr.lpSecurityDescriptor = NULL;
+    sa_attr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa_attr.bInheritHandle = TRUE;
+    sa_attr.lpSecurityDescriptor = NULL;
 
     // Create a pipe for the child process's STDOUT.
 
     if (response) {
-        if (!CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0)) {
+        if (!CreatePipe(&h_child_std_out_rd, &h_child_std_out_wr, &sa_attr, 0)) {
             LOG_ERROR("StdoutRd CreatePipe failed");
             *response = NULL;
             return -1;
         }
-        if (!SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)) {
+        if (!SetHandleInformation(h_child_std_out_rd, HANDLE_FLAG_INHERIT, 0)) {
             LOG_ERROR("Stdout SetHandleInformation failed");
             *response = NULL;
             return -1;
         }
-        if (!CreatePipe(&hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0)) {
+        if (!CreatePipe(&h_child_std_in_rd, &h_child_std_in_wr, &sa_attr, 0)) {
             LOG_ERROR("Stdin CreatePipe failed");
             *response = NULL;
             return -1;
         }
-        if (!SetHandleInformation(hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0)) {
+        if (!SetHandleInformation(h_child_std_in_wr, HANDLE_FLAG_INHERIT, 0)) {
             LOG_ERROR("Stdin SetHandleInformation failed");
             *response = NULL;
             return -1;
@@ -127,9 +125,9 @@ int runcmd(const char* cmdline, char** response) {
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
     if (response) {
-        si.hStdError = hChildStd_OUT_Wr;
-        si.hStdOutput = hChildStd_OUT_Wr;
-        si.hStdInput = hChildStd_IN_Rd;
+        si.hStdError = h_child_std_out_wr;
+        si.hStdOutput = h_child_std_out_wr;
+        si.hStdInput = h_child_std_in_rd;
         si.dwFlags |= STARTF_USESTDHANDLES;
     }
     ZeroMemory(&pi, sizeof(pi));
@@ -161,24 +159,24 @@ int runcmd(const char* cmdline, char** response) {
     }
 
     if (response) {
-        CloseHandle(hChildStd_OUT_Wr);
-        CloseHandle(hChildStd_IN_Rd);
+        CloseHandle(h_child_std_out_wr);
+        CloseHandle(h_child_std_in_rd);
 
-        CloseHandle(hChildStd_IN_Wr);
+        CloseHandle(h_child_std_in_wr);
 
-        DWORD dwRead;
-        CHAR chBuf[2048];
-        BOOL bSuccess = FALSE;
+        DWORD dw_read;
+        CHAR ch_buf[2048];
+        BOOL b_success = FALSE;
 
-        dynamic_buffer db = init_dynamic_buffer();
+        DynamicBuffer* db = init_dynamic_buffer();
         for (;;) {
-            bSuccess = ReadFile(hChildStd_OUT_Rd, chBuf, sizeof(chBuf), &dwRead, NULL);
-            if (!bSuccess || dwRead == 0) break;
+            b_success = ReadFile(h_child_std_out_rd, ch_buf, sizeof(ch_buf), &dw_read, NULL);
+            if (!b_success || dw_read == 0) break;
 
             int original_size = db->size;
-            resize_dynamic_buffer(db, original_size + dwRead);
-            memcpy(db->buf + original_size, chBuf, dwRead);
-            if (!bSuccess) break;
+            resize_dynamic_buffer(db, original_size + dw_read);
+            memcpy(db->buf + original_size, ch_buf, dw_read);
+            if (!b_success) break;
         }
 
         WaitForSingleObject(pi.hProcess, INFINITE);
@@ -193,9 +191,9 @@ int runcmd(const char* cmdline, char** response) {
         free(db);
         return size;
     } else {
-        CloseHandle(hChildStd_OUT_Wr);
-        CloseHandle(hChildStd_IN_Rd);
-        CloseHandle(hChildStd_IN_Wr);
+        CloseHandle(h_child_std_out_wr);
+        CloseHandle(h_child_std_in_rd);
+        CloseHandle(h_child_std_in_wr);
 
         WaitForSingleObject(pi.hProcess, INFINITE);
         CloseHandle(pi.hProcess);
@@ -207,7 +205,7 @@ int runcmd(const char* cmdline, char** response) {
         system(cmdline);
         return 0;
     } else {
-        FILE* pPipe;
+        FILE* p_pipe;
 
         /* Run DIR so that it writes its output to a pipe. Open this
          * pipe with read text attribute so that we can read it
@@ -217,7 +215,7 @@ int runcmd(const char* cmdline, char** response) {
         char* cmd = malloc(strlen(cmdline) + 128);
         snprintf(cmd, strlen(cmdline) + 128, "%s 2>/dev/null", cmdline);
 
-        if ((pPipe = popen(cmd, "r")) == NULL) {
+        if ((p_pipe = popen(cmd, "r")) == NULL) {
             LOG_WARNING("Failed to popen %s", cmd);
             free(cmd);
             return -1;
@@ -227,10 +225,10 @@ int runcmd(const char* cmdline, char** response) {
         /* Read pipe until end of file, or an error occurs. */
 
         int current_len = 0;
-        dynamic_buffer db = init_dynamic_buffer();
+        DynamicBuffer* db = init_dynamic_buffer();
 
         while (true) {
-            char c = (char)fgetc(pPipe);
+            char c = (char)fgetc(p_pipe);
 
             resize_dynamic_buffer(db, current_len + 1);
 
@@ -247,7 +245,7 @@ int runcmd(const char* cmdline, char** response) {
         free(db);
 
         /* Close pipe and print return value of pPipe. */
-        if (feof(pPipe)) {
+        if (feof(p_pipe)) {
             return current_len;
         } else {
             LOG_WARNING("Error: Failed to read the pipe to the end.");
@@ -282,7 +280,7 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
     return true;
 }
 
-int GetFmsgSize(FractalClientMessage* fmsg) {
+int get_fmsg_size(FractalClientMessage* fmsg) {
     if (fmsg->type == MESSAGE_KEYBOARD_STATE || fmsg->type == MESSAGE_DISCOVERY_REQUEST) {
         return sizeof(*fmsg);
     } else if (fmsg->type == CMESSAGE_CLIPBOARD) {

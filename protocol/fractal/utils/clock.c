@@ -6,7 +6,7 @@
 Usage
 ============================
 
-You can use StartTimer and GetTimer to time specific pieces of code, or to
+You can use start_timer and get_timer to time specific pieces of code, or to
 relate different events across server and client.
 */
 
@@ -24,7 +24,7 @@ relate different events across server and client.
 #include "clock.h"
 
 #ifdef _WIN32
-int GetUTCOffset();
+int get_utc_offset();
 #endif
 
 #if defined(_WIN32)
@@ -34,7 +34,7 @@ bool set_frequency = false;
 
 #define US_IN_MS 1000.0
 
-void StartTimer(clock* timer) {
+void start_timer(clock* timer) {
 #if defined(_WIN32)
     if (!set_frequency) {
         QueryPerformanceFrequency(&frequency);
@@ -47,7 +47,7 @@ void StartTimer(clock* timer) {
 #endif
 }
 
-double GetTimer(clock timer) {
+double get_timer(clock timer) {
 #if defined(_WIN32)
     LARGE_INTEGER end;
     QueryPerformanceCounter(&end);
@@ -58,19 +58,19 @@ double GetTimer(clock timer) {
     gettimeofday(&t2, NULL);
 
     // compute and print the elapsed time in millisec
-    double elapsedTime = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;  // sec to ms
-    elapsedTime += (t2.tv_usec - timer.tv_usec) / US_IN_MS;          // us to ms
+    double elapsed_time = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;  // sec to ms
+    elapsed_time += (t2.tv_usec - timer.tv_usec) / US_IN_MS;          // us to ms
 
     // printf("elapsed time in ms is: %f\n", elapsedTime);
 
     // standard var to return and convert to seconds since it gets converted to
     // ms in function call
-    double ret = elapsedTime / MS_IN_SECOND;
+    double ret = elapsed_time / MS_IN_SECOND;
 #endif
     return ret;
 }
 
-clock CreateClock(int timeout_ms) {
+clock create_clock(int timeout_ms) {
     clock out;
 #if defined(_WIN32)
     out.QuadPart = timeout_ms;
@@ -81,7 +81,7 @@ clock CreateClock(int timeout_ms) {
     return out;
 }
 
-char* CurrentTimeStr() {
+char* current_time_str() {
     static char buffer[64];
     //    time_t rawtime;
     //
@@ -107,7 +107,7 @@ char* CurrentTimeStr() {
     return buffer;
 }
 
-int GetUTCOffset() {
+int get_utc_offset() {
 #if defined(_WIN32)
     return 0;
 #else
@@ -120,7 +120,7 @@ int GetUTCOffset() {
 #endif
 }
 
-int GetDST() {
+int get_dst() {
 #if defined(_WIN32)
     return 0;
 #else
@@ -131,7 +131,7 @@ int GetDST() {
 #endif
 }
 
-int GetTimeData(FractalTimeData* time_data) {
+int get_time_data(FractalTimeData* time_data) {
 #ifdef _WIN32
     time_data->use_win_name = 1;
     time_data->use_linux_name = 0;
@@ -149,9 +149,9 @@ int GetTimeData(FractalTimeData* time_data) {
     time_data->use_win_name = 0;
     time_data->use_linux_name = 1;
 
-    time_data->UTC_Offset = GetUTCOffset();
-    LOG_INFO("Sending UTC offset %d", time_data->UTC_Offset);
-    time_data->DST_flag = GetDST();
+    time_data->utc_offset = get_utc_offset();
+    LOG_INFO("Sending UTC offset %d", time_data->utc_offset);
+    time_data->dst_flag = get_dst();
 
     char* response = NULL;
     runcmd(
@@ -166,9 +166,9 @@ int GetTimeData(FractalTimeData* time_data) {
     time_data->use_win_name = 0;
     time_data->use_linux_name = 1;
 
-    time_data->UTC_Offset = GetUTCOffset();
-    LOG_INFO("Sending UTC offset %d", time_data->UTC_Offset);
-    time_data->DST_flag = GetDST();
+    time_data->utc_offset = get_utc_offset();
+    LOG_INFO("Sending UTC offset %d", time_data->utc_offset);
+    time_data->dst_flag = get_dst();
 
     char* response = NULL;
     runcmd("cat /etc/timezone", &response);
@@ -179,7 +179,7 @@ int GetTimeData(FractalTimeData* time_data) {
 #endif
 }
 
-void SetTimezoneFromIANAName(char* linux_tz_name, char* password) {
+void set_timezone_from_iana_name(char* linux_tz_name, char* password) {
     // Two spaces to hide from bash history
     char cmd[2000] = "  echo %s | sudo -S timedatectl set-timezone %s";
     snprintf(cmd, sizeof(cmd), password, linux_tz_name);
@@ -189,7 +189,7 @@ void SetTimezoneFromIANAName(char* linux_tz_name, char* password) {
     return;
 }
 
-void SetTimezoneFromWindowsName(char* win_tz_name) {
+void set_timezone_from_windows_name(char* win_tz_name) {
     char cmd[500];
     //    Timezone name must end with no white space
     for (size_t i = 0; win_tz_name[i] != '\0'; i++) {
@@ -209,7 +209,7 @@ void SetTimezoneFromWindowsName(char* win_tz_name) {
     return;
 }
 
-void SetTimezoneFromUtc(int utc, int DST_flag) {
+void set_timezone_from_utc(int utc, int dst_flag) {
 #ifndef _WIN32
     // TODO come back to this when we have sudo password on linux server
     //    char cmd[5000];
@@ -219,7 +219,7 @@ void SetTimezoneFromUtc(int utc, int DST_flag) {
     //    -1*utc);
     return;
 #else
-    if (DST_flag > 0) {
+    if (dst_flag > 0) {
         LOG_INFO("DST active");
         utc = utc - 1;
     }

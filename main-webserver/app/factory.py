@@ -19,6 +19,7 @@ jwtManager = JWTManager()
 ma = Marshmallow()
 mail = SendGrid()
 
+
 def create_app(app_name=PKG_NAME, testing=False, **kwargs):
     """
     Create app

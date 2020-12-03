@@ -22,7 +22,7 @@ Public Functions
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcastAck(void);
+int broadcast_ack(void);
 
 /**
  * @brief                          Sends a FractalPacket and accompanying
@@ -45,8 +45,8 @@ int broadcastAck(void);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcastUDPPacket(FractalPacketType type, void *data, int len, int id, int burst_bitrate,
-                       FractalPacket *packet_buffer, int *packet_len_buffer);
+int broadcast_udp_packet(FractalPacketType type, void *data, int len, int id, int burst_bitrate,
+                         FractalPacket *packet_buffer, int *packet_len_buffer);
 
 /**
  * @brief                          Sends a FractalPacket and accompanying
@@ -60,7 +60,7 @@ int broadcastUDPPacket(FractalPacketType type, void *data, int len, int id, int 
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcastTCPPacket(FractalPacketType type, void *data, int len);
+int broadcast_tcp_packet(FractalPacketType type, void *data, int len);
 
 /**
  * @brief                          Tries to read in next available TCP message
@@ -83,7 +83,7 @@ int broadcastTCPPacket(FractalPacketType type, void *data, int len);
  * @returns                        Returns -1 on error, 0 otherwise. Not
  *                                 finding an available message is not an error.
  */
-int tryGetNextMessageTCP(int client_id, FractalClientMessage **fcmsg, size_t *fcmsg_size);
+int try_get_next_message_tcp(int client_id, FractalClientMessage **fcmsg, size_t *fcmsg_size);
 
 /**
  * @brief                          Tries to read in next available UDP message
@@ -106,7 +106,7 @@ int tryGetNextMessageTCP(int client_id, FractalClientMessage **fcmsg, size_t *fc
  * @returns                        Returns -1 on error, 0 otherwise. Not
  *                                 finding an available message is not an error.
  */
-int tryGetNextMessageUDP(int client_id, FractalClientMessage *fcmsg, size_t *fcmsg_size);
+int try_get_next_message_udp(int client_id, FractalClientMessage *fcmsg, size_t *fcmsg_size);
 
 /**
  * @brief                          Establishes UDP and TCP connection to client.
@@ -126,7 +126,7 @@ int tryGetNextMessageUDP(int client_id, FractalClientMessage *fcmsg, size_t *fcm
  * @returns                        Returns -1 if either UDP or TCP connection
  *                                 fails or another error occurs, 0 on success.
  */
-int connectClient(int id, char *binary_aes_private_key);
+int connect_client(int id, char *binary_aes_private_key);
 
 /**
  * @brief                          Closes client's UDP and TCP sockets.
@@ -135,7 +135,7 @@ int connectClient(int id, char *binary_aes_private_key);
  *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int disconnectClient(int id);
+int disconnect_client(int id);
 
 /**
  * @brief                          Closes UDP and TCP sockets for all active
@@ -143,6 +143,6 @@ int disconnectClient(int id);
  *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int disconnectClients(void);
+int disconnect_clients(void);
 
 #endif  // SERVER_NETWORK_H

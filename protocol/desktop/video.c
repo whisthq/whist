@@ -62,43 +62,6 @@ volatile bool pending_resize_render = false;
 #define CURSORIMAGE_G 0x0000ff00
 #define CURSORIMAGE_B 0x000000ff
 
-struct VideoData {
-    struct FrameData* pending_ctx;
-    int frames_received;
-    int bytes_transferred;
-    clock frame_timer;
-    int last_statistics_id;
-    int last_rendered_id;
-    int max_id;
-    int most_recent_iframe;
-
-    clock last_iframe_request_timer;
-    bool is_waiting_for_iframe;
-
-    SDL_Thread* render_screen_thread;
-    bool run_render_screen_thread;
-
-    SDL_sem* renderscreen_semaphore;
-
-    double target_mbps;
-    int num_nacked;
-    int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
-    int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
-    double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
-} VideoData;
-
-typedef struct SDLVideoContext {
-    SDL_Renderer* renderer;
-    SDL_Texture* texture;
-
-    Uint8* data[4];
-    int linesize[4];
-
-    video_decoder_t* decoder;
-    struct SwsContext* sws;
-} SDLVideoContext;
-SDLVideoContext videoContext;
-
 typedef struct FrameData {
     char* frame_buffer;
     int frame_size;
@@ -120,11 +83,48 @@ typedef struct FrameData {
     clock frame_creation_timer;
 } FrameData;
 
+struct VideoData {
+    FrameData* pending_ctx;
+    int frames_received;
+    int bytes_transferred;
+    clock frame_timer;
+    int last_statistics_id;
+    int last_rendered_id;
+    int max_id;
+    int most_recent_iframe;
+
+    clock last_iframe_request_timer;
+    bool is_waiting_for_iframe;
+
+    SDL_Thread* render_screen_thread;
+    bool run_render_screen_thread;
+
+    SDL_sem* renderscreen_semaphore;
+
+    double target_mbps;
+    int num_nacked;
+    int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
+    int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
+    double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
+} video_data;
+
+typedef struct SDLVideoContext {
+    SDL_Renderer* renderer;
+    SDL_Texture* texture;
+
+    Uint8* data[4];
+    int linesize[4];
+
+    VideoDecoder* decoder;
+    struct SwsContext* sws;
+} SDLVideoContext;
+SDLVideoContext video_context;
+
 // mbps that currently works
 volatile double working_mbps;
 
 // Context of the frame that is currently being rendered
-volatile struct FrameData renderContext;
+volatile FrameData render_context;
 
 // True if RenderScreen is currently rendering a frame
 volatile bool rendering = false;
@@ -135,7 +135,7 @@ SDL_mutex* render_mutex;
 
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 275
-struct FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
+FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
 char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
 
 bool has_rendered_yet = false;
@@ -144,35 +144,35 @@ bool has_rendered_yet = false;
 
 // START VIDEO FUNCTIONS
 
-void updateDecoderParameters(int width, int height, CodecType codec_type);
-int32_t RenderScreen(SDL_Renderer* renderer);
-void loadingSDL(SDL_Renderer* renderer, int loading_index);
+void update_decoder_parameters(int width, int height, CodecType codec_type);
+int32_t render_screen(SDL_Renderer* renderer);
+void loading_sdl(SDL_Renderer* renderer, int loading_index);
 
 void nack(int id, int index) {
-    if (VideoData.is_waiting_for_iframe) {
+    if (video_data.is_waiting_for_iframe) {
         return;
     }
-    VideoData.num_nacked++;
+    video_data.num_nacked++;
     LOG_INFO("Missing Video Packet ID %d Index %d, NACKing...", id, index);
     FractalClientMessage fmsg;
     fmsg.type = MESSAGE_VIDEO_NACK;
     fmsg.nack_data.id = id;
     fmsg.nack_data.index = index;
-    SendFmsg(&fmsg);
+    send_fmsg(&fmsg);
 }
 
-bool requestIframe() {
-    if (GetTimer(VideoData.last_iframe_request_timer) > 1500.0 / 1000.0) {
+bool request_iframe() {
+    if (get_timer(video_data.last_iframe_request_timer) > 1500.0 / 1000.0) {
         FractalClientMessage fmsg;
         fmsg.type = MESSAGE_IFRAME_REQUEST;
-        if (VideoData.last_rendered_id == 0) {
+        if (video_data.last_rendered_id == 0) {
             fmsg.reinitialize_encoder = true;
         } else {
             fmsg.reinitialize_encoder = false;
         }
-        SendFmsg(&fmsg);
-        StartTimer(&VideoData.last_iframe_request_timer);
-        VideoData.is_waiting_for_iframe = true;
+        send_fmsg(&fmsg);
+        start_timer(&video_data.last_iframe_request_timer);
+        video_data.is_waiting_for_iframe = true;
         return true;
     } else {
         return false;
@@ -181,75 +181,75 @@ bool requestIframe() {
 
 static enum AVPixelFormat sws_input_fmt;
 
-void updateSwsContext() {
+void update_sws_context() {
     LOG_INFO("Updating SWS Context");
-    video_decoder_t* decoder = videoContext.decoder;
+    VideoDecoder* decoder = video_context.decoder;
 
     sws_input_fmt = decoder->sw_frame->format;
 
     LOG_INFO("Decoder Format: %s", av_get_pix_fmt_name(sws_input_fmt));
 
-    if (videoContext.sws) {
-        av_freep(&videoContext.data[0]);
-        sws_freeContext(videoContext.sws);
+    if (video_context.sws) {
+        av_freep(&video_context.data[0]);
+        sws_freeContext(video_context.sws);
     }
 
-    videoContext.sws = NULL;
+    video_context.sws = NULL;
 
-    memset(videoContext.data, 0, sizeof(videoContext.data));
+    memset(video_context.data, 0, sizeof(video_context.data));
 
     if (sws_input_fmt != AV_PIX_FMT_YUV420P || decoder->width != output_width ||
         decoder->height != output_height) {
-        av_image_alloc(videoContext.data, videoContext.linesize, output_width, output_height,
+        av_image_alloc(video_context.data, video_context.linesize, output_width, output_height,
                        AV_PIX_FMT_YUV420P, 32);
 
         LOG_INFO("Will be resizing from %dx%d to %dx%d", decoder->width, decoder->height,
                  output_width, output_height);
-        videoContext.sws =
+        video_context.sws =
             sws_getContext(decoder->width, decoder->height, sws_input_fmt, output_width,
                            output_height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
     }
 }
 
-void updatePixelFormat() {
-    if (sws_input_fmt != videoContext.decoder->sw_frame->format || pending_sws_update) {
-        sws_input_fmt = videoContext.decoder->sw_frame->format;
+void update_pixel_format() {
+    if (sws_input_fmt != video_context.decoder->sw_frame->format || pending_sws_update) {
+        sws_input_fmt = video_context.decoder->sw_frame->format;
         pending_sws_update = false;
-        updateSwsContext();
+        update_sws_context();
     }
 }
 
-void updateTexture() {
+void update_texture() {
     if (pending_texture_update) {
         LOG_INFO("Beginning to use %d x %d", output_width, output_height);
         SDL_Texture* texture =
-            SDL_CreateTexture((SDL_Renderer*)videoContext.renderer, SDL_PIXELFORMAT_YV12,
+            SDL_CreateTexture((SDL_Renderer*)video_context.renderer, SDL_PIXELFORMAT_YV12,
                               SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
         if (!texture) {
             LOG_ERROR("SDL: could not create texture - exiting");
             exit(1);
         }
 
-        SDL_DestroyTexture(videoContext.texture);
+        SDL_DestroyTexture(video_context.texture);
         pending_resize_render = false;
-        videoContext.texture = texture;
+        video_context.texture = texture;
         pending_texture_update = false;
     }
 }
 
-void updateDecoderParameters(int width, int height, CodecType codec_type) {
+void update_decoder_parameters(int width, int height, CodecType codec_type) {
     LOG_INFO("Updating Width & Height to %dx%d and Codec to %d", width, height, codec_type);
 
-    if (videoContext.decoder) {
-        destroy_video_decoder(videoContext.decoder);
+    if (video_context.decoder) {
+        destroy_video_decoder(video_context.decoder);
     }
 
-    video_decoder_t* decoder = create_video_decoder(width, height, USE_HARDWARE, codec_type);
+    VideoDecoder* decoder = create_video_decoder(width, height, USE_HARDWARE, codec_type);
 
-    videoContext.decoder = decoder;
+    video_context.decoder = decoder;
     if (!decoder) {
         LOG_WARNING("ERROR: Decoder could not be created!");
-        destroyLogger();
+        destroy_logger();
         exit(-1);
     }
 
@@ -261,7 +261,7 @@ void updateDecoderParameters(int width, int height, CodecType codec_type) {
     output_codec_type = codec_type;
 }
 
-static int renderPeers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
+static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
     int ret = 0;
 
     int window_width, window_height;
@@ -273,7 +273,7 @@ static int renderPeers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t n
         if (client_id == msgs->peer_id) {
             continue;
         }
-        if (drawPeerCursor(renderer, x, y, msgs->color.r, msgs->color.g, msgs->color.b) != 0) {
+        if (draw_peer_cursor(renderer, x, y, msgs->color.r, msgs->color.g, msgs->color.b) != 0) {
             LOG_ERROR("Failed to draw spectator cursor.");
             ret = -1;
         }
@@ -281,7 +281,7 @@ static int renderPeers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t n
     return ret;
 }
 
-int32_t RenderScreen(SDL_Renderer* renderer) {
+int32_t render_screen(SDL_Renderer* renderer) {
     LOG_INFO("RenderScreen running on Thread %d", SDL_GetThreadID(NULL));
 
 //    Windows GHA VM cannot render, it just segfaults on creating the renderer
@@ -294,21 +294,22 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
     int loading_index = 0;
 
     // present the loading screen
-    loadingSDL(renderer, loading_index);
+    loading_sdl(renderer, loading_index);
 
-    while (VideoData.run_render_screen_thread) {
-        int ret = SDL_SemTryWait(VideoData.renderscreen_semaphore);
+    while (video_data.run_render_screen_thread) {
+        int ret = SDL_SemTryWait(video_data.renderscreen_semaphore);
         SDL_LockMutex(render_mutex);
         if (pending_resize_render) {
-            SDL_RenderCopy((SDL_Renderer*)videoContext.renderer, videoContext.texture, NULL, NULL);
-            SDL_RenderPresent((SDL_Renderer*)videoContext.renderer);
+            SDL_RenderCopy((SDL_Renderer*)video_context.renderer, video_context.texture, NULL,
+                           NULL);
+            SDL_RenderPresent((SDL_Renderer*)video_context.renderer);
         }
         SDL_UnlockMutex(render_mutex);
 
         if (ret == SDL_MUTEX_TIMEDOUT) {
             if (loading_index >= 0) {
                 loading_index++;
-                loadingSDL(renderer, loading_index);
+                loading_sdl(renderer, loading_index);
             }
 
             SDL_Delay(1);
@@ -328,30 +329,30 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         // Cast to Frame* because this variable is not volatile in this section
-        Frame* frame = (Frame*)renderContext.frame_buffer;
+        Frame* frame = (Frame*)render_context.frame_buffer;
         PeerUpdateMessage* peer_update_msgs =
             (PeerUpdateMessage*)(((char*)frame->compressed_frame) + frame->size);
         size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
 #if LOG_VIDEO
         mprintf("Rendering ID %d (Age %f) (Packets %d) %s\n", renderContext.id,
-                GetTimer(renderContext.frame_creation_timer), renderContext.num_packets,
+                get_timer(renderContext.frame_creation_timer), renderContext.num_packets,
                 frame->is_iframe ? "(I-Frame)" : "");
 #endif
 
-        if (GetTimer(renderContext.frame_creation_timer) > 25.0 / 1000.0) {
-            LOG_INFO("Late! Rendering ID %d (Age %f) (Packets %d) %s", renderContext.id,
-                     GetTimer(renderContext.frame_creation_timer), renderContext.num_packets,
+        if (get_timer(render_context.frame_creation_timer) > 25.0 / 1000.0) {
+            LOG_INFO("Late! Rendering ID %d (Age %f) (Packets %d) %s", render_context.id,
+                     get_timer(render_context.frame_creation_timer), render_context.num_packets,
                      frame->is_iframe ? "(I-Frame)" : "");
         }
 
         if ((int)(sizeof(Frame) + frame->size +
                   sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs) !=
-            renderContext.frame_size) {
+            render_context.frame_size) {
             mprintf("Incorrect Frame Size! %d instead of %d\n",
                     sizeof(Frame) + frame->size +
                         sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs,
-                    renderContext.frame_size);
+                    render_context.frame_size);
         }
 
         if (frame->width != server_width || frame->height != server_height ||
@@ -363,54 +364,54 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                     "From %dx%d, codec %d to %dx%d, codec %d",
                     server_width, server_height, server_codec_type, frame->width, frame->height,
                     frame->codec_type);
-                updateDecoderParameters(frame->width, frame->height, frame->codec_type);
+                update_decoder_parameters(frame->width, frame->height, frame->codec_type);
             } else {
                 LOG_INFO("Wants to change resolution, but not an i-frame!");
             }
         }
 
         clock decode_timer;
-        StartTimer(&decode_timer);
+        start_timer(&decode_timer);
 
-        if (!video_decoder_decode(videoContext.decoder, frame->compressed_frame, frame->size)) {
+        if (!video_decoder_decode(video_context.decoder, frame->compressed_frame, frame->size)) {
             LOG_WARNING("Failed to video_decoder_decode!");
             rendering = false;
             continue;
         }
 
-        // LOG_INFO( "Decode Time: %f", GetTimer( decode_timer ) );
+        // LOG_INFO( "Decode Time: %f", get_timer( decode_timer ) );
 
         SDL_LockMutex(render_mutex);
-        updatePixelFormat();
+        update_pixel_format();
 
         if (!skip_render && can_render) {
             clock sws_timer;
-            StartTimer(&sws_timer);
+            start_timer(&sws_timer);
 
-            updateTexture();
+            update_texture();
 
-            if (videoContext.sws) {
-                sws_scale(videoContext.sws,
-                          (uint8_t const* const*)videoContext.decoder->sw_frame->data,
-                          videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->height,
-                          videoContext.data, videoContext.linesize);
+            if (video_context.sws) {
+                sws_scale(
+                    video_context.sws, (uint8_t const* const*)video_context.decoder->sw_frame->data,
+                    video_context.decoder->sw_frame->linesize, 0, video_context.decoder->height,
+                    video_context.data, video_context.linesize);
             } else {
-                memcpy(videoContext.data, videoContext.decoder->sw_frame->data,
-                       sizeof(videoContext.data));
-                memcpy(videoContext.linesize, videoContext.decoder->sw_frame->linesize,
-                       sizeof(videoContext.linesize));
+                memcpy(video_context.data, video_context.decoder->sw_frame->data,
+                       sizeof(video_context.data));
+                memcpy(video_context.linesize, video_context.decoder->sw_frame->linesize,
+                       sizeof(video_context.linesize));
             }
 
-            // LOG_INFO( "SWS Time: %f", GetTimer( sws_timer ) );
+            // LOG_INFO( "SWS Time: %f", get_timer( sws_timer ) );
 
-            SDL_UpdateYUVTexture(videoContext.texture, NULL, videoContext.data[0],
-                                 videoContext.linesize[0], videoContext.data[1],
-                                 videoContext.linesize[1], videoContext.data[2],
-                                 videoContext.linesize[2]);
+            SDL_UpdateYUVTexture(video_context.texture, NULL, video_context.data[0],
+                                 video_context.linesize[0], video_context.data[1],
+                                 video_context.linesize[1], video_context.data[2],
+                                 video_context.linesize[2]);
 
-            if (!videoContext.sws) {
+            if (!video_context.sws) {
                 // Clear out bits that aren't used from av_alloc_frame
-                memset(videoContext.data, 0, sizeof(videoContext.data));
+                memset(video_context.data, 0, sizeof(video_context.data));
             }
         }
 
@@ -453,14 +454,15 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         // mprintf("Client Frame Time for ID %d: %f\n", renderContext.id,
-        // GetTimer(renderContext.client_frame_timer));
+        // get_timer(renderContext.client_frame_timer));
 
         if (!skip_render && can_render) {
             // SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
             // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
 
-            SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL, NULL);
-            if (renderPeers((SDL_Renderer*)renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
+            SDL_RenderCopy((SDL_Renderer*)renderer, video_context.texture, NULL, NULL);
+            if (render_peers((SDL_Renderer*)renderer, peer_update_msgs, num_peer_update_msgs) !=
+                0) {
                 LOG_ERROR("Failed to render peers.");
             }
             SDL_RenderPresent((SDL_Renderer*)renderer);
@@ -470,14 +472,14 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
 #if LOG_VIDEO
         LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", renderContext.id, renderContext.frame_size,
-                  GetTimer(renderContext.frame_creation_timer));
+                  get_timer(renderContext.frame_creation_timer));
 #endif
 
         if (frame->is_iframe) {
-            VideoData.is_waiting_for_iframe = false;
+            video_data.is_waiting_for_iframe = false;
         }
 
-        VideoData.last_rendered_id = renderContext.id;
+        video_data.last_rendered_id = render_context.id;
         has_rendered_yet = true;
         rendering = false;
     }
@@ -487,11 +489,11 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 }
 
 // Make the screen black
-void loadingSDL(SDL_Renderer* renderer, int loading_index) {
+void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     int gif_frame_index = loading_index % 83;
 
     clock c;
-    StartTimer(&c);
+    start_timer(&c);
 
     char frame_name[24];
     if (gif_frame_index < 10) {
@@ -505,7 +507,7 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
     AVPacket pkt;
     av_init_packet(&pkt);
     png_file_to_bmp(frame_name, &pkt);
-    // LOG_INFO( "Test: %f", GetTimer(c) );
+    // LOG_INFO( "Test: %f", get_timer(c) );
 
     SDL_RWops* rw = SDL_RWFromMem(pkt.data, pkt.size);
 
@@ -533,7 +535,7 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
     SDL_RenderPresent(renderer);
     SDL_DestroyTexture(loading_screen_texture);
 
-    int remaining_ms = 30 - (int)GetTimer(c);
+    int remaining_ms = 30 - (int)get_timer(c);
     if (remaining_ms > 0) {
         SDL_Delay(remaining_ms);
     }
@@ -541,21 +543,21 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
     gif_frame_index %= 83;  // number of loading frames
 }
 
-void clearSDL(SDL_Renderer* renderer) {
+void clear_sdl(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
 }
 
-int initMultithreadedVideo(void* opaque) {
+int init_multithreaded_video(void* opaque) {
     UNUSED(opaque);
 
-    if (InitPeerCursors() != 0) {
+    if (init_peer_cursors() != 0) {
         LOG_ERROR("Failed to init peer cursors.");
     }
 
     can_render = true;
-    memset(videoContext.data, 0, sizeof(videoContext.data));
+    memset(video_context.data, 0, sizeof(video_context.data));
 
     render_mutex = SDL_CreateMutex();
 
@@ -578,7 +580,7 @@ int initMultithreadedVideo(void* opaque) {
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
 
-    videoContext.renderer = renderer;
+    video_context.renderer = renderer;
     if (!renderer) {
         LOG_WARNING("SDL: could not create renderer - exiting: %s", SDL_GetError());
         return -1;
@@ -586,7 +588,7 @@ int initMultithreadedVideo(void* opaque) {
 
     // mbps that currently works
     working_mbps = STARTING_BITRATE;
-    VideoData.is_waiting_for_iframe = false;
+    video_data.is_waiting_for_iframe = false;
 
     // True if RenderScreen is currently rendering a frame
     rendering = false;
@@ -600,52 +602,53 @@ int initMultithreadedVideo(void* opaque) {
                                 SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
     if (!texture) {
         LOG_ERROR("SDL: could not create texture - exiting");
-        destroyLogger();
+        destroy_logger();
         exit(1);
     }
 
     pending_sws_update = false;
     sws_input_fmt = AV_PIX_FMT_NONE;
-    videoContext.texture = texture;
-    videoContext.sws = NULL;
+    video_context.texture = texture;
+    video_context.sws = NULL;
 
     max_bitrate = STARTING_BITRATE;
-    VideoData.target_mbps = STARTING_BITRATE;
-    VideoData.pending_ctx = NULL;
-    VideoData.frames_received = 0;
-    VideoData.bytes_transferred = 0;
-    StartTimer(&VideoData.frame_timer);
-    VideoData.last_statistics_id = 1;
-    VideoData.last_rendered_id = 0;
-    VideoData.max_id = 0;
-    VideoData.most_recent_iframe = -1;
-    VideoData.num_nacked = 0;
-    VideoData.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
-    StartTimer(&VideoData.last_iframe_request_timer);
+    video_data.target_mbps = STARTING_BITRATE;
+    video_data.pending_ctx = NULL;
+    video_data.frames_received = 0;
+    video_data.bytes_transferred = 0;
+    start_timer(&video_data.frame_timer);
+    video_data.last_statistics_id = 1;
+    video_data.last_rendered_id = 0;
+    video_data.max_id = 0;
+    video_data.most_recent_iframe = -1;
+    video_data.num_nacked = 0;
+    video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
+    start_timer(&video_data.last_iframe_request_timer);
 
     for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
         receiving_frames[i].id = -1;
     }
 
-    VideoData.renderscreen_semaphore = SDL_CreateSemaphore(0);
-    VideoData.run_render_screen_thread = true;
+    video_data.renderscreen_semaphore = SDL_CreateSemaphore(0);
+    video_data.run_render_screen_thread = true;
 
-    RenderScreen(renderer);
+    render_screen(renderer);
     SDL_DestroyRenderer(renderer);
     return 0;
 }
 // END VIDEO FUNCTIONS
 
-void initVideo() {
-    VideoData.render_screen_thread = SDL_CreateThread(initMultithreadedVideo, "VideoThread", NULL);
+void init_video() {
+    video_data.render_screen_thread =
+        SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
 }
 
 int last_rendered_index = 0;
 
-void updateVideo() {
+void update_video() {
     // Get statistics from the last 3 seconds of data
-    if (GetTimer(VideoData.frame_timer) > 3) {
-        double time = GetTimer(VideoData.frame_timer);
+    if (get_timer(video_data.frame_timer) > 3) {
+        double time = get_timer(video_data.frame_timer);
 
         // Calculate statistics
         /*
@@ -660,75 +663,75 @@ void updateVideo() {
         double dropped_rate = 1.0 - receive_rate;
         */
 
-        double nack_per_second = VideoData.num_nacked / time;
-        VideoData.nack_by_bitrate[VideoData.bucket] += VideoData.num_nacked;
-        VideoData.seconds_by_bitrate[VideoData.bucket] += time;
+        double nack_per_second = video_data.num_nacked / time;
+        video_data.nack_by_bitrate[video_data.bucket] += video_data.num_nacked;
+        video_data.seconds_by_bitrate[video_data.bucket] += time;
 
         LOG_INFO("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====",
-                 VideoData.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
+                 video_data.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
 
         // Print statistics
 
         // mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 *
         // dropped_rate);
 
-        LOG_INFO("MBPS: %f %f", VideoData.target_mbps, nack_per_second);
+        LOG_INFO("MBPS: %f %f", video_data.target_mbps, nack_per_second);
 
         // Adjust mbps based on dropped packets
         if (nack_per_second > 50) {
-            VideoData.target_mbps = VideoData.target_mbps * 0.75;
-            working_mbps = VideoData.target_mbps;
+            video_data.target_mbps = video_data.target_mbps * 0.75;
+            working_mbps = video_data.target_mbps;
             update_mbps = true;
         } else if (nack_per_second > 25) {
-            VideoData.target_mbps = VideoData.target_mbps * 0.83;
-            working_mbps = VideoData.target_mbps;
+            video_data.target_mbps = video_data.target_mbps * 0.83;
+            working_mbps = video_data.target_mbps;
             update_mbps = true;
         } else if (nack_per_second > 15) {
-            VideoData.target_mbps = VideoData.target_mbps * 0.9;
-            working_mbps = VideoData.target_mbps;
+            video_data.target_mbps = video_data.target_mbps * 0.9;
+            working_mbps = video_data.target_mbps;
             update_mbps = true;
         } else if (nack_per_second > 10) {
-            VideoData.target_mbps = VideoData.target_mbps * 0.95;
-            working_mbps = VideoData.target_mbps;
+            video_data.target_mbps = video_data.target_mbps * 0.95;
+            working_mbps = video_data.target_mbps;
             update_mbps = true;
         } else if (nack_per_second > 6) {
-            VideoData.target_mbps = VideoData.target_mbps * 0.98;
-            working_mbps = VideoData.target_mbps;
+            video_data.target_mbps = video_data.target_mbps * 0.98;
+            working_mbps = video_data.target_mbps;
             update_mbps = true;
         } else {
-            working_mbps = max(VideoData.target_mbps * 1.05, working_mbps);
-            VideoData.target_mbps = (VideoData.target_mbps + working_mbps) / 2.0;
-            VideoData.target_mbps = min(VideoData.target_mbps, MAXIMUM_BITRATE);
+            working_mbps = max(video_data.target_mbps * 1.05, working_mbps);
+            video_data.target_mbps = (video_data.target_mbps + working_mbps) / 2.0;
+            video_data.target_mbps = min(video_data.target_mbps, MAXIMUM_BITRATE);
             update_mbps = true;
         }
 
-        LOG_INFO("MBPS2: %f", VideoData.target_mbps);
+        LOG_INFO("MBPS2: %f", video_data.target_mbps);
 
-        VideoData.bucket = (int)VideoData.target_mbps / BITRATE_BUCKET_SIZE;
-        max_bitrate = (int)VideoData.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
+        video_data.bucket = (int)video_data.target_mbps / BITRATE_BUCKET_SIZE;
+        max_bitrate = (int)video_data.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
 
         LOG_INFO("MBPS3: %d", max_bitrate);
-        VideoData.num_nacked = 0;
+        video_data.num_nacked = 0;
 
-        VideoData.bytes_transferred = 0;
-        VideoData.frames_received = 0;
-        VideoData.last_statistics_id = VideoData.max_id;
-        StartTimer(&VideoData.frame_timer);
+        video_data.bytes_transferred = 0;
+        video_data.frames_received = 0;
+        video_data.last_statistics_id = video_data.max_id;
+        start_timer(&video_data.frame_timer);
     }
 
-    if (VideoData.last_rendered_id == -1 && VideoData.most_recent_iframe > 0) {
-        VideoData.last_rendered_id = VideoData.most_recent_iframe - 1;
+    if (video_data.last_rendered_id == -1 && video_data.most_recent_iframe > 0) {
+        video_data.last_rendered_id = video_data.most_recent_iframe - 1;
     }
 
-    if (!rendering && VideoData.last_rendered_id >= 0) {
-        if (VideoData.most_recent_iframe - 1 > VideoData.last_rendered_id) {
-            LOG_INFO("Skipping from %d to i-frame %d!", VideoData.last_rendered_id,
-                     VideoData.most_recent_iframe);
+    if (!rendering && video_data.last_rendered_id >= 0) {
+        if (video_data.most_recent_iframe - 1 > video_data.last_rendered_id) {
+            LOG_INFO("Skipping from %d to i-frame %d!", video_data.last_rendered_id,
+                     video_data.most_recent_iframe);
             // If `last_rendered_id` is further back than the first frame received, start from the
             // first frame received
-            for (int i = max(VideoData.last_rendered_id + 1,
-                             VideoData.most_recent_iframe - VideoData.frames_received + 1);
-                 i < VideoData.most_recent_iframe; i++) {
+            for (int i = max(video_data.last_rendered_id + 1,
+                             video_data.most_recent_iframe - video_data.frames_received + 1);
+                 i < video_data.most_recent_iframe; i++) {
                 int index = i % RECV_FRAMES_BUFFER_SIZE;
                 if (receiving_frames[index].id == i) {
                     LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
@@ -744,40 +747,40 @@ void updateVideo() {
                     LOG_WARNING("Bad ID? %d instead of %d", receiving_frames[index].id, i);
                 }
             }
-            VideoData.last_rendered_id = VideoData.most_recent_iframe - 1;
+            video_data.last_rendered_id = video_data.most_recent_iframe - 1;
         }
 
-        int next_render_id = VideoData.last_rendered_id + 1;
+        int next_render_id = video_data.last_rendered_id + 1;
 
         int index = next_render_id % RECV_FRAMES_BUFFER_SIZE;
 
-        struct FrameData* ctx = &receiving_frames[index];
+        FrameData* ctx = &receiving_frames[index];
 
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
                 // mprintf( "Packets: %d %s\n", ctx->num_packets,
                 // ((Frame*)ctx->frame_buffer)->is_iframe ? "(I-frame)" : "" );
                 // mprintf("Rendering %d (Age %f)\n", ctx->id,
-                // GetTimer(ctx->frame_creation_timer));
+                // get_timer(ctx->frame_creation_timer));
 
-                renderContext = *ctx;
+                render_context = *ctx;
                 rendering = true;
 
                 skip_render = false;
 
                 int after_render_id = next_render_id + 1;
                 int after_index = after_render_id % RECV_FRAMES_BUFFER_SIZE;
-                struct FrameData* after_ctx = &receiving_frames[after_index];
+                FrameData* after_ctx = &receiving_frames[after_index];
 
                 if (after_ctx->id == after_render_id &&
                     after_ctx->packets_received == after_ctx->num_packets) {
                     skip_render = true;
                     LOG_INFO("Skip this render");
                 }
-                SDL_SemPost(VideoData.renderscreen_semaphore);
+                SDL_SemPost(video_data.renderscreen_semaphore);
             } else {
-                if ((GetTimer(ctx->last_packet_timer) > 6.0 / 1000.0) &&
-                    GetTimer(ctx->last_nacked_timer) >
+                if ((get_timer(ctx->last_packet_timer) > 6.0 / 1000.0) &&
+                    get_timer(ctx->last_nacked_timer) >
                         (8.0 + 8.0 * ctx->num_times_nacked) / 1000.0) {
                     if (ctx->num_times_nacked == -1) {
                         ctx->num_times_nacked = 0;
@@ -785,7 +788,7 @@ void updateVideo() {
                     }
                     int num_nacked = 0;
                     // mprintf("************NACKING PACKET %d, alive for %f
-                    // MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
+                    // MS\n", ctx->id, get_timer(ctx->frame_creation_timer));
                     for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 1;
                          i++) {
                         if (!ctx->received_indicies[i]) {
@@ -793,7 +796,7 @@ void updateVideo() {
                             LOG_INFO(
                                 "************NACKING VIDEO PACKET %d %d (/%d), "
                                 "alive for %f MS",
-                                ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
+                                ctx->id, i, ctx->num_packets, get_timer(ctx->frame_creation_timer));
                             ctx->nacked_indicies[i] = true;
                             nack(ctx->id, i);
                         }
@@ -803,52 +806,52 @@ void updateVideo() {
                         ctx->last_nacked_index = -1;
                         ctx->num_times_nacked++;
                     }
-                    StartTimer(&ctx->last_nacked_timer);
+                    start_timer(&ctx->last_nacked_timer);
                 }
             }
         }
 
         if (!rendering) {
-            // struct FrameData* cur_ctx =
+            // FrameData* cur_ctx =
             // &receiving_frames[VideoData.last_rendered_id %
             // RECV_FRAMES_BUFFER_SIZE];
 
-            if (VideoData.max_id >
-                VideoData.last_rendered_id + 3)  // || (cur_ctx->id == VideoData.last_rendered_id &&
-                                                 // GetTimer( cur_ctx->last_packet_timer ) > 96.0 /
-                                                 // 1000.0) )
+            if (video_data.max_id >
+                video_data.last_rendered_id + 3)  // || (cur_ctx->id == VideoData.last_rendered_id
+                                                  // && get_timer( cur_ctx->last_packet_timer )
+                                                  // > 96.0 / 1000.0) )
             {
-                if (requestIframe()) {
+                if (request_iframe()) {
                     LOG_INFO("TOO FAR BEHIND! REQUEST FOR IFRAME!");
                 }
             }
         }
 
-        if (VideoData.max_id > VideoData.last_rendered_id + 5) {
-            if (requestIframe()) {
+        if (video_data.max_id > video_data.last_rendered_id + 5) {
+            if (request_iframe()) {
                 LOG_INFO("WAYY TOO FAR BEHIND! REQUEST FOR IFRAME!");
             }
         }
     }
 }
 
-int32_t ReceiveVideo(FractalPacket* packet) {
+int32_t receive_video(FractalPacket* packet) {
     // mprintf("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)\n",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
 
     // Find frame in linked list that matches the id
-    VideoData.bytes_transferred += packet->payload_size;
+    video_data.bytes_transferred += packet->payload_size;
 
     int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
 
-    struct FrameData* ctx = &receiving_frames[index];
+    FrameData* ctx = &receiving_frames[index];
 
     // Check if we have to initialize the frame buffer
     if (packet->id < ctx->id) {
         LOG_INFO("Old packet received! %d is less than the previous %d", packet->id, ctx->id);
         return -1;
     } else if (packet->id > ctx->id) {
-        if (rendering && renderContext.id == ctx->id) {
+        if (rendering && render_context.id == ctx->id) {
             LOG_INFO(
                 "Error! Currently rendering an ID that will be overwritten! "
                 "Skipping packet.");
@@ -864,15 +867,15 @@ int32_t ReceiveVideo(FractalPacket* packet) {
         ctx->frame_size = 0;
         memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
         memset(ctx->nacked_indicies, 0, sizeof(ctx->nacked_indicies));
-        StartTimer(&ctx->last_nacked_timer);
-        StartTimer(&ctx->frame_creation_timer);
+        start_timer(&ctx->last_nacked_timer);
+        start_timer(&ctx->frame_creation_timer);
         // mprintf("Initialized packet %d!\n", ctx->id);
     } else {
         // mprintf("Already Started: %d/%d - %f\n", ctx->packets_received + 1,
-        // ctx->num_packets, GetTimer(ctx->client_frame_timer));
+        // ctx->num_packets, get_timer(ctx->client_frame_timer));
     }
 
-    StartTimer(&ctx->last_packet_timer);
+    start_timer(&ctx->last_packet_timer);
 
     // If we already received this packet, we can skip
     if (packet->is_a_nack) {
@@ -897,7 +900,7 @@ int32_t ReceiveVideo(FractalPacket* packet) {
         mprintf(
             "Skipping duplicate Video ID %d Index %d at time since creation %f "
             "%s\n",
-            packet->id, packet->index, GetTimer(ctx->frame_creation_timer),
+            packet->id, packet->index, get_timer(ctx->frame_creation_timer),
             packet->is_a_nack ? "(nack)" : "");
 #endif
         return 0;
@@ -905,14 +908,14 @@ int32_t ReceiveVideo(FractalPacket* packet) {
 
 #if LOG_VIDEO
     // mprintf("Received Video ID %d Index %d at time since creation %f %s\n",
-    // packet->id, packet->index, GetTimer(ctx->frame_creation_timer),
+    // packet->id, packet->index, get_timer(ctx->frame_creation_timer),
     // packet->is_a_nack ? "(nack)" : "");
 #endif
 
-    VideoData.max_id = max(VideoData.max_id, ctx->id);
+    video_data.max_id = max(video_data.max_id, ctx->id);
 
     ctx->received_indicies[packet->index] = true;
-    if (packet->index > 0 && GetTimer(ctx->last_nacked_timer) > 6.0 / 1000) {
+    if (packet->index > 0 && get_timer(ctx->last_nacked_timer) > 6.0 / 1000) {
         int to_index = packet->index - 5;
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             // Nacking index i
@@ -920,7 +923,7 @@ int32_t ReceiveVideo(FractalPacket* packet) {
             if (!ctx->received_indicies[i]) {
                 ctx->nacked_indicies[i] = true;
                 nack(packet->id, i);
-                StartTimer(&ctx->last_nacked_timer);
+                start_timer(&ctx->last_nacked_timer);
                 break;
             }
         }
@@ -940,7 +943,7 @@ int32_t ReceiveVideo(FractalPacket* packet) {
     if (ctx->packets_received == ctx->num_packets) {
         bool is_iframe = ((Frame*)ctx->frame_buffer)->is_iframe;
 
-        VideoData.frames_received++;
+        video_data.frames_received++;
 
 #if LOG_VIDEO
         mprintf("Received Video Frame ID %d (Packets: %d) (Size: %d) %s\n", ctx->id,
@@ -950,26 +953,26 @@ int32_t ReceiveVideo(FractalPacket* packet) {
         // If it's an I-frame, then just skip right to it, if the id is ahead of
         // the next to render id
         if (is_iframe) {
-            VideoData.most_recent_iframe = max(VideoData.most_recent_iframe, ctx->id);
+            video_data.most_recent_iframe = max(video_data.most_recent_iframe, ctx->id);
         }
     }
 
     return 0;
 }
 
-void destroyVideo() {
-    VideoData.run_render_screen_thread = false;
-    SDL_WaitThread(VideoData.render_screen_thread, NULL);
-    SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
+void destroy_video() {
+    video_data.run_render_screen_thread = false;
+    SDL_WaitThread(video_data.render_screen_thread, NULL);
+    SDL_DestroySemaphore(video_data.renderscreen_semaphore);
     SDL_DestroyMutex(render_mutex);
 
     //    SDL_DestroyTexture(videoContext.texture); not needed, the renderer
     //    destroys it
-    av_freep(&videoContext.data[0]);
+    av_freep(&video_context.data[0]);
 
     has_rendered_yet = false;
 
-    if (DestroyPeerCursors() != 0) {
+    if (destroy_peer_cursors() != 0) {
         LOG_ERROR("Failed to destroy peer cursors.");
     }
 }
