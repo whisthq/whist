@@ -13,11 +13,10 @@ export function rememberMeLogin(username: string) {
     }
 }
 
-export function createContainer(app: string, url: string) {
+export function createContainer(app: string) {
     return {
         type: CREATE_CONTAINER,
         app,
-        url,
     }
 }
 export function createTestContainer(app: string) {
