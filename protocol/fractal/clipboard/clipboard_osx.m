@@ -20,27 +20,27 @@ respective "ClipboardGet___" or "ClipboardSet___".
 
 #include <AppKit/AppKit.h>
 
-int GetClipboardChangecount() {
+int get_clipboard_changecount() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSInteger changeCount = [pasteboard changeCount];
     return (int)changeCount;
 }
 
-bool ClipboardHasString() {
+bool check_clipboard_has_string() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
     NSDictionary *options = [NSDictionary dictionary];
     return [pasteboard canReadObjectForClasses:classArray options:options];
 }
 
-bool ClipboardHasImage() {
+bool check_clipboard_has_image() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *classArray = [NSArray arrayWithObject:[NSImage class]];
     NSDictionary *options = [NSDictionary dictionary];
     return [pasteboard canReadObjectForClasses:classArray options:options];
 }
 
-const char *ClipboardGetString() {
+const char *clipboard_get_string() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
     NSDictionary *options = [NSDictionary dictionary];
@@ -60,7 +60,7 @@ const char *ClipboardGetString() {
     }
 }
 
-void ClipboardSetString(const char *str) {
+void clipboard_set_string(const char *str) {
     // clear clipboard and then set string data
     [[NSPasteboard generalPasteboard] clearContents];
     [[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str]
@@ -68,7 +68,7 @@ void ClipboardSetString(const char *str) {
     return;
 }
 
-void ClipboardGetImage(OSXImage *clipboard_image) {
+void clipboard_get_image(OSXImage *clipboard_image) {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSBitmapImageRep *rep =
         (NSBitmapImageRep *)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
@@ -87,7 +87,7 @@ void ClipboardGetImage(OSXImage *clipboard_image) {
     }
 }
 
-void ClipboardSetImage(char *img, int len) {
+void clipboard_set_image(char *img, int len) {
     NSData *imageData = [[[NSData alloc] initWithBytes:img length:len] autorelease];
     NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithData:imageData] autorelease];
     NSImage *image = [[[NSImage alloc] initWithSize:[imageRep size]] autorelease];
@@ -100,7 +100,7 @@ void ClipboardSetImage(char *img, int len) {
     return;
 }
 
-bool ClipboardHasFiles() {
+bool check_clipboard_has_files() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *classArray = [NSArray arrayWithObject:[NSURL class]];
     NSDictionary *options =
@@ -109,7 +109,7 @@ bool ClipboardHasFiles() {
     return [pasteboard canReadObjectForClasses:classArray options:options];
 }
 
-void ClipboardGetFiles(OSXFilenames *filenames[]) {
+void clipboard_get_files(OSXFilenames *filenames[]) {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *classArray = [NSArray arrayWithObject:[NSURL class]];
 
@@ -129,7 +129,7 @@ void ClipboardGetFiles(OSXFilenames *filenames[]) {
     }
 }
 
-void ClipboardSetFiles(char *filepaths[]) {
+void clipboard_set_files(char *filepaths[]) {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
 
     // clear pasteboard

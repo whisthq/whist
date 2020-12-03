@@ -7,8 +7,8 @@ on:
   push:
     branches: [master]
     paths:
-      - "/protocol/**"
-      - "!/protocol/README.md"
+      - "protocol/**"
+      - "!protocol/README.md"
 
 jobs:
   createSentryRelease:

@@ -9,9 +9,9 @@ import { history } from "store/history"
 import { generateMessage } from "shared/utils/loading"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalAPI } from "shared/types/api"
-import { AWSRegion } from "shared/types/aws"
 import { FractalAuthCache } from "shared/types/cache"
 import { config } from "shared/constants/config"
+import { AWSRegion } from "shared/types/aws"
 
 function* refreshAccess() {
     const state = yield select()
@@ -68,7 +68,7 @@ function* validateAccessToken(action: { accessToken: string }) {
     }
 }
 
-function* createContainer<T extends {}>(action: { body: T }) {
+function* createContainer(action: { app: string; url: string; test? : boolean}) {
     const test = action.test
     const app = action.app
     const url = action.url
@@ -258,7 +258,7 @@ function* createContainer<T extends {}>(action: { body: T }) {
     }
 }
 
-function* submitFeedback<T extends {}>(action: { body: T }) {
+function* submitFeedback(action: { feedback: string; feedbackType: string }) {
     const state = yield select()
     const { success } = yield call(
         apiPost,

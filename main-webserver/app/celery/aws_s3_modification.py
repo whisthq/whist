@@ -6,24 +6,24 @@ import boto3
 
 from celery import shared_task
 
-from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.logs import fractal_log
 from app.models import db, ProtocolLog, UserContainer
 
 BUCKET_NAME = "fractal-protocol-logs"
 
 
 class BadSenderError(Exception):
-    """Raised by uploadLogsToS3.
+    """Raised by upload_logs_to_s3.
 
-    Raised by uploadLogsToS3 when the sender argument is anything other than
+    Raised by upload_logs_to_s3 when the sender argument is anything other than
     "client" or "server" (case-insensitive).
     """
 
 
 class ContainerNotFoundError(Exception):
-    """Raised by uploadLogsToS3.
+    """Raised by upload_logs_to_s3.
 
-    Raised by uploadLogsToS3 when the container identified by the ip and port
+    Raised by upload_logs_to_s3 when the container identified by the ip and port
     arguments does not exist.
     """
 
@@ -32,7 +32,7 @@ class ContainerNotFoundError(Exception):
 
 
 @shared_task
-def uploadLogsToS3(sender, version, connection_id, ip, port, aes_key, message):
+def upload_logs_to_s3(sender, version, connection_id, ip, port, aes_key, message):
     """Upload logs to S3.
 
     Arguments:
@@ -57,8 +57,8 @@ def uploadLogsToS3(sender, version, connection_id, ip, port, aes_key, message):
 
     # Perform input validation on the sender argument.
     if source not in ("CLIENT", "SERVER"):
-        fractalLog(
-            function="uploadLogsToS3",
+        fractal_log(
+            function="upload_logs_to_s3",
             label=None,
             logs=f"Unrecognized sender {sender}",
             level=logging.ERROR,
@@ -76,8 +76,8 @@ def uploadLogsToS3(sender, version, connection_id, ip, port, aes_key, message):
         else:
             message = f"Container {container} does not exist."
 
-        fractalLog(
-            function="uploadLogsToS3",
+        fractal_log(
+            function="upload_logs_to_s3",
             label=container,
             logs=message,
             level=logging.ERROR,
@@ -89,14 +89,14 @@ def uploadLogsToS3(sender, version, connection_id, ip, port, aes_key, message):
     username = container.user_id
     updated_at = dt.utcnow()
     filename = f"{source}{updated_at.strftime('%Y%m%d%H%M')}.txt"
-    s3 = boto3.resource("s3")
-    s3_object = s3.Object(BUCKET_NAME, filename)
+    s3_resource = boto3.resource("s3")
+    s3_object = s3_resource.Object(BUCKET_NAME, filename)
 
     try:
         s3_object.put(ACL="public-read", Body=message, ContentType="text/plain")
     except Exception as e:  # TODO: Handle specfic exceptions.
-        fractalLog(
-            function="uploadLogsToS3",
+        fractal_log(
+            function="upload_logs_to_s3",
             label=username,
             logs=f"Error uploading {sender.lower()} logs to S3: {e}",
             level=logging.ERROR,
@@ -108,8 +108,8 @@ def uploadLogsToS3(sender, version, connection_id, ip, port, aes_key, message):
     # pointer to the S3 object.
     url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
 
-    fractalLog(
-        function="uploadLogsToS3",
+    fractal_log(
+        function="upload_logs_to_s3",
         label=username,
         logs=f"Successfully saved logs to {filename}",
     )
@@ -139,8 +139,8 @@ def uploadLogsToS3(sender, version, connection_id, ip, port, aes_key, message):
     try:
         db.session.commit()
     except Exception as e:
-        fractalLog(
-            function="uploadLogsToS3",
+        fractal_log(
+            function="upload_logs_to_s3",
             label=username,
             logs=(
                 f"Failed to save a pointer to the {sender.lower()} logs at "

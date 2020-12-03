@@ -3,10 +3,12 @@ export class FractalAPI {
         REFRESH: "/token/refresh",
         VALIDATE: "/token/validate",
     }
+
     static CONTAINER = {
         CREATE: "/container/create",
         TEST_CREATE: "/aws_container/create_container",
     }
+
     static MAIL = {
         FEEDBACK: "/mail/feedback",
     }

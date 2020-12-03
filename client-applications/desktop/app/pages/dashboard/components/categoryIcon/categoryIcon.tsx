@@ -5,11 +5,15 @@ import styles from "pages/dashboard/components/categoryIcon/categoryIcon.css"
 
 /* eslint-disable react/jsx-props-no-spreading */
 
-const renderTooltip = <T,>(props: T) => (
-    <Tooltip id="button-tooltip" {...props}>
-        <div className={styles.tooltipText}>{category} Apps</div>
-    </Tooltip>
-)
+const RenderTooltip = <T extends {}>(props: T) => {
+    return (
+        <div>
+            <Tooltip id="button-tooltip" {...props}>
+                <div className={styles.tooltipText}>{props.category} Apps</div>
+            </Tooltip>
+        </div>
+    )
+}
 
 const CategoryIcon = (props: {
     selectedCategory: string
@@ -21,7 +25,10 @@ const CategoryIcon = (props: {
 
     return (
         <div>
-            <OverlayTrigger placement="right" overlay={renderTooltip}>
+            <OverlayTrigger
+                placement="right"
+                overlay={<RenderTooltip category={category} />}
+            >
                 <button
                     type="button"
                     className={

@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
-from app import fractalPreProcess
+from app import fractal_pre_process
 from app.constants.http_codes import BAD_REQUEST, SUCCESS
 from app.helpers.blueprint_helpers.admin.report_get import (
     fetchUsersHelper,
@@ -14,15 +14,15 @@ from app.helpers.blueprint_helpers.admin.report_post import (
     regionReportHelper,
     userReportHelper,
 )
-from app.helpers.utils.general.auth import adminRequired, fractalAuth
+from app.helpers.utils.general.auth import admin_required, fractal_auth
 
 report_bp = Blueprint("report_bp", __name__)
 
 
 @report_bp.route("/report/<action>", methods=["GET"])
-@fractalPreProcess
+@fractal_pre_process
 @jwt_required
-@adminRequired
+@admin_required
 def report_get(action, **kwargs):
     if action == "latest":
         output = latestHelper()
@@ -46,9 +46,9 @@ def report_get(action, **kwargs):
 
 
 @report_bp.route("/report/regionReport", methods=["POST"])
-@fractalPreProcess
+@fractal_pre_process
 @jwt_required
-@adminRequired
+@admin_required
 def regionReport(**kwargs):
     body = request.get_json()
     output = regionReportHelper(body["timescale"])
@@ -57,9 +57,9 @@ def regionReport(**kwargs):
 
 
 @report_bp.route("/report/userReport", methods=["POST"])
-@fractalPreProcess
+@fractal_pre_process
 @jwt_required
-@fractalAuth
+@fractal_auth
 def userReport(**kwargs):
     body = request.get_json()
 

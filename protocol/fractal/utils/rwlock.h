@@ -9,7 +9,7 @@ Usage
 ============================
 
 RWLocks must be initialized before use and should be destroyed before program
-exit. RWLocks are not allocated or freed by initRWLock or destroyRWLock,
+exit. RWLocks are not allocated or freed by init_rw_lock or destroyRWLock,
 respectively.
 
 Only one thread may write-hold the RWLock at once. Arbitrarily many threads may
@@ -64,20 +64,20 @@ Public Functions
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int initRWLock(RWLock *rwlock);
+int init_rw_lock(RWLock *rwlock);
 
 /**
  * @brief                          Destroys read-write lock.
  *
  * @details                        Does not free the lock itself, though this
  *                                 function frees any additional memory allocated
- *                                 in initRWLock.
+ *                                 in init_rw_lock.
  *
  * @param rwlock                   Lock to be destroyed.
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int destroyRWLock(RWLock *rwlock);
+int destroy_rw_lock(RWLock *rwlock);
 
 /**
  * @brief                          Write-acquires read-write lock.
@@ -88,7 +88,7 @@ int destroyRWLock(RWLock *rwlock);
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int writeLock(RWLock *rwlock);
+int write_lock(RWLock *rwlock);
 
 /**
  * @brief                          Read-acquires read-write lock.
@@ -99,7 +99,7 @@ int writeLock(RWLock *rwlock);
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int readLock(RWLock *rwlock);
+int read_lock(RWLock *rwlock);
 
 /**
  * @brief                          Write-releases read-write lock.
@@ -108,7 +108,7 @@ int readLock(RWLock *rwlock);
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int writeUnlock(RWLock *rwlock);
+int write_unlock(RWLock *rwlock);
 
 /**
  * @brief                          Read-releases read-write lock.
@@ -117,6 +117,6 @@ int writeUnlock(RWLock *rwlock);
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int readUnlock(RWLock *rwlock);
+int read_unlock(RWLock *rwlock);
 
 #endif  // RWLOCK_H

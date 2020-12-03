@@ -1,15 +1,15 @@
 from celery import current_app
 from flask import Blueprint, jsonify, make_response
 
-from app import fractalPreProcess
-from app.celery.dummy import dummyTask
+from app import fractal_pre_process
+from app.celery.dummy import dummy_task
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST
 
 celery_status_bp = Blueprint("celery_status_bp", __name__)
 
 
 @celery_status_bp.route("/status/<task_id>", methods=["GET"])
-@fractalPreProcess
+@fractal_pre_process
 def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
     try:
         result = current_app.AsyncResult(task_id)
@@ -34,9 +34,9 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
 
 
 @celery_status_bp.route("/dummy", methods=["GET"])
-@fractalPreProcess
+@fractal_pre_process
 def celery_dummy(**kwargs):  # pylint: disable=unused-argument
-    task = dummyTask.apply_async([])
+    task = dummy_task.apply_async([])
 
     if not task:
         return jsonify({"ID": None}), BAD_REQUEST

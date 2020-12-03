@@ -40,6 +40,6 @@ Public Functions
  *
  * @returns                       0 on success, else -1
  */
-int cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder);
+int cpu_transfer_capture(CaptureDevice* device, VideoEncoder* encoder);
 
 #endif  // CPU_CAPTURE_TRANSFER_H

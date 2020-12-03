@@ -6,7 +6,7 @@ def init_celery(celery, app):
         worker_hijack_root_logger=True,
         celery_redis_max_connections=40,
     )
-    TaskBase = celery.Task
+    TaskBase = celery.Task  # pylint: disable=invalid-name
 
     class ContextTask(TaskBase):
         def __call__(self, *args, **kwargs):

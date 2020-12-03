@@ -3,7 +3,13 @@ import { DEFAULT } from "store/reducers/states"
 
 import { deep_copy } from "shared/utils/reducerHelpers"
 
-const MainReducer = <T extends {}>(state = DEFAULT, action: T) => {
+const MainReducer = (
+    state = DEFAULT,
+    action: {
+        type: string
+        body: Record<string, any>
+    }
+) => {
     const stateCopy = deep_copy(state)
     switch (action.type) {
         case MainAction.RESET_STATE:
