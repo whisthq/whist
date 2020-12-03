@@ -28,6 +28,7 @@ export const apiPost = async <T>(
     const webserver_url =
         webserver in webservers ? webservers[webserver] : webserver
 
+    // console.log(`connecting to webserver with url ${webserver_url}`)
     try {
         const response = await fetch(webserver_url + endpoint, {
             method: FractalHTTPRequest.POST,
@@ -54,6 +55,9 @@ export const apiGet = async <T>(
 ): T => {
     const webserver_url =
         webserver in webservers ? webservers[webserver] : webserver
+
+    // console.log(`webserver is ${webserver}`)
+    // console.log(`connecting to webserver with url ${webserver_url}`)
 
     try {
         const response = await fetch(webserver_url + endpoint, {
