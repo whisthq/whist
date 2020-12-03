@@ -71,6 +71,12 @@ li {
     list-style: none;
 }
 
+button {
+    border: none;
+    background: none;
+    outline: none;
+}
+
 a {
     color: black;
     opacity: 0.75;

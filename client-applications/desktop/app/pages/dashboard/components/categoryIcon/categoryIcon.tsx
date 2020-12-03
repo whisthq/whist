@@ -3,24 +3,27 @@ import { Tooltip, OverlayTrigger } from "react-bootstrap"
 
 import styles from "pages/dashboard/components/categoryIcon/categoryIcon.css"
 
+/* eslint-disable react/jsx-props-no-spreading */
+
+const renderTooltip = <T,>(props: T) => (
+    <Tooltip id="button-tooltip" {...props}>
+        <div className={styles.tooltipText}>{category} Apps</div>
+    </Tooltip>
+)
+
 const CategoryIcon = (props: {
-    callback: (category: string) => void
     selectedCategory: string
     category: string
     icon: FC
+    callback: (category: string) => void
 }) => {
-    const { category, icon, callback, selectedCategory } = props
-
-    const renderTooltip = <T,>(props: T) => (
-        <Tooltip id="button-tooltip" {...props}>
-            <div className={styles.tooltipText}>{category} Apps</div>
-        </Tooltip>
-    )
+    const { category, icon, selectedCategory, callback } = props
 
     return (
         <div>
             <OverlayTrigger placement="right" overlay={renderTooltip}>
-                <div
+                <button
+                    type="button"
                     className={
                         selectedCategory === category
                             ? styles.categoryIconSelected
@@ -29,7 +32,7 @@ const CategoryIcon = (props: {
                     onClick={() => callback(category)}
                 >
                     {icon}
-                </div>
+                </button>
             </OverlayTrigger>
         </div>
     )

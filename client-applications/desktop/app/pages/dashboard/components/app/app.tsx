@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, Dispatch } from "react"
 import { connect } from "react-redux"
 import { Col, Modal } from "react-bootstrap"
 import { FaPlay } from "react-icons/fa"
@@ -13,7 +13,11 @@ import { FractalApp } from "shared/types/ui"
 import styles from "pages/dashboard/components/app/app.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
 
-const App = (props: { app: FractalApp; launches: number }) => {
+const App = (props: {
+    app: FractalApp
+    launches: number
+    dispatch: Dispatch
+}) => {
     const { app, launches, dispatch } = props
 
     const [showModal, setShowModal] = useState(false)
@@ -42,7 +46,11 @@ const App = (props: { app: FractalApp; launches: number }) => {
     return (
         <Col xs={3}>
             <div>
-                <div className={styles.playButton} onClick={handleLaunch}>
+                <button
+                    type="button"
+                    className={styles.playButton}
+                    onClick={handleLaunch}
+                >
                     <div style={{ position: "relative" }}>
                         <div
                             style={{
@@ -55,11 +63,12 @@ const App = (props: { app: FractalApp; launches: number }) => {
                             <FaPlay className={styles.faPlayButton} />
                         </div>
                     </div>
-                </div>
+                </button>
                 <div
                     style={{ height: 220, paddingBottom: 20, marginBottom: 10 }}
                 >
-                    <div
+                    <button
+                        type="button"
                         className={styles.appContainer}
                         onClick={handleOpenModal}
                     >
@@ -73,7 +82,7 @@ const App = (props: { app: FractalApp; launches: number }) => {
                                 {app.description}
                             </div>
                         </div>
-                    </div>
+                    </button>
                 </div>
             </div>
             <Modal
