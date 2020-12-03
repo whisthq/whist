@@ -67,7 +67,7 @@ function* validateAccessToken(action: { accessToken: string }) {
     }
 }
 
-function* createContainer<T extends {}>(action: { app: string; url: string }) {
+function* createContainer(action: { app: string; url: string }) {
     yield put(
         Action.updateContainer({
             desiredAppID: action.app,
