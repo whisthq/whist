@@ -1,11 +1,11 @@
-@import '/app.global.css';
+@import "/app.global.css";
 
 .faIcon,
 .faIconSelected {
     font-size: 18px;
     color: #efefef;
     position: relative;
-    bottom: 4px;
+    bottom: 5px;
 }
 
 .faIconSelected {

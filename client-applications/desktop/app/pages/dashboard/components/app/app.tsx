@@ -57,7 +57,7 @@ const App = (props: {
                                 position: "absolute",
                                 top: "50%",
                                 left: "50%",
-                                transform: "translate(-50%, -50%)",
+                                transform: "translate(-50%, -55%)",
                             }}
                         >
                             <FaPlay className={styles.faPlayButton} />
@@ -148,7 +148,7 @@ const App = (props: {
                     <div className={styles.tos}>
                         <div>
                             Note: By using this app through Fractal, you are
-                            agreeing to their{" "}
+                            agreeing to their
                         </div>
                         <button
                             type="button"
