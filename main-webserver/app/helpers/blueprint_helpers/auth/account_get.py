@@ -1,5 +1,3 @@
-from flask import jsonify
-
 from app.constants.http_codes import BAD_REQUEST, SUCCESS
 from app.models import User
 from app.serializers.public import UserSchema
