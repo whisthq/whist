@@ -65,8 +65,7 @@ Public Functions
  *
  * @returns                        The FFmpeg video decoder struct
  */
-VideoDecoder* create_video_decoder(int width, int height, bool use_hardware,
-                                      CodecType codec_type);
+VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, CodecType codec_type);
 
 /**
  * @brief                          Destroys an initialized FFmpeg video decoder

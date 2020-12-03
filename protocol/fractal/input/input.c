@@ -28,7 +28,8 @@ void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fmsg
     bool client_num_lock_holding = fmsg->keyboard_state[FK_NUMLOCK];
 
     for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; ++sdl_keycode) {
-        if (!fmsg->keyboard_state[sdl_keycode] && get_keyboard_key_state(input_device, sdl_keycode)) {
+        if (!fmsg->keyboard_state[sdl_keycode] &&
+            get_keyboard_key_state(input_device, sdl_keycode)) {
             KeyUp(input_device, sdl_keycode);
         } else if (fmsg->keyboard_state[sdl_keycode] &&
                    !get_keyboard_key_state(input_device, sdl_keycode)) {
@@ -83,11 +84,11 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
             break;
         case MESSAGE_MOUSE_MOTION:
             ret = emit_mouse_motion_event(input_device, fmsg->mouseMotion.x, fmsg->mouseMotion.y,
-                                       fmsg->mouseMotion.relative);
+                                          fmsg->mouseMotion.relative);
             break;
         case MESSAGE_MOUSE_BUTTON:
             ret = emit_mouse_button_event(input_device, fmsg->mouseButton.button,
-                                       fmsg->mouseButton.pressed);
+                                          fmsg->mouseButton.pressed);
             break;
         case MESSAGE_MOUSE_WHEEL:
             ret = emit_mouse_wheel_event(input_device, fmsg->mouseWheel.x, fmsg->mouseWheel.y);

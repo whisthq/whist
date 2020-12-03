@@ -39,23 +39,27 @@ extern InputDevice *input_device;
 
 extern int host_id;
 
-static int handle_user_input_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
+                                     bool is_controlling);
 static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_id,
-                                      bool is_controlling);
+                                         bool is_controlling);
 static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
-static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
+                                     bool is_controlling);
 static int handle_clipboard_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
-static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
-static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id,
+                                     bool is_controlling);
+static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id,
+                                     bool is_controlling);
 static int handle_iframe_request_message(FractalClientMessage *fmsg, int client_id,
-                                      bool is_controlling);
+                                         bool is_controlling);
 static int handle_interaction_mode_message(FractalClientMessage *fmsg, int client_id,
-                                        bool is_controlling);
+                                           bool is_controlling);
 static int handle_quit_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handle_init_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handle_mouse_inactive_message(FractalClientMessage *fmsg, int client_id,
-                                      bool is_controlling);
+                                         bool is_controlling);
 
 int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     switch (fmsg->type) {
@@ -99,7 +103,8 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
 }
 
 // is called with is active read locked
-static int handle_user_input_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
+                                     bool is_controlling) {
     // Replay user input (keyboard or mouse presses)
     if (is_controlling && input_device) {
         if (!replay_user_input(input_device, fmsg)) {
@@ -128,7 +133,7 @@ static int handle_user_input_message(FractalClientMessage *fmsg, int client_id, 
 // TODO: Unix version missing
 // Synchronize client and server keyboard state
 static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_id,
-                                      bool is_controlling) {
+                                         bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
     update_keyboard_state(input_device, fmsg);
@@ -158,8 +163,9 @@ static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool i
     fmsg_response.type = MESSAGE_PONG;
     fmsg_response.ping_id = fmsg->ping_id;
     int ret = 0;
-    if (send_udp_packet(&(clients[client_id].UDP_context), PACKET_MESSAGE, (uint8_t *)&fmsg_response,
-                      sizeof(fmsg_response), 1, STARTING_BURST_BITRATE, NULL, NULL) < 0) {
+    if (send_udp_packet(&(clients[client_id].UDP_context), PACKET_MESSAGE,
+                        (uint8_t *)&fmsg_response, sizeof(fmsg_response), 1, STARTING_BURST_BITRATE,
+                        NULL, NULL) < 0) {
         LOG_WARNING("Could not send Ping to Client ID: %d", client_id);
         ret = -1;
     }
@@ -167,7 +173,8 @@ static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool i
     return ret;
 }
 
-static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
+                                     bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
     // Update knowledge of client monitor dimensions
@@ -185,7 +192,8 @@ static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id, 
     return 0;
 }
 
-static int handle_clipboard_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+static int handle_clipboard_message(FractalClientMessage *fmsg, int client_id,
+                                    bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
     // Update clipboard with message
@@ -198,7 +206,8 @@ static int handle_clipboard_message(FractalClientMessage *fmsg, int client_id, b
 }
 
 // Audio nack received, relay the packet
-static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id,
+                                     bool is_controlling) {
     if (!is_controlling) return 0;
     // mprintf("Audio NACK requested for: ID %d Index %d\n",
     // fmsg->nack_data.id, fmsg->nack_data.index);
@@ -222,7 +231,8 @@ static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id, 
     }
     return 0;
 }
-static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id,
+                                     bool is_controlling) {
     if (!is_controlling) return 0;
     // Video nack received, relay the packet
 
@@ -251,7 +261,7 @@ static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id, 
 }
 
 static int handle_iframe_request_message(FractalClientMessage *fmsg, int client_id,
-                                      bool is_controlling) {
+                                         bool is_controlling) {
     client_id;
     is_controlling;
     LOG_INFO("Request for i-frame found: Creating iframe");
@@ -268,7 +278,7 @@ static int handle_iframe_request_message(FractalClientMessage *fmsg, int client_
 }
 
 static int handle_interaction_mode_message(FractalClientMessage *fmsg, int client_id,
-                                        bool is_controlling) {
+                                           bool is_controlling) {
     is_controlling;
 
     /*
@@ -404,7 +414,7 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
 }
 
 static int handle_mouse_inactive_message(FractalClientMessage *fmsg, int client_id,
-                                      bool is_controlling) {
+                                         bool is_controlling) {
     fmsg;
     is_controlling;
     clients[client_id].mouse.is_active = false;

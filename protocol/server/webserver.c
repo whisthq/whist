@@ -38,7 +38,7 @@ void update_webserver_parameters() {
             identifier, hex_aes_private_key);
 
     if (!send_post_request(webserver_url, "/container/protocol_info", msg, &resp_buf,
-                         resp_buf_maxlen)) {
+                           resp_buf_maxlen)) {
         start_timer(&last_protocol_info_check_time);
         return;
     }

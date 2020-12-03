@@ -134,8 +134,8 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     }
 
     for (int y = 0; y < h; y++) {
-        memcpy(bmp_buffer + w * (h - y - 1) * num_channels, bmp_original_buffer + scanline_bytes * y,
-               w * num_channels);
+        memcpy(bmp_buffer + w * (h - y - 1) * num_channels,
+               bmp_original_buffer + scanline_bytes * y, w * num_channels);
     }
 
     // Create a new buffer for the PNG image

@@ -46,7 +46,7 @@ int broadcast_ack(void);
  * @returns                        Returns -1 on failure, 0 on success
  */
 int broadcast_udp_packet(FractalPacketType type, void *data, int len, int id, int burst_bitrate,
-                       FractalPacket *packet_buffer, int *packet_len_buffer);
+                         FractalPacket *packet_buffer, int *packet_len_buffer);
 
 /**
  * @brief                          Sends a FractalPacket and accompanying

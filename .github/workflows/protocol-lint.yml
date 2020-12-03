@@ -31,4 +31,4 @@ jobs:
       - name: clang-format
         run: |
           cd protocol && make clang-format
-          cd protocol && git diff-index --quiet HEAD --
+          git diff-index --quiet HEAD --

@@ -161,7 +161,7 @@ bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
     // End Obtain SE_RESTORE_NAME privilege
 
     HANDLE h_dir = CreateFileW(sz_junction, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
-                              FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL);
+                               FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL);
     if (h_dir == INVALID_HANDLE_VALUE) {
         LOG_ERROR("CreateFileW Error: %d", GetLastError());
         return false;
@@ -177,8 +177,8 @@ bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
 
     DWORD dw_ret;
     if (!DeviceIoControl(h_dir, FSCTL_SET_REPARSE_POINT, reparse_buffer,
-                         reparse_buffer->ReparseDataLength + REPARSE_MOUNTPOINT_HEADER_SIZE, NULL, 0,
-                         &dw_ret, NULL)) {
+                         reparse_buffer->ReparseDataLength + REPARSE_MOUNTPOINT_HEADER_SIZE, NULL,
+                         0, &dw_ret, NULL)) {
         CloseHandle(h_dir);
         RemoveDirectoryW(sz_junction);
 
