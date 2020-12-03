@@ -2,31 +2,31 @@
  * @NOTE: Prepend a `~` to css file paths that are in your node_modules
  *        See https://github.com/webpack-contrib/sass-loader#imports
  */
-@import '~@fortawesome/fontawesome-free/css/all.css';
-@import '~bootstrap/dist/css/bootstrap.min.css';
+@import "~@fortawesome/fontawesome-free/css/all.css";
+@import "~bootstrap/dist/css/bootstrap.min.css";
 
 @font-face {
-    font-family: 'Maven Pro';
-    src: url('assets/fonts/MavenPro-Regular.ttf');
+    font-family: "Maven Pro";
+    src: url("assets/fonts/MavenPro-Regular.ttf");
     font-weight: normal;
     font-style: normal;
 }
 
 @font-face {
-    font-family: 'Maven Pro Medium';
-    src: url('assets/fonts/MavenPro-Medium.ttf');
+    font-family: "Maven Pro Medium";
+    src: url("assets/fonts/MavenPro-Medium.ttf");
     font-style: normal;
 }
 
 @font-face {
-    font-family: 'Maven Pro SemiBold';
-    src: url('assets/fonts/MavenPro-SemiBold.ttf');
+    font-family: "Maven Pro SemiBold";
+    src: url("assets/fonts/MavenPro-SemiBold.ttf");
     font-style: normal;
 }
 
 @font-face {
-    font-family: 'Maven Pro Bold';
-    src: url('assets/fonts/MavenPro-Bold.ttf');
+    font-family: "Maven Pro Bold";
+    src: url("assets/fonts/MavenPro-Bold.ttf");
     font-style: normal;
 }
 
@@ -51,8 +51,12 @@ body {
     padding: 0px;
     margin: 0px;
     background-color: white;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     overflow-y: hidden;
+}
+
+div {
+    outline: none;
 }
 
 h2 {
@@ -74,7 +78,7 @@ li {
 button {
     border: none;
     background: none;
-    outline: none;
+    outline: none !important;
 }
 
 a {
