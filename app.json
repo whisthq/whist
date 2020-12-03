@@ -1,12 +1,4 @@
 {
-  "buildpacks": [
-    {
-      "url": "https://github.com/fractal/subdir-heroku-buildpack.git"
-    },
-    {
-      "url": "heroku/python"
-    }
-  ],
   "env": {
     "OAUTHLIB_RELAX_TOKEN_SCOPE": {
       "description": "Don't raise an exception if the granted and requested OAuth scopes differ.",
@@ -19,10 +11,32 @@
   },
   "environments": {
     "review": {
-      "addons": ["heroku-redis:hobby-dev"]
+      "addons": ["heroku-redis:hobby-dev"],
+      "buildpacks": [
+        {
+          "url": "https://github.com/fractal/subdir-heroku-buildpack.git"
+        },
+        {
+          "url": "https://github.com/heroku/heroku-buildpack-awscli.git"
+        },
+        {
+          "url": "https://github.com/heroku/heroku-buildpack-inline.git"
+        },
+        {
+          "url": "heroku/python"
+        }
+      ]
     },
     "test": {
       "addons": ["heroku-redis:in-dyno"],
+      "buildpacks": [
+        {
+          "url": "https://github.com/fractal/subdir-heroku-buildpack.git"
+        },
+        {
+          "url": "heroku/python"
+        }
+      ],
       "scripts": {
         "test": "pytest -v -s --no-mock-aws"
       }
