@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y brave-browser \
     && apt-get autoremove -y \
     && apt-get clean 
 
-# Install Chrome Extensions
+# Install Brave Extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh
 RUN chmod +x /usr/bin/install-extensions.sh
 RUN /usr/bin/install-extensions.sh
