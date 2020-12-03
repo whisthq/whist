@@ -76,7 +76,7 @@ const Discover = (props: { search: string }) => {
     const appQuery = useQuery(GET_FEATURED_APPS, {
         context: {
             headers: {
-                Authorization: `Bearer ${accessToken}`,
+                Authorization: `Bearer ${props.accessToken}`,
             },
         },
     })
@@ -84,7 +84,7 @@ const Discover = (props: { search: string }) => {
     const bannerQuery = useQuery(GET_BANNERS, {
         context: {
             headers: {
-                Authorization: `Bearer ${accessToken}`,
+                Authorization: `Bearer ${props.accessToken}`,
             },
         },
     })
@@ -184,10 +184,10 @@ const Discover = (props: { search: string }) => {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
+const mapStateToProps = <T extends {}>(state: T) => {
     return {
         accessToken: state.MainReducer.auth.accessToken,
-        username: state.MainREducer.auth.username,
+        username: state.MainReducer.auth.username,
     }
 }
 

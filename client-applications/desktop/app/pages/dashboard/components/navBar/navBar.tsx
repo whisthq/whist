@@ -1,4 +1,4 @@
-import React, { useState, KeyboardEvent } from "react"
+import React, { useState, KeyboardEvent, Dispatch } from "react"
 import { connect } from "react-redux"
 import { Collapse } from "react-bootstrap"
 import { FaUser } from "react-icons/fa"
@@ -11,18 +11,11 @@ import { FractalAuthCache } from "shared/types/cache"
 
 import styles from "pages/dashboard/components/navBar/navBar.css"
 
-const NavTitle = (props: {
-    selected: boolean
-    text: string
-    onClick: (currentTab: string) => void
-}) => {
-    const { selected, text, onClick, style } = props
+const NavTitle = (props: { selected: boolean; text: string }) => {
+    const { selected, text } = props
 
     return (
-        <div
-            className={selected ? styles.selectedNavTitle : styles.navTitle}
-            onClick={onClick}
-        >
+        <div className={selected ? styles.selectedNavTitle : styles.navTitle}>
             {text}
         </div>
     )
@@ -35,6 +28,7 @@ const NavBar = (props: {
     search: string
     updateCurrentTab: (currentTab: string) => void
     updateSearch: (search: string) => void
+    dispatch: Dispatch
 }) => {
     const {
         username,
@@ -51,13 +45,18 @@ const NavBar = (props: {
         const Store = require("electron-store")
         const storage = new Store()
 
-        new Promise((resolve, _) => {
+        new Promise((resolve) => {
             storage.set(FractalAuthCache.ACCESS_TOKEN, null)
             resolve()
-        }).then(() => {
-            dispatch(resetState())
-            history.push(FractalRoute.LOGIN)
         })
+            .then(() => {
+                dispatch(resetState())
+                history.push(FractalRoute.LOGIN)
+                return null
+            })
+            .catch((err) => {
+                throw err
+            })
     }
 
     return (
@@ -76,7 +75,8 @@ const NavBar = (props: {
                         </div>
                     )}
                     <div className={styles.columnFlex}>
-                        <div
+                        <button
+                            type="button"
                             className={styles.userInfo}
                             onClick={() => setShowProfile(!showProfile)}
                         >
@@ -85,45 +85,64 @@ const NavBar = (props: {
                                 <span className={styles.name}>{name}</span>
                                 <span className={styles.email}>{username}</span>
                             </div>
-                        </div>
+                        </button>
                         <Collapse in={showProfile}>
-                            <div onClick={handleSignout}>
+                            <button type="button" onClick={handleSignout}>
                                 <div className={styles.signoutButton}>
                                     Sign Out
                                 </div>
-                            </div>
+                            </button>
                         </Collapse>
                     </div>
                 </div>
             </div>
             <div className={styles.tabWrapper}>
-                <NavTitle
-                    selected={currentTab === FractalDashboardTab.APP_STORE}
-                    text={FractalDashboardTab.APP_STORE}
+                <button
+                    type="button"
                     onClick={() =>
                         updateCurrentTab(FractalDashboardTab.APP_STORE)
                     }
-                />
-                <NavTitle
-                    selected={currentTab === FractalDashboardTab.SETTINGS}
-                    text={FractalDashboardTab.SETTINGS}
+                >
+                    <NavTitle
+                        selected={currentTab === FractalDashboardTab.APP_STORE}
+                        text={FractalDashboardTab.APP_STORE}
+                    />
+                </button>
+                <button
+                    type="button"
                     onClick={() =>
                         updateCurrentTab(FractalDashboardTab.SETTINGS)
                     }
-                />
-                <NavTitle
-                    selected={currentTab === FractalDashboardTab.SUPPORT}
-                    text={FractalDashboardTab.SUPPORT}
+                >
+                    <NavTitle
+                        selected={currentTab === FractalDashboardTab.SETTINGS}
+                        text={FractalDashboardTab.SETTINGS}
+                    />
+                </button>
+                <button
+                    type="button"
                     onClick={() =>
                         updateCurrentTab(FractalDashboardTab.SUPPORT)
                     }
-                />
+                >
+                    <NavTitle
+                        selected={currentTab === FractalDashboardTab.SUPPORT}
+                        text={FractalDashboardTab.SUPPORT}
+                    />
+                </button>
             </div>
         </div>
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
+const mapStateToProps = (state: {
+    MainReducer: {
+        auth: {
+            username: string
+            name: string
+        }
+    }
+}) => {
     return {
         username: state.MainReducer.auth.username,
         name: state.MainReducer.auth.name,

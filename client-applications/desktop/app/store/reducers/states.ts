@@ -42,7 +42,7 @@ export const DEFAULT = {
     },
     admin: {
         webserver_url: "dev",
-        task_arn: "fractal-browers-chrome",
+        task_arn: "fractal-browers-firefox",
         region: "us-east-1",
         cluster: null,
     },
