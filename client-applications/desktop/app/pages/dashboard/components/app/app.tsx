@@ -1,10 +1,10 @@
-import React, { useState, useEffect, Dispatch } from "react"
+import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { Col, Modal } from "react-bootstrap"
 import { FaPlay } from "react-icons/fa"
 
 import { createContainer } from "store/actions/sideEffects"
-import { updateAdmin, updateContainer } from "store/actions/pure"
+import { updateContainer } from "store/actions/pure"
 import { history } from "store/history"
 import { FractalRoute } from "shared/types/navigation"
 import { openExternal } from "shared/utils/helpers"
@@ -39,9 +39,6 @@ const App = (props: {
     useEffect(() => {
         if (launches === 1 && launched) {
             history.push(FractalRoute.LOADING)
-            console.log(
-                `gonna create container... is this container admin? ${admin}`
-            )
             dispatch(createContainer(app.app_id, null, admin))
             setLaunched(false)
         }

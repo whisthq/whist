@@ -1,0 +1,160 @@
+import React, { useState } from "react"
+import { Row } from "react-bootstrap"
+import { updateAdmin } from "store/actions/pure"
+import Fractal from "assets/images/fractal.svg"
+
+import { DEFAULT } from "store/reducers/states"
+
+import AdminDropdown from "pages/dashboard/components/admin/adminDropdown"
+import {
+    FractalRegions,
+    FractalWebservers,
+    FractalTaskDefs,
+    FractalClusters,
+} from "pages/dashboard/components/admin/dropdownValues"
+
+export const AdminSettings = (props: {
+    dispatch: <T extends {}>(obj: T) => void
+    adminState: {
+        region: string
+        task_arn: string
+        webserver_url: string
+        cluster: string
+    }
+}) => {
+    const { dispatch, adminState } = props
+
+    const [region, setRegion] = useState(adminState.region)
+    const [task, setTask] = useState(adminState.task_arn)
+    const [webserver, setWebserver] = useState(adminState.webserver_url)
+    const [cluster, setCluster] = useState(adminState.cluster)
+
+    const handleSaveTask = (value: any) => {
+        setTask(value)
+        dispatch(
+            updateAdmin({
+                task_arn: value,
+            })
+        )
+    }
+
+    const handleSaveRegion = (value: any) => {
+        setRegion(value)
+        dispatch(
+            updateAdmin({
+                region: value,
+            })
+        )
+    }
+
+    const handleSaveWebserver = (value: any) => {
+        setWebserver(value)
+        dispatch(
+            updateAdmin({
+                webserver_url: value,
+            })
+        )
+    }
+
+    const handleSaveCluster = (value: any) => {
+        setCluster(value)
+        dispatch(
+            updateAdmin({
+                cluster: value,
+            })
+        )
+    }
+    return (
+        <div>
+            <Row
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    marginTop: 50,
+                    marginBottom: 25,
+                }}
+            >
+                <div style={{ width: "75%" }}>
+                    <div
+                        style={{
+                            color: "#111111",
+                            fontSize: 16,
+                            fontWeight: "bold",
+                        }}
+                    >
+                        <img
+                            src={Fractal}
+                            style={{
+                                color: "#111111",
+                                height: 14,
+                                marginRight: 12,
+                                position: "relative",
+                                top: 2,
+                                width: 16,
+                            }}
+                        />
+                        (Admin Only) Test Settings
+                    </div>
+                    <div
+                        style={{
+                            fontSize: 13,
+                            color: "#333333",
+                            marginTop: 10,
+                            marginLeft: 28,
+                            lineHeight: 1.4,
+                        }}
+                    >
+                        Give a region (like us-east-1) and a webserver version
+                        (local, dev, staging, prod, or a url) and save them to
+                        choose where to connect to. In future may support
+                        different task defs. If the region is not a valid region
+                        the change does not go through (silently).
+                    </div>
+                </div>
+                <div
+                    style={{
+                        width: "25%",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-around",
+                        alignItems: "flex-end",
+                        padding: "10px 0px",
+                    }}
+                >
+                    <div style={{ float: "right" }}>
+                        <AdminDropdown
+                            onClick={handleSaveWebserver}
+                            options={FractalWebservers}
+                            title="Webserver"
+                            defaultValue={DEFAULT.admin.webserver_url}
+                            value={webserver}
+                        />
+                        <AdminDropdown
+                            onClick={handleSaveRegion}
+                            options={FractalRegions}
+                            title="Region"
+                            defaultValue={DEFAULT.admin.region}
+                            value={region}
+                        />
+                        <AdminDropdown
+                            onClick={handleSaveTask}
+                            options={FractalTaskDefs}
+                            title="Task"
+                            defaultValue={DEFAULT.admin.task_arn}
+                            value={task}
+                        />
+                        <AdminDropdown
+                            onClick={handleSaveCluster}
+                            options={FractalClusters}
+                            title="Cluster"
+                            defaultValue={DEFAULT.admin.cluster}
+                            value={cluster}
+                        />
+                    </div>
+                </div>
+            </Row>
+        </div>
+    )
+}
+
+export default AdminSettings
