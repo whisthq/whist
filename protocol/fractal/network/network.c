@@ -202,8 +202,8 @@ bool sign_private_key(PrivateKeyData *priv_key_data, int recv_size, void *privat
 @returns                        True if the verification succeeds, false if it fails
 */
 bool confirm_private_key(PrivateKeyData *our_priv_key_data,
-                       PrivateKeyData *our_signed_priv_key_data, int recv_size,
-                       void *private_key);
+                         PrivateKeyData *our_signed_priv_key_data, int recv_size,
+                         void *private_key);
 
 /*
 ============================
@@ -271,7 +271,7 @@ bool handshake_private_key(SocketContext *context) {
     // Wait for and verify their signed private key request data
     recv_size = recvp(context, &our_signed_priv_key_data, sizeof(our_signed_priv_key_data));
     if (!confirm_private_key(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
-                           context->binary_aes_private_key)) {
+                             context->binary_aes_private_key)) {
         LOG_ERROR("Could not confirmPrivateKey!");
         return false;
     } else {
@@ -335,7 +335,7 @@ int send_tcp_packet(SocketContext *context, FractalPacketType type, void *data, 
 }
 
 int send_udp_packet(SocketContext *context, FractalPacketType type, void *data, int len, int id,
-                  int burst_bitrate, FractalPacket *packet_buffer, int *packet_len_buffer) {
+                    int burst_bitrate, FractalPacket *packet_buffer, int *packet_len_buffer) {
     if (id <= 0) {
         LOG_WARNING("IDs must be positive!");
         return -1;
@@ -773,7 +773,7 @@ FractalPacket *read_tcp_packet(SocketContext *context, bool should_recvp) {
 }
 
 int create_tcp_server_context(SocketContext *context, int port, int recvfrom_timeout_ms,
-                           int stun_timeout_ms) {
+                              int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -865,7 +865,7 @@ int create_tcp_server_context(SocketContext *context, int port, int recvfrom_tim
 }
 
 int create_tcp_server_context_stun(SocketContext *context, int port, int recvfrom_timeout_ms,
-                               int stun_timeout_ms) {
+                                   int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -1006,7 +1006,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
 }
 
 int create_tcp_client_context(SocketContext *context, char *destination, int port,
-                           int recvfrom_timeout_ms, int stun_timeout_ms) {
+                              int recvfrom_timeout_ms, int stun_timeout_ms) {
     UNUSED(stun_timeout_ms);
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -1050,7 +1050,7 @@ int create_tcp_client_context(SocketContext *context, char *destination, int por
 }
 
 int create_tcp_client_context_stun(SocketContext *context, char *destination, int port,
-                               int recvfrom_timeout_ms, int stun_timeout_ms) {
+                                   int recvfrom_timeout_ms, int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -1203,7 +1203,7 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
 }
 
 int create_tcp_context(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
-                     int stun_timeout_ms, bool using_stun, char *binary_aes_private_key) {
+                       int stun_timeout_ms, bool using_stun, char *binary_aes_private_key) {
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
     }
@@ -1222,16 +1222,17 @@ int create_tcp_context(SocketContext *context, char *destination, int port, int 
 
     if (using_stun) {
         if (destination == NULL)
-            ret = create_tcp_server_context_stun(context, port, recvfrom_timeout_ms, stun_timeout_ms);
+            ret =
+                create_tcp_server_context_stun(context, port, recvfrom_timeout_ms, stun_timeout_ms);
         else
             ret = create_tcp_client_context_stun(context, destination, port, recvfrom_timeout_ms,
-                                             stun_timeout_ms);
+                                                 stun_timeout_ms);
     } else {
         if (destination == NULL)
             ret = create_tcp_server_context(context, port, recvfrom_timeout_ms, stun_timeout_ms);
         else
             ret = create_tcp_client_context(context, destination, port, recvfrom_timeout_ms,
-                                         stun_timeout_ms);
+                                            stun_timeout_ms);
     }
 
     if (ret == -1) {
@@ -1249,7 +1250,7 @@ int create_tcp_context(SocketContext *context, char *destination, int port, int 
 }
 
 int create_udp_server_context(SocketContext *context, int port, int recvfrom_timeout_ms,
-                           int stun_timeout_ms) {
+                              int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -1303,7 +1304,7 @@ int create_udp_server_context(SocketContext *context, int port, int recvfrom_tim
 }
 
 int create_udp_server_context_stun(SocketContext *context, int port, int recvfrom_timeout_ms,
-                               int stun_timeout_ms) {
+                                   int stun_timeout_ms) {
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1418,7 +1419,7 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
 }
 
 int create_udp_client_context(SocketContext *context, char *destination, int port,
-                           int recvfrom_timeout_ms, int stun_timeout_ms) {
+                              int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1460,7 +1461,7 @@ int create_udp_client_context(SocketContext *context, char *destination, int por
 }
 
 int create_udp_client_context_stun(SocketContext *context, char *destination, int port,
-                               int recvfrom_timeout_ms, int stun_timeout_ms) {
+                                   int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1544,7 +1545,7 @@ int create_udp_client_context_stun(SocketContext *context, char *destination, in
 }
 
 int create_udp_context(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
-                     int stun_timeout_ms, bool using_stun, char *binary_aes_private_key) {
+                       int stun_timeout_ms, bool using_stun, char *binary_aes_private_key) {
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
     }
@@ -1562,16 +1563,17 @@ int create_udp_context(SocketContext *context, char *destination, int port, int 
 
     if (using_stun) {
         if (destination == NULL)
-            return create_udp_server_context_stun(context, port, recvfrom_timeout_ms, stun_timeout_ms);
+            return create_udp_server_context_stun(context, port, recvfrom_timeout_ms,
+                                                  stun_timeout_ms);
         else
             return create_udp_client_context_stun(context, destination, port, recvfrom_timeout_ms,
-                                              stun_timeout_ms);
+                                                  stun_timeout_ms);
     } else {
         if (destination == NULL)
             return create_udp_server_context(context, port, recvfrom_timeout_ms, stun_timeout_ms);
         else
             return create_udp_client_context(context, destination, port, recvfrom_timeout_ms,
-                                          stun_timeout_ms);
+                                             stun_timeout_ms);
     }
 }
 
@@ -1675,7 +1677,7 @@ bool send_http_request(char *type, char *host_s, char *message, char **response_
 }
 
 bool send_post_request(char *host_s, char *path, char *payload, char **response_body,
-                     size_t max_response_size) {
+                       size_t max_response_size) {
     /*
         Send post request to `host_s` with body `payload`
 
@@ -1802,8 +1804,8 @@ bool sign_private_key(PrivateKeyData *priv_key_data, int recv_size, void *privat
 }
 
 bool confirm_private_key(PrivateKeyData *our_priv_key_data,
-                       PrivateKeyData *our_signed_priv_key_data, int recv_size,
-                       void *private_key) {
+                         PrivateKeyData *our_signed_priv_key_data, int recv_size,
+                         void *private_key) {
     if (recv_size == sizeof(PrivateKeyData)) {
         if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
             LOG_ERROR("IV is incorrect!");

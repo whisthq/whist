@@ -40,11 +40,11 @@ int discover_ports(bool *using_stun) {
     SocketContext context;
     LOG_INFO("using stun is %d", *using_stun);
     if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
-                         (char *)binary_aes_private_key) < 0) {
+                           (char *)binary_aes_private_key) < 0) {
         *using_stun = !*using_stun;
         LOG_INFO("using stun is updated to %d", *using_stun);
         if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                             *using_stun, (char *)binary_aes_private_key) < 0) {
+                               *using_stun, (char *)binary_aes_private_key) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
             return -1;
         }
@@ -135,7 +135,7 @@ int connect_to_server(bool using_stun) {
     }
 
     if (create_udp_context(&packet_send_context, server_ip, udp_port, 10, UDP_CONNECTION_WAIT,
-                         using_stun, (char *)binary_aes_private_key) < 0) {
+                           using_stun, (char *)binary_aes_private_key) < 0) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
@@ -149,8 +149,8 @@ int connect_to_server(bool using_stun) {
         return -1;
     }
 
-    if (create_tcp_context(&packet_tcp_context, server_ip, tcp_port, 1, TCP_CONNECTION_WAIT, using_stun,
-                         (char *)binary_aes_private_key) < 0) {
+    if (create_tcp_context(&packet_tcp_context, server_ip, tcp_port, 1, TCP_CONNECTION_WAIT,
+                           using_stun, (char *)binary_aes_private_key) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         closesocket(packet_send_context.s);
         return -1;
@@ -204,6 +204,6 @@ int send_fmsg(FractalClientMessage *fmsg) {
         static int sent_packet_id = 0;
         sent_packet_id++;
         return send_udp_packet(&packet_send_context, PACKET_MESSAGE, fmsg, get_fmsg_size(fmsg),
-                             sent_packet_id, -1, NULL, NULL);
+                               sent_packet_id, -1, NULL, NULL);
     }
 }

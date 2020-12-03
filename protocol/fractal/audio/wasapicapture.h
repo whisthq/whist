@@ -34,7 +34,7 @@ Custom Types
 ============================
 */
 
-#ifdef __WIN32__ // necessary to keep clang-tidy from converting to snake_case
+#ifdef __WIN32__  // necessary to keep clang-tidy from converting to snake_case
 DEFINE_GUID(CLSID_MMDeviceEnumerator, 0xBCDE0395, 0xE52F, 0x467C, 0x8E, 0x3D, 0xC4, 0x57, 0x92,
             0x91, 0x69, 0x2E);
 DEFINE_GUID(IID_IMMDeviceEnumerator, 0xA95664D2, 0x9614, 0x4F35, 0xA7, 0x46, 0xDE, 0x8D, 0xB6, 0x36,

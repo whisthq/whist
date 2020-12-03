@@ -105,8 +105,8 @@ void start_audio_device(AudioDevice *audio_device) {
         -1 * audio_device->hnsDefaultDevicePeriod / 2;  // negative means relative time
     LONG l_time_between_fires =
         (LONG)audio_device->hnsDefaultDevicePeriod / 2 / 10000;  // convert to milliseconds
-    BOOL b_ok =
-        SetWaitableTimer(audio_device->hWakeUp, &li_first_fire, l_time_between_fires, NULL, NULL, FALSE);
+    BOOL b_ok = SetWaitableTimer(audio_device->hWakeUp, &li_first_fire, l_time_between_fires, NULL,
+                                 NULL, FALSE);
     if (b_ok == 0) {
         LOG_WARNING("Failed to SetWaitableTimer");
         return;
@@ -147,6 +147,4 @@ void release_buffer(AudioDevice *audio_device) {
                                                              audio_device->frames_available);
 }
 
-void wait_timer(AudioDevice *audio_device) {
-    WaitForSingleObject(audio_device->hWakeUp, INFINITE);
-}
+void wait_timer(AudioDevice *audio_device) { WaitForSingleObject(audio_device->hWakeUp, INFINITE); }

@@ -177,8 +177,8 @@ int xioerror_handler(Display* d) {
                 "lock.");
         } else {
             if (broadcast_udp_packet(PACKET_MESSAGE, (uint8_t*)&fmsg_response,
-                                   sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL,
-                                   NULL) != 0) {
+                                     sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL,
+                                     NULL) != 0) {
                 LOG_WARNING("Could not send Quit Message");
             }
             if (read_unlock(&is_active_rwlock) != 0) {
@@ -368,8 +368,8 @@ int32_t send_video(void* opaque) {
             while (pending_encoder) {
                 if (encoder_finished) {
                     if (encoder) {
-                        SDL_CreateThread(multithreaded_destroy_encoder, "MultithreadedDestroyEncoder",
-                                         encoder);
+                        SDL_CreateThread(multithreaded_destroy_encoder,
+                                         "MultithreadedDestroyEncoder", encoder);
                     }
                     encoder = encoder_factory_result;
                     pending_encoder = false;
@@ -392,8 +392,8 @@ int32_t send_video(void* opaque) {
             if (pending_encoder) {
                 if (encoder_finished) {
                     if (encoder) {
-                        SDL_CreateThread(multithreaded_destroy_encoder, "multithreaded_destroy_encoder",
-                                         encoder);
+                        SDL_CreateThread(multithreaded_destroy_encoder,
+                                         "multithreaded_destroy_encoder", encoder);
                     }
                     encoder = encoder_factory_result;
                     pending_encoder = false;
@@ -762,9 +762,9 @@ int32_t send_audio(void* opaque) {
                     LOG_ERROR("Failed to read-acquire is active RW lock.");
                 } else {
                     if (broadcast_udp_packet(PACKET_AUDIO, audio_device->buffer,
-                                           audio_device->buffer_size, id, STARTING_BURST_BITRATE,
-                                           audio_buffer[id % AUDIO_BUFFER_SIZE],
-                                           audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
+                                             audio_device->buffer_size, id, STARTING_BURST_BITRATE,
+                                             audio_buffer[id % AUDIO_BUFFER_SIZE],
+                                             audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
                         mprintf("Could not send audio frame\n");
                     }
                     if (readUnlock(&is_active_rwlock) != 0) {
@@ -993,7 +993,7 @@ int multithreaded_manage_clients(void* opaque) {
         }
 
         if (create_tcp_context(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                             get_using_stun(), binary_aes_private_key) < 0) {
+                               get_using_stun(), binary_aes_private_key) < 0) {
             continue;
         }
 
@@ -1315,7 +1315,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             update_server_status(num_controlling_clients > 0, webserver_url, identifier,
-                               hex_aes_private_key);
+                                 hex_aes_private_key);
             start_timer(&ack_timer);
         }
 
@@ -1331,7 +1331,7 @@ int main(int argc, char* argv[]) {
                 LOG_ERROR("Failed to read-acquire is active RW lock.");
             } else {
                 if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
-                                       sizeof(FractalServerMessage) + cb->size) < 0) {
+                                         sizeof(FractalServerMessage) + cb->size) < 0) {
                     LOG_WARNING("Could not broadcast Clipboard Message");
                 } else {
                     LOG_INFO("Send clipboard message!");
@@ -1389,7 +1389,8 @@ int main(int argc, char* argv[]) {
             FractalClientMessage local_fcmsg;
             size_t fcmsg_size;
             if (try_get_next_message_tcp(id, &fmsg, &fcmsg_size) != 0 || fcmsg_size == 0) {
-                if (try_get_next_message_udp(id, &local_fcmsg, &fcmsg_size) != 0 || fcmsg_size == 0) {
+                if (try_get_next_message_udp(id, &local_fcmsg, &fcmsg_size) != 0 ||
+                    fcmsg_size == 0) {
                     continue;
                 }
                 fmsg = &local_fcmsg;

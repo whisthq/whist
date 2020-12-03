@@ -12,7 +12,8 @@
 
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
 
-int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec) {
+int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
+                                 CodecType requested_codec) {
     NVFBC_SIZE frame_size = {0, 0};
     NVFBC_BOOL print_status_only = NVFBC_FALSE;
 

@@ -300,7 +300,8 @@ int32_t render_screen(SDL_Renderer* renderer) {
         int ret = SDL_SemTryWait(video_data.renderscreen_semaphore);
         SDL_LockMutex(render_mutex);
         if (pending_resize_render) {
-            SDL_RenderCopy((SDL_Renderer*)video_context.renderer, video_context.texture, NULL, NULL);
+            SDL_RenderCopy((SDL_Renderer*)video_context.renderer, video_context.texture, NULL,
+                           NULL);
             SDL_RenderPresent((SDL_Renderer*)video_context.renderer);
         }
         SDL_UnlockMutex(render_mutex);
@@ -390,10 +391,10 @@ int32_t render_screen(SDL_Renderer* renderer) {
             update_texture();
 
             if (video_context.sws) {
-                sws_scale(video_context.sws,
-                          (uint8_t const* const*)video_context.decoder->sw_frame->data,
-                          video_context.decoder->sw_frame->linesize, 0, video_context.decoder->height,
-                          video_context.data, video_context.linesize);
+                sws_scale(
+                    video_context.sws, (uint8_t const* const*)video_context.decoder->sw_frame->data,
+                    video_context.decoder->sw_frame->linesize, 0, video_context.decoder->height,
+                    video_context.data, video_context.linesize);
             } else {
                 memcpy(video_context.data, video_context.decoder->sw_frame->data,
                        sizeof(video_context.data));
@@ -460,7 +461,8 @@ int32_t render_screen(SDL_Renderer* renderer) {
             // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
 
             SDL_RenderCopy((SDL_Renderer*)renderer, video_context.texture, NULL, NULL);
-            if (render_peers((SDL_Renderer*)renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
+            if (render_peers((SDL_Renderer*)renderer, peer_update_msgs, num_peer_update_msgs) !=
+                0) {
                 LOG_ERROR("Failed to render peers.");
             }
             SDL_RenderPresent((SDL_Renderer*)renderer);
@@ -637,7 +639,8 @@ int init_multithreaded_video(void* opaque) {
 // END VIDEO FUNCTIONS
 
 void init_video() {
-    video_data.render_screen_thread = SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
+    video_data.render_screen_thread =
+        SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
 }
 
 int last_rendered_index = 0;
@@ -814,9 +817,9 @@ void update_video() {
             // RECV_FRAMES_BUFFER_SIZE];
 
             if (video_data.max_id >
-                video_data.last_rendered_id + 3)  // || (cur_ctx->id == VideoData.last_rendered_id &&
-                                                 // get_timer( cur_ctx->last_packet_timer ) > 96.0 /
-                                                 // 1000.0) )
+                video_data.last_rendered_id + 3)  // || (cur_ctx->id == VideoData.last_rendered_id
+                                                  // && get_timer( cur_ctx->last_packet_timer )
+                                                  // > 96.0 / 1000.0) )
             {
                 if (request_iframe()) {
                     LOG_INFO("TOO FAR BEHIND! REQUEST FOR IFRAME!");

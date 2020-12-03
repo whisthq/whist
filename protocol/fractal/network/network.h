@@ -247,9 +247,9 @@ int get_last_network_error();
  *                                 success
  */
 int create_udp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
-                     int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
+                       int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
 int create_tcp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
-                     int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
+                       int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
 
 /**
  * @brief                          This will send a FractalPacket over TCP to
@@ -293,7 +293,7 @@ int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, 
  *                                 success
  */
 int send_udp_packet(SocketContext* context, FractalPacketType type, void* data, int len, int id,
-                  int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer);
+                    int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer);
 
 /**
  * @brief                          Replay the sending of a packet that has
@@ -361,7 +361,7 @@ FractalPacket* read_udp_packet(SocketContext* context);
  *                                 more about the error
  */
 bool send_post_request(char* host_s, char* path, char* payload, char** response_body,
-                     size_t max_response_size);
+                       size_t max_response_size);
 
 /**
  * @brief                          Sends a JSON GET request to some host and

@@ -557,7 +557,7 @@ void print_stacktrace() {
 }
 
 #ifdef _WIN32
-LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS *ExceptionInfo) { // NOLINT
+LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS *ExceptionInfo) {  // NOLINT
     SDL_Delay(250);
     fprintf(stderr, "\n");
     switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
@@ -832,7 +832,7 @@ int32_t multithreaded_update_server_status(void *data) {
 }
 
 void update_server_status(bool is_connected, char *host, char *identifier,
-                        char *hex_aes_private_key) {
+                          char *hex_aes_private_key) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     UpdateStatusData *d = malloc(sizeof(UpdateStatusData));
     d->is_connected = is_connected;

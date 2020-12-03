@@ -155,7 +155,7 @@ void update() {
         FractalPacket* tcp_packet = read_tcp_packet(&packet_tcp_context, true);
         if (tcp_packet) {
             handle_server_message((FractalServerMessage*)tcp_packet->data,
-                                (size_t)tcp_packet->payload_size);
+                                  (size_t)tcp_packet->payload_size);
         }
 
         // Update the last tcp check timer
@@ -437,7 +437,7 @@ int receive_packets(void* opaque) {
                     // A FractalServerMessage for other information
                     start_timer(&message_timer);
                     handle_server_message((FractalServerMessage*)packet->data,
-                                        (size_t)packet->payload_size);
+                                          (size_t)packet->payload_size);
                     message_time += get_timer(message_timer);
                     break;
                 default:

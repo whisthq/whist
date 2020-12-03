@@ -124,8 +124,8 @@ int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
         else if (nargc <= ++optind) { /* no arg */
             place = EMSG;
             if ((opterr) && (*ostr != ':'))
-                (void)fprintf(stderr, "%s: option requires an argument -- %c\n",
-                              progname(nargv[0]), optopt);
+                (void)fprintf(stderr, "%s: option requires an argument -- %c\n", progname(nargv[0]),
+                              optopt);
             return (BADARG);
         } else /* white space */
             optarg = nargv[optind];

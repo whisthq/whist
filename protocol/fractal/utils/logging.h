@@ -191,7 +191,8 @@ void save_connection_id(int connection_id);
  *                                 instance of the protocol to the webserver.
  * @param hex_aes_private_key      The private key, as a hex string.
  */
-void update_server_status(bool is_connected, char* host, char* identifier, char* hex_aes_private_key);
+void update_server_status(bool is_connected, char* host, char* identifier,
+                          char* hex_aes_private_key);
 
 /**
  * @brief                          Get the current server's version number

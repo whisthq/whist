@@ -329,8 +329,7 @@ bool try_next_decoder(VideoDecoder* decoder) {
     }
 }
 
-VideoDecoder* create_video_decoder(int width, int height, bool use_hardware,
-                                      CodecType codec_type) {
+VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, CodecType codec_type) {
 #if SHOW_DECODER_LOGS
     // av_log_set_level( AV_LOG_ERROR );
     av_log_set_callback(swap_decoder);

@@ -31,7 +31,7 @@ void set_opt(VideoEncoder *encoder, char *option, char *value) {
 typedef VideoEncoder *(*VideoEncoderCreator)(int, int, int, int, int, CodecType);
 
 VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
-                                      int bitrate, CodecType codec_type) {
+                                   int bitrate, CodecType codec_type) {
     LOG_INFO("Trying NVENC encoder...");
     VideoEncoder *encoder = (VideoEncoder *)malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
@@ -268,7 +268,7 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
 }
 
 VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int out_height,
-                                    int bitrate, CodecType codec_type) {
+                                 int bitrate, CodecType codec_type) {
     LOG_INFO("Trying QSV encoder...");
     VideoEncoder *encoder = (VideoEncoder *)malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
@@ -452,7 +452,7 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
 }
 
 VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
-                                   int bitrate, CodecType codec_type) {
+                                int bitrate, CodecType codec_type) {
     LOG_INFO("Trying software encoder...");
     VideoEncoder *encoder = (VideoEncoder *)malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
@@ -616,7 +616,7 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
 // Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the
 // next one when the previous one doesn't work
 VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, int out_height,
-                                      int bitrate, CodecType codec_type) {
+                                   int bitrate, CodecType codec_type) {
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only linux uses FFmpeg 3.4.x because of canonical system packages
