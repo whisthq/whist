@@ -19,7 +19,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     set_stun,
 )
 
-from app.helpers.utils.general.auth import fractalAuth
+from app.helpers.utils.general.auth import fractalAuth, developerAccess
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
@@ -27,6 +27,9 @@ aws_container_bp = Blueprint("aws_container_bp", __name__)
 
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
 @fractalPreProcess
+@jwt_required  # make sure jwt valid
+@fractalAuth  # make sure that they are who they say they are
+@developerAccess  # make sure they are a developer
 def test_endpoint(action, **kwargs):
     if action == "create_cluster":
         cluster_name, instance_type, ami, region_name, max_size, min_size = (
