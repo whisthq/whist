@@ -1233,6 +1233,12 @@ int main(int argc, char* argv[]) {
 #else
     init_logger(".");
 #endif
+
+    if (using_sentry) {
+        sentry_set_tag("protocol-type", "server");
+        sentry_set_tag("connection_id", "no connection yet");
+    }
+
     LOG_INFO("Version Number: %s", get_version());
     LOG_INFO("Fractal server revision %s", FRACTAL_GIT_REVISION);
 

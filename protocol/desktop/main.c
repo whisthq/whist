@@ -537,9 +537,14 @@ int main(int argc, char* argv[]) {
     // It defaults to None, so we only inform sentry if the client app passes in a user email
     // We do this here instead of in initLogger because initLogger is used both by the client and
     // the server so we have to do it for both in their respective main.c files.
-    if (using_sentry && strcmp(user_email, "None") != 0) {
-        sentry_value_t user = sentry_value_new_object();
-        sentry_value_set_by_key(user, "email", sentry_value_new_string(user_email));
+    if (using_sentry) {
+        sentry_set_tag("protocol-type", "client");
+        sentry_set_tag("connection_id", "no connection yet");
+
+        if (strcmp(user_email, "None") != 0) {
+            sentry_value_t user = sentry_value_new_object();
+            sentry_value_set_by_key(user, "email", sentry_value_new_string(user_email));
+        }
     }
 
     if (running_ci) {

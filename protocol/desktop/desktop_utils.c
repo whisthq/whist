@@ -327,7 +327,6 @@ int log_connection_id(int connection_id) {
     // send connection id to sentry as a tag, server also does this
     if (using_sentry) {
         sentry_set_tag("connection_id", str_connection_id);
-        sentry_set_tag("protocol-type", "client");
     }
 
     char *path;
