@@ -4,7 +4,7 @@ import { Col, Modal } from "react-bootstrap"
 import { FaPlay } from "react-icons/fa"
 
 import { createContainer } from "store/actions/sideEffects"
-import { updateContainer } from "store/actions/pure"
+import { updateAdmin, updateContainer } from "store/actions/pure"
 import { history } from "store/history"
 import { FractalRoute } from "shared/types/navigation"
 import { openExternal } from "shared/utils/helpers"
@@ -39,11 +39,10 @@ const App = (props: {
     useEffect(() => {
         if (launches === 1 && launched) {
             history.push(FractalRoute.LOADING)
-            if (admin) {
-                dispatch(createContainer(app.app_id, null, true))
-            } else {
-                dispatch(createContainer(app.app_id, null))
-            }
+            console.log(
+                `gonna create container... is this container admin? ${admin}`
+            )
+            dispatch(createContainer(app.app_id, null, admin))
             setLaunched(false)
         }
     }, [launches, launched])

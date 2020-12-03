@@ -73,6 +73,8 @@ function* createContainer<T extends {}>(action: { body: T }) {
     const app = action.app
     const url = action.url
 
+    // console.log(`create container saga, test, app, url : ${test}, ${app}, ${url}`)
+
     yield put(
         Action.updateContainer({
             desiredAppID: app,
@@ -101,7 +103,7 @@ function* createContainer<T extends {}>(action: { body: T }) {
               dpi: state.MainReducer.client.dpi,
           }
     const webserver = test
-        ? state.MainReducer.webserver_url
+        ? state.MainReducer.admin.webserver_url
         : config.url.WEBSERVER_URL
 
     if (!test) {
@@ -116,6 +118,9 @@ function* createContainer<T extends {}>(action: { body: T }) {
         }
         body.region = region
     }
+
+    // console.log(`body is ${JSON.stringify(body)}`)
+    // console.log(`webserver is ${webserver}`)
 
     if (!username || username === "None" || username === "") {
         history.push(FractalRoute.LOGIN)
