@@ -8,6 +8,11 @@ const MainReducer = <T extends {}>(state = DEFAULT, action: T) => {
     switch (action.type) {
         case MainAction.RESET_STATE:
             return DEFAULT
+        case MainAction.UPDATE_ADMIN:
+            return {
+                ...stateCopy,
+                admin: Object.assign(stateCopy.admin, action.body),
+            }
         case MainAction.UPDATE_AUTH:
             return {
                 ...stateCopy,

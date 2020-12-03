@@ -89,7 +89,7 @@ def run_cmd(cmd: List[str], **kwargs):
 
 
 def prep_unix(protocol_dir: Path) -> None:  # Shared by Linux and macOS
-    (protocol_dir / "sshkey").chmod(0o600)
+    #(protocol_dir / "sshkey").chmod(0o600)
     (protocol_dir / "FractalClient").chmod(0o744)
 
 
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     # #####
     shutil.rmtree(protocol_dir, ignore_errors=True)
     print(f"Unpacking '{protocol}' to '{protocol_dir}'")
-    # shutil.unpack_archive(protocol, protocol_dir)
+    shutil.unpack_archive(protocol, protocol_dir)
     cleanup_list.append(protocol_dir)
     # Depending on how the archive was created it may place the files (like "FractalClient") directly
     # in the root of the destination (ie. protocol_dir), or it might create an intermediate folder
