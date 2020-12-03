@@ -7,6 +7,7 @@ import { updateClient, updateAuth } from "store/actions/pure"
 import { setAWSRegion } from "shared/utils/exec"
 import { openExternal } from "shared/utils/helpers"
 import { config } from "shared/constants/config"
+import { FractalKey } from "shared/enums/input"
 
 const LoginView = <T extends {}>(props: T) => {
     const { dispatch } = props
@@ -15,13 +16,20 @@ const LoginView = <T extends {}>(props: T) => {
 
     const handleLoginUser = () => {
         setLoggingIn(true)
-        setAWSRegion().then((region) => {
-            dispatch(updateClient({ region: region }))
-            dispatch(updateAuth({ loginWarning: false, loginMessage: null }))
-            openExternal(
-                `${config.url.FRONTEND_URL}/auth/bypass?callback=fractal://auth`
-            )
-        })
+        setAWSRegion()
+            .then((region) => {
+                dispatch(updateClient({ region: region }))
+                dispatch(
+                    updateAuth({ loginWarning: false, loginMessage: null })
+                )
+                openExternal(
+                    `${config.url.FRONTEND_URL}/auth/bypass?callback=fractal://auth`
+                )
+                return null
+            })
+            .catch((err) => {
+                throw err
+            })
     }
 
     const changeAccessToken = (evt: ChangeEvent) => {
@@ -30,7 +38,7 @@ const LoginView = <T extends {}>(props: T) => {
     }
 
     const onKeyPress = (evt: KeyboardEvent) => {
-        if (evt.key === "Enter") {
+        if (evt.key === FractalKey.ENTER) {
             dispatch(updateAuth({ candidateAccessToken: accessToken }))
         }
     }
@@ -39,7 +47,7 @@ const LoginView = <T extends {}>(props: T) => {
         return (
             <div style={{ marginTop: 150 }}>
                 <div className={styles.welcomeBack}>Welcome Back!</div>
-                <div>You've been signed out.</div>
+                <div>You&lsquo;ve been signed out.</div>
                 <div style={{ marginTop: 30 }}>
                     <button
                         onClick={handleLoginUser}
@@ -60,13 +68,16 @@ const LoginView = <T extends {}>(props: T) => {
                 A browser window should open momentarily where you can login.
                 Click{" "}
                 <span
+                    role="button"
+                    tabIndex={0}
                     onClick={handleLoginUser}
+                    onKeyDown={handleLoginUser}
                     style={{ fontWeight: "bold", cursor: "pointer" }}
                 >
                     here
                 </span>{" "}
-                if it doesn't appear. Once you've logged in, this page will
-                automatically redirect.
+                if it doesn&lsquo;t appear. Once you&lsquo;ve logged in, this
+                page will automatically redirect.
             </div>
             {config.sentryEnv === "development" && (
                 <div style={{ marginTop: 40 }}>
@@ -91,7 +102,7 @@ const LoginView = <T extends {}>(props: T) => {
     )
 }
 
-export const mapStateToProps = <T extends {}>(state: T) => {
+export const mapStateToProps = () => {
     return {}
 }
 

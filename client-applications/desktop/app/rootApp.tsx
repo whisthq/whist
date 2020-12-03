@@ -145,10 +145,10 @@ const RootApp = (props: {
                     return null
                 })
                 .then(() => {
-                    const { app_id: appId, url } = Object(
+                    const { appID, url } = Object(
                         urlToApp(launchURL.toLowerCase(), featuredAppData)
                     )
-                    dispatch(createContainer(appId, url))
+                    dispatch(createContainer(appID, url))
                     setLaunched(false)
                     return null
                 })

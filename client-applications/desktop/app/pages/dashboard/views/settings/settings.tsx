@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, KeyboardEvent } from "react"
 import { Row, Alert } from "react-bootstrap"
 import { connect } from "react-redux"
 import ToggleButton from "react-toggle-button"
@@ -6,11 +6,12 @@ import Slider from "react-input-slider"
 import { FaWifi, FaNetworkWired } from "react-icons/fa"
 
 import { FractalClientCache } from "shared/enums/cache"
+import { FractalKey } from "shared/enums/input"
 
 import styles from "pages/dashboard/views/settings/settings.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
 
-const Settings = <T extends {}>(props: T) => {
+const Settings = <T extends {}>() => {
     const [lowInternetMode, setLowInternetMode] = useState(false)
     const [bandwidth, setBandwidth] = useState(500)
     const [showSavedAlert, setShowSavedAlert] = useState(false)
@@ -19,16 +20,16 @@ const Settings = <T extends {}>(props: T) => {
         const Store = require("electron-store")
         const storage = new Store()
 
-        const lowInternetMode = storage.get(
+        const cachedLowInternetMode = storage.get(
             FractalClientCache.LOW_INTERNET_MODE
         )
-        const bandwidth = storage.get(FractalClientCache.BANDWIDTH)
+        const cachedBandwidth = storage.get(FractalClientCache.BANDWIDTH)
 
-        if (lowInternetMode) {
-            setLowInternetMode(lowInternetMode)
+        if (cachedLowInternetMode) {
+            setLowInternetMode(cachedLowInternetMode)
         }
-        if (bandwidth) {
-            setBandwidth(bandwidth)
+        if (cachedBandwidth) {
+            setBandwidth(cachedBandwidth)
         }
     }, [])
 
@@ -61,9 +62,10 @@ const Settings = <T extends {}>(props: T) => {
                     </div>
                     <div className={styles.text}>
                         If you have low Internet speeds (less than 15 Mbps), low
-                        Internet mode will reduce Fractal's Internet speed
+                        Internet mode will reduce Fractal&lsquo;s Internet speed
                         requirement. This will increase your latency slightly,
-                        so we don't recommend activating it unless necessary.
+                        so we don&lsquo;t recommend activating it unless
+                        necessary.
                     </div>
                 </div>
                 <div style={{ width: "25%" }}>
@@ -150,6 +152,13 @@ const Settings = <T extends {}>(props: T) => {
             )}
             <Row style={{ justifyContent: "flex-end" }}>
                 <div
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                        if (event.key === FractalKey.ENTER) {
+                            handleSave()
+                        }
+                    }}
                     className={dashboardStyles.feedbackButton}
                     style={{ width: 110, marginTop: 25 }}
                     onClick={handleSave}
@@ -161,7 +170,7 @@ const Settings = <T extends {}>(props: T) => {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
+const mapStateToProps = () => {
     return {}
 }
 

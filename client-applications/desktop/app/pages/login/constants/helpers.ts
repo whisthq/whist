@@ -8,8 +8,8 @@ export const checkActive = (app: FractalApp): boolean => {
 export const urlToApp = (
     url: string,
     featuredAppData: FractalApp[]
-): { app_id: string; url: string } => {
-    for (let i = 0; i < featuredAppData.length; i++) {
+): { appID: string; url: string } => {
+    for (let i = 0; i < featuredAppData.length; i += 1) {
         if (
             url
                 .toLowerCase()
@@ -18,41 +18,37 @@ export const urlToApp = (
                 ) &&
             featuredAppData[i].app_id !== FractalAppName.CHROME
         ) {
-            return { app_id: featuredAppData[i].app_id, url: null }
+            return { appID: featuredAppData[i].app_id, url: null }
         }
     }
-    return { app_id: FractalAppName, url: url }
+    return { appID: FractalAppName, url: url }
 }
 
-let counter = 0
-
-export const findDPI = () => {
-    return findFirstPositive(
-        (x: number) => (
-            ++counter, matchMedia(`(max-resolution: ${x}dpi)`).matches
-        )
-    )
-}
-
-const findFirstPositive = <T>(fn: (x: number) => T) => {
-    let start = 1
-    while (fn(start) <= 0) start <<= 1
-    return binSearch(fn, start >>> 1, start) | 0
-}
-
-const binSearch = <T>(
-    fn: (x: number) => T,
+const binSearch = (
+    fn: (x: number) => boolean,
     min: number,
     max: number
 ): number => {
     if (max < min) return -1 // not found
 
-    const mid = (min + max) >>> 1
-    if (fn(mid) > 0) {
-        if (mid == min || fn(mid - 1) <= 0) {
+    const mid = (min + max) / 2
+    if (fn(mid)) {
+        if (mid === min || !fn(mid - 1)) {
             return mid
         }
         return binSearch(fn, min, mid - 1)
     }
     return binSearch(fn, mid + 1, max)
+}
+
+const findFirstMatch = (fn: (x: number) => boolean) => {
+    let start = 1
+    while (!fn(start)) start *= 2
+    return binSearch(fn, start / 2, start)
+}
+
+export const findDPI = () => {
+    return findFirstMatch(
+        (x: number) => matchMedia(`(max-resolution: ${x}dpi)`).matches
+    )
 }

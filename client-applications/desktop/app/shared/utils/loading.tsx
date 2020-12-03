@@ -1,4 +1,5 @@
-import React from "react"
+import React, { KeyboardEvent } from "react"
+import { FractalKey } from "shared/enums/input"
 
 const { shell } = require("electron")
 
@@ -23,9 +24,8 @@ const loadingMessages = [
              */
             role="link"
             tabIndex={0}
-            onKeyDown={(ev) => {
-                // enter key
-                if (ev.keyCode === 13) {
+            onKeyDown={(event: KeyboardEvent) => {
+                if (event.key === FractalKey.ENTER) {
                     shell.openExternal("https://discord.gg/PDNpHjy")
                 }
             }}
