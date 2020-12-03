@@ -149,7 +149,6 @@ jobs:
           ref: ${{ needs.params.outputs.ref }}
 
       - name: Set status to in progress
-        working-directory: ${{env.working-directory}}
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{ github.token }}
@@ -160,14 +159,12 @@ jobs:
           target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
 
       - name: Chocolatey install cppcheck
-        working-directory: ${{env.working-directory}}
         if: runner.os == 'Windows'
         uses: crazy-max/ghaction-chocolatey@v1
         with:
           args: install "${{ github.workspace }}\.github\protocol\choco-install.config" --force
 
       - name: Install Python (for sentry download)
-        working-directory: ${{env.working-directory}}
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
@@ -278,7 +275,6 @@ jobs:
           message("::set-output name=timestamp::${current_date}")
 
       - name: ccache cache files
-        working-directory: ${{env.working-directory}}
         uses: actions/cache@v1.1.0
         with:
           path: .ccache
@@ -379,7 +375,6 @@ jobs:
           execute_process(COMMAND ccache -s)
 
       - name: Get latest sentry-cli
-        working-directory: ${{env.working-directory}}
         uses: mathrix-education/setup-sentry-cli@master
       - name: Upload debug information to sentry
         working-directory: ${{env.working-directory}}
@@ -393,7 +388,6 @@ jobs:
             sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
         continue-on-error: true
       - name: Upload server artifact (if requested on this platform)
-        working-directory: ${{env.working-directory}}
         if: matrix.config.server_artifact_name
         uses: actions/upload-artifact@v2
         with:
@@ -401,7 +395,6 @@ jobs:
           path: ${{ github.workspace }}${{ matrix.config.server_artifact_relpath }}
 
       - name: Upload client artifact
-        working-directory: ${{env.working-directory}}
         if: matrix.config.client_artifact_name
         uses: actions/upload-artifact@v2
         with:
@@ -409,7 +402,6 @@ jobs:
           path: ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}
 
       - name: Set status to success
-        working-directory: ${{env.working-directory}}
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{ github.token }}
@@ -420,7 +412,6 @@ jobs:
           target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
 
       - name: Set status to failure
-        working-directory: ${{env.working-directory}}
         if: ${{ failure() }}
         uses: Sibz/github-status-action@v1
         with:
