@@ -31,7 +31,7 @@ def token(**kwargs):  # pylint: disable=unused-argument
 @token_bp.route("/token/validate", methods=["GET"])
 @fractal_pre_process
 @jwt_required
-def validate_token():
+def validate_token(**kwargs):  # pylint: disable=unused-argument
     output = validate_token_helper()
     return jsonify(output), output["status"]
 
