@@ -7,7 +7,7 @@ const MainReducer = (
     state = DEFAULT,
     action: {
         type: string
-        body: Object
+        body: Record<string, any>
     }
 ) => {
     const stateCopy = deep_copy(state)

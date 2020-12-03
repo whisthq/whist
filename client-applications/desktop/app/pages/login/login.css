@@ -19,7 +19,7 @@ button {
     height: 100vh;
     overflow-x: hidden;
     overflow-y: hidden;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     margin: 0px;
     background-size: cover;
     background-position: center;
@@ -56,7 +56,7 @@ button {
 
 .logoTitle {
     color: black;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     position: absolute;
     top: 42px;
     left: 42px;
@@ -67,7 +67,7 @@ button {
 .signupButton,
 .loginButton,
 .googleButton {
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     border: solid 0.8px #cccccc;
     background: white;
     font-weight: bold;
@@ -84,7 +84,7 @@ button {
 }
 
 .processingButton {
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     font-weight: bold;
     padding: 12px 30px;
     font-size: 15px;
@@ -134,7 +134,7 @@ button {
     border: none;
     outline: none !important;
     color: #555555;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     font-size: 15px;
     margin-bottom: 20px;
 }
@@ -180,7 +180,7 @@ input.inputBox::placeholder {
     padding: 10px 15px;
     color: white;
     font-size: 13px;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     margin-top: 10px;
     max-width: 250px;
 }
@@ -191,7 +191,7 @@ input.inputBox::placeholder {
 }
 
 .internetSpeedText {
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     font-size: 12px;
     margin-top: 10px;
     color: #d3d3d3;
@@ -262,7 +262,7 @@ input.inputBox::placeholder {
 
 /* Create the checkmark/indicator (hidden when not checked) */
 .checkmark:after {
-    content: '';
+    content: "";
     position: absolute;
     display: none;
 }
