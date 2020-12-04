@@ -235,7 +235,7 @@ jobs:
           execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./cmake.zip)
 
           # Save the path for other steps
-          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/${cmake_dir}" cmake_dir)
+          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/protocol/${cmake_dir}" cmake_dir)
           message("::set-output name=cmake_dir::${cmake_dir}")
 
           if (NOT "${{ runner.os }}" STREQUAL "Windows")
@@ -334,11 +334,10 @@ jobs:
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
               -DUSE_CPPCHECK=ON
             RESULT_VARIABLE result
-            OUTPUT_VARIABLE cmdout
-            ERROR_VARIABLE cmdout
           )
           if (NOT result EQUAL 0)
             print_all_variables()
+            message(WARNING "Cmake Response: ${result}")
             message(FATAL_ERROR "Bad exit status")
           endif()
 
@@ -362,9 +361,9 @@ jobs:
           if ("${{ runner.os }}" STREQUAL "Windows")
             set(path_separator ";")
           endif()
-          set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
+          set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}/protocol${path_separator}$ENV{PATH}")
 
-          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" ccache_basedir)
+          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/protocol" ccache_basedir)
           set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
           set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
           set(ENV{CCACHE_COMPRESS} "true")
