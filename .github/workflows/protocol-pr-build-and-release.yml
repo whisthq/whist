@@ -388,7 +388,7 @@ jobs:
 
       - name: Verify build with clang-tidy
         working-directory: ${{env.working-directory}}
-        run: ./run-clang-tidy.sh
+        run: ./run-clang-tidy.sh -c
 
       - name: Get latest sentry-cli
         uses: mathrix-education/setup-sentry-cli@master
