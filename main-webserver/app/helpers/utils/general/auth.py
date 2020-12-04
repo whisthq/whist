@@ -91,11 +91,11 @@ def admin_required(func):
     return wrapper
 
 
-def developerAccess(f):
+def developer_access(func):
     # in the future we may want to instead make a table in the DB
     # for people who are developers
     # TODO (adriano) ^
-    @wraps(f)
+    @wraps(func)
     def wrapper(*args, **kwargs):
         current_user = get_jwt_identity()
         if not (
@@ -114,6 +114,6 @@ def developerAccess(f):
                 UNAUTHORIZED,
             )
 
-        return f(*args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
