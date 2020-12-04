@@ -2,6 +2,10 @@ import { OperatingSystem } from "shared/types/client"
 import { FractalApp } from "shared/types/ui"
 import { debugLog } from "shared/utils/logging"
 
+export const createShortcutName = (appName: string): string => {
+    return `${appName} on Fractal`
+}
+
 export const createShortcut = (app: FractalApp): boolean => {
     const os = require("os")
     const platform = os.platform()
@@ -23,7 +27,7 @@ export const createShortcut = (app: FractalApp): boolean => {
         const shortcutsCreated = createDesktopShortcut({
             windows: {
                 filePath: appURL,
-                name: `${app.app_id} on Fractal`,
+                name: createShortcutName(app.app_id),
                 vbsPath: process.env.NODE_ENV === "development" ? "" : vbsPath,
             },
         })
