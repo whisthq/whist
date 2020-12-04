@@ -24,7 +24,7 @@ from app.helpers.utils.payment.stripe_client import (
 
 # TODO (optional) make templates for boilerplate
 def addSubscriptionHelper(email, plan):
-    fractalLog(
+    fractal_log(
         function="addSubscriptionHelper",
         label=email,
         logs="Signing {} up for plan {}".format(email, plan),
@@ -36,7 +36,7 @@ def addSubscriptionHelper(email, plan):
 
     if price:
         try:
-            client.create_subscription(email, plan, price)
+            client.create_subscription(email, price)
             status = SUCCESS
         except NonexistentUser:
             status = FORBIDDEN
@@ -47,7 +47,7 @@ def addSubscriptionHelper(email, plan):
         except InvalidStripeToken:
             status = BAD_REQUEST
         except Exception as e:
-            fractal_log("addSubscriptionCardHelper", "", str(e), level=logging.ERROR)
+            fractal_log("addSubscriptionHelper", "", str(e), level=logging.ERROR)
 
             status = INTERNAL_SERVER_ERROR
     else:
