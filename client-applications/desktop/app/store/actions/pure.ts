@@ -4,8 +4,21 @@ export const UPDATE_CLIENT = "UPDATE_CLIENT"
 export const UPDATE_PAYMENT = "UPDATE_PAYEMNT"
 export const UPDATE_LOADING = "UPDATE_LOADING"
 export const UPDATE_APPS = "UPDATE_APPS"
+export const UPDATE_ADMIN = "UPDATE_ADMIN"
 
 export const RESET_STATE = "RESET_STATE"
+
+export function updateAdmin(body: {
+    webserverUrl?: null | string
+    taskArn?: null | string
+    region?: null | string
+    cluster?: null | string
+}) {
+    return {
+        type: UPDATE_ADMIN,
+        body,
+    }
+}
 
 export function updateAuth(body: {
     username?: string | null
@@ -64,7 +77,7 @@ export function updatePayment(body: {
 }
 
 export function updateLoading(body: {
-    statusMessage: string
+    statusMessage?: string
     percentLoaded?: number
 }) {
     return {

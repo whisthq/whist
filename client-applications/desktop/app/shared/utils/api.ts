@@ -1,4 +1,4 @@
-import { config } from "shared/constants/config"
+import { config, webservers } from "shared/constants/config"
 import { debugLog } from "shared/utils/logging"
 import {
     FractalHTTPRequest,
@@ -22,10 +22,14 @@ const checkJSON = <T>(json: T): boolean => {
 export const apiPost = async <T>(
     endpoint: string,
     body: T,
-    token: string
+    token: string,
+    webserver: string = config.url.WEBSERVER_URL
 ): T => {
+    const webserverUrl =
+        webserver in webservers ? webservers[webserver] : webserver
+
     try {
-        const response = await fetch(config.url.WEBSERVER_URL + endpoint, {
+        const response = await fetch(webserverUrl + endpoint, {
             method: FractalHTTPRequest.POST,
             mode: "cors",
             headers: {
@@ -43,9 +47,16 @@ export const apiPost = async <T>(
     }
 }
 
-export const apiGet = async <T>(endpoint: string, token: string): T => {
+export const apiGet = async <T>(
+    endpoint: string,
+    token: string,
+    webserver: string = config.url.WEBSERVER_URL
+): T => {
+    const webserverUrl =
+        webserver in webservers ? webservers[webserver] : webserver
+
     try {
-        const response = await fetch(config.url.WEBSERVER_URL + endpoint, {
+        const response = await fetch(webserverUrl + endpoint, {
             method: FractalHTTPRequest.GET,
             mode: "cors",
             headers: {

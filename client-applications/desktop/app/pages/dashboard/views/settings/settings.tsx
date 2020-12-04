@@ -1,5 +1,5 @@
-import React, { useState, useEffect, KeyboardEvent } from "react"
 import { Row, Alert } from "react-bootstrap"
+import React, { useState, useEffect, KeyboardEvent } from "react"
 import { connect } from "react-redux"
 import ToggleButton from "react-toggle-button"
 import Slider from "react-input-slider"
@@ -10,11 +10,17 @@ import FractalKey from "shared/types/input"
 
 import styles from "pages/dashboard/views/settings/settings.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
+import AdminSettings from "pages/dashboard/components/admin/adminSettings"
 
-const Settings = () => {
+const Settings = <T extends {}>(props: T) => {
     const [lowInternetMode, setLowInternetMode] = useState(false)
     const [bandwidth, setBandwidth] = useState(500)
     const [showSavedAlert, setShowSavedAlert] = useState(false)
+
+    const adminUsername =
+        props.username &&
+        props.username.indexOf("@") > -1 &&
+        props.username.split("@")[1] == "tryfractal.com"
 
     useEffect(() => {
         const Store = require("electron-store")
@@ -53,7 +59,14 @@ const Settings = () => {
     }
 
     return (
-        <div className={dashboardStyles.page}>
+        <div
+            className={dashboardStyles.page}
+            style={{
+                // might be nicer to add this to page but not sure if you prefer not to
+                overflowY: "scroll",
+                maxHeight: 525,
+            }}
+        >
             <Row className={styles.row}>
                 <div style={{ width: "75%" }}>
                     <div className={styles.header}>
@@ -166,12 +179,21 @@ const Settings = () => {
                     Save
                 </div>
             </Row>
+            {adminUsername && (
+                <AdminSettings
+                    dispatch={props.dispatch}
+                    adminState={props.adminState}
+                />
+            )}
         </div>
     )
 }
 
-const mapStateToProps = () => {
-    return {}
+const mapStateToProps = <T extends {}>(state: T) => {
+    return {
+        username: state.MainReducer.auth.username,
+        adminState: state.MainReducer.admin,
+    }
 }
 
 export default connect(mapStateToProps)(Settings)

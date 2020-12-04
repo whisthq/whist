@@ -89,3 +89,31 @@ def admin_required(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+def developer_access(func):
+    # in the future we may want to instead make a table in the DB
+    # for people who are developers
+    # TODO (adriano) ^
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        current_user = get_jwt_identity()
+        if not (
+            current_app.config["DASHBOARD_USERNAME"] in current_user
+            or "@tryfractal.com" in current_user
+        ):
+            return (
+                jsonify(
+                    {
+                        "error": (
+                            "Authorization failed. Provided username does not belong to "
+                            "a developer account."
+                        ),
+                    }
+                ),
+                UNAUTHORIZED,
+            )
+
+        return func(*args, **kwargs)
+
+    return wrapper

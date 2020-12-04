@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Dispatch } from "react"
+import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { Col, Modal } from "react-bootstrap"
 import { FaPlay } from "react-icons/fa"
@@ -16,9 +16,10 @@ import dashboardStyles from "pages/dashboard/dashboard.css"
 const App = (props: {
     app: FractalApp
     launches: number
-    dispatch: Dispatch
+    dispatch: any
+    admin: boolean
 }) => {
-    const { app, launches, dispatch } = props
+    const { app, launches, admin, dispatch } = props
 
     const [showModal, setShowModal] = useState(false)
     const [launched, setLaunched] = useState(false)
@@ -38,7 +39,7 @@ const App = (props: {
     useEffect(() => {
         if (launches === 1 && launched) {
             history.push(FractalRoute.LOADING)
-            dispatch(createContainer(app.app_id))
+            dispatch(createContainer(app.app_id, null, admin))
             setLaunched(false)
         }
     }, [launches, launched])
