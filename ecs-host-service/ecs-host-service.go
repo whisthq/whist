@@ -154,13 +154,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 		"scope", "drive",
 	)
 
-	logger.Info("Rclone config create command: [  %s  ]", strings.Join(
-		[]string{"/usr/bin/rclone", "config", "create", configName, "drive",
-			"config_is_local", "false",
-			"config_refresh_token", "false",
-			"token", token,
-			"scope", "drive",
-		}, " "))
+	logger.Info("Rclone config create command: %v", cmd)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -175,7 +169,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	go func() {
 		cmd = exec.Command("/usr/bin/rclone", "mount", configName+"", path)
 		cmd.Env = os.Environ()
-		logger.Info("Rclone mount command: [  %s  ]", strings.Join([]string{"/usr/bin/rclone", "mount", configName + "", path}, " "))
+		logger.Info("Rclone mount command: [  %v  ]", cmd)
 		stderr, _ := cmd.StderrPipe()
 
 		if _, ok := cloudStorageDirs[uint16(req.HostPort)]; !ok {
