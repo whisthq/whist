@@ -24,7 +24,7 @@ const environment: any = {
     },
     development: {
         url: {
-            WEBSERVER_URL: "https://dev-webserver.tryfractal.com",
+            WEBSERVER_URL: "https://dev-server.tryfractal.com",
             FRONTEND_URL: "https://dev.tryfractal.com",
             GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
