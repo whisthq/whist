@@ -25,10 +25,11 @@ We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the 
 We use environment variables to configure our local development environments. Environment variables should be set by adding lines of the form `KEY=VALUE` to the file `docker/.env`. **The main environment variable that _must_ be set in order to do any kind of local development, whether with the `docker-compose` stack or the `pytest` test suite, is the `CONFIG_DB_URL` environment variable.** `CONFIG_DB_URL` specifies the PostgreSQL connection URI of the Fractal configuration database. This database contains default values for many of the variables that are used to configure the various parts of the web application stack. These default values may be overridden locally by setting alternatives in the same `docker/.env` file.
 
 The following environment variables must also be set in `docker/.env` (neither the test suite nor the `docker-compose` stack will work without them):
-* `POSTGRES_DB` &ndash; The name of the Postgres database to which to connect.
-* `POSTGRES_HOST` &ndash; The hostname or IP address of the development Postgres instance.
-* `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
-* `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
+
+- `POSTGRES_DB` &ndash; The name of the Postgres database to which to connect.
+- `POSTGRES_HOST` &ndash; The hostname or IP address of the development Postgres instance.
+- `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
+- `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
 
 Finally, if the Redis instance used for testing is running anywhere other than `redis://localhost:6379/0`, `REDIS_URL` should be set to indicate the correct connection URI. Take a moment to understand that setting `REDIS_URL` has no effect on the Flask instance running in the `docker-compose`; it only affects Flask applications launched manually (e.g. Flask applications created by `pytest` for testing purposes).
 
