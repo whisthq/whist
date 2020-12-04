@@ -61,6 +61,10 @@ Review `docker-compose.yml` to see which ports the various services are hosted o
 
 By default, hot-reloading of the Flask web server and Celery task queue is disabled (`HOT_RELOAD=`). To enable it, set `HOT_RELOAD` to a non-empty string in your `docker/.env` file.
 
+### Flask CLI
+
+Take advantage of the Flask CLI! Run `flask --help` for information about what commands are available. If, at any point, there is a script that you need to write that is useful for modifying the Flask application or any of its resources (e.g. databases), you are encourage to write it as a Flask CLI command. Start reading about the Flask CLI documentation [here](https://flask.palletsprojects.com/en/1.1.x/cli/?highlight=cli#custom-commands).
+
 ### Helper Software Setup
 
 We recommend that you download several softwares to help you code and test:
