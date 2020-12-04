@@ -9,8 +9,8 @@ on:
     pull_request:
         branches: [master, dev]
         paths:
-            - "/container-images/**"
-            - "!/container-images/README.md"
+            - "container-images/**"
+            - "!container-images/README.md"
 
 jobs:
     container-images-build-images-main:

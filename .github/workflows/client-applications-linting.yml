@@ -10,7 +10,7 @@ on:
         branches: [master, dev]
         paths:
             - "client-applications/**"
-            - "!/client-applications/README.md"
+            - "!client-applications/README.md"
 
 jobs:
     client-applications-linting-main:
