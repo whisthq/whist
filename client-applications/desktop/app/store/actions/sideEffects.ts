@@ -12,11 +12,7 @@ export function rememberMeLogin(username: string) {
     }
 }
 
-export function createContainer(
-    app: string,
-    url: null | string,
-    test: boolean = false
-) {
+export function createContainer(app: string, url: null | string, test = false) {
     return {
         type: CREATE_CONTAINER,
         app,

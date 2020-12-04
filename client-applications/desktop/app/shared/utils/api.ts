@@ -25,11 +25,11 @@ export const apiPost = async <T>(
     token: string,
     webserver: string = config.url.WEBSERVER_URL
 ): T => {
-    const webserver_url =
+    const webserverUrl =
         webserver in webservers ? webservers[webserver] : webserver
 
     try {
-        const response = await fetch(webserver_url + endpoint, {
+        const response = await fetch(webserverUrl + endpoint, {
             method: FractalHTTPRequest.POST,
             mode: "cors",
             headers: {
@@ -52,11 +52,11 @@ export const apiGet = async <T>(
     token: string,
     webserver: string = config.url.WEBSERVER_URL
 ): T => {
-    const webserver_url =
+    const webserverUrl =
         webserver in webservers ? webservers[webserver] : webserver
 
     try {
-        const response = await fetch(webserver_url + endpoint, {
+        const response = await fetch(webserverUrl + endpoint, {
             method: FractalHTTPRequest.GET,
             mode: "cors",
             headers: {

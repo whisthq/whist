@@ -17,23 +17,23 @@ export const AdminSettings = (props: {
     dispatch: <T extends {}>(obj: T) => void
     adminState: {
         region: string
-        task_arn: string
-        webserver_url: string
+        taskArn: string
+        webserverUrl: string
         cluster: string
     }
 }) => {
     const { dispatch, adminState } = props
 
     const [region, setRegion] = useState(adminState.region)
-    const [task, setTask] = useState(adminState.task_arn)
-    const [webserver, setWebserver] = useState(adminState.webserver_url)
+    const [task, setTask] = useState(adminState.taskArn)
+    const [webserver, setWebserver] = useState(adminState.webserverUrl)
     const [cluster, setCluster] = useState(adminState.cluster)
 
     const handleSaveTask = (value: any) => {
         setTask(value)
         dispatch(
             updateAdmin({
-                task_arn: value,
+                taskArn: value,
             })
         )
     }
@@ -51,7 +51,7 @@ export const AdminSettings = (props: {
         setWebserver(value)
         dispatch(
             updateAdmin({
-                webserver_url: value,
+                webserverUrl: value,
             })
         )
     }
@@ -126,7 +126,7 @@ export const AdminSettings = (props: {
                             onClick={handleSaveWebserver}
                             options={FractalWebservers}
                             title="Webserver"
-                            defaultValue={DEFAULT.admin.webserver_url}
+                            defaultValue={DEFAULT.admin.webserverUrl}
                             value={webserver}
                         />
                         <AdminDropdown
@@ -140,7 +140,7 @@ export const AdminSettings = (props: {
                             onClick={handleSaveTask}
                             options={FractalTaskDefs}
                             title="Task"
-                            defaultValue={DEFAULT.admin.task_arn}
+                            defaultValue={DEFAULT.admin.taskArn}
                             value={task}
                         />
                         <AdminDropdown

@@ -68,7 +68,11 @@ function* validateAccessToken(action: { accessToken: string }) {
     }
 }
 
-function* createContainer(action: { app: string; url: string; test? : boolean}) {
+function* createContainer(action: {
+    app: string
+    url: string
+    test?: boolean
+}) {
     const test = action.test
     const app = action.app
     const url = action.url
@@ -90,10 +94,12 @@ function* createContainer(action: { app: string; url: string; test? : boolean}) 
     const body = test
         ? {
               username: username,
+              // eslint will yell otherwise... to avoid breaking server code we are disbabling
+              /* eslint-disable */
               cluster_name: state.MainReducer.admin.cluster,
               region_name: state.MainReducer.admin.region,
-              task_definition_arn: state.MainReducer.admin.task_arn,
-              //dpi not supported yet
+              task_definition_arn: state.MainReducer.admin.taskArn,
+              // dpi not supported yet
           }
         : {
               username: username,
@@ -103,7 +109,7 @@ function* createContainer(action: { app: string; url: string; test? : boolean}) 
               dpi: state.MainReducer.client.dpi,
           }
     const webserver = test
-        ? state.MainReducer.admin.webserver_url
+        ? state.MainReducer.admin.webserverUrl
         : config.url.WEBSERVER_URL
 
     if (!test) {
