@@ -230,7 +230,6 @@ const mapStateToProps = (state: {
         }
     }
 }) => {
-    console.log(state.MainReducer.client.apps)
     return {
         accessToken: state.MainReducer.auth.accessToken,
         username: state.MainReducer.auth.username,

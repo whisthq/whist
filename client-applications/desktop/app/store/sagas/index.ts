@@ -170,7 +170,7 @@ function* createContainer(action: {
 
     while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
         if (secondsPassed % 1 === 0) {
-            ;({ success } = yield call(
+            ;({ json, success } = yield call(
                 apiGet,
                 `/status/${id}`,
                 state.MainReducer.auth.accessToken,
@@ -231,7 +231,7 @@ function* createContainer(action: {
         if (json.output) {
             yield put(
                 Action.updateContainer({
-                    containerID: json.output.containerID,
+                    containerID: json.output.container_id,
                     cluster: json.output.cluster,
                     port32262: json.output.port_32262,
                     port32263: json.output.port_32263,
