@@ -243,8 +243,6 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 	logger.Info("Setting up HTTP server.")
 
 	// Select the correct environment (dev, staging, prod)
-	logger.Info(webserverAuthSecretDev + "   " + webserverAuthSecretStaging + "   " + webserverAuthSecretProd)
-
 	switch logger.GetAppEnvironment() {
 	case logger.EnvDev:
 		webserverAuthSecret = webserverAuthSecretDev

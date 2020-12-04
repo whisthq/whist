@@ -5,11 +5,15 @@ import (
 	// that we never forget to send a message via sentry. Instead, use the
 	// fractallogger package imported below as `logger`
 	"context"
+	"encoding/json"
 	"io"
 	"math/rand"
 	"os"
 	"os/exec"
 	"os/signal"
+	"regexp"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -71,85 +75,117 @@ func startECSAgent() {
 var ttyState [256]string = [256]string{"reserved", "reserved", "reserved", "reserved",
 	"reserved", "reserved", "reserved", "reserved", "reserved", "reserved"}
 
-// ---------------------------
-// Service shutdown and initialization
-// ---------------------------
+// keys: hostPort, values: slice containing all cloud storage directories that are mounted for that specific container
+var cloudStorageDirs map[uint16][]string
 
-func shutdownHostService() {
-	logger.Info("Beginning host service shutdown procedure.")
-
-	// Catch any panics in the calling goroutine. Note that besides the host
-	// machine itself shutting down, this method should be the _only_ way that
-	// this host service exits. In particular, we use panic() as a control flow
-	// primitive --- panics in main(), its child functions, or any other calling
-	// goroutines (such as the Ctrl+C signal handler) will be recovered here and
-	// used as signals to exit. Therefore, panics should only be used	in the case
-	// of an irrecoverable failure that mandates that the host machine accept no
-	// new connections.
-	r := recover()
-	logger.Errorf("shutdownHostService(): Caught panic: %v", r)
-	logger.PrintStackTrace()
-
-	// Flush buffered Sentry events before the program terminates.
-	logger.Info("Flushing sentry...")
-	logger.FlushSentry()
-
-	logger.Info("Sending final heartbeat...")
-	webserver.SendGracefulShutdownNotice()
-
-	logger.Info("Finished host service shutdown procedure. Finally exiting...")
-	os.Exit(0)
-}
-
-// Create the directory used to store the container resource allocations (e.g.
-// TTYs) on disk
-func initializeFilesystem() {
-	// check if resource mapping directory already exists --- if so, panic, since
-	// we don't know why it's there or if it's valid
-	if _, err := os.Lstat(resourceMappingDirectory); !os.IsNotExist(err) {
-		if err == nil {
-			logger.Panicf("Directory %s already exists!", resourceMappingDirectory)
-		} else {
-			logger.Panicf("Could not make directory %s because of error %v", resourceMappingDirectory, err)
-		}
-	}
-
-	// Create the resource mapping directory
-	err := os.MkdirAll(resourceMappingDirectory, 0644|os.ModeSticky)
+func unmountCloudStorageDir(path string) {
+	// Unmount lazily, i.e. will unmount as soon as the directory is not busy
+	cmd := exec.Command("fusermount", "-u", "-z", path)
+	res, err := cmd.CombinedOutput()
 	if err != nil {
-		logger.Panicf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
-	}
-
-	// Same check as above, but for fractal-private directory
-	if _, err := os.Lstat(httpserver.FractalPrivatePath); !os.IsNotExist(err) {
-		if err == nil {
-			logger.Panicf("Directory %s already exists!", httpserver.FractalPrivatePath)
-		} else {
-			logger.Panicf("Could not make directory %s because of error %v", httpserver.FractalPrivatePath, err)
-		}
-	}
-
-	// Create fractal-private directory
-	err = os.MkdirAll(httpserver.FractalPrivatePath, 0644|os.ModeSticky)
-	if err != nil {
-		logger.Panicf("Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
+		logger.Errorf("Command \"%s\" returned an error code. Output: %s", cmd, res)
+	} else {
+		logger.Infof("Successfully unmounted cloud storage directory %s", path)
 	}
 }
 
-func uninitializeFilesystem() {
-	err := os.RemoveAll(resourceMappingDirectory)
+// Mounts the cloud storage directory and waits around to clean it up once it's unmounted.
+func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
+	sanitized_provider := func() string {
+		p := strings.ReplaceAll(req.Provider, " ", "_")
+		p = regexp.MustCompile("[^a-zA-Z0-9_]+").ReplaceAllString(p, "")
+		return p
+	}()
+
+	// Don't forget the trailing slash
+	hostPort := logger.Sprintf("%v", req.HostPort)
+	path := cloudStorageDirectory + hostPort + "/" + sanitized_provider + "/"
+	configName := hostPort + sanitized_provider
+
+	token, err := func() (string, error) {
+		buf, err := json.Marshal(
+			struct {
+				AccessToken  string `json:"access_token"`
+				TokenType    string `json:"token_type"`
+				RefreshToken string `json:"refresh_token"`
+				Expiry       string `json:"expiry"`
+			}{
+				req.AccessToken,
+				req.TokenType,
+				req.RefreshToken,
+				req.Expiry,
+			},
+		)
+		if err != nil {
+			return "", logger.MakeError("Error creating token for rclone: %s", err)
+		}
+
+		return logger.Sprintf("'%s'", buf), nil
+	}()
 	if err != nil {
-		logger.Panicf("Failed to delete directory %s: error: %v\n", resourceMappingDirectory, err)
-	} else {
-		logger.Infof("Successfully deleted directory %s\n", resourceMappingDirectory)
+		return err
 	}
 
-	err = os.RemoveAll(httpserver.FractalPrivatePath)
+	// Make directory to mount in
+	err = os.MkdirAll(path, 0700)
 	if err != nil {
-		logger.Panicf("Failed to delete directory %s: error: %v\n", httpserver.FractalPrivatePath, err)
-	} else {
-		logger.Infof("Successfully deleted directory %s\n", httpserver.FractalPrivatePath)
+		return logger.MakeError("Could not mkdir path %s. Error: %s", path, err)
 	}
+
+	// We mount in foreground mode, and wait for the result to clean up the
+	// directory created for this purpose. That way we know that we aren't
+	// accidentally removing files from the user's cloud storage drive.
+	cmd := exec.Command(
+		"/usr/bin/rclone", "config", "create", configName, "drive",
+		"config_is_local", "false",
+		"config_refresh_token", "false",
+		"token", token,
+		"scope", "drive",
+	)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return logger.MakeError("Could not run \"rclone config create\" command: %s. Output: %s", err, output)
+	}
+
+	// Mount in separate goroutine so we don't block the main goroutine.
+	// Synchronize using errorchan.
+	errorchan := make(chan error)
+	go func() {
+		cmd = exec.Command("/usr/bin/rclone", "mount", configName+":/", path)
+		err = cmd.Start()
+		if err != nil {
+			errorchan <- logger.MakeError("Could not start \"rclone mount %s\" command: %s", configName+":/", err)
+			close(errorchan)
+			return
+		}
+
+		// We close errorchan after 1000ms so the enclosing function can return an
+		// error if the `rclone mount` command failed immediately, or return nil if
+		// it didn't.
+		timeout := time.Second * 5
+		timer := time.AfterFunc(timeout, func() { close(errorchan) })
+		logger.Infof("Attempting to mount storage directory %s", path)
+
+		err = cmd.Wait()
+		if err != nil {
+			errorchanStillOpen := timer.Stop()
+			if errorchanStillOpen {
+				errorchan <- logger.MakeError("Mounting of cloud storage directory %s returned an error: %s", path, err)
+				close(errorchan)
+			} else {
+				logger.Errorf("Mounting of cloud storage directory %s failed after more than timeout %v and was therefore not reported as a failure to the webserver. Error: %s", path, timeout, err)
+			}
+		}
+
+		// Remove the now-unnecessary directory we created
+		err = os.Remove(path)
+		if err != nil {
+			logger.Errorf("Error removing cloud storage directory %s: %s", path, err)
+		}
+	}()
+
+	err = <-errorchan
+	return err
 }
 
 func writeAssignmentToFile(filename, data string) (err error) {
@@ -259,6 +295,123 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string) {
 	for tty := range ttyState {
 		if ttyState[tty] == id {
 			ttyState[tty] = ""
+		}
+	}
+
+	// Unmount cloud storage directories
+	c, err := cli.ContainerInspect(ctx, id)
+	if err != nil {
+		logger.Errorf("Error running ContainerInspect on container %s: %v", id, err)
+		return
+	}
+	hostPort, exists := c.NetworkSettings.Ports["32262/tcp"]
+	if !exists {
+		logger.Errorf("Could not find mapping for port 32262/tcp for container %s", id)
+		return
+	}
+	if len(hostPort) != 1 {
+		logger.Errorf("The hostPort mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", id, hostPort)
+		return
+	}
+	hostPortInt64, err := strconv.ParseUint(hostPort[0].HostPort, 10, 16)
+	if err != nil {
+		logger.Errorf("The hostPort %s for container %s did not parse into a uint16!", hostPort, id)
+		return
+	}
+	hostPortUint16 := uint16(hostPortInt64)
+
+	storageDirs, exists := cloudStorageDirs[hostPortUint16]
+	if exists {
+		for _, v := range storageDirs {
+			unmountCloudStorageDir(v)
+		}
+	}
+}
+
+// ---------------------------
+// Service shutdown and initialization
+// ---------------------------
+
+func shutdownHostService() {
+	logger.Info("Beginning host service shutdown procedure.")
+
+	// Catch any panics in the calling goroutine. Note that besides the host
+	// machine itself shutting down, this method should be the _only_ way that
+	// this host service exits. In particular, we use panic() as a control flow
+	// primitive --- panics in main(), its child functions, or any other calling
+	// goroutines (such as the Ctrl+C signal handler) will be recovered here and
+	// used as signals to exit. Therefore, panics should only be used	in the case
+	// of an irrecoverable failure that mandates that the host machine accept no
+	// new connections.
+	r := recover()
+	logger.Errorf("shutdownHostService(): Caught panic: %v", r)
+	logger.PrintStackTrace()
+
+	// Flush buffered Sentry events before the program terminates.
+	logger.Info("Flushing sentry...")
+	logger.FlushSentry()
+
+	logger.Info("Sending final heartbeat...")
+	webserver.SendGracefulShutdownNotice()
+
+	logger.Info("Finished host service shutdown procedure. Finally exiting...")
+	os.Exit(0)
+}
+
+// Create the directory used to store the container resource allocations (e.g.
+// TTYs) on disk
+func initializeFilesystem() {
+	// check if resource mapping directory already exists --- if so, panic, since
+	// we don't know why it's there or if it's valid
+	if _, err := os.Lstat(resourceMappingDirectory); !os.IsNotExist(err) {
+		if err == nil {
+			logger.Panicf("Directory %s already exists!", resourceMappingDirectory)
+		} else {
+			logger.Panicf("Could not make directory %s because of error %v", resourceMappingDirectory, err)
+		}
+	}
+
+	// Create the resource mapping directory
+	err := os.MkdirAll(resourceMappingDirectory, 0644|os.ModeSticky)
+	if err != nil {
+		logger.Panicf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
+	}
+
+	// Same check as above, but for fractal-private directory
+	if _, err := os.Lstat(httpserver.FractalPrivatePath); !os.IsNotExist(err) {
+		if err == nil {
+			logger.Panicf("Directory %s already exists!", httpserver.FractalPrivatePath)
+		} else {
+			logger.Panicf("Could not make directory %s because of error %v", httpserver.FractalPrivatePath, err)
+		}
+	}
+
+	// Create fractal-private directory
+	err = os.MkdirAll(httpserver.FractalPrivatePath, 0644|os.ModeSticky)
+	if err != nil {
+		logger.Panicf("Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
+	}
+}
+
+func uninitializeFilesystem() {
+	err := os.RemoveAll(resourceMappingDirectory)
+	if err != nil {
+		logger.Panicf("Failed to delete directory %s: error: %v\n", resourceMappingDirectory, err)
+	} else {
+		logger.Infof("Successfully deleted directory %s\n", resourceMappingDirectory)
+	}
+
+	err = os.RemoveAll(httpserver.FractalPrivatePath)
+	if err != nil {
+		logger.Panicf("Failed to delete directory %s: error: %v\n", httpserver.FractalPrivatePath, err)
+	} else {
+		logger.Infof("Successfully deleted directory %s\n", httpserver.FractalPrivatePath)
+	}
+
+	// Unmount all cloud-storage folders
+	for _, dirs := range cloudStorageDirs {
+		for _, v := range dirs {
+			unmountCloudStorageDir(v)
 		}
 	}
 }
@@ -406,8 +559,15 @@ eventLoop:
 			}
 
 		case serverevent := <-serverEvents:
-			logger.Info("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
-			serverevent.ReturnResult("ez game ez life", nil)
+			switch serverevent.(type) {
+			case *httpserver.SetContainerDPIRequest:
+				logger.Info("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
+				serverevent.ReturnResult("ez game ez life", nil)
+
+			case *httpserver.MountCloudStorageRequest:
+				err := mountCloudStorageDir(serverevent.(*httpserver.MountCloudStorageRequest))
+				serverevent.ReturnResult("", err)
+			}
 		}
 	}
 }
