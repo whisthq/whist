@@ -1,15 +1,17 @@
-# This workflow will periodically empty the S3 bucket which stores the containers
-# AWS SSM ouputs logs after each command
+# workflows/main-webserver-clear-container-outputs.yml
+#
+# Main Webserver: Clear Container Outputs
+# Runs monthly, emptying the S3 bucket which stores the container outputs. AWS SSM outputs logs after each command.
 
-name: Empty Container Outputs S3 Bucket
+name: "Main Webserver: Clear Container Outputs"
 
 on:
   schedule:
     - cron: "0 0 1 * *" # every month
 
 jobs:
-  empty-s3-bucket:
-    name: Empty S3 Bucket
+  main-webserver-clear-container-outputs-main:
+    name: Empty Container Outputs from S3 Bucket
     runs-on: ubuntu-20.04
 
     steps:

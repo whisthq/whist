@@ -1,15 +1,20 @@
-# Workflow to build Docker images for basic testing
-name: Container-Images Build Dockerfiles
+# workflows/container-images-build-images.yml
+#
+# Container Images: Build Images
+# Build docker images to test that they actually build.
+
+name: "Container Images: Build Images"
 
 on:
   pull_request:
     branches: [master, dev]
     paths:
-      - "/container-images/**"
+      - "container-images/**"
+      - "!container-images/README.md"
 
 jobs:
-  build-dockerfiles:
-    name: Build Dockerfiles
+  container-images-build-images-main:
+    name: Build Docker Images for Testing
     runs-on: ubuntu-20.04
 
     steps:

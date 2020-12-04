@@ -1,15 +1,16 @@
-# this workflow will periodically (once per week)
-# run analysis on the event logs from the previous week
-# (these are the ones from datadog)
+# workflows/log-analysis-analyze-datadog-events.yml
+#
+# Log Analysis: Analyze Datadog Events
+# Runs daily, running analysis on the Datadog events from the past week.
 
-name: Run Events Analysis
+name: "Log Analysis: Analyze Datadog Events"
 
 on:
   schedule:
     - cron: "* 13 * * *" # every day at 1
 
 jobs:
-  run-events-analysis:
+  log-analysis-analyze-datadog-events-main:
     name: Run Events Analysis
     runs-on: ubuntu-20.04
     env:
