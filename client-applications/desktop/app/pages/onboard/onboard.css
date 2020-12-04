@@ -62,7 +62,7 @@
 }
 
 .appsContainer {
-    width: 800px;
+    width: 750px;
     margin: auto;
     margin-top: 50px;
     text-align: center;
@@ -77,8 +77,8 @@
 }
 
 .appContainer {
-    height: 95px;
-    width: 95px;
+    height: 80px;
+    width: 80px;
     border-radius: 20px;
     background: white;
     box-shadow: var(--light-box-shadow);
@@ -122,11 +122,12 @@
     font-family: "Maven Pro Medium";
     width: 500px;
     margin: auto;
+    letter-spacing: 1.1px;
 }
 
 .subtext {
     margin: 20px 0;
-    font-size: 16px;
+    font-size: 15px;
 }
 
 .appsWrapper {
@@ -134,6 +135,7 @@
     display: flex;
     flex-flow: row wrap;
     justify-content: flex-start;
+    padding: 0px 15px;
 }
 
 .appImage {
@@ -141,18 +143,20 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    height: 60px;
+    height: 45px;
 }
 
 .faButton {
     font-size: 8px;
     color: var(--text-background-color);
+    position: relative;
+    top: -3px;
 }
 
 .plusButton {
     position: absolute;
-    width: 35px;
-    height: 35px;
+    width: 30px;
+    height: 30px;
     border-radius: 20px;
     background: rgba(57, 48, 184, 0.6);
     border: solid 5px var(--background-color);
