@@ -76,11 +76,12 @@
     text-align: center;
 }
 
-.appContainer {
-    height: 80px;
-    width: 80px;
-    border-radius: 20px;
-    background: white;
+.appContainer,
+.appContainerSelected {
+    height: 70px;
+    width: 70px;
+    border-radius: 15px;
+    background: var(--text-background-color);
     box-shadow: var(--light-box-shadow);
     position: relative;
     transition: 0.5s;
@@ -111,11 +112,15 @@
     background: var(--primary-color);
     color: var(--text-background-color);
     width: 375px;
-    font-size: 16px;
-    margin-top: 20px;
+    font-size: 14px;
     padding: 15px 30px;
-    margin-top: 45px;
+    margin-top: 60px;
     border-radius: 5px;
+}
+
+.enterButton:hover {
+    background: var(--accent-color);
+    color: var(--primary-text-color);
 }
 
 .appsTitle {
@@ -135,14 +140,21 @@
     letter-spacing: 1.2px;
     width: 600px;
     text-align: center;
+    margin-bottom: 40px;
 }
 
 .appsWrapper {
     width: 100%;
     display: flex;
     flex-flow: row wrap;
-    justify-content: flex-start;
+    justify-content: space-between;
     padding: 0px 15px;
+    width: 650px;
+    margin: auto;
+    text-align: center;
+    max-height: 325px;
+    overflow-y: scroll;
+    margin-top: 25px;
 }
 
 .appImage {
@@ -150,7 +162,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    height: 45px;
+    height: 40px;
 }
 
 .faButton {
@@ -176,6 +188,10 @@
 .appContainer:hover .plusButton {
     background: var(--primary-color);
     cursor: pointer;
+}
+
+.appContainerSelected {
+    background: var(--accent-color);
 }
 
 .bottomText {

@@ -10,8 +10,9 @@ const Apps = (props: { app: any; selected: boolean }) => {
 
     return (
         <div
-            className={styles.appContainer}
-            style={{ background: selected ? "#3930b8" : "" }}
+            className={
+                selected ? styles.appContainerSelected : styles.appContainer
+            }
         >
             <img src={app.logo_url} className={styles.appImage} />
             <div className={styles.plusButton}>
