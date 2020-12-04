@@ -15,7 +15,6 @@ import { OperatingSystem } from "shared/types/client"
 import styles from "pages/login/login.css"
 
 const Loading = (props: {
-    clientOS: string
     percentLoaded: number
     status: string
     port32262: number
@@ -29,7 +28,6 @@ const Loading = (props: {
     dispatch: Dispatch
 }) => {
     const {
-        clientOS,
         percentLoaded,
         status,
         port32262,
@@ -249,7 +247,6 @@ const Loading = (props: {
 
 const mapStateToProps = <T extends {}>(state: T) => {
     return {
-        clientOS: state.MainReducer.client.clientOS,
         percentLoaded: state.MainReducer.loading.percentLoaded,
         status: state.MainReducer.loading.statusMessage,
         containerID: state.MainReducer.container.containerID,
