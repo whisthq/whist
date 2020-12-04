@@ -190,7 +190,7 @@ class LocalConfig(DeploymentConfig):
     """
 
     def __init__(self):
-        load_dotenv(verbose=True)
+        load_dotenv(dotenv_path=os.path.join(os.getcwd(), "docker/.env"), verbose=True)
         super().__init__()
 
     config_table = "dev"
