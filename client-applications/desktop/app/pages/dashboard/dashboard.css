@@ -1,4 +1,4 @@
-@import '/app.global.css';
+@import "/app.global.css";
 
 .page {
     flex: 1;
@@ -7,7 +7,7 @@
 
 .feedbackButton,
 .noFeedbackButton {
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     font-weight: bold;
     padding: 10px 25px;
     width: 150px;
@@ -115,7 +115,8 @@
     border-left: none;
 }
 
-.modalButton {
+.modalButton,
+.installedButton {
     position: absolute;
     right: 40px;
     bottom: 40px;
@@ -130,6 +131,13 @@
     border-radius: 5px;
 }
 
+.installedButton {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--primary-text-color);
+    display: flex;
+    justify-content: center;
+}
+
 .container {
     background: rgba(237, 240, 247, 0.75);
     position: absolute;
@@ -137,7 +145,7 @@
     height: 100vh;
     overflow-x: hidden;
     overflow-y: hidden;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     margin: 0px;
     -webkit-app-region: drag;
     user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */

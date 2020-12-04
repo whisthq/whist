@@ -1,4 +1,4 @@
-@import '/app.global.css';
+@import "/app.global.css";
 
 @keyframes ripple {
     0%,
@@ -96,15 +96,27 @@
     left: 40px;
     bottom: 40px;
     font-size: 11px;
-    display: 'flex';
+    display: "flex";
     color: var(--light-text-color);
 }
 
 .tosLink {
     color: var(--primary-color);
+    padding: 0px;
 }
 
 .appLink:hover,
 .tosLink:hover {
     cursor: pointer;
+}
+
+.faCheck {
+    margin-left: 10px;
+    font-size: 12px;
+    color: var(--primary-text-color);
+}
+
+.tooltipText {
+    font-family: "Maven Pro";
+    padding: 8px 6px;
 }

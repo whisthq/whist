@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import { Col, Modal } from "react-bootstrap"
-import { FaPlay } from "react-icons/fa"
+import { Col, Modal, Tooltip, OverlayTrigger } from "react-bootstrap"
+import { FaPlay, FaCheck } from "react-icons/fa"
 
 import { createContainer } from "store/actions/sideEffects"
 import { updateContainer } from "store/actions/pure"
@@ -9,20 +9,34 @@ import { history } from "store/history"
 import { FractalRoute } from "shared/types/navigation"
 import { openExternal } from "shared/utils/helpers"
 import { FractalApp } from "shared/types/ui"
+import { OperatingSystem } from "shared/types/client"
+import { createShortcutName } from "shared/utils/shortcuts"
 
 import styles from "pages/dashboard/components/app/app.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
 
+/* eslint-disable react/jsx-props-no-spreading */
+
 const App = (props: {
     app: FractalApp
     launches: number
-    dispatch: any
+    clientOS: OperatingSystem
+    dispatch: Dispatch
     admin: boolean
 }) => {
-    const { app, launches, admin, dispatch } = props
+    const { app, launches, clientOS, admin, dispatch } = props
 
     const [showModal, setShowModal] = useState(false)
     const [launched, setLaunched] = useState(false)
+
+    const tooltip =
+        clientOS === OperatingSystem.WINDOWS
+            ? `Look for "${createShortcutName(
+                  app.app_id
+              )}" on your desktop or Start Menu.`
+            : `Look for "${createShortcutName(
+                  app.app_id
+              )}" on your desktop or Applications folder.`
 
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => setShowModal(false)
@@ -159,21 +173,51 @@ const App = (props: {
                             terms of service.
                         </button>
                     </div>
-                    <button
-                        type="button"
-                        className={dashboardStyles.modalButton}
-                    >
-                        Download
-                    </button>
+                    {app.installed ? (
+                        <OverlayTrigger
+                            placement="top"
+                            overlay={
+                                <Tooltip id="button-tooltip">
+                                    <div className={styles.tooltipText}>
+                                        {tooltip}
+                                    </div>
+                                </Tooltip>
+                            }
+                        >
+                            <div className={dashboardStyles.installedButton}>
+                                <div>Installed</div>
+                                <div>
+                                    <FaCheck className={styles.faCheck} />
+                                </div>
+                            </div>
+                        </OverlayTrigger>
+                    ) : (
+                        <button
+                            type="button"
+                            className={dashboardStyles.modalButton}
+                        >
+                            Download
+                        </button>
+                    )}
                 </Modal.Body>
             </Modal>
         </Col>
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
+const mapStateToProps = (state: {
+    MainReducer: {
+        container: {
+            launches: number
+        }
+        client: {
+            clientOS: OperatingSystem
+        }
+    }
+}) => {
     return {
         launches: state.MainReducer.container.launches,
+        clientOS: state.MainReducer.client.clientOS,
     }
 }
 
