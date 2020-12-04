@@ -14,5 +14,5 @@ jobs:
         steps:
             - name: Label the PR
               uses: adamzolyak/monorepo-pr-labeler-action@2.0.1
-              with:
+              env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
