@@ -1,6 +1,6 @@
 # workflows/meta-label-pull-requests.yml
 #
-# Meta: Label Pull Requests.
+# Meta: Label Pull Requests
 # Labels pull requests with the subprojects they touch.
 
 name: "Meta: Label Pull Requests"
