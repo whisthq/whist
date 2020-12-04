@@ -42,4 +42,5 @@ repos:
     #                 creative/figma/Dockerfile.20
     #                 creative/lightworks/Dockerfile.20
     #                 creative/gimp/Dockerfile.20
-    #                 creative/inkscape/Dockerfile.20]
+    #                 creative/inkscape/Dockerfile.20
+    #                 creative/kdenlive/Dockerfile.20]
