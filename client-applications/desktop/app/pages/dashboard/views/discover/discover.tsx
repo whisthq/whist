@@ -56,7 +56,6 @@ const Discover = (props: {
     const [mediaData, setMediaData] = useState([])
 
     // GraphQL queries to get Fractal apps and banners
-
     const appQuery = useQuery(GET_FEATURED_APPS, {
         context: {
             headers: {
@@ -74,7 +73,6 @@ const Discover = (props: {
     })
 
     // Helper functions to filter apps by category, active, search results
-
     const checkActive = (app: FractalApp) => {
         return app.active
     }
@@ -98,7 +96,6 @@ const Discover = (props: {
     }
 
     // Filter data queried from GraphQL above
-
     useEffect(() => {
         if (bannerQuery && bannerQuery.data) {
             setBannerData(
@@ -132,9 +129,9 @@ const Discover = (props: {
     }, [search])
 
     // If apps are queried via GraphQL, update local state and filter accordingly
-
     useEffect(() => {
         if (
+            apps &&
             apps.length === 0 &&
             appQuery.data &&
             appQuery.data.hardware_supported_app_images &&
@@ -144,26 +141,24 @@ const Discover = (props: {
             let localAppData: FractalApp[] = []
             for (let i = 0; i < supportedImages.length; i += 1) {
                 let app: FractalApp = supportedImages[i]
+                // If the app is not ready for release, don't store or display it
                 if (!checkActive(app)) {
                     continue
                 }
+                // Check to see if the app is already installed
                 const shortcutName = createShortcutName(app.app_id)
                 const installed = checkIfShortcutExists(shortcutName)
-                const appAlreadyStored = searchArrayByKey(
-                    apps,
-                    "app_id",
-                    app.app_id
-                )
+                // Check to see if the app is already in Redux state
+                const { value } = searchArrayByKey(apps, "app_id", app.app_id)
+                // Set the app state to INSTALLED, NOT_INSTALLED, INSTALLING, or DELETING
                 let localState = installed
                     ? FractalAppLocalState.INSTALLED
                     : FractalAppLocalState.NOT_INSTALLED
 
-                console.log(app.app_id, installed.toString())
-
                 if (appAlreadyStored) {
                     localState = appAlreadyStored.localState
                 }
-
+                // Push app to app array
                 const appCopy = Object.assign(deep_copy(app), {
                     localState: localState,
                 })
@@ -185,14 +180,15 @@ const Discover = (props: {
                 <PuffAnimation />
             </div>
         )
-    }
-    if (search && searchResults.length > 0) {
+        // Display search results if the user searches
+    } else if (search && searchResults.length > 0) {
         return (
             <Row style={{ padding: "0px 45px", marginTop: 25 }}>
                 {searchResults}
             </Row>
         )
     }
+    // Display the normal App Store page
     return (
         <div className={styles.scrollWrapper}>
             <Row style={{ padding: "0px 45px", marginTop: 20 }}>
