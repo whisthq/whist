@@ -5,7 +5,7 @@ import { FractalEnvironment, FractalConfig } from "shared/types/config"
 // app where you can choose where to go to
 export const webservers: { [key: string]: string } = {
     local: "http://127.0.0.1:7730",
-    dev: "https://dev-webserver.herokuapp.com",
+    dev: "https://dev-server.tryfractal.com",
     staging: "https://staging-webserver.tryfractal.com",
     prod: "https://main-webserver.herokuapp.com",
 }
