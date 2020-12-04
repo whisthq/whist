@@ -48,6 +48,10 @@ Notice that we also include a `Title Case`, plaintext name for the job, in addit
 
 In other cases, we might wish for multiple jobs to eventually reside in the same workflow; for example, we have a job named `container-images-push-images-ecr`, since we could ostensibly extend this to also push to DockerHub or GCP or Azure.
 
+### Styling
+
+These YAML files are formatted with [prettier](https://github.com/prettier/prettier). After installing, you can check formatting with `cd .github/workflows && prettier --check .`, and you can fix formatting with `cd .github/workflows && prettier --write .`. VSCode and other IDEs and text editors have pretty robust prettier integration, so if you've set that up, that also works well!
+
 ## Testing
 
 The easiest way to test a workflow is to enable it to be run manually -- to do this, make sure the master branch version of the workflow contains the trigger
