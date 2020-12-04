@@ -6,33 +6,33 @@
 name: "Protocol: Linting"
 
 on:
-    pull_request:
-        paths:
-            - "protocol/**"
-            - "!protocol/README.md"
+  pull_request:
+    paths:
+      - "protocol/**"
+      - "!protocol/README.md"
 
 env:
-    CMAKE_VERSION: 3.15.7
-    NINJA_VERSION: 1.9.0
-    BUILD_TYPE: Debug
-    CCACHE_VERSION: 3.7.7
+  CMAKE_VERSION: 3.15.7
+  NINJA_VERSION: 1.9.0
+  BUILD_TYPE: Debug
+  CCACHE_VERSION: 3.7.7
 
 jobs:
-    protocol-linting-main:
-        name: Lint Protocol
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-            - name: Install linux dependencies
-              run: |
-                  sudo apt-get update -y
-                  ${{ github.workspace }}/protocol/desktop/linux-client-setup.sh
-            - name: cmake build
-              run: cd protocol && cmake -DBUILD_SERVER=OFF -DBUILD_CLIENT=OFF -DBUILD_TESTS=OFF .
-            - name: clang-format
-              run: |
-                  cd protocol && make clang-format
-                  git diff-index --quiet HEAD --
+  protocol-linting-main:
+    name: Lint Protocol
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+      - name: Install linux dependencies
+        run: |
+          sudo apt-get update -y
+          ${{ github.workspace }}/protocol/desktop/linux-client-setup.sh
+      - name: cmake build
+        run: cd protocol && cmake -DBUILD_SERVER=OFF -DBUILD_CLIENT=OFF -DBUILD_TESTS=OFF .
+      - name: clang-format
+        run: |
+          cd protocol && make clang-format
+          git diff-index --quiet HEAD --
