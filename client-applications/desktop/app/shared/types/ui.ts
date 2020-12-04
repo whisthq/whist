@@ -1,3 +1,5 @@
+import { searchArrayByKey } from "shared/utils/helpers"
+
 export enum FractalAppLocalState {
     INSTALLED = 1,
     NOT_INSTALLED,
@@ -23,5 +25,5 @@ export type FractalApp = {
     url: string
     tos: string
     active: boolean
-    local_state: FractalAppLocalState
+    localState: FractalAppLocalState
 }
