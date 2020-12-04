@@ -31,6 +31,7 @@ import (
 
 // The location on disk where we store the container resource allocations
 const resourceMappingDirectory = "/fractal/containerResourceMappings/"
+const cloudStorageDirectory = "/fractal/cloudStorage/"
 
 // Check that the program has been started with the correct permissions --- for
 // now, we just want to run as root, but this service could be assigned its own
@@ -61,6 +62,18 @@ func startECSAgent() {
 		logger.Info("Successfully started the ECS agent ourselves.")
 	}
 }
+
+// ---------------------------
+// Container state manangement
+// ---------------------------
+
+// reserve the first 10 TTYs for the host system
+var ttyState [256]string = [256]string{"reserved", "reserved", "reserved", "reserved",
+	"reserved", "reserved", "reserved", "reserved", "reserved", "reserved"}
+
+// ---------------------------
+// Service shutdown and initialization
+// ---------------------------
 
 func shutdownHostService() {
 	logger.Info("Beginning host service shutdown procedure.")
@@ -166,7 +179,7 @@ func writeAssignmentToFile(filename, data string) (err error) {
 	return nil
 }
 
-func containerStartHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) error {
+func containerStartHandler(ctx context.Context, cli *client.Client, id string) error {
 	// Create a container-specific directory to store mappings
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.Mkdir(datadir, 0644|os.ModeSticky)
@@ -233,7 +246,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string, t
 	return nil
 }
 
-func containerDieHandler(ctx context.Context, cli *client.Client, id string, ttyState *[256]string) {
+func containerDieHandler(ctx context.Context, cli *client.Client, id string) {
 	// Delete the container-specific data directory we used
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.RemoveAll(datadir)
@@ -340,10 +353,6 @@ func main() {
 		Filters: filters,
 	}
 
-	// reserve the first 10 TTYs for the host system
-	const r = "reserved"
-	ttyState := [256]string{r, r, r, r, r, r, r, r, r, r}
-
 	// In the following loop, this var determines whether to re-initialize the
 	// event stream. This is necessary because the Docker event stream needs to
 	// be reopened after any error is sent over the error channel.
@@ -385,7 +394,7 @@ eventLoop:
 			if dockerevent.Action == "start" {
 				// We want the container start handler to die immediately upon failure,
 				// so it returns an error as soon as it encounters one.
-				err := containerStartHandler(ctx, cli, dockerevent.ID, &ttyState)
+				err := containerStartHandler(ctx, cli, dockerevent.ID)
 				if err != nil {
 					logger.Errorf("Error processing dockerevent %s for %s %s: %v", dockerevent.Action, dockerevent.Type, dockerevent.ID, err)
 				}
@@ -393,7 +402,7 @@ eventLoop:
 				// Since we want all steps in the die handler to be attempted,
 				// regardless of earlier errors, we let the containerDieHandler report
 				// its own errors, and return nothing to us.
-				containerDieHandler(ctx, cli, dockerevent.ID, &ttyState)
+				containerDieHandler(ctx, cli, dockerevent.ID)
 			}
 
 		case serverevent := <-serverEvents:
