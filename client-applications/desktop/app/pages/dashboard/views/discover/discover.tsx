@@ -155,8 +155,8 @@ const Discover = (props: {
                     ? FractalAppLocalState.INSTALLED
                     : FractalAppLocalState.NOT_INSTALLED
 
-                if (appAlreadyStored) {
-                    localState = appAlreadyStored.localState
+                if (value) {
+                    localState = value.localState
                 }
                 // Push app to app array
                 const appCopy = Object.assign(deep_copy(app), {
