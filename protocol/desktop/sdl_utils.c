@@ -73,7 +73,8 @@ void set_window_icon_from_png(SDL_Window* window_param, char* filename) {
     SDL_FreeSurface(icon_surface);
 }
 
-SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name, char* icon_filename) {
+SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
+                     char* icon_filename) {
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
