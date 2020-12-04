@@ -1,4 +1,4 @@
-@import "/app.global.css";
+@import '/app.global.css';
 
 .modalAppImage {
     height: 100px;
@@ -14,7 +14,7 @@
     left: 40px;
     bottom: 40px;
     font-size: 11px;
-    display: "flex";
+    display: 'flex';
     color: var(--light-text-color);
 }
 
@@ -28,7 +28,7 @@
 }
 
 .tooltipText {
-    font-family: "Maven Pro";
+    font-family: 'Maven Pro';
     padding: 8px 6px;
 }
 
