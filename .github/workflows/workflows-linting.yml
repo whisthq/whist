@@ -1,0 +1,43 @@
+# workflows/workflows-linting.yml
+#
+# Workflows: Linting
+# Lint workflows using eslint.
+
+name: "Workflows: Linting"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
+        paths:
+            - ".github/workflows/**"
+            - "!.github/workflows/README.md"
+
+jobs:
+    workflows-linting-main:
+        name: Lint Github Actions Workflows
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+            - name: Install Node.js 12
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 12
+
+            - name: Check if code is formatted
+              run: |
+                  result=$(cd .github/workflows && prettier --check . > /dev/null && echo success || echo failure)
+                  if [ "$result" -ne "success" ]; then
+                    (echo "To pass this check please lint .github/workflows with prettier" && false)
+                  else
+                    (echo "Code is linted with prettier" && true)
+                  fi
