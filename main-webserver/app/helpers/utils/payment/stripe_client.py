@@ -292,14 +292,13 @@ class StripeClient:
         else:
             return None
 
-    def create_subscription(self, email, plan, price, code=None):
+    def create_subscription(self, email, price, code=None):
         """This will create a new subscription for a client with the given email
         and a code if it exists. This is similar to what was previously stripe_post's "chargeHelper."
         It will return true on a succes run.
 
         Args:
             email (str): The user's email.
-            plan (str): The name of the plan (Hourly | Monthly | Unlimited)
             price (str): Stripe price id corresponding to the plan
             code (str, optional): A promo/referall code if they were referred. None by default indicates
                 not referrer and will not give them any referall advantages. A referred individual gets
@@ -353,15 +352,13 @@ class StripeClient:
         # check if customer already has subscriptions
         subscriptions = stripe.Subscription.list(customer=stripe_customer_id)["data"]
         if len(subscriptions) == 0:
-            trial_end = dateToUnix(datetime.now() + relativedelta(weeks=1))
+            trial_end = date_to_unix(datetime.now() + relativedelta(weeks=1))
 
         # if they had a subscription modify it, don't make a new one
         # else make a new one with the corresponding params
         if subscriptions:
             stripe.SubscriptionItem.modify(subscriptions[0]["items"]["data"][0]["id"], price=price)
-            user.plan = plan
-            db.session.commit()
-            fractalLog(
+            fractal_log(
                 function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer updated successful",
@@ -378,13 +375,7 @@ class StripeClient:
                 trial_end=trial_end,
                 default_tax_rates=[tax_rate],
             )
-<<<<<<< HEAD
             fractal_log(
-=======
-            user.plan = plan
-            db.session.commit()
-            fractalLog(
->>>>>>> 462d73ffc... handle subscriptions and update tests
                 function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer subscription created successful",
@@ -422,9 +413,7 @@ class StripeClient:
             raise InvalidOperation
         else:
             stripe.Subscription.delete(subscription[0]["id"])
-            user.plan = None
-            db.session.commit()
-            fractalLog(
+            fractal_log(
                 function="StripeClient.cancel_subscription",
                 label=email,
                 logs="Cancelled stripe subscription for {}".format(email),
