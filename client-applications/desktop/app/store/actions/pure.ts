@@ -9,8 +9,8 @@ export const UPDATE_ADMIN = "UPDATE_ADMIN"
 export const RESET_STATE = "RESET_STATE"
 
 export function updateAdmin(body: {
-    webserver_url?: null | string
-    task_arn?: null | string
+    webserverUrl?: null | string
+    taskArn?: null | string
     region?: null | string
     cluster?: null | string
 }) {

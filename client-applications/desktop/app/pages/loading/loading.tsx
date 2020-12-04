@@ -236,9 +236,12 @@ const Loading = (props: {
                             typeof status === "string" &&
                             status.toLowerCase().includes("unexpected") && (
                                 <div
+                                    role="button" // so eslint will not yell
+                                    tabIndex={0} // also for eslint
                                     className={styles.dashboardButton}
                                     style={{ width: 220, marginTop: 25 }}
                                     onClick={returnToDashboard}
+                                    onKeyDown={returnToDashboard} // eslint
                                 >
                                     BACK TO DASHBOARD
                                 </div>
