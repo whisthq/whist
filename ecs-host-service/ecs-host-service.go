@@ -146,13 +146,24 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	// We mount in foreground mode, and wait for the result to clean up the
 	// directory created for this purpose. That way we know that we aren't
 	// accidentally removing files from the user's cloud storage drive.
-	cmd := exec.Command(
-		"/usr/bin/rclone", "config", "create", configName, "drive",
-		"config_is_local", "false",
-		"config_refresh_token", "false",
-		"token", token,
-		"scope", "drive",
-	)
+	// cmd := exec.Command(
+	strcmd := strings.Join(
+		[]string{
+			"/usr/bin/rclone", "config", "create", configName, "drive",
+			"config_is_local", "false",
+			"config_refresh_token", "false",
+			"token", token,
+			"scope", "drive",
+		}, " ")
+	// )
+	scriptpath := resourceMappingDirectory + "config-create-" + configName + ".sh"
+	f, _ := os.Create(scriptpath)
+	_, _ = f.WriteString(logger.Sprintf("#!/bin/sh\n\n"))
+	_, _ = f.WriteString(strcmd)
+	os.Chmod(scriptpath, 0700)
+	f.Close()
+	defer os.Remove(scriptpath)
+	cmd := exec.Command(scriptpath)
 
 	logger.Info("Rclone config create command: %v", cmd)
 
