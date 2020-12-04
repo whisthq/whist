@@ -12,6 +12,10 @@ jobs:
         name: Check Running Tasks
         runs-on: ubuntu-20.04
         steps:
+            - name: Report event path
+              run: echo $GITHUB_EVENT_PATH && echo ${{ env.GITHUB_EVENT_PATH }}
+            - name: See event
+              run: cat $GITHUB_EVENT_PATH
             - name: All Checks Passed Status
               uses: fractal/action-all-checks-passed@latest
               env:
