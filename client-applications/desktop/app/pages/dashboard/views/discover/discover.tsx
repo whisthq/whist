@@ -5,14 +5,22 @@ import { useQuery } from "@apollo/client"
 
 import LeftColumn from "pages/dashboard/components/leftColumn/leftColumn"
 import Banner from "pages/dashboard/components/banner/banner"
-import News from "pages/dashboard/components/news/news"
+import Media from "pages/dashboard/components/media/media"
 import App from "pages/dashboard/components/app/app"
 
 import { GET_FEATURED_APPS, GET_BANNERS } from "shared/constants/graphql"
 import { PuffAnimation } from "shared/components/loadingAnimations"
-
-import { FractalBannerCategory } from "shared/types/navigation"
+import {
+    checkIfShortcutExists,
+    createShortcutName,
+} from "shared/utils/shortcuts"
 import { FractalApp, FractalBanner } from "shared/types/ui"
+import { deep_copy } from "shared/utils/reducerHelpers"
+
+import {
+    FractalAppCategory,
+    FractalBannerCategory,
+} from "shared/types/navigation"
 
 import styles from "pages/dashboard/views/discover/discover.css"
 
@@ -34,33 +42,14 @@ const Discover = (props: {
 
     const [searchResults, setSearchResults] = useState([])
     const [selectedCategory, setSelectedCategory] = useState(
-        FractalBannerCategory.ALL
+        FractalAppCategory.ALL
     )
+    // For app cards
     const [featuredAppData, setFeaturedAppData] = useState([])
-
-    // Helper functions to filter apps by category, active, search results
-
-    const checkActive = (app: FractalApp) => {
-        return app.active
-    }
-
-    const checkCategory = (app: FractalApp) => {
-        if (selectedCategory === FractalBannerCategory.ALL) {
-            return true
-        }
-        return app.category === selectedCategory
-    }
-
-    const getSearchResults = (app: FractalApp) => {
-        if (app && app.app_id && search) {
-            return app.app_id.toLowerCase().includes(search.toLowerCase())
-        }
-        return true
-    }
-
-    const setCategory = (category: string): void => {
-        setSelectedCategory(category)
-    }
+    // For left-side banner
+    const [bannerData, setBannerData] = useState([])
+    // For right-side banner with media articles
+    const [mediaData, setMediaData] = useState([])
 
     // GraphQL queries to get Fractal apps and banners
 
@@ -80,21 +69,48 @@ const Discover = (props: {
         },
     })
 
+    // Helper functions to filter apps by category, active, search results
+
+    const checkActive = (app: FractalApp) => {
+        return app.active
+    }
+
+    const checkCategory = (app: FractalApp) => {
+        if (selectedCategory === FractalAppCategory.ALL) {
+            return true
+        }
+        return app.category === selectedCategory
+    }
+
+    const getSearchResults = (app: FractalApp) => {
+        if (app && app.app_id && search) {
+            return app.app_id.toLowerCase().includes(search.toLowerCase())
+        }
+        return true
+    }
+
+    const setCategory = (category: FractalAppCategory): void => {
+        setSelectedCategory(category)
+    }
+
     // Filter data queried from GraphQL above
 
-    const bannerData = bannerQuery.data
-        ? bannerQuery.data.hardware_banners.filter(
-              (banner: FractalBanner) =>
-                  banner.category === FractalBannerCategory.NEWS
-          )
-        : []
-
-    const mediaData = bannerQuery.data
-        ? bannerQuery.data.hardware_banners.filter(
-              (banner: FractalBanner) =>
-                  banner.category === FractalBannerCategory.MEDIA
-          )
-        : []
+    useEffect(() => {
+        if (bannerQuery && bannerQuery.data) {
+            setBannerData(
+                bannerQuery.data.hardware_banners.filter(
+                    (banner: FractalBanner) =>
+                        banner.category === FractalBannerCategory.NEWS
+                )
+            )
+            setMediaData(
+                bannerQuery.data.hardware_banners.filter(
+                    (banner: FractalBanner) =>
+                        banner.category === FractalBannerCategory.MEDIA
+                )
+            )
+        }
+    }, [bannerQuery])
 
     // If user searches for an app, filter apps
 
@@ -114,20 +130,28 @@ const Discover = (props: {
     // If apps are queried via GraphQL, update local state and filter accordingly
 
     useEffect(() => {
-        if (appQuery.data) {
-            let newAppData = appQuery.data
-                ? appQuery.data.hardware_supported_app_images.filter(
-                      checkActive
-                  )
-                : []
-            if (selectedCategory) {
-                newAppData = newAppData ? newAppData.filter(checkCategory) : []
+        if (appQuery.data && appQuery.data.hardware_supported_app_images) {
+            const supportedImages = appQuery.data.hardware_supported_app_images
+            let localAppData: FractalApp[] = []
+            for (let i = 0; i < supportedImages.length; i += 1) {
+                let app: FractalApp = supportedImages[i]
+                if (!checkActive(app)) {
+                    continue
+                }
+                if (!checkCategory(app)) {
+                    continue
+                }
+                const shortcutName = createShortcutName(app.app_id)
+                const appCopy = Object.assign(deep_copy(app), {
+                    installed: checkIfShortcutExists(shortcutName),
+                })
+                localAppData.push(appCopy)
             }
             if (adminUsername) {
-                newAppData.push(adminApp)
+                localAppData.push(adminApp)
             }
 
-            setFeaturedAppData(newAppData)
+            setFeaturedAppData(localAppData)
         }
     }, [appQuery.data, selectedCategory])
 
@@ -152,7 +176,7 @@ const Discover = (props: {
                 <Col xs={7} className={styles.bannerWrapper}>
                     <Banner bannerData={bannerData} />
                 </Col>
-                <News mediaData={mediaData} />
+                <Media mediaData={mediaData} />
             </Row>
             <Row style={{ marginTop: 35, padding: "0px 45px" }}>
                 <LeftColumn
@@ -177,8 +201,10 @@ const Discover = (props: {
 
 const mapStateToProps = (state: {
     MainReducer: {
-        accessToken: string
-        username: string
+        auth: {
+            accessToken: string
+            username: string
+        }
     }
 }) => {
     return {

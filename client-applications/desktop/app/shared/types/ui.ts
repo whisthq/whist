@@ -16,4 +16,5 @@ type FractalApp = {
     url: string
     tos: string
     active: boolean
+    installed: boolean
 }
