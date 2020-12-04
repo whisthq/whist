@@ -386,6 +386,10 @@ jobs:
 
           execute_process(COMMAND ccache -s)
 
+      - name: Verify build with clang-tidy
+        working-directory: ${{env.working-directory}}
+        run: ./run-clang-tidy.sh
+
       - name: Get latest sentry-cli
         uses: mathrix-education/setup-sentry-cli@master
       - name: Upload debug information to sentry
