@@ -20,8 +20,8 @@ export const searchArrayByKey = (
     value: Record<string, any> | null
 } => {
     for (let i = 0; i < arr.length; i += 1) {
-        let value = arr[i]
-        if (!value.hasOwnProperty(key)) {
+        const value = arr[i]
+        if (!Object.prototype.hasOwnProperty.call(value, key)) {
             throw ReferenceError
         }
         if (value[key] === target) {

@@ -1,5 +1,3 @@
-import { searchArrayByKey } from "shared/utils/helpers"
-
 export enum FractalAppLocalState {
     INSTALLED = 1,
     NOT_INSTALLED,

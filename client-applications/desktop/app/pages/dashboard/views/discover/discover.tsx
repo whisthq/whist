@@ -138,31 +138,35 @@ const Discover = (props: {
             appQuery.data.hardware_supported_app_images.length > 0
         ) {
             const supportedImages = appQuery.data.hardware_supported_app_images
-            let localAppData: FractalApp[] = []
+            const localAppData: FractalApp[] = []
             for (let i = 0; i < supportedImages.length; i += 1) {
-                let app: FractalApp = supportedImages[i]
+                const app: FractalApp = supportedImages[i]
                 // If the app is not ready for release, don't store or display it
-                if (!checkActive(app)) {
-                    continue
-                }
-                // Check to see if the app is already installed
-                const shortcutName = createShortcutName(app.app_id)
-                const installed = checkIfShortcutExists(shortcutName)
-                // Check to see if the app is already in Redux state
-                const { value } = searchArrayByKey(apps, "app_id", app.app_id)
-                // Set the app state to INSTALLED, NOT_INSTALLED, INSTALLING, or DELETING
-                let localState = installed
-                    ? FractalAppLocalState.INSTALLED
-                    : FractalAppLocalState.NOT_INSTALLED
+                const active = checkActive(app)
+                if (active) {
+                    // Check to see if the app is already installed
+                    const shortcutName = createShortcutName(app.app_id)
+                    const installed = checkIfShortcutExists(shortcutName)
+                    // Check to see if the app is already in Redux state
+                    const { value } = searchArrayByKey(
+                        apps,
+                        "app_id",
+                        app.app_id
+                    )
+                    // Set the app state to INSTALLED, NOT_INSTALLED, INSTALLING, or DELETING
+                    let localState = installed
+                        ? FractalAppLocalState.INSTALLED
+                        : FractalAppLocalState.NOT_INSTALLED
 
-                if (value) {
-                    localState = value.localState
+                    if (value) {
+                        localState = value.localState
+                    }
+                    // Push app to app array
+                    const appCopy = Object.assign(deep_copy(app), {
+                        localState: localState,
+                    })
+                    localAppData.push(appCopy)
                 }
-                // Push app to app array
-                const appCopy = Object.assign(deep_copy(app), {
-                    localState: localState,
-                })
-                localAppData.push(appCopy)
             }
 
             if (adminUsername) {
@@ -181,7 +185,8 @@ const Discover = (props: {
             </div>
         )
         // Display search results if the user searches
-    } else if (search && searchResults.length > 0) {
+    }
+    if (search && searchResults.length > 0) {
         return (
             <Row style={{ padding: "0px 45px", marginTop: 25 }}>
                 {searchResults}
