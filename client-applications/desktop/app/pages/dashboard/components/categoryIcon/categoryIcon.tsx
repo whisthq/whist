@@ -1,4 +1,4 @@
-import React, { FC, forwardRef } from "react"
+import React, { FC } from "react"
 import { Tooltip, OverlayTrigger } from "react-bootstrap"
 
 import styles from "pages/dashboard/components/categoryIcon/categoryIcon.css"
