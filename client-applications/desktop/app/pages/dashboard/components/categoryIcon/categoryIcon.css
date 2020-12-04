@@ -1,4 +1,4 @@
-@import "/app.global.css";
+@import '/app.global.css';
 
 .categoryIcon,
 .categoryIconSelected {
@@ -18,7 +18,7 @@
 }
 
 .tooltipText {
-    font-family: "Maven Pro";
+    font-family: 'Maven Pro';
     padding-left: 8px;
     padding-right: 8px;
 }
