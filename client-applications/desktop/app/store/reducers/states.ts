@@ -26,6 +26,7 @@ export const DEFAULT = {
         clientOS: null,
         region: null,
         dpi: null,
+        apps: [],
     },
     payment: {
         accountLocked: false,
@@ -34,11 +35,6 @@ export const DEFAULT = {
     loading: {
         statusMessage: "Powering up your app",
         percentLoaded: 0,
-    },
-    apps: {
-        notInstalled: [],
-        installing: [],
-        installed: [],
     },
     admin: {
         webserverUrl: "dev",

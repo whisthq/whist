@@ -7,7 +7,7 @@ import { createContainer } from "store/actions/sideEffects"
 import { updateContainer } from "store/actions/pure"
 import { history } from "store/history"
 import { FractalRoute } from "shared/types/navigation"
-import { FractalApp } from "shared/types/ui"
+import { FractalApp, FractalAppLocalState } from "shared/types/ui"
 import AppPopup from "pages/dashboard/components/app/components/appPopup"
 
 import styles from "pages/dashboard/components/app/app.css"
@@ -42,7 +42,7 @@ const App = (props: {
     return (
         <Col xs={3}>
             <div>
-                {app.installed && (
+                {app.localState === FractalAppLocalState.INSTALLED && (
                     <div className={styles.installed}>Installed</div>
                 )}
                 <OverlayTrigger
