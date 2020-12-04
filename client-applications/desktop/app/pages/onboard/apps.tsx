@@ -76,11 +76,8 @@ const Apps = (props: { dispatch: Dispatch; accessToken: string }) => {
                         Which apps do you want to run faster?
                     </h2>
                     <div className={styles.subtext}>
-                        Apps that you download from Fractal feel just like the
-                        normal app. But unlike the normal app, Fractal apps
-                        consume under 150MB memory and use cloud processors to
-                        speed up your computer. You can always download more
-                        apps from the App Store.
+                        Fractal apps speed up your computer by running on cloud
+                        hardware.
                     </div>
                     <div className={styles.appsWrapper}>
                         {loading ? (
