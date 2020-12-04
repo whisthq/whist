@@ -325,9 +325,13 @@ jobs:
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
               -DUSE_CPPCHECK=ON
             RESULT_VARIABLE result
+            OUTPUT_VARIABLE sout
+            ERROR_VARIABLE serr
           )
           if (NOT result EQUAL 0)
             message(FATAL_ERROR "Bad exit status")
+            message(FATAL_ERROR ${sout})
+            message(FATAL_ERROR ${serr})
           endif()
 
       - name: Perform build
