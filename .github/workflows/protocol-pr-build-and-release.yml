@@ -283,6 +283,10 @@ jobs:
           restore-keys: |
             ${{ matrix.config.name }}-ccache-
 
+      - name: Shell
+        working-directory: ${{env.working-directory}}
+        run: pwd
+
       - name: Configure cmake
         working-directory: ${{env.working-directory}}
         # TODO move into a script stored inside the repo to make this workflow easier to read
