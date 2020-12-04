@@ -1,0 +1,20 @@
+# workflows/meta-report-all-checks-passed.yml
+#
+# Meta: Report When All Checks Passed
+# This workflow is the only one which should be required for pull requests to dev and to master. Succeeds if all running checks pass, else fails.
+
+name: "Meta: Report When All Checks Passed"
+
+on:
+  check_run:
+    type: [completed]
+
+jobs:
+  meta-report-all-checks-passed-main:
+    name: Check Running Tasks
+    runs-on: ubuntu-20.04
+    steps:
+      - name: All Checks Passed Status
+        uses: fractal/action-all-checks-passed@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

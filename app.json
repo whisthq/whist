@@ -1,0 +1,27 @@
+{
+  "buildpacks": [
+    {
+      "url": "https://github.com/fractal/subdir-heroku-buildpack.git"
+    },
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "env": {
+    "PROJECT_PATH": {
+      "description": "The path to the directory containing the Heroku app itself.",
+      "value": "main-webserver"
+    }
+  },
+  "environments": {
+    "review": {
+      "addons": ["heroku-redis:hobby-dev"]
+    },
+    "test": {
+      "addons": ["heroku-redis:in-dyno"],
+      "scripts": {
+        "test": "pytest -v -s --ignore=tests/payment --no-mock-aws"
+      }
+    }
+  }
+}

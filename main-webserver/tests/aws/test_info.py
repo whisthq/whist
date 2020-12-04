@@ -62,4 +62,6 @@ def test_protocol_info(container):
         assert response.pop("container_id") == c.container_id
         assert response.pop("user_id") == c.user_id
         assert response.pop("state") == c.state
+        assert not response.pop("is_assigned")
+        assert response.pop("dpi") is None
         assert not response  # The dictionary should be empty now.

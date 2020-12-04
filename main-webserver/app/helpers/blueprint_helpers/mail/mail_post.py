@@ -3,16 +3,15 @@ import logging
 from datetime import timedelta
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from flask import jsonify, render_template
+from flask import current_app, jsonify, render_template
 from flask_jwt_extended import create_access_token
 
-from app.constants.config import FRONTEND_URL, SENDGRID_API_KEY, SENDGRID_EMAIL
 from app.constants.http_codes import NOT_FOUND, SUCCESS, UNAUTHORIZED
-from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.logs import fractal_log
 from app.models import User
 
 
-def forgotPasswordHelper(username):
+def forgot_password_helper(username):
     user = User.query.get(username)
 
     if user:
@@ -20,19 +19,19 @@ def forgotPasswordHelper(username):
 
         try:
             message = Mail(
-                from_email=SENDGRID_EMAIL,
+                from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
                 to_emails=username,
                 subject="Reset Your Password",
                 html_content=render_template(
-                    "on_password_forget.html", url=FRONTEND_URL, token=token
+                    "on_password_forget.html", url=current_app.config["FRONTEND_URL"], token=token
                 ),
             )
-            sg = SendGridAPIClient(SENDGRID_API_KEY)
+            sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
-            sg.send(message)
+            sendgrid_client.send(message)
         except Exception as e:
-            fractalLog(
-                function="forgotPasswordHelper",
+            fractal_log(
+                function="forgot_password_helper",
                 label=username,
                 logs="Mail send failed: Error code " + str(e),
                 level=logging.ERROR,
@@ -44,22 +43,22 @@ def forgotPasswordHelper(username):
         return jsonify({"verified": False}), NOT_FOUND
 
 
-def cancelHelper(user, feedback):
+def cancel_helper(user, feedback):
     title = "[CANCELLED PLAN + FEEDBACK] " + user + " has Just Cancelled Their Plan"
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails="support@tryfractal.com",
             subject=title,
             html_content=feedback,
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
-        sg.send(message)
+        sendgrid_client.send(message)
     except Exception as e:
-        fractalLog(
-            function="cancelHelper",
+        fractal_log(
+            function="cancel_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -69,24 +68,24 @@ def cancelHelper(user, feedback):
     return jsonify({"status": SUCCESS}), SUCCESS
 
 
-def verificationHelper(user, token):
+def verification_helper(user, token):
     title = "[Fractal] Please Verify Your Email"
-    url = FRONTEND_URL + "/verify?" + token
+    url = current_app.config["FRONTEND_URL"] + "/verify?" + token
     # url = "https://localhost:3000/verify?" + token
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails=user,
             subject=title,
             html_content=render_template("on_email_verification.html", url=url),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
-        sg.send(message)
+        sendgrid_client.send(message)
     except Exception as e:
-        fractalLog(
-            function="verificationHelper",
+        fractal_log(
+            function="verification_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -96,7 +95,7 @@ def verificationHelper(user, token):
     return jsonify({"status": SUCCESS}), SUCCESS
 
 
-def referralMailHelper(user, recipients, code):
+def referral_mail_helper(user, recipients, code):
     title = "Check out Fractal"
 
     try:
@@ -106,12 +105,12 @@ def referralMailHelper(user, recipients, code):
             subject=title,
             html_content=render_template("on_referral.html", code=code, user=user),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
-        sg.send(message)
+        sendgrid_client.send(message)
     except Exception as e:
-        fractalLog(
-            function="referralMailHelper",
+        fractal_log(
+            function="referral_mail_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -121,22 +120,22 @@ def referralMailHelper(user, recipients, code):
     return jsonify({"status": SUCCESS}), SUCCESS
 
 
-def feedbackHelper(user, feedback, feedback_type):
+def feedback_helper(user, feedback, feedback_type):
     title = "[{}] Feedback from {}".format(feedback_type, user)
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails="support@tryfractal.com",
             subject=title,
             html_content="<div>" + feedback + "</div>",
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
-        sg.send(message)
+        sendgrid_client.send(message)
     except Exception as e:
-        fractalLog(
-            function="feedbackHelper",
+        fractal_log(
+            function="feedback_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -146,20 +145,20 @@ def feedbackHelper(user, feedback, feedback_type):
     return jsonify({"status": SUCCESS}), SUCCESS
 
 
-def trialStartHelper(user, location, code):
+def trial_start_helper(user, location, code):
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails=user,
             subject="Your Free Trial has Started",
             html_content=render_template("on_purchase.html", location=location, code=code),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
-        sg.send(message)
+        sendgrid_client.send(message)
     except Exception as e:
-        fractalLog(
-            function="trialStartHelper",
+        fractal_log(
+            function="trial_start_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -168,19 +167,19 @@ def trialStartHelper(user, location, code):
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails="support@tryfractal.com",
             subject="[FREE TRIAL START] A new user, "
             + user
             + ", just signed up for the free trial.",
             html_content="<div>No action needed from our part at this point.</div>",
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
-        sg.send(message)
+        sendgrid_client.send(message)
     except Exception as e:
-        fractalLog(
-            function="trialStartHelper",
+        fractal_log(
+            function="trial_start_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -190,24 +189,24 @@ def trialStartHelper(user, location, code):
     return jsonify({"status": SUCCESS}), SUCCESS
 
 
-def computerReadyHelper(user, date, code, location):
+def computer_ready_helper(user, date, code, location):
     title = "Your Fractal Subscription Is Ready!"
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails=user,
             subject=title,
             html_content=render_template(
                 "on_cloud_pc_ready.html", date=date, code=code, location=location
             ),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
-        sg.send(message)
+        sendgrid_client.send(message)
     except Exception as e:
-        fractalLog(
-            function="computerReadyHelper",
+        fractal_log(
+            function="computer_ready_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -216,17 +215,17 @@ def computerReadyHelper(user, date, code, location):
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails="support@tryfractal.com",
             subject="" + user + " has signed up for a Fractal paid plan.",
             html_content="<div>{} has signed up for a Fractal paid plan.</div>".format(user),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
-        sg.send(message)
+        sendgrid_client.send(message)
     except Exception as e:
-        fractalLog(
-            function="computerReadyHelper",
+        fractal_log(
+            function="computer_ready_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -236,22 +235,22 @@ def computerReadyHelper(user, date, code, location):
     return jsonify({"status": SUCCESS}), SUCCESS
 
 
-def joinWaitlistHelper(email, name, date):
+def join_waitlist_helper(email, name, date):
     title = "Congrats! You're on the waitlist."
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails=email,
             subject=title,
             html_content=render_template("join_waitlist.html", name=name, date=date),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
-        sg.send(message)
+        sendgrid_client.send(message)
     except Exception as e:
-        fractalLog(
-            function="joinWaitlistHelper",
+        fractal_log(
+            function="join_waitlist_helper",
             label=email,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -261,22 +260,22 @@ def joinWaitlistHelper(email, name, date):
     return jsonify({"status": SUCCESS}), SUCCESS
 
 
-def waitlistReferralHelper(email, name, code, recipient):
+def waitlist_referral_helper(email, name, code, recipient):
     title = name + " has invited you to join Fractal's waitlist!"
 
     try:
         message = Mail(
-            from_email=SENDGRID_EMAIL,
+            from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
             to_emails=recipient,
             subject=title,
             html_content=render_template("on_waitlist_referral.html", email=email, code=code),
         )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
-        sg.send(message)
+        sendgrid_client.send(message)
     except Exception as e:
-        fractalLog(
-            function="waitlistReferralHelper",
+        fractal_log(
+            function="waitlist_referral_helper",
             label=email,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,

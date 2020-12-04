@@ -16,8 +16,8 @@ from pyzipcode import ZipCodeDatabase
 # { state_code : state_name } for all states
 from app.constants.states import STATE_LIST
 
-from app.helpers.utils.general.logs import fractalLog
-from app.helpers.utils.general.time import dateToUnix, getToday
+from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.time import date_to_unix, get_today
 
 # TODO we may want to move this out of the client? not sure
 from app.helpers.utils.mail.stripe_mail import creditAppliedMail, planChangeMail
@@ -45,7 +45,7 @@ Assumptions:
 5. Product names are unique.
 6. Prices have, inside their metadata (look at the key-value metadata in the stripe dashboard) an item
     of the form "name" : "some stripe name"
-7. The Stripe prices we use are: 
+7. The Stripe prices we use are:
     7.1 "Fractal Hourly" (used to charge an additional subscription at a lower rate than the other ones)
     7.2 "Fractal Hourly Per Hour" (used to calculate how much to charge per hour of use)
     7.3 "Fractal Monthly" (used to charge a monthly subscription; all subscriptions are monthly)
@@ -132,6 +132,41 @@ class StripeClient:
                 to use one key to do various things (minimizing damage).
         """
         stripe.api_key = api_key
+
+    def validate_customer_id(self, stripe_customer_id, user=None):
+        """Confirms that a stripe customer id that we store is valid and is not
+        deleted, for example. The use case is when we manually delete people from
+        the stripe dashboard, we don't want to break the code (the db isn't updated immediately).
+
+        Then it will delete a stripe_customer_id from the database if it does not exist (and user object
+        is passed).
+
+        Args:
+            stripe_customer_id (str): The customer id string of the stripe customer, might be none.
+            user (User, optional): The user for whom we might want to update the db.
+
+        Returns:
+            False if the stripe_customer_id was not valid even if we are able to update it (to be null).
+
+        Raises:
+            stripe.error.InvalidRequestError if customer is not retrievable (not a valid id) and we
+            are not able to fix it.
+        """
+        if not stripe_customer_id:
+            return True
+
+        try:
+            customer = stripe.Customer.retrieve(stripe_customer_id)
+            if "deleted" in customer and customer["deleted"]:
+                raise RuntimeError("Customer deleted.")
+        except Exception as e:
+            if user:
+                user.stripe_customer_id = None
+                db.session.commit()
+                return False
+            else:
+                raise e
+        return True
 
     def get_products(self, product_names=["Fractal"], limit=20):
         """Fetch the product ids of various products.
@@ -224,18 +259,18 @@ class StripeClient:
         customer = self.user_schema.dump(user)
         credits_outstanding = customer["credits_outstanding"]
 
+        stripe_customer_id = customer["stripe_customer_id"]
+
         # return a valid object if they exist else None
-        if customer["stripe_customer_id"]:
-            customer_info = stripe.Customer.retrieve(
-                customer["stripe_customer_id"], expand=["sources"]
-            )
+        if stripe_customer_id and self.validate_customer_id(stripe_customer_id, user):
+            customer_info = stripe.Customer.retrieve(stripe_customer_id, expand=["sources"])
             cards = customer_info["sources"]["data"]
 
-            subscription = stripe.Subscription.list(customer=customer["stripe_customer_id"])
+            subscription = stripe.Subscription.list(customer=stripe_customer_id)
 
             if subscription and subscription["data"] and len(subscription["data"]) > 0:
                 subscription = subscription["data"][0]
-                account_locked = subscription["trial_end"] < dateToUnix(getToday())
+                account_locked = subscription["trial_end"] < date_to_unix(get_today())
             else:
                 subscription = None
                 account_locked = False
@@ -288,6 +323,8 @@ class StripeClient:
                 raise InvalidStripeToken
 
         stripe_customer_id = user.stripe_customer_id
+        if not self.validate_customer_id(stripe_customer_id, user):
+            stripe_customer_id = None
 
         # get the zipcode/region
         zipcode = token["card"]["address_zip"]
@@ -324,10 +361,10 @@ class StripeClient:
             # they are rewarded by another request to discount by the client where they get credits
 
             if referrer:
-                trial_end = dateToUnix(datetime.now() + relativedelta(months=1))
+                trial_end = date_to_unix(datetime.now() + relativedelta(months=1))
                 self.discount(referrer)
             else:
-                trial_end = dateToUnix(datetime.now() + timedelta(weeks=1))
+                trial_end = date_to_unix(datetime.now() + timedelta(weeks=1))
 
             subscribed = False
 
@@ -335,7 +372,7 @@ class StripeClient:
             user.credits_outstanding = 0
             db.session.commit()
 
-            fractalLog(
+            fractal_log(
                 function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer added successful",
@@ -343,14 +380,14 @@ class StripeClient:
         else:
             subscriptions = stripe.Subscription.list(customer=stripe_customer_id)["data"]
             if len(subscriptions) == 0:
-                trial_end = dateToUnix(datetime.now() + relativedelta(weeks=1))
+                trial_end = date_to_unix(datetime.now() + relativedelta(weeks=1))
                 subscribed = False
 
         # if they had a subscription modify it, don't make a new one
         # else make a new one with the corresponding params
         if subscriptions:
             stripe.SubscriptionItem.modify(subscriptions[0]["items"]["data"][0]["id"], plan=plan)
-            fractalLog(
+            fractal_log(
                 function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer updated successful",
@@ -368,7 +405,7 @@ class StripeClient:
                 trial_from_plan=False,
                 default_tax_rates=[tax_rate],
             )
-            fractalLog(
+            fractal_log(
                 function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer subscription created successful",
@@ -395,16 +432,18 @@ class StripeClient:
         if not user:
             raise NonexistentUser
 
-        if not user.stripe_customer_id:
+        stripe_customer_id = user.stripe_customer_id
+
+        if not stripe_customer_id or not self.validate_customer_id(stripe_customer_id, user):
             raise InvalidOperation
 
-        subscription = stripe.Subscription.list(customer=user.stripe_customer_id)["data"]
+        subscription = stripe.Subscription.list(customer=stripe_customer_id)["data"]
 
         if len(subscription) == 0:
             raise InvalidOperation
         else:
             stripe.Subscription.delete(subscription[0]["id"])
-            fractalLog(
+            fractal_log(
                 function="StripeClient.cancel_subscription",
                 label=email,
                 logs="Cancelled stripe subscription for {}".format(email),
@@ -430,9 +469,8 @@ class StripeClient:
             raise NonexistentUser
 
         stripe_customer_id = user.stripe_customer_id
-        if not stripe_customer_id:
+        if not stripe_customer_id or not self.validate_customer_id(stripe_customer_id, user):
             customer = stripe.Customer.create(email=email, source=source)
-
             user.stripe_customer_id = customer["id"]
             db.session.commit()
         else:
@@ -459,7 +497,7 @@ class StripeClient:
             raise NonexistentUser
 
         stripe_customer_id = user.stripe_customer_id
-        if not stripe_customer_id:
+        if not stripe_customer_id or not self.validate_customer_id(stripe_customer_id, user):
             raise InvalidOperation
 
         card = stripe.Token.retrieve(source)["card"]
@@ -502,7 +540,7 @@ class StripeClient:
             referrer.credits_outstanding = credits_outstanding + 1
             db.session.commit()
 
-            fractalLog(
+            fractal_log(
                 function="StripeClient.discount",
                 label=email,
                 logs="Applied discount and updated credits outstanding",
@@ -573,7 +611,7 @@ class StripeClient:
             user_price = up("plan")
 
         if user_price != hourly_price:
-            fractalLog(
+            fractal_log(
                 function="StripeClient.charge_hourly",
                 label=email,
                 logs="{username} is not an hourly price subscriber. Why are we charging them hourly?".format(
@@ -590,7 +628,7 @@ class StripeClient:
         )
 
         if latest_user_activity.action != "logon":
-            fractalLog(
+            fractal_log(
                 function="StripeClient.charge_hourly",
                 label=email,
                 logs="{username} logged off and is an hourly subscriber, but no logon was found".format(
@@ -639,7 +677,7 @@ class StripeClient:
                 ),
             )
 
-            fractalLog(
+            fractal_log(
                 function="StripeClient.charge_hourly",
                 label=email,
                 logs="{username} used Fractal for {hours_used} hours and is an hourly subscriber. Charged {amount} cents".format(

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ "$(uname)" == "Darwin" ]; then
+  file=Darwin
+else
+  file=Linux
+fi
+
+cd build64/$file
+./FractalClient $@
+cd ../..
+<<<<<<< HEAD
+
+=======
+>>>>>>> refs/rewritten/onto

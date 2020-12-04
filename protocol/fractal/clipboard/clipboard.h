@@ -98,7 +98,7 @@ Public Functions
  * @brief                          Initialize the clipboard to put/get data
  *                                 to/from
  */
-void initClipboard();
+void init_clipboard();
 
 /**
  * @brief                          Get the current clipboard data
@@ -106,7 +106,7 @@ void initClipboard();
  * @returns                        Pointer to the current clipboard data as a
  *                                 ClipboardData struct
  */
-ClipboardData* GetClipboard();
+ClipboardData* get_clipboard();
 
 /**
  * @brief                         Set the clipboard to the given clipboard data
@@ -114,25 +114,25 @@ ClipboardData* GetClipboard();
  * @param cb                      Pointer to a clipboard data struct to set the
  *                                clipboard to
  */
-void SetClipboard(ClipboardData* cb);
+void set_clipboard(ClipboardData* cb);
 
 /**
  * @brief                          Get the current clipboard
  *
  * @returns                        Pointer to the current clipboard data
  */
-bool hasClipboardUpdated();
+bool has_clipboard_updated();
 
 /**
  * @brief                          Destroy current clipboard
  *
  */
-void DestroyClipboard();
+void destroy_clipboard();
 
-void unsafe_initClipboard();
-ClipboardData* unsafe_GetClipboard();
-void unsafe_SetClipboard(ClipboardData* cb);
-bool unsafe_hasClipboardUpdated();
-void unsafe_DestroyClipboard();
+void unsafe_init_clipboard();
+ClipboardData* unsafe_get_clipboard();
+void unsafe_set_clipboard(ClipboardData* cb);
+bool unsafe_has_clipboard_updated();
+void unsafe_destroy_clipboard();
 
 #endif  // CLIPBOARD_H

@@ -1,6 +1,7 @@
 export const DEFAULT = {
     auth: {
         username: null,
+        candidateAccessToken: null,
         accessToken: null,
         refreshToken: null,
         loginWarning: false,
@@ -9,7 +10,7 @@ export const DEFAULT = {
     },
     container: {
         publicIP: null,
-        container_id: null,
+        containerID: null,
         cluster: null,
         port32262: null,
         port32263: null,
@@ -18,9 +19,11 @@ export const DEFAULT = {
         secretKey: null,
         currentAppID: null,
         desiredAppID: null,
+        launches: 0,
+        launchURL: null,
     },
     client: {
-        os: null,
+        clientOS: null,
         region: null,
         dpi: null,
     },
@@ -32,4 +35,12 @@ export const DEFAULT = {
         statusMessage: "Powering up your app",
         percentLoaded: 0,
     },
+    apps: {
+        notInstalled: [],
+        installing: [],
+        installed: [],
+    },
 }
+
+// default export until we have multiple exports
+export default DEFAULT

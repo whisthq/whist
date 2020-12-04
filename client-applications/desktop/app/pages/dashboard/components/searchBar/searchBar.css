@@ -1,0 +1,59 @@
+@import '/app.global.css';
+
+.searchBar,
+.searchBarHidden {
+    border-radius: 5px;
+    box-shadow: var(--light-box-shadow);
+    margin-right: 15px;
+    z-index: 1;
+    outline: none;
+    border: none;
+    padding: 5px 10px;
+    text-indent: 5px;
+    font-size: 12px;
+    background: var(--text-background-color);
+    height: 35px;
+    transition: 1s;
+    position: relative;
+    left: 45px;
+    z-index: 1;
+    width: 325px;
+    opacity: 1;
+    padding: 5px 10px;
+}
+
+.searchBarHidden {
+    width: 0px !important;
+    opacity: 0 !important;
+    padding: 5px 0px !important;
+}
+
+.searchBar:focus,
+.searchBar:active {
+    background: var(--text-background-color);
+}
+
+.searchBar::placeholder {
+    color: var(--light-text-color);
+}
+
+.faSearch,
+.faSearchActive {
+    position: relative;
+    margin-right: 12px;
+    cursor: pointer;
+    z-index: var(--second-layer);
+    padding: 6px;
+    transition: 1s;
+    top: 3px;
+    font-size: 29px;
+    color: var(--light-text-color);
+    right: 0px;
+}
+
+.faSearchActive {
+    top: 4px;
+    font-size: 26px;
+    color: var(--primary-text-color);
+    right: 5px;
+}

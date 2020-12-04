@@ -25,4 +25,4 @@ fi
     make clang-format && \
     make -j FractalServer \
     "
-  )
+)

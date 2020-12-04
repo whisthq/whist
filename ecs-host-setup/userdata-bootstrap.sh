@@ -16,6 +16,7 @@ After=docker.service
 Restart=always
 User=root
 Type=exec
+Environment="APP_ENV=PROD"
 ExecStart=/home/ubuntu/ecs-host-service
 
 [Install]
@@ -27,4 +28,3 @@ sudo /bin/systemctl daemon-reload
 
 # Enabling ECS Host Service
 sudo systemctl enable ecs-host-service.service
-sudo systemctl start ecs-host-service.service

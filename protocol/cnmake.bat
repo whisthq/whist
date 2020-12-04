@@ -1,1 +1,1 @@
-cmake . -G "NMake Makefiles"
+cmake . -G "NMake Makefiles" %*

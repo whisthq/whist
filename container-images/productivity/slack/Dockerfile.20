@@ -27,6 +27,11 @@ RUN wget --quiet https://downloads.slack-edge.com/linux_releases/slack-desktop-4
     dpkg -i slack-desktop-4.0.2-amd64.deb && \
     rm -rf /tmp/slack-desktop*.deb
 
+# Install wrapper script into /usr/bin
+RUN rm /usr/bin/slack
+COPY run-slack.sh /usr/bin/slack
+RUN chmod +x /usr/bin/slack
+
 # Whitelist slack:// in google-chrome
 RUN mkdir -p /etc/opt/chrome/policies/managed \
     && echo {} \
@@ -34,4 +39,4 @@ RUN mkdir -p /etc/opt/chrome/policies/managed \
     > /etc/opt/chrome/policies/managed/whitelist.json
 
 # Setup Fractal application symlink
-RUN ln -sf /usr/lib/slack/slack /usr/bin/fractal-application
+RUN ln -sf /usr/bin/slack /usr/bin/fractal-application

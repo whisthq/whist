@@ -1,23 +1,37 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, Dispatch } from "react"
 import { connect } from "react-redux"
 import { useSpring, animated } from "react-spring"
-import styles from "styles/login.css"
 import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 import { debugLog } from "shared/utils/logging"
 import { updateContainer, updateLoading } from "store/actions/pure"
-import { history } from "store/configureStore"
+import { history } from "store/history"
 import { execChmodUnix } from "shared/utils/exec"
+import { FractalRoute } from "shared/types/navigation"
+import { OperatingSystem } from "shared/types/client"
 
-const Loading = (props: any) => {
+import styles from "pages/login/login.css"
+
+const Loading = (props: {
+    clientOS: string
+    percentLoaded: number
+    status: string
+    port32262: number
+    port32263: number
+    port32273: number
+    ip: string
+    secretKey: string
+    desiredAppID: string
+    currentAppID: string
+    containerID: string
+    dispatch: Dispatch
+}) => {
     const {
-        dispatch,
-        os,
+        clientOS,
         percentLoaded,
         status,
-        container_id,
         port32262,
         port32263,
         port32273,
@@ -25,50 +39,34 @@ const Loading = (props: any) => {
         secretKey,
         desiredAppID,
         currentAppID,
+        containerID,
+        dispatch,
     } = props
 
     // figure out how to use useEffect
     // note to future developers: setting state inside useffect when you rely on
     // change for those variables to trigger runs forever and is bad
     // use two variables for that or instead do something like this below
-    var percentLoadedWidth = 5 * percentLoaded
+    const percentLoadedWidth = 5 * percentLoaded
 
     const [launches, setLaunches] = useState(0)
     const loadingBar = useSpring({ width: percentLoadedWidth })
 
-    useEffect(() => {
-        // Ensures that a container exists, that the protocol has not been launched before, and that
-        // the app we want to launch is the app that will be launched
-        if (container_id && launches === 0 && currentAppID === desiredAppID) {
-            setLaunches(launches + 1)
-        }
-    }, [container_id])
-
-    useEffect(() => {
-        if (launches === 1) {
-            LaunchProtocol()
-        }
-    }, [launches])
-
     const LaunchProtocol = () => {
-        var child = require("child_process").spawn
-        var appRootDir = require("electron").remote.app.getAppPath()
-        var executable = ""
-        var path = ""
+        const child = require("child_process").spawn
+        const appRootDir = require("electron").remote.app.getAppPath()
+        let executable = ""
+        let path = ""
 
         const os = require("os")
 
-        if (os.platform() === "darwin") {
-            path = appRootDir + "/protocol-build/desktop/"
+        if (os.platform() === OperatingSystem.MAC) {
+            path = `${appRootDir}/protocol-build/desktop/`
             path = path.replace("/app", "")
             path = path.replace("/Resources.asar", "")
             executable = "./FractalClient"
-        } else if (os.platform() === "linux") {
-            path = process.cwd() + "/protocol-build"
-            path = path.replace("/release", "")
-            executable = "./FractalClient"
-        } else if (os.platform() === "win32") {
-            path = appRootDir + "\\protocol-build\\desktop"
+        } else if (os.platform() === OperatingSystem.WINDOWS) {
+            path = `${appRootDir}\\protocol-build\\desktop`
             path = path.replace("\\resources\\app.asar", "")
             path = path.replace("\\app\\protocol-build", "\\protocol-build")
             executable = "FractalClient.exe"
@@ -76,43 +74,47 @@ const Loading = (props: any) => {
             debugLog(`no suitable os found, instead got ${os.platform()}`)
         }
 
-        execChmodUnix("chmod +x FractalClient", path, os.platform()).then(
-            () => {
-                var port_info = `32262:${port32262}.32263:${port32263}.32273:${port32273}`
-                var parameters = [
+        execChmodUnix("chmod +x FractalClient", path, os.platform())
+            .then(() => {
+                const ipc = require("electron").ipcRenderer
+                ipc.sendSync("canClose", false)
+
+                const portInfo = `32262:${port32262}.32263:${port32263}.32273:${port32273}`
+                const parameters = [
                     "-w",
                     800,
                     "-h",
                     600,
                     "-p",
-                    port_info,
+                    portInfo,
                     "-k",
                     secretKey,
                     ip,
                 ]
-                console.log(parameters)
 
                 // Starts the protocol
                 const protocol = child(executable, parameters, {
                     cwd: path,
-                    detached: true,
+                    detached: false,
                     stdio: "ignore",
+                    // env: { ELECTRON_RUN_AS_NODE: 1 },
                     // optional:
-                    //env: {
+                    // env: {
                     //    PATH: process.env.PATH,
-                    //},
+                    // },
                 })
-                protocol.on("close", () => {
-                    console.log("Stream exit detected")
+                return protocol.on("close", () => {
                     dispatch(
                         updateContainer({
-                            container_id: null,
+                            containerID: null,
                             cluster: null,
                             port32262: null,
                             port32263: null,
                             port32273: null,
                             publicIP: null,
                             secretKey: null,
+                            launches: 0,
+                            launchURL: null,
                         })
                     )
                     dispatch(
@@ -122,13 +124,31 @@ const Loading = (props: any) => {
                         })
                     )
                     setLaunches(0)
-                    history.push("/dashboard")
+                    ipc.sendSync("canClose", true)
+                    history.push(FractalRoute.DASHBOARD)
                 })
-            }
-        )
-        // TODO (adriano) graceful exit vs non graceful exit code
-        // this should be done AFTER the endpoint to connect to EXISTS
+            })
+            .catch((error) => {
+                throw error
+            })
     }
+
+    // TODO (adriano) graceful exit vs non graceful exit code
+    // this should be done AFTER the endpoint to connect to EXISTS
+
+    useEffect(() => {
+        // Ensures that a container exists, that the protocol has not been launched before, and that
+        // the app we want to launch is the app that will be launched
+        if (containerID && launches === 0 && currentAppID === desiredAppID) {
+            setLaunches(launches + 1)
+        }
+    }, [containerID])
+
+    useEffect(() => {
+        if (launches === 1) {
+            LaunchProtocol()
+        }
+    }, [launches])
 
     return (
         <div
@@ -141,12 +161,12 @@ const Loading = (props: any) => {
                 zIndex: 1000,
             }}
         >
-            {os === "win32" ? (
+            {clientOS === OperatingSystem.WINDOWS ? (
                 <div>
                     <Titlebar backgroundColor="#000000" />
                 </div>
             ) : (
-                <div style={{ marginTop: 10 }}></div>
+                <div style={{ marginTop: 10 }} />
             )}
             <div className={styles.landingHeader}>
                 <div className={styles.landingHeaderLeft}>
@@ -173,7 +193,7 @@ const Loading = (props: any) => {
                         <animated.div
                             style={loadingBar}
                             className={styles.loadingBar}
-                        ></animated.div>
+                        />
                     </div>
                     <div
                         style={{
@@ -185,7 +205,7 @@ const Loading = (props: any) => {
                         }}
                     >
                         <div style={{ display: "flex", color: "#333333" }}>
-                            {percentLoaded != 100 && (
+                            {percentLoaded !== 100 && (
                                 <FontAwesomeIcon
                                     icon={faCircleNotch}
                                     spin
@@ -207,12 +227,12 @@ const Loading = (props: any) => {
     )
 }
 
-function mapStateToProps(state: any) {
+const mapStateToProps = <T extends {}>(state: T) => {
     return {
-        os: state.MainReducer.client.os,
+        clientOS: state.MainReducer.client.clientOS,
         percentLoaded: state.MainReducer.loading.percentLoaded,
         status: state.MainReducer.loading.statusMessage,
-        container_id: state.MainReducer.container.container_id,
+        containerID: state.MainReducer.container.containerID,
         cluster: state.MainReducer.container.cluster,
         port32262: state.MainReducer.container.port32262,
         port32263: state.MainReducer.container.port32263,

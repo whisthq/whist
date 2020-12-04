@@ -6,13 +6,13 @@ from app.constants.http_codes import (
     SUCCESS,
     UNAUTHORIZED,
 )
-from app.helpers.utils.aws.aws_resource_locks import lockContainerAndUpdate
-from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.aws.aws_resource_locks import lock_container_and_update
+from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import (
-    fractalSQLCommit,
-    fractalSQLUpdate,
+    fractal_sql_commit,
+    fractal_sql_update,
 )
-from app.helpers.utils.general.time import dateToUnix, getToday
+from app.helpers.utils.general.time import date_to_unix, get_today
 from app.models import db, LoginHistory, UserContainer, SupportedAppImages
 from app.serializers.hardware import UserContainerSchema
 
@@ -21,7 +21,7 @@ class BadAppError(Exception):
     """Raised when `preprocess_task_info` doesn't recognized an input."""
 
 
-def pingHelper(available, container_ip, port_32262, aeskey, version=None):
+def ping_helper(available, container_ip, port_32262, aeskey, version=None):
     """Update container state in the database.
 
     Args:
@@ -47,11 +47,13 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
 
     username = container_info.user_id
 
-    fractalSQLCommit(db, fractalSQLUpdate, container_info, {"last_pinged": dateToUnix(getToday())})
+    fractal_sql_commit(
+        db, fractal_sql_update, container_info, {"last_pinged": date_to_unix(get_today())}
+    )
 
     # Update container_info version
     if version:
-        fractalSQLCommit(db, fractalSQLUpdate, container_info, {"version": version})
+        fractal_sql_commit(db, fractal_sql_update, container_info, {"version": version})
 
     # Define states where we don't change the Container state
     intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
@@ -62,13 +64,13 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
         log = LoginHistory(
             user_id=username,
             action="logoff",
-            timestamp=dateToUnix(getToday()),
+            timestamp=date_to_unix(get_today()),
         )
 
-        fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
+        fractal_sql_commit(db, lambda db, x: db.session.add(x), log)
 
-        fractalLog(
-            function="pingHelper",
+        fractal_log(
+            function="ping_helper",
             label=str(username),
             logs="{username} just disconnected from Fractal".format(username=username),
         )
@@ -79,20 +81,20 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
         log = LoginHistory(
             user_id=username,
             action="logon",
-            timestamp=dateToUnix(getToday()),
+            timestamp=date_to_unix(get_today()),
         )
 
-        fractalSQLCommit(db, lambda db, x: db.session.add(x), log)
+        fractal_sql_commit(db, lambda db, x: db.session.add(x), log)
 
-        fractalLog(
-            function="pingHelper",
+        fractal_log(
+            function="ping_helper",
             label=str(username),
             logs="{username} just connected to Fractal".format(username=username),
         )
 
     # Change Container states accordingly
     if container_info.state not in intermediate_states and not available:
-        lockContainerAndUpdate(
+        lock_container_and_update(
             container_name=container_info.container_id,
             state="RUNNING_UNAVAILABLE",
             lock=False,
@@ -100,7 +102,7 @@ def pingHelper(available, container_ip, port_32262, aeskey, version=None):
         )
 
     if container_info.state not in intermediate_states and available:
-        lockContainerAndUpdate(
+        lock_container_and_update(
             container_name=container_info.container_id,
             state="RUNNING_AVAILABLE",
             lock=False,
@@ -149,6 +151,8 @@ def protocol_info(address, port, aeskey):
             "using_stun",
             "container_id",
             "user_id",
+            "is_assigned",
+            "dpi",
             "state",
         )
     )

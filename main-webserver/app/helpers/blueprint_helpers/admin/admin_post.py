@@ -1,10 +1,14 @@
-from app.constants.config import DASHBOARD_PASSWORD, DASHBOARD_USERNAME
-from app.helpers.utils.general.tokens import getAccessTokens
+from flask import current_app
+
+from app.helpers.utils.general.tokens import get_access_tokens
 
 
-def adminLoginHelper(username, password):
-    if username == DASHBOARD_USERNAME and password == DASHBOARD_PASSWORD:
-        access_token, refresh_token = getAccessTokens(username)
+def admin_login_helper(username, password):
+    if (
+        username == current_app.config["DASHBOARD_USERNAME"]
+        and password == current_app.config["DASHBOARD_PASSWORD"]
+    ):
+        access_token, refresh_token = get_access_tokens(username)
 
         return {"access_token": access_token, "refresh_token": refresh_token}
     else:

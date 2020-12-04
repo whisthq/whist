@@ -4,6 +4,6 @@ This subfolder contains the Dockerfiles for the productivity applications that F
 
 ## Applications
 
-- Slack
-- Discord
-- Notion
+-   Slack
+-   Discord
+-   Notion

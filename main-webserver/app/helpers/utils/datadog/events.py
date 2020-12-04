@@ -1,5 +1,5 @@
 from app import *
-from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.logs import fractal_log
 
 from functools import reduce
 
@@ -28,6 +28,7 @@ from app.helpers.utils.datadog.event_tags import (
     FAILURE,
     validTags,
 )
+from app.helpers.utils.datadog.event_text import to_text
 
 # TODO make higher order functions or something to basically
 # generate all the different variations of logs with some parameters
@@ -56,7 +57,7 @@ def initDatadog():
 
 def datadogEvent(title, tags, text="", init=True):
     """Logs a datadog event (not the same as a regular log, basically.. a noteworthy log)
-    to our account w/ the api and app keys as well as doing a fractalLog to keep it in
+    to our account w/ the api and app keys as well as doing a fractal_log to keep it in
     our main body of logs. We require tags to now allow people to make events that are not
     easily categorizeable. We require 2 tags, one for the event-type and one for the status.
 
@@ -67,7 +68,7 @@ def datadogEvent(title, tags, text="", init=True):
     """
 
     if not validTags(tags):
-        fractalLog(
+        fractal_log(
             function="datadogEvent",
             label=None,
             logs="Tried to log a datadog event with invalid tags: {tags}".format(tags=str(tags)),
@@ -97,7 +98,7 @@ def datadogEvent_userLogon(user_name):
     """
     datadogEvent(
         title="User Logged On",
-        text="User {user_name} just logged on".format(user_name=user_name),
+        text=to_text(username=user_name),
         tags=[LOGON, SUCCESS, USER_NAME_F.format(user_name=user_name)],
     )
 
@@ -127,11 +128,11 @@ def datadogEvent_containerCreate(
 
     datadogEvent(
         title="Created new Container",
-        text="Container {container_name} in cluster {cluster_name} for user {username}. Call took {time_taken} time.".format(
+        text=to_text(
             container_name=container_name,
             cluster_name=cluster_name,
             username=username,
-            time_taken=time_taken,
+            spinup_time=time_taken,
         ),
         tags=tags,
     )
@@ -146,7 +147,7 @@ def datadogEvent_clusterCreate(cluster_name, time_taken="unknown"):
     """
     datadogEvent(
         title="Created new Cluster. Call took {time_taken} time.".format(time_taken=time_taken),
-        text="Cluster {cluster_name}".format(cluster_name=cluster_name),
+        text=to_text(cluster_name=cluster_name, spinup_time=time_taken),
         tags=[CLUSTER_CREATION, SUCCESS, CLUSTER_NAME_F.format(cluster_name=cluster_name)],
     )
 
@@ -165,7 +166,7 @@ def datadogEvent_userLogoff(user_name, lifecycle=False):
     else:
         datadogEvent(
             title="User Logged Off",
-            text="User {user_name} just logged off".format(user_name=user_name),
+            text=to_text(username=user_name),
             tags=[LOGOFF, SUCCESS, USER_NAME_F.format(user_name=user_name)],
         )
 
@@ -190,8 +191,8 @@ def datadogEvent_containerDelete(container_name, cluster_name, lifecycle=False, 
     else:
         datadogEvent(
             title="Deleted Container",
-            text="Container {container_name} in cluster {cluster_name}. Call took {time_taken} time.".format(
-                container_name=container_name, cluster_name=cluster_name, time_taken=time_taken
+            text=to_text(
+                container_name=container_name, cluster_name=cluster_name, shutdown_time=time_taken
             ),
             tags=[
                 CONTAINER_DELETION,
@@ -214,9 +215,7 @@ def datadogEvent_clusterDelete(cluster_name, lifecycle=False, time_taken="unknow
     else:
         datadogEvent(
             title="Deleted Cluster",
-            text="Cluster {cluster_name}. Call took {time_taken} time.".format(
-                cluster_name=cluster_name, time_taken=time_taken
-            ),
+            text=to_text(cluster_name=cluster_name, shutdown_time=time_taken),
             tags=[CLUSTER_DELETION, SUCCESS, CLUSTER_NAME_F.format(cluster_name=cluster_name)],
         )
 
@@ -234,7 +233,7 @@ def datadogEvent_containerLifecycle(container_name, cluster_name="unknown", time
     while these datadog logs were in effect, AND it must be deleted now. In the case where it is
     not being deleted then this will return false information (i.e. the container lived for more
     than this will log) without an error. If the container's creation was not found, then this
-    will fractalLog an error with a corresponding message.
+    will fractal_log an error with a corresponding message.
 
     Args:
         container_name (str): The name of the container whose lifecycle we are observing the end for.
@@ -258,7 +257,7 @@ def datadogEvent_containerLifecycle(container_name, cluster_name="unknown", time
 
         if not CONTAINER_CREATION in tags:
             was_deletion = str(CONTAINER_DELETION in tags or CONTAINER_LIFECYCLE in tags)
-            fractalLog(
+            fractal_log(
                 function="datadogEvent_containerLifecycle",
                 label=None,
                 logs="Last event was not a creation for container {container_name}. Was it deletion? Answer: {was_deletion}. The user was {cointainer_user}.".format(
@@ -277,14 +276,14 @@ def datadogEvent_containerLifecycle(container_name, cluster_name="unknown", time
 
             datadogEvent(
                 title="Container Lifecycle Ended",
-                text="Container {container_name} has been deleted, completing its lifecycle. Creation time was {creation_date} and deletion time was {deletion_date}. Change in time was {runtime}. Ther user was {container_user}. Cluster was {cluster_name} and the call to delete took {time_taken}.".format(
+                text=to_text(
                     container_name=container_name,
-                    creation_date=creation_date,
-                    deletion_date=deletion_date,
-                    runtime=runtime,
-                    container_user=container_user,
+                    start_date=creation_date,
+                    end_date=deletion_date,
+                    lifetime=runtime,
+                    username=container_user,
                     cluster_name=cluster_name,
-                    time_taken=time_taken,
+                    shutdown_time=time_taken,
                 ),
                 tags=[
                     CONTAINER_LIFECYCLE,
@@ -293,7 +292,7 @@ def datadogEvent_containerLifecycle(container_name, cluster_name="unknown", time
                 ],
             )
     else:
-        fractalLog(
+        fractal_log(
             function="datadogEvent_containerLifecycle",
             label=None,
             logs="Failed to find creation event for container {container_name}".format(
@@ -323,7 +322,7 @@ def datadogEvent_clusterLifecycle(cluster_name, time_taken="unknown"):
             was_deletion = str(
                 CLUSTER_DELETION in event["tags"] or CLUSTER_LIFECYCLE in event["tags"]
             )
-            fractalLog(
+            fractal_log(
                 function="datadogEvent_clusterLifecycle",
                 label=None,
                 logs="Last event was not a creation for cluster {cluster_name}. Was it deletion? Answer: {was_deletion}.".format(
@@ -339,17 +338,17 @@ def datadogEvent_clusterLifecycle(cluster_name, time_taken="unknown"):
 
             datadogEvent(
                 title="Cluster Lifecycle Ended",
-                text="Cluster {cluster_name} has been deleted, completing its lifecycle. Creation time was {creation_date} and deletion time was {deletion_date}. Change in time was {runtime}. Time taken to invoke shutdown was {time_taken}.".format(
+                text=to_text(
                     cluster_name=cluster_name,
-                    creation_date=creation_date,
-                    deletion_date=deletion_date,
-                    runtime=runtime,
-                    time_taken=time_taken,
+                    start_date=creation_date,
+                    end_date=deletion_date,
+                    lifetime=runtime,
+                    shutdown_time=time_taken,
                 ),
                 tags=[CLUSTER_LIFECYCLE, SUCCESS, CLUSTER_NAME_F.format(cluster_name=cluster_name)],
             )
     else:
-        fractalLog(
+        fractal_log(
             function="datadogEvent_clusterLifecycle",
             label=None,
             logs="Failed to find creation event for cluster {cluster_name}".format(
@@ -372,7 +371,7 @@ def datadogEvent_userLifecycle(user_name):
     if event:
         if not LOGON in event["tags"]:
             was_logoff = str(LOGOFF in event["tags"] or USER_LIFECYCLE in event["tags"])
-            fractalLog(
+            fractal_log(
                 function="datadogEvent_userLifecycle",
                 label=None,
                 logs="Last event was not a log on for user {user_name}. Was it log off? Answer: {was_logoff}.".format(
@@ -388,16 +387,16 @@ def datadogEvent_userLifecycle(user_name):
 
             datadogEvent(
                 title="User Lifcycle ended.",
-                text="User {user_name} logged off, completing his/her lifecycle. Log on time was {start_date} and log off time was {end_date}. Change in time was {runtime}.".format(
-                    user_name=user_name,
+                text=to_text(
+                    username=user_name,
                     start_date=start_date,
                     end_date=end_date,
-                    runtime=runtime,
+                    lifetime=runtime,
                 ),
                 tags=[USER_LIFECYCLE, SUCCESS, USER_NAME_F.format(user_name=user_name)],
             )
     else:
-        fractalLog(
+        fractal_log(
             function="datadogEvent_userLifecycle",
             label=None,
             logs="Failed to find logon event for user {user_name}".format(user_name=user_name),

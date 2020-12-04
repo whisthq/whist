@@ -1,0 +1,18 @@
+# workflows/meta-label-pull-requests.yml
+#
+# Meta: Label Pull Requests
+# Labels pull requests with the subprojects they touch.
+
+name: "Meta: Label Pull Requests"
+
+on: pull_request
+
+jobs:
+  meta-label-pull-requests-main:
+    name: Label Pull Request
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Label the PR
+        uses: adamzolyak/monorepo-pr-labeler-action@2.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

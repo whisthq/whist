@@ -250,7 +250,7 @@ RUN adduser root pulse-access \
 RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service
 RUN systemctl mask pulseaudio
 RUN chmod -x /usr/bin/start-pulseaudio-x11
-COPY pulse-client.conf /etc/pulse/client.conf
+COPY config/pulse-client.conf /etc/pulse/client.conf
 
 # Create fractal Directory and Subdirectories in /usr/share
 RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/sync /usr/share/fractal/private
@@ -273,10 +273,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 
 # Install FractalServer scripts and kernel module input rules
-COPY entry.sh /usr/share/fractal
+COPY scripts/entry.sh /usr/share/fractal
 RUN chmod +x /usr/share/fractal/entry.sh
-COPY display-service-envs /usr/share/fractal
-COPY fractal-input.rules /usr/share/fractal
+COPY config/fractal-display-config.env /usr/share/fractal
 
 # Install and enable OpenSSH
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -295,7 +294,7 @@ RUN chown -vR fractal:fractal /home/fractal
 RUN chown root:root /run/user
 
 # Set up the entrypoint for the Docker container
-COPY docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
+COPY scripts/docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
 RUN chmod +x /usr/share/fractal/docker-entrypoint.sh
 
 # Set up Nvidia inside Docker
@@ -342,9 +341,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
 
 # Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID
-COPY 01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
-COPY fractal-update-nvidia-busid.service /etc/systemd/system/
-COPY update-nvidia-busid.sh /usr/share/fractal/
+COPY config/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
+COPY services/fractal-update-nvidia-busid.service /etc/systemd/system/
+COPY scripts/update-nvidia-busid.sh /usr/share/fractal/
 RUN chmod +x /usr/share/fractal/update-nvidia-busid.sh
 
 # Enable Nvidia Bus ID update script
@@ -368,28 +367,28 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
 
-COPY i3config /root/.config/i3/config
-COPY gtk-3-settings.ini /etc/gtk-3.0/settings.ini
-COPY .gtkrc-2.0 /root/.gtkrc-2.0
-COPY --chown=fractal .gtkrc-2.0 /home/fractal/.gtkrc-2.0
-COPY qt4-settings.conf /root/.config/Trolltech.conf
-COPY --chown=fractal qt4-settings.conf /home/fractal/.config/Trolltech.conf
-COPY .xinitrc /root/.xinitrc
+COPY config/i3config /root/.config/i3/config
+COPY config/gtk-3-settings.ini /etc/gtk-3.0/settings.ini
+COPY config/.gtkrc-2.0 /root/.gtkrc-2.0
+COPY --chown=fractal config/.gtkrc-2.0 /home/fractal/.gtkrc-2.0
+COPY config/qt4-settings.conf /root/.config/Trolltech.conf
+COPY --chown=fractal config/qt4-settings.conf /home/fractal/.config/Trolltech.conf
+COPY scripts/.xinitrc /root/.xinitrc
 
 # Install Fractal services
-COPY fractal-entrypoint.service /etc/systemd/system
+COPY services/fractal-entrypoint.service /etc/systemd/system
 RUN systemctl enable fractal-entrypoint
 
-COPY fractal-display.service /etc/systemd/system
+COPY services/fractal-display.service /etc/systemd/system
 RUN systemctl enable fractal-display
 
-COPY fractal-protocol.service /etc/systemd/system
+COPY services/fractal-protocol.service /etc/systemd/system
 RUN systemctl enable fractal-protocol
 
-COPY fractal-audio.service /etc/systemd/system
+COPY services/fractal-audio.service /etc/systemd/system
 RUN systemctl enable fractal-audio
 
-COPY start-fractal-server.sh /usr/share/fractal/start-fractal-server.sh
+COPY scripts/start-fractal-server.sh /usr/share/fractal/start-fractal-server.sh
 RUN chmod +x /usr/share/fractal/start-fractal-server.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
@@ -406,7 +405,7 @@ RUN systemctl mask NetworkManager-wait-online
 RUN systemctl mask nvidia-persistenced
 
 # Ubuntu 20-specific systemd fix (pre-systemd 246)
-COPY systemd-logind-override-ubuntu20.conf /etc/systemd/system/systemd-logind.service.d/override.conf
+COPY config/systemd-logind-override-ubuntu20.conf /etc/systemd/system/systemd-logind.service.d/override.conf
 
 # Set up Fractal Protocol symlink
 RUN mkdir /usr/share/fractal/bin

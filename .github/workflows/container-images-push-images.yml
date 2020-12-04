@@ -1,12 +1,16 @@
-# Deploy Docker images to AWS ECR
-name: Container-Images Push images
+# workflows/container-images-push-images.yml
+#
+# Container Images: Build & Push Images
+# Build and push docker images to production.
 
-# Publish on update to master branch
+name: "Container Images: Build & Push Images"
+
 on:
   push:
     branches: [master]
     paths:
-      - "/container-images/**"
+      - "container-images/**"
+      - "!container-images/README.md"
 
 env:
   aws-placeholder-region: us-east-1
@@ -18,8 +22,8 @@ env:
     ca-central-1
 
 jobs:
-  ecr-push:
-    name: Build and push to AWS ECR
+  container-images-push-images-ecr:
+    name: Build & Push to AWS ECR
     runs-on: ubuntu-20.04
 
     steps:

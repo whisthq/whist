@@ -5,7 +5,7 @@ import os
 from functools import wraps
 
 from celery import Celery
-from flask import request
+from flask import current_app, request
 from flask_sendgrid import SendGrid
 
 from .factory import create_app, jwtManager, ma, mail
@@ -16,8 +16,8 @@ def make_celery(app_name=__name__):
     return Celery(app_name, broker=redis, backend=redis)
 
 
-def fractalPreProcess(f):
-    @wraps(f)
+def fractal_pre_process(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         received_from = (
             request.headers.getlist("X-Forwarded-For")[0]
@@ -37,9 +37,7 @@ def fractalPreProcess(f):
 
         silence = False
 
-        from .constants.config import SILENCED_ENDPOINTS
-
-        for endpoint in SILENCED_ENDPOINTS:
+        for endpoint in current_app.config["SILENCED_ENDPOINTS"]:
             if endpoint in request.url:
                 silence = True
                 break
@@ -65,11 +63,13 @@ def fractalPreProcess(f):
                 )
             )
 
-        return f(*args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
 
 
 celery_instance = make_celery()
+
 celery_instance.set_default()
+
 app = create_app(celery=celery_instance)
