@@ -105,10 +105,9 @@ export const AdminSettings = (props: {
                         }}
                     >
                         Give a region (like us-east-1) and a webserver version
-                        (local, dev, staging, prod, or a url) and save them to
-                        choose where to connect to. In future may support
-                        different task defs. If the region is not a valid region
-                        the change does not go through (silently).
+                        (local, dev, staging, prod, or a url) as well as a task
+                        def and a cluster if you want. Defaults are provided to
+                        us-east-1, dev, fractal-broswers-chrome, and null cluster.
                     </div>
                 </div>
                 <div
