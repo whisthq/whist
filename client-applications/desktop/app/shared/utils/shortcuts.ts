@@ -17,7 +17,8 @@ export const createShortcut = (app: FractalApp): boolean => {
     if (platform === OperatingSystem.MAC) {
         debugLog("Mac shortcuts not yet implemented")
         return false
-    } else if (platform === OperatingSystem.WINDOWS) {
+    }
+    if (platform === OperatingSystem.WINDOWS) {
         const vbsPath = `${require("electron")
             .remote.app.getAppPath()
             .replace(

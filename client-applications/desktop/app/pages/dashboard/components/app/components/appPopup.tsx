@@ -35,8 +35,7 @@ const AppPopup = (props: {
     }
 
     const handleDownload = () => {
-        const shortcutCreated = createShortcut(app)
-        console.log(shortcutCreated)
+        createShortcut(app)
     }
 
     return (
