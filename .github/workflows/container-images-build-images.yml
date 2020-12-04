@@ -1,0 +1,40 @@
+# workflows/container-images-build-images.yml
+#
+# Container Images: Build Images
+# Build docker images to test that they actually build.
+
+name: "Container Images: Build Images"
+
+on:
+    pull_request:
+        branches: [master, dev]
+        paths:
+            - "/container-images/**"
+            - "!/container-images/README.md"
+
+jobs:
+    container-images-build-images-main:
+        name: Build Docker Images for Testing
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+                  submodules: recursive
+
+            - name: Walk repo to find all dockerfiles and store path as env variable
+              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+
+            - name: Build debug protocol
+              run: ./container-images/build_protocol.sh
+
+            - name: Build container images
+              run: |
+                  for app in ${{ env.apps }}
+                  do
+                    ./container-images/build_container_image.sh $app
+                  done
