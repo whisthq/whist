@@ -246,8 +246,8 @@ jobs:
             )
           endif()
 
-          message(STATUS "\n::add-matcher::./.github/cppcheck_matcher.json\n")
-          message(STATUS "\n::add-matcher::./.github/cmake_matcher.json\n")
+          message(STATUS "\n::add-matcher::${{ env.working-directory }}/.github/cppcheck_matcher.json\n")
+          message(STATUS "\n::add-matcher::${{ env.working-directory }}/.github/cmake_matcher.json\n")
 
           if ("${{ runner.os }}" STREQUAL "Linux")
             # install linux dev dependencies
