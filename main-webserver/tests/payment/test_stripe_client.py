@@ -58,8 +58,6 @@ dummy_invalid_referral_code = "asdofhasiuldofjlasnklfd23980q9wsiojdnh"
 week = date_to_unix(datetime.now() + relativedelta(weeks=1))
 month = date_to_unix(datetime.now() + relativedelta(months=1))
 
-monthly_plan_name = "Monthly"
-
 
 @pytest.fixture(scope="session")
 def monthly_plan(app):
@@ -193,7 +191,7 @@ def _assert_create_get_trial_end(email, referrer, client, plan):
     Returns:
         (unix time): The time of the end of the trial.
     """
-    assert client.create_subscription(email, monthly_plan_name, plan)
+    assert client.create_subscription(email, plan)
 
     stripe_customer_id = _get_stripe_customer_id(email)
     return stripe.Subscription.list(customer=stripe_customer_id)["data"][0]["trial_end"]
@@ -273,7 +271,7 @@ def test_get_stripe_info_no_customer_id(client, not_customer):
 def test_create_subscription_with_not_customer(client, monthly_plan, not_customer):
     email = not_customer
     with pytest.raises(NonexistentStripeCustomer):
-        client.create_subscription(email, monthly_plan_name, monthly_plan)
+        client.create_subscription(email, monthly_plan)
 
 
 def test_create_subscription_with_customer(client, monthly_plan, not_customer):
@@ -458,13 +456,13 @@ def test_get_products(client):
 
 # it's ok to ignore whether the state exists or not since this will exit
 # before any modifications are made
-def test_invalid_user_throws(client):
+def test_invalid_user_throws(client, monthly_plan):
     dummy_token = _generate_token()
 
     with pytest.raises(NonexistentUser):
         client.cancel_subscription(dummy_nonexistent_email)
     with pytest.raises(NonexistentUser):
-        client.create_subscription(dummy_nonexistent_email, dummy_token, dummy_zip_us)
+        client.create_subscription(dummy_nonexistent_email, monthly_plan)
     with pytest.raises(NonexistentUser):
         client.get_customer_info(dummy_nonexistent_email)
     with pytest.raises(NonexistentUser):
