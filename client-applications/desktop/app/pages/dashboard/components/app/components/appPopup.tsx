@@ -40,8 +40,11 @@ const AppPopup = (props: {
     }
 
     const handleDownload = () => {
+        const homeDir = require("os").homedir()
+        const startMenuPath = `${homeDir}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\`
+
         setShortcutCreated(true)
-        createShortcut(app)
+        createShortcut(app, startMenuPath)
         const { array, index } = updateArrayByKey(apps, "app_id", app.app_id, {
             localState: FractalAppLocalState.INSTALLED,
         })
