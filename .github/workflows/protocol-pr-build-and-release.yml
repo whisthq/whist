@@ -283,10 +283,6 @@ jobs:
           restore-keys: |
             ${{ matrix.config.name }}-ccache-
 
-      - name: Shell
-        working-directory: ${{env.working-directory}}
-        run: pwd
-
       - name: Configure cmake
         working-directory: ${{env.working-directory}}
         # TODO move into a script stored inside the repo to make this workflow easier to read
@@ -315,7 +311,7 @@ jobs:
           if ("${{ runner.os }}" STREQUAL "Windows")
             set(path_separator ";")
           endif()
-          set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
+          set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}/protocol${path_separator}$ENV{PATH}")
           set(ENV{FRACTAL_OSX_SYSROOT} /Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk)
 
           execute_process(
