@@ -13,8 +13,9 @@ on:
             - dev
             - project/**
         paths:
-            - "**/README.md"
             - "README.md"
+            - "**/README.md"
+            - ".github/workflows/README.md"
 
 jobs:
     readmes-linting-main:
@@ -35,7 +36,7 @@ jobs:
 
             - name: Check if readmes are formatted
               run: |
-                  result=$(prettier --check {.,**}/README.md > /dev/null && echo success || echo failure)
+                  result=$(prettier --check {.,**,.github/workflows}/README.md > /dev/null && echo success || echo failure)
                   if [ "$result" -ne "success" ]; then
                     (echo "To pass this check please lint README.md files with prettier" && false)
                   else
