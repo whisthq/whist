@@ -154,6 +154,7 @@ class DeploymentConfig:
     HOST_SERVICE_SECRET = property(getter("HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET"))
     JWT_SECRET_KEY = property(getter("JWT_SECRET_KEY"))
     REDIS_URL = property(getter("REDIS_URL", fetch=False))
+    SECRET_KEY = property(getter("SECRET_KEY", fetch=False))
     SENDGRID_API_KEY = property(getter("SENDGRID_API_KEY"))
     SENDGRID_DEFAULT_FROM = "noreply@tryfractal.com"
     SHA_SECRET_KEY = property(getter("SHA_SECRET_KEY"))
