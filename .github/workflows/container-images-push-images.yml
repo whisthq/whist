@@ -9,8 +9,8 @@ on:
     push:
         branches: [master]
         paths:
-            - "/container-images/**"
-            - "!/container-images/README.md"
+            - "container-images/**"
+            - "!container-images/README.md"
 
 env:
     aws-placeholder-region: us-east-1
