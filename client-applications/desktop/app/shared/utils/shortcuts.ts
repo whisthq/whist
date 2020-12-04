@@ -4,19 +4,20 @@ import { FractalNodeEnvironment } from "shared/types/config"
 import { debugLog } from "shared/utils/logging"
 
 export const createShortcutName = (appName: string): string => {
-    return `${appName} on Fractal`
+    return `Fractalized ${appName}`
 }
 
 export const createShortcut = (app: FractalApp): boolean => {
     const os = require("os")
-    const platform = os.platform()
+    const createDesktopShortcut = require("create-desktop-shortcuts")
+
+    const platform: OperatingSystem = os.platform()
     const appURL = `fractal://${app.app_id.toLowerCase().replace(/\s+/g, "-")}`
 
     if (platform === OperatingSystem.MAC) {
         debugLog("Mac shortcuts not yet implemented")
         return false
-    }
-    if (platform === OperatingSystem.WINDOWS) {
+    } else if (platform === OperatingSystem.WINDOWS) {
         const vbsPath = `${require("electron")
             .remote.app.getAppPath()
             .replace(
@@ -24,7 +25,6 @@ export const createShortcut = (app: FractalApp): boolean => {
                 "app.asar.unpacked"
             )}\\node_modules\\create-desktop-shortcuts\\src\\windows.vbs`
 
-        const createDesktopShortcut = require("create-desktop-shortcuts")
         const shortcutsCreated = createDesktopShortcut({
             windows: {
                 filePath: appURL,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, Dispatch } from "react"
 import { Row, Col } from "react-bootstrap"
 import { connect } from "react-redux"
 import { useQuery } from "@apollo/client"
@@ -14,9 +14,14 @@ import {
     checkIfShortcutExists,
     createShortcutName,
 } from "shared/utils/shortcuts"
-import { FractalApp, FractalBanner } from "shared/types/ui"
+import {
+    FractalApp,
+    FractalBanner,
+    FractalAppLocalState,
+} from "shared/types/ui"
 import { deep_copy } from "shared/utils/reducerHelpers"
-
+import { updateClient } from "store/actions/pure"
+import { searchArrayByKey } from "shared/utils/helpers"
 import {
     FractalAppCategory,
     FractalBannerCategory,
@@ -24,14 +29,14 @@ import {
 
 import styles from "pages/dashboard/views/discover/discover.css"
 
-import { adminApp } from "pages/dashboard/constants/adminApp"
-
 const Discover = (props: {
     search: string
+    apps: FractalApp
     username: string
     accessToken: string
+    dispatch: Dispatch
 }) => {
-    const { search, username, accessToken } = props
+    const { search, username, apps, accessToken, dispatch } = props
 
     const adminUsername =
         username &&
@@ -44,8 +49,7 @@ const Discover = (props: {
     const [selectedCategory, setSelectedCategory] = useState(
         FractalAppCategory.ALL
     )
-    // For app cards
-    const [featuredAppData, setFeaturedAppData] = useState([])
+
     // For left-side banner
     const [bannerData, setBannerData] = useState([])
     // For right-side banner with media articles
@@ -115,7 +119,7 @@ const Discover = (props: {
     // If user searches for an app, filter apps
 
     useEffect(() => {
-        const results = featuredAppData.filter(getSearchResults)
+        const results = apps.filter(getSearchResults)
         setSearchResults(
             results.map((app: FractalApp) => (
                 <App
@@ -130,7 +134,12 @@ const Discover = (props: {
     // If apps are queried via GraphQL, update local state and filter accordingly
 
     useEffect(() => {
-        if (appQuery.data && appQuery.data.hardware_supported_app_images) {
+        if (
+            apps.length === 0 &&
+            appQuery.data &&
+            appQuery.data.hardware_supported_app_images &&
+            appQuery.data.hardware_supported_app_images.length > 0
+        ) {
             const supportedImages = appQuery.data.hardware_supported_app_images
             let localAppData: FractalApp[] = []
             for (let i = 0; i < supportedImages.length; i += 1) {
@@ -138,22 +147,36 @@ const Discover = (props: {
                 if (!checkActive(app)) {
                     continue
                 }
-                if (!checkCategory(app)) {
-                    continue
-                }
                 const shortcutName = createShortcutName(app.app_id)
+                const installed = checkIfShortcutExists(shortcutName)
+                const appAlreadyStored = searchArrayByKey(
+                    apps,
+                    "app_id",
+                    app.app_id
+                )
+                let localState = installed
+                    ? FractalAppLocalState.INSTALLED
+                    : FractalAppLocalState.NOT_INSTALLED
+
+                console.log(app.app_id, installed.toString())
+
+                if (appAlreadyStored) {
+                    localState = appAlreadyStored.localState
+                }
+
                 const appCopy = Object.assign(deep_copy(app), {
-                    installed: checkIfShortcutExists(shortcutName),
+                    localState: localState,
                 })
                 localAppData.push(appCopy)
             }
+
             if (adminUsername) {
                 localAppData.push(adminApp)
             }
 
-            setFeaturedAppData(localAppData)
+            dispatch(updateClient({ apps: localAppData }))
         }
-    }, [appQuery.data, selectedCategory])
+    }, [appQuery.data, apps])
 
     // Display loading screen until GraphQL queries finish
     if (appQuery.loading || bannerQuery.loading) {
@@ -185,12 +208,8 @@ const Discover = (props: {
                 />
                 <Col xs={11}>
                     <Row>
-                        {featuredAppData.map((app: FractalApp) => (
-                            <App
-                                key={app.app_id}
-                                app={app}
-                                admin={app.app_id === "Test App"}
-                            />
+                        {apps.filter(checkCategory).map((app: FractalApp) => (
+                            <App key={app.app_id} app={app} />
                         ))}
                     </Row>
                 </Col>
@@ -205,11 +224,15 @@ const mapStateToProps = (state: {
             accessToken: string
             username: string
         }
+        client: {
+            apps: FractalApp[]
+        }
     }
 }) => {
     return {
         accessToken: state.MainReducer.auth.accessToken,
         username: state.MainReducer.auth.username,
+        apps: state.MainReducer.client.apps,
     }
 }
 
