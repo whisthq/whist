@@ -21,7 +21,6 @@ const Dashboard = () => {
                 style={{
                     display: "flex",
                     flexDirection: "column",
-                    marginTop: 28,
                 }}
                 className={styles.removeDrag}
             >
