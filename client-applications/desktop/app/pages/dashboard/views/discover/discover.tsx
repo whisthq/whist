@@ -19,7 +19,7 @@ import {
     FractalBanner,
     FractalAppLocalState,
 } from "shared/types/ui"
-import { deep_copy } from "shared/utils/reducerHelpers"
+import { deepCopyObject } from "shared/utils/reducerHelpers"
 import { updateClient } from "store/actions/pure"
 import { searchArrayByKey } from "shared/utils/helpers"
 import {
@@ -162,7 +162,7 @@ const Discover = (props: {
                         localState = value.localState
                     }
                     // Push app to app array
-                    const appCopy = Object.assign(deep_copy(app), {
+                    const appCopy = Object.assign(deepCopyObject(app), {
                         localState: localState,
                     })
                     localAppData.push(appCopy)
@@ -230,6 +230,7 @@ const mapStateToProps = (state: {
         }
     }
 }) => {
+    console.log(state.MainReducer.client.apps)
     return {
         accessToken: state.MainReducer.auth.accessToken,
         username: state.MainReducer.auth.username,
