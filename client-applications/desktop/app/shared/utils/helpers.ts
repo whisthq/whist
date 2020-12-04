@@ -77,18 +77,12 @@ export const updateArrayByKey = (
             map: { array: Record<string, any>[], index: number }
     */
 
-    try {
-        let clonedArr: Record<string, any>[] = cloneDeep(arr)
-        let { value, index } = searchArrayByKey(clonedArr, key, target)
-        if (index !== -1 && value) {
-            let valueCopy = deepCopyObject(value)
-            ;(valueCopy = Object.assign(valueCopy, body)),
-                (clonedArr[index] = valueCopy)
-            return { array: clonedArr, index: index }
-        } else {
-            return { array: clonedArr, index: -1 }
-        }
-    } catch (err) {
-        throw err
+    const clonedArr: Record<string, any>[] = cloneDeep(arr)
+    const { value, index } = searchArrayByKey(clonedArr, key, target)
+    if (index !== -1 && value) {
+        const valueCopy = deepCopyObject(value)
+        clonedArr[index] = Object.assign(valueCopy, body)
+        return { array: clonedArr, index: index }
     }
+    return { array: clonedArr, index: -1 }
 }
