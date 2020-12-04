@@ -315,13 +315,13 @@ jobs:
           set(ENV{FRACTAL_OSX_SYSROOT} /Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk)
 
           macro(print_all_variables)
-    message(STATUS "print_all_variables------------------------------------------{")
-    get_cmake_property(_variableNames VARIABLES)
-    foreach (_variableName ${_variableNames})
-        message(STATUS "${_variableName}=${${_variableName}}")
-    endforeach()
-    message(STATUS "print_all_variables------------------------------------------}")
-endmacro()
+            message(STATUS "print_all_variables------------------------------------------{")
+            get_cmake_property(_variableNames VARIABLES)
+            foreach (_variableName ${_variableNames})
+              message(STATUS "${_variableName}=${${_variableName}}")
+            endforeach()
+            message(STATUS "print_all_variables------------------------------------------}")
+          endmacro()
 
           execute_process(
             COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
