@@ -3,6 +3,9 @@ export enum FractalRoute {
     DASHBOARD = "/dashboard",
     UPDATE = "/update",
     LOADING = "/loading",
+    ONBOARD_WELCOME = "/onboard/welcome",
+    ONBOARD_APPS = "/onboard/apps",
+    ONBOARD_INSTALLING = "/onboard/installing",
 }
 
 export enum FractalDashboardTab {
