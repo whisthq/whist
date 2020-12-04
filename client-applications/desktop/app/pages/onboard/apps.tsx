@@ -92,7 +92,7 @@ const Apps = (props: { dispatch: Dispatch; accessToken: string }) => {
                                         type="button"
                                         key={app.app_id}
                                         style={{
-                                            margin: "20px 30px",
+                                            margin: "20px 20px",
                                             padding: 0,
                                         }}
                                         onClick={() =>
@@ -115,7 +115,6 @@ const Apps = (props: { dispatch: Dispatch; accessToken: string }) => {
                     <button
                         type="button"
                         className={styles.enterButton}
-                        style={{ marginTop: "35px" }}
                         onClick={handleDownload}
                     >
                         DOWNLOAD {numSelectedApps} APPS
