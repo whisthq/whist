@@ -5,8 +5,12 @@ import { FaCheck } from "react-icons/fa"
 
 import { openExternal, updateArrayByKey } from "shared/utils/helpers"
 import { FractalApp, FractalAppLocalState } from "shared/types/ui"
-import { OperatingSystem } from "shared/types/client"
-import { createShortcutName, createShortcut } from "shared/utils/shortcuts"
+import { OperatingSystem, FractalWindowsDirectory } from "shared/types/client"
+import {
+    createShortcutName,
+    createShortcut,
+    createDirectory,
+} from "shared/utils/shortcuts"
 import { updateClient } from "store/actions/pure"
 
 import styles from "pages/dashboard/components/app/components/appPopup.css"
@@ -39,18 +43,43 @@ const AppPopup = (props: {
         openExternal(url)
     }
 
-    const handleDownload = () => {
-        const homeDir = require("os").homedir()
-        const startMenuPath = `${homeDir}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\`
-
-        setShortcutCreated(true)
-        createShortcut(app, startMenuPath)
-        const { array, index } = updateArrayByKey(apps, "app_id", app.app_id, {
-            localState: FractalAppLocalState.INSTALLED,
-        })
-        if (array && index !== 0) {
-            dispatch(updateClient({ apps: array }))
+    const handleDownload = (): boolean => {
+        if (clientOS === OperatingSystem.MAC) {
+            debugLog("not yet implemented")
+            return false
         }
+        if (clientOS === OperatingSystem.WINDOWS) {
+            const outputPath = `${FractalWindowsDirectory.START_MENU}Fractal\\`
+
+            setShortcutCreated(true)
+            // Create a Fractal directory in the Start Menu if one doesn't exist
+            if (
+                !createDirectory(FractalWindowsDirectory.START_MENU, "Fractal")
+            ) {
+                return false
+            }
+
+            // Create the shortcut inside the Fractal Directory
+            if (!createShortcut(app, outputPath)) {
+                return false
+            }
+
+            const { array, index } = updateArrayByKey(
+                apps,
+                "app_id",
+                app.app_id,
+                {
+                    localState: FractalAppLocalState.INSTALLED,
+                }
+            )
+
+            if (array && index !== 0) {
+                dispatch(updateClient({ apps: array }))
+            }
+
+            return true
+        }
+        return false
     }
 
     return (
@@ -155,7 +184,7 @@ const AppPopup = (props: {
                                     shortcutCreated && "rgba(0,0,0,0.05)",
                             }}
                         >
-                            {shortcutCreated ? "Installing" : "Download"}
+                            Download
                         </button>
                     )}
                 </Modal.Body>

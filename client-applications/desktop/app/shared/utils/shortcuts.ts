@@ -33,6 +33,8 @@ export const createShortcut = (
             success (boolean): True/False if shortcut was created successfully
     */
 
+    const tempPath = outputPath
+
     const os = require("os")
     const createDesktopShortcut = require("create-desktop-shortcuts")
 
@@ -44,16 +46,11 @@ export const createShortcut = (
         return false
     }
     if (platform === OperatingSystem.WINDOWS) {
-        const vbsPath = `${require("electron")
-            .remote.app.getAppPath()
-            .replace(
-                "app.asar",
-                "app.asar.unpacked"
-            )}\\node_modules\\create-desktop-shortcuts\\src\\windows.vbs`
-        console.log(createShortcutName(app.app_id))
-        let params = {
+        const vbsPath = `${FractalWindowsDirectory.VBS_PATH}windows.vbs`
+
+        const shortcutsCreated = createDesktopShortcut({
             windows: {
-                outputPath: outputPath,
+                outputPath: tempPath,
                 filePath: appURL,
                 name: createShortcutName(app.app_id),
                 vbsPath:
@@ -61,10 +58,7 @@ export const createShortcut = (
                         ? null
                         : vbsPath,
             },
-        }
-
-        const shortcutsCreated = createDesktopShortcut(params)
-        console.log(shortcutsCreated)
+        })
         return shortcutsCreated
     }
     debugLog(`no suitable os found, instead got ${platform}`)
@@ -94,7 +88,7 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
         }
         if (platform === OperatingSystem.WINDOWS) {
             const windowsDesktopPath = `${FractalWindowsDirectory.DESKTOP}${shortcut}.lnk`
-            const windowsStartMenuPath = `${FractalWindowsDirectory.START_MENU}${shortcut}.lnk`
+            const windowsStartMenuPath = `${FractalWindowsDirectory.START_MENU}Fractal\\${shortcut}.lnk`
 
             const exists =
                 fs.existsSync(windowsDesktopPath) ||
