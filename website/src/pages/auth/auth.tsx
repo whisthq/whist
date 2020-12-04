@@ -92,6 +92,7 @@ const Auth = (props: {
             initialCallback &&
             initialCallback !== "" &&
             user.accessToken &&
+            user.emailVerified &&
             window
         ) {
             window.location.replace(authFlow.callback)
@@ -102,6 +103,7 @@ const Auth = (props: {
         initialCallback,
         redirectToCallback,
         user.accessToken,
+        user.emailVerified,
     ])
 
     if (redirectToCallback) {
