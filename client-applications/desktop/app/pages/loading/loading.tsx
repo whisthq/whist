@@ -72,7 +72,7 @@ const Loading = (props: {
         )
     }
 
-    const LaunchProtocol = () => {
+    const launchProtocol = () => {
         const child = require("child_process").spawn
         const appRootDir = require("electron").remote.app.getAppPath()
         let executable = ""
@@ -154,7 +154,7 @@ const Loading = (props: {
 
     useEffect(() => {
         if (launches === 1) {
-            LaunchProtocol()
+            launchProtocol()
         }
     }, [launches])
 

@@ -7,7 +7,7 @@ export const createShortcutName = (appName: string): string => {
     return `Fractalized ${appName}`
 }
 
-export const createShortcut = (app: FractalApp): boolean => {
+export const createShortcut = (app: FractalApp, outputPath?: null): boolean => {
     const os = require("os")
     const createDesktopShortcut = require("create-desktop-shortcuts")
 
@@ -26,16 +26,23 @@ export const createShortcut = (app: FractalApp): boolean => {
                 "app.asar.unpacked"
             )}\\node_modules\\create-desktop-shortcuts\\src\\windows.vbs`
 
+        let params = {
+            filePath: appURL,
+            name: createShortcutName(app.app_id),
+            vbsPath:
+                process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
+                    ? null
+                    : vbsPath,
+        }
+
+        if (outputPath) {
+            params.outputPath = outputPath
+        }
+
         const shortcutsCreated = createDesktopShortcut({
-            windows: {
-                filePath: appURL,
-                name: createShortcutName(app.app_id),
-                vbsPath:
-                    process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
-                        ? null
-                        : vbsPath,
-            },
+            windows: params,
         })
+
         return shortcutsCreated
     }
     debugLog(`no suitable os found, instead got ${platform}`)
