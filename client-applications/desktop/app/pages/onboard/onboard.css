@@ -120,14 +120,21 @@
 
 .appsTitle {
     font-family: "Maven Pro Medium";
-    width: 500px;
+    width: 600px;
     margin: auto;
-    letter-spacing: 1.1px;
+    letter-spacing: 1.4px;
+    font-size: 30px;
+    line-height: 1.4;
 }
 
 .subtext {
-    margin: 20px 0;
+    margin: 20px auto;
     font-size: 15px;
+    color: var(--primary-text-color);
+    line-height: 1.4;
+    letter-spacing: 1.2px;
+    width: 600px;
+    text-align: center;
 }
 
 .appsWrapper {
