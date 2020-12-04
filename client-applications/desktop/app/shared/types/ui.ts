@@ -1,4 +1,11 @@
-type FractalBanner = {
+export enum FractalAppLocalState {
+    INSTALLED = 1,
+    NOT_INSTALLED,
+    INSTALLING,
+    DELETING,
+}
+
+export type FractalBanner = {
     heading: string
     subheading: string
     category: string
@@ -6,7 +13,7 @@ type FractalBanner = {
     url: string
 }
 
-type FractalApp = {
+export type FractalApp = {
     app_id: string
     logo_url: string
     task_definition: string
@@ -16,5 +23,5 @@ type FractalApp = {
     url: string
     tos: string
     active: boolean
-    installed: boolean
+    local_state: FractalAppLocalState
 }

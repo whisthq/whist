@@ -4,9 +4,9 @@ import { Modal, Tooltip, OverlayTrigger } from "react-bootstrap"
 import { FaCheck } from "react-icons/fa"
 
 import { openExternal } from "shared/utils/helpers"
-import { FractalApp } from "shared/types/ui"
+import { FractalApp, FractalAppLocalState } from "shared/types/ui"
 import { OperatingSystem } from "shared/types/client"
-import { createShortcutName } from "shared/utils/shortcuts"
+import { createShortcutName, createShortcut } from "shared/utils/shortcuts"
 
 import styles from "pages/dashboard/components/app/components/appPopup.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
@@ -32,6 +32,11 @@ const AppPopup = (props: {
 
     const handleLinkClick = (url: string) => {
         openExternal(url)
+    }
+
+    const handleDownload = () => {
+        const shortcutCreated = createShortcut(app)
+        console.log(shortcutCreated)
     }
 
     return (
@@ -108,7 +113,7 @@ const AppPopup = (props: {
                             terms of service.
                         </button>
                     </div>
-                    {app.installed ? (
+                    {app.localState === FractalAppLocalState.INSTALLED ? (
                         <OverlayTrigger
                             placement="top"
                             overlay={
@@ -130,6 +135,7 @@ const AppPopup = (props: {
                         <button
                             type="button"
                             className={dashboardStyles.modalButton}
+                            onClick={handleDownload}
                         >
                             Download
                         </button>
