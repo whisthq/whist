@@ -2,18 +2,23 @@
 
 from collections import namedtuple
 
+import click
+
 from flask import abort, Blueprint, current_app, redirect, request, session, url_for
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from google_auth_oauthlib.flow import Flow
 
 from app.models import Credential, db, User
+from app.serializers.oauth import CredentialSchema
 
-oauth_bp = Blueprint("oauth", __name__)
+oauth_bp = Blueprint("oauth", __name__, cli_group="credentials")
 Token = namedtuple(
     "Token",
     ("access_token", "expiry", "refresh_token", "token_type"),
     defaults=(None, "bearer"),
 )
+
+oauth_bp.cli.help = "Manipulate encrypted OAuth credentials in the database."
 
 
 @oauth_bp.route("/oauth/authorize")
@@ -88,6 +93,33 @@ def callback():
     put_credential(user, token)
 
     return redirect("https://tryfractal.com")
+
+
+@oauth_bp.cli.command("get", help="Show the credentials owned by the user with user_id USER_ID.")
+@click.argument("user_id")
+def get_credential(user_id):
+    """Show the credentials owned by the user with user_id USER_ID.
+
+    Arguments:
+        user_id: The user_id of the user whose credentials should be retrieved.
+    """
+
+    user = User.query.get(user_id)
+    schema = CredentialSchema()
+
+    if not user:
+        raise click.ClickException(f"Could not find user '{user.user_id}'.")
+
+    credentials = user.credentials
+
+    if not credentials:
+        raise click.ClickException(
+            f"User '{user.user_id}' has not connected any applications to their Fractal account."
+        )
+
+    assert len(credentials) == 1
+
+    click.echo(schema.dumps(credentials[0], indent=2))
 
 
 def put_credential(user_id, token):
