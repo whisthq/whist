@@ -193,7 +193,8 @@
         "source-map-support": "^0.5.16",
         "spawn-sync": "^2.0.0",
         "subscriptions-transport-ws": "^0.9.18",
-        "systeminformation": "^4.22.3"
+        "systeminformation": "^4.22.3",
+        "ts-jest": "^26.4.4"
     },
     "description": "Fractal Desktop Application",
     "devDependencies": {

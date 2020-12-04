@@ -12,15 +12,21 @@ export const isNullString = (str: string): boolean => {
 }
 
 export const searchArrayByKey = (
-    arr: Object[],
+    arr: Record<string, any>[],
     key: string,
     target: string | number | boolean
-): Object | null => {
+): {
+    index: number
+    value: Record<string, any> | null
+} => {
     for (let i = 0; i < arr.length; i += 1) {
-        let element = arr[i]
-        if (element[key] === target) {
-            return element
+        let value = arr[i]
+        if (!value.hasOwnProperty(key)) {
+            throw ReferenceError
+        }
+        if (value[key] === target) {
+            return { value: value, index: i }
         }
     }
-    return null
+    return { value: null, index: -1 }
 }
