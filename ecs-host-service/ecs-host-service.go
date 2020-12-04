@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
 	// that we never forget to send a message via sentry. Instead, use the
 	// fractallogger package imported below as `logger`
@@ -76,9 +77,9 @@ var ttyState [256]string = [256]string{"reserved", "reserved", "reserved", "rese
 	"reserved", "reserved", "reserved", "reserved", "reserved", "reserved"}
 
 // keys: hostPort, values: slice containing all cloud storage directories that are mounted for that specific container
-var cloudStorageDirs map[uint16][]string
+var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
 
-func unmountCloudStorageDir(path string) {
+func unmountCloudStorageDir(hostPort uint16, path string) {
 	// Unmount lazily, i.e. will unmount as soon as the directory is not busy
 	cmd := exec.Command("fusermount", "-u", "-z", path)
 	res, err := cmd.CombinedOutput()
@@ -87,6 +88,14 @@ func unmountCloudStorageDir(path string) {
 	} else {
 		logger.Infof("Successfully unmounted cloud storage directory %s", path)
 	}
+
+	// Remove it from the state
+	_, ok := cloudStorageDirs[hostPort]
+	if !ok {
+		logger.Infof("No cloud storage dirs found for hostPort %v", hostPort)
+		return
+	}
+	delete(cloudStorageDirs[hostPort], path)
 }
 
 // Mounts the cloud storage directory and waits around to clean it up once it's unmounted.
@@ -127,9 +136,11 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	}
 
 	// Make directory to mount in
-	err = os.MkdirAll(path, 0700)
+	err = os.MkdirAll(path, 0644|os.ModeSticky)
 	if err != nil {
 		return logger.MakeError("Could not mkdir path %s. Error: %s", path, err)
+	} else {
+		logger.Infof("Created directory %s", path)
 	}
 
 	// We mount in foreground mode, and wait for the result to clean up the
@@ -142,16 +153,36 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 		"token", token,
 		"scope", "drive",
 	)
+
+	logger.Info("Rclone config create command: [  %s  ]", strings.Join(
+		[]string{"/usr/bin/rclone", "config", "create", configName, "drive",
+			"config_is_local", "false",
+			"config_refresh_token", "false",
+			"token", token,
+			"scope", "drive",
+		}, " "))
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return logger.MakeError("Could not run \"rclone config create\" command: %s. Output: %s", err, output)
+	} else {
+		logger.Info("Ran \"rclone config create\" command with output: %s", output)
 	}
 
 	// Mount in separate goroutine so we don't block the main goroutine.
 	// Synchronize using errorchan.
 	errorchan := make(chan error)
 	go func() {
-		cmd = exec.Command("/usr/bin/rclone", "mount", configName+":/", path)
+		cmd = exec.Command("/usr/bin/rclone", "mount", configName+"", path)
+		cmd.Env = os.Environ()
+		logger.Info("Rclone mount command: [  %s  ]", strings.Join([]string{"/usr/bin/rclone", "mount", configName + "", path}, " "))
+		stderr, _ := cmd.StderrPipe()
+
+		if _, ok := cloudStorageDirs[uint16(req.HostPort)]; !ok {
+			cloudStorageDirs[uint16(req.HostPort)] = make(map[string]interface{}, 0)
+		}
+		cloudStorageDirs[uint16(req.HostPort)][path] = nil
+
 		err = cmd.Start()
 		if err != nil {
 			errorchan <- logger.MakeError("Could not start \"rclone mount %s\" command: %s", configName+":/", err)
@@ -166,14 +197,17 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 		timer := time.AfterFunc(timeout, func() { close(errorchan) })
 		logger.Infof("Attempting to mount storage directory %s", path)
 
+		errbuf := new(bytes.Buffer)
+		errbuf.ReadFrom(stderr)
+
 		err = cmd.Wait()
 		if err != nil {
 			errorchanStillOpen := timer.Stop()
 			if errorchanStillOpen {
-				errorchan <- logger.MakeError("Mounting of cloud storage directory %s returned an error: %s", path, err)
+				errorchan <- logger.MakeError("Mounting of cloud storage directory %s returned an error: %s. Output: %s", path, err, errbuf)
 				close(errorchan)
 			} else {
-				logger.Errorf("Mounting of cloud storage directory %s failed after more than timeout %v and was therefore not reported as a failure to the webserver. Error: %s", path, timeout, err)
+				logger.Errorf("Mounting of cloud storage directory %s failed after more than timeout %v and was therefore not reported as a failure to the webserver. Error: %s. Output: %s", path, timeout, err, errbuf)
 			}
 		}
 
@@ -322,8 +356,8 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string) {
 
 	storageDirs, exists := cloudStorageDirs[hostPortUint16]
 	if exists {
-		for _, v := range storageDirs {
-			unmountCloudStorageDir(v)
+		for k, _ := range storageDirs {
+			unmountCloudStorageDir(hostPortUint16, k)
 		}
 	}
 }
@@ -409,9 +443,9 @@ func uninitializeFilesystem() {
 	}
 
 	// Unmount all cloud-storage folders
-	for _, dirs := range cloudStorageDirs {
-		for _, v := range dirs {
-			unmountCloudStorageDir(v)
+	for port, dirs := range cloudStorageDirs {
+		for k, _ := range dirs {
+			unmountCloudStorageDir(port, k)
 		}
 	}
 }
@@ -566,6 +600,9 @@ eventLoop:
 
 			case *httpserver.MountCloudStorageRequest:
 				err := mountCloudStorageDir(serverevent.(*httpserver.MountCloudStorageRequest))
+				if err != nil {
+					logger.Error(err)
+				}
 				serverevent.ReturnResult("", err)
 			}
 		}
