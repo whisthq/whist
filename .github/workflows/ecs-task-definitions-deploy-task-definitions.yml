@@ -9,8 +9,8 @@ on:
     push:
         branches: [master]
         paths:
-            - "/ecs-task-definitions/**"
-            - "!/ecs-task-definitions/README.md"
+            - "ecs-task-definitions/**"
+            - "!ecs-task-definitions/README.md"
 
 jobs:
     ecs-task-definitions-deploy-task-definitions-main:

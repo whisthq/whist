@@ -9,8 +9,8 @@ on:
     push:
         branches: [master]
         paths:
-            - "/ecs-host-service/**"
-            - "!/ecs-host-service/README.md"
+            - "ecs-host-service/**"
+            - "!ecs-host-service/README.md"
 
 env:
     binary-location: ecs-host-service/build
