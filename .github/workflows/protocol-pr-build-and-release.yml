@@ -112,7 +112,7 @@ jobs:
     needs: [params]
     runs-on: ${{ matrix.config.os }}
     env:
-      working-directory: ./protocol
+      working-directory: ${{ github.workspace }}/protocol
     strategy:
       fail-fast: false
       matrix:
@@ -162,7 +162,7 @@ jobs:
         if: runner.os == 'Windows'
         uses: crazy-max/ghaction-chocolatey@v1
         with:
-          args: install "${{ github.workspace }}\.github\protocol\choco-install.config" --force
+          args: install "${{ env.working-directory }}\.github\choco-install.config" --force
 
       - name: Install Python (for sentry download)
         uses: actions/setup-python@v2
@@ -178,7 +178,7 @@ jobs:
         shell: powershell
         run: |
           # Install CUDA via a powershell script
-          ${{ github.workspace }}\.github\protocol\install_cuda_windows.ps1
+          ${{ env.working-directory }}\.github\install_cuda_windows.ps1
           if ($?) {
           # Set paths for subsequent steps, using $env:CUDA_PATH
           echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
@@ -212,18 +212,18 @@ jobs:
             set(ninja_suffix "win.zip")
             set(cmake_suffix "win64-x64.zip")
             set(cmake_dir "cmake-${cmake_version}-win64-x64/bin")
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\protocol\msvc_matcher.json\n")
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\protocol\msvc_linker_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ env.working-directory }}\.github\msvc_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ env.working-directory }}\.github\msvc_linker_matcher.json\n")
           elseif ("${{ runner.os }}" STREQUAL "Linux")
             set(ninja_suffix "linux.zip")
             set(cmake_suffix "Linux-x86_64.tar.gz")
             set(cmake_dir "cmake-${cmake_version}-Linux-x86_64/bin")
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/protocol/gcc_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ env.working-directory }}/.github/protocol/gcc_matcher.json\n")
           elseif ("${{ runner.os }}" STREQUAL "macOS")
             set(ninja_suffix "mac.zip")
             set(cmake_suffix "Darwin-x86_64.tar.gz")
             set(cmake_dir "cmake-${cmake_version}-Darwin-x86_64/CMake.app/Contents/bin")
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/protocol/clang_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ env.working-directory }}/.github/protocol/clang_matcher.json\n")
           endif()
 
           set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
@@ -235,7 +235,7 @@ jobs:
           execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./cmake.zip)
 
           # Save the path for other steps
-          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/protocol/${cmake_dir}" cmake_dir)
+          file(TO_CMAKE_PATH "${{ env.working-directory }}/${cmake_dir}" cmake_dir)
           message("::set-output name=cmake_dir::${cmake_dir}")
 
           if (NOT "${{ runner.os }}" STREQUAL "Windows")
@@ -252,7 +252,7 @@ jobs:
           if ("${{ runner.os }}" STREQUAL "Linux")
             # install linux dev dependencies
               execute_process(COMMAND bash -c "sudo apt-get update -y")
-              execute_process(COMMAND ${{ github.workspace }}/desktop/linux-client-setup.sh)
+              execute_process(COMMAND ${{ env.working-directory }}/protocol/desktop/linux-client-setup.sh)
               execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
           elseif("${{ runner.os }}" STREQUAL "macOS")
               execute_process(COMMAND brew install cppcheck)
@@ -311,7 +311,7 @@ jobs:
           if ("${{ runner.os }}" STREQUAL "Windows")
             set(path_separator ";")
           endif()
-          set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}/protocol${path_separator}$ENV{PATH}")
+          set(ENV{PATH} "${{ env.working-directory }}${path_separator}$ENV{PATH}")
           set(ENV{FRACTAL_OSX_SYSROOT} /Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk)
 
           macro(print_all_variables)
@@ -361,9 +361,9 @@ jobs:
           if ("${{ runner.os }}" STREQUAL "Windows")
             set(path_separator ";")
           endif()
-          set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}/protocol${path_separator}$ENV{PATH}")
+          set(ENV{PATH} "${{ env.working-directory }}${path_separator}$ENV{PATH}")
 
-          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/protocol" ccache_basedir)
+          file(TO_CMAKE_PATH "${{ env.working-directory }}" ccache_basedir)
           set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
           set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
           set(ENV{CCACHE_COMPRESS} "true")
@@ -391,27 +391,27 @@ jobs:
       - name: Upload debug information to sentry
         working-directory: ${{env.working-directory}}
         run: |
-            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
+            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
         continue-on-error: true
       - name: upload windows pdb
         working-directory: ${{env.working-directory}}
         if: runner.os == 'Windows'
         run: |
-            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
+            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
         continue-on-error: true
       - name: Upload server artifact (if requested on this platform)
         if: matrix.config.server_artifact_name
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.config.server_artifact_name }}
-          path: ${{ github.workspace }}${{ matrix.config.server_artifact_relpath }}
+          path: ${{ env.working-directory }}${{ matrix.config.server_artifact_relpath }}
 
       - name: Upload client artifact
         if: matrix.config.client_artifact_name
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.config.client_artifact_name }}
-          path: ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}
+          path: ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}
 
       - name: Set status to success
         uses: Sibz/github-status-action@v1
@@ -483,7 +483,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: Windows-64bit_server
-          path: ${{ github.workspace }}/Windows-64bit_server
+          path: ${{ env.working-directory }}/Windows-64bit_server
       - name: deploy to VM
         timeout-minutes: 20
         run: |
@@ -497,11 +497,11 @@ jobs:
               sleep 30
           done
 
-          ${{ github.workspace }}/.github/protocol/deploy_artifact_ssh.sh \
+          ${{ env.working-directory }}/.github/protocol/deploy_artifact_ssh.sh \
             --ssh-key ./sshkey \
             --vm-ip "$SERVER_VM_IP" \
             --vm-user "$SERVER_VM_USER" \
-            --deploy ${{ github.workspace }}/Windows-64bit_server
+            --deploy ${{ env.working-directory }}/Windows-64bit_server
           sleep 60
           NUM_RETRIES=0
           until [ NUM_RETRIES -eq 5 ] || ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"; do
