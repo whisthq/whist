@@ -1,23 +1,25 @@
-# Automatically push a new Sentry release
-# You need this GitHub repository to be linked in the Settings section of the Sentry organization
-# for this workflow to execute properly
-name: Sentry Release
+# workflows/ecs-host-service-push-sentry-release.yml
+#
+# ECS Host Service: Push Sentry Release
+# Automatically push a new sentry release for ecs-host-service.
+
+name: "ECS Host Service: Push Sentry Release"
 
 on:
   push:
     branches: [master]
     paths:
-      - "main-webserver/**"
-      - "!main-webserver/README.md"
+      - "ecs-host-service/**"
+      - "!ecs-host-service/README.md"
 
 jobs:
-  createSentryRelease:
-    name: Create and Upload Sentry Release
-    runs-on: ubuntu-latest
+  ecs-host-service-push-sentry-release-main:
+    name: Push Sentry Release
+    runs-on: ubuntu-20.04
     env:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       SENTRY_ORG: tryfractal
-      SENTRY_PROJECT: main-webserver
+      SENTRY_PROJECT: ecs-host-service
       SENTRY_DEPLOY_ENVIRONMENT: production
 
     steps:
@@ -48,5 +50,5 @@ jobs:
       - name: Notify Slack
         run: |
           curl -X POST \
-          --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Main Webserver Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+          --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"ECS Host Service Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
           https://hooks.slack.com/services/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

@@ -1,7 +1,9 @@
-# Automatically push a new Sentry release
-# You need this GitHub repository to be linked in the Settings section of the Sentry organization
-# for this workflow to execute properly
-name: Sentry Release
+# workflows/protocol-push-sentry-release.yml
+#
+# Protocol: Push Sentry Release
+# Automatically push a new sentry release for the protocol.
+
+name: "Protocol: Push Sentry Release"
 
 on:
   push:
@@ -11,9 +13,9 @@ on:
       - "!protocol/README.md"
 
 jobs:
-  createSentryRelease:
-    name: Create and Upload Sentry Release
-    runs-on: ubuntu-latest
+  protocol-push-sentry-release-main:
+    name: Push Sentry Release
+    runs-on: ubuntu-20.04
     env:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       SENTRY_ORG: fractalcomputers

@@ -1,15 +1,18 @@
-# This workflow deletes GitHub Releases/Tags every 7 days, keeping the 5 latest Releases/Tags
+# workflows/meta-clear-releases.yml
+#
+# Meta: Clean Up Releases & Tags
+# Runs weekly, deleting old releases and tags from github, keeping only the last 5.
 
-name: "Delete Old GitHub Releases & Tags"
+name: "Meta: Clean Up Releases & Tags"
 
 on:
   schedule:
     - cron: "0 0 * * 0" # every 7 days
 
 jobs:
-  delete-releases:
-    name: "Delete Releases"
-    runs-on: ubuntu-latest
+  meta-clear-releases-main:
+    name: "Delete Old Releases & Tags"
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Purge releases/tags over 7 days old, keeping the 5 latest

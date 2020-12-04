@@ -1,15 +1,17 @@
-# This workflow will periodically empty the S3 bucket which stores the protocol client/server
-# logs after each streaming session
+# workflows/main-webserver-clear-protocol-logs.yml
+#
+# Main Webserver: Clear Protocol Logs
+# Runs monthly, emptying the S3 bucket which stores the protocol client/server logs.
 
-name: Empty Protocol Logs S3 Bucket
+name: "Main Webserver: Clear Protocol Logs"
 
 on:
   schedule:
     - cron: "0 0 1 * *" # every month
 
 jobs:
-  empty-s3-bucket:
-    name: Empty S3 Bucket
+  main-webserver-clear-protocol-logs-main:
+    name: Empty Protocol Logs from S3 Bucket
     runs-on: ubuntu-20.04
 
     steps:

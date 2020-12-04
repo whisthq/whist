@@ -1,0 +1,19 @@
+# workflows/meta-clear-artifacts.yml
+#
+# Meta: Clean Up Artifacts
+# Runs daily, deleting old artifacts from the github workflows.
+
+name: "Meta: Clean Up Artifacts"
+on:
+  schedule:
+    - cron: "0 1 * * *" # every day
+
+jobs:
+  meta-clear-artifacts-main:
+    name: Delete Old Artifacts
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: kolpav/purge-artifacts-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          expire-in: 7days # Setting this to 0 will delete all artifacts

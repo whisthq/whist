@@ -1,16 +1,20 @@
-# This workflow will check if the code is linted with Python Black and Pylint
+# workflows/main-webserver-linting.yml
+#
+# Main Webserver: Linting
+# Lint main-webserver using black and pylint.
 
-name: Python Linters
+name: "Main Webserver: Linting"
 
 on:
   pull_request:
     branches: [master, dev]
     paths:
       - "main-webserver/**"
+      - "!main-webserver/README.md"
 
 jobs:
-  lint:
-    name: Python Black and Pylint Linters
+  main-webserver-linting-main:
+    name: Lint Main Webserver
     runs-on: ubuntu-20.04
 
     steps:

@@ -1,12 +1,16 @@
-name: Publish ECS Host Service builds
+# workflows/ecs-host-service-publish-build.yml
+#
+# ECS Host Service: Build & Publish
+# Build and publish the ECS host service.
 
-# Publish on update to master branch
+name: "ECS Host Service: Build & Publish"
+
 on:
   push:
     branches: [master]
     paths:
-      - "/ecs-host-service/**"
-      - "!/ecs-host-service/README.md"
+      - "ecs-host-service/**"
+      - "!ecs-host-service/README.md"
 
 env:
   binary-location: ecs-host-service/build
@@ -15,9 +19,9 @@ env:
   s3-bucket-uri: s3://fractal-ecs-host-service
 
 jobs:
-  s3-publish:
-    name: Build and publish to AWS S3
-    runs-on: ubuntu-latest
+  ecs-host-service-publish-build-s3:
+    name: Build & Publish to AWS S3
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout git repository

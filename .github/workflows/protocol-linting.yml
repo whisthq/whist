@@ -1,21 +1,25 @@
-# Format C/C++ code via clang-format
+# workflows/protocol-linting.yml
+#
+# Protocol: Linting
+# Lint protocol using clang-format.
 
-name: Protocol Linter
+name: "Protocol: Linting"
 
 on:
   pull_request:
     paths:
       - "protocol/**"
+      - "!protocol/README.md"
 
 env:
-    CMAKE_VERSION: 3.15.7
-    NINJA_VERSION: 1.9.0
-    BUILD_TYPE: Debug
-    CCACHE_VERSION: 3.7.7
+  CMAKE_VERSION: 3.15.7
+  NINJA_VERSION: 1.9.0
+  BUILD_TYPE: Debug
+  CCACHE_VERSION: 3.7.7
 
 jobs:
-  build:
-    name: Check with clang-format
+  protocol-linting-main:
+    name: Lint Protocol
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

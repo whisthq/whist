@@ -1,16 +1,21 @@
-# Workflow to lint an Electron app with Prettier
+# workflows/client-applications-linting.yml
+#
+# Client Applications: Linting
+# Lint client-applications using eslint.
 
-name: Lint client-applications
+name: "Client Applications: Linting"
 
 on:
   pull_request:
     branches: [master, dev]
     paths:
       - "client-applications/**"
+      - "!client-applications/README.md"
 
 jobs:
-  client-applications-lint:
-    runs-on: ubuntu-latest
+  client-applications-linting-main:
+    name: Lint Client Applications
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Check out Git repository
