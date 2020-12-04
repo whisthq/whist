@@ -1,23 +1,28 @@
-import React from "react"
+import React, { useState } from "react"
 import { connect } from "react-redux"
 import { Modal, Tooltip, OverlayTrigger } from "react-bootstrap"
 import { FaCheck } from "react-icons/fa"
 
-import { openExternal } from "shared/utils/helpers"
+import { openExternal, updateArrayByKey } from "shared/utils/helpers"
 import { FractalApp, FractalAppLocalState } from "shared/types/ui"
 import { OperatingSystem } from "shared/types/client"
 import { createShortcutName, createShortcut } from "shared/utils/shortcuts"
+import { updateClient } from "store/actions/pure"
 
 import styles from "pages/dashboard/components/app/components/appPopup.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
 
 const AppPopup = (props: {
     app: FractalApp
+    apps: FractalApp[]
     showModal: boolean
     clientOS: OperatingSystem
     callback: (showModal: boolean) => void
+    dispatch: Dispatch
 }) => {
-    const { app, showModal, clientOS, callback } = props
+    const { app, apps, showModal, clientOS, callback, dispatch } = props
+
+    const [shortcutCreated, setShortcutCreated] = useState(false)
 
     const tooltip =
         clientOS === OperatingSystem.WINDOWS
@@ -35,7 +40,14 @@ const AppPopup = (props: {
     }
 
     const handleDownload = () => {
+        setShortcutCreated(true)
         createShortcut(app)
+        const { array, index } = updateArrayByKey(apps, "app_id", app.app_id, {
+            localState: FractalAppLocalState.INSTALLED,
+        })
+        if (array && index !== 0) {
+            dispatch(updateClient({ apps: array }))
+        }
     }
 
     return (
@@ -135,8 +147,12 @@ const AppPopup = (props: {
                             type="button"
                             className={dashboardStyles.modalButton}
                             onClick={handleDownload}
+                            style={{
+                                background:
+                                    shortcutCreated && "rgba(0,0,0,0.05)",
+                            }}
                         >
-                            Download
+                            {shortcutCreated ? "Installing" : "Download"}
                         </button>
                     )}
                 </Modal.Body>
@@ -149,11 +165,13 @@ const mapStateToProps = (state: {
     MainReducer: {
         client: {
             clientOS: OperatingSystem
+            apps: FractalApp[]
         }
     }
 }) => {
     return {
         clientOS: state.MainReducer.client.clientOS,
+        apps: state.MainReducer.client.apps,
     }
 }
 

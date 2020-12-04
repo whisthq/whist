@@ -32,7 +32,7 @@ export const createShortcut = (app: FractalApp): boolean => {
                 name: createShortcutName(app.app_id),
                 vbsPath:
                     process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
-                        ? ""
+                        ? null
                         : vbsPath,
             },
         })
