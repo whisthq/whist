@@ -19,8 +19,13 @@ export type FractalConfig = {
 }
 
 export type FractalEnvironment = {
-    local: FractalConfig
-    development: FractalConfig
-    staging: FractalConfig
-    production: FractalConfig
+    LOCAL: FractalConfig
+    DEVELOPMENT: FractalConfig
+    STAGING: FractalConfig
+    PRODUCTION: FractalConfig
+}
+
+export enum FractalNodeEnvironment {
+    DEVELOPMENT = "development",
+    PRODUCTION = "production",
 }

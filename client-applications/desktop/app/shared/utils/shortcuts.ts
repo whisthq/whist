@@ -1,5 +1,6 @@
 import { OperatingSystem } from "shared/types/client"
 import { FractalApp } from "shared/types/ui"
+import { FractalNodeEnvironment } from "shared/types/config"
 import { debugLog } from "shared/utils/logging"
 
 export const createShortcutName = (appName: string): string => {
@@ -12,7 +13,7 @@ export const createShortcut = (app: FractalApp): boolean => {
     const appURL = `fractal://${app.app_id.toLowerCase().replace(/\s+/g, "-")}`
 
     if (platform === OperatingSystem.MAC) {
-        debugLog("mac shortcuts not yet implemented")
+        debugLog("Mac shortcuts not yet implemented")
         return false
     }
     if (platform === OperatingSystem.WINDOWS) {
@@ -28,7 +29,10 @@ export const createShortcut = (app: FractalApp): boolean => {
             windows: {
                 filePath: appURL,
                 name: createShortcutName(app.app_id),
-                vbsPath: process.env.NODE_ENV === "development" ? "" : vbsPath,
+                vbsPath:
+                    process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
+                        ? ""
+                        : vbsPath,
             },
         })
         return shortcutsCreated
