@@ -325,12 +325,9 @@ jobs:
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
               -DUSE_CPPCHECK=ON
             RESULT_VARIABLE result
-            OUTPUT_VARIABLE sout
-            ERROR_VARIABLE serr
+            OUTPUT_FILE "/proc/self/fd/0"
           )
           if (NOT result EQUAL 0)
-            message(WARNING sout)
-            message(WARNING serr)
             message(FATAL_ERROR "Bad exit status")
           endif()
 
