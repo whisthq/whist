@@ -52,6 +52,28 @@ const Loading = (props: {
     const [launches, setLaunches] = useState(0)
     const loadingBar = useSpring({ width: percentLoadedWidth })
 
+    const resetLaunchRedux = () => {
+        dispatch(
+            updateContainer({
+                containerID: null,
+                cluster: null,
+                port32262: null,
+                port32263: null,
+                port32273: null,
+                publicIP: null,
+                secretKey: null,
+                launches: 0,
+                launchURL: null,
+            })
+        )
+        dispatch(
+            updateLoading({
+                statusMessage: "Powering up your app",
+                percentLoaded: 0,
+            })
+        )
+    }
+
     const LaunchProtocol = () => {
         const child = require("child_process").spawn
         const appRootDir = require("electron").remote.app.getAppPath()
@@ -104,25 +126,7 @@ const Loading = (props: {
                     // },
                 })
                 return protocol.on("close", () => {
-                    dispatch(
-                        updateContainer({
-                            containerID: null,
-                            cluster: null,
-                            port32262: null,
-                            port32263: null,
-                            port32273: null,
-                            publicIP: null,
-                            secretKey: null,
-                            launches: 0,
-                            launchURL: null,
-                        })
-                    )
-                    dispatch(
-                        updateLoading({
-                            statusMessage: "Powering up your app",
-                            percentLoaded: 0,
-                        })
-                    )
+                    resetLaunchRedux()
                     setLaunches(0)
                     ipc.sendSync("canClose", true)
                     history.push(FractalRoute.DASHBOARD)
@@ -131,6 +135,12 @@ const Loading = (props: {
             .catch((error) => {
                 throw error
             })
+    }
+
+    const returnToDashboard = () => {
+        resetLaunchRedux()
+        setLaunches(0)
+        history.push(FractalRoute.DASHBOARD)
     }
 
     // TODO (adriano) graceful exit vs non graceful exit code
@@ -220,6 +230,22 @@ const Loading = (props: {
                             )}{" "}
                             {status}
                         </div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "center" }}>
+                        {status && // a little bit hacky, but gets the job done
+                            typeof status === "string" &&
+                            status.toLowerCase().includes("unexpected") && (
+                                <div
+                                    role="button" // so eslint will not yell
+                                    tabIndex={0} // also for eslint
+                                    className={styles.dashboardButton}
+                                    style={{ width: 220, marginTop: 25 }}
+                                    onClick={returnToDashboard}
+                                    onKeyDown={returnToDashboard} // eslint
+                                >
+                                    BACK TO DASHBOARD
+                                </div>
+                            )}
                     </div>
                 </div>
             </div>

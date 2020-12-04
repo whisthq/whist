@@ -10,6 +10,7 @@ import { generateMessage } from "shared/utils/loading"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalAPI } from "shared/types/api"
 import { FractalAuthCache } from "shared/types/cache"
+import { config } from "shared/constants/config"
 import { AWSRegion } from "shared/types/aws"
 
 function* refreshAccess() {
@@ -67,25 +68,65 @@ function* validateAccessToken(action: { accessToken: string }) {
     }
 }
 
-function* createContainer(action: { app: string; url: string }) {
+function* createContainer(action: {
+    app: string
+    url: string
+    test?: boolean
+}) {
+    const test = action.test
+    const app = action.app
+    const url = action.url
+
+    // console.log(`create container saga, test, app, url : ${test}, ${app}, ${url}`)
+
     yield put(
         Action.updateContainer({
-            desiredAppID: action.app,
+            desiredAppID: app,
         })
     )
 
     const state = yield select()
     const username = state.MainReducer.auth.username
 
-    let region = state.MainReducer.client.region
-        ? state.MainReducer.client.region
-        : AWSRegion.US_EAST_1
-    if (region === AWSRegion.US_EAST_2) {
-        region = AWSRegion.US_EAST_1
+    const endpoint = test
+        ? FractalAPI.CONTAINER.TEST_CREATE
+        : FractalAPI.CONTAINER.CREATE
+    const body = test
+        ? {
+              username: username,
+              // eslint will yell otherwise... to avoid breaking server code we are disbabling
+              /* eslint-disable */
+              cluster_name: state.MainReducer.admin.cluster,
+              region_name: state.MainReducer.admin.region,
+              task_definition_arn: state.MainReducer.admin.taskArn,
+              // dpi not supported yet
+          }
+        : {
+              username: username,
+              region: null,
+              app: app,
+              url: url,
+              dpi: state.MainReducer.client.dpi,
+          }
+    const webserver = test
+        ? state.MainReducer.admin.webserverUrl
+        : config.url.WEBSERVER_URL
+
+    if (!test) {
+        let region = state.MainReducer.client.region
+            ? state.MainReducer.client.region
+            : AWSRegion.US_EAST_1
+        if (region === AWSRegion.US_EAST_2) {
+            region = AWSRegion.US_EAST_1
+        }
+        if (region === AWSRegion.US_WEST_2) {
+            region = AWSRegion.US_WEST_1
+        }
+        body.region = region
     }
-    if (region === AWSRegion.US_WEST_2) {
-        region = AWSRegion.US_WEST_1
-    }
+
+    // console.log(`body is ${JSON.stringify(body)}`)
+    // console.log(`webserver is ${webserver}`)
 
     if (!username || username === "None" || username === "") {
         history.push(FractalRoute.LOGIN)
@@ -94,15 +135,10 @@ function* createContainer(action: { app: string; url: string }) {
 
     let { json, success } = yield call(
         apiPost,
-        FractalAPI.CONTAINER.CREATE,
-        {
-            username: username,
-            region: region,
-            app: action.app,
-            url: action.url,
-            dpi: state.MainReducer.client.dpi,
-        },
-        state.MainReducer.auth.accessToken
+        endpoint,
+        body,
+        state.MainReducer.auth.accessToken,
+        webserver
     )
 
     if (!success) {
@@ -111,11 +147,14 @@ function* createContainer(action: { app: string; url: string }) {
         return
     }
 
+    // TODO (adriano) add handlers for 404 (mainly for testing, low priority)
+
     const id = json.ID
     ;({ json, success } = yield call(
         apiGet,
         `/status/${id}`,
-        state.MainReducer.auth.accessToken
+        state.MainReducer.auth.accessToken,
+        webserver
     ))
 
     let progressSoFar = 0
@@ -133,7 +172,8 @@ function* createContainer(action: { app: string; url: string }) {
             ;({ success } = yield call(
                 apiGet,
                 `/status/${id}`,
-                state.MainReducer.auth.accessToken
+                state.MainReducer.auth.accessToken,
+                webserver
             ))
 
             if (!success) {
@@ -148,11 +188,14 @@ function* createContainer(action: { app: string; url: string }) {
                         statusMessage: warning,
                     })
                 )
+                // TODO (adriano) we should not have to return in case it can try agin
+                // however, there is no way to exit this loop right if they press the return button
+                return
             }
         }
 
         // Update status message every six seconds
-        if (secondsPassed > 0 && secondsPassed % 6 === 0) {
+        if (success && secondsPassed > 0 && secondsPassed % 6 === 0) {
             yield put(
                 Action.updateLoading({
                     statusMessage: generateMessage(),
@@ -173,6 +216,17 @@ function* createContainer(action: { app: string; url: string }) {
     }
     // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
     if (json && json.state && json.state === "SUCCESS") {
+        progressSoFar = 100
+
+        yield put(
+            Action.updateLoading({
+                statusMessage: "Stream successfully started.",
+                percentLoaded: progressSoFar,
+            })
+        )
+
+        delay(1000) // so they can ready that above
+
         if (json.output) {
             yield put(
                 Action.updateContainer({
@@ -187,16 +241,15 @@ function* createContainer(action: { app: string; url: string }) {
                     currentAppID: action.app,
                 })
             )
+        } else {
+            yield put(
+                Action.updateLoading({
+                    statusMessage:
+                        "Unexpectedly, server didn't send connection info. Please try again.",
+                    percentLoaded: progressSoFar,
+                })
+            )
         }
-
-        progressSoFar = 100
-
-        yield put(
-            Action.updateLoading({
-                statusMessage: "Stream successfully started.",
-                percentLoaded: progressSoFar,
-            })
-        )
     } else {
         const warning =
             `(${moment().format("hh:mm:ss")}) ` +

@@ -6,6 +6,7 @@ export class FractalAPI {
 
     static CONTAINER = {
         CREATE: "/container/create",
+        TEST_CREATE: "/aws_container/create_container",
     }
 
     static MAIL = {

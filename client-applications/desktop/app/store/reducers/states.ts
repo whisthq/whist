@@ -40,6 +40,12 @@ export const DEFAULT = {
         installing: [],
         installed: [],
     },
+    admin: {
+        webserverUrl: "dev",
+        taskArn: "fractal-browsers-chrome",
+        region: "us-east-1",
+        cluster: null,
+    },
 }
 
 // default export until we have multiple exports
