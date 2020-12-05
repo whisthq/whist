@@ -234,6 +234,9 @@ RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 RUN useradd --create-home fractal \
     && echo 'fractal:dX6-gkE%Gx42gapUaR+T*^.4fhm3Pv7c' | chpasswd
 
+# disable fractal user password to prevent non-Docker login
+RUN usermod --expiredate 1 fractal
+
 # Install Pulse Audio
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.

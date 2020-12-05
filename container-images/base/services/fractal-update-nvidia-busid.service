@@ -1,5 +1,3 @@
-# Update Nvidia BUSID before X starts
-
 [Unit]
 Description=Update Nvidia BUSID in /usr/share/X11/xorg.conf.d/01-nvidia.conf before X starts
 DefaultDependencies=yes
