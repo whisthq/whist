@@ -28,6 +28,8 @@ const AppPopup = (props: {
 
     const [shortcutCreated, setShortcutCreated] = useState(false)
 
+    const [png, setPng] = useState("")
+
     const tooltip =
         clientOS === OperatingSystem.WINDOWS
             ? `Look for "${createShortcutName(
