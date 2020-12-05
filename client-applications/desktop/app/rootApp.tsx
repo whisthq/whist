@@ -21,6 +21,8 @@ import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalAuthCache } from "shared/types/cache"
 
+import { SVGConverter } from "shared/utils/shortcuts"
+
 const RootApp = (props: {
     launches: number
     launchURL: string
