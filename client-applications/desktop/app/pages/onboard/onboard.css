@@ -1,0 +1,234 @@
+@import '/app.global.css';
+
+.container {
+    background: rgba(237, 240, 247, 0.75);
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-family: 'Maven Pro';
+    margin: 0px;
+    -webkit-app-region: drag;
+    user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
+    text-align: center;
+}
+
+.scrollableContainer {
+    background: rgba(237, 240, 247, 0.75);
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-family: 'Maven Pro';
+    margin: 0px;
+    -webkit-app-region: drag;
+    user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
+    text-align: center;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    padding-bottom: 25px;
+}
+
+.container h2 {
+    font-family: 'Maven Pro Medium';
+    font-size: 35px;
+    letter-spacing: 1.2px;
+}
+
+.landingHeader {
+    padding: 30px;
+    padding-top: 20px;
+    display: flex;
+}
+
+.landingHeaderLeft {
+    width: 40%;
+    text-align: left;
+}
+
+.landingHeaderRight {
+    width: 60%;
+    text-align: right;
+    font-size: 12px;
+    color: #d3d3d3;
+}
+
+.welcomeContainer {
+    width: 450px;
+    margin: auto;
+    margin-top: 150px;
+}
+
+.appsContainer {
+    width: 750px;
+    margin: auto;
+    margin-top: 50px;
+    text-align: center;
+    padding: 0px 5px;
+}
+
+.installingContainer {
+    width: 600px;
+    margin: auto;
+    margin-top: 75px;
+    text-align: center;
+}
+
+.appContainer,
+.appContainerSelected {
+    height: 70px;
+    width: 70px;
+    border-radius: 15px;
+    background: var(--text-background-color);
+    box-shadow: var(--light-box-shadow);
+    position: relative;
+    transition: 0.5s;
+}
+
+.appContainer:hover {
+    cursor: pointer;
+    background: #b0acf1;
+}
+
+.logoTitle {
+    color: black;
+    font-family: 'Maven Pro';
+    position: absolute;
+    top: 42px;
+    left: 42px;
+    font-size: 20px !important;
+    letter-spacing: 1.5px;
+}
+
+.removeDrag {
+    -webkit-app-region: no-drag;
+}
+
+.enterButton {
+    font-family: 'Maven Pro Medium';
+    letter-spacing: 1px;
+    background: var(--primary-color);
+    color: var(--text-background-color);
+    width: 375px;
+    font-size: 14px;
+    padding: 15px 30px;
+    margin-top: 60px;
+    border-radius: 5px;
+}
+
+.enterButton:hover {
+    background: var(--accent-color);
+    color: var(--primary-text-color);
+}
+
+.appsTitle {
+    font-family: 'Maven Pro Medium';
+    width: 600px;
+    margin: auto;
+    letter-spacing: 1.4px;
+    font-size: 30px;
+    line-height: 1.4;
+}
+
+.subtext {
+    margin: 20px auto;
+    font-size: 15px;
+    color: var(--primary-text-color);
+    line-height: 1.4;
+    letter-spacing: 1.2px;
+    width: 600px;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.appsWrapper {
+    width: 100%;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-between;
+    padding: 0px 15px;
+    width: 650px;
+    margin: auto;
+    text-align: center;
+    max-height: 325px;
+    overflow-y: scroll;
+    margin-top: 25px;
+}
+
+.appImage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 40px;
+}
+
+.faButton {
+    font-size: 8px;
+    color: var(--text-background-color);
+    position: relative;
+    top: -3px;
+}
+
+.plusButton {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-radius: 20px;
+    background: rgba(57, 48, 184, 0.6);
+    border: solid 5px var(--background-color);
+    bottom: -15px;
+    right: -15px;
+    z-index: 100px;
+    transition: 0.5s;
+}
+
+.appContainer:hover .plusButton {
+    background: var(--primary-color);
+    cursor: pointer;
+}
+
+.appContainerSelected {
+    background: var(--accent-color);
+}
+
+.bottomText {
+    margin-top: 20px;
+    font-size: 12px;
+}
+
+.link {
+    padding: 0px;
+    color: var(--primary-color);
+}
+
+.link:hover {
+    cursor: pointer;
+}
+
+.installingBar {
+    width: 600px;
+    height: 13px;
+    background: white;
+    border-radius: 4px;
+    box-shadow: var(--light-box-shadow);
+    position: relative;
+    margin: auto;
+    margin-top: 110px;
+}
+
+.progress {
+    height: 13px;
+    background-image: linear-gradient(to right, #9f71eb, #5645c3);
+    border-radius: 4px;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.installingText {
+    font-family: 'Maven Pro Medium';
+    margin-top: 20px;
+}

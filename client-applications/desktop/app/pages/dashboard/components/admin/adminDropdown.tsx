@@ -29,19 +29,15 @@ export const AdminDropdown = (props: {
     }
 
     const handleDropdownClick = (option: string) => {
-        //console.log(`option ${option} was clicked!`)
+        // console.log(`option ${option} was clicked!`)
         if (
-            option == FractalClusters.RESET ||
-            option == FractalRegions.RESET ||
-            option == FractalTaskDefs.RESET ||
-            option == FractalWebservers.RESET
+            option === FractalClusters.RESET ||
+            option === FractalRegions.RESET ||
+            option === FractalTaskDefs.RESET ||
+            option === FractalWebservers.RESET
         ) {
-            console.log(
-                `resetting ${title} to default value of ${defaultValue}`
-            )
             onClick(defaultValue)
         } else {
-            console.log(`setting to ${option}`)
             onClick(option)
         }
     }
@@ -61,21 +57,19 @@ export const AdminDropdown = (props: {
                 </Dropdown.Toggle>
 
                 <Dropdown.Menu>
-                    {Object.values(options).map(
-                        (option: string, index: number) => (
-                            <Dropdown.Item
-                                key={index}
-                                active={option == value}
-                                onClick={() => handleDropdownClick(option)}
-                            >
-                                {option}
-                            </Dropdown.Item>
-                        )
-                    )}
+                    {Object.values(options).map((option: string) => (
+                        <Dropdown.Item
+                            key={option}
+                            active={option === value}
+                            onClick={() => handleDropdownClick(option)}
+                        >
+                            {option}
+                        </Dropdown.Item>
+                    ))}
                 </Dropdown.Menu>
             </Dropdown>
             <Form>
-                <Form.Group controlId={title + "CustomValue"}>
+                <Form.Group controlId={`${title}CustomValue`}>
                     <Form.Label>Custom Value</Form.Label>
                     <Form.Control
                         placeholder="Enter Custom Value"

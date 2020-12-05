@@ -1,10 +1,10 @@
 import React, { useEffect, useState, Dispatch } from "react"
 import { connect } from "react-redux"
 import { useSpring, animated } from "react-spring"
-import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
+import TitleBar from "shared/components/titleBar"
 import { debugLog } from "shared/utils/logging"
 import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/history"
@@ -15,7 +15,6 @@ import { OperatingSystem } from "shared/types/client"
 import styles from "pages/login/login.css"
 
 const Loading = (props: {
-    clientOS: string
     percentLoaded: number
     status: string
     port32262: number
@@ -29,7 +28,6 @@ const Loading = (props: {
     dispatch: Dispatch
 }) => {
     const {
-        clientOS,
         percentLoaded,
         status,
         port32262,
@@ -171,13 +169,7 @@ const Loading = (props: {
                 zIndex: 1000,
             }}
         >
-            {clientOS === OperatingSystem.WINDOWS ? (
-                <div>
-                    <Titlebar backgroundColor="#000000" />
-                </div>
-            ) : (
-                <div style={{ marginTop: 10 }} />
-            )}
+            <TitleBar />
             <div className={styles.landingHeader}>
                 <div className={styles.landingHeaderLeft}>
                     <span className={styles.logoTitle}>Fractal</span>
@@ -255,7 +247,6 @@ const Loading = (props: {
 
 const mapStateToProps = <T extends {}>(state: T) => {
     return {
-        clientOS: state.MainReducer.client.clientOS,
         percentLoaded: state.MainReducer.loading.percentLoaded,
         status: state.MainReducer.loading.statusMessage,
         containerID: state.MainReducer.container.containerID,

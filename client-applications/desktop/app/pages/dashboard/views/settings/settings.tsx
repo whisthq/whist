@@ -1,3 +1,5 @@
+/* eslint-disable import/no-named-as-default */
+
 import { Row, Alert } from "react-bootstrap"
 import React, { useState, useEffect, KeyboardEvent } from "react"
 import { connect } from "react-redux"
@@ -20,7 +22,7 @@ const Settings = <T extends {}>(props: T) => {
     const adminUsername =
         props.username &&
         props.username.indexOf("@") > -1 &&
-        props.username.split("@")[1] == "tryfractal.com"
+        props.username.split("@")[1] === "tryfractal.com"
 
     useEffect(() => {
         const Store = require("electron-store")
