@@ -29,7 +29,7 @@ export const AdminDropdown = (props: {
     }
 
     const handleDropdownClick = (option: string) => {
-        //console.log(`option ${option} was clicked!`)
+        // console.log(`option ${option} was clicked!`)
         if (
             option == FractalClusters.RESET ||
             option == FractalRegions.RESET ||
@@ -75,7 +75,7 @@ export const AdminDropdown = (props: {
                 </Dropdown.Menu>
             </Dropdown>
             <Form>
-                <Form.Group controlId={title + "CustomValue"}>
+                <Form.Group controlId={`${title}CustomValue`}>
                     <Form.Label>Custom Value</Form.Label>
                     <Form.Control
                         placeholder="Enter Custom Value"
