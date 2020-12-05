@@ -5,7 +5,7 @@ import { FractalAppLocalState } from "shared/types/ui"
 
 /* Define test variables here */
 
-// searchArrayByKey() variables
+// searchArrayByKey() and updateArrayByKey() variables
 let chrome = { app_id: "Chrome", localState: FractalAppLocalState.INSTALLED }
 let figma = { app_id: "Figma", localState: FractalAppLocalState.NOT_INSTALLED }
 let blender = {

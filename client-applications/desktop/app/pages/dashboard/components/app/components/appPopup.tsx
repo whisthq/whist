@@ -9,7 +9,7 @@ import { OperatingSystem, FractalWindowsDirectory } from "shared/types/client"
 import {
     createShortcutName,
     createShortcut,
-    createDirectory,
+    createDirectorySync,
 } from "shared/utils/shortcuts"
 import { updateClient } from "store/actions/pure"
 
@@ -54,7 +54,10 @@ const AppPopup = (props: {
             setShortcutCreated(true)
             // Create a Fractal directory in the Start Menu if one doesn't exist
             if (
-                !createDirectory(FractalWindowsDirectory.START_MENU, "Fractal")
+                !createDirectorySync(
+                    FractalWindowsDirectory.START_MENU,
+                    "Fractal"
+                )
             ) {
                 return false
             }
