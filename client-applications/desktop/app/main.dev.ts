@@ -64,6 +64,7 @@ const createWindow = async () => {
             resizable: false,
             webPreferences: {
                 nodeIntegration: true,
+                enableRemoteModule: true,
             },
         })
     } else if (os.platform() === "darwin") {
@@ -77,6 +78,7 @@ const createWindow = async () => {
             maximizable: false,
             webPreferences: {
                 nodeIntegration: true,
+                enableRemoteModule: true,
             },
         })
     } else {
@@ -91,6 +93,7 @@ const createWindow = async () => {
             maximizable: false,
             webPreferences: {
                 nodeIntegration: true,
+                enableRemoteModule: true,
             },
             icon: path.join(__dirname, "/build/icon.png"),
         })
