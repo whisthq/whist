@@ -44,8 +44,6 @@ export class SVGConverter {
         let _this = this
         this.imgPreview.onload = function () {
             const img = new Image()
-            console.log("CLIENT WIDTH", _this.imgPreview.clientWidth)
-            console.log("CLIENT HEIGHT", _this.imgPreview.clientHeight)
             _this.canvas.width = _this.imgPreview.clientWidth
             _this.canvas.height = _this.imgPreview.clientHeight
             img.crossOrigin = "anonymous"
