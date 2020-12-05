@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react"
+import React from "react"
 import { connect } from "react-redux"
-import { FaPlus } from "react-icons/fa"
-import { FaMinus } from "react-icons/fa"
+import { FaPlus, FaMinus } from "react-icons/fa"
 
 import styles from "pages/onboard/onboard.css"
 
@@ -14,7 +13,11 @@ const Apps = (props: { app: any; selected: boolean }) => {
                 selected ? styles.appContainerSelected : styles.appContainer
             }
         >
-            <img src={app.logo_url} className={styles.appImage} />
+            <img
+                alt="App logo"
+                src={app.logo_url}
+                className={styles.appImage}
+            />
             <div className={styles.plusButton}>
                 {selected ? (
                     <FaMinus className={styles.faButton} />
