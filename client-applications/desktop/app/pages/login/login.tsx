@@ -1,41 +1,19 @@
-import React, { useState, useEffect } from "react"
+import React from "react"
 import { connect } from "react-redux"
 import styles from "pages/login/login.css"
-import Titlebar from "react-electron-titlebar"
 
-import BackgroundView from "pages/login/views/backgroundView"
+import TitleBar from "shared/components/titleBar"
+import Version from "shared/components/version"
+import BackgroundView from "shared/views/backgroundView"
 import LoginView from "pages/login/views/loginView"
-import { OperatingSystem } from "shared/types/client"
 
-const Login = (props: { clientOS: string; loginWarning: string }) => {
-    const { clientOS, loginWarning } = props
-    const [version, setVersion] = useState("1.0.0")
-
-    useEffect(() => {
-        const appVersion = require("../../package.json").version
-        setVersion(appVersion)
-    }, [])
+const Login = (props: { loginWarning: string }) => {
+    const { loginWarning } = props
 
     return (
         <div className={styles.container} data-tid="container">
-            <div
-                style={{
-                    position: "absolute",
-                    bottom: 15,
-                    right: 15,
-                    fontSize: 11,
-                    color: "#D1D1D1",
-                }}
-            >
-                Version: {version}
-            </div>
-            {clientOS === OperatingSystem.WINDOWS ? (
-                <div>
-                    <Titlebar backgroundColor="#000000" />
-                </div>
-            ) : (
-                <div className={styles.macTitleBar} />
-            )}
+            <TitleBar />
+            <Version />
             <div className={styles.removeDrag}>
                 <div className={styles.landingHeader}>
                     <div className={styles.landingHeaderLeft}>
@@ -57,7 +35,6 @@ export const mapStateToProps = <T extends {}>(state: T) => {
     return {
         loginWarning: state.MainReducer.auth.loginWarning,
         loginMessage: state.MainReducer.auth.loginMessage,
-        clientOS: state.MainReducer.client.clientOS,
     }
 }
 

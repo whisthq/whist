@@ -1,3 +1,5 @@
+/* eslint-disable import/no-named-as-default */
+
 import React, { useState } from "react"
 import { Row } from "react-bootstrap"
 import { updateAdmin } from "store/actions/pure"
@@ -83,6 +85,7 @@ export const AdminSettings = (props: {
                         }}
                     >
                         <img
+                            alt="Test app"
                             src={Fractal}
                             style={{
                                 color: "#111111",
@@ -107,7 +110,8 @@ export const AdminSettings = (props: {
                         Give a region (like us-east-1) and a webserver version
                         (local, dev, staging, prod, or a url) as well as a task
                         def and a cluster if you want. Defaults are provided to
-                        us-east-1, dev, fractal-broswers-chrome, and null cluster.
+                        us-east-1, dev, fractal-broswers-chrome, and null
+                        cluster.
                     </div>
                 </div>
                 <div

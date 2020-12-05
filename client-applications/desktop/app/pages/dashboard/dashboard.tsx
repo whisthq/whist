@@ -1,37 +1,26 @@
 import React, { useState } from "react"
-import { connect } from "react-redux"
-import Titlebar from "react-electron-titlebar"
 
+import TitleBar from "shared/components/titleBar"
 import NavBar from "pages/dashboard/components/navBar/navBar"
 import Discover from "pages/dashboard/views/discover/discover"
 import Settings from "pages/dashboard/views/settings/settings"
 import Support from "pages/dashboard/views/support/support"
 
 import { FractalDashboardTab } from "shared/types/navigation"
-import { OperatingSystem } from "shared/types/client"
 
 import styles from "pages/dashboard/dashboard.css"
 
-const Dashboard = (props: { clientOS: string }) => {
-    const { clientOS } = props
-
+const Dashboard = () => {
     const [currentTab, setCurrentTab] = useState(FractalDashboardTab.APP_STORE)
     const [search, setSearch] = useState("")
 
     return (
         <div className={styles.container}>
-            {clientOS === OperatingSystem.WINDOWS ? (
-                <div className={styles.titleBar}>
-                    <Titlebar backgroundColor="#000000" />
-                </div>
-            ) : (
-                <div className={styles.macTitleBar} />
-            )}
+            <TitleBar />
             <div
                 style={{
                     display: "flex",
                     flexDirection: "column",
-                    marginTop: 28,
                 }}
                 className={styles.removeDrag}
             >
@@ -51,10 +40,4 @@ const Dashboard = (props: { clientOS: string }) => {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
-    return {
-        clientOS: state.MainReducer.client.clientOS,
-    }
-}
-
-export default connect(mapStateToProps)(Dashboard)
+export default Dashboard

@@ -18,13 +18,17 @@ import styles from "pages/dashboard/views/discover/discover.css"
 
 import { adminApp } from "pages/dashboard/constants/adminApp"
 
-const Discover = (props: { search: string }) => {
-    const { search } = props
+const Discover = (props: {
+    search: string
+    username: string
+    accessToken: string
+}) => {
+    const { search, username, accessToken } = props
 
     const adminUsername =
-        props.username &&
-        props.username.indexOf("@") > -1 &&
-        props.username.split("@")[1] == "tryfractal.com"
+        username &&
+        username.indexOf("@") > -1 &&
+        username.split("@")[1] === "tryfractal.com"
 
     // Define local state
 
@@ -63,7 +67,7 @@ const Discover = (props: { search: string }) => {
     const appQuery = useQuery(GET_FEATURED_APPS, {
         context: {
             headers: {
-                Authorization: `Bearer ${props.accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
             },
         },
     })
@@ -71,7 +75,7 @@ const Discover = (props: { search: string }) => {
     const bannerQuery = useQuery(GET_BANNERS, {
         context: {
             headers: {
-                Authorization: `Bearer ${props.accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
             },
         },
     })
@@ -171,7 +175,12 @@ const Discover = (props: { search: string }) => {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T) => {
+const mapStateToProps = (state: {
+    MainReducer: {
+        accessToken: string
+        username: string
+    }
+}) => {
     return {
         accessToken: state.MainReducer.auth.accessToken,
         username: state.MainReducer.auth.username,

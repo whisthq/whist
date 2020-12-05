@@ -56,6 +56,7 @@ function* validateAccessToken(action: { accessToken: string }) {
                 username: json.user.user_id,
                 accessToken: action.accessToken,
                 refreshToken: json.user.refresh_token,
+                name: json.user.name,
             })
         )
     } else {
