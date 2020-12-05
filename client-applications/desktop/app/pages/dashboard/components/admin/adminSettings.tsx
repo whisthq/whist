@@ -1,3 +1,5 @@
+/* eslint-disable import/no-named-as-default */
+
 import React, { useState } from "react"
 import { Row } from "react-bootstrap"
 import { updateAdmin } from "store/actions/pure"
@@ -83,6 +85,7 @@ export const AdminSettings = (props: {
                         }}
                     >
                         <img
+                            alt="Test app"
                             src={Fractal}
                             style={{
                                 color: "#111111",

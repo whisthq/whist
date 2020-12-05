@@ -1,5 +1,7 @@
 import FractalImg from "assets/images/fractal.svg"
 
+/* eslint-disable @typescript-eslint/camelcase */
+
 export const adminApp = {
     app_id: "Test App",
     logo_url: FractalImg,
@@ -11,3 +13,5 @@ export const adminApp = {
     tos: "https://www.tryfractal.com/termsofservice",
     active: true, // not used yet
 }
+
+export default adminApp
