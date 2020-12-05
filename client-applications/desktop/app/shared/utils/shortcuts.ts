@@ -50,6 +50,7 @@ export class SVGConverter {
             img.src = _this.imgPreview.src
             img.onload = function () {
                 _this.canvasCtx.drawImage(img, 0, 0)
+
                 let imgData = _this.canvas.toDataURL("image/png")
                 callback(imgData)
                 _this._cleanUp()
