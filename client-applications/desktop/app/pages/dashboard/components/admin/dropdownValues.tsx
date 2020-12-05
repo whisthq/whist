@@ -1,4 +1,4 @@
-//here are some preset options for the dropdown
+// here are some preset options for the dropdown
 export enum FractalRegions {
     US_EAST_1 = "us-east-1",
     US_WEST_1 = "us-west-1",
@@ -20,14 +20,14 @@ export enum FractalTaskDefs {
     CHROME = "fractal-browsers-chrome",
     FIREFOX = "fractal-browsers-firefox",
     SIDEKICK = "fractal-browsers-sidekick",
-    //creative
+    // creative
     BLENDER = "fractal-creative-blender",
     BLOCKBENCH = "fractal-creative-blockbench",
     FIGMA = "fractal-creative-figma",
     GIMP = "fractal-creative-gimp",
     LIGHTWORKS = "fractal-creative-lightworks",
     TEXTURELAB = "fractal-creative-texturelab",
-    //productivity
+    // productivity
     DISCORD = "fractal-productivity-discord",
     NOTION = "fractal-productivity-notion",
     SLACK = "fractal-productivity-slack",
