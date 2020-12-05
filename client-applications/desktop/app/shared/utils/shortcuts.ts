@@ -28,7 +28,8 @@ export class SVGConverter {
     _init() {
         this.canvas = document.createElement("canvas")
         this.imgPreview = document.createElement("img")
-        this.imgPreview.style = "position: absolute; top: -9999px"
+        this.imgPreview.style =
+            "position: absolute; top: -9999px; width: 64px; height: 64px;"
 
         document.body.appendChild(this.imgPreview)
         this.canvasCtx = this.canvas.getContext("2d")
@@ -43,6 +44,8 @@ export class SVGConverter {
         let _this = this
         this.imgPreview.onload = function () {
             const img = new Image()
+            console.log("CLIENT WIDTH", _this.imgPreview.clientWidth)
+            console.log("CLIENT HEIGHT", _this.imgPreview.clientHeight)
             _this.canvas.width = _this.imgPreview.clientWidth
             _this.canvas.height = _this.imgPreview.clientHeight
             img.crossOrigin = "anonymous"
@@ -126,7 +129,7 @@ export const createShortcut = (
                 createDirectorySync(path, "icons")
                 const icoPath = `${path}\\icons\\${app.app_id}.ico`
                 fs.writeFileSync(icoPath, buf)
-                createDesktopShortcut({
+                const shortcutCreated = createDesktopShortcut({
                     windows: {
                         outputPath: tempPath,
                         filePath: appURL,
@@ -139,9 +142,12 @@ export const createShortcut = (
                         icon: icoPath,
                     },
                 })
+                console.log("DONE CREATING")
+                return shortcutCreated
             })
         })
 
+        console.log("LOG HERE")
         return true
     }
     debugLog(`no suitable os found, instead got ${platform}`)
