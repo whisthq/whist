@@ -3,9 +3,12 @@ import { FractalApp } from "shared/types/ui"
 import { FractalNodeEnvironment } from "shared/types/config"
 import { debugLog } from "shared/utils/logging"
 
+// Import with require() packages that require Node 10 experimental
 const fs = require("fs")
 const os = require("os")
+const toIco = require("to-ico")
 
+// How big should the PNG's be
 const PNG_WIDTH = 64
 const PNG_HEIGHT = 64
 
@@ -109,6 +112,7 @@ export class SVGConverter {
             thisRef.canvas.height = PNG_HEIGHT
             img.crossOrigin = "anonymous"
             img.src = thisRef.imgPreview.src
+            // Draw SVG onto canvas with resampling (to resize to 64 x 64)
             img.onload = () => {
                 if (thisRef.canvasCtx) {
                     thisRef.canvasCtx.drawImage(
@@ -122,8 +126,10 @@ export class SVGConverter {
                         thisRef.canvas.width,
                         thisRef.canvas.height
                     )
+                    // Encode PNG as a base64 string
                     const base64 = thisRef.canvas.toDataURL("image/png")
                     this.base64Png = base64
+                    // Fire callback on success with base64 string
                     callback(base64)
                 } else {
                     callback("")
@@ -131,14 +137,13 @@ export class SVGConverter {
                 thisRef.cleanUp()
             }
         }
-
+        // Load the SVG into HTML image element
         this.imgPreview.src = input
     }
 
     convertToIco(input: string, callback: (buffer: ArrayBuffer) => void) {
         this.convertToPngBase64(input, async (base64: string) => {
             if (base64) {
-                const toIco = require("to-ico")
                 const convertedBuffer = this.base64PngToBuffer(base64)
 
                 const bufferRef = await toIco([convertedBuffer]).then(
@@ -176,7 +181,7 @@ export const createShortcut = (
 ): void => {
     /*
         Description:
-            Creates a shortcut to the Fractal streamed app
+            Creates a shortcut to the Fractal streamed app and stores the shortcut in a specified directory
 
         Arguments:
             app (FractalApp): App to create shortcut to
@@ -189,12 +194,14 @@ export const createShortcut = (
     const createDesktopShortcut = require("create-desktop-shortcuts")
 
     const platform: OperatingSystem = os.platform()
+    // appURL is the protocol that the shortcut should run the open Fractal
     const appURL = `fractal://${app.app_id.toLowerCase().replace(/\s+/g, "-")}`
 
     if (platform === OperatingSystem.MAC) {
         debugLog("Mac shortcuts not yet implemented")
         callback(false)
     } else if (platform === OperatingSystem.WINDOWS) {
+        // Points to the folder where windows.vbs is located (shortcut creation code)
         const vbsPath = `${require("electron")
             .remote.app.getAppPath()
             .replace(
@@ -202,11 +209,14 @@ export const createShortcut = (
                 "app.asar.unpacked"
             )}\\node_modules\\create-desktop-shortcuts\\src\\windows.vbs`
 
+        // Convert SVG into a .ico ArrayBuffer
         new SVGConverter().convertToIco(app.logo_url, (buffer: ArrayBuffer) => {
+            // Create directory called /icons to store the .ico if it doesn't already exist
             createDirectorySync(FractalWindowsDirectory.ROOT_DIRECTORY, "icons")
             const icoPath = `${FractalWindowsDirectory.ROOT_DIRECTORY}\\icons\\${app.app_id}.ico`
+            // Write .ico into directory
             fs.writeFileSync(icoPath, buffer)
-
+            // Save shortcut in outputPath
             const success = createDesktopShortcut({
                 windows: {
                     outputPath: outputPath,
@@ -220,6 +230,7 @@ export const createShortcut = (
                     icon: icoPath,
                 },
             })
+            // Fire callback with shortcut creation success True/False
             callback(success)
         })
     } else {
@@ -246,6 +257,7 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
             return false
         }
         if (platform === OperatingSystem.WINDOWS) {
+            // Check the desktop folder and Start Menu Programs folder
             const windowsDesktopPath = `${FractalWindowsDirectory.DESKTOP}${shortcut}.lnk`
             const windowsStartMenuPath = `${FractalWindowsDirectory.START_MENU}Fractal\\${shortcut}.lnk`
 
