@@ -50,7 +50,7 @@ export class SVGConverter {
         return buffer
     }
 
-    convertToPngBase64(input: string, callback: (imgData: string) => void) {
+    convertToPngBase64(input: string, callback: (base64: string) => void) {
         this._init()
         let _this = this
         this.imgPreview.onload = function () {
@@ -73,8 +73,8 @@ export class SVGConverter {
                         _this.canvas.height
                     )
 
-                    let imgData = _this.canvas.toDataURL("image/png")
-                    callback(imgData)
+                    let base64 = _this.canvas.toDataURL("image/png")
+                    callback(base64)
                 } else {
                     callback("")
                 }
@@ -150,12 +150,8 @@ export const createShortcut = (
             )}\\node_modules\\create-desktop-shortcuts\\src\\windows.vbs`
 
         new SVGConverter().convertToIco(app.logo_url, (buffer: ArrayBuffer) => {
-            let path = require("electron").remote.app.getAppPath() + "\\"
-            path = path.replace("\\resources\\app.asar", "")
-            path = path.replace("\\app\\", "\\")
-
-            createDirectorySync(path, "icons")
-            const icoPath = `${path}\\icons\\${app.app_id}.ico`
+            createDirectorySync(FractalWindowsDirectory.ROOT_DIRECTORY, "icons")
+            const icoPath = `${FractalWindowsDirectory.ROOT_DIRECTORY}\\icons\\${app.app_id}.ico`
             fs.writeFileSync(icoPath, buffer)
 
             const shortcutCreated = createDesktopShortcut({

@@ -10,7 +10,7 @@ import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/history"
 import { execChmodUnix } from "shared/utils/exec"
 import { FractalRoute } from "shared/types/navigation"
-import { OperatingSystem } from "shared/types/client"
+import { OperatingSystem, FractalWindowsDirectory } from "shared/types/client"
 
 import styles from "pages/login/login.css"
 
@@ -86,9 +86,7 @@ const Loading = (props: {
             path = path.replace("/Resources.asar", "")
             executable = "./FractalClient"
         } else if (os.platform() === OperatingSystem.WINDOWS) {
-            path = `${appRootDir}\\protocol-build\\desktop`
-            path = path.replace("\\resources\\app.asar", "")
-            path = path.replace("\\app\\protocol-build", "\\protocol-build")
+            path = `${FractalWindowsDirectory.ROOT_DIRECTORY}\\protocol-build\\desktop`
             executable = "FractalClient.exe"
         } else {
             debugLog(`no suitable os found, instead got ${os.platform()}`)
@@ -245,7 +243,7 @@ const Loading = (props: {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T) => {
+const mapStateToProps = (state: { MainReducer: Record<string, any> }) => {
     return {
         percentLoaded: state.MainReducer.loading.percentLoaded,
         status: state.MainReducer.loading.statusMessage,
