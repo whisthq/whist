@@ -15,7 +15,9 @@ export enum FractalAppName {
 
 export class FractalWindowsDirectory {
     static START_MENU = `${homeDir}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\`
+
     static DESKTOP = `${homeDir}\\Desktop\\`
+
     static ROOT_DIRECTORY = `${remote}\\`
         .replace("\\resources\\app.asar", "")
         .replace("\\app\\", "\\")
