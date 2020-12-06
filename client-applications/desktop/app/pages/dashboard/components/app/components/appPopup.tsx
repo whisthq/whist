@@ -28,8 +28,6 @@ const AppPopup = (props: {
 
     const [shortcutCreated, setShortcutCreated] = useState(false)
 
-    const [png, setPng] = useState("")
-
     const tooltip =
         clientOS === OperatingSystem.WINDOWS
             ? `Look for "${createShortcutName(
@@ -63,8 +61,8 @@ const AppPopup = (props: {
             }
 
             // Create the shortcut inside the Fractal Directory
-            createShortcut(app, outputPath, (shortcutCreated) => {
-                if (shortcutCreated) {
+            createShortcut(app, outputPath, (success: boolean) => {
+                if (success) {
                     const { array, index } = updateArrayByKey(
                         apps,
                         "app_id",
