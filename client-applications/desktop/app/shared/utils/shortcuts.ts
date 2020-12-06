@@ -9,6 +9,44 @@ const os = require("os")
 const PNG_WIDTH = 64
 const PNG_HEIGHT = 64
 
+export const createDirectorySync = (
+    filePath: string,
+    directoryName: string
+): boolean => {
+    /*
+        Description:
+            Creates a directory on the user's computer. 
+        
+        Usage:
+            To create a directory called "Folder" in "C:\\User\\Fake_User", call createDirectorySync("C:\\User\\Fake_User", "Folder")
+
+        Arguments:
+            filePath (string): Folder that the new directory should be placed in
+            directoryName (string): Name of new directory
+        
+        Returns:
+            success: True/False if the directory was created successfully
+    */
+
+    // If the base file path does not exist, return false
+    if (!fs.existsSync(filePath) && fs.lstatSync(filePath).isDirectory()) {
+        return false
+    }
+
+    // If the directory already exists, return true
+    if (
+        fs.existsSync(`${filePath}${directoryName}`) &&
+        fs.lstatSync(`${filePath}${directoryName}`).isDirectory()
+    ) {
+        return true
+    }
+
+    // If the directory doesn't exist yet, create it
+    fs.mkdirSync(`${filePath}${directoryName}`)
+    return true
+}
+
+/* eslint-disable @typescript-eslint/no-this-alias */
 export class SVGConverter {
     /*
         Description:
@@ -30,41 +68,50 @@ export class SVGConverter {
                 Converts an svg (requires .svg) to .ico and returns the .ico in an ArrayBuffer
     */
     canvas: HTMLCanvasElement = document.createElement("canvas")
+
     imgPreview: HTMLImageElement = document.createElement("img")
+
     canvasCtx: CanvasRenderingContext2D | null = this.canvas.getContext("2d")
 
+    base64Png: string | null = null
+
+    bufferPng: ArrayBuffer | null = null
+
     constructor() {
-        this._init = this._init.bind(this)
-        this._cleanUp = this._cleanUp.bind(this)
+        this.init = this.init.bind(this)
+        this.cleanUp = this.cleanUp.bind(this)
         this.convertToPngBase64 = this.convertToPngBase64.bind(this)
+        this.base64PngToBuffer = this.base64PngToBuffer.bind(this)
+        this.convertToIco = this.convertToIco.bind(this)
     }
 
-    _init() {
+    init() {
         document.body.appendChild(this.imgPreview)
     }
 
-    _cleanUp() {
+    cleanUp() {
         document.body.removeChild(this.imgPreview)
     }
 
     base64PngToBuffer(base64: string) {
         base64 = base64.replace("data:image/png;base64,", "")
-        const buffer = new Buffer(base64, "base64")
+        const buffer = Buffer.from(base64, "base64")
+        this.bufferPng = buffer
         return buffer
     }
 
     convertToPngBase64(input: string, callback: (base64: string) => void) {
-        this._init()
-        let _this = this
-        this.imgPreview.onload = function () {
+        this.init()
+        const thisRef = this
+        this.imgPreview.onload = () => {
             const img = new Image()
-            _this.canvas.width = PNG_WIDTH
-            _this.canvas.height = PNG_HEIGHT
+            thisRef.canvas.width = PNG_WIDTH
+            thisRef.canvas.height = PNG_HEIGHT
             img.crossOrigin = "anonymous"
-            img.src = _this.imgPreview.src
-            img.onload = function () {
-                if (_this.canvasCtx) {
-                    _this.canvasCtx.drawImage(
+            img.src = thisRef.imgPreview.src
+            img.onload = () => {
+                if (thisRef.canvasCtx) {
+                    thisRef.canvasCtx.drawImage(
                         img,
                         0,
                         0,
@@ -72,15 +119,16 @@ export class SVGConverter {
                         img.height,
                         0,
                         0,
-                        _this.canvas.width,
-                        _this.canvas.height
+                        thisRef.canvas.width,
+                        thisRef.canvas.height
                     )
-                    let base64 = _this.canvas.toDataURL("image/png")
+                    const base64 = thisRef.canvas.toDataURL("image/png")
+                    this.base64Png = base64
                     callback(base64)
                 } else {
                     callback("")
                 }
-                _this._cleanUp()
+                thisRef.cleanUp()
             }
         }
 
@@ -88,14 +136,18 @@ export class SVGConverter {
     }
 
     convertToIco(input: string, callback: (buffer: ArrayBuffer) => void) {
-        this.convertToPngBase64(input, (base64: string) => {
+        this.convertToPngBase64(input, async (base64: string) => {
             if (base64) {
                 const toIco = require("to-ico")
-                const buffer = this.base64PngToBuffer(base64)
+                const convertedBuffer = this.base64PngToBuffer(base64)
 
-                toIco([buffer]).then((buffer: ArrayBuffer) => {
-                    callback(buffer)
-                })
+                const bufferRef = await toIco([convertedBuffer]).then(
+                    (bufferRef: ArrayBuffer) => {
+                        return bufferRef
+                    }
+                )
+
+                callback(bufferRef)
             } else {
                 callback(new ArrayBuffer(0))
             }
@@ -134,7 +186,6 @@ export const createShortcut = (
             success (boolean): True/False if shortcut was created successfully
     */
 
-    const os = require("os")
     const createDesktopShortcut = require("create-desktop-shortcuts")
 
     const platform: OperatingSystem = os.platform()
@@ -156,7 +207,7 @@ export const createShortcut = (
             const icoPath = `${FractalWindowsDirectory.ROOT_DIRECTORY}\\icons\\${app.app_id}.ico`
             fs.writeFileSync(icoPath, buffer)
 
-            const shortcutCreated = createDesktopShortcut({
+            const success = createDesktopShortcut({
                 windows: {
                     outputPath: outputPath,
                     filePath: appURL,
@@ -169,7 +220,7 @@ export const createShortcut = (
                     icon: icoPath,
                 },
             })
-            callback(shortcutCreated)
+            callback(success)
         })
     } else {
         debugLog(`no suitable os found, instead got ${platform}`)
@@ -209,41 +260,4 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
         debugLog(err)
         return false
     }
-}
-
-export const createDirectorySync = (
-    filePath: string,
-    directoryName: string
-): boolean => {
-    /*
-        Description:
-            Creates a directory on the user's computer. 
-        
-        Usage:
-            To create a directory called "Folder" in "C:\\User\\Fake_User", call createDirectorySync("C:\\User\\Fake_User", "Folder")
-
-        Arguments:
-            filePath (string): Folder that the new directory should be placed in
-            directoryName (string): Name of new directory
-        
-        Returns:
-            success: True/False if the directory was created successfully
-    */
-
-    // If the base file path does not exist, return false
-    if (!fs.existsSync(filePath) && fs.lstatSync(filePath).isDirectory()) {
-        return false
-    }
-
-    // If the directory already exists, return true
-    if (
-        fs.existsSync(`${filePath}${directoryName}`) &&
-        fs.lstatSync(`${filePath}${directoryName}`).isDirectory()
-    ) {
-        return true
-    }
-
-    // If the directory doesn't exist yet, create it
-    fs.mkdirSync(`${filePath}${directoryName}`)
-    return true
 }
