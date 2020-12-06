@@ -3,6 +3,9 @@ import { FractalApp } from "shared/types/ui"
 import { FractalNodeEnvironment } from "shared/types/config"
 import { debugLog } from "shared/utils/logging"
 
+const fs = require("fs")
+const os = require("os")
+
 export class SVGConverter {
     /*
         Description:
@@ -16,9 +19,17 @@ export class SVGConverter {
             })
 
         Methods:
-            convertToPngBase64(input: string, callback: function) : Convert an svg (requires .svg) to base64 
-            convertToIco(input: string, callback: function)L Convert an svg (requires .svg) to .ico
+            base64PngToBuffer(input: string) :
+                Converts a base64 encoded PNG to an ArrayBuffer and returns the ArrayBuffer
+            convertToPngBase64(input: string, callback: (base64: string) => void) :
+                Converts an svg (requires .svg) to base64 and pass the base64 string into callback
+            convertToIco(input: string, callback: (buffer: ArrayBuffer) => void) : 
+                Converts an svg (requires .svg) to .ico and returns the .ico in an ArrayBuffer
     */
+    canvas: HTMLCanvasElement = document.createElement("canvas")
+    imgPreview: HTMLImageElement = document.createElement("img")
+    canvasCtx: CanvasRenderingContext2D | null = this.canvas.getContext("2d")
+
     constructor() {
         this._init = this._init.bind(this)
         this._cleanUp = this._cleanUp.bind(this)
@@ -26,16 +37,17 @@ export class SVGConverter {
     }
 
     _init() {
-        this.canvas = document.createElement("canvas")
-        this.imgPreview = document.createElement("img")
-        this.imgPreview.style = "position: absolute; top: -9999px;"
-
         document.body.appendChild(this.imgPreview)
-        this.canvasCtx = this.canvas.getContext("2d")
     }
 
     _cleanUp() {
         document.body.removeChild(this.imgPreview)
+    }
+
+    base64PngToBuffer(base64: string) {
+        base64 = base64.replace("data:image/png;base64,", "")
+        const buffer = new Buffer(base64, "base64")
+        return buffer
     }
 
     convertToPngBase64(input: string, callback: (imgData: string) => void) {
@@ -48,25 +60,44 @@ export class SVGConverter {
             img.crossOrigin = "anonymous"
             img.src = _this.imgPreview.src
             img.onload = function () {
-                _this.canvasCtx.drawImage(
-                    img,
-                    0,
-                    0,
-                    img.width,
-                    img.height,
-                    0,
-                    0,
-                    _this.canvas.width,
-                    _this.canvas.height
-                )
+                if (_this.canvasCtx) {
+                    _this.canvasCtx.drawImage(
+                        img,
+                        0,
+                        0,
+                        img.width,
+                        img.height,
+                        0,
+                        0,
+                        _this.canvas.width,
+                        _this.canvas.height
+                    )
 
-                let imgData = _this.canvas.toDataURL("image/png")
-                callback(imgData)
+                    let imgData = _this.canvas.toDataURL("image/png")
+                    callback(imgData)
+                } else {
+                    callback("")
+                }
                 _this._cleanUp()
             }
         }
 
         this.imgPreview.src = input
+    }
+
+    convertToIco(input: string, callback: (buffer: ArrayBuffer) => void) {
+        this.convertToPngBase64(input, (base64: string) => {
+            if (base64) {
+                const toIco = require("to-ico")
+                const buffer = this.base64PngToBuffer(base64)
+
+                toIco([buffer]).then((buffer: ArrayBuffer) => {
+                    callback(buffer)
+                })
+            } else {
+                callback(new ArrayBuffer(0))
+            }
+        })
     }
 }
 
@@ -86,8 +117,9 @@ export const createShortcutName = (appName: string): string => {
 
 export const createShortcut = (
     app: FractalApp,
-    outputPath?: string
-): boolean => {
+    outputPath: string,
+    callback: (shortcutCreated: boolean) => void
+): void => {
     /*
         Description:
             Creates a shortcut to the Fractal streamed app
@@ -100,8 +132,6 @@ export const createShortcut = (
             success (boolean): True/False if shortcut was created successfully
     */
 
-    const tempPath = outputPath
-
     const os = require("os")
     const createDesktopShortcut = require("create-desktop-shortcuts")
 
@@ -110,9 +140,8 @@ export const createShortcut = (
 
     if (platform === OperatingSystem.MAC) {
         debugLog("Mac shortcuts not yet implemented")
-        return false
-    }
-    if (platform === OperatingSystem.WINDOWS) {
+        callback(false)
+    } else if (platform === OperatingSystem.WINDOWS) {
         const vbsPath = `${require("electron")
             .remote.app.getAppPath()
             .replace(
@@ -120,46 +149,34 @@ export const createShortcut = (
                 "app.asar.unpacked"
             )}\\node_modules\\create-desktop-shortcuts\\src\\windows.vbs`
 
-        new SVGConverter().convertToPngBase64(app.logo_url, function (
-            pngOutput: string
-        ) {
-            const toIco = require("to-ico")
-            const fs = require("fs")
-            const base64Data = pngOutput.replace("data:image/png;base64,", "")
+        new SVGConverter().convertToIco(app.logo_url, (buffer: ArrayBuffer) => {
+            let path = require("electron").remote.app.getAppPath() + "\\"
+            path = path.replace("\\resources\\app.asar", "")
+            path = path.replace("\\app\\", "\\")
 
-            const binaryData = new Buffer(base64Data, "base64")
+            createDirectorySync(path, "icons")
+            const icoPath = `${path}\\icons\\${app.app_id}.ico`
+            fs.writeFileSync(icoPath, buffer)
 
-            toIco([binaryData]).then((buf) => {
-                let path = require("electron").remote.app.getAppPath() + "\\"
-                path = path.replace("\\resources\\app.asar", "")
-                path = path.replace("\\app\\", "\\")
-
-                createDirectorySync(path, "icons")
-                const icoPath = `${path}\\icons\\${app.app_id}.ico`
-                fs.writeFileSync(icoPath, buf)
-                const shortcutCreated = createDesktopShortcut({
-                    windows: {
-                        outputPath: tempPath,
-                        filePath: appURL,
-                        name: createShortcutName(app.app_id),
-                        vbsPath:
-                            process.env.NODE_ENV ===
-                            FractalNodeEnvironment.DEVELOPMENT
-                                ? null
-                                : vbsPath,
-                        icon: icoPath,
-                    },
-                })
-                console.log("DONE CREATING")
-                return shortcutCreated
+            const shortcutCreated = createDesktopShortcut({
+                windows: {
+                    outputPath: outputPath,
+                    filePath: appURL,
+                    name: createShortcutName(app.app_id),
+                    vbsPath:
+                        process.env.NODE_ENV ===
+                        FractalNodeEnvironment.DEVELOPMENT
+                            ? null
+                            : vbsPath,
+                    icon: icoPath,
+                },
             })
+            callback(shortcutCreated)
         })
-
-        console.log("LOG HERE")
-        return true
+    } else {
+        debugLog(`no suitable os found, instead got ${platform}`)
+        callback(false)
     }
-    debugLog(`no suitable os found, instead got ${platform}`)
-    return false
 }
 
 export const checkIfShortcutExists = (shortcut: string): boolean => {
@@ -173,10 +190,6 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
         Returns:
             exists (boolean): True/False if the shortcut exists
     */
-
-    const fs = require("fs")
-    const os = require("os")
-
     const platform = os.platform()
     try {
         if (platform === OperatingSystem.MAC) {
@@ -218,8 +231,6 @@ export const createDirectorySync = (
         Returns:
             success: True/False if the directory was created successfully
     */
-
-    const fs = require("fs")
 
     // If the base file path does not exist, return false
     if (!fs.existsSync(filePath) && fs.lstatSync(filePath).isDirectory()) {
