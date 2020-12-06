@@ -45,12 +45,10 @@ const AppPopup = (props: {
         openExternal(url)
     }
 
-    const handleDownload = (): boolean => {
+    const handleDownload = () => {
         if (clientOS === OperatingSystem.MAC) {
             debugLog("not yet implemented")
-            return false
-        }
-        if (clientOS === OperatingSystem.WINDOWS) {
+        } else if (clientOS === OperatingSystem.WINDOWS) {
             const outputPath = `${FractalWindowsDirectory.START_MENU}Fractal\\`
 
             setShortcutCreated(true)
@@ -61,30 +59,27 @@ const AppPopup = (props: {
                     "Fractal"
                 )
             ) {
-                return false
+                return
             }
 
             // Create the shortcut inside the Fractal Directory
-            if (!createShortcut(app, outputPath)) {
-                return false
-            }
+            createShortcut(app, outputPath, (shortcutCreated) => {
+                if (shortcutCreated) {
+                    const { array, index } = updateArrayByKey(
+                        apps,
+                        "app_id",
+                        app.app_id,
+                        {
+                            localState: FractalAppLocalState.INSTALLED,
+                        }
+                    )
 
-            const { array, index } = updateArrayByKey(
-                apps,
-                "app_id",
-                app.app_id,
-                {
-                    localState: FractalAppLocalState.INSTALLED,
+                    if (array && index !== 0) {
+                        dispatch(updateClient({ apps: array }))
+                    }
                 }
-            )
-
-            if (array && index !== 0) {
-                dispatch(updateClient({ apps: array }))
-            }
-
-            return true
+            })
         }
-        return false
     }
 
     return (
