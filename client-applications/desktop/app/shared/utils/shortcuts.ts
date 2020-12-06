@@ -6,6 +6,9 @@ import { debugLog } from "shared/utils/logging"
 const fs = require("fs")
 const os = require("os")
 
+const PNG_WIDTH = 64
+const PNG_HEIGHT = 64
+
 export class SVGConverter {
     /*
         Description:
@@ -55,8 +58,8 @@ export class SVGConverter {
         let _this = this
         this.imgPreview.onload = function () {
             const img = new Image()
-            _this.canvas.width = 64
-            _this.canvas.height = 64
+            _this.canvas.width = PNG_WIDTH
+            _this.canvas.height = PNG_HEIGHT
             img.crossOrigin = "anonymous"
             img.src = _this.imgPreview.src
             img.onload = function () {
@@ -72,7 +75,6 @@ export class SVGConverter {
                         _this.canvas.width,
                         _this.canvas.height
                     )
-
                     let base64 = _this.canvas.toDataURL("image/png")
                     callback(base64)
                 } else {

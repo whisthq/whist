@@ -21,7 +21,7 @@ module.exports = {
     // collectCoverageFrom: undefined,
 
     // The directory where Jest should output its coverage files
-    coverageDirectory: 'coverage',
+    coverageDirectory: "coverage",
 
     // An array of regexp pattern strings used to skip coverage collection
     // coveragePathIgnorePatterns: [
@@ -69,13 +69,12 @@ module.exports = {
     // ],
 
     // An array of file extensions your modules use
-    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+    moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
 
     // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
     moduleNameMapper: {
-        'shared/(.*)': '<rootDir>/app/shared/$1',
-        'types/(.*)': '<rootDir>/app/types/$1',
-        'pages/(.*)': '<rootDir>/app/pages/$1',
+        "shared/(.*)": "<rootDir>/app/shared/$1",
+        "pages/(.*)": "<rootDir>/app/pages/$1",
     },
 
     // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
@@ -112,7 +111,7 @@ module.exports = {
     // rootDir: undefined,
 
     // A list of paths to directories that Jest should use to search for files in
-    roots: ['<rootDir>'],
+    roots: ["<rootDir>"],
 
     // Allows you to use a custom runner instead of Jest's default test runner
     // runner: "jest-runner",
@@ -127,7 +126,7 @@ module.exports = {
     // slowTestThreshold: 5,
 
     // A list of paths to snapshot serializer modules Jest should use for snapshot testing
-    snapshotSerializers: ['enzyme-to-json/serializer'],
+    snapshotSerializers: ["enzyme-to-json/serializer"],
 
     // The test environment that will be used for testing
     // testEnvironment: 'node',
@@ -150,7 +149,7 @@ module.exports = {
     // ],
 
     // The regexp pattern or array of patterns that Jest uses to detect test files
-    testRegex: ['(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$'],
+    testRegex: ["(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$"],
 
     // This option allows the use of a custom results processor
     // testResultsProcessor: undefined,
@@ -166,7 +165,7 @@ module.exports = {
 
     // A map from regular expressions to paths to transformers
     transform: {
-        '^.+\\.tsx?$': 'ts-jest',
+        "^.+\\.tsx?$": "ts-jest",
     }, // ts-jest warns but is necessary to run typescript tests
 
     // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
