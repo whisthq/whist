@@ -125,6 +125,8 @@
         "@fortawesome/react-fontawesome": "^0.1.8",
         "@hot-loader/react-dom": "^16.11.0",
         "@sentry/electron": "^2.0.4",
+        "@testing-library/jest-dom": "^5.11.6",
+        "@testing-library/react": "^11.2.2",
         "@typeform/embed": "^0.16.0",
         "app-root-dir": "^1.0.2",
         "app-root-path": "^3.0.0",
