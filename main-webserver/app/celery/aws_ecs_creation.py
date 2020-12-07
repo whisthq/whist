@@ -249,12 +249,15 @@ def assign_container(
     :param username: the username of the requesting user
     :param task_definition_arn: which taskdef the user needs a container for
     :param region_name: which region the user needs a container for
+    :param cluster_name: which cluster the user needs a container for, only used in test
     :param dpi: the user's DPI
     :param webserver_url: the webserver originating the request
     :return: the generated container, in json form
     """
+
+    enable_waiting = False
     # if a cluster is passed in, we're in testing mode:
-    if cluster_name is None:
+    if cluster_name is None and enable_waiting:
         # first, we check for a preexisting container with the correct user and pass it back:
         existing_container = (
             UserContainer.query.filter_by(
