@@ -62,6 +62,7 @@ export const updateClient = (body: {
     region?: string
     dpi?: number
     apps?: FractalApp[]
+    onboardApps?: FractalApp[]
 }) => {
     return {
         type: UPDATE_CLIENT,
