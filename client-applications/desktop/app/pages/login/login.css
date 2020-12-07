@@ -19,7 +19,7 @@ button {
     height: 100vh;
     overflow-x: hidden;
     overflow-y: hidden;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     margin: 0px;
     background-size: cover;
     background-position: center;
@@ -56,7 +56,7 @@ button {
 
 .logoTitle {
     color: black;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     position: absolute;
     top: 42px;
     left: 42px;
@@ -64,47 +64,8 @@ button {
     letter-spacing: 1.5px;
 }
 
-.signupButton,
-.loginButton,
-.googleButton {
-    font-family: 'Maven Pro';
-    border: solid 0.8px #cccccc;
-    background: white;
-    font-weight: bold;
-    padding: 12px 30px;
-    color: black;
-    margin-left: 10px;
-    font-size: 15px;
-    outline: none !important;
-}
-
-.dashboardButton {
-    font-family: 'Maven Pro';
-    font-weight: bold;
-    padding: 10px 25px;
-    width: 150px;
-    background: var(--primary-color);
-    color: white;
-    font-size: 13px;
-    float: right;
-    margin-top: 15px;
-    text-align: center;
-    border-radius: 5px;
-}
-
-.dashboardButton:hover {
-    background: #93f1d9;
-    cursor: pointer;
-    color: #111111;
-}
-
-.loginButton {
-    margin-left: 0px;
-    width: 350px;
-}
-
 .processingButton {
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     font-weight: bold;
     padding: 12px 30px;
     font-size: 15px;
@@ -140,13 +101,6 @@ button {
     text-align: center;
 }
 
-.welcomeBack {
-    font-weight: bold;
-    font-size: 30px;
-    color: black;
-    margin-bottom: 5px;
-}
-
 .inputBox {
     width: 350px;
     background: #f7f7fc;
@@ -154,7 +108,7 @@ button {
     border: none;
     outline: none !important;
     color: #555555;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     font-size: 15px;
     margin-bottom: 20px;
 }
@@ -200,7 +154,7 @@ input.inputBox::placeholder {
     padding: 10px 15px;
     color: white;
     font-size: 13px;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     margin-top: 10px;
     max-width: 250px;
 }
@@ -211,7 +165,7 @@ input.inputBox::placeholder {
 }
 
 .internetSpeedText {
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     font-size: 12px;
     margin-top: 10px;
     color: #d3d3d3;
@@ -282,7 +236,7 @@ input.inputBox::placeholder {
 
 /* Create the checkmark/indicator (hidden when not checked) */
 .checkmark:after {
-    content: '';
+    content: "";
     position: absolute;
     display: none;
 }
@@ -312,11 +266,6 @@ input.inputBox::placeholder {
 
 .removeDrag {
     -webkit-app-region: no-drag;
-}
-
-.loadingBar {
-    height: 6px;
-    background: #93f1d9;
 }
 
 .bounce {
