@@ -160,7 +160,7 @@ typedef enum CodecType {
     CODEC_TYPE_UNKNOWN = 0,
     CODEC_TYPE_H264 = 264,
     CODEC_TYPE_H265 = 265,
-    __CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
+    CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
 } CodecType;
 
 typedef enum FractalCursorID {
@@ -327,14 +327,14 @@ typedef enum FractalMouseButton {
     MOUSE_R = 3,       ///< Right mouse button.
     MOUSE_X1 = 4,      ///< Extra mouse button 1.
     MOUSE_X2 = 5,      ///< Extra mouse button 2.
-    __MOUSE_MAKE_32 = 0x7FFFFFFF,
+    MOUSE_MAKE_32 = 0x7FFFFFFF,
 } FractalMouseButton;
 
-typedef struct RGB_Color {
+typedef struct FractalFractalRGBColor {
     uint8_t r;
     uint8_t g;
     uint8_t b;
-} RGB_Color;
+} FractalRGBColor;
 
 /// @brief Cursor properties.
 /// @details Track important information on cursor.
@@ -524,7 +524,7 @@ typedef struct PeerUpdateMessage {
     int x;
     int y;
     bool is_controlling;
-    RGB_Color color;
+    FractalRGBColor color;
 } PeerUpdateMessage;
 
 typedef struct FractalServerMessage {
@@ -565,12 +565,12 @@ Public Functions
 /**
  * @brief                          Print the memory trace of a process
  */
-void PrintMemoryInfo();
+void print_memory_info();
 
 /**
  * @brief                          Print the system info of the computer
  */
-void PrintSystemInfo();
+void print_system_info();
 
 /**
  * @brief                          Run a system command via command prompt or
@@ -615,6 +615,6 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
  *
  * @returns                        The size of the Fractal Client Message struct
  */
-int GetFmsgSize(FractalClientMessage* fmsg);
+int get_fmsg_size(FractalClientMessage* fmsg);
 
 #endif  // FRACTAL_H

@@ -1,0 +1,54 @@
+# workflows/main-webserver-push-sentry-release.yml
+#
+# Main Webserver: Push Sentry Release
+# Automatically push a new sentry release for the main webserver.
+
+name: "Main Webserver: Push Sentry Release"
+
+on:
+    push:
+        branches: [master]
+        paths:
+            - "main-webserver/**"
+            - "!main-webserver/README.md"
+
+jobs:
+    main-webserver-push-sentry-release-main:
+        name: Push Sentry Release
+        runs-on: ubuntu-20.04
+        env:
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_ORG: tryfractal
+            SENTRY_PROJECT: main-webserver
+            SENTRY_DEPLOY_ENVIRONMENT: production
+
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+            - name: Set Git repository URL to enable sentry-cli automatic commit tagging
+              run: |
+                  git remote set-url origin https://github.com/fractal/fractal
+
+            - name: Create new Sentry release
+              run: |
+                  # Install Sentry CLI
+                  curl -sL https://sentry.io/get-cli/ | bash
+
+                  # Create new Sentry release
+                  export SENTRY_RELEASE=$(sentry-cli releases propose-version)
+                  sentry-cli releases new -p $SENTRY_PROJECT $SENTRY_RELEASE
+                  sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
+                  sentry-cli releases finalize $SENTRY_RELEASE
+
+                  # Create new deploy for this Sentry release
+                  sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
+
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Main Webserver Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  https://hooks.slack.com/services/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

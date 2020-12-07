@@ -84,12 +84,12 @@ sudo systemctl disable --now docker
 echo "================================================"
 echo "Installing AWS CLI..."
 echo "================================================"
-sudo apt install awscli
+sudo apt install -y awscli
 
 echo "================================================"
 echo "Installing Cloud Storage Dependencies..."
 echo "================================================"
-sudo apt install rclone openssl
+sudo apt install -y rclone openssl
 
 echo "================================================"
 echo "Cleaning up the image a bit..."

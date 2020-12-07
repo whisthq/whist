@@ -1,0 +1,13 @@
+@import '/app.global.css';
+
+.faIcon,
+.faIconSelected {
+    font-size: 18px;
+    color: #efefef;
+    position: relative;
+    bottom: 5px;
+}
+
+.faIconSelected {
+    color: var(--primary-color);
+}

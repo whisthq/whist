@@ -7,11 +7,11 @@ from flask import current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
 from app.constants.http_codes import UNAUTHORIZED
-from app.helpers.utils.general.logs import fractalLog
+from app.helpers.utils.general.logs import fractal_log
 
 
-def fractalAuth(f):
-    @wraps(f)
+def fractal_auth(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         username = None
 
@@ -25,7 +25,7 @@ def fractalAuth(f):
             elif request.method == "GET":
                 username = request.args.get("username")
         except Exception as e:
-            fractalLog(
+            fractal_log(
                 function="",
                 label="",
                 logs="Bearer error: {error}".format(error=str(e)),
@@ -64,13 +64,13 @@ def fractalAuth(f):
                 UNAUTHORIZED,
             )
 
-        return f(*args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
 
 
-def adminRequired(f):
-    @wraps(f)
+def admin_required(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         current_user = get_jwt_identity()
         if current_app.config["DASHBOARD_USERNAME"] not in current_user:
@@ -86,6 +86,34 @@ def adminRequired(f):
                 UNAUTHORIZED,
             )
 
-        return f(*args, **kwargs)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def developer_access(func):
+    # in the future we may want to instead make a table in the DB
+    # for people who are developers
+    # TODO (adriano) ^
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        current_user = get_jwt_identity()
+        if not (
+            current_app.config["DASHBOARD_USERNAME"] in current_user
+            or "@tryfractal.com" in current_user
+        ):
+            return (
+                jsonify(
+                    {
+                        "error": (
+                            "Authorization failed. Provided username does not belong to "
+                            "a developer account."
+                        ),
+                    }
+                ),
+                UNAUTHORIZED,
+            )
+
+        return func(*args, **kwargs)
 
     return wrapper

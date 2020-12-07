@@ -18,11 +18,11 @@ audio_decoder_packet_readout.
 
 #include "audiodecode.h"
 
-audio_decoder_t *create_audio_decoder(int sample_rate) {
+AudioDecoder *create_audio_decoder(int sample_rate) {
     // initialize the audio decoder
 
-    audio_decoder_t *decoder = (audio_decoder_t *)malloc(sizeof(audio_decoder_t));
-    memset(decoder, 0, sizeof(audio_decoder_t));
+    AudioDecoder *decoder = (AudioDecoder *)malloc(sizeof(AudioDecoder));
+    memset(decoder, 0, sizeof(AudioDecoder));
 
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
@@ -84,7 +84,7 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
     return decoder;
 }
 
-int init_av_frame(audio_decoder_t *decoder) {
+int init_av_frame(AudioDecoder *decoder) {
     // setup the AVFrame fields
 
     decoder->pFrame->nb_samples = MAX_AUDIO_FRAME_SIZE;
@@ -101,7 +101,7 @@ int init_av_frame(audio_decoder_t *decoder) {
     return 0;
 }
 
-void audio_decoder_packet_readout(audio_decoder_t *decoder, uint8_t *data) {
+void audio_decoder_packet_readout(AudioDecoder *decoder, uint8_t *data) {
     if (!decoder) return;
     // convert samples from the AVFrame and return
 
@@ -126,12 +126,12 @@ void audio_decoder_packet_readout(audio_decoder_t *decoder, uint8_t *data) {
     // mprintf("finished reading out packet\n");
 }
 
-int audio_decoder_get_frame_data_size(audio_decoder_t *decoder) {
+int audio_decoder_get_frame_data_size(AudioDecoder *decoder) {
     return av_get_bytes_per_sample(decoder->pCodecCtx->sample_fmt) * decoder->pFrame->nb_samples *
            av_get_channel_layout_nb_channels(decoder->pFrame->channel_layout);
 }
 
-int audio_decoder_decode_packet(audio_decoder_t *decoder, AVPacket *encoded_packet) {
+int audio_decoder_decode_packet(AudioDecoder *decoder, AVPacket *encoded_packet) {
     if (!decoder) {
         return -1;
     }
@@ -171,7 +171,7 @@ int audio_decoder_decode_packet(audio_decoder_t *decoder, AVPacket *encoded_pack
     }
 }
 
-void destroy_audio_decoder(audio_decoder_t *decoder) {
+void destroy_audio_decoder(AudioDecoder *decoder) {
     if (decoder == NULL) {
         LOG_WARNING("Cannot destroy null audio decoder.");
         return;

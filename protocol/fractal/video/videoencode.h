@@ -26,7 +26,7 @@ Custom Types
 
 #define MAX_ENCODER_PACKETS 20
 
-typedef struct video_encoder_t {
+typedef struct VideoEncoder {
     AVCodec* pCodec;
     AVCodecContext* pCodecCtx;
     AVFilterGraph* pFilterGraph;
@@ -54,7 +54,7 @@ typedef struct video_encoder_t {
 
     EncodeType type;
     CodecType codec_type;
-} video_encoder_t;
+} VideoEncoder;
 
 /*
 ============================
@@ -81,8 +81,8 @@ Public Functions
  *
  * @returns                        The newly created encoder
  */
-video_encoder_t* create_video_encoder(int in_width, int in_height, int out_width, int out_height,
-                                      int bitrate, CodecType codec_type);
+VideoEncoder* create_video_encoder(int in_width, int in_height, int out_width, int out_height,
+                                   int bitrate, CodecType codec_type);
 
 /**
  * @brief                          Put the input data into a software frame, and
@@ -94,7 +94,7 @@ video_encoder_t* create_video_encoder(int in_width, int in_height, int out_width
  *
  * @returns                        0 on success, else -1
  */
-int video_encoder_frame_intake(video_encoder_t* encoder, void* rgb_pixels, int pitch);
+int video_encoder_frame_intake(VideoEncoder* encoder, void* rgb_pixels, int pitch);
 
 /**
  * @brief                          Encode the frame in `encoder->sw_frame` or
@@ -107,7 +107,7 @@ int video_encoder_frame_intake(video_encoder_t* encoder, void* rgb_pixels, int p
  *
  * @returns                        0 on success, else -1
  */
-int video_encoder_encode(video_encoder_t* encoder);
+int video_encoder_encode(VideoEncoder* encoder);
 
 /**
  * @brief                          Write the data from the encoded packet(s) in
@@ -120,14 +120,14 @@ int video_encoder_encode(video_encoder_t* encoder);
  *                                 least `encoder->encoded_frame_size` into
  *                                 which to copy the data
  */
-void video_encoder_write_buffer(video_encoder_t* encoder, int* buf);
+void video_encoder_write_buffer(VideoEncoder* encoder, int* buf);
 
 /**
  * @brief                          Set the next frame to be an i-frame
  *
  * @param encoder                  Encoder to be updated
  */
-void video_encoder_set_iframe(video_encoder_t* encoder);
+void video_encoder_set_iframe(VideoEncoder* encoder);
 
 /**
  * @brief                          Allow the next frame to be either an i-frame
@@ -135,13 +135,13 @@ void video_encoder_set_iframe(video_encoder_t* encoder);
  *
  * @param encoder                  Encoder to be updated
  */
-void video_encoder_unset_iframe(video_encoder_t* encoder);
+void video_encoder_unset_iframe(VideoEncoder* encoder);
 
 /**
  * @brief                          Destroy encoder
  *
  * @param encoder                  Encoder to be destroyed
  */
-void destroy_video_encoder(video_encoder_t* encoder);
+void destroy_video_encoder(VideoEncoder* encoder);
 
 #endif  // ENCODE_H

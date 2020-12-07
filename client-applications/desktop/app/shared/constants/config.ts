@@ -1,7 +1,19 @@
-const environment: any = {
+import { FractalEnvironment, FractalConfig } from "shared/types/config"
+
+// these are basically used to keep these links in one place
+// since we are going to be using them in logic for admin integration testing
+// app where you can choose where to go to
+export const webservers: { [key: string]: string } = {
+    local: "http://127.0.0.1:7730",
+    dev: "https://dev-server.tryfractal.com",
+    staging: "https://staging-webserver.tryfractal.com",
+    prod: "https://main-webserver.herokuapp.com",
+}
+
+const environment: FractalEnvironment = {
     local: {
         url: {
-            WEBSERVER_URL: "http://127.0.0.1:7730",
+            WEBSERVER_URL: webservers.local,
             FRONTEND_URL: "http://localhost:3000",
             GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
@@ -12,8 +24,8 @@ const environment: any = {
             GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
-        sentry_env: "development",
-        client_download_urls: {
+        sentryEnv: "development",
+        clientDownloadURLs: {
             MacOS:
                 "https://fractal-mac-application-testing.s3.amazonaws.com/Fractal.dmg",
             Windows:
@@ -22,7 +34,7 @@ const environment: any = {
     },
     development: {
         url: {
-            WEBSERVER_URL: "https://dev-webserver.herokuapp.com",
+            WEBSERVER_URL: webservers.dev,
             FRONTEND_URL: "https://dev.tryfractal.com",
             GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
@@ -33,8 +45,8 @@ const environment: any = {
             GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
-        sentry_env: "development",
-        client_download_urls: {
+        sentryEnv: "development",
+        clientDownloadURLs: {
             MacOS:
                 "https://fractal-mac-application-testing.s3.amazonaws.com/Fractal.dmg",
             Windows:
@@ -43,7 +55,7 @@ const environment: any = {
     },
     staging: {
         url: {
-            WEBSERVER_URL: "https://staging-webserver.tryfractal.com",
+            WEBSERVER_URL: webservers.staging,
             FRONTEND_URL: "https://staging.tryfractal.com",
             GRAPHQL_HTTP_URL:
                 "https://staging-database.tryfractal.com/v1/graphql",
@@ -55,8 +67,8 @@ const environment: any = {
             GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
-        sentry_env: "development",
-        client_download_urls: {
+        sentryEnv: "development",
+        clientDownloadURLs: {
             MacOS:
                 "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
             Windows:
@@ -65,7 +77,7 @@ const environment: any = {
     },
     production: {
         url: {
-            WEBSERVER_URL: "https://main-webserver.herokuapp.com",
+            WEBSERVER_URL: webservers.production,
             FRONTEND_URL: "https://tryfractal.com",
             GRAPHQL_HTTP_URL: "https://prod-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://prod-database.tryfractal.com/v1/graphql",
@@ -76,8 +88,8 @@ const environment: any = {
             GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
-        sentry_env: "production",
-        client_download_urls: {
+        sentryEnv: "production",
+        clientDownloadURLs: {
             MacOS:
                 "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
             Windows:
@@ -86,7 +98,10 @@ const environment: any = {
     },
 }
 
-export const config: any =
+export const config: FractalConfig =
     process.env.NODE_ENV === "development"
         ? environment.development
-        : environment.production
+        : environment.development
+
+// default export until we have multiple exports
+export default config

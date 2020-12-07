@@ -45,6 +45,25 @@ def _save_user():
     pass
 
 
+@pytest.fixture
+def admin(app, authorized, monkeypatch):
+    """Bypass the admin_required decorator.
+
+    The way the admin_required decorator works is it compares the identity stored in the JWT token
+    sent along with the request to the admin username. Since we patch the get_jwt_identity function
+    so it always returns is the identity of our test user, we can easily bypass the admin_required
+    decorator by patching the admin username to be the same as the one that the patched
+    get_jwt_identity function returns.
+
+    Returns:
+        An instance of the User model representing the authorized admin user.
+    """
+
+    monkeypatch.setitem(app.config, "DASHBOARD_USERNAME", authorized.user_id)
+
+    return authorized
+
+
 @pytest.fixture(scope="session")
 def app():
     """Flask application test fixture required by pytest-flask.

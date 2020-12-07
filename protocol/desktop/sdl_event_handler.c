@@ -39,35 +39,35 @@ extern volatile int output_width;
 extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 
-extern mouse_motion_accumulation mouse_state;
+extern MouseMotionAccumulation mouse_state;
 
-int handleWindowSizeChanged(SDL_Event *event);
-int handleMouseLeftWindow(SDL_Event *event);
-int handleKeyUpDown(SDL_Event *event);
-int handleMouseMotion(SDL_Event *event);
-int handleMouseWheel(SDL_Event *event);
-int handleMouseButtonUpDown(SDL_Event *event);
-int handleMultiGesture(SDL_Event *event);
+int handle_window_size_changed(SDL_Event *event);
+int handle_mouse_left_window(SDL_Event *event);
+int handle_key_up_down(SDL_Event *event);
+int handle_mouse_motion(SDL_Event *event);
+int handle_mouse_wheel(SDL_Event *event);
+int handle_mouse_button_up_down(SDL_Event *event);
+int handle_multi_gesture(SDL_Event *event);
 
-int tryHandleSDLEvent(void) {
+int try_handle_sdl_event(void) {
     SDL_Event event;
     if (SDL_PollEvent(&event)) {
-        if (handleSDLEvent(&event) != 0) {
+        if (handle_sdl_event(&event) != 0) {
             return -1;
         }
     }
     return 0;
 }
 
-int handleSDLEvent(SDL_Event *event) {
+int handle_sdl_event(SDL_Event *event) {
     switch (event->type) {
         case SDL_WINDOWEVENT:
             if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                if (handleWindowSizeChanged(event) != 0) {
+                if (handle_window_size_changed(event) != 0) {
                     return -1;
                 }
             } else if (event->window.event == SDL_WINDOWEVENT_LEAVE) {
-                if (handleMouseLeftWindow(event) != 0) {
+                if (handle_mouse_left_window(event) != 0) {
                     return -1;
                 }
             }
@@ -75,7 +75,7 @@ int handleSDLEvent(SDL_Event *event) {
         case SDL_AUDIODEVICEADDED:
         case SDL_AUDIODEVICEREMOVED:
             SDL_DetachThread(
-                SDL_CreateThread(MultithreadedReinitAudio, "MultithreadedReinitAudio", NULL));
+                SDL_CreateThread(multithreaded_reinit_audio, "MultithreadedReinitAudio", NULL));
             break;
         case SDL_KEYDOWN:
         case SDL_KEYUP:
@@ -87,28 +87,28 @@ int handleSDLEvent(SDL_Event *event) {
             }
 #endif
 
-            if (handleKeyUpDown(event) != 0) {
+            if (handle_key_up_down(event) != 0) {
                 return -1;
             }
             break;
         case SDL_MOUSEMOTION:
-            if (handleMouseMotion(event) != 0) {
+            if (handle_mouse_motion(event) != 0) {
                 return -1;
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
-            if (handleMouseButtonUpDown(event) != 0) {
+            if (handle_mouse_button_up_down(event) != 0) {
                 return -1;
             }
             break;
         case SDL_MOUSEWHEEL:
-            if (handleMouseWheel(event) != 0) {
+            if (handle_mouse_wheel(event) != 0) {
                 return -1;
             }
             break;
         case SDL_MULTIGESTURE:
-            if (handleMultiGesture(event) != 0) {
+            if (handle_multi_gesture(event) != 0) {
                 return -1;
             }
             break;
@@ -120,12 +120,12 @@ int handleSDLEvent(SDL_Event *event) {
     return 0;
 }
 
-int handleWindowSizeChanged(SDL_Event *event) {
+int handle_window_size_changed(SDL_Event *event) {
     // Let video thread know about the resizing to
     // reinitialize display dimensions
     set_video_active_resizing(false);
 
-    if (GetTimer(window_resize_timer) > 0.2) {
+    if (get_timer(window_resize_timer) > 0.2) {
         // Let the server know the new dimensions so that it
         // can change native dimensions for monitor
         FractalClientMessage fmsg = {0};
@@ -136,9 +136,9 @@ int handleWindowSizeChanged(SDL_Event *event) {
         float dpi;
         SDL_GetDisplayDPI(0, NULL, &dpi, NULL);
         fmsg.dimensions.dpi = (int)dpi;
-        SendFmsg(&fmsg);
+        send_fmsg(&fmsg);
 
-        StartTimer(&window_resize_timer);
+        start_timer(&window_resize_timer);
     }
 
     LOG_INFO("Window %d resized to %dx%d (Physical %dx%d)", event->window.windowID,
@@ -147,15 +147,15 @@ int handleWindowSizeChanged(SDL_Event *event) {
     return 0;
 }
 
-int handleMouseLeftWindow(SDL_Event *event) {
+int handle_mouse_left_window(SDL_Event *event) {
     UNUSED(event);
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MOUSE_INACTIVE;
-    SendFmsg(&fmsg);
+    send_fmsg(&fmsg);
     return 0;
 }
 
-int handleKeyUpDown(SDL_Event *event) {
+int handle_key_up_down(SDL_Event *event) {
     FractalKeycode keycode =
         (FractalKeycode)SDL_GetScancodeFromName(SDL_GetKeyName(event->key.keysym.sym));
     bool is_pressed = event->key.type == SDL_KEYDOWN;
@@ -188,21 +188,21 @@ int handleKeyUpDown(SDL_Event *event) {
         FractalClientMessage fmsg = {0};
         fmsg.type = CMESSAGE_INTERACTION_MODE;
         fmsg.interaction_mode = SPECTATE;
-        SendFmsg(&fmsg);
+        send_fmsg(&fmsg);
     }
 
     if (ctrl_pressed && alt_pressed && keycode == FK_G && is_pressed) {
         FractalClientMessage fmsg = {0};
         fmsg.type = CMESSAGE_INTERACTION_MODE;
         fmsg.interaction_mode = CONTROL;
-        SendFmsg(&fmsg);
+        send_fmsg(&fmsg);
     }
 
     if (ctrl_pressed && alt_pressed && keycode == FK_M && is_pressed) {
         FractalClientMessage fmsg = {0};
         fmsg.type = CMESSAGE_INTERACTION_MODE;
         fmsg.interaction_mode = EXCLUSIVE_CONTROL;
-        SendFmsg(&fmsg);
+        send_fmsg(&fmsg);
     }
 
     FractalClientMessage fmsg = {0};
@@ -210,7 +210,7 @@ int handleKeyUpDown(SDL_Event *event) {
     fmsg.keyboard.code = keycode;
     fmsg.keyboard.pressed = is_pressed;
     fmsg.keyboard.mod = event->key.keysym.mod;
-    SendFmsg(&fmsg);
+    send_fmsg(&fmsg);
 
     return 0;
 }
@@ -219,13 +219,13 @@ int handleKeyUpDown(SDL_Event *event) {
 // mouse position Absolute mouse position is where it is
 // on the screen We multiply by scaling factor so that
 // integer division doesn't destroy accuracy
-int handleMouseMotion(SDL_Event *event) {
+int handle_mouse_motion(SDL_Event *event) {
     bool is_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
 
     if (is_relative && !mouse_state.is_relative) {
         // old datum was absolute, new is relative
         // hence, clear any pending absolute motion
-        if (updateMouseMotion() != 0) {
+        if (update_mouse_motion() != 0) {
             return -1;
         }
     }
@@ -244,7 +244,7 @@ int handleMouseMotion(SDL_Event *event) {
     return 0;
 }
 
-int handleMouseButtonUpDown(SDL_Event *event) {
+int handle_mouse_button_up_down(SDL_Event *event) {
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MOUSE_BUTTON;
     // Record if left / right / middle button
@@ -253,26 +253,26 @@ int handleMouseButtonUpDown(SDL_Event *event) {
     if (fmsg.mouseButton.button == MOUSE_L) {
         SDL_CaptureMouse(fmsg.mouseButton.pressed);
     }
-    SendFmsg(&fmsg);
+    send_fmsg(&fmsg);
 
     return 0;
 }
 
-int handleMouseWheel(SDL_Event *event) {
+int handle_mouse_wheel(SDL_Event *event) {
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MOUSE_WHEEL;
     fmsg.mouseWheel.x = event->wheel.x;
     fmsg.mouseWheel.y = event->wheel.y;
-    SendFmsg(&fmsg);
+    send_fmsg(&fmsg);
 
     return 0;
 }
 
-int handleMultiGesture(SDL_Event *event) {
+int handle_multi_gesture(SDL_Event *event) {
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MULTIGESTURE;
     fmsg.multigestureData = event->mgesture;
-    SendFmsg(&fmsg);
+    send_fmsg(&fmsg);
 
     return 0;
 }

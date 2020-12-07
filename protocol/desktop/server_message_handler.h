@@ -43,6 +43,6 @@ Public Functions
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handleServerMessage(FractalServerMessage *fmsg, size_t fmsg_size);
+int handle_server_message(FractalServerMessage *fmsg, size_t fmsg_size);
 
 #endif  // SERVER_MESSAGE_HANDLER_H

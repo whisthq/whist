@@ -42,14 +42,14 @@ Public Functions
 ============================
 */
 
-bool parse_json(char* str, json_t* json) {
+bool parse_json(char* str, Json* json) {
     skip_whitespace(&str);
     if (*str != '{') {
         return false;
     }
     char c;
 
-    kv_pair_t kv_pairs[100];
+    KVPair kv_pairs[100];
     int num_kv_pairs = 0;
 
     while ((c = next_alphanumeric_char(&str)) != '\0') {
@@ -69,7 +69,7 @@ bool parse_json(char* str, json_t* json) {
             }
         }
 
-        kv_pair_t* kv = &kv_pairs[num_kv_pairs];
+        KVPair* kv = &kv_pairs[num_kv_pairs];
         num_kv_pairs++;
 
         if (*str != '\"') {
@@ -137,12 +137,12 @@ bool parse_json(char* str, json_t* json) {
     }
 
     json->size = num_kv_pairs;
-    json->pairs = malloc(sizeof(kv_pair_t) * num_kv_pairs);
-    memcpy(json->pairs, kv_pairs, sizeof(kv_pair_t) * num_kv_pairs);
+    json->pairs = malloc(sizeof(KVPair) * num_kv_pairs);
+    memcpy(json->pairs, kv_pairs, sizeof(KVPair) * num_kv_pairs);
 
     /*
     for (int i = 0; i < json->size; i++) {
-        kv_pair_t* kv = &json->pairs[i];
+        KVPair* kv = &json->pairs[i];
         LOG_INFO("KEY BEGIN: %s", kv->key);
         switch (kv->type) {
             case JSON_BOOL:
@@ -161,7 +161,7 @@ bool parse_json(char* str, json_t* json) {
     return true;
 }
 
-kv_pair_t* get_kv(json_t* json, char* key) {
+KVPair* get_kv(Json* json, char* key) {
     for (int i = 0; i < json->size; i++) {
         if (strcmp(json->pairs[i].key, key) == 0) {
             return &json->pairs[i];
@@ -170,7 +170,7 @@ kv_pair_t* get_kv(json_t* json, char* key) {
     return NULL;
 }
 
-void free_json(json_t json) {
+void free_json(Json json) {
     for (int i = 0; i < json.size; i++) {
         free(json.pairs[i].key);
         if (json.pairs[i].type == JSON_STRING) {

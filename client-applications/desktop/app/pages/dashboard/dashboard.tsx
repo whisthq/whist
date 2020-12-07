@@ -1,44 +1,26 @@
-import React, { useEffect, useState } from "react"
-import { connect } from "react-redux"
-import styles from "styles/dashboard.css"
-import Titlebar from "react-electron-titlebar"
-import { Redirect } from "react-router-dom"
+import React, { useState } from "react"
 
-import NavBar from "pages/dashboard/components/navBar"
-import Discover from "pages/dashboard/views/discover"
-import Settings from "pages/dashboard/views/settings"
-import Support from "pages/dashboard/views/support"
+import TitleBar from "shared/components/titleBar"
+import NavBar from "pages/dashboard/components/navBar/navBar"
+import Discover from "pages/dashboard/views/discover/discover"
+import Settings from "pages/dashboard/views/settings/settings"
+import Support from "pages/dashboard/views/support/support"
 
-const Dashboard = (props: any) => {
-    const { launchURL, os } = props
-    const [currentTab, setCurrentTab] = useState("Discover")
+import { FractalDashboardTab } from "shared/types/navigation"
+
+import styles from "pages/dashboard/dashboard.css"
+
+const Dashboard = () => {
+    const [currentTab, setCurrentTab] = useState(FractalDashboardTab.APP_STORE)
     const [search, setSearch] = useState("")
-
-    if (launchURL) {
-        return <Redirect to="/loading" />
-    }
 
     return (
         <div className={styles.container}>
-            {os === "win32" ? (
-                <div
-                    style={{
-                        zIndex: 9999,
-                        position: "fixed",
-                        top: 0,
-                        right: 0,
-                    }}
-                >
-                    <Titlebar backgroundColor="#000000" />
-                </div>
-            ) : (
-                <div className={styles.macTitleBar} />
-            )}
+            <TitleBar />
             <div
                 style={{
                     display: "flex",
                     flexDirection: "column",
-                    marginTop: 28,
                 }}
                 className={styles.removeDrag}
             >
@@ -48,25 +30,14 @@ const Dashboard = (props: any) => {
                     search={search}
                     updateSearch={setSearch}
                 />
-                {currentTab === "Discover" && (
-                    <Discover
-                        updateCurrentTab={setCurrentTab}
-                        search={search}
-                    />
+                {currentTab === FractalDashboardTab.APP_STORE && (
+                    <Discover search={search} />
                 )}
-                {currentTab === "Settings" && <Settings />}
-                {currentTab === "Support" && <Support />}
+                {currentTab === FractalDashboardTab.SETTINGS && <Settings />}
+                {currentTab === FractalDashboardTab.SUPPORT && <Support />}
             </div>
         </div>
     )
 }
 
-const mapStateToProps = (state: any) => {
-    return {
-        username: state.MainReducer.auth.username,
-        os: state.MainReducer.client.os,
-        launchURL: state.MainReducer.container.launchURL,
-    }
-}
-
-export default connect(mapStateToProps)(Dashboard)
+export default Dashboard

@@ -1,0 +1,46 @@
+# workflows/client-applications-linting.yml
+#
+# Client Applications: Linting
+# Lint client-applications using eslint.
+
+name: "Client Applications: Linting"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
+        paths:
+            - "client-applications/**"
+            - "!client-applications/README.md"
+
+jobs:
+    client-applications-linting-main:
+        name: Lint Client Applications
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+            - name: Install Node.js 12
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 12
+
+            - name: Run yarn -i in /desktop
+              run: cd client-applications/desktop && yarn -i
+
+            - name: Check if code follows ESLint standards
+              run: |
+                  result=$(cd client-applications/desktop && yarn lint-check) # checks if code is linted
+                  if [ "$result" -ne "0" ]; then
+                    (echo "To pass this check please lint the code with ESLint or update .eslintrc.js to ignore unwanted checks" && false)
+                  else
+                    (echo "Code is linted with ESLint" && true)
+                  fi

@@ -1,0 +1,46 @@
+# workflows/protocol-push-sentry-release.yml
+#
+# Protocol: Push Sentry Release
+# Automatically push a new sentry release for the protocol.
+
+name: "Protocol: Push Sentry Release"
+
+on:
+    push:
+        branches: [master]
+        paths:
+            - "protocol/**"
+            - "!protocol/README.md"
+
+jobs:
+    protocol-push-sentry-release-main:
+        name: Push Sentry Release
+        runs-on: ubuntu-20.04
+        env:
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_ORG: fractalcomputers
+            SENTRY_PROJECT: protocol
+            SENTRY_DEPLOY_ENVIRONMENT: production
+
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+              with:
+                  python-version: "3.8"
+            - name: Install Python requests (for sentry download)
+              uses: actions/setup-python@v2
+            - name: install python requests
+              run: pip3 install requests
+            - name: Set Sentry Environment
+              id: sentry_env
+              run: python3 sentry_env_from_release.py ${{ github.event.release.tag_name }}
+            - name: Create a Sentry.io release
+              uses: tclindner/sentry-releases-action@v1.2.0
+              env:
+                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+                  SENTRY_ORG: Fractal
+                  SENTRY_PROJECT: protocol
+              with:
+                  tagName: ${{ steps.vars.outputs.sha_short }}
+                  releaseNamePrefix: fractal-protocol@
+                  environment: ${{ steps.sentry_env.outputs.sentry_env }}

@@ -45,7 +45,7 @@ Public Functions
  * @returns                        Initialized input device struct defining
  *                                 mouse and keyboard states
  */
-input_device_t* CreateInputDevice();
+InputDevice* create_input_device();
 
 /**
  * @brief                          Destroy and free the memory of an input
@@ -54,7 +54,7 @@ input_device_t* CreateInputDevice();
  * @param input_device             The initialized input device struct to
  *                                 destroy and free the memory of
  */
-void DestroyInputDevice(input_device_t* input_device);
+void destroy_input_device(InputDevice* input_device);
 
 /**
  * @brief                          Get the active/inactive state of a key
@@ -68,7 +68,7 @@ void DestroyInputDevice(input_device_t* input_device);
  * @returns                        1 if the queried modifier is active,
  *                                 0 if inactive, and -1 on error
  */
-int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_keycode);
+int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode sdl_keycode);
 
 /**
  * @brief                          Get the pressed/unpressed state of a
@@ -81,7 +81,7 @@ int GetKeyboardModifierState(input_device_t* input_device, FractalKeycode sdl_ke
  * @returns                        1 if the queried key is pressed,
  *                                 0 if unpressed, and -1 on error
  */
-int GetKeyboardKeyState(input_device_t* input_device, FractalKeycode sdl_keycode);
+int get_keyboard_key_state(InputDevice* input_device, FractalKeycode sdl_keycode);
 
 /**
  * @brief                          Emit a keyboard press/unpress event
@@ -94,7 +94,7 @@ int GetKeyboardKeyState(input_device_t* input_device, FractalKeycode sdl_keycode
  *
  * @returns                        0 on success, -1 on failure
  */
-int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int pressed);
+int emit_key_event(InputDevice* input_device, FractalKeycode sdl_keycode, int pressed);
 
 /**
  * @brief                          Emit a relative/absolute mouse motion event
@@ -115,7 +115,7 @@ int EmitKeyEvent(input_device_t* input_device, FractalKeycode sdl_keycode, int p
  *
  * @returns                        0 on success, -1 on failure
  */
-int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int relative);
+int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int relative);
 
 /**
  * @brief                          Emit a mouse button press/unpress event
@@ -128,7 +128,7 @@ int EmitMouseMotionEvent(input_device_t* input_device, int32_t x, int32_t y, int
  *
  * @returns                        0 on success, -1 on failure
  */
-int EmitMouseButtonEvent(input_device_t* input_device, FractalMouseButton button, int pressed);
+int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button, int pressed);
 
 /**
  * @brief                          Emit a mouse vertical or horizontal scroll event
@@ -141,6 +141,6 @@ int EmitMouseButtonEvent(input_device_t* input_device, FractalMouseButton button
  *
  * @returns                        0 on success, -1 on failure
  */
-int EmitMouseWheelEvent(input_device_t* input_device, int32_t x, int32_t y);
+int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y);
 
 #endif  // INPUT_DRIVER_H

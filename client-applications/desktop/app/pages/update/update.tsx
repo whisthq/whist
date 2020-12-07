@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react"
-import { connect } from "react-redux"
-import styles from "styles/login.css"
-import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
-const Update = (props: any) => {
-    const { os, needsUpdate } = props
+import TitleBar from "shared/components/titleBar"
+import styles from "pages/login/login.css"
+
+const Update = (props: { needsUpdate: boolean }) => {
+    const { needsUpdate } = props
 
     const [percentageLeft, setPercentageLeft] = useState(500)
     const [percentageDownloaded, setPercentageDownloaded] = useState(0)
@@ -18,25 +18,28 @@ const Update = (props: any) => {
     useEffect(() => {
         const ipc = require("electron").ipcRenderer
 
-        ipc.on("percent", (_: any, percent: any) => {
-            percent = percent * 3
+        ipc.on("percent", (_: IpcRendererEvent, percent: number) => {
+            percent *= 3
             setPercentageLeft(500 - percent)
             setPercentageDownloaded(percent)
         })
 
-        ipc.on("download-speed", (_: any, speed: any) => {
+        ipc.on("download-speed", (_: IpcRendererEvent, speed: number) => {
             setDownloadSpeed((speed / 1000000).toFixed(2))
         })
 
-        ipc.on("transferred", (_: any, transferred: any) => {
-            setTransferred((transferred / 1000000).toFixed(2))
+        ipc.on(
+            "transferred",
+            (_: IpcRendererEvent, reportedTransferred: number) => {
+                setTransferred((reportedTransferred / 1000000).toFixed(2))
+            }
+        )
+
+        ipc.on("total", (_: IpcRendererEvent, reportedTotal: number) => {
+            setTotal((reportedTotal / 1000000).toFixed(2))
         })
 
-        ipc.on("total", (_: any, total: any) => {
-            setTotal((total / 1000000).toFixed(2))
-        })
-
-        ipc.on("error", (_: any, error: any) => {
+        ipc.on("error", (_: IpcRendererEvent, error: string) => {
             setDownloadError(error)
         })
 
@@ -57,13 +60,7 @@ const Update = (props: any) => {
                         zIndex: 1000,
                     }}
                 >
-                    {os === "win32" ? (
-                        <div>
-                            <Titlebar backgroundColor="#000000" />
-                        </div>
-                    ) : (
-                        <div style={{ marginTop: 10 }}></div>
-                    )}
+                    <TitleBar />
                     <div className={styles.landingHeader}>
                         <div className={styles.landingHeaderLeft}>
                             <span className={styles.logoTitle}>Fractal</span>
@@ -91,14 +88,14 @@ const Update = (props: any) => {
                                         height: 6,
                                         background: "#EFEFEF",
                                     }}
-                                ></div>
+                                />
                                 <div
                                     style={{
                                         width: `${percentageLeft}px`,
                                         height: 6,
                                         background: "#111111",
                                     }}
-                                ></div>
+                                />
                             </div>
                             {downloadError === "" ? (
                                 <div
@@ -147,22 +144,16 @@ const Update = (props: any) => {
                                     marginTop: 5,
                                 }}
                             >
-                                {transferred} / {total} MB Downloaded
+                                {transferred} /{total} MB Downloaded
                             </div>
                         </div>
                     </div>
                 </div>
             ) : (
-                <div></div>
+                <div />
             )}
         </div>
     )
 }
 
-function mapStateToProps(state: any) {
-    return {
-        os: state.MainReducer.os,
-    }
-}
-
-export default connect(mapStateToProps)(Update)
+export default Update
