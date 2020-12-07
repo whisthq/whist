@@ -1,4 +1,4 @@
-@import "/app.global.css";
+@import '/app.global.css';
 
 .landingHeader {
     padding: 30px;
@@ -20,7 +20,7 @@
 
 .logoTitle {
     color: var(--primary-text-color);
-    font-family: "Maven Pro";
+    font-family: 'Maven Pro';
     position: absolute;
     top: 42px;
     left: 42px;
@@ -34,7 +34,7 @@
 }
 
 .dashboardButton {
-    font-family: "Maven Pro";
+    font-family: 'Maven Pro';
     font-weight: bold;
     padding: 10px 25px;
     width: 150px;

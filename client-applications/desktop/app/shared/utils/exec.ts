@@ -4,10 +4,23 @@ import { debugLog } from "shared/utils/logging"
 export const execChmodUnix = (
     command: string,
     path: string,
-    platform: string
+    clientOS: OperatingSystem
 ) => {
+    /*
+    Description:
+        Executes a shell command on Mac or Linux
+
+    Arguments:
+        command (string) : Shell command (e.g. echo "Hello world")
+        path (string) : Absolute path to shell command
+        clientOS (OperatingSystem) : Operating system of client machine 
+    
+    Returns:
+        promise : Promise
+    */
     return new Promise((resolve, reject) => {
-        if (platform !== OperatingSystem.WINDOWS) {
+        // If not on Windows, run shell command, otherwise do nothing
+        if (clientOS !== OperatingSystem.WINDOWS) {
             const { exec } = require("child_process")
             exec(command, { cwd: path }, (error, stdout) => {
                 if (error) {
@@ -23,6 +36,15 @@ export const execChmodUnix = (
 }
 
 export const setAWSRegion = () => {
+    /*
+    Description:
+        Runs AWS ping shell script (tells us which AWS server is closest to the client)
+
+    Arguments:
+    
+    Returns:
+        promise : Promise
+    */
     return new Promise((resolve, reject) => {
         const { spawn } = require("child_process")
         const os = require("os")
