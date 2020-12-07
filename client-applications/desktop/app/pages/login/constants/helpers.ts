@@ -21,7 +21,7 @@ export const urlToApp = (
             return { appID: featuredAppData[i].app_id, url: null }
         }
     }
-    return { appID: FractalAppName, url: url }
+    return { appID: FractalAppName.CHROME, url: url }
 }
 
 const binSearch = (

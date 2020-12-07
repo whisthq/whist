@@ -86,6 +86,7 @@ export class SVGConverter {
         this.convertToPngBase64 = this.convertToPngBase64.bind(this)
         this.base64PngToBuffer = this.base64PngToBuffer.bind(this)
         this.convertToIco = this.convertToIco.bind(this)
+        this.waitForImageToLoad = this.waitForImageToLoad.bind(this)
     }
 
     init() {
@@ -96,6 +97,13 @@ export class SVGConverter {
         document.body.removeChild(this.imgPreview)
     }
 
+    private waitForImageToLoad(img: HTMLImageElement) {
+        return new Promise((resolve, reject) => {
+            img.onload = () => resolve(img)
+            img.onerror = reject
+        })
+    }
+
     base64PngToBuffer(base64: string) {
         base64 = base64.replace("data:image/png;base64,", "")
         const buffer = Buffer.from(base64, "base64")
@@ -103,60 +111,58 @@ export class SVGConverter {
         return buffer
     }
 
-    convertToPngBase64(input: string, callback: (base64: string) => void) {
-        this.init()
-        const thisRef = this
-        this.imgPreview.onload = () => {
-            const img = new Image()
-            thisRef.canvas.width = PNG_WIDTH
-            thisRef.canvas.height = PNG_HEIGHT
-            img.crossOrigin = "anonymous"
-            img.src = thisRef.imgPreview.src
-            // Draw SVG onto canvas with resampling (to resize to 64 x 64)
-            img.onload = () => {
-                if (thisRef.canvasCtx) {
-                    thisRef.canvasCtx.drawImage(
-                        img,
-                        0,
-                        0,
-                        img.width,
-                        img.height,
-                        0,
-                        0,
-                        thisRef.canvas.width,
-                        thisRef.canvas.height
-                    )
-                    // Encode PNG as a base64 string
-                    const base64 = thisRef.canvas.toDataURL("image/png")
-                    this.base64Png = base64
-                    // Fire callback on success with base64 string
-                    callback(base64)
-                } else {
-                    callback("")
-                }
-                thisRef.cleanUp()
-            }
-        }
+    async convertToPngBase64(input: string): Promise<string> {
+        // String where base64 output will be written to
+        let base64 = ""
+
         // Load the SVG into HTML image element
+        this.init()
         this.imgPreview.src = input
+
+        // Wait for SVG to load into HTML image preview
+        await this.waitForImageToLoad(this.imgPreview)
+
+        // Create final image
+        const img = new Image()
+        this.canvas.width = PNG_WIDTH
+        this.canvas.height = PNG_HEIGHT
+        img.crossOrigin = "anonymous"
+        img.src = this.imgPreview.src
+
+        // Draw SVG onto canvas with resampling (to resize to 64 x 64)
+        await this.waitForImageToLoad(img)
+
+        if (this.canvasCtx) {
+            this.canvasCtx.drawImage(
+                img,
+                0,
+                0,
+                img.width,
+                img.height,
+                0,
+                0,
+                this.canvas.width,
+                this.canvas.height
+            )
+            // Encode PNG as a base64 string
+            base64 = this.canvas.toDataURL("image/png")
+            this.base64Png = base64
+            // Fire callback on success with base64 string
+        }
+        this.cleanUp()
+        return base64
     }
 
-    convertToIco(input: string, callback: (buffer: ArrayBuffer) => void) {
-        this.convertToPngBase64(input, async (base64: string) => {
-            if (base64) {
-                const convertedBuffer = this.base64PngToBuffer(base64)
+    async convertToIco(input: string): Promise<ArrayBuffer> {
+        let buffer = new ArrayBuffer(0)
+        const base64 = await this.convertToPngBase64(input)
 
-                const bufferRef = await toIco([convertedBuffer]).then(
-                    (bufferRef: ArrayBuffer) => {
-                        return bufferRef
-                    }
-                )
+        if (base64) {
+            const convertedBuffer = this.base64PngToBuffer(base64)
+            buffer = await toIco([convertedBuffer])
+        }
 
-                callback(bufferRef)
-            } else {
-                callback(new ArrayBuffer(0))
-            }
-        })
+        return buffer
     }
 }
 
@@ -174,11 +180,10 @@ export const createShortcutName = (appName: string): string => {
     return `${appName} Fractalized`
 }
 
-export const createShortcut = (
+export const createShortcut = async (
     app: FractalApp,
-    outputPath: string,
-    callback: (shortcutCreated: boolean) => void
-): void => {
+    outputPath: string
+): Promise<boolean> => {
     /*
         Description:
             Creates a shortcut to the Fractal streamed app and stores the shortcut in a specified directory
@@ -199,7 +204,7 @@ export const createShortcut = (
 
     if (platform === OperatingSystem.MAC) {
         debugLog("Mac shortcuts not yet implemented")
-        callback(false)
+        return false
     } else if (platform === OperatingSystem.WINDOWS) {
         // Points to the folder where windows.vbs is located (shortcut creation code)
         const vbsPath = `${require("electron")
@@ -210,32 +215,32 @@ export const createShortcut = (
             )}\\node_modules\\create-desktop-shortcuts\\src\\windows.vbs`
 
         // Convert SVG into a .ico ArrayBuffer
-        new SVGConverter().convertToIco(app.logo_url, (buffer: ArrayBuffer) => {
-            // Create directory called /icons to store the .ico if it doesn't already exist
-            createDirectorySync(FractalWindowsDirectory.ROOT_DIRECTORY, "icons")
-            const icoPath = `${FractalWindowsDirectory.ROOT_DIRECTORY}\\icons\\${app.app_id}.ico`
-            // Write .ico into directory
-            fs.writeFileSync(icoPath, buffer)
-            // Save shortcut in outputPath
-            const success = createDesktopShortcut({
-                windows: {
-                    outputPath: outputPath,
-                    filePath: appURL,
-                    name: createShortcutName(app.app_id),
-                    vbsPath:
-                        process.env.NODE_ENV ===
-                        FractalNodeEnvironment.DEVELOPMENT
-                            ? null
-                            : vbsPath,
-                    icon: icoPath,
-                },
-            })
-            // Fire callback with shortcut creation success True/False
-            callback(success)
+        let converter = new SVGConverter()
+        const buffer = await converter.convertToIco(app.logo_url)
+
+        // Create directory called /icons to store the .ico if it doesn't already exist
+        createDirectorySync(FractalWindowsDirectory.ROOT_DIRECTORY, "icons")
+        const icoPath = `${FractalWindowsDirectory.ROOT_DIRECTORY}\\icons\\${app.app_id}.ico`
+        // Write .ico into directory
+        fs.writeFileSync(icoPath, buffer)
+        // Save shortcut in outputPath
+        const success = createDesktopShortcut({
+            windows: {
+                outputPath: outputPath,
+                filePath: appURL,
+                name: createShortcutName(app.app_id),
+                vbsPath:
+                    process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
+                        ? null
+                        : vbsPath,
+                icon: icoPath,
+            },
         })
+        // Fire callback with shortcut creation success True/False
+        return success
     } else {
         debugLog(`no suitable os found, instead got ${platform}`)
-        callback(false)
+        return false
     }
 }
 
