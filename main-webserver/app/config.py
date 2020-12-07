@@ -190,6 +190,7 @@ class DeploymentConfig:
     JWT_TOKEN_LOCATION = ("headers", "query_string")
     REDIS_URL = property(getter("REDIS_URL", fetch=False))
     SECRET_KEY = property(getter("SECRET_KEY", fetch=False))
+    REDIS_TLS_URL = property(getter("REDIS_TLS_URL", fetch=False))
     SENDGRID_API_KEY = property(getter("SENDGRID_API_KEY"))
     SENDGRID_DEFAULT_FROM = "noreply@tryfractal.com"
     SHA_SECRET_KEY = property(getter("SHA_SECRET_KEY"))
@@ -252,7 +253,7 @@ class LocalConfig(DeploymentConfig):
     db_port = property(getter("POSTGRES_PORT", default=5432, fetch=False))
     db_user = property(getter("POSTGRES_USER", default="postgres", fetch=False))
 
-    REDIS_URL = property(getter("REDIS_URL", default="redis://", fetch=False))
+    REDIS_TLS_URL = property(getter("REDIS_TLS_URL", default="rediss://", fetch=False))
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
 
     @property

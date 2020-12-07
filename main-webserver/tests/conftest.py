@@ -116,7 +116,7 @@ def celery_config():
     https://docs.celeryproject.org/en/latest/userguide/testing.html#session-scope.
     """
 
-    redis_url = os.environ.get("REDIS_URL", "redis://")
+    redis_url = os.environ.get("REDIS_TLS_URL", "rediss://")
 
     return {
         "broker_url": redis_url,
