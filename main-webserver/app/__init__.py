@@ -16,8 +16,8 @@ def make_celery(app_name=__name__):
     return Celery(app_name, broker=redis, backend=redis)
 
 
-def fractalPreProcess(f):
-    @wraps(f)
+def fractal_pre_process(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         received_from = (
             request.headers.getlist("X-Forwarded-For")[0]
@@ -63,7 +63,7 @@ def fractalPreProcess(f):
                 )
             )
 
-        return f(*args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
 

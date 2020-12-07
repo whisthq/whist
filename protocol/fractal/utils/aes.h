@@ -37,7 +37,7 @@ Public Functions
  *
  * @returns                        Return the result of the hash
  */
-uint32_t Hash(void* key, size_t len);
+uint32_t hash(void* key, size_t len);
 
 /**
  * @brief                          Generate a random IV

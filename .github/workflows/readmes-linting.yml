@@ -1,0 +1,44 @@
+# workflows/readmes-linting.yml
+#
+# Readmes: Linting
+# Lint readmes using eslint.
+
+name: "Readmes: Linting"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
+        paths:
+            - "README.md"
+            - "**/README.md"
+            - ".github/workflows/README.md"
+
+jobs:
+    readmes-linting-main:
+        name: Lint Readmes
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+            - name: Install Node.js 12
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 12
+
+            - name: Check if readmes are formatted
+              run: |
+                  result=$(prettier --check {.,**,.github/workflows}/README.md > /dev/null && echo success || echo failure)
+                  if [ "$result" -ne "success" ]; then
+                    (echo "To pass this check please lint README.md files with prettier" && false)
+                  else
+                    (echo "Readmes are linted with prettier" && true)
+                  fi

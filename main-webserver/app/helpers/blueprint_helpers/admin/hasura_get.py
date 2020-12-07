@@ -4,7 +4,7 @@ from jose import jwt
 from app.models import User
 
 
-def authHelper(token):
+def auth_helper(token):
     if not token:
         return {"X-Hasura-Role": "anonymous", "X-Hasura-User-Id": ""}
     else:

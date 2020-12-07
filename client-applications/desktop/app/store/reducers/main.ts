@@ -3,11 +3,22 @@ import { DEFAULT } from "store/reducers/states"
 
 import { deep_copy } from "shared/utils/reducerHelpers"
 
-export default function MainReducer(state = DEFAULT, action: any) {
-    var stateCopy = deep_copy(state)
+const MainReducer = (
+    state = DEFAULT,
+    action: {
+        type: string
+        body: Record<string, any>
+    }
+) => {
+    const stateCopy = deep_copy(state)
     switch (action.type) {
         case MainAction.RESET_STATE:
             return DEFAULT
+        case MainAction.UPDATE_ADMIN:
+            return {
+                ...stateCopy,
+                admin: Object.assign(stateCopy.admin, action.body),
+            }
         case MainAction.UPDATE_AUTH:
             return {
                 ...stateCopy,
@@ -33,7 +44,14 @@ export default function MainReducer(state = DEFAULT, action: any) {
                 ...stateCopy,
                 payment: Object.assign(stateCopy.payment, action.body),
             }
+        case MainAction.UPDATE_APPS:
+            return {
+                ...stateCopy,
+                payment: Object.assign(stateCopy.apps, action.body),
+            }
         default:
             return state
     }
 }
+
+export default MainReducer

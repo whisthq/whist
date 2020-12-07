@@ -2,31 +2,33 @@ from flask import Blueprint
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
-from app import fractalPreProcess
+from app import fractal_pre_process
 from app.celery.aws_ecs_creation import (
     assign_container,
     create_new_cluster,
     create_new_container,
     send_commands,
 )
-from app.celery.aws_ecs_deletion import delete_cluster, deleteContainer, drainContainer
+from app.celery.aws_ecs_deletion import delete_cluster, delete_container, drain_container
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
-    pingHelper,
+    ping_helper,
     preprocess_task_info,
     protocol_info,
     set_stun,
 )
 
-from app.helpers.utils.general.auth import fractalAuth
+from app.helpers.utils.general.auth import admin_required, fractal_auth
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
 
+# when we add @admin_required, instead of admin_required use developer_access
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
-@fractalPreProcess
+@fractal_pre_process
+@admin_required
 def test_endpoint(action, **kwargs):
     if action == "create_cluster":
         cluster_name, instance_type, ami, region_name, max_size, min_size = (
@@ -79,6 +81,27 @@ def test_endpoint(action, **kwargs):
 
         return jsonify({"ID": task.id}), ACCEPTED
 
+    if action == "assign_container":
+        (username, cluster_name, region_name, task_definition_arn) = (
+            kwargs["body"]["username"],
+            kwargs["body"]["cluster_name"],
+            kwargs["body"].get("region_name", None),
+            kwargs["body"]["task_definition_arn"],
+        )
+        region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
+        task = assign_container.apply_async(
+            [username, task_definition_arn],
+            {
+                "cluster_name": cluster_name,
+                "region_name": region_name,
+                "webserver_url": kwargs["webserver_url"],
+            },
+        )
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
+
     if action == "send_commands":
         cluster, region_name, commands, containers = (
             kwargs["body"]["cluster"],
@@ -97,7 +120,7 @@ def test_endpoint(action, **kwargs):
 
 
 @aws_container_bp.route("/container/delete", methods=("POST",))
-@fractalPreProcess
+@fractal_pre_process
 def aws_container_delete(**kwargs):
     body = kwargs.pop("body")
 
@@ -106,14 +129,14 @@ def aws_container_delete(**kwargs):
     except (AttributeError, KeyError):
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
-        task = deleteContainer.delay(*args)
+        task = delete_container.delay(*args)
         response = jsonify({"ID": task.id}), ACCEPTED
 
     return response
 
 
 @aws_container_bp.route("/container/protocol_info", methods=("POST",))
-@fractalPreProcess
+@fractal_pre_process
 def aws_container_info(**kwargs):
     body = kwargs.pop("body")
     address = kwargs.pop("received_from")
@@ -136,7 +159,7 @@ def aws_container_info(**kwargs):
 
 
 @aws_container_bp.route("/container/ping", methods=("POST",))
-@fractalPreProcess
+@fractal_pre_process
 def aws_container_ping(**kwargs):
     body = kwargs.pop("body")
     address = kwargs.pop("received_from")
@@ -150,7 +173,7 @@ def aws_container_ping(**kwargs):
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
         # Update container status.
-        data, status = pingHelper(available, address, identifier, private_key)
+        data, status = ping_helper(available, address, identifier, private_key)
         response = jsonify(data), status
 
     return response
@@ -160,9 +183,9 @@ allowed_regions = {"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-centr
 
 
 @aws_container_bp.route("/container/<action>", methods=["POST"])
-@fractalPreProcess
+@fractal_pre_process
 @jwt_required
-@fractalAuth
+@fractal_auth
 def aws_container_post(action, **kwargs):
     response = jsonify({"status": NOT_FOUND}), NOT_FOUND
     body = kwargs.pop("body")
@@ -232,7 +255,7 @@ def aws_container_post(action, **kwargs):
                 response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
             else:
                 # Delete the container
-                task = deleteContainer.delay(user, container)
+                task = delete_container.delay(user, container)
                 response = jsonify({"ID": task.id}), ACCEPTED
 
         elif action == "drain":
@@ -242,7 +265,7 @@ def aws_container_post(action, **kwargs):
                 response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
             else:
                 # Delete the container
-                task = drainContainer.delay(user, container)
+                task = drain_container.delay(user, container)
                 response = jsonify({"ID": task.id}), ACCEPTED
 
         elif action == "stun":

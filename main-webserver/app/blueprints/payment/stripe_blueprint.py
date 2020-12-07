@@ -1,10 +1,10 @@
 # import stripe
-# from app.helpers.utils.general.logs import fractalLog
+# from app.helpers.utils.general.logs import fractal_log
 
 from flask import Blueprint, jsonify  # , request
 from flask_jwt_extended import jwt_required
 
-from app import fractalPreProcess
+from app import fractal_pre_process
 
 # from app.constants.config import ENDPOINT_SECRET
 from app.constants.http_codes import FORBIDDEN  # , NOT_ACCEPTABLE
@@ -16,15 +16,15 @@ from app.helpers.blueprint_helpers.payment.stripe_post import (
     deleteCardHelper,
     retrieveHelper,
 )
-from app.helpers.utils.general.auth import fractalAuth
+from app.helpers.utils.general.auth import fractal_auth
 
 stripe_bp = Blueprint("stripe_bp", __name__)
 
 
 @stripe_bp.route("/stripe/<action>", methods=["POST"])
-@fractalPreProcess
+@fractal_pre_process
 @jwt_required
-@fractalAuth
+@fractal_auth
 def payment(action, **kwargs):
     """Covers payment endpoints for stripe. Right now has seven endpoints:
 
@@ -78,14 +78,14 @@ def payment(action, **kwargs):
 
     # these add a subscription or remove (or modify)
     if action == "addSubscription" or action == "modifySubscription":
-        return addSubscriptionHelper(body["token"], body["email"], body["plan"], body["code"])
+        return addSubscriptionHelper(body["email"], body["plan"])
     elif action == "deleteSubscription":
         return deleteSubscriptionHelper(body["email"])
     # these will add a card as a source or remove (or modify) for future payment
     elif action == "addCard" or action == "modifyCard":
-        return addCardHelper(body["email"], body["token"])
+        return addCardHelper(body["email"], body["source"])
     elif action == "deleteCard":
-        return deleteCardHelper(body["email"], body["token"])
+        return deleteCardHelper(body["email"], body["source"])
     # Retrieves the stripe subscription of the customer so we can tell them some basic info
     elif action == "retrieve":
         return retrieveHelper(body["email"])

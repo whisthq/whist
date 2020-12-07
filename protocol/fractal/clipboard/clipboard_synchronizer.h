@@ -52,7 +52,7 @@ Public Functions
  * @brief                          Initialize the Update Clipboard Helper
  *
  */
-void initClipboardSynchronizer();
+void init_clipboard_synchronizer();
 
 /**
  * @brief                          Set the clipboard to a given clipboard data
@@ -62,7 +62,7 @@ void initClipboardSynchronizer();
  *
  * @returns						             true on success, false on failure
  */
-bool ClipboardSynchronizerSetClipboard(ClipboardData* clipboard);
+bool clipboard_synchronizer_set_clipboard(ClipboardData* clipboard);
 
 /**
  * @brief                          Check if the clipboard is in the midst of
@@ -73,7 +73,7 @@ bool ClipboardSynchronizerSetClipboard(ClipboardData* clipboard);
  *                                 for a some period of time after
  *                                 updateSetClipboard
  */
-bool isClipboardSynchronizing();
+bool is_clipboard_synchronizing();
 
 /**
  * @brief                          Get a new clipboard, if any
@@ -84,11 +84,11 @@ bool isClipboardSynchronizing();
  *                                 updated since the last call to the
  *                                 clipboard
  */
-ClipboardData* ClipboardSynchronizerGetNewClipboard();
+ClipboardData* clipboard_synchronizer_get_new_clipboard();
 
 /**
  * @brief                          Cleanup the clipboard synchronizer
  */
-void destroyClipboardSynchronizer();
+void destroy_clipboard_synchronizer();
 
 #endif  // CLIPBOARD_SYNCHRONIZER_H

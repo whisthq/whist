@@ -10,9 +10,9 @@ from flask import current_app
 from app.celery.aws_ecs_deletion import delete_cluster
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient
-from app.helpers.utils.general.logs import fractalLog
-from app.helpers.utils.general.sql_commands import fractalSQLCommit
-from app.helpers.utils.general.sql_commands import fractalSQLUpdate
+from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.sql_commands import fractal_sql_commit
+from app.helpers.utils.general.sql_commands import fractal_sql_update
 from app.models import db, UserContainer, ClusterInfo, SortedClusters
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 
@@ -111,7 +111,7 @@ def _poll(container_id):
 
     for i in range(MAX_POLL_ITERATIONS):
         if not container.state.startswith("RUNNING_"):
-            fractalLog(
+            fractal_log(
                 function="create_new_container",
                 label=None,
                 logs=f"{container.container_id} deployment in progress. {i}/{MAX_POLL_ITERATIONS}",
@@ -141,7 +141,7 @@ def select_cluster(region_name):
     base_len = 2
     regen_fraction = 0.7
     if len(all_clusters) == 0:
-        fractalLog(
+        fractal_log(
             function="select_cluster",
             label=None,
             logs="No available clusters found. Creating new cluster...",
@@ -226,10 +226,10 @@ def send_dpi_info_to_instance(ip, port, dpi):
     """
     data = {"host_port": port, "dpi": dpi, "auth_secret": current_app.config["HOST_SERVICE_SECRET"]}
     instance_port = 4678
-    r = requests.put(f"http://{ip}:{instance_port}", data=data)
-    if r.status_code != 200:
-        return False, r
-    return True, r
+    request = requests.put(f"http://{ip}:{instance_port}", data=data)
+    if request.status_code != 200:
+        return False, request
+    return True, request
 
 
 @shared_task(bind=True)
@@ -238,6 +238,7 @@ def assign_container(
     username,
     task_definition_arn,
     region_name="us-east-1",
+    cluster_name=None,
     dpi=96,
     webserver_url=None,
 ):
@@ -248,33 +249,43 @@ def assign_container(
     :param username: the username of the requesting user
     :param task_definition_arn: which taskdef the user needs a container for
     :param region_name: which region the user needs a container for
+    :param cluster_name: which cluster the user needs a container for, only used in test
     :param dpi: the user's DPI
     :param webserver_url: the webserver originating the request
     :return: the generated container, in json form
     """
-    # first, we check for a preexisting container with the correct user and pass it back:
-    existing_container = (
-        UserContainer.query()
-        .filter_by(
-            is_assigned=True,
-            user_id=username,
-            task_definition=task_definition_arn,
-            region_name=region_name,
-        )
-        .limit(1)
-    )
-    if existing_container:
-        if _poll(existing_container.container_id):
-            return user_container_schema.dump(existing_container)
 
-    # otherwise, we see if there's an unassigned container
-    base_container = (
-        UserContainer.query()
-        .filter_by(is_assigned=False, task_definition=task_definition_arn, region_name=region_name)
-        .with_for_update()
-        .limit(1)
-    )
-    num_extra = 1
+    enable_waiting = False
+    # if a cluster is passed in, we're in testing mode:
+    if cluster_name is None and enable_waiting:
+        # first, we check for a preexisting container with the correct user and pass it back:
+        existing_container = (
+            UserContainer.query.filter_by(
+                is_assigned=True,
+                user_id=username,
+                task_definition=task_definition_arn,
+                location=region_name,
+            )
+            .limit(1)
+            .first()
+        )
+        if existing_container:
+            if _poll(existing_container.container_id):
+                return user_container_schema.dump(existing_container)
+
+        # otherwise, we see if there's an unassigned container
+        base_container = (
+            UserContainer.query.filter_by(
+                is_assigned=False, task_definition=task_definition_arn, location=region_name
+            )
+            .with_for_update()
+            .limit(1)
+            .first()
+        )
+        num_extra = 1
+    else:
+        num_extra = 0
+        base_container = False
     if base_container:
         base_container.is_assigned = True
         base_container.user_id = username
@@ -286,8 +297,9 @@ def assign_container(
         )
     else:
         db.session.commit()
-        cluster_name = select_cluster(region_name)
-        fractalLog(
+        if cluster_name is None:
+            cluster_name = select_cluster(region_name)
+        fractal_log(
             function="select_container",
             label=cluster_name,
             logs=f"Creating new container in cluster {cluster_name}",
@@ -296,7 +308,7 @@ def assign_container(
         cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
 
         if cluster_info.status == "DEPROVISIONING":
-            fractalLog(
+            fractal_log(
                 function="create_new_container",
                 label=cluster_name,
                 logs=f"Cluster status is {cluster_info.status}",
@@ -312,13 +324,13 @@ def assign_container(
             state="PENDING",
             meta={"msg": message},
         )
-        fractalLog(function="create_new_container", label="None", logs=message)
+        fractal_log(function="create_new_container", label="None", logs=message)
         task_id, curr_ip, curr_network_binding, aeskey = start_container(
             webserver_url, region_name, cluster_name, task_definition_arn, dpi
         )
         # TODO:  Get this right
         if curr_ip == -1 or curr_network_binding == -1:
-            fractalLog(
+            fractal_log(
                 function="create_new_container",
                 label=str(username),
                 logs="Error generating task with running IP",
@@ -350,10 +362,10 @@ def assign_container(
             secret_key=aeskey,
             task_definition=task_definition_arn,
         )
-        container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
+        container_sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), container)
         if container_sql:
             container = UserContainer.query.get(task_id)
-            fractalLog(
+            fractal_log(
                 function="create_new_container",
                 label=str(task_id),
                 logs=(
@@ -362,7 +374,7 @@ def assign_container(
                 ),
             )
         else:
-            fractalLog(
+            fractal_log(
                 function="create_new_container",
                 label=str(task_id),
                 logs="SQL insertion unsuccessful",
@@ -375,16 +387,16 @@ def assign_container(
 
         cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
         cluster_usage["cluster"] = cluster_name
-        cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
+        cluster_sql = fractal_sql_commit(db, fractal_sql_update, cluster_info, cluster_usage)
         if cluster_sql:
-            fractalLog(
+            fractal_log(
                 function="create_new_container",
                 label=str(task_id),
                 logs=f"Added task to cluster {cluster_name} and updated cluster info",
             )
             base_container = container
         else:
-            fractalLog(
+            fractal_log(
                 function="create_new_container",
                 label=str(task_id),
                 logs="SQL insertion unsuccessful",
@@ -401,7 +413,7 @@ def assign_container(
         pass
     time.sleep(5)
     if not _poll(base_container.container_id):
-        fractalLog(
+        fractal_log(
             function="create_new_container",
             label=str(base_container.container_id),
             logs="container failed to ping",
@@ -414,7 +426,7 @@ def assign_container(
         raise Ignore
 
         # pylint: disable=line-too-long
-    fractalLog(
+    fractal_log(
         function="create_new_container",
         label=str(base_container.container_id),
         logs=f"""container pinged!  To connect, run:
@@ -463,10 +475,10 @@ def create_new_container(
         f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in "
         f"{region_name}"
     )
-    fractalLog(function="create_new_container", label="None", logs=message)
+    fractal_log(function="create_new_container", label="None", logs=message)
     if not cluster_name:
         cluster_name = select_cluster(region_name)
-    fractalLog(
+    fractal_log(
         function="create_new_container",
         label=cluster_name,
         logs=f"Container will be deployed to cluster {cluster_name}",
@@ -474,7 +486,7 @@ def create_new_container(
 
     cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
     if not cluster_info:
-        fractalSQLCommit(
+        fractal_sql_commit(
             db,
             lambda db, x: db.session.add(x),
             ClusterInfo(cluster=cluster_name, location=region_name),
@@ -482,7 +494,7 @@ def create_new_container(
         cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
 
     if cluster_info.status == "DEPROVISIONING":
-        fractalLog(
+        fractal_log(
             function="create_new_container",
             label=cluster_name,
             logs=f"Cluster status is {cluster_info.status}",
@@ -496,13 +508,13 @@ def create_new_container(
         state="PENDING",
         meta={"msg": message},
     )
-    fractalLog(function="create_new_container", label="None", logs=message)
+    fractal_log(function="create_new_container", label="None", logs=message)
     task_id, curr_ip, curr_network_binding, aeskey = start_container(
         webserver_url, region_name, cluster_name, task_definition_arn, dpi
     )
     # TODO:  Get this right
     if curr_ip == -1 or curr_network_binding == -1:
-        fractalLog(
+        fractal_log(
             function="create_new_container",
             label=str(username),
             logs="Error generating task with running IP",
@@ -533,10 +545,10 @@ def create_new_container(
         task_definition=task_definition_arn,
         dpi=dpi,
     )
-    container_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), container)
+    container_sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), container)
     if container_sql:
         container = UserContainer.query.get(task_id)
-        fractalLog(
+        fractal_log(
             function="create_new_container",
             label=str(task_id),
             logs=(
@@ -545,7 +557,7 @@ def create_new_container(
             ),
         )
     else:
-        fractalLog(
+        fractal_log(
             function="create_new_container",
             label=str(task_id),
             logs="SQL insertion unsuccessful",
@@ -558,9 +570,9 @@ def create_new_container(
 
     cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
     cluster_usage["cluster"] = cluster_name
-    cluster_sql = fractalSQLCommit(db, fractalSQLUpdate, cluster_info, cluster_usage)
+    cluster_sql = fractal_sql_commit(db, fractal_sql_update, cluster_info, cluster_usage)
     if cluster_sql:
-        fractalLog(
+        fractal_log(
             function="create_new_container",
             label=str(task_id),
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
@@ -571,7 +583,7 @@ def create_new_container(
             except requests.exceptions.ConnectionError:
                 pass
             if not _poll(container.container_id):
-                fractalLog(
+                fractal_log(
                     function="create_new_container",
                     label=str(task_id),
                     logs="container failed to ping",
@@ -584,7 +596,7 @@ def create_new_container(
                 raise Ignore
 
             # pylint: disable=line-too-long
-            fractalLog(
+            fractal_log(
                 function="create_new_container",
                 label=str(task_id),
                 logs=f"""container pinged!  To connect, run:
@@ -600,7 +612,7 @@ def create_new_container(
 
         return user_container_schema.dump(container)
     else:
-        fractalLog(
+        fractal_log(
             function="create_new_container",
             label=str(task_id),
             logs="SQL insertion unsuccessful",
@@ -642,7 +654,7 @@ def create_new_cluster(
     """
     task_start_time = time.time()
 
-    fractalLog(
+    fractal_log(
         function="create_new_cluster",
         label="None",
         logs=(
@@ -676,11 +688,11 @@ def create_new_cluster(
         cluster_usage_info = ClusterInfo(
             cluster=cluster_name, location=region_name, **cluster_usage
         )
-        cluster_sql = fractalSQLCommit(db, lambda db, x: db.session.add(x), cluster_usage_info)
+        cluster_sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), cluster_usage_info)
         if cluster_sql:
             cluster = ClusterInfo.query.get(cluster_name)
             cluster = user_cluster_schema.dump(cluster)
-            fractalLog(
+            fractal_log(
                 function="create_new_cluster",
                 label=cluster_name,
                 logs=f"Successfully created cluster {cluster_name}",
@@ -692,7 +704,7 @@ def create_new_cluster(
 
             return cluster
         else:
-            fractalLog(
+            fractal_log(
                 function="create_new_cluster",
                 label=cluster_name,
                 logs="SQL insertion unsuccessful",
@@ -707,7 +719,7 @@ def create_new_cluster(
             )
             return None
     except Exception as error:
-        fractalLog(
+        fractal_log(
             function="create_new_cluster",
             label="None",
             logs=f"Encountered error: {error}",
@@ -725,10 +737,10 @@ def send_commands(self, cluster, region_name, commands, containers=None):
         ecs_client = ECSClient(region_name=region_name)
         cluster_info = ClusterInfo.query.get(cluster)
         if not cluster_info:
-            fractalSQLCommit(db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster))
+            fractal_sql_commit(db, lambda db, x: db.session.add(x), ClusterInfo(cluster=cluster))
             cluster_info = ClusterInfo.query.filter_by(cluster=cluster).first()
         elif cluster_info.status == "INACTIVE" or cluster_info.status == "DEPROVISIONING":
-            fractalLog(
+            fractal_log(
                 function="send_command",
                 label=cluster,
                 logs=f"Cluster status is {cluster_info.status}",
@@ -740,7 +752,7 @@ def send_commands(self, cluster, region_name, commands, containers=None):
             )
         containers = containers or ecs_client.get_containers_in_cluster(cluster=cluster)
         if containers:
-            fractalLog(
+            fractal_log(
                 function="send_command",
                 label="None",
                 logs="Sending commands {} to containers {} in cluster {}".format(
@@ -759,13 +771,13 @@ def send_commands(self, cluster, region_name, commands, containers=None):
                 "Command"
             ]["CommandId"]
             ecs_client.spin_til_command_executed(command_id)
-            fractalLog(
+            fractal_log(
                 function="send_command",
                 label="None",
                 logs="Commands sent!",
             )
         else:
-            fractalLog(
+            fractal_log(
                 function="send_command",
                 label=cluster,
                 logs="No containers in cluster",
@@ -776,7 +788,7 @@ def send_commands(self, cluster, region_name, commands, containers=None):
                 meta={"msg": "No containers in cluster {} to send commands to".format(cluster)},
             )
     except Exception as error:
-        fractalLog(
+        fractal_log(
             function="send_command",
             label="None",
             logs=f"Encountered error: {error}",

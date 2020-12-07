@@ -40,7 +40,7 @@ extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 extern volatile CodecType codec_type;
 extern bool using_stun;
 
-extern mouse_motion_accumulation mouse_state;
+extern MouseMotionAccumulation mouse_state;
 extern volatile SDL_Window *window;
 
 extern unsigned short port_mappings[USHRT_MAX];
@@ -256,7 +256,7 @@ int parse_args(int argc, char *argv[]) {
 }
 
 #ifndef _WIN32
-static char *appendPathToHome(char *path) {
+static char *append_path_to_home(char *path) {
     char *home, *new_path;
     int len;
 
@@ -285,15 +285,15 @@ char *dupstring(char *s1) {
     return ret;
 }
 
-char *getLogDir(void) {
+char *get_log_dir(void) {
 #ifdef _WIN32
     return dupstring(".");
 #else
-    return appendPathToHome(".fractal");
+    return append_path_to_home(".fractal");
 #endif
 }
 
-int logConnectionID(int connection_id) {
+int log_connection_id(int connection_id) {
     // itoa is not portable
     char *str_connection_id = malloc(sizeof(char) * 100);
     sprintf(str_connection_id, "%d", connection_id);
@@ -304,7 +304,7 @@ int logConnectionID(int connection_id) {
 #ifdef _WIN32
     path = dupstring("connection_id.txt");
 #else
-    path = appendPathToHome(".fractal/connection_id.txt");
+    path = append_path_to_home(".fractal/connection_id.txt");
 #endif
     if (path == NULL) {
         LOG_ERROR("Failed to get connection log path.");
@@ -326,7 +326,7 @@ int logConnectionID(int connection_id) {
     return 0;
 }
 
-int initSocketLibrary(void) {
+int init_socket_library(void) {
 #ifdef _WIN32
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
@@ -337,7 +337,7 @@ int initSocketLibrary(void) {
     return 0;
 }
 
-int destroySocketLibrary(void) {
+int destroy_socket_library(void) {
 #ifdef _WIN32
     WSACleanup();
 #endif
@@ -352,7 +352,7 @@ int destroySocketLibrary(void) {
 // for the same reason
 // the mkdir command won't do anything if the folder already exists, in
 // which case we make sure to clear the previous logs and connection id
-int configureCache(void) {
+int configure_cache(void) {
 #ifndef _WIN32
     runcmd("mkdir -p ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
@@ -362,11 +362,11 @@ int configureCache(void) {
     return 0;
 }
 
-int prepareInitToServer(FractalDiscoveryRequestMessage *fmsg, char *email) {
+int prepare_init_to_server(FractalDiscoveryRequestMessage *fmsg, char *email) {
     // Copy email
     strcpy(fmsg->user_email, email);
     // Copy time
-    if (GetTimeData(&(fmsg->time_data)) != 0) {
+    if (get_time_data(&(fmsg->time_data)) != 0) {
         LOG_ERROR("Failed to get time data.");
         return -1;
     }
@@ -374,7 +374,7 @@ int prepareInitToServer(FractalDiscoveryRequestMessage *fmsg, char *email) {
     return 0;
 }
 
-int updateMouseMotion() {
+int update_mouse_motion() {
     if (mouse_state.update) {
         int window_width, window_height;
         SDL_GetWindowSize((SDL_Window *)window, &window_width, &window_height);
@@ -408,7 +408,7 @@ int updateMouseMotion() {
         fmsg.mouseMotion.y = y;
         fmsg.mouseMotion.x_nonrel = x_nonrel;
         fmsg.mouseMotion.y_nonrel = y_nonrel;
-        if (SendFmsg(&fmsg) != 0) {
+        if (send_fmsg(&fmsg) != 0) {
             return -1;
         }
 

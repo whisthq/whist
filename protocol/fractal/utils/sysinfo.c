@@ -11,7 +11,7 @@ Call the respective functions to log a device's OS, model, CPU, RAM, etc.
 
 #include "sysinfo.h"
 
-void PrintOSInfo() {
+void print_os_info() {
 #ifdef _WIN32
     char buf[1024];
     char product[256];
@@ -40,12 +40,12 @@ void PrintOSInfo() {
         buildlab[0] = '\0';
     }
 
-    char winOSstring[512];
-    snprintf(winOSstring, sizeof(winOSstring), "%s %s.%s", product, version, buildlab);
+    char win_o_sstring[512];
+    snprintf(win_o_sstring, sizeof(win_o_sstring), "%s %s.%s", product, version, buildlab);
 #endif
 
 #ifdef _WIN32
-    snprintf(buf, sizeof(buf), "32-bit %s", winOSstring);
+    snprintf(buf, sizeof(buf), "32-bit %s", win_o_sstring);
     LOG_INFO("  OS: %s", buf);
 #elif _WIN64
     snprintf(buf, sizeof(buf), "64-bit %s", winOSstring);
@@ -72,7 +72,7 @@ void PrintOSInfo() {
 #endif
 }
 
-void PrintModelInfo() {
+void print_model_info() {
 #ifdef _WIN32
     char* response = NULL;
     int total_sz = runcmd("wmic computersystem get model,manufacturer", &response);
@@ -145,7 +145,7 @@ void PrintModelInfo() {
 #endif
 }
 
-void PrintMonitors() {
+void print_monitors() {
 #ifdef _WIN32
     int num_adapters = 0, i = 0, j = 0;
     IDXGIFactory1* factory;
@@ -191,20 +191,20 @@ void PrintMonitors() {
             LOG_INFO("Found monitor %d on adapter %lu. Monitor %d named %S", j, i, j,
                      output_desc.DeviceName);
 
-            HMONITOR hMonitor = output_desc.Monitor;
-            MONITORINFOEXW monitorInfo;
-            monitorInfo.cbSize = sizeof(MONITORINFOEXW);
-            GetMonitorInfoW(hMonitor, (LPMONITORINFO)&monitorInfo);
-            DEVMODE devMode = {0};
-            devMode.dmSize = sizeof(DEVMODE);
-            devMode.dmDriverExtra = 0;
-            EnumDisplaySettingsW(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode);
+            HMONITOR h_monitor = output_desc.Monitor;
+            MONITORINFOEXW monitor_info;
+            monitor_info.cbSize = sizeof(MONITORINFOEXW);
+            GetMonitorInfoW(h_monitor, (LPMONITORINFO)&monitor_info);
+            DEVMODE dev_mode = {0};
+            dev_mode.dmSize = sizeof(DEVMODE);
+            dev_mode.dmDriverExtra = 0;
+            EnumDisplaySettingsW(monitor_info.szDevice, ENUM_CURRENT_SETTINGS, &dev_mode);
 
-            UINT dpiX, dpiY;
-            hr = GetDpiForMonitor(hMonitor, MDT_DEFAULT, &dpiX, &dpiY);
+            UINT dpi_x, dpi_y;
+            hr = GetDpiForMonitor(h_monitor, MDT_DEFAULT, &dpi_x, &dpi_y);
 
             char* orientation = NULL;
-            switch (devMode.dmDisplayOrientation) {
+            switch (dev_mode.dmDisplayOrientation) {
                 case DMDO_DEFAULT:
                     orientation = "default";
                     break;
@@ -218,7 +218,7 @@ void PrintMonitors() {
                     orientation = "270 degrees";
                     break;
                 default:
-                    LOG_WARNING("Orientation did not match: %d", devMode.dmDisplayOrientation);
+                    LOG_WARNING("Orientation did not match: %d", dev_mode.dmDisplayOrientation);
                     orientation = "";
                     break;
             }
@@ -226,14 +226,14 @@ void PrintMonitors() {
             LOG_INFO(
                 "Resolution of %dx%d, Refresh Rate of %d, DPI %d, location "
                 "(%d,%d), orientation %s",
-                devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmDisplayFrequency, dpiX,
-                devMode.dmPosition.x, devMode.dmPosition.y, orientation);
+                dev_mode.dmPelsWidth, dev_mode.dmPelsHeight, dev_mode.dmDisplayFrequency, dpi_x,
+                dev_mode.dmPosition.x, dev_mode.dmPosition.y, orientation);
         }
     }
 #endif
 }
 
-void PrintRAMInfo() {
+void print_ram_info() {
 #if defined(_WIN32)
     size_t total_ram;
     size_t total_ram_usage;
@@ -281,28 +281,28 @@ void PrintRAMInfo() {
     LOG_INFO("Total Physical RAM: %.2f GB", (size_t)total_ram / BYTES_IN_GB);
 }
 
-void PrintMemoryInfo() {
+void print_memory_info() {
 #if defined(_WIN32)
-    DWORD processID = GetCurrentProcessId();
-    HANDLE hProcess;
+    DWORD process_id = GetCurrentProcessId();
+    HANDLE h_process;
     PROCESS_MEMORY_COUNTERS pmc;
 
     // Print information about the memory usage of the process.
 
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
-    if (NULL == hProcess) return;
+    h_process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, process_id);
+    if (NULL == h_process) return;
 
-    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
+    if (GetProcessMemoryInfo(h_process, &pmc, sizeof(pmc))) {
         LOG_INFO("PeakWorkingSetSize: %lld", (long long)pmc.PeakWorkingSetSize);
         LOG_INFO("WorkingSetSize: %lld", (long long)pmc.WorkingSetSize);
     }
 
-    CloseHandle(hProcess);
+    CloseHandle(h_process);
 #endif
 }
 // End Print Memory Info
 
-void cpuID(unsigned i, unsigned regs[4]) {
+void cpu_id(unsigned i, unsigned regs[4]) {
 #ifdef _WIN32
     __cpuid((int*)regs, (int)i);
 #else
@@ -313,67 +313,67 @@ void cpuID(unsigned i, unsigned regs[4]) {
 #endif
 }
 
-void PrintCPUInfo() {
+void print_cpu_info() {
     // https://stackoverflow.com/questions/2901694/how-to-detect-the-number-of-physical-processors-cores-on-windows-mac-and-linu
     unsigned regs[4];
 
     // Get vendor
-    char cpuVendor[13] = {0};
-    cpuID(0, regs);
-    ((unsigned*)cpuVendor)[0] = regs[1];  // EBX
-    ((unsigned*)cpuVendor)[1] = regs[3];  // EDX
-    ((unsigned*)cpuVendor)[2] = regs[2];  // ECX
+    char cpu_vendor[13] = {0};
+    cpu_id(0, regs);
+    ((unsigned*)cpu_vendor)[0] = regs[1];  // EBX
+    ((unsigned*)cpu_vendor)[1] = regs[3];  // EDX
+    ((unsigned*)cpu_vendor)[2] = regs[2];  // ECX
 
-    LOG_INFO("CPU Vendor: %s", cpuVendor);
+    LOG_INFO("CPU Vendor: %s", cpu_vendor);
 
     // Get Brand String
-    unsigned int nExIds = 0;
-    char CPUBrandString[0x40];
+    unsigned int n_ex_ids = 0;
+    char cpu_brand_string[0x40];
     // Get the information associated with each extended ID.
-    cpuID(0x80000000, regs);
-    nExIds = regs[0];
-    for (unsigned int i = 0x80000000; i <= nExIds; ++i) {
-        cpuID(i, regs);
+    cpu_id(0x80000000, regs);
+    n_ex_ids = regs[0];
+    for (unsigned int i = 0x80000000; i <= n_ex_ids; ++i) {
+        cpu_id(i, regs);
         // Interpret CPU brand string
         if (i == 0x80000002)
-            memcpy(CPUBrandString, regs, sizeof(regs));
+            memcpy(cpu_brand_string, regs, sizeof(regs));
         else if (i == 0x80000003)
-            memcpy(CPUBrandString + 16, regs, sizeof(regs));
+            memcpy(cpu_brand_string + 16, regs, sizeof(regs));
         else if (i == 0x80000004)
-            memcpy(CPUBrandString + 32, regs, sizeof(regs));
+            memcpy(cpu_brand_string + 32, regs, sizeof(regs));
     }
     // string includes manufacturer, model and clockspeed
-    LOG_INFO("CPU Type: %s", CPUBrandString);
+    LOG_INFO("CPU Type: %s", cpu_brand_string);
 
     // Logical core count per CPU
-    cpuID(1, regs);
+    cpu_id(1, regs);
     unsigned logical = (regs[1] >> 16) & 0xff;  // EBX[23:16]
     LOG_INFO("Logical Cores: %d", logical);
     unsigned cores = logical;
 
-    if (strcmp(cpuVendor, "GenuineIntel") == 0) {
+    if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
         // Get DCP cache info
-        cpuID(4, regs);
+        cpu_id(4, regs);
         cores = ((regs[0] >> 26) & 0x3f) + 1;  // EAX[31:26] + 1
 
-    } else if (strcmp(cpuVendor, "AuthenticAMD") == 0) {
+    } else if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
         // Get NC: Number of CPU cores - 1
-        cpuID(0x80000008, regs);
+        cpu_id(0x80000008, regs);
         cores = ((unsigned)(regs[2] & 0xff)) + 1;  // ECX[7:0] + 1
     } else {
-        LOG_WARNING("Unrecognized processor: %s", cpuVendor);
+        LOG_WARNING("Unrecognized processor: %s", cpu_vendor);
     }
 
     LOG_INFO("Physical Cores: %d", cores);
 
     // Get CPU features
-    cpuID(1, regs);
-    unsigned cpuFeatures = regs[3];  // EDX
+    cpu_id(1, regs);
+    unsigned cpu_features = regs[3];  // EDX
 
     // Detect hyper-threads
-    bool hyperThreads = cpuFeatures & (1 << 28) && cores < logical;
+    bool hyper_threads = cpu_features & (1 << 28) && cores < logical;
 
-    LOG_INFO("HyperThreaded: %s", (hyperThreads ? "true" : "false"));
+    LOG_INFO("HyperThreaded: %s", (hyper_threads ? "true" : "false"));
 
 // add CPU usage at beginning of Fractal
 #ifdef __APPLE__
@@ -384,7 +384,7 @@ void PrintCPUInfo() {
 #endif
 }
 
-void PrintHardDriveInfo() {
+void print_hard_drive_info() {
     double used_space;
     double total_space;
     double available_space;

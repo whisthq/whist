@@ -83,7 +83,7 @@ Public Functions
  *
  * @returns                        0 if succeeded, else -1
  */
-int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi);
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
 
 /**
  * @brief                          Capture a bitmap snapshot of the screen, in
@@ -94,7 +94,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height, UINT dpi
  * @returns                        The number of accumulated frames on success,
  *                                 else -1
  */
-int CaptureScreen(CaptureDevice* device);
+int capture_screen(CaptureDevice* device);
 
 /**
  * @brief                          Copy a captured bitmap snapshot to a new CPU
@@ -104,7 +104,7 @@ int CaptureScreen(CaptureDevice* device);
  *
  * @returns                        0 if succeeded, else -1
  */
-int TransferScreen(CaptureDevice* device);
+int transfer_screen(CaptureDevice* device);
 
 /**
  * @brief                          Release a captured screen bitmap snapshot
@@ -112,7 +112,7 @@ int TransferScreen(CaptureDevice* device);
  * @param device                   The Windows screencapture device holding the
  *                                 screen object captured
  */
-void ReleaseScreen(CaptureDevice* device);
+void release_screen(CaptureDevice* device);
 
 /**
  * @brief                          Destroys and frees the memory of a Windows
@@ -121,7 +121,7 @@ void ReleaseScreen(CaptureDevice* device);
  * @param device                   The Windows screencapture device to destroy
  *                                 and free the memory of
  */
-void DestroyCaptureDevice(CaptureDevice* device);
+void destroy_capture_device(CaptureDevice* device);
 
 /**
  * @brief                          Updates the capture device if the capture device is also the
@@ -131,6 +131,6 @@ void DestroyCaptureDevice(CaptureDevice* device);
  * @param bitrate                  The new bitrate to use for encoding
  * @param codec                    The new codec to use for encoding
  */
-void UpdateCaptureEncoder(CaptureDevice* device, int bitrate, CodecType codec);
+void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec);
 
 #endif  // DXGI_CAPTURE_H

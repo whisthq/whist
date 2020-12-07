@@ -6,7 +6,7 @@
 #include "rwlock.h"
 #include "../core/fractal.h"
 
-int initRWLock(RWLock *rwlock) {
+int init_rw_lock(RWLock *rwlock) {
     rwlock->num_active_readers = 0;
     rwlock->num_writers = 0;
     rwlock->is_active_writer = false;
@@ -22,7 +22,7 @@ int initRWLock(RWLock *rwlock) {
     return 0;
 }
 
-int destroyRWLock(RWLock *rwlock) {
+int destroy_rw_lock(RWLock *rwlock) {
     SDL_DestroyMutex(rwlock->num_active_readers_lock);
     SDL_DestroyMutex(rwlock->num_writers_lock);
     SDL_DestroyMutex(rwlock->is_active_writer_lock);
@@ -34,7 +34,7 @@ int destroyRWLock(RWLock *rwlock) {
     return 0;
 }
 
-int writeLock(RWLock *rwlock) {
+int write_lock(RWLock *rwlock) {
     // Increment number of writers
     SDL_LockMutex(rwlock->num_writers_lock);
     rwlock->num_writers++;
@@ -60,7 +60,7 @@ int writeLock(RWLock *rwlock) {
     return 0;
 }
 
-int readLock(RWLock *rwlock) {
+int read_lock(RWLock *rwlock) {
     // Wait for all of the writers to go home
     SDL_LockMutex(rwlock->num_writers_lock);
     while (rwlock->num_writers > 0) {
@@ -76,7 +76,7 @@ int readLock(RWLock *rwlock) {
     return 0;
 }
 
-int writeUnlock(RWLock *rwlock) {
+int write_unlock(RWLock *rwlock) {
     // Set is active writer to false
     SDL_LockMutex(rwlock->is_active_writer_lock);
     rwlock->is_active_writer = false;
@@ -95,7 +95,7 @@ int writeUnlock(RWLock *rwlock) {
     return 0;
 }
 
-int readUnlock(RWLock *rwlock) {
+int read_unlock(RWLock *rwlock) {
     // Decrement the number of active readers
     SDL_LockMutex(rwlock->num_active_readers_lock);
     rwlock->num_active_readers--;
