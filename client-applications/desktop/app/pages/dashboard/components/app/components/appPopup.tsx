@@ -43,11 +43,11 @@ const AppPopup = (props: {
         openExternal(url)
     }
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         if (clientOS === OperatingSystem.MAC) {
             debugLog("not yet implemented")
         } else if (clientOS === OperatingSystem.WINDOWS) {
-            const outputPath = `${FractalWindowsDirectory.START_MENU}Fractal\\`
+            const startMenuPath = `${FractalWindowsDirectory.START_MENU}Fractal\\`
 
             setShortcutCreated(true)
             // Create a Fractal directory in the Start Menu if one doesn't exist
@@ -60,23 +60,27 @@ const AppPopup = (props: {
                 return
             }
 
-            // Create the shortcut inside the Fractal Directory
-            createShortcut(app, outputPath, (success: boolean) => {
-                if (success) {
-                    const { array, index } = updateArrayByKey(
-                        apps,
-                        "app_id",
-                        app.app_id,
-                        {
-                            localState: FractalAppLocalState.INSTALLED,
-                        }
-                    )
+            const desktopSuccess = await createShortcut(
+                app,
+                FractalWindowsDirectory.DESKTOP
+            )
+            const startMenuSuccess = await createShortcut(app, startMenuPath)
 
-                    if (array && index !== 0) {
-                        dispatch(updateClient({ apps: array }))
+            // Create the shortcut inside the Fractal Directory
+            if (desktopSuccess || startMenuSuccess) {
+                const { array, index } = updateArrayByKey(
+                    apps,
+                    "app_id",
+                    app.app_id,
+                    {
+                        localState: FractalAppLocalState.INSTALLED,
                     }
+                )
+
+                if (array && index !== 0) {
+                    dispatch(updateClient({ apps: array }))
                 }
-            })
+            }
         }
     }
 
