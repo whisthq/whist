@@ -25,7 +25,7 @@ services:
     ports:
       - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
     environment:
-      REDIS_TLS_URL: redis://redis
+      REDIS_TLS_URL: rediss://redis
       HOT_RELOAD: ${HOT_RELOAD}
       PORT: 7730
     volumes:
@@ -35,7 +35,7 @@ services:
     <<: *base-app
     command: celery
     environment:
-      - REDIS_TLS_URL=redis://redis
+      - REDIS_TLS_URL=rediss://redis
       - AWS_SHARED_CREDENTIALS_FILE=/.aws/credentials
     volumes:
       - ..:/app
