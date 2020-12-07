@@ -10,6 +10,7 @@ const MainReducer = (
         body: Record<string, any>
     }
 ) => {
+    console.log(action.type, action.body)
     const stateCopy = deepCopyObject(state)
     switch (action.type) {
         case MainAction.RESET_STATE:
