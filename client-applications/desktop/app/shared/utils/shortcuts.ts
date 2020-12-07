@@ -65,10 +65,10 @@ export class SVGConverter {
         Methods:
             base64PngToBuffer(input: string) :
                 Converts a base64 encoded PNG to an ArrayBuffer and returns the ArrayBuffer
-            convertToPngBase64(input: string, callback: (base64: string) => void) :
-                Converts an svg (requires .svg) to base64 and pass the base64 string into callback
-            convertToIco(input: string, callback: (buffer: ArrayBuffer) => void) : 
-                Converts an svg (requires .svg) to .ico and returns the .ico in an ArrayBuffer
+            convertToPngBase64(input: string) :
+                Converts an svg (requires .svg) to base64 and returns a Promise with the base64 string
+            convertToIco(input: string) : 
+                Converts an svg (requires .svg) to .ico and returns a Promise with the ArrayBuffer
     */
     canvas: HTMLCanvasElement = document.createElement("canvas")
 
