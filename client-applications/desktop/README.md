@@ -14,7 +14,7 @@ Before starting development, you need to install all of the application and deve
 
 If you are still experiencing issues with starting the dev environment, you might need to run `yarn upgrade`, which will upgrade all the dependencies. It's a good idea to do so periodically to keep the application up-to-date. If further issues persist, you can try reinstalling by running `rm -rf node_modules/` then `yarn` again.
 
-To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `yarn cross-env PORT={number} yarn dev`. This will start the Electron application, but will not fetch the Fractal protocol, which means you can only use this to test the application itself, unless you manually cloned and built the protocol yourself. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below. 
+To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `yarn cross-env PORT={number} yarn dev`. This will start the Electron application, but will not fetch the Fractal protocol, which means you can only use this to test the application itself, unless you manually cloned and built the protocol yourself. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below.
 
 This repository has continuous integration through GitHub Actions, which you can learn more about under [Continuous Integration](#Continuous Integration).
 
@@ -46,7 +46,7 @@ The installer executable will be in `client-applications/desktop/release` as a `
 
 Before you can package the MacOS application it needs to be notarized. This means that it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developer Certificate in your MacOS Keychain for this work successfully. You can download the certificate from AWS S3 on [this link](https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12) assuming you have access to the Fractal AWS organization, and then install it by double-clicking the `.p12` certificate file. The application will get notarized as part of the regular build script.
 
-In order for this to work, you need to have installed the latest version of Xcode (which you can install from the macOS App Store), and have opened it *at least* once following installation, which will prompt you to install additional components. Once those components are installed, you need to open up a terminal and run `xcode-select --install` to install the Xcode CLI, which is necessary for the notarizing to work. Once all of these are done, you should have no problem with the notarization process as part of the packaging of the application.
+In order for this to work, you need to have installed the latest version of Xcode (which you can install from the macOS App Store), and have opened it _at least_ once following installation, which will prompt you to install additional components. Once those components are installed, you need to open up a terminal and run `xcode-select --install` to install the Xcode CLI, which is necessary for the notarizing to work. Once all of these are done, you should have no problem with the notarization process as part of the packaging of the application.
 
 ### Publishing New Versions
 
@@ -54,11 +54,11 @@ Fractal runs two update channels, `production` and `testing`. The `dev` branch s
 
 Any CI generated builds are also stored in GitHub Releases which can be manually downloaded and used.
 
-CI should handle releases, however, 
+CI should handle releases, however,
 
 #### Update Channels
 
-*The source of truth for these should be `build_and_publish.py` in the `default_channel_s3_buckets` dictionary.*
+_The source of truth for these should be `build_and_publish.py` in the `default_channel_s3_buckets` dictionary._
 
 There is a channel for `testing` and `production` on each platform. These channels are backed by AWS S3 buckets ([here](https://s3.console.aws.amazon.com/s3/home?region=us-east-1#)) that follow a file structure and metadata schema specified by [electron-builder's publish system](https://www.electron.build/configuration/publish) (it's basically the executable installer + a well-known YAML file with metadata like file hash, file name, and release date which is used for knowing when an update is available).
 
@@ -87,6 +87,8 @@ To ensure that code formatting is standardized, and to minimize clutter in the c
 You can always run Prettier directly from a terminal by typing `yarn format`, or you can install it directly within your IDE by via the following instructions:
 
 ### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+
+Additional specific checks are done by ESLint. Please run `yarn lint-check` or `yarn lint-fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to .eslintrc and either demote to warnings or mute entirely.
 
 Launch VS Code Quick Open (Ctrl+P/Cmd+P), paste the following command, and press enter.
 

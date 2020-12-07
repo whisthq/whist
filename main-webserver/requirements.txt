@@ -20,7 +20,7 @@ python-jose==3.2.0
 pyzipcode==2.0.0
 redis==3.5.3
 requests==2.24.0
-sentry-sdk==0.19.1
+sentry-sdk==0.19.4
 stripe==2.55.0
 waitress==1.4.4
 datadog==0.39.0

@@ -1,6 +1,6 @@
 #include "cpucapturetransfer.h"
 
-int cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder) {
+int cpu_transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
 #ifdef _WIN32
     encoder->already_encoded = false;
 #else
@@ -22,9 +22,9 @@ int cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder) {
     static double time_spent = 0.0;
 
     clock cpu_transfer_timer;
-    StartTimer(&cpu_transfer_timer);
+    start_timer(&cpu_transfer_timer);
 
-    if (TransferScreen(device)) {
+    if (transfer_screen(device)) {
         LOG_ERROR("Unable to transfer screen to CPU buffer.");
         return -1;
     }
@@ -34,7 +34,7 @@ int cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder) {
     }
 
     times_measured++;
-    time_spent += GetTimer(cpu_transfer_timer);
+    time_spent += get_timer(cpu_transfer_timer);
 
     if (times_measured == 10) {
         LOG_INFO("Average time transferring dxgi data to encoder frame on CPU: %f",

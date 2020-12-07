@@ -24,7 +24,7 @@ called on the receiving end to re-obtain the data and process it.
 #include <openssl/hmac.h>
 #include <time.h>
 
-uint32_t Hash(void* buf, size_t len) {
+uint32_t hash(void* buf, size_t len) {
     char* key = buf;
 
     uint64_t pre_hash = 123456789;
@@ -52,7 +52,7 @@ uint32_t Hash(void* buf, size_t len) {
     return hash;
 }
 
-void handleErrors(void) {
+void handle_errors(void) {
     ERR_print_errors_fp(stderr);
     abort();
 }
@@ -184,18 +184,18 @@ int aes_encrypt(void* plaintext, int plaintext_len, void* key, void* iv, void* c
     int ciphertext_len;
 
     // Create and initialise the context
-    if (!(ctx = EVP_CIPHER_CTX_new())) handleErrors();
+    if (!(ctx = EVP_CIPHER_CTX_new())) handle_errors();
 
     // Initialise the encryption operation.
-    if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv)) handleErrors();
+    if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv)) handle_errors();
 
     // Encrypt
-    if (1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len)) handleErrors();
+    if (1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len)) handle_errors();
     ciphertext_len = len;
 
     // Finish encryption (Might add a few bytes)
     if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char*)ciphertext + ciphertext_len, &len))
-        handleErrors();
+        handle_errors();
     ciphertext_len += len;
 
     // Free the context
@@ -212,17 +212,17 @@ int aes_decrypt(void* ciphertext, int ciphertext_len, void* key, void* iv, void*
     int plaintext_len;
 
     // Create and initialize the context
-    if (!(ctx = EVP_CIPHER_CTX_new())) handleErrors();
+    if (!(ctx = EVP_CIPHER_CTX_new())) handle_errors();
 
     // Initialize decryption
-    if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv)) handleErrors();
+    if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv)) handle_errors();
 
     // Decrypt
-    if (1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len)) handleErrors();
+    if (1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len)) handle_errors();
     plaintext_len = len;
 
     // Finish decryption
-    if (1 != EVP_DecryptFinal_ex(ctx, (unsigned char*)plaintext + len, &len)) handleErrors();
+    if (1 != EVP_DecryptFinal_ex(ctx, (unsigned char*)plaintext + len, &len)) handle_errors();
     plaintext_len += len;
 
     // Free context

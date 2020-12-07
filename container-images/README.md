@@ -8,15 +8,15 @@ This repository contains the code for containerizing the various applications th
 
 All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
 
-| Browsers         | Creative   | Productivity |
-| ---------------- | ---------- | ------------ |
-| Google Chrome    | Blender    | Slack        |
-| Mozilla Firefox  | Blockbench | Notion       |
-| Brave Browser    | Figma      | Discord      |
-| Sidekick Browser | TextureLab |              |
-|                  | Gimp       |              |
-|                  | Lightworks |              |
-|		               | Inkscape   | 	           |
+| Browsers         | Creative (2D/3D) | Creative (Video) | Productivity |
+| ---------------- | ---------------- | ---------------- | ------------ |
+| Google Chrome    | Blender          | Lightworks       | Slack        |
+| Mozilla Firefox  | Blockbench       | Kdenlive         | Notion       |
+| Brave Browser    | Figma            |                  | Discord      |
+| Sidekick Browser | TextureLab       |                  |              |
+|                  | Gimp             |                  |              |
+|                  | Inkscape         |                  |              |
+|                  | Krita            |                  |              |
 
 See [Adding New Applications](#Adding-New-Applications) for details on how to add support for new applications and integrate them with our continuous delivery pipeline.
 
@@ -41,7 +41,7 @@ Or, if you have sshkeys:
 git clone --recurse-submodules --branch $your-container-images-branch git@github.com:fractal/container-images.git ~/container-images
 ```
 
-Then, setup on your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractal/ecs-host-setup/) repository: 
+Then, setup on your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractal/ecs-host-setup/) repository:
 
 ```
 ./setup_ubuntu20_host.sh

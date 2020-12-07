@@ -1,0 +1,53 @@
+# workflows/main-webserver-linting.yml
+#
+# Main Webserver: Linting
+# Lint main-webserver using black and pylint.
+
+name: "Main Webserver: Linting"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
+        paths:
+            - "main-webserver/**"
+            - "!main-webserver/README.md"
+
+jobs:
+    main-webserver-linting-main:
+        name: Lint Main Webserver
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip
+              run: cd main-webserver && pip install --upgrade pip
+
+            - name: Install dependencies
+              run: cd main-webserver && pip install -r requirements.txt -r requirements-test.txt
+
+            - name: Check if code is linted with Python Black
+              run: |
+                  cd main-webserver
+                  result=$(black . --check) # black --check returns 0 if the code is already linted
+                  if [ "$result" -ne "0" ]; then
+                    (echo "To pass this check please lint the code with Python Black" && false)
+                  else
+                    (echo "Code is linted with Python Black" && true)
+                  fi
+
+            - name: Check if code matches Pylint standards
+              run: cd main-webserver && pylint app # Returns 0 iff code is linted

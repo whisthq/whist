@@ -32,22 +32,22 @@ Custom Types
 ============================
 */
 
-typedef enum json_type { JSON_BOOL, JSON_INT, JSON_STRING, JSON_NULL } json_type_t;
+typedef enum JsonType { JSON_BOOL, JSON_INT, JSON_STRING, JSON_NULL } JsonType;
 
-typedef struct kv_pair {
-    json_type_t type;
+typedef struct KVPair {
+    JsonType type;
     char* key;
     union {
         char* str_value;
         int int_value;
         bool bool_value;
     };
-} kv_pair_t;
+} KVPair;
 
-typedef struct json {
+typedef struct Json {
     int size;
-    kv_pair_t* pairs;
-} json_t;
+    KVPair* pairs;
+} Json;
 
 /*
 ============================
@@ -63,7 +63,7 @@ Public Functions
  *
  * @returns                        True if parsed successfully, else False
  */
-bool parse_json(char* str, json_t* json);
+bool parse_json(char* str, Json* json);
 
 /**
  * @brief                          Retrieve the value associated with a key in a
@@ -75,7 +75,7 @@ bool parse_json(char* str, json_t* json);
  * @returns                        A key-value pair struct of the found value
  *                                 for the provided key
  */
-kv_pair_t* get_kv(json_t* json, char* key);
+KVPair* get_kv(Json* json, char* key);
 
 /**
  * @brief                          Free the memory of a JSON stored in a JSON
@@ -83,7 +83,7 @@ kv_pair_t* get_kv(json_t* json, char* key);
  *
  * @param json                     The JSON struct to free
  */
-void free_json(json_t json);
+void free_json(Json json);
 
 /**
  * @brief                          Allocate new memory and clone a string

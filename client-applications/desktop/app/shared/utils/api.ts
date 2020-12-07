@@ -1,37 +1,72 @@
-import { config } from "shared/constants/config"
+import { config, webservers } from "shared/constants/config"
 import { debugLog } from "shared/utils/logging"
+import {
+    FractalHTTPRequest,
+    FractalHTTPContent,
+    FractalHTTPCode,
+} from "shared/types/api"
 
-export async function apiPost(endpoint: any, body: any, token: any) {
+const checkResponse = (response: { status: number }): boolean => {
+    return (
+        response &&
+        response.status &&
+        (response.status === FractalHTTPCode.SUCCESS ||
+            response.status === FractalHTTPCode.ACCEPTED)
+    )
+}
+
+const checkJSON = <T>(json: T): boolean => {
+    return !!json
+}
+
+export const apiPost = async <T>(
+    endpoint: string,
+    body: T,
+    token: string,
+    webserver: string = config.url.WEBSERVER_URL
+): T => {
+    const webserverUrl =
+        webserver in webservers ? webservers[webserver] : webserver
+
     try {
-        const response = await fetch(config.url.WEBSERVER_URL + endpoint, {
-            method: "POST",
+        const response = await fetch(webserverUrl + endpoint, {
+            method: FractalHTTPRequest.POST,
             mode: "cors",
             headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
+                "Content-Type": FractalHTTPContent.JSON,
+                Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(body),
         })
         const json = await response.json()
-        return { json, response }
+        const success = checkJSON(json) && checkResponse(response)
+        return { json, success }
     } catch (err) {
         debugLog(err)
         return err
     }
 }
 
-export async function apiGet(endpoint: any, token: any) {
+export const apiGet = async <T>(
+    endpoint: string,
+    token: string,
+    webserver: string = config.url.WEBSERVER_URL
+): T => {
+    const webserverUrl =
+        webserver in webservers ? webservers[webserver] : webserver
+
     try {
-        const response = await fetch(config.url.WEBSERVER_URL + endpoint, {
-            method: "GET",
+        const response = await fetch(webserverUrl + endpoint, {
+            method: FractalHTTPRequest.GET,
             mode: "cors",
             headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
+                "Content-Type": FractalHTTPContent.JSON,
+                Authorization: `Bearer ${token}`,
             },
         })
         const json = await response.json()
-        return { json, response }
+        const success = checkJSON(json) && checkResponse(response)
+        return { json, success }
     } catch (err) {
         debugLog(err)
         return err

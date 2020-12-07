@@ -20,13 +20,13 @@ extern volatile int audio_frequency;
 extern bool has_rendered_yet;
 
 // Hold information about audio data as the packets come in
-typedef struct audio_packet {
+typedef struct AudioPacket {
     int id;
     int size;
     int nacked_for;
     int nacked_amount;
     char data[MAX_PAYLOAD_SIZE];
-} audio_packet;
+} AudioPacket;
 
 #define LOG_AUDIO false
 
@@ -37,14 +37,14 @@ typedef struct audio_packet {
 #define MAX_NUM_AUDIO_FRAMES 25
 #define MAX_NUM_AUDIO_INDICES 3
 #define RECV_AUDIO_BUFFER_SIZE (MAX_NUM_AUDIO_FRAMES * MAX_NUM_AUDIO_INDICES)
-audio_packet receiving_audio[RECV_AUDIO_BUFFER_SIZE];
+AudioPacket receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
 
 struct AudioData {
     SDL_AudioDeviceID dev;
-    audio_decoder_t* audio_decoder;
-} volatile AudioData;
+    AudioDecoder* audio_decoder;
+} volatile audio_data;
 
 clock nack_timer;
 
@@ -61,57 +61,57 @@ clock test_timer;
 double test_time;
 SDL_mutex* audio_mutex;
 
-void reinitAudio() {
+void reinit_audio() {
     LOG_INFO("Re-init'ing Audio!");
     if (SDL_LockMutex(audio_mutex) != 0) {
         LOG_ERROR("Failed to lock mutex!");
-        destroyLogger();
+        destroy_logger();
         exit(-1);
     }
-    destroyAudio();
-    initAudio();
+    destroy_audio();
+    init_audio();
     SDL_UnlockMutex(audio_mutex);
 }
 
-int MultithreadedReinitAudio(void* opaque) {
+int multithreaded_reinit_audio(void* opaque) {
     UNUSED(opaque);
-    reinitAudio();
+    reinit_audio();
     return 0;
 }
 
-void initAudio() {
+void init_audio() {
     if (!audio_mutex) {
         audio_mutex = SDL_CreateMutex();
         if (!audio_mutex) {
             LOG_ERROR("Failed to initialize mutex!");
-            destroyLogger();
+            destroy_logger();
             exit(-1);
         }
     }
-    StartTimer(&nack_timer);
+    start_timer(&nack_timer);
 
     // cast socket and SDL variables back to their data type for usage
-    SDL_AudioSpec wantedSpec = {0}, audioSpec = {0};
-    AudioData.audio_decoder = create_audio_decoder(decoder_frequency);
+    SDL_AudioSpec wanted_spec = {0}, audio_spec = {0};
+    audio_data.audio_decoder = create_audio_decoder(decoder_frequency);
 
-    SDL_zero(wantedSpec);
-    SDL_zero(audioSpec);
-    wantedSpec.channels = 2;
-    wantedSpec.freq = decoder_frequency;
-    LOG_INFO("Freq: %d", wantedSpec.freq);
-    wantedSpec.format = AUDIO_F32SYS;
-    wantedSpec.silence = 0;
-    wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
+    SDL_zero(wanted_spec);
+    SDL_zero(audio_spec);
+    wanted_spec.channels = 2;
+    wanted_spec.freq = decoder_frequency;
+    LOG_INFO("Freq: %d", wanted_spec.freq);
+    wanted_spec.format = AUDIO_F32SYS;
+    wanted_spec.silence = 0;
+    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;
 
-    AudioData.dev =
-        SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
-    if (AudioData.dev == 0) {
+    audio_data.dev =
+        SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &audio_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+    if (audio_data.dev == 0) {
         LOG_ERROR("Failed to open audio, %s", SDL_GetError());
-        destroyLogger();
+        destroy_logger();
         exit(1);
     }
 
-    SDL_PauseAudioDevice(AudioData.dev, 0);
+    SDL_PauseAudioDevice(audio_data.dev, 0);
 
     for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
         receiving_audio[i].id = -1;
@@ -120,22 +120,22 @@ void initAudio() {
     }
 }
 
-void destroyAudio() {
-    SDL_CloseAudioDevice(AudioData.dev);
-    if (AudioData.audio_decoder) {
-        destroy_audio_decoder(AudioData.audio_decoder);
+void destroy_audio() {
+    SDL_CloseAudioDevice(audio_data.dev);
+    if (audio_data.audio_decoder) {
+        destroy_audio_decoder(audio_data.audio_decoder);
     }
-    AudioData.dev = 0;
+    audio_data.dev = 0;
 }
 
-void updateAudio() {
+void update_audio() {
     if (!audio_mutex) {
         LOG_ERROR("Mutex or audio is not initialized yet!");
-        destroyLogger();
+        destroy_logger();
         exit(-1);
     }
     int status = SDL_TryLockMutex(audio_mutex);
-    if (!AudioData.dev || status != 0) {
+    if (!audio_data.dev || status != 0) {
         LOG_INFO("Couldn't lock mutex in updateAudio!");
         return;
     }
@@ -150,8 +150,8 @@ void updateAudio() {
     if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
         LOG_INFO("Updating audio frequency to %d!", audio_frequency);
         decoder_frequency = audio_frequency;
-        destroyAudio();
-        initAudio();
+        destroy_audio();
+        init_audio();
     }
 
     bool still_more_audio_packets = true;
@@ -175,7 +175,7 @@ void updateAudio() {
     // Wait to delay
     static bool gapping = false;
     int bytes_until_can_play = (most_recent_audio_id - last_played_id) * MAX_PAYLOAD_SIZE +
-                               SDL_GetQueuedAudioSize(AudioData.dev);
+                               SDL_GetQueuedAudioSize(audio_data.dev);
     if (!gapping && bytes_until_can_play < AUDIO_QUEUE_LOWER_LIMIT) {
         LOG_INFO("Audio Queue too low: %d. Needs to catch up!", bytes_until_can_play);
         gapping = true;
@@ -220,12 +220,12 @@ void updateAudio() {
 
             int real_limit = triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
 
-            if (SDL_GetQueuedAudioSize(AudioData.dev) > (unsigned int)real_limit) {
+            if (SDL_GetQueuedAudioSize(audio_data.dev) > (unsigned int)real_limit) {
                 LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
                             next_to_play_id / MAX_NUM_AUDIO_INDICES,
-                            SDL_GetQueuedAudioSize(AudioData.dev));
+                            SDL_GetQueuedAudioSize(audio_data.dev));
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+                    AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     packet->id = -1;
                     packet->nacked_amount = 0;
                 }
@@ -240,24 +240,24 @@ void updateAudio() {
                 encoded_packet.size = 0;
 
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+                    AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
                     encoded_packet.size += packet->size;
                     packet->id = -1;
                     packet->nacked_amount = 0;
                 }
-                res = audio_decoder_decode_packet(AudioData.audio_decoder, &encoded_packet);
+                res = audio_decoder_decode_packet(audio_data.audio_decoder, &encoded_packet);
                 av_free(encoded_packet.data);
                 av_packet_unref(&encoded_packet);
 
                 if (res == 0) {
                     uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
 
-                    audio_decoder_packet_readout(AudioData.audio_decoder, decoded_data);
+                    audio_decoder_packet_readout(audio_data.audio_decoder, decoded_data);
 
                     res =
-                        SDL_QueueAudio(AudioData.dev, &decoded_data,
-                                       audio_decoder_get_frame_data_size(AudioData.audio_decoder));
+                        SDL_QueueAudio(audio_data.dev, &decoded_data,
+                                       audio_decoder_get_frame_data_size(audio_data.audio_decoder));
 
                     if (res < 0) {
                         LOG_WARNING("Could not play audio!");
@@ -265,7 +265,7 @@ void updateAudio() {
                 }
 #else
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+                    AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     if (packet->size > 0) {
 #if LOG_AUDIO
                         mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id,
@@ -292,12 +292,12 @@ void updateAudio() {
     // }
 
     // Find all pending audio packets and NACK them
-    if (last_played_id > -1 && GetTimer(nack_timer) > 6.0 / MS_IN_SECOND) {
+    if (last_played_id > -1 && get_timer(nack_timer) > 6.0 / MS_IN_SECOND) {
         int num_nacked = 0;
         last_nacked_id = max(last_played_id, last_nacked_id);
         for (int i = last_nacked_id + 1; i < most_recent_audio_id - 4 && num_nacked < 1; i++) {
             int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
-            audio_packet* i_packet = &receiving_audio[i_buffer_index];
+            AudioPacket* i_packet = &receiving_audio[i_buffer_index];
             if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
                 i_packet->nacked_amount++;
                 FractalClientMessage fmsg;
@@ -307,10 +307,10 @@ void updateAudio() {
                 LOG_INFO("Missing Audio Packet ID %d, Index %d. NACKing...", fmsg.nack_data.id,
                          fmsg.nack_data.index);
                 i_packet->nacked_for = i;
-                SendFmsg(&fmsg);
+                send_fmsg(&fmsg);
                 num_nacked++;
 
-                StartTimer(&nack_timer);
+                start_timer(&nack_timer);
             }
             last_nacked_id = i;
         }
@@ -318,7 +318,7 @@ void updateAudio() {
     SDL_UnlockMutex(audio_mutex);
 }
 
-int32_t ReceiveAudio(FractalPacket* packet) {
+int32_t receive_audio(FractalPacket* packet) {
     if (packet->index >= MAX_NUM_AUDIO_INDICES) {
         LOG_WARNING("Packet Index too large!");
         return -1;
@@ -328,7 +328,7 @@ int32_t ReceiveAudio(FractalPacket* packet) {
     }
 
     int audio_id = packet->id * MAX_NUM_AUDIO_INDICES + packet->index;
-    audio_packet* audio_pkt = &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
+    AudioPacket* audio_pkt = &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
 
     if (audio_id == audio_pkt->id) {
         //         LOG_WARNING("Already received audio packet: %d", audio_id);

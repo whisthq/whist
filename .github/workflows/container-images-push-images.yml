@@ -1,84 +1,85 @@
-# Deploy Docker images to AWS ECR
-name: Container-Images Push images
+# workflows/container-images-push-images.yml
+#
+# Container Images: Build & Push Images
+# Build and push docker images to production.
 
-# Publish on update to master branch
+name: "Container Images: Build & Push Images"
+
 on:
-  push:
-    branches: [master]
-    paths:
-      - "/container-images/**"
+    push:
+        branches: [master]
+        paths:
+            - "container-images/**"
+            - "!container-images/README.md"
 
 env:
-  aws-placeholder-region: us-east-1
-  aws-regions: >
-    us-east-1
-    us-east-2
-    us-west-1
-    us-west-2
-    ca-central-1
+    aws-placeholder-region: us-east-1
+    aws-regions: >
+        us-east-1
+        us-east-2
+        us-west-1
+        us-west-2
+        ca-central-1
 
 jobs:
-  ecr-push:
-    name: Build and push to AWS ECR
-    runs-on: ubuntu-20.04
+    container-images-push-images-ecr:
+        name: Build & Push to AWS ECR
+        runs-on: ubuntu-20.04
 
-    steps:
-      - name: Checkout Git repository
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-          token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-          submodules: recursive
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+                  submodules: recursive
 
-      - name: Configure AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.aws-placeholder-region }}
+            - name: Configure AWS CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.aws-placeholder-region }}
 
-      - name: Walk repo to find all dockerfiles and store path as env variable
-        run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+            - name: Walk repo to find all dockerfiles and store path as env variable
+              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
-      - name: Build release protocol
-        run: ./container-images/build_protocol.sh release
+            - name: Build container images
+              run: |
+                  for app in ${{ env.apps }}
+                  do
+                    ./container-images/build_container_image.sh $app
+                  done
 
-      - name: Build container images
-        run: |
-          for app in ${{ env.apps }}
-          do
-            ./container-images/build_container_image.sh $app
-          done
+            - name: Push container images
+              run: |
+                  for region in ${{ env.aws-regions }}
+                  do
+                    for app in ${{ env.apps }}
+                    do
+                      ./container-images/push_container_image.sh $app $region
+                    done
+                  done
 
-      - name: Push container images
-        run: |
-          for region in ${{ env.aws-regions }}
-          do
-            for app in ${{ env.apps }}
-            do
-              ./container-images/push_container_image.sh $app $region
-            done
-          done
+            - name: Create Lifecycle Policies for each image, only keeps latest 10
+              run: |
+                  for region in ${{ env.aws-regions }}
+                  do
+                    for app in ${{ env.apps }}
+                    do
+                      ./container-images/apply_ecr_lifecycle_policy.sh $app $region
+                    done
+                  done
 
-      - name: Create Lifecycle Policies for each image, only keeps latest 10
-        run: |
-          for region in ${{ env.aws-regions }}
-          do
-            for app in ${{ env.apps }}
-            do
-              ./container-images/apply_ecr_lifecycle_policy.sh $app $region
-            done
-          done
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Container images builds pushed to production via Docker push to ECR.\", \"icon_emoji\": \":fractal:\"}" \
+                  https://hooks.slack.com/services/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
 
-      - name: Notify Slack
-        run: |
-          curl -X POST \
-          --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Container images builds pushed to production via Docker push to ECR.\", \"icon_emoji\": \":fractal:\"}" \
-          https://hooks.slack.com/services/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
-
-        # secrets.ECS_TASK_DEFINITIONS_RENDER_AND_DEPLOY_WORKFLOW_ID is the ID of that specific .yml file in ecs-task-definitions.
-        # It was retrieve via a Curl request and stored into GitHub secrets for this repository. See Notion -> Engineering Wiki for more details
-      - name: Trigger a ECS task definitions render and deployment
-        run: |
-          echo "Trigger render_and_deploy.yml on the main branch of ecs-task-definitions to update tags to our latest container images"
-          curl -X POST -H "Authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/fractal/ecs-task-definitions/actions/workflows/${{ secrets.ECS_TASK_DEFINITIONS_RENDER_AND_DEPLOY_WORKFLOW_ID }}/dispatches -d '{"ref": "main"}'
+              # secrets.ECS_TASK_DEFINITIONS_RENDER_AND_DEPLOY_WORKFLOW_ID is the ID of that specific .yml file in ecs-task-definitions.
+              # It was retrieve via a Curl request and stored into GitHub secrets for this repository. See Notion -> Engineering Wiki for more details
+            - name: Trigger a ECS task definitions render and deployment
+              run: |
+                  echo "Trigger render_and_deploy.yml on the main branch of ecs-task-definitions to update tags to our latest container images"
+                  curl -X POST -H "Authorization: Bearer ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/fractal/ecs-task-definitions/actions/workflows/${{ secrets.ECS_TASK_DEFINITIONS_RENDER_AND_DEPLOY_WORKFLOW_ID }}/dispatches -d '{"ref": "main"}'

@@ -8,8 +8,8 @@ from collections import defaultdict
 import pytest
 
 from app.celery.aws_ecs_creation import _poll
-from app.helpers.utils.general.logs import fractalLog
-from app.helpers.utils.general.sql_commands import fractalSQLCommit
+from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.models import ClusterInfo, db, UserContainer
 
 from ..helpers.general.progress import fractalJobRunner, queryStatus
@@ -22,7 +22,7 @@ pytest.container_name = None
 @pytest.mark.container_serial
 def check_test_database():
     if os.getenv("HEROKU_APP_NAME") == "main-webserver":
-        fractalLog(
+        fractal_log(
             function="test_aws_container",
             label=None,
             logs="Not using staging database or resource group! Forcefully stopping tests.",
@@ -35,9 +35,9 @@ def check_test_database():
 @pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_save_user")
-def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
+def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
     cluster_name = cluster_name or pytest.cluster_name
-    fractalLog(
+    fractal_log(
         function="test_create_cluster",
         label="cluster/create",
         logs="Starting to create cluster {}".format(cluster_name),
@@ -52,14 +52,14 @@ def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
             region_name="us-east-1",
             max_size=1,
             min_size=0,
-            username=authorized.user_id,
+            username=admin.user_id,
         ),
     )
 
     task = queryStatus(client, resp, timeout=10)
 
     if task["status"] < 1:
-        fractalLog(
+        fractal_log(
             function="test_create_cluster",
             label="cluster/create",
             logs=task["output"],
@@ -67,7 +67,7 @@ def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
         )
         assert False
     if not ClusterInfo.query.get(cluster_name):
-        fractalLog(
+        fractal_log(
             function="test_create_cluster",
             label="cluster/create",
             logs="Cluster was not inserted in database",
@@ -82,10 +82,10 @@ def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
-def test_assign_container(client, authorized, monkeypatch):
+def test_assign_container(client, admin, monkeypatch):
     monkeypatch.setattr(_poll, "__code__", (lambda *args, **kwargs: True).__code__)
 
-    fractalLog(
+    fractal_log(
         function="test_assign_container",
         label="container/assign",
         logs="Starting to assign container in cluster {}".format(pytest.cluster_name),
@@ -93,7 +93,7 @@ def test_assign_container(client, authorized, monkeypatch):
     resp = client.post(
         "/aws_container/assign_container",
         json=dict(
-            username=authorized.user_id,
+            username=admin.user_id,
             cluster_name=pytest.cluster_name,
             region_name="us-east-1",
             task_definition_arn="fractal-browsers-chrome",
@@ -103,27 +103,27 @@ def test_assign_container(client, authorized, monkeypatch):
     task = queryStatus(client, resp, timeout=50)
 
     if task["status"] < 1:
-        fractalLog(
-            function="test_assign_container",
-            label="container/assign",
+        fractal_log(
+            function="test_create_container",
+            label="container/create",
             logs=task["output"],
             level=logging.ERROR,
         )
         assert False
 
     if not task["result"]:
-        fractalLog(
-            function="test_assign_container",
-            label="container/assign",
+        fractal_log(
+            function="test_create_container",
+            label="container/create",
             logs="No container returned",
             level=logging.ERROR,
         )
         assert False
     pytest.container_name = task["result"]["container_id"]
     if not UserContainer.query.get(pytest.container_name):
-        fractalLog(
-            function="test_assign_container",
-            label="container/assign",
+        fractal_log(
+            function="test_create_container",
+            label="container/create",
             logs="Container was not inserted in database",
             level=logging.ERROR,
         )
@@ -138,8 +138,9 @@ def test_assign_container(client, authorized, monkeypatch):
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
-def test_send_commands(client, authorized):
-    fractalLog(
+@pytest.mark.usefixtures("admin")
+def test_send_commands(client):
+    fractal_log(
         function="test_send_commands",
         label="cluster/send_commands",
         logs="Starting to send commands to cluster {}".format(pytest.cluster_name),
@@ -157,7 +158,7 @@ def test_send_commands(client, authorized):
     task = queryStatus(client, resp, timeout=10)
 
     if task["status"] < 1:
-        fractalLog(
+        fractal_log(
             function="test_send_commands",
             label="cluster/send_commands",
             logs=task["output"],
@@ -172,7 +173,7 @@ def test_send_commands(client, authorized):
 @pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
 def test_delete_container(client):
-    fractalLog(
+    fractal_log(
         function="test_delete_container",
         label="container/delete",
         logs="Starting to delete container {}".format(pytest.container_name),
@@ -190,7 +191,7 @@ def test_delete_container(client):
     task = queryStatus(client, resp, timeout=10)
 
     if task["status"] < 1:
-        fractalLog(
+        fractal_log(
             function="test_delete_container",
             label="container/delete",
             logs=task["output"],
@@ -201,7 +202,7 @@ def test_delete_container(client):
     db.session.expire(container)
 
     if UserContainer.query.get(pytest.container_name):
-        fractalLog(
+        fractal_log(
             function="test_delete_container",
             label="container/delete",
             logs="Container was not deleted from database",
@@ -216,9 +217,10 @@ def test_delete_container(client):
 @pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_retrieve_user")
-def test_delete_cluster(client, authorized, cluster=pytest.cluster_name):
+@pytest.mark.usefixtures("admin")
+def test_delete_cluster(client, cluster=pytest.cluster_name):
     cluster = cluster or pytest.cluster_name
-    fractalLog(
+    fractal_log(
         function="test_delete_cluster",
         label="cluster/delete",
         logs="Starting to delete cluster {}".format(cluster),
@@ -235,7 +237,7 @@ def test_delete_cluster(client, authorized, cluster=pytest.cluster_name):
     task = queryStatus(client, resp, timeout=10)
 
     if task["status"] < 1:
-        fractalLog(
+        fractal_log(
             function="test_delete_cluster",
             label="cluster/delete",
             logs=task["output"],
@@ -243,7 +245,7 @@ def test_delete_cluster(client, authorized, cluster=pytest.cluster_name):
         )
         assert False
     if ClusterInfo.query.get(cluster):
-        fractalLog(
+        fractal_log(
             function="test_delete_cluster",
             label="cluster/delete",
             logs="Cluster was not deleted in database",
@@ -259,23 +261,23 @@ def test_delete_cluster(client, authorized, cluster=pytest.cluster_name):
 )
 def test_cluster_assignment():
     check_test_database(input_token, admin_token)
-    fractalLog(
+    fractal_log(
         function="test_cluster_assignment",
         label="cluster/assign",
         logs="First deleting all clusters in database",
     )
 
     def delete_cluster_helper(cluster):
-        fractalLog(
+        fractal_log(
             function="test_cluster_assignment",
             label="cluster/delete",
             logs="Deleting cluster {} from database".format(cluster),
         )
         cluster_info = ClusterInfo.query.get(cluster)
-        fractalSQLCommit(db, lambda db, x: db.session.delete(x), cluster_info)
+        fractal_sql_commit(db, lambda db, x: db.session.delete(x), cluster_info)
 
         if ClusterInfo.query.get(cluster):
-            fractalLog(
+            fractal_log(
                 function="test_cluster_assignment",
                 label="cluster/delete",
                 logs="Cluster was not deleted in database",
@@ -289,7 +291,7 @@ def test_cluster_assignment():
         cluster_info.cluster for cluster_info in all_clusters if "cluster_" in cluster_info.cluster
     ]
     if all_clusters:
-        fractalLog(
+        fractal_log(
             function="test_cluster_assignment",
             label="cluster/delete",
             logs="Found {num_clusters} cluster(s) already in database. Starting to delete...".format(
@@ -299,7 +301,7 @@ def test_cluster_assignment():
         fractalJobRunner(delete_cluster_helper, clusters)
 
     else:
-        fractalLog(
+        fractal_log(
             function="test_cluster_assignment",
             label="cluster/delete",
             logs="No clusters found in database",

@@ -1,0 +1,12 @@
+FROM fractal/base:current-build
+
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    software-properties-common \
+    libqt5svg5 \
+    && apt-get autoremove -y \
+    && apt-get clean
+
+RUN add-apt-repository ppa:kritalime/ppa
+RUN apt-get install -y krita
+
+RUN ln -sf /usr/bin/krita /usr/bin/fractal-application

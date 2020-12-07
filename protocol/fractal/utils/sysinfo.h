@@ -59,37 +59,37 @@ Public Functions
 /**
  * @brief                          Prints the OS name,
  */
-void PrintOSInfo();
+void print_os_info();
 
 /**
  * @brief                          Prints the OS model and build version
  */
-void PrintModelInfo();
+void print_model_info();
 
 /**
  * @brief                          Prints the monitors
  */
-void PrintMonitors();
+void print_monitors();
 
 /**
  * @brief                          Prints the total RAM and used RAM
  */
-void PrintRAMInfo();
+void print_ram_info();
 
 /**
  * @brief                          Prints the CPU specs, vendor and usage
  */
-void PrintCPUInfo();
+void print_cpu_info();
 
 /**
  * @brief                          Prints the total storage and the available
  * storage
  */
-void PrintHardDriveInfo();
+void print_hard_drive_info();
 
 /**
  * @brief                          Prints the memory
  */
-void PrintMemoryInfo();
+void print_memory_info();
 
 #endif  // SYS_INFO

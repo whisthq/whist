@@ -64,14 +64,14 @@ Public Functions
  * @returns                        The integer count of clipboard updates (e.g.
  *                                 233, and after an update, 234)
  */
-int GetClipboardChangecount();
+int get_clipboard_changecount();
 
 /**
  * @brief                          Check if the clipboard has a string stored in
  *
  * @returns                        True if it contains a string, else False
  */
-bool ClipboardHasString();
+bool check_clipboard_has_string();
 
 /**
  * @brief                          Check if the clipboard has an image stored in
@@ -79,28 +79,28 @@ bool ClipboardHasString();
  *
  * @returns                        True if it contains an image, else False
  */
-bool ClipboardHasImage();
+bool check_clipboard_has_image();
 
 /**
  * @brief                          Check if the clipboard has files stored in it
  *
  * @returns                        True if it contains files, else False
  */
-bool ClipboardHasFiles();
+bool check_clipboard_has_files();
 
 /**
  * @brief                          Get a string from the clipboard
  *
  * @returns                        The string retrieved from the clipboard
  */
-const char* ClipboardGetString();
+const char* clipboard_get_string();
 
 /**
  * @brief                          Set the clipboard to a specific string
  *
  * @param str                      The string to set the clipboard to
  */
-void ClipboardSetString(const char* str);
+void clipboard_set_string(const char* str);
 
 /**
  * @brief                          Get an image from the clipboard
@@ -108,7 +108,7 @@ void ClipboardSetString(const char* str);
  * @param clipboard_image          The image struct that the image gets
  *                                 retrieved into
  */
-void ClipboardGetImage(OSXImage* clipboard_image);
+void clipboard_get_image(OSXImage* clipboard_image);
 
 /**
  * @brief                          Set the clipboard to a specific image
@@ -116,7 +116,7 @@ void ClipboardGetImage(OSXImage* clipboard_image);
  * @param img                      The data of the image to set the clipboard to
  * @param len                      The length of the image data buffer
  */
-void ClipboardSetImage(char* img, int len);
+void clipboard_set_image(char* img, int len);
 
 /**
  * @brief                          Get one or many files from the clipboard
@@ -124,13 +124,13 @@ void ClipboardSetImage(char* img, int len);
  * @param filenames                List of the filenames retrieved from the
  *                                 clipboard
  */
-void ClipboardGetFiles(OSXFilenames* filenames[]);
+void clipboard_get_files(OSXFilenames* filenames[]);
 
 /**
  * @brief                          Set the clipboard to one or many files
  *
  * @param filepaths                List of file paths to set the clipboard to
  */
-void ClipboardSetFiles(char* filepaths[]);
+void clipboard_set_files(char* filepaths[]);
 
 #endif  // CLIPBOARD_OSX_H

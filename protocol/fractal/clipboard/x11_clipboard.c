@@ -46,7 +46,7 @@ whatever files are in the SET_CLIPBOARD directory.
 // TODO: standardize this across all clipboards
 #define MAX_CLIPBOARD_SIZE 9000000
 
-bool StartTrackingClipboardUpdates();
+bool start_tracking_clipboard_updates();
 
 static char cb_buf[MAX_CLIPBOARD_SIZE];
 static Display* display = NULL;
@@ -58,9 +58,9 @@ static Atom incr_id;
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
 bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
 
-void unsafe_initClipboard() { StartTrackingClipboardUpdates(); }
+void unsafe_init_clipboard() { start_tracking_clipboard_updates(); }
 
-void unsafe_DestroyClipboard() {
+void unsafe_destroy_clipboard() {
     if (display) {
         XCloseDisplay(display);
     }
@@ -70,10 +70,9 @@ bool get_clipboard_picture(ClipboardData* cb) {
     /*
     Assume that clipboard stores pictures in png format when getting
     */
-    Atom target_atom;
-    Atom property_atom = XInternAtom(display, "XSEL_DATA", False);
+    Atom target_atom = XInternAtom(display, "image/png", False),
+         property_atom = XInternAtom(display, "XSEL_DATA", False);
 
-    target_atom = XInternAtom(display, "image/png", False);
     if (clipboard_has_target(property_atom, target_atom)) {
         // is PNG
         if (!get_clipboard_data(property_atom, cb, 0)) {
@@ -84,8 +83,7 @@ bool get_clipboard_picture(ClipboardData* cb) {
         return true;
     }
 
-    cb->type = CLIPBOARD_IMAGE;
-
+    // request failed, e.g. owner can't convert to the target format
     LOG_WARNING("Can't convert clipboard image to target format");
     return false;
 }
@@ -102,10 +100,11 @@ bool get_clipboard_string(ClipboardData* cb) {
 
         cb->type = CLIPBOARD_TEXT;
         return true;
-    } else {  // request failed, e.g. owner can't convert to the target format
-        LOG_WARNING("Can't convert clipboard string to target format");
-        return false;
     }
+
+    // request failed, e.g. owner can't convert to the target format
+    LOG_WARNING("Can't convert clipboard string to target format");
+    return false;
 }
 
 bool get_clipboard_files(ClipboardData* cb) {
@@ -155,7 +154,7 @@ bool get_clipboard_files(ClipboardData* cb) {
     }
 }
 
-ClipboardData* unsafe_GetClipboard() {
+ClipboardData* unsafe_get_clipboard() {
     ClipboardData* cb = (ClipboardData*)cb_buf;
     cb->type = CLIPBOARD_NONE;
     cb->size = 0;
@@ -170,7 +169,7 @@ ClipboardData* unsafe_GetClipboard() {
     return cb;
 }
 
-void unsafe_SetClipboard(ClipboardData* cb) {
+void unsafe_set_clipboard(ClipboardData* cb) {
     static FILE* inp = NULL;
 
     //
@@ -253,15 +252,10 @@ void unsafe_SetClipboard(ClipboardData* cb) {
         }
         */
     }
-
-    // Empty call of unsafe_hasClipboardUpdated() in order to prevent hasUpdated from returning true
-    //      just after we've called xclip to set the clipboard
-    unsafe_hasClipboardUpdated();
-
     return;
 }
 
-bool StartTrackingClipboardUpdates() {
+bool start_tracking_clipboard_updates() {
     // To be called at the beginning of clipboard usage
     display = XOpenDisplay(NULL);
     if (!display) {
@@ -276,19 +270,23 @@ bool StartTrackingClipboardUpdates() {
     return true;
 }
 
-bool unsafe_hasClipboardUpdated() {
+bool unsafe_has_clipboard_updated() {
     //
     // If the clipboard has updated since this function was last called,
     // or since StartTrackingClipboardUpdates was last called,
     // then we return "true". Otherwise, return "false".
     //
 
-    if (!display) return false;
+    if (!display) {
+        return false;
+    }
 
     static bool first = true;  // static, so only sets to true on first call
     int event_base, error_base;
     XEvent event;
-    if (!XFixesQueryExtension(display, &event_base, &error_base)) return false;
+    if (!XFixesQueryExtension(display, &event_base, &error_base)) {
+        return false;
+    }
     XFixesSelectSelectionInput(display, DefaultRootWindow(display), clipboard,
                                XFixesSetSelectionOwnerNotifyMask);
     if (first) {
