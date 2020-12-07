@@ -184,7 +184,7 @@ jobs:
           echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
           echo "CUDA_PATH=$env:CUDA_PATH"
           echo "CUDA_PATH=$env:CUDA_PATH_VX_Y"
-          echo "CUDA_PATH=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "CUDA_PATH=$env:CUDA_PATH" >> $GITHUB_ENV
           echo "CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "CUDA_PATH=$env:CUDA_PATH"
           echo "CUDA_PATH=$env:CUDA_PATH_VX_Y $CUDA_PATH_VX_Y"
