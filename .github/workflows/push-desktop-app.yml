@@ -28,8 +28,9 @@ jobs:
                   submodules: recursive
 
             - name: Publish the client-application
-              env: 
-                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-              run: |
-                cd client-applications && cd desktop && ./publish.sh release "$token"
+              with: 
+                  mac_certs: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+                  mac_certs_password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+              run:
+                cd client-applications && cd desktop && ./publish.sh release
 
