@@ -22,7 +22,7 @@ add_custom_command(
 
 # MacOS and Windows default to crashpad for Sentry, and crashpad_handler needs to be in
 #   the same folder as the executable
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_custom_command(
             TARGET FractalServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
