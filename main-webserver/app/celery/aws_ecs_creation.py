@@ -260,7 +260,7 @@ def assign_container(
             is_assigned=True,
             user_id=username,
             task_definition=task_definition_arn,
-            region_name=region_name,
+            location=region_name,
         ).limit(1)
         if existing_container:
             if _poll(existing_container.container_id):
@@ -269,7 +269,7 @@ def assign_container(
         # otherwise, we see if there's an unassigned container
         base_container = (
             UserContainer.query.filter_by(
-                is_assigned=False, task_definition=task_definition_arn, region_name=region_name
+                is_assigned=False, task_definition=task_definition_arn, location=region_name
             )
             .with_for_update()
             .limit(1)
