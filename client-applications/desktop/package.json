@@ -92,7 +92,8 @@
         },
         "publish": {
             "bucket": "fractal-mac-application-testing",
-            "provider": "s3",
+            "provider": "github",
+            "owner": "fractal",
             "region": "us-east-1"
         },
         "win": {
