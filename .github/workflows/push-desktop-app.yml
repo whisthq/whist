@@ -27,24 +27,6 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
-            # - name: Build protocol
-            #   run: cd protocol/desktop && ls && ./linux-client-setup.sh release
-            
             - name: Publish the client-application
               run: cd client-applications && cd desktop && ./publish.sh release
-            # - name: Build release protocol
-            #   run: ./build_protocol.sh release
-
-            # - name: Build container images
-            #   run: |
-            #       for app in ${{ env.apps }}
-            #       do
-            #         ./build_container_image.sh $app
-            #       done
-
-            # - name: Notify Slack
-            #   run: |
-            #       curl -X POST \
-            #       --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Container images builds pushed to production via Docker push to ECR.\", \"icon_emoji\": \":fractal:\"}" \
-            #       https://hooks.slack.com/services/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
 
