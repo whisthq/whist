@@ -231,6 +231,7 @@ endif()
 # Do this before setting the OSX compiler so we do not mess with the sentry-native build
 set(BUILD_SHARED_LIBS ON)
 set(SENTRY_BUILD_RUNTIMESTATIC ON)
+set(SENTRY_BACKEND "crashpad" PARENT_SCOPE)
 add_subdirectory(sentry-native)
 
 # set a standard location for the sentry shared lib so we can copy it into client/server build folders as a post build step
