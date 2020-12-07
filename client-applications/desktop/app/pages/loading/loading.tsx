@@ -12,7 +12,7 @@ import { execChmodUnix } from "shared/utils/exec"
 import { FractalRoute } from "shared/types/navigation"
 import { OperatingSystem, FractalWindowsDirectory } from "shared/types/client"
 
-import styles from "pages/login/login.css"
+import styles from "pages/loading/loading.css"
 
 const Loading = (props: {
     percentLoaded: number

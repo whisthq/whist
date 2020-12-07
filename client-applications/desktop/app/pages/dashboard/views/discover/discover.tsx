@@ -26,6 +26,7 @@ import {
     FractalAppCategory,
     FractalBannerCategory,
 } from "shared/types/navigation"
+import adminApp from "pages/dashboard/constants/adminApp"
 
 import styles from "pages/dashboard/views/discover/discover.css"
 
