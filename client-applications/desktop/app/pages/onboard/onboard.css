@@ -1,4 +1,4 @@
-@import '/app.global.css';
+@import "/app.global.css";
 
 .container {
     background: rgba(237, 240, 247, 0.75);
@@ -7,7 +7,7 @@
     height: 100vh;
     overflow-x: hidden;
     overflow-y: hidden;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     margin: 0px;
     -webkit-app-region: drag;
     user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
@@ -21,7 +21,7 @@
     height: 100vh;
     overflow-x: hidden;
     overflow-y: hidden;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     margin: 0px;
     -webkit-app-region: drag;
     user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
@@ -32,7 +32,7 @@
 }
 
 .container h2 {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     font-size: 35px;
     letter-spacing: 1.2px;
 }
@@ -56,7 +56,7 @@
 }
 
 .welcomeContainer {
-    width: 450px;
+    width: 425px;
     margin: auto;
     margin-top: 150px;
 }
@@ -94,7 +94,7 @@
 
 .logoTitle {
     color: black;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     position: absolute;
     top: 42px;
     left: 42px;
@@ -107,7 +107,7 @@
 }
 
 .enterButton {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     letter-spacing: 1px;
     background: var(--primary-color);
     color: var(--text-background-color);
@@ -124,7 +124,7 @@
 }
 
 .appsTitle {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     width: 600px;
     margin: auto;
     letter-spacing: 1.4px;
@@ -229,6 +229,6 @@
 }
 
 .installingText {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     margin-top: 20px;
 }

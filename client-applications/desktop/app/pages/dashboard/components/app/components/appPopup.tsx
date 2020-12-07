@@ -8,8 +8,7 @@ import { FractalApp, FractalAppLocalState } from "shared/types/ui"
 import { OperatingSystem, FractalWindowsDirectory } from "shared/types/client"
 import {
     createShortcutName,
-    createShortcut,
-    createDirectorySync,
+    createWindowsShortcuts,
 } from "shared/utils/shortcuts"
 import { updateClient } from "store/actions/pure"
 import { debugLog } from "shared/utils/logging"
@@ -48,27 +47,12 @@ const AppPopup = (props: {
         if (clientOS === OperatingSystem.MAC) {
             debugLog("not yet implemented")
         } else if (clientOS === OperatingSystem.WINDOWS) {
-            const startMenuPath = `${FractalWindowsDirectory.START_MENU}Fractal\\`
-
             setShortcutCreated(true)
-            // Create a Fractal directory in the Start Menu if one doesn't exist
-            if (
-                !createDirectorySync(
-                    FractalWindowsDirectory.START_MENU,
-                    "Fractal"
-                )
-            ) {
-                return
-            }
 
-            const desktopSuccess = await createShortcut(
-                app,
-                FractalWindowsDirectory.DESKTOP
-            )
-            const startMenuSuccess = await createShortcut(app, startMenuPath)
+            const success = await createWindowsShortcuts(app)
 
             // Create the shortcut inside the Fractal Directory
-            if (desktopSuccess || startMenuSuccess) {
+            if (success) {
                 const { array, index } = updateArrayByKey(
                     apps,
                     "app_id",
