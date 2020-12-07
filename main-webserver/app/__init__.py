@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import ssl
 
 from functools import wraps
 
@@ -13,11 +14,14 @@ from .factory import create_app, jwtManager, ma, mail
 
 
 def make_celery(app_name=__name__):
-    """
-    Returns a Celery object with initialized redis parameters.
-    """
-    redis = os.environ.get("REDIS_URL", "redis://")
-    return Celery(app_name, broker=redis, backend=redis)
+    redis = os.environ.get("REDIS_TLS_URL", "rediss://")
+    return Celery(
+        app_name,
+        broker=redis,
+        backend=redis,
+        broker_use_ssl={"cert_reqs": ssl.CERT_NONE},
+        backend_use_ssl={"cert_reqs": ssl.CERT_NONE},
+    )
 
 
 def fractal_pre_process(func):
