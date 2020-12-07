@@ -6,7 +6,6 @@ import { useSpring, animated } from "react-spring"
 import Version from "shared/components/version"
 import TitleBar from "shared/components/titleBar"
 import { FractalRoute } from "shared/types/navigation"
-import { FractalAuthCache } from "shared/types/cache"
 import { updateApps } from "store/actions/pure"
 import { history } from "store/history"
 
@@ -29,12 +28,6 @@ const Installing = (props: {
     const sleep = (ms: number) => {
         return new Promise((resolve) => setTimeout(resolve, ms))
     }
-
-    useEffect(() => {
-        const Store = require("electron-store")
-        const storage = new Store()
-        storage.set(FractalAuthCache.ONBOARDED, true)
-    }, [])
 
     useEffect(() => {
         if (installed.length === 0) {

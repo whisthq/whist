@@ -171,7 +171,7 @@ export const createShortcutName = (appName: string): string => {
         Returns:
             name (string): Name of shortcut
     */
-    return `Fractalized ${appName}`
+    return `${appName} Fractalized`
 }
 
 export const createShortcut = (
