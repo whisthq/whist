@@ -7,6 +7,7 @@ import PuffLoader from "react-spinners/PuffLoader"
 import Version from "shared/components/version"
 import TitleBar from "shared/components/titleBar"
 import App from "pages/onboard/components/app"
+
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { FractalRoute } from "shared/types/navigation"
 import { history } from "store/history"
@@ -63,6 +64,7 @@ const Apps = (props: { accessToken: string; dispatch: Dispatch<any> }) => {
         if (numSelectedApps === 0) {
             history.push(FractalRoute.DASHBOARD)
         } else {
+            console.log("dispatching", selectedApps)
             dispatch(updateClient({ onboardApps: selectedApps }))
             history.push(FractalRoute.ONBOARD_INSTALLING)
         }
@@ -145,7 +147,13 @@ const Apps = (props: { accessToken: string; dispatch: Dispatch<any> }) => {
     )
 }
 
-export const mapStateToProps = <T extends {}>(state: T) => {
+export const mapStateToProps = (state: {
+    MainReducer: {
+        auth: {
+            accessToken: string
+        }
+    }
+}) => {
     return {
         accessToken: state.MainReducer.auth.accessToken,
     }
