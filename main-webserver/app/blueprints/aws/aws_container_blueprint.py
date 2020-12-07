@@ -81,6 +81,27 @@ def test_endpoint(action, **kwargs):
 
         return jsonify({"ID": task.id}), ACCEPTED
 
+    if action == "assign_container":
+        (username, cluster_name, region_name, task_definition_arn) = (
+            kwargs["body"]["username"],
+            kwargs["body"]["cluster_name"],
+            kwargs["body"].get("region_name", None),
+            kwargs["body"]["task_definition_arn"],
+        )
+        region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
+        task = assign_container.apply_async(
+            [username, task_definition_arn],
+            {
+                "cluster_name": cluster_name,
+                "region_name": region_name,
+                "webserver_url": kwargs["webserver_url"],
+            },
+        )
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
+
     if action == "send_commands":
         cluster, region_name, commands, containers = (
             kwargs["body"]["cluster"],

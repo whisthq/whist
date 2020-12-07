@@ -238,6 +238,7 @@ def assign_container(
     username,
     task_definition_arn,
     region_name="us-east-1",
+    cluster_name=None,
     dpi=96,
     webserver_url=None,
 ):
@@ -252,29 +253,36 @@ def assign_container(
     :param webserver_url: the webserver originating the request
     :return: the generated container, in json form
     """
-    # first, we check for a preexisting container with the correct user and pass it back:
-    existing_container = (
-        UserContainer.query()
-        .filter_by(
-            is_assigned=True,
-            user_id=username,
-            task_definition=task_definition_arn,
-            region_name=region_name,
+    # if a cluster is passed in, we're in testing mode:
+    if cluster_name is None:
+        # first, we check for a preexisting container with the correct user and pass it back:
+        existing_container = (
+            UserContainer.query.filter_by(
+                is_assigned=True,
+                user_id=username,
+                task_definition=task_definition_arn,
+                location=region_name,
+            )
+            .limit(1)
+            .first()
         )
-        .limit(1)
-    )
-    if existing_container:
-        if _poll(existing_container.container_id):
-            return user_container_schema.dump(existing_container)
+        if existing_container:
+            if _poll(existing_container.container_id):
+                return user_container_schema.dump(existing_container)
 
-    # otherwise, we see if there's an unassigned container
-    base_container = (
-        UserContainer.query()
-        .filter_by(is_assigned=False, task_definition=task_definition_arn, region_name=region_name)
-        .with_for_update()
-        .limit(1)
-    )
-    num_extra = 1
+        # otherwise, we see if there's an unassigned container
+        base_container = (
+            UserContainer.query.filter_by(
+                is_assigned=False, task_definition=task_definition_arn, location=region_name
+            )
+            .with_for_update()
+            .limit(1)
+            .first()
+        )
+        num_extra = 1
+    else:
+        num_extra = 0
+        base_container = False
     if base_container:
         base_container.is_assigned = True
         base_container.user_id = username
@@ -286,7 +294,8 @@ def assign_container(
         )
     else:
         db.session.commit()
-        cluster_name = select_cluster(region_name)
+        if cluster_name is None:
+            cluster_name = select_cluster(region_name)
         fractal_log(
             function="select_container",
             label=cluster_name,

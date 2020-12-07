@@ -1,6 +1,6 @@
-"""Tests for the /container/create endpoint."""
+"""Tests for the /container/assign endpoint."""
 
-from app.celery.aws_ecs_creation import create_new_container
+from app.celery.aws_ecs_creation import assign_container
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
     preprocess_task_info,
@@ -20,35 +20,35 @@ def test_bad_app(client, authorized, monkeypatch):
     monkeypatch.setattr(preprocess_task_info, "__code__", bad_app.__code__)
 
     response = client.post(
-        "/container/create", json=dict(username=authorized.user_id, app="Bad App")
+        "/container/assign", json=dict(username=authorized.user_id, app="Bad App")
     )
 
     assert response.status_code == 400
 
 
 def test_no_username(client, authorized):
-    response = client.post("/container/create", json=dict(app="VSCode"))
+    response = client.post("/container/assign", json=dict(app="VSCode"))
 
     assert response.status_code == 401
 
 
 def test_no_app(client, authorized):
-    response = client.post("/container/create", json=dict(username=authorized.user_id))
+    response = client.post("/container/assign", json=dict(username=authorized.user_id))
 
     assert response.status_code == 400
 
 
 def test_no_region(client, authorized):
     response = client.post(
-        "/container/create", json=dict(username=authorized.user_id, app="VSCode")
+        "/container/assign", json=dict(username=authorized.user_id, app="VSCode")
     )
 
 
 def test_successful(client, authorized, monkeypatch):
-    monkeypatch.setattr(create_new_container, "apply_async", apply_async)
+    monkeypatch.setattr(assign_container, "apply_async", apply_async)
 
     response = client.post(
-        "/container/create",
+        "/container/assign",
         json=dict(username=authorized.user_id, app="Blender", region="us-east-1"),
     )
 
