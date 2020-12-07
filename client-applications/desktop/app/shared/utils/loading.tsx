@@ -40,13 +40,22 @@ const loadingMessages = [
         share it!
     </div>,
     <div>
-        Launch Fractal directly from any browser by typing fractal:// followed
-        by a URL.
+        You can launch Fractal apps directly by downloading them from the
+        Fractal App Store.
     </div>,
     <div>You can zoom in with Ctrl+/Cmd+.</div>,
 ]
 
 export const generateMessage = (): string => {
+    /*
+    Description:
+        Returns a random loading message (defined above)
+
+    Arguments:
+    
+    Returns:
+        message (string) : Loading message
+    */
     return _.shuffle(loadingMessages)[0]
 }
 
