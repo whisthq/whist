@@ -129,6 +129,8 @@ function* createContainer(action: {
     // console.log(`body is ${JSON.stringify(body)}`)
     // console.log(`webserver is ${webserver}`)
 
+    console.log("username", username)
+
     if (!username || username === "None" || username === "") {
         history.push(FractalRoute.LOGIN)
         return
@@ -144,7 +146,6 @@ function* createContainer(action: {
 
     if (!success) {
         yield call(refreshAccess)
-        yield call(createContainer, action)
         return
     }
 
