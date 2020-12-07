@@ -8,29 +8,36 @@ on:
         branches: [eric/add-wf]
     workflow_dispatch:
 
-env:
-    CMAKE_VERSION: 3.16.4
-    NINJA_VERSION: 1.9.0
-    BUILD_TYPE: Debug
-    CCACHE_VERSION: 3.7.7
-
 jobs:
     build-desktop-app:
         name: Build-desktop-app
-        runs-on: macos-10.14
+        runs-on: ${{ matrix.os }}
+
+        # Platforms to build on/for
+        strategy:
+        matrix:
+            os: [macos-10.14, ubuntu-20.04, windows-latest]
 
         steps:
             - name: Checkout Git repository
               uses: actions/checkout@v2
               with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  submodules: recursive
+                persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+                submodules: recursive
+
+            - name: Set up codesigning secrets
+              uses: apple-actions/import-codesign-certs@v1
+              with: 
+                p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+                p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
 
             - name: Publish the client-application
-              with: 
-                  mac_certs: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
-                  mac_certs_password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
               run:
                 cd client-applications && cd desktop && ./publish.sh release
 
+            - name: Notify Slack
+                run: |
+                curl -X POST \
+                --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Client-apps pushed to prod!\", \"icon_emoji\": \":fractal:\"}" \
+                https://hooks.slack.com/services/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
