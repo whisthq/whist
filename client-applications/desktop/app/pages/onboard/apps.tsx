@@ -11,6 +11,7 @@ import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { FractalRoute } from "shared/types/navigation"
 import { updateApps } from "store/actions/pure"
 import { history } from "store/history"
+import { FractalAuthCache } from "shared/types/cache"
 
 const { shell } = require("electron")
 
@@ -49,6 +50,10 @@ const Apps = (props: { dispatch: Dispatch; accessToken: string }) => {
     })
 
     const handleDownload = () => {
+        const Store = require("electron-store")
+        const storage = new Store()
+        storage.set(FractalAuthCache.ONBOARDED, true)
+
         if (numSelectedApps === 0) {
             history.push(FractalRoute.DASHBOARD)
         } else {
