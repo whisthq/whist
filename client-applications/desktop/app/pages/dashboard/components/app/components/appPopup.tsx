@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, Dispatch } from "react"
 import { connect } from "react-redux"
 import { Modal, Tooltip, OverlayTrigger } from "react-bootstrap"
 import { FaCheck } from "react-icons/fa"
@@ -12,6 +12,7 @@ import {
     createDirectorySync,
 } from "shared/utils/shortcuts"
 import { updateClient } from "store/actions/pure"
+import { debugLog } from "shared/utils/logging"
 
 import styles from "pages/dashboard/components/app/components/appPopup.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
