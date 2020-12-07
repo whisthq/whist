@@ -4,6 +4,7 @@
         "name": "Fractal Computers, Inc.",
         "url": "https://www.tryfractal.com"
     },
+    "version": "2.1.3",
     "browserslist": [
         "extends browserslist-config-erb"
     ],
