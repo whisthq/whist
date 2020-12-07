@@ -1,5 +1,15 @@
 #ifndef WEBSERVER_H
 #define WEBSERVER_H
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file webserver.h
+ * @brief This file contains functions to interact with the Fractal webserver(s).
+============================
+Usage
+============================
+
+TODO
+*/
 
 /**
  * @brief                          Queries the webserver for various parameters

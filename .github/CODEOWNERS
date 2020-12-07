@@ -5,7 +5,7 @@
 
 # The '*' pattern is global owners.
 # Global rule:
-*                       @rpadaki @djsavvy @philippemnoel @fractal/code-standard-reviewers
+*                       @fractal/code-standard-reviewers @rpadaki @djsavvy @philippemnoel
 
 # Order is important. The last matching pattern has the most precedence.
 # The folders are ordered as follows:
@@ -15,7 +15,7 @@
 /ecs-host-service/      @fractal/code-standard-reviewers @djsavvy @rpadaki
 /ecs-host-setup/        @fractal/code-standard-reviewers @rpadaki @djsavvy
 /ecs-task-definitions/  @fractal/code-standard-reviewers @rpadaki @djsavvy
-/log-analysis/          @fractal/code-standard-reviewers @rpadaki @philippemnoel
+/analytics/             @fractal/code-standard-reviewers @rpadaki @philippemnoel
 /main-webserver/        @fractal/code-standard-reviewers @FishmanL @mingy98
 /protocol/              @fractal/code-standard-reviewers @npip99 @rpadaki
 
