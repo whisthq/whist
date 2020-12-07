@@ -254,14 +254,18 @@ def assign_container(
     :return: the generated container, in json form
     """
     # if a cluster is passed in, we're in testing mode:
-    if cluster_name is not None:
+    if cluster_name is None:
         # first, we check for a preexisting container with the correct user and pass it back:
-        existing_container = UserContainer.query.filter_by(
-            is_assigned=True,
-            user_id=username,
-            task_definition=task_definition_arn,
-            location=region_name,
-        ).limit(1)
+        existing_container = (
+            UserContainer.query.filter_by(
+                is_assigned=True,
+                user_id=username,
+                task_definition=task_definition_arn,
+                location=region_name,
+            )
+            .limit(1)
+            .first()
+        )
         if existing_container:
             if _poll(existing_container.container_id):
                 return user_container_schema.dump(existing_container)
@@ -273,6 +277,7 @@ def assign_container(
             )
             .with_for_update()
             .limit(1)
+            .first()
         )
         num_extra = 1
     else:
