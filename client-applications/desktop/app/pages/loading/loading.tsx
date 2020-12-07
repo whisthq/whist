@@ -51,6 +51,7 @@ const Loading = (props: {
     const loadingBar = useSpring({ width: percentLoadedWidth })
 
     const resetLaunchRedux = () => {
+        console.log("container update reset")
         dispatch(
             updateContainer({
                 containerID: null,
@@ -145,6 +146,7 @@ const Loading = (props: {
     useEffect(() => {
         // Ensures that a container exists, that the protocol has not been launched before, and that
         // the app we want to launch is the app that will be launched
+        console.log("container ID is ", containerID)
         if (containerID && launches === 0 && currentAppID === desiredAppID) {
             setLaunches(launches + 1)
         }
