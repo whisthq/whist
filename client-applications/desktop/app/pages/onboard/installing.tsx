@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, Dispatch } from "react"
 import { connect } from "react-redux"
 import styles from "pages/onboard/onboard.css"
 import { useSpring, animated } from "react-spring"
@@ -6,63 +6,40 @@ import { useSpring, animated } from "react-spring"
 import Version from "shared/components/version"
 import TitleBar from "shared/components/titleBar"
 import { FractalRoute } from "shared/types/navigation"
-import { updateApps } from "store/actions/pure"
+import { FractalApp } from "shared/types/ui"
+import { OperatingSystem } from "shared/types.client"
+import { updateClient } from "store/actions/pure"
+import { createWindowsShortcut } from "shared/utils/shortcuts"
 import { history } from "store/history"
 
+const MAX_PROGRESS = 1
+
 const Installing = (props: {
-    dispatch: Dispatch
-    notInstalled: string[]
-    installed: string[]
+    onboardApps: FractalApp[]
+    apps: FractalApp[]
+    dispatch: Dispatch<any>
 }) => {
-    const { dispatch, notInstalled, installed } = props
+    const { apps, onboardApps, dispatch } = props
 
     const [currentApp, setCurrentApp] = useState("")
-    const percentDownloaded =
-        installed.length / (notInstalled.length + installed.length)
-    const progressBar = useSpring({ width: percentDownloaded * 600 })
+    const [progress, setProgress] = useState(0)
+
+    const progressBar = useSpring({ width: progress * 600 })
 
     const handleDone = () => {
         history.push(FractalRoute.DASHBOARD)
     }
 
-    const sleep = (ms: number) => {
-        return new Promise((resolve) => setTimeout(resolve, ms))
+    const createShortcutWrapper = async (app: FractalApp) => {
+        await createWindowsShortcut(app)
     }
 
     useEffect(() => {
-        if (installed.length === 0) {
-            setCurrentApp(notInstalled[0])
-            const newNotInstalled = Object.assign([], notInstalled)
-            const newInstalled = Object.assign([], installed)
-            newInstalled.push(notInstalled[0])
-            newNotInstalled.shift()
-            dispatch(
-                updateApps({
-                    notInstalled: newNotInstalled,
-                    installed: newInstalled,
-                })
-            )
-        } else if (notInstalled.length > 0) {
-            sleep(5000)
-                .then(() => {
-                    setCurrentApp(notInstalled[0])
-                    const newNotInstalled = Object.assign([], notInstalled)
-                    const newInstalled = Object.assign([], installed)
-                    newInstalled.push(notInstalled[0])
-                    newNotInstalled.shift()
-                    dispatch(
-                        updateApps({
-                            notInstalled: newNotInstalled,
-                            installed: newInstalled,
-                        })
-                    )
-                    return null
-                })
-                .catch((err) => {
-                    throw err
-                })
+        for (let i = 0; i < onboardApps.length; i += 1) {
+            const app = onboardApps[i]
+            createShortcutWrapper(app)
         }
-    }, [notInstalled, installed])
+    }, [onboardApps])
 
     return (
         <div className={styles.container} data-tid="container">
@@ -106,10 +83,17 @@ const Installing = (props: {
     )
 }
 
-export const mapStateToProps = <T extends {}>(state: T) => {
+export const mapStateToProps = (state: {
+    MainReducer: {
+        client: {
+            onboardApps: FractalApp[]
+            apps: FractalApp[]
+        }
+    }
+}) => {
     return {
-        notInstalled: state.MainReducer.apps.notInstalled,
-        installed: state.MainReducer.apps.installed,
+        onboardApps: state.MainReducer.client.apps,
+        apps: state.MainReducer.client.apps,
     }
 }
 

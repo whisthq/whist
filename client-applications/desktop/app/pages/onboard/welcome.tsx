@@ -37,7 +37,7 @@ const Welcome = (props: { username: string; name: string }) => {
                 </div>
                 <BackgroundView />
                 <div className={styles.welcomeContainer}>
-                    <h2 style={{ fontWeight: "normal" }}>
+                    <h2 style={{ fontWeight: "normal", fontSize: 28 }}>
                         {welcomeMessage}. You have VIP Access.
                     </h2>
                     <button
