@@ -78,7 +78,7 @@ const AppPopup = (props: {
                     }
                 )
 
-                if (array && index !== 0) {
+                if (array && index !== -1) {
                     dispatch(updateClient({ apps: array }))
                 }
             }
