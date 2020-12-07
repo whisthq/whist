@@ -217,6 +217,7 @@ function* createContainer(action: {
     }
     // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
     if (json && json.state && json.state === "SUCCESS") {
+        console.log(json)
         progressSoFar = 100
 
         yield put(
