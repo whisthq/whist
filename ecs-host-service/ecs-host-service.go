@@ -162,7 +162,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	_, _ = f.WriteString(strcmd)
 	os.Chmod(scriptpath, 0700)
 	f.Close()
-	defer os.Remove(scriptpath)
+	defer os.RemoveAll(scriptpath)
 	cmd := exec.Command(scriptpath)
 
 	logger.Info("Rclone config create command: %v", cmd)
