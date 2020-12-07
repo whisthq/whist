@@ -361,7 +361,7 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string) {
 
 	storageDirs, exists := cloudStorageDirs[hostPortUint16]
 	if exists {
-		for k, _ := range storageDirs {
+		for k := range storageDirs {
 			unmountCloudStorageDir(hostPortUint16, k)
 		}
 	}
@@ -449,7 +449,7 @@ func uninitializeFilesystem() {
 
 	// Unmount all cloud-storage folders
 	for port, dirs := range cloudStorageDirs {
-		for k, _ := range dirs {
+		for k := range dirs {
 			unmountCloudStorageDir(port, k)
 		}
 	}
