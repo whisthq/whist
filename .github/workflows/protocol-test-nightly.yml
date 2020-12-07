@@ -31,6 +31,8 @@ jobs:
 
             # Pipe secrets.GHA_PERSONAL_ACCESS_TOKEN to base64 so that the user can see it in the logs
             # since GHA auto redacts secrets.
+
+            # NOTE: THE CORRECT SYNTAX IS .../protocol/actions/workflows/$WORKFLOW_ID/dispatches
             - run: |
                   echo "base64 encoded GHA_PERSONAL_ACCESS_TOKEN (pipe to `base64 -d` to decode): "
                   echo "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" | base64
