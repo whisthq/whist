@@ -1,6 +1,5 @@
-import React, { useState, ChangeEvent, KeyboardEvent } from "react"
+import React, { useState, ChangeEvent, KeyboardEvent, Dispatch } from "react"
 import { connect } from "react-redux"
-import styles from "pages/login/login.css"
 import PuffLoader from "react-spinners/PuffLoader"
 
 import { updateClient, updateAuth } from "store/actions/pure"
@@ -9,7 +8,9 @@ import { openExternal } from "shared/utils/helpers"
 import { config } from "shared/constants/config"
 import FractalKey from "shared/types/input"
 
-const LoginView = <T extends {}>(props: T) => {
+import styles from "pages/login/views/loginView/loginView.css"
+
+const LoginView = (props: { dispatch: Dispatch }) => {
     const { dispatch } = props
     const [loggingIn, setLoggingIn] = useState(false)
     const [accessToken, setAccessToken] = useState("")
