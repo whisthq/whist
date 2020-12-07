@@ -1,7 +1,7 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file winapi_input_driver.c
- * @brief This file defines the Windows input device type
+ * @brief This file defines the Windows input device type as a char dummy.
 ============================
 Usage
 ============================

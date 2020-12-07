@@ -66,7 +66,7 @@ When we approach a release milestone, we:
 We do all feature development and most bug-fixing on feature branches that are forked off `dev`.
 
 __Feature branches are named as follows:__
-- Project-specific feature branches (i.e. those restricted to a single top-level directory in the repo) are named in the form `<author>/<project>/<feature-verb>`. For instance, a branch authored by Savvy and designed to make the ECS host service llama-themed would be called `djsavvy/ecs-host-service/add-llama-theme`.
+- Project-specific feature branches (i.e. those restricted to a single top-level directory in the repo) are named in the form `<author>/<project>/<feature-verb>`. For instance, a branch authored by Savvy and designed to make the ECS host service llama-themed would be called `djsavvy/host-service/add-llama-theme`.
 - Broader feature branches that touch multiple projects should be named in the form `<author>/<feature-verb>`.
 
 Note that the last part of the branch name should almost always be an __action__ instead of an object (i.e. `add-llama-theme` instead of `llama-theme`). This makes commit logs much easier to parse.

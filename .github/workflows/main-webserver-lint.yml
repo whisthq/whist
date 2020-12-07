@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [master, dev]
     paths:
-      - "/main-webserver/**"
+      - "/webserver/**"
 
 jobs:
   lint:
@@ -33,7 +33,7 @@ jobs:
 
       - name: Check if code is linted with Python Black
         run: |
-          cd main-webserver
+          cd webserver
           result=$(black . --check) # black --check returns 0 if the code is already linted
           if [ "$result" -ne "0" ]; then
             (echo "To pass this check please lint the code with Python Black" && false)
