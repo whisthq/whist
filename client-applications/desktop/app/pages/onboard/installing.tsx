@@ -7,37 +7,41 @@ import Version from "shared/components/version"
 import TitleBar from "shared/components/titleBar"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalApp } from "shared/types/ui"
-import { OperatingSystem } from "shared/types.client"
-import { updateClient } from "store/actions/pure"
-import { createWindowsShortcut } from "shared/utils/shortcuts"
+import { OperatingSystem } from "shared/types/client"
+import { createWindowsShortcuts } from "shared/utils/shortcuts"
 import { history } from "store/history"
-
-const MAX_PROGRESS = 1
 
 const Installing = (props: {
     onboardApps: FractalApp[]
     apps: FractalApp[]
+    clientOS: OperatingSystem
     dispatch: Dispatch<any>
 }) => {
-    const { apps, onboardApps, dispatch } = props
+    const { apps, onboardApps, clientOS, dispatch } = props
 
     const [currentApp, setCurrentApp] = useState("")
     const [progress, setProgress] = useState(0)
 
-    const progressBar = useSpring({ width: progress * 600 })
+    const appsLength = apps && apps.length > 0 ? apps.length : 1
+    const progressBar = useSpring({ width: (progress / appsLength) * 600 })
 
     const handleDone = () => {
         history.push(FractalRoute.DASHBOARD)
     }
 
     const createShortcutWrapper = async (app: FractalApp) => {
-        await createWindowsShortcut(app)
+        if (clientOS === OperatingSystem.WINDOWS) {
+            await createWindowsShortcuts(app)
+        }
     }
 
     useEffect(() => {
         for (let i = 0; i < onboardApps.length; i += 1) {
             const app = onboardApps[i]
+            console.log("installing ", app.app_id)
+            setCurrentApp(app.app_id)
             createShortcutWrapper(app)
+            setProgress(progress + 1)
         }
     }, [onboardApps])
 
@@ -58,7 +62,7 @@ const Installing = (props: {
                             style={progressBar}
                         />
                     </div>
-                    {percentDownloaded === 1 ? (
+                    {apps && apps.length && progress === apps.length ? (
                         <>
                             <div className={styles.installingText}>
                                 Done installing.
@@ -88,12 +92,14 @@ export const mapStateToProps = (state: {
         client: {
             onboardApps: FractalApp[]
             apps: FractalApp[]
+            clientOS: OperatingSystem
         }
     }
 }) => {
     return {
-        onboardApps: state.MainReducer.client.apps,
+        onboardApps: state.MainReducer.client.onboardApps,
         apps: state.MainReducer.client.apps,
+        clientOS: state.MainReducer.client.clientOS,
     }
 }
 
