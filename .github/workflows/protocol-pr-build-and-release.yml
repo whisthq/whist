@@ -183,8 +183,10 @@ jobs:
           # Set paths for subsequent steps, using $env:CUDA_PATH
           echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
           echo "CUDA_PATH=$env:CUDA_PATH"
-          echo "CUDA_PATH=$env:CUDA_PATH" >> $GITHUB_ENV
-          echo "CUDA_PATH_VX_Y=$env:CUDA_PATH" >> $GITHUB_ENV
+          echo "CUDA_PATH=$env:CUDA_PATH_VX_Y"
+          echo "CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "CUDA_PATH=$env:CUDA_PATH"
+          echo "CUDA_PATH=$env:CUDA_PATH_VX_Y"
           echo "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           }
 
@@ -194,6 +196,7 @@ jobs:
         shell: powershell
         run: |
           nvcc -V
+          echo "CUDA_PATH=$env:CUDA_PATH"
           ls $env:CUDA_PATH
           ls $env:CUDA_PATH\bin
           ls $env:CUDA_PATH\include
