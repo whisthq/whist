@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import ssl
 
 from functools import wraps
 
@@ -19,8 +18,6 @@ def make_celery(app_name=__name__):
         app_name,
         broker=redis,
         backend=redis,
-        broker_use_ssl={"cert_reqs": ssl.CERT_NONE},
-        backend_use_ssl={"cert_reqs": ssl.CERT_NONE},
     )
 
 
