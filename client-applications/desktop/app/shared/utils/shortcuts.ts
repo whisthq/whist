@@ -70,48 +70,40 @@ export class SVGConverter {
             convertToIco(input: string) : 
                 Converts an svg (requires .svg) to .ico and returns a Promise with the ArrayBuffer
     */
-    canvas: HTMLCanvasElement = document.createElement("canvas")
+    private static canvas: HTMLCanvasElement = document.createElement("canvas")
 
-    imgPreview: HTMLImageElement = document.createElement("img")
+    private static imgPreview: HTMLImageElement = document.createElement("img")
 
-    canvasCtx: CanvasRenderingContext2D | null = this.canvas.getContext("2d")
+    private static canvasCtx: CanvasRenderingContext2D | null = SVGConverter.canvas.getContext(
+        "2d"
+    )
 
-    base64Png: string | null = null
+    // static base64Png: string | null = null
 
-    bufferPng: ArrayBuffer | null = null
+    // static bufferPng: ArrayBuffer | null = null
 
-    constructor() {
-        this.init = this.init.bind(this)
-        this.cleanUp = this.cleanUp.bind(this)
-        this.convertToPngBase64 = this.convertToPngBase64.bind(this)
-        this.base64PngToBuffer = this.base64PngToBuffer.bind(this)
-        this.convertToIco = this.convertToIco.bind(this)
-        this.waitForImageToLoad = this.waitForImageToLoad.bind(this)
-    }
-
-    init() {
+    private static init() {
         document.body.appendChild(this.imgPreview)
     }
 
-    cleanUp() {
+    private static cleanUp() {
         document.body.removeChild(this.imgPreview)
     }
 
-    private waitForImageToLoad(img: HTMLImageElement) {
+    private static waitForImageToLoad(img: HTMLImageElement) {
         return new Promise((resolve, reject) => {
             img.onload = () => resolve(img)
             img.onerror = reject
         })
     }
 
-    base64PngToBuffer(base64: string) {
+    static base64PngToBuffer(base64: string) {
         base64 = base64.replace("data:image/png;base64,", "")
         const buffer = Buffer.from(base64, "base64")
-        this.bufferPng = buffer
         return buffer
     }
 
-    async convertToPngBase64(input: string): Promise<string> {
+    static async convertToPngBase64(input: string): Promise<string> {
         // String where base64 output will be written to
         let base64 = ""
 
@@ -146,14 +138,12 @@ export class SVGConverter {
             )
             // Encode PNG as a base64 string
             base64 = this.canvas.toDataURL("image/png")
-            this.base64Png = base64
-            // Fire callback on success with base64 string
         }
         this.cleanUp()
         return base64
     }
 
-    async convertToIco(input: string): Promise<ArrayBuffer> {
+    static async convertToIco(input: string): Promise<ArrayBuffer> {
         let buffer = new ArrayBuffer(0)
         const base64 = await this.convertToPngBase64(input)
 
@@ -205,7 +195,8 @@ export const createShortcut = async (
     if (platform === OperatingSystem.MAC) {
         debugLog("Mac shortcuts not yet implemented")
         return false
-    } else if (platform === OperatingSystem.WINDOWS) {
+    }
+    if (platform === OperatingSystem.WINDOWS) {
         // Points to the folder where windows.vbs is located (shortcut creation code)
         const vbsPath = `${require("electron")
             .remote.app.getAppPath()
@@ -215,8 +206,7 @@ export const createShortcut = async (
             )}\\node_modules\\create-desktop-shortcuts\\src\\windows.vbs`
 
         // Convert SVG into a .ico ArrayBuffer
-        let converter = new SVGConverter()
-        const buffer = await converter.convertToIco(app.logo_url)
+        const buffer = await SVGConverter.convertToIco(app.logo_url)
 
         // Create directory called /icons to store the .ico if it doesn't already exist
         createDirectorySync(FractalWindowsDirectory.ROOT_DIRECTORY, "icons")
@@ -238,10 +228,9 @@ export const createShortcut = async (
         })
         // Fire callback with shortcut creation success True/False
         return success
-    } else {
-        debugLog(`no suitable os found, instead got ${platform}`)
-        return false
     }
+    debugLog(`no suitable os found, instead got ${platform}`)
+    return false
 }
 
 export const checkIfShortcutExists = (shortcut: string): boolean => {
