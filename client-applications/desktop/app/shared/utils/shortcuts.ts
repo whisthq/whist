@@ -264,3 +264,31 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
         return false
     }
 }
+
+export const createWindowsShortcuts = async (
+    app: FractalApp,
+    desktop = true,
+    startMenu = true
+): boolean => {
+    const startMenuPath = `${FractalWindowsDirectory.START_MENU}Fractal\\`
+    let desktopSuccess = true
+    let startMenuSuccess = true
+
+    // Create a Fractal directory in the Start Menu if one doesn't exist
+    if (!createDirectorySync(FractalWindowsDirectory.START_MENU, "Fractal")) {
+        return false
+    }
+
+    if (desktop) {
+        desktopSuccess = await createShortcut(
+            app,
+            FractalWindowsDirectory.DESKTOP
+        )
+    }
+
+    if (startMenu) {
+        startMenuSuccess = await createShortcut(app, startMenuPath)
+    }
+
+    return desktopSuccess || startMenuSuccess
+}

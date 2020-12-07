@@ -27,6 +27,7 @@ export const DEFAULT = {
         region: null,
         dpi: null,
         apps: [],
+        onboardApps: [],
     },
     payment: {
         accountLocked: false,
