@@ -12,7 +12,7 @@ import (
 	// forget to send a message via sentry.  For the same reason, we make sure
 	// not to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
-	logger "github.com/fractal/host-service/fractallogger"
+	logger "github.com/fractal/ecs-host-service/fractallogger"
 )
 
 const stagingHost = "https://staging-webserver.tryfractal.com"

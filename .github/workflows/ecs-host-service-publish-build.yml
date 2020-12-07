@@ -5,11 +5,11 @@ on:
   push:
     branches: [master]
     paths:
-      - "/host-service/**"
-      - "!/host-service/README.md"
+      - "/ecs-host-service/**"
+      - "!/ecs-host-service/README.md"
 
 env:
-  binary-location: host-service/build
+  binary-location: ecs-host-service/build
   binary-name: ecs-host-service
   s3-bucket-region: us-east-1 # eventually, we should replicate s3 per region
   s3-bucket-uri: s3://fractal-ecs-host-service
@@ -37,10 +37,10 @@ jobs:
           aws-region: ${{ env.s3-bucket-region }}
 
       - name: Install Go dependencies
-        run: cd host-service && make deps
+        run: cd ecs-host-service && make deps
 
       - name: Build Go project
-        run: cd host-service && make build
+        run: cd ecs-host-service && make build
 
       - name: Upload binary to S3
         run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}

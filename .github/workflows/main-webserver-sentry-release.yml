@@ -7,8 +7,8 @@ on:
   push:
     branches: [master]
     paths:
-      - "/webserver/**"
-      - "!/webserver/README.md"
+      - "/main-webserver/**"
+      - "!/main-webserver/README.md"
 
 jobs:
   createSentryRelease:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Set Git repository URL to enable sentry-cli automatic commit tagging
         run: |
-          git remote set-url origin https://github.com/fractal/fractal
+          git remote set-url origin https://github.com/fractal/main-webserver
 
       - name: Create new Sentry release
         run: |

@@ -11,11 +11,11 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
                 xtest_input_driver.h
                 uinput_input_driver.c
                 uinput_input_driver.h)
-    elseif (${WIN32})
+    elseif(${WIN32})
         target_sources(fractalInput PRIVATE
             winapi_input_driver.c
             winapi_input_driver.h)
         set_property(TARGET fractalInput PROPERTY
                 MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     endif ()
-endif ()
+endif()

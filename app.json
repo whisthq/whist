@@ -10,7 +10,7 @@
   "env": {
     "PROJECT_PATH": {
       "description": "The path to the directory containing the Heroku app itself.",
-      "value": "webserver"
+      "value": "main-webserver"
     }
   },
   "environments": {

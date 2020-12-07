@@ -6,8 +6,8 @@ on:
   push:
     branches: [master]
     paths:
-      - "/host-service/**"
-      - "!/host-service/README.md"
+      - "/ecs-host-service/**"
+      - "!/ecs-host-service/README.md"
 
 jobs:
   createSentryRelease:

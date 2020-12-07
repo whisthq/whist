@@ -12,11 +12,11 @@
 
 /client-applications/   @fractal/code-standard-reviewers @mingy98 @philippemnoel
 /container-images/      @fractal/code-standard-reviewers @djsavvy @rpadaki @philippemnoel
-/host-service/          @fractal/code-standard-reviewers @djsavvy @rpadaki
+/ecs-host-service/      @fractal/code-standard-reviewers @djsavvy @rpadaki
 /ecs-host-setup/        @fractal/code-standard-reviewers @rpadaki @djsavvy
 /ecs-task-definitions/  @fractal/code-standard-reviewers @rpadaki @djsavvy
 /analytics/             @fractal/code-standard-reviewers @rpadaki @philippemnoel
-/webserver/             @fractal/code-standard-reviewers @FishmanL @mingy98
+/main-webserver/        @fractal/code-standard-reviewers @FishmanL @mingy98
 /protocol/              @fractal/code-standard-reviewers @npip99 @rpadaki
 
 # In each subsection folders are ordered first by depth, then alphabetically.
