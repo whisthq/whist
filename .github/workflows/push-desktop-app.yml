@@ -28,8 +28,8 @@ jobs:
                   submodules: recursive
 
             - name: Publish the client-application
-              with: persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+              env: 
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  submodules: recursive
-              run: cd client-applications && cd desktop && ./publish.sh release
+              run: |
+                cd client-applications && cd desktop && ./publish.sh release "$token"
 
