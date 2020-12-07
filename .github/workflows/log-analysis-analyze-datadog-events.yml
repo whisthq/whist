@@ -1,13 +1,13 @@
 # workflows/log-analysis-analyze-datadog-events.yml
 #
 # Log Analysis: Analyze Datadog Events
-# Runs daily, running analysis on the Datadog events from the past week.
+# Runs daily, running analysis on Datadog events from the past day.
 
 name: "Log Analysis: Analyze Datadog Events"
 
 on:
     schedule:
-        - cron: "* 13 * * *" # every day at 1
+        - cron: "0 13 * * *" # every day at 1
 
 jobs:
     log-analysis-analyze-datadog-events-main:
@@ -34,5 +34,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Main Webserver Weekly Events Analysis performed and visualized in Datadog.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Main Webserver Daily Events Analysis performed and visualized in Datadog.\", \"icon_emoji\": \":fractal:\"}" \
                   https://hooks.slack.com/services/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
