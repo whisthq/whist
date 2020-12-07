@@ -22,7 +22,7 @@ export const updateAdmin = (body: {
     }
 }
 
-export const updateAuth(body: {
+export const updateAuth = (body: {
     username?: string | null
     candidateAccessToken?: string | null
     accessToken?: string | null
