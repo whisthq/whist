@@ -49,7 +49,6 @@ export const createDirectorySync = (
     return true
 }
 
-/* eslint-disable @typescript-eslint/no-this-alias */
 export class SVGConverter {
     /*
         Description:
@@ -58,9 +57,8 @@ export class SVGConverter {
 
         Usage: 
             const svgInput = "https://my-svg-url.svg"
-            new SVGConverter().convertToPngBase64(svgInput, (pngBase64) => {
-                console.log(pngBase64)
-            })
+            const base64 = await SVGConverter.convertToPngBase64(svgInput)
+            console.log(base64)
 
         Methods:
             base64PngToBuffer(input: string) :
@@ -77,10 +75,6 @@ export class SVGConverter {
     private static canvasCtx: CanvasRenderingContext2D | null = SVGConverter.canvas.getContext(
         "2d"
     )
-
-    // static base64Png: string | null = null
-
-    // static bufferPng: ArrayBuffer | null = null
 
     private static init() {
         document.body.appendChild(this.imgPreview)
@@ -109,6 +103,9 @@ export class SVGConverter {
 
         // Load the SVG into HTML image element
         this.init()
+
+        this.imgPreview.style.position = "absolute"
+        this.imgPreview.style.top = "-9999px"
         this.imgPreview.src = input
 
         // Wait for SVG to load into HTML image preview

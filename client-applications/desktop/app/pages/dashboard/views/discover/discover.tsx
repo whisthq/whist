@@ -26,7 +26,7 @@ import {
     FractalAppCategory,
     FractalBannerCategory,
 } from "shared/types/navigation"
-import * as AdminApp from "pages/dashboard/constants/adminApp"
+import { adminApp } from "pages/dashboard/constants/adminApp"
 
 import styles from "pages/dashboard/views/discover/discover.css"
 
@@ -171,7 +171,7 @@ const Discover = (props: {
             }
 
             if (adminUsername) {
-                localAppData.push(AdminApp)
+                localAppData.push(adminApp)
             }
 
             dispatch(updateClient({ apps: localAppData }))
