@@ -82,16 +82,16 @@ def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
-def test_create_container(client, authorized, monkeypatch):
+def test_assign_container(client, authorized, monkeypatch):
     monkeypatch.setattr(_poll, "__code__", (lambda *args, **kwargs: True).__code__)
 
     fractalLog(
-        function="test_create_container",
-        label="container/create",
-        logs="Starting to create container in cluster {}".format(pytest.cluster_name),
+        function="test_assign_container",
+        label="container/assign",
+        logs="Starting to assign container in cluster {}".format(pytest.cluster_name),
     )
     resp = client.post(
-        "/aws_container/create_container",
+        "/aws_container/assign_container",
         json=dict(
             username=authorized.user_id,
             cluster_name=pytest.cluster_name,
@@ -104,8 +104,8 @@ def test_create_container(client, authorized, monkeypatch):
 
     if task["status"] < 1:
         fractalLog(
-            function="test_create_container",
-            label="container/create",
+            function="test_assign_container",
+            label="container/assign",
             logs=task["output"],
             level=logging.ERROR,
         )
@@ -113,8 +113,8 @@ def test_create_container(client, authorized, monkeypatch):
 
     if not task["result"]:
         fractalLog(
-            function="test_create_container",
-            label="container/create",
+            function="test_assign_container",
+            label="container/assign",
             logs="No container returned",
             level=logging.ERROR,
         )
@@ -122,8 +122,8 @@ def test_create_container(client, authorized, monkeypatch):
     pytest.container_name = task["result"]["container_id"]
     if not UserContainer.query.get(pytest.container_name):
         fractalLog(
-            function="test_create_container",
-            label="container/create",
+            function="test_assign_container",
+            label="container/assign",
             logs="Container was not inserted in database",
             level=logging.ERROR,
         )
