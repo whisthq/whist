@@ -137,7 +137,7 @@ const RootApp = (props: {
     useEffect(() => {
         setTimeout(() => {
             setUrlReceived(true)
-        }, 2000)
+        }, 2500)
     }, [])
 
     // If there's an update, redirect to update screen
