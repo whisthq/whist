@@ -27,6 +27,8 @@ fi
 # make sure this environment variable does not leak in any way (probably
 # redundant, but still good practice)
 unset FRACTAL_AES_KEY
+# in case the webserver is still passing in this environment variable (that
+# method has been superseded by a request to the host service)
 unset FRACTAL_DPI
 
 exec /lib/systemd/systemd
