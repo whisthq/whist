@@ -10,6 +10,7 @@ on Heroku, the DeploymentConfig class will be selected. The configuration object
 instantiated and the Flask application is configured by flask.Config.from_object().
 """
 
+import json
 import os
 
 from collections import namedtuple
@@ -129,6 +130,11 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
         STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
         TESTING = True
 
+        @property
+        def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
+            # Test deployments should not be able to act as OAuth clients.
+            return {}
+
     return TestConfig
 
 
@@ -184,6 +190,17 @@ class DeploymentConfig:
 
         return table
 
+    @property
+    def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
+        """Load the client secret configuration object from client_secret.json
+
+        Returns:
+            A Google client secret-formatted JSON object.
+        """
+
+        with open("client_secret.json") as secret_file:
+            return json.loads(secret_file.read())
+
 
 class LocalConfig(DeploymentConfig):
     """Application configuration for applications running on local development machines.
@@ -210,6 +227,11 @@ class LocalConfig(DeploymentConfig):
 
     REDIS_URL = property(getter("REDIS_URL", default="redis://", fetch=False))
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
+
+    @property
+    def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
+        # Local deployments should not be able to act as OAuth clients.
+        return {}
 
     @property
     def SQLALCHEMY_DATABASE_URI(self):  # pylint: disable=invalid-name
