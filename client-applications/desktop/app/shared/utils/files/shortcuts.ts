@@ -1,4 +1,4 @@
-import { OperatingSystem, FractalWindowsDirectory } from "shared/types/client"
+import { OperatingSystem, FractalDirectory } from "shared/types/client"
 import { FractalApp } from "shared/types/ui"
 import { FractalNodeEnvironment } from "shared/types/config"
 import { SVGConverter } from "shared/utils/files/images"
@@ -7,6 +7,7 @@ import { debugLog } from "shared/utils/general/logging"
 // Import with require() packages that require Node 10 experimental
 const fs = require("fs")
 const os = require("os")
+const path = require("path")
 
 export const createDirectorySync = (
     filePath: string,
@@ -34,14 +35,14 @@ export const createDirectorySync = (
 
     // If the directory already exists, return true
     if (
-        fs.existsSync(`${filePath}${directoryName}`) &&
-        fs.lstatSync(`${filePath}${directoryName}`).isDirectory()
+        fs.existsSync(path.join(filePath, directoryName)) &&
+        fs.lstatSync(path.join(filePath, directoryName)).isDirectory()
     ) {
         return true
     }
 
     // If the directory doesn't exist yet, create it
-    fs.mkdirSync(`${filePath}${directoryName}`)
+    fs.mkdirSync(path.join(filePath, directoryName))
     return true
 }
 
@@ -56,16 +57,16 @@ export const createShortcutName = (appName: string): string => {
         Returns:
             name (string): Name of shortcut
     */
-    return `${appName} Fractalized`
+    return `Fractalized ${appName}`
 }
 
-export const createShortcut = async (
+export const createWindowsShortcut = async (
     app: FractalApp,
     outputPath: string
 ): Promise<boolean> => {
     /*
         Description:
-            Creates a shortcut to the Fractal streamed app and stores the shortcut in a specified directory
+            Creates a shortcut to the Fractal streamed app and stores the shortcut in a specified directory, for Windows
 
         Arguments:
             app (FractalApp): App to create shortcut to
@@ -77,49 +78,111 @@ export const createShortcut = async (
 
     const createDesktopShortcut = require("create-desktop-shortcuts")
 
-    const platform: OperatingSystem = os.platform()
     // appURL is the protocol that the shortcut should run the open Fractal
     const appURL = `fractal://${app.app_id.toLowerCase().replace(/\s+/g, "-")}`
 
-    if (platform === OperatingSystem.MAC) {
-        debugLog("Mac shortcuts not yet implemented")
+    // Points to the folder where windows.vbs is located (shortcut creation code)
+    const vbsPath = path.join(
+        FractalDirectory.ROOT_DIRECTORY,
+        "resources/app.asar.unpacked/node_modules",
+        "create-desktop-shortcuts/src/windows.vbs"
+    )
+
+    // Convert SVG into a .ico ArrayBuffer
+    const buffer = await SVGConverter.convertToIco(app.logo_url)
+
+    // Create directory called /icons to store the .ico if it doesn't already exist
+    createDirectorySync(FractalDirectory.ROOT_DIRECTORY, "icons")
+    const icoPath = path.join(
+        FractalDirectory.ROOT_DIRECTORY,
+        `icons/${app.app_id}.ico`
+    )
+    // Write .ico into directory
+    fs.writeFileSync(icoPath, buffer)
+    // Save shortcut in outputPath
+    const success = createDesktopShortcut({
+        windows: {
+            outputPath: outputPath,
+            filePath: appURL,
+            name: createShortcutName(app.app_id),
+            vbsPath:
+                process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
+                    ? null
+                    : vbsPath,
+            icon: icoPath,
+        },
+    })
+    // Fire callback with shortcut creation success True/False
+    return success
+}
+
+export const createMacShortcut = async (
+    app: FractalApp,
+    outputPath: string
+): Promise<boolean> => {
+    /*
+        Description:
+            Creates a dummy application that launches the Fractal streamed app and stores the shortcut in a specified directory, for Mac
+
+        Arguments:
+            app (FractalApp): App to create shortcut to
+            outputPath (string): Folder that the shortcut should be placed in. If not specified, defaults to ~/Desktop.
+        
+        Returns:
+            success (boolean): True/False if shortcut was created successfully
+    */
+
+    try {
+        // appURL is the protocol that the shortcut should run the open Fractal
+        const appURL = `fractal://${app.app_id
+            .toLowerCase()
+            .replace(/\s+/g, "-")}`
+        const appFolderName = `${createShortcutName(app.app_id)}.app`
+
+        // Create application folder
+        createDirectorySync(outputPath, appFolderName)
+        const appFolderPath = path.join(outputPath, appFolderName)
+
+        // based on steam's shortcut implementation
+        const infoPlistData = `<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple/DTD PLIST 1.0/EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleExecutable</key>
+            <string>run.sh</string>
+            <key>CFBundleIconFile</key>
+            <string>shortcut.icns</key>
+            <key>CFBundleInfoDictionaryVersion</key>
+            <string>1.0</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleSignature</key>
+            <string>????</string>
+            <key>CFBundleVersion</key>
+            <string>1.0</string>
+        </dict>
+        </plist>
+    `
+        const infoPlistPath = path.join(appFolderPath, "Info.plist")
+        fs.writeFileSync(infoPlistPath, infoPlistData)
+
+        createDirectorySync(appFolderName, "MacOS")
+
+        const runScriptData = `#!/bin/bash
+    # autogenerated file - do not edit
+
+    open ${appURL}
+    `
+        const runScriptPath = path.join(appFolderName, "MacOS/run.sh")
+        fs.writeFileSync(runScriptPath, runScriptData)
+        fs.chmodSync(runScriptPath, 0o755)
+
+        createDirectorySync(appFolderName, "Resources") // shortcut.icns goes here
+    } catch (err) {
+        debugLog(err)
         return false
     }
-    if (platform === OperatingSystem.WINDOWS) {
-        // Points to the folder where windows.vbs is located (shortcut creation code)
-        const vbsPath = `${require("electron")
-            .remote.app.getAppPath()
-            .replace(
-                "app.asar",
-                "app.asar.unpacked"
-            )}\\node_modules\\create-desktop-shortcuts\\src\\windows.vbs`
-
-        // Convert SVG into a .ico ArrayBuffer
-        const buffer = await SVGConverter.convertToIco(app.logo_url)
-
-        // Create directory called /icons to store the .ico if it doesn't already exist
-        createDirectorySync(FractalWindowsDirectory.ROOT_DIRECTORY, "icons")
-        const icoPath = `${FractalWindowsDirectory.ROOT_DIRECTORY}\\icons\\${app.app_id}.ico`
-        // Write .ico into directory
-        fs.writeFileSync(icoPath, buffer)
-        // Save shortcut in outputPath
-        const success = createDesktopShortcut({
-            windows: {
-                outputPath: outputPath,
-                filePath: appURL,
-                name: createShortcutName(app.app_id),
-                vbsPath:
-                    process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
-                        ? null
-                        : vbsPath,
-                icon: icoPath,
-            },
-        })
-        // Fire callback with shortcut creation success True/False
-        return success
-    }
-    debugLog(`no suitable os found, instead got ${platform}`)
-    return false
+    return true
 }
 
 export const checkIfShortcutExists = (shortcut: string): boolean => {
@@ -136,50 +199,98 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
     const platform = os.platform()
     try {
         if (platform === OperatingSystem.MAC) {
-            debugLog("mac shortcuts not yet implemented")
-            return false
-        }
-        if (platform === OperatingSystem.WINDOWS) {
+            const macDesktopPath = path.join(
+                FractalDirectory.DESKTOP,
+                `${shortcut}.app`
+            )
+            const macApplicationsPath = path.join(
+                FractalDirectory.MAC_APPLICATIONS,
+                `Fractal/${shortcut}.app`
+            )
+
+            const exists =
+                fs.existsSync(macDesktopPath) ||
+                fs.existsSync(macApplicationsPath)
+            return exists
+        } else if (platform === OperatingSystem.WINDOWS) {
             // Check the desktop folder and Start Menu Programs folder
-            const windowsDesktopPath = `${FractalWindowsDirectory.DESKTOP}${shortcut}.lnk`
-            const windowsStartMenuPath = `${FractalWindowsDirectory.START_MENU}Fractal\\${shortcut}.lnk`
+            const windowsDesktopPath = path.join(
+                FractalDirectory.DESKTOP,
+                `${shortcut}.lnk`
+            )
+            const windowsStartMenuPath = path.join(
+                FractalDirectory.WINDOWS_START_MENU,
+                `Fractal/${shortcut}.lnk`
+            )
 
             const exists =
                 fs.existsSync(windowsDesktopPath) ||
                 fs.existsSync(windowsStartMenuPath)
             return exists
+        } else {
+            debugLog(`no suitable os found, instead got ${platform}`)
+            return false
         }
-        debugLog(`no suitable os found, instead got ${platform}`)
-        return false
     } catch (err) {
         debugLog(err)
         return false
     }
 }
 
-export const createWindowsShortcuts = async (
+export const createShortcuts = async (
     app: FractalApp,
-    desktop = true
+    desktop: boolean = true
 ): Promise<boolean> => {
-    const startMenuPath = `${FractalWindowsDirectory.START_MENU}Fractal\\`
-    let desktopSuccess = true
-    let startMenuSuccess = true
+    const platform = os.platform()
+    if (platform === OperatingSystem.MAC) {
+        if (
+            !createDirectorySync(FractalDirectory.MAC_APPLICATIONS, "Fractal")
+        ) {
+            return false
+        }
 
-    // Create a Fractal directory in the Start Menu if one doesn't exist
-    if (!createDirectorySync(FractalWindowsDirectory.START_MENU, "Fractal")) {
+        let desktopStatus = true
+        let applicationsStatus = true
+
+        if (desktop) {
+            desktopStatus = await createMacShortcut(
+                app,
+                FractalDirectory.DESKTOP
+            )
+        }
+
+        applicationsStatus = await createMacShortcut(
+            app,
+            FractalDirectory.MAC_APPLICATIONS
+        )
+
+        return desktopStatus || applicationsStatus
+    } else if (platform === OperatingSystem.WINDOWS) {
+        if (
+            !createDirectorySync(FractalDirectory.WINDOWS_START_MENU, "Fractal")
+        ) {
+            return false
+        }
+        let desktopStatus = true
+        let startMenuStatus = true
+
+        if (desktop) {
+            desktopStatus = await createWindowsShortcut(
+                app,
+                FractalDirectory.DESKTOP
+            )
+        }
+
+        startMenuStatus = await createWindowsShortcut(
+            app,
+            FractalDirectory.DESKTOP
+        )
+
+        return desktopStatus || startMenuStatus
+    } else {
+        debugLog(`no suitable os found, instead got ${platform}`)
         return false
     }
-
-    if (desktop) {
-        desktopSuccess = await createShortcut(
-            app,
-            FractalWindowsDirectory.DESKTOP
-        )
-    }
-
-    startMenuSuccess = await createShortcut(app, startMenuPath)
-
-    return desktopSuccess || startMenuSuccess
 }
 
 export const deleteShortcut = (app: FractalApp) => {

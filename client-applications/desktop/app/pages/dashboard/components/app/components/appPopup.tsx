@@ -8,7 +8,7 @@ import { FractalApp, FractalAppLocalState } from "shared/types/ui"
 import { OperatingSystem } from "shared/types/client"
 import {
     createShortcutName,
-    createWindowsShortcuts,
+    createShortcuts,
 } from "shared/utils/files/shortcuts"
 import { updateClient } from "store/actions/pure"
 import { debugLog } from "shared/utils/general/logging"
@@ -49,7 +49,7 @@ const AppPopup = (props: {
         } else if (clientOS === OperatingSystem.WINDOWS) {
             setShortcutCreated(true)
 
-            const success = await createWindowsShortcuts(app)
+            const success = await createShortcuts(app)
 
             // Create the shortcut inside the Fractal Directory
             if (success) {
