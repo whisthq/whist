@@ -141,13 +141,10 @@ export class SVGConverter {
     }
 
     static async convertToIco(input: string): Promise<ArrayBuffer> {
-        let buffer = new ArrayBuffer(0)
         const base64 = await this.convertToPngBase64(input)
 
-        if (base64) {
-            const convertedBuffer = this.base64PngToBuffer(base64)
-            buffer = await toIco([convertedBuffer])
-        }
+        const convertedBuffer = this.base64PngToBuffer(base64)
+        const buffer = await toIco([convertedBuffer])
 
         return buffer
     }
@@ -267,8 +264,7 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
 
 export const createWindowsShortcuts = async (
     app: FractalApp,
-    desktop = true,
-    startMenu = true
+    desktop = true
 ): Promise<boolean> => {
     const startMenuPath = `${FractalWindowsDirectory.START_MENU}Fractal\\`
     let desktopSuccess = true
@@ -286,9 +282,7 @@ export const createWindowsShortcuts = async (
         )
     }
 
-    if (startMenu) {
-        startMenuSuccess = await createShortcut(app, startMenuPath)
-    }
+    startMenuSuccess = await createShortcut(app, startMenuPath)
 
     return desktopSuccess || startMenuSuccess
 }
