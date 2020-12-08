@@ -3,7 +3,8 @@
 # things running outside runuser are run as root
 i3 &
 
-DPI_FILENAME=/usr/share/fractal/private/dpi
+CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
+DPI_FILENAME=/fractal/containerResourceMappings/$CONTAINER_ID/DPI
 # send in dpi if set
 if [ -f "$DPI_FILENAME" ]; then
     export FRACTAL_DPI=$(cat $DPI_FILENAME)
