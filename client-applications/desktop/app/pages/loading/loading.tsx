@@ -50,6 +50,10 @@ const Loading = (props: {
     const [launches, setLaunches] = useState(0)
     const loadingBar = useSpring({ width: percentLoadedWidth })
 
+    const failedToLaunch = status && // a little bit hacky, but gets the job done
+                            typeof status === "string" &&
+                            status.toLowerCase().includes("unexpected");
+
     const resetLaunchRedux = () => {
         dispatch(
             updateContainer({
@@ -136,6 +140,9 @@ const Loading = (props: {
     }
 
     const returnToDashboard = () => {
+        if (!failedToLaunch) {
+            // do something!
+        }
         resetLaunchRedux()
         setLaunches(0)
         history.push(FractalRoute.DASHBOARD)
@@ -224,20 +231,16 @@ const Loading = (props: {
                         </div>
                     </div>
                     <div style={{ display: "flex", justifyContent: "center" }}>
-                        {status && // a little bit hacky, but gets the job done
-                            typeof status === "string" &&
-                            status.toLowerCase().includes("unexpected") && (
-                                <div
-                                    role="button" // so eslint will not yell
-                                    tabIndex={0} // also for eslint
-                                    className={styles.dashboardButton}
-                                    style={{ width: 220, marginTop: 25 }}
-                                    onClick={returnToDashboard}
-                                    onKeyDown={returnToDashboard} // eslint
-                                >
-                                    BACK TO DASHBOARD
-                                </div>
-                            )}
+                    <div
+                        role="button" // so eslint will not yell
+                        tabIndex={0} // also for eslint
+                        className={styles.dashboardButton}
+                        style={{ width: 220, marginTop: 25 }}
+                        onClick={returnToDashboard}
+                        onKeyDown={returnToDashboard} // eslint
+                    >
+                        {failedToLaunch ? "BACK TO DASHBOARD" : "CANCEL"}
+                    </div>
                     </div>
                 </div>
             </div>
