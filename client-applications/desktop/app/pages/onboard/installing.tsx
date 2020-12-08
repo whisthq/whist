@@ -34,14 +34,23 @@ const Installing = (props: {
 
         for (let i = 0; i < onboardApps.length; i += 1) {
             const app = onboardApps[i]
-            setCurrentApp(app.app_id)
             if (clientOS === OperatingSystem.WINDOWS) {
-                results.push(createWindowsShortcuts(app))
+                results.push(
+                    new Promise((resolve) => {
+                        setCurrentApp(app.app_id)
+                        createWindowsShortcuts(app)
+                        resolve()
+                    }).then(() => {
+                        setProgress(progress + 1)
+                        return
+                    })
+                )
             }
             setProgress(progress + 1)
         }
 
         await Promise.all(results)
+
         setDoneInstalling(true)
     }
 
