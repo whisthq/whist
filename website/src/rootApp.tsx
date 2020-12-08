@@ -16,6 +16,9 @@ import Profile from "pages/profile/profile"
 import AuthCallback from "pages/auth/callback"
 import Plan from "pages/plan/plan"
 import Payment from "pages/payment/payment"
+import Cancel from "pages/cancel/cancel"
+import Canceled from "pages/cancel/canceled"
+import Confirmation from "pages/confirmation/confirmation"
 
 import withTracker from "shared/utils/withTracker"
 
@@ -74,6 +77,17 @@ const RootApp = (props: any) => {
                 <Route exact path="/profile" component={withTracker(Profile)} />
                 <Route exact path="/plan" component={withTracker(Plan)} />
                 <Route exact path="/payment" component={withTracker(Payment)} />
+                <Route
+                    exact
+                    path="/confirmation"
+                    component={withTracker(Confirmation)}
+                />
+                <Route exact path="/cancel" component={withTracker(Cancel)} />
+                <Route
+                    exact
+                    path="/canceled"
+                    component={withTracker(Canceled)}
+                />
                 <Route
                     exact
                     path="/:first?/:second?"

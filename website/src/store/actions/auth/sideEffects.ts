@@ -16,6 +16,8 @@ export const UPDATE_PASSWORD = "UPDATE_PASSWORD"
 
 export const SEND_VERIFICATION_EMAIL = "SEND_VERIFICATION_EMAIL"
 
+export const FETCH_PAYMENT_INFO = "FETCH_PAYMENT_INFO"
+
 export function googleLogin(code: any, rememberMe?: boolean) {
     return {
         type: GOOGLE_LOGIN,
@@ -107,5 +109,12 @@ export function updatePassword(currentPassword: string, newPassword: string) {
         type: UPDATE_PASSWORD,
         currentPassword,
         newPassword,
+    }
+}
+
+export function fetchPaymentInfo(email: string) {
+    return {
+        type: FETCH_PAYMENT_INFO,
+        email,
     }
 }

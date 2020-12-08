@@ -2,10 +2,13 @@ export const UPDATE_STRIPE_INFO = "UPDATE_STRIPE_INFO"
 export const UPDATE_PAYMENT_FLOW = "UPDATE_PAYMENT_FLOW"
 
 export function updateStripeInfo(body: {
-    subscription?: null
-    cards?: number
+    cardBrand?: string | null
+    cardLastFour?: string | null
+    postalCode?: string | null
+    plan?: string | null
     stripeRequestRecieved?: boolean
     stripeStatus?: string | null
+    checkoutStatus?: string | null
 }) {
     return {
         type: UPDATE_STRIPE_INFO,

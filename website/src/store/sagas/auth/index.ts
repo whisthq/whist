@@ -5,6 +5,7 @@ import history from "shared/utils/history"
 
 import * as AuthPureAction from "store/actions/auth/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
+import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 import {
     UPDATE_WAITLIST_AUTH_EMAIL,
     UPDATE_WAITLIST_REFERRALS,
@@ -35,9 +36,6 @@ function* emailLogin(action: any) {
                 emailVerified: json.verified,
                 canLogin: json.can_login,
                 emailVerificationToken: json.verification_token,
-                cardBrand: json.card_brand,
-                cardLastFour: json.card_last_four,
-                postalCode: json.postal_code,
             })
         )
         yield put(
@@ -45,6 +43,7 @@ function* emailLogin(action: any) {
                 loginWarning: "",
             })
         )
+        yield call(fetchPaymentInfo, { email: action.email })
 
         if (!json.verified) {
             yield call(sendVerificationEmail, {
@@ -87,9 +86,6 @@ function* googleLogin(action: any) {
                         emailVerified: true,
                         canLogin: json.can_login,
                         usingGoogleLogin: json.using_google_login,
-                        cardBrand: json.card_brand,
-                        cardLastFour: json.card_last_four,
-                        postalCode: json.postal_code,
                     })
                 )
 
@@ -426,6 +422,32 @@ function* updatePassword(action: any) {
     }
 }
 
+function* fetchPaymentInfo(action: any) {
+    const state = yield select()
+    const { json } = yield call(
+        apiPost,
+        `/stripe/retrieve`,
+        {
+            email: action.email,
+        },
+        state.AuthReducer.user.accessToken
+    )
+    if (json) {
+        yield put(
+            PaymentPureAction.updateStripeInfo({
+                cardBrand: json.source ? json.source.card.brand : null,
+                cardLastFour: json.source ? json.source.card.last4 : null,
+                postalCode: json.source
+                    ? json.source.owner.address.postal_code
+                    : null,
+                plan: json.subscription
+                    ? json.subscription.plan.metadata.name
+                    : null,
+            })
+        )
+    }
+}
+
 export default function* () {
     yield all([
         takeEvery(AuthSideEffect.EMAIL_LOGIN, emailLogin),
@@ -443,5 +465,6 @@ export default function* () {
             sendVerificationEmail
         ),
         takeEvery(AuthSideEffect.UPDATE_PASSWORD, updatePassword),
+        takeEvery(AuthSideEffect.FETCH_PAYMENT_INFO, fetchPaymentInfo),
     ])
 }

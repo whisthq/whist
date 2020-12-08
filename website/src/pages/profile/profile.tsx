@@ -88,9 +88,13 @@ const Profile = (props: any) => {
     }
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
+const mapStateToProps = (state: {
+    AuthReducer: { user: any }
+    DashboardReducer: { stripeInfo: any }
+}) => {
     return {
         user: state.AuthReducer.user,
+        stripeInfo: state.DashboardReducer.stripeInfo,
     }
 }
 

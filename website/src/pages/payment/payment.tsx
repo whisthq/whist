@@ -6,17 +6,20 @@ import Header from "shared/components/header"
 import PaymentMethod from "pages/payment/components/paymentMethod"
 import Checkout from "pages/payment/components/checkout"
 
+import { config } from "shared/constants/config"
+
 import "styles/payment.css"
 
 const Payment = (props: {
     dispatch: any
     user: any
+    stripeInfo: any
     paymentFlow: { plan: string }
 }) => {
-    const { user, paymentFlow } = props
+    const { user, stripeInfo, paymentFlow } = props
 
     const [editingCard, setEditingCard] = useState(
-        !(user.cardBrand && user.cardLastFour)
+        !(stripeInfo.cardBrand && stripeInfo.cardLastFour)
     )
 
     const valid_user = user.user_id && user.user_id !== ""
@@ -25,6 +28,8 @@ const Payment = (props: {
         return <Redirect to="/auth/bypass" />
     } else if (!paymentFlow.plan) {
         return <Redirect to="/plan" />
+    } else if (!config.payment_enabled) {
+        return <Redirect to="/profile" />
     } else {
         return (
             <div className="fractalContainer">
@@ -41,12 +46,13 @@ const Payment = (props: {
     }
 }
 
-function mapStateToProps(state: {
+const mapStateToProps = (state: {
     AuthReducer: { user: any }
     DashboardReducer: { stripeInfo: any; paymentFlow: any }
-}) {
+}) => {
     return {
         user: state.AuthReducer.user,
+        stripeInfo: state.DashboardReducer.stripeInfo,
         paymentFlow: state.DashboardReducer.paymentFlow,
     }
 }

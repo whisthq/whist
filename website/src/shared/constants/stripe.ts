@@ -6,7 +6,7 @@ import MasterCard from "assets/cards/masterCard.svg"
 import UnionPay from "assets/cards/unionPay.svg"
 import Visa from "assets/cards/visa.svg"
 
-export const cards: { [key: string]: any } = {
+export const CARDS: { [key: string]: any } = {
     "American Express": AmericanExpress,
     "Diners Club": DinersClub,
     Discover: Discover,
@@ -23,6 +23,12 @@ export const STRIPE_OPTIONS = {
                 "https://fonts.googleapis.com/css2?family=Maven+Pro&display=swap",
         },
     ],
+}
+
+export const PLANS: { [key: string]: { price: number; subtext: string } } = {
+    Hourly: { price: 5, subtext: "+$0.70 /hr of usage" },
+    Monthly: { price: 39, subtext: "6 hr/day +$0.50 per extra hour" },
+    Unlimited: { price: 99, subtext: "unlimited daily usage" },
 }
 
 export const TAX_RATES: { [key: string]: number } = {

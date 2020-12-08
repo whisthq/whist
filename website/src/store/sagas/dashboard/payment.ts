@@ -1,6 +1,5 @@
 import { put, takeEvery, all, call, select } from "redux-saga/effects"
 import { apiPost } from "shared/utils/api"
-import history from "shared/utils/history"
 
 import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 import * as PaymentSideEffect from "store/actions/dashboard/payment/sideEffects"
@@ -29,7 +28,9 @@ function* addCard(action: any) {
                 PaymentPureAction.updateStripeInfo({
                     stripeRequestRecieved: true,
                     stripeStatus: "success",
-                    cards: state.DashboardReducer.stripeInfo.cards + 1,
+                    cardBrand: action.source.card.brand,
+                    cardLastFour: action.source.card.last4,
+                    postalCode: action.source.owner.address.postal_code,
                 })
             )
         } else {
@@ -58,7 +59,7 @@ function* deleteCard(action: any) {
         "/stripe/deleteCard",
         {
             email: state.AuthReducer.user.user_id,
-            token: action.token,
+            source: action.source,
         },
         state.AuthReducer.user.accessToken,
         state.AuthReducer.user.refreshToken
@@ -73,7 +74,9 @@ function* deleteCard(action: any) {
 
         if (json.status === 200) {
             PaymentPureAction.updateStripeInfo({
-                cards: state.DashboardReducer.stripeInfo.cards - 1,
+                cardBrand: null,
+                cardLastFour: null,
+                postalCode: null,
             })
         }
     }
@@ -88,30 +91,37 @@ function* addSubscription(action: any) {
         apiPost,
         "/stripe/addSubscription",
         {
-            token: action.token,
             email: state.AuthReducer.user.user_id,
             plan: action.plan,
-            code: action.code,
         },
         state.AuthReducer.user.accessToken,
         state.AuthReducer.user.refreshToken
     )
 
     if (json) {
-        yield put(
-            PaymentPureAction.updateStripeInfo({
-                stripeRequestRecieved: true,
-            })
-        )
-
         if (json.status === 200) {
-            history.push("/dashboard")
             yield put(
                 PaymentPureAction.updateStripeInfo({
-                    subscription: action.plan,
+                    stripeRequestRecieved: true,
+                    checkoutStatus: "success",
+                    plan: action.plan,
+                })
+            )
+        } else {
+            yield put(
+                PaymentPureAction.updateStripeInfo({
+                    stripeRequestRecieved: true,
+                    checkoutStatus: "failure",
                 })
             )
         }
+    } else {
+        yield put(
+            PaymentPureAction.updateStripeInfo({
+                stripeRequestRecieved: true,
+                checkoutStatus: "failure",
+            })
+        )
     }
 }
 
@@ -139,19 +149,29 @@ function* deleteSubscription(action: any) {
     )
 
     if (json) {
-        yield put(
-            PaymentPureAction.updateStripeInfo({
-                stripeRequestRecieved: true,
-            })
-        )
-
         if (json.status === 200) {
             yield put(
                 PaymentPureAction.updateStripeInfo({
-                    subscription: null,
+                    stripeRequestRecieved: true,
+                    stripeStatus: "success",
+                    plan: null,
+                })
+            )
+        } else {
+            yield put(
+                PaymentPureAction.updateStripeInfo({
+                    stripeRequestRecieved: true,
+                    stripeStatus: "failure",
                 })
             )
         }
+    } else {
+        yield put(
+            PaymentPureAction.updateStripeInfo({
+                stripeRequestRecieved: true,
+                stripeStatus: "failure",
+            })
+        )
     }
 }
 

@@ -3,22 +3,20 @@ import { connect } from "react-redux"
 import { FaEdit } from "react-icons/fa"
 import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 
-import { cards } from "shared/constants/stripe"
+import { CARDS } from "shared/constants/stripe"
 import CardField from "shared/components/cardField"
 
 import "styles/profile.css"
 
-const PaymentForm = (props: {
-    dispatch: any
-    user: { cardBrand: string | null; cardLastFour: string | null }
-    stripeInfo: any
-}) => {
-    const { dispatch, user, stripeInfo } = props
+const PaymentForm = (props: { dispatch: any; stripeInfo: any }) => {
+    const { dispatch, stripeInfo } = props
     const [editingCard, setEditingCard] = useState(false)
     const [savedCard, setSavedCard] = useState(false)
 
     const cardImage =
-        user.cardBrand && cards[user.cardBrand] ? cards[user.cardBrand] : null
+        stripeInfo.cardBrand && CARDS[stripeInfo.cardBrand]
+            ? CARDS[stripeInfo.cardBrand]
+            : null
 
     useEffect(() => {
         dispatch(
@@ -46,7 +44,7 @@ const PaymentForm = (props: {
                     <CardField setEditingCard={setEditingCard} />
                 ) : (
                     <>
-                        {user.cardBrand && user.cardLastFour ? (
+                        {stripeInfo.cardBrand && stripeInfo.cardLastFour ? (
                             <div
                                 style={{
                                     display: "flex",
@@ -61,7 +59,9 @@ const PaymentForm = (props: {
                                         alt=""
                                     />
                                 )}
-                                <div>**** **** **** {user.cardLastFour}</div>
+                                <div>
+                                    **** **** **** {stripeInfo.cardLastFour}
+                                </div>
                             </div>
                         ) : (
                             <div
@@ -74,7 +74,7 @@ const PaymentForm = (props: {
                                 + Add a card
                             </div>
                         )}
-                        {user.cardBrand && user.cardLastFour && (
+                        {stripeInfo.cardBrand && stripeInfo.cardLastFour && (
                             <div
                                 style={{
                                     display: "flex",
@@ -101,12 +101,8 @@ const PaymentForm = (props: {
     )
 }
 
-const mapStateToProps = (state: {
-    AuthReducer: { user: any }
-    DashboardReducer: { stripeInfo: any }
-}) => {
+const mapStateToProps = (state: { DashboardReducer: { stripeInfo: any } }) => {
     return {
-        user: state.AuthReducer.user,
         stripeInfo: state.DashboardReducer.stripeInfo,
     }
 }

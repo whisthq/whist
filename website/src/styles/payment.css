@@ -34,6 +34,12 @@
     padding: 30px;
 }
 
+.checkout-warning {
+    border: solid 1px #fc3d03;
+    width: 45%;
+    padding: 30px;
+}
+
 .price {
     font-weight: 500;
     float: right;
@@ -55,6 +61,7 @@
     padding-bottom: 15px;
     text-align: center;
     margin-top: 40px;
+    margin-bottom: 10px;
 }
 
 @media only screen and (max-width: 600px) {

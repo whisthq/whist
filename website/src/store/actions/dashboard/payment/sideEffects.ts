@@ -3,15 +3,9 @@ export const DELETE_SUBSCRIPTION = "DELETE_SUBSCRIPTION"
 export const ADD_CARD = "ADD_CARD"
 export const DELETE_CARD = "DELETE_CARD"
 
-export function addSubscription(
-    token: string,
-    plan: string,
-    code: string | null
-) {
+export function addSubscription(plan: string) {
     return {
         type: ADD_SUBSCRIPTION,
-        token,
-        code,
         plan,
     }
 }
@@ -30,9 +24,9 @@ export function addCard(source: any) {
     }
 }
 
-export function deleteCard(token: string) {
+export function deleteCard(source: string) {
     return {
         type: DELETE_CARD,
-        token, // this should be replaced?
+        source, // this should be replaced?
     }
 }

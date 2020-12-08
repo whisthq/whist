@@ -70,3 +70,12 @@
     height: 17px;
     margin-right: 10px;
 }
+
+::placeholder {
+    color: #cccccc;
+    font-size: 14px;
+}
+
+.bold {
+    font-weight: 500;
+}

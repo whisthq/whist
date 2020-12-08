@@ -3,10 +3,16 @@ import { connect } from "react-redux"
 
 import history from "shared/utils/history"
 
+import { PLANS } from "shared/constants/stripe"
+
 import "styles/profile.css"
 
 const PlanForm = (props: any) => {
-    const { user } = props
+    const { stripeInfo } = props
+
+    const cancelPlan = () => {
+        history.push("/cancel")
+    }
 
     const addPlan = () => {
         history.push("/plan")
@@ -16,10 +22,16 @@ const PlanForm = (props: any) => {
         <>
             <div className="section-title">Plan</div>
             <div className="section-info">
-                {user.plan ? (
+                {stripeInfo.plan && PLANS[stripeInfo.plan] ? (
                     <>
-                        <div>{user.plan}</div>
-                        <div>View plan details</div>
+                        <div>
+                            {stripeInfo.plan} - $
+                            {PLANS[stripeInfo.plan].price.toFixed(2)} /mo (
+                            {PLANS[stripeInfo.plan].subtext})
+                        </div>
+                        <div className="add" onClick={cancelPlan}>
+                            Cancel
+                        </div>
                     </>
                 ) : (
                     <div className="add" onClick={addPlan}>
@@ -31,9 +43,9 @@ const PlanForm = (props: any) => {
     )
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any } }) {
+function mapStateToProps(state: { DashboardReducer: { stripeInfo: any } }) {
     return {
-        user: state.AuthReducer.user,
+        stripeInfo: state.DashboardReducer.stripeInfo,
     }
 }
 

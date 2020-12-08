@@ -4,7 +4,6 @@ import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
-import * as PureAuthAction from "store/actions/auth/pure"
 import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 import * as PaymentSideEffect from "store/actions/dashboard/payment/sideEffects"
 
@@ -27,14 +26,10 @@ const CardField = (props: any) => {
             if (stripeInfo.stripeStatus === "success") {
                 setSavingCard(false)
                 dispatch(
-                    PureAuthAction.updateUser({
+                    PaymentPureAction.updateStripeInfo({
                         cardBrand: currentBrand,
                         cardLastFour: currentLastFour,
                         postalCode: currentPostalCode,
-                    })
-                )
-                dispatch(
-                    PaymentPureAction.updateStripeInfo({
                         stripeRequestRecieved: false,
                         stripeStatus: null,
                     })
@@ -86,14 +81,12 @@ const CardField = (props: any) => {
                         setWarning(true)
                     } else if (result.source) {
                         const source = result.source
-                        console.log(source)
                         if (
                             source.card &&
                             source.card.brand &&
                             source.card.last4 &&
                             source.id
                         ) {
-                            console.log(source)
                             setCurrentBrand(source.card.brand)
                             setCurrentLastFour(source.card.last4)
                             if (
@@ -101,7 +94,6 @@ const CardField = (props: any) => {
                                 source.owner.address &&
                                 source.owner.address.postal_code
                             ) {
-                                console.log(source.owner.address.postal_code)
                                 setCurrentPostalCode(
                                     source.owner.address.postal_code
                                 )

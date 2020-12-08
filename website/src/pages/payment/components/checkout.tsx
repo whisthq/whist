@@ -1,31 +1,34 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import moment from "moment"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
+
+import history from "shared/utils/history"
 
 import { getZipState } from "shared/utils/stripe"
-import { TAX_RATES } from "shared/constants/stripe"
+import { TAX_RATES, PLANS } from "shared/constants/stripe"
+import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
+import * as PaymentSideEffect from "store/actions/dashboard/payment/sideEffects"
 
 import "styles/payment.css"
 
 const Checkout = (props: {
     dispatch: any
-    user: any
+    stripeInfo: any
     paymentFlow: { plan: string }
     editingCard: boolean
 }) => {
-    const { user, paymentFlow, editingCard } = props
+    const { dispatch, stripeInfo, paymentFlow, editingCard } = props
 
     const [trialEnd, setTrialEnd] = useState("")
     const [tax, setTax] = useState(0)
+    const [submittingPayment, setSubmittingPayment] = useState(false)
+    const [paymentWarning, setPaymentWarning] = useState(false)
 
-    const prices: { [key: string]: number } = {
-        Hourly: 5,
-        Monthly: 39,
-        Unlimited: 99,
-    }
-
-    const paymentReady = user.cardBrand && user.cardLastFour && !editingCard
-    const monthlyPrice = prices[paymentFlow.plan]
+    const paymentReady =
+        stripeInfo.cardBrand && stripeInfo.cardLastFour && !editingCard
+    const monthlyPrice = PLANS[paymentFlow.plan].price
 
     useEffect(() => {
         var unix = Math.round(
@@ -35,18 +38,46 @@ const Checkout = (props: {
     }, [])
 
     useEffect(() => {
-        if (user.postalCode.length === 5) {
-            const billingState = getZipState(user.postalCode)
+        if (stripeInfo.postalCode.length === 5) {
+            const billingState = getZipState(stripeInfo.postalCode)
             if (billingState) {
                 setTax(monthlyPrice * TAX_RATES[billingState] * 0.01)
             }
         }
-    }, [user.postalCode, monthlyPrice])
+    }, [stripeInfo.postalCode, monthlyPrice])
 
-    const submitPayment = () => {}
+    useEffect(() => {
+        if (stripeInfo.stripeRequestRecieved) {
+            setSubmittingPayment(false)
+            if (stripeInfo.checkoutStatus === "success") {
+                dispatch(
+                    PaymentPureAction.updateStripeInfo({
+                        plan: paymentFlow.plan,
+                        stripeRequestRecieved: false,
+                        checkoutStatus: null,
+                    })
+                )
+                history.push("/confirmation")
+            } else if (stripeInfo.checkoutStatus === "failure") {
+                setPaymentWarning(true)
+                dispatch(
+                    PaymentPureAction.updateStripeInfo({
+                        stripeRequestRecieved: false,
+                        checkoutStatus: null,
+                    })
+                )
+            }
+        }
+    }, [dispatch, stripeInfo, paymentFlow.plan])
+
+    const submitPayment = () => {
+        dispatch(PaymentSideEffect.addSubscription(paymentFlow.plan))
+        setPaymentWarning(false)
+        setSubmittingPayment(true)
+    }
 
     return (
-        <div className="checkout">
+        <div className={paymentWarning ? "checkout-warning" : "checkout"}>
             <div>
                 Subtotal:{" "}
                 <div className="price">${monthlyPrice.toFixed(2)} USD</div>
@@ -67,9 +98,25 @@ const Checkout = (props: {
                 disabled={!paymentReady}
                 onClick={submitPayment}
             >
-                Submit Payment
+                {submittingPayment ? (
+                    <FontAwesomeIcon
+                        icon={faCircleNotch}
+                        spin
+                        style={{
+                            color: "white",
+                        }}
+                    />
+                ) : (
+                    <span>Submit Payment</span>
+                )}
             </button>
-            <div style={{ marginTop: 20, fontSize: 12 }}>
+            {paymentWarning && (
+                <div style={{ color: "#fc3d03", fontSize: 12 }}>
+                    There was an error submitting your payment. Please try
+                    again.
+                </div>
+            )}
+            <div style={{ marginTop: 10, fontSize: 12 }}>
                 Note: You will not be charged until{" "}
                 <span className="bold">{trialEnd}</span>, which is the end of
                 your 7-day free trial. After that, you will be automatically
@@ -80,12 +127,11 @@ const Checkout = (props: {
     )
 }
 
-function mapStateToProps(state: {
-    AuthReducer: { user: any }
+const mapStateToProps = (state: {
     DashboardReducer: { stripeInfo: any; paymentFlow: any }
-}) {
+}) => {
     return {
-        user: state.AuthReducer.user,
+        stripeInfo: state.DashboardReducer.stripeInfo,
         paymentFlow: state.DashboardReducer.paymentFlow,
     }
 }

@@ -5,32 +5,27 @@ import { faChevronLeft } from "@fortawesome/free-solid-svg-icons"
 
 import history from "shared/utils/history"
 
-import { cards } from "shared/constants/stripe"
+import { CARDS, PLANS } from "shared/constants/stripe"
 import CardField from "shared/components/cardField"
 
 import "styles/payment.css"
 
 const PaymentMethod = (props: {
     dispatch: any
-    user: any
     stripeInfo: any
     paymentFlow: { plan: string }
     editingCard: boolean
     setEditingCard: any
 }) => {
-    const { user, stripeInfo, paymentFlow, editingCard, setEditingCard } = props
+    const { stripeInfo, paymentFlow, editingCard, setEditingCard } = props
 
     const [savedCard, setSavedCard] = useState(false)
 
-    const hasCard = user.cardBrand && user.cardLastFour
+    const hasCard = stripeInfo.cardBrand && stripeInfo.cardLastFour
     const cardImage =
-        user.cardBrand && cards[user.cardBrand] ? cards[user.cardBrand] : null
-
-    const plans: { [key: string]: string } = {
-        Hourly: "$5 /mo (+$0.70 /hr of usage)",
-        Monthly: "$39 /mo (6 hr/day +$0.50 per extra hour)",
-        Unlimited: "$99 /mo (unlimited daily usage)",
-    }
+        stripeInfo.cardBrand && CARDS[stripeInfo.cardBrand]
+            ? CARDS[stripeInfo.cardBrand]
+            : null
 
     useEffect(() => {
         if (
@@ -60,7 +55,9 @@ const PaymentMethod = (props: {
             </div>
             <h3>Payment method</h3>
             <div>
-                Your plan: {paymentFlow.plan} - {plans[paymentFlow.plan]}
+                Your plan: {paymentFlow.plan} - $
+                {PLANS[paymentFlow.plan].price.toFixed(2)} /mo (
+                {PLANS[paymentFlow.plan].subtext})
             </div>
             <div style={{ marginTop: 20 }}>
                 Your first seven days are free, and you can cancel anytime.
@@ -93,7 +90,9 @@ const PaymentMethod = (props: {
                                         alt=""
                                     />
                                 )}
-                                <div>**** **** **** {user.cardLastFour}</div>
+                                <div>
+                                    **** **** **** {stripeInfo.cardLastFour}
+                                </div>
                             </div>
                             <div
                                 style={{
@@ -138,12 +137,10 @@ const PaymentMethod = (props: {
     )
 }
 
-function mapStateToProps(state: {
-    AuthReducer: { user: any }
+const mapStateToProps = (state: {
     DashboardReducer: { stripeInfo: any; paymentFlow: any }
-}) {
+}) => {
     return {
-        user: state.AuthReducer.user,
         stripeInfo: state.DashboardReducer.stripeInfo,
         paymentFlow: state.DashboardReducer.paymentFlow,
     }

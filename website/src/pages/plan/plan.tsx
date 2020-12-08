@@ -8,6 +8,8 @@ import Header from "shared/components/header"
 import PriceBox from "pages/plan/components/priceBox"
 import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 
+import { config } from "shared/constants/config"
+
 import "styles/plan.css"
 
 const Plan = (props: any) => {
@@ -25,6 +27,8 @@ const Plan = (props: any) => {
 
     if (!valid_user) {
         return <Redirect to="/auth/bypass" />
+    } else if (!config.payment_enabled) {
+        return <Redirect to="/profile" />
     } else {
         return (
             <div className="fractalContainer">
