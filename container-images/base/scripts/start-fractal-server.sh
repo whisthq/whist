@@ -32,4 +32,8 @@ if [ -f "$SENTRY_ENV_FILENAME" ]; then
     OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
 fi
 
+# mount cloud storage directories to home directory
+# https://stackoverflow.com/questions/2107945/how-to-loop-over-directories-in-linux
+# find "/fractal/cloudStorage/$IDENTIFIER" -maxdepth 1 -mindepth 1 -type d -exec ln -sf {} /home/fractal/
+
 /usr/share/fractal/FractalServer --identifier=$IDENTIFIER $OPTIONS
