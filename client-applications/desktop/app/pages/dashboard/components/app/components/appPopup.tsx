@@ -171,7 +171,7 @@ const AppPopup = (props: {
                                     shortcutCreated && "rgba(0,0,0,0.05)",
                             }}
                         >
-                            Download
+                            Install
                         </button>
                     )}
                 </Modal.Body>
