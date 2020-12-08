@@ -1,7 +1,5 @@
 # Fractal Desktop Applications
 
-![Electron CI](https://github.com/fractal/client-applications/workflows/Electron%20CI/badge.svg)
-
 This folder contains the code for the Fractal desktop applications running on Windows, MacOS and Linux Ubuntu. The applications are built with cross-platform compatibility using ElectronJS. This repository contains all the directions for building the applications locally and for publishing them for production on each of the following OSes:
 
 -   Windows 10
