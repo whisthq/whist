@@ -1,6 +1,0 @@
-[submodule "base/protocol"]
-	path = base/protocol
-	url = https://github.com/fractal/protocol
-[submodule "creative/figma/figma-font-bindings"]
-	path = creative/figma/figma-font-bindings
-	url = https://github.com/fractal/figma-font-bindings
