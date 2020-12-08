@@ -86,6 +86,15 @@ function* createContainer(action: {
         })
     )
 
+    // so we know that we are launching the test/admin version to shut down with the right webserver
+    if (test) {
+        yield put(
+            Action.updateAdmin({
+                launched: true,
+            })
+        )
+    }
+
     const state = yield select()
     const username = state.MainReducer.auth.username
 
@@ -284,10 +293,49 @@ function* submitFeedback(action: { feedback: string; feedbackType: string }) {
     }
 }
 
+function* deleteContainer(action: {containerID: string; privateKey: string; test: boolean}) {
+    const state= yield select()
+
+    const test = action.test
+    const containerID = action.containerID
+    const private_key = action.privateKey
+
+    if (test) {
+        yield put(Action.updateAdmin({
+            launched: false,
+        }))
+    }
+    
+    const username = state.MainReducer.auth.username
+    const webserver = test
+        ? state.MainReducer.admin.webserverUrl
+        : config.url.WEBSERVER_URL
+
+    const { success } = yield call(
+        apiPost,
+        FractalAPI.CONTAINER.DELETE,
+        {
+            // note how the webserver expects this naming format
+            /* eslint-disable */
+            container_id: containerID,
+            hex_aes_private_key: private_key,
+            username: username,
+        },
+        state.MainReducer.auth.accessToken,
+        webserver,
+    )
+
+    if (!success) {
+        yield call(refreshAccess)
+        yield call(deleteContainer, action)
+    }
+}
+
 export default function* rootSaga() {
     yield all([
         takeEvery(SideEffect.CREATE_CONTAINER, createContainer),
         takeEvery(SideEffect.SUBMIT_FEEDBACK, submitFeedback),
         takeEvery(SideEffect.VALIDATE_ACCESS_TOKEN, validateAccessToken),
+        takeEvery(SideEffect.DELETE_CONTAINER, deleteContainer),
     ])
 }

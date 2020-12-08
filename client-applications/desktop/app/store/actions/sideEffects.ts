@@ -5,6 +5,8 @@ export const CREATE_CONTAINER = "CREATE_CONTAINER"
 
 export const SUBMIT_FEEDBACK = "SUBMIT_FEEDBACK"
 
+export const DELETE_CONTAINER = "DELETE_CONTAINER"
+
 export function rememberMeLogin(username: string) {
     return {
         type: REMEMBER_ME_LOGIN,
@@ -33,5 +35,18 @@ export function submitFeedback(feedback: string, feedbackType: string) {
         type: SUBMIT_FEEDBACK,
         feedback,
         feedbackType,
+    }
+}
+
+export function deleteContainer(
+    containerID: string,
+    privateKey: string,
+    test = false
+) {
+    return {
+        type: DELETE_CONTAINER,
+        containerID,
+        privateKey,
+        test,
     }
 }

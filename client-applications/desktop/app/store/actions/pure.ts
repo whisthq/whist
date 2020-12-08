@@ -13,6 +13,7 @@ export function updateAdmin(body: {
     taskArn?: null | string
     region?: null | string
     cluster?: null | string
+    launched?: boolean
 }) {
     return {
         type: UPDATE_ADMIN,

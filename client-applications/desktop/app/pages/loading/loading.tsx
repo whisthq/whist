@@ -13,6 +13,7 @@ import { FractalRoute } from "shared/types/navigation"
 import { OperatingSystem } from "shared/types/client"
 
 import styles from "pages/login/login.css"
+import { deleteContainer } from "store/actions/sideEffects"
 
 const Loading = (props: {
     percentLoaded: number
@@ -25,6 +26,7 @@ const Loading = (props: {
     desiredAppID: string
     currentAppID: string
     containerID: string
+    admin: boolean
     dispatch: Dispatch
 }) => {
     const {
@@ -38,6 +40,7 @@ const Loading = (props: {
         desiredAppID,
         currentAppID,
         containerID,
+        admin,
         dispatch,
     } = props
 
@@ -50,9 +53,10 @@ const Loading = (props: {
     const [launches, setLaunches] = useState(0)
     const loadingBar = useSpring({ width: percentLoadedWidth })
 
-    const failedToLaunch = status && // a little bit hacky, but gets the job done
-                            typeof status === "string" &&
-                            status.toLowerCase().includes("unexpected");
+    const failedToLaunch =
+        status && // a little bit hacky, but gets the job done
+        typeof status === "string" &&
+        status.toLowerCase().includes("unexpected")
 
     const resetLaunchRedux = () => {
         dispatch(
@@ -140,8 +144,10 @@ const Loading = (props: {
     }
 
     const returnToDashboard = () => {
+        // emulates what the protocol would have done had you successfully closed
+        // not sure if secretKey is the correct one, or if deleting while spinning up will work
         if (!failedToLaunch) {
-            // do something!
+            dispatch(deleteContainer(containerID, secretKey, admin))
         }
         resetLaunchRedux()
         setLaunches(0)
@@ -231,16 +237,16 @@ const Loading = (props: {
                         </div>
                     </div>
                     <div style={{ display: "flex", justifyContent: "center" }}>
-                    <div
-                        role="button" // so eslint will not yell
-                        tabIndex={0} // also for eslint
-                        className={styles.dashboardButton}
-                        style={{ width: 220, marginTop: 25 }}
-                        onClick={returnToDashboard}
-                        onKeyDown={returnToDashboard} // eslint
-                    >
-                        {failedToLaunch ? "BACK TO DASHBOARD" : "CANCEL"}
-                    </div>
+                        <div
+                            role="button" // so eslint will not yell
+                            tabIndex={0} // also for eslint
+                            className={styles.dashboardButton}
+                            style={{ width: 220, marginTop: 25 }}
+                            onClick={returnToDashboard}
+                            onKeyDown={returnToDashboard} // eslint
+                        >
+                            {failedToLaunch ? "BACK TO DASHBOARD" : "CANCEL"}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -262,6 +268,7 @@ const mapStateToProps = <T extends {}>(state: T) => {
         secretKey: state.MainReducer.container.secretKey,
         desiredAppID: state.MainReducer.container.desiredAppID,
         currentAppID: state.MainReducer.container.currentAppID,
+        admin: state.MainReducer.admin.launched,
     }
 }
 

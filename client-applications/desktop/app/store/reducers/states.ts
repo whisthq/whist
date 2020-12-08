@@ -45,6 +45,7 @@ export const DEFAULT = {
         taskArn: "fractal-browsers-chrome",
         region: "us-east-1",
         cluster: null,
+        launched: false,
     },
 }
 
