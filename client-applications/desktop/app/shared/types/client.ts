@@ -1,7 +1,8 @@
 const homeDir = require("os").homedir()
-const remote = require("electron").remote
+const appPath = require("electron").remote
     ? require("electron").remote.app.getAppPath()
     : ""
+const path = require("path")
 
 export enum OperatingSystem {
     WINDOWS = "win32",
@@ -13,12 +14,15 @@ export enum FractalAppName {
     CHROME = "Google Chrome",
 }
 
-export class FractalWindowsDirectory {
-    static START_MENU = `${homeDir}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\`
+export class FractalDirectory {
+    static WINDOWS_START_MENU = path.join(
+        homeDir,
+        "AppData/Roaming/Microsoft/Windows/Start Menu/Programs"
+    )
 
-    static DESKTOP = `${homeDir}\\Desktop\\`
+    static MAC_APPLICATIONS = path.join(homeDir, "Applications")
 
-    static ROOT_DIRECTORY = `${remote}\\`
-        .replace("\\resources\\app.asar", "")
-        .replace("\\app\\", "\\")
+    static DESKTOP = path.join(homeDir, "Desktop")
+
+    static ROOT_DIRECTORY = appPath ? path.join(appPath, "../../..") : "" // undo resources/app.asar/app
 }

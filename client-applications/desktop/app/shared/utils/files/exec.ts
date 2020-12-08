@@ -1,26 +1,27 @@
 import { OperatingSystem } from "shared/types/client"
 import { debugLog } from "shared/utils/general/logging"
 
-export const execChmodUnix = (
+export const execPromise = (
     command: string,
     path: string,
-    clientOS: OperatingSystem
+    targetOS: OperatingSystem[]
 ) => {
     /*
     Description:
-        Executes a shell command on Mac or Linux
+        Executes a shell command on target operating systems
 
     Arguments:
         command (string) : Shell command (e.g. echo "Hello world")
-        path (string) : Absolute path to shell command
-        clientOS (OperatingSystem) : Operating system of client machine 
+        path (string) : Absolute path for working directory in which to run shell command
+        targetOS (OperatingSystem[]) : Operating systems on which to run this command 
     
     Returns:
         promise : Promise
     */
+    const clientOS = require("os").platform()
     return new Promise((resolve, reject) => {
-        // If not on Windows, run shell command, otherwise do nothing
-        if (clientOS !== OperatingSystem.WINDOWS) {
+        // If not on a target OS, run shell command, otherwise do nothing
+        if (targetOS.includes(clientOS)) {
             const { exec } = require("child_process")
             exec(command, { cwd: path }, (error, stdout) => {
                 if (error) {
@@ -67,7 +68,10 @@ export const setAWSRegion = () => {
             debugLog(`no suitable os found, instead got ${platform}`)
         }
 
-        execChmodUnix("chmod +x awsping_osx", path, platform)
+        execPromise("chmod +x awsping_osx", path, [
+            OperatingSystem.MAC,
+            OperatingSystem.LINUX,
+        ])
             .then(() => {
                 const regions = spawn(executable, ["-n", "3"], {
                     cwd: path,

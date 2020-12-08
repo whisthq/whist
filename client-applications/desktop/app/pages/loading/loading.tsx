@@ -8,9 +8,9 @@ import TitleBar from "shared/components/titleBar"
 import { debugLog } from "shared/utils/general/logging"
 import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/history"
-import { execChmodUnix } from "shared/utils/files/exec"
+import { execPromise } from "shared/utils/files/exec"
 import { FractalRoute } from "shared/types/navigation"
-import { OperatingSystem, FractalWindowsDirectory } from "shared/types/client"
+import { OperatingSystem, FractalDirectory } from "shared/types/client"
 
 import styles from "pages/loading/loading.css"
 
@@ -72,47 +72,54 @@ const Loading = (props: {
         )
     }
 
-    const launchProtocol = () => {
-        const child = require("child_process").spawn
-        const appRootDir = require("electron").remote.app.getAppPath()
-        let executable = ""
-        let path = ""
+    const getExecutableName = (): string => {
+        const currentOS = require("os").platform()
 
-        const os = require("os")
-
-        if (os.platform() === OperatingSystem.MAC) {
-            path = `${appRootDir}/protocol-build/desktop/`
-            path = path.replace("/app", "")
-            path = path.replace("/Resources.asar", "")
-            executable = "./FractalClient"
-        } else if (os.platform() === OperatingSystem.WINDOWS) {
-            path = `${FractalWindowsDirectory.ROOT_DIRECTORY}\\protocol-build\\desktop`
-            executable = "FractalClient.exe"
-        } else {
-            debugLog(`no suitable os found, instead got ${os.platform()}`)
+        if (currentOS === OperatingSystem.MAC) {
+            return "./FractalClient"
         }
+        if (currentOS === OperatingSystem.WINDOWS) {
+            return "FractalClient.exe"
+        }
+        debugLog(`no suitable os found, instead got ${currentOS}`)
+        return ""
+    }
 
-        execChmodUnix("chmod +x FractalClient", path, os.platform())
+    const launchProtocol = () => {
+        const spawn = require("child_process").spawn
+
+        const protocolPath = require("path").join(
+            FractalDirectory.ROOT_DIRECTORY,
+            "protocol-build/desktop"
+        )
+        const executable = getExecutableName()
+
+        execPromise("chmod +x FractalClient", protocolPath, [
+            OperatingSystem.MAC,
+            OperatingSystem.LINUX,
+        ])
             .then(() => {
                 const ipc = require("electron").ipcRenderer
                 ipc.sendSync("canClose", false)
 
                 const portInfo = `32262:${port32262}.32263:${port32263}.32273:${port32273}`
-                const parameters = [
-                    "-w",
-                    800,
-                    "-h",
-                    600,
-                    "-p",
-                    portInfo,
-                    "-k",
-                    secretKey,
+                const protocolParameters = {
+                    width: 800,
+                    height: 600,
+                    ports: portInfo,
+                    "private-key": secretKey,
+                }
+
+                const protocolArguments = [
+                    ...Object.entries(protocolParameters)
+                        .map(([flag, arg]) => [`--${flag}`, arg])
+                        .flat(),
                     ip,
                 ]
 
                 // Starts the protocol
-                const protocol = child(executable, parameters, {
-                    cwd: path,
+                const protocol = spawn(executable, protocolArguments, {
+                    cwd: protocolPath,
                     detached: false,
                     stdio: "ignore",
                     // env: { ELECTRON_RUN_AS_NODE: 1 },
