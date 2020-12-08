@@ -1,5 +1,5 @@
 import { OperatingSystem } from "shared/types/client"
-import { debugLog } from "shared/utils/logging"
+import { debugLog } from "shared/utils/general/logging"
 
 export const execChmodUnix = (
     command: string,

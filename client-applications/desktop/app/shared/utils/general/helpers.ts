@@ -1,4 +1,4 @@
-import { deepCopyObject } from "shared/utils/reducerHelpers"
+import { deepCopyObject } from "shared/utils/general/reducer"
 import { cloneDeep } from "lodash"
 
 export const openExternal = (url: string) => {

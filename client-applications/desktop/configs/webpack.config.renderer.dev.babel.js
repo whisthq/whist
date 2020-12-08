@@ -12,7 +12,6 @@ import chalk from 'chalk'
 import merge from 'webpack-merge'
 import { spawn, execSync } from 'child_process'
 import { TypedCssModulesPlugin } from 'typed-css-modules-webpack-plugin'
-import { debugLog } from '../utils/logging.js'
 import baseConfig from './webpack.config.base'
 import CheckNodeEnv from '../internals/scripts/CheckNodeEnv'
 import dotenv from 'dotenv'
@@ -35,7 +34,7 @@ const requiredByDLLConfig = module.parent.filename.includes(
  * Warn if the DLL is not built
  */
 if (!requiredByDLLConfig && !(fs.existsSync(dll) && fs.existsSync(manifest))) {
-    debugLog(
+    console.log(
         chalk.black.bgYellow.bold(
             'The DLL files are missing. Sit back while we build them for you with "yarn build-dll"'
         )
@@ -267,7 +266,7 @@ export default merge.smart(baseConfig, {
         },
         before() {
             if (process.env.START_HOT) {
-                debugLog('Starting Main Process...')
+                console.log('Starting Main Process...')
                 spawn('npm', ['run', 'start-main-dev'], {
                     shell: true,
                     env: process.env,

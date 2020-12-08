@@ -41,7 +41,6 @@ const Support = (props: { dispatch: Dispatch<any> }) => {
     useEffect(() => {
         if (showSubmittedAlert) {
             setTimeout(() => {
-                console.log("setting to false")
                 setShowSubmittedAlert(false)
             }, 5000)
         }

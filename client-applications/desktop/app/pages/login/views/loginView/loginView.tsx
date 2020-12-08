@@ -3,8 +3,8 @@ import { connect } from "react-redux"
 import PuffLoader from "react-spinners/PuffLoader"
 
 import { updateClient, updateAuth } from "store/actions/pure"
-import { setAWSRegion } from "shared/utils/exec"
-import { openExternal } from "shared/utils/helpers"
+import { setAWSRegion } from "shared/utils/files/exec"
+import { openExternal } from "shared/utils/general/helpers"
 import { config } from "shared/constants/config"
 import FractalKey from "shared/types/input"
 
