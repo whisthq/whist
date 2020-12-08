@@ -32,7 +32,6 @@ let customURL: string | null = null
 let canClose = true
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
-process.env.GOOGLE_API_KEY = "AIzaSyA2FUwAOXKqIWMqKN5DNPBUaqYMOWdBADQ"
 
 if (process.env.NODE_ENV === "production") {
     const sourceMapSupport = require("source-map-support")
@@ -99,7 +98,7 @@ const createWindow = async () => {
         })
     }
     mainWindow.loadURL(`file://${__dirname}/app.html`)
-    // mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools()
 
     // @TODO: Use 'ready-to-show' event
     //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
