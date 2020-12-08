@@ -45,6 +45,7 @@ const RootApp = (props: {
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [launched, setLaunched] = useState(false)
     const [accessTokenRetrieved, setAccessTokenRetrieved] = useState(false)
+    const [urlReceived, setUrlReceived] = useState(false)
 
     const { data } = useQuery(GET_FEATURED_APPS)
 
@@ -132,6 +133,13 @@ const RootApp = (props: {
         needsUpdate,
     ])
 
+    // Wait two seconds to allow for fractal:// to be detected
+    useEffect(() => {
+        setTimeout(() => {
+            setUrlReceived(true)
+        }, 2000)
+    }, [])
+
     // If there's an update, redirect to update screen
     useEffect(() => {
         if (needsUpdate && updatePingReceived) {
@@ -203,7 +211,9 @@ const RootApp = (props: {
                 />
                 <Route
                     path={FractalRoute.LOGIN}
-                    component={() => <Login loaded={accessTokenRetrieved} />}
+                    component={() => (
+                        <Login loaded={accessTokenRetrieved && urlReceived} />
+                    )}
                 />
             </Switch>
         </div>
