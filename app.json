@@ -38,6 +38,7 @@
         }
       ],
       "scripts": {
+        "test-setup": "echo '{}' > client_secret.json",
         "test": "pytest -v -s --no-mock-aws"
       }
     }
