@@ -13,45 +13,40 @@ import { history } from "store/history"
 
 const Installing = (props: {
     onboardApps: FractalApp[]
-    apps: FractalApp[]
     clientOS: OperatingSystem
 }) => {
-    const { apps, onboardApps, clientOS } = props
+    const { onboardApps, clientOS } = props
 
     const [currentApp, setCurrentApp] = useState("")
     const [progress, setProgress] = useState(0)
-    const [doneInstalling, setDoneInstalling] = useState(false)
 
-    const appsLength = apps && apps.length > 0 ? apps.length : 1
+    const appsLength =
+        onboardApps && onboardApps.length > 0 ? onboardApps.length : 1
     const progressBar = useSpring({ width: (progress / appsLength) * 600 })
 
     const handleDone = (): void => {
         history.push(FractalRoute.DASHBOARD)
     }
 
-    const createShortcutsWrapper = async (): Promise<void> => {
-        const results = []
-
-        for (let i = 0; i < onboardApps.length; i += 1) {
-            const app = onboardApps[i]
-            if (clientOS === OperatingSystem.WINDOWS) {
-                results.push(
-                    new Promise((resolve) => {
-                        setCurrentApp(app.app_id)
-                        createWindowsShortcuts(app)
-                        resolve()
-                    }).then(() => {
-                        setProgress(progress + 1)
-                        return null
-                    })
-                )
-            }
-            setProgress(progress + 1)
+    const createShortcutsWrapper = async (): Promise<any> => {
+        if (clientOS === OperatingSystem.WINDOWS) {
+            await onboardApps.reduce(
+                async (previousPromise: Promise<any>, nextApp: FractalApp) => {
+                    await previousPromise
+                    setCurrentApp(nextApp.app_id)
+                    setProgress(progress + 1)
+                    return createWindowsShortcuts(nextApp)
+                },
+                Promise.resolve()
+            )
+            setProgress(appsLength)
         }
-
-        await Promise.all(results)
-        setDoneInstalling(true)
     }
+
+    useEffect(() => {
+        console.log("progres", progress)
+        console.log("onboard app", onboardApps.length)
+    }, [progress])
 
     useEffect(() => {
         if (onboardApps && onboardApps.length > 0) {
@@ -76,7 +71,7 @@ const Installing = (props: {
                             style={progressBar}
                         />
                     </div>
-                    {doneInstalling ? (
+                    {progress === appsLength ? (
                         <>
                             <div className={styles.installingText}>
                                 Done installing.
@@ -105,14 +100,12 @@ export const mapStateToProps = (state: {
     MainReducer: {
         client: {
             onboardApps: FractalApp[]
-            apps: FractalApp[]
             clientOS: OperatingSystem
         }
     }
 }) => {
     return {
         onboardApps: state.MainReducer.client.onboardApps,
-        apps: state.MainReducer.client.apps,
         clientOS: state.MainReducer.client.clientOS,
     }
 }
