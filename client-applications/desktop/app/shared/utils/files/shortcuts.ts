@@ -181,3 +181,34 @@ export const createWindowsShortcuts = async (
 
     return desktopSuccess || startMenuSuccess
 }
+
+export const deleteShortcut = (app: FractalApp) => {
+    /*
+        Description:
+            Creates a shortcut to the Fractal streamed app and stores the shortcut in a specified directory
+
+        Arguments:
+            app (FractalApp): App to create shortcut to
+            outputPath (string): Folder that the shortcut should be placed in. If not specified, defaults to Desktop.
+        
+        Returns:
+            success (boolean): True/False if shortcut was created successfully
+    */
+
+    const shortcut = createShortcutName(app.app_id)
+    const platform: OperatingSystem = os.platform()
+
+    if (platform === OperatingSystem.MAC) {
+        debugLog("Mac shortcuts not yet implemented")
+    }
+    if (platform === OperatingSystem.WINDOWS) {
+        // Points to the folder where windows.vbs is located (shortcut creation code)
+        // Check the desktop folder and Start Menu Programs folder
+        const windowsDesktopPath = `${FractalWindowsDirectory.DESKTOP}${shortcut}.lnk`
+        const windowsStartMenuPath = `${FractalWindowsDirectory.START_MENU}Fractal\\${shortcut}.lnk`
+
+        fs.unlinkSync(windowsDesktopPath)
+        fs.unlinkSync(windowsStartMenuPath)
+    }
+    debugLog(`no suitable os found, instead got ${platform}`)
+}
