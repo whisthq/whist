@@ -167,6 +167,10 @@ jobs:
               run: cd ecs-host-service && make deps
 
             - name: Build Go project
+              env:
+                WEBSERVER_AUTH_SECRET_DEV: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_DEV }}
+                WEBSERVER_AUTH_SECRET_STAGING: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_STAGING }}
+                WEBSERVER_AUTH_SECRET_PROD: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_PROD }}
               run: cd ecs-host-service && make build
 
             - name: Upload binary to S3
