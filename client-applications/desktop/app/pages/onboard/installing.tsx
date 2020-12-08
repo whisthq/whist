@@ -44,11 +44,6 @@ const Installing = (props: {
     }
 
     useEffect(() => {
-        console.log("progres", progress)
-        console.log("onboard app", onboardApps.length)
-    }, [progress])
-
-    useEffect(() => {
         if (onboardApps && onboardApps.length > 0) {
             createShortcutsWrapper()
         }
