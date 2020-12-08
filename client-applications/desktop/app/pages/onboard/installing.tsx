@@ -17,31 +17,34 @@ const Installing = (props: {
     clientOS: OperatingSystem
     dispatch: Dispatch<any>
 }) => {
-    const { apps, onboardApps, clientOS, dispatch } = props
+    const { apps, onboardApps, clientOS } = props
 
     const [currentApp, setCurrentApp] = useState("")
     const [progress, setProgress] = useState(0)
+    const [doneInstalling, setDoneInstalling] = useState(false)
 
     const appsLength = apps && apps.length > 0 ? apps.length : 1
     const progressBar = useSpring({ width: (progress / appsLength) * 600 })
 
-    const handleDone = () => {
+    const handleDone = (): void => {
         history.push(FractalRoute.DASHBOARD)
     }
 
-    const createShortcutWrapper = async (app: FractalApp) => {
-        if (clientOS === OperatingSystem.WINDOWS) {
-            await createWindowsShortcuts(app)
+    const createShortcutsWrapper = async (): Promise<void> => {
+        for (let i = 0; i < onboardApps.length; i += 1) {
+            const app = onboardApps[i]
+            setCurrentApp(app.app_id)
+            if (clientOS === OperatingSystem.WINDOWS) {
+                await createWindowsShortcuts(app)
+            }
+            setProgress(progress + 1)
         }
+        setDoneInstalling(true)
     }
 
     useEffect(() => {
-        for (let i = 0; i < onboardApps.length; i += 1) {
-            const app = onboardApps[i]
-            console.log("installing ", app.app_id)
-            setCurrentApp(app.app_id)
-            createShortcutWrapper(app)
-            setProgress(progress + 1)
+        if (onboardApps && onboardApps.length > 0) {
+            createShortcutsWrapper()
         }
     }, [onboardApps])
 
@@ -62,7 +65,7 @@ const Installing = (props: {
                             style={progressBar}
                         />
                     </div>
-                    {apps && apps.length && progress === apps.length ? (
+                    {doneInstalling ? (
                         <>
                             <div className={styles.installingText}>
                                 Done installing.
