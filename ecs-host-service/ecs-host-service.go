@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"math"
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
 	// that we never forget to send a message via sentry. Instead, use the
 	// fractallogger package imported below as `logger`
@@ -75,6 +76,9 @@ func startECSAgent() {
 // reserve the first 10 TTYs for the host system
 var ttyState [256]string = [256]string{"reserved", "reserved", "reserved", "reserved",
 	"reserved", "reserved", "reserved", "reserved", "reserved", "reserved"}
+
+// keep track of the mapping from hostPort to Docker container ID
+var containerIDs map[uint16]string = make(map[uint16]string)
 
 // keys: hostPort, values: slice containing all cloud storage directories that are mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
@@ -227,6 +231,37 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	return err
 }
 
+func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
+	// Compute container-specific directory to write DPI data to
+	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
+		return logger.MakeError("Invalid HostPort for DPI request: %v", req.HostPort)
+	}
+	hostPort := (uint16)(req.HostPort)
+	id, exists := containerIDs[hostPort]
+	if !exists {
+		return logger.MakeError("Could not find currently-starting container with hostPort %v", hostPort)
+	}
+	datadir := resourceMappingDirectory + id + "/"
+
+	// Actually write DPI information to file
+	strdpi := logger.Sprintf("%v", req.DPI)
+	filename := datadir + "DPI"
+	err := writeAssignmentToFile(filename, strdpi)
+	if err != nil {
+		return logger.MakeError("Could not write value %v to DPI file %v. Error: %s", strdpi, filename, err)
+	}
+
+	// Indicate that we are ready for the container to read the data back
+	// (see comment at the end of containerStartHandler)
+	err = writeAssignmentToFile(datadir+".ready", ".ready")
+	if err != nil {
+		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
+		return err
+	}
+
+	return nil
+}
+
 func writeAssignmentToFile(filename, data string) (err error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644|os.ModeSticky)
 	if err != nil {
@@ -311,12 +346,22 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string) e
 		return err
 	}
 
-	// Indicate that we are ready for the container to read the data back
-	err = writeAssignmentToFile(datadir+".ready", ".ready")
+	// If we didn't run into any errors so far, we add this container to the
+	// `containerIDs` map.
+	hostPortInt64, err := strconv.ParseUint(hostPort[0].HostPort, 10, 16)
 	if err != nil {
-		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
+		err := logger.MakeError("containerStartHandler: The hostPort %s for container %s did not parse into a uint16!", hostPort, id)
 		return err
 	}
+	hostPortUint16 := uint16(hostPortInt64)
+	containerIDs[hostPortUint16] = id
+
+	// We do not mark the container as "ready" but instead let handleDPIRequest
+	// do that, since we don't want to mark a container as ready until the DPI is
+	// set. We are confident that the DPI request will arrive after the Docker
+	// start handler is called, since the DPI request is not triggered until the
+	// webserver receives the hostPort from AWS, which does not happen until the
+	// container is in a "RUNNING" state.
 
 	return nil
 }
@@ -327,6 +372,7 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string) {
 	err := os.RemoveAll(datadir)
 	if err != nil {
 		logger.Errorf("Failed to delete container-specific directory %s", datadir)
+		// Do not return here, since we still want to de-allocate the TTY if it exists
 	}
 	logger.Info("Successfully deleted (possibly non-existent) container-specific directory %s\n", datadir)
 
@@ -337,32 +383,31 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string) {
 		}
 	}
 
-	// Unmount cloud storage directories
-	c, err := cli.ContainerInspect(ctx, id)
-	if err != nil {
-		logger.Errorf("Error running ContainerInspect on container %s: %v", id, err)
+	// Make sure the container is removed from the `containerIDs` map
+	// Note that we cannot parse the hostPort the same way we do in
+	// containerStartHandler, since now the hostPort does not appear in the
+	// container's data! Therefore, we have to find it by id.
+	var hostPort uint16
+	foundHostPort := false
+	for k, v := range containerIDs {
+		if v == id {
+			foundHostPort = true
+			hostPort = k
+			break
+		}
+	}
+	if !foundHostPort {
+		logger.Errorf("Could not find a hostPort mapping for container %s", id)
 		return
 	}
-	hostPort, exists := c.NetworkSettings.Ports["32262/tcp"]
-	if !exists {
-		logger.Errorf("Could not find mapping for port 32262/tcp for container %s", id)
-		return
-	}
-	if len(hostPort) != 1 {
-		logger.Errorf("The hostPort mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", id, hostPort)
-		return
-	}
-	hostPortInt64, err := strconv.ParseUint(hostPort[0].HostPort, 10, 16)
-	if err != nil {
-		logger.Errorf("The hostPort %s for container %s did not parse into a uint16!", hostPort, id)
-		return
-	}
-	hostPortUint16 := uint16(hostPortInt64)
+	delete(containerIDs, hostPort)
+	logger.Infof("Deleted mapping from hostPort %v to container ID %v", hostPort, id)
 
-	storageDirs, exists := cloudStorageDirs[hostPortUint16]
+	// Unmount cloud storage directories
+	storageDirs, exists := cloudStorageDirs[hostPort]
 	if exists {
 		for k := range storageDirs {
-			unmountCloudStorageDir(hostPortUint16, k)
+			unmountCloudStorageDir(hostPort, k)
 		}
 	}
 }
@@ -600,8 +645,11 @@ eventLoop:
 		case serverevent := <-serverEvents:
 			switch serverevent.(type) {
 			case *httpserver.SetContainerDPIRequest:
-				logger.Info("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
-				serverevent.ReturnResult("ez game ez life", nil)
+				err := handleDPIRequest(serverevent.(*httpserver.SetContainerDPIRequest))
+				if err != nil {
+					logger.Error(err)
+				}
+				serverevent.ReturnResult("", err)
 
 			case *httpserver.MountCloudStorageRequest:
 				err := mountCloudStorageDir(serverevent.(*httpserver.MountCloudStorageRequest))
@@ -609,6 +657,11 @@ eventLoop:
 					logger.Error(err)
 				}
 				serverevent.ReturnResult("", err)
+
+			default:
+				err := logger.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
+				serverevent.ReturnResult("", err)
+				logger.Error(err)
 			}
 		}
 	}
