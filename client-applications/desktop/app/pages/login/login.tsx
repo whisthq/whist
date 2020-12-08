@@ -5,11 +5,20 @@ import TitleBar from "shared/components/titleBar"
 import Version from "shared/components/version"
 import BackgroundView from "shared/views/backgroundView"
 import LoginView from "pages/login/views/loginView/loginView"
+import { PuffAnimation } from "shared/components/loadingAnimations"
 
 import styles from "pages/login/login.css"
 
-const Login = (props: { loginWarning: string }) => {
-    const { loginWarning } = props
+const Login = (props: { loginWarning: string; loaded: boolean }) => {
+    const { loginWarning, loaded } = props
+
+    if (!loaded) {
+        return (
+            <div>
+                <PuffAnimation />
+            </div>
+        )
+    }
 
     return (
         <div className={styles.container} data-tid="container">
