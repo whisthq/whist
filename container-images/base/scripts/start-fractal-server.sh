@@ -3,12 +3,10 @@
 CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
 FRACTAL_MAPPINGS_DIR=/fractal/containerResourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
-DPI_FILENAME=DPI
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url
 
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/$IDENTIFIER_FILENAME)
-FRACTAL_DPI=$(cat $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/$DPI_FILENAME)
 
 OPTIONS=""
 
@@ -25,9 +23,5 @@ if [ -f "$WEBSERVER_URL_FILENAME" ]; then
     OPTIONS="$OPTIONS --webserver=$WEBSERVER_URL"
 fi
 
-# mount cloud storage directories to home directory
-# https://stackoverflow.com/questions/2107945/how-to-loop-over-directories-in-linux
-# find "/fractal/cloudStorage/$IDENTIFIER" -maxdepth 1 -mindepth 1 -type d -exec ln -sf {} /home/fractal/
-
-
 /usr/share/fractal/FractalServer --identifier=$IDENTIFIER $OPTIONS
+
