@@ -269,7 +269,7 @@ export const createWindowsShortcuts = async (
     app: FractalApp,
     desktop = true,
     startMenu = true
-): boolean => {
+): Promise<boolean> => {
     const startMenuPath = `${FractalWindowsDirectory.START_MENU}Fractal\\`
     let desktopSuccess = true
     let startMenuSuccess = true
