@@ -8,7 +8,7 @@ import TitleBar from "shared/components/titleBar"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalApp } from "shared/types/ui"
 import { OperatingSystem } from "shared/types/client"
-import { createWindowsShortcuts } from "shared/utils/files/shortcuts"
+import { createShortcuts } from "shared/utils/files/shortcuts"
 import { history } from "store/history"
 
 const Installing = (props: {
@@ -35,7 +35,7 @@ const Installing = (props: {
                     await previousPromise
                     setCurrentApp(nextApp.app_id)
                     setProgress(progress + 1)
-                    return createWindowsShortcuts(nextApp)
+                    return createShortcuts(nextApp)
                 },
                 Promise.resolve()
             )
