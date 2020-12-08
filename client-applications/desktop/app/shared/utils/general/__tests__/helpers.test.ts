@@ -1,6 +1,9 @@
 /* eslint-disable */
 
-import { searchArrayByKey, updateArrayByKey } from "shared/utils/helpers"
+import {
+    searchArrayByKey,
+    updateArrayByKey,
+} from "shared/utils/general/helpers"
 import { FractalAppLocalState } from "shared/types/ui"
 
 /* Define test variables here */

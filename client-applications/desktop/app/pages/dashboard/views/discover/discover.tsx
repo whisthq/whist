@@ -13,15 +13,15 @@ import { PuffAnimation } from "shared/components/loadingAnimations"
 import {
     checkIfShortcutExists,
     createShortcutName,
-} from "shared/utils/shortcuts"
+} from "shared/utils/files/shortcuts"
 import {
     FractalApp,
     FractalBanner,
     FractalAppLocalState,
 } from "shared/types/ui"
-import { deepCopyObject } from "shared/utils/reducerHelpers"
+import { deepCopyObject } from "shared/utils/general/reducer"
 import { updateClient } from "store/actions/pure"
-import { searchArrayByKey } from "shared/utils/helpers"
+import { searchArrayByKey } from "shared/utils/general/helpers"
 import {
     FractalAppCategory,
     FractalBannerCategory,
