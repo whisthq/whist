@@ -44,6 +44,7 @@ const RootApp = (props: {
     const [needsUpdate, setNeedsUpdate] = useState(false)
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [launched, setLaunched] = useState(false)
+    const [accessTokenRetrieved, setAccessTokenRetrieved] = useState(false)
 
     const { data } = useQuery(GET_FEATURED_APPS)
 
@@ -89,6 +90,8 @@ const RootApp = (props: {
         if (localAccessToken) {
             dispatch(updateAuth({ candidateAccessToken: localAccessToken }))
         }
+
+        setAccessTokenRetrieved(true)
     }, [])
 
     useEffect(() => {
@@ -198,7 +201,10 @@ const RootApp = (props: {
                     path={FractalRoute.ONBOARD_INSTALLING}
                     component={Installing}
                 />
-                <Route path={FractalRoute.LOGIN} component={Login} />
+                <Route
+                    path={FractalRoute.LOGIN}
+                    component={() => <Login loaded={accessTokenRetrieved} />}
+                />
             </Switch>
         </div>
     )
