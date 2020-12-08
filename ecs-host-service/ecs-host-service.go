@@ -140,7 +140,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	}
 
 	// Make directory to mount in
-	err = os.MkdirAll(path, 0644|os.ModeSticky)
+	err = os.MkdirAll(path, os.FileMode(0777))
 	if err != nil {
 		return logger.MakeError("Could not mkdir path %s. Error: %s", path, err)
 	} else {
@@ -164,10 +164,10 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	f, _ := os.Create(scriptpath)
 	_, _ = f.WriteString(logger.Sprintf("#!/bin/sh\n\n"))
 	_, _ = f.WriteString(strcmd)
-	os.Chmod(scriptpath, 0700)
+	os.Chmod(scriptpath, os.FileMode(0777))
 	f.Close()
 	defer os.RemoveAll(scriptpath)
-	cmd := exec.Command(scriptpath)
+	cmd := exec.Command("runuser", "ubuntu", scriptpath)
 
 	logger.Info("Rclone config create command: %v", cmd)
 
@@ -182,7 +182,8 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	// Synchronize using errorchan.
 	errorchan := make(chan error)
 	go func() {
-		cmd = exec.Command("/usr/bin/rclone", "mount", configName+":/", path)
+		// cmd = exec.Command("runuser", "ubuntu", "-c", "'/usr/bin/rclone mount "+configName+":/ "+path+"'")
+		cmd = exec.Command("rclone", "mount", configName+":/", path)
 		cmd.Env = os.Environ()
 		logger.Info("Rclone mount command: [  %v  ]", cmd)
 		stderr, _ := cmd.StderrPipe()
@@ -292,7 +293,7 @@ func writeAssignmentToFile(filename, data string) (err error) {
 func containerStartHandler(ctx context.Context, cli *client.Client, id string) error {
 	// Create a container-specific directory to store mappings
 	datadir := resourceMappingDirectory + id + "/"
-	err := os.Mkdir(datadir, 0644|os.ModeSticky)
+	err := os.Mkdir(datadir, os.FileMode(0777))
 	if err != nil {
 		return logger.MakeError("Failed to create container-specific directory %s. Error: %v", datadir, err)
 	}
@@ -456,7 +457,7 @@ func initializeFilesystem() {
 	}
 
 	// Create the resource mapping directory
-	err := os.MkdirAll(resourceMappingDirectory, 0644|os.ModeSticky)
+	err := os.MkdirAll(resourceMappingDirectory, os.FileMode(0777))
 	if err != nil {
 		logger.Panicf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
 	}
@@ -471,7 +472,7 @@ func initializeFilesystem() {
 	}
 
 	// Create fractal-private directory
-	err = os.MkdirAll(httpserver.FractalPrivatePath, 0644|os.ModeSticky)
+	err = os.MkdirAll(httpserver.FractalPrivatePath, os.FileMode(0777))
 	if err != nil {
 		logger.Panicf("Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
 	}
