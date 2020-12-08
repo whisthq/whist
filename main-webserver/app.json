@@ -23,6 +23,7 @@
     "test": {
       "addons": ["heroku-redis:in-dyno"],
       "scripts": {
+        "test-setup": "echo '{}' > client_secret.json",
         "test": "pytest -v -s --no-mock-aws"
       }
     }
