@@ -4,7 +4,7 @@ import moment from "moment"
 import * as Action from "store/actions/pure"
 import * as SideEffect from "store/actions/sideEffects"
 
-import { apiPost, apiGet } from "shared/utils/api"
+import { apiPost, apiGet } from "shared/utils/general/api"
 import { history } from "store/history"
 import { generateMessage } from "shared/utils/loading"
 import { FractalRoute } from "shared/types/navigation"
@@ -78,8 +78,6 @@ function* createContainer(action: {
     const app = action.app
     const url = action.url
 
-    // console.log(`create container saga, test, app, url : ${test}, ${app}, ${url}`)
-
     yield put(
         Action.updateContainer({
             desiredAppID: app,
@@ -125,11 +123,6 @@ function* createContainer(action: {
         }
         body.region = region
     }
-
-    // console.log(`body is ${JSON.stringify(body)}`)
-    // console.log(`webserver is ${webserver}`)
-
-    console.log("username", username)
 
     if (!username || username === "None" || username === "") {
         history.push(FractalRoute.LOGIN)
@@ -218,7 +211,6 @@ function* createContainer(action: {
     }
     // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
     if (json && json.state && json.state === "SUCCESS") {
-        console.log(json)
         progressSoFar = 100
 
         yield put(

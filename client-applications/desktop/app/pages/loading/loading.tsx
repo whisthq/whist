@@ -5,10 +5,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 import TitleBar from "shared/components/titleBar"
-import { debugLog } from "shared/utils/logging"
+import { debugLog } from "shared/utils/general/logging"
 import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/history"
-import { execChmodUnix } from "shared/utils/exec"
+import { execChmodUnix } from "shared/utils/files/exec"
 import { FractalRoute } from "shared/types/navigation"
 import { OperatingSystem, FractalWindowsDirectory } from "shared/types/client"
 
@@ -51,7 +51,6 @@ const Loading = (props: {
     const loadingBar = useSpring({ width: percentLoadedWidth })
 
     const resetLaunchRedux = () => {
-        console.log("container update reset")
         dispatch(
             updateContainer({
                 containerID: null,
@@ -146,7 +145,6 @@ const Loading = (props: {
     useEffect(() => {
         // Ensures that a container exists, that the protocol has not been launched before, and that
         // the app we want to launch is the app that will be launched
-        console.log("container ID is ", containerID)
         if (containerID && launches === 0 && currentAppID === desiredAppID) {
             setLaunches(launches + 1)
         }

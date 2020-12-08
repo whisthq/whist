@@ -27,7 +27,7 @@ let mainWindow: BrowserWindow | null = null
 // Detects whether there's an auto-update
 let updating = false
 // Detects whether fractal:// has been typed into a browser
-let customURL = null
+let customURL: string | null = null
 // Toggles whether the desktop app is allowed to quit (to prevent concurrent apps)
 let canClose = true
 

@@ -14,7 +14,7 @@ import { history } from "store/history"
 import { FractalAuthCache } from "shared/types/cache"
 import { updateClient } from "store/actions/pure"
 import { FractalApp } from "shared/types/ui"
-import { searchArrayByKey } from "shared/utils/helpers"
+import { searchArrayByKey } from "shared/utils/general/helpers"
 
 const { shell } = require("electron")
 
@@ -64,7 +64,6 @@ const Apps = (props: { accessToken: string; dispatch: Dispatch<any> }) => {
         if (numSelectedApps === 0) {
             history.push(FractalRoute.DASHBOARD)
         } else {
-            console.log("dispatching", selectedApps)
             dispatch(updateClient({ onboardApps: selectedApps }))
             history.push(FractalRoute.ONBOARD_INSTALLING)
         }
