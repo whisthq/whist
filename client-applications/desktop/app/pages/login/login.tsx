@@ -12,14 +12,6 @@ import styles from "pages/login/login.css"
 const Login = (props: { loginWarning: string; loaded: boolean }) => {
     const { loginWarning, loaded } = props
 
-    if (!loaded) {
-        return (
-            <div>
-                <PuffAnimation />
-            </div>
-        )
-    }
-
     return (
         <div className={styles.container} data-tid="container">
             <TitleBar />
@@ -30,12 +22,18 @@ const Login = (props: { loginWarning: string; loaded: boolean }) => {
                         <span className={styles.logoTitle}>Fractal</span>
                     </div>
                 </div>
-                <div style={{ marginTop: loginWarning ? 0 : 50 }}>
-                    <div className={styles.loginContainer}>
-                        <BackgroundView />
-                        <LoginView />
+                {!loaded ? (
+                    <div>
+                        <PuffAnimation />
                     </div>
-                </div>
+                ) : (
+                    <div style={{ marginTop: loginWarning ? 0 : 50 }}>
+                        <div className={styles.loginContainer}>
+                            <BackgroundView />
+                            <LoginView />
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )

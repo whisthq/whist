@@ -42,7 +42,7 @@ const Installing = (props: {
                         resolve()
                     }).then(() => {
                         setProgress(progress + 1)
-                        return
+                        return null
                     })
                 )
             }
@@ -50,7 +50,6 @@ const Installing = (props: {
         }
 
         await Promise.all(results)
-
         setDoneInstalling(true)
     }
 
@@ -69,7 +68,7 @@ const Installing = (props: {
                     <h2>Your apps are installing.</h2>
                     <div className={styles.subtext} style={{ marginTop: 50 }}>
                         Please do not close this window until your installation
-                        is complete. This will take no more than a few minutes.
+                        is complete.
                     </div>
                     <div className={styles.installingBar}>
                         <animated.div
