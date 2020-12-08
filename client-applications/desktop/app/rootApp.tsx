@@ -32,14 +32,7 @@ const RootApp = (props: {
     accessToken: string
     dispatch: Dispatch<any>
 }) => {
-    const {
-        launches,
-        launchURL,
-        clientOS,
-        dpi,
-        candidateAccessToken,
-        dispatch,
-    } = props
+    const { launches, launchURL, clientOS, dpi, dispatch } = props
 
     const [needsUpdate, setNeedsUpdate] = useState(false)
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
@@ -78,8 +71,11 @@ const RootApp = (props: {
                 localAccessToken = urlObj.searchParams.get("accessToken")
                 if (localAccessToken) {
                     dispatch(
-                        updateAuth({ candidateAccessToken: localAccessToken })
+                        updateAuth({
+                            candidateAccessToken: localAccessToken,
+                        })
                     )
+                    dispatch(validateAccessToken(localAccessToken))
                 } else {
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
                 }
@@ -87,9 +83,10 @@ const RootApp = (props: {
         })
 
         // If already logged in, redirect to dashboard
-        localAccessToken = storage.get("accessToken")
+        localAccessToken = storage.get(FractalAuthCache.ACCESS_TOKEN)
         if (localAccessToken) {
             dispatch(updateAuth({ candidateAccessToken: localAccessToken }))
+            dispatch(validateAccessToken(localAccessToken))
         }
 
         setAccessTokenRetrieved(true)
@@ -105,13 +102,6 @@ const RootApp = (props: {
             )
         }
     }, [clientOS, dpi])
-
-    // If there's an access token, validate it
-    useEffect(() => {
-        if (candidateAccessToken && candidateAccessToken !== "") {
-            dispatch(validateAccessToken(candidateAccessToken))
-        }
-    }, [candidateAccessToken])
 
     // If does not need update, logged in and ready to launch
     useEffect(() => {
@@ -137,7 +127,7 @@ const RootApp = (props: {
     useEffect(() => {
         setTimeout(() => {
             setUrlReceived(true)
-        }, 2500)
+        }, 3000)
     }, [])
 
     // If there's an update, redirect to update screen
@@ -224,7 +214,6 @@ const mapStateToProps = (state: {
     MainReducer: {
         auth: {
             username: string
-            candidateAccessToken: string
             accessToken: string
             refreshToken: string
         }
@@ -240,7 +229,6 @@ const mapStateToProps = (state: {
 }) => {
     return {
         username: state.MainReducer.auth.username,
-        candidateAccessToken: state.MainReducer.auth.candidateAccessToken,
         accessToken: state.MainReducer.auth.accessToken,
         refreshToken: state.MainReducer.auth.refreshToken,
         launches: state.MainReducer.container.launches,
