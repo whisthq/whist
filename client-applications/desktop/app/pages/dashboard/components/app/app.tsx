@@ -33,7 +33,6 @@ const App = (props: {
 
     useEffect(() => {
         if (launches === 1 && launched) {
-            console.log("redirecting to loading")
             history.push(FractalRoute.LOADING)
             dispatch(createContainer(app.app_id, null, admin))
             setLaunched(false)

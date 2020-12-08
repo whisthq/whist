@@ -3,15 +3,15 @@ import { connect } from "react-redux"
 import { Modal, Tooltip, OverlayTrigger } from "react-bootstrap"
 import { FaCheck } from "react-icons/fa"
 
-import { openExternal, updateArrayByKey } from "shared/utils/helpers"
+import { openExternal, updateArrayByKey } from "shared/utils/general/helpers"
 import { FractalApp, FractalAppLocalState } from "shared/types/ui"
-import { OperatingSystem, FractalWindowsDirectory } from "shared/types/client"
+import { OperatingSystem } from "shared/types/client"
 import {
     createShortcutName,
     createWindowsShortcuts,
-} from "shared/utils/shortcuts"
+} from "shared/utils/files/shortcuts"
 import { updateClient } from "store/actions/pure"
-import { debugLog } from "shared/utils/logging"
+import { debugLog } from "shared/utils/general/logging"
 
 import styles from "pages/dashboard/components/app/components/appPopup.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"

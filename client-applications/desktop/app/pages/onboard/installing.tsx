@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Dispatch } from "react"
+import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import styles from "pages/onboard/onboard.css"
 import { useSpring, animated } from "react-spring"
@@ -8,14 +8,13 @@ import TitleBar from "shared/components/titleBar"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalApp } from "shared/types/ui"
 import { OperatingSystem } from "shared/types/client"
-import { createWindowsShortcuts } from "shared/utils/shortcuts"
+import { createWindowsShortcuts } from "shared/utils/files/shortcuts"
 import { history } from "store/history"
 
 const Installing = (props: {
     onboardApps: FractalApp[]
     apps: FractalApp[]
     clientOS: OperatingSystem
-    dispatch: Dispatch<any>
 }) => {
     const { apps, onboardApps, clientOS } = props
 
@@ -31,14 +30,18 @@ const Installing = (props: {
     }
 
     const createShortcutsWrapper = async (): Promise<void> => {
+        const results = []
+
         for (let i = 0; i < onboardApps.length; i += 1) {
             const app = onboardApps[i]
             setCurrentApp(app.app_id)
             if (clientOS === OperatingSystem.WINDOWS) {
-                await createWindowsShortcuts(app)
+                results.push(createWindowsShortcuts(app))
             }
             setProgress(progress + 1)
         }
+
+        await Promise.all(results)
         setDoneInstalling(true)
     }
 

@@ -1,5 +1,5 @@
 import { config, webservers } from "shared/constants/config"
-import { debugLog } from "shared/utils/logging"
+import { debugLog } from "shared/utils/general/logging"
 import {
     FractalHTTPRequest,
     FractalHTTPContent,

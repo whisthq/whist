@@ -2,7 +2,7 @@ import React from "react"
 import { Carousel } from "react-bootstrap"
 import { connect } from "react-redux"
 
-import { openExternal } from "shared/utils/helpers"
+import { openExternal } from "shared/utils/general/helpers"
 import { FractalBanner } from "shared/types/ui"
 
 import styles from "pages/dashboard/components/banner/banner.css"

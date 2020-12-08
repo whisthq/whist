@@ -14,10 +14,11 @@ import Installing from "pages/onboard/installing"
 import { history } from "store/history"
 import { createContainer, validateAccessToken } from "store/actions/sideEffects"
 import { updateClient, updateContainer, updateAuth } from "store/actions/pure"
-import { setAWSRegion } from "shared/utils/exec"
+import { setAWSRegion } from "shared/utils/files/exec"
 import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 
+import { OperatingSystem } from "shared/types/client"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalAuthCache } from "shared/types/cache"
 
@@ -29,7 +30,7 @@ const RootApp = (props: {
     candidateAccessToken: string
     username: string
     accessToken: string
-    dispatch: Dispatch
+    dispatch: Dispatch<any>
 }) => {
     const {
         launches,
@@ -58,13 +59,13 @@ const RootApp = (props: {
         let localAccessToken: string | null = null
 
         // Update listener
-        ipc.on("update", (_: IpcRendererEvent, update: boolean) => {
+        ipc.on("update", (_: any, update: boolean) => {
             setNeedsUpdate(update)
             setUpdatePingReceived(true)
         })
 
         // Custom URL listener
-        ipc.on("customURL", (_: IpcRendererEvent, customURL: string) => {
+        ipc.on("customURL", (_: any, customURL: string) => {
             if (customURL && customURL.toString().includes("fractal://")) {
                 customURL = `fractal://${customURL.split("fractal://")[1]}`
                 // Convert URL to URL object so it can be parsed
@@ -203,7 +204,24 @@ const RootApp = (props: {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
+const mapStateToProps = (state: {
+    MainReducer: {
+        auth: {
+            username: string
+            candidateAccessToken: string
+            accessToken: string
+            refreshToken: string
+        }
+        container: {
+            launches: number
+            launchURL: string
+        }
+        client: {
+            clientOS: OperatingSystem
+            dpi: number
+        }
+    }
+}) => {
     return {
         username: state.MainReducer.auth.username,
         candidateAccessToken: state.MainReducer.auth.candidateAccessToken,
