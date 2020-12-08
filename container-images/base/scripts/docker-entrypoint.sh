@@ -12,6 +12,12 @@ then
     echo $WEBSERVER_URL > /usr/share/fractal/private/webserver_url
 fi
 
+# if FRACTAL_DPI is set, then create file
+if [ -n "${FRACTAL_DPI+1}" ]
+then
+    echo $FRACTAL_DPI > /usr/share/fractal/private/dpi
+fi
+
 # make sure this environment variable does not leak in any way (probably
 # redundant, but still good practice)
 unset FRACTAL_AES_KEY
