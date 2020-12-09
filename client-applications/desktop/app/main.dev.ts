@@ -215,6 +215,9 @@ app.on("open-url", (event, data) => {
     customURL = data.toString()
     if (mainWindow && mainWindow.webContents) {
         mainWindow.webContents.send("customURL", customURL)
+        mainWindow.show()
+        mainWindow.focus()
+        mainWindow.restore()
     }
 })
 
