@@ -34,8 +34,8 @@ jobs:
               with:
                   node-version: 12
 
-            - name: Install prettier # should match version in client-applications/package.json devDependencies
-              run: npm install -g prettier@2.0.5
+            - name: Install prettier
+              run: npm install -g prettier
 
             - name: Check if readmes are formatted
               run: prettier --check '**/README.md' # prettier glob syntax hits all readmes with this
