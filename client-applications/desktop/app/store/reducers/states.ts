@@ -21,6 +21,7 @@ export const DEFAULT = {
         desiredAppID: null,
         launches: 0,
         launchURL: null,
+        pngFile: null,
     },
     client: {
         clientOS: null,

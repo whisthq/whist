@@ -50,6 +50,7 @@ export const updateContainer = (body: {
     currentAppID: string | null
     launches: number
     launchURL: string | null
+    pngFile: string | null
 }) => {
     return {
         type: UPDATE_CONTAINER,
