@@ -97,6 +97,10 @@ if [ ! -f ../protocol/server/build64/libsentry.so ]; then
   echo "Could not find $DIR/../protocol/server/build64/libsentry.so... building protocol"
   ../protocol/build_protocol.sh
 fi
+if [ ! -f ../protocol/server/build64/crashpad_handler ]; then
+  echo "Could not find $DIR/../protocol/sentry-native/crashpad_build/handler/crashpad_handler... building protocol"
+  ../protocol/build_protocol.sh
+fi
 if [ ! -f ../protocol/server/build64/FractalServer ]; then
   echo "Could not find $DIR/../protocol/server/build64/FractalServer... building protocol"
   ../protocol/build_protocol.sh
@@ -106,6 +110,7 @@ echo "A protocol build exists, though it is not guaranteed to be up-to-date."
 
 mkdir "base/build_temp"
 cp ../protocol/server/build64/libsentry.so base/build_temp
+cp ../protocol/server/build64/crashpad_handler base/build_temp
 cp ../protocol/server/build64/FractalServer base/build_temp
 
 build_image_with_deps "$app_path" "$local_tag" "$force_output"

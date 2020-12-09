@@ -416,6 +416,7 @@ RUN ln -sf $(which xterm) /usr/bin/fractal-application
 
 # Grab pre-compiled Fractal Protocol
 COPY build_temp/libsentry.so /usr/share/fractal/bin/libsentry.so
+COPY build_temp/crashpad_handler /usr/share/fractal/bin/crashpad_handler
 COPY build_temp/FractalServer /usr/share/fractal/bin/FractalServer
 
 # Enter the Docker container via the entrypoint
