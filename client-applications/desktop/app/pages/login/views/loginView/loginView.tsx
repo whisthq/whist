@@ -3,6 +3,7 @@ import { connect } from "react-redux"
 import PuffLoader from "react-spinners/PuffLoader"
 
 import { updateClient, updateAuth } from "store/actions/pure"
+import { validateAccessToken } from "store/actions/sideEffects"
 import { setAWSRegion } from "shared/utils/files/exec"
 import { openExternal } from "shared/utils/general/helpers"
 import { config } from "shared/constants/config"
@@ -41,6 +42,7 @@ const LoginView = (props: { dispatch: Dispatch }) => {
     const onKeyPress = (evt: KeyboardEvent) => {
         if (evt.key === FractalKey.ENTER) {
             dispatch(updateAuth({ candidateAccessToken: accessToken }))
+            dispatch(validateAccessToken(accessToken))
         }
     }
 

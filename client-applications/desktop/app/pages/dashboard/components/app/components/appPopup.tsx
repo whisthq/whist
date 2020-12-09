@@ -44,27 +44,23 @@ const AppPopup = (props: {
     }
 
     const handleDownload = async () => {
-        if (clientOS === OperatingSystem.MAC) {
-            debugLog("not yet implemented")
-        } else if (clientOS === OperatingSystem.WINDOWS) {
-            setShortcutCreated(true)
+        setShortcutCreated(true)
 
-            const success = await createShortcuts(app)
+        const success = await createShortcuts(app)
 
-            // Create the shortcut inside the Fractal Directory
-            if (success) {
-                const { array, index } = updateArrayByKey(
-                    apps,
-                    "app_id",
-                    app.app_id,
-                    {
-                        localState: FractalAppLocalState.INSTALLED,
-                    }
-                )
-
-                if (array && index !== -1) {
-                    dispatch(updateClient({ apps: array }))
+        // Create the shortcut inside the Fractal Directory
+        if (success) {
+            const { array, index } = updateArrayByKey(
+                apps,
+                "app_id",
+                app.app_id,
+                {
+                    localState: FractalAppLocalState.INSTALLED,
                 }
+            )
+
+            if (array && index !== -1) {
+                dispatch(updateClient({ apps: array }))
             }
         }
     }

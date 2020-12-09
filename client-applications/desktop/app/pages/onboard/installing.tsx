@@ -29,18 +29,16 @@ const Installing = (props: {
     }
 
     const createShortcutsWrapper = async (): Promise<any> => {
-        if (clientOS === OperatingSystem.WINDOWS) {
-            await onboardApps.reduce(
-                async (previousPromise: Promise<any>, nextApp: FractalApp) => {
-                    await previousPromise
-                    setCurrentApp(nextApp.app_id)
-                    setProgress(progress + 1)
-                    return createShortcuts(nextApp)
-                },
-                Promise.resolve()
-            )
-            setProgress(appsLength)
-        }
+        await onboardApps.reduce(
+            async (previousPromise: Promise<any>, nextApp: FractalApp) => {
+                await previousPromise
+                setCurrentApp(nextApp.app_id)
+                setProgress(progress + 1)
+                return createShortcuts(nextApp)
+            },
+            Promise.resolve()
+        )
+        setProgress(appsLength)
     }
 
     useEffect(() => {
