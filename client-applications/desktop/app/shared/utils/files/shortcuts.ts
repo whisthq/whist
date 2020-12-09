@@ -188,7 +188,11 @@ export const createMacShortcut = async (
         fs.writeFileSync(runScriptPath, runScriptData)
         fs.chmodSync(runScriptPath, 0o755)
 
-        createDirectorySync(appFolderContents, "Resources") // shortcut.icns goes here
+        createDirectorySync(appFolderContents, "Resources")
+
+        const icnsBuffer = await SVGConverter.convertToIcns(app.logo_url)
+        const icnsPath = path.join(appFolderContents, "Resources/shortcut.icns")
+        fs.writeFileSync(icnsPath, icnsBuffer)
     } catch (err) {
         debugLog(err)
         return false
