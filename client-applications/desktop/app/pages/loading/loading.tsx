@@ -25,6 +25,7 @@ const Loading = (props: {
     desiredAppID: string
     currentAppID: string
     containerID: string
+    pngFile: string
     dispatch: Dispatch
 }) => {
     const {
@@ -38,6 +39,7 @@ const Loading = (props: {
         desiredAppID,
         currentAppID,
         containerID,
+        pngFile,
         dispatch,
     } = props
 
@@ -104,15 +106,16 @@ const Loading = (props: {
 
                 const portInfo = `32262:${port32262}.32263:${port32263}.32273:${port32273}`
                 const protocolParameters = {
-                    width: 800,
-                    height: 600,
-                    ports: portInfo,
-                    "private-key": secretKey,
+                    w: 800,
+                    h: 600,
+                    p: portInfo,
+                    k: secretKey,
+                    ...(pngFile && { i: pngFile }),
                 }
 
                 const protocolArguments = [
                     ...Object.entries(protocolParameters)
-                        .map(([flag, arg]) => [`--${flag}`, arg])
+                        .map(([flag, arg]) => [`-${flag}`, arg])
                         .flat(),
                     ip,
                 ]
@@ -264,6 +267,7 @@ const mapStateToProps = (state: { MainReducer: Record<string, any> }) => {
         secretKey: state.MainReducer.container.secretKey,
         desiredAppID: state.MainReducer.container.desiredAppID,
         currentAppID: state.MainReducer.container.currentAppID,
+        pngFile: state.MainReducer.container.pngFile,
     }
 }
 

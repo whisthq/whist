@@ -12,9 +12,7 @@
 import path from "path"
 import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
-import * as Sentry from "@sentry/electron"
-
-const { dialog } = require("electron")
+// import * as Sentry from "@sentry/electron"
 
 // if (process.env.NODE_ENV === "production") {
 //     Sentry.init({

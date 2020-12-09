@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, Dispatch } from "react"
 import { connect } from "react-redux"
 import { Col, Tooltip, OverlayTrigger } from "react-bootstrap"
 import { FaPlay } from "react-icons/fa"
@@ -8,6 +8,7 @@ import { updateContainer } from "store/actions/pure"
 import { history } from "store/history"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalApp, FractalAppLocalState } from "shared/types/ui"
+import { SVGConverter } from "shared/utils/files/images"
 import AppPopup from "pages/dashboard/components/app/components/appPopup"
 
 import styles from "pages/dashboard/components/app/app.css"
@@ -15,8 +16,8 @@ import styles from "pages/dashboard/components/app/app.css"
 const App = (props: {
     app: FractalApp
     launches: number
-    dispatch: Dispatch
     admin: boolean
+    dispatch: Dispatch<any>
 }) => {
     const { app, launches, admin, dispatch } = props
 
@@ -34,8 +35,18 @@ const App = (props: {
     useEffect(() => {
         if (launches === 1 && launched) {
             history.push(FractalRoute.LOADING)
-            dispatch(createContainer(app.app_id, null, admin))
-            setLaunched(false)
+            // Create PNG
+            SVGConverter.saveAsPngTemp(app.logo_url, app.app_id)
+                .then((pngPath: string) => {
+                    // Create container
+                    dispatch(updateContainer({ pngFile: pngPath }))
+                    dispatch(createContainer(app.app_id, null, admin))
+                    setLaunched(false)
+                    return null
+                })
+                .catch((err) => {
+                    throw err
+                })
         }
     }, [launches, launched])
 

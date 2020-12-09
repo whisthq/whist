@@ -271,7 +271,8 @@ export const createShortcuts = async (app: FractalApp): Promise<boolean> => {
         )
 
         return applicationsStatus
-    } else if (platform === OperatingSystem.WINDOWS) {
+    }
+    if (platform === OperatingSystem.WINDOWS) {
         // On Windows, create a desktop shortcut and Start Menu shortcut
         if (
             !createDirectorySync(FractalDirectory.WINDOWS_START_MENU, "Fractal")
