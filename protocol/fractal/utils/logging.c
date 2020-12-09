@@ -195,6 +195,10 @@ void destroy_logger() {
 void sentry_send_bread_crumb(char *tag, const char *fmt_str, ...) {
     if (!using_sentry) return;
 
+    // in the current sentry-native beta version, breadcrumbs prevent sentry
+    //  from sending Windows events to the dashboard, so we only log
+    //  breadcrumbs for OSX and Linux
+#ifndef _WIN32
     va_list args;
     va_start(args, fmt_str);
     char sentry_str[LOGGER_BUF_SIZE];
@@ -204,6 +208,7 @@ void sentry_send_bread_crumb(char *tag, const char *fmt_str, ...) {
     sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));
     sentry_add_breadcrumb(crumb);
     va_end(args);
+#endif
 }
 
 void sentry_send_event(const char *fmt_str, ...) {
