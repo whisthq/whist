@@ -310,13 +310,29 @@ export const deleteShortcut = (app: FractalApp) => {
     const platform: OperatingSystem = os.platform()
 
     if (platform === OperatingSystem.MAC) {
-        debugLog("Mac shortcuts not yet implemented")
+        const macDesktopPath = path.join(
+            FractalDirectory.DESKTOP,
+            `${shortcut}.app`
+        )
+        const macApplicationsPath = path.join(
+            FractalDirectory.MAC_APPLICATIONS,
+            `Fractal/${shortcut}.app`
+        )
+
+        fs.rmdirSync(macDesktopPath, { recursive: true })
+        fs.rmdirSync(macApplicationsPath, { recursive: true })
     }
     if (platform === OperatingSystem.WINDOWS) {
         // Points to the folder where windows.vbs is located (shortcut creation code)
         // Check the desktop folder and Start Menu Programs folder
-        const windowsDesktopPath = `${FractalWindowsDirectory.DESKTOP}${shortcut}.lnk`
-        const windowsStartMenuPath = `${FractalWindowsDirectory.START_MENU}Fractal\\${shortcut}.lnk`
+        const windowsDesktopPath = path.join(
+            FractalDirectory.DESKTOP,
+            `${shortcut}.lnk`
+        )
+        const windowsStartMenuPath = path.join(
+            FractalDirectory.WINDOWS_START_MENU,
+            `Fractal/${shortcut}.lnk`
+        )
 
         fs.unlinkSync(windowsDesktopPath)
         fs.unlinkSync(windowsStartMenuPath)
