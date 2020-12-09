@@ -23,7 +23,7 @@ repos:
     rev: 20.8b1 # Replace by any tag/version: https://github.com/psf/black/tags
     hooks:
       - id: black
-        name: "black (for all repositories)"
+        name: "Python Black (for all repositories)"
         language_version: python3
 
   # To use beautysh, you need to first install it locally via `pip install beautysh`
