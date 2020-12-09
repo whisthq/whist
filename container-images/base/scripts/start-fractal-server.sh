@@ -23,5 +23,11 @@ if [ -f "$WEBSERVER_URL_FILENAME" ]; then
     OPTIONS="$OPTIONS --webserver=$WEBSERVER_URL"
 fi
 
+# send in sentry environment if set
+if [ -f "$SENTRY_ENV" ]; then
+    export SENTRY_ENV=$(cat $SENTRY_ENV)
+    OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
+fi
+
 /usr/share/fractal/FractalServer --identifier=$IDENTIFIER $OPTIONS
 

@@ -232,6 +232,7 @@ endif()
 message("setting sentry options")
 set(SENTRY_BUILD_SHARED_LIBS ON CACHE BOOL "sentry create shared lib" FORCE)
 set(SENTRY_BUILD_RUNTIMESTATIC ON CACHE BOOL "sentry runtimestatic" FORCE)
+set(SENTRY_BACKEND crashpad CACHE STRING "sentry backend" FORCE)
 add_subdirectory(sentry-native)
 
 # set a standard location for the sentry shared lib so we can copy it into client/server build folders as a post build step
