@@ -202,7 +202,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 		// We close errorchan after 1000ms so the enclosing function can return an
 		// error if the `rclone mount` command failed immediately, or return nil if
 		// it didn't.
-		timeout := time.Second * 5
+		timeout := time.Second * 15
 		timer := time.AfterFunc(timeout, func() { close(errorchan) })
 		logger.Infof("Attempting to mount storage directory %s", path)
 
