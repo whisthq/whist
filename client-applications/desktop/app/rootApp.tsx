@@ -27,7 +27,6 @@ const RootApp = (props: {
     launchURL: string
     clientOS: string
     dpi: number
-    candidateAccessToken: string
     username: string
     accessToken: string
     dispatch: Dispatch<any>

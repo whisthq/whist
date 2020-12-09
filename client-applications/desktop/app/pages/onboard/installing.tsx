@@ -11,11 +11,8 @@ import { OperatingSystem } from "shared/types/client"
 import { createShortcuts } from "shared/utils/files/shortcuts"
 import { history } from "store/history"
 
-const Installing = (props: {
-    onboardApps: FractalApp[]
-    clientOS: OperatingSystem
-}) => {
-    const { onboardApps, clientOS } = props
+const Installing = (props: { onboardApps: FractalApp[] }) => {
+    const { onboardApps } = props
 
     const [currentApp, setCurrentApp] = useState("")
     const [progress, setProgress] = useState(0)

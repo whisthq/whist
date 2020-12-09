@@ -11,7 +11,6 @@ import {
     createShortcuts,
 } from "shared/utils/files/shortcuts"
 import { updateClient } from "store/actions/pure"
-import { debugLog } from "shared/utils/general/logging"
 
 import styles from "pages/dashboard/components/app/components/appPopup.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
