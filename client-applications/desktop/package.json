@@ -94,7 +94,7 @@
             ]
         },
         "publish": {
-            "bucket": "fractal-windows-application-release",
+            "bucket": "fractal-windows-application-testing",
             "provider": "s3",
             "region": "us-east-1"
         },
@@ -197,6 +197,7 @@
         "spawn-sync": "^2.0.0",
         "subscriptions-transport-ws": "^0.9.18",
         "systeminformation": "^4.22.3",
+        "temp": "^0.9.4",
         "to-ico": "^1.1.5"
     },
     "description": "Fractal Desktop Application",
@@ -373,16 +374,16 @@
         "build-renderer": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.renderer.prod.babel.js --colors",
         "dev": "cross-env START_HOT=1 yarn start-renderer-dev",
         "electron-rebuild": "electron-rebuild --parallel --force --types prod,dev,optional --module-dir app",
-        "lint-check": "yarn eslint 'app/*.ts*' && yarn eslint 'app/pages/**/*.ts*' && yarn eslint 'app/shared/**/*.ts*' && yarn eslint 'app/store/**/*.ts*'",
-        "lint-fix": "yarn eslint --fix 'app/*.ts*' && yarn eslint --fix 'app/pages/**/*.ts*' && yarn eslint --fix 'app/shared/**/*.ts*' && yarn eslint --fix 'app/store/**/*.ts*'",
+        "lint-check": "yarn eslint \"app/*.ts*\" && yarn eslint \"app/pages/**/*.ts*\" && yarn eslint \"app/shared/**/*.ts*\" && yarn eslint \"app/store/**/*.ts*\"",
+        "lint-fix": "yarn eslint --fix app/*.ts* && yarn eslint --fix app/pages/**/*.ts* && yarn eslint --fix app/shared/**/*.ts* && yarn eslint --fix app/store/**/*.ts*",
         "package": "yarn build && electron-builder build --publish never",
         "package-all": "yarn build && electron-builder build -mwl",
         "package-ci": "yarn postinstall && yarn build && electron-builder build --publish always",
         "package-linux": "yarn build && electron-builder build --linux",
         "package-win": "yarn build && electron-builder build --win --x64",
         "postinstall": "node -r @babel/register internals/scripts/CheckNativeDep.js && electron-builder install-app-deps && yarn build-dll && opencollective-postinstall",
-        "postlint-check": "prettier --ignore-path .eslintignore --single-quote --check '**/*.{js,jsx,json,html,css,less,scss,yml}'",
-        "postlint-fix": "prettier --ignore-path .eslintignore --single-quote --write '**/*.{js,jsx,json,html,css,less,scss,yml}'",
+        "postlint-check": "prettier --ignore-path .eslintignore --single-quote --check \"**/*.{js,jsx,json,html,css,less,scss,yml}\"",
+        "postlint-fix": "prettier --ignore-path .eslintignore --single-quote --write \"**/*.{js,jsx,json,html,css,less,scss,yml}\"",
         "preinstall": "node ./internals/scripts/CheckYarn.js",
         "prestart": "yarn build",
         "start": "cross-env NODE_ENV=development electron ./app/main.prod.js",

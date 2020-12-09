@@ -15,22 +15,17 @@ if "%1%" == "--help" (
 
     PowerShell.exe -ExecutionPolicy Bypass -Command "& './setVersion.ps1'" -version %version% -bucket %bucket%
 
-    rmdir /S/Q .protocol
-    git clone --depth 1 https://github.com/fractal/protocol .protocol
-    cd .protocol
-    git reset --hard
-    git fetch --depth 25 origin %branch%:%branch%
-    git checkout %branch%
+    cd ..\..\protocol
     cmake . -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles"
     nmake FractalClient
-    cd ..
+    cd ..\client-applications\desktop
     rmdir /S/Q protocol-build
     mkdir protocol-build 
     cd protocol-build
     mkdir desktop
     mkdir desktop\loading
     cd ..
-    xcopy /s .protocol\desktop\build64\Windows protocol-build\desktop
+    xcopy /s ..\..\protocol\desktop\build64\Windows protocol-build\desktop
     powershell -Command "(New-Object Net.WebClient).DownloadFile('https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe', 'rcedit-x64.exe')"
     powershell -Command "Invoke-WebRequest https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe -OutFile rcedit-x64.exe"
     rcedit-x64.exe protocol-build\desktop\FractalClient.exe --set-icon build\icon.ico

@@ -20,7 +20,7 @@ import { config } from "shared/constants/config"
 import configureStore from "store/configureStore"
 import { history } from "store/history"
 
-import * as Sentry from "@sentry/electron"
+// import * as Sentry from "@sentry/electron"
 
 // if (process.env.NODE_ENV === "production") {
 //     Sentry.init({

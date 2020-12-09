@@ -1,5 +1,8 @@
 // Import with require() packages that require Node 10 experimental
 const png2icons = require("png2icons")
+const temp = require("temp")
+const fs = require("fs")
+const path = require("path")
 
 export class SVGConverter {
     /*
@@ -134,6 +137,23 @@ export class SVGConverter {
         )
 
         return buffer
+    }
+
+    static async saveAsPngTemp(
+        input: string,
+        pngName: string
+    ): Promise<string> {
+        // SVG to base64 PNG
+        const base64 = await this.convertToPngBase64(input, 64, 64)
+        // base64 PNG to Buffer
+        const convertedBuffer = this.base64PngToBuffer(base64)
+        // Create temp folder
+        const dirPath = temp.mkdirSync("fractal")
+        // Save PNG in temp folder
+        const pngPath = path.join(dirPath, `${pngName}.png`)
+        fs.writeFileSync(pngPath, convertedBuffer)
+        // Return PNG path
+        return pngPath
     }
 }
 
