@@ -28,7 +28,7 @@ func InitializeSentry() error {
 	if err != nil {
 		return MakeError("Error calling Sentry.init: %v", err)
 	}
-	log.Printf("Set sentry tag git-commit-hash: %s", GetGitCommit())
+	log.Printf("Set sentry release to git commit hash: %s", GetGitCommit())
 
 	// Configure Sentry's scope with some instance-specific information
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
