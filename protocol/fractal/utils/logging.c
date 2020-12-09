@@ -103,7 +103,7 @@ void init_logger(char *log_dir) {
 
     if (using_sentry) {
         sentry_options_t *options = sentry_options_new();
-        // sentry_options_set_debug(options, true); //if sentry is playing up uncomment this
+        // sentry_options_set_debug(options, true);  // if sentry is playing up uncomment this
         sentry_options_set_dsn(options, SENTRY_DSN);
         // These are used by sentry to classify events and so we can keep track of version specific
         // issues.
@@ -195,9 +195,9 @@ void destroy_logger() {
 void sentry_send_bread_crumb(char *tag, const char *fmt_str, ...) {
     if (!using_sentry) return;
 
-    // in the current sentry-native beta version, breadcrumbs prevent sentry
-    //  from sending Windows events to the dashboard, so we only log
-    //  breadcrumbs for OSX and Linux
+        // in the current sentry-native beta version, breadcrumbs prevent sentry
+        //  from sending Windows events to the dashboard, so we only log
+        //  breadcrumbs for OSX and Linux
 #ifndef _WIN32
     va_list args;
     va_start(args, fmt_str);
