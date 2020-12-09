@@ -2,7 +2,6 @@ from flask import Blueprint
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
-from app.helpers.utils.general.logs import fractal_log
 from app import fractal_pre_process
 from app.celery.aws_ecs_creation import (
     assign_container,
@@ -20,7 +19,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     set_stun,
 )
 
-from app.helpers.utils.general.auth import admin_required, fractal_auth, developer_required
+from app.helpers.utils.general.auth import fractal_auth, developer_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
