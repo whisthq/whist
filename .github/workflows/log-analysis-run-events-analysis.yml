@@ -6,7 +6,7 @@ name: Run Events Analysis
 
 on:
   schedule:
-    - cron: "* 13 * * *" # every day at 1
+    - cron: "0 13 * * *" # every day at 1
 
 jobs:
   run-events-analysis:
