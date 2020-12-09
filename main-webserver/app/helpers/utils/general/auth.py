@@ -73,6 +73,7 @@ def admin_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         current_user = get_jwt_identity()
+
         if current_app.config["DASHBOARD_USERNAME"] not in current_user:
             return (
                 jsonify(
@@ -91,10 +92,7 @@ def admin_required(func):
     return wrapper
 
 
-def developer_access(func):
-    # in the future we may want to instead make a table in the DB
-    # for people who are developers
-    # TODO (adriano) ^
+def developer_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         current_user = get_jwt_identity()
