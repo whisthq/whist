@@ -16,13 +16,13 @@ import * as Sentry from "@sentry/electron"
 
 const { dialog } = require("electron")
 
-if (process.env.NODE_ENV === "production") {
-    Sentry.init({
-        dsn:
-            "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323",
-        release: `client-applications@${app.getVersion()}`,
-    })
-}
+// if (process.env.NODE_ENV === "production") {
+//     Sentry.init({
+//         dsn:
+//             "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323",
+//         release: `client-applications@${app.getVersion()}`,
+//     })
+// }
 
 // This is the window where the renderer thread will render our React app
 let mainWindow: BrowserWindow | null = null
@@ -54,8 +54,6 @@ process.on("uncaughtException", (err) => {
 
 // Function to create the browser window
 const createWindow = async () => {
-    dialog.showMessageBox(null, { title: "create window started" })
-
     const os = require("os")
     if (os.platform() === "win32") {
         mainWindow = new BrowserWindow({
@@ -67,6 +65,7 @@ const createWindow = async () => {
             resizable: false,
             webPreferences: {
                 nodeIntegration: true,
+                enableRemoteModule: true,
             },
         })
     } else if (os.platform() === "darwin") {
@@ -80,6 +79,7 @@ const createWindow = async () => {
             maximizable: false,
             webPreferences: {
                 nodeIntegration: true,
+                enableRemoteModule: true,
             },
         })
     } else {
@@ -94,6 +94,7 @@ const createWindow = async () => {
             maximizable: false,
             webPreferences: {
                 nodeIntegration: true,
+                enableRemoteModule: true,
             },
             icon: path.join(__dirname, "/build/icon.png"),
         })
@@ -168,8 +169,6 @@ const createWindow = async () => {
     if (process.env.NODE_ENV === "development") {
         // Skip autoupdate check
     } else {
-        dialog.showMessageBox(null, { title: "checking for updates" })
-
         autoUpdater.checkForUpdates()
     }
 }
@@ -225,15 +224,12 @@ app.on("open-url", (event, data) => {
 autoUpdater.autoDownload = false
 
 autoUpdater.on("update-available", () => {
-    dialog.showMessageBox(null, { title: "updates" })
-
     updating = true
     mainWindow.webContents.send("update", updating)
     autoUpdater.downloadUpdate()
 })
 
 autoUpdater.on("update-not-available", () => {
-    dialog.showMessageBox(null, { title: "no updates" })
     updating = false
     mainWindow.webContents.send("update", updating)
 })

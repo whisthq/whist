@@ -1,3 +1,5 @@
+import { FractalNodeEnvironment } from "shared/types/config"
+
 const homeDir = require("os").homedir()
 const path = require("path")
 
@@ -24,10 +26,11 @@ export class FractalDirectory {
     static getRootDirectory = () => {
         const remote = require("electron").remote
         if (remote && remote.app) {
-            console.log("getting app path")
             const appPath = remote.app.getAppPath()
-            console.log("done getting app path")
-            return path.join(appPath, "../../..")
+            if (process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT) {
+                return path.join(appPath, "..")
+            }
+            return path.join(appPath, "../..")
         }
         return ""
     }

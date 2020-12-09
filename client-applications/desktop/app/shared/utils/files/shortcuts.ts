@@ -89,6 +89,8 @@ export const createWindowsShortcut = async (
         "create-desktop-shortcuts/src/windows.vbs"
     )
 
+    console.log(FractalDirectory.getRootDirectory())
+
     // Convert SVG into a .ico ArrayBuffer
     const buffer = await SVGConverter.convertToIco(app.logo_url)
 
