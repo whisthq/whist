@@ -25,6 +25,7 @@ from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
+
 @aws_container_bp.route("/app_state/<action>", methods=["POST"])
 @fractal_pre_process
 @jwt_required
@@ -39,6 +40,7 @@ def app_state(action, **kwargs):
             response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
         return jsonify({"status": SUCCESS}), SUCCESS
     return jsonify({"error": NOT_FOUND}), NOT_FOUND
+
 
 # when we add @admin_required, instead of admin_required use developer_access
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
