@@ -18,6 +18,12 @@ then
     echo $FRACTAL_DPI > /usr/share/fractal/private/dpi
 fi
 
+# if SENTRY_ENV is set, then create file
+if [ -n "${SENTRY_ENV+1}" ]
+then
+   echo $SENTRY_ENV > /usr/shar/fractal/private/sentry_env
+fi
+
 # make sure this environment variable does not leak in any way (probably
 # redundant, but still good practice)
 unset FRACTAL_AES_KEY
