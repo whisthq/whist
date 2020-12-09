@@ -18,7 +18,7 @@ import { setAWSRegion } from "shared/utils/files/exec"
 import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 
-import { OperatingSystem } from "shared/types/client"
+// import { OperatingSystem } from "shared/types/client"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalAuthCache } from "shared/types/cache"
 
@@ -221,7 +221,7 @@ const mapStateToProps = (state: {
             launchURL: string
         }
         client: {
-            clientOS: OperatingSystem
+            clientOS: string
             dpi: number
         }
     }

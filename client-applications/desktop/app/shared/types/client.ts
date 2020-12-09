@@ -1,7 +1,4 @@
 const homeDir = require("os").homedir()
-const appPath = require("electron").remote
-    ? require("electron").remote.app.getAppPath()
-    : ""
 const path = require("path")
 
 export enum OperatingSystem {
@@ -24,5 +21,14 @@ export class FractalDirectory {
 
     static DESKTOP = path.join(homeDir, "Desktop")
 
-    static ROOT_DIRECTORY = appPath ? path.join(appPath, "../../..") : "" // undo resources/app.asar/app
+    static getRootDirectory = () => {
+        const remote = require("electron").remote
+        if (remote && remote.app) {
+            console.log("getting app path")
+            const appPath = remote.app.getAppPath()
+            console.log("done getting app path")
+            return path.join(appPath, "../../..")
+        }
+        return ""
+    }
 }

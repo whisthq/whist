@@ -50,7 +50,9 @@ export const setAWSRegion = () => {
         const { spawn } = require("child_process")
         const os = require("os")
         const platform = os.platform()
+        console.log("set aws region get app path")
         const appRootDir = require("electron").remote.app.getAppPath()
+        console.log("done aws region")
         let executable = ""
         let path = ""
 
