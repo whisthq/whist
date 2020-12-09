@@ -168,6 +168,8 @@ export const createMacShortcut = async (
             \t\t<string>????</string>
             \t\t<key>CFBundleVersion</key>
             \t\t<string>1.0</string>
+            \t\t<key>CFBundleShortVersionString</key>
+            \t\t<string>Fractal</string>    
             \t</dict>
             \t</plist>
         `)
@@ -254,7 +256,7 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
 
 export const createShortcuts = async (
     app: FractalApp,
-    desktop = true
+    desktop = false
 ): Promise<boolean> => {
     const platform = os.platform()
     if (platform === OperatingSystem.MAC) {
