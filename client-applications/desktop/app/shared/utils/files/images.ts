@@ -1,5 +1,6 @@
 // Import with require() packages that require Node 10 experimental
 const toIco = require("to-ico")
+const png2icons = require("png2icons")
 
 // How big should the PNG's be
 const PNG_WIDTH = 64
@@ -97,9 +98,20 @@ export class SVGConverter {
 
     static async convertToIco(input: string): Promise<ArrayBuffer> {
         const base64 = await this.convertToPngBase64(input)
-
         const convertedBuffer = this.base64PngToBuffer(base64)
         const buffer = await toIco([convertedBuffer])
+
+        return buffer
+    }
+
+    static async convertToIcns(input: string): Promise<ArrayBuffer> {
+        const base64 = await this.convertToPngBase64(input)
+        const convertedBuffer = this.base64PngToBuffer(base64)
+        const buffer = png2icons.createICNS(
+            convertedBuffer,
+            png2icons.BILINEAR,
+            0
+        )
 
         return buffer
     }
