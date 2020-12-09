@@ -223,7 +223,8 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
                 fs.existsSync(macDesktopPath) ||
                 fs.existsSync(macApplicationsPath)
             return exists
-        } else if (platform === OperatingSystem.WINDOWS) {
+        }
+        if (platform === OperatingSystem.WINDOWS) {
             // Check the desktop folder and Start Menu Programs folder
             const windowsDesktopPath = path.join(
                 FractalDirectory.DESKTOP,
@@ -238,10 +239,9 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
                 fs.existsSync(windowsDesktopPath) ||
                 fs.existsSync(windowsStartMenuPath)
             return exists
-        } else {
-            debugLog(`no suitable os found, instead got ${platform}`)
-            return false
         }
+        debugLog(`no suitable os found, instead got ${platform}`)
+        return false
     } catch (err) {
         debugLog(err)
         return false
@@ -250,7 +250,7 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
 
 export const createShortcuts = async (
     app: FractalApp,
-    desktop: boolean = true
+    desktop = true
 ): Promise<boolean> => {
     const platform = os.platform()
     if (platform === OperatingSystem.MAC) {
@@ -276,7 +276,8 @@ export const createShortcuts = async (
         )
 
         return desktopStatus || applicationsStatus
-    } else if (platform === OperatingSystem.WINDOWS) {
+    }
+    if (platform === OperatingSystem.WINDOWS) {
         if (
             !createDirectorySync(FractalDirectory.WINDOWS_START_MENU, "Fractal")
         ) {
@@ -298,10 +299,9 @@ export const createShortcuts = async (
         )
 
         return desktopStatus || startMenuStatus
-    } else {
-        debugLog(`no suitable os found, instead got ${platform}`)
-        return false
     }
+    debugLog(`no suitable os found, instead got ${platform}`)
+    return false
 }
 
 export const deleteShortcut = (app: FractalApp) => {
