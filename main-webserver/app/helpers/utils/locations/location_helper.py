@@ -5,7 +5,7 @@ def get_loc_from_ip(ip):
     # necessary for testing, the endpoint will return "Not Found" otherwise for longitude etc
     if ip[0:4] == "172.":
         return "us-east-1"
-    
+
     response = requests.get("https://geolocation-db.com/json/{}&position=true".format(ip)).json()
     long = abs(response["longitude"])
     if long > 90:
