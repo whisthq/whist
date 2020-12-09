@@ -475,6 +475,17 @@ func initializeFilesystem() {
 	if err != nil {
 		logger.Panicf("Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
 	}
+
+	// Don't check for cloud storage directory, since that makes
+	// testing/debugging a lot easier and safer (we don't want to delete the
+	// directory on exit, since that might delete files from people's cloud
+	// storage drives.)
+
+	// Create cloud storage directory
+	err = os.MkdirAll(cloudStorageDirectory, 0644|os.ModeSticky)
+	if err != nil {
+		logger.Panicf("Could not mkdir path %s. Error: %s", cloudStorageDirectory, err)
+	}
 }
 
 func uninitializeFilesystem() {
