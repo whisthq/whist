@@ -142,6 +142,7 @@ const createWindow = async () => {
         if (canClose && mainWindow) {
             mainWindow.show()
             mainWindow.focus()
+            mainWindow.restore()
             if (app && app.dock) {
                 app.dock.show()
             }
