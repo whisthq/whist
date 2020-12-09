@@ -89,7 +89,7 @@ const Loading = (props: {
         const spawn = require("child_process").spawn
 
         const protocolPath = require("path").join(
-            FractalDirectory.ROOT_DIRECTORY,
+            FractalDirectory.getRootDirectory(),
             "protocol-build/desktop"
         )
         const executable = getExecutableName()

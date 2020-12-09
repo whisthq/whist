@@ -14,6 +14,8 @@ import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
 import * as Sentry from "@sentry/electron"
 
+const { dialog } = require("electron")
+
 if (process.env.NODE_ENV === "production") {
     Sentry.init({
         dsn:
@@ -52,6 +54,8 @@ process.on("uncaughtException", (err) => {
 
 // Function to create the browser window
 const createWindow = async () => {
+    dialog.showMessageBox(null, { title: "create window started" })
+
     const os = require("os")
     if (os.platform() === "win32") {
         mainWindow = new BrowserWindow({
@@ -63,7 +67,6 @@ const createWindow = async () => {
             resizable: false,
             webPreferences: {
                 nodeIntegration: true,
-                enableRemoteModule: true,
             },
         })
     } else if (os.platform() === "darwin") {
@@ -77,7 +80,6 @@ const createWindow = async () => {
             maximizable: false,
             webPreferences: {
                 nodeIntegration: true,
-                enableRemoteModule: true,
             },
         })
     } else {
@@ -92,7 +94,6 @@ const createWindow = async () => {
             maximizable: false,
             webPreferences: {
                 nodeIntegration: true,
-                enableRemoteModule: true,
             },
             icon: path.join(__dirname, "/build/icon.png"),
         })
@@ -167,6 +168,8 @@ const createWindow = async () => {
     if (process.env.NODE_ENV === "development") {
         // Skip autoupdate check
     } else {
+        dialog.showMessageBox(null, { title: "checking for updates" })
+
         autoUpdater.checkForUpdates()
     }
 }
@@ -222,12 +225,15 @@ app.on("open-url", (event, data) => {
 autoUpdater.autoDownload = false
 
 autoUpdater.on("update-available", () => {
+    dialog.showMessageBox(null, { title: "updates" })
+
     updating = true
     mainWindow.webContents.send("update", updating)
     autoUpdater.downloadUpdate()
 })
 
 autoUpdater.on("update-not-available", () => {
+    dialog.showMessageBox(null, { title: "no updates" })
     updating = false
     mainWindow.webContents.send("update", updating)
 })

@@ -84,7 +84,7 @@ export const createWindowsShortcut = async (
 
     // Points to the folder where windows.vbs is located (shortcut creation code)
     const vbsPath = path.join(
-        FractalDirectory.ROOT_DIRECTORY,
+        FractalDirectory.getRootDirectory(),
         "resources/app.asar.unpacked/node_modules",
         "create-desktop-shortcuts/src/windows.vbs"
     )
@@ -93,9 +93,9 @@ export const createWindowsShortcut = async (
     const buffer = await SVGConverter.convertToIco(app.logo_url)
 
     // Create directory called /icons to store the .ico if it doesn't already exist
-    createDirectorySync(FractalDirectory.ROOT_DIRECTORY, "icons")
+    createDirectorySync(FractalDirectory.getRootDirectory(), "icons")
     const icoPath = path.join(
-        FractalDirectory.ROOT_DIRECTORY,
+        FractalDirectory.getRootDirectory(),
         `icons/${app.app_id}.ico`
     )
     // Write .ico into directory
@@ -253,54 +253,38 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
     }
 }
 
-export const createShortcuts = async (
-    app: FractalApp,
-    desktop = false
-): Promise<boolean> => {
+export const createShortcuts = async (app: FractalApp): Promise<boolean> => {
     const platform = os.platform()
     if (platform === OperatingSystem.MAC) {
+        // On Mac, create a shortcut in the User Application folder
         if (
             !createDirectorySync(FractalDirectory.MAC_APPLICATIONS, "Fractal")
         ) {
             return false
         }
 
-        let desktopStatus = true
-        let applicationsStatus = true
-
-        if (desktop) {
-            desktopStatus = await createMacShortcut(
-                app,
-                FractalDirectory.DESKTOP
-            )
-        }
-
-        applicationsStatus = await createMacShortcut(
+        const applicationsStatus = await createMacShortcut(
             app,
             path.join(FractalDirectory.MAC_APPLICATIONS, "Fractal")
         )
 
-        return desktopStatus || applicationsStatus
-    }
-    if (platform === OperatingSystem.WINDOWS) {
+        return applicationsStatus
+    } else if (platform === OperatingSystem.WINDOWS) {
+        // On Windows, create a desktop shortcut and Start Menu shortcut
         if (
             !createDirectorySync(FractalDirectory.WINDOWS_START_MENU, "Fractal")
         ) {
             return false
         }
-        let desktopStatus = true
-        let startMenuStatus = true
 
-        if (desktop) {
-            desktopStatus = await createWindowsShortcut(
-                app,
-                FractalDirectory.DESKTOP
-            )
-        }
-
-        startMenuStatus = await createWindowsShortcut(
+        const desktopStatus = await createWindowsShortcut(
             app,
             FractalDirectory.DESKTOP
+        )
+
+        const startMenuStatus = await createWindowsShortcut(
+            app,
+            path.join(FractalDirectory.WINDOWS_START_MENU, "Fractal")
         )
 
         return desktopStatus || startMenuStatus
