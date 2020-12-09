@@ -5,10 +5,10 @@
 
 # name: "Client Applications: Publish Desktop Applications"
 
-# on:
-#     push:
-#         branches: [master, eric/add-wf]
-#     workflow_dispatch:
+on:
+     push:
+         branches: [master, eric/add-wf]
+     workflow_dispatch:
 
 # jobs:
 #     build-and-publish-desktop-applications:
