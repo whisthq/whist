@@ -39,6 +39,8 @@ extern InputDevice *input_device;
 
 extern int host_id;
 
+extern bool using_sentry;
+
 static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling);
 static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_id,
