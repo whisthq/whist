@@ -5,6 +5,7 @@ FRACTAL_MAPPINGS_DIR=/fractal/containerResourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url
+SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
 
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/$IDENTIFIER_FILENAME)
 
@@ -24,8 +25,8 @@ if [ -f "$WEBSERVER_URL_FILENAME" ]; then
 fi
 
 # send in sentry environment if set
-if [ -f "$SENTRY_ENV" ]; then
-    export SENTRY_ENV=$(cat $SENTRY_ENV)
+if [ -f "$SENTRY_ENV_FILENAME" ]; then
+    export SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
     OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
 fi
 
