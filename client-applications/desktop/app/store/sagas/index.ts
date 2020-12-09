@@ -1,4 +1,4 @@
-import { put, takeEvery, all, call, select, delay } from "redux-saga/effects"
+import { put, takeEvery, all, call, select } from "redux-saga/effects"
 import moment from "moment"
 
 import * as Action from "store/actions/pure"
@@ -6,12 +6,12 @@ import * as SideEffect from "store/actions/sideEffects"
 
 import { apiPost, apiGet } from "shared/utils/api"
 import { history } from "store/history"
-import { generateMessage } from "shared/utils/loading"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalAPI } from "shared/types/api"
 import { FractalAuthCache } from "shared/types/cache"
 import { config } from "shared/constants/config"
 import { AWSRegion } from "shared/types/aws"
+import { FractalStatus } from "shared/types/containers"
 
 function* refreshAccess() {
     const state = yield select()
@@ -135,9 +135,6 @@ function* createContainer(action: {
         body.region = region
     }
 
-    // console.log(`body is ${JSON.stringify(body)}`)
-    // console.log(`webserver is ${webserver}`)
-
     if (!username || username === "None" || username === "") {
         history.push(FractalRoute.LOGIN)
         return
@@ -155,92 +152,34 @@ function* createContainer(action: {
         yield call(refreshAccess)
         yield call(createContainer, action)
         return
+    } else {
+        const id = json.ID
+        yield put(Action.updateContainer({
+            currentAppID: action.app,
+            statusID: id,
+        }))
     }
 
-    // TODO (adriano) add handlers for 404 (mainly for testing, low priority)
+    // there used to be a while loop here that did things, now
+    // we are going to use the websocket hasura/graphql endpoints
+}
 
-    const id = json.ID
-    ;({ json, success } = yield call(
+// this should potentially be replaced with a graphQL query if we can get the right permissions
+// and unique keys
+function *getStatus(action: {id: string}) {
+    const id = action.id
+    const state = yield select()
+
+    const { json, response } = yield call(
         apiGet,
-        `/status/${id}`,
-        state.MainReducer.auth.accessToken,
-        webserver
-    ))
-
-    let progressSoFar = 0
-    let secondsPassed = 0
-
-    yield put(
-        Action.updateLoading({
-            percentLoaded: progressSoFar,
-            statusMessage: `Preparing to stream ${action.app}`,
-        })
+        `/status/` + id,
+        state.MainReducer.auth.accessToken
     )
 
-    while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
-        if (secondsPassed % 1 === 0) {
-            ;({ success } = yield call(
-                apiGet,
-                `/status/${id}`,
-                state.MainReducer.auth.accessToken,
-                webserver
-            ))
-
-            if (!success) {
-                const warning =
-                    `(${moment().format("hh:mm:ss")}) ` +
-                    "Unexpectedly lost connection with server. Please close the app and try again."
-
-                progressSoFar = 0
-                yield put(
-                    Action.updateLoading({
-                        percentLoaded: progressSoFar,
-                        statusMessage: warning,
-                    })
-                )
-                // TODO (adriano) we should not have to return in case it can try agin
-                // however, there is no way to exit this loop right if they press the return button
-                return
-            }
-        }
-
-        // Update status message every six seconds
-        if (success && secondsPassed > 0 && secondsPassed % 6 === 0) {
-            yield put(
-                Action.updateLoading({
-                    statusMessage: generateMessage(),
-                })
-            )
-        }
-
-        // Update loading bar every second
+    if (json && json.state === FractalStatus.SUCCESS) {
         yield put(
-            Action.updateLoading({
-                percentLoaded: progressSoFar,
-            })
-        )
-        progressSoFar = Math.min(99, progressSoFar + 1)
-
-        yield delay(1000)
-        secondsPassed += 1
-    }
-    // testing params : -w200 -h200 -p32262:32780,32263:32778,32273:32779 34.206.64.200
-    if (json && json.state && json.state === "SUCCESS") {
-        progressSoFar = 100
-
-        yield put(
-            Action.updateLoading({
-                statusMessage: "Stream successfully started.",
-                percentLoaded: progressSoFar,
-            })
-        )
-
-        delay(1000) // so they can ready that above
-
-        if (json.output) {
-            yield put(
                 Action.updateContainer({
-                    containerID: json.output.containerID,
+                    containerID: json.output.container_id,
                     cluster: json.output.cluster,
                     port32262: json.output.port_32262,
                     port32263: json.output.port_32263,
@@ -248,27 +187,29 @@ function* createContainer(action: {
                     location: json.output.location,
                     publicIP: json.output.ip,
                     secretKey: json.output.secret_key,
-                    currentAppID: action.app,
                 })
             )
-        } else {
-            yield put(
-                Action.updateLoading({
-                    statusMessage:
-                        "Unexpectedly, server didn't send connection info. Please try again.",
-                    percentLoaded: progressSoFar,
-                })
-            )
-        }
-    } else {
-        const warning =
-            `(${moment().format("hh:mm:ss")}) ` +
-            `Unexpectedly lost connection with server. Trying again...`
-        progressSoFar = 0
+
+        const progressSoFar = 100
+
         yield put(
             Action.updateLoading({
-                statusMessage: warning,
+                statusMessage: "Stream successfully started.",
                 percentLoaded: progressSoFar,
+            })
+        )
+    } else {
+        const warning = json && json.state === FractalStatus.FAILURE ? "Unexpectedly failed to start stream. Close and try again." 
+            : response && response.status && response.status === 500 
+                ? `(${moment().format("hh:mm:ss")}) ` + 
+                  "Unexpectedly lost connection with server. Please close the app and try again."
+                : "Server unexpectedly not responding. Close the app and try again."
+
+        const progressSoFar = 0
+        yield put(
+            Action.updateLoading({
+                percentLoaded: progressSoFar,
+                statusMessage: warning,
             })
         )
     }
@@ -328,6 +269,11 @@ function* deleteContainer(action: {containerID: string; privateKey: string; test
     if (!success) {
         yield call(refreshAccess)
         yield call(deleteContainer, action)
+    } else {
+        yield put(Action.updateContainer({
+            currentAppID: null,
+            statusID: null,
+        }))
     }
 }
 
@@ -337,5 +283,6 @@ export default function* rootSaga() {
         takeEvery(SideEffect.SUBMIT_FEEDBACK, submitFeedback),
         takeEvery(SideEffect.VALIDATE_ACCESS_TOKEN, validateAccessToken),
         takeEvery(SideEffect.DELETE_CONTAINER, deleteContainer),
+        takeEvery(SideEffect.GET_STATUS, getStatus),
     ])
 }

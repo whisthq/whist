@@ -7,6 +7,8 @@ export const SUBMIT_FEEDBACK = "SUBMIT_FEEDBACK"
 
 export const DELETE_CONTAINER = "DELETE_CONTAINER"
 
+export const GET_STATUS = "GET_STATUS"
+
 export function rememberMeLogin(username: string) {
     return {
         type: REMEMBER_ME_LOGIN,
@@ -19,6 +21,19 @@ export function createContainer(app: string, url: null | string, test = false) {
         type: CREATE_CONTAINER,
         app,
         url,
+        test,
+    }
+}
+
+export function deleteContainer(
+    containerID: string,
+    privateKey: string,
+    test = false
+) {
+    return {
+        type: DELETE_CONTAINER,
+        containerID,
+        privateKey,
         test,
     }
 }
@@ -38,15 +53,9 @@ export function submitFeedback(feedback: string, feedbackType: string) {
     }
 }
 
-export function deleteContainer(
-    containerID: string,
-    privateKey: string,
-    test = false
-) {
+export function getStatus(id: string) {
     return {
-        type: DELETE_CONTAINER,
-        containerID,
-        privateKey,
-        test,
+        type: GET_STATUS,
+        id,
     }
 }

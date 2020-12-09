@@ -37,18 +37,19 @@ export function updateAuth(body: {
 }
 
 export function updateContainer(body: {
-    publicIP: string | null
-    containerID: string | null
-    cluster: string | null
-    port32262: string | null
-    port32263: string | null
-    port32273: string | null
-    location: string | null
-    secretKey: string | null
-    desiredAppID: string | null
-    currentAppID: string | null
-    launches: number
-    launchURL: string | null
+    publicIP?: string | null
+    containerID?: string | null
+    cluster?: string | null
+    port32262?: string | null
+    port32263?: string | null
+    port32273?: string | null
+    location?: string | null
+    secretKey?: string | null
+    desiredAppID?: string | null
+    currentAppID?: string | null
+    launches?: number
+    launchURL?: string | null
+    statusID?: string | null
 }) {
     return {
         type: UPDATE_CONTAINER,
