@@ -40,6 +40,7 @@ class BannersSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Banners
 
+
 class UserAppStateSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = UserAppState
