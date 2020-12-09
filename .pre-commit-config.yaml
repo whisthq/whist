@@ -26,7 +26,7 @@ repos:
         name: "Python Black (for all repositories)"
         language_version: python3
 
-  # To use beautysh, you need to first install it locally via `pip install beautysh`
+  # To use beautysh, you first need to install it locally via `pip install beautysh`
   - repo: local
     hooks:
       - id: beautysh
