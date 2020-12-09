@@ -4,17 +4,16 @@
         "name": "Fractal Computers, Inc.",
         "url": "https://www.tryfractal.com"
     },
-    "version": "2.1.3",
     "browserslist": [
         "extends browserslist-config-erb"
     ],
     "build": {
-        "asar": true,
-        "asarUnpack": "node_modules/create-desktop-shortcuts/**/*",
         "afterSign": "build/notarize.js",
         "appId": "com.fractalcomputers.fractal",
         "artifactName": "Fractal.${ext}",
-        "copyright": "Copyright � Fractal Computers, Inc.",
+        "asar": true,
+        "asarUnpack": "node_modules/create-desktop-shortcuts/**/*",
+        "copyright": "Copyright \ufffd Fractal Computers, Inc.",
         "deb": {
             "icon": "build/icon.png",
             "vendor": "Fractal Computers, Inc."
@@ -116,8 +115,8 @@
         }
     ],
     "dependencies": {
-        "3": "^2.1.0",
         "-": "^0.0.1",
+        "3": "^2.1.0",
         "@apollo/client": "^3.2.4",
         "@fortawesome/fontawesome-free": "^5.12.1",
         "@fortawesome/fontawesome-svg-core": "^1.2.27",
@@ -392,5 +391,6 @@
         "test": "cross-env NODE_ENV=test BABEL_DISABLE_CACHE=1 jest",
         "test-watch": "yarn test --watch",
         "ts": "tsc"
-    }
+    },
+    "version": "2.1.3"
 }
