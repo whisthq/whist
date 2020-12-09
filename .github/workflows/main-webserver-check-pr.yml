@@ -1,9 +1,9 @@
-# workflows/main-webserver-linting.yml
+# workflows/main-webserver-check-pr.yml
 #
-# Main Webserver: Linting
-# Lint main-webserver using black and pylint.
+# Main Webserver: Check PR
+# Checks a main-webserver PR for linting and unit testing success.
 
-name: "Main Webserver: Linting"
+name: "Main Webserver: Check PR"
 
 on:
     pull_request:
@@ -17,8 +17,10 @@ on:
             - "!main-webserver/README.md"
 
 jobs:
-    main-webserver-linting-main:
-        name: Lint Main Webserver
+    # Linting
+    # Checks for formatting using black and pylint.
+    main-webserver-check-pr-linting:
+        name: Linting
         runs-on: ubuntu-20.04
 
         steps:
@@ -51,3 +53,22 @@ jobs:
 
             - name: Check if code matches Pylint standards
               run: cd main-webserver && pylint app # Returns 0 iff code is linted
+
+    # Heroku Testing
+    # Checks unit tests on the Heroku pipeline.
+    main-webserver-check-pr-testing-heroku:
+        name: Heroku Testing
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+                  ref: ${{ github.event.pull_request.head.ref }}
+
+            - name: Run Tests on Heroku
+              run: cd main-webserver && heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
+              env:
+                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
