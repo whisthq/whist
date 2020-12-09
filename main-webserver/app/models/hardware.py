@@ -120,3 +120,11 @@ class Banners(db.Model):
     category = db.Column(db.String(250))
     background = db.Column(db.String(250))
     url = db.Column(db.String(250))
+
+class UserAppState(db.Model):
+    __tablename__ = "user_app_state"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+
+    user_id = db.Column(db.ForeignKey("users.user_id"))
+    state = db.Column(db.String(250), nullable=False)
+    task_id = db.Column(db.String(250), nullable=False)
