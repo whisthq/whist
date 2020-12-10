@@ -7,7 +7,7 @@ export class FractalAPI {
     static CONTAINER = {
         CREATE: "/container/create",
         TEST_CREATE: "/aws_container/create_container",
-        CANCEL: "/app_state/cancel",
+        CANCEL: "/container_state/cancel",
     }
 
     static MAIL = {
