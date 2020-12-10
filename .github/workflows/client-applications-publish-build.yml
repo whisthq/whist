@@ -28,7 +28,8 @@ jobs:
                 token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                 submodules: recursive
 
-            - name: Install macOS Codesigning Certificates on the GitHub Actions VM            
+            - name: Install macOS Codesigning Certificates on the GitHub Actions VM
+              if: matrix.os == 'macos-10.14'            
               uses: apple-actions/import-codesign-certs@v1
               with: 
                 p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
