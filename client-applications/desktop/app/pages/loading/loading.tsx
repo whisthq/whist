@@ -6,7 +6,7 @@ import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 import TitleBar from "shared/components/titleBar"
 import { debugLog } from "shared/utils/logging"
-import { updateContainer, updateLoading } from "store/actions/pure"
+import { updateContainer } from "store/actions/pure"
 import { history } from "store/history"
 import { execChmodUnix } from "shared/utils/exec"
 import { FractalRoute } from "shared/types/navigation"
@@ -61,9 +61,10 @@ const Loading = (props: {
 
     const [launches, setLaunches] = useState(0)
     const [status, setStatus] = useState(generateMessage())
-    const [percent, setPercent] = useState(0)
+    const [percentLoaded, setPercentLoaded] = useState(0)
+    const [canLoad, setCanLoad] = useState(true)
 
-    const percentLoadedWidth = 5 * percent
+    const percentLoadedWidth = 5 * percentLoaded
 
     const loadingBar = useSpring({ width: percentLoadedWidth })
 
@@ -71,61 +72,55 @@ const Loading = (props: {
         variables: { userID: username },
     })
 
-    useEffect(() => {
-        if (percent < 100) {
-            setTimeout(() => setPercent(percent + 1), 1000) // every second 1 percent, change later
-        }
-    }, [percent])
+    const rightTask =
+        data && data.task_id && statusID && data.task_id === statusID
+    const hasState = data && data.state
+
+    const pending =
+        loading ||
+        (hasState && rightTask && data.state === FractalAppStates.PENDING)
+    const ready = hasState && data.state === FractalAppStates.READY
+    const cancelled = hasState && data.state === FractalAppStates.CANCELLED
+    const failure = hasState && data.state === FractalAppStates.FAILURE
+
+    console.log(`${data}`)
 
     useEffect(() => {
-        // TODO this is busted it needs to check for state being bad
-        setTimeout(() => setStatus(generateMessage()), 5000) // every 5 sec change status
-    }, [status])
-
-    useEffect(() => {
-        const rightTask =
-            data && data.task_id && statusID && data.task_id === statusID
-        const hasState = data && data.state
-        if (
-            loading ||
-            (hasState && rightTask && data.state === FractalAppStates.PENDING)
-        ) {
-            dispatch(
-                updateLoading({
-                    percentLoaded: percent,
-                    statusMessage: generateMessage(),
-                })
-            )
-            // show a loading message
-        } else if (hasState) {
-            // we'll just put the loading stuff by default
-            if (data.state === FractalAppStates.READY) {
-                // just launched and is ready to go
+        if (percentLoaded < 100 && canLoad) {
+            if (pending) {
+                setTimeout(() => {
+                    if (canLoad) {
+                        setPercentLoaded(percentLoaded + 1)
+                    }
+                }, 1000) // every second 1 percent, change later
+            } else if (ready) {
+                setCanLoad(false)
                 dispatch(getStatus(statusID))
-                if (status === "Stream successfully started.") {
-                    // change this
-                    setLaunches(launches + 1)
-                }
-            } else if (data.state === FractalAppStates.CANCELLED) {
-                dispatch(
-                    updateLoading({
-                        statusMessage: "Your Launch has been cancelled.",
-                    })
-                )
-            } else if (data.state === FractalAppStates.FAILURE) {
-                dispatch(
-                    updateLoading({
-                        statusMessage:
-                            "Unexpectedly failed to spin up your app.",
-                    })
-                )
+                setPercentLoaded(100)
+                setStatus("Stream successfully started.")
+                setTimeout(() => null, 1000) // wait one sec so they can rea the message
+                setLaunches(launches + 1)
+            } else if (cancelled) {
+                setCanLoad(false)
+                setStatus("Your app launch has been cancelled.")
+                setPercentLoaded(0)
+            } else if (failure) {
+                setCanLoad(false)
+                setStatus("Unexpectedly failed to spin up your app.")
+                setPercentLoaded(0)
             }
-        } else {
-            // show a loading or a disconnected message
         }
-    }, [data, loading, percent])
+    }, [percentLoaded, data, loading])
 
-    const failedToLaunch = data && data.state === FractalAppStates.FAILURE
+    useEffect(() => {
+        if (pending) {
+            setTimeout(() => {
+                if (canLoad) {
+                    setStatus(generateMessage())
+                }
+            }, 5000)
+        }
+    }, [status])
 
     const resetLaunchRedux = () => {
         dispatch(
@@ -141,12 +136,13 @@ const Loading = (props: {
                 launchURL: null,
             })
         )
-        dispatch(
-            updateLoading({
-                statusMessage: "Powering up your app",
-                percentLoaded: 0,
-            })
-        )
+        // dispatch(
+        //     updateLoading({
+        //         statusMessage: "Powering up your app",
+        //         percentLoaded: 0,
+        //     })
+
+        // )
     }
 
     const LaunchProtocol = () => {
@@ -215,7 +211,7 @@ const Loading = (props: {
     const returnToDashboard = () => {
         // emulates what the protocol would have done had you successfully closed
         // not sure if secretKey is the correct one, or if deleting while spinning up will work
-        if (!failedToLaunch) {
+        if (!failure) {
             dispatch(cancelContainer())
         }
         resetLaunchRedux()
@@ -314,7 +310,7 @@ const Loading = (props: {
                             onClick={returnToDashboard}
                             onKeyDown={returnToDashboard} // eslint
                         >
-                            {failedToLaunch ? "BACK TO DASHBOARD" : "CANCEL"}
+                            {failure ? "BACK TO DASHBOARD" : "CANCEL"}
                         </div>
                     </div>
                 </div>
