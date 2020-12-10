@@ -2,7 +2,15 @@ import requests
 
 
 def get_loc_from_ip(ip):
-    # necessary for testing, the endpoint will return "Not Found" otherwise for longitude etc
+    """This function will use a geolocation site to tell you what is the closest (rougly)
+    aws datacenter to you, returning the aws region that would be most suitable.
+
+    Args:
+        ip (str): The IP address the the requester.
+
+    Returns:
+        str: us-east-1 | us-west-1, whichever is closest by longitude.
+    """
     if ip[0:4] == "172.":
         return "us-east-1"
 
