@@ -30,6 +30,16 @@ aws_container_bp = Blueprint("aws_container_bp", __name__)
 @jwt_required
 @developer_required
 def test_endpoint(action, **kwargs):
+    """This is an endpoint for administrators and developers to test aws container creation,
+    cluster creation, deletion, etcetera. It differs from our regular container endpoints in that
+    it requires some different parameters and it has some additional functionality (i.e. for clusters).
+
+    Args:
+        action (str): The action the user is requiesting in the url (look at the route for clarity).
+
+    Returns:
+        json, int: the json http response and the http status code (which is an int like 200, 400, ...).
+    """
     if action == "create_cluster":
         cluster_name, instance_type, ami, region_name, max_size, min_size = (
             kwargs["body"]["cluster_name"],
