@@ -20,7 +20,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     set_stun,
 )
 
-from app.helpers.utils.general.auth import admin_required, fractal_auth
+from app.helpers.utils.general.auth import fractal_auth, developer_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
@@ -56,11 +56,24 @@ def container_state(action, **kwargs):
     return jsonify({"error": NOT_FOUND}), NOT_FOUND
 
 
-# when we add @admin_required, instead of admin_required use developer_access
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
 @fractal_pre_process
-@admin_required
+@jwt_required
+@developer_required
 def test_endpoint(action, **kwargs):
+    """This is an endpoint for administrators and developers to test
+    aws container creation, cluster creation, deletion, etcetera. It differs from our
+    regular container endpoints in that it requires some different parameters and it
+    has some additional functionality (i.e. for clusters).
+
+    Args:
+        action (str): The action the user is requiesting in the url
+        (look at the route for clarity).
+
+    Returns:
+        json, int: the json http response and the http status code
+        (which is an int like 200, 400, ...).
+    """
     if action == "create_cluster":
         cluster_name, instance_type, ami, region_name, max_size, min_size = (
             kwargs["body"]["cluster_name"],
@@ -98,6 +111,7 @@ def test_endpoint(action, **kwargs):
             kwargs["body"].get("region_name", None),
             kwargs["body"]["task_definition_arn"],
         )
+
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
         task = create_new_container.apply_async(
             [username, task_definition_arn],

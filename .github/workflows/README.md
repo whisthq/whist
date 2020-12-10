@@ -1,16 +1,16 @@
-# Fractal Github Actions Workflows
+# Fractal GitHub Actions Workflows
 
-This repository contains the YAML workflow files for our Github Actions workflows. These workflows are integral to our continuous integration, handling everything from tests to building and deployment to cron jobs for cleanup and analysis.
+This repository contains the YAML workflow files for our GitHub Actions workflows. These workflows are integral to our continuous integration, handling everything from tests to building and deployment to cron jobs for cleanup and analysis.
 
 ## Syntax
 
-The syntax for workflows is documented in the [Github Docs](https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions).
+The syntax for workflows is documented in the [GitHub Docs](https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions).
 
 ## Conventions
 
 ### Filenames
 
-Since Github does not yet allow us to sort our workflow files into directories, we must name them in a clear and consistent manner. In particular, we name our workflows as `[subproject]-[verb]-[noun].yml`.
+Since GitHub does not yet allow us to sort our workflow files into directories, we must name them in a clear and consistent manner. In particular, we name our workflows as `[subproject]-[verb]-[noun].yml`.
 
 For example, a workflow for the `main-webserver` project which clears protocol logs is named `main-webserver-clear-protocol-logs.yml`, whereas a meta workflow (one which operates on workflows and PRs themselves) which labels pull requests is named `meta-label-pull-requests.yml`. Workflows that belong to the whole repo -- for example, for pushing sentry releases, are instead written `fractal-push-sentry-releases.yml`.
 
@@ -59,7 +59,7 @@ jobs:
 
 ### Styling
 
-These YAML files are formatted with [prettier](https://github.com/prettier/prettier). After installing, you can check formatting with `cd .github/workflows && prettier --check .`, and you can fix formatting with `cd .github/workflows && prettier --write .`. VSCode and other IDEs and text editors have pretty robust prettier integration, so if you've set that up, that also works well!
+These YAML files are formatted with [Prettier](https://github.com/prettier/prettier). After installing, you can check formatting with `cd .github/workflows && prettier --check .`, and you can fix formatting with `cd .github/workflows && prettier --write .`. VSCode and other IDEs and text editors have pretty robust prettier integration, so if you've set that up, that also works well!
 
 ## Testing
 
