@@ -1,11 +1,13 @@
 /* eslint-disable import/no-named-as-default */
 
 import React, { useState } from "react"
+import { connect } from "react-redux"
 import { Row } from "react-bootstrap"
 import { updateAdmin } from "store/actions/pure"
 import Fractal from "assets/images/fractal.svg"
 
 import { DEFAULT } from "store/reducers/states"
+import { Dispatch } from "store/reducers/types"
 
 import AdminDropdown from "pages/dashboard/components/admin/adminDropdown"
 import {
@@ -16,7 +18,7 @@ import {
 } from "pages/dashboard/components/admin/dropdownValues"
 
 export const AdminSettings = (props: {
-    dispatch: <T extends {}>(obj: T) => void
+    dispatch: Dispatch
     adminState: {
         region: string
         taskArn: string
@@ -160,4 +162,10 @@ export const AdminSettings = (props: {
     )
 }
 
-export default AdminSettings
+const mapStateToProps = <T extends {}>(state: T) => {
+    return {
+        adminState: state.MainReducer.admin,
+    }
+}
+
+export default connect(mapStateToProps)(AdminSettings)
