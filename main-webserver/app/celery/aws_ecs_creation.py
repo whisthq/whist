@@ -6,6 +6,7 @@ import requests
 from celery import shared_task
 from celery.exceptions import Ignore
 from flask import current_app
+from requests import ConnectionError, Timeout, TooManyRedirects
 
 from app.celery.aws_ecs_deletion import delete_cluster
 
@@ -126,6 +127,52 @@ def _poll(container_id):
     return result
 
 
+def send_dpi_info_to_instance(ip, port, dpi):
+    """Send the DPI of a client display to the host service.
+
+    Arguments:
+        ip: The IP address of the instance on which the container is running.
+        port: The port on the instance to which port 32262 within the container has been mapped.
+        dpi: The DPI of the client display.
+    """
+
+    try:
+        response = requests.put(
+            f"https://{ip}:{current_app.config['HOST_SERVICE_PORT']}/set_container_dpi",
+            json={
+                "host_port": port,
+                "dpi": dpi,
+                "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
+            },
+            verify=False,
+        )
+    except (ConnectionError, Timeout, TooManyRedirects) as error:
+        log_kwargs = {
+            "logs": (
+                "Encountered an error while attempting to connect to the ECS host service running "
+                f"on {ip}: {error}"
+            ),
+            "level": logging.ERROR,
+        }
+    else:
+        if response.ok:
+            log_kwargs = {
+                "logs": "DPI set.",
+                "level": logging.INFO,
+            }
+        else:
+            log_kwargs = {
+                "logs": "Received unsuccessful set-DPI response: {response.text}",
+                "level": logging.ERROR,
+            }
+
+    fractal_log(
+        function="send_dpi_info_to_instance",
+        label=str(dpi),
+        **log_kwargs,
+    )
+
+
 def select_cluster(region_name):
     """
     Selects the best cluster for task placement in a given region, creating new clusters as
@@ -211,25 +258,6 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
     curr_network_binding = ecs_client.task_ports.get(0, -1)
     task_id = ecs_client.tasks[0]
     return task_id, curr_ip, curr_network_binding, aeskey
-
-
-def send_dpi_info_to_instance(ip, port, dpi):
-    """
-
-    Args:
-        ip: the IP of the instance hosting the container
-        port: what host port the container has port 32262 mapped to
-        dpi: what DPI the container should be run on
-
-    Returns: a tuple of success/failure and response
-
-    """
-    data = {"host_port": port, "dpi": dpi, "auth_secret": current_app.config["HOST_SERVICE_SECRET"]}
-    instance_port = 4678
-    request = requests.put(f"http://{ip}:{current_app.config['HOST_SERVICE_PORT']}", data=data)
-    if request.status_code != 200:
-        return False, request
-    return True, request
 
 
 def _get_num_extra(taskdef):
@@ -420,11 +448,9 @@ def assign_container(
             )
             raise Ignore
 
-    try:
-        send_dpi_info_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
-    except requests.exceptions.ConnectionError:
-        pass
+    send_dpi_info_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
     time.sleep(5)
+
     if not _poll(base_container.container_id):
         fractal_log(
             function="create_new_container",
@@ -591,10 +617,8 @@ def create_new_container(
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
         if username != "Unassigned":
-            try:
-                send_dpi_info_to_instance(container.ip, container.port_32262, container.dpi)
-            except requests.exceptions.ConnectionError:
-                pass
+            send_dpi_info_to_instance(container.ip, container.port_32262, container.dpi)
+
             if not _poll(container.container_id):
                 fractal_log(
                     function="create_new_container",
