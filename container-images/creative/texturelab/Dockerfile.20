@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
 # Build and install TextureLab Electron app
 RUN git clone https://github.com/njbrown/texturelab \
     && cd texturelab \
+    && git submodule update --init \
     && yarn install \
     && yarn electron:build \
     && mv dist_electron/linux-unpacked /opt/texturelab \
