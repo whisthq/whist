@@ -37,7 +37,7 @@ def app_state(action, **kwargs):
             user = body.pop("username")
             cancel_app(user)
         except:
-            response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+            return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
         return jsonify({"status": SUCCESS}), SUCCESS
     return jsonify({"error": NOT_FOUND}), NOT_FOUND
 

@@ -6,6 +6,7 @@ from app.models import (
     InstallCommand,
     SupportedAppImages,
     UserContainer,
+    UserAppState,
 )
 
 

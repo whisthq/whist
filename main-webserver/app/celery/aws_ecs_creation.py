@@ -12,12 +12,11 @@ from app.celery.aws_ecs_deletion import delete_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
-from app.helpers.utils.general.sql_commands import fractal_sql_updatef
+from app.helpers.utils.general.sql_commands import fractal_sql_update
 from app.models import db, UserContainer, ClusterInfo, SortedClusters
-from app.constants.user_app_states import CANCELLED, FAILURE, PENDING, SUCCESS
+from app.constants.user_app_states import FAILURE, PENDING, READY
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 from app.helpers.blueprint_helpers.aws.app_state import (
-    get_app_info,
     set_app_info,
     can_update_app_state,
 )
@@ -457,7 +456,7 @@ def assign_container(
             webserver_url=webserver_url,
         )
     if can_update_app_state(username, self.request.id):
-        set_app_info(keyuser=username, task_id=self.request.id, state=SUCCESS)
+        set_app_info(keyuser=username, task_id=self.request.id, state=READY)
     return user_container_schema.dump(base_container)
 
 
@@ -642,7 +641,7 @@ def create_new_container(
         return user_container_schema.dump(container)
     else:
         if can_update_app_state(username, self.request.id):
-            set_app_info(keyuser=username, task_id=self.request.id, state=SUCCESS)
+            set_app_info(keyuser=username, task_id=self.request.id, state=READY)
         fractal_log(
             function="create_new_container",
             label=str(task_id),
