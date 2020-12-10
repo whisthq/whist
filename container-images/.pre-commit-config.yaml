@@ -20,28 +20,3 @@ repos:
       rev: v2.1.2
       hooks:
           - id: prettier
-
-    # - repo: local
-    #   hooks:
-    #       # https://github.com/hadolint/hadolint
-    #       - id: dockerfile-lint
-    #         name: Dockerfile Lint
-    #         language: docker_image
-    #         entry: hadolint/hadolint:v1.18.0 hadolint
-    #         args: [
-    #                 base/Dockerfile.20
-    #                 browsers/chrome/Dockerfile.20
-    #                 browsers/firefox/Dockerfile.20
-    #                 browsers/brave/Dockerfile.20
-    #                 browsers/sidekick/Dockerfile.20
-    #                 productivity/slack/Dockerfile.20
-    #                 productivity/discord/Dockerfile.20
-    #                 productivity/notion/Dockerfile.20
-    #                 creative/blockbench/Dockerfile.20
-    #                 creative/blender/Dockerfile.20
-    #                 creative/figma/Dockerfile.20
-    #                 creative/lightworks/Dockerfile.20
-    #                 creative/gimp/Dockerfile.20
-    #                 creative/inkscape/Dockerfile.20
-    #                 creative/kdenlive/Dockerfile.20
-    #                 creative/krita/Dockerfile.20]

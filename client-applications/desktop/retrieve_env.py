@@ -95,6 +95,3 @@ if __name__ == "__main__":
     s3.Bucket(SECRET_BUCKET).download_file(remote, local)
 
     print(f"Downloaded {remote} to {local}.")
-
-
-    

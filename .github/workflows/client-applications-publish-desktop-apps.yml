@@ -1,0 +1,51 @@
+# workflows/client-applications-publish-desktop-apps.yml
+#
+# Client Applications: Publish Desktop Applications
+# Publishes Fractal Desktop Applications master branch to Production via S3 Upload 
+
+# name: "Client Applications: Publish Desktop Applications"
+
+# on:
+#     push:
+#         branches: [master, eric/add-wf]
+#     workflow_dispatch:
+
+# jobs:
+#     build-and-publish-desktop-applications:
+#         name: Build and Publish Fractal Desktop Applications to Production
+#         runs-on: ${{ matrix.os }}
+
+#         # Platforms to build on/for
+#         strategy:
+#             matrix:
+#                 os: [macos-10.14, ubuntu-latest, windows-latest]
+
+#         steps:
+#             - name: Checkout Git repository
+#               uses: actions/checkout@v2
+#               with:
+#                 persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+#                 token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+#                 submodules: recursive
+
+#             - name: Install macOS Codesigning Certificates on the GitHub Actions VM            
+#               uses: apple-actions/import-codesign-certs@v1
+#               with: 
+#                 p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+#                 p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+
+#             - name: Publish the client-application
+#               run: |
+#                 cd client-applications/desktop && ./publish.sh release
+
+#     notify-slack:
+#         name: Notify Slack
+#         needs: [build-and-publish-desktop-applications]
+#         if: success()
+#         runs-on: ubuntu-20.04
+#         steps:
+#             - name: Notify Slack
+#               run: |
+#                   curl -X POST \
+#                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Task Definitions rendered and deployed to production via ECS upload.\", \"icon_emoji\": \":fractal:\"}" \
+#                   https://hooks.slack.com/services/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

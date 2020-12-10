@@ -1,25 +1,31 @@
-# workflows/ecs-host-service-push-sentry-release.yml
+# workflows/fractal-push-sentry-releases.yml
 #
-# ECS Host Service: Push Sentry Release
-# Automatically push a new sentry release for ecs-host-service.
+# Fractal: Push Sentry Release
+# Automatically push a new sentry release for each of the fractal/fractal projects.
 
-name: "ECS Host Service: Push Sentry Release"
+name: "Fractal: Push Sentry Releases"
 
 on:
     push:
         branches: [master]
-        paths:
-            - "ecs-host-service/**"
-            - "!ecs-host-service/README.md"
 
 jobs:
-    ecs-host-service-push-sentry-release-main:
-        name: Push Sentry Release
+    fractal-push-sentry-releases-main:
+        strategy:
+            matrix:
+                project:
+                    - name: Main Webserver
+                      sentry-project: main-webserver
+                    - name: Protocol
+                      sentry-project: protocol
+                    - name: ECS Host Service
+                      sentry-project: ecs-host-service
+        name: "${{ matrix.name }}: Push Sentry Release"
         runs-on: ubuntu-20.04
         env:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
             SENTRY_ORG: tryfractal
-            SENTRY_PROJECT: ecs-host-service
+            SENTRY_PROJECT: ${{ matrix.sentry-project }}
             SENTRY_DEPLOY_ENVIRONMENT: production
 
         steps:
@@ -50,5 +56,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"ECS Host Service Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Main Webserver Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   https://hooks.slack.com/services/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

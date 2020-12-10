@@ -20,6 +20,17 @@ import { config } from "shared/constants/config"
 import configureStore from "store/configureStore"
 import { history } from "store/history"
 
+import * as Sentry from "@sentry/electron"
+
+if (process.env.NODE_ENV === "production") {
+    Sentry.init({
+        dsn:
+            "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323",
+        environment: config.sentryEnv,
+        release: `client-applications@${require("electron").remote.app.getVersion()}`,
+    })
+}
+
 const store = configureStore()
 
 const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer

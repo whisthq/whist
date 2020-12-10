@@ -152,9 +152,6 @@ class DeploymentConfig:
 
         self.session = Session(bind=engine)
 
-    # The table in the configuration database from which to retrieve configuration information.
-    config_table = "staging"
-
     DASHBOARD_PASSWORD = property(getter("DASHBOARD_PASSWORD"))
     DASHBOARD_USERNAME = property(getter("DASHBOARD_USERNAME"))
     DATADOG_API_KEY = property(getter("DATADOG_API_KEY"))
@@ -171,6 +168,25 @@ class DeploymentConfig:
     SQLALCHEMY_DATABASE_URI = property(getter("DATABASE_URL", fetch=False))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
+
+    @property
+    def config_table(self):
+        """Determine which config database table fallback configuration values should be read.
+
+        Returns:
+            Either "dev", "production", or "staging".
+        """
+
+        app_name = os.environ.get("HEROKU_APP_NAME")
+
+        if app_name == "fractal-prod-server":
+            table = "production"
+        elif app_name == "fractal-staging-server":
+            table = "staging"
+        else:
+            table = "dev"
+
+        return table
 
 
 class LocalConfig(DeploymentConfig):

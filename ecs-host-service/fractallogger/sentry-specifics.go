@@ -10,24 +10,25 @@ import (
 )
 
 func InitializeSentry() error {
+	// Only set up Sentry to log events if running in production
 	strProd := os.Getenv("USE_PROD_SENTRY")
-	// We want to use the production sentry config if we run with that
-	// environment variable, or if we are actually running in production.
 	useProdSentry := (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (IsRunningInProduction())
 	if useProdSentry {
-		log.Print("Using production sentry configuration: Debug: false")
+		log.Print("Using production sentry configuration.")
 	} else {
-		log.Print("Using debug sentry configuration: Debug: true. Printing sentry events instead")
+		log.Print("Not production - not setting up sentry")
+		return nil
 	}
 
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:     "https://5f2dd9674e2b4546b52c205d7382ac90@o400459.ingest.sentry.io/5461239",
-		Release: "0.1",
-		Debug:   !useProdSentry,
+		Dsn:     "https://774bb2996acb4696944e1c847c41773c@o400459.ingest.sentry.io/5461239",
+		Release: GetGitCommit(),
+		Environment: os.Getenv("APP_ENV")
 	})
 	if err != nil {
 		return MakeError("Error calling Sentry.init: %v", err)
 	}
+	log.Printf("Set sentry release to git commit hash: %s", GetGitCommit())
 
 	// Configure Sentry's scope with some instance-specific information
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
@@ -35,8 +36,6 @@ func InitializeSentry() error {
 		// into a separate function because we want to defer sending the errors
 		// about being unable to set Sentry tags until after we have set all the
 		// ones we can.
-		scope.SetTag("git-commit-hash", GetGitCommit())
-		log.Printf("Set sentry tag git-commit-hash: %s", GetGitCommit())
 
 		if val, err := GetAwsAmiId(); err != nil {
 			defer Errorf("Unable to set Sentry tag aws.ami-id: %v", err)
