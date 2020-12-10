@@ -35,7 +35,7 @@ const Installing = (props: {
                 await previousPromise
                 setCurrentApp(nextApp.app_id)
                 setProgress(currentProgress)
-                currentProgress = currentProgress + 1
+                currentProgress += 1
                 return createShortcut(nextApp)
             },
             Promise.resolve()

@@ -325,7 +325,8 @@ export const deleteShortcut = (app: FractalApp): boolean => {
         fs.rmdirSync(macDesktopPath, { recursive: true })
         fs.rmdirSync(macApplicationsPath, { recursive: true })
         return true
-    } else if (platform === OperatingSystem.WINDOWS) {
+    }
+    if (platform === OperatingSystem.WINDOWS) {
         // Points to the folder where windows.vbs is located (shortcut creation code)
         // Check the desktop folder and Start Menu Programs folder
         const windowsDesktopPath = path.join(
@@ -340,8 +341,7 @@ export const deleteShortcut = (app: FractalApp): boolean => {
         fs.unlinkSync(windowsDesktopPath)
         fs.unlinkSync(windowsStartMenuPath)
         return true
-    } else {
-        debugLog(`no suitable os found, instead got ${platform}`)
-        return false
     }
+    debugLog(`no suitable os found, instead got ${platform}`)
+    return false
 }

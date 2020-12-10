@@ -38,7 +38,6 @@ const App = (props: {
             // Create PNG
             SVGConverter.saveAsPngTemp(app.logo_url, app.app_id)
                 .then((pngPath: string) => {
-                    console.log(pngPath)
                     // Create container
                     dispatch(updateContainer({ pngFile: pngPath }))
                     dispatch(createContainer(app.app_id, null, admin))
