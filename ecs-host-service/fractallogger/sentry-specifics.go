@@ -21,9 +21,9 @@ func InitializeSentry() error {
 	}
 
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:     "https://774bb2996acb4696944e1c847c41773c@o400459.ingest.sentry.io/5461239",
-		Release: GetGitCommit(),
-		Environment: os.Getenv("APP_ENV")
+		Dsn:         "https://774bb2996acb4696944e1c847c41773c@o400459.ingest.sentry.io/5461239",
+		Release:     GetGitCommit(),
+		Environment: os.Getenv("APP_ENV"),
 	})
 	if err != nil {
 		return MakeError("Error calling Sentry.init: %v", err)
