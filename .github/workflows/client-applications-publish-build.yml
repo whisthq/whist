@@ -1,0 +1,98 @@
+# workflows/client-applications-publish-desktop-apps.yml
+#
+# Client Applications: Publish Desktop Applications
+# Publishes Fractal Desktop Applications master branch to Production via S3 Upload 
+
+name: "Client Applications: Publish Desktop Applications" 
+
+on:
+    push:
+        branches: [master, phil/clientapp-workflow]
+    workflow_dispatch:
+
+jobs:
+    build-and-publish-desktop-applications:
+        name: Build and Publish Fractal Desktop Applications to Production
+        runs-on: ${{ matrix.os }}
+
+        # Platforms to build on/for
+        strategy:
+            matrix:
+                os: [macos-10.14, ubuntu-latest, windows-2019]
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+              with:
+                persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+                submodules: recursive
+
+            - name: Install macOS Codesigning Certificates on the GitHub Actions VM
+              if: matrix.os == 'macos-10.14'            
+              uses: apple-actions/import-codesign-certs@v1
+              with: 
+                p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+                p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+
+            - name: Retrieve Desktop App Version from Config Database
+              run: |
+                # curl GraphQL API
+                curl -X POST \
+                -H "Content-Type: application/json" \
+                -H "X-Hasura-Admin-Secret: WhFpeUYnKxGsa8L" \
+                --data '{ "query": "query { desktop_app_version { commit_hash major minor micro } }" }' \
+                http://config-database.tryfractal.com/v1/graphql > response.json
+
+                # parse JSON into major.minor.micro
+                MAJOR=$(cat response.json | jq '.data.desktop_app_version[0].major')
+                MINOR=$(cat response.json | jq '.data.desktop_app_version[0].minor')
+                MICRO=$(cat response.json | jq '.data.desktop_app_version[0].micro')
+
+                # increment version by 0.0.1
+                NEW_MICRO=$(echo "${MICRO} + 1" | bc -l)
+
+                # set new desktop app version
+                NEW_VERSION="${MAJOR}.${MINOR}.${NEW_MICRO}"
+
+                # remove temporary JSON file and store version in environment variable
+                # store NEW_MICRO in GITHUB_ENV to push to GraphQL API iff job succeeds
+                rm -rf response.json
+                echo "new_micro_version=${NEW_MICRO}" >> $GITHUB_ENV
+                echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
+
+            - name: Select S3 bucket based on OS
+              run: |
+                    if [ "$RUNNER_OS" == "Linux" ]; then
+                        echo "s3_bucket=fractal-linux-application-release" >> $GITHUB_ENV
+                    elif [ "$RUNNER_OS" == "Windows" ]; then
+                        echo "s3_bucket=fractal-windows-application-release" >> $GITHUB_ENV
+                    else
+                        echo "s3_bucket=fractal-mac-application-release" >> $GITHUB_ENV
+                    fi
+              shell: bash
+
+            - name: Publish the client-applications
+              run: | 
+                cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
+
+    update-graphql-and-notify-slack:
+        name: Update GraphQL API Version and Notify Slack
+        needs: [build-and-publish-desktop-applications]
+        if: success()
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Update Version in GraphQL API
+              run: |
+                curl -X POST \
+                -H "Content-Type: application/json" \
+                -H "X-Hasura-Admin-Secret: WhFpeUYnKxGsa8L" \
+                --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk ( pk_columns: { id: 1 } _set: { micro: ${{ env.NEW_VERSION }}, commit_hash: ${{ env.GITHUB_SHA }} }, ) { id micro commit_hash } }\" }" \
+                http://config-database.tryfractal.com/v1/graphql
+
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Task Definitions rendered and deployed to production via ECS upload.\", \"icon_emoji\": \":fractal:\"}" \
+                  https://hooks.slack.com/services/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
