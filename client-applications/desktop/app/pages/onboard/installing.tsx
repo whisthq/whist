@@ -8,11 +8,14 @@ import TitleBar from "shared/components/titleBar"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalApp } from "shared/types/ui"
 import { OperatingSystem } from "shared/types/client"
-import { createShortcuts } from "shared/utils/files/shortcuts"
+import { createShortcut } from "shared/utils/files/shortcuts"
 import { history } from "store/history"
 
-const Installing = (props: { onboardApps: FractalApp[] }) => {
-    const { onboardApps } = props
+const Installing = (props: {
+    onboardApps: FractalApp[]
+    clientOS: OperatingSystem
+}) => {
+    const { onboardApps, clientOS } = props
 
     const [currentApp, setCurrentApp] = useState("")
     const [progress, setProgress] = useState(0)
@@ -25,13 +28,13 @@ const Installing = (props: { onboardApps: FractalApp[] }) => {
         history.push(FractalRoute.DASHBOARD)
     }
 
-    const createShortcutsWrapper = async (): Promise<any> => {
+    const createShortcutWrapper = async (): Promise<any> => {
         await onboardApps.reduce(
             async (previousPromise: Promise<any>, nextApp: FractalApp) => {
                 await previousPromise
                 setCurrentApp(nextApp.app_id)
                 setProgress(progress + 1)
-                return createShortcuts(nextApp)
+                return createShortcut(nextApp)
             },
             Promise.resolve()
         )
@@ -40,7 +43,7 @@ const Installing = (props: { onboardApps: FractalApp[] }) => {
 
     useEffect(() => {
         if (onboardApps && onboardApps.length > 0) {
-            createShortcutsWrapper()
+            createShortcutWrapper()
         }
     }, [onboardApps])
 
@@ -64,7 +67,11 @@ const Installing = (props: { onboardApps: FractalApp[] }) => {
                     {progress === appsLength ? (
                         <>
                             <div className={styles.installingText}>
-                                Done installing.
+                                Done installing. In your{" "}
+                                {clientOS === OperatingSystem.Windows
+                                    ? "Windows"
+                                    : "Mac"}{" "}
+                                search bar, type Fractalized to see your apps.
                             </div>
                             <button
                                 type="button"
