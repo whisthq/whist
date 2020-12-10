@@ -1,6 +1,14 @@
 import { OperatingSystem } from "shared/types/client"
 import { debugLog } from "shared/utils/general/logging"
 
+const allowedRegions = [
+    "us-east-1",
+    "us-east-2",
+    "us-west-1",
+    "us-west-2",
+    "ca-central-1",
+]
+
 export const execPromise = (
     command: string,
     path: string,
@@ -81,16 +89,22 @@ export const setAWSRegion = () => {
 
                 regions.stdout.on("data", (data: string) => {
                     // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
-                    const line = data.split(/\r?\n/)[0].replace(/  +/g, " ")
-                    const items = line.split(" ")
-                    // In case data is split and sent separately, only use closest AWS region which has index of 0
-                    if (items[1] === "1.") {
-                        const region = items[2].slice(1, -1)
-                        resolve(region)
-                        // debugLog("Ping detected " + region.toString())
-                    } else {
-                        reject()
+                    const output = data.split(/\r?\n/)
+                    let index = 0
+                    let line = output[index].replace(/  +/g, " ")
+                    let items = line.split(" ")
+                    while (
+                        !allowedRegions.includes(items[2].slice(1, -1)) &&
+                        index < output.length - 1
+                    ) {
+                        index += 1
+                        line = output[index].replace(/  +/g, " ")
+                        items = line.split(" ")
                     }
+                    // In case data is split and sent separately, only use closest AWS region which has index of 0
+                    const region = items[2].slice(1, -1)
+                    console.log(region)
+                    resolve(region)
                 })
                 return null
             })
