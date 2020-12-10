@@ -16,6 +16,7 @@ import os
 from collections import namedtuple
 
 from dotenv import load_dotenv
+from flask import request
 from sqlalchemy import create_engine
 from sqlalchemy.orm.session import Session
 
@@ -27,6 +28,31 @@ from sqlalchemy.orm.session import Session
 # evaluates to DeployedConfig and CONFIG_MATRIX.local.test evaluates to LocalTestConfig.
 _ConfigMatrix = namedtuple("_ConfigMatrix", ("deployment", "local"))
 _ConfigVector = namedtuple("_ConfigVector", ("serve", "test"))
+
+
+def _callback_webserver_hostname():
+    """Return the hostname of the web server with which the protocol server should communicate.
+
+    The callback web server will receive pings from the protocol server and will receive the
+    container deletion request when the protocol terminates.
+
+
+    If we're launching a streamed application from an instance of the web server running on a local
+    development machine, the server is unable to receive pings from the protocol running in the
+    container from which the application is being streamed. Instead, we want to direct all of the
+    protocol's communication to the Fractal development server deployment on Heroku.
+
+    This function must be called with request context.
+
+    Returns:
+        A web server hostname.
+    """
+
+    return (
+        request.host
+        if request.host not in ("localhost", "127.0.0.1")
+        else "fractal-dev-server.herokuapp.com"
+    )
 
 
 def getter(key, fetch=True, **kwargs):
