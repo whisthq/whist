@@ -56,7 +56,6 @@ def getter(key, fetch=True, **kwargs):
     default = kwargs.get("default")
     has_default = "default" in kwargs
     raising = kwargs.get("raising", not has_default)
-    cache_key = f"_{key}"
 
     def _getter(config):
         """Return an instance attribute value.
@@ -80,38 +79,32 @@ def getter(key, fetch=True, **kwargs):
                 the configuration database.
         """
 
-        if not hasattr(config, cache_key):
-            # Go out and get the associated value.
-            try:
-                value = os.environ[key]
-            except KeyError as e:
-                found = False
+        try:
+            # First, try to read the value of the configuration variable from the process's
+            # execution environment.
+            value = os.environ[key]
+        except KeyError as e:
+            found = False
 
-                if fetch:
-                    # Go even further and fetch the value from the configuration database.
-                    result = config.session.execute(
-                        f"SELECT value FROM {config.config_table} WHERE key=:key",
-                        {"key": key},
-                    )
-                    row = result.fetchone()
+            if fetch:
+                # Attempt to read a fallback value from the configuration database.
+                result = config.session.execute(
+                    f"SELECT value FROM {config.config_table} WHERE key=:key",
+                    {"key": key},
+                )
+                row = result.fetchone()
 
-                    if row:
-                        found = True
-                        value = row[0]
+                if row:
+                    found = True
+                    value = row[0]
 
-                        result.close()
+                    result.close()
 
-                if not found:
-                    if not has_default and raising:
-                        raise e
+            if not found:
+                if not has_default and raising:
+                    raise e
 
-                    value = default
-
-            # Cache the result.
-            setattr(config, cache_key, value)
-        else:
-            # Fetch a cached result.
-            value = getattr(config, cache_key)
+                value = default
 
         return value
 
