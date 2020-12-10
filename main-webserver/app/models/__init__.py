@@ -10,7 +10,7 @@ from .hardware import (
     UserContainer,
     SortedClusters,
     SupportedAppImages,
-    UserAppState,
+    UserContainerState,
 )
 from .logs import LoginHistory, MonitorLog, ProtocolLog
 from .public import User

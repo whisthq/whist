@@ -9,7 +9,7 @@ from app.celery.aws_ecs_creation import (
     create_new_container,
     send_commands,
 )
-from app.helpers.blueprint_helpers.aws.app_state import cancel_app
+from app.helpers.blueprint_helpers.aws.container_state import cancel_container
 from app.celery.aws_ecs_deletion import delete_cluster, delete_container, drain_container
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND, SUCCESS
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
@@ -26,16 +26,30 @@ from app.helpers.utils.locations.location_helper import get_loc_from_ip
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
 
-@aws_container_bp.route("/app_state/<action>", methods=["POST"])
+@aws_container_bp.route("/container_state/<action>", methods=["POST"])
 @fractal_pre_process
 @jwt_required
 @fractal_auth
-def app_state(action, **kwargs):
+def container_state(action, **kwargs):
+    """This is an endpoint which accesses our container_state_values table.
+    This table hides much of the inner workings of container spinup from users
+    and simply provides information regarding whether a user's app/container is
+    ready, cancelled, failed, etc. It is meant to be listened on through
+    a GraphQL websocket (subscription) for the loading page in the client app.
+
+    Args:
+        action (str): The string at the end of the URL which signifies
+        which action we want to take. Currently, only the cancel endpoint is provided,
+        which allows us to easily cancel a spinning up container and clean up our redux state.
+
+    Returns:
+        json, int: A json HTTP response and status code.
+    """
     if action == "cancel":
         body = kwargs.pop("body")
         try:
             user = body.pop("username")
-            cancel_app(user)
+            cancel_container(user)
         except:
             return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
         return jsonify({"status": SUCCESS}), SUCCESS

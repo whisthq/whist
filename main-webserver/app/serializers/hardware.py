@@ -6,7 +6,7 @@ from app.models import (
     InstallCommand,
     SupportedAppImages,
     UserContainer,
-    UserAppState,
+    UserContainerState,
 )
 
 
@@ -42,7 +42,7 @@ class BannersSchema(ma.SQLAlchemyAutoSchema):
         model = Banners
 
 
-class UserAppStateSchema(ma.SQLAlchemyAutoSchema):
+class UserContainerStateSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = UserAppState
+        model = UserContainerState
         include_fk = True
