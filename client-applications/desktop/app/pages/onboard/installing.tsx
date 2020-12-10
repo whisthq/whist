@@ -18,22 +18,24 @@ const Installing = (props: {
     const { onboardApps, clientOS } = props
 
     const [currentApp, setCurrentApp] = useState("")
-    const [progress, setProgress] = useState(0)
+    const [progress, setProgress] = useState(1)
 
     const appsLength =
         onboardApps && onboardApps.length > 0 ? onboardApps.length : 1
-    const progressBar = useSpring({ width: (progress / appsLength) * 600 })
-
-    const handleDone = (): void => {
-        history.push(FractalRoute.DASHBOARD)
-    }
+    const progressBar = useSpring({
+        config: { friction: 0, mass: 0.5 },
+        to: { width: (progress / appsLength) * 600 },
+        from: { width: ((progress - 1) / appsLength) * 600 },
+    })
 
     const createShortcutWrapper = async (): Promise<any> => {
+        let currentProgress = 1
         await onboardApps.reduce(
             async (previousPromise: Promise<any>, nextApp: FractalApp) => {
                 await previousPromise
                 setCurrentApp(nextApp.app_id)
-                setProgress(progress + 1)
+                setProgress(currentProgress)
+                currentProgress = currentProgress + 1
                 return createShortcut(nextApp)
             },
             Promise.resolve()
@@ -44,6 +46,8 @@ const Installing = (props: {
     useEffect(() => {
         if (onboardApps && onboardApps.length > 0) {
             createShortcutWrapper()
+        } else {
+            history.push(FractalRoute.DASHBOARD)
         }
     }, [onboardApps])
 
@@ -53,39 +57,50 @@ const Installing = (props: {
             <TitleBar />
             <div className={styles.removeDrag}>
                 <div className={styles.installingContainer}>
-                    <h2>Your apps are installing.</h2>
-                    <div className={styles.subtext} style={{ marginTop: 50 }}>
-                        Please do not close this window until your installation
-                        is complete.
-                    </div>
-                    <div className={styles.installingBar}>
-                        <animated.div
-                            className={styles.progress}
-                            style={progressBar}
-                        />
-                    </div>
-                    {progress === appsLength ? (
+                    {progress === appsLength && onboardApps.length > 0 ? (
                         <>
-                            <div className={styles.installingText}>
-                                Done installing. In your{" "}
-                                {clientOS === OperatingSystem.Windows
+                            <h2 style={{ marginTop: 225 }}>
+                                Success! One last step.
+                            </h2>
+                            <div
+                                className={styles.installingText}
+                                style={{ fontWeight: "normal" }}
+                            >
+                                In your{" "}
+                                {clientOS === OperatingSystem.WINDOWS
                                     ? "Windows"
                                     : "Mac"}{" "}
-                                search bar, type Fractalized to see your apps.
+                                search bar, type{" "}
+                                <span className={styles.command}>
+                                    Fractalized
+                                </span>{" "}
+                                to pull up your apps. For example, if you open{" "}
+                                <span className={styles.command}>
+                                    Fractalized {onboardApps[0].app_id}
+                                </span>
+                                , this page will refresh!
                             </div>
-                            <button
-                                type="button"
-                                className={styles.enterButton}
-                                onClick={handleDone}
-                                style={{ marginTop: 100 }}
-                            >
-                                GO TO APP STORE
-                            </button>
                         </>
                     ) : (
-                        <div className={styles.installingText}>
-                            Installing {currentApp}...
-                        </div>
+                        <>
+                            <h2>Your apps are installing.</h2>
+                            <div
+                                className={styles.subtext}
+                                style={{ marginTop: 50 }}
+                            >
+                                Please do not close this window until your
+                                installation is complete.
+                            </div>
+                            <div className={styles.installingBar}>
+                                <animated.div
+                                    className={styles.progress}
+                                    style={progressBar}
+                                />
+                            </div>
+                            <div className={styles.installingText}>
+                                Installing {currentApp}...
+                            </div>
+                        </>
                     )}
                 </div>
             </div>
