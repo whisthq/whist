@@ -3,7 +3,7 @@
 # Client Applications: Publish Desktop Applications
 # Publishes Fractal Desktop Applications master branch to Production via S3 Upload 
 
-name: "Client Applications: Publish Desktop Applications"
+name: "Client Applications: Publish Desktop Applications" 
 
 on:
     push:
