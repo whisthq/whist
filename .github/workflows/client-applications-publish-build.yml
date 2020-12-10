@@ -50,8 +50,8 @@ jobs:
                 MICRO=$(cat response.json | jq '.data.desktop_app_version[0].micro')
 
                 # increment version by 0.0.1
-                NEW_MICRO=$(echo "${MICRO} + 1" | bc -l)
-
+                NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+                
                 # set new desktop app version
                 NEW_VERSION="${MAJOR}.${MINOR}.${NEW_MICRO}"
 
