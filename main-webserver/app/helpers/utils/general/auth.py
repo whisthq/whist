@@ -11,19 +11,22 @@ from app.helpers.utils.general.logs import fractal_log
 
 
 def fractal_auth(func):
-    """Authenticates users for requests (a decorator). It checks that the provided username is
-    matching the jwt provided (which this server gave to that user on login with a secret key).
-    It also authenticates the admin user.
+    """Authenticates users for requests (a decorator). It checks that the
+    provided username is matching the jwt provided (which this server gave to that
+    user on login with a secret key). It also authenticates the admin user.
 
     Args:
-        func (function): A function that we are wrapping with this decorator. Read the python docs on
-        decorators for more context (effectivelly, this injects code to run before the function and may
-        return early if the user is not authenticated, for example).
+        func (function): A function that we are wrapping with this decorator.
+        Read the python docs on decorators for more context (effectivelly, this injects
+        code to run before the function and may return early if the user is not authenticated,
+        for example).
 
     Returns:
-        function: The wrapped function (i.e. a function that does the provided func if the username was
-        authenticated and otherwise returns an unauthorized error).
+        function: The wrapped function (i.e. a function that does the
+        provided func if the username was authenticated and otherwise returns an
+        unauthorized error).
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         username = None
@@ -83,18 +86,20 @@ def fractal_auth(func):
 
 
 def admin_required(func):
-    """A decorator that will return unauthorized if the invoker is no the admin user (i.e.
-    "DASHBOARD_USERNAME" user). This user can be found in the config db. To log in as this user
-    you will have to use the admin login endpoint (which is different from the reguar login endpoint).
+    """A decorator that will return unauthorized if the
+    invoker is no the admin user (i.e. "DASHBOARD_USERNAME" user). This user can
+    be found in the config db. To log in as this user you will have to use the admin
+    login endpoint (which is different from the reguar login endpoint).
 
     Args:
-        func (function): A function that will be wrapped by this decorator and only run if
-        an admin is invoking it.
+        func (function): A function that will be wrapped by
+        this decorator and only run if an admin is invoking it.
 
     Returns:
-        function: A wrapper that will return unauthorized if the jwt identity provided is not
-        an admin and otherwise run the wrapped function.
+        function: A wrapper that will return unauthorized if the
+        jwt identity provided is not an admin and otherwise run the wrapped function.
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         current_user = get_jwt_identity()
@@ -118,17 +123,20 @@ def admin_required(func):
 
 
 def developer_required(func):
-    """Similar decorator to admin_required, but it allows @tryfractal.com users as well. It is meant
-    for developer endpoints such as the test_endpoint where we, for ease of testing, prefer to let any
-    of the fractal members connect. It will return unauthorized for non-developers.
+    """Similar decorator to admin_required, but it allows @tryfractal.com
+    users as well. It is meant for developer endpoints such as the test_endpoint where we,
+    for ease of testing, prefer to let any of the fractal members connect. It will return
+    unauthorized for non-developers.
 
     Args:
         func (function): The function that is being decorated.
 
     Returns:
-        function: A wrapper that runs some preprocessing/decoration code and then calls the func in
-        certain cases (or returns something else). Check the docks on python decorators for more context.
+        function: A wrapper that runs some preprocessing/decoration code and
+        then calls the func in certain cases (or returns something else). Check the
+        docs on python decorators for more context.
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         current_user = get_jwt_identity()
