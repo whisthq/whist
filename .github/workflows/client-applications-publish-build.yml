@@ -7,7 +7,7 @@ name: "Client Applications: Publish Desktop Applications"
 
 on:
     push:
-        branches: [master, phil/clientapps-workflow]
+        branches: [master, phil/clientapp-workflow]
     workflow_dispatch:
 
 jobs:
