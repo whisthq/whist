@@ -1,4 +1,4 @@
-@import '/app.global.css';
+@import "/app.global.css";
 
 .container {
     background: rgba(237, 240, 247, 0.75);
@@ -7,7 +7,7 @@
     height: 100vh;
     overflow-x: hidden;
     overflow-y: hidden;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     margin: 0px;
     -webkit-app-region: drag;
     user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
@@ -21,7 +21,7 @@
     height: 100vh;
     overflow-x: hidden;
     overflow-y: hidden;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     margin: 0px;
     -webkit-app-region: drag;
     user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
@@ -32,7 +32,7 @@
 }
 
 .container h2 {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     font-size: 35px;
     letter-spacing: 1.2px;
 }
@@ -80,9 +80,9 @@
 .appContainerSelected {
     height: 70px;
     width: 70px;
-    border-radius: 15px;
+    border-radius: 10px;
     background: var(--text-background-color);
-    box-shadow: var(--light-box-shadow);
+    /* box-shadow: var(--light-box-shadow); */
     position: relative;
     transition: 0.5s;
 }
@@ -94,7 +94,7 @@
 
 .logoTitle {
     color: black;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     position: absolute;
     top: 42px;
     left: 42px;
@@ -107,7 +107,7 @@
 }
 
 .enterButton {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     letter-spacing: 1px;
     background: var(--primary-color);
     color: var(--text-background-color);
@@ -124,7 +124,7 @@
 }
 
 .appsTitle {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     width: 600px;
     margin: auto;
     letter-spacing: 1.4px;
@@ -196,7 +196,7 @@
 
 .bottomText {
     margin-top: 20px;
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .link {
@@ -229,6 +229,22 @@
 }
 
 .installingText {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     margin-top: 20px;
+}
+
+.installedText {
+    margin-top: 35px;
+    font-size: 14px;
+}
+
+.command {
+    color: var(--primary-color);
+    border-radius: 3px;
+    padding: 4px 10px;
+    background: rgba(57, 48, 184, 0.1);
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+    text-align: center;
 }
