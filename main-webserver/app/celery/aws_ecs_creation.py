@@ -12,9 +12,15 @@ from app.celery.aws_ecs_deletion import delete_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
-from app.helpers.utils.general.sql_commands import fractal_sql_update
+from app.helpers.utils.general.sql_commands import fractal_sql_updatef
 from app.models import db, UserContainer, ClusterInfo, SortedClusters
+from app.constants.user_app_states import CANCELLED, FAILURE, PENDING, SUCCESS
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
+from app.helpers.blueprint_helpers.aws.app_state import (
+    get_app_info,
+    set_app_info,
+    can_update_app_state,
+)
 
 from app.helpers.utils.datadog.events import (
     datadogEvent_containerCreate,
@@ -308,6 +314,8 @@ def assign_container(
         cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
 
         if cluster_info.status == "DEPROVISIONING":
+            if can_update_app_state(username, self.request.id):
+                set_app_info(keyuser=username, task_id=self.request.id, state=FAILURE)
             fractal_log(
                 function="create_new_container",
                 label=cluster_name,
@@ -330,6 +338,8 @@ def assign_container(
         )
         # TODO:  Get this right
         if curr_ip == -1 or curr_network_binding == -1:
+            if can_update_app_state(username, self.request.id):
+                set_app_info(keyuser=username, task_id=self.request.id, state=FAILURE)
             fractal_log(
                 function="create_new_container",
                 label=str(username),
@@ -374,6 +384,8 @@ def assign_container(
                 ),
             )
         else:
+            if can_update_app_state(username, self.request.id):
+                set_app_info(keyuser=username, task_id=self.request.id, state=FAILURE)
             fractal_log(
                 function="create_new_container",
                 label=str(task_id),
@@ -396,6 +408,8 @@ def assign_container(
             )
             base_container = container
         else:
+            if can_update_app_state(username, self.request.id):
+                set_app_info(keyuser=username, task_id=self.request.id, state=FAILURE)
             fractal_log(
                 function="create_new_container",
                 label=str(task_id),
@@ -413,6 +427,8 @@ def assign_container(
         pass
     time.sleep(5)
     if not _poll(base_container.container_id):
+        if can_update_app_state(username, self.request.id):
+            set_app_info(keyuser=username, task_id=self.request.id, state=FAILURE)
         fractal_log(
             function="create_new_container",
             label=str(base_container.container_id),
@@ -440,6 +456,8 @@ def assign_container(
             region_name=region_name,
             webserver_url=webserver_url,
         )
+    if can_update_app_state(username, self.request.id):
+        set_app_info(keyuser=username, task_id=self.request.id, state=SUCCESS)
     return user_container_schema.dump(base_container)
 
 
@@ -471,6 +489,8 @@ def create_new_container(
 
     task_start_time = time.time()
 
+    set_app_info(keyuser=username, task_id=self.request.id, state=PENDING)
+
     message = (
         f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in "
         f"{region_name}"
@@ -494,6 +514,8 @@ def create_new_container(
         cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
 
     if cluster_info.status == "DEPROVISIONING":
+        if can_update_app_state(username, self.request.id):
+            set_app_info(keyuser=username, task_id=self.request.id, state=FAILURE)
         fractal_log(
             function="create_new_container",
             label=cluster_name,
@@ -514,6 +536,8 @@ def create_new_container(
     )
     # TODO:  Get this right
     if curr_ip == -1 or curr_network_binding == -1:
+        if can_update_app_state(username, self.request.id):
+            set_app_info(keyuser=username, task_id=self.request.id, state=FAILURE)
         fractal_log(
             function="create_new_container",
             label=str(username),
@@ -557,6 +581,8 @@ def create_new_container(
             ),
         )
     else:
+        if can_update_app_state(username, self.request.id):
+            set_app_info(keyuser=username, task_id=self.request.id, state=FAILURE)
         fractal_log(
             function="create_new_container",
             label=str(task_id),
@@ -583,6 +609,8 @@ def create_new_container(
             except requests.exceptions.ConnectionError:
                 pass
             if not _poll(container.container_id):
+                if can_update_app_state(username, self.request.id):
+                    set_app_info(keyuser=username, task_id=self.request.id, state=FAILURE)
                 fractal_log(
                     function="create_new_container",
                     label=str(task_id),
@@ -609,9 +637,12 @@ def create_new_container(
             datadogEvent_containerCreate(
                 container.container_id, cluster_name, username=username, time_taken=task_time_taken
             )
-
+        if can_update_app_state(username, self.request.id):
+            set_app_info(keyuser=username, task_id=self.request.id, state=FAILURE)
         return user_container_schema.dump(container)
     else:
+        if can_update_app_state(username, self.request.id):
+            set_app_info(keyuser=username, task_id=self.request.id, state=SUCCESS)
         fractal_log(
             function="create_new_container",
             label=str(task_id),
