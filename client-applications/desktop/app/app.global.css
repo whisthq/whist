@@ -53,12 +53,12 @@ body {
     background-color: white;
     font-family: "Maven Pro";
     overflow-y: hidden;
-    letter-spacing: 1.2px !important;
+    letter-spacing: 1.1px !important;
 }
 
 div {
     outline: none;
-    letter-spacing: 1.2px !important;
+    letter-spacing: 1.1px !important;
 }
 
 h2 {
