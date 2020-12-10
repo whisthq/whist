@@ -73,15 +73,17 @@ jobs:
                     fi
               shell: bash
 
-            - name: Publish the client-applications
+            - name: Publish the Windows client-application
+              if: matrix.os == 'windows-2019'
               run: | 
-                if [ "$RUNNER_OS" == "Windows" ]; then
                   cd client-applications/desktop && ./publish.bat -branch=master -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -publish=true
-                else
-                  cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
-                fi
 
-                
+            - name: Publish the macOS & Linux client-applications
+              if: matrix.os != 'windows-2019'
+              run: | 
+                  cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
+
+                  
     update-graphql-and-notify-slack:
         name: Update GraphQL API Version and Notify Slack
         needs: [build-and-publish-desktop-applications]
