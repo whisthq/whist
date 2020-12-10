@@ -15,7 +15,7 @@
 /ecs-host-service/      @fractal/code-standard-reviewers @djsavvy @rpadaki
 /ecs-host-setup/        @fractal/code-standard-reviewers @rpadaki @djsavvy
 /ecs-task-definitions/  @fractal/code-standard-reviewers @rpadaki @djsavvy
-/analytics/             @fractal/code-standard-reviewers @rpadaki @philippemnoel
+/log-analysis/          @fractal/code-standard-reviewers @rpadaki @philippemnoel
 /main-webserver/        @fractal/code-standard-reviewers @FishmanL @mingy98
 /protocol/              @fractal/code-standard-reviewers @npip99 @rpadaki
 
