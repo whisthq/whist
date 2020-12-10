@@ -110,7 +110,7 @@ const Loading = (props: {
                     h: 600,
                     p: portInfo,
                     k: secretKey,
-                    ...(pngFile && { i: pngFile }),
+                    // ...(pngFile && { i: pngFile }),
                 }
 
                 const protocolArguments = [
@@ -131,12 +131,13 @@ const Loading = (props: {
                     //    PATH: process.env.PATH,
                     // },
                 })
-                return protocol.on("close", () => {
+                protocol.on("close", () => {
                     resetLaunchRedux()
                     setLaunches(0)
                     ipc.sendSync("canClose", true)
                     history.push(FractalRoute.DASHBOARD)
                 })
+                return null
             })
             .catch((error) => {
                 throw error
