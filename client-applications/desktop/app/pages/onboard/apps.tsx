@@ -85,11 +85,11 @@ const Apps = (props: { accessToken: string; dispatch: Dispatch<any> }) => {
             <div className={styles.removeDrag}>
                 <div className={styles.appsContainer}>
                     <h2 className={styles.appsTitle}>
-                        Which apps do you want to run faster?
+                        Which apps do you want to speed up?
                     </h2>
                     <div className={styles.subtext}>
-                        Fractal apps speed up your computer by running on cloud
-                        hardware.
+                        Fractal apps run in the cloud, which boosts your
+                        computer to use less power and memory.
                     </div>
                     <div className={styles.appsWrapper}>
                         {loading ? (
@@ -118,13 +118,18 @@ const Apps = (props: { accessToken: string; dispatch: Dispatch<any> }) => {
                             </>
                         )}
                     </div>
-                    <button
-                        type="button"
-                        className={styles.enterButton}
-                        onClick={handleDownload}
-                    >
-                        DOWNLOAD {numSelectedApps} APPS
-                    </button>
+                    {numSelectedApps > 0 && (
+                        <div>
+                            <button
+                                type="button"
+                                className={styles.enterButton}
+                                onClick={handleDownload}
+                            >
+                                DOWNLOAD {numSelectedApps} APP
+                                {numSelectedApps > 1 && "S"}
+                            </button>
+                        </div>
+                    )}
                     <div className={styles.bottomText}>
                         Don&apos;t see your{" "}
                         <button
