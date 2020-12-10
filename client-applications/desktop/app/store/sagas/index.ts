@@ -4,7 +4,7 @@ import moment from "moment"
 import * as Action from "store/actions/pure"
 import * as SideEffect from "store/actions/sideEffects"
 
-import { apiPost, apiGet } from "shared/utils/general/api"
+import { apiPost, apiGet, apiDelete } from "shared/utils/general/api"
 import { history } from "store/history"
 import { generateMessage } from "shared/components/loading"
 import { FractalRoute } from "shared/types/navigation"
@@ -38,6 +38,50 @@ function* refreshAccess() {
     }
 }
 
+function* fetchExternalApps() {
+    const state = yield select()
+
+    const { json, success } = yield call(
+        apiGet,
+        FractalAPI.APPS.EXTERNAL,
+        state.MainReducer.auth.accessToken
+    )
+
+    if (success && json) {
+        if (json.data) {
+            yield put(
+                Action.updateApps({
+                    external: json.data,
+                })
+            )
+        }
+    } else {
+        // console.log("failed to fetch external apps")
+    }
+}
+
+function* fetchConnectedApps() {
+    const state = yield select()
+
+    const { json, success } = yield call(
+        apiGet,
+        FractalAPI.APPS.CONNECTED,
+        state.MainReducer.auth.accessToken
+    )
+
+    if (success && json) {
+        if (json.app_names) {
+            yield put(
+                Action.updateApps({
+                    connected: json.app_names,
+                })
+            )
+        }
+    } else {
+        // console.log("failed to fetch connected apps")
+    }
+}
+
 function* validateAccessToken(action: { accessToken: string }) {
     const { json, success } = yield call(
         apiGet,
@@ -59,6 +103,8 @@ function* validateAccessToken(action: { accessToken: string }) {
                 name: json.user.name,
             })
         )
+        yield call(fetchExternalApps)
+        yield call(fetchConnectedApps)
     } else {
         yield put(
             Action.updateAuth({
@@ -278,10 +324,37 @@ function* submitFeedback(action: { feedback: string; feedbackType: string }) {
     }
 }
 
+function* disconnectApp(action: { app: string }) {
+    const state = yield select()
+
+    const { success } = yield call(
+        apiDelete,
+        FractalAPI.APPS.CONNECTED + "/" + action.app,
+        state.MainReducer.auth.accessToken
+    )
+
+    if (success) {
+        const connectedApps = state.MainReducer.apps.connected
+        const index = connectedApps.indexOf(action.app)
+        if (index > -1) {
+            const newConnectedApps = Object.assign([], connectedApps)
+            newConnectedApps.splice(index, 1)
+            yield put(
+                Action.updateApps({
+                    connected: newConnectedApps,
+                })
+            )
+        }
+    } else {
+        // console.log("failed to disconnect connected apps")
+    }
+}
+
 export default function* rootSaga() {
     yield all([
         takeEvery(SideEffect.CREATE_CONTAINER, createContainer),
         takeEvery(SideEffect.SUBMIT_FEEDBACK, submitFeedback),
         takeEvery(SideEffect.VALIDATE_ACCESS_TOKEN, validateAccessToken),
+        takeEvery(SideEffect.DISCONNECT_APP, disconnectApp),
     ])
 }

@@ -7,22 +7,40 @@ import ToggleButton from "react-toggle-button"
 import Slider from "react-input-slider"
 import { FaWifi, FaNetworkWired } from "react-icons/fa"
 
+import { config } from "shared/constants/config"
 import { FractalClientCache } from "shared/types/cache"
 import FractalKey from "shared/types/input"
+import { openExternal } from "shared/utils/helpers"
+import { ExternalAppType } from "store/reducers/types"
+import { disconnectApp } from "store/actions/sideEffects"
 
 import styles from "pages/dashboard/views/settings/settings.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
 import AdminSettings from "pages/dashboard/components/admin/adminSettings"
 
-const Settings = <T extends {}>(props: T) => {
+const Settings = (props: {
+    dispatch: Dispatch
+    username: string
+    accessToken: string
+    externalApps: ExternalAppType[]
+    connectedApps: string[]
+}) => {
+    const {
+        dispatch,
+        username,
+        accessToken,
+        externalApps,
+        connectedApps,
+    } = props
+
     const [lowInternetMode, setLowInternetMode] = useState(false)
     const [bandwidth, setBandwidth] = useState(500)
     const [showSavedAlert, setShowSavedAlert] = useState(false)
 
     const adminUsername =
-        props.username &&
-        props.username.indexOf("@") > -1 &&
-        props.username.split("@")[1] === "tryfractal.com"
+        username &&
+        username.indexOf("@") > -1 &&
+        username.split("@")[1] === "tryfractal.com"
 
     useEffect(() => {
         const Store = require("electron-store")
@@ -69,6 +87,7 @@ const Settings = <T extends {}>(props: T) => {
                 maxHeight: 525,
             }}
         >
+            <h2 className={styles.title}>Streaming</h2>
             <Row className={styles.row}>
                 <div style={{ width: "75%" }}>
                     <div className={styles.header}>
@@ -101,12 +120,7 @@ const Settings = <T extends {}>(props: T) => {
                     </div>
                 </div>
             </Row>
-            <Row
-                className={styles.row}
-                style={{
-                    marginBottom: 25,
-                }}
-            >
+            <Row className={styles.row}>
                 <div style={{ width: "75%" }}>
                     <div className={styles.header}>
                         <FaNetworkWired className={styles.faIcon} />
@@ -153,6 +167,82 @@ const Settings = <T extends {}>(props: T) => {
                     </div>
                 </div>
             </Row>
+            {externalApps.length > -1 && (
+                <>
+                    <h2 className={styles.title} style={{ marginTop: 30 }}>
+                        Cloud Storage
+                    </h2>
+                    <div className={styles.subtitle}>
+                        Access, manage, edit, and share files from any of the
+                        following cloud storage services within your streamed
+                        apps by connecting your cloud drives to your Fractal
+                        account.
+                    </div>
+                    {externalApps.map((externalApp: ExternalAppType) => (
+                        <Row className={styles.row}>
+                            <div style={{ width: "75%" }}>
+                                <div className={styles.header}>
+                                    <img
+                                        src={externalApp.image_s3_uri}
+                                        className={styles.cloudStorageIcon}
+                                    />
+                                    {externalApp.display_name}
+                                </div>
+                                <div className={styles.text}>
+                                    By using this service through Fractal, you
+                                    are agreeing to their{" "}
+                                    <button
+                                        type="button"
+                                        className={styles.tosLink}
+                                        onClick={() =>
+                                            openExternal(externalApp.tos_uri)
+                                        }
+                                    >
+                                        terms of service.
+                                    </button>
+                                </div>
+                            </div>
+                            <div style={{ width: "25%", alignSelf: "center" }}>
+                                <div
+                                    style={{
+                                        float: "right",
+                                    }}
+                                >
+                                    {connectedApps.indexOf(
+                                        externalApp.code_name
+                                    ) > -1 ? (
+                                        <button
+                                            type="button"
+                                            className={styles.connectButton}
+                                            onClick={() =>
+                                                dispatch(
+                                                    disconnectApp(
+                                                        externalApp.code_name
+                                                    )
+                                                )
+                                            }
+                                        >
+                                            Disconnect
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            className={styles.connectButton}
+                                            onClick={() =>
+                                                openExternal(
+                                                    `${config.url.CLOUD_STORAGE_URL}external_app=${externalApp.code_name}&access_token=${accessToken}`
+                                                )
+                                            }
+                                        >
+                                            Connect
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </Row>
+                    ))}
+                </>
+            )}
             {showSavedAlert && (
                 <Row>
                     <Alert
@@ -165,7 +255,7 @@ const Settings = <T extends {}>(props: T) => {
                     </Alert>
                 </Row>
             )}
-            <Row style={{ justifyContent: "flex-end" }}>
+            <Row className={styles.row} style={{ justifyContent: "flex-end" }}>
                 <div
                     role="button"
                     tabIndex={0}
@@ -175,18 +265,13 @@ const Settings = <T extends {}>(props: T) => {
                         }
                     }}
                     className={dashboardStyles.feedbackButton}
-                    style={{ width: 110, marginTop: 25 }}
+                    style={{ width: 125, marginTop: 25 }}
                     onClick={handleSave}
                 >
                     Save
                 </div>
             </Row>
-            {adminUsername && (
-                <AdminSettings
-                    dispatch={props.dispatch}
-                    adminState={props.adminState}
-                />
-            )}
+            {adminUsername && <AdminSettings />}
         </div>
     )
 }
@@ -194,7 +279,9 @@ const Settings = <T extends {}>(props: T) => {
 const mapStateToProps = <T extends {}>(state: T) => {
     return {
         username: state.MainReducer.auth.username,
-        adminState: state.MainReducer.admin,
+        accessToken: state.MainReducer.auth.accessToken,
+        externalApps: state.MainReducer.apps.external,
+        connectedApps: state.MainReducer.apps.connected,
     }
 }
 

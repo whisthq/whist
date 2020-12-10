@@ -38,6 +38,10 @@ export const DEFAULT = {
         statusMessage: "Powering up your app",
         percentLoaded: 0,
     },
+    apps: {
+        external: [], // all external applications (example entry: {id: "google_drive", display_name" "Google Drive", ...})
+        connected: [], // all external application ids that the user has connected their account to
+    },
     admin: {
         webserverUrl: "dev",
         taskArn: "fractal-browsers-chrome",

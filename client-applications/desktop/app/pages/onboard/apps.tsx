@@ -10,16 +10,15 @@ import App from "pages/onboard/components/app"
 
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { FractalRoute } from "shared/types/navigation"
+import { openExternal } from "shared/utils/general/helpers"
 import { history } from "store/history"
 import { FractalAuthCache } from "shared/types/cache"
 import { updateClient } from "store/actions/pure"
 import { FractalApp } from "shared/types/ui"
 import { searchArrayByKey } from "shared/utils/general/helpers"
 
-const { shell } = require("electron")
-
-const Apps = (props: { accessToken: string; dispatch: Dispatch<any> }) => {
-    const { accessToken, dispatch } = props
+const Apps = (props: { dispatch: Dispatch<any>; accessToken: string }) => {
+    const { dispatch, accessToken } = props
 
     const [featuredAppData, setFeaturedAppData] = useState([])
     const [selectedApps, setSelectedApps] = useState<FractalApp[]>([])
@@ -62,7 +61,7 @@ const Apps = (props: { accessToken: string; dispatch: Dispatch<any> }) => {
         storage.set(FractalAuthCache.ONBOARDED, true)
 
         if (numSelectedApps === 0) {
-            history.push(FractalRoute.DASHBOARD)
+            history.push(FractalRoute.ONBOARD_STORAGE)
         } else {
             dispatch(updateClient({ onboardApps: selectedApps }))
             history.push(FractalRoute.ONBOARD_INSTALLING)
@@ -136,7 +135,7 @@ const Apps = (props: { accessToken: string; dispatch: Dispatch<any> }) => {
                             type="button"
                             className={styles.link}
                             onClick={() =>
-                                shell.openExternal(
+                                openExternal(
                                     "https://tryfractal.typeform.com/to/AdCZ8ad2"
                                 )
                             }
