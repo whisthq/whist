@@ -32,3 +32,9 @@ Once that done, add the application to the `apps` array in `generate_taskdefs.sh
 For every push to `main`, all the task definitions specified in `.github/workflows/render-and-deploy.yml`, which should be all task definition JSONs in this repository, will be automatically rendered and deployed to all supported AWS regions listed under `aws-regions` in `.github/workflows/render-and-deploy.yml`.
 
 On top of that, whenever there is a push to `master` on the `container-images` repository, all task definitions specified in `.github/workflows/render-and-deploy.yml` will be rendered and deployed automatically to update the task definition tags to point to the newly-deployed container images.
+
+
+## Design Decisions
+
+Note that the `:rshared` string in the cloud storage mount point is an instance of us using this undocumented hack in AWS: https://github.com/aws/containers-roadmap/issues/362
+However, it's been around since 2017, so hopefully it doesn't get patched out before we transition to multicloud/running Docker containers ourselves.
