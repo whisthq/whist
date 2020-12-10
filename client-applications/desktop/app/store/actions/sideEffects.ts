@@ -5,6 +5,8 @@ export const CREATE_CONTAINER = "CREATE_CONTAINER"
 
 export const SUBMIT_FEEDBACK = "SUBMIT_FEEDBACK"
 
+export const DISCONNECT_APP = "DISCONNECT_APP"
+
 export function rememberMeLogin(username: string) {
     return {
         type: REMEMBER_ME_LOGIN,
@@ -33,5 +35,12 @@ export function submitFeedback(feedback: string, feedbackType: string) {
         type: SUBMIT_FEEDBACK,
         feedback,
         feedbackType,
+    }
+}
+
+export function disconnectApp(app: string) {
+    return {
+        type: DISCONNECT_APP,
+        app,
     }
 }

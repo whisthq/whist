@@ -22,6 +22,8 @@ const environment: FractalEnvironment = {
             GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
+            CLOUD_STORAGE_URL:
+                "https://fractal-serv-owenniles--03xq4d.herokuapp.com/oauth/authorize?",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
@@ -43,6 +45,8 @@ const environment: FractalEnvironment = {
             GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
+            CLOUD_STORAGE_URL:
+                "https://fractal-serv-owenniles--03xq4d.herokuapp.com/oauth/authorize?",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
@@ -65,6 +69,8 @@ const environment: FractalEnvironment = {
                 "https://staging-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://staging-database.tryfractal.com/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
+            CLOUD_STORAGE_URL:
+                "http://fractal-cloud-storage.herokuapp.com/oauth/login?",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
@@ -86,6 +92,8 @@ const environment: FractalEnvironment = {
             GRAPHQL_HTTP_URL: "https://prod-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://prod-database.tryfractal.com/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
+            CLOUD_STORAGE_URL:
+                "http://fractal-cloud-storage.herokuapp.com/oauth/login?",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_PROD_PUBLIC_KEY,

@@ -28,6 +28,10 @@ const Installing = (props: {
         from: { width: ((progress - 1) / appsLength) * 600 },
     })
 
+    const handleDone = () => {
+        history.push(FractalRoute.ONBOARD_STORAGE)
+    }
+
     const createShortcutWrapper = async (): Promise<any> => {
         let currentProgress = 1
         await onboardApps.reduce(
@@ -80,6 +84,14 @@ const Installing = (props: {
                                 </span>
                                 , this page will refresh!
                             </div>
+                            <button
+                                type="button"
+                                className={styles.enterButton}
+                                onClick={handleDone}
+                                style={{ marginTop: 100 }}
+                            >
+                                NEXT: CLOUD STORAGE
+                            </button>
                         </>
                     ) : (
                         <>
