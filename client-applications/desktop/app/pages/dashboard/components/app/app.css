@@ -1,4 +1,4 @@
-@import '/app.global.css';
+@import "/app.global.css";
 
 @keyframes ripple {
     0%,
@@ -100,7 +100,7 @@
 }
 
 .installed {
-    color: var(--light-text-color);
+    color: var(--primary-text-color);
     border-radius: 3px;
     padding: 4px 10px;
     background: rgba(0, 0, 0, 0.05);
@@ -113,6 +113,6 @@
 }
 
 .tooltipText {
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     padding: 8px 6px;
 }

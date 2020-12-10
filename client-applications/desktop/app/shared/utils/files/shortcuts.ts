@@ -255,7 +255,7 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
     }
 }
 
-export const createShortcuts = async (app: FractalApp): Promise<boolean> => {
+export const createShortcut = async (app: FractalApp): Promise<boolean> => {
     const platform = os.platform()
     if (platform === OperatingSystem.MAC) {
         // On Mac, create a shortcut in the User Application folder
@@ -296,7 +296,7 @@ export const createShortcuts = async (app: FractalApp): Promise<boolean> => {
     return false
 }
 
-export const deleteShortcut = (app: FractalApp) => {
+export const deleteShortcut = (app: FractalApp): boolean => {
     /*
         Description:
             Creates a shortcut to the Fractal streamed app and stores the shortcut in a specified directory
@@ -324,8 +324,8 @@ export const deleteShortcut = (app: FractalApp) => {
 
         fs.rmdirSync(macDesktopPath, { recursive: true })
         fs.rmdirSync(macApplicationsPath, { recursive: true })
-    }
-    if (platform === OperatingSystem.WINDOWS) {
+        return true
+    } else if (platform === OperatingSystem.WINDOWS) {
         // Points to the folder where windows.vbs is located (shortcut creation code)
         // Check the desktop folder and Start Menu Programs folder
         const windowsDesktopPath = path.join(
@@ -339,6 +339,9 @@ export const deleteShortcut = (app: FractalApp) => {
 
         fs.unlinkSync(windowsDesktopPath)
         fs.unlinkSync(windowsStartMenuPath)
+        return true
+    } else {
+        debugLog(`no suitable os found, instead got ${platform}`)
+        return false
     }
-    debugLog(`no suitable os found, instead got ${platform}`)
 }

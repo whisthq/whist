@@ -1,14 +1,14 @@
 import React, { useState, Dispatch } from "react"
 import { connect } from "react-redux"
-import { Modal, Tooltip, OverlayTrigger } from "react-bootstrap"
-import { FaCheck } from "react-icons/fa"
+import { Modal, Dropdown, Tooltip, OverlayTrigger } from "react-bootstrap"
 
 import { openExternal, updateArrayByKey } from "shared/utils/general/helpers"
 import { FractalApp, FractalAppLocalState } from "shared/types/ui"
 import { OperatingSystem } from "shared/types/client"
 import {
     createShortcutName,
-    createShortcuts,
+    createShortcut,
+    deleteShortcut,
 } from "shared/utils/files/shortcuts"
 import { updateClient } from "store/actions/pure"
 
@@ -45,7 +45,7 @@ const AppPopup = (props: {
     const handleDownload = async () => {
         setShortcutCreated(true)
 
-        const success = await createShortcuts(app)
+        const success = await createShortcut(app)
 
         // Create the shortcut inside the Fractal Directory
         if (success) {
@@ -55,6 +55,24 @@ const AppPopup = (props: {
                 app.app_id,
                 {
                     localState: FractalAppLocalState.INSTALLED,
+                }
+            )
+
+            if (array && index !== -1) {
+                dispatch(updateClient({ apps: array }))
+            }
+        }
+    }
+
+    const handleUninstall = () => {
+        const success = deleteShortcut(app)
+        if (success) {
+            const { array, index } = updateArrayByKey(
+                apps,
+                "app_id",
+                app.app_id,
+                {
+                    localState: FractalAppLocalState.NOT_INSTALLED,
                 }
             )
 
@@ -139,23 +157,39 @@ const AppPopup = (props: {
                         </button>
                     </div>
                     {app.localState === FractalAppLocalState.INSTALLED ? (
-                        <OverlayTrigger
-                            placement="top"
-                            overlay={
-                                <Tooltip id="button-tooltip">
-                                    <div className={styles.tooltipText}>
-                                        {tooltip}
-                                    </div>
-                                </Tooltip>
-                            }
-                        >
-                            <div className={dashboardStyles.installedButton}>
-                                <div>Installed</div>
-                                <div>
-                                    <FaCheck className={styles.faCheck} />
-                                </div>
-                            </div>
-                        </OverlayTrigger>
+                        <Dropdown>
+                            <OverlayTrigger
+                                placement="top"
+                                overlay={
+                                    <Tooltip id="button-tooltip">
+                                        <div className={styles.tooltipText}>
+                                            {tooltip}
+                                        </div>
+                                    </Tooltip>
+                                }
+                            >
+                                <Dropdown.Toggle
+                                    className={dashboardStyles.installedButton}
+                                >
+                                    Installed
+                                </Dropdown.Toggle>
+                            </OverlayTrigger>
+
+                            <Dropdown.Menu className={styles.dropdownMenu}>
+                                <Dropdown.Item
+                                    className={styles.dropdownText}
+                                    onClick={handleDownload}
+                                >
+                                    Install Again
+                                </Dropdown.Item>
+                                <Dropdown.Item
+                                    className={styles.dropdownText}
+                                    onClick={handleUninstall}
+                                >
+                                    Uninstall
+                                </Dropdown.Item>
+                            </Dropdown.Menu>
+                        </Dropdown>
                     ) : (
                         <button
                             type="button"
