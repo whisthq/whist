@@ -34,11 +34,6 @@ const MainReducer = (
                 ...stateCopy,
                 container: Object.assign(stateCopy.container, action.body),
             }
-        case MainAction.UPDATE_LOADING:
-            return {
-                ...stateCopy,
-                loading: Object.assign(stateCopy.loading, action.body),
-            }
         case MainAction.UPDATE_PAYMENT:
             return {
                 ...stateCopy,

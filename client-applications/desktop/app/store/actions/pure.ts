@@ -2,7 +2,6 @@ export const UPDATE_AUTH = "UPDATE_AUTH"
 export const UPDATE_CONTAINER = "UPDATE_CONTAINER"
 export const UPDATE_CLIENT = "UPDATE_CLIENT"
 export const UPDATE_PAYMENT = "UPDATE_PAYEMNT"
-export const UPDATE_LOADING = "UPDATE_LOADING"
 export const UPDATE_APPS = "UPDATE_APPS"
 export const UPDATE_ADMIN = "UPDATE_ADMIN"
 
@@ -74,16 +73,6 @@ export function updatePayment(body: {
 }) {
     return {
         type: UPDATE_PAYMENT,
-        body,
-    }
-}
-
-export function updateLoading(body: {
-    statusMessage?: string
-    percentLoaded?: number
-}) {
-    return {
-        type: UPDATE_LOADING,
         body,
     }
 }

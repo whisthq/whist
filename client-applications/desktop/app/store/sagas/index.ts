@@ -169,11 +169,17 @@ function* createContainer(action: {
 function *getStatus(action: {id: string}) {
     const id = action.id
     const state = yield select()
+    const test = state.MainReducer.admin.launched
+
+    const webserver = test
+        ? state.MainReducer.admin.webserverUrl
+        : config.url.WEBSERVER_URL
 
     const { json, response } = yield call(
         apiGet,
         `/status/` + id,
-        state.MainReducer.auth.accessToken
+        state.MainReducer.auth.accessToken,
+        webserver,
     )
 
     if (json && json.state === FractalStatus.SUCCESS) {
@@ -190,28 +196,8 @@ function *getStatus(action: {id: string}) {
                 })
             )
 
-        const progressSoFar = 100
-
-        yield put(
-            Action.updateLoading({
-                statusMessage: "Stream successfully started.",
-                percentLoaded: progressSoFar,
-            })
-        )
     } else {
-        const warning = json && json.state === FractalStatus.FAILURE ? "Unexpectedly failed to start stream. Close and try again." 
-            : response && response.status && response.status === 500 
-                ? `(${moment().format("hh:mm:ss")}) ` + 
-                  "Unexpectedly lost connection with server. Please close the app and try again."
-                : "Server unexpectedly not responding. Close the app and try again."
-
-        const progressSoFar = 0
-        yield put(
-            Action.updateLoading({
-                percentLoaded: progressSoFar,
-                statusMessage: warning,
-            })
-        )
+        
     }
 }
 
@@ -234,12 +220,10 @@ function* submitFeedback(action: { feedback: string; feedbackType: string }) {
     }
 }
 
-function* deleteContainer(action: {containerID: string; privateKey: string; test: boolean}) {
+function* cancelContainer(action: {test: boolean}) {
     const state= yield select()
 
     const test = action.test
-    const containerID = action.containerID
-    const private_key = action.privateKey
 
     if (test) {
         yield put(Action.updateAdmin({
@@ -254,12 +238,8 @@ function* deleteContainer(action: {containerID: string; privateKey: string; test
 
     const { success } = yield call(
         apiPost,
-        FractalAPI.CONTAINER.DELETE,
+        FractalAPI.CONTAINER.CANCEL,
         {
-            // note how the webserver expects this naming format
-            /* eslint-disable */
-            container_id: containerID,
-            hex_aes_private_key: private_key,
             username: username,
         },
         state.MainReducer.auth.accessToken,
@@ -268,7 +248,7 @@ function* deleteContainer(action: {containerID: string; privateKey: string; test
 
     if (!success) {
         yield call(refreshAccess)
-        yield call(deleteContainer, action)
+        yield call(cancelContainer, action)
     } else {
         yield put(Action.updateContainer({
             currentAppID: null,
@@ -282,7 +262,7 @@ export default function* rootSaga() {
         takeEvery(SideEffect.CREATE_CONTAINER, createContainer),
         takeEvery(SideEffect.SUBMIT_FEEDBACK, submitFeedback),
         takeEvery(SideEffect.VALIDATE_ACCESS_TOKEN, validateAccessToken),
-        takeEvery(SideEffect.DELETE_CONTAINER, deleteContainer),
+        takeEvery(SideEffect.CANCEL_CONTAINER, cancelContainer),
         takeEvery(SideEffect.GET_STATUS, getStatus),
     ])
 }

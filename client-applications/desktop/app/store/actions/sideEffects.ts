@@ -5,7 +5,7 @@ export const CREATE_CONTAINER = "CREATE_CONTAINER"
 
 export const SUBMIT_FEEDBACK = "SUBMIT_FEEDBACK"
 
-export const DELETE_CONTAINER = "DELETE_CONTAINER"
+export const CANCEL_CONTAINER = "CANCEL_CONTAINER"
 
 export const GET_STATUS = "GET_STATUS"
 
@@ -25,15 +25,9 @@ export function createContainer(app: string, url: null | string, test = false) {
     }
 }
 
-export function deleteContainer(
-    containerID: string,
-    privateKey: string,
-    test = false
-) {
+export function cancelContainer(test = false) {
     return {
-        type: DELETE_CONTAINER,
-        containerID,
-        privateKey,
+        type: CANCEL_CONTAINER,
         test,
     }
 }

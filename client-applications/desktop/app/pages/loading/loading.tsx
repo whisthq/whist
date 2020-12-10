@@ -12,12 +12,22 @@ import { execChmodUnix } from "shared/utils/exec"
 import { FractalRoute } from "shared/types/navigation"
 import { OperatingSystem } from "shared/types/client"
 
+import { useSubscription } from "@apollo/client"
+import { SUBSCRIBE_USER_APP_STATE } from "shared/constants/graphql"
+
 import styles from "pages/login/login.css"
-import { deleteContainer } from "store/actions/sideEffects"
+import { cancelContainer, getStatus } from "store/actions/sideEffects"
+import { FractalAppStates } from "shared/types/containers"
+import { generateMessage } from "shared/utils/loading"
+
+// TODO we need some way to signal the 500 thing (or maybe we do just let it keep loading? prolly not)
+// const warning = json && json.state === FractalStatus.FAILURE ? "Unexpectedly failed to start stream. Close and try again."
+//     : response && response.status && response.status === 500
+//         ? `(${moment().format("hh:mm:ss")}) ` +
+//             "Unexpectedly lost connection with server. Please close the app and try again."
+//         : "Server unexpectedly not responding. Close the app and try again."
 
 const Loading = (props: {
-    percentLoaded: number
-    status: string
     port32262: number
     port32263: number
     port32273: number
@@ -26,12 +36,11 @@ const Loading = (props: {
     desiredAppID: string
     currentAppID: string
     containerID: string
-    admin: boolean
+    statusID: string
+    username: string
     dispatch: Dispatch
 }) => {
     const {
-        percentLoaded,
-        status,
         port32262,
         port32263,
         port32273,
@@ -40,7 +49,8 @@ const Loading = (props: {
         desiredAppID,
         currentAppID,
         containerID,
-        admin,
+        statusID,
+        username,
         dispatch,
     } = props
 
@@ -48,15 +58,74 @@ const Loading = (props: {
     // note to future developers: setting state inside useffect when you rely on
     // change for those variables to trigger runs forever and is bad
     // use two variables for that or instead do something like this below
-    const percentLoadedWidth = 5 * percentLoaded
 
     const [launches, setLaunches] = useState(0)
+    const [status, setStatus] = useState(generateMessage())
+    const [percent, setPercent] = useState(0)
+
+    const percentLoadedWidth = 5 * percent
+
     const loadingBar = useSpring({ width: percentLoadedWidth })
 
-    const failedToLaunch =
-        status && // a little bit hacky, but gets the job done
-        typeof status === "string" &&
-        status.toLowerCase().includes("unexpected")
+    const { data, loading } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
+        variables: { userID: username },
+    })
+
+    useEffect(() => {
+        if (percent < 100) {
+            setTimeout(() => setPercent(percent + 1), 1000) // every second 1 percent, change later
+        }
+    }, [percent])
+
+    useEffect(() => {
+        // TODO this is busted it needs to check for state being bad
+        setTimeout(() => setStatus(generateMessage()), 5000) // every 5 sec change status
+    }, [status])
+
+    useEffect(() => {
+        const rightTask =
+            data && data.task_id && statusID && data.task_id === statusID
+        const hasState = data && data.state
+        if (
+            loading ||
+            (hasState && rightTask && data.state === FractalAppStates.PENDING)
+        ) {
+            dispatch(
+                updateLoading({
+                    percentLoaded: percent,
+                    statusMessage: generateMessage(),
+                })
+            )
+            // show a loading message
+        } else if (hasState) {
+            // we'll just put the loading stuff by default
+            if (data.state === FractalAppStates.READY) {
+                // just launched and is ready to go
+                dispatch(getStatus(statusID))
+                if (status === "Stream successfully started.") {
+                    // change this
+                    setLaunches(launches + 1)
+                }
+            } else if (data.state === FractalAppStates.CANCELLED) {
+                dispatch(
+                    updateLoading({
+                        statusMessage: "Your Launch has been cancelled.",
+                    })
+                )
+            } else if (data.state === FractalAppStates.FAILURE) {
+                dispatch(
+                    updateLoading({
+                        statusMessage:
+                            "Unexpectedly failed to spin up your app.",
+                    })
+                )
+            }
+        } else {
+            // show a loading or a disconnected message
+        }
+    }, [data, loading, percent])
+
+    const failedToLaunch = data && data.state === FractalAppStates.FAILURE
 
     const resetLaunchRedux = () => {
         dispatch(
@@ -147,7 +216,7 @@ const Loading = (props: {
         // emulates what the protocol would have done had you successfully closed
         // not sure if secretKey is the correct one, or if deleting while spinning up will work
         if (!failedToLaunch) {
-            dispatch(deleteContainer(containerID, secretKey, admin))
+            dispatch(cancelContainer())
         }
         resetLaunchRedux()
         setLaunches(0)
@@ -256,9 +325,8 @@ const Loading = (props: {
 
 const mapStateToProps = <T extends {}>(state: T) => {
     return {
-        percentLoaded: state.MainReducer.loading.percentLoaded,
-        status: state.MainReducer.loading.statusMessage,
         containerID: state.MainReducer.container.containerID,
+        statusID: state.MainReducer.container.statusID,
         cluster: state.MainReducer.container.cluster,
         port32262: state.MainReducer.container.port32262,
         port32263: state.MainReducer.container.port32263,
@@ -268,7 +336,7 @@ const mapStateToProps = <T extends {}>(state: T) => {
         secretKey: state.MainReducer.container.secretKey,
         desiredAppID: state.MainReducer.container.desiredAppID,
         currentAppID: state.MainReducer.container.currentAppID,
-        admin: state.MainReducer.admin.launched,
+        user: state.MainReducer.auth.username,
     }
 }
 

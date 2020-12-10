@@ -32,10 +32,6 @@ export const DEFAULT = {
         accountLocked: false,
         promoCode: null,
     },
-    loading: {
-        statusMessage: "Powering up your app",
-        percentLoaded: 0,
-    },
     apps: {
         notInstalled: [],
         installing: [],

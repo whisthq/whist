@@ -48,9 +48,10 @@ export const GET_CONTAINER_INFO = gql`
     }
 `
 export const SUBSCRIBE_USER_APP_STATE = gql`
-    subscription GetContainerInfo($user_id: String!) {
-        hardware_user_app_state(where: { user_id: { _eq: $user_id } }) {
+    subscription GetContainerInfo($userID: String!) {
+        hardware_user_app_state(where: { user_id: { _eq: $userID } }) {
             state
+            task_id
         }
     }
 `
