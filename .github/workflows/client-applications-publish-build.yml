@@ -60,6 +60,7 @@ jobs:
                 rm -rf response.json
                 echo "new_micro_version=${NEW_MICRO}" >> $GITHUB_ENV
                 echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
+              shell: bash
 
             - name: Select S3 bucket based on OS
               run: |
