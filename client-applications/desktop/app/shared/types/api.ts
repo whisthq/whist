@@ -17,11 +17,17 @@ export class FractalAPI {
     static ACCOUNT = {
         LOGIN: "/account/login",
     }
+
+    static APPS = {
+        EXTERNAL: "/external_apps",
+        CONNECTED: "/connected_apps",
+    }
 }
 
 export enum FractalHTTPCode {
     SUCCESS = 200,
     ACCEPTED = 202,
+    NO_CONTENT = 204,
     PARTIAL_CONTENT = 206,
     BAD_REQUEST = 400,
     UNAUTHORIZED = 401,

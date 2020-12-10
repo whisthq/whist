@@ -1,4 +1,4 @@
-@import '/app.global.css';
+@import "/app.global.css";
 
 .navBar {
     position: relative;
@@ -39,7 +39,7 @@
 
 .logoTitle {
     color: var(--primary-text-color);
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     font-size: 18px !important;
     letter-spacing: 1.7px;
     font-weight: bold;
@@ -80,7 +80,7 @@
 }
 
 .name {
-    font-family: 'Maven Pro SemiBold';
+    font-family: "Maven Pro SemiBold";
     font-size: 13px;
 }
 
@@ -90,7 +90,7 @@
 }
 
 .signoutButton {
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     font-weight: bold;
     padding: 10px 25px;
     background: var(--text-background-color);

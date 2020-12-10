@@ -1,4 +1,4 @@
-@import '/app.global.css';
+@import "/app.global.css";
 
 .container {
     background: rgba(237, 240, 247, 0.75);
@@ -7,7 +7,7 @@
     height: 100vh;
     overflow-x: hidden;
     overflow-y: hidden;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     margin: 0px;
     -webkit-app-region: drag;
     user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
@@ -21,7 +21,7 @@
     height: 100vh;
     overflow-x: hidden;
     overflow-y: hidden;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     margin: 0px;
     -webkit-app-region: drag;
     user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
@@ -32,7 +32,7 @@
 }
 
 .container h2 {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     font-size: 35px;
     letter-spacing: 1.2px;
 }
@@ -76,6 +76,20 @@
     text-align: center;
 }
 
+.storageServiceContainer {
+    width: 220px;
+    height: 250px;
+    background: var(--text-background-color);
+    box-shadow: var(--light-box-shadow);
+    border-radius: 10px;
+    padding: 25px 35px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0px 30px;
+}
+
 .appContainer,
 .appContainerSelected {
     height: 70px;
@@ -94,7 +108,7 @@
 
 .logoTitle {
     color: black;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     position: absolute;
     top: 42px;
     left: 42px;
@@ -107,7 +121,7 @@
 }
 
 .enterButton {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     letter-spacing: 1px;
     background: var(--primary-color);
     color: var(--text-background-color);
@@ -118,13 +132,14 @@
     border-radius: 5px;
 }
 
-.enterButton:hover {
+.enterButton:hover,
+.connectButton:hover {
     background: var(--accent-color);
     color: var(--primary-text-color);
 }
 
 .appsTitle {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     width: 600px;
     margin: auto;
     letter-spacing: 1.4px;
@@ -229,7 +244,7 @@
 }
 
 .installingText {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     margin-top: 20px;
 }
 
@@ -247,4 +262,39 @@
     font-weight: bold;
     display: inline-block;
     text-align: center;
+}
+
+.servicesWrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.serviceLogo {
+    width: 100px;
+}
+
+.displayName {
+    font-family: "Maven Pro Medium";
+}
+
+.connected {
+    color: var(--accent-color);
+    font-size: 14px;
+}
+
+.connectButton {
+    font-family: "Maven Pro Medium";
+    width: 100%;
+    background: var(--primary-color);
+    color: var(--text-background-color);
+    font-size: 13px;
+    border-radius: 4px;
+    padding: 10px 20px;
+    letter-spacing: 1px;
+}
+
+.faCheck {
+    font-size: 17px;
+    color: var(--accent-color);
 }
