@@ -443,7 +443,7 @@ def assign_container(
         function="create_new_container",
         label=str(base_container.container_id),
         logs=f"""container pinged!  To connect, run:
-               desktop 3.96.141.146 -p32262:{base_container.port_32262}.32263:{base_container.port_32263}.32273:{base_container.port_32273} -k {base_container.secret_key}
+               desktop {base_container.ip} -p32262:{base_container.port_32262}.32263:{base_container.port_32263}.32273:{base_container.port_32273} -k {base_container.secret_key}
                            """,
     )
     for _ in range(num_extra):
@@ -613,7 +613,7 @@ def create_new_container(
                 function="create_new_container",
                 label=str(task_id),
                 logs=f"""container pinged!  To connect, run:
-    desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
+    desktop {container.ip} -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
                 """,
             )
 
