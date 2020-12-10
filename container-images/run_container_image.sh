@@ -13,7 +13,7 @@ runcontainer() {
     docker run -it -d \
         -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
         -v /fractal/containerResourceMappings:/fractal/containerResourceMappings:ro \
-        --mount type=bind,source=/fractal/cloudStorage,target=/fractal/cloudStorage,bind-propagation=rshared \
+        -v /fractal/cloudStorage:/fractal/cloudStorage:rshared \
         $mount_protocol \
         --tmpfs /run \
         --tmpfs /run/lock \

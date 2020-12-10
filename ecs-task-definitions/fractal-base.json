@@ -85,8 +85,13 @@
                 },
                 {
                     "readOnly": true,
-                    "containerPath": "/fractal",
-                    "sourceVolume": "fractal"
+                    "containerPath": "/fractal/containerResourceMappings",
+                    "sourceVolume": "containerResourceMappings"
+                },
+                {
+                    "readOnly": false,
+                    "containerPath": "/fractal/cloudStorage:rshared",
+                    "sourceVolume": "cloudStorage"
                 }
             ],
             "workingDirectory": null,
@@ -136,9 +141,17 @@
         },
         {
             "efsVolumeConfiguration": null,
-            "name": "fractal",
+            "name": "containerResourceMappings",
             "host": {
-                "sourcePath": "/fractal"
+                "sourcePath": "/fractal/containerResourceMappings"
+            },
+            "dockerVolumeConfiguration": null
+        },
+        {
+            "efsVolumeConfiguration": null,
+            "name": "cloudStorage",
+            "host": {
+                "sourcePath": "/fractal/cloudStorage"
             },
             "dockerVolumeConfiguration": null
         }
