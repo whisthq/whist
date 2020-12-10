@@ -51,7 +51,7 @@ jobs:
 
                 # increment version by 0.0.1
                 NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
-                
+
                 # set new desktop app version
                 NEW_VERSION="${MAJOR}.${MINOR}.${NEW_MICRO}"
 
@@ -75,8 +75,13 @@ jobs:
 
             - name: Publish the client-applications
               run: | 
-                cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
+                if [ "$RUNNER_OS" == "Windows" ]; then
+                  cd client-applications/desktop && ./publish.bat -branch=master -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -publish=true
+                else
+                  cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
+                fi
 
+                
     update-graphql-and-notify-slack:
         name: Update GraphQL API Version and Notify Slack
         needs: [build-and-publish-desktop-applications]
