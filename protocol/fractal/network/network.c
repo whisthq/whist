@@ -110,6 +110,12 @@ typedef struct {
     char signature[32];
 } PrivateKeyData;
 
+typedef struct {
+    char* buffer;
+    size_t filled_len;
+    size_t max_len;
+} CurlResponseBuffer;
+
 /*
 ============================
 Private Functions
@@ -1577,102 +1583,84 @@ int create_udp_context(SocketContext *context, char *destination, int port, int 
     }
 }
 
-bool send_http_request(char *type, char *host_s, char *message, char **response_body,
-                       size_t max_response_size) {
-    SOCKET socket;  // socket to send/receive request
-    struct hostent *host;
-    struct sockaddr_in webserver_socket_address;  // address of the web server socket
+void write_curl_response_callback(char* ptr, size_t size, size_t nmemb, CurlResponseBuffer* crb) {
+    /*
+    Writes CURL request response data to the CurlResponseBuffer buffer up to `crb->max_len`
 
-    // Creating our TCP socket to connect to the web server
-    if ((socket = socketp_tcp()) == INVALID_SOCKET) {
-        return -1;
+    Arguments:
+        ptr (char*): pointer to the delivered response data
+        size (size_t): always 1 - size of each `nmemb` pointed to by `ptr`
+        nmemb (size_t): the size of the buffer pointed to by `ptr`
+        crb (CurlResponseBuffer*): the response buffer object that contains full response data
+    */
+
+    if (!crb || !crb->buffer || crb->filled_len > crb->max_len) {
+        return size;
     }
-    set_timeout(socket, 1000);
 
+    size_t copy_bytes = size * nmemb;
+    if (copy_bytes + crb->filled_len > crb->max_len) {
+        copy_bytes = crb->max_len - crb->filled_len;
+    }
+
+    memcpy(crb->buffer + crb->filled_len, ptr, copy_bytes);
+
+    return size;
+}
+
+bool send_http_request(char* type, char* host_s, char* path, char *payload, char **response_body,
+                       size_t max_response_size) {
+
+    // verify that we're requesting from a valid host
+    struct hostent *host;
     host = gethostbyname(host_s);
     if (host == NULL) {
         LOG_ERROR("Error %d: Could not resolve host %s", h_errno, host_s);
         return false;
     }
 
-    // create the struct for the webserver address socket we will query
-    webserver_socket_address.sin_family = AF_INET;
-    webserver_socket_address.sin_port = htons(80);  // HTTP port
-    webserver_socket_address.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
+    // use CURL to send a request and process response buffer
+    CURL *curl;
+    CURLcode res;
+    curl = curl_easy_init();
 
-    // connect to the web server before sending the request packet
-    int connect_status = connect(socket, (struct sockaddr *)&webserver_socket_address,
-                                 sizeof(webserver_socket_address));
-    if (connect_status < 0) {
-        LOG_WARNING("Could not connect to the webserver.");
+    if (!curl) {
         return false;
     }
 
-    // DO NOT LOG ARBITRARY HTTP REQUESTS -- THEY MAY CONTAIN SENSITIVE INFO
-    // LIKE PRIVATE KEYS
-    // LOG_INFO("Sending request: %s", message);
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, type);
+    // create target URL
+    CURLU* curl_url_handle = curl_url();
+    curl_url_set(curl_url_handle, CURLUPART_URL, host_s, 0);
+    curl_url_set(curl_url_handle, CURLUPART_PATH, path, 0);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
 
-    // now we send it
-    int total_sent = 0;
-    int sent_n;
-    int msg_len = ((int)strlen(message));
-    do {
-        sent_n = send(socket, message + total_sent, msg_len - total_sent, 0);
-        if (sent_n < 0) {
-            // error sending, terminate
-            LOG_WARNING("Sending %s message failed.", type);
-            return false;
-        } else if (sent_n == 0) {
-            break;
-        } else {
-            total_sent += sent_n;
-        }
-    } while (total_sent < msg_len);
-
-    // now that it's sent, let's get the reply (if applicable)
-    if ((!response_body) || (max_response_size == 0)) {
-        // don't care about the reply, so we might as well not make the system
-        // call to get the data
-        FRACTAL_SHUTDOWN_SOCKET(socket);
-    } else {
-        char *response = malloc(max_response_size);
-        size_t total_read = 0;
-        int read_n;
-        do {
-            read_n =
-                recv(socket, response + total_read, (int)(max_response_size - total_read - 1), 0);
-            if (read_n < 0) {
-                LOG_ERROR("Response to %s request failed! %d %d", type, read_n,
-                          get_last_network_error());
-                *response_body = NULL;
-                return false;
-            } else if (read_n == 0) {
-                break;
-            } else {
-                total_read += read_n;
-            }
-        } while (total_read < max_response_size - 1);
-
-        response[total_read] = '\0';
-
-        // Figure out where response body starts (i.e. after the string "\r\n\r\n")
-        char *body_to_be_copied = NULL;
-        for (size_t i = 0; i < total_read - 3; ++i) {
-            if (memcmp(response + i, "\r\n\r\n", 4) == 0) {
-                body_to_be_copied = response + i + 4;
-            }
-        }
-        if (!body_to_be_copied) {
-            LOG_ERROR("Could not find end of HTTP headers!");
-            *response_body = NULL;
-            return false;
-        }
-
-        *response_body = clone(body_to_be_copied);
-        free(response);
+    // if a response is expected (response_body != NULL), have libcurl return response body
+    CurlResponseBuffer crb;
+    crb.buffer = NULL;
+    if (response_body) {
+        crb.buffer = malloc(max_response_size);
+        crb.filled_len = 0;
+        crb.max_len = max_response_size;
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_curl_response_callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &crb);
     }
 
-    FRACTAL_CLOSE_SOCKET(socket);
+    res = curl_easy_perform(curl)
+    if (res != 0) {
+        LOG_ERROR("curl to %s/%s failed", host_s, path);
+        return false;
+    }
+
+    // if response is expected and a response buffer was created, copy over
+    if (response_body && crb.buffer) {
+        *response_body = crb.buffer;
+    }
+
+    curl_easy_cleanup(curl);
+
     return true;
 }
 
@@ -1700,22 +1688,7 @@ bool send_post_request(char *host_s, char *path, char *payload, char **response_
         return true;
     }
 
-    int payload_len = (int)strlen(payload);
-    char *message = malloc(5000 + payload_len);
-    snprintf(message, 5000 + payload_len,
-             "POST %s HTTP/1.0\r\n"
-             "Host: %s\r\n"
-             "Content-Type: application/json\r\n"
-             "Content-Length: %d\r\n"
-             "\r\n"
-             "%s"
-             "\r\n",
-             path, host_s, payload_len, payload);
-
-    // send the message
-    bool worked = send_http_request("POST", host_s, message, response_body, max_response_size);
-    free(message);
-    return worked;
+    return send_http_request("POST", host_s, path, payload, response_body, max_response_size);
 }
 
 bool send_get_request(char *host_s, char *path, char **response_body, size_t max_response_size) {
@@ -1740,14 +1713,7 @@ bool send_get_request(char *host_s, char *path, char **response_body, size_t max
         return true;
     }
 
-    // prepare the message
-    char *message = malloc(100 + strlen(path) + strlen(host_s));
-    sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
-
-    // send the message
-    bool worked = send_http_request("GET", host_s, message, response_body, max_response_size);
-    free(message);
-    return worked;
+    return send_http_request("GET", host_s, path, payload, response_body, max_response_size);
 }
 
 void set_timeout(SOCKET s, int timeout_ms) {
