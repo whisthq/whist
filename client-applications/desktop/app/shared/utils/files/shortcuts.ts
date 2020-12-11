@@ -254,6 +254,16 @@ export const checkIfShortcutExists = (shortcut: string): boolean => {
 }
 
 export const createShortcut = async (app: FractalApp): Promise<boolean> => {
+    /*
+        Description:
+            Creates a shortcut to the Fractal streamed app (cross-platform)
+
+        Arguments:
+            app (FractalApp): App to create shortcut to
+        
+        Returns:
+            success (boolean): True/False if shortcut was created successfully
+    */
     const platform = os.platform()
     if (platform === OperatingSystem.MAC) {
         // On Mac, create a shortcut in the User Application folder
@@ -297,14 +307,13 @@ export const createShortcut = async (app: FractalApp): Promise<boolean> => {
 export const deleteShortcut = (app: FractalApp): boolean => {
     /*
         Description:
-            Creates a shortcut to the Fractal streamed app and stores the shortcut in a specified directory
+            Deletes an app's shortcuts (cross-platform)
 
         Arguments:
             app (FractalApp): App to create shortcut to
-            outputPath (string): Folder that the shortcut should be placed in. If not specified, defaults to Desktop.
         
         Returns:
-            success (boolean): True/False if shortcut was created successfully
+            success (boolean): True/False if shortcut was deleted successfully
     */
 
     const shortcut = createShortcutName(app.app_id)
