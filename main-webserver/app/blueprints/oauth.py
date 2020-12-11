@@ -1,13 +1,19 @@
 """A blueprint for endpoints that allow users to manage connected applications."""
 
+import logging
+
 from collections import namedtuple
+from urllib.parse import urljoin
 
 import click
+import requests
 
-from flask import abort, Blueprint, current_app, redirect, request, session, url_for
+from flask import abort, Blueprint, current_app, jsonify, redirect, request, session, url_for
+from flask.views import MethodView
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from google_auth_oauthlib.flow import Flow
 
+from app.helpers.utils.general.logs import fractal_log
 from app.models import Credential, db, User
 from app.serializers.oauth import CredentialSchema
 
@@ -19,6 +25,73 @@ Token = namedtuple(
 )
 
 oauth_bp.cli.help = "Manipulate encrypted OAuth credentials in the database."
+
+
+class ConnectedAppsAPI(MethodView):
+    """Manage connected external applications."""
+
+    decorators = (jwt_required,)
+
+    def get(self):  # pylint: disable=no-self-use
+        """Fetch the list of external apps that the user has connected to her Fractal account."""
+
+        apps = []
+        user = User.query.get(get_jwt_identity())
+
+        assert user
+
+        if user.credentials:
+            apps.append("google_drive")
+
+        return jsonify({"app_names": apps})
+
+    def delete(self, app_name):  # pylint: disable=no-self-use
+        """Revoke Fractal's authorization to use the specified app.
+
+        Arguments:
+            app_name: The name of the application for which to revoke Fractal's authorization.
+        """
+
+        user = User.query.get(get_jwt_identity())
+
+        assert user
+
+        if not (user.credentials and app_name == "google_drive"):
+            abort(400)
+
+        for credential in user.credentials:
+            response = requests.post(
+                "https://oauth2.googleapis.com/revoke",
+                params={"token": credential.access_token},
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+
+            if response.ok:
+                log_kwargs = {
+                    "logs": f"Suggessfully revoked access token for user '{user.user_id}'.",
+                    "level": logging.INFO,
+                }
+            else:
+                log_kwargs = {
+                    "logs": (
+                        "Encountered an error while attempting to revoke access token for user "
+                        f"'{user.user_id}'. Has the token already been revoked?"
+                    ),
+                    "level": logging.WARNING,
+                }
+
+            fractal_log(
+                function=f"/connected_apps/{app_name}",
+                label=request.method,
+                **log_kwargs,
+            )
+            db.session.delete(credential)
+
+        db.session.commit()
+
+        # TODO: It may be appropriate to return a status code of 204 here. Doing so would require
+        # some changes to be made to the client application's apiDelete function.
+        return jsonify({})
 
 
 @oauth_bp.route("/oauth/authorize")
@@ -92,7 +165,31 @@ def callback():
 
     put_credential(user, token)
 
-    return redirect("https://tryfractal.com")
+    return redirect(
+        urljoin(
+            current_app.config["FRONTEND_URL"],
+            "/auth/bypass?callback=fractal://oauth?successfully_authenticated=google_drive",
+        )
+    )
+
+
+@oauth_bp.route("/external_apps")
+def external_apps():
+    """List metadata for all available external applications."""
+
+    # TODO: Load this data from a table in the database.
+    return jsonify(
+        {
+            "data": [
+                {
+                    "code_name": "google_drive",
+                    "display_name": "Google Drive",
+                    "image_s3_uri": "https://fractal-external-app-images.s3.amazonaws.com/google-drive-256.svg",  # pylint: disable=line-too-long
+                    "tos_uri": "https://www.google.com/drive/terms-of-service/",
+                }
+            ]
+        }
+    )
 
 
 @oauth_bp.cli.command("get", help="Show the credentials owned by the user with user_id USER_ID.")
@@ -171,3 +268,11 @@ def put_credential(user_id, token):
     db.session.commit()
 
     return credential
+
+
+connected_apps = ConnectedAppsAPI.as_view("connected_apps")
+
+oauth_bp.add_url_rule("/connected_apps", view_func=connected_apps, methods=("GET",))
+oauth_bp.add_url_rule(
+    "/connected_apps/<string:app_name>", view_func=connected_apps, methods=("DELETE",)
+)
