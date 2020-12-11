@@ -13,6 +13,9 @@ import { FractalAuthCache } from "shared/types/cache"
 import { config } from "shared/constants/config"
 import { AWSRegion } from "shared/types/aws"
 
+/**
+ * Refreshes a user's access token if expired
+ */
 function* refreshAccess() {
     const state = yield select()
     const username = state.MainReducer.auth.username
@@ -38,6 +41,10 @@ function* refreshAccess() {
     }
 }
 
+/**
+ * Fetches metadata about all external apps Fractal allows users to connect
+ * to (i.e. cloud storage apps), and stores in state.MainReducer.apps.external
+ */
 function* fetchExternalApps() {
     const state = yield select()
 
@@ -55,11 +62,13 @@ function* fetchExternalApps() {
                 })
             )
         }
-    } else {
-        // console.log("failed to fetch external apps")
     }
 }
 
+/**
+ * Fetches list of the names of all apps the current user has connected to, and
+ * stores list in state.MainReducer.apps.connected
+ */
 function* fetchConnectedApps() {
     const state = yield select()
 
@@ -77,8 +86,6 @@ function* fetchConnectedApps() {
                 })
             )
         }
-    } else {
-        // console.log("failed to fetch connected apps")
     }
 }
 
@@ -115,6 +122,9 @@ function* validateAccessToken(action: { accessToken: string }) {
     }
 }
 
+/**
+ * Creates a container used to stream a specified app
+ */
 function* createContainer(action: {
     app: string
     url: string
@@ -305,6 +315,9 @@ function* createContainer(action: {
     }
 }
 
+/**
+ * Sends feedback to our support email if a user submits feedback through our support form
+ */
 function* submitFeedback(action: { feedback: string; feedbackType: string }) {
     const state = yield select()
     const { success } = yield call(
@@ -324,6 +337,10 @@ function* submitFeedback(action: { feedback: string; feedbackType: string }) {
     }
 }
 
+/**
+ * Revokes the user's access to an external app, and if successful, deletes the
+ * corresponding app name from state.MainReducer.apps.connected
+ */
 function* disconnectApp(action: { app: string }) {
     const state = yield select()
 
@@ -345,8 +362,6 @@ function* disconnectApp(action: { app: string }) {
                 })
             )
         }
-    } else {
-        // console.log("failed to disconnect connected apps")
     }
 }
 
