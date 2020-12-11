@@ -16,8 +16,19 @@ import { FractalApp, FractalBanner } from "shared/types/ui"
 
 import styles from "pages/dashboard/views/discover/discover.css"
 
-const Discover = (props: { search: string; accessToken: string }) => {
-    const { search, accessToken } = props
+import { adminApp } from "pages/dashboard/constants/adminApp"
+
+const Discover = (props: {
+    search: string
+    username: string
+    accessToken: string
+}) => {
+    const { search, username, accessToken } = props
+
+    const adminUsername =
+        username &&
+        username.indexOf("@") > -1 &&
+        username.split("@")[1] === "tryfractal.com"
 
     // Define local state
 
@@ -90,7 +101,13 @@ const Discover = (props: { search: string; accessToken: string }) => {
     useEffect(() => {
         const results = featuredAppData.filter(getSearchResults)
         setSearchResults(
-            results.map((app: FractalApp) => <App key={app.app_id} app={app} />)
+            results.map((app: FractalApp) => (
+                <App
+                    key={app.app_id}
+                    app={app}
+                    admin={app.app_id === "Test App"}
+                />
+            ))
         )
     }, [search])
 
@@ -106,6 +123,10 @@ const Discover = (props: { search: string; accessToken: string }) => {
             if (selectedCategory) {
                 newAppData = newAppData ? newAppData.filter(checkCategory) : []
             }
+            if (adminUsername) {
+                newAppData.push(adminApp)
+            }
+
             setFeaturedAppData(newAppData)
         }
     }, [appQuery.data, selectedCategory])
@@ -141,7 +162,11 @@ const Discover = (props: { search: string; accessToken: string }) => {
                 <Col xs={11}>
                     <Row>
                         {featuredAppData.map((app: FractalApp) => (
-                            <App key={app.app_id} app={app} />
+                            <App
+                                key={app.app_id}
+                                app={app}
+                                admin={app.app_id === "Test App"}
+                            />
                         ))}
                     </Row>
                 </Col>
@@ -150,9 +175,15 @@ const Discover = (props: { search: string; accessToken: string }) => {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
+const mapStateToProps = (state: {
+    MainReducer: {
+        accessToken: string
+        username: string
+    }
+}) => {
     return {
         accessToken: state.MainReducer.auth.accessToken,
+        username: state.MainReducer.auth.username,
     }
 }
 

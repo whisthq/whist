@@ -1,10 +1,10 @@
 import React, { useEffect, useState, Dispatch } from "react"
 import { connect } from "react-redux"
 import { useSpring, animated } from "react-spring"
-import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
+import TitleBar from "shared/components/titleBar"
 import { debugLog } from "shared/utils/logging"
 import { updateContainer, updateLoading } from "store/actions/pure"
 import { history } from "store/history"
@@ -15,7 +15,6 @@ import { OperatingSystem } from "shared/types/client"
 import styles from "pages/login/login.css"
 
 const Loading = (props: {
-    clientOS: string
     percentLoaded: number
     status: string
     port32262: number
@@ -29,7 +28,6 @@ const Loading = (props: {
     dispatch: Dispatch
 }) => {
     const {
-        clientOS,
         percentLoaded,
         status,
         port32262,
@@ -51,6 +49,28 @@ const Loading = (props: {
 
     const [launches, setLaunches] = useState(0)
     const loadingBar = useSpring({ width: percentLoadedWidth })
+
+    const resetLaunchRedux = () => {
+        dispatch(
+            updateContainer({
+                containerID: null,
+                cluster: null,
+                port32262: null,
+                port32263: null,
+                port32273: null,
+                publicIP: null,
+                secretKey: null,
+                launches: 0,
+                launchURL: null,
+            })
+        )
+        dispatch(
+            updateLoading({
+                statusMessage: "Powering up your app",
+                percentLoaded: 0,
+            })
+        )
+    }
 
     const LaunchProtocol = () => {
         const child = require("child_process").spawn
@@ -104,25 +124,7 @@ const Loading = (props: {
                     // },
                 })
                 return protocol.on("close", () => {
-                    dispatch(
-                        updateContainer({
-                            containerID: null,
-                            cluster: null,
-                            port32262: null,
-                            port32263: null,
-                            port32273: null,
-                            publicIP: null,
-                            secretKey: null,
-                            launches: 0,
-                            launchURL: null,
-                        })
-                    )
-                    dispatch(
-                        updateLoading({
-                            statusMessage: "Powering up your app",
-                            percentLoaded: 0,
-                        })
-                    )
+                    resetLaunchRedux()
                     setLaunches(0)
                     ipc.sendSync("canClose", true)
                     history.push(FractalRoute.DASHBOARD)
@@ -131,6 +133,12 @@ const Loading = (props: {
             .catch((error) => {
                 throw error
             })
+    }
+
+    const returnToDashboard = () => {
+        resetLaunchRedux()
+        setLaunches(0)
+        history.push(FractalRoute.DASHBOARD)
     }
 
     // TODO (adriano) graceful exit vs non graceful exit code
@@ -161,13 +169,7 @@ const Loading = (props: {
                 zIndex: 1000,
             }}
         >
-            {clientOS === OperatingSystem.WINDOWS ? (
-                <div>
-                    <Titlebar backgroundColor="#000000" />
-                </div>
-            ) : (
-                <div style={{ marginTop: 10 }} />
-            )}
+            <TitleBar />
             <div className={styles.landingHeader}>
                 <div className={styles.landingHeaderLeft}>
                     <span className={styles.logoTitle}>Fractal</span>
@@ -221,6 +223,22 @@ const Loading = (props: {
                             {status}
                         </div>
                     </div>
+                    <div style={{ display: "flex", justifyContent: "center" }}>
+                        {status && // a little bit hacky, but gets the job done
+                            typeof status === "string" &&
+                            status.toLowerCase().includes("unexpected") && (
+                                <div
+                                    role="button" // so eslint will not yell
+                                    tabIndex={0} // also for eslint
+                                    className={styles.dashboardButton}
+                                    style={{ width: 220, marginTop: 25 }}
+                                    onClick={returnToDashboard}
+                                    onKeyDown={returnToDashboard} // eslint
+                                >
+                                    BACK TO DASHBOARD
+                                </div>
+                            )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -229,7 +247,6 @@ const Loading = (props: {
 
 const mapStateToProps = <T extends {}>(state: T) => {
     return {
-        clientOS: state.MainReducer.client.clientOS,
         percentLoaded: state.MainReducer.loading.percentLoaded,
         status: state.MainReducer.loading.statusMessage,
         containerID: state.MainReducer.container.containerID,

@@ -1,7 +1,5 @@
 # Fractal Main Webserver
 
-[![Heroku CI Status](https://heroku-cibadge.herokuapp.com/last.svg)](https://dashboard.heroku.com/pipelines/22da0c0d-7555-4647-8765-031c14b8398f/tests) ![Python Black Linting](https://github.com/fractal/main-webserver/workflows/Python%20Black%20Linting/badge.svg) ![Sentry Release](https://github.com/fractal/main-webserver/workflows/Sentry%20Release/badge.svg)
-
 This repository contains the code for our webserver, which is our REST API and provides backend support for our user interfaces, our internal tools, and our container/virtual machine management.
 
 Our webservers and CD pipeline are hosted on Heroku. Our production database is attached as an Heroku Add-On PostgresSQL to the associated webserver in Heroku, `main-webserver`, and has automated backups in place daily at 2 AM PST. See [here](https://devcenter.heroku.com/articles/heroku-postgres-backups#creating-a-backup) for further information.
@@ -25,10 +23,11 @@ We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the 
 We use environment variables to configure our local development environments. Environment variables should be set by adding lines of the form `KEY=VALUE` to the file `docker/.env`. **The main environment variable that _must_ be set in order to do any kind of local development, whether with the `docker-compose` stack or the `pytest` test suite, is the `CONFIG_DB_URL` environment variable.** `CONFIG_DB_URL` specifies the PostgreSQL connection URI of the Fractal configuration database. This database contains default values for many of the variables that are used to configure the various parts of the web application stack. These default values may be overridden locally by setting alternatives in the same `docker/.env` file.
 
 The following environment variables must also be set in `docker/.env` (neither the test suite nor the `docker-compose` stack will work without them):
-* `POSTGRES_DB` &ndash; The name of the Postgres database to which to connect.
-* `POSTGRES_HOST` &ndash; The hostname or IP address of the development Postgres instance.
-* `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
-* `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
+
+- `POSTGRES_DB` &ndash; The name of the Postgres database to which to connect.
+- `POSTGRES_HOST` &ndash; The hostname or IP address of the development Postgres instance.
+- `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
+- `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
 
 Finally, if the Redis instance used for testing is running anywhere other than `redis://localhost:6379/0`, `REDIS_URL` should be set to indicate the correct connection URI. Take a moment to understand that setting `REDIS_URL` has no effect on the Flask instance running in the `docker-compose`; it only affects Flask applications launched manually (e.g. Flask applications created by `pytest` for testing purposes).
 
@@ -40,7 +39,15 @@ Luckily, there is an easy way to set all of the necessary environment variables 
 
 When the `docker/retrieve_config.sh` script terminates, it will print the name of the file containing the fetched environment variables that has been written to standard error.
 
-**2. Spin Up Local Servers**
+**2. Set AWS credentials**
+
+Whether you're running tests or the `docker-compose` stack locally, the web server needs to be able to access AWS APIs. You can set your AWS credentials using either the same files in the `~/.aws/` directory or environment variables that you can use to configure [`boto`](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) and the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html). Environment variables set in `docker/.env` will beloaded by `pytest` during test run sessions and set in the execution environment within the containers in the docker-compose stack.
+
+> I recommend downloading the AWS CLI, which may you may find useful in the future, and running `aws configure`.
+>
+> -O
+
+**3. Spin Up Local Servers**
 
 Use `docker-compose` to run the stack locally. First, `cd` into the `docker/` folder. Then, run the `up` command. If you are on Windows, you should run this from a command prompt in Administrator mode.
 

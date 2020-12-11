@@ -5,7 +5,7 @@ import pytest
 from flask import current_app
 from moto import mock_ecs, mock_logs, mock_iam
 
-from utils.aws.base_ecs_client import ECSClient, boto3
+from app.helpers.utils.aws.base_ecs_client import ECSClient, boto3
 
 
 @pytest.mark.skipif(

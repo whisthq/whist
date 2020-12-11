@@ -45,6 +45,8 @@ def forgot_password_helper(username):
 
 def cancel_helper(user, feedback):
     title = "[CANCELLED PLAN + FEEDBACK] " + user + " has Just Cancelled Their Plan"
+    if not feedback:
+        feedback = "User did not submit feedback."
 
     try:
         message = Mail(

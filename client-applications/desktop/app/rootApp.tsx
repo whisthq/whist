@@ -7,6 +7,9 @@ import Login from "pages/login/login"
 import Loading from "pages/loading/loading"
 import Dashboard from "pages/dashboard/dashboard"
 import Update from "pages/update/update"
+import Welcome from "pages/onboard/welcome"
+import Apps from "pages/onboard/apps"
+import Installing from "pages/onboard/installing"
 
 import { history } from "store/history"
 import { createContainer, validateAccessToken } from "store/actions/sideEffects"
@@ -16,6 +19,7 @@ import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 
 import { FractalRoute } from "shared/types/navigation"
+import { FractalAuthCache } from "shared/types/cache"
 
 const RootApp = (props: {
     launches: number
@@ -130,7 +134,12 @@ const RootApp = (props: {
             history.push(FractalRoute.UPDATE)
         } else if (!launchURL && props.username && props.accessToken) {
             updateAuth({ candidateAccessToken: "" })
-            history.push(FractalRoute.DASHBOARD)
+            const onboarded = storage.get(FractalAuthCache.ONBOARDED)
+            if (onboarded) {
+                history.push(FractalRoute.DASHBOARD)
+            } else {
+                history.push(FractalRoute.ONBOARD_WELCOME)
+            }
         } else if (
             launches === 1 &&
             launched &&
@@ -175,11 +184,20 @@ const RootApp = (props: {
             <Switch>
                 <Route path={FractalRoute.DASHBOARD} component={Dashboard} />
                 <Route path={FractalRoute.LOADING} component={Loading} />
-                <Route path={FractalRoute.LOGIN} component={Login} />
                 <Route
                     path={FractalRoute.UPDATE}
                     render={() => <Update needsUpdate={needsUpdate} />}
                 />
+                <Route
+                    path={FractalRoute.ONBOARD_WELCOME}
+                    component={Welcome}
+                />
+                <Route path={FractalRoute.ONBOARD_APPS} component={Apps} />
+                <Route
+                    path={FractalRoute.ONBOARD_INSTALLING}
+                    component={Installing}
+                />
+                <Route path={FractalRoute.LOGIN} component={Login} />
             </Switch>
         </div>
     )

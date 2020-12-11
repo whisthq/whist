@@ -16,37 +16,38 @@ from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.payment.stripe_client import (
     StripeClient,
     NonexistentUser,
+    NonexistentStripeCustomer,
     RegionNotSupported,
     InvalidStripeToken,
     InvalidOperation,
 )
 
 # TODO (optional) make templates for boilerplate
-def addSubscriptionHelper(token, email, plan, code):
+def addSubscriptionHelper(email, plan):
     fractal_log(
         function="addSubscriptionHelper",
         label=email,
-        logs="Signing {} up for plan {}, with code {}, token {}".format(
-            email, plan, code, str(token)
-        ),
+        logs="Signing {} up for plan {}".format(email, plan),
     )
     client = StripeClient(current_app.config["STRIPE_SECRET"])
-    plans = client.get_prices()  # product Fractal by default
+    plans = client.get_prices()
 
-    plan = reduce(lambda acc, pl: acc if pl[0] != plan else pl[1], plans, None)
+    price = reduce(lambda acc, pl: acc if pl[0] != plan else pl[1], plans, None)
 
-    if plan:
+    if price:
         try:
-            client.create_subscription(token, email, plan, code=code)
+            client.create_subscription(email, price)
             status = SUCCESS
         except NonexistentUser:
+            status = FORBIDDEN
+        except NonexistentStripeCustomer:
             status = FORBIDDEN
         except RegionNotSupported:
             status = BAD_REQUEST
         except InvalidStripeToken:
             status = BAD_REQUEST
         except Exception as e:
-            fractal_log("addSubscriptionCardHelper", "", str(e), level=logging.ERROR)
+            fractal_log("addSubscriptionHelper", "", str(e), level=logging.ERROR)
 
             status = INTERNAL_SERVER_ERROR
     else:
@@ -73,11 +74,11 @@ def deleteSubscriptionHelper(email):
         return jsonify({"status": INTERNAL_SERVER_ERROR}), INTERNAL_SERVER_ERROR
 
 
-def addCardHelper(email, token):
+def addCardHelper(email, source):
     client = StripeClient(current_app.config["STRIPE_SECRET"])
 
     try:
-        client.add_card(email, token)
+        client.add_card(email, source)
         status = SUCCESS
     except NonexistentUser:
         status = FORBIDDEN
@@ -91,11 +92,11 @@ def addCardHelper(email, token):
     return jsonify({"status": status}), status
 
 
-def deleteCardHelper(email, token):
+def deleteCardHelper(email, source):
     client = StripeClient(current_app.config["STRIPE_SECRET"])
 
     try:
-        client.delete_card(email, token)
+        client.delete_card(email, source)
         status = SUCCESS
     except NonexistentUser:
         status = FORBIDDEN
@@ -125,7 +126,7 @@ def retrieveHelper(email):
                 {
                     "status": PAYMENT_REQUIRED,
                     "subscription": {},
-                    "cards": [],
+                    "source": None,
                     "creditsOutstanding": 0,
                     "account_locked": False,
                     "customer": {},

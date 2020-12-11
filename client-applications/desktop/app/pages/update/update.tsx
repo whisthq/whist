@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react"
-import { connect } from "react-redux"
-import Titlebar from "react-electron-titlebar"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
-import { OperatingSystem } from "shared/types/client"
+import TitleBar from "shared/components/titleBar"
 import styles from "pages/login/login.css"
 
-const Update = (props: { clientOS: string; needsUpdate: boolean }) => {
-    const { clientOS, needsUpdate } = props
+const Update = (props: { needsUpdate: boolean }) => {
+    const { needsUpdate } = props
 
     const [percentageLeft, setPercentageLeft] = useState(500)
     const [percentageDownloaded, setPercentageDownloaded] = useState(0)
@@ -62,13 +60,7 @@ const Update = (props: { clientOS: string; needsUpdate: boolean }) => {
                         zIndex: 1000,
                     }}
                 >
-                    {clientOS === OperatingSystem.WINDOWS ? (
-                        <div>
-                            <Titlebar backgroundColor="#000000" />
-                        </div>
-                    ) : (
-                        <div style={{ marginTop: 10 }} />
-                    )}
+                    <TitleBar />
                     <div className={styles.landingHeader}>
                         <div className={styles.landingHeaderLeft}>
                             <span className={styles.logoTitle}>Fractal</span>
@@ -164,10 +156,4 @@ const Update = (props: { clientOS: string; needsUpdate: boolean }) => {
     )
 }
 
-export const mapStateToProps = <T extends {}>(state: T) => {
-    return {
-        clientOS: state.MainReducer.clientOS,
-    }
-}
-
-export default connect(mapStateToProps)(Update)
+export default Update

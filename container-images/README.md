@@ -1,22 +1,20 @@
 # Fractal Container Images
 
-![Dockerfiles Building](https://github.com/fractal/container-images/workflows/Dockerfiles%20Building/badge.svg)
-
 This repository contains the code for containerizing the various applications that Fractal streams. The base Dockerfile.20 running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
 
 ### Supported Applications
 
 All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
 
-| Browsers         | Creative   | Productivity |
-| ---------------- | ---------- | ------------ |
-| Google Chrome    | Blender    | Slack        |
-| Mozilla Firefox  | Blockbench | Notion       |
-| Brave Browser    | Figma      | Discord      |
-| Sidekick Browser | TextureLab |              |
-|                  | Gimp       |              |
-|                  | Lightworks |              |
-|		               | Inkscape   | 	           |
+| Browsers         | Creative (2D/3D) | Creative (Video) | Productivity |
+| ---------------- | ---------------- | ---------------- | ------------ |
+| Google Chrome    | Blender          | Lightworks       | Slack        |
+| Mozilla Firefox  | Blockbench       | Kdenlive         | Notion       |
+| Brave Browser    | Figma            |                  | Discord      |
+| Sidekick Browser | TextureLab       |                  |              |
+|                  | Gimp             |                  |              |
+|                  | Inkscape         |                  |              |
+|                  | Krita            |                  |              |
 
 See [Adding New Applications](#Adding-New-Applications) for details on how to add support for new applications and integrate them with our continuous delivery pipeline.
 
@@ -41,7 +39,7 @@ Or, if you have sshkeys:
 git clone --recurse-submodules --branch $your-container-images-branch git@github.com:fractal/container-images.git ~/container-images
 ```
 
-Then, setup on your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractal/ecs-host-setup/) repository: 
+Then, setup on your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractal/ecs-host-setup/) repository:
 
 ```
 ./setup_ubuntu20_host.sh

@@ -6,15 +6,15 @@
 name: "Meta: Report When All Checks Passed"
 
 on:
-  check_run:
-    type: [completed]
+    check_run:
+        type: [completed]
 
 jobs:
-  meta-report-all-checks-passed-main:
-    name: Check Running Tasks
-    runs-on: ubuntu-20.04
-    steps:
-      - name: All Checks Passed Status
-        uses: fractal/action-all-checks-passed@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    meta-report-all-checks-passed-main:
+        name: Check Running Tasks
+        runs-on: ubuntu-20.04
+        steps:
+            - name: All Checks Passed Status
+              uses: fractal/action-all-checks-passed@latest
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
