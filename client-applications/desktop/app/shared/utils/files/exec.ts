@@ -54,7 +54,7 @@ export const setAWSRegion = () => {
     Returns:
         promise : Promise
     */
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         const { spawn } = require("child_process")
         const os = require("os")
         const platform = os.platform()
@@ -103,7 +103,6 @@ export const setAWSRegion = () => {
                     }
                     // In case data is split and sent separately, only use closest AWS region which has index of 0
                     const region = items[2].slice(1, -1)
-                    console.log(region)
                     resolve(region)
                 })
                 return null
