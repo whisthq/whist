@@ -123,6 +123,16 @@ class Banners(db.Model):
 
 
 class UserContainerState(db.Model):
+    """Stores basic state information which users can query or subscribe to, to
+    find out whether their container/app is ready, pending etc. Check
+    container_state_values (constants) for he list of possible states and
+    container_state.py in helpers/blueprint_helpers for the methods which you can use
+    for this table.
+
+    Args:
+        db (SLQAlchemy db): Implements db methods to communicate with the physical infra.
+    """
+
     __tablename__ = "user_app_state"  # may want to change going forward
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
 
