@@ -3,17 +3,6 @@ from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.constants.container_state_values import CANCELLED, PENDING
 
 
-def cancel_container(user):
-    """Simply cancels the application for someone by changing the
-    container state table.
-
-    Args:
-        user (str): The username of the user who's app we are cancelling
-        (i.e. the spinup).
-    """
-    set_container_state(state=CANCELLED, keyuser=user)
-
-
 def container_state_obj(**kwargs):
     """Fetches the UserContainerState object which has the user_id,
     state, and task_id (i.e. for the celery task, called statusID on the client app).
@@ -27,11 +16,11 @@ def container_state_obj(**kwargs):
     task_id = kwargs.get("task_id", None)
 
     _kwargs = {"user_id": user_id} if user_id else {"task_id": task_id}
-    state_info = UserContainerState.query.filter_by(_kwargs).limit(1).first()
+    state_info = UserContainerState.query.filter_by(**_kwargs).limit(1).first()
     return state_info
 
 
-def can_update_container_state(user, task_id):
+def can_update_container_state(user, task_id, obj=None):
     """This let's us know if the user's entry in UserContainerState
     can be updated (meaning that the task_id which is calling this,
     passing its own task_id, is still the valid one for that
@@ -45,45 +34,51 @@ def can_update_container_state(user, task_id):
         user (str): The username of the user who's entry we want to
         check for whether it can be updated.
         task_id (str): Thet task id (status id) of the celery task calling this.
+        obj (UserContainerState) : an object that can be passed if it's being used inside
+        an internal method (such as set_container_state without force). Defaults to null.
 
     Returns:
         bool: Whether the task id matches and this hasn't been cancelled.
     """
-    obj = container_state_obj(user_id=user)
-    return obj.task_id == task_id and obj.state != CANCELLED
+    if not obj:
+        obj = container_state_obj(user_id=user)
+    # if obj is null it's ok since we can always create a new one
+    return not obj or obj.task_id == task_id and obj.state != CANCELLED
 
 
-def set_container_state(**kwargs):
-    """Sets the container state (or creates if necessary) entry
-    for either a user or a task (filered by keyuser or keytask in **kwargs).
-    It then modifies task_id, state, or user_id based on those **kwargs (by those names).
+def set_container_state(keyuser, keytask, user_id=None, state=None, task_id=None, force=False):
+    """Set a container state in the UserContinerState (user_app_state) table. We
+    require a keyuser (and potentially keytask) to set it. You can null out keytask only if
+    the entry already exists and force is true. Otherwise keytask is required to check
+    whether that entry can be updated. It can be updated only if the keytask matches the
+    current task and it's not cancelled. The other params (aside from force) set those
+    values in the entry in the table.
 
-    It expects at least one of a user or task (as a key). If you are
-    trying to create a new state, it expects both.
-
-    Raises:
-        KeyError: The user or task keys (keyuser, keytask) were never passed.
+    Args:
+        keyuser (str): The user to filter by.
+        keytask (str): The task id that we should expect to be the current task
+        in that entry.
+        user_id (str, optional): The user_id we want to set. Defaults to None.
+        state (str, optional): The state we want to set. Defaults to None.
+        task_id (str, optional): The task id we want to set. Defaults to None.
+        force (bool, optional): Whether to update with a check for validity or not.
+        Defaults to False.
     """
-    keyuser, keytask = kwargs.get("keyuser", None), kwargs.get("keytask", None)
-    if not keyuser and not keytask:
-        raise KeyError("Need either a user or a task")
+    obj = container_state_obj(user_id=keyuser)
 
-    _kwargs = {"user_id": keyuser} if keyuser else {"task_id": keytask}
-    obj = container_state_obj(**_kwargs)
-
-    if obj:
-        if "task_id" in kwargs:
-            obj.task_id = kwargs["task_id"]
-        if "state" in kwargs:
-            obj.state = kwargs["state"]
-        if "user_id" in kwargs:
-            obj.user_id = kwargs["user_id"]
-        db.session.commit()
-    else:
-        if "state" in kwargs:
-            create_container_state(keyuser, keytask, state=kwargs["state"])
+    if force or can_update_container_state(keyuser, keytask, obj=obj):
+        if obj:
+            if task_id:
+                obj.task_id = task_id
+            if state:
+                obj.state = state
+            if user_id:
+                obj.user_id = user_id
+            db.session.commit()
         else:
-            create_container_state(keyuser, keytask)
+            if not state:
+                state = PENDING
+            create_container_state(keyuser, keytask, state=state)
 
 
 def create_container_state(user_id, task_id, state=PENDING):
@@ -93,7 +88,7 @@ def create_container_state(user_id, task_id, state=PENDING):
         user_id (str): The username of the user for whom'stdv this entry belongs.
         task_id (str): The task id of the task that's creating this.
         state (str, optional): The state that we want to write to the table for this
-        new object.. Defaults to PENDING.
+        new object. Defaults to PENDING.
 
     Raises:
         Exception: if it fails to commit the creation somehow.

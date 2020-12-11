@@ -9,7 +9,7 @@ from app.celery.aws_ecs_creation import (
     create_new_container,
     send_commands,
 )
-from app.helpers.blueprint_helpers.aws.container_state import cancel_container
+from app.helpers.blueprint_helpers.aws.container_state import set_container_state
 from app.celery.aws_ecs_deletion import delete_cluster, delete_container, drain_container
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND, SUCCESS
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
@@ -19,6 +19,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     protocol_info,
     set_stun,
 )
+from app.constants.container_state_values import CANCELLED
 
 from app.helpers.utils.general.auth import fractal_auth, developer_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
@@ -49,7 +50,8 @@ def container_state(action, **kwargs):
         body = kwargs.pop("body")
         try:
             user = body.pop("username")
-            cancel_container(user)
+            task = body.pop("task")
+            set_container_state(keyuser=user, keytask=task, state=CANCELLED)
         except:
             return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
         return jsonify({"status": SUCCESS}), SUCCESS

@@ -126,6 +126,6 @@ class UserContainerState(db.Model):
     __tablename__ = "user_app_state"  # may want to change going forward
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
 
-    user_id = db.Column(db.ForeignKey("users.user_id"))
+    user_id = db.Column(db.ForeignKey("users.user_id"), primary_key=True, nullable=False)
     state = db.Column(db.String(250), nullable=False)
     task_id = db.Column(db.String(250), nullable=False)
