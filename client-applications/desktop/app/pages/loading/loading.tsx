@@ -71,19 +71,39 @@ const Loading = (props: {
     const { data, loading } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { userID: username },
     })
+    /* Looks like:
+    { "hardware_user_app_state":
+      [
+        {
+        "state":"PENDING",
+        "task_id":"5bc34a50-9452-4123-9ca8-6dd7af8c9495",
+        "__typename":"hardware_user_app_state"
+        }
+      ]
+    }
+    */
+    // console.log(`data is ${data}`)
+    // console.log(`data looks like ${JSON.stringify(data)}`)
+    // console.log(`loading is ${loading}`)
 
-    const rightTask =
-        data && data.task_id && statusID && data.task_id === statusID
-    const hasState = data && data.state
+    const state = data ? data.hardware_user_app_state[0].state : null
+    const gqlTaskId = data ? data.hardware_user_app_state[0].task_id : null
+
+    // console.log(`username is ${username}`)
+    // console.log(`gql task id is ${gql_task_id}\nand our task is ${statusID}`)
+
+    const rightTask = data && gqlTaskId && statusID && gqlTaskId === statusID
+    const hasState = data && state
 
     const pending =
         loading ||
-        (hasState && rightTask && data.state === FractalAppStates.PENDING)
-    const ready = hasState && data.state === FractalAppStates.READY
-    const cancelled = hasState && data.state === FractalAppStates.CANCELLED
-    const failure = hasState && data.state === FractalAppStates.FAILURE
+        !rightTask ||
+        (hasState && state === FractalAppStates.PENDING)
+    const ready = hasState && state === FractalAppStates.READY
+    const cancelled = hasState && state === FractalAppStates.CANCELLED
+    const failure = hasState && state === FractalAppStates.FAILURE
 
-    console.log(`${data}`)
+    // console.log(`pending:${pending}\nready:${ready}\ncancelled:${cancelled}\nfailure:${failure}`)
 
     useEffect(() => {
         if (percentLoaded < 100 && canLoad) {
@@ -108,6 +128,10 @@ const Loading = (props: {
                 setCanLoad(false)
                 setStatus("Unexpectedly failed to spin up your app.")
                 setPercentLoaded(0)
+            } else {
+                setStatus(
+                    "Unexpecedly lost connection to server... trying to reconnect."
+                )
             }
         }
     }, [percentLoaded, data, loading])
@@ -134,15 +158,9 @@ const Loading = (props: {
                 secretKey: null,
                 launches: 0,
                 launchURL: null,
+                statusID: null,
             })
         )
-        // dispatch(
-        //     updateLoading({
-        //         statusMessage: "Powering up your app",
-        //         percentLoaded: 0,
-        //     })
-
-        // )
     }
 
     const LaunchProtocol = () => {
@@ -332,7 +350,7 @@ const mapStateToProps = <T extends {}>(state: T) => {
         secretKey: state.MainReducer.container.secretKey,
         desiredAppID: state.MainReducer.container.desiredAppID,
         currentAppID: state.MainReducer.container.currentAppID,
-        user: state.MainReducer.auth.username,
+        username: state.MainReducer.auth.username,
     }
 }
 

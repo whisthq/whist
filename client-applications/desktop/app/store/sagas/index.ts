@@ -1,5 +1,4 @@
 import { put, takeEvery, all, call, select } from "redux-saga/effects"
-import moment from "moment"
 
 import * as Action from "store/actions/pure"
 import * as SideEffect from "store/actions/sideEffects"
@@ -232,6 +231,7 @@ function* cancelContainer(action: {test: boolean}) {
     }
     
     const username = state.MainReducer.auth.username
+    const task = state.MainReducer.container.statusID
     const webserver = test
         ? state.MainReducer.admin.webserverUrl
         : config.url.WEBSERVER_URL
@@ -241,6 +241,7 @@ function* cancelContainer(action: {test: boolean}) {
         FractalAPI.CONTAINER.CANCEL,
         {
             username: username,
+            task: task,
         },
         state.MainReducer.auth.accessToken,
         webserver,
