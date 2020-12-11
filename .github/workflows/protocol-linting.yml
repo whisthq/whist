@@ -14,7 +14,8 @@ on:
             - project/**
         paths:
             - "protocol/**"
-            - "!protocol/README.md"
+        paths-ignore:
+            - "protocol/README.md"
 
 env:
     CMAKE_VERSION: 3.15.7

@@ -14,7 +14,8 @@ on:
             - project/**
         paths:
             - "main-webserver/**"
-            - "!main-webserver/README.md"
+        paths-ignore:
+            - "main-webserver/README.md"
 
 jobs:
     # Linting

@@ -14,7 +14,8 @@ on:
             - project/**
         paths:
             - ".github/workflows/**"
-            - "!.github/workflows/README.md"
+        paths-ignore:
+            - ".github/workflows/README.md"
 
 jobs:
     workflows-linting-main:
