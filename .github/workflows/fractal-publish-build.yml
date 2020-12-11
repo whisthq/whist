@@ -25,8 +25,11 @@ jobs:
     fractal-publish-build-config:
         name: "Configure Jobs"
         runs-on: ubuntu-20.04
+        outputs:
+            branch: ${{ steps.detect-branch.outputs.branch }}
         steps:
             - name: Detect Branch
+              id: detect-branch
               run: |
                   if [[ ${{ github.ref }} =~ ^refs/heads/master$ ]]; then
                       BRANCH_NAME=master
@@ -39,7 +42,7 @@ jobs:
                   else
                       BRANCH_NAME=null
                   fi
-
+                  echo "branch is $BRANCH_NAME"
                   echo "::set-output name=branch::$BRANCH_NAME"
 
     # Container Images: Build & Publish to AWS ECR
@@ -50,7 +53,7 @@ jobs:
         name: "Container Images: Build & Push to AWS ECR"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.branch)
+        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
         env:
             aws-placeholder-region: us-east-1
             aws-regions: >
@@ -125,7 +128,7 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Container images builds pushed to production via Docker push to ECR.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to production via Docker push to ECR :bezos:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # ECS Host Service: Build & Publish to AWS S3
@@ -136,7 +139,7 @@ jobs:
         name: "ECS Host Service: Build & Publish to AWS S3"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config, container-images-push-images-ecr]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.branch)
+        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
         env:
             binary-location: ecs-host-service/build
             binary-name: ecs-host-service
@@ -172,7 +175,7 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"ECS Host Service build pushed to production via S3 upload.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":athletic_shoe: ECS Host Service build pushed to production via S3 upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
@@ -183,7 +186,7 @@ jobs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config, container-images-push-images-ecr]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.branch)
+        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
 
         strategy:
             matrix: ${{ fromJson(needs.container-images-push-images-ecr.outputs.task-definitions-matrix) }}
@@ -244,7 +247,7 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Task Definitions rendered and deployed to production via ECS upload.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to production via ECS upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Main Webserver: Deploy to Heroku
@@ -258,16 +261,14 @@ jobs:
             ( 
                 contains(
                     fromJSON('["master"]'), 
-                    needs.fractal-publish-build-config.branch
-                ) && 
-                success()
+                    needs.fractal-publish-build-config.outputs.branch
+                ) && success()
             ) || 
             (
                 contains(
                     fromJSON('["dev"]'),
-                    needs.fractal-publish-build-config.branch
-                ) &&
-                always()
+                    needs.fractal-publish-build-config.outputs.branch
+                ) && always()
             )
         runs-on: ubuntu-20.04
         steps:
@@ -277,15 +278,27 @@ jobs:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
                   fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
+            - name: Authenticate Heroku
+              run: |
+                  cat > ~/.netrc << EOF
+                  machine api.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  machine git.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  EOF
+
             - name: Add Heroku Remote
               run: |
-                  if [[ ${{ needs.fractal-publish-build-config.branch }} == dev ]]; then
+                  if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
                       HEROKU_APP_NAME=fractal-dev-server
-                  elif [[ ${{ needs.fractal-publish-build-config.branch }} == master ]]; then
+                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == master ]]; then
                       HEROKU_APP_NAME=fractal-staging-server
                   else
                       echo 'Error: Invalid branch' && false
                   fi
+                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
 
                   heroku git:remote --app $HEROKU_APP_NAME --remote heroku-fractal-server
               env:
@@ -303,5 +316,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Main webserver for branch \`${{ needs.fractal-publish-build-config.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":rocket: Main webserver for branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\` :heroku:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
