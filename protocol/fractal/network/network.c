@@ -1647,14 +1647,30 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
         return false;
     }
 
+    // set request type (POST/GET/etc.) and protocol to https
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, type);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
+
     // create target URL
-    CURLU *curl_url_handle = curl_url();
+#ifdef CURLUPART_URL
+    // when curl's urlapi is not available
+    CURLU* curl_url_handle = curl_url();
+    if (!curl_url_handle) {
+        return false;
+    }
     curl_url_set(curl_url_handle, CURLUPART_URL, host_s, CURLU_DEFAULT_SCHEME);
     curl_url_set(curl_url_handle, CURLUPART_PATH, path, CURLU_DEFAULT_SCHEME);
+    curl_url_cleanup(curl_url_handle);
     curl_easy_setopt(curl, CURLOPT_CURLU, curl_url_handle);
+#else
+    // with no urlapi, build our own URL (path must begin with '/' when passed in)
+    char* full_url = malloc(strlen(host_s) + strlen(path));
+    sprintf(full_url, "%s%s", host_s, path);
+    curl_easy_setopt(curl, CURLOPT_URL, full_url);
+    free(full_url);
+#endif
+
     // add request payload
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
 
@@ -1669,6 +1685,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &crb);
     }
 
+    // LOG_ERROR curl's error if it fails
     char *error_buf = malloc(CURL_ERROR_SIZE);
     curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error_buf);
     if (curl_easy_perform(curl) != 0) {
