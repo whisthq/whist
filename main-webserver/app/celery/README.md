@@ -1,5 +1,7 @@
 ##Celery README
 
+Here's a great tutorial on Celery and Redis: https://ljvmiranda921.github.io/notebook/2019/11/08/flask-redis-celery-mcdo/.
+
 ###Basics of celery
 A celery task is one way to asynchronously execute some code — this is useful for e.g. code that pings an API or touches one of our databases so it doesn't block our server while it's running. By design, Heroku fails all API requests that take more than 30 seconds to execute, so celery tasks are necessary for long-running API calls. A high-level rule of thumb to follow is to outsource an endpoint to a celery task if the endpoint can be expected to take more than 5-10 seconds to run (most SQL operations take less than a second).
 
