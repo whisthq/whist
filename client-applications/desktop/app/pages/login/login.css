@@ -64,45 +64,6 @@ button {
     letter-spacing: 1.5px;
 }
 
-.signupButton,
-.loginButton,
-.googleButton {
-    font-family: 'Maven Pro';
-    border: solid 0.8px #cccccc;
-    background: white;
-    font-weight: bold;
-    padding: 12px 30px;
-    color: black;
-    margin-left: 10px;
-    font-size: 15px;
-    outline: none !important;
-}
-
-.dashboardButton {
-    font-family: 'Maven Pro';
-    font-weight: bold;
-    padding: 10px 25px;
-    width: 150px;
-    background: var(--primary-color);
-    color: white;
-    font-size: 13px;
-    float: right;
-    margin-top: 15px;
-    text-align: center;
-    border-radius: 5px;
-}
-
-.dashboardButton:hover {
-    background: #93f1d9;
-    cursor: pointer;
-    color: #111111;
-}
-
-.loginButton {
-    margin-left: 0px;
-    width: 350px;
-}
-
 .processingButton {
     font-family: 'Maven Pro';
     font-weight: bold;
@@ -138,13 +99,6 @@ button {
 
 .loginContainer {
     text-align: center;
-}
-
-.welcomeBack {
-    font-weight: bold;
-    font-size: 30px;
-    color: black;
-    margin-bottom: 5px;
 }
 
 .inputBox {
@@ -312,11 +266,6 @@ input.inputBox::placeholder {
 
 .removeDrag {
     -webkit-app-region: no-drag;
-}
-
-.loadingBar {
-    height: 6px;
-    background: #93f1d9;
 }
 
 .bounce {

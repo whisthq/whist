@@ -1,14 +1,16 @@
 import React from "react"
 import { connect } from "react-redux"
-import styles from "pages/login/login.css"
 
 import TitleBar from "shared/components/titleBar"
 import Version from "shared/components/version"
 import BackgroundView from "shared/views/backgroundView"
-import LoginView from "pages/login/views/loginView"
+import LoginView from "pages/login/views/loginView/loginView"
+import { PuffAnimation } from "shared/components/loadingAnimations"
 
-const Login = (props: { loginWarning: string }) => {
-    const { loginWarning } = props
+import styles from "pages/login/login.css"
+
+const Login = (props: { loginWarning: string; loaded: boolean }) => {
+    const { loginWarning, loaded } = props
 
     return (
         <div className={styles.container} data-tid="container">
@@ -20,21 +22,32 @@ const Login = (props: { loginWarning: string }) => {
                         <span className={styles.logoTitle}>Fractal</span>
                     </div>
                 </div>
-                <div style={{ marginTop: loginWarning ? 0 : 50 }}>
-                    <div className={styles.loginContainer}>
-                        <BackgroundView />
-                        <LoginView />
+                {!loaded ? (
+                    <div>
+                        <PuffAnimation />
                     </div>
-                </div>
+                ) : (
+                    <div style={{ marginTop: loginWarning ? 0 : 50 }}>
+                        <div className={styles.loginContainer}>
+                            <BackgroundView />
+                            <LoginView />
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )
 }
 
-export const mapStateToProps = <T extends {}>(state: T) => {
+export const mapStateToProps = (state: {
+    MainReducer: {
+        auth: {
+            loginWarning: boolean
+        }
+    }
+}) => {
     return {
         loginWarning: state.MainReducer.auth.loginWarning,
-        loginMessage: state.MainReducer.auth.loginMessage,
     }
 }
 

@@ -1,0 +1,54 @@
+@import '/app.global.css';
+
+.landingHeader {
+    padding: 30px;
+    padding-top: 20px;
+    display: flex;
+}
+
+.landingHeaderLeft {
+    width: 40%;
+    text-align: left;
+}
+
+.landingHeaderRight {
+    width: 60%;
+    text-align: right;
+    font-size: 12px;
+    color: #d3d3d3;
+}
+
+.logoTitle {
+    color: var(--primary-text-color);
+    font-family: 'Maven Pro';
+    position: absolute;
+    top: 42px;
+    left: 42px;
+    font-size: 20px !important;
+    letter-spacing: 1.5px;
+}
+
+.loadingBar {
+    height: 6px;
+    background: var(--accent-color);
+}
+
+.dashboardButton {
+    font-family: 'Maven Pro';
+    font-weight: bold;
+    padding: 10px 25px;
+    width: 150px;
+    background: var(--primary-color);
+    color: var(--text-background-color);
+    font-size: 13px;
+    float: right;
+    margin-top: 15px;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.dashboardButton:hover {
+    background: var(--accent-color);
+    cursor: pointer;
+    color: #111111;
+}

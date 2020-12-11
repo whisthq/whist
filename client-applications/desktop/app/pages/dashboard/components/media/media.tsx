@@ -2,12 +2,12 @@ import React from "react"
 import { Col, Carousel } from "react-bootstrap"
 import { connect } from "react-redux"
 
-import { openExternal } from "shared/utils/helpers"
+import { openExternal } from "shared/utils/general/helpers"
 import { FractalBanner } from "shared/types/ui"
 
-import styles from "pages/dashboard/components/news/news.css"
+import styles from "pages/dashboard/components/media/media.css"
 
-const News = (props: { mediaData: FractalBanner[] }) => {
+const Media = (props: { mediaData: FractalBanner[] }) => {
     const { mediaData } = props
 
     if (mediaData && mediaData.length > 0) {
@@ -58,4 +58,4 @@ const mapStateToProps = () => {
     return {}
 }
 
-export default connect(mapStateToProps)(News)
+export default connect(mapStateToProps)(Media)

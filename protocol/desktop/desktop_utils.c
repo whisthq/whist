@@ -36,6 +36,7 @@ extern volatile int max_bitrate;
 extern volatile int running_ci;
 extern char user_email[USER_EMAIL_MAXLEN];  // Note: Is larger than environment maxlen
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN + 1];
+extern char icon_png_filename[ICON_PNG_FILENAME_MAXLEN];
 
 extern volatile CodecType codec_type;
 extern bool using_stun;
@@ -52,6 +53,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"private-key", required_argument, NULL, 'k'},
                                      {"user", required_argument, NULL, 'u'},
                                      {"environment", required_argument, NULL, 'e'},
+                                     {"icon", required_argument, NULL, 'i'},
                                      {"connection-method", required_argument, NULL, 'z'},
                                      {"ports", required_argument, NULL, 'p'},
                                      {"use_ci", no_argument, NULL, 'x'},
@@ -63,7 +65,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {0, 0, 0, 0}};
 
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:z:p:xn:"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:xn:"
 
 int parse_args(int argc, char *argv[]) {
     // TODO: replace `desktop` with argv[0]
@@ -89,6 +91,7 @@ int parse_args(int argc, char *argv[]) {
         "  -u, --user=EMAIL              Tell Fractal the user's email. Default: None \n"
         "  -e, --environment=ENV         The environment the protocol is running in,\n"
         "                                  e.g master, staging, dev. Default: dev\n"
+        "  -i, --icon=PNG_FILE           Set the protocol window icon from a 64x64 pixel png file\n"
         "  -p, --ports=PORTS             Pass in custom port:port mappings, period-separated.\n"
         "                                  Default: identity mapping\n"
         "  -x, --use_ci                  Launch the protocol in CI mode\n"
@@ -108,6 +111,8 @@ int parse_args(int argc, char *argv[]) {
     strcpy(sentry_environment, "dev");
     // default sentry environment
     strcpy(user_email, "None");
+    // default icon filename
+    strcpy(icon_png_filename, "");
 
     int opt;
     long int ret;
@@ -171,6 +176,9 @@ int parse_args(int argc, char *argv[]) {
                 break;
             case 'e':
                 strcpy(sentry_environment, optarg);
+                break;
+            case 'i':
+                strcpy(icon_png_filename, optarg);
                 break;
             case 'p': {
                 char separator = '.';

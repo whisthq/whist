@@ -1,0 +1,62 @@
+@import '/app.global.css';
+
+.modalAppImage {
+    height: 100px;
+}
+
+.appLink {
+    color: var(--primary-color);
+    margin-left: 30px;
+}
+
+.tos {
+    position: absolute;
+    left: 40px;
+    bottom: 40px;
+    font-size: 11px;
+    display: 'flex';
+    color: var(--light-text-color);
+}
+
+.tosLink {
+    color: var(--primary-color);
+    padding: 0px;
+}
+
+.tosLink:hover {
+    cursor: pointer;
+}
+
+.tooltipText {
+    font-family: 'Maven Pro';
+    padding: 8px 6px;
+}
+
+.faCheck {
+    margin-left: 10px;
+    font-size: 12px;
+    color: var(--primary-text-color);
+}
+
+.dropdownMenu {
+    border: none !important;
+    color: var(--text-background-color) !important;
+    padding: 10px 30px !important;
+    background: var(--primary-text-color) !important;
+}
+
+.dropdownText {
+    color: var(--text-background-color) !important;
+    font-weight: bold !important;
+    font-size: 13px !important;
+    letter-spacing: 1.3px !important;
+}
+
+.dropdownText:hover {
+    color: var(--accent-color) !important;
+    background: rgba(0, 0, 0, 0) !important;
+}
+
+.dropdown-toggle::after {
+    display: none !important;
+}

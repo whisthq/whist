@@ -133,6 +133,7 @@ Defines
 #define FRACTAL_ENVIRONMENT_MAXLEN 100
 #define FRACTAL_IDENTIFIER_MAXLEN 31
 #define MAX_WEBSERVER_URL_LEN 63
+#define ICON_PNG_FILENAME_MAXLEN 256
 
 /*
 ============================

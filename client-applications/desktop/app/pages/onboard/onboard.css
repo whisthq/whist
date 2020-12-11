@@ -56,7 +56,7 @@
 }
 
 .welcomeContainer {
-    width: 450px;
+    width: 425px;
     margin: auto;
     margin-top: 150px;
 }
@@ -80,9 +80,9 @@
 .appContainerSelected {
     height: 70px;
     width: 70px;
-    border-radius: 15px;
+    border-radius: 10px;
     background: var(--text-background-color);
-    box-shadow: var(--light-box-shadow);
+    /* box-shadow: var(--light-box-shadow); */
     position: relative;
     transition: 0.5s;
 }
@@ -196,7 +196,7 @@
 
 .bottomText {
     margin-top: 20px;
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .link {
@@ -231,4 +231,20 @@
 .installingText {
     font-family: 'Maven Pro Medium';
     margin-top: 20px;
+}
+
+.installedText {
+    margin-top: 35px;
+    font-size: 14px;
+}
+
+.command {
+    color: var(--primary-color);
+    border-radius: 3px;
+    padding: 4px 10px;
+    background: rgba(57, 48, 184, 0.1);
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+    text-align: center;
 }
