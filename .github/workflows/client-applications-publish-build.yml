@@ -79,7 +79,7 @@ jobs:
                   cd client-applications/desktop && git clean -dfx && ./publish.bat -branch=master -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -publish=true
 
             - name: Publish the macOS & Linux client-applications
-              if: matrix.os == 'macOS-10.14'
+              if: matrix.os == 'macOS-10.10'
               run: | 
                   cd client-applications/desktop && git clean -dfx && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
 
