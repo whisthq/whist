@@ -1583,7 +1583,7 @@ int create_udp_context(SocketContext *context, char *destination, int port, int 
     }
 }
 
-void write_curl_response_callback(char* ptr, size_t size, size_t nmemb, CurlResponseBuffer* crb) {
+size_t write_curl_response_callback(char* ptr, size_t size, size_t nmemb, CurlResponseBuffer* crb) {
     /*
     Writes CURL request response data to the CurlResponseBuffer buffer up to `crb->max_len`
 
@@ -1592,6 +1592,10 @@ void write_curl_response_callback(char* ptr, size_t size, size_t nmemb, CurlResp
         size (size_t): always 1 - size of each `nmemb` pointed to by `ptr`
         nmemb (size_t): the size of the buffer pointed to by `ptr`
         crb (CurlResponseBuffer*): the response buffer object that contains full response data
+
+    Returns:
+        size (size_t): returns passed in `size` if successful (this function just always
+            returns success state)
     */
 
     if (!crb || !crb->buffer || crb->filled_len > crb->max_len) {
@@ -1610,6 +1614,21 @@ void write_curl_response_callback(char* ptr, size_t size, size_t nmemb, CurlResp
 
 bool send_http_request(char* type, char* host_s, char* path, char *payload, char **response_body,
                        size_t max_response_size) {
+    /*
+    Send an HTTP (over HTTPS protocol) to a host
+
+    Arguments:
+        type (char*): type of HTTP request (POST, GET, etc.)
+        host_s (char*): hostname (e.g. URL) for HTTP request target
+        path (char*): path of request (full request URL would be host_s/path)
+        payload (char*): content of the request body
+        response_body (char**): pointer to the buffer where request response should be stored
+        max_response_size (size_t): max size of the response buffer
+
+    Returns:
+        bool: true on success, false on failure
+        => ARG `response_body` is loaded with request response data
+    */
 
     // verify that we're requesting from a valid host
     struct hostent *host;
@@ -1621,7 +1640,6 @@ bool send_http_request(char* type, char* host_s, char* path, char *payload, char
 
     // use CURL to send a request and process response buffer
     CURL *curl;
-    CURLcode res;
     curl = curl_easy_init();
 
     if (!curl) {
@@ -1648,8 +1666,7 @@ bool send_http_request(char* type, char* host_s, char* path, char *payload, char
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &crb);
     }
 
-    res = curl_easy_perform(curl)
-    if (res != 0) {
+    if (curl_easy_perform(curl) != 0) {
         LOG_ERROR("curl to %s/%s failed", host_s, path);
         return false;
     }
@@ -1679,7 +1696,8 @@ bool send_post_request(char *host_s, char *path, char *payload, char **response_
                 copied into `response_body`
 
         Return:
-            bool: return true on succes (or 0-length host), false on failure
+            bool: return true on success (or 0-length host), false on failure
+            => ARG `response_body` is loaded with request response data
     */
 
     // assume that no host means no post request needs to be sent,
@@ -1704,7 +1722,8 @@ bool send_get_request(char *host_s, char *path, char **response_body, size_t max
                 copied into `response_body`
 
         Return:
-            bool: return true on succes (or 0-length host), false on failure
+            bool: return true on success (or 0-length host), false on failure
+            => ARG `response_body` is loaded with request response data
     */
 
     // assume that no host means no post request needs to be sent,
