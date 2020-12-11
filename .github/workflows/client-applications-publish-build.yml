@@ -18,7 +18,7 @@ jobs:
         # Platforms to build on/for
         strategy:
             matrix:
-                os: [macos-10.12, ubuntu-latest, windows-2019]
+                os: [macos-10.14, ubuntu-latest, windows-2019]
 
         steps:
             - name: Checkout Git Repository
@@ -79,7 +79,9 @@ jobs:
                   cd client-applications/desktop && git clean -dfx && ./publish.bat -branch=master -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -publish=true
 
             - name: Publish the macOS & Linux client-applications
-              if: matrix.os == 'macOS-10.12'
+              env: 
+                FRACTAL_OSX_SYSROOT: '/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs'
+              if: matrix.os == 'macOS-10.14'
               run: | 
                   cd client-applications/desktop && git clean -dfx && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
 
