@@ -14,8 +14,7 @@ on:
             - project/**
         paths:
             - "client-applications/**"
-        paths-ignore:
-            - "client-applications/README.md"
+            - "!client-applications/README.md"
 
 jobs:
     client-applications-linting-main:
