@@ -66,4 +66,4 @@ jobs:
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Monthly fractal-container-outputs and fractal-protocol-logs S3 Buckets Clearing Performed.\", \"icon_emoji\": \":fractal:\"}" \
-                  https://hooks.slack.com/services/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
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}

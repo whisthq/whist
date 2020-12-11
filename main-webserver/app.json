@@ -1,0 +1,13 @@
+{
+  "environments": {
+    "review": {
+      "addons": ["heroku-redis:hobby-dev"]
+    },
+    "test": {
+      "addons": ["heroku-redis:in-dyno"],
+      "scripts": {
+        "test": "pytest -v -s --no-mock-aws"
+      }
+    }
+  }
+}
