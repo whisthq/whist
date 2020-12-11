@@ -14,7 +14,8 @@ on:
             - project/**
         paths:
             - "container-images/**"
-            - "!container-images/README.md"
+        paths-ignore:
+            - "container-images/README.md"
 
 jobs:
     container-images-build-images-main:

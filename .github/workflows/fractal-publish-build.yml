@@ -12,10 +12,10 @@ on:
             - staging
             - dev
             - project/**
-        paths:
-            - "!README.md"
-            - "!**/README.md"
-            - "!.github/workflows/README.md"
+        paths-ignore:
+            - "README.md"
+            - "**/README.md"
+            - ".github/workflows/README.md"
 
 jobs:
     # Configure Jobs
