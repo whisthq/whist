@@ -4,7 +4,7 @@ This module contains arguably the most important parts of our web server impleme
 
 There are three things you should know about this module before you try to use it:
 
-1. **It must be installed to your Python virtual environment for tests to pass.** The line `-e app/helpers` in `requirements-test.txt takes care of this. It's worth noting that this module, which is also a package, by no means stands alone from the rest of the repository; not only does the rest of the Flask application depend on this package, but also this package depends on code in the rest of the Flask application. **You don't have to worry about this if you just run `pip install -r requirements-test.txt`.\*\*
+1. **It must be installed to your Python virtual environment for tests to pass.** The line `-e app/helpers` in `requirements-test.txt` takes care of this. It's worth noting that this module, which is also a package, by no means stands alone from the rest of the repository; not only does the rest of the Flask application depend on this package, but also this package depends on code in the rest of the Flask application. **You don't have to worry about this if you just run `pip install -r requirements-test.txt`.**
 2. When trying to locate a particular helper function it is helpful to know two things:
 
    - functions that are called more than once will be found in the `utils` subdirectory, while functions that are only used once are likely to be found in the `blueprint_helpers` subdirectory.
