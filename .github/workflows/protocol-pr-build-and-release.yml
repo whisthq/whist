@@ -97,16 +97,6 @@ jobs:
           echo "Env vars:"
           printenv
 
-      - name: Set status to in progress # You would run your tests before this using the output to set state/desc
-        uses: Sibz/github-status-action@v1
-        with:
-          authToken: ${{ github.token }}
-          context: 'Create Release'
-          description: 'Waiting for builds to complete'
-          state: 'pending'
-          sha: ${{ github.sha }}
-          target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
-
   build:
     name: ${{ matrix.config.name }}
     needs: [params]
@@ -634,27 +624,12 @@ jobs:
         run: |
           if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
             echo "Proceeding with job"
-            curl \
-              -H 'Authorization: Bearer ${{ github.token }}' \
-              -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/fractal/fractal/statuses/${{github.sha}} \
-              -d '{"state": "success", "target_url": "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Release successfully created"}'
           else
             echo "Killing release job because builds or tests failed"
-            curl \
-              -H 'Authorization: Bearer ${{ github.token }}' \
-              -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/fractal/fractal/statuses/${{github.sha}} \
-              -d '{"state": "failure", "target_url": "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Builds or tests failed"}'
             exit 1
           fi
           if ! ${{ needs.params.outputs.should_release }}; then
             echo "Killing release job because should_release=${{ needs.params.outputs.should_release }}"
-            curl \
-              -H 'Authorization: Bearer ${{ github.token }}' \
-              -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/fractal/fractal/statuses/${{github.sha}} \
-              -d '{"state": "failure", "target_url": "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}", "context": "Create Release", "description": "Did not create release because should_release was false"}'
             exit 1
           fi
       # TODO convert this into its own Github Action (ie. not embedded in this workflow but as its own published action)
@@ -721,72 +696,9 @@ jobs:
         run: |
           git tag ${{ steps.release_info.outputs.version_id }}
           git push origin --tags
-      - name: Create release for ${{ steps.release_info.outputs.version_id }}
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          tag_name: ${{ steps.release_info.outputs.version_id }}
-          release_name: ${{ steps.release_info.outputs.version_id }}
-          body: |
-            This was an automated release produced via the *${{ github.workflow }}* workflow in Github Actions which was triggered by *${{ github.event_name }}*.
-
-            **Version ID:** `${{ steps.release_info.outputs.version_id }}`
-
-            **Commit:** `${{ needs.params.outputs.git_sha }}`
-
-            **Release parameters:**
-
-            Inputs:
-            ```json
-            ${{ toJson(github.event.inputs) }}
-            ```
-
-            Derived:
-            ```json
-            ${{ toJson(needs.params.outputs) }}
-            ```
-
-            **Commits since last release:** TODO
-          draft: false
-          prerelease: false
-
-  upload-builds:
-    needs: [create-release]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        config:
-          # These should match the configurations defined in the build job
-          # TODO: figure out how to DRY these configurations
-          - artifact_name: "Windows-64bit_client"
-          - artifact_name: "Windows-64bit_server"
-          - artifact_name: "Linux-64bit_client"
-          - artifact_name: "macOS-64bit_client"
-    name: Upload ${{ matrix.config.artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
-    steps:
-      - name: Retrieve artifact ${{ matrix.config.artifact_name }}
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ matrix.config.artifact_name }}
-          path: ${{ matrix.config.artifact_name }}
-      - name: Package up artifact as a zip file
-        run: |
-          ls -laR
-          zip -r "${{ matrix.config.artifact_name }}" "${{ matrix.config.artifact_name }}"
-      - name: Upload to release ${{ needs['create-release'].outputs.version_id }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ needs['create-release'].outputs.release_upload_url }}
-          asset_path: ./${{ matrix.config.artifact_name }}.zip
-          asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.artifact_name }}.zip
-          asset_content_type: application/zip
 
   trigger-clientapp-builds:
-    needs: [params, build, upload-builds, test_client, create-release]
+    needs: [params, build, test_client, create-release]
     if: always() # See not in first step to understand why this is set to always run (which would seem incorrect since it should only run when builds succeed)
     runs-on: ubuntu-latest
     steps:
@@ -810,3 +722,4 @@ jobs:
           echo "${{ secrets.PROTOCOL_PR_BUILD_AND_RELEASE_ID }}" | base64
           printf -v date '%(%Y.%-m.%-d)T'
           curl -H 'Authorization: Bearer ${{ github.token }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractal/client-applications/actions/workflows/${{ secrets.PROTOCOL_PR_BUILD_AND_RELEASE_ID }}/dispatches  -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "'$date'", "should_test": "false", "should_release": "true"}}'
+
