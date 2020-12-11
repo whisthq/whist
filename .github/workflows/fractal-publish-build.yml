@@ -6,7 +6,6 @@
 name: "Fractal: Build & Publish"
 
 on:
-    workflow_dispatch:
     push:
         branches:
             - master
@@ -255,7 +254,21 @@ jobs:
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         needs: [fractal-publish-build-config, container-images-push-images-ecr]
-        if: ( contains(fromJSON('["master"]'), needs.fractal-publish-build-config.branch) && success() ) || ( contains(fromJSON('["dev"]')) && always() )
+        if: |
+            ( 
+                contains(
+                    fromJSON('["master"]'), 
+                    needs.fractal-publish-build-config.branch
+                ) && 
+                success()
+            ) || 
+            (
+                contains(
+                    fromJSON('["dev"]'),
+                    needs.fractal-publish-build-config.branch
+                ) &&
+                always()
+            )
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git repository
