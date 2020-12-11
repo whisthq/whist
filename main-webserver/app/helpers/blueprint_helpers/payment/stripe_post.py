@@ -124,16 +124,15 @@ def retrieveHelper(email):
         return (
             jsonify(
                 {
-                    "status": PAYMENT_REQUIRED,
-                    "subscription": {},
+                    "subscription": None,
                     "source": None,
                     "creditsOutstanding": 0,
                     "account_locked": False,
-                    "customer": {},
+                    "customer": None,
                 }
             ),
+            PAYMENT_REQUIRED,
         )
-        PAYMENT_REQUIRED,
     except Exception as e:
         fractal_log("retrieveHelper", "", str(e), level=logging.ERROR)
 
