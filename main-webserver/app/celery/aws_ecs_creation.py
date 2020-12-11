@@ -257,6 +257,14 @@ def assign_container(
     :return: the generated container, in json form
     """
 
+    set_container_state(
+        keyuser=username,
+        keytask=self.request.id,
+        task_id=self.request.id,
+        state=PENDING,
+        force=True,  # necessary since check will fail otherwise
+    )
+
     enable_waiting = False
     # if a cluster is passed in, we're in testing mode:
     if cluster_name is None and enable_waiting:
@@ -496,7 +504,11 @@ def create_new_container(
     task_start_time = time.time()
 
     set_container_state(
-        keyuser=username, keytask=self.request.id, task_id=self.request.id, state=PENDING
+        keyuser=username,
+        keytask=self.request.id,
+        task_id=self.request.id,
+        state=PENDING,
+        force=True,  # necessary since check will fail otherwise
     )
 
     message = (
