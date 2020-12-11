@@ -12,27 +12,26 @@
 import path from "path"
 import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
-import * as Sentry from "@sentry/electron"
+// import * as Sentry from "@sentry/electron"
 
-if (process.env.NODE_ENV === "production") {
-    Sentry.init({
-        dsn:
-            "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323",
-        release: `client-applications@${app.getVersion()}`,
-    })
-}
+// if (process.env.NODE_ENV === "production") {
+//     Sentry.init({
+//         dsn:
+//             "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323",
+//         release: `client-applications@${app.getVersion()}`,
+//     })
+// }
 
 // This is the window where the renderer thread will render our React app
 let mainWindow: BrowserWindow | null = null
 // Detects whether there's an auto-update
 let updating = false
 // Detects whether fractal:// has been typed into a browser
-let customURL = null
+let customURL: string | null = null
 // Toggles whether the desktop app is allowed to quit (to prevent concurrent apps)
 let canClose = true
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
-process.env.GOOGLE_API_KEY = "AIzaSyA2FUwAOXKqIWMqKN5DNPBUaqYMOWdBADQ"
 
 if (process.env.NODE_ENV === "production") {
     const sourceMapSupport = require("source-map-support")
@@ -64,6 +63,7 @@ const createWindow = async () => {
             resizable: false,
             webPreferences: {
                 nodeIntegration: true,
+                enableRemoteModule: true,
             },
         })
     } else if (os.platform() === "darwin") {
@@ -77,6 +77,7 @@ const createWindow = async () => {
             maximizable: false,
             webPreferences: {
                 nodeIntegration: true,
+                enableRemoteModule: true,
             },
         })
     } else {
@@ -91,12 +92,13 @@ const createWindow = async () => {
             maximizable: false,
             webPreferences: {
                 nodeIntegration: true,
+                enableRemoteModule: true,
             },
             icon: path.join(__dirname, "/build/icon.png"),
         })
     }
     mainWindow.loadURL(`file://${__dirname}/app.html`)
-    mainWindow.webContents.openDevTools()
+    // mainWindow.webContents.openDevTools()
 
     // @TODO: Use 'ready-to-show' event
     //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
@@ -140,6 +142,7 @@ const createWindow = async () => {
         if (canClose && mainWindow) {
             mainWindow.show()
             mainWindow.focus()
+            mainWindow.restore()
             if (app && app.dock) {
                 app.dock.show()
             }
@@ -199,9 +202,7 @@ if (!gotTheLock) {
 app.on("window-all-closed", () => {
     // Respect the OSX convention of having the application in memory even
     // after all windows have been closed
-    if (process.platform !== "darwin") {
-        app.quit()
-    }
+    app.quit()
 })
 
 app.setAsDefaultProtocolClient("fractal")
@@ -212,6 +213,9 @@ app.on("open-url", (event, data) => {
     customURL = data.toString()
     if (mainWindow && mainWindow.webContents) {
         mainWindow.webContents.send("customURL", customURL)
+        mainWindow.show()
+        mainWindow.focus()
+        mainWindow.restore()
     }
 })
 

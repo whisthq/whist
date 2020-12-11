@@ -6,7 +6,8 @@
 }
 
 .feedbackButton,
-.noFeedbackButton {
+.noFeedbackButton,
+.submittedButton {
     font-family: 'Maven Pro';
     font-weight: bold;
     padding: 10px 25px;
@@ -18,6 +19,11 @@
     margin-top: 15px;
     text-align: center;
     border-radius: 5px;
+}
+
+.submittedButton {
+    background: var(--accent-color);
+    color: var(--primary-text-color);
 }
 
 .noFeedbackButton {
@@ -115,19 +121,29 @@
     border-left: none;
 }
 
-.modalButton {
-    position: absolute;
-    right: 40px;
-    bottom: 40px;
-    text-align: center;
-    padding: 10px 30px;
-    color: white;
-    font-weight: bold;
-    width: 200px;
+.modalButton,
+.installedButton {
+    position: absolute !important;
+    right: 40px !important;
+    bottom: 40px !important;
+    text-align: center !important;
+    padding: 10px 30px !important;
+    color: var(--text-background-color) !important;
+    font-weight: bold !important;
+    width: 200px !important;
     background: var(--primary-color);
-    border: none;
-    box-shadow: none;
-    border-radius: 5px;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    border-radius: 5px !important;
+}
+
+.installedButton {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: var(--primary-text-color) !important;
+    border: none !important;
+    bottom: 0px !important;
+    right: 0px !important;
 }
 
 .container {

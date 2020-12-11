@@ -2,7 +2,6 @@ import fs from 'fs'
 import chalk from 'chalk'
 import { execSync } from 'child_process'
 import { dependencies } from '../../package.json'
-import { debugLog } from '../../utils/logging.js'
 
 if (dependencies) {
     const dependenciesKeys = Object.keys(dependencies)
@@ -22,7 +21,7 @@ if (dependencies) {
         )
         if (filteredRootDependencies.length > 0) {
             const plural = filteredRootDependencies.length > 1
-            debugLog(`
+            console.log(`
  ${chalk.whiteBright.bgYellow.bold(
      'Webpack does not work with native dependencies.'
  )}
@@ -42,9 +41,8 @@ ${chalk.bold(
     'https://github.com/electron-react-boilerplate/electron-react-boilerplate/wiki/Module-Structure----Two-package.json-Structure'
 )}
  `)
-            process.exit(1)
         }
     } catch (e) {
-        debugLog('Native dependencies could not be checked')
+        console.log('Native dependencies could not be checked')
     }
 }

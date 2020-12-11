@@ -1,5 +1,5 @@
 import { config, webservers } from "shared/constants/config"
-import { debugLog } from "shared/utils/logging"
+import { debugLog } from "shared/utils/general/logging"
 import {
     FractalHTTPRequest,
     FractalHTTPContent,
@@ -7,6 +7,16 @@ import {
 } from "shared/types/api"
 
 const checkResponse = (response: { status: number }): boolean => {
+    /*
+    Description:
+        Reads HTTP response and checks if it is successful
+
+    Arguments:
+        response (JSON): HTTP response
+    
+    Returns:
+        success (boolean) : True/false
+    */
     return (
         response &&
         response.status &&
@@ -15,16 +25,39 @@ const checkResponse = (response: { status: number }): boolean => {
     )
 }
 
-const checkJSON = <T>(json: T): boolean => {
+const checkJSON = (json: Record<string, any>): boolean => {
+    /*
+    Description:
+        Reads a JSON and checks if it is undefined
+
+    Arguments:
+        json (JSON): Any JSON object
+    
+    Returns:
+        success (boolean) : True if not undefined, false otherwise
+    */
     return !!json
 }
 
-export const apiPost = async <T>(
+export const apiPost = async (
     endpoint: string,
-    body: T,
+    body: Record<string, any>,
     token: string,
     webserver: string = config.url.WEBSERVER_URL
-): T => {
+) => {
+    /*
+    Description:
+        Sends an HTTP POST request
+
+    Arguments:
+        endpoint (string) : HTTP endpoint (e.g. /account/login)
+        body (JSON) : POST request body
+        token (string) : Access token
+        webserver (string) : HTTP URL (e.g. https://fractal-prod-server.tryfractal.com)
+    
+    Returns:
+        { json, success } (JSON) : Returned JSON of POST request and success True/False
+    */
     const webserverUrl =
         webserver in webservers ? webservers[webserver] : webserver
 
@@ -47,11 +80,23 @@ export const apiPost = async <T>(
     }
 }
 
-export const apiGet = async <T>(
+export const apiGet = async (
     endpoint: string,
     token: string,
     webserver: string = config.url.WEBSERVER_URL
-): T => {
+) => {
+    /*
+    Description:
+        Sends an HTTP GET request
+
+    Arguments:
+        endpoint (string) : HTTP endpoint (e.g. /account/login)
+        token (string) : Access token
+        webserver (string) : HTTP URL (e.g. https://fractal-prod-server.tryfractal.com)
+    
+    Returns:
+        { json, success } (JSON) : Returned JSON of GET request and success True/False
+    */
     const webserverUrl =
         webserver in webservers ? webservers[webserver] : webserver
 

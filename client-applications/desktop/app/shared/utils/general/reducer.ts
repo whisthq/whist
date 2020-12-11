@@ -3,7 +3,7 @@
 const _ = require("lodash") // alternatively use a recursive ... function
 
 // deep copy an object so that there is no aliasing
-export const deep_copy = <T extends {}>(obj: T) => _.cloneDeep(obj)
+export const deepCopyObject = <T extends {}>(obj: T) => _.cloneDeep(obj)
 
 // basically will return obj after obj.prop_func(prop_func_args)
 // i.e. modified(a_set, add, element) = a_set after a_set.add(element)
@@ -17,7 +17,7 @@ export const modified = <T extends {}>(
     prop_func_args: any[] = [],
     deepcopy = false
 ) => {
-    const y = deepcopy ? deep_copy(obj) : obj
+    const y = deepcopy ? deepCopyObject(obj) : obj
     if (prop_func_args.length > 0) {
         if (!deepcopy) {
             if (typeof prop_func === "string") {
@@ -51,9 +51,9 @@ export const if_exists_spread = (
     copy = true,
     deepcopy = false
 ) => {
-    const key_valuefs = deep_copy(key_values)
+    const key_valuefs = deepCopyObject(key_values)
     for (const key in key_values) {
-        key_valuefs[key] = (obj: any) => key_values[key]
+        key_valuefs[key] = () => key_values[key]
     }
 
     return if_exists_spread_f(obj, key_valuefs, copy, deepcopy)
@@ -69,7 +69,11 @@ export const if_exists_spread_f = (
     deepcopy = false
 ) => {
     const new_obj =
-        deepcopy && obj ? deep_copy(obj) : copy && obj ? { ...obj } : obj || {}
+        deepcopy && obj
+            ? deepCopyObject(obj)
+            : copy && obj
+            ? { ...obj }
+            : obj || {}
 
     if (obj) {
         for (const key in key_valuefs) {
@@ -124,7 +128,7 @@ const nested_values_to_f = (new_key_values: any) => {
     for (const key in new_key_values) {
         if (is_base(new_key_values[key])) {
             const value = new_key_values[key] // necessary because arrow functions lazy??
-            new_key_values[key] = (old_obj: any) => value
+            new_key_values[key] = () => value
         } else {
             nested_values_to_f(new_key_values[key])
         }
@@ -143,7 +147,7 @@ const nested_values_to_f = (new_key_values: any) => {
 // this is necessarily a deep copy
 // basically a help
 export const if_exists_spread_nested = (obj: any, key_values: any) =>
-    merge_f(deep_copy(obj), nested_values_to_f(deep_copy(key_values)))
+    merge_f(deepCopyObject(obj), nested_values_to_f(deepCopyObject(key_values)))
 
 // same idea but with functions
 // by undefined we are basically setting it to "not existing"
@@ -151,7 +155,7 @@ export const if_exists_spread_nested_f = (
     obj: any,
     key_valuefs: any,
     otherwise_in: any | undefined = undefined
-) => merge_f(deep_copy(obj), deep_copy(key_valuefs), otherwise_in)
+) => merge_f(deepCopyObject(obj), deepCopyObject(key_valuefs), otherwise_in)
 
 // below here are functions that you'll want to use in every day-life
 // i.e. in the mapStateToProps function

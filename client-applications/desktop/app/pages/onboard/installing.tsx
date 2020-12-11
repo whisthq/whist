@@ -6,70 +6,50 @@ import { useSpring, animated } from "react-spring"
 import Version from "shared/components/version"
 import TitleBar from "shared/components/titleBar"
 import { FractalRoute } from "shared/types/navigation"
-import { FractalAuthCache } from "shared/types/cache"
-import { updateApps } from "store/actions/pure"
+import { FractalApp } from "shared/types/ui"
+import { OperatingSystem } from "shared/types/client"
+import { createShortcut } from "shared/utils/files/shortcuts"
 import { history } from "store/history"
 
 const Installing = (props: {
-    dispatch: Dispatch
-    notInstalled: string[]
-    installed: string[]
+    onboardApps: FractalApp[]
+    clientOS: OperatingSystem
 }) => {
-    const { dispatch, notInstalled, installed } = props
+    const { onboardApps, clientOS } = props
 
     const [currentApp, setCurrentApp] = useState("")
-    const percentDownloaded =
-        installed.length / (notInstalled.length + installed.length)
-    const progressBar = useSpring({ width: percentDownloaded * 600 })
+    const [progress, setProgress] = useState(1)
 
-    const handleDone = () => {
-        history.push(FractalRoute.DASHBOARD)
-    }
+    const appsLength =
+        onboardApps && onboardApps.length > 0 ? onboardApps.length : 1
+    const progressBar = useSpring({
+        config: { friction: 0, mass: 0.5 },
+        to: { width: (progress / appsLength) * 600 },
+        from: { width: ((progress - 1) / appsLength) * 600 },
+    })
 
-    const sleep = (ms: number) => {
-        return new Promise((resolve) => setTimeout(resolve, ms))
+    const createShortcutWrapper = async (): Promise<any> => {
+        let currentProgress = 1
+        await onboardApps.reduce(
+            async (previousPromise: Promise<any>, nextApp: FractalApp) => {
+                await previousPromise
+                setCurrentApp(nextApp.app_id)
+                setProgress(currentProgress)
+                currentProgress += 1
+                return createShortcut(nextApp)
+            },
+            Promise.resolve()
+        )
+        setProgress(appsLength)
     }
 
     useEffect(() => {
-        const Store = require("electron-store")
-        const storage = new Store()
-        storage.set(FractalAuthCache.ONBOARDED, true)
-    }, [])
-
-    useEffect(() => {
-        if (installed.length === 0) {
-            setCurrentApp(notInstalled[0])
-            const newNotInstalled = Object.assign([], notInstalled)
-            const newInstalled = Object.assign([], installed)
-            newInstalled.push(notInstalled[0])
-            newNotInstalled.shift()
-            dispatch(
-                updateApps({
-                    notInstalled: newNotInstalled,
-                    installed: newInstalled,
-                })
-            )
-        } else if (notInstalled.length > 0) {
-            sleep(5000)
-                .then(() => {
-                    setCurrentApp(notInstalled[0])
-                    const newNotInstalled = Object.assign([], notInstalled)
-                    const newInstalled = Object.assign([], installed)
-                    newInstalled.push(notInstalled[0])
-                    newNotInstalled.shift()
-                    dispatch(
-                        updateApps({
-                            notInstalled: newNotInstalled,
-                            installed: newInstalled,
-                        })
-                    )
-                    return null
-                })
-                .catch((err) => {
-                    throw err
-                })
+        if (onboardApps && onboardApps.length > 0) {
+            createShortcutWrapper()
+        } else {
+            history.push(FractalRoute.DASHBOARD)
         }
-    }, [notInstalled, installed])
+    }, [onboardApps])
 
     return (
         <div className={styles.container} data-tid="container">
@@ -77,35 +57,50 @@ const Installing = (props: {
             <TitleBar />
             <div className={styles.removeDrag}>
                 <div className={styles.installingContainer}>
-                    <h2>Your apps are installing.</h2>
-                    <div className={styles.subtext} style={{ marginTop: 50 }}>
-                        Please do not close this window until your installation
-                        is complete. This will take no more than a few minutes.
-                    </div>
-                    <div className={styles.installingBar}>
-                        <animated.div
-                            className={styles.progress}
-                            style={progressBar}
-                        />
-                    </div>
-                    {percentDownloaded === 1 ? (
+                    {progress === appsLength && onboardApps.length > 0 ? (
                         <>
-                            <div className={styles.installingText}>
-                                Done installing.
-                            </div>
-                            <button
-                                type="button"
-                                className={styles.enterButton}
-                                onClick={handleDone}
-                                style={{ marginTop: 100 }}
+                            <h2 style={{ marginTop: 225 }}>
+                                Success! One last step.
+                            </h2>
+                            <div
+                                className={styles.installingText}
+                                style={{ fontWeight: "normal" }}
                             >
-                                GO TO APP STORE
-                            </button>
+                                In your{" "}
+                                {clientOS === OperatingSystem.WINDOWS
+                                    ? "Windows"
+                                    : "Mac"}{" "}
+                                search bar, type{" "}
+                                <span className={styles.command}>
+                                    Fractalized
+                                </span>{" "}
+                                to pull up your apps. For example, if you open{" "}
+                                <span className={styles.command}>
+                                    Fractalized {onboardApps[0].app_id}
+                                </span>
+                                , this page will refresh!
+                            </div>
                         </>
                     ) : (
-                        <div className={styles.installingText}>
-                            Installing {currentApp}...
-                        </div>
+                        <>
+                            <h2>Your apps are installing.</h2>
+                            <div
+                                className={styles.subtext}
+                                style={{ marginTop: 50 }}
+                            >
+                                Please do not close this window until your
+                                installation is complete.
+                            </div>
+                            <div className={styles.installingBar}>
+                                <animated.div
+                                    className={styles.progress}
+                                    style={progressBar}
+                                />
+                            </div>
+                            <div className={styles.installingText}>
+                                Installing {currentApp}...
+                            </div>
+                        </>
                     )}
                 </div>
             </div>
@@ -113,10 +108,17 @@ const Installing = (props: {
     )
 }
 
-export const mapStateToProps = <T extends {}>(state: T) => {
+export const mapStateToProps = (state: {
+    MainReducer: {
+        client: {
+            onboardApps: FractalApp[]
+            clientOS: OperatingSystem
+        }
+    }
+}) => {
     return {
-        notInstalled: state.MainReducer.apps.notInstalled,
-        installed: state.MainReducer.apps.installed,
+        onboardApps: state.MainReducer.client.onboardApps,
+        clientOS: state.MainReducer.client.clientOS,
     }
 }
 

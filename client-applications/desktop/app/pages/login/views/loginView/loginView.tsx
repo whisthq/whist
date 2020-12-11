@@ -1,15 +1,17 @@
-import React, { useState, ChangeEvent, KeyboardEvent } from "react"
+import React, { useState, ChangeEvent, KeyboardEvent, Dispatch } from "react"
 import { connect } from "react-redux"
-import styles from "pages/login/login.css"
 import PuffLoader from "react-spinners/PuffLoader"
 
 import { updateClient, updateAuth } from "store/actions/pure"
-import { setAWSRegion } from "shared/utils/exec"
-import { openExternal } from "shared/utils/helpers"
+import { validateAccessToken } from "store/actions/sideEffects"
+import { setAWSRegion } from "shared/utils/files/exec"
+import { openExternal } from "shared/utils/general/helpers"
 import { config } from "shared/constants/config"
 import FractalKey from "shared/types/input"
 
-const LoginView = <T extends {}>(props: T) => {
+import styles from "pages/login/views/loginView/loginView.css"
+
+const LoginView = (props: { dispatch: Dispatch }) => {
     const { dispatch } = props
     const [loggingIn, setLoggingIn] = useState(false)
     const [accessToken, setAccessToken] = useState("")
@@ -40,6 +42,7 @@ const LoginView = <T extends {}>(props: T) => {
     const onKeyPress = (evt: KeyboardEvent) => {
         if (evt.key === FractalKey.ENTER) {
             dispatch(updateAuth({ candidateAccessToken: accessToken }))
+            dispatch(validateAccessToken(accessToken))
         }
     }
 

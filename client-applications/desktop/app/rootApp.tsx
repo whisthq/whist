@@ -14,10 +14,11 @@ import Installing from "pages/onboard/installing"
 import { history } from "store/history"
 import { createContainer, validateAccessToken } from "store/actions/sideEffects"
 import { updateClient, updateContainer, updateAuth } from "store/actions/pure"
-import { setAWSRegion } from "shared/utils/exec"
+import { setAWSRegion } from "shared/utils/files/exec"
 import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 
+// import { OperatingSystem } from "shared/types/client"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalAuthCache } from "shared/types/cache"
 
@@ -26,23 +27,17 @@ const RootApp = (props: {
     launchURL: string
     clientOS: string
     dpi: number
-    candidateAccessToken: string
     username: string
     accessToken: string
-    dispatch: Dispatch
+    dispatch: Dispatch<any>
 }) => {
-    const {
-        launches,
-        launchURL,
-        clientOS,
-        dpi,
-        candidateAccessToken,
-        dispatch,
-    } = props
+    const { launches, launchURL, clientOS, dpi, dispatch } = props
 
     const [needsUpdate, setNeedsUpdate] = useState(false)
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [launched, setLaunched] = useState(false)
+    const [accessTokenRetrieved, setAccessTokenRetrieved] = useState(false)
+    const [urlReceived, setUrlReceived] = useState(false)
 
     const { data } = useQuery(GET_FEATURED_APPS)
 
@@ -58,13 +53,13 @@ const RootApp = (props: {
         let localAccessToken: string | null = null
 
         // Update listener
-        ipc.on("update", (_: IpcRendererEvent, update: boolean) => {
+        ipc.on("update", (_: any, update: boolean) => {
             setNeedsUpdate(update)
             setUpdatePingReceived(true)
         })
 
         // Custom URL listener
-        ipc.on("customURL", (_: IpcRendererEvent, customURL: string) => {
+        ipc.on("customURL", (_: any, customURL: string) => {
             if (customURL && customURL.toString().includes("fractal://")) {
                 customURL = `fractal://${customURL.split("fractal://")[1]}`
                 // Convert URL to URL object so it can be parsed
@@ -75,8 +70,11 @@ const RootApp = (props: {
                 localAccessToken = urlObj.searchParams.get("accessToken")
                 if (localAccessToken) {
                     dispatch(
-                        updateAuth({ candidateAccessToken: localAccessToken })
+                        updateAuth({
+                            candidateAccessToken: localAccessToken,
+                        })
                     )
+                    dispatch(validateAccessToken(localAccessToken))
                 } else {
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
                 }
@@ -84,10 +82,13 @@ const RootApp = (props: {
         })
 
         // If already logged in, redirect to dashboard
-        localAccessToken = storage.get("accessToken")
+        localAccessToken = storage.get(FractalAuthCache.ACCESS_TOKEN)
         if (localAccessToken) {
             dispatch(updateAuth({ candidateAccessToken: localAccessToken }))
+            dispatch(validateAccessToken(localAccessToken))
         }
+
+        setAccessTokenRetrieved(true)
     }, [])
 
     useEffect(() => {
@@ -100,13 +101,6 @@ const RootApp = (props: {
             )
         }
     }, [clientOS, dpi])
-
-    // If there's an access token, validate it
-    useEffect(() => {
-        if (candidateAccessToken && candidateAccessToken !== "") {
-            dispatch(validateAccessToken(candidateAccessToken))
-        }
-    }, [candidateAccessToken])
 
     // If does not need update, logged in and ready to launch
     useEffect(() => {
@@ -127,6 +121,13 @@ const RootApp = (props: {
         updatePingReceived,
         needsUpdate,
     ])
+
+    // Wait two seconds to allow for fractal:// to be detected
+    useEffect(() => {
+        setTimeout(() => {
+            setUrlReceived(true)
+        }, 3000)
+    }, [])
 
     // If there's an update, redirect to update screen
     useEffect(() => {
@@ -197,16 +198,36 @@ const RootApp = (props: {
                     path={FractalRoute.ONBOARD_INSTALLING}
                     component={Installing}
                 />
-                <Route path={FractalRoute.LOGIN} component={Login} />
+                <Route
+                    path={FractalRoute.LOGIN}
+                    component={() => (
+                        <Login loaded={accessTokenRetrieved && urlReceived} />
+                    )}
+                />
             </Switch>
         </div>
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
+const mapStateToProps = (state: {
+    MainReducer: {
+        auth: {
+            username: string
+            accessToken: string
+            refreshToken: string
+        }
+        container: {
+            launches: number
+            launchURL: string
+        }
+        client: {
+            clientOS: string
+            dpi: number
+        }
+    }
+}) => {
     return {
         username: state.MainReducer.auth.username,
-        candidateAccessToken: state.MainReducer.auth.candidateAccessToken,
         accessToken: state.MainReducer.auth.accessToken,
         refreshToken: state.MainReducer.auth.refreshToken,
         launches: state.MainReducer.container.launches,

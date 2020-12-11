@@ -33,11 +33,8 @@ jobs:
               with:
                   node-version: 12
 
+            - name: Install prettier # should match version in client-applications/package.json devDependencies
+              run: npm install -g prettier
+
             - name: Check if code is formatted
-              run: |
-                  result=$(cd .github/workflows && prettier --check . > /dev/null && echo success || echo failure)
-                  if [ "$result" -ne "success" ]; then
-                    (echo "To pass this check please lint .github/workflows with prettier" && false)
-                  else
-                    (echo "Code is linted with prettier" && true)
-                  fi
+              run: cd .github/workflows && prettier --check '*.yml'

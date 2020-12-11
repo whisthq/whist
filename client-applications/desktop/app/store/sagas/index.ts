@@ -4,7 +4,7 @@ import moment from "moment"
 import * as Action from "store/actions/pure"
 import * as SideEffect from "store/actions/sideEffects"
 
-import { apiPost, apiGet } from "shared/utils/api"
+import { apiPost, apiGet } from "shared/utils/general/api"
 import { history } from "store/history"
 import { generateMessage } from "shared/utils/loading"
 import { FractalRoute } from "shared/types/navigation"
@@ -78,8 +78,6 @@ function* createContainer(action: {
     const app = action.app
     const url = action.url
 
-    // console.log(`create container saga, test, app, url : ${test}, ${app}, ${url}`)
-
     yield put(
         Action.updateContainer({
             desiredAppID: app,
@@ -91,7 +89,7 @@ function* createContainer(action: {
 
     const endpoint = test
         ? FractalAPI.CONTAINER.TEST_CREATE
-        : FractalAPI.CONTAINER.CREATE
+        : FractalAPI.CONTAINER.ASSIGN
     const body = test
         ? {
               username: username,
@@ -126,9 +124,6 @@ function* createContainer(action: {
         body.region = region
     }
 
-    // console.log(`body is ${JSON.stringify(body)}`)
-    // console.log(`webserver is ${webserver}`)
-
     if (!username || username === "None" || username === "") {
         history.push(FractalRoute.LOGIN)
         return
@@ -144,7 +139,6 @@ function* createContainer(action: {
 
     if (!success) {
         yield call(refreshAccess)
-        yield call(createContainer, action)
         return
     }
 
@@ -170,7 +164,7 @@ function* createContainer(action: {
 
     while (json && json.state !== "SUCCESS" && json.state !== "FAILURE") {
         if (secondsPassed % 1 === 0) {
-            ;({ success } = yield call(
+            ;({ json, success } = yield call(
                 apiGet,
                 `/status/${id}`,
                 state.MainReducer.auth.accessToken,
@@ -231,7 +225,7 @@ function* createContainer(action: {
         if (json.output) {
             yield put(
                 Action.updateContainer({
-                    containerID: json.output.containerID,
+                    containerID: json.output.container_id,
                     cluster: json.output.cluster,
                     port32262: json.output.port_32262,
                     port32263: json.output.port_32263,

@@ -34,11 +34,8 @@ jobs:
               with:
                   node-version: 12
 
+            - name: Install prettier
+              run: npm install -g prettier
+
             - name: Check if readmes are formatted
-              run: |
-                  result=$(prettier --check {.,**,.github/workflows}/README.md > /dev/null && echo success || echo failure)
-                  if [ "$result" -ne "success" ]; then
-                    (echo "To pass this check please lint README.md files with prettier" && false)
-                  else
-                    (echo "Readmes are linted with prettier" && true)
-                  fi
+              run: prettier --check '**/README.md' # prettier glob syntax hits all readmes with this

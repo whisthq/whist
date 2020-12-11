@@ -1,0 +1,26 @@
+@import '/app.global.css';
+
+.welcomeBack {
+    font-weight: bold;
+    font-size: 30px;
+    margin-bottom: 5px;
+    color: var(--primary-text-color);
+}
+
+.loginButton {
+    font-family: 'Maven Pro';
+    border: solid 0.8px #cccccc;
+    background: white;
+    font-weight: bold;
+    padding: 12px 30px;
+    color: var(--primary-text-color);
+    margin-left: 10px;
+    font-size: 15px;
+    outline: none !important;
+}
+
+.loginButton {
+    margin-left: 0px;
+    width: 350px;
+    background: var(--accent-color);
+}

@@ -1,8 +1,8 @@
 import FractalImg from "assets/images/fractal.svg"
-
+import { FractalApp } from "shared/types/ui"
 /* eslint-disable @typescript-eslint/camelcase */
 
-export const adminApp = {
+export const adminApp: FractalApp = {
     app_id: "Test App",
     logo_url: FractalImg,
     category: "Test",
