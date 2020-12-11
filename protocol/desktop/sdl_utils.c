@@ -49,8 +49,18 @@ int resizing_event_watcher(void* data, SDL_Event* event) {
     return 0;
 }
 
-// Set the icon for the SDL window
-void set_window_icon_from_png(SDL_Window* window_param, char* filename) {
+void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
+    /*
+        Set the icon for a SDL window from a PNG file
+
+        Arguments:
+            sdl_window (SDL_Window*): The window whose icon will be set
+            filename (char*): A path to a `.png` file containing the 64x64 pixel icon.
+
+        Return:
+            None
+    */
+
     AVPacket pkt;
     av_init_packet(&pkt);
     png_file_to_bmp(filename, &pkt);
@@ -67,7 +77,7 @@ void set_window_icon_from_png(SDL_Window* window_param, char* filename) {
     // free pkt.data which is initialized by calloc in png_file_to_bmp
     free(pkt.data);
 
-    SDL_SetWindowIcon(window_param, icon_surface);
+    SDL_SetWindowIcon(sdl_window, icon_surface);
 
     // surface can now be freed
     SDL_FreeSurface(icon_surface);
@@ -75,6 +85,21 @@ void set_window_icon_from_png(SDL_Window* window_param, char* filename) {
 
 SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
                      char* icon_filename) {
+    /*
+        Attaches the current thread to the specified current input desktop
+
+        Arguments:
+            target_output_width (int): The width of the SDL window to create, in pixels
+            target_output_height (int): The height of the SDL window to create, in pixels
+            name (char*): The title of the window
+            icon_filename (char*): The filename of the window icon, pointing to a 64x64 png,
+                or "" for the default icon
+
+        Return:
+            sdl_window (SDL_Window*): NULL if fails to create SDL window, else the created SDL
+                window
+    */
+
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
