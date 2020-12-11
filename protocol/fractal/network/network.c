@@ -73,6 +73,7 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 
 #include <stdio.h>
 #include <fcntl.h>
+#include <curl/curl.h>
 
 #include "../utils/aes.h"
 #include "../utils/json.h"
@@ -111,7 +112,7 @@ typedef struct {
 } PrivateKeyData;
 
 typedef struct {
-    char* buffer;
+    char *buffer;
     size_t filled_len;
     size_t max_len;
 } CurlResponseBuffer;
@@ -1583,7 +1584,7 @@ int create_udp_context(SocketContext *context, char *destination, int port, int 
     }
 }
 
-size_t write_curl_response_callback(char* ptr, size_t size, size_t nmemb, CurlResponseBuffer* crb) {
+size_t write_curl_response_callback(char *ptr, size_t size, size_t nmemb, CurlResponseBuffer *crb) {
     /*
     Writes CURL request response data to the CurlResponseBuffer buffer up to `crb->max_len`
 
@@ -1594,12 +1595,12 @@ size_t write_curl_response_callback(char* ptr, size_t size, size_t nmemb, CurlRe
         crb (CurlResponseBuffer*): the response buffer object that contains full response data
 
     Returns:
-        size (size_t): returns passed in `size` if successful (this function just always
+        size (size_t): returns `size * nmemb` if successful (this function just always
             returns success state)
     */
 
     if (!crb || !crb->buffer || crb->filled_len > crb->max_len) {
-        return size;
+        return size * nmemb;
     }
 
     size_t copy_bytes = size * nmemb;
@@ -1609,10 +1610,10 @@ size_t write_curl_response_callback(char* ptr, size_t size, size_t nmemb, CurlRe
 
     memcpy(crb->buffer + crb->filled_len, ptr, copy_bytes);
 
-    return size;
+    return size * nmemb;
 }
 
-bool send_http_request(char* type, char* host_s, char* path, char *payload, char **response_body,
+bool send_http_request(char *type, char *host_s, char *path, char *payload, char **response_body,
                        size_t max_response_size) {
     /*
     Send an HTTP (over HTTPS protocol) to a host
@@ -1647,12 +1648,14 @@ bool send_http_request(char* type, char* host_s, char* path, char *payload, char
     }
 
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, type);
-    // create target URL
-    CURLU* curl_url_handle = curl_url();
-    curl_url_set(curl_url_handle, CURLUPART_URL, host_s, 0);
-    curl_url_set(curl_url_handle, CURLUPART_PATH, path, 0);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
+    // create target URL
+    CURLU *curl_url_handle = curl_url();
+    curl_url_set(curl_url_handle, CURLUPART_URL, host_s, CURLU_DEFAULT_SCHEME);
+    curl_url_set(curl_url_handle, CURLUPART_PATH, path, CURLU_DEFAULT_SCHEME);
+    curl_easy_setopt(curl, CURLOPT_CURLU, curl_url_handle);
+    // add request payload
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
 
     // if a response is expected (response_body != NULL), have libcurl return response body
@@ -1666,10 +1669,14 @@ bool send_http_request(char* type, char* host_s, char* path, char *payload, char
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &crb);
     }
 
+    char *error_buf = malloc(CURL_ERROR_SIZE);
+    curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error_buf);
     if (curl_easy_perform(curl) != 0) {
-        LOG_ERROR("curl to %s/%s failed", host_s, path);
+        LOG_ERROR("curl to %s/%s failed: %s", host_s, path, error_buf);
+        free(error_buf);
         return false;
     }
+    free(error_buf);
 
     // if response is expected and a response buffer was created, copy over
     if (response_body && crb.buffer) {
@@ -1732,7 +1739,7 @@ bool send_get_request(char *host_s, char *path, char **response_body, size_t max
         return true;
     }
 
-    return send_http_request("GET", host_s, path, payload, response_body, max_response_size);
+    return send_http_request("GET", host_s, path, NULL, response_body, max_response_size);
 }
 
 void set_timeout(SOCKET s, int timeout_ms) {
