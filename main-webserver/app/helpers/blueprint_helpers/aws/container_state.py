@@ -30,6 +30,11 @@ def can_update_container_state(user, task_id, obj=None):
     to FAILURE or CANCELLED (imagine that the user cancels and initializes a new task,
     then this old task would not want to be able to overwrite the table.)
 
+    If obj is null then it will pass since that signifies creation. If task_id is null
+    then it will also pass signifying that we do not actually care about the task_id.
+    However, if this is used as a prelude to creation of an entry, that
+    creation will fail since the column is non-nullable.
+
     Args:
         user (str): The username of the user who's entry we want to
         check for whether it can be updated.
@@ -42,8 +47,7 @@ def can_update_container_state(user, task_id, obj=None):
     """
     if not obj:
         obj = container_state_obj(user_id=user)
-    # if obj is null it's ok since we can always create a new one
-    return not obj or obj.task_id == task_id and obj.state != CANCELLED
+    return (not obj or not task_id) or (obj.task_id == task_id and obj.state != CANCELLED)
 
 
 def set_container_state(keyuser, keytask, user_id=None, state=None, task_id=None, force=False):
