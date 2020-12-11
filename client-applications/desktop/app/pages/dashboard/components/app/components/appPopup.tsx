@@ -1,4 +1,4 @@
-import React, { useState, Dispatch } from "react"
+import React, { Dispatch } from "react"
 import { connect } from "react-redux"
 import { Modal, Dropdown, Tooltip, OverlayTrigger } from "react-bootstrap"
 
@@ -25,8 +25,6 @@ const AppPopup = (props: {
 }) => {
     const { app, apps, showModal, clientOS, callback, dispatch } = props
 
-    const [shortcutCreated, setShortcutCreated] = useState(false)
-
     const tooltip =
         clientOS === OperatingSystem.WINDOWS
             ? `Look for "${createShortcutName(
@@ -43,8 +41,6 @@ const AppPopup = (props: {
     }
 
     const handleDownload = async () => {
-        setShortcutCreated(true)
-
         const success = await createShortcut(app)
 
         // Create the shortcut inside the Fractal Directory
@@ -195,10 +191,6 @@ const AppPopup = (props: {
                             type="button"
                             className={dashboardStyles.modalButton}
                             onClick={handleDownload}
-                            style={{
-                                background:
-                                    shortcutCreated && "rgba(0,0,0,0.05)",
-                            }}
                         >
                             Install
                         </button>
