@@ -7,63 +7,50 @@ name: "Fractal: Build & Publish"
 
 on:
     push:
-        branches: [master]
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
         paths:
             - "!README.md"
             - "!**/README.md"
             - "!.github/workflows/README.md"
 
 jobs:
-    # ECS Host Service: Build & Publish to AWS S3
-    # Build and publish the ECS host service to an S3 bucket from which EC2 hosts pull.
+    # Configure Jobs
+    # Detect the branch using regex matching and store as an output to regulate downstream actions.
+    # Access branch with `fractal-publish-build-config.outputs.branch`.
 
-    ecs-host-service-publish-build-s3:
-        name: "ECS Host Service: Build & Publish to AWS S3"
+    fractal-publish-build-config:
+        name: "Configure Jobs"
         runs-on: ubuntu-20.04
-        env:
-            binary-location: ecs-host-service/build
-            binary-name: ecs-host-service
-            s3-bucket-region: us-east-1 # eventually, we should replicate s3 per region
-            s3-bucket-uri: s3://fractal-ecs-host-service
-
         steps:
-            - name: Checkout git repository
-              uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-
-            - name: Setup Go environment
-              uses: actions/setup-go@v2.1.3
-
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
-                  aws-region: ${{ env.s3-bucket-region }}
-
-            - name: Install Go dependencies
-              run: cd ecs-host-service && make deps
-
-            - name: Build Go project
-              run: cd ecs-host-service && make build
-
-            - name: Upload binary to S3
-              run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
-
-            - name: Notify Slack
+            - name: Detect Branch
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"ECS Host Service build pushed to production via S3 upload.\", \"icon_emoji\": \":fractal:\"}" \
-                  https://hooks.slack.com/services/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
+                  if [[ ${{ github.ref }} =~ ^refs/heads/master$ ]]; then
+                      BRANCH_NAME=master
+                  elif [[ ${{ github.ref }} =~ ^refs/heads/staging$ ]]; then
+                      BRANCH_NAME=staging
+                  elif [[ ${{ github.ref }} =~ ^refs/heads/dev$ ]]; then
+                      BRANCH_NAME=dev
+                  elif [[ ${{ github.ref }} =~ ^refs/heads/project/.*$ ]]; then
+                      BRANCH_NAME=project
+                  else
+                      BRANCH_NAME=null
+                  fi
+
+                  echo "::set-output name=branch::$BRANCH_NAME"
 
     # Container Images: Build & Publish to AWS ECR
     # Build and publish the ECS host service to an S3 bucket from which EC2 hosts pull.
+    # Runs if config succeeds and branch is in ["master"].
 
     container-images-push-images-ecr:
         name: "Container Images: Build & Push to AWS ECR"
         runs-on: ubuntu-20.04
+        needs: [fractal-publish-build-config]
+        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.branch)
         env:
             aws-placeholder-region: us-east-1
             aws-regions: >
@@ -139,15 +126,65 @@ jobs:
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Container images builds pushed to production via Docker push to ECR.\", \"icon_emoji\": \":fractal:\"}" \
-                  https://hooks.slack.com/services/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
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+    # ECS Host Service: Build & Publish to AWS S3
+    # Build and publish the ECS host service to an S3 bucket from which EC2 hosts pull.
+    # Runs if config succeeds and branch is in ["master"] and push-images-ecr succeeds.
+
+    ecs-host-service-publish-build-s3:
+        name: "ECS Host Service: Build & Publish to AWS S3"
+        runs-on: ubuntu-20.04
+        needs: [fractal-publish-build-config, container-images-push-images-ecr]
+        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.branch)
+        env:
+            binary-location: ecs-host-service/build
+            binary-name: ecs-host-service
+            s3-bucket-region: us-east-1 # eventually, we should replicate s3 per region
+            s3-bucket-uri: s3://fractal-ecs-host-service
+
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+            - name: Setup Go environment
+              uses: actions/setup-go@v2.1.3
+
+            - name: Configure AWS CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.s3-bucket-region }}
+
+            - name: Install Go dependencies
+              run: cd ecs-host-service && make deps
+
+            - name: Build Go project
+              run: cd ecs-host-service && make build
+
+            - name: Upload binary to S3
+              run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
+
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"ECS Host Service build pushed to production via S3 upload.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
     # Render and deploy the app task definitions to ECS.
+    # Runs if config succeeds and branch is in ["master"] and push-images-ecr succeeds.
 
     ecs-task-definitions-deploy-task-definitions-ecs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
-        needs: [container-images-push-images-ecr]
+        needs: [fractal-publish-build-config, container-images-push-images-ecr]
+        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.branch)
+
         strategy:
             matrix: ${{ fromJson(needs.container-images-push-images-ecr.outputs.task-definitions-matrix) }}
 
@@ -196,6 +233,7 @@ jobs:
 
     # ECS Task Definitions: Notify Slack
     # Notify Slack after rendering and deploying all the task definitions.
+    # Runs if deploy-task-definitions-ecs succeeds.
 
     ecs-task-definitions-notify-slack:
         name: "ECS Task Definitions: Notify Slack"
@@ -207,4 +245,49 @@ jobs:
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Task Definitions rendered and deployed to production via ECS upload.\", \"icon_emoji\": \":fractal:\"}" \
-                  https://hooks.slack.com/services/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
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+    # Main Webserver: Deploy to Heroku
+    # Push the main-webserver subtree to the appropriate Heroku app.
+    # Runs if config succeeds and branch is in ["master"] and push-images-ecr succeeds, or unconditionally if branch is in ["dev"] (since other workflows won't run then)
+
+    main-webserver-deploy-heroku:
+        name: "Main Webserver: Deploy to Heroku"
+        needs: [fractal-publish-build-config, container-images-push-images-ecr]
+        if: ( contains(fromJSON('["master"]'), needs.fractal-publish-build-config.branch) && success() ) || ( contains(fromJSON('["dev"]')) && always() )
+        runs-on: ubuntu-20.04
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+            - name: Add Heroku Remote
+              run: |
+                  if [[ ${{ needs.fractal-publish-build-config.branch }} == dev ]]; then
+                      HEROKU_APP_NAME=fractal-dev-server
+                  elif [[ ${{ needs.fractal-publish-build-config.branch }} == master ]]; then
+                      HEROKU_APP_NAME=fractal-staging-server
+                  else
+                      echo 'Error: Invalid branch' && false
+                  fi
+
+                  heroku git:remote --app $HEROKU_APP_NAME --remote heroku-fractal-server
+              env:
+                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+
+            - name: Split off and checkout main-webserver subtree
+              run: |
+                  git subtree split --prefix main-webserver -b workflows-private/main-webserver
+                  git checkout workflows-private/main-webserver
+
+            - name: Push to Heroku remote, deploying the app # force push is only necessary for the transition period, then should be removed
+              run: |
+                  git push -f heroku-fractal-server workflows-private/main-webserver:master
+
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Main webserver for branch \`${{ needs.fractal-publish-build-config.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
