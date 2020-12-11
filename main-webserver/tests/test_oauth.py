@@ -179,3 +179,68 @@ def test_update_credential(make_credential, make_token, put_credential, user):
     assert credential.expiry == token.expiry
     assert credential.refresh_token == refresh_token
     assert credential.token_type == token.token_type
+
+
+@pytest.mark.usefixtures("authorized")
+def test_list_no_connected_apps(client):
+    """Return an empty list of connected external applications.
+
+    Arguments:
+        client: An instance of the Flask test client.
+    """
+
+    response = client.get("/connected_apps")
+
+    assert response.json == {"app_names": []}
+
+
+@pytest.mark.usefixtures("authorized")
+def test_list_connected_apps(client, make_credential):
+    """Return a list of connected applications.
+
+    Arguments:
+        client: An instance of the Flask test client.
+        make_credential: A function that adds test rows to the oauth.credentials table.
+    """
+
+    make_credential()
+
+    response = client.get("/connected_apps")
+
+    assert response.json == {"app_names": ["google_drive"]}
+
+
+@pytest.mark.usefixtures("authorized")
+def test_disconnect_app(client, make_credential):
+    """Disconnect an external application from the test user's Fractal account.
+
+    Arguments:
+        client: An instance of the Flask test client.
+        make_credential: A function that adds test rows to the oauth.credentials table.
+    """
+
+    # TODO: Patch over the request to revoke the test user's fake access token so it doesn't actually
+    # get sent.
+
+    make_credential(cleanup=False)
+
+    first_response = client.delete("/connected_apps/google_drive")
+
+    assert first_response.status_code == 200
+
+    second_response = client.get("/connected_apps")
+
+    assert second_response.json == {"app_names": []}
+
+
+@pytest.mark.usefixtures("authorized")
+def test_disconnect_bad_app(client):
+    """Attempt to disconnect an external application that is already disconnected.
+
+    Arguments:
+        client: An instance of the Flask test client.
+    """
+
+    response = client.delete("/connected_apps/google_drive")
+
+    assert response.status_code == 400
