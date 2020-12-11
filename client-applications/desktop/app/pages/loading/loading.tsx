@@ -25,7 +25,7 @@ const Loading = (props: {
     desiredAppID: string
     currentAppID: string
     containerID: string
-    pngFile: string
+    // pngFile: string
     dispatch: Dispatch
 }) => {
     const {
