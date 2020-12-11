@@ -6,7 +6,9 @@
 name: "Fractal: Build & Publish"
 
 on:
-    workflow_dispatch:
+    pull_request:
+        branches:
+            - dev
     push:
         branches:
             - master
@@ -38,7 +40,7 @@ jobs:
                   elif [[ ${{ github.ref }} =~ ^refs/heads/project/.*$ ]]; then
                       BRANCH_NAME=project
                   else
-                      BRANCH_NAME=null
+                      BRANCH_NAME=dev
                   fi
 
                   echo "::set-output name=branch::$BRANCH_NAME"
