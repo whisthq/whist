@@ -114,7 +114,7 @@ module.exports = {
     roots: ['<rootDir>'],
 
     // Allows you to use a custom runner instead of Jest's default test runner
-    // runner: "jest-runner",
+    runner: '@jest-runner/electron',
 
     // The paths to modules that run some code to configure or set up the testing environment before each test
     // setupFiles: [],
@@ -129,7 +129,7 @@ module.exports = {
     snapshotSerializers: ['enzyme-to-json/serializer'],
 
     // The test environment that will be used for testing
-    // testEnvironment: 'node',
+    testEnvironment: '@jest-runner/electron/environment',
 
     // Options that will be passed to the testEnvironment
     // testEnvironmentOptions: {},
