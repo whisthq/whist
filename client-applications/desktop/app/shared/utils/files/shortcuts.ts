@@ -4,10 +4,9 @@ import { FractalNodeEnvironment } from "shared/types/config"
 import { SVGConverter } from "shared/utils/files/images"
 import { debugLog } from "shared/utils/general/logging"
 
-// Import with require() packages that require Node 10 experimental
 const fs = require("fs")
-const os = require("os")
 const path = require("path")
+const os = require("os")
 const dedent = require("dedent-js")
 
 export const createDirectorySync = (
@@ -317,7 +316,7 @@ export const deleteShortcut = (app: FractalApp): boolean => {
     */
 
     const shortcut = createShortcutName(app.app_id)
-    const platform: OperatingSystem = os.platform()
+    const platform = os.platform()
 
     if (platform === OperatingSystem.MAC) {
         const macDesktopPath = path.join(

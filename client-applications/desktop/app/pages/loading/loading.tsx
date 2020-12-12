@@ -26,7 +26,7 @@ const Loading = (props: {
     currentAppID: string
     containerID: string
     // pngFile: string
-    dispatch: Dispatch
+    dispatch: Dispatch<any>
 }) => {
     const {
         percentLoaded,

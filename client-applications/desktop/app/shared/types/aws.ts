@@ -7,5 +7,10 @@ export enum AWSRegion {
     SA_EAST_1 = "sa-east-1",
 }
 
-// default export until we have multiple exports
-export default AWSRegion
+export const allowedRegions = [
+    AWSRegion.US_EAST_1,
+    AWSRegion.US_EAST_2,
+    AWSRegion.US_WEST_1,
+    AWSRegion.US_WEST_2,
+    AWSRegion.CA_CENTRAL_1,
+]
