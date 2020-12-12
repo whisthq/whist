@@ -13,6 +13,10 @@ export class FractalAPI {
     static MAIL = {
         FEEDBACK: "/mail/feedback",
     }
+
+    static ACCOUNT = {
+        LOGIN: "/account/login",
+    }
 }
 
 export enum FractalHTTPCode {

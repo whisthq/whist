@@ -1,20 +1,20 @@
 export type FractalConfig = {
     url: {
-        WEBSERVER_URL: string
-        FRONTEND_URL: string
-        GRAPHQL_HTTP_URL: string
-        GRAPHQL_WS_URL: string
-        GOOGLE_REDIRECT_URL: string
+        WEBSERVER_URL: string | undefined
+        FRONTEND_URL: string | undefined
+        GRAPHQL_HTTP_URL: string | undefined
+        GRAPHQL_WS_URL: string | undefined
+        GOOGLE_REDIRECT_URI: string | undefined
     }
     keys: {
-        STRIPE_PUBLIC_KEY: string
-        GOOGLE_CLIENT_ID: string
-        GOOGLE_ANALYTICS_TRACKING_CODES: string
+        STRIPE_PUBLIC_KEY: string | undefined
+        GOOGLE_CLIENT_ID: string | undefined
+        GOOGLE_ANALYTICS_TRACKING_CODES: string[]
     }
-    sentryEnv: string
+    sentryEnv: string | undefined
     clientDownloadURLs: {
-        MacOS: string
-        Windows: string
+        MacOS: string | undefined
+        Windows: string | undefined
     }
 }
 
