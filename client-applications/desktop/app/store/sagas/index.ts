@@ -6,7 +6,7 @@ import * as SideEffect from "store/actions/sideEffects"
 
 import { apiPost, apiGet } from "shared/utils/general/api"
 import { history } from "store/history"
-import { generateMessage } from "shared/utils/loading"
+import { generateMessage } from "shared/components/loading"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalAPI } from "shared/types/api"
 import { FractalAuthCache } from "shared/types/cache"

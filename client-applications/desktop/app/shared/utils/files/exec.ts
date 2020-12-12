@@ -1,13 +1,6 @@
 import { OperatingSystem } from "shared/types/client"
 import { debugLog } from "shared/utils/general/logging"
-
-const allowedRegions = [
-    "us-east-1",
-    "us-east-2",
-    "us-west-1",
-    "us-west-2",
-    "ca-central-1",
-]
+import { allowedRegions } from "shared/types/aws"
 
 export const execPromise = (
     command: string,

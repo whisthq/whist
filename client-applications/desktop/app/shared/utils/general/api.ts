@@ -6,6 +6,8 @@ import {
     FractalHTTPCode,
 } from "shared/types/api"
 
+const fetch = require("node-fetch")
+
 const checkResponse = (response: { status: number }): boolean => {
     /*
     Description:
@@ -17,12 +19,15 @@ const checkResponse = (response: { status: number }): boolean => {
     Returns:
         success (boolean) : True/false
     */
-    return (
+    if (
         response &&
         response.status &&
         (response.status === FractalHTTPCode.SUCCESS ||
             response.status === FractalHTTPCode.ACCEPTED)
-    )
+    ) {
+        return true
+    }
+    return false
 }
 
 const checkJSON = (json: Record<string, any>): boolean => {
@@ -43,7 +48,7 @@ export const apiPost = async (
     endpoint: string,
     body: Record<string, any>,
     token: string,
-    webserver: string = config.url.WEBSERVER_URL
+    webserver: string | undefined = config.url.WEBSERVER_URL
 ) => {
     /*
     Description:
@@ -58,32 +63,37 @@ export const apiPost = async (
     Returns:
         { json, success } (JSON) : Returned JSON of POST request and success True/False
     */
-    const webserverUrl =
-        webserver in webservers ? webservers[webserver] : webserver
+    if (webserver) {
+        const webserverUrl =
+            webserver in webservers ? webservers[webserver] : webserver
 
-    try {
-        const response = await fetch(webserverUrl + endpoint, {
-            method: FractalHTTPRequest.POST,
-            mode: "cors",
-            headers: {
-                "Content-Type": FractalHTTPContent.JSON,
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(body),
-        })
-        const json = await response.json()
-        const success = checkJSON(json) && checkResponse(response)
-        return { json, success }
-    } catch (err) {
-        debugLog(err)
-        return err
+        try {
+            const fullUrl = `${webserverUrl}${endpoint}`
+            const response = await fetch(fullUrl, {
+                method: FractalHTTPRequest.POST,
+                mode: "cors",
+                headers: {
+                    "Content-Type": FractalHTTPContent.JSON,
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(body),
+            })
+            const json = await response.json()
+            const success = checkJSON(json) && checkResponse(response)
+            return { json, success }
+        } catch (err) {
+            debugLog(err)
+            return err
+        }
+    } else {
+        return { json: null, success: false }
     }
 }
 
 export const apiGet = async (
     endpoint: string,
     token: string,
-    webserver: string = config.url.WEBSERVER_URL
+    webserver: string | undefined = config.url.WEBSERVER_URL
 ) => {
     /*
     Description:
@@ -97,23 +107,28 @@ export const apiGet = async (
     Returns:
         { json, success } (JSON) : Returned JSON of GET request and success True/False
     */
-    const webserverUrl =
-        webserver in webservers ? webservers[webserver] : webserver
+    if (webserver) {
+        const webserverUrl =
+            webserver in webservers ? webservers[webserver] : webserver
 
-    try {
-        const response = await fetch(webserverUrl + endpoint, {
-            method: FractalHTTPRequest.GET,
-            mode: "cors",
-            headers: {
-                "Content-Type": FractalHTTPContent.JSON,
-                Authorization: `Bearer ${token}`,
-            },
-        })
-        const json = await response.json()
-        const success = checkJSON(json) && checkResponse(response)
-        return { json, success }
-    } catch (err) {
-        debugLog(err)
-        return err
+        try {
+            const fullUrl = `${webserverUrl}${endpoint}`
+            const response = await fetch(fullUrl, {
+                method: FractalHTTPRequest.GET,
+                mode: "cors",
+                headers: {
+                    "Content-Type": FractalHTTPContent.JSON,
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            const json = await response.json()
+            const success = checkJSON(json) && checkResponse(response)
+            return { json, success }
+        } catch (err) {
+            debugLog(err)
+            return err
+        }
+    } else {
+        return { json: null, success: false }
     }
 }
