@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # things running outside runuser are run as root
-i3 &
+awesome &
 
 CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
 DPI_FILENAME=/fractal/containerResourceMappings/$CONTAINER_ID/DPI
