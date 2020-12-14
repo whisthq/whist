@@ -13,5 +13,6 @@ aws ecr get-login-password --region $region | docker login --username AWS --pass
 # create ECR repository if it doesn't already exist
 aws ecr describe-repositories --region $region --repository-names $local_name > /dev/null 2> /dev/null || { echo "Repository $local_name does not exist in region $region, creating..." ; aws ecr create-repository --region $region --repository-name $local_name > /dev/null ; }
 
+echo $git_hash
 docker tag $local_name:$local_tag $ecr_uri/$local_name:$git_hash
-docker push $ecr_uri/$local_name
+docker push $ecr_uri/$local_name:$git_hash
