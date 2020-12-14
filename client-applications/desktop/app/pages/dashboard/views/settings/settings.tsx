@@ -183,6 +183,7 @@ const Settings = (props: {
                             <div style={{ width: "75%" }}>
                                 <div className={styles.header}>
                                     <img
+                                        alt="External app"
                                         src={externalApp.image_s3_uri}
                                         className={styles.cloudStorageIcon}
                                     />
