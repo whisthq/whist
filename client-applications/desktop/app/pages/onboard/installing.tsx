@@ -64,7 +64,7 @@ const Installing = (props: {
                     {progress === appsLength && onboardApps.length > 0 ? (
                         <>
                             <h2 style={{ marginTop: 225 }}>
-                                Success! One last step.
+                                Successfully installed your apps!
                             </h2>
                             <div
                                 className={styles.installingText}
@@ -88,7 +88,6 @@ const Installing = (props: {
                                 type="button"
                                 className={styles.enterButton}
                                 onClick={handleDone}
-                                style={{ marginTop: 100 }}
                             >
                                 NEXT: CLOUD STORAGE
                             </button>
