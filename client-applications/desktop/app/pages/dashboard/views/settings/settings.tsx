@@ -1,16 +1,16 @@
 /* eslint-disable import/no-named-as-default */
 
+import React, { useState, useEffect, KeyboardEvent, Dispatch } from "react"
 import { Row, Alert } from "react-bootstrap"
-import React, { useState, useEffect, KeyboardEvent } from "react"
-import { connect } from "react-redux"
-import ToggleButton from "react-toggle-button"
-import Slider from "react-input-slider"
 import { FaWifi, FaNetworkWired } from "react-icons/fa"
+import { connect } from "react-redux"
+import Slider from "react-input-slider"
+import ToggleButton from "react-toggle-button"
 
 import { config } from "shared/constants/config"
 import { FractalClientCache } from "shared/types/cache"
 import FractalKey from "shared/types/input"
-import { openExternal } from "shared/utils/helpers"
+import { openExternal } from "shared/utils/general/helpers"
 import { ExternalAppType } from "store/reducers/types"
 import { disconnectApp } from "store/actions/sideEffects"
 
@@ -19,7 +19,7 @@ import dashboardStyles from "pages/dashboard/dashboard.css"
 import AdminSettings from "pages/dashboard/components/admin/adminSettings"
 
 const Settings = (props: {
-    dispatch: Dispatch
+    dispatch: Dispatch<any>
     username: string
     accessToken: string
     externalApps: ExternalAppType[]
@@ -276,7 +276,12 @@ const Settings = (props: {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T) => {
+const mapStateToProps = (state: {
+    MainReducer: {
+        auth: { username: string; accessToken: string }
+        apps: { external: ExternalAppType[]; connected: string[] }
+    }
+}) => {
     return {
         username: state.MainReducer.auth.username,
         accessToken: state.MainReducer.auth.accessToken,

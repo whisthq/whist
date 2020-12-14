@@ -95,7 +95,7 @@ export const updateLoading = (body: {
 export const updateApps = (body: {
     external?: ExternalAppType[]
     connected?: string[]
-}) {
+}) => {
     return {
         type: UPDATE_APPS,
         body,
