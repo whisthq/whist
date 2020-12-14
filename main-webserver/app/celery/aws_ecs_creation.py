@@ -93,41 +93,7 @@ def build_base_from_image(image):
     return base_task
 
 
-def _poll(container_id):
-    """Poll the database until the web server receives its first ping from the new container.
-
-    Time out after 20 seconds. This may be an appropriate use case for Hasura subscriptions.
-
-    This function should patched to immediately return True in order to get CI to pass.
-
-    Arguments:
-        container_id: The container ID of the container whose state to poll.
-
-    Returns:
-        True iff the container's starts with RUNNING_ by the end of the polling period.
-    """
-
-    container = UserContainer.query.get(container_id)
-    result = False
-
-    for i in range(MAX_POLL_ITERATIONS):
-        if not container.state.startswith("RUNNING_"):
-            fractal_log(
-                function="create_new_container",
-                label=None,
-                logs=f"{container.container_id} deployment in progress. {i}/{MAX_POLL_ITERATIONS}",
-                level=logging.WARNING,
-            )
-            time.sleep(1)
-            db.session.refresh(container)
-        else:
-            result = True
-            break
-
-    return result
-
-
-def send_dpi_info_to_instance(ip, port, dpi):
+def _pass_start_dpi_to_instance(ip, port, dpi):
     """Send the DPI of a client display to the host service.
 
     Arguments:
@@ -167,10 +133,44 @@ def send_dpi_info_to_instance(ip, port, dpi):
             }
 
     fractal_log(
-        function="send_dpi_info_to_instance",
+        function="_pass_start_dpi_to_instance",
         label=str(dpi),
         **log_kwargs,
     )
+
+
+def _poll(container_id):
+    """Poll the database until the web server receives its first ping from the new container.
+
+    Time out after 20 seconds. This may be an appropriate use case for Hasura subscriptions.
+
+    This function should patched to immediately return True in order to get CI to pass.
+
+    Arguments:
+        container_id: The container ID of the container whose state to poll.
+
+    Returns:
+        True iff the container's starts with RUNNING_ by the end of the polling period.
+    """
+
+    container = UserContainer.query.get(container_id)
+    result = False
+
+    for i in range(MAX_POLL_ITERATIONS):
+        if not container.state.startswith("RUNNING_"):
+            fractal_log(
+                function="create_new_container",
+                label=None,
+                logs=f"{container.container_id} deployment in progress. {i}/{MAX_POLL_ITERATIONS}",
+                level=logging.WARNING,
+            )
+            time.sleep(1)
+            db.session.refresh(container)
+        else:
+            result = True
+            break
+
+    return result
 
 
 def select_cluster(region_name):
@@ -448,7 +448,7 @@ def assign_container(
             )
             raise Ignore
 
-    send_dpi_info_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
+    _pass_start_dpi_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
     time.sleep(5)
 
     if not _poll(base_container.container_id):
@@ -617,7 +617,7 @@ def create_new_container(
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
         if username != "Unassigned":
-            send_dpi_info_to_instance(container.ip, container.port_32262, container.dpi)
+            _pass_start_dpi_to_instance(container.ip, container.port_32262, container.dpi)
 
             if not _poll(container.container_id):
                 fractal_log(
