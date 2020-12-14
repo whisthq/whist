@@ -226,7 +226,7 @@ def send_dpi_info_to_instance(ip, port, dpi):
     """
     data = {"host_port": port, "dpi": dpi, "auth_secret": current_app.config["HOST_SERVICE_SECRET"]}
     instance_port = 4678
-    request = requests.put(f"http://{ip}:{instance_port}", data=data)
+    request = requests.put(f"http://{ip}:{current_app.config['HOST_SERVICE_PORT']}", data=data)
     if request.status_code != 200:
         return False, request
     return True, request

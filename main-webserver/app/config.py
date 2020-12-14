@@ -157,6 +157,7 @@ class DeploymentConfig:
     DATADOG_APP_KEY = property(getter("DATADOG_APP_KEY"))
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
+    HOST_SERVICE_PORT = 4678
     HOST_SERVICE_SECRET = property(getter("HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET"))
     JWT_QUERY_STRING_NAME = "access_token"
     JWT_SECRET_KEY = property(getter("JWT_SECRET_KEY"))
