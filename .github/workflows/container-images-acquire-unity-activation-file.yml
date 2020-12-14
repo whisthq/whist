@@ -10,7 +10,7 @@ name: "Container Images: Acquire Unity Activation File"
 # For context, see: https://unity-ci.com/docs/github/activation
 on:
     push:
-	branches:
+        branches:
 	    - phil/unity-license
 jobs:
     container-images-acquire-unity-activation-file:
