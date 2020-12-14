@@ -1684,7 +1684,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: application/json");
         // create content-length header
-        char* content_length_header = malloc(32);
+        char *content_length_header = malloc(64);
         sprintf(content_length_header, "Content-Length: %lu", strlen(payload));
         headers = curl_slist_append(headers, content_length_header);
         free(content_length_header);
@@ -1754,12 +1754,13 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
             // add request headers:
             //       "Content-Type: application/json\r\n"
             //       "Content-Length: %d\r\n"
-            char* headers = malloc(128);
+            char *headers = malloc(128);
             sprintf(headers,
-                "Content-Type: application/json\r\n"
-                "Content-Length: %d",
-                payload_size);
-            if (!WinHttpAddRequestHeaders(http_request, (LPCWSTR)headers, DWORD(strlen(headers), 0))) {
+                    "Content-Type: application/json\r\n"
+                    "Content-Length: %d",
+                    payload_size);
+            if (!WinHttpAddRequestHeaders(http_request, (LPCWSTR)headers,
+                                          (DWORD)strlen(headers), 0)) {
                 LOG_ERROR("WinHttpAddRequestHeaders failed with error %u", GetLastError());
             }
         }
