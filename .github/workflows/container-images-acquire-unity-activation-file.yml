@@ -34,5 +34,5 @@ jobs:
           - name: Notify Slack
             run: |
                 curl -X POST \
-                --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Unity Activation File Acquired and Uploaded to GitHub Arifact via Manual GitHub Workflow Triggering.\", \"icon_emoji\": \":fractal:\"}" \
+                --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Unity Activation File Acquired and Uploaded to GitHub Artifact via Manual GitHub Workflow Triggering.\", \"icon_emoji\": \":fractal:\"}" \
                 ${{ secrets.SLACK_HOOKS_ENDPOINT }}
