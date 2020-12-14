@@ -61,7 +61,9 @@ const Storage = (props: {
     )
 }
 
-export const mapStateToProps = <T extends {}>(state: T) => {
+export const mapStateToProps = (state: {
+    MainReducer: { apps: { external: ExternalAppType[]; connected: string[] } }
+}) => {
     return {
         externalApps: state.MainReducer.apps.external,
         connectedApps: state.MainReducer.apps.connected,
