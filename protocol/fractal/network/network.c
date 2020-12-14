@@ -1669,13 +1669,13 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     curl_url_set(curl_url_handle, CURLUPART_PATH, path, CURLU_DEFAULT_SCHEME);
     curl_url_cleanup(curl_url_handle);
     curl_easy_setopt(curl, CURLOPT_CURLU, curl_url_handle);
-
 #else
     // with no urlapi, build our own URL (path must begin with '/' when passed in)
     char *full_url = malloc(strlen(host_s) + strlen(path));
     sprintf(full_url, "%s%s", host_s, path);
     curl_easy_setopt(curl, CURLOPT_URL, full_url);
     free(full_url);
+#endif  // CURL urlapi
 
     // add request payload
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
@@ -1707,9 +1707,9 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     }
 
     curl_easy_cleanup(curl);
-#endif  // CURL urlapi
 
 #else
+
     HINTERNET http_session = NULL, http_connect = NULL, http_request = NULL;
 
     // open session handle
@@ -1725,14 +1725,18 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     // create http request handl
     if (http_connect) {
         http_request =
-            WinHttpOpenRequest(http_connect, (LPCWSTR)type, NULL, NULL, WINHTTP_NO_REFERER,
+            WinHttpOpenRequest(http_connect, (LPCWSTR)type, (LPCWSTR)path, NULL, WINHTTP_NO_REFERER,
                                WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
     }
 
-    // send a request
+    // send the request
     if (http_request) {
-        if (!WinHttpSendRequest(http_request, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
-                                WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
+        DWORD payload_size = 0;
+        if (payload) {
+            payload_size = (DWORD)strlen(payload);
+        }
+        if (!WinHttpSendRequest(http_request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, (LPVOID)payload,
+                                payload_size, payload_size, 0)) {
             LOG_ERROR("WinHttpSendRequest failed with error %u", GetLastError());
             return false;
         }
