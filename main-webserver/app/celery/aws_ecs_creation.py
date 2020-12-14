@@ -234,7 +234,8 @@ def send_dpi_info_to_instance(ip, port, dpi):
 
 def _get_num_extra(taskdef):
     """
-    Function determining how many containers to preboot based on type -- right now only preboots chrome
+    Function determining how many containers to preboot based on type
+    right now only preboots chrome
     :param taskdef: the task definition ARN of the container
     :return: integer determining how many containers to preboot
     """
