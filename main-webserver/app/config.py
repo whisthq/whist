@@ -222,7 +222,7 @@ class DeploymentConfig:
         """Load the client secret configuration object from client_secret.json
 
         Returns:
-            A Google client secret-formatted JSON object.
+            A Google client secret-formatted dictionary.
         """
 
         with open("client_secret.json") as secret_file:
@@ -257,11 +257,33 @@ class LocalConfig(DeploymentConfig):
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
-        # Local deployments should not be able to act as OAuth clients.
-        return {}
+        """Load the client secret configuration from client_secret.json if the file exists.
+
+        If client_secret.json does not exist, return an empty dictionary.
+
+        Returns:
+            A dictionary.
+        """
+
+        try:
+            secret = super().GOOGLE_CLIENT_SECRET_OBJECT
+        except FileNotFoundError:
+            secret = {}
+
+        return secret
 
     @property
     def SQLALCHEMY_DATABASE_URI(self):  # pylint: disable=invalid-name
+        """Generate the PostgreSQL connection URI.
+
+        This property's implementation allows developers to specify individual components of the
+        connection URI in environment variables rather than requiring that they specify the entire
+        connection URI themselves.
+
+        Returns:
+            A PostgreSQL connection URI.
+        """
+
         return (
             f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
             f"{self.db_name}"
