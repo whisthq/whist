@@ -103,6 +103,7 @@ class SupportedAppImages(db.Model):
     url = db.Column(db.String(250))
     tos = db.Column(db.String(250))
     active = db.Column(db.Boolean, nullable=False, default=False)
+    preboot_number = db.Column(db.Integer, nullable=False)
     containers = relationship(
         "UserContainer",
         back_populates="app",
