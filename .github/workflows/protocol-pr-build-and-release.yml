@@ -3,361 +3,360 @@
 name: "Procedure: Branch Build & Release"
 
 on:
-  # manual/api trigger
-  workflow_dispatch:
-    inputs:
-      ref:
-        description: ref to run against (eg. `refs/heads/BRANCH_NAME` or `refs/pull/PR_NUMBER`)
-        required: true
+    # manual/api trigger
+    workflow_dispatch:
+        inputs:
+            ref:
+                description: ref to run against (eg. `refs/heads/BRANCH_NAME` or `refs/pull/PR_NUMBER`)
+                required: true
 
 env:
-  CMAKE_VERSION: 3.16.4
-  NINJA_VERSION: 1.9.0
-  BUILD_TYPE: Debug
-  CCACHE_VERSION: 3.7.7
-  SERVER_VM_NAME: crimsonbonus543
-  SERVER_VM_USER: Fractal
-  SERVER_VM_IP: 20.185.40.33
-  WEBSERVER_BASE_URL: https://main-webserver.tryfractal.com
+    CMAKE_VERSION: 3.16.4
+    NINJA_VERSION: 1.9.0
+    BUILD_TYPE: Debug
+    CCACHE_VERSION: 3.7.7
+    SERVER_VM_NAME: crimsonbonus543
+    SERVER_VM_USER: Fractal
+    SERVER_VM_IP: 20.185.40.33
+    WEBSERVER_BASE_URL: https://main-webserver.tryfractal.com
 
 jobs:
-  build:
-    name: ${{ matrix.config.name }}
-    needs: []
-    runs-on: ${{ matrix.config.os }}
-    env:
-      working-directory: ${{ github.workspace }}/protocol
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - name: "Windows cl"
-            os: windows-latest
-            client_artifact_name: "Windows-64bit_client"
-            client_artifact_relpath: "/desktop/build64/Windows"
-            client_name: "/FractalClient.exe"
-            server_artifact_name: "Windows-64bit_server"
-            server_artifact_relpath: "/server/build64"
-            cc: "cl"
-            cxx: "cl"
-            cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc"
-            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-          - name: "Ubuntu gcc"
-            os: ubuntu-latest
-            client_artifact_name: "Linux-64bit_client"
-            client_artifact_relpath: "/desktop/build64/Linux"
-            client_name: "/FractalClient"
-            cc: "gcc"
-            cxx: "g++"
-          - name: "MacOS clang"
-            os: macos-10.14
-            client_artifact_name: "macOS-64bit_client"
-            client_artifact_relpath: "/desktop/build64/Darwin"
-            client_name: "/FractalClient"
-            cc: "clang"
-            cxx: "clang++"
-
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ needs.params.outputs.ref }}
-
-      - name: Set status to in progress
-        uses: Sibz/github-status-action@v1
-        with:
-          authToken: ${{ github.token }}
-          context: ${{ matrix.config.name }}
-          description: 'Running build ${{ matrix.config.name }}'
-          state: 'pending'
-          sha: ${{ github.sha }}
-          target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
-
-      - name: Chocolatey install cppcheck
-        if: runner.os == 'Windows'
-        uses: crazy-max/ghaction-chocolatey@v1
-        with:
-          args: install "${{ env.working-directory }}\.github\choco-install.config" --force
-
-      - name: Install Python (for sentry download)
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-
-      - name: Install CUDA for windows
-        working-directory: ${{env.working-directory}}
-        if: runner.os == 'Windows'
+    build:
+        name: ${{ matrix.config.name }}
+        needs: []
+        runs-on: ${{ matrix.config.os }}
         env:
-          visual_studio: "Visual Studio 16 2019"
-          cuda: "11.0.167"
-        shell: powershell
-        run: |
-          # Install CUDA via a powershell script
-          ${{ env.working-directory }}\.github\install_cuda_windows.ps1
-          if ($?) {
-            # Set paths for subsequent steps, using $env:CUDA_PATH
-            echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
-            echo "CUDA_PATH=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-            echo "$env:CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-            echo "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          }
+            working-directory: ${{ github.workspace }}/protocol
+        strategy:
+            fail-fast: false
+            matrix:
+                config:
+                    - name: "Windows cl"
+                      os: windows-latest
+                      client_artifact_name: "Windows-64bit_client"
+                      client_artifact_relpath: "/desktop/build64/Windows"
+                      client_name: "/FractalClient.exe"
+                      server_artifact_name: "Windows-64bit_server"
+                      server_artifact_relpath: "/server/build64"
+                      cc: "cl"
+                      cxx: "cl"
+                      cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc"
+                      environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+                    - name: "Ubuntu gcc"
+                      os: ubuntu-latest
+                      client_artifact_name: "Linux-64bit_client"
+                      client_artifact_relpath: "/desktop/build64/Linux"
+                      client_name: "/FractalClient"
+                      cc: "gcc"
+                      cxx: "g++"
+                    - name: "MacOS clang"
+                      os: macos-10.14
+                      client_artifact_name: "macOS-64bit_client"
+                      client_artifact_relpath: "/desktop/build64/Darwin"
+                      client_name: "/FractalClient"
+                      cc: "clang"
+                      cxx: "clang++"
 
-      - name: nvcc check for windows
-        working-directory: ${{env.working-directory}}
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          nvcc -V
-          ls $env:CUDA_PATH
-          ls $env:CUDA_PATH\bin
-          ls $env:CUDA_PATH\include
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  ref: ${{ needs.params.outputs.ref }}
 
-      # TODO add actions/cache@v2 around this operation to improve GHA execution time
-      - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
-        working-directory: ${{env.working-directory}}
-        # TODO move into a script stored inside the repo to make this workflow easier to read
-        id: cmake_and_ninja
-        shell: cmake -P {0}
-        run: |
-          # Convert windows backslash path to unix/cmake-compatible path
-          file(TO_CMAKE_PATH "${{ env.working-directory }}" working_dir)
+            - name: Set status to in progress
+              uses: Sibz/github-status-action@v1
+              with:
+                  authToken: ${{ github.token }}
+                  context: ${{ matrix.config.name }}
+                  description: "Running build ${{ matrix.config.name }}"
+                  state: "pending"
+                  sha: ${{ github.sha }}
+                  target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
 
-          set(cmake_version $ENV{CMAKE_VERSION})
-          set(ninja_version $ENV{NINJA_VERSION})
-          message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
+            - name: Chocolatey install cppcheck
+              if: runner.os == 'Windows'
+              uses: crazy-max/ghaction-chocolatey@v1
+              with:
+                  args: install "${{ env.working-directory }}\.github\choco-install.config" --force
 
-          if ("${{ runner.os }}" STREQUAL "Windows")
-            set(ninja_suffix "win.zip")
-            set(cmake_suffix "win64-x64.zip")
-            set(cmake_dir "cmake-${cmake_version}-win64-x64/bin")
-            message(STATUS "\n ::add-matcher::${working_dir}\.github\msvc_matcher.json\n")
-            message(STATUS "\n ::add-matcher::${working_dir}\.github\msvc_linker_matcher.json\n")
-          elseif ("${{ runner.os }}" STREQUAL "Linux")
-            set(ninja_suffix "linux.zip")
-            set(cmake_suffix "Linux-x86_64.tar.gz")
-            set(cmake_dir "cmake-${cmake_version}-Linux-x86_64/bin")
-            message(STATUS "\n ::add-matcher::${working_dir}/.github/gcc_matcher.json\n")
-          elseif ("${{ runner.os }}" STREQUAL "macOS")
-            set(ninja_suffix "mac.zip")
-            set(cmake_suffix "Darwin-x86_64.tar.gz")
-            set(cmake_dir "cmake-${cmake_version}-Darwin-x86_64/CMake.app/Contents/bin")
-            message(STATUS "\n ::add-matcher::${working_dir}/.github/clang_matcher.json\n")
-          endif()
+            - name: Install Python (for sentry download)
+              uses: actions/setup-python@v2
+              with:
+                  python-version: "3.8"
 
-          set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
-          file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
-          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ninja.zip)
+            - name: Install CUDA for windows
+              working-directory: ${{env.working-directory}}
+              if: runner.os == 'Windows'
+              env:
+                  visual_studio: "Visual Studio 16 2019"
+                  cuda: "11.0.167"
+              shell: powershell
+              run: |
+                  # Install CUDA via a powershell script
+                  ${{ env.working-directory }}\.github\install_cuda_windows.ps1
+                  if ($?) {
+                    # Set paths for subsequent steps, using $env:CUDA_PATH
+                    echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
+                    echo "CUDA_PATH=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                    echo "$env:CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                    echo "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                  }
 
-          set(cmake_url "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-${cmake_suffix}")
-          file(DOWNLOAD "${cmake_url}" ./cmake.zip SHOW_PROGRESS)
-          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./cmake.zip)
+            - name: nvcc check for windows
+              working-directory: ${{env.working-directory}}
+              if: runner.os == 'Windows'
+              shell: powershell
+              run: |
+                  nvcc -V
+                  ls $env:CUDA_PATH
+                  ls $env:CUDA_PATH\bin
+                  ls $env:CUDA_PATH\include
 
-          # Save the path for other steps
-          file(TO_CMAKE_PATH "${working_dir}/${cmake_dir}" cmake_dir)
-          message("::set-output name=cmake_dir::${cmake_dir}")
+            # TODO add actions/cache@v2 around this operation to improve GHA execution time
+            - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
+              working-directory: ${{env.working-directory}}
+              # TODO move into a script stored inside the repo to make this workflow easier to read
+              id: cmake_and_ninja
+              shell: cmake -P {0}
+              run: |
+                  # Convert windows backslash path to unix/cmake-compatible path
+                  file(TO_CMAKE_PATH "${{ env.working-directory }}" working_dir)
 
-          if (NOT "${{ runner.os }}" STREQUAL "Windows")
+                  set(cmake_version $ENV{CMAKE_VERSION})
+                  set(ninja_version $ENV{NINJA_VERSION})
+                  message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
 
-            execute_process(
-              COMMAND chmod +x ninja
-              COMMAND chmod +x ${cmake_dir}/cmake
-            )
-          endif()
+                  if ("${{ runner.os }}" STREQUAL "Windows")
+                    set(ninja_suffix "win.zip")
+                    set(cmake_suffix "win64-x64.zip")
+                    set(cmake_dir "cmake-${cmake_version}-win64-x64/bin")
+                    message(STATUS "\n ::add-matcher::${working_dir}\.github\msvc_matcher.json\n")
+                    message(STATUS "\n ::add-matcher::${working_dir}\.github\msvc_linker_matcher.json\n")
+                  elseif ("${{ runner.os }}" STREQUAL "Linux")
+                    set(ninja_suffix "linux.zip")
+                    set(cmake_suffix "Linux-x86_64.tar.gz")
+                    set(cmake_dir "cmake-${cmake_version}-Linux-x86_64/bin")
+                    message(STATUS "\n ::add-matcher::${working_dir}/.github/gcc_matcher.json\n")
+                  elseif ("${{ runner.os }}" STREQUAL "macOS")
+                    set(ninja_suffix "mac.zip")
+                    set(cmake_suffix "Darwin-x86_64.tar.gz")
+                    set(cmake_dir "cmake-${cmake_version}-Darwin-x86_64/CMake.app/Contents/bin")
+                    message(STATUS "\n ::add-matcher::${working_dir}/.github/clang_matcher.json\n")
+                  endif()
 
-          message(STATUS "\n::add-matcher::${ working_dir }/.github/cppcheck_matcher.json\n")
-          message(STATUS "\n::add-matcher::${ working_dir }/.github/cmake_matcher.json\n")
+                  set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
+                  file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
+                  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ninja.zip)
 
-          if ("${{ runner.os }}" STREQUAL "Linux")
-            # install linux dev dependencies
-              execute_process(COMMAND bash -c "sudo apt-get update -y")
-              execute_process(COMMAND ${{ env.working-directory }}/desktop/linux-client-setup.sh)
-              execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
-          elseif("${{ runner.os }}" STREQUAL "macOS")
-              execute_process(COMMAND brew install cppcheck)
-          endif()
+                  set(cmake_url "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-${cmake_suffix}")
+                  file(DOWNLOAD "${cmake_url}" ./cmake.zip SHOW_PROGRESS)
+                  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./cmake.zip)
 
-      - name: Download ccache
-        working-directory: ${{env.working-directory}}
-        id: ccache
-        shell: cmake -P {0}
-        run: |
-          set(ccache_url "https://github.com/cristianadam/ccache/releases/download/v$ENV{CCACHE_VERSION}/${{ runner.os }}.tar.xz")
-          file(DOWNLOAD "${ccache_url}" ./ccache.tar.xz SHOW_PROGRESS)
-          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ccache.tar.xz)
+                  # Save the path for other steps
+                  file(TO_CMAKE_PATH "${working_dir}/${cmake_dir}" cmake_dir)
+                  message("::set-output name=cmake_dir::${cmake_dir}")
 
-      - name: Prepare ccache timestamp
-        working-directory: ${{env.working-directory}}
-        id: ccache_cache_timestamp
-        shell: cmake -P {0}
-        run: |
-          string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
-          message("::set-output name=timestamp::${current_date}")
+                  if (NOT "${{ runner.os }}" STREQUAL "Windows")
 
-      - name: ccache cache files
-        uses: actions/cache@v1.1.0
-        with:
-          path: .ccache
-          key: ${{ matrix.config.name }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
-          restore-keys: |
-            ${{ matrix.config.name }}-ccache-
+                    execute_process(
+                      COMMAND chmod +x ninja
+                      COMMAND chmod +x ${cmake_dir}/cmake
+                    )
+                  endif()
 
-      - name: Configure cmake
-        working-directory: ${{env.working-directory}}
-        # TODO move into a script stored inside the repo to make this workflow easier to read
-        shell: cmake -P {0}
-        run: |
-          # Convert windows backslash path to unix/cmake-compatible path
-          file(TO_CMAKE_PATH "${{ env.working-directory }}" working_dir)
+                  message(STATUS "\n::add-matcher::${ working_dir }/.github/cppcheck_matcher.json\n")
+                  message(STATUS "\n::add-matcher::${ working_dir }/.github/cmake_matcher.json\n")
 
-          set(ENV{CC} ${{ matrix.config.cc }})
-          set(ENV{CXX} ${{ matrix.config.cxx }})
-          if ("${{ runner.os }}" STREQUAL "Windows")
-            set(ENV{CUDACXX} "${{ matrix.config.cudacxx }}")
-          endif()
+                  if ("${{ runner.os }}" STREQUAL "Linux")
+                    # install linux dev dependencies
+                      execute_process(COMMAND bash -c "sudo apt-get update -y")
+                      execute_process(COMMAND ${{ env.working-directory }}/desktop/linux-client-setup.sh)
+                      execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
+                  elseif("${{ runner.os }}" STREQUAL "macOS")
+                      execute_process(COMMAND brew install cppcheck)
+                  endif()
 
-          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-            execute_process(
-              COMMAND "${{ matrix.config.environment_script }}" && set
-              OUTPUT_FILE environment_script_output.txt
-            )
-            file(STRINGS environment_script_output.txt output_lines)
-            foreach(line IN LISTS output_lines)
-              if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-                set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-              endif()
-            endforeach()
-          endif()
+            - name: Download ccache
+              working-directory: ${{env.working-directory}}
+              id: ccache
+              shell: cmake -P {0}
+              run: |
+                  set(ccache_url "https://github.com/cristianadam/ccache/releases/download/v$ENV{CCACHE_VERSION}/${{ runner.os }}.tar.xz")
+                  file(DOWNLOAD "${ccache_url}" ./ccache.tar.xz SHOW_PROGRESS)
+                  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ccache.tar.xz)
 
-          set(path_separator ":")
-          if ("${{ runner.os }}" STREQUAL "Windows")
-            set(path_separator ";")
-          endif()
-          set(ENV{PATH} "${working_dir}${path_separator}$ENV{PATH}")
-          set(ENV{FRACTAL_OSX_SYSROOT} /Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk)
+            - name: Prepare ccache timestamp
+              working-directory: ${{env.working-directory}}
+              id: ccache_cache_timestamp
+              shell: cmake -P {0}
+              run: |
+                  string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
+                  message("::set-output name=timestamp::${current_date}")
 
-          macro(print_all_variables)
-            message(STATUS "print_all_variables------------------------------------------{")
-            get_cmake_property(_variableNames VARIABLES)
-            foreach (_variableName ${_variableNames})
-              message(STATUS "${_variableName}=${${_variableName}}")
-            endforeach()
-            message(STATUS "print_all_variables------------------------------------------}")
-          endmacro()
+            - name: ccache cache files
+              uses: actions/cache@v1.1.0
+              with:
+                  path: .ccache
+                  key: ${{ matrix.config.name }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
+                  restore-keys: |
+                      ${{ matrix.config.name }}-ccache-
 
-          execute_process(
-            COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
-              -S .
-              -B build
-              -D CMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
-              -G Ninja
-              -D CMAKE_MAKE_PROGRAM=ninja
-              -D CMAKE_C_COMPILER_LAUNCHER=ccache
-              -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
-              -DUSE_CPPCHECK=ON
-            RESULT_VARIABLE result
-          )
-          if (NOT result EQUAL 0)
-            print_all_variables()
-            message(WARNING "Cmake Response: ${result}")
-            message(FATAL_ERROR "Bad exit status")
-          endif()
+            - name: Configure cmake
+              working-directory: ${{env.working-directory}}
+              # TODO move into a script stored inside the repo to make this workflow easier to read
+              shell: cmake -P {0}
+              run: |
+                  # Convert windows backslash path to unix/cmake-compatible path
+                  file(TO_CMAKE_PATH "${{ env.working-directory }}" working_dir)
 
-      - name: Perform build
-        working-directory: ${{env.working-directory}}
-        # TODO move into a script stored inside the repo to make this workflow easier to read
-        shell: cmake -P {0}
-        run: |
-          # Convert windows backslash path to unix/cmake-compatible path
-          file(TO_CMAKE_PATH "${{ env.working-directory }}" working_dir)
+                  set(ENV{CC} ${{ matrix.config.cc }})
+                  set(ENV{CXX} ${{ matrix.config.cxx }})
+                  if ("${{ runner.os }}" STREQUAL "Windows")
+                    set(ENV{CUDACXX} "${{ matrix.config.cudacxx }}")
+                  endif()
 
-          set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+                  if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+                    execute_process(
+                      COMMAND "${{ matrix.config.environment_script }}" && set
+                      OUTPUT_FILE environment_script_output.txt
+                    )
+                    file(STRINGS environment_script_output.txt output_lines)
+                    foreach(line IN LISTS output_lines)
+                      if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+                        set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+                      endif()
+                    endforeach()
+                  endif()
 
-          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-            file(STRINGS environment_script_output.txt output_lines)
-            foreach(line IN LISTS output_lines)
-              if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-                set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-              endif()
-            endforeach()
-          endif()
+                  set(path_separator ":")
+                  if ("${{ runner.os }}" STREQUAL "Windows")
+                    set(path_separator ";")
+                  endif()
+                  set(ENV{PATH} "${working_dir}${path_separator}$ENV{PATH}")
+                  set(ENV{FRACTAL_OSX_SYSROOT} /Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk)
 
-          set(path_separator ":")
-          if ("${{ runner.os }}" STREQUAL "Windows")
-            set(path_separator ";")
-          endif()
-          set(ENV{PATH} "${working_dir}${path_separator}$ENV{PATH}")
+                  macro(print_all_variables)
+                    message(STATUS "print_all_variables------------------------------------------{")
+                    get_cmake_property(_variableNames VARIABLES)
+                    foreach (_variableName ${_variableNames})
+                      message(STATUS "${_variableName}=${${_variableName}}")
+                    endforeach()
+                    message(STATUS "print_all_variables------------------------------------------}")
+                  endmacro()
 
-          file(TO_CMAKE_PATH "${{ env.working-directory }}" ccache_basedir)
-          set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
-          set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
-          set(ENV{CCACHE_COMPRESS} "true")
-          set(ENV{CCACHE_COMPRESSLEVEL} "6")
-          set(ENV{CCACHE_MAXSIZE} "400M")
-          if ("${{ matrix.config.cxx }}" STREQUAL "cl")
-            set(ENV{CCACHE_MAXSIZE} "600M")
-          endif()
+                  execute_process(
+                    COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
+                      -S .
+                      -B build
+                      -D CMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
+                      -G Ninja
+                      -D CMAKE_MAKE_PROGRAM=ninja
+                      -D CMAKE_C_COMPILER_LAUNCHER=ccache
+                      -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
+                      -DUSE_CPPCHECK=ON
+                    RESULT_VARIABLE result
+                  )
+                  if (NOT result EQUAL 0)
+                    print_all_variables()
+                    message(WARNING "Cmake Response: ${result}")
+                    message(FATAL_ERROR "Bad exit status")
+                  endif()
 
-          execute_process(COMMAND ccache -p)
-          execute_process(COMMAND ccache -z)
+            - name: Perform build
+              working-directory: ${{env.working-directory}}
+              # TODO move into a script stored inside the repo to make this workflow easier to read
+              shell: cmake -P {0}
+              run: |
+                  # Convert windows backslash path to unix/cmake-compatible path
+                  file(TO_CMAKE_PATH "${{ env.working-directory }}" working_dir)
 
-          execute_process(
-            COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build
-            RESULT_VARIABLE result
-          )
-          if (NOT result EQUAL 0)
-            message(FATAL_ERROR "Bad exit status")
-          endif()
+                  set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
 
-          execute_process(COMMAND ccache -s)
+                  if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+                    file(STRINGS environment_script_output.txt output_lines)
+                    foreach(line IN LISTS output_lines)
+                      if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+                        set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+                      endif()
+                    endforeach()
+                  endif()
 
-          #- name: Verify build with clang-tidy
-          #working-directory: ${{env.working-directory}}
-          #run: ./run-clang-tidy.sh -c
+                  set(path_separator ":")
+                  if ("${{ runner.os }}" STREQUAL "Windows")
+                    set(path_separator ";")
+                  endif()
+                  set(ENV{PATH} "${working_dir}${path_separator}$ENV{PATH}")
 
-      - name: Get latest sentry-cli
-        uses: mathrix-education/setup-sentry-cli@master
-      - name: Upload debug information to sentry
-        working-directory: ${{env.working-directory}}
-        run: |
-            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
-        continue-on-error: true
-      - name: upload windows pdb
-        working-directory: ${{env.working-directory}}
-        if: runner.os == 'Windows'
-        run: |
-            sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
-        continue-on-error: true
-      - name: Upload server artifact (if requested on this platform)
-        if: matrix.config.server_artifact_name
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ matrix.config.server_artifact_name }}
-          path: ${{ env.working-directory }}${{ matrix.config.server_artifact_relpath }}
+                  file(TO_CMAKE_PATH "${{ env.working-directory }}" ccache_basedir)
+                  set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
+                  set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
+                  set(ENV{CCACHE_COMPRESS} "true")
+                  set(ENV{CCACHE_COMPRESSLEVEL} "6")
+                  set(ENV{CCACHE_MAXSIZE} "400M")
+                  if ("${{ matrix.config.cxx }}" STREQUAL "cl")
+                    set(ENV{CCACHE_MAXSIZE} "600M")
+                  endif()
 
-      - name: Upload client artifact
-        if: matrix.config.client_artifact_name
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ matrix.config.client_artifact_name }}
-          path: ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}
+                  execute_process(COMMAND ccache -p)
+                  execute_process(COMMAND ccache -z)
 
-      - name: Set status to success
-        uses: Sibz/github-status-action@v1
-        with:
-          authToken: ${{ github.token }}
-          context: ${{ matrix.config.name }}
-          description: 'Finished build ${{ matrix.config.name }}'
-          state: 'success'
-          sha: ${{ github.sha }}
-          target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
+                  execute_process(
+                    COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build
+                    RESULT_VARIABLE result
+                  )
+                  if (NOT result EQUAL 0)
+                    message(FATAL_ERROR "Bad exit status")
+                  endif()
 
-      - name: Set status to failure
-        if: ${{ failure() }}
-        uses: Sibz/github-status-action@v1
-        with:
-          authToken: ${{ github.token }}
-          context: ${{ matrix.config.name }}
-          description: 'Failed to build ${{ matrix.config.name }}'
-          state: 'failure'
-          sha: ${{ github.sha }}
-          target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
+                  execute_process(COMMAND ccache -s)
 
+                  #- name: Verify build with clang-tidy
+                  #working-directory: ${{env.working-directory}}
+                  #run: ./run-clang-tidy.sh -c
+
+            - name: Get latest sentry-cli
+              uses: mathrix-education/setup-sentry-cli@master
+            - name: Upload debug information to sentry
+              working-directory: ${{env.working-directory}}
+              run: |
+                  sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
+              continue-on-error: true
+            - name: upload windows pdb
+              working-directory: ${{env.working-directory}}
+              if: runner.os == 'Windows'
+              run: |
+                  sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
+              continue-on-error: true
+            - name: Upload server artifact (if requested on this platform)
+              if: matrix.config.server_artifact_name
+              uses: actions/upload-artifact@v2
+              with:
+                  name: ${{ matrix.config.server_artifact_name }}
+                  path: ${{ env.working-directory }}${{ matrix.config.server_artifact_relpath }}
+
+            - name: Upload client artifact
+              if: matrix.config.client_artifact_name
+              uses: actions/upload-artifact@v2
+              with:
+                  name: ${{ matrix.config.client_artifact_name }}
+                  path: ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}
+
+            - name: Set status to success
+              uses: Sibz/github-status-action@v1
+              with:
+                  authToken: ${{ github.token }}
+                  context: ${{ matrix.config.name }}
+                  description: "Finished build ${{ matrix.config.name }}"
+                  state: "success"
+                  sha: ${{ github.sha }}
+                  target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
+
+            - name: Set status to failure
+              if: ${{ failure() }}
+              uses: Sibz/github-status-action@v1
+              with:
+                  authToken: ${{ github.token }}
+                  context: ${{ matrix.config.name }}
+                  description: "Failed to build ${{ matrix.config.name }}"
+                  state: "failure"
+                  sha: ${{ github.sha }}
+                  target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
