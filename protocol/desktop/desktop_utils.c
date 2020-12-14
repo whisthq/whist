@@ -187,8 +187,7 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'i':
-            {
+            case 'i': {
                 strcpy(icon_png_filename, optarg);
                 break;
             }
