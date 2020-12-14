@@ -1,7 +1,7 @@
 # workflows/container-images-acquire-unity-activation-file.yml
 #
 # Container Images: Acquire Unity Activation File
-# Acquire a Unity activation file and upload as GitHub artifact. 
+# Acquire a Unity activation file and upload as GitHub artifact.
 
 name: "Container Images: Acquire Unity Activation File"
 
@@ -17,22 +17,22 @@ jobs:
         runs-on: ubuntu-20.04
 
         steps:
-          # Request manual activation file
-          - name: Request Manual Unity Activation File
-            id: getManualLicenseFile
-            uses: webbertakken/unity-request-manual-activation-file@v1.1
-            with:
-              unityVersion: 2019.2.11f1 # change this version to match the one used in Unity containers
+            # Request manual activation file
+            - name: Request Manual Unity Activation File
+              id: getManualLicenseFile
+              uses: webbertakken/unity-request-manual-activation-file@v1.1
+              with:
+                  unityVersion: 2019.2.11f1 # change this version to match the one used in Unity containers
 
-          # Upload artifact (Unity_v20XX.X.XXXX.alf)
-          - name: Expose As GitHub Artifact
-            uses: actions/upload-artifact@v1
-            with:
-              name: ${{ steps.getManualLicenseFile.outputs.filePath }}
-              path: ${{ steps.getManualLicenseFile.outputs.filePath }}
+            # Upload artifact (Unity_v20XX.X.XXXX.alf)
+            - name: Expose As GitHub Artifact
+              uses: actions/upload-artifact@v1
+              with:
+                  name: ${{ steps.getManualLicenseFile.outputs.filePath }}
+                  path: ${{ steps.getManualLicenseFile.outputs.filePath }}
 
-          - name: Notify Slack
-            run: |
-                curl -X POST \
-                --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Unity Activation File Acquired and Uploaded to GitHub Artifact via Manual GitHub Workflow Triggering.\", \"icon_emoji\": \":fractal:\"}" \
-                ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Unity Activation File Acquired and Uploaded to GitHub Artifact via Manual GitHub Workflow Triggering.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
