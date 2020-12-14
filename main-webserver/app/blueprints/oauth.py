@@ -68,7 +68,7 @@ class ConnectedAppsAPI(MethodView):
 
             if response.ok:
                 log_kwargs = {
-                    "logs": f"Suggessfully revoked access token for user '{user.user_id}'.",
+                    "logs": f"Successfully revoked access token for user '{user.user_id}'.",
                     "level": logging.INFO,
                 }
             else:
