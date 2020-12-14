@@ -163,7 +163,7 @@ const RootApp = (props: {
             updateAuth({ candidateAccessToken: "" })
             const onboarded = storage.get(FractalAuthCache.ONBOARDED)
             if (onboarded) {
-                history.push(FractalRoute.ONBOARD_WELCOME)
+                history.push(FractalRoute.DASHBOARD)
             } else {
                 history.push(FractalRoute.ONBOARD_WELCOME)
             }
