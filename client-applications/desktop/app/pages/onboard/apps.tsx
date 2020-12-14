@@ -1,21 +1,21 @@
 import React, { useState, useEffect, Dispatch } from "react"
 import { connect } from "react-redux"
-import styles from "pages/onboard/onboard.css"
 import { useQuery } from "@apollo/client"
 import PuffLoader from "react-spinners/PuffLoader"
 
-import Version from "shared/components/version"
-import TitleBar from "shared/components/titleBar"
 import App from "pages/onboard/components/app"
+import styles from "pages/onboard/onboard.css"
 
+import TitleBar from "shared/components/titleBar"
+import Version from "shared/components/version"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
-import { FractalRoute } from "shared/types/navigation"
-import { openExternal } from "shared/utils/general/helpers"
-import { history } from "store/history"
 import { FractalAuthCache } from "shared/types/cache"
-import { updateClient } from "store/actions/pure"
+import { FractalRoute } from "shared/types/navigation"
 import { FractalApp } from "shared/types/ui"
-import { searchArrayByKey } from "shared/utils/general/helpers"
+import { openExternal, searchArrayByKey } from "shared/utils/general/helpers"
+
+import { updateClient } from "store/actions/pure"
+import { history } from "store/history"
 
 const Apps = (props: { dispatch: Dispatch<any>; accessToken: string }) => {
     const { dispatch, accessToken } = props

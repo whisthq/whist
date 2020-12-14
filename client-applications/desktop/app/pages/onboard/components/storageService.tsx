@@ -3,7 +3,7 @@ import { connect } from "react-redux"
 import { FaCheck } from "react-icons/fa"
 
 import { config } from "shared/constants/config"
-import { openExternal } from "shared/utils/helpers"
+import { openExternal } from "shared/utils/general/helpers"
 
 import styles from "pages/onboard/onboard.css"
 
@@ -48,7 +48,13 @@ const StorageService = (props: {
     )
 }
 
-export const mapStateToProps = <T extends {}>(state: T) => {
+export const mapStateToProps = (state: {
+    MainReducer: {
+        auth: {
+            accessToken: string
+        }
+    }
+}) => {
     return {
         accessToken: state.MainReducer.auth.accessToken,
     }

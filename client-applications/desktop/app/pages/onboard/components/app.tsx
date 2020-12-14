@@ -1,10 +1,9 @@
 import React from "react"
-import { connect } from "react-redux"
 import { FaPlus, FaMinus } from "react-icons/fa"
 
 import styles from "pages/onboard/onboard.css"
 
-const Apps = (props: { app: any; selected: boolean }) => {
+const App = (props: { app: any; selected: boolean }) => {
     const { app, selected } = props
 
     return (
@@ -29,13 +28,4 @@ const Apps = (props: { app: any; selected: boolean }) => {
     )
 }
 
-export const mapStateToProps = <T extends {}>(state: T) => {
-    return {
-        username: state.MainReducer.auth.username,
-        name: state.MainReducer.auth.name,
-        os: state.MainReducer.client.os,
-        accessToken: state.MainReducer.auth.accessToken,
-    }
-}
-
-export default connect(mapStateToProps)(Apps)
+export default App
