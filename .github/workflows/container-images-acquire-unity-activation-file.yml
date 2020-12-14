@@ -9,8 +9,8 @@ name: "Container Images: Acquire Unity Activation File"
 # we use, so we only run this workflow manually
 # For context, see: https://unity-ci.com/docs/github/activation
 on:
-    workflow_dispatch:
-
+    push: 
+	branches:[phi/unity-activation]
 jobs:
     container-images-acquire-unity-activation-file:
         name: Acquire Unity Activation File and Upload as GitHub Artifact 🔑
