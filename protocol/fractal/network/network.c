@@ -73,7 +73,12 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 
 #include <stdio.h>
 #include <fcntl.h>
-#include <curl/curl.h>
+
+#ifndef _WIN32
+#include "curl/curl.h"
+#else
+#include <winhttp.h>
+#endif
 
 #include "../utils/aes.h"
 #include "../utils/json.h"
@@ -1639,6 +1644,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
         return false;
     }
 
+#ifndef _WIN32
     // use CURL to send a request and process response buffer
     CURL *curl;
     curl = curl_easy_init();
@@ -1655,7 +1661,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     // create target URL
 #ifdef CURLUPART_URL
     // when curl's urlapi is not available
-    CURLU* curl_url_handle = curl_url();
+    CURLU *curl_url_handle = curl_url();
     if (!curl_url_handle) {
         return false;
     }
@@ -1663,13 +1669,13 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     curl_url_set(curl_url_handle, CURLUPART_PATH, path, CURLU_DEFAULT_SCHEME);
     curl_url_cleanup(curl_url_handle);
     curl_easy_setopt(curl, CURLOPT_CURLU, curl_url_handle);
+
 #else
     // with no urlapi, build our own URL (path must begin with '/' when passed in)
-    char* full_url = malloc(strlen(host_s) + strlen(path));
+    char *full_url = malloc(strlen(host_s) + strlen(path));
     sprintf(full_url, "%s%s", host_s, path);
     curl_easy_setopt(curl, CURLOPT_URL, full_url);
     free(full_url);
-#endif
 
     // add request payload
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
@@ -1701,6 +1707,83 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     }
 
     curl_easy_cleanup(curl);
+#endif  // CURL urlapi
+
+#else
+    HINTERNET http_session = NULL, http_connect = NULL, http_request = NULL;
+
+    // open session handle
+    http_session = WinHttpOpen(L"Fractal Protocol", WINHTTP_ACCESS_TYPE_NO_PROXY,
+                               WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+
+    // specify http server
+    if (http_session) {
+        http_connect =
+            WinHttpConnect(http_session, (LPCWSTR)host_s, INTERNET_DEFAULT_HTTPS_PORT, 0);
+    }
+
+    // create http request handl
+    if (http_connect) {
+        http_request =
+            WinHttpOpenRequest(http_connect, (LPCWSTR)type, NULL, NULL, WINHTTP_NO_REFERER,
+                               WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+    }
+
+    // send a request
+    if (http_request) {
+        if (!WinHttpSendRequest(http_request, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+                                WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
+            LOG_ERROR("WinHttpSendRequest failed with error %u", GetLastError());
+            return false;
+        }
+    }
+
+    // end request
+    WinHttpReceiveResponse(http_request, NULL);
+
+    DWORD read_size = 0;
+    DWORD total_read_size = 0;
+    DWORD downloaded_size;
+    DWORD size_to_download = 0;
+    // keep checking for data while there is still data
+    if (response_body) {
+        *response_body = malloc(max_response_size);
+    }
+
+    do {
+        // check for available data
+        read_size = 0;
+        if (!WinHttpQueryDataAvailable(http_request, &read_size)) {
+            LOG_ERROR("WinHttpQueryDataAvailable failed with error %u", GetLastError());
+            free(*response_body);
+            return false;
+        }
+
+        // allocate space for the buffer
+        size_to_download = read_size;
+        if (read_size + total_read_size > max_response_size) {
+            size_to_download = (DWORD)max_response_size - total_read_size;
+        }
+
+        if (!WinHttpReadData(http_request, (LPVOID)*response_body, read_size, &downloaded_size)) {
+            LOG_ERROR("WinHttpReadData failed with error %u", GetLastError());
+            free(*response_body);
+            return false;
+        }
+
+    } while (read_size > 0);
+
+    if (http_request) {
+        WinHttpCloseHandle(http_request);
+    }
+    if (http_connect) {
+        WinHttpCloseHandle(http_connect);
+    }
+    if (http_session) {
+        WinHttpCloseHandle(http_session);
+    }
+
+#endif  // not _WIN32
 
     return true;
 }
