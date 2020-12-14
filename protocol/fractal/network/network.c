@@ -1671,7 +1671,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     curl_easy_setopt(curl, CURLOPT_CURLU, curl_url_handle);
 #else
     // with no urlapi, build our own URL (path must begin with '/' when passed in)
-    char *full_url = malloc(strlen(host_s) + strlen(path));
+    char *full_url = malloc(strlen(host_s) + strlen(path) + 2);
     sprintf(full_url, "%s%s", host_s, path);
     curl_easy_setopt(curl, CURLOPT_URL, full_url);
     free(full_url);
@@ -1759,8 +1759,8 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
                     "Content-Type: application/json\r\n"
                     "Content-Length: %d",
                     payload_size);
-            if (!WinHttpAddRequestHeaders(http_request, (LPCWSTR)headers,
-                                          (DWORD)strlen(headers), 0)) {
+            if (!WinHttpAddRequestHeaders(http_request, (LPCWSTR)headers, (DWORD)strlen(headers),
+                                          0)) {
                 LOG_ERROR("WinHttpAddRequestHeaders failed with error %u", GetLastError());
             }
         }
@@ -1781,30 +1781,31 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     // keep checking for data while there is still data
     if (response_body) {
         *response_body = malloc(max_response_size);
+
+        do {
+            // check for available data
+            read_size = 0;
+            if (!WinHttpQueryDataAvailable(http_request, &read_size)) {
+                LOG_ERROR("WinHttpQueryDataAvailable failed with error %u", GetLastError());
+                free(*response_body);
+                return false;
+            }
+
+            // allocate space for the buffer
+            size_to_download = read_size;
+            if (read_size + total_read_size > max_response_size) {
+                size_to_download = (DWORD)max_response_size - total_read_size;
+            }
+
+            if (!WinHttpReadData(http_request, (LPVOID)*response_body, read_size,
+                                 &downloaded_size)) {
+                LOG_ERROR("WinHttpReadData failed with error %u", GetLastError());
+                free(*response_body);
+                return false;
+            }
+
+        } while (read_size > 0);
     }
-
-    do {
-        // check for available data
-        read_size = 0;
-        if (!WinHttpQueryDataAvailable(http_request, &read_size)) {
-            LOG_ERROR("WinHttpQueryDataAvailable failed with error %u", GetLastError());
-            free(*response_body);
-            return false;
-        }
-
-        // allocate space for the buffer
-        size_to_download = read_size;
-        if (read_size + total_read_size > max_response_size) {
-            size_to_download = (DWORD)max_response_size - total_read_size;
-        }
-
-        if (!WinHttpReadData(http_request, (LPVOID)*response_body, read_size, &downloaded_size)) {
-            LOG_ERROR("WinHttpReadData failed with error %u", GetLastError());
-            free(*response_body);
-            return false;
-        }
-
-    } while (read_size > 0);
 
     if (http_request) {
         WinHttpCloseHandle(http_request);
