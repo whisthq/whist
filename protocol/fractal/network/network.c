@@ -1677,8 +1677,22 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     free(full_url);
 #endif  // CURL urlapi
 
-    // add request payload
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+    if (payload) {
+        // add request headers:
+        //       "Content-Type: application/json"
+        //       "Content-Length: payload_len"
+        struct curl_slist *headers = NULL;
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+        // create content-length header
+        char* content_length_header = malloc(32);
+        sprintf(content_length_header, "Content-Length: %lu", strlen(payload));
+        headers = curl_slist_append(headers, content_length_header);
+        free(content_length_header);
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+        // add request payload
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+    }
 
     // if a response is expected (response_body != NULL), have libcurl return response body
     CurlResponseBuffer crb;
@@ -1710,7 +1724,9 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
 
 #else
 
-    HINTERNET http_session = NULL, http_connect = NULL, http_request = NULL;
+    HINTERNET http_session = NULL;
+    HINTERNET http_connect = NULL;
+    HINTERNET http_request = NULL;
 
     // open session handle
     http_session = WinHttpOpen(L"Fractal Protocol", WINHTTP_ACCESS_TYPE_NO_PROXY,
@@ -1734,6 +1750,18 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
         DWORD payload_size = 0;
         if (payload) {
             payload_size = (DWORD)strlen(payload);
+
+            // add request headers:
+            //       "Content-Type: application/json\r\n"
+            //       "Content-Length: %d\r\n"
+            char* headers = malloc(128);
+            sprintf(headers,
+                "Content-Type: application/json\r\n"
+                "Content-Length: %d",
+                payload_size);
+            if (!WinHttpAddRequestHeaders(http_request, (LPCWSTR)headers, DWORD(strlen(headers), 0))) {
+                LOG_ERROR("WinHttpAddRequestHeaders failed with error %u", GetLastError());
+            }
         }
         if (!WinHttpSendRequest(http_request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, (LPVOID)payload,
                                 payload_size, payload_size, 0)) {
