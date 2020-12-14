@@ -13,7 +13,7 @@ from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.helpers.utils.general.sql_commands import fractal_sql_update
-from app.models import db, UserContainer, ClusterInfo, SortedClusters
+from app.models import db, UserContainer, ClusterInfo, SortedClusters, SupportedAppImages
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 
 from app.helpers.utils.datadog.events import (
@@ -239,8 +239,9 @@ def _get_num_extra(taskdef):
     :param taskdef: the task definition ARN of the container
     :return: integer determining how many containers to preboot
     """
-    if "chrome" in taskdef:
-        return 1
+    app_image_for_taskdef = SupportedAppImages.query.filter_by(task_definition_arn=taskdef).first()
+    if app_image_for_taskdef:
+        return app_image_for_taskdef.preboot_number
     return 0
 
 
