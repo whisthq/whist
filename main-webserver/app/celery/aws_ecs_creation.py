@@ -232,6 +232,17 @@ def send_dpi_info_to_instance(ip, port, dpi):
     return True, request
 
 
+def _get_num_extra(taskdef):
+    """
+    Function determining how many containers to preboot based on type -- right now only preboots chrome
+    :param taskdef: the task definition ARN of the container
+    :return: integer determining how many containers to preboot
+    """
+    if "chrome" in taskdef:
+        return 1
+    return 0
+
+
 @shared_task(bind=True)
 def assign_container(
     self,
@@ -282,7 +293,7 @@ def assign_container(
             .limit(1)
             .first()
         )
-        num_extra = 1
+        num_extra = _get_num_extra(task_definition_arn)
     else:
         num_extra = 0
         base_container = False
