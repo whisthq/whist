@@ -22,7 +22,7 @@ jobs:
               id: getManualLicenseFile
               uses: webbertakken/unity-request-manual-activation-file@v1.1
               with:
-                  unityVersion: 2019.2.11f1 # change this version to match the one used in Unity containers
+                  unityVersion: 2019.3.4f1 # change this version to match the one used in Unity containers
 
             # Upload artifact (Unity_v20XX.X.XXXX.alf)
             - name: Expose As GitHub Artifact
