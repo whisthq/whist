@@ -1,4 +1,4 @@
-@import '/app.global.css';
+@import '~app.global.css';
 
 .landingHeader {
     padding: 30px;
