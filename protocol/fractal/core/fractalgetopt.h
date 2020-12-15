@@ -134,7 +134,7 @@ struct option {
    differences in the consts, in stdlib.h.  To avoid compilation
    errors, only prototype getopt for the GNU C library.  */
 extern int getopt(int __argc, char *const *__argv, const char *__shortopts);
-#else /* not __GNU_LIBRARY__ */
+#else  /* not __GNU_LIBRARY__ */
 extern int getopt();
 #endif /* __GNU_LIBRARY__ */
 
