@@ -58,12 +58,6 @@ beautiful.init(gears.filesystem.get_themes_dir() .. "default/theme.lua")
 -- However, you can use another modifier like Mod1, but it may interact with others.
 modkey = "Mod1"
 
--- Table of layouts to cover with awful.layout.inc, order matters.
-awful.layout.layouts = {
-    awful.layout.suit.floating,
-}
--- }}}
-
 -- {{{ Wibar
 -- Create a wibox for each screen and add it
 local tasklist_buttons = gears.table.join(
@@ -108,7 +102,7 @@ awful.screen.connect_for_each_screen(function(s)
     set_wallpaper(s)
 
     -- Each screen has its own tag table.
-    awful.tag({ "1"}, s, awful.layout.layouts[1])
+    awful.tag({ "1"}, s, awful.layout.suit.floating)
 
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
