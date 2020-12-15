@@ -63,7 +63,7 @@ export const setAWSRegion = () => {
             executableName = "awsping_osx"
         } else if (platform === OperatingSystem.WINDOWS) {
             executableName = "awsping_windows.exe"
-        } else if (platform == OperatingSystem.LINUX) {
+        } else if (platform === OperatingSystem.LINUX) {
             executableName = "awsping_linux"
         } else {
             debugLog(`no suitable os found, instead got ${platform}`)
