@@ -4,16 +4,12 @@ import { FaCheck } from "react-icons/fa"
 
 import { config } from "shared/constants/config"
 import { openExternal } from "shared/utils/general/helpers"
+import { ExternalApp } from "store/reducers/types"
 
 import styles from "pages/onboard/onboard.css"
 
 const StorageService = (props: {
-    externalApp: {
-        code_name: string
-        display_name: string
-        image_s3_uri: string
-        tos_uri: string
-    }
+    externalApp: ExternalApp
     connected: boolean
     accessToken: string
 }) => {
@@ -21,7 +17,7 @@ const StorageService = (props: {
 
     const handleConnect = () => {
         openExternal(
-            `${config.url.CLOUD_STORAGE_URL}external_app=${externalApp.code_name}&access_token=${accessToken}`
+            `${config.url.WEBSERVER_URL}/oauth/authorize?external_app=${externalApp.code_name}&access_token=${accessToken}`
         )
     }
 

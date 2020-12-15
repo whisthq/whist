@@ -1,37 +1,23 @@
 /* eslint-disable import/no-named-as-default */
 
-import React, { useState, useEffect, KeyboardEvent, Dispatch } from "react"
+import React, { useState, useEffect, KeyboardEvent } from "react"
 import { Row, Alert } from "react-bootstrap"
 import { FaWifi, FaNetworkWired } from "react-icons/fa"
 import { connect } from "react-redux"
 import Slider from "react-input-slider"
 import ToggleButton from "react-toggle-button"
 
-import { config } from "shared/constants/config"
-import { FractalClientCache } from "shared/types/cache"
-import FractalKey from "shared/types/input"
-import { openExternal } from "shared/utils/general/helpers"
-import { ExternalAppType } from "store/reducers/types"
-import { disconnectApp } from "store/actions/sideEffects"
-
+import AdminSettings from "pages/dashboard/components/admin/adminSettings"
+import CloudStorage from "pages/dashboard/components/cloudStorage/cloudStorage"
 import styles from "pages/dashboard/views/settings/settings.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
-import AdminSettings from "pages/dashboard/components/admin/adminSettings"
 
-const Settings = (props: {
-    dispatch: Dispatch<any>
-    username: string
-    accessToken: string
-    externalApps: ExternalAppType[]
-    connectedApps: string[]
-}) => {
-    const {
-        dispatch,
-        username,
-        accessToken,
-        externalApps,
-        connectedApps,
-    } = props
+import { FractalClientCache } from "shared/types/cache"
+import FractalKey from "shared/types/input"
+import { ExternalApp } from "store/reducers/types"
+
+const Settings = (props: { username: string; externalApps: ExternalApp[] }) => {
+    const { username, externalApps } = props
 
     const [lowInternetMode, setLowInternetMode] = useState(false)
     const [bandwidth, setBandwidth] = useState(500)
@@ -167,83 +153,7 @@ const Settings = (props: {
                     </div>
                 </div>
             </Row>
-            {externalApps.length > -1 && (
-                <>
-                    <h2 className={styles.title} style={{ marginTop: 30 }}>
-                        Cloud Storage
-                    </h2>
-                    <div className={styles.subtitle}>
-                        Access, manage, edit, and share files from any of the
-                        following cloud storage services within your streamed
-                        apps by connecting your cloud drives to your Fractal
-                        account.
-                    </div>
-                    {externalApps.map((externalApp: ExternalAppType) => (
-                        <Row className={styles.row}>
-                            <div style={{ width: "75%" }}>
-                                <div className={styles.header}>
-                                    <img
-                                        alt="External app"
-                                        src={externalApp.image_s3_uri}
-                                        className={styles.cloudStorageIcon}
-                                    />
-                                    {externalApp.display_name}
-                                </div>
-                                <div className={styles.text}>
-                                    By using this service through Fractal, you
-                                    are agreeing to their{" "}
-                                    <button
-                                        type="button"
-                                        className={styles.tosLink}
-                                        onClick={() =>
-                                            openExternal(externalApp.tos_uri)
-                                        }
-                                    >
-                                        terms of service.
-                                    </button>
-                                </div>
-                            </div>
-                            <div style={{ width: "25%", alignSelf: "center" }}>
-                                <div
-                                    style={{
-                                        float: "right",
-                                    }}
-                                >
-                                    {connectedApps.indexOf(
-                                        externalApp.code_name
-                                    ) > -1 ? (
-                                        <button
-                                            type="button"
-                                            className={styles.connectButton}
-                                            onClick={() =>
-                                                dispatch(
-                                                    disconnectApp(
-                                                        externalApp.code_name
-                                                    )
-                                                )
-                                            }
-                                        >
-                                            Disconnect
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            className={styles.connectButton}
-                                            onClick={() =>
-                                                openExternal(
-                                                    `${config.url.CLOUD_STORAGE_URL}external_app=${externalApp.code_name}&access_token=${accessToken}`
-                                                )
-                                            }
-                                        >
-                                            Connect
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </Row>
-                    ))}
-                </>
-            )}
+            {externalApps.length > -1 && <CloudStorage />}
             {showSavedAlert && (
                 <Row>
                     <Alert
@@ -279,15 +189,13 @@ const Settings = (props: {
 
 const mapStateToProps = (state: {
     MainReducer: {
-        auth: { username: string; accessToken: string }
-        apps: { external: ExternalAppType[]; connected: string[] }
+        auth: { username: string }
+        apps: { externalApps: ExternalApp[] }
     }
 }) => {
     return {
         username: state.MainReducer.auth.username,
-        accessToken: state.MainReducer.auth.accessToken,
-        externalApps: state.MainReducer.apps.external,
-        connectedApps: state.MainReducer.apps.connected,
+        externalApps: state.MainReducer.apps.externalApps,
     }
 }
 
