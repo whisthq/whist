@@ -53,15 +53,11 @@ modkey = "Mod1"
 -- Create a wibox for each screen and add it
 local tasklist_buttons = gears.table.join(
                      awful.button({ }, 1, function (c)
-                                              if c == client.focus then
-                                                  c.minimized = true
-                                              else
-                                                  c:emit_signal(
-                                                      "request::activate",
-                                                      "tasklist",
-                                                      {raise = true}
-                                                  )
-                                              end
+                                              c:emit_signal(
+                                                  "request::activate",
+                                                  "tasklist",
+                                                  {raise = true}
+                                              )
                                           end),
                      awful.button({ }, 3, function()
                                               awful.menu.client_list({ theme = { width = 250 } })
