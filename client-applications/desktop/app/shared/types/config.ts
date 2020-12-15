@@ -5,7 +5,6 @@ export type FractalConfig = {
         GRAPHQL_HTTP_URL: string | undefined
         GRAPHQL_WS_URL: string | undefined
         GOOGLE_REDIRECT_URI: string | undefined
-        CLOUD_STORAGE_URL: string | undefined
     }
     keys: {
         STRIPE_PUBLIC_KEY: string | undefined

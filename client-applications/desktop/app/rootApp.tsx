@@ -99,7 +99,9 @@ const RootApp = (props: {
                             connectedApps
                         )
                         newConnectedApps.push(authenticatedApp)
-                        dispatch(updateApps({ connected: newConnectedApps }))
+                        dispatch(
+                            updateApps({ connectedApps: newConnectedApps })
+                        )
                     }
                 } else {
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
@@ -255,7 +257,7 @@ const mapStateToProps = (state: {
             dpi: number
         }
         apps: {
-            connected: string[]
+            connectedApps: string[]
         }
     }
 }) => {
@@ -267,7 +269,7 @@ const mapStateToProps = (state: {
         launchURL: state.MainReducer.container.launchURL,
         clientOS: state.MainReducer.client.clientOS,
         dpi: state.MainReducer.client.dpi,
-        connectedApps: state.MainReducer.apps.connected,
+        connectedApps: state.MainReducer.apps.connectedApps,
     }
 }
 
