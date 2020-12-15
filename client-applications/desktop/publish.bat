@@ -26,10 +26,12 @@ if "%1%" == "--help" (
     mkdir desktop\loading
     cd ..
     xcopy /s ..\..\protocol\desktop\build64\Windows protocol-build\desktop
-    powershell -Command "(New-Object Net.WebClient).DownloadFile('https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe', 'rcedit-x64.exe')"
-    powershell -Command "Invoke-WebRequest https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe -OutFile rcedit-x64.exe"
-    rcedit-x64.exe protocol-build\desktop\FractalClient.exe --set-icon build\icon.ico
-    del /Q rcedit-x64.exe
+
+    REM Note: we no longer add the logo to the executable because the logo gets set
+    REM in the protocol directly via SDL
+
+    REM initialize yarn first
+    yarn -i
 
     if "%publish%" == "true" (
         yarn package-ci 
