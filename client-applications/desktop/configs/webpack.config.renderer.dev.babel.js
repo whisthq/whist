@@ -61,6 +61,10 @@ export default merge.smart(baseConfig, {
         filename: 'renderer.dev.js',
     },
 
+    optimization: {
+        noEmitOnErrors: true,
+    },
+
     module: {
         rules: [
             {
@@ -212,10 +216,9 @@ export default merge.smart(baseConfig, {
         }),
 
         new TypedCssModulesPlugin({
-            globPattern: 'app/**/*.{css,scss,sass}',
+            // this plugin is stupid, and otherwise hits node_modules that are directories named X.css
+            globPattern: 'app/{.,!(node_modules)/**}/*.css',
         }),
-
-        new webpack.NoEmitOnErrorsPlugin(),
 
         /**
          * Create global constants which can be configured at compile time.
@@ -267,7 +270,7 @@ export default merge.smart(baseConfig, {
         before() {
             if (process.env.START_HOT) {
                 console.log('Starting Main Process...')
-                spawn('npm', ['run', 'start-main-dev'], {
+                spawn('yarn', ['start-main-dev'], {
                     shell: true,
                     env: process.env,
                     stdio: 'inherit',
