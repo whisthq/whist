@@ -189,6 +189,9 @@ if (!gotTheLock) {
             mainWindow.webContents.send("customURL", url.toString())
         }
     })
+
+    app.allowRendererProcessReuse = true
+
     app.on("ready", createWindow)
 
     app.on("activate", () => {
