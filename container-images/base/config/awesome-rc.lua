@@ -104,9 +104,6 @@ awful.screen.connect_for_each_screen(function(s)
     -- Each screen has its own tag table.
     awful.tag({ "1"}, s, awful.layout.suit.floating)
 
-    -- Create a promptbox for each screen
-    s.mypromptbox = awful.widget.prompt()
-
     -- Create a tasklist widget
     s.mytasklist = awful.widget.tasklist {
         screen  = s,
@@ -119,16 +116,8 @@ awful.screen.connect_for_each_screen(function(s)
 
     -- Add widgets to the wibox
     s.mywibox:setup {
-        layout = wibox.layout.align.horizontal,
-        { -- Left widgets
-            layout = wibox.layout.fixed.horizontal,
-            s.mypromptbox,
-        },
-        s.mytasklist, -- Middle widget
-        { -- Right widgets
-            layout = wibox.layout.fixed.horizontal,
-            wibox.widget.systray(),
-        },
+        layout = wibox.layout.flex.horizontal,
+        s.mytasklist,
     }
 end)
 -- }}}
