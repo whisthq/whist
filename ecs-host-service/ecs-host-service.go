@@ -39,6 +39,13 @@ import (
 const resourceMappingDirectory = "/fractal/containerResourceMappings/"
 const cloudStorageDirectory = "/fractal/cloudStorage/"
 
+func makeFractalDirectoryFreeForAll() {
+	cmd := exec.Command("chown", "-R", "ubuntu", "/fractal")
+	cmd.Run()
+	cmd = exec.Command("chmod", "-R", "777", "/fractal")
+	cmd.Run()
+}
+
 // Check that the program has been started with the correct permissions --- for
 // now, we just want to run as root, but this service could be assigned its own
 // user in the future
@@ -140,12 +147,13 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	}
 
 	// Make directory to mount in
-	err = os.MkdirAll(path, 0644|os.ModeSticky)
+	err = os.MkdirAll(path, 0777)
 	if err != nil {
 		return logger.MakeError("Could not mkdir path %s. Error: %s", path, err)
 	} else {
 		logger.Infof("Created directory %s", path)
 	}
+	makeFractalDirectoryFreeForAll()
 
 	// We mount in foreground mode, and wait for the result to clean up the
 	// directory created for this purpose. That way we know that we aren't
@@ -263,7 +271,7 @@ func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
 }
 
 func writeAssignmentToFile(filename, data string) (err error) {
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644|os.ModeSticky)
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
 	if err != nil {
 		return logger.MakeError("Unable to create file %s to store resource assignment. Error: %v", filename, err)
 	}
@@ -292,7 +300,7 @@ func writeAssignmentToFile(filename, data string) (err error) {
 func containerStartHandler(ctx context.Context, cli *client.Client, id string) error {
 	// Create a container-specific directory to store mappings
 	datadir := resourceMappingDirectory + id + "/"
-	err := os.Mkdir(datadir, 0644|os.ModeSticky)
+	err := os.Mkdir(datadir, 0777)
 	if err != nil {
 		return logger.MakeError("Failed to create container-specific directory %s. Error: %v", datadir, err)
 	}
@@ -456,7 +464,7 @@ func initializeFilesystem() {
 	}
 
 	// Create the resource mapping directory
-	err := os.MkdirAll(resourceMappingDirectory, 0644|os.ModeSticky)
+	err := os.MkdirAll(resourceMappingDirectory, 0777)
 	if err != nil {
 		logger.Panicf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
 	}
@@ -471,7 +479,7 @@ func initializeFilesystem() {
 	}
 
 	// Create fractal-private directory
-	err = os.MkdirAll(httpserver.FractalPrivatePath, 0644|os.ModeSticky)
+	err = os.MkdirAll(httpserver.FractalPrivatePath, 0777)
 	if err != nil {
 		logger.Panicf("Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
 	}
@@ -482,10 +490,11 @@ func initializeFilesystem() {
 	// storage drives.)
 
 	// Create cloud storage directory
-	err = os.MkdirAll(cloudStorageDirectory, 0644|os.ModeSticky)
+	err = os.MkdirAll(cloudStorageDirectory, 0777)
 	if err != nil {
 		logger.Panicf("Could not mkdir path %s. Error: %s", cloudStorageDirectory, err)
 	}
+	makeFractalDirectoryFreeForAll()
 }
 
 func uninitializeFilesystem() {
