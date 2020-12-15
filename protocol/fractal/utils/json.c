@@ -97,7 +97,7 @@ bool parse_json(char* str, Json* json) {
             } else if (memcmp(str, "null", 4) == 0) {
                 str += 3;
                 kv->type = JSON_NULL;
-            } else if ('0' < *str && *str < '9') {
+            } else if ('0' <= *str && *str <= '9') {
                 kv->type = JSON_INT;
                 kv->int_value = atoi(str);
                 while ('0' <= *str && *str <= '9') {
