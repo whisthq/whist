@@ -116,10 +116,14 @@ typedef struct {
     char signature[32];
 } PrivateKeyData;
 
+/**
+ * @brief                       Struct to keep response data from a curl
+ *                              request as it is being received.
+ */
 typedef struct {
-    char *buffer;
-    size_t filled_len;
-    size_t max_len;
+    char *buffer;       // Buffer that contains received response data
+    size_t filled_len;  // How much of the buffer is full so far
+    size_t max_len;     // How much the buffer can be filled, at most
 } CurlResponseBuffer;
 
 /*
