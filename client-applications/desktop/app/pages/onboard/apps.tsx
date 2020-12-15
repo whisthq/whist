@@ -8,6 +8,7 @@ import styles from "pages/onboard/onboard.css"
 
 import TitleBar from "shared/components/titleBar"
 import Version from "shared/components/version"
+import { requestAppsForm } from "shared/constants/externalUrls"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 import { FractalAuthCache } from "shared/types/cache"
 import { FractalRoute } from "shared/types/navigation"
@@ -134,11 +135,7 @@ const Apps = (props: { dispatch: Dispatch<any>; accessToken: string }) => {
                         <button
                             type="button"
                             className={styles.link}
-                            onClick={() =>
-                                openExternal(
-                                    "https://tryfractal.typeform.com/to/AdCZ8ad2"
-                                )
-                            }
+                            onClick={() => openExternal(requestAppsForm)}
                         >
                             favorite app
                         </button>

@@ -1,5 +1,5 @@
 import { OperatingSystem, FractalApp } from "shared/types/client"
-import { ExternalAppType } from "store/reducers/types"
+import { ExternalApp } from "store/reducers/types"
 
 export const UPDATE_AUTH = "UPDATE_AUTH"
 export const UPDATE_CONTAINER = "UPDATE_CONTAINER"
@@ -93,8 +93,8 @@ export const updateLoading = (body: {
 }
 
 export const updateApps = (body: {
-    external?: ExternalAppType[]
-    connected?: string[]
+    externalApps?: ExternalApp[]
+    connectedApps?: string[]
 }) => {
     return {
         type: UPDATE_APPS,

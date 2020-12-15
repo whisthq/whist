@@ -1,13 +1,10 @@
 /* eslint-disable import/no-named-as-default */
 
-import React, { useState } from "react"
-import { connect } from "react-redux"
+import React from "react"
 import { Row } from "react-bootstrap"
-import { updateAdmin } from "store/actions/pure"
-import Fractal from "assets/images/fractal.svg"
+import { connect } from "react-redux"
 
-import { DEFAULT } from "store/reducers/states"
-import { Dispatch } from "store/reducers/types"
+import Fractal from "assets/images/fractal.svg"
 
 import AdminDropdown from "pages/dashboard/components/admin/adminDropdown"
 import {
@@ -17,42 +14,20 @@ import {
     FractalClusters,
 } from "pages/dashboard/components/admin/dropdownValues"
 
+import { updateAdmin } from "store/actions/pure"
+import { DEFAULT } from "store/reducers/states"
+import { Dispatch } from "store/reducers/types"
+
 export const AdminSettings = (props: {
     dispatch: Dispatch
-    adminState: {
-        region: string
-        taskArn: string
-        webserverUrl: string
-        cluster: string
-    }
+    webserverUrl: string
+    taskArn: string
+    region: string
+    cluster: string
 }) => {
-    const { dispatch, adminState } = props
-
-    const [region, setRegion] = useState(adminState.region)
-    const [task, setTask] = useState(adminState.taskArn)
-    const [webserver, setWebserver] = useState(adminState.webserverUrl)
-    const [cluster, setCluster] = useState(adminState.cluster)
-
-    const handleSaveTask = (value: any) => {
-        setTask(value)
-        dispatch(
-            updateAdmin({
-                taskArn: value,
-            })
-        )
-    }
-
-    const handleSaveRegion = (value: any) => {
-        setRegion(value)
-        dispatch(
-            updateAdmin({
-                region: value,
-            })
-        )
-    }
+    const { dispatch, webserverUrl, taskArn, region, cluster } = props
 
     const handleSaveWebserver = (value: any) => {
-        setWebserver(value)
         dispatch(
             updateAdmin({
                 webserverUrl: value,
@@ -60,8 +35,23 @@ export const AdminSettings = (props: {
         )
     }
 
+    const handleSaveRegion = (value: any) => {
+        dispatch(
+            updateAdmin({
+                region: value,
+            })
+        )
+    }
+
+    const handleSaveTask = (value: any) => {
+        dispatch(
+            updateAdmin({
+                taskArn: value,
+            })
+        )
+    }
+
     const handleSaveCluster = (value: any) => {
-        setCluster(value)
         dispatch(
             updateAdmin({
                 cluster: value,
@@ -132,7 +122,7 @@ export const AdminSettings = (props: {
                             options={FractalWebservers}
                             title="Webserver"
                             defaultValue={DEFAULT.admin.webserverUrl}
-                            value={webserver}
+                            value={webserverUrl}
                         />
                         <AdminDropdown
                             onClick={handleSaveRegion}
@@ -146,7 +136,7 @@ export const AdminSettings = (props: {
                             options={FractalTaskDefs}
                             title="Task"
                             defaultValue={DEFAULT.admin.taskArn}
-                            value={task}
+                            value={taskArn}
                         />
                         <AdminDropdown
                             onClick={handleSaveCluster}
@@ -162,9 +152,21 @@ export const AdminSettings = (props: {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T) => {
+const mapStateToProps = (state: {
+    MainReducer: {
+        admin: {
+            webserverUrl: string
+            taskArn: string
+            region: string
+            cluster: string
+        }
+    }
+}) => {
     return {
-        adminState: state.MainReducer.admin,
+        webserverUrl: state.MainReducer.admin.webserverUrl,
+        taskArn: state.MainReducer.admin.taskArn,
+        region: state.MainReducer.admin.region,
+        cluster: state.MainReducer.admin.cluster,
     }
 }
 

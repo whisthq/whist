@@ -58,7 +58,7 @@ function* fetchExternalApps() {
         if (json.data) {
             yield put(
                 Action.updateApps({
-                    external: json.data,
+                    externalApps: json.data,
                 })
             )
         }
@@ -68,7 +68,7 @@ function* fetchExternalApps() {
 function* fetchConnectedApps() {
     /*
         Fetches list of the names of all apps the current user has connected to, and 
-        stores list in state.MainReducer.apps.connected
+        stores list in state.MainReducer.apps.connectedApps
     */
     const state = yield select()
 
@@ -82,7 +82,7 @@ function* fetchConnectedApps() {
         if (json.app_names) {
             yield put(
                 Action.updateApps({
-                    connected: json.app_names,
+                    connectedApps: json.app_names,
                 })
             )
         }
@@ -353,7 +353,7 @@ function* submitFeedback(action: { feedback: string; feedbackType: string }) {
 function* disconnectApp(action: { app: string }) {
     /*
         Revokes the user's access to an external app, and if successful, deletes the 
-        corresponding app name from state.MainReducer.apps.connected
+        corresponding app name from state.MainReducer.apps.connectedApps
 
         Arguments:
             app: name of external app to disconnect from
@@ -367,14 +367,14 @@ function* disconnectApp(action: { app: string }) {
     )
 
     if (success) {
-        const connectedApps = state.MainReducer.apps.connected
+        const connectedApps = state.MainReducer.apps.connectedApps
         const index = connectedApps.indexOf(action.app)
         if (index > -1) {
             const newConnectedApps = Object.assign([], connectedApps)
             newConnectedApps.splice(index, 1)
             yield put(
                 Action.updateApps({
-                    connected: newConnectedApps,
+                    connectedApps: newConnectedApps,
                 })
             )
         }

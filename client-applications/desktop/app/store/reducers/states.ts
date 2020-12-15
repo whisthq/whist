@@ -39,8 +39,8 @@ export const DEFAULT = {
         percentLoaded: 0,
     },
     apps: {
-        external: [], // all external applications (example entry: {code_name: "google_drive", display_name: "Google Drive", ...})
-        connected: [], // all external application ids that the user has connected their account to
+        externalApps: [], // all external applications (example entry: {code_name: "google_drive", display_name: "Google Drive", ...})
+        connectedApps: [], // all external application ids that the user has connected their account to
     },
     admin: {
         webserverUrl: "dev",

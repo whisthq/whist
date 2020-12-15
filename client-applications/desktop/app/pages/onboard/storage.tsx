@@ -7,10 +7,10 @@ import TitleBar from "shared/components/titleBar"
 import StorageService from "pages/onboard/components/storageService"
 import { FractalRoute } from "shared/types/navigation"
 import { history } from "store/history"
-import { ExternalAppType } from "store/reducers/types"
+import { ExternalApp } from "store/reducers/types"
 
 const Storage = (props: {
-    externalApps: ExternalAppType[]
+    externalApps: ExternalApp[]
     connectedApps: string[]
 }) => {
     const { externalApps, connectedApps } = props
@@ -36,7 +36,7 @@ const Storage = (props: {
                         you can disconnect your accounts at any time.
                     </div>
                     <div className={styles.servicesWrapper}>
-                        {externalApps.map((externalApp: any) => (
+                        {externalApps.map((externalApp: ExternalApp) => (
                             <StorageService
                                 externalApp={externalApp}
                                 connected={
@@ -62,11 +62,13 @@ const Storage = (props: {
 }
 
 export const mapStateToProps = (state: {
-    MainReducer: { apps: { external: ExternalAppType[]; connected: string[] } }
+    MainReducer: {
+        apps: { externalApps: ExternalApp[]; connectedApps: string[] }
+    }
 }) => {
     return {
-        externalApps: state.MainReducer.apps.external,
-        connectedApps: state.MainReducer.apps.connected,
+        externalApps: state.MainReducer.apps.externalApps,
+        connectedApps: state.MainReducer.apps.connectedApps,
     }
 }
 
