@@ -41,9 +41,9 @@ export default {
         extensions: ['.js', '.jsx', '.json', '.ts', '.tsx'],
         modules: [path.join(__dirname, '..', 'app'), 'node_modules'],
     },
-    
+
     optimization: {
-        namedModules: true
+        namedModules: true,
     },
 
     plugins: [
