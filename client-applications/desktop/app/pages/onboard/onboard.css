@@ -1,4 +1,4 @@
-@import '/app.global.css';
+@import '~app.global.css';
 
 .container {
     background: rgba(237, 240, 247, 0.75);
