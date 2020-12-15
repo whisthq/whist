@@ -1,4 +1,4 @@
-import { OperatingSystem } from "shared/types/client"
+import { OperatingSystem, FractalDirectory } from "shared/types/client"
 import { debugLog } from "shared/utils/general/logging"
 import { allowedRegions } from "shared/types/aws"
 
@@ -49,59 +49,51 @@ export const setAWSRegion = () => {
     */
     return new Promise((resolve) => {
         const { spawn } = require("child_process")
-        const os = require("os")
-        const platform = os.platform()
-        const appRootDir = require("electron").remote.app.getAppPath()
+        const platform = require("os").platform()
+        const path = require("path")
+        const fs = require("fs")
 
-        let executable = ""
-        let path = ""
+        let executableName
+        const binariesPath = path.join(
+            FractalDirectory.getRootDirectory(),
+            "binaries"
+        )
 
         if (platform === OperatingSystem.MAC) {
-            path = `${appRootDir}/binaries/`
-            path = path.replace("/Resources/app.asar", "")
-            path = path.replace("/app", "")
-            executable = "./awsping_osx"
+            executableName = "awsping_osx"
         } else if (platform === OperatingSystem.WINDOWS) {
-            path = `${appRootDir}\\binaries`
-            path = path.replace("\\resources\\app.asar", "")
-            path = path.replace("\\app", "")
-            executable = "awsping_windows.exe"
+            executableName = "awsping_windows.exe"
+        } else if (platform == OperatingSystem.LINUX) {
+            executableName = "awsping_linux"
         } else {
             debugLog(`no suitable os found, instead got ${platform}`)
         }
 
-        execPromise("chmod +x awsping_osx", path, [
-            OperatingSystem.MAC,
-            OperatingSystem.LINUX,
-        ])
-            .then(() => {
-                const regions = spawn(executable, ["-n", "3"], {
-                    cwd: path,
-                }) // ping via TCP
-                regions.stdout.setEncoding("utf8")
+        const executablePath = path.join(binariesPath, executableName)
 
-                regions.stdout.on("data", (data: string) => {
-                    // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
-                    const output = data.split(/\r?\n/)
-                    let index = 0
-                    let line = output[index].replace(/  +/g, " ")
-                    let items = line.split(" ")
-                    while (
-                        !allowedRegions.includes(items[2].slice(1, -1)) &&
-                        index < output.length - 1
-                    ) {
-                        index += 1
-                        line = output[index].replace(/  +/g, " ")
-                        items = line.split(" ")
-                    }
-                    // In case data is split and sent separately, only use closest AWS region which has index of 0
-                    const region = items[2].slice(1, -1)
-                    resolve(region)
-                })
-                return null
-            })
-            .catch((err) => {
-                throw err
-            })
+        fs.chmodSync(executablePath, 0o755)
+
+        const regions = spawn(executablePath, ["-n", "3"]) // ping via TCP
+        regions.stdout.setEncoding("utf8")
+
+        regions.stdout.on("data", (data: string) => {
+            // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
+            const output = data.split(/\r?\n/)
+            let index = 0
+            let line = output[index].replace(/  +/g, " ")
+            let items = line.split(" ")
+            while (
+                !allowedRegions.includes(items[2].slice(1, -1)) &&
+                index < output.length - 1
+            ) {
+                index += 1
+                line = output[index].replace(/  +/g, " ")
+                items = line.split(" ")
+            }
+            // In case data is split and sent separately, only use closest AWS region which has index of 0
+            const region = items[2].slice(1, -1)
+            resolve(region)
+        })
+        return null
     })
 }
