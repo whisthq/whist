@@ -212,13 +212,50 @@ function serializeTable(val, name, skipnewlines, depth)
     return tmp
 end
 
+
+ensure_client_is_not_offscreen = function (c)
+  -- ignore the master client
+  if c == awful.client.getmaster() then
+    notify("ensure_client_is_not_offscreen", "master. doing nothing")
+    return
+  end
+
+  local g = c:geometry()
+  local w = awful.screen.focused().workarea
+
+  if g.x < w.x then
+    g.x = w.x
+  end
+  if g.x > w.x + w.width - 150 then
+    g.x = w.x + w.width - 150
+  end
+  if g.x + g.width > w.x + w.width then
+    g.width = w.x + w.width - g.x
+  end
+  if g.y < w.y then
+    g.y = w.y
+  end
+  if g.y > w.y + w.height - 150 then
+    g.y = w.y + w.height - 150
+  end
+  if g.y + g.height > w.y + w.height then
+    g.height = w.y + w.height - g.y
+  end
+
+  c:geometry(g)
+end
+
+
 client.connect_signal("manage", function (c)
     -- Set the windows at the slave,
     -- i.e. put it at the end of others instead of setting it master.
     if not awesome.startup then awful.client.setslave(c) end
+
     manage_taskbar_visibility(c)
     show_master_window(c)
     awful.placement.no_offscreen(c, {honor_workarea=true})
+
+    ensure_client_is_not_offscreen(c)
 
     if c == awful.client.getmaster() then
       awful.titlebar.hide(c)
@@ -231,8 +268,18 @@ client.connect_signal("unmanage", function (c)
     show_master_window(c)
 end)
 
+client.connect_signal("request::geometry", function (client, context, extra_args)
+  if context ~= "mouse.move" then
+    ensure_client_is_not_offscreen(client)
+  end
+end)
 
 
+screen.connect_signal("property::geometry", function (s)
+   for k, v in pairs(s.all_clients) do
+     ensure_client_is_not_offscreen(v)
+   end
+end)
 
 
 -- Add a titlebar if titlebars_enabled is set to true in the rules.
