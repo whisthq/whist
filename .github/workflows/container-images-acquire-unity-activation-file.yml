@@ -10,7 +10,7 @@ name: "Container Images: Acquire Unity Activation File"
 # For context, see: https://unity-ci.com/docs/github/activation
 on:
     workflow_dispatch:
-    
+
 jobs:
     container-images-acquire-unity-activation-file:
         name: Acquire Unity Activation File and Upload as GitHub Artifact 🔑
