@@ -121,7 +121,7 @@ int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
 
-char window_name[32];
+char window_name[WINDOW_NAME_MAXLEN];
 
 /*
 ============================
@@ -1365,7 +1365,7 @@ int main(int argc, char* argv[]) {
         }
 
         char name[WINDOW_NAME_MAXLEN];
-        get_window_name(name);
+        get_focused_window_name(name);
         if (strcmp(name, window_name) != 0) {
             LOG_INFO("Sending window title to client!");
             memcpy(window_name, name, sizeof(name));
