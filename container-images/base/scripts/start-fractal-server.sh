@@ -30,5 +30,7 @@ if [ -f "$SENTRY_ENV_FILENAME" ]; then
     OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
 fi
 
+ln -sf /fractal/cloudStorage/$IDENTIFIER/google_drive /home/fractal/
+
 /usr/share/fractal/FractalServer --identifier=$IDENTIFIER $OPTIONS
 
