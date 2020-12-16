@@ -4,11 +4,13 @@ add_library(fractalUtils STATIC
         logging.h
         sdlscreeninfo.h
         json.h
+        window_name.h
         aes.c
         clock.c
         logging.c
         sdlscreeninfo.c
         json.c
+        window_name.c
 	    sysinfo.c
         png.c
         mouse.c
