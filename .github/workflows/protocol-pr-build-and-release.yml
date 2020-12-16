@@ -3,6 +3,8 @@
 name: "Procedure: Branch Build & Release"
 
 on:
+    pull_request:
+        types: [opened, reopened, synchronize]
     # manual/api trigger
     workflow_dispatch:
         inputs:
@@ -61,16 +63,6 @@ jobs:
             - uses: actions/checkout@v2
               with:
                   ref: ${{ needs.params.outputs.ref }}
-
-            - name: Set status to in progress
-              uses: Sibz/github-status-action@v1
-              with:
-                  authToken: ${{ github.token }}
-                  context: ${{ matrix.config.name }}
-                  description: "Running build ${{ matrix.config.name }}"
-                  state: "pending"
-                  sha: ${{ github.sha }}
-                  target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
 
             - name: Chocolatey install cppcheck
               if: runner.os == 'Windows'
@@ -320,43 +312,4 @@ jobs:
               run: |
                   sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
               continue-on-error: true
-            - name: upload windows pdb
-              working-directory: ${{env.working-directory}}
-              if: runner.os == 'Windows'
-              run: |
-                  sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}FractalClient.pdb
-              continue-on-error: true
-            - name: Upload server artifact (if requested on this platform)
-              if: matrix.config.server_artifact_name
-              uses: actions/upload-artifact@v2
-              with:
-                  name: ${{ matrix.config.server_artifact_name }}
-                  path: ${{ env.working-directory }}${{ matrix.config.server_artifact_relpath }}
 
-            - name: Upload client artifact
-              if: matrix.config.client_artifact_name
-              uses: actions/upload-artifact@v2
-              with:
-                  name: ${{ matrix.config.client_artifact_name }}
-                  path: ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}
-
-            - name: Set status to success
-              uses: Sibz/github-status-action@v1
-              with:
-                  authToken: ${{ github.token }}
-                  context: ${{ matrix.config.name }}
-                  description: "Finished build ${{ matrix.config.name }}"
-                  state: "success"
-                  sha: ${{ github.sha }}
-                  target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
-
-            - name: Set status to failure
-              if: ${{ failure() }}
-              uses: Sibz/github-status-action@v1
-              with:
-                  authToken: ${{ github.token }}
-                  context: ${{ matrix.config.name }}
-                  description: "Failed to build ${{ matrix.config.name }}"
-                  state: "failure"
-                  sha: ${{ github.sha }}
-                  target_url: "https://github.com/fractal/fractal/actions/runs/${{ github.run_id }}"
