@@ -86,6 +86,7 @@ jobs:
 
             - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
               if: runner.os == 'macOS' || runner.os == 'Linux'
+              shell: bash
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
                       ./protocol/desktop/linux-client-setup.sh
