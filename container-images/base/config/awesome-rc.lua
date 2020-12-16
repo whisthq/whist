@@ -248,6 +248,10 @@ client.connect_signal("manage", function (c)
     manage_taskbar_visibility(c)
     show_master_window(c)
     awful.placement.no_offscreen(c, {honor_workarea=true})
+
+    if c == awful.client.getmaster() then
+      awful.titlebar.hide(c)
+    end
 end)
 
 client.connect_signal("unmanage", function (c)
