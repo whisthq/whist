@@ -244,7 +244,7 @@ end
 client.connect_signal("manage", function (c)
     -- Set the windows at the slave,
     -- i.e. put it at the end of others instead of setting it master.
-    -- if not awesome.startup then awful.client.setslave(c) end
+    if not awesome.startup then awful.client.setslave(c) end
     manage_taskbar_visibility(c)
     show_master_window(c)
     awful.placement.no_offscreen(c, {honor_workarea=true})
