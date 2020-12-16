@@ -1360,6 +1360,30 @@ int main(int argc, char* argv[]) {
             free(fmsg_response);
         }
 
+        // TODO(anton) actually check if window title should be updated
+        if (true) {
+            LOG_INFO("Sending window title to client!");
+            char test_title[11] = "test title";
+            test_title[10] = 0;
+            size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(test_title);
+            FractalServerMessage* fmsg_response = malloc(fsmsg_size);
+            fmsg_response->type = SMESSAGE_WINDOW_TITLE;
+            memcpy(&fmsg_response->window_title, test_title, sizeof(test_title));
+            if (read_lock(&is_active_rwlock) != 0) {
+                LOG_ERROR("Failed to read-acquire is active RW lock.");
+            } else {
+                if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response, fsmsg_size) < 0) {
+                    LOG_WARNING("Could not broadcast window title Message");
+                } else {
+                    LOG_INFO("Sent window title message!");
+                }
+                if (read_unlock(&is_active_rwlock) != 0) {
+                    LOG_ERROR("Failed to read-release is active RW lock.");
+                }
+            }
+            free(fmsg_response);
+        }
+
         if (get_timer(last_ping_check) > 20.0) {
             for (;;) {
                 if (read_lock(&is_active_rwlock) != 0) {
