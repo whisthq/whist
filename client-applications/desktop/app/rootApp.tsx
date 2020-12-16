@@ -100,7 +100,10 @@ const RootApp = (props: {
                         )
                         newConnectedApps.push(authenticatedApp)
                         dispatch(
-                            updateApps({ connectedApps: newConnectedApps })
+                            updateApps({
+                                connectedApps: newConnectedApps,
+                                authenticated: authenticatedApp,
+                            })
                         )
                     }
                 } else {
