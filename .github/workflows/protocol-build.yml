@@ -92,7 +92,7 @@ jobs:
                       ./protocol/desktop/linux-client-setup.sh
 
                       # install yq for clang-tidy
-                      sudo apt-get install yq
+                      sudo snap install yq
                   else
                       brew install yq
                   fi
