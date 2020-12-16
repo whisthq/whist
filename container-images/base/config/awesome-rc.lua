@@ -265,6 +265,9 @@ end)
 
 client.connect_signal("unmanage", function (c)
     manage_taskbar_visibility(c)
+    awful.titlebar.hide(awful.client.getmaster())
+    awful.client.getmaster().border_width = 0
+    awful.client.getmaster():geometry(awful.screen.focused().workarea)
     show_master_window(c)
 end)
 
