@@ -7,7 +7,7 @@ name: "Protocol: Build and Check Protocool"
 
 on:
     pull_request:
-        branches: [master, staging, dev]
+        branches: [master, staging, dev, pipitone/protocol-ci]
     workflow_dispatch:
 
 jobs:
@@ -19,11 +19,11 @@ jobs:
         strategy:
             matrix:
                 config: 
-                  - name: "Build and Check Protocol on Windows"
+                  - name: "Build and Check Protocol on Windows (cl)"
                     os: windows-2016
-                  - name: "Build and Check Protocol on Linux Ubuntu"
+                  - name: "Build and Check Protocol on Linux Ubuntu (gcc)"
                     os: ubuntu-18.04
-                  - name: "Build and Check Protocol on macOS"
+                  - name: "Build and Check Protocol on macOS (clang)"
                     os: macos-10.14
 
         steps:
@@ -36,13 +36,11 @@ jobs:
 
             ############################# Windows Configuration Steps START #############################
 
-
-
-            - name: Install cppcheck via Chocolatey on Windows GHA Machine
+            - name: Install cppcheck, llvm (clang-tidy) via Chocolatey on Windows GHA Machine
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
               with:
-                  args: install cppcheck
+                  args: install cppcheck llvm
 
             - name: Install CUDA on Windows GHA Machine
               if: runner.os == 'Windows'
@@ -80,152 +78,53 @@ jobs:
               if: runner.os == 'Windows'
               uses: ilammy/msvc-dev-cmd@v1
 
-
             ############################# Windows Configuration Steps END #############################
 
             ############################# Unix Configuration Steps START #############################
 
-
+            # cmake is already installed on GHA Machines
 
             - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
               if: runner.os == 'Linux'
               run: |
                   ./protocol/desktop/linux-client-setup.sh
 
-
             ############################# Unix Configuration Steps END #############################
 
-
-
-        env:
-            working-directory: ${{ github.workspace }}/protocol
-
-
-
-
-
-
-
-env:
-    CMAKE_VERSION: 3.16.4
-    BUILD_TYPE: Debug
-
-
-
-
-
-
-
-            - name: Configure cmake
-              working-directory: ${{env.working-directory}}
-              # TODO move into a script stored inside the repo to make this workflow easier to read
-              shell: cmake -P {0}
+            - name: Build Protocol Client on Windows
+              if: runner.os == 'Windows'
+              shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               run: |
-                  # Convert windows backslash path to unix/cmake-compatible path
-                  file(TO_CMAKE_PATH ${{ env.working-directory }} working_dir)
-
-                  set(ENV{CC} ${{ matrix.config.cc }})
-                  set(ENV{CXX} ${{ matrix.config.cxx }})
-                  if ("${{ runner.os }}" STREQUAL "Windows")
-                    set(ENV{CUDACXX} "${{ matrix.config.cudacxx }}")
-                  endif()
-
-                  if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-                    execute_process(
-                      COMMAND "${{ matrix.config.environment_script }}" && set
-                      OUTPUT_FILE environment_script_output.txt
-                    )
-                    file(STRINGS environment_script_output.txt output_lines)
-                    foreach(line IN LISTS output_lines)
-                      if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-                        set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-                      endif()
-                    endforeach()
-                  endif()
-
-                  set(path_separator ":")
-                  if ("${{ runner.os }}" STREQUAL "Windows")
-                    set(path_separator ";")
-                  endif()
-                  set(ENV{PATH} "${working_dir}${path_separator}$ENV{PATH}")
-                  set(ENV{FRACTAL_OSX_SYSROOT} /Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk)
-
-                  macro(print_all_variables)
-                    message(STATUS "print_all_variables------------------------------------------{")
-                    get_cmake_property(_variableNames VARIABLES)
-                    foreach (_variableName ${_variableNames})
-                      message(STATUS "${_variableName}=${${_variableName}}")
-                    endforeach()
-                    message(STATUS "print_all_variables------------------------------------------}")
-                  endmacro()
-
-                  execute_process(
-                    COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
-                      -S .
-                      -B build
-                      -D CMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
-                      -G Ninja
-                      -D CMAKE_MAKE_PROGRAM=ninja
-                      -D CMAKE_C_COMPILER_LAUNCHER=ccache
-                      -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
-                      -D SENTRY_BACKEND=crashpad
-                      -D USE_CPPCHECK=ON
-                    RESULT_VARIABLE result
-                  )
-                  if (NOT result EQUAL 0)
-                    print_all_variables()
-                    message(WARNING "Cmake Response: ${result}")
-                    message(FATAL_ERROR "Bad exit status")
-                  endif()
-
-            - name: Perform build
-              working-directory: ${{env.working-directory}}
-              # TODO move into a script stored inside the repo to make this workflow easier to read
-              shell: cmake -P {0}
+                  cd protocol/
+                  cmake . -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles"
+                  nmake FractalClient
+                  cd ~
+  
+            - name: Build Protocol Client on macOS/Linux Ubuntu
+              if: runner.os == 'macOS' || runner.os == 'Linux'
+              env:
+                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
+              shell: bash
               run: |
-                  # Convert windows backslash path to unix/cmake-compatible path
-                  file(TO_CMAKE_PATH ${{ env.working-directory }} working_dir)
+                  cd protocol/
+                  cmake . -DCMAKE_BUILD_TYPE=Debug
+                  make FractalClient
+                  cd ~
 
-                  set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+            - name: Build Protocol Sever on Linux Ubuntu
+              if: runner.os == 'Linux'
+              shell: bash
+              run: |
+                  cd protocol/
+                  cmake . -DCMAKE_BUILD_TYPE=Debug
+                  make FractalServer
+                  cd ~
 
-                  if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-                    file(STRINGS environment_script_output.txt output_lines)
-                    foreach(line IN LISTS output_lines)
-                      if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-                        set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-                      endif()
-                    endforeach()
-                  endif()
+            - name: Verify Build(s) with clang-tidy
+              shell: bash
+              run: |
+                cd protocol/
+                ./run-clang-tidy.sh -c
+                cd ~
 
-                  set(path_separator ":")
-                  if ("${{ runner.os }}" STREQUAL "Windows")
-                    set(path_separator ";")
-                  endif()
-                  set(ENV{PATH} "${working_dir}${path_separator}$ENV{PATH}")
-
-                  file(TO_CMAKE_PATH "${working_dir}" ccache_basedir)
-                  set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
-                  set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
-                  set(ENV{CCACHE_COMPRESS} "true")
-                  set(ENV{CCACHE_COMPRESSLEVEL} "6")
-                  set(ENV{CCACHE_MAXSIZE} "400M")
-                  if ("${{ matrix.config.cxx }}" STREQUAL "cl")
-                    set(ENV{CCACHE_MAXSIZE} "600M")
-                  endif()
-
-                  execute_process(COMMAND ccache -p)
-                  execute_process(COMMAND ccache -z)
-
-                  execute_process(
-                    COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build
-                    RESULT_VARIABLE result
-                  )
-                  if (NOT result EQUAL 0)
-                    message(FATAL_ERROR "Bad exit status")
-                  endif()
-
-                  execute_process(COMMAND ccache -s)
-
-                  #- name: Verify build with clang-tidy
-                  #working-directory: ${{env.working-directory}}
-                  #run: ./run-clang-tidy.sh -c
+            # TODO: still want to run cppcheck too!
