@@ -12,7 +12,7 @@ TODO
 #if defined(_WIN32)
 // TODO(anton) implement functionality for windows servers
 void init_window_name_listener() {}
-void get_window_name(char* name) {}
+void get_focused_window_name(char* name) {}
 #else
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -34,7 +34,7 @@ void init_window_name_listener() {
         SDL_CreateThread(window_name_listener, "window_name_listener", NULL);
 }
 
-void get_window_name(char* name) {
+void get_focused_window_name(char* name) {
     /*
      * Get the name of the focused window.
      *
@@ -77,7 +77,7 @@ int window_name_listener(void* opaque) {
     while (true) {
         XGetInputFocus(display, &focus, &revert);
         char name[WINDOW_NAME_MAXLEN];
-        get_window_name(device->display, focus, name);
+        get_window_name(display, focus, name);
         SDL_LockMutex(window_name_mutex);
         if (strcmp(name, window_name) != 0) {
             strncpy(window_name, name, WINDOW_NAME_MAXLEN);

@@ -46,6 +46,6 @@ void init_window_name_listener();
  *                                 bytes available.
  *
  */
-void get_window_name(char* name);
+void get_focused_window_name(char* name);
 
 #endif  // WINDOW_NAME_H
