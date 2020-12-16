@@ -1,6 +1,6 @@
 # NOTE: this name should be kept stable since workflow_dispatch callers may use it to
 # trigger this workflow.
-name: "Procedure: Branch Build & Release"
+name: "Procedure: Branch Build"
 
 on:
     pull_request:
@@ -52,7 +52,7 @@ jobs:
                       cc: "gcc"
                       cxx: "g++"
                     - name: "MacOS clang"
-                      os: macos-10.14
+                      os: macos-10.15
                       client_artifact_name: "macOS-64bit_client"
                       client_artifact_relpath: "/desktop/build64/Darwin"
                       client_name: "/FractalClient"
@@ -111,7 +111,7 @@ jobs:
               shell: cmake -P {0}
               run: |
                   # Convert windows backslash path to unix/cmake-compatible path
-                  file(TO_CMAKE_PATH "${{ env.working-directory }}" working_dir)
+                  file(TO_CMAKE_PATH ${{ env.working-directory }} working_dir)
 
                   set(cmake_version $ENV{CMAKE_VERSION})
                   set(ninja_version $ENV{NINJA_VERSION})
@@ -198,7 +198,7 @@ jobs:
               shell: cmake -P {0}
               run: |
                   # Convert windows backslash path to unix/cmake-compatible path
-                  file(TO_CMAKE_PATH "${{ env.working-directory }}" working_dir)
+                  file(TO_CMAKE_PATH ${{ env.working-directory }} working_dir)
 
                   set(ENV{CC} ${{ matrix.config.cc }})
                   set(ENV{CXX} ${{ matrix.config.cxx }})
@@ -244,7 +244,8 @@ jobs:
                       -D CMAKE_MAKE_PROGRAM=ninja
                       -D CMAKE_C_COMPILER_LAUNCHER=ccache
                       -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
-                      -DUSE_CPPCHECK=ON
+                      -D SENTRY_BACKEND=crashpad
+                      -D USE_CPPCHECK=ON
                     RESULT_VARIABLE result
                   )
                   if (NOT result EQUAL 0)
@@ -259,7 +260,7 @@ jobs:
               shell: cmake -P {0}
               run: |
                   # Convert windows backslash path to unix/cmake-compatible path
-                  file(TO_CMAKE_PATH "${{ env.working-directory }}" working_dir)
+                  file(TO_CMAKE_PATH ${{ env.working-directory }} working_dir)
 
                   set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
 
@@ -278,7 +279,7 @@ jobs:
                   endif()
                   set(ENV{PATH} "${working_dir}${path_separator}$ENV{PATH}")
 
-                  file(TO_CMAKE_PATH "${{ env.working-directory }}" ccache_basedir)
+                  file(TO_CMAKE_PATH "${working_dir}" ccache_basedir)
                   set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
                   set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
                   set(ENV{CCACHE_COMPRESS} "true")
