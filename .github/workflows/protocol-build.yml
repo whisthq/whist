@@ -10,75 +10,49 @@ on:
         branches: [master, staging, dev]
     workflow_dispatch:
 
-
-
-
-env:
-    CMAKE_VERSION: 3.16.4
-    NINJA_VERSION: 1.9.0
-    BUILD_TYPE: Debug
-    CCACHE_VERSION: 3.7.7
-
-
 jobs:
-    build:
-        name: ${{ matrix.config.name }}
-        needs: []
+    build-and-check-protocol:
+        name: ${{ matrix.config.name}}
         runs-on: ${{ matrix.config.os }}
-        env:
-            working-directory: ${{ github.workspace }}/protocol
+
+        # Platforms to build on/for
         strategy:
-            fail-fast: false
             matrix:
-                config:
-                    - name: "Windows cl"
-                      os: windows-latest
-                      client_artifact_name: "Windows-64bit_client"
-                      client_artifact_relpath: "/desktop/build64/Windows"
-                      client_name: "/FractalClient.exe"
-                      server_artifact_name: "Windows-64bit_server"
-                      server_artifact_relpath: "/server/build64"
-                      cc: "cl"
-                      cxx: "cl"
-                      cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc"
-                      environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-                    - name: "Ubuntu gcc"
-                      os: ubuntu-latest
-                      client_artifact_name: "Linux-64bit_client"
-                      client_artifact_relpath: "/desktop/build64/Linux"
-                      client_name: "/FractalClient"
-                      cc: "gcc"
-                      cxx: "g++"
-                    - name: "MacOS clang"
-                      os: macos-10.15
-                      client_artifact_name: "macOS-64bit_client"
-                      client_artifact_relpath: "/desktop/build64/Darwin"
-                      client_name: "/FractalClient"
-                      cc: "clang"
-                      cxx: "clang++"
+                config: 
+                  - name: "Build and Check Protocol on Windows"
+                    os: windows-2016
+                  - name: "Build and Check Protocol on Linux Ubuntu"
+                    os: ubuntu-18.04
+                  - name: "Build and Check Protocol on macOS"
+                    os: macos-10.14
 
         steps:
-            - uses: actions/checkout@v2
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
               with:
-                  ref: ${{ needs.params.outputs.ref }}
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+                  submodules: recursive
 
-            - name: Chocolatey install cppcheck
+            ############################# Windows Configuration Steps START #############################
+
+
+
+            - name: Install cppcheck via Chocolatey on Windows GHA Machine
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
               with:
-                  args: install "${{ env.working-directory }}\.github\choco-install.config" --force
+                  args: install cppcheck
 
-
-            - name: Install CUDA for windows
-              working-directory: ${{env.working-directory}}
+            - name: Install CUDA on Windows GHA Machine
               if: runner.os == 'Windows'
               env:
-                  visual_studio: "Visual Studio 16 2019"
-                  cuda: "11.0.167"
+                  visual_studio: "Visual Studio 16 2019" # Imported from env in the .ps1 script
+                  cuda: "11.0.167" # Imported from env in the .ps1 script
               shell: powershell
               run: |
-                  # Install CUDA via a powershell script
-                  ${{ env.working-directory }}\.github\install_cuda_windows.ps1
+                  .\.github\install_cuda_windows.ps1
+
                   if ($?) {
                     # Set paths for subsequent steps, using $env:CUDA_PATH
                     echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
@@ -87,8 +61,7 @@ jobs:
                     echo "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
                   }
 
-            - name: nvcc check for windows
-              working-directory: ${{env.working-directory}}
+            - name: Verify that NVCC is Installed on GHA Windows Machine
               if: runner.os == 'Windows'
               shell: powershell
               run: |
@@ -97,94 +70,51 @@ jobs:
                   ls $env:CUDA_PATH\bin
                   ls $env:CUDA_PATH\include
 
-            # TODO add actions/cache@v2 around this operation to improve GHA execution time
-            - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
-              working-directory: ${{env.working-directory}}
-              # TODO move into a script stored inside the repo to make this workflow easier to read
-              id: cmake_and_ninja
-              shell: cmake -P {0}
-              run: |
-                  # Convert windows backslash path to unix/cmake-compatible path
-                  file(TO_CMAKE_PATH ${{ env.working-directory }} working_dir)
-
-                  set(cmake_version $ENV{CMAKE_VERSION})
-                  set(ninja_version $ENV{NINJA_VERSION})
-                  message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
-
-                  if ("${{ runner.os }}" STREQUAL "Windows")
-                    set(ninja_suffix "win.zip")
-                    set(cmake_suffix "win64-x64.zip")
-                    set(cmake_dir "cmake-${cmake_version}-win64-x64/bin")
-                    message(STATUS "\n ::add-matcher::${working_dir}\.github\msvc_matcher.json\n")
-                    message(STATUS "\n ::add-matcher::${working_dir}\.github\msvc_linker_matcher.json\n")
-                  elseif ("${{ runner.os }}" STREQUAL "Linux")
-                    set(ninja_suffix "linux.zip")
-                    set(cmake_suffix "Linux-x86_64.tar.gz")
-                    set(cmake_dir "cmake-${cmake_version}-Linux-x86_64/bin")
-                    message(STATUS "\n ::add-matcher::${working_dir}/.github/gcc_matcher.json\n")
-                  elseif ("${{ runner.os }}" STREQUAL "macOS")
-                    set(ninja_suffix "mac.zip")
-                    set(cmake_suffix "Darwin-x86_64.tar.gz")
-                    set(cmake_dir "cmake-${cmake_version}-Darwin-x86_64/CMake.app/Contents/bin")
-                    message(STATUS "\n ::add-matcher::${working_dir}/.github/clang_matcher.json\n")
-                  endif()
-
-                  set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
-                  file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
-                  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ninja.zip)
-
-                  set(cmake_url "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-${cmake_suffix}")
-                  file(DOWNLOAD "${cmake_url}" ./cmake.zip SHOW_PROGRESS)
-                  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./cmake.zip)
-
-                  # Save the path for other steps
-                  file(TO_CMAKE_PATH "${working_dir}/${cmake_dir}" cmake_dir)
-                  message("::set-output name=cmake_dir::${cmake_dir}")
-
-                  if (NOT "${{ runner.os }}" STREQUAL "Windows")
-
-                    execute_process(
-                      COMMAND chmod +x ninja
-                      COMMAND chmod +x ${cmake_dir}/cmake
-                    )
-                  endif()
-
-                  message(STATUS "\n::add-matcher::${ working_dir }/.github/cppcheck_matcher.json\n")
-                  message(STATUS "\n::add-matcher::${ working_dir }/.github/cmake_matcher.json\n")
-
-                  if ("${{ runner.os }}" STREQUAL "Linux")
-                    # install linux dev dependencies
-                      execute_process(COMMAND bash -c "sudo apt-get update -y")
-                      execute_process(COMMAND ${{ env.working-directory }}/desktop/linux-client-setup.sh)
-                      execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
-                  elseif("${{ runner.os }}" STREQUAL "macOS")
-                      execute_process(COMMAND brew install cppcheck)
-                  endif()
-
-            - name: Download ccache
-              working-directory: ${{env.working-directory}}
-              id: ccache
-              shell: cmake -P {0}
-              run: |
-                  set(ccache_url "https://github.com/cristianadam/ccache/releases/download/v$ENV{CCACHE_VERSION}/${{ runner.os }}.tar.xz")
-                  file(DOWNLOAD "${ccache_url}" ./ccache.tar.xz SHOW_PROGRESS)
-                  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ccache.tar.xz)
-
-            - name: Prepare ccache timestamp
-              working-directory: ${{env.working-directory}}
-              id: ccache_cache_timestamp
-              shell: cmake -P {0}
-              run: |
-                  string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
-                  message("::set-output name=timestamp::${current_date}")
-
-            - name: ccache cache files
-              uses: actions/cache@v1.1.0
+            - name: Install cmake via Chocolatey on Windows GHA Machine
+              if: runner.os == 'Windows'
+              uses: crazy-max/ghaction-chocolatey@v1
               with:
-                  path: .ccache
-                  key: ${{ matrix.config.name }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
-                  restore-keys: |
-                      ${{ matrix.config.name }}-ccache-
+                  args: install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+
+            - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
+              if: runner.os == 'Windows'
+              uses: ilammy/msvc-dev-cmd@v1
+
+
+            ############################# Windows Configuration Steps END #############################
+
+            ############################# Unix Configuration Steps START #############################
+
+
+
+            - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
+              if: runner.os == 'Linux'
+              run: |
+                  ./protocol/desktop/linux-client-setup.sh
+
+
+            ############################# Unix Configuration Steps END #############################
+
+
+
+        env:
+            working-directory: ${{ github.workspace }}/protocol
+
+
+
+
+
+
+
+env:
+    CMAKE_VERSION: 3.16.4
+    BUILD_TYPE: Debug
+
+
+
+
+
+
 
             - name: Configure cmake
               working-directory: ${{env.working-directory}}
