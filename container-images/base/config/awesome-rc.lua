@@ -96,7 +96,7 @@ awful.screen.connect_for_each_screen(function(s)
     }
 
     -- Create the wibox
-    s.mywibox = awful.wibar({ position = "bottom", screen = s })
+    s.mywibox = awful.wibar({ position = "bottom", screen = s, ontop = true })
 
     -- Add widgets to the wibox
     s.mywibox:setup {
@@ -211,13 +211,47 @@ awful.rules.rules = {
 
 -- {{{ Signals
 -- Signal function to execute when a new client appears.
+
+manage_taskbar_visibility = function (c)
+  if c == nil then
+    naughty.notify({ preset = naughty.config.presets.normal,
+                     title = "Error in manage_taskbar_visibility",
+                     text = "c was nil!" })
+    return
+  end
+
+  local s = c.screen
+  local t = s.all_clients
+
+  local length = 0
+  for k, v in pairs(t) do
+    length = length + 1
+  end
+
+  naughty.notify({ preset = naughty.config.presets.normal,
+                   title = "List event triggered",
+                   text = "There were " .. length .. " clients on this screen." })
+
+  if length <= 1 then
+    s.mywibox.visible = false
+  else
+    s.mywibox.visible = true
+  end
+end
+
+
 client.connect_signal("manage", function (c)
     -- Set the windows at the slave,
     -- i.e. put it at the end of others instead of setting it master.
     -- if not awesome.startup then awful.client.setslave(c) end
-
-    awful.placement.no_offscreen(c)
+    manage_taskbar_visibility(c)
+    awful.placement.no_offscreen(c, {honor_workarea=true})
 end)
+
+client.connect_signal("unmanage", function (c)
+    manage_taskbar_visibility(c)
+end)
+
 
 -- Add a titlebar if titlebars_enabled is set to true in the rules.
 client.connect_signal("request::titlebars", function(c)
