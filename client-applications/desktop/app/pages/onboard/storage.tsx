@@ -16,7 +16,7 @@ const Storage = (props: {
     const { externalApps, connectedApps } = props
 
     const handleDone = () => {
-        history.push(FractalRoute.DASHBOARD)
+        history.push(FractalRoute.ONBOARD_APPS)
     }
 
     return (
@@ -53,7 +53,7 @@ const Storage = (props: {
                         className={styles.enterButton}
                         onClick={handleDone}
                     >
-                        GO TO APP STORE
+                        NEXT: INSTALL APPS
                     </button>
                 </div>
             </div>

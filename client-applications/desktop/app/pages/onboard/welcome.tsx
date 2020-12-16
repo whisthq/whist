@@ -22,7 +22,7 @@ const Welcome = (props: { username: string; name: string }) => {
     }, [])
 
     const handleEnter = () => {
-        history.push(FractalRoute.ONBOARD_APPS)
+        history.push(FractalRoute.ONBOARD_STORAGE)
     }
 
     return (

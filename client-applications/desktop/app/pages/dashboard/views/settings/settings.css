@@ -1,12 +1,13 @@
-@import '/app.global.css';
+@import "/app.global.css";
 
 .alert {
     width: 100%;
-    font-size: 14px;
-    border-radius: 5px;
-    border: none;
-    padding: 15px 20px;
-    margin-bottom: 0px;
+    font-size: 12px;
+    border-radius: 5px !important;
+    border: none !important;
+    padding: 15px 20px !important;
+    margin-bottom: 0px !important;
+    margin-top: 15px;
 }
 
 .sliderWrapper {
@@ -34,7 +35,7 @@
 }
 
 .title {
-    font-family: 'Maven Pro Medium';
+    font-family: "Maven Pro Medium";
     letter-spacing: 1.1px;
     font-size: 25px;
 }
@@ -73,6 +74,7 @@
 .tosLink {
     color: var(--primary-color);
     padding: 0px;
+    letter-spacing: 1.1px;
 }
 
 .connectButton {

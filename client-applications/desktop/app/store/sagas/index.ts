@@ -44,7 +44,7 @@ function* refreshAccess() {
 function* fetchExternalApps() {
     /*
         Fetches metadata about all external apps Fractal allows users to connect 
-        to (i.e. cloud storage apps), and stores in state.MainReducer.apps.external
+        to (i.e. cloud storage apps), and stores in state.MainReducer.apps.externalApps
     */
     const state = yield select()
 
@@ -139,7 +139,7 @@ function* createContainer(action: {
             url (string | null): a url to immediately open in Chrome, or null if no specified url
             test? (boolean): indicates if launching a test container 
     */
-    const test = action.test
+    const test = true
     const app = action.app
     const url = action.url
 
@@ -157,13 +157,17 @@ function* createContainer(action: {
         : FractalAPI.CONTAINER.ASSIGN
     const body = test
         ? {
-              username: username,
-              // eslint will yell otherwise... to avoid breaking server code we are disbabling
-              /* eslint-disable */
-              cluster_name: state.MainReducer.admin.cluster,
-              region_name: state.MainReducer.admin.region,
-              task_definition_arn: state.MainReducer.admin.taskArn,
-              // dpi not supported yet
+              //   username: username,
+              //   // eslint will yell otherwise... to avoid breaking server code we are disbabling
+              //   /* eslint-disable */
+              //   cluster_name: state.MainReducer.admin.cluster,
+              //   region_name: state.MainReducer.admin.region,
+              //   task_definition_arn: state.MainReducer.admin.taskArn,
+              //   // dpi not supported yet
+              task_definition_arn: "cloud-storage-test",
+              cluster_name: "cloud-storage-demo-cluster",
+              username: "cidney@tryfractal.com",
+              region_name: "us-east-1",
           }
         : {
               username: username,
@@ -375,9 +379,16 @@ function* disconnectApp(action: { app: string }) {
             yield put(
                 Action.updateApps({
                     connectedApps: newConnectedApps,
+                    disconnected: action.app,
                 })
             )
         }
+    } else {
+        yield put(
+            Action.updateApps({
+                disconnectWarning: action.app,
+            })
+        )
     }
 }
 

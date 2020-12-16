@@ -9,7 +9,7 @@ import {
 // app where you can choose where to go to
 export const webservers: { [key: string]: string } = {
     local: "http://127.0.0.1:7730",
-    dev: "https://fractal.owenniles.com",
+    dev: "http://fractal-cloud-storage.herokuapp.com/",
     staging: "https://staging-webserver.tryfractal.com",
     prod: "https://main-webserver.herokuapp.com",
 }
