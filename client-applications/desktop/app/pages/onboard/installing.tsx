@@ -29,7 +29,7 @@ const Installing = (props: {
     })
 
     const handleDone = () => {
-        history.push(FractalRoute.ONBOARD_STORAGE)
+        history.push(FractalRoute.DASHBOARD)
     }
 
     const createShortcutWrapper = async (): Promise<any> => {
@@ -64,7 +64,7 @@ const Installing = (props: {
                     {progress === appsLength && onboardApps.length > 0 ? (
                         <>
                             <h2 style={{ marginTop: 225 }}>
-                                Successfully installed your apps!
+                                Success! One last step.
                             </h2>
                             <div
                                 className={styles.installingText}
@@ -82,14 +82,15 @@ const Installing = (props: {
                                 <span className={styles.command}>
                                     Fractalized {onboardApps[0].app_id}
                                 </span>
-                                , this page will refresh!
+                                , this page will refresh! Or, go to the app
+                                store by clicking the button below.
                             </div>
                             <button
                                 type="button"
                                 className={styles.enterButton}
                                 onClick={handleDone}
                             >
-                                NEXT: CLOUD STORAGE
+                                GO TO APP STORE
                             </button>
                         </>
                     ) : (

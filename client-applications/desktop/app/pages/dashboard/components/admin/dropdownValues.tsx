@@ -31,10 +31,12 @@ export enum FractalTaskDefs {
     DISCORD = "fractal-productivity-discord",
     NOTION = "fractal-productivity-notion",
     SLACK = "fractal-productivity-slack",
+    CLOUD_STORAGE = "cloud-storage-test",
     RESET = "reset",
 }
 
 export enum FractalClusters {
     // no cluster defaults
+    CLOUD_STORAGE = "cloud-storage-demo-cluster",
     RESET = "reset",
 }
