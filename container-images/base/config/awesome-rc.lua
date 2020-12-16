@@ -173,9 +173,8 @@ awful.rules.rules = {
 }
 -- }}}
 
--- {{{ Signals
--- Signal function to execute when a new client appears.
 
+-- {{{ Signals
 manage_taskbar_visibility = function (c)
   local s = awful.screen.focused()
   local t = s.all_clients
@@ -223,8 +222,8 @@ client.connect_signal("unmanage", function (c)
     show_master_window(c)
 end)
 
-client.connect_signal("property::size", show_master_window)
-client.connect_signal("property::position", show_master_window)
+
+
 
 
 -- Add a titlebar if titlebars_enabled is set to true in the rules.
