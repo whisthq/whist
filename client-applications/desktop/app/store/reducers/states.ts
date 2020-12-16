@@ -41,6 +41,9 @@ export const DEFAULT = {
     apps: {
         externalApps: [], // all external applications (example entry: {code_name: "google_drive", display_name: "Google Drive", ...})
         connectedApps: [], // all external application ids that the user has connected their account to
+        authenticated: null, // app name that has successfully authenticated
+        disconnected: null, // app name that has been successfully disconnected
+        disconnectWarning: null, // app name that tried to disconnect but failed
     },
     admin: {
         webserverUrl: "dev",

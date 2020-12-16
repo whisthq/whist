@@ -1,9 +1,10 @@
 /* eslint-disable import/no-named-as-default */
 
-import React, { Dispatch } from "react"
+import React, { Dispatch, useState } from "react"
 import { Row } from "react-bootstrap"
 import { connect } from "react-redux"
 
+import CloudStorageAlert from "pages/dashboard/components/cloudStorage/components/cloudStorageAlert"
 import styles from "pages/dashboard/views/settings/settings.css"
 
 import { config } from "shared/constants/config"
@@ -19,9 +20,12 @@ const CloudStorage = (props: {
 }) => {
     const { dispatch, accessToken, externalApps, connectedApps } = props
 
+    // name of app most recently connect to from settings, used to render alerts correctly
+    const [connectedFromSettings, setConnectedFromSettings] = useState("")
+
     return (
         <>
-            <h2 className={styles.title} style={{ marginTop: 30 }}>
+            <h2 className={styles.title} style={{ marginTop: 40 }}>
                 Cloud Storage
             </h2>
             <div className={styles.subtitle}>
@@ -31,63 +35,76 @@ const CloudStorage = (props: {
             </div>
             {externalApps.map((externalApp: ExternalApp) => (
                 <Row className={styles.row} key={externalApp.code_name}>
-                    <div style={{ width: "75%" }}>
-                        <div className={styles.header}>
-                            <img
-                                alt="External app"
-                                src={externalApp.image_s3_uri}
-                                className={styles.cloudStorageIcon}
-                            />
-                            {externalApp.display_name}
+                    <div style={{ width: "100%", display: "flex" }}>
+                        <div style={{ width: "75%" }}>
+                            <div className={styles.header}>
+                                <img
+                                    alt="External app"
+                                    src={externalApp.image_s3_uri}
+                                    className={styles.cloudStorageIcon}
+                                />
+                                {externalApp.display_name}
+                            </div>
+                            <div className={styles.text}>
+                                By using this service through Fractal, you are
+                                agreeing to their{" "}
+                                <button
+                                    type="button"
+                                    className={styles.tosLink}
+                                    onClick={() =>
+                                        openExternal(externalApp.tos_uri)
+                                    }
+                                >
+                                    terms of service.
+                                </button>
+                            </div>
                         </div>
-                        <div className={styles.text}>
-                            By using this service through Fractal, you are
-                            agreeing to their{" "}
-                            <button
-                                type="button"
-                                className={styles.tosLink}
-                                onClick={() =>
-                                    openExternal(externalApp.tos_uri)
-                                }
+                        <div style={{ width: "25%", alignSelf: "center" }}>
+                            <div
+                                style={{
+                                    float: "right",
+                                }}
                             >
-                                terms of service.
-                            </button>
+                                {connectedApps.indexOf(externalApp.code_name) >
+                                -1 ? (
+                                    <button
+                                        type="button"
+                                        className={styles.connectButton}
+                                        onClick={() =>
+                                            dispatch(
+                                                disconnectApp(
+                                                    externalApp.code_name
+                                                )
+                                            )
+                                        }
+                                    >
+                                        Disconnect
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className={styles.connectButton}
+                                        onClick={() => {
+                                            setConnectedFromSettings(
+                                                externalApp.code_name
+                                            )
+                                            openExternal(
+                                                `${config.url.WEBSERVER_URL}/oauth/authorize?external_app=${externalApp.code_name}&access_token=${accessToken}`
+                                            )
+                                        }}
+                                    >
+                                        Connect
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
-                    <div style={{ width: "25%", alignSelf: "center" }}>
-                        <div
-                            style={{
-                                float: "right",
-                            }}
-                        >
-                            {connectedApps.indexOf(externalApp.code_name) >
-                            -1 ? (
-                                <button
-                                    type="button"
-                                    className={styles.connectButton}
-                                    onClick={() =>
-                                        dispatch(
-                                            disconnectApp(externalApp.code_name)
-                                        )
-                                    }
-                                >
-                                    Disconnect
-                                </button>
-                            ) : (
-                                <button
-                                    type="button"
-                                    className={styles.connectButton}
-                                    onClick={() =>
-                                        openExternal(
-                                            `${config.url.WEBSERVER_URL}/oauth/authorize?external_app=${externalApp.code_name}&access_token=${accessToken}`
-                                        )
-                                    }
-                                >
-                                    Connect
-                                </button>
-                            )}
-                        </div>
-                    </div>
+                    <CloudStorageAlert
+                        externalApp={externalApp}
+                        connectedFromSettings={
+                            connectedFromSettings === externalApp.code_name
+                        }
+                    />
                 </Row>
             ))}
         </>
@@ -97,7 +114,10 @@ const CloudStorage = (props: {
 const mapStateToProps = (state: {
     MainReducer: {
         auth: { accessToken: string }
-        apps: { externalApps: ExternalApp[]; connectedApps: string[] }
+        apps: {
+            externalApps: ExternalApp[]
+            connectedApps: string[]
+        }
     }
 }) => {
     return {

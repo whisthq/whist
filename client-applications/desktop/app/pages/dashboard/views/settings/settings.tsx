@@ -73,7 +73,29 @@ const Settings = (props: { username: string; externalApps: ExternalApp[] }) => {
                 maxHeight: 525,
             }}
         >
-            <h2 className={styles.title}>Streaming</h2>
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                }}
+            >
+                <h2 className={styles.title}>Streaming</h2>
+                <div
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                        if (event.key === FractalKey.ENTER) {
+                            handleSave()
+                        }
+                    }}
+                    className={dashboardStyles.feedbackButton}
+                    style={{ width: 125, marginTop: 0 }}
+                    onClick={handleSave}
+                >
+                    Save
+                </div>
+            </div>
             <Row className={styles.row}>
                 <div style={{ width: "75%" }}>
                     <div className={styles.header}>
@@ -153,35 +175,20 @@ const Settings = (props: { username: string; externalApps: ExternalApp[] }) => {
                     </div>
                 </div>
             </Row>
-            {externalApps.length > -1 && <CloudStorage />}
             {showSavedAlert && (
-                <Row>
+                <Row className={styles.row}>
                     <Alert
                         variant="success"
                         onClose={() => setShowSavedAlert(false)}
                         dismissible
                         className={styles.alert}
+                        style={{ marginTop: 0 }}
                     >
-                        Your settings have been saved!
+                        Your streaming settings have been saved!
                     </Alert>
                 </Row>
             )}
-            <Row className={styles.row} style={{ justifyContent: "flex-end" }}>
-                <div
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
-                        if (event.key === FractalKey.ENTER) {
-                            handleSave()
-                        }
-                    }}
-                    className={dashboardStyles.feedbackButton}
-                    style={{ width: 125, marginTop: 25 }}
-                    onClick={handleSave}
-                >
-                    Save
-                </div>
-            </Row>
+            {externalApps.length > -1 && <CloudStorage />}
             {adminUsername && <AdminSettings />}
         </div>
     )
