@@ -1,4 +1,4 @@
-@import "/app.global.css";
+@import '/app.global.css';
 
 .alert {
     width: 100%;
@@ -35,7 +35,7 @@
 }
 
 .title {
-    font-family: "Maven Pro Medium";
+    font-family: 'Maven Pro Medium';
     letter-spacing: 1.1px;
     font-size: 25px;
 }
