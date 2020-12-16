@@ -213,14 +213,7 @@ awful.rules.rules = {
 -- Signal function to execute when a new client appears.
 
 manage_taskbar_visibility = function (c)
-  if c == nil then
-    naughty.notify({ preset = naughty.config.presets.normal,
-                     title = "Error in manage_taskbar_visibility",
-                     text = "c was nil!" })
-    return
-  end
-
-  local s = c.screen
+  local s = awful.screen.focused()
   local t = s.all_clients
 
   local length = 0
