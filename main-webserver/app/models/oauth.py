@@ -1,6 +1,10 @@
 """Data models for securely Fractal's third-party app credentials."""
 
+from datetime import datetime, timezone
+
 from flask import current_app
+from google_auth_oauthlib.flow import Flow
+from oauthlib.oauth2 import InvalidGrantError
 from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine, StringEncryptedType
 
 from ._meta import db
@@ -37,3 +41,45 @@ class Credential(db.Model):
     refresh_token = db.Column(StringEncryptedType(db.String, secret_key, AesEngine, "pkcs5"))
     token_type = db.Column(db.String(128), nullable=False)
     user_id = db.Column(db.ForeignKey("users.user_id"), nullable=False, primary_key=True)
+
+    def refresh(self, cleanup=True, force=False):
+        """Use this credential's refresh token to refresh the access token.
+
+        This method modifies the instance on which it is called in place.
+
+        Arguments:
+            cleanup: A boolean indicating whether or not to delete a credential that cannot be
+                refreshed from the database.
+            force: A boolean indiciating whether or not to refresh the access token even if its
+                expiration date has not yet passed.
+
+        Raises:
+            InvalidGrantError: The credential cannot be refreshed because the refresh token has
+                been revoked or has expired.
+        """
+
+        if force or self.expiry <= datetime.now(timezone.utc):
+            flow = Flow.from_client_config(current_app.config["GOOGLE_CLIENT_SECRET_OBJECT"], None)
+
+            try:
+                # The Flow class doesn't expose a refresh_token method directly, so we have to
+                # access the underlying OAuth2Session instance.
+                flow.oauth2session.refresh_token(
+                    flow.client_config["token_uri"],
+                    client_id=flow.client_config["client_id"],
+                    client_secret=flow.client_config["client_secret"],
+                    refresh_token=self.refresh_token,
+                )
+            except InvalidGrantError:
+                if cleanup:
+                    db.session.delete(self)
+                    db.session.commit()
+
+                raise
+
+            self.access_token = flow.credentials.token
+            self.expiry = flow.credentials.expiry
+            assert flow.credentials.refresh_token == self.refresh_token
+
+            db.session.add(self)
+            db.session.commit()
