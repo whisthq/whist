@@ -9,9 +9,8 @@ name: "Container Images: Acquire Unity Activation File"
 # we use, so we only run this workflow manually
 # For context, see: https://unity-ci.com/docs/github/activation
 on:
-    push:
-        branches:
-            - phil/unity-license
+    workflow_dispatch:
+    
 jobs:
     container-images-acquire-unity-activation-file:
         name: Acquire Unity Activation File and Upload as GitHub Artifact 🔑
@@ -23,7 +22,7 @@ jobs:
               id: getManualLicenseFile
               uses: webbertakken/unity-request-manual-activation-file@v1.1
               with:
-                  unityVersion: 2019.2.11f1 # change this version to match the one used in Unity containers
+                  unityVersion: 2019.2.11f1 # change this version to match the one used in the Fractal Unity containers
 
             # Upload artifact (Unity_v20XX.X.XXXX.alf)
             - name: Expose As GitHub Artifact
