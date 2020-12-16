@@ -1,26 +1,24 @@
-# NOTE: this name should be kept stable since workflow_dispatch callers may use it to
-# trigger this workflow.
-name: "Procedure: Branch Build"
+# workflows/protocol-build.yml
+#
+# Protocol: Build and Check Protocol
+# Builds the Fractal Protocol on Windows, macOS and Linux, and Run Tests
+
+name: "Protocol: Build and Check Protocool"
 
 on:
     pull_request:
-        types: [opened, reopened, synchronize]
-    # manual/api trigger
+        branches: [master, staging, dev]
     workflow_dispatch:
-        inputs:
-            ref:
-                description: ref to run against (eg. `refs/heads/BRANCH_NAME` or `refs/pull/PR_NUMBER`)
-                required: true
+
+
+
 
 env:
     CMAKE_VERSION: 3.16.4
     NINJA_VERSION: 1.9.0
     BUILD_TYPE: Debug
     CCACHE_VERSION: 3.7.7
-    SERVER_VM_NAME: crimsonbonus543
-    SERVER_VM_USER: Fractal
-    SERVER_VM_IP: 20.185.40.33
-    WEBSERVER_BASE_URL: https://main-webserver.tryfractal.com
+
 
 jobs:
     build:
@@ -70,10 +68,6 @@ jobs:
               with:
                   args: install "${{ env.working-directory }}\.github\choco-install.config" --force
 
-            - name: Install Python (for sentry download)
-              uses: actions/setup-python@v2
-              with:
-                  python-version: "3.8"
 
             - name: Install CUDA for windows
               working-directory: ${{env.working-directory}}
@@ -305,12 +299,3 @@ jobs:
                   #- name: Verify build with clang-tidy
                   #working-directory: ${{env.working-directory}}
                   #run: ./run-clang-tidy.sh -c
-
-            - name: Get latest sentry-cli
-              uses: mathrix-education/setup-sentry-cli@master
-            - name: Upload debug information to sentry
-              working-directory: ${{env.working-directory}}
-              run: |
-                  sentry-cli --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }} upload-dif -o fractal -p desktop-protocol --include-sources ${{ env.working-directory }}${{ matrix.config.client_artifact_relpath }}${{matrix.config.client_name}}
-              continue-on-error: true
-
