@@ -107,12 +107,6 @@ end)
 -- }}}
 
 clientkeys = gears.table.join(
-    awful.key({ modkey,           }, "f",
-        function (c)
-            c.fullscreen = not c.fullscreen
-            c:raise()
-        end,
-        {description = "toggle fullscreen", group = "client"}),
     awful.key({ modkey, "Shift"   }, "c",      function (c) c:kill()                         end,
               {description = "close", group = "client"}),
     awful.key({ modkey, "Control" }, "space",  awful.client.floating.toggle                     ,
@@ -214,6 +208,7 @@ client.connect_signal("manage", function (c)
 
     if c == awful.client.getmaster() then
       awful.titlebar.hide(c)
+      c.border_width = 0
     end
 end)
 
