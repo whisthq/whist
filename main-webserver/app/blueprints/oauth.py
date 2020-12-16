@@ -1,19 +1,15 @@
 """A blueprint for endpoints that allow users to manage connected applications."""
 
-import logging
-
 from collections import namedtuple
 from urllib.parse import urljoin
 
 import click
-import requests
 
 from flask import abort, Blueprint, current_app, jsonify, redirect, request, session, url_for
 from flask.views import MethodView
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from google_auth_oauthlib.flow import Flow
 
-from app.helpers.utils.general.logs import fractal_log
 from app.models import Credential, db, User
 from app.serializers.oauth import CredentialSchema
 
@@ -60,34 +56,7 @@ class ConnectedAppsAPI(MethodView):
             abort(400)
 
         for credential in user.credentials:
-            response = requests.post(
-                "https://oauth2.googleapis.com/revoke",
-                params={"token": credential.access_token},
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-            )
-
-            if response.ok:
-                log_kwargs = {
-                    "logs": f"Successfully revoked access token for user '{user.user_id}'.",
-                    "level": logging.INFO,
-                }
-            else:
-                log_kwargs = {
-                    "logs": (
-                        "Encountered an error while attempting to revoke access token for user "
-                        f"'{user.user_id}'. Has the token already been revoked?"
-                    ),
-                    "level": logging.WARNING,
-                }
-
-            fractal_log(
-                function=f"/connected_apps/{app_name}",
-                label=request.method,
-                **log_kwargs,
-            )
-            db.session.delete(credential)
-
-        db.session.commit()
+            credential.revoke()
 
         # TODO: It may be appropriate to return a status code of 204 here. Doing so would require
         # some changes to be made to the client application's apiDelete function.

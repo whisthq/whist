@@ -1,11 +1,17 @@
 """Data models for securely Fractal's third-party app credentials."""
 
+import logging
+
 from datetime import datetime, timezone
+
+import requests
 
 from flask import current_app
 from google_auth_oauthlib.flow import Flow
 from oauthlib.oauth2 import InvalidGrantError
 from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine, StringEncryptedType
+
+from app.helpers.utils.general.logs import fractal_log
 
 from ._meta import db
 
@@ -82,4 +88,42 @@ class Credential(db.Model):
             assert flow.credentials.refresh_token == self.refresh_token
 
             db.session.add(self)
+            db.session.commit()
+
+    def revoke(self, cleanup=True):
+        """Revoke the credential against the appropriate OAuth provider's servers.
+
+        Arguments:
+            cleanup: A boolean indicating whether or not to delete the credential from the
+                database.
+        """
+
+        response = requests.post(
+            "https://oauth2.googleapis.com/revoke",
+            params={"token": self.refresh_token},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+
+        if response.ok:
+            log_kwargs = {
+                "logs": f"Successfully revoked external API credential for user '{self.user_id}'.",
+                "level": logging.INFO,
+            }
+        else:
+            log_kwargs = {
+                "logs": (
+                    f"Encountered an error while attempting to revoke external API credential for "
+                    f"user '{self.user_id}': {response.text}"
+                ),
+                "level": logging.WARNING,
+            }
+
+        fractal_log(
+            function="Credential.revoke",
+            label=self.user_id,
+            **log_kwargs,
+        )
+
+        if cleanup:
+            db.session.delete(self)
             db.session.commit()

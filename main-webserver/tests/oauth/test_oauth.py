@@ -7,6 +7,8 @@ import pytest
 from app.models import db
 from app.blueprints.oauth import put_credential as _put_credential
 
+from ..patches import function
+
 
 @pytest.fixture
 def put_credential(user):
@@ -133,26 +135,26 @@ def test_list_connected_apps(client, make_credential):
 
 
 @pytest.mark.usefixtures("authorized")
-def test_disconnect_app(client, make_credential):
+def test_disconnect_app(client, make_credential, monkeypatch):
     """Disconnect an external application from the test user's Fractal account.
 
     Arguments:
         client: An instance of the Flask test client.
         make_credential: A function that adds test rows to the oauth.credentials table.
+        monkeypatch: The built-in monkeypatch test fixture.
     """
 
     # TODO: Patch over the request to revoke the test user's fake access token so it doesn't
     # actually get sent.
 
-    make_credential(cleanup=False)
+    credential = make_credential()
 
-    first_response = client.delete("/connected_apps/google_drive")
+    monkeypatch.setattr(credential, "revoke", function())
 
-    assert first_response.status_code == 200
+    response = client.delete("/connected_apps/google_drive")
 
-    second_response = client.get("/connected_apps")
-
-    assert second_response.json == {"app_names": []}
+    assert response.status_code == 200
+    assert response.json == {}
 
 
 @pytest.mark.usefixtures("authorized")
