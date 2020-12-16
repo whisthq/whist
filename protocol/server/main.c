@@ -120,6 +120,9 @@ int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
 
+volatile bool update_window_name;
+char window_name[32];
+
 /*
 ============================
 Private Functions
@@ -284,6 +287,29 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
     VideoEncoder* encoder = (VideoEncoder*)opaque;
     destroy_video_encoder(encoder);
     return 0;
+}
+
+// TODO(anton) refactor these
+// (XFetchName cannot get a name with multi-byte chars)
+void get_window_name(Display* d, Window w, char* name, size_t len) {
+    XTextProperty prop;
+    Status s;
+
+    s = XGetWMName(d, w, &prop);  // see man
+    if (s) {
+        int count = 0, result;
+        char** list = NULL;
+        result = XmbTextPropertyToTextList(d, &prop, &list, &count);  // see man
+        if (result == Success) {
+            LOG_INFO("window name: %s\n", list[0]);
+            strncpy(name, list[0], len);
+            name[len - 1] = '\0';
+        } else {
+            LOG_ERROR("window name: ERROR: XmbTextPropertyToTextList\n");
+        }
+    } else {
+        LOG_ERROR("window name: ERROR: XGetWMName\n");
+    }
 }
 
 int32_t send_video(void* opaque) {
@@ -661,6 +687,19 @@ int32_t send_video(void* opaque) {
                     // get_timer(server_frame_timer); mprintf("Server Frame
                     // Time for ID %d: %f\n", id, server_frame_time);
                 }
+            }
+        }
+
+        // TODO(anton) Check if window title has changed
+        if (device) {
+            Window focus;
+            int revert;
+            XGetInputFocus(device->display, &focus, &revert);
+            char name[32];
+            get_window_name(device->display, focus, name, 32);
+            if (strcmp(name, window_name) != 0) {
+                strncpy(window_name, name, 32);
+                update_window_name = true;
             }
         }
     }
@@ -1361,27 +1400,27 @@ int main(int argc, char* argv[]) {
         }
 
         // TODO(anton) actually check if window title should be updated
-        if (true) {
-            LOG_INFO("Sending window title to client!");
-            char test_title[11] = "test title";
-            test_title[10] = 0;
-            size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(test_title);
+        if (update_window_name) {
+            // LOG_INFO("Sending window title to client!");
+            size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(window_name);
             FractalServerMessage* fmsg_response = malloc(fsmsg_size);
             fmsg_response->type = SMESSAGE_WINDOW_TITLE;
-            memcpy(&fmsg_response->window_title, test_title, sizeof(test_title));
+            memcpy(&fmsg_response->window_title, window_name, sizeof(window_name));
             if (read_lock(&is_active_rwlock) != 0) {
                 LOG_ERROR("Failed to read-acquire is active RW lock.");
             } else {
                 if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response, fsmsg_size) < 0) {
                     LOG_WARNING("Could not broadcast window title Message");
                 } else {
-                    LOG_INFO("Sent window title message!");
+                    // LOG_INFO("Sent window title message!");
                 }
                 if (read_unlock(&is_active_rwlock) != 0) {
                     LOG_ERROR("Failed to read-release is active RW lock.");
                 }
             }
             free(fmsg_response);
+            // TODO(anton) fix this race
+            update_window_name = false;
         }
 
         if (get_timer(last_ping_check) > 20.0) {
