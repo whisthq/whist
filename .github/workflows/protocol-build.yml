@@ -3,7 +3,7 @@
 # Protocol: Build and Check Protocol
 # Builds the Fractal Protocol on Windows, macOS and Linux, and Run Tests
 
-name: "Protocol: Build and Check Protocool"
+name: "Protocol: Build and Check Protocol"
 
 on:
     pull_request:
@@ -18,13 +18,13 @@ jobs:
         # Platforms to build on/for
         strategy:
             matrix:
-                config: 
-                  - name: "Build and Check Protocol on Windows (cl)"
-                    os: windows-2016
-                  - name: "Build and Check Protocol on Linux Ubuntu (gcc)"
-                    os: ubuntu-18.04
-                  - name: "Build and Check Protocol on macOS (clang)"
-                    os: macos-10.14
+                config:
+                    - name: "Build and Check Protocol on Windows (cl)"
+                      os: windows-2016
+                    - name: "Build and Check Protocol on Linux Ubuntu (gcc)"
+                      os: ubuntu-18.04
+                    - name: "Build and Check Protocol on macOS (clang)"
+                      os: macos-10.14
 
         steps:
             - name: Checkout Git Repository
@@ -99,7 +99,7 @@ jobs:
                   cmake . -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles"
                   nmake FractalClient
                   cd ~
-  
+
             - name: Build Protocol Client on macOS/Linux Ubuntu
               if: runner.os == 'macOS' || runner.os == 'Linux'
               env:
@@ -123,8 +123,7 @@ jobs:
             - name: Verify Build(s) with clang-tidy
               shell: bash
               run: |
-                cd protocol/
-                ./run-clang-tidy.sh -c
-                cd ~
-
+                  cd protocol/
+                  ./run-clang-tidy.sh -c
+                  cd ~
             # TODO: still want to run cppcheck too!
