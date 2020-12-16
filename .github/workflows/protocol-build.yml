@@ -36,11 +36,11 @@ jobs:
 
             ############################# Windows Configuration Steps START #############################
 
-            - name: Install cppcheck, llvm (clang-tidy) via Chocolatey on Windows GHA Machine
+            - name: Install cppcheck, llvm (clang-tidy), yq (for clang-tidy) via Chocolatey on Windows GHA Machine
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
               with:
-                  args: install cppcheck llvm
+                  args: install cppcheck llvm yq
 
             - name: Install CUDA on Windows GHA Machine
               if: runner.os == 'Windows'
@@ -85,9 +85,16 @@ jobs:
             # cmake is already installed on GHA Machines
 
             - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
-              if: runner.os == 'Linux'
+              if: runner.os == 'macOS' || runner.os == 'Linux'
               run: |
-                  ./protocol/desktop/linux-client-setup.sh
+                  if [ "$RUNNER_OS" == "Linux" ]; then
+                      ./protocol/desktop/linux-client-setup.sh
+
+                      # install yq for clang-tidy
+                      apt-get install yq
+                  else
+                      brew install yq
+                  fi
 
             ############################# Unix Configuration Steps END #############################
 
@@ -127,3 +134,4 @@ jobs:
                   ./run-clang-tidy.sh -c
                   cd ~
             # TODO: still want to run cppcheck too!
+            # TODO: install yq for clang-tidy
