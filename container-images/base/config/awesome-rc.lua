@@ -233,17 +233,30 @@ manage_taskbar_visibility = function (c)
 end
 
 
+show_master_window = function (c)
+  local m = awful.client.getmaster()
+  naughty.notify( { preset = naughty.config.presets.normal,
+                    title = "Master window is now",
+                    text = m.name })
+end
+
+
 client.connect_signal("manage", function (c)
     -- Set the windows at the slave,
     -- i.e. put it at the end of others instead of setting it master.
     -- if not awesome.startup then awful.client.setslave(c) end
     manage_taskbar_visibility(c)
+    show_master_window(c)
     awful.placement.no_offscreen(c, {honor_workarea=true})
 end)
 
 client.connect_signal("unmanage", function (c)
     manage_taskbar_visibility(c)
+    show_master_window(c)
 end)
+
+client.connect_signal("property::size", show_master_window)
+client.connect_signal("property::position", show_master_window)
 
 
 -- Add a titlebar if titlebars_enabled is set to true in the rules.
