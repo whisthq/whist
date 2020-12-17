@@ -174,9 +174,11 @@ end
 
 show_master_window = function (c)
   local m = awful.client.getmaster()
-  naughty.notify( { preset = naughty.config.presets.normal,
-                    title = "Master window is now",
-                    text = m.name })
+  if m ~= nil then
+    naughty.notify( { preset = naughty.config.presets.normal,
+                      title = "Master window is now",
+                      text = m.name })
+  end
 end
 
 notify = function (title, text)
@@ -214,6 +216,10 @@ end
 
 
 ensure_client_is_not_offscreen = function (c)
+  -- https://awesomewm.org/doc/api/classes/client.html#client.valid
+  local is_valid = pcall(function() return c.valid end) and c.valid
+  if not is_valid then return end
+
   -- make sure master takes up the whole screen
   if c == awful.client.getmaster() then
     awful.titlebar.hide(c)
