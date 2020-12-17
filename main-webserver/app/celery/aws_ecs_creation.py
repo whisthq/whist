@@ -148,7 +148,7 @@ def _mount_cloud_storage(user, container):
                     }
                 else:
                     log_kwargs = {
-                        "logs": "Cloud storage folder failed to mount: {response.text}",
+                        "logs": f"Cloud storage folder failed to mount: {response.text}",
                         "level": logging.ERROR,
                     }
     else:
@@ -199,7 +199,7 @@ def _pass_start_dpi_to_instance(ip, port, dpi):
             }
         else:
             log_kwargs = {
-                "logs": "Received unsuccessful set-DPI response: {response.text}",
+                "logs": f"Received unsuccessful set-DPI response: {response.text}",
                 "level": logging.ERROR,
             }
 
