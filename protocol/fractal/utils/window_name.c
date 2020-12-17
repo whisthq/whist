@@ -84,6 +84,15 @@ void get_window_name(Display* d, Window w, char* name_return) {
 }
 
 int window_name_listener(void* opaque) {
+    /*
+     * Polls the name of the window in focus, and writes the result to window_name.
+     *
+     * TODO(anton) I originally tried an approach using XSelectInput to listen for specific events
+     * that indicate that the window name has changed. However, I could not get that approach to
+     * work for certain applications like Notion. I ran into issues with setting up the listener to
+     * be notified for events from all relevant windows. In the future, it might be worth revisiting
+     * for better performance.
+     */
     Display* display = XOpenDisplay(NULL);
     Window focus;
     int revert;
