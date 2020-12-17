@@ -6,14 +6,17 @@
 Usage
 ============================
 
-TODO
+init_window_name_listener();
+
+char name[WINDOW_NAME_MAXLEN];
+get_focused_window_name(name);
 */
 
 #if defined(_WIN32)
 // TODO(anton) implement functionality for windows servers
 void init_window_name_listener() {}
 void get_focused_window_name(char* name) {}
-#else
+#else  // linux
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <stdbool.h>
@@ -34,7 +37,7 @@ void init_window_name_listener() {
         SDL_CreateThread(window_name_listener, "window_name_listener", NULL);
 }
 
-void get_focused_window_name(char* name) {
+void get_focused_window_name(char* name_return) {
     /*
      * Get the name of the focused window.
      *
@@ -42,12 +45,12 @@ void get_focused_window_name(char* name) {
      *     name (char*): pointer to location to write name
      */
     SDL_LockMutex(window_name_mutex);
-    strncpy(name, window_name, WINDOW_NAME_MAXLEN);
+    strncpy(name_return, window_name, WINDOW_NAME_MAXLEN);
     SDL_UnlockMutex(window_name_mutex);
 }
 
 // https://gist.github.com/kui/2622504
-void get_window_name(Display* d, Window w, char* name) {
+void get_window_name(Display* d, Window w, char* name_return) {
     XTextProperty prop;
     Status s;
 
@@ -58,8 +61,8 @@ void get_window_name(Display* d, Window w, char* name) {
         result = XmbTextPropertyToTextList(d, &prop, &list, &count);  // see man
         if (result == Success) {
             LOG_INFO("window name: %s\n", list[0]);
-            strncpy(name, list[0], WINDOW_NAME_MAXLEN);
-            name[WINDOW_NAME_MAXLEN - 1] = '\0';
+            strncpy(name_return, list[0], WINDOW_NAME_MAXLEN);
+            name_return[WINDOW_NAME_MAXLEN - 1] = '\0';
             XFreeStringList(list);
         } else {
             LOG_ERROR("window name: XmbTextPropertyToTextList\n");
@@ -74,15 +77,17 @@ int window_name_listener(void* opaque) {
     Display* display = XOpenDisplay(NULL);
     Window focus;
     int revert;
+    XGetInputFocus(display, &focus, &revert);
+    XSelectInput(display, focus, PropertyChangeMask);  // listen for property changes
+    XEvent event;
+    Atom wm_name = XInternAtom(display, "_NET_WM_NAME", false);
     while (true) {
-        XGetInputFocus(display, &focus, &revert);
-        char name[WINDOW_NAME_MAXLEN];
-        get_window_name(display, focus, name);
-        SDL_LockMutex(window_name_mutex);
-        if (strcmp(name, window_name) != 0) {
-            strncpy(window_name, name, WINDOW_NAME_MAXLEN);
+        XNextEvent(display, &event);
+        if (event.xproperty.atom == wm_name) {
+            SDL_LockMutex(window_name_mutex);
+            get_window_name(display, focus, window_name);
+            SDL_UnlockMutex(window_name_mutex);
         }
-        SDL_UnlockMutex(window_name_mutex);
         SDL_Delay(100);
     }
     return 0;
