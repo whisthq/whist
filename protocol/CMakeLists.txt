@@ -265,11 +265,11 @@ include_directories(sentry-native/include)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
-if (${BUILD_CLIENT} MATCHES "ON")
-    message(STATUS building client)
+if (${BUILD_CLIENT} MATCHES ON)
+    message(STATUS "building client")
     add_subdirectory(desktop)
 endif()
-if (${BUILD_SERVER} MATCHES "ON" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") #Server does not ever build on macos
-    message(STATUS building server)
+if (${BUILD_SERVER} MATCHES ON AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") #Server does not ever build on macos
+    message(STATUS "building server")
     add_subdirectory(server)
 endif()
