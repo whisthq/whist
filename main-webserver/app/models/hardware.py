@@ -46,7 +46,10 @@ class ClusterInfo(db.Model):
     maxContainers = db.Column(db.Integer, nullable=False, default=0)
     status = db.Column(db.String(250), nullable=False)
     containers = relationship(
-        "UserContainer", back_populates="parent_cluster", lazy="dynamic", passive_deletes=True,
+        "UserContainer",
+        back_populates="parent_cluster",
+        lazy="dynamic",
+        passive_deletes=True,
     )
 
 
@@ -89,7 +92,7 @@ class AppsToInstall(db.Model):
 
 class RegionToAmi(db.Model):
     """
-    This class represents the region_to_ami table in the hardware schema
+    This class represents the region_to_ami table in hardware
     it maps region names to the AMIs which should be used
     for clusters in that region
     """
@@ -115,7 +118,10 @@ class SupportedAppImages(db.Model):
     active = db.Column(db.Boolean, nullable=False, default=False)
     preboot_number = db.Column(db.Integer, nullable=False)
     containers = relationship(
-        "UserContainer", back_populates="app", lazy="dynamic", passive_deletes=True,
+        "UserContainer",
+        back_populates="app",
+        lazy="dynamic",
+        passive_deletes=True,
     )
 
 
