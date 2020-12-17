@@ -268,12 +268,12 @@ end)
 client.connect_signal("unmanage", function (c)
     notify("unmanaged", "class: " .. c.class .. " name: " .. c.name)
 
-    local length = 0
+    local numclients = 0
     for k, v in pairs(awful.screen.focused().all_clients) do
-      length = length + 1
+      numclients = numclients + 1
     end
 
-    if length == 0 and c.class == "Google-chrome" then
+    if numclients == 0 and c.class == "Google-chrome" then
       awful.spawn("google-chrome", {focus = true, skip_taskbar = true, titlebars_enabled = false, below = true})
 
       notify("replacement", "spawned")
