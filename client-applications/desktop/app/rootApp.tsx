@@ -50,8 +50,6 @@ const RootApp = (props: {
     const [needsUpdate, setNeedsUpdate] = useState(false)
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [launched, setLaunched] = useState(false)
-    const [accessTokenRetrieved, setAccessTokenRetrieved] = useState(false)
-    const [urlReceived, setUrlReceived] = useState(false)
 
     const { data } = useQuery(GET_FEATURED_APPS)
 
@@ -118,8 +116,6 @@ const RootApp = (props: {
             dispatch(updateAuth({ candidateAccessToken: localAccessToken }))
             dispatch(validateAccessToken(localAccessToken))
         }
-
-        setAccessTokenRetrieved(true)
     }, [])
 
     useEffect(() => {
@@ -152,13 +148,6 @@ const RootApp = (props: {
         updatePingReceived,
         needsUpdate,
     ])
-
-    // Wait two seconds to allow for fractal:// to be detected
-    useEffect(() => {
-        setTimeout(() => {
-            setUrlReceived(true)
-        }, 3000)
-    }, [])
 
     // If there's an update, redirect to update screen
     useEffect(() => {
@@ -233,12 +222,7 @@ const RootApp = (props: {
                     path={FractalRoute.ONBOARD_STORAGE}
                     component={Storage}
                 />
-                <Route
-                    path={FractalRoute.LOGIN}
-                    component={() => (
-                        <Login loaded={accessTokenRetrieved && urlReceived} />
-                    )}
-                />
+                <Route path={FractalRoute.LOGIN} component={Login} />
             </Switch>
         </div>
     )

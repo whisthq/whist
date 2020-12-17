@@ -8,19 +8,16 @@
 }
 
 .loginButton {
-    font-family: 'Maven Pro';
+    font-family: 'Maven Pro Medium';
     border: solid 0.8px #cccccc;
     background: white;
-    font-weight: bold;
     padding: 12px 30px;
     color: var(--primary-text-color);
-    margin-left: 10px;
     font-size: 15px;
     outline: none !important;
+    width: 350px;
 }
 
-.loginButton {
-    margin-left: 0px;
-    width: 350px;
+.loginButton:hover {
     background: var(--accent-color);
 }
