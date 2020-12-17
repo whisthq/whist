@@ -151,6 +151,13 @@ awful.rules.rules = {
 
 
 -- {{{ Signals
+notify = function (title, text)
+  naughty.notify( { preset = naughty.config.presets.normal,
+                    title = "" .. title,
+                    text = "" .. text })
+end
+
+
 manage_taskbar_visibility = function (c)
   local s = awful.screen.focused()
   local t = s.all_clients
@@ -160,9 +167,7 @@ manage_taskbar_visibility = function (c)
     length = length + 1
   end
 
-  naughty.notify({ preset = naughty.config.presets.normal,
-                   title = "List event triggered",
-                   text = "There were " .. length .. " clients on this screen." })
+  notify("List event triggered", "There were " .. length .. " clients on this screen.")
 
   if length <= 1 then
     s.mywibox.visible = false
@@ -172,19 +177,11 @@ manage_taskbar_visibility = function (c)
 end
 
 
-show_master_window = function (c)
+show_master_window = function ()
   local m = awful.client.getmaster()
   if m ~= nil then
-    naughty.notify( { preset = naughty.config.presets.normal,
-                      title = "Master window is now",
-                      text = m.name })
+    notify("Master window is now", m.name)
   end
-end
-
-notify = function (title, text)
-  naughty.notify( { preset = naughty.config.presets.normal,
-                    title = "" .. title,
-                    text = "" .. text })
 end
 
 function serializeTable(val, name, skipnewlines, depth)
@@ -260,7 +257,7 @@ client.connect_signal("manage", function (c)
     if not awesome.startup then awful.client.setslave(c) end
 
     manage_taskbar_visibility(c)
-    show_master_window(c)
+    show_master_window()
     awful.placement.no_offscreen(c, {honor_workarea=true})
 
     ensure_client_is_not_offscreen(c)
@@ -269,7 +266,7 @@ end)
 client.connect_signal("unmanage", function (c)
     manage_taskbar_visibility(c)
     ensure_client_is_not_offscreen(awful.client.getmaster())
-    show_master_window(c)
+    show_master_window()
 end)
 
 client.connect_signal("request::geometry", function (client, context, extra_args)
