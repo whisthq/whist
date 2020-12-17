@@ -1368,14 +1368,15 @@ int main(int argc, char* argv[]) {
 
         char name[WINDOW_NAME_MAXLEN];
         get_focused_window_name(name);
-        if (strcmp(name, window_name) != 0 || client_joined_after_window_name_broadcast) {
+        if (strcmp(name, window_name) != 0 ||
+            (client_joined_after_window_name_broadcast && name[0] != '\0')) {
             // TODO(anton) fix race condition
             // There is a race condition if a new client joins after the main thread enters this if
             // block but before client_joined_after... gets set back to false. However, this race
             // condition is relatively benign as the client's window name will say "Fractal" instead
             // of the correct name, so it doesn't seem worth fixing right now.
             client_joined_after_window_name_broadcast = false;
-            LOG_INFO("Sending window title to client!");
+            LOG_INFO("Sending window title to client: '%s'\n", name);
             size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
             FractalServerMessage* fmsg_response = malloc(fsmsg_size);
             fmsg_response->type = SMESSAGE_WINDOW_TITLE;
