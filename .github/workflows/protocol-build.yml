@@ -93,6 +93,7 @@ jobs:
 
                       # install yq for clang-tidy
                       sudo snap install yq
+                      sudo apt install clang-tidy -y
                   else
                       brew install yq
                   fi
@@ -134,5 +135,4 @@ jobs:
                   cd protocol/
                   ./run-clang-tidy.sh -c
                   cd ~
-            # TODO: still want to run cppcheck too!
-            # TODO: install yq for clang-tidy
+
