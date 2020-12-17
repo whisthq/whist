@@ -50,7 +50,7 @@ def _callback_webserver_hostname():
 
     return (
         request.host
-        if request.host not in ("localhost", "127.0.0.1")
+        if not any((host in request.host for host in ("localhost", "127.0.0.1")))
         else "fractal-dev-server.herokuapp.com"
     )
 
