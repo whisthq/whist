@@ -157,7 +157,7 @@ notify = function (title, text)
 end
 
 
-manage_taskbar_visibility = function (c)
+manage_taskbar_visibility = function ()
   local s = awful.screen.focused()
   local t = s.all_clients
 
@@ -252,11 +252,13 @@ end
 
 
 client.connect_signal("manage", function (c)
+    notify("managed", "class: " .. c.class .. " name: " .. c.name)
+
     -- Set the windows at the slave,
     -- i.e. put it at the end of others instead of setting it master.
     if not awesome.startup then awful.client.setslave(c) end
 
-    manage_taskbar_visibility(c)
+    manage_taskbar_visibility()
     show_master_window()
     awful.placement.no_offscreen(c, {honor_workarea=true})
 
@@ -264,7 +266,23 @@ client.connect_signal("manage", function (c)
 end)
 
 client.connect_signal("unmanage", function (c)
-    manage_taskbar_visibility(c)
+    notify("unmanaged", "class: " .. c.class .. " name: " .. c.name)
+
+    local length = 0
+    for k, v in pairs(awful.screen.focused().all_clients) do
+      length = length + 1
+    end
+
+    if length == 0 and c.class == "Google-chrome" then
+      awful.spawn("google-chrome", {focus = true, skip_taskbar = true, titlebars_enabled = false, below = true})
+
+      notify("replacement", "spawned")
+      mouse.coords({ x = 100, y = 100})
+      root.fake_input('button_press', 1)
+      root.fake_input('button_release', 1)
+    end
+
+    manage_taskbar_visibility()
     ensure_client_is_not_offscreen(awful.client.getmaster())
     show_master_window()
 end)
