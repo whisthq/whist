@@ -4,6 +4,7 @@ from app.models import (
     Banners,
     ClusterInfo,
     InstallCommand,
+    RegionToAmi,
     SupportedAppImages,
     UserContainer,
 )
@@ -34,6 +35,11 @@ class AppsToInstallSchema(ma.SQLAlchemyAutoSchema):
 class SupportedAppImagesSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SupportedAppImages
+
+
+class RegionToAmiSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = RegionToAmi
 
 
 class BannersSchema(ma.SQLAlchemyAutoSchema):

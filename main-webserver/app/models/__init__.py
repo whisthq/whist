@@ -8,6 +8,7 @@ from .hardware import (
     ClusterInfo,
     InstallCommand,
     UserContainer,
+    RegionToAmi,
     SortedClusters,
     SupportedAppImages,
 )
