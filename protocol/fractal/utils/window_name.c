@@ -17,7 +17,7 @@ get_focused_window_name(name);
 void init_window_name_listener() {}
 void destroy_window_name_listener() {}
 void get_focused_window_name(char* name_return) {}
-#else  // linux
+#elif __linux__
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <stdbool.h>

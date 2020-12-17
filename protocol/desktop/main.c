@@ -58,6 +58,7 @@ volatile char hex_aes_private_key[33];
 volatile int connection_id;
 volatile SDL_Window* window;
 volatile char* window_title;
+volatile bool should_update_window_title;
 volatile bool run_receive_packets;
 volatile bool run_send_clipboard_packets;
 volatile bool is_timing_latency;
@@ -653,9 +654,14 @@ int main(int argc, char* argv[]) {
             }
 
             // Check if window title should be updated
-            if (window_title != 0) {
-                SDL_SetWindowTitle(window, window_title);
-                window_title = 0;
+            if (should_update_window_title) {
+                if (window_title) {
+                    SDL_SetWindowTitle(window, window_title);
+                    free(window_title);
+                } else {
+                    LOG_ERROR("Window Title should not be null!");
+                }
+                should_update_window_title = false;
             }
 
             if (get_timer(keyboard_sync_timer) > 50.0 / MS_IN_SECOND) {
