@@ -13,7 +13,14 @@ from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.helpers.utils.general.sql_commands import fractal_sql_update
-from app.models import db, UserContainer, ClusterInfo, SortedClusters, SupportedAppImages
+from app.models import (
+    db,
+    UserContainer,
+    ClusterInfo,
+    SortedClusters,
+    SupportedAppImages,
+    RegionToAmi,
+)
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 
 from app.helpers.utils.datadog.events import (
@@ -25,15 +32,6 @@ MAX_POLL_ITERATIONS = 20
 
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
-
-# all amis support ecs-host-service
-region_to_ami = {
-    "us-east-1": "ami-0ff621efe35407b94",
-    "us-east-2": "ami-09ca6dce71a870c6e",
-    "us-west-1": "ami-0914e92a46ab8f546",
-    "us-west-2": "ami-0ef2d9c97b2425bfc",
-    "ca-central-1": "ami-0fe17e1f98a492a2f",
-}
 
 
 def build_base_from_image(image):
@@ -136,6 +134,11 @@ def select_cluster(region_name):
     Returns: a valid cluster name.
 
     """
+
+    all_regions = RegionToAmi.query.all()
+
+    region_to_ami = {region.region_name: region.ami_id for region in all_regions}
+
     all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
     base_len = 2
