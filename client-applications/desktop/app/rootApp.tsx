@@ -10,10 +10,16 @@ import Update from "pages/update/update"
 import Welcome from "pages/onboard/welcome"
 import Apps from "pages/onboard/apps"
 import Installing from "pages/onboard/installing"
+import Storage from "pages/onboard/storage"
 
 import { history } from "store/history"
 import { createContainer, validateAccessToken } from "store/actions/sideEffects"
-import { updateClient, updateContainer, updateAuth } from "store/actions/pure"
+import {
+    updateClient,
+    updateContainer,
+    updateAuth,
+    updateApps,
+} from "store/actions/pure"
 import { setAWSRegion } from "shared/utils/files/exec"
 import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
@@ -29,15 +35,21 @@ const RootApp = (props: {
     dpi: number
     username: string
     accessToken: string
+    connectedApps: string[]
     dispatch: Dispatch<any>
 }) => {
-    const { launches, launchURL, clientOS, dpi, dispatch } = props
+    const {
+        launches,
+        launchURL,
+        clientOS,
+        dpi,
+        connectedApps,
+        dispatch,
+    } = props
 
     const [needsUpdate, setNeedsUpdate] = useState(false)
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [launched, setLaunched] = useState(false)
-    const [accessTokenRetrieved, setAccessTokenRetrieved] = useState(false)
-    const [urlReceived, setUrlReceived] = useState(false)
 
     const { data } = useQuery(GET_FEATURED_APPS)
 
@@ -66,8 +78,11 @@ const RootApp = (props: {
                 const urlObj = new URL(customURL.toString())
                 urlObj.protocol = "https"
 
-                // Check to see if this is an auth request
+                // Check to see if this is an auth request or an external app authentication
                 localAccessToken = urlObj.searchParams.get("accessToken")
+                const authenticatedApp = urlObj.searchParams.get(
+                    "successfully_authenticated"
+                )
                 if (localAccessToken) {
                     dispatch(
                         updateAuth({
@@ -75,6 +90,20 @@ const RootApp = (props: {
                         })
                     )
                     dispatch(validateAccessToken(localAccessToken))
+                } else if (authenticatedApp) {
+                    if (connectedApps.indexOf(authenticatedApp) === -1) {
+                        const newConnectedApps = Object.assign(
+                            [],
+                            connectedApps
+                        )
+                        newConnectedApps.push(authenticatedApp)
+                        dispatch(
+                            updateApps({
+                                connectedApps: newConnectedApps,
+                                authenticated: authenticatedApp,
+                            })
+                        )
+                    }
                 } else {
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
                 }
@@ -87,8 +116,6 @@ const RootApp = (props: {
             dispatch(updateAuth({ candidateAccessToken: localAccessToken }))
             dispatch(validateAccessToken(localAccessToken))
         }
-
-        setAccessTokenRetrieved(true)
     }, [])
 
     useEffect(() => {
@@ -121,13 +148,6 @@ const RootApp = (props: {
         updatePingReceived,
         needsUpdate,
     ])
-
-    // Wait two seconds to allow for fractal:// to be detected
-    useEffect(() => {
-        setTimeout(() => {
-            setUrlReceived(true)
-        }, 3000)
-    }, [])
 
     // If there's an update, redirect to update screen
     useEffect(() => {
@@ -199,11 +219,10 @@ const RootApp = (props: {
                     component={Installing}
                 />
                 <Route
-                    path={FractalRoute.LOGIN}
-                    component={() => (
-                        <Login loaded={accessTokenRetrieved && urlReceived} />
-                    )}
+                    path={FractalRoute.ONBOARD_STORAGE}
+                    component={Storage}
                 />
+                <Route path={FractalRoute.LOGIN} component={Login} />
             </Switch>
         </div>
     )
@@ -224,6 +243,9 @@ const mapStateToProps = (state: {
             clientOS: string
             dpi: number
         }
+        apps: {
+            connectedApps: string[]
+        }
     }
 }) => {
     return {
@@ -234,6 +256,7 @@ const mapStateToProps = (state: {
         launchURL: state.MainReducer.container.launchURL,
         clientOS: state.MainReducer.client.clientOS,
         dpi: state.MainReducer.client.dpi,
+        connectedApps: state.MainReducer.apps.connectedApps,
     }
 }
 

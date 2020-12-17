@@ -86,8 +86,7 @@ button {
     padding-top: 11px;
 }
 
-.signupButton:hover,
-.loginButton:hover {
+.signupButton:hover {
     background: #93f1d9;
     border: solid 0.8px #93f1d9;
     cursor: pointer;

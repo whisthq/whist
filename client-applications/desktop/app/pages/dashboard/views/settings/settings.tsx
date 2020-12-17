@@ -1,28 +1,32 @@
 /* eslint-disable import/no-named-as-default */
 
-import { Row, Alert } from "react-bootstrap"
 import React, { useState, useEffect, KeyboardEvent } from "react"
-import { connect } from "react-redux"
-import ToggleButton from "react-toggle-button"
-import Slider from "react-input-slider"
+import { Row, Alert } from "react-bootstrap"
 import { FaWifi, FaNetworkWired } from "react-icons/fa"
+import { connect } from "react-redux"
+import Slider from "react-input-slider"
+import ToggleButton from "react-toggle-button"
+
+import AdminSettings from "pages/dashboard/components/admin/adminSettings"
+import CloudStorage from "pages/dashboard/components/cloudStorage/cloudStorage"
+import styles from "pages/dashboard/views/settings/settings.css"
+import dashboardStyles from "pages/dashboard/dashboard.css"
 
 import { FractalClientCache } from "shared/types/cache"
 import FractalKey from "shared/types/input"
+import { ExternalApp } from "store/reducers/types"
 
-import styles from "pages/dashboard/views/settings/settings.css"
-import dashboardStyles from "pages/dashboard/dashboard.css"
-import AdminSettings from "pages/dashboard/components/admin/adminSettings"
+const Settings = (props: { username: string; externalApps: ExternalApp[] }) => {
+    const { username, externalApps } = props
 
-const Settings = <T extends {}>(props: T) => {
     const [lowInternetMode, setLowInternetMode] = useState(false)
     const [bandwidth, setBandwidth] = useState(500)
     const [showSavedAlert, setShowSavedAlert] = useState(false)
 
     const adminUsername =
-        props.username &&
-        props.username.indexOf("@") > -1 &&
-        props.username.split("@")[1] === "tryfractal.com"
+        username &&
+        username.indexOf("@") > -1 &&
+        username.split("@")[1] === "tryfractal.com"
 
     useEffect(() => {
         const Store = require("electron-store")
@@ -69,6 +73,29 @@ const Settings = <T extends {}>(props: T) => {
                 maxHeight: 525,
             }}
         >
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                }}
+            >
+                <h2 className={styles.title}>Streaming</h2>
+                <div
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                        if (event.key === FractalKey.ENTER) {
+                            handleSave()
+                        }
+                    }}
+                    className={dashboardStyles.feedbackButton}
+                    style={{ width: 125, marginTop: 0 }}
+                    onClick={handleSave}
+                >
+                    Save
+                </div>
+            </div>
             <Row className={styles.row}>
                 <div style={{ width: "75%" }}>
                     <div className={styles.header}>
@@ -101,12 +128,7 @@ const Settings = <T extends {}>(props: T) => {
                     </div>
                 </div>
             </Row>
-            <Row
-                className={styles.row}
-                style={{
-                    marginBottom: 25,
-                }}
-            >
+            <Row className={styles.row}>
                 <div style={{ width: "75%" }}>
                     <div className={styles.header}>
                         <FaNetworkWired className={styles.faIcon} />
@@ -154,47 +176,33 @@ const Settings = <T extends {}>(props: T) => {
                 </div>
             </Row>
             {showSavedAlert && (
-                <Row>
+                <Row className={styles.row}>
                     <Alert
                         variant="success"
                         onClose={() => setShowSavedAlert(false)}
                         dismissible
                         className={styles.alert}
+                        style={{ marginTop: 0 }}
                     >
-                        Your settings have been saved!
+                        Your streaming settings have been saved!
                     </Alert>
                 </Row>
             )}
-            <Row style={{ justifyContent: "flex-end" }}>
-                <div
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
-                        if (event.key === FractalKey.ENTER) {
-                            handleSave()
-                        }
-                    }}
-                    className={dashboardStyles.feedbackButton}
-                    style={{ width: 110, marginTop: 25 }}
-                    onClick={handleSave}
-                >
-                    Save
-                </div>
-            </Row>
-            {adminUsername && (
-                <AdminSettings
-                    dispatch={props.dispatch}
-                    adminState={props.adminState}
-                />
-            )}
+            {externalApps.length > -1 && <CloudStorage />}
+            {adminUsername && <AdminSettings />}
         </div>
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T) => {
+const mapStateToProps = (state: {
+    MainReducer: {
+        auth: { username: string }
+        apps: { externalApps: ExternalApp[] }
+    }
+}) => {
     return {
         username: state.MainReducer.auth.username,
-        adminState: state.MainReducer.admin,
+        externalApps: state.MainReducer.apps.externalApps,
     }
 }
 

@@ -5,12 +5,11 @@ import TitleBar from "shared/components/titleBar"
 import Version from "shared/components/version"
 import BackgroundView from "shared/views/backgroundView"
 import LoginView from "pages/login/views/loginView/loginView"
-import { PuffAnimation } from "shared/components/loadingAnimations"
 
 import styles from "pages/login/login.css"
 
-const Login = (props: { loginWarning: string; loaded: boolean }) => {
-    const { loginWarning, loaded } = props
+const Login = (props: { loginWarning: string }) => {
+    const { loginWarning } = props
 
     return (
         <div className={styles.container} data-tid="container">
@@ -22,18 +21,12 @@ const Login = (props: { loginWarning: string; loaded: boolean }) => {
                         <span className={styles.logoTitle}>Fractal</span>
                     </div>
                 </div>
-                {!loaded ? (
-                    <div>
-                        <PuffAnimation />
+                <div style={{ marginTop: loginWarning ? 0 : 50 }}>
+                    <div className={styles.loginContainer}>
+                        <BackgroundView />
+                        <LoginView />
                     </div>
-                ) : (
-                    <div style={{ marginTop: loginWarning ? 0 : 50 }}>
-                        <div className={styles.loginContainer}>
-                            <BackgroundView />
-                            <LoginView />
-                        </div>
-                    </div>
-                )}
+                </div>
             </div>
         </div>
     )

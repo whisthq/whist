@@ -1,7 +1,7 @@
 /* eslint-disable */
 
 import { FractalAPI } from "shared/types/api"
-import { apiGet, apiPost } from "shared/utils/general/api"
+import { apiGet, apiPost, apiDelete } from "shared/utils/general/api"
 
 /* Define test variables here */
 const USERNAME = "not-a-valid-username"
@@ -29,6 +29,14 @@ describe("api.ts", () => {
             ACCESS_TOKEN
         )
         expect(success).toEqual(true)
+        expect(json).toBeTruthy()
+    })
+    test("apiDelete(): Send a DELETE request to Fractal webserver", async () => {
+        const { json, success } = await apiDelete(
+            FractalAPI.APPS.CONNECTED + "/google_drive",
+            ACCESS_TOKEN
+        )
+        expect(success).toEqual(false)
         expect(json).toBeTruthy()
     })
 })
