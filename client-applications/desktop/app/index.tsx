@@ -22,6 +22,11 @@ import { history } from "store/history"
 
 import * as Sentry from "@sentry/electron"
 
+const { init } =
+  process.type === "browser"
+    ? require("@sentry/electron/dist/main")
+    : require("@sentry/electron/dist/renderer");
+
 if (process.env.NODE_ENV === "production") {
     Sentry.init({
         dsn:
