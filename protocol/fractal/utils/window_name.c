@@ -15,7 +15,8 @@ get_focused_window_name(name);
 #if defined(_WIN32)
 // TODO(anton) implement functionality for windows servers
 void init_window_name_listener() {}
-void get_focused_window_name(char* name) {}
+void destroy_window_name_listener() {}
+void get_focused_window_name(char* name_return) {}
 #else  // linux
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -27,16 +28,24 @@ void get_focused_window_name(char* name) {}
 static SDL_mutex* window_name_mutex;
 static char window_name[WINDOW_NAME_MAXLEN];  // protected by window_name_mutex
 static SDL_Thread* window_name_listener_thread;
+static bool connected;
 
 int window_name_listener(void* opaque);
 
 void init_window_name_listener() {
-    if (!window_name_listener_thread) {
+    if (!connected) {
         // do nothing if already initialized
+        connected = true;
         window_name_mutex = SDL_CreateMutex();
         window_name_listener_thread =
             SDL_CreateThread(window_name_listener, "window_name_listener", NULL);
     }
+}
+
+void destroy_window_name_listener() {
+    connected = false;
+    SDL_WaitThread(window_name_listener_thread, NULL);
+    SDL_DestroyMutex(window_name_mutex);
 }
 
 void get_focused_window_name(char* name_return) {
@@ -75,7 +84,6 @@ void get_window_name(Display* d, Window w, char* name_return) {
 }
 
 int window_name_listener(void* opaque) {
-    // TODO(anton) listen for event
     Display* display = XOpenDisplay(NULL);
     Window focus;
     int revert;
@@ -83,15 +91,16 @@ int window_name_listener(void* opaque) {
     XSelectInput(display, focus, PropertyChangeMask);  // listen for property changes
     XEvent event;
     Atom wm_name = XInternAtom(display, "_NET_WM_NAME", false);
-    while (true) {
+    while (connected) {
         XNextEvent(display, &event);
-        if (event.xproperty.atom == wm_name) {
+        if (event.type == PropertyNotify && event.xproperty.atom == wm_name) {
             SDL_LockMutex(window_name_mutex);
             get_window_name(display, focus, window_name);
             SDL_UnlockMutex(window_name_mutex);
         }
-        SDL_Delay(100);
+        SDL_Delay(10);
     }
+    XCloseDisplay(display);
     return 0;
 }
 

@@ -1467,6 +1467,7 @@ int main(int argc, char* argv[]) {
 
     destroy_input_device(input_device);
     destroy_clipboard_synchronizer();
+    destroy_window_name_listener();
 
     SDL_WaitThread(send_video_thread, NULL);
     SDL_WaitThread(send_audio_thread, NULL);
