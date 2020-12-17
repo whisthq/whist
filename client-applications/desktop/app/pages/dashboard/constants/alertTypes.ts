@@ -3,3 +3,5 @@ export enum AlertType {
     DISCONNECTED = "disconnected",
     DISCONNECT_WARNING = "disconnectWarning",
 }
+
+export default AlertType
