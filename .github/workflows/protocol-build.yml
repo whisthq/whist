@@ -12,7 +12,7 @@ on:
 
 jobs:
     build-and-check-protocol:
-        name: ${{ matrix.config.name}}
+        name: ${{ matrix.config.name }}
         runs-on: ${{ matrix.config.os }}
 
         # Platforms to build on/for
@@ -75,6 +75,24 @@ jobs:
               uses: crazy-max/ghaction-chocolatey@v1
               with:
                   args: install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+
+            - name: Windows matchers
+              if: runner.os == 'Windows'
+              run: |
+                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/msvc_matcher.json"
+                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/msvc_linker_matcher.json"
+            - name: Linux matchers
+              if: runner.os == 'Linux'
+              run: |
+                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/gcc_matcher.json"
+            - name: Mac matchers
+              if: runner.os == 'macOS'
+              run: |
+                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/clang_matcher.json"
+            - name: Matchers
+              run: |
+                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/cppcheck_matcher.json"
+                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/cmake_matcher.json"
 
             - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
               if: runner.os == 'Windows'
