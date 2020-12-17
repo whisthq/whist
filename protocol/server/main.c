@@ -122,6 +122,7 @@ int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
 
 char window_name[WINDOW_NAME_MAXLEN];
+volatile bool client_joined_after_window_name_broadcast;
 
 /*
 ============================
@@ -1064,6 +1065,7 @@ int multithreaded_manage_clients(void* opaque) {
         start_timer(&(clients[client_id].last_ping));
 
         clients[client_id].is_active = true;
+        client_joined_after_window_name_broadcast = true;
 
         if (write_unlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
@@ -1366,20 +1368,26 @@ int main(int argc, char* argv[]) {
 
         char name[WINDOW_NAME_MAXLEN];
         get_focused_window_name(name);
-        if (strcmp(name, window_name) != 0) {  // name has changed
+        if (strcmp(name, window_name) != 0 || client_joined_after_window_name_broadcast) {
+            // TODO(anton) fix race condition
+            // There is a race condition if a new client joins after the main thread enters this if
+            // block but before client_joined_after... gets set back to false. However, this race
+            // condition is relatively benign as the client's window name will say "Fractal" instead
+            // of the correct name, so it doesn't seem worth fixing right now.
+            client_joined_after_window_name_broadcast = false;
             LOG_INFO("Sending window title to client!");
-            memcpy(window_name, name, sizeof(name));
-            size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(window_name);
+            size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
             FractalServerMessage* fmsg_response = malloc(fsmsg_size);
             fmsg_response->type = SMESSAGE_WINDOW_TITLE;
-            memcpy(&fmsg_response->window_title, window_name, sizeof(window_name));
+            memcpy(&fmsg_response->window_title, name, sizeof(name));
             if (read_lock(&is_active_rwlock) != 0) {
                 LOG_ERROR("Failed to read-acquire is active RW lock.");
             } else {
                 if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response, fsmsg_size) < 0) {
                     LOG_WARNING("Could not broadcast window title Message");
                 } else {
-                    // LOG_INFO("Sent window title message!");
+                    LOG_INFO("Sent window title message!");
+                    memcpy(window_name, name, sizeof(name));  // keep track of last name sent
                 }
                 if (read_unlock(&is_active_rwlock) != 0) {
                     LOG_ERROR("Failed to read-release is active RW lock.");
