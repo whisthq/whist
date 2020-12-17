@@ -87,17 +87,11 @@ int window_name_listener(void* opaque) {
     Display* display = XOpenDisplay(NULL);
     Window focus;
     int revert;
-    XGetInputFocus(display, &focus, &revert);
-    XSelectInput(display, focus, PropertyChangeMask);  // listen for property changes
-    XEvent event;
-    Atom wm_name = XInternAtom(display, "_NET_WM_NAME", false);
     while (connected) {
-        XNextEvent(display, &event);
-        if (event.type == PropertyNotify && event.xproperty.atom == wm_name) {
-            SDL_LockMutex(window_name_mutex);
-            get_window_name(display, focus, window_name);
-            SDL_UnlockMutex(window_name_mutex);
-        }
+        XGetInputFocus(display, &focus, &revert);
+        SDL_LockMutex(window_name_mutex);
+        get_window_name(display, focus, window_name);
+        SDL_UnlockMutex(window_name_mutex);
         SDL_Delay(10);
     }
     XCloseDisplay(display);
