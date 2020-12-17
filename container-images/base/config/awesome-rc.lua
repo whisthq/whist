@@ -38,7 +38,6 @@ do
 end
 -- }}}
 
--- {{{ Variable definitions
 -- Themes define colours, icons, font and wallpapers.
 beautiful.init(gears.filesystem.get_themes_dir() .. "default/theme.lua")
 
@@ -183,6 +182,7 @@ show_master_window = function ()
     notify("Master window is now", m.name)
   end
 end
+
 
 function serializeTable(val, name, skipnewlines, depth)
     skipnewlines = skipnewlines or false
