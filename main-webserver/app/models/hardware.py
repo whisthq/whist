@@ -91,6 +91,11 @@ class AppsToInstall(db.Model):
 
 
 class RegionToAmi(db.Model):
+    """
+    This class represents the region_to_ami table in the hardware schema
+    it maps region names to the AMIs which should be used
+    for clusters in that region
+    """
     __tablename__ = "region_to_ami"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     region_name = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
