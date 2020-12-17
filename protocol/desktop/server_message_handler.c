@@ -18,6 +18,7 @@ Any action trigged a server message must be initiated in network.c.
 #include "../fractal/core/fractal.h"
 #include "../fractal/utils/clock.h"
 #include "../fractal/utils/logging.h"
+#include "../fractal/utils/window_name.h"
 #include "desktop_utils.h"
 #include "server_message_handler.h"
 
@@ -35,6 +36,7 @@ extern volatile int ping_id;
 extern volatile int ping_failures;
 extern volatile int try_amount;
 extern volatile char *window_title;
+extern volatile bool should_update_window_title;
 extern int client_id;
 
 static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size);
@@ -125,9 +127,19 @@ static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_s
     // The main thread periodically polls this variable to determine if it needs to update the
     // window title.
     LOG_INFO("Received window title message from server!");
-    while (window_title != 0) {
+    while (should_update_window_title) {
         // wait for the main thread to process the previous request
     }
-    window_title = &fmsg->window_title;
+
+    // format title so it ends with (Fractal)
+    char* title = &fmsg->window_title;
+    const char suffix[] = " (Fractal)";
+    size_t len = strlen(title) + strlen(suffix) + 1;
+    window_title = malloc(len);
+    strncpy(window_title, title, strlen(title));
+    strncpy(window_title + strlen(title), suffix, strlen(suffix));
+    window_title[len - 1] = '\0';
+
+    should_update_window_title = true;
     return 0;
 }
