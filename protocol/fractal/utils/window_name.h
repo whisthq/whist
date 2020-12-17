@@ -8,7 +8,10 @@
 Usage
 ============================
 
-TODO
+init_window_name_listener();
+
+char name[WINDOW_NAME_MAXLEN];
+get_focused_window_name(name);
 */
 
 /*
@@ -42,10 +45,10 @@ void init_window_name_listener();
 /**
  * @brief                          Get the name of the focused window.
  *
- * @param name                     Address to write name. Should have at least WINDOW_NAME_MAXLEN
+ * @param name_return              Address to write name. Should have at least WINDOW_NAME_MAXLEN
  *                                 bytes available.
  *
  */
-void get_focused_window_name(char* name);
+void get_focused_window_name(char* name_return);
 
 #endif  // WINDOW_NAME_H

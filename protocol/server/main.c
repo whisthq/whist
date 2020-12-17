@@ -1366,7 +1366,7 @@ int main(int argc, char* argv[]) {
 
         char name[WINDOW_NAME_MAXLEN];
         get_focused_window_name(name);
-        if (strcmp(name, window_name) != 0) {
+        if (strcmp(name, window_name) != 0) {  // name has changed
             LOG_INFO("Sending window title to client!");
             memcpy(window_name, name, sizeof(name));
             size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(window_name);
