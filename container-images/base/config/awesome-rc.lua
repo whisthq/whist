@@ -157,14 +157,18 @@ notify = function (title, text)
 end
 
 
+compute_table_length = function(t)
+  local len = 0
+  for k, v in pairs(t) do
+    len = len + 1
+  end
+  return len
+end
+
+
 manage_taskbar_visibility = function ()
   local s = awful.screen.focused()
-  local t = s.all_clients
-
-  local length = 0
-  for k, v in pairs(t) do
-    length = length + 1
-  end
+  length = compute_table_length(s.all_clients)
 
   notify("List event triggered", "There were " .. length .. " clients on this screen.")
 
@@ -268,11 +272,7 @@ end)
 client.connect_signal("unmanage", function (c)
     notify("unmanaged", "class: " .. c.class .. " name: " .. c.name)
 
-    local numclients = 0
-    for k, v in pairs(awful.screen.focused().all_clients) do
-      numclients = numclients + 1
-    end
-
+    local numclients = compute_table_length(awful.screen.focused().all_clients)
     if numclients == 0 and c.class == "Google-chrome" then
       awful.spawn("google-chrome", {focus = true, skip_taskbar = true, titlebars_enabled = false, below = true})
 
