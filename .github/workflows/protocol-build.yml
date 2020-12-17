@@ -40,7 +40,7 @@ jobs:
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
               with:
-                  args: install cppcheck llvm yq
+                  args: install llvm yq
 
             - name: Install CUDA on Windows GHA Machine
               if: runner.os == 'Windows'
