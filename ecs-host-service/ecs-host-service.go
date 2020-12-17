@@ -190,7 +190,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	// Synchronize using errorchan.
 	errorchan := make(chan error)
 	go func() {
-		cmd = exec.Command("/usr/bin/rclone", "mount", configName+":/", path, "--allow-other")
+		cmd = exec.Command("/usr/bin/rclone", "mount", configName+":/", path, "--allow-other", "--vfs-cache-mode", "writes")
 		cmd.Env = os.Environ()
 		logger.Info("Rclone mount command: [  %v  ]", cmd)
 		stderr, _ := cmd.StderrPipe()
