@@ -34,12 +34,6 @@ user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
 
-all_regions = RegionToAmi.query.all()
-
-
-region_to_ami = {region.region_name: region.ami_id for region in all_regions}
-
-
 def build_base_from_image(image):
     base_task = {
         "executionRoleArn": "arn:aws:iam::747391415460:role/ecsTaskExecutionRole",
@@ -140,6 +134,11 @@ def select_cluster(region_name):
     Returns: a valid cluster name.
 
     """
+
+    all_regions = RegionToAmi.query.all()
+
+    region_to_ami = {region.region_name: region.ami_id for region in all_regions}
+
     all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
     base_len = 2
