@@ -14,6 +14,10 @@ class CeleryResult(AsyncResult):
         return str(uuid.uuid4())
 
 
+class Object:
+    pass
+
+
 class Patch:
     pass
 
