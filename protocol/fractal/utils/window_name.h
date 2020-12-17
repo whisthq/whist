@@ -51,4 +51,10 @@ void init_window_name_listener();
  */
 void get_focused_window_name(char* name_return);
 
+/**
+ * @brief                          Destroy the window name listener.
+ *
+ */
+void destroy_window_name_listener();
+
 #endif  // WINDOW_NAME_H
