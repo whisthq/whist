@@ -214,9 +214,11 @@ end
 
 
 ensure_client_is_not_offscreen = function (c)
-  -- ignore the master client
+  -- make sure master takes up the whole screen
   if c == awful.client.getmaster() then
-    notify("ensure_client_is_not_offscreen", "master. doing nothing")
+    awful.titlebar.hide(c)
+    c.border_width = 0
+    c:geometry(awful.screen.focused().workarea)
     return
   end
 
@@ -256,18 +258,11 @@ client.connect_signal("manage", function (c)
     awful.placement.no_offscreen(c, {honor_workarea=true})
 
     ensure_client_is_not_offscreen(c)
-
-    if c == awful.client.getmaster() then
-      awful.titlebar.hide(c)
-      c.border_width = 0
-    end
 end)
 
 client.connect_signal("unmanage", function (c)
     manage_taskbar_visibility(c)
-    awful.titlebar.hide(awful.client.getmaster())
-    awful.client.getmaster().border_width = 0
-    awful.client.getmaster():geometry(awful.screen.focused().workarea)
+    ensure_client_is_not_offscreen(awful.client.getmaster())
     show_master_window(c)
 end)
 
