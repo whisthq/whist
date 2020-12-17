@@ -33,7 +33,6 @@ For every push to `main`, all the task definitions specified in `.github/workflo
 
 On top of that, whenever there is a push to `master` on the `container-images` repository, all task definitions specified in `.github/workflows/render-and-deploy.yml` will be rendered and deployed automatically to update the task definition tags to point to the newly-deployed container images.
 
-
 ## Design Decisions
 
 Note that the `:rshared` string in the cloud storage mount point is an instance of us using this undocumented hack in AWS: https://github.com/aws/containers-roadmap/issues/362
