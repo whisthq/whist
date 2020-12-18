@@ -49,7 +49,7 @@ jobs:
                   cuda: "11.0.167" # Imported from env in the .ps1 script
               shell: powershell
               run: |
-                  .\.github\helpers\protocol\install_cuda_windows.ps1
+                  .\.github\workflows\helpers\protocol\install_cuda_windows.ps1
 
                   if ($?) {
                     # Set paths for subsequent steps, using $env:CUDA_PATH
@@ -77,20 +77,20 @@ jobs:
             - name: Windows matchers
               if: runner.os == 'Windows'
               run: |
-                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/msvc_matcher.json"
-                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/msvc_linker_matcher.json"
+                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/msvc_matcher.json"
+                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/msvc_linker_matcher.json"
             - name: Linux matchers
               if: runner.os == 'Linux'
               run: |
-                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/gcc_matcher.json"
+                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/gcc_matcher.json"
             - name: Mac matchers
               if: runner.os == 'macOS'
               run: |
-                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/clang_matcher.json"
+                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
             - name: Matchers
               run: |
-                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/cppcheck_matcher.json"
-                  echo " ::add-matcher::${{ github.workspace }}/.github/helpers/protocol/cmake_matcher.json"
+                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cppcheck_matcher.json"
+                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cmake_matcher.json"
 
             - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
               if: runner.os == 'Windows'
@@ -126,9 +126,8 @@ jobs:
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               run: |
                   cd protocol/
-                  cmake . -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles"
+                  cmake . -DCMAKE_BUILD_TYPE=Debug -G "NMake Makefiles"
                   nmake FractalClient
-                  cd ~
 
             - name: Build Protocol Client on macOS/Linux Ubuntu
               if: runner.os == 'macOS' || runner.os == 'Linux'
