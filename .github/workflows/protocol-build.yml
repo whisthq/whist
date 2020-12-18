@@ -150,6 +150,7 @@ jobs:
                   cd ~
 
             - name: Verify Build(s) with clang-tidy
+              if: runner.os == 'macOS' || runner.os == 'Linux'
               shell: bash
               run: |
                   cd protocol/
