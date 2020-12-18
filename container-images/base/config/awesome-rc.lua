@@ -13,6 +13,9 @@ local beautiful = require("beautiful")
 -- Notification library
 local naughty = require("naughty")
 
+-- Needed for create_titlebar_widget_button
+local imagebox = require("wibox.widget.imagebox")
+
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
 -- another config (This code will only ever execute for the fallback config)
@@ -122,6 +125,27 @@ clientkeys = gears.table.join(
 clientbuttons = gears.table.join(
     awful.button({ }, 1, function (c)
         c:emit_signal("request::activate", "mouse_click", {raise = true})
+
+        if c == awful.client.getmaster() then
+            return
+        end
+
+        -- Originally based on https://www.reddit.com/r/awesomewm/comments/fr9ss3/awesomewm_as_a_floating_window_manager/flvdlga
+        -- top corners are handled in `client.connect_signal("request::titlebars")`
+        local bottom_corners = {
+            { c.x, c.y + c.height },
+            { c.x + c.width, c.y + c.height },
+        }
+
+        local m = mouse.coords()
+        local distance_sq = 100
+
+        for _, pos in ipairs(bottom_corners) do
+            if (m.x - pos[1]) ^ 2 + (m.y - pos[2]) ^ 2 <= distance_sq then
+                awful.mouse.client.resize(c)
+                break
+            end
+        end
     end)
 )
 
@@ -164,6 +188,97 @@ compute_table_length = function(t)
   end
   return len
 end
+
+
+-- This function is a modified copy of `titlebar.widget.button` from
+-- /usr/share/awesome/lib/awful/titlebar.lua to allow for running a function on
+-- mouse button _press_, not just release.
+function create_titlebar_widget_button(c, name, selector, action_pressed, action_released, tooltips_enabled)
+    local ret = imagebox()
+
+    if tooltips_enabled then
+        ret._private.tooltip = awful.tooltip({ objects = {ret}, delay_show = 1 })
+        ret._private.tooltip:set_text(name)
+    end
+
+    local function update()
+        local img = selector(c)
+        if type(img) ~= "nil" then
+            -- Convert booleans automatically
+            if type(img) == "boolean" then
+                if img then
+                    img = "active"
+                else
+                    img = "inactive"
+                end
+            end
+            local prefix = "normal"
+            if client.focus == c then
+                prefix = "focus"
+            end
+            if img ~= "" then
+                prefix = prefix .. "_"
+            end
+            local state = ret.state
+            if state ~= "" then
+                state = "_" .. state
+            end
+            -- First try with a prefix based on the client's focus state,
+            -- then try again without that prefix if nothing was found,
+            -- and finally, try a fallback for compatibility with Awesome 3.5 themes
+            local theme = beautiful["titlebar_" .. name .. "_button_" .. prefix .. img .. state]
+                       or beautiful["titlebar_" .. name .. "_button_" .. prefix .. img]
+                       or beautiful["titlebar_" .. name .. "_button_" .. img]
+                       or beautiful["titlebar_" .. name .. "_button_" .. prefix .. "_inactive"]
+            if theme then
+                img = theme
+            end
+        end
+        ret:set_image(img)
+    end
+    ret.state = ""
+    if action_pressed then
+      action_pressed_function = function() action_pressed(c) end
+    else
+      action_pressed_function = nil
+    end
+    if action_released then
+        ret:buttons(awful.button({ }, 1, action_pressed_function, function()
+            ret.state = ""
+            update()
+            action_released(c, selector(c))
+        end))
+    else
+        ret:buttons(awful.button({ }, 1, action_pressed_function, function()
+            ret.state = ""
+            update()
+        end))
+    end
+    ret:connect_signal("mouse::enter", function()
+        ret.state = "hover"
+        update()
+    end)
+    ret:connect_signal("mouse::leave", function()
+        ret.state = ""
+        update()
+    end)
+    ret:connect_signal("button::press", function(_, _, _, b)
+        if b == 1 then
+            ret.state = "press"
+            update()
+        end
+    end)
+    ret.update = update
+    update()
+
+    -- We do magic based on whether a client is focused above, so we need to
+    -- connect to the corresponding signal here.
+    c:connect_signal("focus", update)
+    c:connect_signal("unfocus", update)
+
+    return ret
+end
+
 
 
 manage_taskbar_visibility = function ()
@@ -307,7 +422,20 @@ client.connect_signal("request::titlebars", function(c)
     local buttons = gears.table.join(
         awful.button({ }, 1, function()
             c:emit_signal("request::activate", "titlebar", {raise = true})
-            awful.mouse.client.move(c)
+
+            if c == awful.client.getmaster() then
+                return
+            end
+
+            local m = mouse.coords()
+            local distance_sq = 100
+
+            -- check for top left corner
+            if (m.x - c.x) ^ 2 + (m.y - c.y) ^ 2 <= distance_sq then
+                awful.mouse.client.resize(c)
+            else
+                awful.mouse.client.move(c)
+            end
         end),
         awful.button({ }, 3, function()
             c:emit_signal("request::activate", "titlebar", {raise = true})
@@ -331,7 +459,22 @@ client.connect_signal("request::titlebars", function(c)
         },
         { -- Right
             awful.titlebar.widget.maximizedbutton(c),
-            awful.titlebar.widget.closebutton    (c),
+            create_titlebar_widget_button(c, "close", function() return "" end, function(cl)
+              local m = mouse.coords()
+              local distance_sq = 100
+              -- check for top right corner
+              if (m.x - (cl.x + cl.width)) ^ 2 + (m.y - cl.y) ^ 2 <= distance_sq then
+                  notify("choosing to resize instead of kill",
+                    "m.x: " .. m.x .. " m.y: " .. m.y .. " cl.x + cl.width: " .. (cl.x + cl.width) .. " cl.y: " .. cl.y)
+                  -- mouse.coords(m)
+                  -- root.fake_input('button_press', 1)
+                  awful.mouse.client.resize(cl)
+              else
+                  notify("choosing to kill instead of resize",
+                    "m.x: " .. m.x .. " m.y: " .. m.y .. " cl.x + cl.width: " .. (cl.x + cl.width) .. " cl.y: " .. cl.y)
+                  cl:kill()
+              end
+            end, function() end, true),
             layout = wibox.layout.fixed.horizontal()
         },
         layout = wibox.layout.align.horizontal
