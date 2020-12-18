@@ -121,9 +121,6 @@ int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
 
-char window_name[WINDOW_NAME_MAXLEN];
-volatile bool client_joined_after_window_name_broadcast;
-
 /*
 ============================
 Private Functions
@@ -1065,7 +1062,6 @@ int multithreaded_manage_clients(void* opaque) {
         start_timer(&(clients[client_id].last_ping));
 
         clients[client_id].is_active = true;
-        client_joined_after_window_name_broadcast = true;
 
         if (write_unlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
@@ -1317,10 +1313,13 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Receiving packets...");
 
     init_clipboard_synchronizer();
-    init_window_name_listener();
+    init_window_name_getter();
 
     clock ack_timer;
     start_timer(&ack_timer);
+
+    clock window_name_timer;
+    start_timer(&window_name_timer);
 
     while (!exiting) {
         if (get_timer(ack_timer) > 5) {
@@ -1366,35 +1365,30 @@ int main(int argc, char* argv[]) {
             free(fmsg_response);
         }
 
-        char name[WINDOW_NAME_MAXLEN];
-        get_focused_window_name(name);
-        if (strcmp(name, window_name) != 0 ||
-            (client_joined_after_window_name_broadcast && name[0] != '\0')) {
-            // TODO(anton) fix race condition
-            // There is a race condition if a new client joins after the main thread enters this if
-            // block but before client_joined_after... gets set back to false. However, this race
-            // condition is relatively benign as the client's window name will say "Fractal" instead
-            // of the correct name, so it doesn't seem worth fixing right now.
-            client_joined_after_window_name_broadcast = false;
-            LOG_INFO("Sending window title to client: '%s'\n", name);
-            size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
-            FractalServerMessage* fmsg_response = malloc(fsmsg_size);
-            fmsg_response->type = SMESSAGE_WINDOW_TITLE;
-            memcpy(&fmsg_response->window_title, name, sizeof(name));
-            if (read_lock(&is_active_rwlock) != 0) {
-                LOG_ERROR("Failed to read-acquire is active RW lock.");
-            } else {
-                if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response, fsmsg_size) < 0) {
-                    LOG_WARNING("Could not broadcast window title Message");
+        if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
+            char name[WINDOW_NAME_MAXLEN];
+            if (get_focused_window_name(name) == 0) {
+                LOG_INFO("Sending window title to client: '%s'\n", name);
+                size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
+                FractalServerMessage* fmsg_response = malloc(fsmsg_size);
+                fmsg_response->type = SMESSAGE_WINDOW_TITLE;
+                memcpy(&fmsg_response->window_title, name, sizeof(name));
+                if (read_lock(&is_active_rwlock) != 0) {
+                    LOG_ERROR("Failed to read-acquire is active RW lock.");
                 } else {
-                    LOG_INFO("Sent window title message!");
-                    memcpy(window_name, name, sizeof(name));  // keep track of last name sent
+                    if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response, fsmsg_size) <
+                        0) {
+                        LOG_WARNING("Could not broadcast window title Message");
+                    } else {
+                        LOG_INFO("Sent window title message!");
+                    }
+                    if (read_unlock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-release is active RW lock.");
+                    }
                 }
-                if (read_unlock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to read-release is active RW lock.");
-                }
+                free(fmsg_response);
             }
-            free(fmsg_response);
+            start_timer(&window_name_timer);
         }
 
         if (get_timer(last_ping_check) > 20.0) {
@@ -1476,7 +1470,7 @@ int main(int argc, char* argv[]) {
 
     destroy_input_device(input_device);
     destroy_clipboard_synchronizer();
-    destroy_window_name_listener();
+    destroy_window_name_getter();
 
     SDL_WaitThread(send_video_thread, NULL);
     SDL_WaitThread(send_audio_thread, NULL);
