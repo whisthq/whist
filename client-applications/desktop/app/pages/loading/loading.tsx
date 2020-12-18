@@ -12,8 +12,8 @@ import { execChmodUnix } from "shared/utils/exec"
 import { FractalRoute } from "shared/types/navigation"
 import { OperatingSystem } from "shared/types/client"
 
-import { useSubscription } from "@apollo/client"
-import { SUBSCRIBE_USER_APP_STATE } from "shared/constants/graphql"
+import { useQuery, useSubscription } from "@apollo/client"
+import { SUBSCRIBE_USER_APP_STATE, GET_USER_CONTAINER } from "shared/constants/graphql"
 
 import styles from "pages/login/login.css"
 import { cancelContainer, getStatus } from "store/actions/sideEffects"
@@ -26,6 +26,8 @@ import { generateMessage } from "shared/utils/loading"
 //         ? `(${moment().format("hh:mm:ss")}) ` +
 //             "Unexpectedly lost connection with server. Please close the app and try again."
 //         : "Server unexpectedly not responding. Close the app and try again."
+// TODO timeout
+const LOADING_TIMEOUT = 1000 * 100 // 100 second timeout
 
 const Loading = (props: {
     port32262: number
@@ -38,6 +40,7 @@ const Loading = (props: {
     containerID: string
     statusID: string
     username: string
+    accessToken: string
     dispatch: Dispatch
 }) => {
     const {
@@ -51,13 +54,13 @@ const Loading = (props: {
         containerID,
         statusID,
         username,
+        accessToken,
         dispatch,
     } = props
 
-    // figure out how to use useEffect
-    // note to future developers: setting state inside useffect when you rely on
-    // change for those variables to trigger runs forever and is bad
-    // use two variables for that or instead do something like this below
+    // important note!!!
+    // we are relying on containers automatically shutting down if no one connects
+    // for the cancel button
 
     const [launches, setLaunches] = useState(0)
     const [status, setStatus] = useState(generateMessage())
@@ -70,6 +73,15 @@ const Loading = (props: {
 
     const { data, loading } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { userID: username },
+    })
+
+    const containerData = useQuery(GET_USER_CONTAINER, {
+        variables: { userID: username },
+        context: {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }
     })
     /* Looks like:
     { "hardware_user_app_state":
@@ -103,8 +115,9 @@ const Loading = (props: {
     const cancelled = hasState && state === FractalAppStates.CANCELLED
     const failure = hasState && state === FractalAppStates.FAILURE
 
-    // console.log(`pending:${pending}\nready:${ready}\ncancelled:${cancelled}\nfailure:${failure}`)
-
+    console.log(`pending:${pending}\nready:${ready}\ncancelled:${cancelled}\nfailure:${failure}\ncanLoad:${canLoad}`)
+    console.log(`percent loaded: ${percentLoaded}`)
+    
     useEffect(() => {
         if (percentLoaded < 100 && canLoad) {
             if (pending) {
@@ -351,6 +364,7 @@ const mapStateToProps = <T extends {}>(state: T) => {
         desiredAppID: state.MainReducer.container.desiredAppID,
         currentAppID: state.MainReducer.container.currentAppID,
         username: state.MainReducer.auth.username,
+        accessToken: state.MainReducer.auth.accessToken
     }
 }
 
