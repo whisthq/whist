@@ -68,6 +68,10 @@ jobs:
                   ls $env:CUDA_PATH\bin
                   ls $env:CUDA_PATH\include
 
+                  # Install clang-tidy
+                  curl -fsSL -o "LLVM-10.0.0-win32.exe" "https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/LLVM-10.0.0-win32.exe"
+                  LLVM-10.0.0-win32.exe /S
+
             - name: Install cmake via Chocolatey on Windows GHA Machine
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
@@ -149,8 +153,7 @@ jobs:
                   make FractalServer
                   cd ~
 
-            - name: Verify Build(s) with clang-tidy
-              if: runner.os == 'macOS' || runner.os == 'Linux'
+            - name: Verify Build with clang-tidy
               shell: bash
               run: |
                   cd protocol/
