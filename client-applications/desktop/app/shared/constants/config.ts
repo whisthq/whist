@@ -9,16 +9,16 @@ import {
 // app where you can choose where to go to
 export const webservers: { [key: string]: string } = {
     local: "http://127.0.0.1:7730",
-    dev: "http://fractal-cloud-storage.herokuapp.com/",
-    staging: "https://staging-webserver.tryfractal.com",
-    prod: "https://main-webserver.herokuapp.com",
+    dev: "http://dev-server.tryfractal.com/",
+    staging: "https://fractal-staging-server.herokuapp.com",
+    prod: "https://fractal-prod-server.herokuapp.com",
 }
 
 const environment: FractalEnvironment = {
     LOCAL: {
         url: {
             WEBSERVER_URL: webservers.local,
-            FRONTEND_URL: "https://dev.tryfractal.com",//"http://localhost:3000", //TODO!
+            FRONTEND_URL: "http://localhost:3000",
             GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
@@ -104,8 +104,8 @@ const environment: FractalEnvironment = {
 
 export const config: FractalConfig =
     process.env.NODE_ENV === "development"
-        ? environment.LOCAL // development
-        : environment.LOCAL // development
+        ? environment.DEVELOPMENT
+        : environment.DEVELOPMENT
 
 // default export until we have multiple exports
 export default config

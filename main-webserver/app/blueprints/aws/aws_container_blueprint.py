@@ -1,6 +1,7 @@
 from flask import Blueprint
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
+from app.helpers.utils.general.logs import fractal_log
 
 from app import fractal_pre_process
 from app.celery.aws_ecs_creation import (
@@ -136,6 +137,7 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["task_definition_arn"],
         )
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
+
         task = assign_container.apply_async(
             [username, task_definition_arn],
             {
@@ -144,6 +146,7 @@ def test_endpoint(action, **kwargs):
                 "webserver_url": kwargs["webserver_url"],
             },
         )
+
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
 
@@ -286,6 +289,8 @@ def aws_container_post(action, **kwargs):
                 except BadAppError:
                     response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
                 else:
+                    fractal_log("","","starting task!!!!")
+                    # fractal_log("","","FAILED TO START TASK OH NO OH NO
                     task = assign_container.delay(
                         user,
                         task_arn,

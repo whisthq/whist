@@ -162,7 +162,7 @@ function* createContainer(action: {
 
     const endpoint = test
         ? FractalAPI.CONTAINER.TEST_CREATE
-        : FractalAPI.CONTAINER.ASSIGN
+        : FractalAPI.CONTAINER.CREATE//ASSIGN
     const body = test
         ? {
               username: username,
@@ -180,6 +180,7 @@ function* createContainer(action: {
               url: url,
               dpi: state.MainReducer.client.dpi,
           }
+
     const webserver = test
         ? state.MainReducer.admin.webserverUrl
         : config.url.WEBSERVER_URL

@@ -1,5 +1,5 @@
 #!/bin/bash
-echo “Running userdata-bootstrap.sh”
+echo "Running userdata-bootstrap.sh"
 
 aws s3 cp s3://fractal-ecs-host-service/ecs-host-service ecs-host-service
 chmod +x ecs-host-service
@@ -27,4 +27,4 @@ EOF
 sudo /bin/systemctl daemon-reload
 
 # Enabling ECS Host Service
-sudo systemctl enable ecs-host-service.service
+sudo systemctl enable --now ecs-host-service.service

@@ -17,7 +17,7 @@ import {
     SUBSCRIBE_USER_APP_STATE,
 } from "shared/constants/graphql"
 
-import styles from "pages/login/login.css"
+import styles from "pages/loading/loading.css"
 import { cancelContainer, getStatus } from "store/actions/sideEffects"
 import { FractalAppStates } from "shared/types/containers"
 import { generateMessage } from "shared/components/loading"
@@ -43,6 +43,7 @@ const Loading = (props: {
     containerID: string
     statusID: string
     username: string
+    pngFile: string
     dispatch: Dispatch<any>
 }) => {
     const {
@@ -56,6 +57,7 @@ const Loading = (props: {
         containerID,
         statusID,
         username,
+        pngFile,
         dispatch,
     } = props
 
@@ -119,11 +121,11 @@ const Loading = (props: {
     console.log(
         `pending:${pending}\nready:${ready}\ncancelled:${cancelled}\nfailure:${failure}\ncanLoad:${canLoad}`
     )
-    // console.log(`percent loaded: ${percentLoaded}`)
+    console.log(`percent loaded: ${percentLoaded}`)
 
     useEffect(() => {
-        if (percentLoaded < 100 && canLoad) {
-            if (pending) {
+        if (canLoad) {
+            if (pending && percentLoaded < 100) {
                 setTimeout(() => {
                     if (canLoad) {
                         setPercentLoaded(percentLoaded + 1)
@@ -215,7 +217,7 @@ const Loading = (props: {
                     h: 600,
                     p: portInfo,
                     k: secretKey,
-                    // ...(pngFile && { i: pngFile }),
+                    ...(pngFile && { i: pngFile }),
                 }
 
                 const protocolArguments = [
