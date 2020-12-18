@@ -133,11 +133,11 @@ static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_s
 
     // format title so it ends with (Fractal)
     char *title = &fmsg->window_title;
-    const char suffix[] = " (Fractal)";
-    size_t len = strlen(title) + strlen(suffix) + 1;
+    const char prefix[] = "Fractalized ";
+    size_t len = strlen(prefix) + strlen(title) + 1;
     window_title = malloc(len);
-    strncpy(window_title, title, strlen(title));
-    strncpy(window_title + strlen(title), suffix, strlen(suffix));
+    strncpy(window_title, prefix, strlen(prefix));
+    strncpy(window_title + strlen(prefix), title, strlen(title));
     window_title[len - 1] = '\0';
 
     should_update_window_title = true;
