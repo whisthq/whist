@@ -45,7 +45,7 @@ blacklist rivafb
 blacklist nvidiafb
 blacklist rivatv
 EOF
-sed -i 's/GRUB_CMDLINE_LINUX=""/# GRUB_CMDLINE_LINUX=""/g' /etc/default/grub
+sudo sed -i 's/GRUB_CMDLINE_LINUX=""/# GRUB_CMDLINE_LINUX=""/g' /etc/default/grub
 cat << EOF | sudo tee --append /etc/default/grub
 GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
