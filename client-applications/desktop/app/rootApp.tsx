@@ -10,14 +10,21 @@ import Update from "pages/update/update"
 import Welcome from "pages/onboard/welcome"
 import Apps from "pages/onboard/apps"
 import Installing from "pages/onboard/installing"
+import Storage from "pages/onboard/storage"
 
 import { history } from "store/history"
 import { createContainer, validateAccessToken } from "store/actions/sideEffects"
-import { updateClient, updateContainer, updateAuth } from "store/actions/pure"
-import { setAWSRegion } from "shared/utils/exec"
+import {
+    updateClient,
+    updateContainer,
+    updateAuth,
+    updateApps,
+} from "store/actions/pure"
+import { setAWSRegion } from "shared/utils/files/exec"
 import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 
+// import { OperatingSystem } from "shared/types/client"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalAuthCache } from "shared/types/cache"
 
@@ -26,17 +33,17 @@ const RootApp = (props: {
     launchURL: string
     clientOS: string
     dpi: number
-    candidateAccessToken: string
     username: string
     accessToken: string
-    dispatch: Dispatch
+    connectedApps: string[]
+    dispatch: Dispatch<any>
 }) => {
     const {
         launches,
         launchURL,
         clientOS,
         dpi,
-        candidateAccessToken,
+        connectedApps,
         dispatch,
     } = props
 
@@ -58,25 +65,45 @@ const RootApp = (props: {
         let localAccessToken: string | null = null
 
         // Update listener
-        ipc.on("update", (_: IpcRendererEvent, update: boolean) => {
+        ipc.on("update", (_: any, update: boolean) => {
             setNeedsUpdate(update)
             setUpdatePingReceived(true)
         })
 
         // Custom URL listener
-        ipc.on("customURL", (_: IpcRendererEvent, customURL: string) => {
+        ipc.on("customURL", (_: any, customURL: string) => {
             if (customURL && customURL.toString().includes("fractal://")) {
                 customURL = `fractal://${customURL.split("fractal://")[1]}`
                 // Convert URL to URL object so it can be parsed
                 const urlObj = new URL(customURL.toString())
                 urlObj.protocol = "https"
 
-                // Check to see if this is an auth request
+                // Check to see if this is an auth request or an external app authentication
                 localAccessToken = urlObj.searchParams.get("accessToken")
+                const authenticatedApp = urlObj.searchParams.get(
+                    "successfully_authenticated"
+                )
                 if (localAccessToken) {
                     dispatch(
-                        updateAuth({ candidateAccessToken: localAccessToken })
+                        updateAuth({
+                            candidateAccessToken: localAccessToken,
+                        })
                     )
+                    dispatch(validateAccessToken(localAccessToken))
+                } else if (authenticatedApp) {
+                    if (connectedApps.indexOf(authenticatedApp) === -1) {
+                        const newConnectedApps = Object.assign(
+                            [],
+                            connectedApps
+                        )
+                        newConnectedApps.push(authenticatedApp)
+                        dispatch(
+                            updateApps({
+                                connectedApps: newConnectedApps,
+                                authenticated: authenticatedApp,
+                            })
+                        )
+                    }
                 } else {
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
                 }
@@ -84,9 +111,10 @@ const RootApp = (props: {
         })
 
         // If already logged in, redirect to dashboard
-        localAccessToken = storage.get("accessToken")
+        localAccessToken = storage.get(FractalAuthCache.ACCESS_TOKEN)
         if (localAccessToken) {
             dispatch(updateAuth({ candidateAccessToken: localAccessToken }))
+            dispatch(validateAccessToken(localAccessToken))
         }
     }, [])
 
@@ -100,13 +128,6 @@ const RootApp = (props: {
             )
         }
     }, [clientOS, dpi])
-
-    // If there's an access token, validate it
-    useEffect(() => {
-        if (candidateAccessToken && candidateAccessToken !== "") {
-            dispatch(validateAccessToken(candidateAccessToken))
-        }
-    }, [candidateAccessToken])
 
     // If does not need update, logged in and ready to launch
     useEffect(() => {
@@ -197,22 +218,45 @@ const RootApp = (props: {
                     path={FractalRoute.ONBOARD_INSTALLING}
                     component={Installing}
                 />
+                <Route
+                    path={FractalRoute.ONBOARD_STORAGE}
+                    component={Storage}
+                />
                 <Route path={FractalRoute.LOGIN} component={Login} />
             </Switch>
         </div>
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T): T => {
+const mapStateToProps = (state: {
+    MainReducer: {
+        auth: {
+            username: string
+            accessToken: string
+            refreshToken: string
+        }
+        container: {
+            launches: number
+            launchURL: string
+        }
+        client: {
+            clientOS: string
+            dpi: number
+        }
+        apps: {
+            connectedApps: string[]
+        }
+    }
+}) => {
     return {
         username: state.MainReducer.auth.username,
-        candidateAccessToken: state.MainReducer.auth.candidateAccessToken,
         accessToken: state.MainReducer.auth.accessToken,
         refreshToken: state.MainReducer.auth.refreshToken,
         launches: state.MainReducer.container.launches,
         launchURL: state.MainReducer.container.launchURL,
         clientOS: state.MainReducer.client.clientOS,
         dpi: state.MainReducer.client.dpi,
+        connectedApps: state.MainReducer.apps.connectedApps,
     }
 }
 

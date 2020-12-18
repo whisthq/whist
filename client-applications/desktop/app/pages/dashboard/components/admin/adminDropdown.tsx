@@ -29,7 +29,6 @@ export const AdminDropdown = (props: {
     }
 
     const handleDropdownClick = (option: string) => {
-        // console.log(`option ${option} was clicked!`)
         if (
             option === FractalClusters.RESET ||
             option === FractalRegions.RESET ||

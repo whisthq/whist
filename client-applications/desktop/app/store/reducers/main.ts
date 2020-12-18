@@ -1,7 +1,7 @@
 import * as MainAction from "store/actions/pure"
 import { DEFAULT } from "store/reducers/states"
 
-import { deep_copy } from "shared/utils/reducerHelpers"
+import { deepCopyObject } from "shared/utils/general/reducer"
 
 const MainReducer = (
     state = DEFAULT,
@@ -10,7 +10,7 @@ const MainReducer = (
         body: Record<string, any>
     }
 ) => {
-    const stateCopy = deep_copy(state)
+    const stateCopy = deepCopyObject(state)
     switch (action.type) {
         case MainAction.RESET_STATE:
             return DEFAULT

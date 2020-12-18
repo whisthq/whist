@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# compile
+
+# Read the CLIENT_SECRET_URI environment variable and download the file at that
+# URI to ~/client_secret.json.
+
+set -eo pipefail
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
+
+source "$(dirname $0)"/util.sh
+
+CLIENT_SECRET_PATH="$ENV_DIR"/CLIENT_SECRET_URI
+
+[ -f "$CLIENT_SECRET_PATH" ] || \
+    { echo "       CLIENT_SECRET_URI is not set!" ; exit 1 ; }
+
+CLIENT_SECRET_URI=$(cat "$CLIENT_SECRET_PATH")
+
+echo "       Configuring AWS CLI from environment variables."
+
+export_env_dir "$ENV_DIR" "^AWS_"
+
+echo "-----> Downloading Google client secret file from $CLIENT_SECRET_URI."
+
+aws s3 cp "$CLIENT_SECRET_URI" "$BUILD_DIR"/client_secret.json

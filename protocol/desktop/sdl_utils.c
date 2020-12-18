@@ -12,6 +12,7 @@ close the window.
 */
 
 #include "sdl_utils.h"
+#include "../fractal/utils/png.h"
 
 extern volatile int output_width;
 extern volatile int output_height;
@@ -48,7 +49,57 @@ int resizing_event_watcher(void* data, SDL_Event* event) {
     return 0;
 }
 
-SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name) {
+void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
+    /*
+        Set the icon for a SDL window from a PNG file
+
+        Arguments:
+            sdl_window (SDL_Window*): The window whose icon will be set
+            filename (char*): A path to a `.png` file containing the 64x64 pixel icon.
+
+        Return:
+            None
+    */
+
+    AVPacket pkt;
+    av_init_packet(&pkt);
+    png_file_to_bmp(filename, &pkt);
+
+    SDL_RWops* rw = SDL_RWFromMem(pkt.data, pkt.size);
+
+    // second parameter nonzero means free the rw after reading it, no need to free rw ourselves
+    SDL_Surface* icon_surface = SDL_LoadBMP_RW(rw, 1);
+    if (icon_surface == NULL) {
+        LOG_ERROR("Failed to load icon from file '%s': %s", filename, SDL_GetError());
+        return;
+    }
+
+    // free pkt.data which is initialized by calloc in png_file_to_bmp
+    free(pkt.data);
+
+    SDL_SetWindowIcon(sdl_window, icon_surface);
+
+    // surface can now be freed
+    SDL_FreeSurface(icon_surface);
+}
+
+SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
+                     char* icon_filename) {
+    /*
+        Attaches the current thread to the specified current input desktop
+
+        Arguments:
+            target_output_width (int): The width of the SDL window to create, in pixels
+            target_output_height (int): The height of the SDL window to create, in pixels
+            name (char*): The title of the window
+            icon_filename (char*): The filename of the window icon, pointing to a 64x64 png,
+                or "" for the default icon
+
+        Return:
+            sdl_window (SDL_Window*): NULL if fails to create SDL window, else the created SDL
+                window
+    */
+
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
@@ -96,6 +147,11 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         (name == NULL ? "Fractal" : name), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         target_output_width, target_output_height,
         SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : windowed_flags));
+
+    // Set icon
+    if (strcmp(icon_filename, "") != 0) {
+        set_window_icon_from_png(sdl_window, icon_filename);
+    }
 
     if (!is_fullscreen) {
         // Resize event handling

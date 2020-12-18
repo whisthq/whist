@@ -208,8 +208,8 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
 endif()
 
 #download and install Sentry CMake project
-# This is fixed to sdk version 0.4.1
-set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.1/sentry-native.zip)
+# This is fixed to sdk version 0.4.4
+set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.4/sentry-native.zip)
 set(sentry_dir sentry-native)
 MESSAGE(VERBOSE ${CMAKE_SOURCE_DIR}/${sentry_dir})
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
@@ -218,17 +218,21 @@ if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
             STATUS sentry_dl_status)
     MESSAGE(VERBOSE ${sentry_dl_status})
     file(MAKE_DIRECTORY ${sentry_dir})
+
+    execute_process(
+            COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${sentry_dir}
+    )
+    execute_process(
+            COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
+    )
 endif()
 
-execute_process(
-        COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${sentry_dir}
-)
-execute_process(
-        COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
-)
 # Do this before setting the OSX compiler so we do not mess with the sentry-native build
-set(SENTRY_BUILD_RUNTIMESTATIC ON)
+message("setting sentry options")
+set(SENTRY_BUILD_SHARED_LIBS ON CACHE BOOL "sentry create shared lib" FORCE)
+set(SENTRY_BUILD_RUNTIMESTATIC ON CACHE BOOL "sentry runtimestatic" FORCE)
+set(SENTRY_BACKEND crashpad CACHE STRING "sentry backend" FORCE)
 add_subdirectory(sentry-native)
 
 # set a standard location for the sentry shared lib so we can copy it into client/server build folders as a post build step
@@ -242,7 +246,7 @@ endif()
 
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_compile_options(sentry PRIVATE -Wno-error)
+    target_compile_options(sentry PRIVATE -Wno-error -Wno-typedef-redefinition)
     set(CMAKE_C_COMPILER clang)
     if(DEFINED ENV{FRACTAL_OSX_SYSROOT})
         set(CMAKE_OSX_SYSROOT $ENV{FRACTAL_OSX_SYSROOT})
@@ -261,11 +265,11 @@ include_directories(sentry-native/include)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
-if (${BUILD_CLIENT} MATCHES "ON")
-    message(STATUS building client)
+if (${BUILD_CLIENT} MATCHES ON)
+    message(STATUS "building client")
     add_subdirectory(desktop)
 endif()
-if (${BUILD_SERVER} MATCHES "ON" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") #Server does not ever build on macos
-    message(STATUS building server)
+if (${BUILD_SERVER} MATCHES ON AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") #Server does not ever build on macos
+    message(STATUS "building server")
     add_subdirectory(server)
 endif()

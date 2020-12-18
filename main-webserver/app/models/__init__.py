@@ -8,10 +8,12 @@ from .hardware import (
     ClusterInfo,
     InstallCommand,
     UserContainer,
+    RegionToAmi,
     SortedClusters,
     SupportedAppImages,
     UserContainerState,
 )
 from .logs import LoginHistory, MonitorLog, ProtocolLog
+from .oauth import Credential
 from .public import User
 from .sales import MainNewsletter, StripeProduct

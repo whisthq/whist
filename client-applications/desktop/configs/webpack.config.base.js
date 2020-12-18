@@ -42,6 +42,10 @@ export default {
         modules: [path.join(__dirname, '..', 'app'), 'node_modules'],
     },
 
+    optimization: {
+        namedModules: true,
+    },
+
     plugins: [
         new webpack.EnvironmentPlugin({
             NODE_ENV: 'production',
@@ -49,7 +53,5 @@ export default {
         }),
 
         new webpack.IgnorePlugin(/osx-temperature-sensor/),
-
-        new webpack.NamedModulesPlugin(),
     ],
 }

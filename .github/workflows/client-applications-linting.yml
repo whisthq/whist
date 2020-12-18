@@ -38,9 +38,4 @@ jobs:
 
             - name: Check if code follows ESLint standards
               run: |
-                  result=$(cd client-applications/desktop && yarn lint-check) # checks if code is linted
-                  if [ "$result" -ne "0" ]; then
-                    (echo "To pass this check please lint the code with ESLint or update .eslintrc.js to ignore unwanted checks" && false)
-                  else
-                    (echo "Code is linted with ESLint" && true)
-                  fi
+                  cd client-applications/desktop && yarn lint-check

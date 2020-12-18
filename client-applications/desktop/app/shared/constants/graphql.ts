@@ -39,7 +39,11 @@ export const SUBSCRIBE_USER_APP_STATE = gql`
 // which is the latest (or delete old rows)
 export const GET_USER_CONTAINER = gql`
     query GetUserContainers($userID: String!) {
-        hardware_user_containers(where: {user_id: {_eq: $userID}}, order_by: {last_pinged: desc_nulls_last}, limit: 1) {
+        hardware_user_containers(
+            where: { user_id: { _eq: $userID } }
+            order_by: { last_pinged: desc_nulls_last }
+            limit: 1
+        ) {
             ip
             container_id
             cluster

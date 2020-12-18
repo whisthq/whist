@@ -1,10 +1,5 @@
 import { WebSocketLink } from "@apollo/client/link/ws"
-import {
-    ApolloClient,
-    InMemoryCache,
-    HttpLink,
-    split,
-} from "@apollo/client"
+import { ApolloClient, InMemoryCache, HttpLink, split } from "@apollo/client"
 import { config } from "shared/constants/config"
 import { getMainDefinition } from "@apollo/client/utilities"
 

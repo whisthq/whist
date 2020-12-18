@@ -1,4 +1,4 @@
-@import '/app.global.css';
+@import '~app.global.css';
 
 .bannerImage {
     background-size: cover;

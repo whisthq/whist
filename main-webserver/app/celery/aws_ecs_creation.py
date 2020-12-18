@@ -6,6 +6,8 @@ import requests
 from celery import shared_task
 from celery.exceptions import Ignore
 from flask import current_app
+from oauthlib.oauth2 import InvalidGrantError
+from requests import ConnectionError, Timeout, TooManyRedirects
 
 from app.celery.aws_ecs_deletion import delete_cluster
 
@@ -13,9 +15,18 @@ from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.helpers.utils.general.sql_commands import fractal_sql_update
-from app.models import db, UserContainer, ClusterInfo, SortedClusters
-from app.constants.container_state_values import FAILURE, PENDING, READY
+from app.models import (
+    db,
+    UserContainer,
+    ClusterInfo,
+    SortedClusters,
+    SupportedAppImages,
+    User,
+    RegionToAmi,
+)
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
+from app.serializers.oauth import CredentialSchema
+from app.constants.container_state_values import FAILURE, PENDING, READY
 from app.helpers.blueprint_helpers.aws.container_state import set_container_state
 
 from app.helpers.utils.datadog.events import (
@@ -27,15 +38,6 @@ MAX_POLL_ITERATIONS = 20
 
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
-
-# all amis support ecs-host-service
-region_to_ami = {
-    "us-east-1": "ami-0ff621efe35407b94",
-    "us-east-2": "ami-09ca6dce71a870c6e",
-    "us-west-1": "ami-0914e92a46ab8f546",
-    "us-west-2": "ami-0ef2d9c97b2425bfc",
-    "ca-central-1": "ami-0fe17e1f98a492a2f",
-}
 
 
 def build_base_from_image(image):
@@ -94,6 +96,121 @@ def build_base_from_image(image):
     return base_task
 
 
+def _mount_cloud_storage(user, container):
+    """Send a request to the ECS host service to mount a cloud storage folder to the container.
+
+    Arguments:
+        user: The user who owns the container.
+        container: An instance of the UserContainer model.
+    """
+
+    schema = CredentialSchema()
+
+    if user.credentials:
+        credential = user.credentials[0]
+
+        try:
+            credential.refresh(force=True)
+        except InvalidGrantError:
+            log_kwargs = {
+                "logs": "Found cloud storage credential, but it was expired. Deleted it.",
+                "level": logging.WARNING,
+            }
+        else:
+            # Mount a cloud storage folder to the container.
+            try:
+                response = requests.post(
+                    (
+                        f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+                        "/mount_cloud_storage"
+                    ),
+                    json=dict(
+                        auth_secret=current_app.config["HOST_SERVICE_SECRET"],
+                        host_port=container.port_32262,
+                        provider="google_drive",
+                        **schema.dump(credential),
+                    ),
+                    verify=False,
+                )
+            except (ConnectionError, Timeout, TooManyRedirects) as error:
+                # Don't just explode if there's a problem connecting to the ECS host service.
+                log_kwargs = {
+                    "logs": (
+                        "Encountered an error while attempting to connect to the ECS host service "
+                        f"running on {container.ip}: {error}"
+                    ),
+                    "level": logging.ERROR,
+                }
+            else:
+                if response.ok:
+                    log_kwargs = {
+                        "logs": "Cloud storage folder mounted successfully.",
+                        "level": logging.INFO,
+                    }
+                else:
+                    log_kwargs = {
+                        "logs": f"Cloud storage folder failed to mount: {response.text}",
+                        "level": logging.ERROR,
+                    }
+    else:
+        log_kwargs = {
+            "logs": "No cloud storage credentials found.",
+            "level": logging.WARNING,
+        }
+
+    fractal_log(
+        function="_mount_cloud_storage",
+        label=container.container_id,
+        **log_kwargs,
+    )
+
+
+def _pass_start_dpi_to_instance(ip, port, dpi):
+    """Send the DPI of a client display to the host service.
+
+    Arguments:
+        ip: The IP address of the instance on which the container is running.
+        port: The port on the instance to which port 32262 within the container has been mapped.
+        dpi: The DPI of the client display.
+    """
+
+    try:
+        response = requests.put(
+            f"https://{ip}:{current_app.config['HOST_SERVICE_PORT']}/set_container_dpi",
+            json={
+                "host_port": port,
+                "dpi": dpi,
+                "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
+            },
+            verify=False,
+        )
+    except (ConnectionError, Timeout, TooManyRedirects) as error:
+        log_kwargs = {
+            "logs": (
+                "Encountered an error while attempting to connect to the ECS host service running "
+                f"on {ip}: {error}"
+            ),
+            "level": logging.ERROR,
+        }
+    else:
+        if response.ok:
+            log_kwargs = {
+                "logs": "DPI set.",
+                "level": logging.INFO,
+            }
+        else:
+            log_kwargs = {
+                "logs": f"Received unsuccessful set-DPI response: {response.text}",
+                "level": logging.ERROR,
+            }
+
+    fractal_log(
+        function="_pass_start_dpi_to_instance",
+        label=str(dpi),
+        **log_kwargs,
+    )
+
+
 def _poll(container_id):
     """Poll the database until the web server receives its first ping from the new container.
 
@@ -138,6 +255,11 @@ def select_cluster(region_name):
     Returns: a valid cluster name.
 
     """
+
+    all_regions = RegionToAmi.query.all()
+
+    region_to_ami = {region.region_name: region.ami_id for region in all_regions}
+
     all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
     base_len = 2
@@ -215,23 +337,17 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
     return task_id, curr_ip, curr_network_binding, aeskey
 
 
-def send_dpi_info_to_instance(ip, port, dpi):
+def _get_num_extra(taskdef):
     """
-
-    Args:
-        ip: the IP of the instance hosting the container
-        port: what host port the container has port 32262 mapped to
-        dpi: what DPI the container should be run on
-
-    Returns: a tuple of success/failure and response
-
+    Function determining how many containers to preboot based on type
+    right now only preboots chrome
+    :param taskdef: the task definition ARN of the container
+    :return: integer determining how many containers to preboot
     """
-    data = {"host_port": port, "dpi": dpi, "auth_secret": current_app.config["HOST_SERVICE_SECRET"]}
-    instance_port = 4678
-    request = requests.put(f"http://{ip}:{instance_port}", data=data)
-    if request.status_code != 200:
-        return False, request
-    return True, request
+    app_image_for_taskdef = SupportedAppImages.query.filter_by(task_definition_arn=taskdef).first()
+    if app_image_for_taskdef:
+        return app_image_for_taskdef.preboot_number
+    return 0
 
 
 @shared_task(bind=True)
@@ -266,6 +382,10 @@ def assign_container(
     )
 
     enable_waiting = False
+    user = User.query.get(username)
+
+    assert user
+
     # if a cluster is passed in, we're in testing mode:
     if cluster_name is None and enable_waiting:
         # first, we check for a preexisting container with the correct user and pass it back:
@@ -292,7 +412,7 @@ def assign_container(
             .limit(1)
             .first()
         )
-        num_extra = 1
+        num_extra = _get_num_extra(task_definition_arn)
     else:
         num_extra = 0
         base_container = False
@@ -431,11 +551,10 @@ def assign_container(
             )
             raise Ignore
 
-    try:
-        send_dpi_info_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
-    except requests.exceptions.ConnectionError:
-        pass
+    _mount_cloud_storage(user, base_container)  # Not tested
+    _pass_start_dpi_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
     time.sleep(5)
+
     if not _poll(base_container.container_id):
 
         set_container_state(
@@ -458,7 +577,7 @@ def assign_container(
         function="create_new_container",
         label=str(base_container.container_id),
         logs=f"""container pinged!  To connect, run:
-               desktop 3.96.141.146 -p32262:{base_container.port_32262}.32263:{base_container.port_32263}.32273:{base_container.port_32273} -k {base_container.secret_key}
+               desktop {base_container.ip} -p32262:{base_container.port_32262}.32263:{base_container.port_32263}.32273:{base_container.port_32273} -k {base_container.secret_key}
                            """,
     )
     for _ in range(num_extra):
@@ -515,6 +634,7 @@ def create_new_container(
         f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in "
         f"{region_name}"
     )
+
     fractal_log(function="create_new_container", label="None", logs=message)
     if not cluster_name:
         cluster_name = select_cluster(region_name)
@@ -630,10 +750,13 @@ def create_new_container(
             logs=f"Added task to cluster {cluster_name} and updated cluster info",
         )
         if username != "Unassigned":
-            try:
-                send_dpi_info_to_instance(container.ip, container.port_32262, container.dpi)
-            except requests.exceptions.ConnectionError:
-                pass
+            user = User.query.get(username)
+
+            assert user
+
+            _mount_cloud_storage(user, container)
+            _pass_start_dpi_to_instance(container.ip, container.port_32262, container.dpi)
+
             if not _poll(container.container_id):
 
                 set_container_state(
@@ -659,9 +782,10 @@ def create_new_container(
                 function="create_new_container",
                 label=str(task_id),
                 logs=f"""container pinged!  To connect, run:
-    desktop 3.96.141.146 -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
+    desktop {container.ip} -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}
                 """,
             )
+            # pylint: enable=line-too-long
 
         if not current_app.testing:
             task_time_taken = time.time() - task_start_time

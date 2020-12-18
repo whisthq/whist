@@ -5,20 +5,23 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 import TitleBar from "shared/components/titleBar"
-import { debugLog } from "shared/utils/logging"
+import { debugLog } from "shared/utils/general/logging"
 import { updateContainer } from "store/actions/pure"
 import { history } from "store/history"
-import { execChmodUnix } from "shared/utils/exec"
+import { execPromise } from "shared/utils/files/exec"
 import { FractalRoute } from "shared/types/navigation"
-import { OperatingSystem } from "shared/types/client"
+import { OperatingSystem, FractalDirectory } from "shared/types/client"
 
 import { useQuery, useSubscription } from "@apollo/client"
-import { SUBSCRIBE_USER_APP_STATE, GET_USER_CONTAINER } from "shared/constants/graphql"
+import {
+    SUBSCRIBE_USER_APP_STATE,
+    GET_USER_CONTAINER,
+} from "shared/constants/graphql"
 
 import styles from "pages/login/login.css"
 import { cancelContainer, getStatus } from "store/actions/sideEffects"
 import { FractalAppStates } from "shared/types/containers"
-import { generateMessage } from "shared/utils/loading"
+import { generateMessage } from "shared/components/loading"
 
 // TODO we need some way to signal the 500 thing (or maybe we do just let it keep loading? prolly not)
 // const warning = json && json.state === FractalStatus.FAILURE ? "Unexpectedly failed to start stream. Close and try again."
@@ -41,7 +44,7 @@ const Loading = (props: {
     statusID: string
     username: string
     accessToken: string
-    dispatch: Dispatch
+    dispatch: Dispatch<any>
 }) => {
     const {
         port32262,
@@ -81,7 +84,7 @@ const Loading = (props: {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
             },
-        }
+        },
     })
     /* Looks like:
     { "hardware_user_app_state":
@@ -115,9 +118,11 @@ const Loading = (props: {
     const cancelled = hasState && state === FractalAppStates.CANCELLED
     const failure = hasState && state === FractalAppStates.FAILURE
 
-    console.log(`pending:${pending}\nready:${ready}\ncancelled:${cancelled}\nfailure:${failure}\ncanLoad:${canLoad}`)
-    console.log(`percent loaded: ${percentLoaded}`)
-    
+    // console.log(
+    //     `pending:${pending}\nready:${ready}\ncancelled:${cancelled}\nfailure:${failure}\ncanLoad:${canLoad}`
+    // )
+    // console.log(`percent loaded: ${percentLoaded}`)
+
     useEffect(() => {
         if (percentLoaded < 100 && canLoad) {
             if (pending) {
@@ -176,49 +181,55 @@ const Loading = (props: {
         )
     }
 
-    const LaunchProtocol = () => {
-        const child = require("child_process").spawn
-        const appRootDir = require("electron").remote.app.getAppPath()
-        let executable = ""
-        let path = ""
+    const getExecutableName = (): string => {
+        const currentOS = require("os").platform()
 
-        const os = require("os")
-
-        if (os.platform() === OperatingSystem.MAC) {
-            path = `${appRootDir}/protocol-build/desktop/`
-            path = path.replace("/app", "")
-            path = path.replace("/Resources.asar", "")
-            executable = "./FractalClient"
-        } else if (os.platform() === OperatingSystem.WINDOWS) {
-            path = `${appRootDir}\\protocol-build\\desktop`
-            path = path.replace("\\resources\\app.asar", "")
-            path = path.replace("\\app\\protocol-build", "\\protocol-build")
-            executable = "FractalClient.exe"
-        } else {
-            debugLog(`no suitable os found, instead got ${os.platform()}`)
+        if (currentOS === OperatingSystem.MAC) {
+            return "./FractalClient"
         }
+        if (currentOS === OperatingSystem.WINDOWS) {
+            return "FractalClient.exe"
+        }
+        debugLog(`no suitable os found, instead got ${currentOS}`)
+        return ""
+    }
 
-        execChmodUnix("chmod +x FractalClient", path, os.platform())
+    const launchProtocol = () => {
+        const spawn = require("child_process").spawn
+
+        const protocolPath = require("path").join(
+            FractalDirectory.getRootDirectory(),
+            "protocol-build/desktop"
+        )
+        const executable = getExecutableName()
+
+        execPromise("chmod +x FractalClient", protocolPath, [
+            OperatingSystem.MAC,
+            OperatingSystem.LINUX,
+        ])
             .then(() => {
                 const ipc = require("electron").ipcRenderer
                 ipc.sendSync("canClose", false)
 
                 const portInfo = `32262:${port32262}.32263:${port32263}.32273:${port32273}`
-                const parameters = [
-                    "-w",
-                    800,
-                    "-h",
-                    600,
-                    "-p",
-                    portInfo,
-                    "-k",
-                    secretKey,
+                const protocolParameters = {
+                    w: 800,
+                    h: 600,
+                    p: portInfo,
+                    k: secretKey,
+                    // ...(pngFile && { i: pngFile }),
+                }
+
+                const protocolArguments = [
+                    ...Object.entries(protocolParameters)
+                        .map(([flag, arg]) => [`-${flag}`, arg])
+                        .flat(),
                     ip,
                 ]
 
                 // Starts the protocol
-                const protocol = child(executable, parameters, {
-                    cwd: path,
+                const protocol = spawn(executable, protocolArguments, {
+                    cwd: protocolPath,
                     detached: false,
                     stdio: "ignore",
                     // env: { ELECTRON_RUN_AS_NODE: 1 },
@@ -227,12 +238,13 @@ const Loading = (props: {
                     //    PATH: process.env.PATH,
                     // },
                 })
-                return protocol.on("close", () => {
+                protocol.on("close", () => {
                     resetLaunchRedux()
                     setLaunches(0)
                     ipc.sendSync("canClose", true)
                     history.push(FractalRoute.DASHBOARD)
                 })
+                return null
             })
             .catch((error) => {
                 throw error
@@ -263,7 +275,7 @@ const Loading = (props: {
 
     useEffect(() => {
         if (launches === 1) {
-            LaunchProtocol()
+            launchProtocol()
         }
     }, [launches])
 
@@ -350,7 +362,7 @@ const Loading = (props: {
     )
 }
 
-const mapStateToProps = <T extends {}>(state: T) => {
+const mapStateToProps = (state: { MainReducer: Record<string, any> }) => {
     return {
         containerID: state.MainReducer.container.containerID,
         statusID: state.MainReducer.container.statusID,
@@ -364,7 +376,8 @@ const mapStateToProps = <T extends {}>(state: T) => {
         desiredAppID: state.MainReducer.container.desiredAppID,
         currentAppID: state.MainReducer.container.currentAppID,
         username: state.MainReducer.auth.username,
-        accessToken: state.MainReducer.auth.accessToken
+        accessToken: state.MainReducer.auth.accessToken,
+        pngFile: state.MainReducer.container.pngFile,
     }
 }
 

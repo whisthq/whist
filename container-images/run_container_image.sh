@@ -12,7 +12,8 @@ fi
 runcontainer() {
     docker run -it -d \
         -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-        -v /fractal:/fractal:ro \
+        -v /fractal/containerResourceMappings:/fractal/containerResourceMappings:ro \
+        -v /fractal/cloudStorage:/fractal/cloudStorage:rshared \
         $mount_protocol \
         --tmpfs /run \
         --tmpfs /run/lock \

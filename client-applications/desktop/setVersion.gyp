@@ -1,4 +1,4 @@
-import json, sys, simplejson
+import json, sys
 
 # Read command-line arguments
 
@@ -16,7 +16,7 @@ data["build"]["publish"]["bucket"] = bucket
 json_data = json.dumps(data)
 
 f = open("package.json","w")
-f.write(simplejson.dumps(simplejson.loads(json_data), indent=4, sort_keys=True))
+f.write(json.dumps(json.loads(json_data), indent=4, sort_keys=True))
 f.close()
 
 # Set app/package.json version
@@ -30,5 +30,5 @@ data["version"] = version
 json_data = json.dumps(data)
 
 f = open("app/package.json","w")
-f.write(simplejson.dumps(simplejson.loads(json_data), indent=4, sort_keys=True))
+f.write(json.dumps(json.loads(json_data), indent=4, sort_keys=True))
 f.close()

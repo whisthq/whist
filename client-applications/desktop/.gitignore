@@ -10,6 +10,9 @@ ssh_host_ecdsa_key.pub
 sshkey.pub
 sshkey
 
+# Icons
+icons/
+
 # Logs
 logs
 *.log

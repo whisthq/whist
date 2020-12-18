@@ -8,6 +8,7 @@ export const SUBMIT_FEEDBACK = "SUBMIT_FEEDBACK"
 export const CANCEL_CONTAINER = "CANCEL_CONTAINER"
 
 export const GET_STATUS = "GET_STATUS"
+export const DISCONNECT_APP = "DISCONNECT_APP"
 
 export function rememberMeLogin(username: string) {
     return {
@@ -51,5 +52,11 @@ export function getStatus(id: string) {
     return {
         type: GET_STATUS,
         id,
+    }
+}
+export function disconnectApp(app: string) {
+    return {
+        type: DISCONNECT_APP,
+        app,
     }
 }

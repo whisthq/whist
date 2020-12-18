@@ -1,6 +1,12 @@
-import React, { useState, ChangeEvent, KeyboardEvent } from "react"
+import React, {
+    useState,
+    useEffect,
+    ChangeEvent,
+    KeyboardEvent,
+    Dispatch,
+} from "react"
 import { connect } from "react-redux"
-import { Alert, Row } from "react-bootstrap"
+import { Row } from "react-bootstrap"
 
 import { submitFeedback } from "store/actions/sideEffects"
 import FractalKey from "shared/types/input"
@@ -8,27 +14,37 @@ import FractalKey from "shared/types/input"
 import styles from "pages/dashboard/views/support/support.css"
 import dashboardStyles from "pages/dashboard/dashboard.css"
 
-const Support = <T extends {}>(props: T) => {
+const Support = (props: { dispatch: Dispatch<any> }) => {
     const { dispatch } = props
 
     const [feedback, setFeedback] = useState("")
     const [type, setType] = useState("")
     const [showSubmittedAlert, setShowSubmittedAlert] = useState(false)
 
-    const updateFeedback = (evt: ChangeEvent) => {
+    const updateFeedback = (evt: ChangeEvent<HTMLTextAreaElement>) => {
         setFeedback(evt.target.value)
     }
 
-    const handleSelect = (evt: ChangeEvent) => {
+    const handleSelect = (evt: ChangeEvent<HTMLSelectElement>) => {
         setType(evt.target.value)
     }
 
     const handleSubmit = () => {
-        dispatch(submitFeedback(feedback, type))
-        setShowSubmittedAlert(true)
-        setFeedback("")
-        setType("")
+        if (feedback !== "" && type !== "") {
+            dispatch(submitFeedback(feedback, type))
+            setShowSubmittedAlert(true)
+            setFeedback("")
+            setType("")
+        }
     }
+
+    useEffect(() => {
+        if (showSubmittedAlert) {
+            setTimeout(() => {
+                setShowSubmittedAlert(false)
+            }, 5000)
+        }
+    }, [showSubmittedAlert])
 
     return (
         <div className={dashboardStyles.page}>
@@ -64,30 +80,23 @@ const Support = <T extends {}>(props: T) => {
                     wrap="soft"
                     className={styles.textBox}
                 />
-                {showSubmittedAlert && (
-                    <Alert
-                        variant="success"
-                        onClose={() => setShowSubmittedAlert(false)}
-                        dismissible
-                        className={styles.alert}
-                    >
-                        Your feedback has been submitted!
-                    </Alert>
-                )}
-                {type && feedback ? (
+                {(type && feedback) || showSubmittedAlert ? (
                     <div
                         role="button"
                         tabIndex={0}
                         onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
-                            // enter key
                             if (event.key === FractalKey.ENTER) {
                                 handleSubmit()
                             }
                         }}
-                        className={dashboardStyles.feedbackButton}
+                        className={
+                            showSubmittedAlert
+                                ? dashboardStyles.submittedButton
+                                : dashboardStyles.feedbackButton
+                        }
                         onClick={handleSubmit}
                     >
-                        Submit
+                        {showSubmittedAlert ? "Submitted!" : "Submit"}
                     </div>
                 ) : (
                     <div className={dashboardStyles.noFeedbackButton}>

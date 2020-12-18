@@ -22,20 +22,25 @@ export const DEFAULT = {
         launches: 0,
         launchURL: null,
         statusID: null,
+        pngFile: null,
     },
     client: {
         clientOS: null,
         region: null,
         dpi: null,
+        apps: [],
+        onboardApps: [],
     },
     payment: {
         accountLocked: false,
         promoCode: null,
     },
     apps: {
-        notInstalled: [],
-        installing: [],
-        installed: [],
+        externalApps: [], // all external applications (example entry: {code_name: "google_drive", display_name: "Google Drive", ...})
+        connectedApps: [], // all external application ids that the user has connected their account to
+        authenticated: null, // app name that has successfully authenticated
+        disconnected: null, // app name that has been successfully disconnected
+        disconnectWarning: null, // app name that tried to disconnect but failed
     },
     admin: {
         webserverUrl: "dev",

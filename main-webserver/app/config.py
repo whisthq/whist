@@ -10,11 +10,13 @@ on Heroku, the DeploymentConfig class will be selected. The configuration object
 instantiated and the Flask application is configured by flask.Config.from_object().
 """
 
+import json
 import os
 
 from collections import namedtuple
 
 from dotenv import load_dotenv
+from flask import request
 from sqlalchemy import create_engine
 from sqlalchemy.orm.session import Session
 
@@ -26,6 +28,31 @@ from sqlalchemy.orm.session import Session
 # evaluates to DeployedConfig and CONFIG_MATRIX.local.test evaluates to LocalTestConfig.
 _ConfigMatrix = namedtuple("_ConfigMatrix", ("deployment", "local"))
 _ConfigVector = namedtuple("_ConfigVector", ("serve", "test"))
+
+
+def _callback_webserver_hostname():
+    """Return the hostname of the web server with which the protocol server should communicate.
+
+    The callback web server will receive pings from the protocol server and will receive the
+    container deletion request when the protocol terminates.
+
+
+    If we're launching a streamed application from an instance of the web server running on a local
+    development machine, the server is unable to receive pings from the protocol running in the
+    container from which the application is being streamed. Instead, we want to direct all of the
+    protocol's communication to the Fractal development server deployment on Heroku.
+
+    This function must be called with request context.
+
+    Returns:
+        A web server hostname.
+    """
+
+    return (
+        request.host
+        if not any((host in request.host for host in ("localhost", "127.0.0.1")))
+        else "fractal-dev-server.herokuapp.com"
+    )
 
 
 def getter(key, fetch=True, **kwargs):
@@ -56,7 +83,6 @@ def getter(key, fetch=True, **kwargs):
     default = kwargs.get("default")
     has_default = "default" in kwargs
     raising = kwargs.get("raising", not has_default)
-    cache_key = f"_{key}"
 
     def _getter(config):
         """Return an instance attribute value.
@@ -80,38 +106,32 @@ def getter(key, fetch=True, **kwargs):
                 the configuration database.
         """
 
-        if not hasattr(config, cache_key):
-            # Go out and get the associated value.
-            try:
-                value = os.environ[key]
-            except KeyError as e:
-                found = False
+        try:
+            # First, try to read the value of the configuration variable from the process's
+            # execution environment.
+            value = os.environ[key]
+        except KeyError as e:
+            found = False
 
-                if fetch:
-                    # Go even further and fetch the value from the configuration database.
-                    result = config.session.execute(
-                        f"SELECT value FROM {config.config_table} WHERE key=:key",
-                        {"key": key},
-                    )
-                    row = result.fetchone()
+            if fetch:
+                # Attempt to read a fallback value from the configuration database.
+                result = config.session.execute(
+                    f"SELECT value FROM {config.config_table} WHERE key=:key",
+                    {"key": key},
+                )
+                row = result.fetchone()
 
-                    if row:
-                        found = True
-                        value = row[0]
+                if row:
+                    found = True
+                    value = row[0]
 
-                        result.close()
+                    result.close()
 
-                if not found:
-                    if not has_default and raising:
-                        raise e
+            if not found:
+                if not has_default and raising:
+                    raise e
 
-                    value = default
-
-            # Cache the result.
-            setattr(config, cache_key, value)
-        else:
-            # Fetch a cached result.
-            value = getattr(config, cache_key)
+                value = default
 
         return value
 
@@ -136,6 +156,11 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
         STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
         TESTING = True
 
+        @property
+        def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
+            # Test deployments should not be able to act as OAuth clients.
+            return {}
+
     return TestConfig
 
 
@@ -158,9 +183,13 @@ class DeploymentConfig:
     DATADOG_APP_KEY = property(getter("DATADOG_APP_KEY"))
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
+    HOST_SERVICE_PORT = 4678
     HOST_SERVICE_SECRET = property(getter("HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET"))
+    JWT_QUERY_STRING_NAME = "access_token"
     JWT_SECRET_KEY = property(getter("JWT_SECRET_KEY"))
+    JWT_TOKEN_LOCATION = ("headers", "query_string")
     REDIS_URL = property(getter("REDIS_URL", fetch=False))
+    SECRET_KEY = property(getter("SECRET_KEY", fetch=False))
     SENDGRID_API_KEY = property(getter("SENDGRID_API_KEY"))
     SENDGRID_DEFAULT_FROM = "noreply@tryfractal.com"
     SHA_SECRET_KEY = property(getter("SHA_SECRET_KEY"))
@@ -188,6 +217,17 @@ class DeploymentConfig:
 
         return table
 
+    @property
+    def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
+        """Load the client secret configuration object from client_secret.json
+
+        Returns:
+            A Google client secret-formatted dictionary.
+        """
+
+        with open("client_secret.json") as secret_file:
+            return json.loads(secret_file.read())
+
 
 class LocalConfig(DeploymentConfig):
     """Application configuration for applications running on local development machines.
@@ -197,7 +237,7 @@ class LocalConfig(DeploymentConfig):
     """
 
     def __init__(self):
-        load_dotenv(verbose=True)
+        load_dotenv(dotenv_path=os.path.join(os.getcwd(), "docker/.env"), verbose=True)
         super().__init__()
 
     config_table = "dev"
@@ -216,7 +256,34 @@ class LocalConfig(DeploymentConfig):
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
 
     @property
+    def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
+        """Load the client secret configuration from client_secret.json if the file exists.
+
+        If client_secret.json does not exist, return an empty dictionary.
+
+        Returns:
+            A dictionary.
+        """
+
+        try:
+            secret = super().GOOGLE_CLIENT_SECRET_OBJECT
+        except FileNotFoundError:
+            secret = {}
+
+        return secret
+
+    @property
     def SQLALCHEMY_DATABASE_URI(self):  # pylint: disable=invalid-name
+        """Generate the PostgreSQL connection URI.
+
+        This property's implementation allows developers to specify individual components of the
+        connection URI in environment variables rather than requiring that they specify the entire
+        connection URI themselves.
+
+        Returns:
+            A PostgreSQL connection URI.
+        """
+
         return (
             f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
             f"{self.db_name}"

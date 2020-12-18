@@ -74,6 +74,12 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #include <stdio.h>
 #include <fcntl.h>
 
+#ifndef _WIN32
+#include "curl/curl.h"
+#else
+#include <winhttp.h>
+#endif
+
 #include "../utils/aes.h"
 #include "../utils/json.h"
 
@@ -109,6 +115,16 @@ typedef struct {
     char iv[16];
     char signature[32];
 } PrivateKeyData;
+
+/**
+ * @brief                       Struct to keep response data from a curl
+ *                              request as it is being received.
+ */
+typedef struct {
+    char *buffer;       // Buffer that contains received response data
+    size_t filled_len;  // How much of the buffer is full so far
+    size_t max_len;     // How much the buffer can be filled, at most
+} CurlResponseBuffer;
 
 /*
 ============================
@@ -1577,102 +1593,236 @@ int create_udp_context(SocketContext *context, char *destination, int port, int 
     }
 }
 
-bool send_http_request(char *type, char *host_s, char *message, char **response_body,
-                       size_t max_response_size) {
-    SOCKET socket;  // socket to send/receive request
-    struct hostent *host;
-    struct sockaddr_in webserver_socket_address;  // address of the web server socket
+size_t write_curl_response_callback(char *ptr, size_t size, size_t nmemb, CurlResponseBuffer *crb) {
+    /*
+    Writes CURL request response data to the CurlResponseBuffer buffer up to `crb->max_len`
 
-    // Creating our TCP socket to connect to the web server
-    if ((socket = socketp_tcp()) == INVALID_SOCKET) {
-        return -1;
+    Arguments:
+        ptr (char*): pointer to the delivered response data
+        size (size_t): always 1 - size of each `nmemb` pointed to by `ptr`
+        nmemb (size_t): the size of the buffer pointed to by `ptr`
+        crb (CurlResponseBuffer*): the response buffer object that contains full response data
+
+    Returns:
+        size (size_t): returns `size * nmemb` if successful (this function just always
+            returns success state)
+    */
+
+    if (!crb || !crb->buffer || crb->filled_len > crb->max_len) {
+        return size * nmemb;
     }
-    set_timeout(socket, 1000);
 
+    size_t copy_bytes = size * nmemb;
+    if (copy_bytes + crb->filled_len > crb->max_len) {
+        copy_bytes = crb->max_len - crb->filled_len;
+    }
+
+    memcpy(crb->buffer + crb->filled_len, ptr, copy_bytes);
+
+    return size * nmemb;
+}
+
+bool send_http_request(char *type, char *host_s, char *path, char *payload, char **response_body,
+                       size_t max_response_size) {
+    /*
+    Send an HTTP (over HTTPS protocol) to a host
+
+    Arguments:
+        type (char*): type of HTTP request (POST, GET, etc.)
+        host_s (char*): hostname (e.g. URL) for HTTP request target
+        path (char*): path of request (full request URL would be host_s/path)
+        payload (char*): content of the request body
+        response_body (char**): pointer to the buffer where request response should be stored
+        max_response_size (size_t): max size of the response buffer
+
+    Returns:
+        bool: true on success, false on failure
+        => ARG `response_body` is loaded with request response data
+    */
+
+    // verify that we're requesting from a valid host
+    struct hostent *host;
     host = gethostbyname(host_s);
     if (host == NULL) {
         LOG_ERROR("Error %d: Could not resolve host %s", h_errno, host_s);
         return false;
     }
 
-    // create the struct for the webserver address socket we will query
-    webserver_socket_address.sin_family = AF_INET;
-    webserver_socket_address.sin_port = htons(80);  // HTTP port
-    webserver_socket_address.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
+#ifndef _WIN32
+    // use CURL to send a request and process response buffer
+    CURL *curl;
+    curl = curl_easy_init();
 
-    // connect to the web server before sending the request packet
-    int connect_status = connect(socket, (struct sockaddr *)&webserver_socket_address,
-                                 sizeof(webserver_socket_address));
-    if (connect_status < 0) {
-        LOG_WARNING("Could not connect to the webserver.");
+    if (!curl) {
         return false;
     }
 
-    // DO NOT LOG ARBITRARY HTTP REQUESTS -- THEY MAY CONTAIN SENSITIVE INFO
-    // LIKE PRIVATE KEYS
-    // LOG_INFO("Sending request: %s", message);
+    // set request type (POST/GET/etc.) and protocol to https
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, type);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
 
-    // now we send it
-    int total_sent = 0;
-    int sent_n;
-    int msg_len = ((int)strlen(message));
-    do {
-        sent_n = send(socket, message + total_sent, msg_len - total_sent, 0);
-        if (sent_n < 0) {
-            // error sending, terminate
-            LOG_WARNING("Sending %s message failed.", type);
-            return false;
-        } else if (sent_n == 0) {
-            break;
-        } else {
-            total_sent += sent_n;
-        }
-    } while (total_sent < msg_len);
+    // create target URL
+#ifdef CURLUPART_URL
+    // when curl's urlapi is not available
+    CURLU *curl_url_handle = curl_url();
+    if (!curl_url_handle) {
+        return false;
+    }
+    curl_url_set(curl_url_handle, CURLUPART_URL, host_s, CURLU_DEFAULT_SCHEME);
+    curl_url_set(curl_url_handle, CURLUPART_PATH, path, CURLU_DEFAULT_SCHEME);
+    curl_url_cleanup(curl_url_handle);
+    curl_easy_setopt(curl, CURLOPT_CURLU, curl_url_handle);
+#else
+    // with no urlapi, build our own URL (path must begin with '/' when passed in)
+    char *full_url = malloc(strlen(host_s) + strlen(path) + 2);
+    sprintf(full_url, "%s%s", host_s, path);
+    curl_easy_setopt(curl, CURLOPT_URL, full_url);
+    free(full_url);
+#endif  // CURL urlapi
 
-    // now that it's sent, let's get the reply (if applicable)
-    if ((!response_body) || (max_response_size == 0)) {
-        // don't care about the reply, so we might as well not make the system
-        // call to get the data
-        FRACTAL_SHUTDOWN_SOCKET(socket);
-    } else {
-        char *response = malloc(max_response_size);
-        size_t total_read = 0;
-        int read_n;
-        do {
-            read_n =
-                recv(socket, response + total_read, (int)(max_response_size - total_read - 1), 0);
-            if (read_n < 0) {
-                LOG_ERROR("Response to %s request failed! %d %d", type, read_n,
-                          get_last_network_error());
-                *response_body = NULL;
-                return false;
-            } else if (read_n == 0) {
-                break;
-            } else {
-                total_read += read_n;
-            }
-        } while (total_read < max_response_size - 1);
+    if (payload) {
+        // add request headers:
+        //       "Content-Type: application/json"
+        //       "Content-Length: payload_len"
+        struct curl_slist *headers = NULL;
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+        // create content-length header
+        char *content_length_header = malloc(64);
+        sprintf(content_length_header, "Content-Length: %lu", strlen(payload));
+        headers = curl_slist_append(headers, content_length_header);
+        free(content_length_header);
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-        response[total_read] = '\0';
-
-        // Figure out where response body starts (i.e. after the string "\r\n\r\n")
-        char *body_to_be_copied = NULL;
-        for (size_t i = 0; i < total_read - 3; ++i) {
-            if (memcmp(response + i, "\r\n\r\n", 4) == 0) {
-                body_to_be_copied = response + i + 4;
-            }
-        }
-        if (!body_to_be_copied) {
-            LOG_ERROR("Could not find end of HTTP headers!");
-            *response_body = NULL;
-            return false;
-        }
-
-        *response_body = clone(body_to_be_copied);
-        free(response);
+        // add request payload
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
     }
 
-    FRACTAL_CLOSE_SOCKET(socket);
+    // if a response is expected (response_body != NULL), have libcurl return response body
+    CurlResponseBuffer crb;
+    crb.buffer = NULL;
+    if (response_body) {
+        crb.buffer = malloc(max_response_size);
+        crb.filled_len = 0;
+        crb.max_len = max_response_size;
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_curl_response_callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &crb);
+    }
+
+    // LOG_ERROR curl's error if it fails
+    char *error_buf = malloc(CURL_ERROR_SIZE);
+    curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error_buf);
+    if (curl_easy_perform(curl) != 0) {
+        LOG_ERROR("curl to %s/%s failed: %s", host_s, path, error_buf);
+        free(error_buf);
+        return false;
+    }
+    free(error_buf);
+
+    // if response is expected and a response buffer was created, copy over
+    if (response_body && crb.buffer) {
+        *response_body = crb.buffer;
+    }
+
+    curl_easy_cleanup(curl);
+
+#else
+
+    HINTERNET http_session = NULL;
+    HINTERNET http_connect = NULL;
+    HINTERNET http_request = NULL;
+
+    // open session handle
+    http_session = WinHttpOpen(L"Fractal Protocol", WINHTTP_ACCESS_TYPE_NO_PROXY,
+                               WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+
+    // specify http server
+    if (http_session) {
+        http_connect =
+            WinHttpConnect(http_session, (LPCWSTR)host_s, INTERNET_DEFAULT_HTTPS_PORT, 0);
+    }
+
+    // create http request handl
+    if (http_connect) {
+        http_request =
+            WinHttpOpenRequest(http_connect, (LPCWSTR)type, (LPCWSTR)path, NULL, WINHTTP_NO_REFERER,
+                               WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+    }
+
+    // send the request
+    if (http_request) {
+        DWORD payload_size = 0;
+        if (payload) {
+            payload_size = (DWORD)strlen(payload);
+
+            // add request headers:
+            //       "Content-Type: application/json\r\n"
+            //       "Content-Length: %d\r\n"
+            char *headers = malloc(128);
+            sprintf(headers,
+                    "Content-Type: application/json\r\n"
+                    "Content-Length: %d",
+                    payload_size);
+            if (!WinHttpAddRequestHeaders(http_request, (LPCWSTR)headers, (DWORD)strlen(headers),
+                                          0)) {
+                LOG_ERROR("WinHttpAddRequestHeaders failed with error %u", GetLastError());
+            }
+        }
+        if (!WinHttpSendRequest(http_request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, (LPVOID)payload,
+                                payload_size, payload_size, 0)) {
+            LOG_ERROR("WinHttpSendRequest failed with error %u", GetLastError());
+            return false;
+        }
+    }
+
+    // end request
+    WinHttpReceiveResponse(http_request, NULL);
+
+    DWORD read_size = 0;
+    DWORD total_read_size = 0;
+    DWORD downloaded_size;
+    DWORD size_to_download = 0;
+    // keep checking for data while there is still data
+    if (response_body) {
+        *response_body = malloc(max_response_size);
+
+        do {
+            // check for available data
+            read_size = 0;
+            if (!WinHttpQueryDataAvailable(http_request, &read_size)) {
+                LOG_ERROR("WinHttpQueryDataAvailable failed with error %u", GetLastError());
+                free(*response_body);
+                return false;
+            }
+
+            // allocate space for the buffer
+            size_to_download = read_size;
+            if (read_size + total_read_size > max_response_size) {
+                size_to_download = (DWORD)max_response_size - total_read_size;
+            }
+
+            if (!WinHttpReadData(http_request, (LPVOID)*response_body, read_size,
+                                 &downloaded_size)) {
+                LOG_ERROR("WinHttpReadData failed with error %u", GetLastError());
+                free(*response_body);
+                return false;
+            }
+
+        } while (read_size > 0);
+    }
+
+    if (http_request) {
+        WinHttpCloseHandle(http_request);
+    }
+    if (http_connect) {
+        WinHttpCloseHandle(http_connect);
+    }
+    if (http_session) {
+        WinHttpCloseHandle(http_session);
+    }
+
+#endif  // not _WIN32
+
     return true;
 }
 
@@ -1691,7 +1841,8 @@ bool send_post_request(char *host_s, char *path, char *payload, char **response_
                 copied into `response_body`
 
         Return:
-            bool: return true on succes (or 0-length host), false on failure
+            bool: return true on success (or 0-length host), false on failure
+            => ARG `response_body` is loaded with request response data
     */
 
     // assume that no host means no post request needs to be sent,
@@ -1700,22 +1851,7 @@ bool send_post_request(char *host_s, char *path, char *payload, char **response_
         return true;
     }
 
-    int payload_len = (int)strlen(payload);
-    char *message = malloc(5000 + payload_len);
-    snprintf(message, 5000 + payload_len,
-             "POST %s HTTP/1.0\r\n"
-             "Host: %s\r\n"
-             "Content-Type: application/json\r\n"
-             "Content-Length: %d\r\n"
-             "\r\n"
-             "%s"
-             "\r\n",
-             path, host_s, payload_len, payload);
-
-    // send the message
-    bool worked = send_http_request("POST", host_s, message, response_body, max_response_size);
-    free(message);
-    return worked;
+    return send_http_request("POST", host_s, path, payload, response_body, max_response_size);
 }
 
 bool send_get_request(char *host_s, char *path, char **response_body, size_t max_response_size) {
@@ -1731,7 +1867,8 @@ bool send_get_request(char *host_s, char *path, char **response_body, size_t max
                 copied into `response_body`
 
         Return:
-            bool: return true on succes (or 0-length host), false on failure
+            bool: return true on success (or 0-length host), false on failure
+            => ARG `response_body` is loaded with request response data
     */
 
     // assume that no host means no post request needs to be sent,
@@ -1740,14 +1877,7 @@ bool send_get_request(char *host_s, char *path, char **response_body, size_t max
         return true;
     }
 
-    // prepare the message
-    char *message = malloc(100 + strlen(path) + strlen(host_s));
-    sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
-
-    // send the message
-    bool worked = send_http_request("GET", host_s, message, response_body, max_response_size);
-    free(message);
-    return worked;
+    return send_http_request("GET", host_s, path, NULL, response_body, max_response_size);
 }
 
 void set_timeout(SOCKET s, int timeout_ms) {

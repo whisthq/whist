@@ -73,6 +73,8 @@ int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
 char user_email[USER_EMAIL_MAXLEN];
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+char icon_png_filename[ICON_PNG_FILENAME_MAXLEN];
+extern bool using_sentry;
 bool using_stun = true;
 
 int udp_port = -1;
@@ -535,9 +537,14 @@ int main(int argc, char* argv[]) {
     // It defaults to None, so we only inform sentry if the client app passes in a user email
     // We do this here instead of in initLogger because initLogger is used both by the client and
     // the server so we have to do it for both in their respective main.c files.
-    if (strcmp(user_email, "None") != 0) {
-        sentry_value_t user = sentry_value_new_object();
-        sentry_value_set_by_key(user, "email", sentry_value_new_string(user_email));
+    if (using_sentry) {
+        sentry_set_tag("protocol-type", "client");
+        sentry_set_tag("connection_id", "no connection yet");
+
+        if (strcmp(user_email, "None") != 0) {
+            sentry_value_t user = sentry_value_new_object();
+            sentry_value_set_by_key(user, "email", sentry_value_new_string(user_email));
+        }
     }
 
     if (running_ci) {
@@ -551,7 +558,8 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the SDL window
-    window = init_sdl(output_width, output_height, (char*)program_name);
+    window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
+
     if (!window) {
         LOG_ERROR("Failed to initialize SDL");
         destroy_socket_library();
@@ -683,7 +691,7 @@ int main(int argc, char* argv[]) {
         close_connections();
     }
 
-    if (failed) {
+    if (failed && using_sentry) {
         sentry_value_t event = sentry_value_new_message_event(
             /*   level */ SENTRY_LEVEL_ERROR,
             /*  logger */ "client-errors",
@@ -691,7 +699,7 @@ int main(int argc, char* argv[]) {
         sentry_capture_event(event);
     }
 
-    if (try_amount >= 3) {
+    if (try_amount >= 3 && using_sentry) {
         sentry_value_t event = sentry_value_new_message_event(
             /*   level */ SENTRY_LEVEL_ERROR,
             /*  logger */ "client-errors",

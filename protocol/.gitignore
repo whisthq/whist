@@ -27,6 +27,7 @@
 .DS_Store
 
 # sentry
+*.sentry-native
 sentry-native
 
 # fractal files

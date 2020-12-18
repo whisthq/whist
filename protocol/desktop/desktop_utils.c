@@ -36,6 +36,8 @@ extern volatile int max_bitrate;
 extern volatile int running_ci;
 extern char user_email[USER_EMAIL_MAXLEN];  // Note: Is larger than environment maxlen
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN + 1];
+extern char icon_png_filename[ICON_PNG_FILENAME_MAXLEN];
+extern bool using_sentry;
 
 extern volatile CodecType codec_type;
 extern bool using_stun;
@@ -52,6 +54,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"private-key", required_argument, NULL, 'k'},
                                      {"user", required_argument, NULL, 'u'},
                                      {"environment", required_argument, NULL, 'e'},
+                                     {"icon", required_argument, NULL, 'i'},
                                      {"connection-method", required_argument, NULL, 'z'},
                                      {"ports", required_argument, NULL, 'p'},
                                      {"use_ci", no_argument, NULL, 'x'},
@@ -63,7 +66,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {0, 0, 0, 0}};
 
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:z:p:xn:"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:xn:"
 
 int parse_args(int argc, char *argv[]) {
     // TODO: replace `desktop` with argv[0]
@@ -88,7 +91,8 @@ int parse_args(int argc, char *argv[]) {
         "                                  hexadecimal string\n"
         "  -u, --user=EMAIL              Tell Fractal the user's email. Default: None \n"
         "  -e, --environment=ENV         The environment the protocol is running in,\n"
-        "                                  e.g master, staging, dev. Default: dev\n"
+        "                                  e.g master, staging, dev. Default: none\n"
+        "  -i, --icon=PNG_FILE           Set the protocol window icon from a 64x64 pixel png file\n"
         "  -p, --ports=PORTS             Pass in custom port:port mappings, period-separated.\n"
         "                                  Default: identity mapping\n"
         "  -x, --use_ci                  Launch the protocol in CI mode\n"
@@ -104,10 +108,10 @@ int parse_args(int argc, char *argv[]) {
            sizeof(binary_aes_private_key));
     memcpy((char *)&hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(hex_aes_private_key));
 
-    // default sentry environment
-    strcpy(sentry_environment, "dev");
-    // default sentry environment
+    // default user email
     strcpy(user_email, "None");
+    // default icon filename
+    strcpy(icon_png_filename, "");
 
     int opt;
     long int ret;
@@ -123,7 +127,7 @@ int parse_args(int argc, char *argv[]) {
         }
         errno = 0;
         switch (opt) {
-            case 'w':
+            case 'w': {
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -131,7 +135,8 @@ int parse_args(int argc, char *argv[]) {
                 }
                 output_width = (int)ret;
                 break;
-            case 'h':
+            }
+            case 'h': {
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -139,7 +144,8 @@ int parse_args(int argc, char *argv[]) {
                 }
                 output_height = (int)ret;
                 break;
-            case 'b':
+            }
+            case 'b': {
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -147,7 +153,8 @@ int parse_args(int argc, char *argv[]) {
                 }
                 max_bitrate = (int)ret;
                 break;
-            case 'c':
+            }
+            case 'c': {
                 if (!strcmp(optarg, "h264")) {
                     output_codec_type = CODEC_TYPE_H264;
                 } else if (!strcmp(optarg, "h265")) {
@@ -158,7 +165,8 @@ int parse_args(int argc, char *argv[]) {
                     return -1;
                 }
                 break;
-            case 'k':
+            }
+            case 'k': {
                 if (!read_hexadecimal_private_key(optarg, (char *)binary_aes_private_key,
                                                   (char *)hex_aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
@@ -166,12 +174,23 @@ int parse_args(int argc, char *argv[]) {
                     return -1;
                 }
                 break;
-            case 'u':
+            }
+            case 'u': {
                 strcpy(user_email, optarg);
                 break;
-            case 'e':
-                strcpy(sentry_environment, optarg);
+            }
+            case 'e': {
+                // only log "production" and "staging" env sentry events
+                if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
+                    strcpy(sentry_environment, optarg);
+                    using_sentry = true;
+                }
                 break;
+            }
+            case 'i': {
+                strcpy(icon_png_filename, optarg);
+                break;
+            }
             case 'p': {
                 char separator = '.';
                 char c = separator;
@@ -202,11 +221,13 @@ int parse_args(int argc, char *argv[]) {
                     // Progress the string forwards
                     str += bytes_read;
                 }
-            } break;
-            case 'x':
+                break;
+            }
+            case 'x': {
                 running_ci = 1;
                 break;
-            case 'z':
+            }
+            case 'z': {
                 if (!strcmp(optarg, "STUN")) {
                     using_stun = true;
                 } else if (!strcmp(optarg, "DIRECT")) {
@@ -217,23 +238,28 @@ int parse_args(int argc, char *argv[]) {
                     return -1;
                 }
                 break;
-            case 'n':
+            }
+            case 'n': {
                 program_name = calloc(sizeof(char), strlen(optarg));
                 strcpy((char *)program_name, optarg);
                 break;
-            case FRACTAL_GETOPT_HELP_CHAR:
+            }
+            case FRACTAL_GETOPT_HELP_CHAR: {
                 printf("%s", usage_details);
                 return 1;
-            case FRACTAL_GETOPT_VERSION_CHAR:
+            }
+            case FRACTAL_GETOPT_VERSION_CHAR: {
                 printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
                 return 1;
-            default:
+            }
+            default: {
                 if (opt != -1) {
                     // illegal option
                     printf("%s", usage);
                     return -1;
                 }
                 break;
+            }
         }
         if (opt == -1) {
             if (optind < argc && !ip_set) {
@@ -298,7 +324,9 @@ int log_connection_id(int connection_id) {
     char *str_connection_id = malloc(sizeof(char) * 100);
     sprintf(str_connection_id, "%d", connection_id);
     // send connection id to sentry as a tag, server also does this
-    sentry_set_tag("connection_id", str_connection_id);
+    if (using_sentry) {
+        sentry_set_tag("connection_id", str_connection_id);
+    }
 
     char *path;
 #ifdef _WIN32

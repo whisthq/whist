@@ -49,7 +49,7 @@ Defines
 ============================
 */
 
-#define SENTRY_DSN "https://62090d93120c4937971347505b53e48d@o400459.ingest.sentry.io/5373388"
+#define SENTRY_DSN "https://8e1447e8ea2f4ac6ac64e0150fa3e5d0@o400459.ingest.sentry.io/5373388"
 
 #define LOGGER_QUEUE_SIZE 1000
 #define LOGGER_BUF_SIZE 1000

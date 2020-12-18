@@ -1,11 +1,12 @@
 import React from "react"
 import { connect } from "react-redux"
-import styles from "pages/login/login.css"
 
 import TitleBar from "shared/components/titleBar"
 import Version from "shared/components/version"
 import BackgroundView from "shared/views/backgroundView"
-import LoginView from "pages/login/views/loginView"
+import LoginView from "pages/login/views/loginView/loginView"
+
+import styles from "pages/login/login.css"
 
 const Login = (props: { loginWarning: string }) => {
     const { loginWarning } = props
@@ -31,10 +32,15 @@ const Login = (props: { loginWarning: string }) => {
     )
 }
 
-export const mapStateToProps = <T extends {}>(state: T) => {
+export const mapStateToProps = (state: {
+    MainReducer: {
+        auth: {
+            loginWarning: boolean
+        }
+    }
+}) => {
     return {
         loginWarning: state.MainReducer.auth.loginWarning,
-        loginMessage: state.MainReducer.auth.loginMessage,
     }
 }
 

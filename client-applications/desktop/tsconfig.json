@@ -21,10 +21,14 @@
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true,
-        "allowJs": true
+        "allowJs": true,
+        "paths": {
+            "shared/*": ["shared/*"],
+            "types/*": ["types/*"],
+            "pages/*": ["pages/*"]
+        }
     },
     "exclude": [
-        "test",
         "release",
         "app/main.prod.js",
         "app/main.prod.js.map",

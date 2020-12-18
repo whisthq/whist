@@ -1,17 +1,21 @@
-import { FractalEnvironment, FractalConfig } from "shared/types/config"
+import {
+    FractalEnvironment,
+    FractalConfig,
+    FractalNodeEnvironment,
+} from "shared/types/config"
 
 // these are basically used to keep these links in one place
 // since we are going to be using them in logic for admin integration testing
 // app where you can choose where to go to
 export const webservers: { [key: string]: string } = {
     local: "http://127.0.0.1:7730",
-    dev: "https://dev-server.tryfractal.com",
+    dev: "http://fractal-cloud-storage.herokuapp.com/",
     staging: "https://staging-webserver.tryfractal.com",
     prod: "https://main-webserver.herokuapp.com",
 }
 
 const environment: FractalEnvironment = {
-    local: {
+    LOCAL: {
         url: {
             WEBSERVER_URL: webservers.local,
             FRONTEND_URL: "http://localhost:3000",
@@ -32,7 +36,7 @@ const environment: FractalEnvironment = {
                 "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe",
         },
     },
-    development: {
+    DEVELOPMENT: {
         url: {
             WEBSERVER_URL: webservers.dev,
             FRONTEND_URL: "https://dev.tryfractal.com",
@@ -53,7 +57,7 @@ const environment: FractalEnvironment = {
                 "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe   ",
         },
     },
-    staging: {
+    STAGING: {
         url: {
             WEBSERVER_URL: webservers.staging,
             FRONTEND_URL: "https://staging.tryfractal.com",
@@ -75,7 +79,7 @@ const environment: FractalEnvironment = {
                 "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
         },
     },
-    production: {
+    PRODUCTION: {
         url: {
             WEBSERVER_URL: webservers.production,
             FRONTEND_URL: "https://tryfractal.com",
@@ -100,8 +104,8 @@ const environment: FractalEnvironment = {
 
 export const config: FractalConfig =
     process.env.NODE_ENV === "development"
-        ? environment.local // development
-        : environment.local // development
+        ? environment.LOCAL // development
+        : environment.LOCAL // development
 
 // default export until we have multiple exports
 export default config

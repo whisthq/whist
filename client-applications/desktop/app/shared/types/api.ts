@@ -6,6 +6,7 @@ export class FractalAPI {
 
     static CONTAINER = {
         CREATE: "/container/create",
+        ASSIGN: "/container/assign",
         TEST_CREATE: "/aws_container/create_container",
         CANCEL: "/container_state/cancel",
     }
@@ -13,11 +14,21 @@ export class FractalAPI {
     static MAIL = {
         FEEDBACK: "/mail/feedback",
     }
+
+    static ACCOUNT = {
+        LOGIN: "/account/login",
+    }
+
+    static APPS = {
+        EXTERNAL: "/external_apps",
+        CONNECTED: "/connected_apps",
+    }
 }
 
 export enum FractalHTTPCode {
     SUCCESS = 200,
     ACCEPTED = 202,
+    NO_CONTENT = 204,
     PARTIAL_CONTENT = 206,
     BAD_REQUEST = 400,
     UNAUTHORIZED = 401,

@@ -90,6 +90,19 @@ class AppsToInstall(db.Model):
     app_id = db.Column(db.String(250), nullable=False, index=True)
 
 
+class RegionToAmi(db.Model):
+    """
+    This class represents the region_to_ami table in hardware
+    it maps region names to the AMIs which should be used
+    for clusters in that region
+    """
+
+    __tablename__ = "region_to_ami"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+    region_name = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
+    ami_id = db.Column(db.String(250), nullable=False)
+
+
 class SupportedAppImages(db.Model):
     __tablename__ = "supported_app_images"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
@@ -103,6 +116,7 @@ class SupportedAppImages(db.Model):
     url = db.Column(db.String(250))
     tos = db.Column(db.String(250))
     active = db.Column(db.Boolean, nullable=False, default=False)
+    preboot_number = db.Column(db.Integer, nullable=False)
     containers = relationship(
         "UserContainer",
         back_populates="app",

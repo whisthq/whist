@@ -1,4 +1,4 @@
-/*
+/* 
  * @NOTE: Prepend a `~` to css file paths that are in your node_modules
  *        See https://github.com/webpack-contrib/sass-loader#imports
  */
@@ -53,10 +53,12 @@ body {
     background-color: white;
     font-family: 'Maven Pro';
     overflow-y: hidden;
+    letter-spacing: 1.1px !important;
 }
 
 div {
     outline: none;
+    letter-spacing: 1.1px !important;
 }
 
 h2 {

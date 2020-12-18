@@ -1,0 +1,74 @@
+# workflows/main-webserver-check-pr.yml
+#
+# Main Webserver: Check PR
+# Checks a main-webserver PR for linting and unit testing success.
+
+name: "Main Webserver: Check PR"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
+        paths:
+            - "main-webserver/**"
+            - "!main-webserver/README.md"
+
+jobs:
+    # Linting
+    # Checks for formatting using black and pylint.
+    main-webserver-check-pr-linting:
+        name: Linting
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip
+              run: cd main-webserver && pip install --upgrade pip
+
+            - name: Install dependencies
+              run: cd main-webserver && pip install -r requirements.txt -r requirements-test.txt
+
+            - name: Check if code is linted with Python Black
+              run: |
+                  cd main-webserver
+                  result=$(black . --check) # black --check returns 0 if the code is already linted
+                  if [ "$result" -ne "0" ]; then
+                    (echo "To pass this check please lint the code with Python Black" && false)
+                  else
+                    (echo "Code is linted with Python Black" && true)
+                  fi
+
+            - name: Check if code matches Pylint standards
+              run: cd main-webserver && pylint app # Returns 0 iff code is linted
+
+    # Heroku Testing
+    # Checks unit tests on the Heroku pipeline.
+    main-webserver-check-pr-testing-heroku:
+        name: Heroku Testing
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+                  ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch not just the commit for Heroku CI to work
+
+            - name: Run Tests on Heroku
+              run: cd main-webserver && heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
+              env:
+                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}

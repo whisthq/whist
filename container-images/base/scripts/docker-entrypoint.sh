@@ -18,9 +18,17 @@ then
     echo $FRACTAL_DPI > /usr/share/fractal/private/dpi
 fi
 
+# if SENTRY_ENV is set, then create file
+if [ -n "${SENTRY_ENV+1}" ]
+then
+   echo $SENTRY_ENV > /usr/share/fractal/private/sentry_env
+fi
+
 # make sure this environment variable does not leak in any way (probably
 # redundant, but still good practice)
 unset FRACTAL_AES_KEY
+# in case the webserver is still passing in this environment variable (that
+# method has been superseded by a request to the host service)
 unset FRACTAL_DPI
 
 exec /lib/systemd/systemd

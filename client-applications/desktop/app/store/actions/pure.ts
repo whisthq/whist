@@ -1,3 +1,6 @@
+import { OperatingSystem, FractalApp } from "shared/types/client"
+import { ExternalApp } from "store/reducers/types"
+
 export const UPDATE_AUTH = "UPDATE_AUTH"
 export const UPDATE_CONTAINER = "UPDATE_CONTAINER"
 export const UPDATE_CLIENT = "UPDATE_CLIENT"
@@ -49,6 +52,7 @@ export function updateContainer(body: {
     launches?: number
     launchURL?: string | null
     statusID?: string | null
+    pngFile?: string | null
 }) {
     return {
         type: UPDATE_CONTAINER,
@@ -57,9 +61,11 @@ export function updateContainer(body: {
 }
 
 export function updateClient(body: {
-    clientOS?: string
+    clientOS?: OperatingSystem
     region?: string
     dpi?: number
+    apps?: FractalApp[]
+    onboardApps?: FractalApp[]
 }) {
     return {
         type: UPDATE_CLIENT,
@@ -77,11 +83,13 @@ export function updatePayment(body: {
     }
 }
 
-export function updateApps(body: {
-    notInstalled?: string[]
-    installing?: string[]
-    installed?: string[]
-}) {
+export const updateApps = (body: {
+    externalApps?: ExternalApp[]
+    connectedApps?: string[]
+    authenticated?: string | null
+    disconnected?: string | null
+    disconnectWarning?: string | null
+}) => {
     return {
         type: UPDATE_APPS,
         body,

@@ -7,7 +7,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 git_hash=$(git rev-parse --short HEAD)
 if [[ ${1:-''} == release ]]; then
-    release_tag='-DCMAKE_BUILD_TYPE=Release'
+    release_tag='-D CMAKE_BUILD_TYPE=Release'
 else
     release_tag=''
 fi
@@ -18,11 +18,14 @@ fi
 (cd "$DIR" && ./docker-create-builder.sh)
 (cd "$DIR" && ./docker-run-builder-shell.sh \
     $(pwd)/.. \
-    " \
-    git clean -dfx -- protocol && \
-    cd protocol &&
-    cmake . ${release_tag} && \
-    make clang-format && \
-    make -j FractalServer \
+    "                              \
+    git clean -dfx -- protocol &&  \
+    cd protocol &&                 \
+    cmake                          \
+        -S .                       \
+        -D BUILD_CLIENT=OFF        \
+        ${release_tag} &&          \
+    make clang-format &&           \
+    make -j FractalServer          \
     "
 )
