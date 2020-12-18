@@ -29,37 +29,30 @@ sudo groupadd docker ||:
 sudo gpasswd -a $USER docker
 
 echo "================================================"
+echo "Installing AWS CLI..."
+echo "================================================"
+sudo apt install -y awscli
+
+echo "================================================"
 echo "Installing nvidia drivers..."
 echo "================================================"
-sudo apt-get install -y linux-headers-$(uname -r)
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
-wget https://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64/cuda-$distribution.pin
-sudo mv cuda-$distribution.pin /etc/apt/preferences.d/cuda-repository-pin-600
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64/7fa2af80.pub
-echo "deb http://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
-sudo apt-get update
-sudo apt-mark unhold \
-    nvidia-dkms-450 \
-    nvidia-driver-450 \
-    nvidia-settings \
-    nvidia-modprobe \
-    cuda-drivers-450 \
-    cuda-drivers
-sudo apt-get update && sudo apt-get install -y --no-install-recommends --allow-downgrades \
-    nvidia-dkms-450=450.80.02-0ubuntu1 \
-    nvidia-driver-450=450.80.02-0ubuntu1 \
-    nvidia-settings=450.80.02-0ubuntu1 \
-    nvidia-modprobe=450.80.02-0ubuntu1 \
-    cuda-drivers-450=450.80.02-1 \
-    cuda-drivers=450.80.02-1
-sudo apt-mark hold \
-    nvidia-dkms-450 \
-    nvidia-driver-450 \
-    nvidia-settings \
-    nvidia-modprobe \
-    cuda-drivers-450 \
-    cuda-drivers
-export PATH=/usr/local/cuda-11.0/bin${PATH:+:${PATH}}
+
+sudo apt-get install -y gcc make linux-headers-$(uname -r)
+cat << EOF | sudo tee --append /etc/modprobe.d/blacklist.conf
+blacklist vga16fb
+blacklist nouveau
+blacklist rivafb
+blacklist nvidiafb
+blacklist rivatv
+EOF
+sed -i 's/GRUB_CMDLINE_LINUX=""/# GRUB_CMDLINE_LINUX=""/g' /etc/default/grub
+cat << EOF | sudo tee --append /etc/default/grub
+GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
+EOF
+sudo ./get-nvidia-driver-installer.sh
+sudo chmod +x nvidia-driver-installer.run
+sudo ./nvidia-driver-installer.run --silent
+sudo rm nvidia-driver-installer.run
 
 echo "================================================"
 echo "Installing nvidia-docker..."
@@ -80,11 +73,6 @@ sudo cp docker-daemon-config/seccomp-filter.json /etc/docker/seccomp-filter.json
 # disable Docker (see README.md)
 sudo systemctl restart docker
 sudo systemctl disable --now docker
-
-echo "================================================"
-echo "Installing AWS CLI..."
-echo "================================================"
-sudo apt install -y awscli
 
 echo "================================================"
 echo "Installing Cloud Storage Dependencies..."
