@@ -80,7 +80,7 @@ type MountCloudStorageRequest struct {
 	RefreshToken string `json:"refresh_token"`
 	Expiry       string `json:"expiry"`
 	TokenType    string `json:"token_type"`
-	ClientID	 string `json:"client_id"`
+	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	resultChan   chan requestResult
 }
