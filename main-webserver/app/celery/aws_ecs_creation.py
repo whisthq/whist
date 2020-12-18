@@ -102,9 +102,24 @@ def _mount_cloud_storage(user, container):
         container: An instance of the UserContainer model.
     """
 
+    oauth_client_credentials = {
+        k: v
+        for k, v in current_app.config["GOOGLE_CLIENT_SECRET_OBJECT"].get("web", {}).items()
+        if k.startswith("client")
+    }
     schema = CredentialSchema()
 
-    if user.credentials:
+    if not user.credentials:
+        log_kwargs = {
+            "logs": f"No cloud storage credentials found for user '{user}'.",
+            "level": logging.WARNING,
+        }
+    elif not oauth_client_credentials:
+        log_kwargs = {
+            "logs": "OAuth client not configured. Not checking for cloud storage credentials.",
+            "level": logging.WARNING,
+        }
+    else:
         credential = user.credentials[0]
 
         try:
@@ -127,6 +142,7 @@ def _mount_cloud_storage(user, container):
                         host_port=container.port_32262,
                         provider="google_drive",
                         **schema.dump(credential),
+                        **oauth_client_credentials,
                     ),
                     verify=False,
                 )
@@ -150,11 +166,6 @@ def _mount_cloud_storage(user, container):
                         "logs": f"Cloud storage folder failed to mount: {response.text}",
                         "level": logging.ERROR,
                     }
-    else:
-        log_kwargs = {
-            "logs": "No cloud storage credentials found.",
-            "level": logging.WARNING,
-        }
 
     fractal_log(
         function="_mount_cloud_storage",
