@@ -79,6 +79,8 @@ thisDirectory="${thisDirectory}/"
 # remove any diagnostic entries with excluded folder paths - some remain because of roundabout access (..)
 perl -i -p -000 -e 's/  - DiagnosticName:[^\n]*\n(    [^\n]*\n)*[ ]*FilePath: '"'"'?[\/\\\w\.]*(include|lib|docs|sentry-native|share|nvidia-linux|fractalgetopt\.[ch])[\/\\\w\.]*'"'"'?\n(    [^\n]*(\n|$))*//g' ${yamlFolder}/${fixesFilename}
 
+cat ${yamlFolder}/${fixesFilename}
+
 if [[ $CICheck == 1 ]]
 then
     numSuggestions=$(yq r -l ${yamlFolder}/${fixesFilename} Diagnostics)
