@@ -111,10 +111,10 @@ jobs:
 
                       # install yq for clang-tidy
                       sudo snap install yq
-                      sudo apt install clang-tidy coreutils -y # coreutils for realpath
+                      sudo apt install clang-tidy coreutils perl -y # coreutils for realpath
                   else
                       # llvm for clang-tidy, coreutils for realpath
-                      brew install yq llvm coreutils
+                      brew install yq llvm coreutils perl
                       ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
                       ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
                   fi
