@@ -91,10 +91,14 @@ app_path=${1:-base}
 app_path=${app_path%/}
 force_output=${2:-false}
 
-# enter proper dir
+# Working directory is fractal/container-images/
 cd "$DIR"
 
-# Check if protocol has been built
+# Create temporary directory for build dependencies
+mkdir -p "base/build-temp"
+
+# PROTOCOL -- BUILD & COPY
+mkdir -p "base/build-temp/protocol"
 if [ ! -f ../protocol/server/build64/libsentry.so ]; then
   echo "Could not find $DIR/../protocol/server/build64/libsentry.so... building protocol"
   ../protocol/build_protocol.sh
@@ -110,12 +114,15 @@ fi
 
 echo "A protocol build exists, though it is not guaranteed to be up-to-date."
 
-mkdir "base/build_temp"
-cp ../protocol/server/build64/libsentry.so base/build_temp
-cp ../protocol/server/build64/crashpad_handler base/build_temp
-cp ../protocol/server/build64/FractalServer base/build_temp
+cp ../protocol/server/build64/libsentry.so base/build-temp/protocol
+cp ../protocol/server/build64/crashpad_handler base/build-temp/protocol
+cp ../protocol/server/build64/FractalServer base/build-temp/protocol
+
+# NVIDIA DRIVERS -- DOWNLOAD AND EXTRACT
+mkdir -p "base/build-temp/nvidia-driver"
+../ecs-host-setup/get-nvidia-driver-installer.sh && mv nvidia-driver-installer.run base/build-temp/nvidia-driver
 
 build_image_with_deps "$app_path" "$local_tag" "$force_output"
 
 echo "Cleaning up..."
-rm -rf "base/build_temp"
+rm -rf "base/build-temp"
