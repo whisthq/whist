@@ -28,11 +28,11 @@ const { init } =
         : require("@sentry/electron/dist/renderer")
 
 if (process.env.NODE_ENV === "production") {
-    Sentry.init({
+    init({
         dsn:
             "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323",
         environment: config.sentryEnv,
-        release: "client-applications@1.0.0",
+        release: "client-applications@1.0.0", // TODO: make this the real release version
     })
 }
 
