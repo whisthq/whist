@@ -1,5 +1,5 @@
 #!/bin/bash
-echo “Running userdata-bootstrap.sh”
+echo "Running userdata-bootstrap.sh"
 
 aws s3 cp s3://fractal-ecs-host-service/ecs-host-service ecs-host-service
 chmod +x ecs-host-service
