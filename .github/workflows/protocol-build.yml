@@ -74,7 +74,7 @@ jobs:
               run: |
                   # Install clang-tidy
                   curl -fsSL -o "LLVM-10.0.0-win32.exe" "https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/LLVM-10.0.0-win32.exe"
-                  LLVM-10.0.0-win32.exe /S
+                  ./LLVM-10.0.0-win32.exe /S
 
             - name: Install cmake via Chocolatey on Windows GHA Machine
               if: runner.os == 'Windows'
