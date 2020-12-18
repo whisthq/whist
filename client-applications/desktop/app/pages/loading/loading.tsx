@@ -110,6 +110,7 @@ const Loading = (props: {
                     h: 600,
                     p: portInfo,
                     k: secretKey,
+                    n: desiredAppID,
                     ...(pngFile && { i: pngFile }),
                 }
 
