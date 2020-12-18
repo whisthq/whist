@@ -6,7 +6,6 @@ import requests
 from celery import shared_task
 from celery.exceptions import Ignore
 from flask import current_app
-from oauthlib.oauth2 import InvalidGrantError
 from requests import ConnectionError, Timeout, TooManyRedirects
 
 from app.celery.aws_ecs_deletion import delete_cluster
@@ -120,52 +119,42 @@ def _mount_cloud_storage(user, container):
             "level": logging.WARNING,
         }
     else:
-        credential = user.credentials[0]
-
+        # Mount a cloud storage folder to the container.
         try:
-            credential.refresh(force=True)
-        except InvalidGrantError:
+            response = requests.post(
+                (
+                    f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+                    "/mount_cloud_storage"
+                ),
+                json=dict(
+                    auth_secret=current_app.config["HOST_SERVICE_SECRET"],
+                    host_port=container.port_32262,
+                    provider="google_drive",
+                    **schema.dump(user.credentials[0]),
+                    **oauth_client_credentials,
+                ),
+                verify=False,
+            )
+        except (ConnectionError, Timeout, TooManyRedirects) as error:
+            # Don't just explode if there's a problem connecting to the ECS host service.
             log_kwargs = {
-                "logs": "Found cloud storage credential, but it was expired. Deleted it.",
-                "level": logging.WARNING,
+                "logs": (
+                    "Encountered an error while attempting to connect to the ECS host service "
+                    f"running on {container.ip}: {error}"
+                ),
+                "level": logging.ERROR,
             }
         else:
-            # Mount a cloud storage folder to the container.
-            try:
-                response = requests.post(
-                    (
-                        f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-                        "/mount_cloud_storage"
-                    ),
-                    json=dict(
-                        auth_secret=current_app.config["HOST_SERVICE_SECRET"],
-                        host_port=container.port_32262,
-                        provider="google_drive",
-                        **schema.dump(credential),
-                        **oauth_client_credentials,
-                    ),
-                    verify=False,
-                )
-            except (ConnectionError, Timeout, TooManyRedirects) as error:
-                # Don't just explode if there's a problem connecting to the ECS host service.
+            if response.ok:
                 log_kwargs = {
-                    "logs": (
-                        "Encountered an error while attempting to connect to the ECS host service "
-                        f"running on {container.ip}: {error}"
-                    ),
-                    "level": logging.ERROR,
+                    "logs": "Cloud storage folder mounted successfully.",
+                    "level": logging.INFO,
                 }
             else:
-                if response.ok:
-                    log_kwargs = {
-                        "logs": "Cloud storage folder mounted successfully.",
-                        "level": logging.INFO,
-                    }
-                else:
-                    log_kwargs = {
-                        "logs": f"Cloud storage folder failed to mount: {response.text}",
-                        "level": logging.ERROR,
-                    }
+                log_kwargs = {
+                    "logs": f"Cloud storage folder failed to mount: {response.text}",
+                    "level": logging.ERROR,
+                }
 
     fractal_log(
         function="_mount_cloud_storage",
