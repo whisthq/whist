@@ -27,4 +27,4 @@ EOF
 sudo /bin/systemctl daemon-reload
 
 # Enabling ECS Host Service
-sudo systemctl enable ecs-host-service.service
+sudo systemctl enable --now ecs-host-service.service
