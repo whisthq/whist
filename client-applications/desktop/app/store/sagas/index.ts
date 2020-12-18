@@ -162,7 +162,7 @@ function* createContainer(action: {
 
     const endpoint = test
         ? FractalAPI.CONTAINER.TEST_CREATE
-        : FractalAPI.CONTAINER.CREATE//ASSIGN
+        : FractalAPI.CONTAINER.CREATE // ASSIGN
     const body = test
         ? {
               username: username,

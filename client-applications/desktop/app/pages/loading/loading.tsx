@@ -13,24 +13,14 @@ import { FractalRoute } from "shared/types/navigation"
 import { OperatingSystem, FractalDirectory } from "shared/types/client"
 
 import { useSubscription } from "@apollo/client"
-import {
-    SUBSCRIBE_USER_APP_STATE,
-} from "shared/constants/graphql"
+import { SUBSCRIBE_USER_APP_STATE } from "shared/constants/graphql"
 
 import styles from "pages/loading/loading.css"
 import { cancelContainer, getStatus } from "store/actions/sideEffects"
 import { FractalAppStates } from "shared/types/containers"
 import { generateMessage } from "shared/components/loading"
 
-// TODO we need some way to signal the 500 thing (or maybe we do just let it keep loading? prolly not)
-// const warning = json && json.state === FractalStatus.FAILURE ? "Unexpectedly failed to start stream. Close and try again."
-//     : response && response.status && response.status === 500
-//         ? `(${moment().format("hh:mm:ss")}) ` +
-//             "Unexpectedly lost connection with server. Please close the app and try again."
-//         : "Server unexpectedly not responding. Close the app and try again."
-// TODO timeout
-
-const LOADING_TIMEOUT = 1000 * 100 // 100 seconds
+const LOADING_TIMEOUT = 1000 * 200 // 200 seconds
 
 const Loading = (props: {
     port32262: number
@@ -89,15 +79,8 @@ const Loading = (props: {
       ]
     }
     */
-    // console.log(`data is ${data}`)
-    // console.log(`data looks like ${JSON.stringify(data)}`)
-    // console.log(`loading is ${loading}`)
-
     const state = data ? data.hardware_user_app_state[0].state : null
     const gqlTaskId = data ? data.hardware_user_app_state[0].task_id : null
-
-    // console.log(`username is ${username}`)
-    // console.log(`gql task id is ${gql_task_id}\nand our task is ${statusID}`)
 
     const rightTask = data && gqlTaskId && statusID && gqlTaskId === statusID
     const hasState = data && state
@@ -118,11 +101,6 @@ const Loading = (props: {
         }, LOADING_TIMEOUT)
     }, [])
 
-    console.log(
-        `pending:${pending}\nready:${ready}\ncancelled:${cancelled}\nfailure:${failure}\ncanLoad:${canLoad}`
-    )
-    console.log(`percent loaded: ${percentLoaded}`)
-
     useEffect(() => {
         if (canLoad) {
             if (pending && percentLoaded < 100) {
@@ -136,7 +114,7 @@ const Loading = (props: {
                 dispatch(getStatus(statusID))
                 setPercentLoaded(100)
                 setStatus("Stream successfully started.")
-                setTimeout(() => null, 1000) // wait one sec so they can rea the message
+                setTimeout(() => null, 1000) // wait one sec so they can read the message
                 setLaunches(launches + 1)
             } else if (cancelled) {
                 setCanLoad(false)
@@ -144,7 +122,11 @@ const Loading = (props: {
                 setPercentLoaded(0)
             } else if (failure) {
                 setCanLoad(false)
-                setStatus(timedOut ? "Unexpectedly failed to spin up your app." : "Timed Out.")
+                setStatus(
+                    timedOut
+                        ? "Unexpectedly failed to spin up your app."
+                        : "Timed Out."
+                )
                 setPercentLoaded(0)
             } else {
                 setStatus(

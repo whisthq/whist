@@ -211,7 +211,11 @@ const Discover = (props: {
                 <Col xs={11}>
                     <Row>
                         {apps.filter(checkCategory).map((app: FractalApp) => (
-                            <App key={app.app_id} app={app} admin={app.app_id === "Test App"} />
+                            <App
+                                key={app.app_id}
+                                app={app}
+                                admin={app.app_id === "Test App"}
+                            />
                         ))}
                     </Row>
                 </Col>

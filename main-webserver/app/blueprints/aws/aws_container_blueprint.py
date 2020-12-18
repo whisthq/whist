@@ -289,8 +289,6 @@ def aws_container_post(action, **kwargs):
                 except BadAppError:
                     response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
                 else:
-                    fractal_log("","","starting task!!!!")
-                    # fractal_log("","","FAILED TO START TASK OH NO OH NO
                     task = assign_container.delay(
                         user,
                         task_arn,
