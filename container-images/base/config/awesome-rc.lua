@@ -51,6 +51,11 @@ beautiful.init(gears.filesystem.get_themes_dir() .. "default/theme.lua")
 -- However, you can use another modifier like Mod1, but it may interact with others.
 modkey = "Mod1"
 
+-- Set default mouse settings
+awful.mouse.snap.edge_enabled = true
+awful.mouse.snap.client_enabled = true
+awful.mouse.drag_to_tag.enabled = false
+
 -- {{{ Wibar
 -- Create a wibox for each screen and add it
 local tasklist_buttons = gears.table.join(
