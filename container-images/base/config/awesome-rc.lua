@@ -459,22 +459,18 @@ client.connect_signal("request::titlebars", function(c)
         },
         { -- Right
             awful.titlebar.widget.maximizedbutton(c),
+
             create_titlebar_widget_button(c, "close", function() return "" end, function(cl)
               local m = mouse.coords()
               local distance_sq = 100
               -- check for top right corner
               if (m.x - (cl.x + cl.width)) ^ 2 + (m.y - cl.y) ^ 2 <= distance_sq then
-                  notify("choosing to resize instead of kill",
-                    "m.x: " .. m.x .. " m.y: " .. m.y .. " cl.x + cl.width: " .. (cl.x + cl.width) .. " cl.y: " .. cl.y)
-                  -- mouse.coords(m)
-                  -- root.fake_input('button_press', 1)
                   awful.mouse.client.resize(cl)
               else
-                  notify("choosing to kill instead of resize",
-                    "m.x: " .. m.x .. " m.y: " .. m.y .. " cl.x + cl.width: " .. (cl.x + cl.width) .. " cl.y: " .. cl.y)
                   cl:kill()
               end
             end, function() end, true),
+
             layout = wibox.layout.fixed.horizontal()
         },
         layout = wibox.layout.align.horizontal
