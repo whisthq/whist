@@ -18,7 +18,7 @@ const environment: FractalEnvironment = {
     LOCAL: {
         url: {
             WEBSERVER_URL: webservers.local,
-            FRONTEND_URL: "http://localhost:3000",
+            FRONTEND_URL: "https://dev.tryfractal.com",//"http://localhost:3000", //TODO!
             GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",

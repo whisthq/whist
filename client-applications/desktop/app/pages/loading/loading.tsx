@@ -12,10 +12,9 @@ import { execPromise } from "shared/utils/files/exec"
 import { FractalRoute } from "shared/types/navigation"
 import { OperatingSystem, FractalDirectory } from "shared/types/client"
 
-import { useQuery, useSubscription } from "@apollo/client"
+import { useSubscription } from "@apollo/client"
 import {
     SUBSCRIBE_USER_APP_STATE,
-    GET_USER_CONTAINER,
 } from "shared/constants/graphql"
 
 import styles from "pages/login/login.css"
@@ -30,7 +29,8 @@ import { generateMessage } from "shared/components/loading"
 //             "Unexpectedly lost connection with server. Please close the app and try again."
 //         : "Server unexpectedly not responding. Close the app and try again."
 // TODO timeout
-const LOADING_TIMEOUT = 1000 * 100 // 100 second timeout
+
+const LOADING_TIMEOUT = 1000 * 100 // 100 seconds
 
 const Loading = (props: {
     port32262: number
@@ -43,7 +43,6 @@ const Loading = (props: {
     containerID: string
     statusID: string
     username: string
-    accessToken: string
     dispatch: Dispatch<any>
 }) => {
     const {
@@ -57,7 +56,6 @@ const Loading = (props: {
         containerID,
         statusID,
         username,
-        accessToken,
         dispatch,
     } = props
 
@@ -69,6 +67,7 @@ const Loading = (props: {
     const [status, setStatus] = useState(generateMessage())
     const [percentLoaded, setPercentLoaded] = useState(0)
     const [canLoad, setCanLoad] = useState(true)
+    const [timedOut, setTimedOut] = useState(false)
 
     const percentLoadedWidth = 5 * percentLoaded
 
@@ -76,15 +75,6 @@ const Loading = (props: {
 
     const { data, loading } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { userID: username },
-    })
-
-    const containerData = useQuery(GET_USER_CONTAINER, {
-        variables: { userID: username },
-        context: {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        },
     })
     /* Looks like:
     { "hardware_user_app_state":
@@ -116,11 +106,19 @@ const Loading = (props: {
         (hasState && state === FractalAppStates.PENDING)
     const ready = hasState && state === FractalAppStates.READY
     const cancelled = hasState && state === FractalAppStates.CANCELLED
-    const failure = hasState && state === FractalAppStates.FAILURE
+    const failure = (hasState && state === FractalAppStates.FAILURE) || timedOut
 
-    // console.log(
-    //     `pending:${pending}\nready:${ready}\ncancelled:${cancelled}\nfailure:${failure}\ncanLoad:${canLoad}`
-    // )
+    useEffect(() => {
+        setTimeout(() => {
+            if (canLoad && !timedOut) {
+                setTimedOut(true)
+            }
+        }, LOADING_TIMEOUT)
+    }, [])
+
+    console.log(
+        `pending:${pending}\nready:${ready}\ncancelled:${cancelled}\nfailure:${failure}\ncanLoad:${canLoad}`
+    )
     // console.log(`percent loaded: ${percentLoaded}`)
 
     useEffect(() => {
@@ -144,7 +142,7 @@ const Loading = (props: {
                 setPercentLoaded(0)
             } else if (failure) {
                 setCanLoad(false)
-                setStatus("Unexpectedly failed to spin up your app.")
+                setStatus(timedOut ? "Unexpectedly failed to spin up your app." : "Timed Out.")
                 setPercentLoaded(0)
             } else {
                 setStatus(
@@ -152,7 +150,7 @@ const Loading = (props: {
                 )
             }
         }
-    }, [percentLoaded, data, loading])
+    }, [percentLoaded, data, loading, timedOut])
 
     useEffect(() => {
         if (pending) {
