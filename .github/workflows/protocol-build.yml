@@ -111,7 +111,7 @@ jobs:
 
                       # install yq for clang-tidy
                       sudo snap install yq
-                      sudo apt install clang-tidy -y
+                      sudo apt install clang-tidy coreutils -y # coreutils for realpath
                   else
                       brew install yq
                       brew install llvm
