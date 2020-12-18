@@ -8,10 +8,12 @@
 Usage
 ============================
 
-init_window_name_listener();
+init_window_name_getter();
 
 char name[WINDOW_NAME_MAXLEN];
 get_focused_window_name(name);
+
+destroy_window_name_getter();
 */
 
 /*
@@ -37,10 +39,10 @@ Public Functions
 */
 
 /**
- * @brief                          Initialize the window name listener.
+ * @brief                          Initialize variables required to get window names.
  *
  */
-void init_window_name_listener();
+void init_window_name_getter();
 
 /**
  * @brief                          Get the name of the focused window.
@@ -48,13 +50,14 @@ void init_window_name_listener();
  * @param name_return              Address to write name. Should have at least WINDOW_NAME_MAXLEN
  *                                 bytes available.
  *
+ * @returns                        0 on success, any other int on failure.
  */
-void get_focused_window_name(char* name_return);
+int get_focused_window_name(char* name_return);
 
 /**
- * @brief                          Destroy the window name listener.
+ * @brief                          Destroy variables that were initialized.
  *
  */
-void destroy_window_name_listener();
+void destroy_window_name_getter();
 
 #endif  // WINDOW_NAME_H

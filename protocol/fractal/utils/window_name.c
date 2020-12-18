@@ -6,17 +6,19 @@
 Usage
 ============================
 
-init_window_name_listener();
+init_window_name_getter();
 
 char name[WINDOW_NAME_MAXLEN];
 get_focused_window_name(name);
+
+destroy_window_name_getter();
 */
 
 #if defined(_WIN32)
 // TODO(anton) implement functionality for windows servers
-void init_window_name_listener() {}
-void destroy_window_name_listener() {}
-void get_focused_window_name(char* name_return) {}
+void init_window_name_getter();
+int get_focused_window_name(char* name_return) {}
+void destroy_window_name_getter();
 #elif __linux__
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -25,86 +27,59 @@ void get_focused_window_name(char* name_return) {}
 #include "../core/fractal.h"
 #include "window_name.h"
 
-static SDL_mutex* window_name_mutex;
-static char window_name[WINDOW_NAME_MAXLEN];  // protected by window_name_mutex
-static SDL_Thread* window_name_listener_thread;
-static bool connected;
+Display* display;
 
-int window_name_listener(void* opaque);
-
-void init_window_name_listener() {
-    if (!connected) {
-        // do nothing if already initialized
-        connected = true;
-        window_name_mutex = SDL_CreateMutex();
-        window_name_listener_thread =
-            SDL_CreateThread(window_name_listener, "window_name_listener", NULL);
+void init_window_name_getter() {
+    if (display == NULL) {
+        display = XOpenDisplay(NULL);
     }
 }
 
-void destroy_window_name_listener() {
-    connected = false;
-    SDL_WaitThread(window_name_listener_thread, NULL);
-    SDL_DestroyMutex(window_name_mutex);
-}
-
-void get_focused_window_name(char* name_return) {
+int get_focused_window_name(char* name_return) {
     /*
      * Get the name of the focused window.
      *
      * Arguments:
-     *     name (char*): pointer to location to write name
+     *     name_return (char*): Pointer to location to write name. Must have at least
+     *                          WINDOW_NAME_MAXLEN bytes available.
+     *
+     *  Return:
+     *      ret (int): 0 on success, other integer on failure
      */
-    SDL_LockMutex(window_name_mutex);
-    strncpy(name_return, window_name, WINDOW_NAME_MAXLEN);
-    SDL_UnlockMutex(window_name_mutex);
-}
 
-// https://gist.github.com/kui/2622504
-void get_window_name(Display* d, Window w, char* name_return) {
+    Window w;
+    int revert;
+    XGetInputFocus(display, &w, &revert);
+
+    // https://gist.github.com/kui/2622504
     XTextProperty prop;
     Status s;
 
-    s = XGetWMName(d, w, &prop);  // see man
+    s = XGetWMName(display, w, &prop);
     if (s) {
         int count = 0, result;
         char** list = NULL;
-        result = XmbTextPropertyToTextList(d, &prop, &list, &count);  // see man
+        result = XmbTextPropertyToTextList(display, &prop, &list, &count);
         if (result == Success) {
             LOG_INFO("window name: %s\n", list[0]);
             strncpy(name_return, list[0], WINDOW_NAME_MAXLEN);
             name_return[WINDOW_NAME_MAXLEN - 1] = '\0';
             XFreeStringList(list);
+            return 0;
         } else {
             LOG_ERROR("window name: XmbTextPropertyToTextList\n");
         }
     } else {
         LOG_ERROR("window name: XGetWMName\n");
     }
+    return 1;
 }
 
-int window_name_listener(void* opaque) {
-    /*
-     * Polls the name of the window in focus, and writes the result to window_name.
-     *
-     * TODO(anton) I originally tried an approach using XSelectInput to listen for specific events
-     * that indicate that the window name has changed. However, I could not get that approach to
-     * work for certain applications like Notion. I ran into issues with setting up the listener to
-     * be notified for events from all relevant windows. In the future, it might be worth revisiting
-     * for better performance.
-     */
-    Display* display = XOpenDisplay(NULL);
-    Window focus;
-    int revert;
-    while (connected) {
-        XGetInputFocus(display, &focus, &revert);
-        SDL_LockMutex(window_name_mutex);
-        get_window_name(display, focus, window_name);
-        SDL_UnlockMutex(window_name_mutex);
-        SDL_Delay(10);
+void destroy_window_name_getter() {
+    if (display != NULL) {
+        XCloseDisplay(display);
+        display = NULL;
     }
-    XCloseDisplay(display);
-    return 0;
 }
 
-#endif
+#endif  // __linux__
