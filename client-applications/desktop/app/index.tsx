@@ -20,8 +20,6 @@ import { config } from "shared/constants/config"
 import configureStore from "store/configureStore"
 import { history } from "store/history"
 
-import * as Sentry from "@sentry/electron"
-
 const { init } =
     process.type === "browser"
         ? require("@sentry/electron/dist/main")
