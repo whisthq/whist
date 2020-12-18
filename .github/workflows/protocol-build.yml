@@ -114,6 +114,9 @@ jobs:
                       sudo apt install clang-tidy -y
                   else
                       brew install yq
+                      brew install llvm
+                      ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
+                      ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
                   fi
 
             ############################# Unix Configuration Steps END #############################
