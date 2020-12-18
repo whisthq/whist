@@ -166,6 +166,8 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 			"config_refresh_token", "false",
 			"token", token,
 			"scope", "drive",
+			"client_id", req.ClientID,
+			"client_secret", req.ClientSecret,
 		}, " ")
 	// )
 	scriptpath := resourceMappingDirectory + "config-create-" + configName + ".sh"
