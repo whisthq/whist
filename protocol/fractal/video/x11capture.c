@@ -78,8 +78,6 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         runcmd("xrandr --current | grep \" connected\"", &display_name);
         *strchr(display_name, ' ') = '\0';
 
-        snprintf(cmd, sizeof(cmd), "xrandr --delmode default %s", modename);
-        runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --delmode %s %s", display_name, modename);
         runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
@@ -88,10 +86,6 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
                  "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
                  "cut -d' ' -f3-)",
                  modename, width, height);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --addmode default %s", modename);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --output default --mode %s", modename);
         runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --addmode %s %s", display_name, modename);
         runcmd(cmd, NULL);
