@@ -34,6 +34,13 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
+            - name: Configure AWS CLI # To get and install GRID driver
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
             - name: Walk repo to find all dockerfiles and store path as env variable
               run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
