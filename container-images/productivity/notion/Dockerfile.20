@@ -3,29 +3,47 @@ FROM fractal/browsers/chrome:current-build
 # Install notion dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
+RUN curl -sL https://deb.nodesource.com/setup_current.x | sudo -E bash -
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    dmg2img \
     unzip \
     p7zip-full \
+    jq \
+    nodejs \
     && apt-get autoremove -y \
-    && apt-get clean 
+    && apt-get clean
 
-ENV NOTION_VERSION 2.0.8
-ENV ELECTRON_VERSION v6.1.12
+RUN npm i -g asar
+
+ENV NOTION_VERSION 2.0.11
+ENV ELECTRON_VERSION v11.1.0
 
 RUN wget -qO electron.zip https://github.com/electron/electron/releases/download/$ELECTRON_VERSION/electron-$ELECTRON_VERSION-linux-x64.zip \
-    && wget -qO notion.dmg https://desktop-release.notion-static.com/Notion-$NOTION_VERSION.dmg \
-    && dmg2img  notion.dmg notion.img \
+    && wget -qO notion.exe https://desktop-release.notion-static.com/Notion%20Setup%20$NOTION_VERSION.exe \
     && mkdir -p tmp/build \
     && unzip electron.zip -d tmp/build \
-    && 7z x "notion.dmg" -y -otmp/notion \
-    && cp -r tmp/notion/Notion**/*.app/Contents/Resources/* tmp/build \
-    && rm -rf electron.zip notion.dmg notion.img tmp/notion
+    && 7z x notion.exe -y -otmp/notion-installer \
+    && 7z x tmp/notion-installer/\$PLUGINSDIR/app-64.7z -y -otmp/notion \
+    && cp -r tmp/notion/locales tmp/build \
+    && asar extract tmp/notion/resources/app.asar tmp/build/app \
+    && rm -rf electron.zip notion.dmg notion.img tmp/notion tmp/notion-installer
 
-RUN mv tmp/build /opt/notion
-COPY run-notion.sh /usr/bin/notion
-RUN chmod +x /usr/bin/notion
+RUN mv tmp/build /opt/notion-app
+COPY run-notion.sh /opt/notion-app/notion-app
+RUN chmod +x /opt/notion-app/notion-app \
+    && cp /opt/notion-app/notion-app /usr/bin/notion-app
+
+# Patch the app
+RUN sed -i 's/process.platform === "win32"/process.platform === "win32" || process.platform === "linux"/g' /opt/notion-app/app/main/main.js
+
+# Install notion-app.desktop to enable notion:// handling
+COPY notion-app.desktop /opt/notion-app/notion-app.desktop
+RUN su - fractal -c 'xdg-desktop-menu install /opt/notion-app/notion-app.desktop'
+
+# Whitelist notion:// in google-chrome
+RUN mkdir -p /etc/opt/chrome/policies/managed \
+    && echo {} \
+    | jq '.URLWhitelist=["notion://*"]' \
+    > /etc/opt/chrome/policies/managed/whitelist.json
 
 # Setup Fractal application symlink
-RUN ln -sf /usr/bin/notion /usr/bin/fractal-application
-
+ RUN ln -sf /opt/notion-app/notion-app /usr/bin/fractal-application
