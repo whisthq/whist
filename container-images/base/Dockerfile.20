@@ -232,12 +232,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
-# Create fractal user and do NOT add to sudo group
-# First, generate dynamic password (not allowing : and '' characters to avoid interfering with chpasswd)
-RUN password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo)
-
-# Then, create fractal user with dynamic password, and do NOT add to sudo group
+# Create fractal user with dynamic, random password and do NOT add to sudo group
 RUN useradd --create-home fractal \
+    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
     && echo fractal:${password} | chpasswd
 
 # Install Pulse Audio
