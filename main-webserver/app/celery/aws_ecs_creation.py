@@ -268,23 +268,24 @@ def assign_container(
     :return: the generated container, in json form
     """
 
-    enable_waiting = False
+    enable_reconnect = False
     # if a cluster is passed in, we're in testing mode:
-    if cluster_name is None and enable_waiting:
-        # first, we check for a preexisting container with the correct user and pass it back:
-        existing_container = (
-            UserContainer.query.filter_by(
-                is_assigned=True,
-                user_id=username,
-                task_definition=task_definition_arn,
-                location=region_name,
+    if cluster_name is None:
+        if enable_reconnect:
+            # first, we check for a preexisting container with the correct user:
+            existing_container = (
+                UserContainer.query.filter_by(
+                    is_assigned=True,
+                    user_id=username,
+                    task_definition=task_definition_arn,
+                    location=region_name,
+                )
+                .limit(1)
+                .first()
             )
-            .limit(1)
-            .first()
-        )
-        if existing_container:
-            if _poll(existing_container.container_id):
-                return user_container_schema.dump(existing_container)
+            if existing_container:
+                if _poll(existing_container.container_id):
+                    return user_container_schema.dump(existing_container)
 
         # otherwise, we see if there's an unassigned container
         base_container = (
