@@ -1,0 +1,171 @@
+# workflows/client-applications-publish-desktop-apps.yml
+#
+# Client Applications: Publish Desktop Applications
+# Publishes Fractal Desktop Applications master branch to Production via S3 Upload
+
+name: "Client Applications: Publish Desktop Applications"
+
+on:
+    push:
+        branches: [master]
+
+jobs:
+    build-and-publish-desktop-applications:
+        name: ${{ matrix.config.name }}
+        runs-on: ${{ matrix.config.os }}
+
+        # Platforms to build on/for
+        strategy:
+            matrix:
+                config:
+                    - name: "Build and Publish Fractal Windows Desktop Application to Production"
+                      os: windows-2016
+                    - name: "Build and Publish Fractal macOS Desktop Application to Production"
+                      os: macos-10.14
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+                  submodules: recursive
+
+            # Necessary for Electron to upload packaged applications to AWS S3
+            - name: Configure AWS S3 CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            ############################# Windows Configuration Steps START #############################
+
+            - name: Install CUDA on Windows GHA Machine
+              if: runner.os == 'Windows'
+              env:
+                  visual_studio: "Visual Studio 16 2019" # Imported from env in the .ps1 script
+                  cuda: "11.0.167" # Imported from env in the .ps1 script
+              shell: powershell
+              run: |
+                  .\.github\workflows\helpers\protocol\install_cuda_windows.ps1
+
+                  if ($?) {
+                    # Set paths for subsequent steps, using $env:CUDA_PATH
+                    echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
+                    echo "CUDA_PATH=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                    echo "$env:CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                    echo "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                  }
+
+            - name: Verify that NVCC is Installed on GHA Windows Machine
+              if: runner.os == 'Windows'
+              shell: powershell
+              run: |
+                  nvcc -V
+                  ls $env:CUDA_PATH
+                  ls $env:CUDA_PATH\bin
+                  ls $env:CUDA_PATH\include
+
+            - name: Install cmake via Chocolatey on Windows GHA Machine
+              if: runner.os == 'Windows'
+              uses: crazy-max/ghaction-chocolatey@v1
+              with:
+                  args: install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+
+            - name: Set up Visual Studio Developer Command Prompt (for nmake)
+              if: runner.os == 'Windows'
+              uses: ilammy/msvc-dev-cmd@v1
+
+            ############################# Windows Configuration Steps END #############################
+
+            ############################# Unix Configuration Steps START #############################
+
+            - name: Install macOS Codesigning Certificates on macOS GHA Machine
+              if: runner.os == 'macOS'
+              uses: apple-actions/import-codesign-certs@v1
+              with:
+                  p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+                  p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+
+            # cmake is already installed on GHA Machines
+
+            - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
+              if: runner.os == 'Linux'
+              run: |
+                  ./protocol/desktop/linux-client-setup.sh
+
+            ############################# Unix Configuration Steps END #############################
+
+            - name: Retrieve Desktop App Version from Config Database
+              shell: bash
+              run: |
+                  # curl GraphQL API
+                  curl -X POST \
+                  -H "Content-Type: application/json" \
+                  -H "X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}" \
+                  --data '{ "query": "query { desktop_app_version { commit_hash major minor micro } }" }' \
+                  http://config-database.tryfractal.com/v1/graphql > response.json
+
+                  # parse JSON into major.minor.micro
+                  MAJOR=$(cat response.json | jq '.data.desktop_app_version[0].major')
+                  MINOR=$(cat response.json | jq '.data.desktop_app_version[0].minor')
+                  MICRO=$(cat response.json | jq '.data.desktop_app_version[0].micro')
+
+                  # increment version by 0.0.1
+                  NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
+                  # set new desktop app version
+                  NEW_VERSION="${MAJOR}.${MINOR}.${NEW_MICRO}"
+
+                  # remove temporary JSON file and store version in environment variable
+                  # store NEW_MICRO in GITHUB_ENV to push to GraphQL API iff job succeeds
+                  rm -rf response.json
+                  echo "new_micro_version=${NEW_MICRO}" >> $GITHUB_ENV
+                  echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
+
+            - name: Select AWS S3 Bucket to Publish to Based on GHA Machine OS
+              shell: bash
+              run: |
+                  if [ "$RUNNER_OS" == "Linux" ]; then
+                      echo "s3_bucket=fractal-linux-application-release" >> $GITHUB_ENV
+                  elif [ "$RUNNER_OS" == "Windows" ]; then
+                      echo "s3_bucket=fractal-windows-application-release" >> $GITHUB_ENV
+                  else
+                      echo "s3_bucket=fractal-mac-application-release" >> $GITHUB_ENV
+                  fi
+
+            - name: Publish the Windows Electron Application
+              if: runner.os == 'Windows'
+              shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+              run: |
+                  cd client-applications\desktop\ && .\publish.bat -branch=master -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -publish=true
+
+            - name: Publish the macOS/Linux Ubuntu Electron Applications
+              if: runner.os == 'macOS' || runner.os == 'Linux'
+              env:
+                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
+              shell: bash
+              run: |
+                  cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
+
+    update-graphql-and-notify-slack:
+        name: Update Electron Application Version in Config Database via GraphQL API and Notify Slack
+        needs: [build-and-publish-desktop-applications]
+        if: success()
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Update Version in Config Database via GraphQL API
+              run: |
+                  curl -X POST \
+                  -H "Content-Type: application/json" \
+                  -H "X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}" \
+                  --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk ( pk_columns: { id: 1 } _set: { micro: ${{ env.NEW_VERSION }}, commit_hash: ${{ env.GITHUB_SHA }} }, ) { id micro commit_hash } }\" }" \
+                  http://config-database.tryfractal.com/v1/graphql
+
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Delpoyed to Production via S3 Upload.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}

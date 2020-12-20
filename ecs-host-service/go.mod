@@ -1,4 +1,4 @@
-module github.com/fractal/ecs-host-service
+module github.com/fractal/fractal/ecs-host-service
 
 go 1.15
 
