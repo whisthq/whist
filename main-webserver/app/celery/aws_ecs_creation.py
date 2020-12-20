@@ -481,6 +481,7 @@ def assign_container(
             lock=False,
             secret_key=aeskey,
             task_definition=task_definition_arn,
+            dpi=dpi,
         )
         container_sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), container)
         if container_sql:
