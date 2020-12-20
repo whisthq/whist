@@ -149,9 +149,18 @@ jobs:
                   make FractalServer
                   cd ~
 
+            - name: Verify Build with clang-format
+              if: runner.os == 'Linux'
+              shell: bash
+              run: |
+                  cd protocol
+                  make clang-format
+                  git diff-index --quiet HEAD --
+
             - name: Verify Build with clang-tidy
               shell: bash
               run: |
                   cd protocol/
                   ./run-clang-tidy.sh -c
                   cd ~
+
