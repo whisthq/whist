@@ -148,7 +148,7 @@ jobs:
                   make FractalClient
                   cd ~
 
-            - name: Build Protocol Sever on Linux Ubuntu
+            - name: Build Protocol Server on Linux Ubuntu
               if: runner.os == 'Linux'
               shell: bash
               run: |
@@ -162,5 +162,6 @@ jobs:
               run: |
                   cd protocol/
                   ./run-clang-tidy.sh -c
+                  cat fixes/clang-tidy-fixes.yaml
                   cd ~
 
