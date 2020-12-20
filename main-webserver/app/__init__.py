@@ -8,6 +8,7 @@ from celery import Celery
 from flask import current_app, request
 from flask_sendgrid import SendGrid
 
+from .config import _callback_webserver_hostname
 from .factory import create_app, jwtManager, ma, mail
 
 
@@ -33,7 +34,7 @@ def fractal_pre_process(func):
 
         kwargs["body"] = body
         kwargs["received_from"] = received_from
-        kwargs["webserver_url"] = request.host
+        kwargs["webserver_url"] = _callback_webserver_hostname()
 
         silence = False
 

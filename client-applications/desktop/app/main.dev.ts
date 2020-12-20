@@ -12,15 +12,15 @@
 import path from "path"
 import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
-// import * as Sentry from "@sentry/electron"
+import * as Sentry from "@sentry/electron"
 
-// if (process.env.NODE_ENV === "production") {
-//     Sentry.init({
-//         dsn:
-//             "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323",
-//         release: `client-applications@${app.getVersion()}`,
-//     })
-// }
+if (process.env.NODE_ENV === "production") {
+    Sentry.init({
+        dsn:
+            "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323",
+        release: `client-applications@${app.getVersion()}`,
+    })
+}
 
 // This is the window where the renderer thread will render our React app
 let mainWindow: BrowserWindow | null = null

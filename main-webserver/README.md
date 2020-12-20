@@ -47,7 +47,17 @@ Whether you're running tests or the `docker-compose` stack locally, the web serv
 >
 > -O
 
-**3. Spin Up Local Servers**
+**3. Configure OAuth client (optional)**
+
+Before you can create new containers with cloud storage folders mounted to them from an instance of the web server running locally, you must download the [Google client secret file](https://s3.console.aws.amazon.com/s3/object/fractal-dev-secrets?region=us-east-1&prefix=client_secret.json) from S3. Save it to `main-webserver/client_secret.json`. An easy way to do this is to run:
+
+    aws s3 cp s3://fractal-dev-secrets/client_secret.json client_secret.json
+
+from within the `main-webserver` directory.
+
+This step is optional. If you choose not to complete this step, you will still be able to launch containers, but those containers will not have cloud storage access, even for accounts to which a cloud storage provider is connected.
+
+**4. Spin Up Local Servers**
 
 Use `docker-compose` to run the stack locally. First, `cd` into the `docker/` folder. Then, run the `up` command. If you are on Windows, you should run this from a command prompt in Administrator mode.
 
@@ -60,6 +70,10 @@ If you encounter a "daemon not running" error, this likely means that Docker is 
 Review `docker-compose.yml` to see which ports the various services are hosted on. For example, `"7810:6379"` means that the Redis service, running on port 6379 internally, will be available on `localhost:7810` from the host machine. Line 25 of `docker-compose.yml` will tell you where the webserver itself is running.
 
 By default, hot-reloading of the Flask web server and Celery task queue is disabled (`HOT_RELOAD=`). To enable it, set `HOT_RELOAD` to a non-empty string in your `docker/.env` file.
+
+### Flask CLI
+
+Take advantage of the Flask CLI! Run `flask --help` for information about what commands are available. If, at any point, there is a script that you need to write that is useful for modifying the Flask application or any of its resources (e.g. databases), you are encourage to write it as a Flask CLI command. Start reading about the Flask CLI documentation [here](https://flask.palletsprojects.com/en/1.1.x/cli/?highlight=cli#custom-commands).
 
 ### Helper Software Setup
 

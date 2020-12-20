@@ -77,6 +77,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     xserver-xorg-video-dummy \
     dkms \
     i3 \
+    awesome \
+    awesome-extra \
     lxappearance \
     xinit \
     materia-gtk-theme \
@@ -373,7 +375,8 @@ COPY config/.gtkrc-2.0 /root/.gtkrc-2.0
 COPY --chown=fractal config/.gtkrc-2.0 /home/fractal/.gtkrc-2.0
 COPY config/qt4-settings.conf /root/.config/Trolltech.conf
 COPY --chown=fractal config/qt4-settings.conf /home/fractal/.config/Trolltech.conf
-COPY scripts/.xinitrc /root/.xinitrc
+COPY scripts/xinitrc /root/.xinitrc
+COPY config/awesome-rc.lua /home/fractal/.config/awesome/rc.lua
 
 # Install Fractal services
 COPY services/fractal-entrypoint.service /etc/systemd/system

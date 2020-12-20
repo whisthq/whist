@@ -14,6 +14,10 @@ class CeleryResult(AsyncResult):
         return str(uuid.uuid4())
 
 
+class Object:
+    pass
+
+
 class Patch:
     pass
 
@@ -24,3 +28,14 @@ def apply_async(*args, **kwargs):
 
 def do_nothing(*args, **kwargs):
     pass
+
+
+def function(**kwargs):
+    def func(*_args, **_kwargs):
+
+        if kwargs.get("raises"):
+            raise kwargs["raises"]
+
+        return kwargs.get("returns")
+
+    return func

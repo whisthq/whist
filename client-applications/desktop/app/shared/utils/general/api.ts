@@ -132,3 +132,46 @@ export const apiGet = async (
         return { json: null, success: false }
     }
 }
+
+export const apiDelete = async (
+    endpoint: string,
+    token: string,
+    webserver: string | undefined = config.url.WEBSERVER_URL
+) => {
+    /*
+    Description:
+        Sends an HTTP DELETE request
+
+    Arguments:
+        endpoint (string) : HTTP endpoint (e.g. /account/login)
+        token (string) : Access token
+        webserver (string) : HTTP URL (e.g. https://fractal-prod-server.tryfractal.com)
+    
+    Returns:
+        { json, success } (JSON) : Returned JSON of GET request and success True/False
+    */
+    if (webserver) {
+        const webserverUrl =
+            webserver in webservers ? webservers[webserver] : webserver
+
+        try {
+            const fullUrl = `${webserverUrl}${endpoint}`
+            const response = await fetch(fullUrl, {
+                method: FractalHTTPRequest.DELETE,
+                mode: "cors",
+                headers: {
+                    "Content-Type": FractalHTTPContent.JSON,
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            const json = await response.json()
+            const success = checkJSON(json) && checkResponse(response)
+            return { json, success }
+        } catch (err) {
+            debugLog(err)
+            return err
+        }
+    } else {
+        return { json: null, success: false }
+    }
+}

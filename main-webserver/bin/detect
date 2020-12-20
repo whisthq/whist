@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# detect
+
+echo "Fractal"
+exit 0

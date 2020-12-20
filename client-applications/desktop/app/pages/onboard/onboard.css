@@ -76,6 +76,20 @@
     text-align: center;
 }
 
+.storageServiceContainer {
+    width: 220px;
+    height: 250px;
+    background: var(--text-background-color);
+    box-shadow: var(--light-box-shadow);
+    border-radius: 10px;
+    padding: 25px 35px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0px 30px;
+}
+
 .appContainer,
 .appContainerSelected {
     height: 70px;
@@ -118,7 +132,8 @@
     border-radius: 5px;
 }
 
-.enterButton:hover {
+.enterButton:hover,
+.connectButton:hover {
     background: var(--accent-color);
     color: var(--primary-text-color);
 }
@@ -247,4 +262,39 @@
     font-weight: bold;
     display: inline-block;
     text-align: center;
+}
+
+.servicesWrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.serviceLogo {
+    width: 100px;
+}
+
+.displayName {
+    font-family: 'Maven Pro Medium';
+}
+
+.connected {
+    color: var(--accent-color);
+    font-size: 14px;
+}
+
+.connectButton {
+    font-family: 'Maven Pro Medium';
+    width: 100%;
+    background: var(--primary-color);
+    color: var(--text-background-color);
+    font-size: 13px;
+    border-radius: 4px;
+    padding: 10px 20px;
+    letter-spacing: 1px;
+}
+
+.faCheck {
+    font-size: 20px;
+    color: var(--accent-color);
 }

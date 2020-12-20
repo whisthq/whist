@@ -25,7 +25,7 @@ const Loading = (props: {
     desiredAppID: string
     currentAppID: string
     containerID: string
-    // pngFile: string
+    pngFile: string
     dispatch: Dispatch<any>
 }) => {
     const {
@@ -39,7 +39,7 @@ const Loading = (props: {
         desiredAppID,
         currentAppID,
         containerID,
-        // pngFile,
+        pngFile,
         dispatch,
     } = props
 
@@ -110,7 +110,7 @@ const Loading = (props: {
                     h: 600,
                     p: portInfo,
                     k: secretKey,
-                    // ...(pngFile && { i: pngFile }),
+                    ...(pngFile && { i: pngFile }),
                 }
 
                 const protocolArguments = [
