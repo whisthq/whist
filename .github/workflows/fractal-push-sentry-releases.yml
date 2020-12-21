@@ -55,7 +55,7 @@ jobs:
 
                   # Create new Sentry release
                   export SENTRY_RELEASE=$(sentry-cli releases propose-version)
-                  sentry-cli releases new -p $SENTRY_PROJECT $SENTRY_RELEASE
+                  sentry-cli releases new $SENTRY_RELEASE --project $SENTRY_PROJECT
                   sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
                   sentry-cli releases finalize $SENTRY_RELEASE
 
