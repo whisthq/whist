@@ -1,13 +1,13 @@
-# workflows/protocol-build.yml
+# workflows/protocol-build-and-run-checks.yml
 #
 # Protocol: Build and Check Protocol
-# Builds the Fractal Protocol on Windows, macOS and Linux, and Run Tests
+# Builds the Fractal Protocol on Windows, macOS and Linux, and Run Static Checks (cppcheck, clang-tidy)
 
 name: "Protocol: Build and Check Protocol"
 
 on:
     pull_request:
-        branches: [master, staging, dev, pipitone/protocol-ci]
+        branches: [master, staging, dev]
     workflow_dispatch:
 
 jobs:
@@ -20,11 +20,11 @@ jobs:
             matrix:
                 config:
                     - name: "Build and Check Protocol on Windows (cl)"
-                      os: windows-2019 # llvm, clang-tidy are pre-installed on windows-2019 GHA machines
+                      os: windows-2019 # llvm, cmake, clang-tidy are pre-installed on windows-2019+ GHA machines
                     - name: "Build and Check Protocol on Linux Ubuntu (gcc)"
-                      os: ubuntu-18.04
+                      os: ubuntu-18.04 # cmake is pre-installed on ubuntu-18.04+ machines
                     - name: "Build and Check Protocol on macOS (clang)"
-                      os: macos-10.14
+                      os: macos-10.14 # cmake is pre-installed on macos-10.14+ machines
 
         steps:
             - name: Checkout Git Repository
@@ -36,7 +36,7 @@ jobs:
 
             ############################# Windows Configuration Steps START #############################
 
-            - name: Install cppcheck, yq (for clang-tidy) via Chocolatey on Windows GHA Machine
+            - name: Install yq (for clang-tidy) and cppcheck via Chocolatey on Windows GHA Machine
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
               with:
@@ -68,29 +68,21 @@ jobs:
                   ls $env:CUDA_PATH\bin
                   ls $env:CUDA_PATH\include
 
-            - name: Install cmake via Chocolatey on Windows GHA Machine
-              if: runner.os == 'Windows'
-              uses: crazy-max/ghaction-chocolatey@v1
-              with:
-                  args: install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
-
-            - name: Windows matchers
-              if: runner.os == 'Windows'
+            - name: Install OS-specific Compiler Matchers
               run: |
-                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/msvc_matcher.json"
-                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/msvc_linker_matcher.json"
-            - name: Linux matchers
-              if: runner.os == 'Linux'
-              run: |
-                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/gcc_matcher.json"
-            - name: Mac matchers
-              if: runner.os == 'macOS'
-              run: |
-                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
-            - name: Matchers
-              run: |
+                  # OS-independent matchers
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cppcheck_matcher.json"
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cmake_matcher.json"
+
+                  # OS-specific matchers
+                  if [ "$RUNNER_OS" == "Linux" ]; then
+                      echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/gcc_matcher.json"
+                  elif [ "$RUNNER_OS" == "Windows" ]; then
+                      echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/msvc_matcher.json"
+                      echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/msvc_linker_matcher.json"
+                  else
+                    echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+                  fi
 
             - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
               if: runner.os == 'Windows'
@@ -100,8 +92,6 @@ jobs:
 
             ############################# Unix Configuration Steps START #############################
 
-            # cmake is already installed on GHA Machines
-
             - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
               if: runner.os == 'macOS' || runner.os == 'Linux'
               shell: bash
@@ -109,9 +99,9 @@ jobs:
                   if [ "$RUNNER_OS" == "Linux" ]; then
                       ./protocol/desktop/linux-client-setup.sh
 
-                      # install yq for clang-tidy
+                      # install yq for clang-tidy, coreutils for realpath
                       sudo snap install yq
-                      sudo apt install clang-tidy coreutils perl -y # coreutils for realpath
+                      sudo apt install -y clang-tidy coreutils perl
                   else
                       # llvm for clang-tidy, coreutils for realpath
                       brew install yq llvm coreutils perl
@@ -149,7 +139,7 @@ jobs:
                   make FractalServer
                   cd ~
 
-            - name: Verify Build with clang-format
+            - name: Verify Builds with clang-format
               if: runner.os == 'Linux'
               shell: bash
               run: |
@@ -157,7 +147,7 @@ jobs:
                   make clang-format
                   git diff-index --quiet HEAD --
 
-            - name: Verify Build with clang-tidy
+            - name: Verify Builds with clang-tidy
               shell: bash
               run: |
                   cd protocol/
