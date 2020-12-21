@@ -127,9 +127,12 @@ def delete_container(self, container_name, aes_key):
 
     if not current_app.testing:
         task_time_taken = time.time() - task_start_time
-        datadogEvent_containerDelete(
-            container_name, container_cluster, lifecycle=True, time_taken=task_time_taken
-        )
+        try:
+            datadogEvent_containerDelete(
+                container_name, container_cluster, lifecycle=True, time_taken=task_time_taken
+            )
+        except KeyError:
+            pass
 
 
 @shared_task(bind=True)
