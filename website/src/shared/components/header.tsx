@@ -148,7 +148,7 @@ const Header = (props: {
                                         ? "account-button-light"
                                         : "account-button"
                                 }
-                                menuAlign="right"
+                                // menuAlign="right"
                             >
                                 <Dropdown.Item href="/dashboard">
                                     Dashboard
