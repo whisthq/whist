@@ -413,7 +413,7 @@ def assign_container(
         base_container.dpi = dpi
         db.session.commit()
         self.update_state(
-            state="SUCCESS",
+            state="PENDING",
             meta={"msg": "Container assigned."},
         )
     else:
