@@ -5,8 +5,9 @@
 
 name: "Client Applications: Publish Desktop Applications"
 
+# TODO: TEMP FIX, JUST TO PUSH THE CLIENTAPPS
 on:
-    push:
+    pull_request:
         branches: [master]
 
 jobs:
@@ -160,7 +161,8 @@ jobs:
               run: |
                   curl -X POST \
                   -H 'Content-Type: application/json' \
-                  -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
+                  -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}'
+                   \
                   --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk ( pk_columns: { id: 1 } _set: { micro: ${{ env.NEW_VERSION }}, commit_hash: ${{ env.GITHUB_SHA }} }, ) { id micro commit_hash } }\" }" \
                   https://config-database.tryfractal.com/v1/graphql
 
