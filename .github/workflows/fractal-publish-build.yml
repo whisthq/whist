@@ -70,7 +70,7 @@ jobs:
             - name: Walk repo to find all dockerfiles and store path as env variable
               run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
-           - name: Package app names and regions into json for ecs-task-definitions strategy matrix
+            - name: Package app names and regions into json for ecs-task-definitions strategy matrix
               run: |
                   matrix='{"aws-regions": [], "apps": []}'
                   for region in ${{ env.aws-regions }}
@@ -85,7 +85,6 @@ jobs:
                   echo "$matrix" | jq
                   echo "$matrix"
                   echo "::set-output name=task-definitions-matrix::$matrix"
-
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
     # Render and deploy the app task definitions to ECS.
@@ -158,4 +157,3 @@ jobs:
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to production via ECS upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
