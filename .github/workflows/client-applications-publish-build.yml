@@ -102,10 +102,10 @@ jobs:
               run: |
                   # curl GraphQL API
                   curl -X POST \
-                  -H "Content-Type: application/json" \
-                  -H "X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}" \
+                  -H 'Content-Type: application/json' \
+                  -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
                   --data '{ "query": "query { desktop_app_version { commit_hash major minor micro } }" }' \
-                  http://config-database.tryfractal.com/v1/graphql > response.json
+                  https://config-database.tryfractal.com/v1/graphql > response.json
 
                   # parse JSON into major.minor.micro
                   MAJOR=$(cat response.json | jq '.data.desktop_app_version[0].major')
@@ -159,10 +159,10 @@ jobs:
             - name: Update Version in Config Database via GraphQL API
               run: |
                   curl -X POST \
-                  -H "Content-Type: application/json" \
-                  -H "X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}" \
+                  -H 'Content-Type: application/json' \
+                  -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
                   --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk ( pk_columns: { id: 1 } _set: { micro: ${{ env.NEW_VERSION }}, commit_hash: ${{ env.GITHUB_SHA }} }, ) { id micro commit_hash } }\" }" \
-                  http://config-database.tryfractal.com/v1/graphql
+                  https://config-database.tryfractal.com/v1/graphql
 
             - name: Notify Slack
               run: |
