@@ -22,9 +22,9 @@ const Payment = (props: {
         !(stripeInfo.cardBrand && stripeInfo.cardLastFour)
     )
 
-    const valid_user = user.user_id && user.user_id !== ""
+    const validUser = user.user_id && user.user_id !== ""
 
-    if (!valid_user) {
+    if (!validUser) {
         return <Redirect to="/auth/bypass" />
     } else if (!paymentFlow.plan) {
         return <Redirect to="/plan" />

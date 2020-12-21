@@ -14,7 +14,9 @@ const PriceBox = (props: any) => {
             }}
         >
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <div className="priceBox-name">{name}</div>
+                <div className="priceBox-name">
+{name}
+</div>
                 <div
                     className="priceBox-checkbox"
                     style={{
@@ -22,13 +24,23 @@ const PriceBox = (props: any) => {
                     }}
                 />
             </div>
-            <div className="priceBox-subText">{subText}</div>
+            <div className="priceBox-subText">
+{subText}
+</div>
             <div className="priceBox-priceContainer">
-                <div className="priceBox-dollarSign">$</div>
-                <div className="priceBox-price">{price}</div>
-                <div className="priceBox-mo">/ mo</div>
+                <div className="priceBox-dollarSign">
+$
+</div>
+                <div className="priceBox-price">
+{price}
+</div>
+                <div className="priceBox-mo">
+/ mo
+</div>
             </div>
-            <div className="priceBox-details">{details}</div>
+            <div className="priceBox-details">
+{details}
+</div>
         </div>
     )
 }

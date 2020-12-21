@@ -73,8 +73,9 @@ const ForgotView = (props: any) => {
                             textAlign: "center",
                         }}
                     >
-                        {authFlow.forgotStatus ? authFlow.forgotStatus : ""}.
-                    </h2>
+                        {authFlow.forgotStatus ? authFlow.forgotStatus : ""}
+.
+</h2>
                     <div
                         style={{
                             color: "#333333",
@@ -83,7 +84,8 @@ const ForgotView = (props: any) => {
                         }}
                     >
                         Didn't receive an email? Please check your spam folder.
-                        To receive another email, click{" "}
+                        To receive another email, click
+{" "}
                         <span
                             onClick={() => setGotResponse(false)}
                             style={{ color: "#3930b8", cursor: "pointer" }}

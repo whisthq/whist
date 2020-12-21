@@ -43,7 +43,9 @@ const Footer = (props: any) => {
                 >
                     <Row>
                         <Col xs={12} style={{ maxWidth: 350 }}>
-                            <div className="title">Fractal</div>
+                            <div className="title">
+Fractal
+</div>
                             <div className="text">
                                 Fractal supercharges your applications by
                                 streaming them from the cloud.
@@ -142,7 +144,9 @@ const Footer = (props: any) => {
                                 textAlign: width > 720 ? "right" : "left",
                             }}
                         >
-                            <div className="section-name">RESOURCES</div>
+                            <div className="section-name">
+RESOURCES
+</div>
                             <div style={{ fontSize: 13, outline: "none" }}>
                                 <div>
                                     <HashLink
@@ -187,7 +191,9 @@ const Footer = (props: any) => {
                                 textAlign: width > 720 ? "right" : "left",
                             }}
                         >
-                            <div className="section-name">CONTACT</div>
+                            <div className="section-name">
+CONTACT
+</div>
                             <div>
                                 <a
                                     href="mailto: sales@tryfractal.com"
@@ -254,8 +260,10 @@ const Footer = (props: any) => {
                                     style={{ color: "#cccccc" }}
                                 >
                                     Terms of Service
-                                </HashLink>{" "}
-                                &amp;{" "}
+                                </HashLink>
+{" "}
+                                &amp;
+{" "}
                                 <HashLink
                                     to="/privacy#top"
                                     style={{ color: "#cccccc" }}

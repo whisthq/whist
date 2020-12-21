@@ -18,14 +18,14 @@ const Plan = (props: any) => {
         paymentFlow.plan ? paymentFlow.plan : ""
     )
 
-    const valid_user = user.user_id && user.user_id !== ""
+    const validUser = user.user_id && user.user_id !== ""
 
     const submitPlan = () => {
         dispatch(PaymentPureAction.updatePaymentFlow({ plan: checkedPlan }))
         history.push("/payment")
     }
 
-    if (!valid_user) {
+    if (!validUser) {
         return <Redirect to="/auth/bypass" />
     } else if (!config.payment_enabled) {
         return <Redirect to="/profile" />
@@ -34,7 +34,9 @@ const Plan = (props: any) => {
             <div className="fractalContainer">
                 <Header dark={false} account />
                 <div className="plan">
-                    <h3>Choose your plan</h3>
+                    <h3>
+Choose your plan
+</h3>
                     <div>
                         No payment is required until your free trial has ended.
                         You can change or cancel your plan at any time.

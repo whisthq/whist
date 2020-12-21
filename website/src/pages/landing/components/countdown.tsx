@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react"
+import React, { useState, useEffect, useContext, Dispatch } from "react"
 import { connect } from "react-redux"
 import Countdown from "react-countdown"
 
@@ -9,20 +9,20 @@ import "styles/landing.css"
 
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
 
-const CountdownTimer = (props: any) => {
+const CountdownTimer = (props: { type: string; dispatch: Dispatch<any> }) => {
     const { width } = useContext(MainContext)
-    const { dispatch } = props
+    const { type, dispatch } = props
 
     const [closingDate, changeClosingDate] = useState(() => {
         return Date.now()
     })
 
     useEffect(() => {
-        getCloseDate().then((closingDate) => {
-            changeClosingDate(closingDate)
+        getCloseDate().then((date) => {
+            changeClosingDate(date)
             dispatch(
                 PureWaitlistAction.updateWaitlistData({
-                    closingDate: closingDate,
+                    closingDate: date,
                 })
             )
         })
@@ -48,7 +48,7 @@ const CountdownTimer = (props: any) => {
                 style={{
                     color: "#111111",
                     fontSize: width > 720 ? 18 : 12,
-                    background: props.background ? props.background : "none",
+                    background: "none",
                     textAlign: "center",
                 }}
             >
@@ -147,7 +147,7 @@ const CountdownTimer = (props: any) => {
         )
     }
 
-    if (props.type === "small") {
+    if (type === "small") {
         return (
             <div>
                 <Countdown

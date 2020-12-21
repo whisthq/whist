@@ -90,7 +90,7 @@ const Leaderboard = (props: { waitlist: any[]; waitlistUser: any }) => {
                         </div>
                     </Col>
                 </Row>
-                <Row style={{ paddingTop: idx = 3 ? 20 : 0 }}>
+                <Row style={{ paddingTop: (idx = 3 ? 20 : 0) }}>
                     <Col xs={2}></Col>
                     <Col xs={8} style={{ paddingLeft: 10, display: "flex" }}>
                         <div
@@ -220,7 +220,7 @@ const Leaderboard = (props: { waitlist: any[]; waitlistUser: any }) => {
                                 marginBottom: 2,
                             }}
                         >
-                            <Countdown />
+                            <Countdown type="large" />
                         </div>
                         {getRows()}
                     </div>

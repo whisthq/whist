@@ -45,7 +45,9 @@ const DemoVideo = (props: any) => {
                 >
                     {heading}
                 </h2>
-                <p style={{ marginTop: 20, maxWidth: 1000 }}>{text}</p>
+                <p style={{ marginTop: 20, maxWidth: 1000 }}>
+{text}
+</p>
             </div>
             <Row
                 style={{
@@ -104,7 +106,9 @@ const DemoVideo = (props: any) => {
                         }}
                         alt=""
                     />
-                    <div style={{ marginLeft: 20 }}>{icons[1][1]}</div>
+                    <div style={{ marginLeft: 20 }}>
+{icons[1][1]}
+</div>
                 </Col>
                 <Col
                     xs={12}
@@ -125,7 +129,9 @@ const DemoVideo = (props: any) => {
                         style={{ width: 30, height: 30 }}
                         alt=""
                     />
-                    <div style={{ marginLeft: 20 }}>{icons[2][1]}</div>
+                    <div style={{ marginLeft: 20 }}>
+{icons[2][1]}
+</div>
                 </Col>
             </Row>
             {component}

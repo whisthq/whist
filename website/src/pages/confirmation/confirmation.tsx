@@ -13,7 +13,7 @@ import { config } from "shared/constants/config"
 const Confirmation = (props: { user: any; stripeInfo: any }) => {
     const { user, stripeInfo } = props
 
-    const valid_user = user.user_id && user.user_id !== ""
+    const validUser = user.user_id && user.user_id !== ""
 
     const [trialEnd, setTrialEnd] = useState("")
 
@@ -28,7 +28,7 @@ const Confirmation = (props: { user: any; stripeInfo: any }) => {
         history.push("/profile")
     }
 
-    if (!valid_user) {
+    if (!validUser) {
         return <Redirect to="/auth/bypass" />
     } else if (!stripeInfo.plan || !config.payment_enabled) {
         return <Redirect to="/profile" />
@@ -47,16 +47,26 @@ const Confirmation = (props: { user: any; stripeInfo: any }) => {
                         Success! You've started your Fractal plan.
                     </h3>
                     <div>
-                        Your plan is:{" "}
+                        Your plan is:
+{" "}
                         <span className="bold">
-                            {stripeInfo.plan} - $
-                            {PLANS[stripeInfo.plan].price.toFixed(2)} /mo (
-                            {PLANS[stripeInfo.plan].subtext})
-                        </span>
-                        , and your next billing date is on{" "}
-                        <span className="bold">{trialEnd}</span>. You can cancel
+                            {stripeInfo.plan}
+{' '}
+- $
+{PLANS[stripeInfo.plan].price.toFixed(2)}
+{' '}
+/mo (
+{PLANS[stripeInfo.plan].subtext}
+)
+</span>
+                        , and your next billing date is on
+{" "}
+                        <span className="bold">
+{trialEnd}
+</span>
+. You can cancel
                         your plan at any time.
-                    </div>
+</div>
                     <button
                         className="white-button"
                         style={{ width: "100%", fontSize: 16, marginTop: 20 }}

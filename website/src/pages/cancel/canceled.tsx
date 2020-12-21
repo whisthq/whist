@@ -11,7 +11,7 @@ import { config } from "shared/constants/config"
 const Canceled = (props: any) => {
     const { user } = props
 
-    const valid_user = user.user_id && user.user_id !== ""
+    const validUser = user.user_id && user.user_id !== ""
 
     const addPlan = () => {
         history.push("/plan")
@@ -21,7 +21,7 @@ const Canceled = (props: any) => {
         history.push("/profile")
     }
 
-    if (!valid_user) {
+    if (!validUser) {
         return <Redirect to="/auth/bypass" />
     } else if (!config.payment_enabled) {
         return <Redirect to="/profile" />

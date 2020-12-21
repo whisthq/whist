@@ -22,7 +22,7 @@ const Cancel = (props: any) => {
     const [submitting, setSubmitting] = useState(false)
     const [warning, setWarning] = useState(false)
 
-    const valid_user = user.user_id && user.user_id !== ""
+    const validUser = user.user_id && user.user_id !== ""
 
     useEffect(() => {
         if (stripeInfo.stripeRequestRecieved) {
@@ -61,7 +61,7 @@ const Cancel = (props: any) => {
         history.push("/profile")
     }
 
-    if (!valid_user) {
+    if (!validUser) {
         return <Redirect to="/auth/bypass" />
     } else if (!stripeInfo.plan || !config.payment_enabled) {
         return <Redirect to="/profile" />
@@ -76,14 +76,22 @@ const Cancel = (props: any) => {
                         marginTop: 70,
                     }}
                 >
-                    <h3 style={{ marginBottom: "30px" }}>Cancel Plan</h3>
+                    <h3 style={{ marginBottom: "30px" }}>
+Cancel Plan
+</h3>
                     <div style={{ marginBottom: "30px" }}>
-                        Are you sure you want to cancel the following plan:{" "}
+                        Are you sure you want to cancel the following plan:
+{" "}
                         <span className="bold">
-                            {stripeInfo.plan} - $
-                            {PLANS[stripeInfo.plan].price.toFixed(2)} /mo (
-                            {PLANS[stripeInfo.plan].subtext})
-                        </span>
+                            {stripeInfo.plan}
+{' '}
+- $
+{PLANS[stripeInfo.plan].price.toFixed(2)}
+{' '}
+/mo (
+{PLANS[stripeInfo.plan].subtext}
+)
+</span>
                         ?
                     </div>
                     <div style={{ marginBottom: "15px" }}>
@@ -132,7 +140,9 @@ const Cancel = (props: any) => {
                                 }}
                             />
                         ) : (
-                            <span>Cancel Plan</span>
+                            <span>
+Cancel Plan
+</span>
                         )}
                     </button>
                     <button

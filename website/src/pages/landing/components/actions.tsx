@@ -45,8 +45,11 @@ const CustomAction = (props: {
                     {text}
                 </div>
                 <div className="points" style={{ textAlign: "right" }}>
-                    +{points.toString()} pts
-                </div>
+                    +
+{points.toString()}
+{' '}
+pts
+</div>
             </div>
             {warning && warning !== "" && (
                 <div
@@ -148,14 +151,20 @@ const Actions = (props: {
 
             <Modal size="lg" show={showModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Refer a Friend</Modal.Title>
+                    <Modal.Title>
+Refer a Friend
+</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <div>
                         Want to move up the waitlist? Refer a friend by sending
                         them your referral code. Once they join and enter your
-                        referral code, you'll receive {REFERRAL_POINTS} points!
-                    </div>
+                        referral code, you'll receive 
+{' '}
+{REFERRAL_POINTS}
+{' '}
+points!
+</div>
                     <div
                         style={{
                             display: "flex",
@@ -177,7 +186,9 @@ const Actions = (props: {
                                 waitlistUser.referralCode
                             }
                         >
-                            <Button className="modal-button">Copy Link</Button>
+                            <Button className="modal-button">
+Copy Link
+</Button>
                         </CopyToClipboard>
                     </div>
                     <div
@@ -206,8 +217,14 @@ const Actions = (props: {
                             onClose={() => setShowEmailSentAlert(false)}
                             dismissible
                         >
-                            Your email to <b>{sentEmail}</b> has been sent!
-                        </Alert>
+                            Your email to 
+{' '}
+<b>
+{sentEmail}
+</b>
+{' '}
+has been sent!
+</Alert>
                     )}
                 </Modal.Body>
                 <Modal.Footer>
