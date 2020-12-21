@@ -81,15 +81,16 @@ export async function apiPost(
 
 export async function graphQLPost(
     operationsDoc: any,
-    operationName: any,
-    variables: any
+    operationName: string,
+    variables: any,
+    accessToken?: string
 ) {
     try {
         const response = await fetch(config.url.GRAPHQL_HTTP_URL, {
             method: "POST",
             mode: "cors",
             headers: {
-                "x-hasura-admin-secret": config.keys.HASURA_ACCESS_KEY,
+                Authorization: accessToken ? `Bearer ${accessToken}` : `Bearer`,
             },
             body: JSON.stringify({
                 query: stringifyGQL(operationsDoc),

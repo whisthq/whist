@@ -3,7 +3,7 @@ import React from "react"
 
 const Input = (props: any) => {
     return (
-        <div>
+        <div style={{ width: "100%" }}>
             <div
                 style={{
                     width: "100%",

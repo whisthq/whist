@@ -1,0 +1,51 @@
+.section-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin: 30px 0 15px 0;
+}
+
+.section-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.save-button {
+    width: 47%;
+    margin-top: 20px;
+    background: #3930b8;
+    border: none;
+    color: white;
+    font-size: 16px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    outline: none !important;
+    letter-spacing: 1.1px;
+}
+
+.saved {
+    font-style: italic;
+    margin-right: 15px;
+    animation: FadeAnimation 0.5s ease-in 1s forwards;
+}
+
+@keyframes FadeAnimation {
+    0% {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    100% {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+.add-name {
+    display: flex;
+    flex-direction: row;
+}
+
+.add-name:hover {
+    cursor: pointer;
+}

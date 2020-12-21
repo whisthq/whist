@@ -41,6 +41,7 @@ const Leaderboard = (props: { waitlist: any[]; waitlistUser: any }) => {
                     padding: "20px 25px",
                     marginBottom: 2,
                 }}
+                key={"leaderboard-row-" + idx}
             >
                 <Row style={{ width: "100%" }}>
                     <Col xs={2}>

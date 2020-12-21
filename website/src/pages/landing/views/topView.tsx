@@ -8,30 +8,35 @@ import MainContext from "shared/context/mainContext"
 import FloatingLogo from "pages/landing/components/floatingLogo"
 
 import BlenderNoColor from "assets/largeGraphics/blenderNoColor.svg"
-import VSCodeNoColor from "assets/largeGraphics/vscodeNoColor.svg"
+import UnityNoColor from "assets/largeGraphics/unityNoColor.svg"
 import FigmaNoColor from "assets/largeGraphics/figmaNoColor.svg"
 import ChromeNoColor from "assets/largeGraphics/chromeNoColor.svg"
 import MayaNoColor from "assets/largeGraphics/mayaNoColor.svg"
-import PhotoshopNoColor from "assets/largeGraphics/photoshopNoColor.svg"
+import FirefoxNoColor from "assets/largeGraphics/firefoxNoColor.svg"
 import BlenderColor from "assets/largeGraphics/blenderColor.svg"
-import VSCodeColor from "assets/largeGraphics/vscodeColor.svg"
+import UnityColor from "assets/largeGraphics/unityColor.svg"
 import FigmaColor from "assets/largeGraphics/figmaColor.svg"
 import ChromeColor from "assets/largeGraphics/chromeColor.svg"
 import MayaColor from "assets/largeGraphics/mayaColor.svg"
-import PhotoshopColor from "assets/largeGraphics/photoshopColor.svg"
+import FirefoxColor from "assets/largeGraphics/firefoxColor.svg"
+
+import UnityScreenshot from "assets/largeGraphics/unityScreenshot.svg"
+import BlenderTiger from "assets/largeGraphics/blenderTiger.svg"
+import FigmaScreenshot from "assets/largeGraphics/figmaScreenshot.svg"
+import MayaScreenshot from "assets/largeGraphics/mayaScreenshot.svg"
+import YoutubeScreenshot from "assets/largeGraphics/youtube.svg"
 
 import "styles/landing.css"
 
 const TopView = (props: any) => {
     const { width, appHighlight } = useContext(MainContext)
-
     const [currentIndex, setCurrentIndex] = useState(0)
 
     const apps = [
-        "Adobe,",
+        "Firefox,",
         "Blender,",
         "Figma,",
-        "VSCode,",
+        "Unity,",
         "Chrome,",
         "Maya,",
         "Your apps,",
@@ -39,63 +44,112 @@ const TopView = (props: any) => {
 
     const appImages = [
         {
-            name: "Adobe",
-            colorImage: PhotoshopColor,
-            noColorImage: PhotoshopNoColor,
-            rgb: "36, 35, 85",
+            name: "Firefox",
+            colorImage: FirefoxColor,
+            noColorImage: FirefoxNoColor,
+            rgb: "0,0,0",
         },
         {
             name: "Blender",
             colorImage: BlenderColor,
             noColorImage: BlenderNoColor,
-            rgb: "234, 118, 0",
+            rgb: "0,0,0",
         },
         {
             name: "Figma",
             colorImage: FigmaColor,
             noColorImage: FigmaNoColor,
-            rgb: "162, 89, 255",
+            rgb: "0,0,0",
         },
         {
-            name: "VSCode",
-            colorImage: VSCodeColor,
-            noColorImage: VSCodeNoColor,
-            rgb: "0, 120, 215",
+            name: "Unity",
+            colorImage: UnityColor,
+            noColorImage: UnityNoColor,
+            rgb: "0,0,0",
         },
         {
             name: "Chrome",
             colorImage: ChromeColor,
             noColorImage: ChromeNoColor,
-            rgb: "66, 133, 244",
+            rgb: "0,0,0",
         },
         {
             name: "Maya",
             colorImage: MayaColor,
             noColorImage: MayaNoColor,
-            rgb: "115, 194, 251",
+            rgb: "0,0,0",
         },
     ]
 
     const tops =
         width > 720
             ? appHighlight
-                ? [110, 20, 40, 170, 420, 390]
-                : [65, 20, 40, 190, 350, 370]
+                ? [110, 20, 40, 170, 400, 390]
+                : [65, 20, 40, 190, 290, 370]
             : [30, 20, 110, 110, 200, 210]
     const lefts =
         width > 720
             ? appHighlight
-                ? [-50, 140, 410, 200, 150, 450]
-                : [-100, 130, 410, 250, 150, 450]
+                ? [-50, 140, 340, 175, 125, 360]
+                : [-100, 130, 340, 200, 20, 360]
             : [0, 130, 200, 70, 40, 150]
 
     const handleTextChange = (idx: any) => {
         setCurrentIndex(idx)
     }
 
+    const renderBackground = () => {
+        if (!appImages[currentIndex]) {
+            return {
+                background: "none",
+                className: "website-background",
+            }
+        }
+
+        const currentApp = appImages[currentIndex].name
+
+        if (
+            ["Blender"].includes(currentApp) ||
+            ["Blender"].includes(appHighlight)
+        ) {
+            return {
+                background: `linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.8)), url(${BlenderTiger})`,
+                className: "website-background",
+            }
+        } else if (
+            ["Figma"].includes(currentApp) ||
+            ["Figma"].includes(appHighlight)
+        ) {
+            return {
+                background: `linear-gradient(to bottom, rgba(255,255,255,0.85), rgba(255,255,255,0.85)), url(${FigmaScreenshot})`,
+                className: "website-background",
+            }
+        } else if (
+            ["Maya"].includes(currentApp) ||
+            ["Maya"].includes(appHighlight)
+        ) {
+            return {
+                background: `linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url(${MayaScreenshot})`,
+                className: "website-background",
+            }
+        } else if (
+            ["Unity"].includes(currentApp) ||
+            ["Unity"].includes(appHighlight)
+        ) {
+            return {
+                background: `linear-gradient(to bottom, rgba(255,255,255,0.85), rgba(255,255,255,0.85)), url(${UnityScreenshot})`,
+                className: "website-background",
+            }
+        } else {
+            return {
+                background: `linear-gradient(to bottom, rgba(255,255,255,0.85), rgba(255,255,255,0.85)), url(${YoutubeScreenshot})`,
+                className: "website-background",
+            }
+        }
+    }
+
     const renderLogos = () => {
         let idx = -1
-
         if (appHighlight) {
             const appHighlightIndex = apps.indexOf(appHighlight + ",")
             return appImages
@@ -113,8 +167,8 @@ const TopView = (props: any) => {
                                 top={tops[idx]}
                                 left={lefts[idx]}
                                 colorImage={app.colorImage}
+                                background="white"
                                 noColorImage={app.noColorImage}
-                                background={"rgba(" + app.rgb + ", 0.1)"}
                                 animationDelay={0.5 * idx + "s"}
                                 app={app.name}
                             />
@@ -138,11 +192,7 @@ const TopView = (props: any) => {
                         left={lefts[3]}
                         colorImage={appImages[appHighlightIndex].colorImage}
                         noColorImage={appImages[appHighlightIndex].noColorImage}
-                        background={
-                            "rgba(" +
-                            appImages[appHighlightIndex].rgb +
-                            ", 0.1)"
-                        }
+                        background={"white"}
                         animationDelay="1.5s"
                         app={appHighlight}
                     />
@@ -161,7 +211,7 @@ const TopView = (props: any) => {
                         left={lefts[idx]}
                         colorImage={app.colorImage}
                         noColorImage={app.noColorImage}
-                        background={"rgba(" + app.rgb + ", 0.1)"}
+                        background={"white"}
                         animationDelay={0.5 * idx + "s"}
                         app={app.name}
                     />
@@ -170,6 +220,7 @@ const TopView = (props: any) => {
         }
     }
 
+    const renderedBackground = renderBackground()
     return (
         <div
             className="banner-background"
@@ -179,14 +230,13 @@ const TopView = (props: any) => {
                 paddingBottom: width > 720 ? 0 : 70,
             }}
         >
-            <Header color="black" />
+            <Header dark={false} />
             <Row
                 style={{
-                    width: "100%",
-                    padding: 0,
-                    margin: 0,
                     paddingTop: width > 720 ? 75 : 0,
+                    backgroundImage: renderedBackground.background,
                 }}
+                className={renderedBackground.className}
             >
                 <Col
                     md={7}
@@ -227,6 +277,7 @@ const TopView = (props: any) => {
                             fontSize: width > 720 ? 80 : 50,
                             fontWeight: "bold",
                             display: "inline-block",
+                            color: "black",
                             paddingBottom: 20,
                             lineHeight: width > 720 ? 1.0 : 0.6,
                             marginBottom: 40,
@@ -237,9 +288,10 @@ const TopView = (props: any) => {
                     <p
                         style={{
                             lineHeight: 1.6,
-                            color: "#333333",
+                            color: "#111111",
                             letterSpacing: 1.5,
                             textAlign: "left",
+                            maxWidth: 500,
                         }}
                     >
                         Fractal supercharges your applications by streaming them
@@ -247,7 +299,7 @@ const TopView = (props: any) => {
                         ends for access.
                     </p>
                     <div style={{ marginTop: 50 }}>
-                        <WaitlistForm />
+                        <WaitlistForm dark={false} />
                     </div>
                 </Col>
                 <Col

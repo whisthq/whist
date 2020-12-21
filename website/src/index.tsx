@@ -60,20 +60,12 @@ sagaMiddleware.run(rootSaga)
 
 const httpLink = new HttpLink({
     uri: config.url.GRAPHQL_HTTP_URL,
-    headers: {
-        "x-hasura-access-key": config.keys.HASURA_ACCESS_KEY,
-    },
 })
 
 const wsLink = new WebSocketLink({
     uri: config.url.GRAPHQL_WS_URL,
     options: {
         reconnect: true,
-        connectionParams: {
-            headers: {
-                "x-hasura-admin-secret": config.keys.HASURA_ACCESS_KEY,
-            },
-        },
     },
 })
 

@@ -130,7 +130,7 @@ const DownloadBox = (props: {
                     {smallIcon}
                     <div>
                         {canSmall
-                            ? "Or Download for " + againstOS("Windows", "MacOS")
+                            ? "Download for " + againstOS("Windows", "MacOS")
                             : "Downloading..."}
                     </div>
                 </button>

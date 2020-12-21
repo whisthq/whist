@@ -12,6 +12,7 @@ import Auth from "pages/auth/auth"
 import Verify from "pages/auth/verify"
 import Reset from "pages/auth/reset"
 import Dashboard from "pages/dashboard/dashboard"
+import Profile from "pages/profile/profile"
 
 import withTracker from "shared/utils/withTracker"
 
@@ -51,7 +52,10 @@ const RootApp = (props: any) => {
                     path="/termsofservice"
                     component={withTracker(TermsOfService)}
                 />
-                <Route path="/auth/:first?" component={withTracker(Auth)} />
+                <Route
+                    path="/auth/:first?/:second?"
+                    component={withTracker(Auth)}
+                />
                 <Route exact path="/verify" component={withTracker(Verify)} />
                 <Route exact path="/reset" component={withTracker(Reset)} />
                 <Route
@@ -59,6 +63,7 @@ const RootApp = (props: any) => {
                     path="/dashboard"
                     component={withTracker(Dashboard)}
                 />
+                <Route exact path="/profile" component={withTracker(Profile)} />
                 <Route
                     exact
                     path="/:first?/:second?"

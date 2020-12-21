@@ -43,7 +43,7 @@ const About = (props: any) => {
                 id="top"
                 className="fractalContainer"
             >
-                <Header color="black" />
+                <Header dark={false} />
                 <div style={{ marginTop: 50 }}>
                     <SideBySide case={"Gaming"} width={width} />
                 </div>

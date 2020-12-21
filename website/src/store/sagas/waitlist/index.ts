@@ -24,13 +24,13 @@ import * as SideEffectWaitlistAction from "store/actions/waitlist/sideEffects"
 
 function* sendReferralEmail(action: any) {
     const state = yield select()
-    if (action.user_id) {
+    if (state.WaitlistReducer.waitlistUser.user_id) {
         yield call(
             apiPost,
             "/mail/waitlistReferral",
             {
-                email: state.AuthReducer.user.user_id,
-                name: state.AuthReducer.user.name,
+                email: state.WaitlistReducer.waitlistUser.user_id,
+                name: state.WaitlistReducer.waitlistUser.name,
                 code: state.WaitlistReducer.waitlistUser.referralCode,
                 recipient: action.recipient,
             },

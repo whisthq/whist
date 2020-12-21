@@ -11,6 +11,7 @@ export function updateWaitlistUser(body: {
     points?: number
     ranking?: number
     referralCode?: string
+    eastereggsAvailable?: any
     authEmail?: string
 }) {
     return {

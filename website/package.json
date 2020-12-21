@@ -57,6 +57,7 @@
         "react-native": "^0.63.3",
         "react-player": "^2.6.2",
         "react-redux": "^7.2.1",
+        "react-responsive-carousel": "^3.2.10",
         "react-router": "^5.2.0",
         "react-router-dom": "^5.2.0",
         "react-router-hash-link": "^2.1.0",

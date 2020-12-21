@@ -1,6 +1,6 @@
 # Fractal Website
 
-![Node.js CI](https://github.com/fractalcomputers/website/workflows/Node.js%20CI/badge.svg)
+![Node.js CI](https://github.com/fractal/website/workflows/Node.js%20CI/badge.svg)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/6bf95ae3-d9ee-4e92-99e2-fc67c52f540f/deploy-status)](https://app.netlify.com/sites/tryfractal/deploys)
 
 This repository contains the code for the new Fractal website for single app streaming.

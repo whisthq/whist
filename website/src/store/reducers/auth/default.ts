@@ -12,6 +12,8 @@ export const DEFAULT = {
         // verification status for this specific user
         emailVerified: false, // keeps track of whether this user is verified so we can display the proper info
         canLogin: false, // are they off the waitlist?
+        waitlistToken: null,
+        usingGoogleLogin: false, // if the user signed in using Google
     },
     authFlow: {
         mode: "Sign up", // what auth is doing right now (todo in the future make it an enum)
@@ -29,5 +31,6 @@ export const DEFAULT = {
         resetDone: false, // whether we are done resetting our password (i.e. server says "I've done it")
         passwordResetEmail: null, // forgot password email
         passwordResetToken: null,
+        passwordVerified: null, // null | "success" | "failed"
     },
 }

@@ -11,9 +11,13 @@ import { useMutation } from "@apollo/client"
 import MainContext from "shared/context/mainContext"
 import { INITIAL_POINTS, REFERRAL_POINTS } from "shared/utils/points"
 import { INSERT_WAITLIST } from "pages/landing/constants/graphql"
-import { UPDATE_WAITLIST } from "shared/constants/graphql"
+import { UPDATE_WAITLIST_REFERRALS } from "shared/constants/graphql"
 
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
+
+import { deep_copy } from "shared/utils/reducerHelpers"
+import { SECRET_POINTS } from "shared/utils/points"
+import { db } from "shared/utils/firebase"
 import * as PureAuthAction from "store/actions/auth/pure"
 import { deepCopy } from "shared/utils/reducerHelpers"
 import { DEFAULT } from "store/reducers/auth/default"
@@ -21,8 +25,8 @@ import { DEFAULT } from "store/reducers/auth/default"
 import "styles/landing.css"
 import { checkEmail } from "pages/auth/constants/authHelpers"
 
-function WaitlistForm(props: any) {
-    const { dispatch, waitlist, waitlistUser, isAction } = props
+const WaitlistForm = (props: any) => {
+    const { dispatch, waitlist, waitlistUser, user, dark, isAction } = props
     const { width, referralCode } = useContext(MainContext)
 
     const [email, setEmail] = useState("")
@@ -33,9 +37,21 @@ function WaitlistForm(props: any) {
     const validInputs =
         email && checkEmail(email) && name && name.length > 1 && country
 
-    const [addWaitlist] = useMutation(INSERT_WAITLIST)
+    const [addWaitlist] = useMutation(INSERT_WAITLIST, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        },
+    })
 
-    const [updatePoints] = useMutation(UPDATE_WAITLIST)
+    const [updatePoints] = useMutation(UPDATE_WAITLIST_REFERRALS, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        },
+    })
 
     function updateEmail(evt: any) {
         evt.persist()
@@ -97,7 +113,8 @@ function WaitlistForm(props: any) {
         var newReferralCode = nanoid(8)
 
         if (!currentUser) {
-            var referrer = getReferrer()
+            const secretPoints = deep_copy(SECRET_POINTS)
+            const referrer = getReferrer()
 
             if (referrer && referrer.user_id) {
                 updatePoints({
@@ -117,6 +134,7 @@ function WaitlistForm(props: any) {
                     referralCode: newReferralCode,
                     user_id: email,
                     name: name,
+                    eastereggsAvailable: secretPoints,
                 })
             )
             dispatch(
@@ -132,17 +150,42 @@ function WaitlistForm(props: any) {
                     points: newPoints,
                     referral_code: newReferralCode,
                     referrals: 0,
+                    country: country,
                 },
+            })
+
+            db.collection("eastereggs").doc(email).set({
+                available: secretPoints,
             })
 
             setProcessing(false)
         } else {
+            // get the easter eggs state so we can set local if you re-log in
+            const eastereggsDocument = await db
+                .collection("eastereggs")
+                .doc(email)
+                .get()
+
+            let data = eastereggsDocument.data()
+
+            // if they did existed but were here before the update
+            if (!eastereggsDocument.exists) {
+                data = {
+                    available: deepCopy(SECRET_POINTS),
+                }
+
+                db.collection("eastereggs").doc(email).set(data)
+            }
+
+            const secretPoints = data ? data.available : {}
+
             dispatch(
                 PureWaitlistAction.updateWaitlistUser({
                     points: currentUser.points,
                     referralCode: currentUser.referralCode,
                     user_id: email,
                     name: currentUser.name,
+                    eastereggsAvailable: secretPoints,
                 })
             )
 
@@ -155,11 +198,11 @@ function WaitlistForm(props: any) {
             {waitlistUser && waitlistUser.user_id ? (
                 <div>
                     <button
-                        className="white-button"
+                        className={dark ? "white-button-light" : "white-button"}
                         style={{ textTransform: "uppercase" }}
                         onClick={logout}
                     >
-                        LOGOUT AS {waitlistUser.name}
+                        LOGOUT FROM WAITLIST
                     </button>
                 </div>
             ) : (
@@ -180,10 +223,16 @@ function WaitlistForm(props: any) {
                                 >
                                     Join Waitlist
                                 </div>
-                                <div className="points"> +100 points</div>
+                                <div className="points">
+                                    +{INITIAL_POINTS} points
+                                </div>
                             </button>
                         ) : (
-                            <button className="white-button">
+                            <button
+                                className={
+                                    dark ? "white-button-light" : "white-button"
+                                }
+                            >
                                 JOIN WAITLIST
                             </button>
                         )
@@ -276,6 +325,9 @@ function WaitlistForm(props: any) {
 }
 
 function mapStateToProps(state: {
+    AuthReducer: {
+        user: any
+    }
     WaitlistReducer: {
         waitlistUser: any
         waitlist: any[]
@@ -285,6 +337,7 @@ function mapStateToProps(state: {
     return {
         waitlist: state.WaitlistReducer.waitlistData.waitlist,
         waitlistUser: state.WaitlistReducer.waitlistUser,
+        user: state.AuthReducer.user,
     }
 }
 

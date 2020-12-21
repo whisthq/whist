@@ -6,6 +6,7 @@ export const DEFAULT = {
         points: 0,
         ranking: 0,
         referralCode: null,
+        eastereggsAvailable: {},
         authEmail: null,
     },
     waitlistData: {

@@ -153,7 +153,7 @@ function Application(props: any) {
 
     return (
         <div className="fractalContainer">
-            <Header color="#111111" />
+            <Header dark={false} />
             <Row style={{ width: "100%", margin: 0, maxWidth: "none" }}>
                 <Col md={12}>
                     <div

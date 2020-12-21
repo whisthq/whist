@@ -1,18 +1,5 @@
 import { gql } from "@apollo/client"
 
-export const GET_WAITLIST = gql`
-    query GetWaitlist {
-        waitlist(order_by: { points: desc }) {
-            name
-            points
-            referral_code
-            referrals
-            user_id
-            auth_email
-        }
-    }
-`
-
 export const INSERT_WAITLIST = gql`
     mutation InsertWaitlist(
         $user_id: String!
@@ -20,6 +7,7 @@ export const INSERT_WAITLIST = gql`
         $points: Int!
         $referral_code: String!
         $referrals: Int!
+        $country: String!
     ) {
         insert_waitlist(
             objects: {
@@ -29,6 +17,7 @@ export const INSERT_WAITLIST = gql`
                 referral_code: $referral_code
                 referrals: $referrals
                 user_id: $user_id
+                country: $country
             }
             on_conflict: { constraint: waitlist_pkey, update_columns: name }
         ) {
@@ -39,6 +28,7 @@ export const INSERT_WAITLIST = gql`
                 referral_code
                 referrals
                 user_id
+                country
             }
         }
     }
@@ -46,7 +36,10 @@ export const INSERT_WAITLIST = gql`
 
 export const SUBSCRIBE_WAITLIST = gql`
     subscription SubscribeWaitlist {
-        waitlist(order_by: { points: desc }) {
+        waitlist(
+            order_by: { points: desc }
+            where: { on_waitlist: { _eq: true } }
+        ) {
             name
             points
             user_id

@@ -13,6 +13,8 @@ export function updateUser(body: {
     emailVerificationToken?: string
     emailVerified?: boolean
     canLogin?: boolean
+    waitlistToken?: string
+    usingGoogleLogin?: boolean
 }) {
     return {
         type: UPDATE_USER,
@@ -33,6 +35,7 @@ export function updateAuthFlow(body: {
     resetDone?: boolean
     passwordResetEmail?: string | null
     passwordResetToken?: string | null
+    passwordVerified?: string | null
 }) {
     return {
         type: UPDATE_AUTH_FLOW,
