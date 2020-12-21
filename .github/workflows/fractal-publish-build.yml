@@ -49,6 +49,8 @@ jobs:
     container-images-push-images-ecr:
         name: "Container Images: Build & Push to AWS ECR"
         runs-on: ubuntu-20.04
+        outputs:
+            task-definitions-matrix: ${{ steps.package-matrix.outputs.task-definitions-matrix }}
         needs: [fractal-publish-build-config]
         if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
         env:
@@ -71,6 +73,7 @@ jobs:
               run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
             - name: Package app names and regions into json for ecs-task-definitions strategy matrix
+              id: package-matrix
               run: |
                   matrix='{"aws-regions": [], "apps": []}'
                   for region in ${{ env.aws-regions }}
@@ -97,7 +100,7 @@ jobs:
         if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
 
         strategy:
-            matrix: ${{ fromJson(needs.container-images-push-images-ecr.outputs.task-definitions-matrix) }}
+            matrix: ${{ fromJSON(needs.container-images-push-images-ecr.outputs.task-definitions-matrix) }}
 
         steps:
             - name: Checkout git repository
