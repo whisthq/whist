@@ -16,6 +16,7 @@ const Header = (props: {
     user: any
     dark: boolean
     account?: boolean
+    waitlistUser: any
 }) => {
     const { width } = useContext(MainContext)
 
@@ -183,9 +184,11 @@ const Header = (props: {
 
 const mapStateToProps = (state: {
     AuthReducer: { user: any; authFlow: any }
+    WaitlistReducer: { waitlistUser: any }
 }) => {
     return {
         user: state.AuthReducer.user,
+        waitlistUser: state.WaitlistReducer.waitlistUser,
     }
 }
 
