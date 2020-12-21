@@ -414,7 +414,7 @@ def assign_container(
         db.session.commit()
         self.update_state(
             state="PENDING",
-            meta={"msg": "Container assigned."},
+            meta={"msg": "Container assigned"},
         )
     else:
         db.session.commit()
