@@ -69,6 +69,7 @@ jobs:
                   ls $env:CUDA_PATH\include
 
             - name: Install OS-specific Compiler Matchers
+              shell: bash
               run: |
                   # OS-independent matchers
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cppcheck_matcher.json"
