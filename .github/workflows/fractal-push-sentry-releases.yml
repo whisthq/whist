@@ -55,15 +55,15 @@ jobs:
 
                   # Create new Sentry release
                   export SENTRY_RELEASE=$(sentry-cli releases propose-version)
-                  sentry-cli releases new $SENTRY_RELEASE --project $SENTRY_PROJECT
+                  sentry-cli releases new $SENTRY_RELEASE --project ${{ env.SENTRY_PROJECT }}
                   sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
                   sentry-cli releases finalize $SENTRY_RELEASE
 
                   # Create new deploy for this Sentry release
-                  sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
+                  sentry-cli releases deploys $SENTRY_RELEASE new -e ${{ env.SENTRY_DEPLOY_ENVIRONMENT }}
 
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Main Webserver Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"fractal/fractal Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
