@@ -156,7 +156,7 @@ jobs:
                     tar -xf MacOSX10.14.sdk.tar
 
                     # Move it to the right folder for building the protocol
-                    cp -rf MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
+                    mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                     cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
 
