@@ -118,7 +118,7 @@ jobs:
 
             # TODO: this can be done way more elegantly
             - name: Retrieve master git hash as env variable
-              run: echo "containers_gha_sha=$(git ls-remote https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/fractal | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
+              run: echo "containers_gha_sha=30fdcde309096ed20084a5a972bb503a20d26e34" >> $GITHUB_ENV
 
             - name: Retrieve AWS account number as env variable
               run: echo "aws_account=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
