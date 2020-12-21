@@ -7,10 +7,13 @@ name: "Fractal: Push Sentry Releases"
 
 on:
     push:
-        branches: [master, phil/fix-ci]
+        branches: [master]
 
 jobs:
     fractal-push-sentry-releases-main:
+        name: "${{ matrix.project.name }}: Push Sentry Release"
+        runs-on: ubuntu-20.04
+
         strategy:
             matrix:
                 project:
@@ -20,22 +23,20 @@ jobs:
                       sentry-project: protocol
                     - name: ECS Host Service
                       sentry-project: ecs-host-service
-        name: "${{ matrix.name }}: Push Sentry Release"
-        runs-on: ubuntu-20.04
         env:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
             SENTRY_ORG: tryfractal
-            SENTRY_PROJECT: ${{ matrix.sentry-project }}
+            SENTRY_PROJECT: ${{ matrix.project.sentry-project }}
             SENTRY_DEPLOY_ENVIRONMENT: production
 
         steps:
-            - name: Checkout Git repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
                   fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
-            - name: Set Git repository URL to enable sentry-cli automatic commit tagging
+            - name: Set Git Repository URL to enable sentry-cli automatic commit tagging
               run: |
                   git remote set-url origin https://github.com/fractal/fractal
 
@@ -46,15 +47,15 @@ jobs:
 
                   # Create new Sentry release
                   export SENTRY_RELEASE=$(sentry-cli releases propose-version)
-                  sentry-cli releases new $SENTRY_RELEASE --project ${{ env.SENTRY_PROJECT }}
+                  sentry-cli releases new $SENTRY_RELEASE --project $SENTRY_PROJECT
                   sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
                   sentry-cli releases finalize $SENTRY_RELEASE
 
                   # Create new deploy for this Sentry release
-                  sentry-cli releases deploys $SENTRY_RELEASE new -e ${{ env.SENTRY_DEPLOY_ENVIRONMENT }}
+                  sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
 
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"fractal/fractal Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"fractal/fractal Production Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
