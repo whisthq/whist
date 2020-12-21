@@ -82,25 +82,25 @@ const LoginView = (props: { dispatch: Dispatch }) => {
                 if it doesn&lsquo;t appear. Once you&lsquo;ve logged in, this
                 page will automatically redirect.
             </div>
-            {config.sentryEnv === "development" && (
-                <div style={{ marginTop: 40 }}>
-                    <input
-                        type="text"
-                        onChange={changeAccessToken}
-                        onKeyPress={onKeyPress}
-                        style={{
-                            width: 400,
-                            border: "none",
-                            boxShadow: "none",
-                            margin: "auto",
-                            background: "rgba(237, 240, 247, 0.75)",
-                            padding: "5px 20px",
-                            borderRadius: 5,
-                            outline: "none",
-                        }}
-                    />
-                </div>
-            )}
+            {/* {config.sentryEnv === "development" && ( */}
+            <div style={{ marginTop: 40 }}>
+                <input
+                    type="text"
+                    onChange={changeAccessToken}
+                    onKeyPress={onKeyPress}
+                    style={{
+                        width: 400,
+                        border: "none",
+                        boxShadow: "none",
+                        margin: "auto",
+                        background: "rgba(237, 240, 247, 0.75)",
+                        padding: "5px 20px",
+                        borderRadius: 5,
+                        outline: "none",
+                    }}
+                />
+            </div>
+            {/* )} */}
         </div>
     )
 }
