@@ -342,7 +342,7 @@ def _get_num_extra(taskdef):
     :param taskdef: the task definition ARN of the container
     :return: integer determining how many containers to preboot
     """
-    app_image_for_taskdef = SupportedAppImages.query.filter_by(task_definition_arn=taskdef).first()
+    app_image_for_taskdef = SupportedAppImages.query.filter_by(task_definition=taskdef).first()
     if app_image_for_taskdef:
         return app_image_for_taskdef.preboot_number
     return 0
