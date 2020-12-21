@@ -62,7 +62,7 @@ const App = (props: {
                         <Tooltip id="button-tooltip">
                             <div className={styles.tooltipText}>
                                 Click to preview {app.app_id} without
-                                downloading.
+                                installing.
                             </div>
                         </Tooltip>
                     }
