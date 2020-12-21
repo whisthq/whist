@@ -5,7 +5,7 @@
 
 name: "Client Applications: Publish Desktop Applications"
 
-# TODO: TEMP FIX, JUST TO PUSH THE CLIENTAPPS
+# TODO: TEMP FIX, JUST TO PUSH THE CLIENTAPPS 
 on:
     pull_request:
         branches: [master]
