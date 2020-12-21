@@ -123,14 +123,17 @@ jobs:
             - name: Retrieve AWS account number as env variable
               run: echo "aws_account=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
 
-            - name: Generate the task definitions
-              run: cd ecs-task-definitions && ./generate_taskdefs.sh
-
             - name: Store AWS ECR base uri as env variable
               run: echo "ecr_base_uri=${{ env.aws_account }}.dkr.ecr.${{ matrix.aws-regions }}.amazonaws.com" >> $GITHUB_ENV
 
-            - name: Store taskdef JSON name as env variable
-              run: echo "taskdef_json=ecs-task-definitions/$(echo ${{ matrix.apps }} | tr / -).json" >> $GITHUB_ENV
+            - name: Store taskdef name as env variable
+              run: echo "taskdef_name=$(echo ${{ matrix.apps }} | tr / -)" >> $GITHUB_ENV
+
+            - name: Generate taskdef
+              run: cd ecs-task-definitions && ./generate_taskdef.sh $taskdef_name
+
+            - name: Store taskdef JSON path as env variable
+              run: echo "taskdef_json=ecs-task-definitions/$taskdef_name.json" >> $GITHUB_ENV
 
             - name: Render Amazon ECS task Definitions
               id: render-web-container
