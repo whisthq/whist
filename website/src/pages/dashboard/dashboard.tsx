@@ -214,9 +214,8 @@ const Dashboard = (props: {
                                 }}
                             >
                                 Congratulations
-                                {name.length < 7 ? " " + name : ""}
-!
-</div>
+                                {name.length < 7 ? " " + name : ""}!
+                            </div>
                             <div
                                 style={{
                                     marginTop: 20,

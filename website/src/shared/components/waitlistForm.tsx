@@ -224,11 +224,8 @@ const WaitlistForm = (props: any) => {
                                     Join Waitlist
                                 </div>
                                 <div className="points">
-                                    +
-{INITIAL_POINTS}
-{' '}
-points
-</div>
+                                    +{INITIAL_POINTS} points
+                                </div>
                             </button>
                         ) : (
                             <button

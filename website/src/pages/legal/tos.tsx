@@ -13,33 +13,26 @@ function TermsOfService(props: any) {
                     margin: "auto",
                 }}
             >
-                <div style={{ fontSize: 40 }}>
-TERMS OF SERVICE
-</div>
+                <div style={{ fontSize: 40 }}>TERMS OF SERVICE</div>
                 <div style={{ color: "#555555", marginBottom: 40 }}>
                     Last updated October 13th, 2020
                 </div>
                 <div>
                     <p>
                         PLEASE READ THESE TERMS OF SERVICE (COLLECTIVELY WITH
-                        FRACTAL'S PRIVACY POLICY
-{" "}
+                        FRACTAL'S PRIVACY POLICY{" "}
                         <a href="https://www.tryfractal.com/privacy">
                             www.tryfractal.com/privacy
-                        </a>
-{" "}
-                        AND
-{" "}
+                        </a>{" "}
+                        AND{" "}
                         <a href="http://www.copyright.gov/legislation/dmca.pdf">
                             www.copyright.gov/legislation/dmca.pdf
                         </a>
                         , THE "TERMS OF SERVICE ") FULLY AND CAREFULLY BEFORE
-                        USING
-{" "}
+                        USING{" "}
                         <a href="https://www.tryfractal.com">
                             WWW.TRYFRACTAL.COM
-                        </a>
-{" "}
+                        </a>{" "}
                         (THE "SITE"), ANY DESKTOP OR MOBILE APPLICATIONS
                         PROVIDED BY FRACTAL (THE "APPLICATIONS") AND THE CLOUD
                         COMPUTING SERVICES, FEATURES, CONTENT OR APPLICATIONS
@@ -137,9 +130,7 @@ TERMS OF SERVICE
                         Account, either directly or through a request made to
                         one of our employees or affiliates.
                     </p>
-                    <p style={{ fontWeight: "bold", fontSize: 20 }}>
-Product
-</p>
+                    <p style={{ fontWeight: "bold", fontSize: 20 }}>Product</p>
                     <p>
                         Fractal is a provider of cloud-based applications
                         ("Cloud Applications"). Cloud Applications are similar
@@ -794,19 +785,12 @@ Product
                         to the Designated Agent identified below:
                     </p>
                     <p>
-                        Fractal Computers, Inc. 
-{' '}
-<br />
-                        Six Landmark Square, 4th Floor 
-{' '}
-<br />
-                        Stamford, CT 06901 
-{' '}
-<br />
+                        Fractal Computers, Inc. <br />
+                        Six Landmark Square, 4th Floor <br />
+                        Stamford, CT 06901 <br />
                         <a href="mailto: support@tryfractal.com">
                             support@tryfractal.com
-                        </a>
-{" "}
+                        </a>{" "}
                         <br />
                     </p>
                     <p>
@@ -866,9 +850,7 @@ Product
                         reserve the right to immediately cancel your
                         subscription.
                     </p>
-                    <p style={{ fontWeight: "bold", fontSize: 20 }}>
-Notices
-</p>
+                    <p style={{ fontWeight: "bold", fontSize: 20 }}>Notices</p>
                     <p>
                         Unless otherwise stated in these Terms, when the User
                         seeks to contact Fractal, the user should do so through
@@ -921,8 +903,7 @@ Notices
                     <p>
                         To that effect, before filing a claim against us, you
                         agree to try to resolve the dispute informally by
-                        opening a support ticket via email to
-{" "}
+                        opening a support ticket via email to{" "}
                         <a href="mailto: support@tryfractal.com">
                             support@tryfractal.com
                         </a>
@@ -960,12 +941,10 @@ Notices
                     </p>
                     <p>
                         You can opt-out of the requirement to arbitrate by
-                        emailing
-{" "}
+                        emailing{" "}
                         <a href="mailto: support@tryfractal.com">
                             support@tryfractal.com
-                        </a>
-{" "}
+                        </a>{" "}
                         with the subject line “Arbitration Opt-Out” within 30
                         days of the date you first register your account. You
                         can obtain the opt-form, free of charge, by contacting

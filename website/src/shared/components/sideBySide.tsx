@@ -44,17 +44,10 @@ function SideBySide(props: any) {
         Graphics: (
             <div>
                 <div>
-                    Fractal runs 
-{' '}
-{yourApplications}
-{' '}
-on cloud GPUs. Unlike
-                    virtual desktops, Fractal streams just the app, so using
-{" "}
-                    {theApp}
-{' '}
-feels native.
-</div>
+                    Fractal runs {yourApplications} on cloud GPUs. Unlike
+                    virtual desktops, Fractal streams just the app, so using{" "}
+                    {theApp} feels native.
+                </div>
             </div>
         ),
         Gaming: (
@@ -254,9 +247,7 @@ feels native.
                     }}
                 >
                     <div style={{ position: "relative" }}>
-                        <div>
-{images[props.case]}
-</div>
+                        <div>{images[props.case]}</div>
                         <div
                             style={{
                                 position: "absolute",

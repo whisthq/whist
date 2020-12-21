@@ -20,22 +20,15 @@ const PlanForm = (props: any) => {
 
     return (
         <>
-            <div className="section-title">
-Plan
-</div>
+            <div className="section-title">Plan</div>
             <div className="section-info">
                 {stripeInfo.plan && PLANS[stripeInfo.plan] ? (
                     <>
                         <div>
-                            {stripeInfo.plan}
-{' '}
-- $
-{PLANS[stripeInfo.plan].price.toFixed(2)}
-{' '}
-/mo (
-{PLANS[stripeInfo.plan].subtext}
-)
-</div>
+                            {stripeInfo.plan} - $
+                            {PLANS[stripeInfo.plan].price.toFixed(2)} /mo (
+                            {PLANS[stripeInfo.plan].subtext})
+                        </div>
                         <div className="add" onClick={cancelPlan}>
                             Cancel
                         </div>

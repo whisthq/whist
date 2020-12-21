@@ -1,12 +1,10 @@
 module.exports = {
-    extends: [
-        "react-app"
-    ],
+    extends: ["react-app"],
     rules: {
         // A temporary hack related to IDE not resolving correct package.json
         "import/no-extraneous-dependencies": "off",
         // camelcase is a default typescript setting
-        "@typescript-eslint/camelcase": ["error", {"ignoreImports": true}],
+        "@typescript-eslint/camelcase": ["error", { ignoreImports: true }],
         // disable the below checks
         "@typescript-eslint/no-explicit-any": 0,
         "global-require": 0,
@@ -23,6 +21,6 @@ module.exports = {
         "import/prefer-default-export": 1,
         "no-shadow": 1,
         "react/jsx-props-no-spreading": 1,
-        "react/jsx-one-expression-per-line": 1
-    }
+        "react/jsx-one-expression-per-line": 1,
+    },
 }

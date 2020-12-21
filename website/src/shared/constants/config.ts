@@ -46,7 +46,7 @@ const environment: any = {
     },
     staging: {
         url: {
-            WEBSERVER_URL: "https://staging-webserver.tryfractal.com",
+            WEBSERVER_URL: "https://fractal-staging-server.herokuapp.com",
             FRONTEND_URL: "https://staging.tryfractal.com",
             GRAPHQL_HTTP_URL:
                 "https://staging-database.tryfractal.com/v1/graphql",
@@ -69,7 +69,7 @@ const environment: any = {
     },
     production: {
         url: {
-            WEBSERVER_URL: "https://main-webserver.herokuapp.com",
+            WEBSERVER_URL: "https://fractal-prod-server.herokuapp.com",
             FRONTEND_URL: "https://tryfractal.com",
             GRAPHQL_HTTP_URL: "https://prod-database.tryfractal.com/v1/graphql",
             GRAPHQL_WS_URL: "wss://prod-database.tryfractal.com/v1/graphql",

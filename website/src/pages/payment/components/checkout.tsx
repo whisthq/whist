@@ -79,35 +79,18 @@ const Checkout = (props: {
     return (
         <div className={paymentWarning ? "checkout-warning" : "checkout"}>
             <div>
-                Subtotal:
-{" "}
-                <div className="price">
-$
-{monthlyPrice.toFixed(2)}
-{' '}
-USD
-</div>
+                Subtotal:{" "}
+                <div className="price">${monthlyPrice.toFixed(2)} USD</div>
             </div>
             <div>
-                Tax: 
-{' '}
-<div className="price">
-$
-{tax.toFixed(2)}
-{' '}
-USD
-</div>
+                Tax: <div className="price">${tax.toFixed(2)} USD</div>
             </div>
             <div className="line" />
             <div>
-                Total:
-{" "}
+                Total:{" "}
                 <div className="price">
-                    $
-{(monthlyPrice + tax).toFixed(2)}
-{' '}
-USD
-</div>
+                    ${(monthlyPrice + tax).toFixed(2)} USD
+                </div>
             </div>
             <button
                 className="pay-button"
@@ -124,9 +107,7 @@ USD
                         }}
                     />
                 ) : (
-                    <span>
-Submit Payment
-</span>
+                    <span>Submit Payment</span>
                 )}
             </button>
             {paymentWarning && (
@@ -136,16 +117,12 @@ Submit Payment
                 </div>
             )}
             <div style={{ marginTop: 10, fontSize: 12 }}>
-                Note: You will not be charged until
-{" "}
-                <span className="bold">
-{trialEnd}
-</span>
-, which is the end of
+                Note: You will not be charged until{" "}
+                <span className="bold">{trialEnd}</span>, which is the end of
                 your 7-day free trial. After that, you will be automatically
                 charged every month for the cost of your current plan. You can
                 cancel your plan at anytime.
-</div>
+            </div>
         </div>
     )
 }

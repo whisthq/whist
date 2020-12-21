@@ -21,9 +21,7 @@ const Testimonial = (props: any) => {
                     color: props.invert ? "white" : "#111111",
                 }}
             >
-                <p>
-{props.text}
-</p>
+                <p>{props.text}</p>
                 <div style={{ display: "flex" }}>
                     <FaStar
                         style={{
@@ -60,9 +58,7 @@ const Testimonial = (props: any) => {
                     <div style={{ fontWeight: "bold", fontSize: 15 }}>
                         {props.name}
                     </div>
-                    <div style={{ fontSize: 14 }}>
-{props.job}
-</div>
+                    <div style={{ fontSize: 14 }}>{props.job}</div>
                 </div>
             </div>
         </div>

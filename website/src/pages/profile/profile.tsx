@@ -60,15 +60,9 @@ const Profile = (props: any) => {
                         marginTop: 70,
                     }}
                 >
-                    <h2 style={{ marginBottom: "20px" }}>
-Your Profile
-</h2>
-                    <div className="section-title">
-Email
-</div>
-                    <div className="section-info">
-{user.userID}
-</div>
+                    <h2 style={{ marginBottom: "20px" }}>Your Profile</h2>
+                    <div className="section-title">Email</div>
+                    <div className="section-info">{user.userID}</div>
                     <NameForm />
                     <PasswordForm />
                     {config.payment_enabled && (

@@ -21,25 +21,15 @@ const AuthCallback = (props: { callback: string }) => {
                     textAlign: "center",
                 }}
             >
-                <h2>
-You will be redirected.
-</h2>
+                <h2>You will be redirected.</h2>
                 <div style={{ marginTop: 25 }}>
-                    Not redirected? Click
-{" "}
+                    Not redirected? Click{" "}
                     <a href={callback} style={{ fontWeight: "bold" }}>
                         here
-                    </a>
-{" "}
-                    to try again, or click 
-{' '}
-<Link to="/dashboard">
-here
-</Link>
-{' '}
-to
+                    </a>{" "}
+                    to try again, or click <Link to="/dashboard">here</Link> to
                     return home.
-</div>
+                </div>
             </div>
         </div>
     )

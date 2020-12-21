@@ -51,10 +51,9 @@ function Application(props: any) {
         flowState === 1 ? (
             <div>
                 <h2>
-Thanks for signing up with us,
-{waitlistUser.name}
-!
-</h2>
+                    Thanks for signing up with us,
+                    {waitlistUser.name}!
+                </h2>
                 <p style={{ marginTop: 35 }}>
                     As a starter, tell us why you're excited to try Fractal!
                     What are the top three apps you'd like us to stream to you?
@@ -80,9 +79,7 @@ Thanks for signing up with us,
         ) : flowState === 2 ? (
             // consider adding emojis!
             <div>
-                <h2>
-What devices would you use Fractal on?
-</h2>
+                <h2>What devices would you use Fractal on?</h2>
                 <p style={{ marginTop: 35 }}>
                     By tailoring Fractal to your device we can improve your
                     experience with system-specific features and better
@@ -108,9 +105,7 @@ What devices would you use Fractal on?
             </div>
         ) : flowState === 3 ? (
             <div>
-                <h2>
-How did you hear about us?
-</h2>
+                <h2>How did you hear about us?</h2>
                 <p style={{ marginTop: 35 }}>
                     Please be as specific as possible. For instance, if you
                     found us through a Google search, what keywords were you
@@ -137,40 +132,25 @@ How did you hear about us?
         ) : (
             <div>
                 <h2>
-                    Congrats, 
-{' '}
-{waitlistUser.name}
-! You're 
-{' '}
-<br />
+                    Congrats, {waitlistUser.name}! You're <br />
                     <span
                         style={{
                             color: "#3930b8",
                             fontSize: width > 720 ? "calc(140px + 2.2vw)" : 50,
                         }}
                     >
-                        No. 
-{' '}
-{waitlistUser.ranking}
-                    </span>
-{" "}
+                        No. {waitlistUser.ranking}
+                    </span>{" "}
                     <br />
                     on the waitlist.
                 </h2>
                 <p style={{ marginTop: 50 }}>
-                    You’re registered as 
-{' '}
-{waitlistUser.userID}
-. When the
+                    You’re registered as {waitlistUser.userID}. When the
                     countdown reaches zero, we'll invite people to try Fractal.
                     You can signficantly increase your chances of being selected
-                    by by
-{" "}
-                    <strong>
-referring friends and racking up points
-</strong>
-.
-</p>
+                    by by{" "}
+                    <strong>referring friends and racking up points</strong>.
+                </p>
             </div>
         )
 
@@ -206,10 +186,8 @@ referring friends and racking up points
                                     }
                                 }}
                             >
-                                {flowState > 3 ? "Submit" : "Continue"}
-{" "}
-                                Application
-{" "}
+                                {flowState > 3 ? "Submit" : "Continue"}{" "}
+                                Application{" "}
                                 {flowState > 3
                                     ? ""
                                     : "(" + flowState.toString() + "/3)"}

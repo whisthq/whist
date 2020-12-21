@@ -36,21 +36,13 @@ const BottomView = (props: any) => {
                         lineHeight: 1.4,
                     }}
                 >
-                    Give 
-{' '}
-{myApplications}
-{' '}
-superpowers.
-</h2>
+                    Give {myApplications} superpowers.
+                </h2>
                 <p style={{ marginTop: 20 }}>
-                    Run 
-{' '}
-{theMostDemandingApplications}
-{' '}
-from my device using 10x
+                    Run {theMostDemandingApplications} from my device using 10x
                     less RAM and processing power, all on gigabyte datacenter
                     Internet.
-</p>
+                </p>
                 <div style={{ marginTop: 30 }}>
                     <WaitlistForm />
                 </div>

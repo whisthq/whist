@@ -38,9 +38,7 @@ const PaymentForm = (props: { dispatch: any; stripeInfo: any }) => {
 
     return (
         <>
-            <div className="section-title">
-Payment Information
-</div>
+            <div className="section-title">Payment Information</div>
             <div className="section-info">
                 {editingCard ? (
                     <CardField setEditingCard={setEditingCard} />
@@ -62,9 +60,7 @@ Payment Information
                                     />
                                 )}
                                 <div>
-                                    **** **** **** 
-{' '}
-{stripeInfo.cardLastFour}
+                                    **** **** **** {stripeInfo.cardLastFour}
                                 </div>
                             </div>
                         ) : (
@@ -86,9 +82,7 @@ Payment Information
                                 }}
                             >
                                 {savedCard && (
-                                    <div className="saved">
-Saved!
-</div>
+                                    <div className="saved">Saved!</div>
                                 )}
                                 <FaEdit
                                     className="edit"
