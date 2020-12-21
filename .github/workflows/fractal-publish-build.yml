@@ -6,12 +6,9 @@
 name: "Fractal: Build & Publish"
 
 on:
-    push:
+    pull_request:
         branches:
             - master
-            - staging
-            - dev
-            - project/**
         paths-ignore:
             - "README.md"
             - "**/README.md"
@@ -70,47 +67,10 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
-                  aws-region: ${{ env.aws-placeholder-region }}
-
             - name: Walk repo to find all dockerfiles and store path as env variable
               run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
-            - name: Build release protocol # No need to run this for debug, just for release
-              run: ./protocol/build_protocol.sh release
-
-            - name: Build container images
-              run: |
-                  for app in ${{ env.apps }}
-                  do
-                    ./container-images/build_container_image.sh $app
-                  done
-
-            - name: Push container images
-              run: |
-                  for region in ${{ env.aws-regions }}
-                  do
-                    for app in ${{ env.apps }}
-                    do
-                      ./container-images/push_container_image.sh $app $region
-                    done
-                  done
-
-            - name: Create Lifecycle Policies for each image, only keeps latest 10
-              run: |
-                  for region in ${{ env.aws-regions }}
-                  do
-                    for app in ${{ env.apps }}
-                    do
-                      ./container-images/apply_ecr_lifecycle_policy.sh $app $region
-                    done
-                  done
-
-            - name: Package app names and regions into json for ecs-task-definitions strategy matrix
+           - name: Package app names and regions into json for ecs-task-definitions strategy matrix
               run: |
                   matrix='{"aws-regions": [], "apps": []}'
                   for region in ${{ env.aws-regions }}
@@ -122,65 +82,10 @@ jobs:
                   do
                     matrix=$(echo $matrix | jq -c ".\"apps\" += [\"$app\"]")
                   done
-
+                  echo "$matrix" | jq
+                  echo "$matrix"
                   echo "::set-output name=task-definitions-matrix::$matrix"
 
-            - name: Notify Slack
-              run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to production via Docker push to ECR :bezos:\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
-    # ECS Host Service: Build & Publish to AWS S3
-    # Build and publish the ECS host service to an S3 bucket from which EC2 hosts pull.
-    # Runs if config succeeds and branch is in ["master"] and push-images-ecr succeeds.
-
-    ecs-host-service-publish-build-s3:
-        name: "ECS Host Service: Build & Publish to AWS S3"
-        runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config, container-images-push-images-ecr]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
-        env:
-            binary-location: ecs-host-service/build
-            binary-name: ecs-host-service
-            s3-bucket-region: us-east-1 # eventually, we should replicate s3 per region
-            s3-bucket-uri: s3://fractal-ecs-host-service
-
-        steps:
-            - name: Checkout Git repository
-              uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-
-            - name: Setup Go environment
-              uses: actions/setup-go@v2.1.3
-
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
-                  aws-region: ${{ env.s3-bucket-region }}
-
-            - name: Install Go dependencies
-              run: cd ecs-host-service && make deps
-
-            - name: Build Go project
-              env:
-                  WEBSERVER_AUTH_SECRET_DEV: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_DEV }}
-                  WEBSERVER_AUTH_SECRET_STAGING: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_STAGING }}
-                  WEBSERVER_AUTH_SECRET_PROD: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_PROD }}
-              run: cd ecs-host-service && make build
-
-            - name: Upload binary to S3
-              run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
-
-            - name: Notify Slack
-              run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":athletic_shoe: ECS Host Service build pushed to production via S3 upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
     # Render and deploy the app task definitions to ECS.
@@ -254,71 +159,3 @@ jobs:
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to production via ECS upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
-    # Main Webserver: Deploy to Heroku
-    # Push the main-webserver subtree to the appropriate Heroku app.
-    # Runs if config succeeds and branch is in ["master"] and push-images-ecr succeeds, or unconditionally if branch is in ["dev"] (since other workflows won't run then)
-
-    main-webserver-deploy-heroku:
-        name: "Main Webserver: Deploy to Heroku"
-        needs: [fractal-publish-build-config, container-images-push-images-ecr]
-        if: |
-            ( 
-                contains(
-                    fromJSON('["master"]'), 
-                    needs.fractal-publish-build-config.outputs.branch
-                ) && success()
-            ) || 
-            (
-                contains(
-                    fromJSON('["dev"]'),
-                    needs.fractal-publish-build-config.outputs.branch
-                ) && always()
-            )
-        runs-on: ubuntu-20.04
-        steps:
-            - name: Checkout Git repository
-              uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-
-            - name: Authenticate Heroku
-              run: |
-                  cat > ~/.netrc << EOF
-                  machine api.heroku.com
-                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-                  machine git.heroku.com
-                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-                  EOF
-
-            - name: Add Heroku Remote
-              run: |
-                  if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
-                      HEROKU_APP_NAME=fractal-dev-server
-                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == master ]]; then
-                      HEROKU_APP_NAME=fractal-staging-server
-                  else
-                      echo 'Error: Invalid branch' && false
-                  fi
-                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
-
-                  heroku git:remote --app $HEROKU_APP_NAME --remote heroku-fractal-server
-              env:
-                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-
-            - name: Split off and checkout main-webserver subtree
-              run: |
-                  git subtree split --prefix main-webserver -b workflows-private/main-webserver
-                  git checkout workflows-private/main-webserver
-
-            - name: Push to Heroku remote, deploying the app # force push is only necessary for the transition period, then should be removed
-              run: |
-                  git push -f heroku-fractal-server workflows-private/main-webserver:master
-
-            - name: Notify Slack
-              run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":rocket: Main webserver for branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\` :heroku:\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
