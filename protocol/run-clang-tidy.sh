@@ -112,4 +112,3 @@ fi
 
 # cleanup
 rm -rf $yamlFolder
-
