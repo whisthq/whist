@@ -41,7 +41,7 @@ const loadingMessages = [
         share it!
     </div>,
     <div>
-        You can launch Fractal apps directly by downloading them from the
+        You can launch Fractal apps directly by installing them from the
         Fractal App Store.
     </div>,
     <div>You can zoom in with Ctrl+/Cmd+.</div>,
