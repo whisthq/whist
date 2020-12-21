@@ -119,9 +119,7 @@ class Credential(db.Model):
             }
 
         fractal_log(
-            function="Credential.revoke",
-            label=self.user_id,
-            **log_kwargs,
+            function="Credential.revoke", label=self.user_id, **log_kwargs,
         )
 
         if cleanup:

@@ -61,11 +61,7 @@ def ping_helper(available, container_ip, port_32262, aeskey, version=None):
     # Detect and handle disconnect event
     if container_info.state == "RUNNING_UNAVAILABLE" and available:
         # Add logoff event to timetable
-        log = LoginHistory(
-            user_id=username,
-            action="logoff",
-            timestamp=date_to_unix(get_today()),
-        )
+        log = LoginHistory(user_id=username, action="logoff", timestamp=date_to_unix(get_today()),)
 
         fractal_sql_commit(db, lambda db, x: db.session.add(x), log)
 
@@ -78,11 +74,7 @@ def ping_helper(available, container_ip, port_32262, aeskey, version=None):
     # Detect and handle logon event
     if container_info.state == "RUNNING_AVAILABLE" and not available:
         # Add logon event to timetable
-        log = LoginHistory(
-            user_id=username,
-            action="logon",
-            timestamp=date_to_unix(get_today()),
-        )
+        log = LoginHistory(user_id=username, action="logon", timestamp=date_to_unix(get_today()),)
 
         fractal_sql_commit(db, lambda db, x: db.session.add(x), log)
 

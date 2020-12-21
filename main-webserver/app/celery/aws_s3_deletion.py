@@ -25,10 +25,7 @@ def delete_logs_from_s3(connection_id):
 
         file_name = file_name.replace("https://fractal-protocol-logs.s3.amazonaws.com/", "")
 
-        s3_resource = boto3.resource(
-            "s3",
-            region_name="us-east-1",
-        )
+        s3_resource = boto3.resource("s3", region_name="us-east-1",)
 
         try:
             s3_resource.Object(bucket, file_name).delete()

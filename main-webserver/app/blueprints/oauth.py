@@ -15,9 +15,7 @@ from app.serializers.oauth import CredentialSchema
 
 oauth_bp = Blueprint("oauth", __name__, cli_group="credentials")
 Token = namedtuple(
-    "Token",
-    ("access_token", "expiry", "refresh_token", "token_type"),
-    defaults=(None, "bearer"),
+    "Token", ("access_token", "expiry", "refresh_token", "token_type"), defaults=(None, "bearer"),
 )
 
 oauth_bp.cli.help = "Manipulate encrypted OAuth credentials in the database."

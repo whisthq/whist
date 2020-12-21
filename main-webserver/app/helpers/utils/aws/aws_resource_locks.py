@@ -42,9 +42,7 @@ def lock_container_and_update(container_name, state, lock, temporary_lock):
         function="lock_container_and_update",
         label=get_container_user(container_name),
         logs="State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
-            state=state,
-            lock=str(lock),
-            temporary_lock=str(temporary_lock),
+            state=state, lock=str(lock), temporary_lock=str(temporary_lock),
         ),
     )
 

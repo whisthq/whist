@@ -157,9 +157,7 @@ def _mount_cloud_storage(user, container):
                 }
 
     fractal_log(
-        function="_mount_cloud_storage",
-        label=container.container_id,
-        **log_kwargs,
+        function="_mount_cloud_storage", label=container.container_id, **log_kwargs,
     )
 
 
@@ -203,9 +201,7 @@ def _pass_start_dpi_to_instance(ip, port, dpi):
             }
 
     fractal_log(
-        function="_pass_start_dpi_to_instance",
-        label=str(dpi),
-        **log_kwargs,
+        function="_pass_start_dpi_to_instance", label=str(dpi), **log_kwargs,
     )
 
 
@@ -413,8 +409,7 @@ def assign_container(
         base_container.dpi = dpi
         db.session.commit()
         self.update_state(
-            state="SUCCESS",
-            meta={"msg": "Container assigned."},
+            state="SUCCESS", meta={"msg": "Container assigned."},
         )
     else:
         db.session.commit()
@@ -442,8 +437,7 @@ def assign_container(
 
         message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
         self.update_state(
-            state="PENDING",
-            meta={"msg": message},
+            state="PENDING", meta={"msg": message},
         )
         fractal_log(function="create_new_container", label="None", logs=message)
         task_id, curr_ip, curr_network_binding, aeskey = start_container(
@@ -556,10 +550,7 @@ def assign_container(
     )
     for _ in range(num_extra):
         create_new_container.delay(
-            "Unassigned",
-            task_definition_arn,
-            region_name=region_name,
-            webserver_url=webserver_url,
+            "Unassigned", task_definition_arn, region_name=region_name, webserver_url=webserver_url,
         )
     return user_container_schema.dump(base_container)
 
@@ -626,8 +617,7 @@ def create_new_container(
 
     message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
     self.update_state(
-        state="PENDING",
-        meta={"msg": message},
+        state="PENDING", meta={"msg": message},
     )
     fractal_log(function="create_new_container", label="None", logs=message)
     task_id, curr_ip, curr_network_binding, aeskey = start_container(
@@ -679,13 +669,10 @@ def create_new_container(
         )
     else:
         fractal_log(
-            function="create_new_container",
-            label=str(task_id),
-            logs="SQL insertion unsuccessful",
+            function="create_new_container", label=str(task_id), logs="SQL insertion unsuccessful",
         )
         self.update_state(
-            state="FAILURE",
-            meta={"msg": "Error inserting Container {} into SQL".format(task_id)},
+            state="FAILURE", meta={"msg": "Error inserting Container {} into SQL".format(task_id)},
         )
         raise Ignore
 
@@ -713,8 +700,7 @@ def create_new_container(
                     logs="container failed to ping",
                 )
                 self.update_state(
-                    state="FAILURE",
-                    meta={"msg": "Container {} failed to ping.".format(task_id)},
+                    state="FAILURE", meta={"msg": "Container {} failed to ping.".format(task_id)},
                 )
 
                 raise Ignore
@@ -738,13 +724,10 @@ def create_new_container(
         return user_container_schema.dump(container)
     else:
         fractal_log(
-            function="create_new_container",
-            label=str(task_id),
-            logs="SQL insertion unsuccessful",
+            function="create_new_container", label=str(task_id), logs="SQL insertion unsuccessful",
         )
         self.update_state(
-            state="FAILURE",
-            meta={"msg": "Error updating container {} in SQL.".format(task_id)},
+            state="FAILURE", meta={"msg": "Error updating container {} in SQL.".format(task_id)},
         )
         raise Ignore
 
@@ -851,8 +834,7 @@ def create_new_cluster(
             level=logging.ERROR,
         )
         self.update_state(
-            state="FAILURE",
-            meta={"msg": f"Encountered error: {error}"},
+            state="FAILURE", meta={"msg": f"Encountered error: {error}"},
         )
 
 
@@ -872,8 +854,7 @@ def send_commands(self, cluster, region_name, commands, containers=None):
                 level=logging.ERROR,
             )
             self.update_state(
-                state="FAILURE",
-                meta={"msg": f"Cluster status is {cluster_info.status}"},
+                state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}"},
             )
         containers = containers or ecs_client.get_containers_in_cluster(cluster=cluster)
         if containers:
@@ -897,9 +878,7 @@ def send_commands(self, cluster, region_name, commands, containers=None):
             ]["CommandId"]
             ecs_client.spin_til_command_executed(command_id)
             fractal_log(
-                function="send_command",
-                label="None",
-                logs="Commands sent!",
+                function="send_command", label="None", logs="Commands sent!",
             )
         else:
             fractal_log(
@@ -920,6 +899,5 @@ def send_commands(self, cluster, region_name, commands, containers=None):
             level=logging.ERROR,
         )
         self.update_state(
-            state="FAILURE",
-            meta={"msg": f"Encountered error: {error}"},
+            state="FAILURE", meta={"msg": f"Encountered error: {error}"},
         )

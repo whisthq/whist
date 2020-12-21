@@ -175,9 +175,7 @@ def _new_customer(email, plan, referrer=None, subscribe=True):
 
         # keep trial_end so that we can test that it was correctly evaluated based on referrer
         stripe.Subscription.create(
-            customer=stripe_customer_id,
-            items=[{"price": plan}],
-            trial_end=trial_end,
+            customer=stripe_customer_id, items=[{"price": plan}], trial_end=trial_end,
         )
 
 

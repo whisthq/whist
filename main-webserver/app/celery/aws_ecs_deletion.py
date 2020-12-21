@@ -62,10 +62,7 @@ def delete_container(self, container_name, aes_key):
             message = f"Container {container_name} does not exist."
 
         fractal_log(
-            function="delete_container",
-            label=container_name,
-            logs=message,
-            level=logging.ERROR,
+            function="delete_container", label=container_name, logs=message, level=logging.ERROR,
         )
 
         raise Exception("The requested container does not exist.")
@@ -197,8 +194,7 @@ def delete_cluster(self, cluster, region_name):
                 level=logging.ERROR,
             )
             self.update_state(
-                state="FAILURE",
-                meta={"msg": "Cannot delete clusters with running tasks"},
+                state="FAILURE", meta={"msg": "Cannot delete clusters with running tasks"},
             )
         else:
             fractal_log(
@@ -210,12 +206,7 @@ def delete_cluster(self, cluster, region_name):
             )
             ecs_client.terminate_containers_in_cluster(cluster)
             self.update_state(
-                state="PENDING",
-                meta={
-                    "msg": "Terminating containers in {}".format(
-                        cluster,
-                    )
-                },
+                state="PENDING", meta={"msg": "Terminating containers in {}".format(cluster,)},
             )
             cluster_info = ClusterInfo.query.filter_by(cluster=cluster)
             fractal_sql_commit(db, lambda _, x: x.update({"status": "INACTIVE"}), cluster_info)
@@ -241,8 +232,7 @@ def delete_cluster(self, cluster, region_name):
             level=logging.ERROR,
         )
         self.update_state(
-            state="FAILURE",
-            meta={"msg": f"Encountered error: {error}"},
+            state="FAILURE", meta={"msg": f"Encountered error: {error}"},
         )
     if not current_app.testing:
         task_time_taken = time.time() - task_start_time

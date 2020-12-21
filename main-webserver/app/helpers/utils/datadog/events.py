@@ -388,10 +388,7 @@ def datadogEvent_userLifecycle(user_name):
             datadogEvent(
                 title="User Lifcycle ended.",
                 text=to_text(
-                    username=user_name,
-                    start_date=start_date,
-                    end_date=end_date,
-                    lifetime=runtime,
+                    username=user_name, start_date=start_date, end_date=end_date, lifetime=runtime,
                 ),
                 tags=[USER_LIFECYCLE, SUCCESS, USER_NAME_F.format(user_name=user_name)],
             )

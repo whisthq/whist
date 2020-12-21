@@ -182,10 +182,7 @@ def test_delete_container(client):
     container = UserContainer.query.get(pytest.container_name)
     resp = client.post(
         "/container/delete",
-        json=dict(
-            private_key=container.secret_key,
-            container_id=pytest.container_name,
-        ),
+        json=dict(private_key=container.secret_key, container_id=pytest.container_name,),
     )
 
     task = queryStatus(client, resp, timeout=10)
@@ -228,10 +225,7 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
 
     resp = client.post(
         "/aws_container/delete_cluster",
-        json=dict(
-            cluster_name=pytest.cluster_name,
-            region_name="us-east-1",
-        ),
+        json=dict(cluster_name=pytest.cluster_name, region_name="us-east-1",),
     )
 
     task = queryStatus(client, resp, timeout=10)

@@ -77,10 +77,7 @@ def upload_logs_to_s3(sender, version, connection_id, ip, port, aes_key, message
             message = f"Container {container} does not exist."
 
         fractal_log(
-            function="upload_logs_to_s3",
-            label=container,
-            logs=message,
-            level=logging.ERROR,
+            function="upload_logs_to_s3", label=container, logs=message, level=logging.ERROR,
         )
 
         raise ContainerNotFoundError(ip, port)
@@ -109,9 +106,7 @@ def upload_logs_to_s3(sender, version, connection_id, ip, port, aes_key, message
     url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
 
     fractal_log(
-        function="upload_logs_to_s3",
-        label=username,
-        logs=f"Successfully saved logs to {filename}",
+        function="upload_logs_to_s3", label=username, logs=f"Successfully saved logs to {filename}",
     )
 
     log = ProtocolLog.query.get(connection_id)
