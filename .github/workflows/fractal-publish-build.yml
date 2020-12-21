@@ -83,7 +83,7 @@ jobs:
 
                   for app in ${{ env.apps }}
                   do
-                    matrix=$(echo $matrix | jq -c ".\"apps\" += [\"$app\"]")
+                    matrix=$(echo $matrix | jq -c ".\"apps\" += [\"fractal/$app\"]")
                   done
                   echo "$matrix" | jq
                   echo "$matrix"
@@ -127,7 +127,7 @@ jobs:
               run: echo "ecr_base_uri=${{ env.aws_account }}.dkr.ecr.${{ matrix.aws-regions }}.amazonaws.com" >> $GITHUB_ENV
 
             - name: Store taskdef name as env variable
-              run: echo "taskdef_name=fractal-$(echo ${{ matrix.apps }} | tr / -)" >> $GITHUB_ENV
+              run: echo "taskdef_name=$(echo ${{ matrix.apps }} | tr / -)" >> $GITHUB_ENV
 
             - name: Generate taskdef
               run: cd ecs-task-definitions && ./generate_taskdef.sh $taskdef_name
