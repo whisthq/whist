@@ -30,10 +30,12 @@ jobs:
                 project:
                     - name: Main Webserver
                       sentry-project: main-webserver
-                    - name: Protocol
-                      sentry-project: protocol
+                    - name: Protocol (macOS, Windows, Linux Ubuntu)
+                      sentry-project: desktop-protocol
                     - name: ECS Host Service
                       sentry-project: ecs-host-service
+                    - name: Client Applications (macOS, Windows, Linux Ubuntu)
+                      sentry-project: desktop-client
         env:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
             SENTRY_ORG: tryfractal
