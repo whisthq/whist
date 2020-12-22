@@ -25,6 +25,7 @@ cd ~/fractal/container-images
 ```
 
 Next, from your local terminal, run the following command:
+
 ```
 curl --silent --location --request PUT 'https://{YOUR_DEV_INSTANCE_IP_ADDR}/set_container_dpi' \
 --header 'Content-Type: application/json' \
