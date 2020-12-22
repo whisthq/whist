@@ -98,4 +98,7 @@ app_path=${2:-base}
 app_path=${app_path%/}
 force_output=${3:-false}
 
+# enter proper dir
+cd "$DIR"
+
 build_image_with_deps "$app_path" "$local_tag" "$force_output" "$base_region" "$remote_tag"
