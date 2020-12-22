@@ -17,7 +17,7 @@ destroy_window_name_getter();
 #if defined(_WIN32)
 // TODO(anton) implement functionality for windows servers
 void init_window_name_getter();
-int get_focused_window_name(char* name_return) {}
+int get_focused_window_name(char* name_return) { return -1; }
 void destroy_window_name_getter();
 #elif __linux__
 #include <X11/Xlib.h>
