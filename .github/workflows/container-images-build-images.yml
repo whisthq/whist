@@ -15,6 +15,7 @@ on:
         paths:
             - "container-images/**"
             - "!container-images/README.md"
+    workflow_dispatch:
 
 jobs:
     container-images-build-images-main:
@@ -22,7 +23,7 @@ jobs:
         runs-on: ubuntu-20.04
 
         steps:
-            - name: Checkout Git repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
