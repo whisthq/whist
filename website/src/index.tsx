@@ -31,12 +31,21 @@ import "bootstrap/dist/css/bootstrap.min.css"
 
 import RootApp from "rootApp"
 
-Sentry.init({
-    dsn:
-        "https://9a25b78ce37b4f7db2ff1a4952c1e3a8@o400459.ingest.sentry.io/5394481",
-    environment: config.sentry_env,
-    release: "website@" + process.env.REACT_APP_VERSION,
-})
+if (process.env.REACT_APP_ENVIRONMENT === "production") {
+    // the netlify build command is
+    //   export REACT_APP_VERSION=$COMMIT_HASH && npm run build
+    // so this environment variable should be set on netlify deploys
+    let gitHash = "local"
+    if (process.env.REACT_APP_VERSION) {
+        gitHash = process.env.REACT_APP_VERSION
+    }
+    Sentry.init({
+        dsn:
+            "https://4fbefcae900443d58c38489898773eea@o400459.ingest.sentry.io/5394481",
+        environment: config.sentry_env,
+        release: "website@" + gitHash,
+    })
+}
 
 const sentryReduxEnhancer = Sentry.createReduxEnhancer({})
 
@@ -93,22 +102,24 @@ const stripePromise = loadStripe(config.keys.STRIPE_PUBLIC_KEY)
 
 ReactDOM.render(
     <React.StrictMode>
-        <Router history={history}>
-            <Provider store={store}>
-                <PersistGate loading={null} persistor={persistor}>
-                    <ApolloProvider client={apolloClient}>
-                        <Elements
-                            stripe={stripePromise}
-                            options={STRIPE_OPTIONS}
-                        >
-                            <MainProvider>
-                                <RootApp />
-                            </MainProvider>
-                        </Elements>
-                    </ApolloProvider>
-                </PersistGate>
-            </Provider>
-        </Router>
+        <Sentry.ErrorBoundary fallback={"An error has occurred"}>
+            <Router history={history}>
+                <Provider store={store}>
+                    <PersistGate loading={null} persistor={persistor}>
+                        <ApolloProvider client={apolloClient}>
+                            <Elements
+                                stripe={stripePromise}
+                                options={STRIPE_OPTIONS}
+                            >
+                                <MainProvider>
+                                    <RootApp />
+                                </MainProvider>
+                            </Elements>
+                        </ApolloProvider>
+                    </PersistGate>
+                </Provider>
+            </Router>
+        </Sentry.ErrorBoundary>
     </React.StrictMode>,
     document.getElementById("root")
 )

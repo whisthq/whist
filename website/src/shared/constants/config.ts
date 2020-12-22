@@ -57,7 +57,7 @@ const environment: any = {
             GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
-        sentry_env: "development",
+        sentry_env: "staging",
         client_download_urls: {
             MacOS:
                 "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
