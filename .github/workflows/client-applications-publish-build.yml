@@ -5,9 +5,8 @@
 
 name: "Client Applications: Publish Desktop Applications"
 
-# TODO: TEMP FIX, JUST TO PUSH THE CLIENTAPPS 
 on:
-    pull_request:
+    push:
         branches: [master]
 
 jobs:
@@ -148,17 +147,17 @@ jobs:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
               shell: bash
               run: |
-                    # Explicitly retrieve macOS 10.14 SDK
-                    wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
+                  # Explicitly retrieve macOS 10.14 SDK
+                  wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
 
-                    # Untar it
-                    xz -d MacOSX10.14.sdk.tar.xz
-                    tar -xf MacOSX10.14.sdk.tar
+                  # Untar it
+                  xz -d MacOSX10.14.sdk.tar.xz
+                  tar -xf MacOSX10.14.sdk.tar
 
-                    # Move it to the right folder for building the protocol
-                    mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
+                  # Move it to the right folder for building the protocol
+                  mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
-                    cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
+                  cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
 
     update-graphql-and-notify-slack:
         name: Update Electron Application Version in Config Database via GraphQL API and Notify Slack
