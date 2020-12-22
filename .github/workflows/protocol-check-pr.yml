@@ -1,9 +1,9 @@
-# workflows/protocol-build-and-run-checks.yml
+# workflows/protocol-check-pr.yml
 #
-# Protocol: Build and Check Protocol
+# Protocol: Check PR
 # Builds the Fractal Protocol on Windows, macOS and Linux, and Run Static Checks (cppcheck, clang-tidy)
 
-name: "Protocol: Build and Check Protocol"
+name: "Protocol: Check PR"
 
 on:
     pull_request:
@@ -18,7 +18,7 @@ on:
     workflow_dispatch:
 
 jobs:
-    build-and-check-protocol:
+    protocol-check-pr-building-linting:
         name: ${{ matrix.config.name }}
         runs-on: ${{ matrix.config.os }}
 
