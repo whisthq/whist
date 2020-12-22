@@ -147,7 +147,7 @@ jobs:
               run: ./container-images/push_container_image.sh ${{ matrix.app }} ${{ matrix.aws-region }}
 
             - name: Create Lifecycle Policies for image, only keeps latest 10
-              run: ./container-images/apply_acr_lifecycle_policy.sh ${{ matrix.app }} ${{ matrix.aws-region }}
+              run: ./container-images/apply_ecr_lifecycle_policy.sh ${{ matrix.app }} ${{ matrix.aws-region }}
 
     # Container Images: Notify Slack
     # Notify Slack after building and pushing all the container images.
