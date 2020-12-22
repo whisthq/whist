@@ -6,12 +6,14 @@
 name: "Fractal: Push Sentry Releases"
 
 on:
+    pull_request:
+        branches:
+            - dev
     push:
         branches:
             - master
             - staging
             - dev
-            - project/**
         paths-ignore:
             - "README.md"
             - "**/README.md"
@@ -36,7 +38,6 @@ jobs:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
             SENTRY_ORG: tryfractal
             SENTRY_PROJECT: ${{ matrix.project.sentry-project }}
-            SENTRY_DEPLOY_ENVIRONMENT: production
 
         steps:
             - name: Checkout Git Repository
@@ -48,6 +49,17 @@ jobs:
             - name: Set Git Repository URL to enable sentry-cli automatic commit tagging
               run: |
                   git remote set-url origin https://github.com/fractal/fractal
+
+            - name: Set SENTRY_DEPLOY_ENVIRONMENT based on Git branch
+              shell: bash
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=production" >> $GITHUB_ENV
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
+                  else
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
+                  fi
 
             - name: Create new Sentry release
               run: |
