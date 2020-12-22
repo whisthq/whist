@@ -656,8 +656,8 @@ int main(int argc, char* argv[]) {
             // Check if window title should be updated
             if (should_update_window_title) {
                 if (window_title) {
-                    SDL_SetWindowTitle(window, window_title);
-                    free(window_title);
+                    SDL_SetWindowTitle((SDL_Window*)window, (char*)window_title);
+                    free((char*)window_title);
                 } else {
                     LOG_ERROR("Window Title should not be null!");
                 }
