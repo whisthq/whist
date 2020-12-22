@@ -104,7 +104,7 @@ jobs:
 
                   for app in ${{ env.apps }}
                   do
-                    matrix=$(echo $matrix | jq -c ".\"app\" += [\"fractal/$app\"]")
+                    matrix=$(echo $matrix | jq -c ".\"app\" += [\"$app\"]")
                   done
 
                   echo "::set-output name=task-definitions-matrix::$matrix"
@@ -256,7 +256,7 @@ jobs:
               run: echo "ecr_base_uri=${{ env.aws_account }}.dkr.ecr.${{ matrix.aws-region }}.amazonaws.com" >> $GITHUB_ENV
 
             - name: Store taskdef name as env variable
-              run: echo "taskdef_name=$(echo ${{ matrix.app }} | tr / -)" >> $GITHUB_ENV
+              run: echo "taskdef_name=$(echo fractal/${{ matrix.app }} | tr / -)" >> $GITHUB_ENV
 
             - name: Generate taskdef and store JSON path to variable
               working-directory: ecs-task-definitions
@@ -270,7 +270,7 @@ jobs:
               with:
                   container-name: fractal-container
                   task-definition: ${{ env.taskdef_json }}
-                  image: ${{ env.ecr_base_uri }}/${{ matrix.app }}:${{ env.containers_gha_sha }}
+                  image: ${{ env.ecr_base_uri }}/fractal/${{ matrix.app }}:${{ env.containers_gha_sha }}
 
             - name: Deploy to Amazon ECS service
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
