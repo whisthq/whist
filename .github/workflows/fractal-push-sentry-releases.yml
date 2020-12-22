@@ -7,7 +7,16 @@ name: "Fractal: Push Sentry Releases"
 
 on:
     push:
-        branches: [master]
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
+        paths-ignore:
+            - "README.md"
+            - "**/README.md"
+            - ".github/workflows/README.md"
+    workflow_dispatch:
 
 jobs:
     fractal-push-sentry-releases-main:
@@ -29,7 +38,7 @@ jobs:
             SENTRY_DEPLOY_ENVIRONMENT: production
 
         steps:
-            - name: Checkout Git repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
