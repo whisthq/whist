@@ -84,7 +84,7 @@ jobs:
             - name: Build release protocol # No need to run this for debug, just for release
               run: ./protocol/build_protocol.sh release
 
-            - name: Build base container images
+            - name: Build base container image
               run: ./container-images/build_container_image.sh base
 
             - name: Push base container image to placeholder region

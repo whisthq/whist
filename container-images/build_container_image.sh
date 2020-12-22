@@ -91,8 +91,10 @@ app_path=${1:-base}
 app_path=${app_path%/}
 force_output=${2:-false}
 
-# Check if protocol has been built
+# enter proper dir
 cd "$DIR"
+
+# Check if protocol has been built
 if [ ! -f ../protocol/server/build64/libsentry.so ]; then
   echo "Could not find $DIR/../protocol/server/build64/libsentry.so... building protocol"
   ../protocol/build_protocol.sh
