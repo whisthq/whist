@@ -7,7 +7,14 @@ name: "Protocol: Build and Check Protocol"
 
 on:
     pull_request:
-        branches: [master, staging, dev]
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
+        paths:
+            - "protocol/**"
+            - "!protocol/README.md"
     workflow_dispatch:
 
 jobs:

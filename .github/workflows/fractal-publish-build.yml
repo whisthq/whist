@@ -16,6 +16,7 @@ on:
             - "README.md"
             - "**/README.md"
             - ".github/workflows/README.md"
+    workflow_dispatch:
 
 jobs:
     # Configure Jobs
@@ -63,7 +64,7 @@ jobs:
                 us-west-2
                 ca-central-1
         steps:
-            - name: Checkout Git repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
@@ -147,7 +148,7 @@ jobs:
             s3-bucket-uri: s3://fractal-ecs-host-service
 
         steps:
-            - name: Checkout Git repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
@@ -196,7 +197,7 @@ jobs:
             matrix: ${{ fromJson(needs.container-images-push-images-ecr.outputs.task-definitions-matrix) }}
 
         steps:
-            - name: Checkout git repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
@@ -276,7 +277,7 @@ jobs:
             )
         runs-on: ubuntu-20.04
         steps:
-            - name: Checkout Git repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token

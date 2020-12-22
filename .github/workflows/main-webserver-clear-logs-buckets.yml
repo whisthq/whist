@@ -8,6 +8,7 @@ name: "Main Webserver: Clear Webserver-Generated Logs S3 Buckets"
 on:
     schedule:
         - cron: "0 0 1 * *" # every month
+    workflow_dispatch:
 
 jobs:
     main-webserver-clear-protocol-logs:
@@ -15,7 +16,7 @@ jobs:
         runs-on: ubuntu-20.04
 
         steps:
-            - name: Checkout Git repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
