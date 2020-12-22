@@ -57,7 +57,7 @@ jobs:
         outputs:
             task-definitions-matrix: ${{ steps.package-matrix.outputs.task-definitions-matrix }}
         needs: [fractal-publish-build-config]
-        #if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
+        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
 
         env:
             aws-placeholder-region: us-east-1
