@@ -32,7 +32,7 @@ You can run `systemctl status` to see all the running services in the container.
 
 `journalctl -e` shows the end of the systemd logs (you can page further backwards by hitting `b`).
 
-`journalctl` shows all the systemd logs. Too much to read unless you pipe it through grep.
+`journalctl` shows all the systemd logs. If you run `journalctl` in a Bash shell inside a container, you'll be able to see the logs of a running server protocol, which is useful for debugging.
 
 `/usr/share/fractal/log.txt` contains the Fractal protocol logs. They can also be found in the systemd logs with `journalctl | grep FractalServer`.
 
