@@ -42,8 +42,9 @@ Public Functions
  *
  * @param num                      Number of bytes to copy.
  *
- * @returns                        `destination` is returned.
+ * @returns                        True if all bytes of source were copied (i.e. strlen(source) <=
+ *                                 num - 1)
  */
-char* safe_strncpy(char* destination, char* source, size_t num);
+bool safe_strncpy(char* destination, char* source, size_t num);
 
 #endif  // STRING_UTILS_H

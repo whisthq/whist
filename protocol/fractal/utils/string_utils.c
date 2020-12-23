@@ -12,7 +12,7 @@ safe_strncpy(buf, some_string, 10);
 
 #include "string_utils.h"
 
-char* safe_strncpy(char* destination, char* source, size_t num) {
+bool safe_strncpy(char* destination, char* source, size_t num) {
     /*
      * Safely copy a string from source to destination.
      *
@@ -28,7 +28,7 @@ char* safe_strncpy(char* destination, char* source, size_t num) {
      *     num: Number of bytes to copy.
      *
      * Return:
-     *     `destination` is returned.
+     *     True if all bytes of source were copied (i.e. strlen(source) <= num - 1)
      */
     if (num > 0) {
         size_t i;
@@ -36,6 +36,7 @@ char* safe_strncpy(char* destination, char* source, size_t num) {
             destination[i] = source[i];
         }
         destination[i] = '\0';
+        return source[i] == '\0';
     }
-    return destination;
+    return false;
 }
