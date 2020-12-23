@@ -318,6 +318,8 @@ int handle_mouse_wheel(SDL_Event *event) {
     fmsg.type = MESSAGE_MOUSE_WHEEL;
     fmsg.mouseWheel.x = event->wheel.x;
     fmsg.mouseWheel.y = event->wheel.y;
+    fmsg.mouseWheel.precise_x = event->wheel.preciseX;
+    fmsg.mouseWheel.precise_y = event->wheel.preciseY;
     send_fmsg(&fmsg);
 
     return 0;

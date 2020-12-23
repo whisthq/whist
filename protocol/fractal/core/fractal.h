@@ -401,10 +401,12 @@ typedef struct FractalMouseButtonMessage {
 /// @brief Mouse wheel message.
 /// @details Message from mouse wheel.
 typedef struct FractalMouseWheelMessage {
-    int32_t x;  ///< Horizontal delta of mouse wheel rotation. Negative values
-                ///< scroll left.
-    int32_t y;  ///< Vertical delta of mouse wheel rotation. Negative values
-                ///< scroll up.
+    int32_t x;        ///< Horizontal delta of mouse wheel rotation. Negative values
+                      ///< scroll left.
+    int32_t y;        ///< Vertical delta of mouse wheel rotation. Negative values
+                      ///< scroll up.
+    float precise_x;  ///< Horizontal floating delta of mouse wheel/trackpad scrolling.
+    float precise_y;  ///< Vertical floating delta of mouse wheel/trackpad scrolling.
 } FractalMouseWheelMessage;
 
 /// @brief Mouse motion message.
