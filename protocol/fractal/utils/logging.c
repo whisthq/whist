@@ -44,6 +44,7 @@ could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 #include <signal.h>
 #endif
 
+#include "string_utils.h"
 #include "../core/fractal.h"
 #include "../network/network.h"
 #include "logging.h"
@@ -244,8 +245,8 @@ int multi_threaded_printf(void *opaque) {
         SDL_LockMutex((SDL_mutex *)logger_mutex);
         cache_size = logger_queue_size;
         for (int i = 0; i < logger_queue_size; i++) {
-            strcpy((char *)logger_queue_cache[i].buf,
-                   (const char *)logger_queue[logger_queue_index].buf);
+            safe_strncpy((char *)logger_queue_cache[i].buf,
+                         (const char *)logger_queue[logger_queue_index].buf, LOGGER_BUF_SIZE);
             logger_queue_cache[i].log = logger_queue[logger_queue_index].log;
             logger_queue_cache[i].id = logger_queue[logger_queue_index].id;
             logger_queue[logger_queue_index].buf[0] = '\0';
@@ -508,7 +509,7 @@ void real_mprintf(bool log, const char *fmt_str, va_list args) {
 
     } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
         buf = (char *)logger_queue[index].buf;
-        strcpy(buf, "Buffer maxed out!!!\n");
+        safe_strncpy(buf, "Buffer maxed out!!!\n", LOGGER_BUF_SIZE);
         logger_queue[index].log = log;
         logger_queue[index].id = logger_global_id++;
         logger_queue_size++;
