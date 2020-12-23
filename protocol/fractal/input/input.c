@@ -91,6 +91,8 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
                                           fmsg->mouseButton.pressed);
             break;
         case MESSAGE_MOUSE_WHEEL:
+            LOG_INFO("mouse wheel event: x=%d, y=%d, px=%.4f, py=%.4f", fmsg->mouseWheel.x,
+                     fmsg->mouseWheel.y, fmsg->mouseWheel.precise_x, fmsg->mouseWheel.precise_y);
             ret = emit_mouse_wheel_event(input_device, fmsg->mouseWheel.x, fmsg->mouseWheel.y);
             break;
         case MESSAGE_MULTIGESTURE:
