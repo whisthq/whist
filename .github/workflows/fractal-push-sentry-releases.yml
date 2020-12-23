@@ -6,11 +6,7 @@
 name: "Fractal: Push Sentry Releases"
 
 on:
-    pull_request:
-        branches:
-            - dev
     push:
-<<<<<<< HEAD
         branches:
             - master
             - staging
@@ -20,9 +16,6 @@ on:
             - "**/README.md"
             - ".github/workflows/README.md"
     workflow_dispatch:
-=======
-        branches: [master]
->>>>>>> actually fix sentry workflow, plus some minor QoL in workflow
 
 jobs:
     fractal-push-sentry-releases-main:
