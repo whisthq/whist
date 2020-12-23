@@ -35,6 +35,7 @@ Includes
 #endif
 
 #include "../fractal/utils/logging.h"
+#include "../fractal/utils/string_utils.h"
 #include "../fractal/utils/window_name.h"
 #include "../fractal/core/fractalgetopt.h"
 #include "../fractal/audio/audiocapture.h"
@@ -1145,29 +1146,28 @@ int parse_args(int argc, char* argv[]) {
             }
             case 'i': {
                 printf("Identifier passed in: %s\n", optarg);
-                if (strlen(optarg) > FRACTAL_IDENTIFIER_MAXLEN) {
+                if (!safe_strncpy(identifier, optarg, FRACTAL_IDENTIFIER_MAXLEN + 1)) {
                     printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
                            (unsigned long)strlen(optarg), FRACTAL_IDENTIFIER_MAXLEN);
                     return -1;
                 }
-                strncpy(identifier, optarg, FRACTAL_IDENTIFIER_MAXLEN);
-                identifier[FRACTAL_IDENTIFIER_MAXLEN] = 0;
                 break;
             }
             case 'w': {
                 printf("Webserver URL passed in: %s\n", optarg);
-                if (strlen(optarg) > MAX_WEBSERVER_URL_LEN) {
+                if (!safe_strncpy(webserver_url, optarg, MAX_WEBSERVER_URL_LEN + 1)) {
                     printf("Webserver url passed in is too long! Has length %lu but max is %d.\n",
                            (unsigned long)strlen(optarg), MAX_WEBSERVER_URL_LEN);
                 }
-                strncpy(webserver_url, optarg, MAX_WEBSERVER_URL_LEN);
-                webserver_url[MAX_WEBSERVER_URL_LEN] = 0;
                 break;
             }
             case 'e': {
                 // only log "production" and "staging" env sentry events
                 if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
-                    strcpy(sentry_environment, optarg);
+                    if (!safe_strncpy(sentry_environment, optarg)) {
+                        printf("Sentry environment is too long: %s\n", optarg);
+                        return -1;
+                    }
                     sentry_set_tag("runner", "server");
                     using_sentry = true;
                 }
