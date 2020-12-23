@@ -18,6 +18,7 @@ Any action trigged a server message must be initiated in network.c.
 #include "../fractal/core/fractal.h"
 #include "../fractal/utils/clock.h"
 #include "../fractal/utils/logging.h"
+#include "../fractal/utils/string_utils.h"
 #include "../fractal/utils/window_name.h"
 #include "desktop_utils.h"
 #include "server_message_handler.h"
@@ -136,9 +137,8 @@ static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_s
     const char prefix[] = "Fractalized ";
     size_t len = strlen(prefix) + strlen(title) + 1;
     char *new_window_title = malloc(len);
-    strncpy(new_window_title, prefix, strlen(prefix));
-    strncpy(new_window_title + strlen(prefix), title, strlen(title));
-    new_window_title[len - 1] = '\0';
+    safe_strncpy(new_window_title, prefix, strlen(prefix) + 1);
+    safe_strncpy(new_window_title + strlen(prefix), title, strlen(title) + 1);
     window_title = new_window_title;
 
     should_update_window_title = true;
