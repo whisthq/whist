@@ -1164,7 +1164,7 @@ int parse_args(int argc, char* argv[]) {
             case 'e': {
                 // only log "production" and "staging" env sentry events
                 if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
-                    if (!safe_strncpy(sentry_environment, optarg)) {
+                    if (!safe_strncpy(sentry_environment, optarg, FRACTAL_ENVIRONMENT_MAXLEN)) {
                         printf("Sentry environment is too long: %s\n", optarg);
                         return -1;
                     }

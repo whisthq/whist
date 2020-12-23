@@ -45,6 +45,6 @@ Public Functions
  * @returns                        True if all bytes of source were copied (i.e. strlen(source) <=
  *                                 num - 1)
  */
-bool safe_strncpy(char* destination, char* source, size_t num);
+bool safe_strncpy(char* destination, const char* source, size_t num);
 
 #endif  // STRING_UTILS_H

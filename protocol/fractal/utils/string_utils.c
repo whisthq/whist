@@ -12,7 +12,7 @@ safe_strncpy(buf, some_string, 10);
 
 #include "string_utils.h"
 
-bool safe_strncpy(char* destination, char* source, size_t num) {
+bool safe_strncpy(char* destination, const char* source, size_t num) {
     /*
      * Safely copy a string from source to destination.
      *
