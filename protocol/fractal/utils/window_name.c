@@ -24,6 +24,7 @@ void destroy_window_name_getter();
 #include <X11/Xutil.h>
 #include <stdbool.h>
 
+#include "string_utils.h"
 #include "../core/fractal.h"
 #include "window_name.h"
 
@@ -62,8 +63,7 @@ int get_focused_window_name(char* name_return) {
         result = XmbTextPropertyToTextList(display, &prop, &list, &count);
         if (result == Success) {
             LOG_INFO("window name: %s\n", list[0]);
-            strncpy(name_return, list[0], WINDOW_NAME_MAXLEN);
-            name_return[WINDOW_NAME_MAXLEN - 1] = '\0';
+            safe_strncpy(name_return, list[0], WINDOW_NAME_MAXLEN);
             XFreeStringList(list);
             return 0;
         } else {
