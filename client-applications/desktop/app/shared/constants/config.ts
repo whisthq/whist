@@ -11,7 +11,7 @@ export const webservers: { [key: string]: string } = {
     local: "http://127.0.0.1:7730",
     dev: "http://dev-server.tryfractal.com/",
     staging: "https://fractal-staging-server.herokuapp.com",
-    prod: "https://fractal-prod-server.herokuapp.com",
+    production: "https://fractal-prod-server.herokuapp.com",
 }
 
 const environment: FractalEnvironment = {
@@ -105,7 +105,7 @@ const environment: FractalEnvironment = {
 export const config: FractalConfig =
     process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
         ? environment.DEVELOPMENT
-        : environment.DEVELOPMENT
+        : environment.PRODUCTION
 
 // default export until we have multiple exports
 export default config

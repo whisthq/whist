@@ -344,7 +344,7 @@ def _get_num_extra(taskdef):
     :param taskdef: the task definition ARN of the container
     :return: integer determining how many containers to preboot
     """
-    app_image_for_taskdef = SupportedAppImages.query.filter_by(task_definition_arn=taskdef).first()
+    app_image_for_taskdef = SupportedAppImages.query.filter_by(task_definition=taskdef).first()
     if app_image_for_taskdef:
         return app_image_for_taskdef.preboot_number
     return 0
@@ -373,35 +373,28 @@ def assign_container(
     :return: the generated container, in json form
     """
 
-    set_container_state(
-        keyuser=username,
-        keytask=self.request.id,
-        task_id=self.request.id,
-        state=PENDING,
-        force=True,  # necessary since check will fail otherwise
-    )
-
-    enable_waiting = False
+    enable_reconnect = False
     user = User.query.get(username)
 
     assert user
 
     # if a cluster is passed in, we're in testing mode:
-    if cluster_name is None and enable_waiting:
-        # first, we check for a preexisting container with the correct user and pass it back:
-        existing_container = (
-            UserContainer.query.filter_by(
-                is_assigned=True,
-                user_id=username,
-                task_definition=task_definition_arn,
-                location=region_name,
+    if cluster_name is None:
+        if enable_reconnect:
+            # first, we check for a preexisting container with the correct user:
+            existing_container = (
+                UserContainer.query.filter_by(
+                    is_assigned=True,
+                    user_id=username,
+                    task_definition=task_definition_arn,
+                    location=region_name,
+                )
+                .limit(1)
+                .first()
             )
-            .limit(1)
-            .first()
-        )
-        if existing_container:
-            if _poll(existing_container.container_id):
-                return user_container_schema.dump(existing_container)
+            if existing_container:
+                if _poll(existing_container.container_id):
+                    return user_container_schema.dump(existing_container)
 
         # otherwise, we see if there's an unassigned container
         base_container = (
@@ -422,8 +415,8 @@ def assign_container(
         base_container.dpi = dpi
         db.session.commit()
         self.update_state(
-            state="SUCCESS",
-            meta={"msg": "Container assigned."},
+            state="PENDING",
+            meta={"msg": "Container assigned"},
         )
     else:
         db.session.commit()
@@ -497,6 +490,7 @@ def assign_container(
             lock=False,
             secret_key=aeskey,
             task_definition=task_definition_arn,
+            dpi=dpi,
         )
         container_sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), container)
         if container_sql:

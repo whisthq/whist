@@ -13,17 +13,20 @@ import "app.global.css"
 import configureStore from "store/configureStore"
 import { history } from "store/history"
 
-// import * as Sentry from "@sentry/electron"
+// set up Sentry - import proper init based on running thread
+const { init } =
+    process.type === "browser"
+        ? require("@sentry/electron/dist/main")
+        : require("@sentry/electron/dist/renderer")
 
-// if (process.env.NODE_ENV === "production") {
-//     Sentry.init({
-//         dsn:
-//             "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323",
-//         environment: config.sentryEnv,
-//         // release: `client-applications@${require("electron").remote.app.getVersion()}`,
-//         release: "client-applications@1.0.0",
-//     })
-// }
+if (process.env.NODE_ENV === "production") {
+    init({
+        dsn:
+            "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323",
+        environment: config.sentryEnv,
+        release: "client-applications@1.0.0", // TODO: make this the real release version
+    })
+}
 
 const store = configureStore()
 

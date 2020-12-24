@@ -76,44 +76,8 @@ else
 fi
 thisDirectory="${thisDirectory}/"
 
-IFS=$'\n'
-# normalizes all paths to get rid of '..' and make paths relative to current directory
-echo "Normalizing paths"
-for pathPair in $(yq r --printMode pv $yamlFolder/$fixesFilename 'Diagnostics.[*].**.FilePath')
-do
-    arr=( $(perl -E 'say for split quotemeta shift, shift' -- ": " "$pathPair" | tr -d \') )
-    replacePath=$(realpath ${arr[1]})
-    replacePath=${replacePath#"$thisDirectory"}
-    yq w -i $yamlFolder/$fixesFilename ${arr[0]} $replacePath
-done
-
 # remove any diagnostic entries with excluded folder paths - some remain because of roundabout access (..)
-echo "Removing excluded paths"
-declare -a excludeFolders=(
-    "include"
-    "lib"
-    "docs"
-    "sentry-native"
-    "share"
-    "fractal/video/nvidia-linux"
-)
-
-for excludeFolder in "${excludeFolders[@]}"
-do
-    pathExpression="Diagnostics.(DiagnosticMessage.FilePath==${excludeFolder}/*)"
-    yq d -i $yamlFolder/$fixesFilename $pathExpression
-done
-
-# array of specific files to exclude
-declare -a excludeFiles=(
-    "fractal/core/fractalgetopt.*"
-)
-
-for excludeFile in "${excludeFiles[@]}"
-do
-    pathExpression="Diagnostics.(DiagnosticMessage.FilePath==${excludeFile})"
-    yq d -i $yamlFolder/$fixesFilename $pathExpression
-done
+perl -i -p -000 -e 's/  - DiagnosticName:[^\n]*\n(    [^\n]*\n)*[ ]*FilePath: '"'"'?[:\/\\\w\.]*(include|lib|docs|sentry-native|share|nvidia-linux|fractalgetopt\.[ch])[:\/\\\w\.]*'"'"'?\n(    [^\n]*(\n|$))*//g' ${yamlFolder}/${fixesFilename}
 
 if [[ $CICheck == 1 ]]
 then

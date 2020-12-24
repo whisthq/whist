@@ -7,37 +7,58 @@ name: "Fractal: Push Sentry Releases"
 
 on:
     push:
-        branches: [master]
+        branches:
+            - master
+            - staging
+            - dev
+        paths-ignore:
+            - "README.md"
+            - "**/README.md"
+            - ".github/workflows/README.md"
+    workflow_dispatch:
 
 jobs:
     fractal-push-sentry-releases-main:
+        name: "${{ matrix.project.name }}: Push Sentry Release"
+        runs-on: ubuntu-20.04
+
         strategy:
             matrix:
                 project:
                     - name: Main Webserver
                       sentry-project: main-webserver
-                    - name: Protocol
-                      sentry-project: protocol
+                    - name: Protocol (macOS, Windows, Linux Ubuntu)
+                      sentry-project: desktop-protocol
                     - name: ECS Host Service
                       sentry-project: ecs-host-service
-        name: "${{ matrix.name }}: Push Sentry Release"
-        runs-on: ubuntu-20.04
+                    - name: Client Applications (macOS, Windows, Linux Ubuntu)
+                      sentry-project: desktop-client
         env:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
             SENTRY_ORG: tryfractal
-            SENTRY_PROJECT: ${{ matrix.sentry-project }}
-            SENTRY_DEPLOY_ENVIRONMENT: production
+            SENTRY_PROJECT: ${{ matrix.project.sentry-project }}
 
         steps:
-            - name: Checkout Git repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
                   fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
-            - name: Set Git repository URL to enable sentry-cli automatic commit tagging
+            - name: Set Git Repository URL to enable sentry-cli automatic commit tagging
               run: |
                   git remote set-url origin https://github.com/fractal/fractal
+
+            - name: Set SENTRY_DEPLOY_ENVIRONMENT based on Git branch
+              shell: bash
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=production" >> $GITHUB_ENV
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
+                  else
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
+                  fi
 
             - name: Create new Sentry release
               run: |
@@ -46,7 +67,7 @@ jobs:
 
                   # Create new Sentry release
                   export SENTRY_RELEASE=$(sentry-cli releases propose-version)
-                  sentry-cli releases new -p $SENTRY_PROJECT $SENTRY_RELEASE
+                  sentry-cli releases new $SENTRY_RELEASE --project $SENTRY_PROJECT
                   sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
                   sentry-cli releases finalize $SENTRY_RELEASE
 
@@ -56,5 +77,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Main Webserver Sentry Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"fractal/fractal Production Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}

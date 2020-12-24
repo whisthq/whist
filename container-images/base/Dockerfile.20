@@ -77,6 +77,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     xserver-xorg-video-dummy \
     dkms \
     i3 \
+    awesome \
+    awesome-extra \
     lxappearance \
     xinit \
     materia-gtk-theme \
@@ -230,9 +232,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
-# Create fractal user and do NOT add to sudo group
+# Create fractal user with dynamic, random password and do NOT add to sudo group
 RUN useradd --create-home fractal \
-    && echo 'fractal:dX6-gkE%Gx42gapUaR+T*^.4fhm3Pv7c' | chpasswd
+    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
+    && echo fractal:${password} | chpasswd
 
 # Install Pulse Audio
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -373,7 +376,8 @@ COPY config/.gtkrc-2.0 /root/.gtkrc-2.0
 COPY --chown=fractal config/.gtkrc-2.0 /home/fractal/.gtkrc-2.0
 COPY config/qt4-settings.conf /root/.config/Trolltech.conf
 COPY --chown=fractal config/qt4-settings.conf /home/fractal/.config/Trolltech.conf
-COPY scripts/.xinitrc /root/.xinitrc
+COPY scripts/xinitrc /root/.xinitrc
+COPY config/awesome-rc.lua /home/fractal/.config/awesome/rc.lua
 
 # Install Fractal services
 COPY services/fractal-entrypoint.service /etc/systemd/system
