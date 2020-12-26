@@ -1,8 +1,8 @@
 import React, { useContext } from "react"
 
-import MainContext from "shared/context/mainContext"
-
 import WaitlistForm from "shared/components/waitlistForm"
+import { ScreenSize } from "shared/constants/screenSizes"
+import MainContext from "shared/context/mainContext"
 
 import "styles/landing.css"
 
@@ -18,8 +18,8 @@ const BottomView = (props: any) => {
         <div
             style={{
                 borderRadius: 5,
-                padding: width > 720 ? "60px 30px" : 0,
-                marginTop: 75,
+                padding: width > ScreenSize.MEDIUM ? "60px 30px" : "50px 0",
+                marginTop: width > ScreenSize.LARGE ? 75 : 25,
             }}
         >
             <div

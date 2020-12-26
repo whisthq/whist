@@ -29,13 +29,7 @@ const Canceled = (props: any) => {
         return (
             <div className="fractalContainer">
                 <Header dark={false} account />
-                <div
-                    style={{
-                        width: 500,
-                        margin: "auto",
-                        marginTop: 70,
-                    }}
-                >
+                <div className="resizable-container">
                     <h3 style={{ marginBottom: "30px" }}>
                         Successfully canceled plan.
                     </h3>

@@ -6,11 +6,9 @@ import Leaderboard from "pages/landing/components/leaderboard"
 import Actions from "pages/landing/components/actions"
 
 const LeaderboardView = (props: any) => {
-    // const { width } = useContext(MainContext)
-
     return (
         <div>
-            <Row>
+            <Row style={{ marginTop: 50 }}>
                 <Col md={8}>
                     <Leaderboard />
                 </Col>

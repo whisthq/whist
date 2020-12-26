@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { Redirect, useLocation } from "react-router"
 import { useMutation } from "@apollo/client"
@@ -14,11 +14,21 @@ import VerifyView from "pages/auth/views/verifyView"
 
 const Verify = (props: any) => {
     const { user, authFlow, waitlistUser, dispatch } = props
+
+    const [completed, setCompleted] = useState(false)
+    const [error, setError] = useState(false)
+
     const [updateWaitlistAuthEmail] = useMutation(UPDATE_WAITLIST_AUTH_EMAIL, {
         context: {
             headers: {
                 Authorization: `Bearer ${user.accessToken}`,
             },
+        },
+        onCompleted: () => {
+            setCompleted(true)
+        },
+        onError: () => {
+            setError(true)
         },
     })
 
@@ -42,19 +52,19 @@ const Verify = (props: any) => {
                 },
                 optimisticResponse: true,
             })
+        }
+    }, [authFlow.signupSuccess, updateWaitlistAuthEmail, user, waitlistUser])
+
+    useEffect(() => {
+        // update redux with authEmail if successfully updated database
+        if (completed && !error) {
             dispatch(
                 PureWaitlistAction.updateWaitlistUser({
                     authEmail: user.userID,
                 })
             )
         }
-    }, [
-        authFlow.signupSuccess,
-        updateWaitlistAuthEmail,
-        dispatch,
-        user,
-        waitlistUser,
-    ])
+    }, [completed, error, dispatch, user.userID])
 
     // return visuals
     if (!validUser) {

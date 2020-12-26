@@ -1,10 +1,10 @@
 import React, { useContext } from "react"
 import { Row, Col } from "react-bootstrap"
 
-import WaitlistForm from "shared/components/waitlistForm"
-import MainContext from "shared/context/mainContext"
-
 import SecretPoints from "shared/components/secretPoints"
+import WaitlistForm from "shared/components/waitlistForm"
+import { ScreenSize } from "shared/constants/screenSizes"
+import MainContext from "shared/context/mainContext"
 import {
     SECRET_POINTS,
     EASTEREGG_POINTS,
@@ -23,8 +23,8 @@ import BlenderShadow from "assets/largeGraphics/blenderShadow.svg"
 import MayaShadow from "assets/largeGraphics/mayaShadow.svg"
 import UnityShadow from "assets/largeGraphics/unityShadow.svg"
 
-function SideBySide(props: any) {
-    const { appHighlight } = useContext(MainContext)
+const SideBySide = (props: { case: string }) => {
+    const { appHighlight, width } = useContext(MainContext)
 
     const yourApps = appHighlight ? appHighlight : "your apps"
     const yourApplications = appHighlight ? appHighlight : "your apps"
@@ -77,7 +77,7 @@ function SideBySide(props: any) {
         >
             <img
                 style={{
-                    position: "absolute",
+                    position: "relative",
                     top: 0,
                     left: 0,
                     width: "100%",
@@ -91,7 +91,7 @@ function SideBySide(props: any) {
                     position: "absolute",
                     top: "50%",
                     left: "50%",
-                    transform: "translate(-53%, 25%)",
+                    transform: "translate(-53%, -50%)",
                     width: "50%",
                     display: "inline-block",
                 }}
@@ -101,9 +101,9 @@ function SideBySide(props: any) {
             <img
                 style={{
                     position: "absolute",
-                    top: props.width < 700 ? "20px" : "40px",
-                    right: props.width < 700 ? "-20px" : "-40px",
-                    width: props.width < 700 ? "60px" : "100px",
+                    top: width > ScreenSize.SMALL ? "40px" : "20px",
+                    right: width > ScreenSize.SMALL ? "-40px" : "-20px",
+                    width: width > ScreenSize.SMALL ? "100px" : "60px",
                     animationDelay: "0.2s",
                     display: "inline-block",
                 }}
@@ -114,9 +114,9 @@ function SideBySide(props: any) {
             <img
                 style={{
                     position: "absolute",
-                    top: props.width < 700 ? "90px" : "140px",
-                    right: props.width < 700 ? "-20px" : "-40px",
-                    width: props.width < 700 ? "60px" : "100px",
+                    top: width > ScreenSize.SMALL ? "140px" : "90px",
+                    right: width > ScreenSize.SMALL ? "-40px" : "-20px",
+                    width: width > ScreenSize.SMALL ? "100px" : "60px",
                     display: "inline-block",
                 }}
                 src={FirefoxShadow}
@@ -126,9 +126,9 @@ function SideBySide(props: any) {
             <img
                 style={{
                     position: "absolute",
-                    top: props.width < 700 ? "170px" : "260px",
-                    right: props.width < 700 ? "-20px" : "-40px",
-                    width: props.width < 700 ? "60px" : "95px",
+                    top: width > ScreenSize.SMALL ? "260px" : "170px",
+                    right: width > ScreenSize.SMALL ? "-40px" : "-20px",
+                    width: width > ScreenSize.SMALL ? "95px" : "60px",
                     animationDelay: "0.4s",
                     display: "inline-block",
                 }}
@@ -145,7 +145,7 @@ function SideBySide(props: any) {
                 width: "100%",
                 margin: "auto",
                 position: "relative",
-                bottom: props.width < 700 ? 50 : 20,
+                bottom: width > ScreenSize.SMALL ? 20 : 50,
             }}
         >
             <div>
@@ -175,9 +175,9 @@ function SideBySide(props: any) {
                 <img
                     style={{
                         position: "absolute",
-                        top: props.width < 700 ? "20px" : "40px",
-                        left: props.width < 700 ? "-20px" : "-40px",
-                        width: props.width < 700 ? "60px" : "100px",
+                        top: width > ScreenSize.SMALL ? "40px" : "20px",
+                        left: width > ScreenSize.SMALL ? "-40px" : "-20px",
+                        width: width > ScreenSize.SMALL ? "100px" : "60px",
                         animationDelay: "0.2s",
                     }}
                     src={BlenderShadow}
@@ -187,9 +187,9 @@ function SideBySide(props: any) {
                 <img
                     style={{
                         position: "absolute",
-                        top: props.width < 700 ? "90px" : "140px",
-                        left: props.width < 700 ? "-20px" : "-40px",
-                        width: props.width < 700 ? "60px" : "100px",
+                        top: width > ScreenSize.SMALL ? "140px" : "90px",
+                        left: width > ScreenSize.SMALL ? "-40px" : "-20px",
+                        width: width > ScreenSize.SMALL ? "100px" : "60px",
                     }}
                     src={MayaShadow}
                     className="bounce"
@@ -198,9 +198,9 @@ function SideBySide(props: any) {
                 <img
                     style={{
                         position: "absolute",
-                        top: props.width < 700 ? "170px" : "260px",
-                        left: props.width < 700 ? "-10px" : "-25px",
-                        width: props.width < 700 ? "40px" : "70px",
+                        top: width > ScreenSize.SMALL ? "260px" : "170px",
+                        left: width > ScreenSize.SMALL ? "-25px" : "-10px",
+                        width: width > ScreenSize.SMALL ? "70px" : "40px",
                         animationDelay: "0.4s",
                     }}
                     className="bounce"
@@ -211,11 +211,22 @@ function SideBySide(props: any) {
         </div>
     )
     const Gaming = (
-        <div>
+        <div style={{ marginBottom: width > ScreenSize.LARGE ? 0 : 70 }}>
             <img
                 src={GraphicsImage}
                 style={{ width: "100%", margin: "auto" }}
                 alt=""
+            />
+            <div
+                style={{
+                    position: "absolute",
+                    zIndex: 1,
+                    height: "100%",
+                    width: "100%",
+                    left: width > ScreenSize.LARGE ? 50 : 25,
+                    top: width > ScreenSize.LARGE ? 50 : 25,
+                    background: "rgba(213, 225, 245, 0.2)",
+                }}
             />
         </div>
     )
@@ -235,49 +246,49 @@ function SideBySide(props: any) {
     return (
         <div
             style={{
-                padding: "40px 0px",
+                padding:
+                    props.case === "Productivity" && width < ScreenSize.MEDIUM
+                        ? 0
+                        : "50px 0px",
             }}
             id={props.case}
         >
-            <Row>
+            <Row
+                style={{
+                    flexDirection:
+                        props.case === "Productivity" &&
+                        width < ScreenSize.MEDIUM
+                            ? "column-reverse"
+                            : "row",
+                }}
+            >
                 <Col
                     md={{
-                        span: props.reverse ? 7 : 6,
-                        order: props.reverse ? 2 : 1,
+                        span: props.case === "Productivity" ? 6 : 12,
                     }}
+                    lg={{ span: 6 }}
                 >
                     <div style={{ position: "relative" }}>
                         <div>{images[props.case]}</div>
-                        <div
-                            style={{
-                                position: "absolute",
-                                zIndex: 1,
-                                height: props.width > 720 ? "100%" : "50%",
-                                width: "100%",
-                                maxWidth: 800,
-                                left: props.reverse ? -50 : 50,
-                                top: 50,
-                                background: "rgba(213, 225, 245, 0.2)",
-                            }}
-                        />
                     </div>
                 </Col>
                 <Col
                     md={{
-                        span: props.reverse ? 5 : 6,
-                        order: props.reverse ? 1 : 2,
+                        span: props.case === "Productivity" ? 5 : 12,
+                        offset: props.case === "Productivity" ? 1 : 0,
                     }}
+                    lg={{ span: 5, offset: 1 }}
                 >
                     <div
                         style={{
                             display: "flex",
                             flexDirection: "column",
                             justifyContent: "flex-end",
-                            paddingLeft:
-                                props.reverse || props.width < 775 ? 0 : 100,
-                            paddingRight:
-                                props.reverse && props.width > 775 ? 100 : 0,
-                            marginTop: props.width < 775 ? "55vw" : 0,
+                            marginBottom:
+                                props.case === "Productivity" &&
+                                width < ScreenSize.MEDIUM
+                                    ? 70
+                                    : 0,
                         }}
                     >
                         <h2

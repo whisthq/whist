@@ -4,7 +4,7 @@ import { Row, Col } from "react-bootstrap"
 import { FaCrown } from "react-icons/fa"
 
 import Countdown from "pages/landing/components/countdown"
-import CountdownTimer from "pages/landing/components/countdown"
+import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 
 import "styles/landing.css"
@@ -201,44 +201,26 @@ const Leaderboard = (props: { waitlist: any[]; waitlistUser: any }) => {
                 style={{
                     width: "100%",
                     zIndex: 2,
-                    paddingTop: width > 720 ? 0 : 20,
                 }}
             >
-                {width > 720 ? (
+                <div
+                    style={{ marginBottom: width > ScreenSize.MEDIUM ? 0 : 30 }}
+                >
                     <div
                         style={{
-                            width: "100%",
-                            marginTop: 50,
-                            paddingRight: 40,
+                            color: "#111111",
+                            background: "rgba(213, 225, 245, 0.2)",
+                            padding:
+                                width > ScreenSize.SMALL
+                                    ? "10px 25px"
+                                    : "30px 15px",
+                            marginBottom: 2,
                         }}
                     >
-                        <div
-                            style={{
-                                color: "#111111",
-                                background: "rgba(213, 225, 245, 0.2)",
-                                padding: "10px 25px",
-                                marginBottom: 2,
-                            }}
-                        >
-                            <Countdown type="large" />
-                        </div>
-                        {getRows()}
+                        <Countdown />
                     </div>
-                ) : (
-                    <div style={{ marginBottom: 30, marginTop: 20 }}>
-                        <div
-                            style={{
-                                color: "#111111",
-                                background: "rgba(213, 225, 245, 0.2)",
-                                padding: "30px 15px",
-                                marginBottom: 2,
-                            }}
-                        >
-                            <CountdownTimer type="small" />
-                        </div>
-                        {getRows()}
-                    </div>
-                )}
+                    {getRows()}
+                </div>
             </div>
         </div>
     )

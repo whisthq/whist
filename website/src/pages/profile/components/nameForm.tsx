@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { useMutation } from "@apollo/client"
 import { FaEdit } from "react-icons/fa"
@@ -13,11 +13,20 @@ import "styles/profile.css"
 const NameForm = (props: any) => {
     const { dispatch, user } = props
 
+    const [completed, setCompleted] = useState(false)
+    const [error, setError] = useState(false)
+
     const [updateName] = useMutation(UPDATE_NAME, {
         context: {
             headers: {
                 Authorization: `Bearer ${user.accessToken}`,
             },
+        },
+        onCompleted: () => {
+            setCompleted(true)
+        },
+        onError: () => {
+            setError(true)
         },
     })
 
@@ -30,17 +39,30 @@ const NameForm = (props: any) => {
         setNewName(evt.target.value)
     }
 
+    useEffect(() => {
+        if (completed && !error) {
+            setEditingName(false)
+            dispatch(PureAuthAction.updateUser({ name: newName }))
+            setSavedName(true)
+        }
+    }, [completed, error, dispatch, newName])
+
     // Update user's name in database and redux state
     const saveNewName = () => {
-        setEditingName(false)
+        setCompleted(false)
+        setError(false)
         updateName({
             variables: {
                 userID: user.userID,
                 name: newName,
             },
         })
-        dispatch(PureAuthAction.updateUser({ name: newName }))
-        setSavedName(true)
+    }
+
+    const handleCancel = () => {
+        setCompleted(false)
+        setError(false)
+        setEditingName(false)
     }
 
     return (
@@ -60,6 +82,7 @@ const NameForm = (props: any) => {
                             placeholder={"New name"}
                             onChange={changeNewName}
                             value={newName}
+                            warning={error ? "Unable to save name." : ""}
                         />
                         <div
                             style={{
@@ -82,7 +105,7 @@ const NameForm = (props: any) => {
                                     fontSize: "16px",
                                     marginTop: "20px",
                                 }}
-                                onClick={() => setEditingName(false)}
+                                onClick={handleCancel}
                             >
                                 CANCEL
                             </button>
@@ -106,6 +129,7 @@ const NameForm = (props: any) => {
                         {user.name && (
                             <div
                                 style={{
+                                    position: "relative",
                                     display: "flex",
                                     flexDirection: "row",
                                 }}

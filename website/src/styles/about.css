@@ -1,3 +1,17 @@
 .carousel-indicators li {
     background-color: #3930b8;
 }
+
+.investor-image {
+    background: white;
+    padding: 15px;
+    text-align: center;
+    height: 125px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.investor-image:hover {
+    cursor: pointer;
+}

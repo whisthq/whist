@@ -1,11 +1,12 @@
 import React, { useContext } from "react"
 import { Row, Col } from "react-bootstrap"
 
-import MainContext from "shared/context/mainContext"
-
-import SideBySide from "shared/components/sideBySide"
 import Testimonial from "pages/landing/components/testimonial"
 import DemoVideos from "pages/landing/components/demoVideos"
+
+import SideBySide from "shared/components/sideBySide"
+import { ScreenSize } from "shared/constants/screenSizes"
+import MainContext from "shared/context/mainContext"
 
 import "styles/landing.css"
 
@@ -13,24 +14,22 @@ const MiddleView = (props: any) => {
     const { width } = useContext(MainContext)
 
     return (
-        <div style={{ marginTop: width > 720 ? 100 : 150 }}>
+        <div style={{ marginTop: width >= ScreenSize.LARGE ? 100 : 0 }}>
             <div style={{ position: "relative", width: "100%" }}>
-                <div style={{ paddingTop: 35 }}>
-                    <SideBySide case={"Productivity"} width={width} />
-                </div>
+                <SideBySide case={"Productivity"} />
             </div>
-            <DemoVideos width={width} />
+            <DemoVideos />
             <Row
                 style={{
-                    marginTop: width > 720 ? 175 : 75,
+                    marginTop: width >= ScreenSize.LARGE ? 175 : 75,
                 }}
             >
                 <Col
-                    md={4}
+                    lg={4}
                     style={{
                         position: "relative",
-                        bottom: width > 720 ? 80 : 0,
-                        paddingRight: width > 720 ? 30 : 15,
+                        bottom: width >= ScreenSize.LARGE ? 80 : 0,
+                        paddingRight: width >= ScreenSize.LARGE ? 30 : 15,
                     }}
                 >
                     <Testimonial
@@ -41,7 +40,7 @@ const MiddleView = (props: any) => {
                     />
                 </Col>
                 <Col
-                    md={4}
+                    lg={4}
                     style={{
                         position: "relative",
                         paddingLeft: 15,
@@ -56,11 +55,11 @@ const MiddleView = (props: any) => {
                     />
                 </Col>
                 <Col
-                    md={4}
+                    lg={4}
                     style={{
                         position: "relative",
-                        paddingLeft: width > 720 ? 30 : 15,
-                        top: width > 720 ? 80 : 0,
+                        paddingLeft: width >= ScreenSize.LARGE ? 30 : 15,
+                        top: width >= ScreenSize.LARGE ? 80 : 0,
                     }}
                 >
                     <Testimonial
@@ -71,8 +70,11 @@ const MiddleView = (props: any) => {
                     />
                 </Col>
             </Row>
-            <Row style={{ marginTop: width > 720 ? 125 : 50 }} id="leaderboard">
-                <Col md={9}>
+            <Row
+                style={{ marginTop: width >= ScreenSize.LARGE ? 125 : 50 }}
+                id="leaderboard"
+            >
+                <Col md={12} lg={9}>
                     <h1>How can I get access?</h1>
                     <p style={{ marginTop: 30 }}>
                         Join the waitlist—when the countdown hits zero, we’ll

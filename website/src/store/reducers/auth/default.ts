@@ -27,7 +27,7 @@ export const DEFAULT = {
         verificationEmailsSent: 0, // how many emails we send
         // reset password
         forgotEmailsSent: 0,
-        resetTokenStatus: null, // null | "verified" | "expired" | "invalid"
+        resetTokenStatus: null, // null | "verified" | "invalid", may want to handle expired tokens in the future
         resetDone: false, // whether we are done resetting our password (i.e. server says "I've done it")
         passwordResetEmail: null, // forgot password email
         passwordResetToken: null,

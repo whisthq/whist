@@ -1,8 +1,11 @@
-import React, { useContext } from "react"
+import React, { useContext, useState } from "react"
 import { connect } from "react-redux"
 import { Link } from "react-router-dom"
-import { Dropdown, DropdownButton } from "react-bootstrap"
+import { Dropdown, DropdownButton, Collapse } from "react-bootstrap"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faBars } from "@fortawesome/free-solid-svg-icons"
 
+import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 import * as PureAuthAction from "store/actions/auth/pure"
 import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
@@ -22,6 +25,8 @@ const Header = (props: {
 
     const { dispatch, user, account, dark } = props
 
+    const [expanded, setExpanded] = useState(false)
+
     const handleSignOut = () => {
         dispatch(PureAuthAction.updateUser(deepCopy(AUTH_DEFAULT.user)))
         dispatch(
@@ -38,39 +43,7 @@ const Header = (props: {
     }
 
     // Only render navigation links for desktops and tablets
-    if (width < 720) {
-        return (
-            <div
-                style={{
-                    display: "flex",
-                    width: "100%",
-                    paddingBottom: 0,
-                    paddingTop: 25,
-                    borderBottom: "solid 1px #DFDFDF",
-                    background: dark ? "black" : "white",
-                }}
-            >
-                <Link
-                    to="/"
-                    style={{
-                        outline: "none",
-                        textDecoration: "none",
-                        marginRight: 100,
-                    }}
-                >
-                    <div
-                        className="logo"
-                        style={{
-                            marginBottom: 20,
-                            color: dark ? "white" : "black",
-                        }}
-                    >
-                        Fractal
-                    </div>
-                </Link>
-            </div>
-        )
-    } else {
+    if (width >= ScreenSize.MEDIUM) {
         return (
             <div
                 style={{
@@ -106,9 +79,7 @@ const Header = (props: {
                             Fractal
                         </div>
                     </Link>
-                    {account ? (
-                        <div></div>
-                    ) : (
+                    {!account && (
                         <div
                             style={{
                                 display: "flex",
@@ -149,7 +120,7 @@ const Header = (props: {
                                         ? "account-button-light"
                                         : "account-button"
                                 }
-                                // menuAlign="right"
+                                menuAlign="right"
                             >
                                 <Dropdown.Item href="/dashboard">
                                     Dashboard
@@ -176,6 +147,155 @@ const Header = (props: {
                             Sign In
                         </Link>
                     )}
+                </div>
+            </div>
+        )
+    } else {
+        return (
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    paddingBottom: 0,
+                    paddingTop: 25,
+                    borderBottom: "solid 1px #DFDFDF",
+                    background: dark ? "black" : "white",
+                }}
+            >
+                <Link
+                    to="/"
+                    style={{
+                        outline: "none",
+                        textDecoration: "none",
+                    }}
+                >
+                    <div
+                        className="logo"
+                        style={{
+                            marginBottom: 20,
+                            color: dark ? "white" : "black",
+                        }}
+                    >
+                        Fractal
+                    </div>
+                </Link>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setExpanded(!expanded)
+                        }}
+                        style={{
+                            background: "none",
+                            outline: "none !important",
+                            border: "none",
+                            position: "relative",
+                            top: 5,
+                            textAlign: "right",
+                        }}
+                    >
+                        <FontAwesomeIcon
+                            icon={faBars}
+                            style={{
+                                color: "black",
+                            }}
+                        />
+                    </button>
+                    <Collapse in={expanded}>
+                        <div>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    textAlign: "right",
+                                    padding: "12px 0 12px 0",
+                                }}
+                            >
+                                {account ? (
+                                    <>
+                                        <Link
+                                            to="/dashboard"
+                                            className="mobile-header-link"
+                                        >
+                                            Dashboard
+                                        </Link>
+                                        <Link
+                                            to="/profile"
+                                            className="mobile-header-link"
+                                        >
+                                            Profile
+                                        </Link>
+                                        <button
+                                            className="mobile-header-link"
+                                            onClick={handleSignOut}
+                                            style={{
+                                                background: "none",
+                                                border: "none",
+                                                padding: 0,
+                                                textAlign: "right",
+                                            }}
+                                        >
+                                            Sign Out
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link
+                                            to="/about"
+                                            className="mobile-header-link"
+                                        >
+                                            About
+                                        </Link>
+                                        <a
+                                            href="mailto: support@tryfractal.com"
+                                            className="mobile-header-link"
+                                        >
+                                            Support
+                                        </a>
+                                        <a
+                                            href="mailto: careers@tryfractal.com"
+                                            className="mobile-header-link"
+                                        >
+                                            Careers
+                                        </a>
+                                        <>
+                                            {user.userID ? (
+                                                <>
+                                                    <Link
+                                                        to="/dashboard"
+                                                        className="mobile-header-link"
+                                                    >
+                                                        My Account
+                                                    </Link>
+                                                    <button
+                                                        className="mobile-header-link"
+                                                        onClick={handleSignOut}
+                                                        style={{
+                                                            background: "none",
+                                                            border: "none",
+                                                            padding: 0,
+                                                            textAlign: "right",
+                                                        }}
+                                                    >
+                                                        Sign Out
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <Link
+                                                    to="/auth/bypass"
+                                                    className="mobile-header-link"
+                                                >
+                                                    Sign In
+                                                </Link>
+                                            )}
+                                        </>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </Collapse>
                 </div>
             </div>
         )

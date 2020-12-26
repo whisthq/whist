@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useContext } from "react"
 import { Row, Col } from "react-bootstrap"
 
 import AnimatedCheckmark from "assets/icons/animatedCheckmark.svg"
@@ -7,6 +7,7 @@ import AnimatedRocket from "assets/icons/animatedRocket.svg"
 import AnimatedComputer from "assets/icons/animatedComputer.svg"
 import AnimatedRouter from "assets/icons/animatedRouter.svg"
 import AnimatedCloud from "assets/icons/animatedCloud.svg"
+import BlenderDemo from "assets/gifs/blenderDemo.gif"
 import DemoBackground from "assets/largeGraphics/demoBackground.svg"
 // import BlenderShadow from "assets/largeGraphics/blenderShadow.svg"
 import PerformanceChartAfter from "assets/largeGraphics/performanceChartAfter.svg"
@@ -14,27 +15,28 @@ import PerformanceChartBefore from "assets/largeGraphics/performanceChartBefore.
 
 import ReactPlayer from "react-player"
 import { config } from "shared/constants/config"
+import { ScreenSize } from "shared/constants/screenSizes"
+import MainContext from "shared/context/mainContext"
 
-import BlenderDemo from "assets/gifs/blenderDemo.gif"
-
-const DemoVideo = (props: any) => {
+const DemoVideo = (props: {
+    heading: string
+    text: string
+    icons: any[]
+    component: any
+    first?: boolean
+}) => {
     // icons should have length 3
-    const { width, heading, text, icons, component, first } = props
+    const { heading, text, icons, component, first } = props
 
     return (
         <div
             style={{
                 position: "relative",
                 width: "100%",
-                marginTop: first ? 75 : 25,
+                marginTop: first ? 25 : 75,
             }}
         >
-            <div style={{ height: width > 1400 ? 75 : 0 }}></div>
-            <div
-                style={{
-                    paddingTop: first ? (width > 720 ? 125 : 0) : 15,
-                }}
-            >
+            <div>
                 <h2
                     style={{
                         fontSize: 50,
@@ -134,7 +136,7 @@ const DemoVideo = (props: any) => {
 }
 
 const DemoVideos = (props: any) => {
-    const { width } = props
+    const { width } = useContext(MainContext)
 
     const gifHeading = "No GPU? No Problem."
     const gifText =
@@ -159,7 +161,7 @@ const DemoVideos = (props: any) => {
                     alt=""
                     style={{
                         width:
-                            width > 700
+                            width > ScreenSize.MEDIUM
                                 ? "calc(100% - 100px)"
                                 : "calc(100% - 40px)",
                         boxShadow: "0px 4px 20px rgba(0,0,0,0.15)",
@@ -170,7 +172,7 @@ const DemoVideos = (props: any) => {
                 <img
                     style={{
                         width:
-                            width > 700
+                            width > ScreenSize.MEDIUM
                                 ? "calc(100% - 100px)"
                                 : "calc(100% - 40px)",
                         maxHeight: "600px",
@@ -202,7 +204,7 @@ const DemoVideos = (props: any) => {
                     position: "absolute",
                     bottom: -40,
                     right: 0,
-                    width: width > 775 ? 250 : 100,
+                    width: width > ScreenSize.MEDIUM ? 250 : 100,
                     borderRadius: 5,
                     boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
                     animationDelay: "4s",
@@ -216,7 +218,7 @@ const DemoVideos = (props: any) => {
                     position: "absolute",
                     bottom: -40,
                     right: 0,
-                    width: width > 775 ? 250 : 100,
+                    width: width > ScreenSize.MEDIUM ? 250 : 100,
                     borderRadius: 5,
                     boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
                     animationDelay: "4s",
@@ -266,7 +268,6 @@ const DemoVideos = (props: any) => {
     return (
         <div>
             <DemoVideo
-                width={width}
                 heading={gifHeading}
                 text={gifText}
                 icons={gifIcons}
@@ -275,7 +276,6 @@ const DemoVideos = (props: any) => {
             />
             {config.video_enabled && (
                 <DemoVideo
-                    width={width}
                     heading={demoHeading}
                     text={demoText}
                     icons={demoIcons}

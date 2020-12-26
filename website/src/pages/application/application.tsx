@@ -8,10 +8,11 @@ import { db } from "shared/utils/firebase"
 
 import "styles/application.css"
 
-import MainContext from "shared/context/mainContext"
 import Header from "shared/components/header"
+import { ScreenSize } from "shared/constants/screenSizes"
+import MainContext from "shared/context/mainContext"
 
-function Application(props: any) {
+const Application = (props: any) => {
     const { waitlistUser } = props
     const { width } = useContext(MainContext)
 
@@ -136,7 +137,10 @@ function Application(props: any) {
                     <span
                         style={{
                             color: "#3930b8",
-                            fontSize: width > 720 ? "calc(140px + 2.2vw)" : 50,
+                            fontSize:
+                                width > ScreenSize.SMALL
+                                    ? "calc(140px + 2.2vw)"
+                                    : 50,
                         }}
                     >
                         No. {waitlistUser.ranking}
@@ -161,20 +165,22 @@ function Application(props: any) {
                 <Col md={12}>
                     <div
                         style={{
-                            paddingTop: width > 720 ? 100 : 25,
+                            paddingTop: width > ScreenSize.SMALL ? 100 : 25,
                         }}
                     >
                         {form}
                         <div
                             style={{
-                                display: width > 720 ? "flex" : "block",
+                                display:
+                                    width > ScreenSize.SMALL ? "flex" : "block",
                                 marginTop: 35,
                                 maxWidth: "100%",
                             }}
                         >
                             <Button
                                 style={{
-                                    marginRight: width > 720 ? 25 : 0,
+                                    marginRight:
+                                        width > ScreenSize.SMALL ? 25 : 0,
                                     marginBottom: 10,
                                 }}
                                 className="application-button"
@@ -200,7 +206,7 @@ function Application(props: any) {
     )
 }
 
-function mapStateToProps(state: { WaitlistReducer: { waitlistUser: any } }) {
+const mapStateToProps = (state: { WaitlistReducer: { waitlistUser: any } }) => {
     return {
         waitlistUser: state.WaitlistReducer.waitlistUser,
     }

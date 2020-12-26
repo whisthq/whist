@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, Dispatch } from "react"
 import { connect } from "react-redux"
 import Countdown from "react-countdown"
 
+import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 import { db } from "shared/utils/firebase"
 
@@ -9,9 +10,9 @@ import "styles/landing.css"
 
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
 
-const CountdownTimer = (props: { type: string; dispatch: Dispatch<any> }) => {
+const CountdownTimer = (props: { dispatch: Dispatch<any> }) => {
     const { width } = useContext(MainContext)
-    const { type, dispatch } = props
+    const { dispatch } = props
 
     const [closingDate, changeClosingDate] = useState(() => {
         return Date.now()
@@ -53,19 +54,15 @@ const CountdownTimer = (props: { type: string; dispatch: Dispatch<any> }) => {
                 }}
             >
                 <strong>{days}</strong>{" "}
-                <span style={{ fontSize: width > 720 ? 12 : 9 }}>
-                    {" "}
-                    days &nbsp;{" "}
-                </span>{" "}
+                <span style={{ fontSize: 10 }}> days &nbsp; </span>{" "}
                 <strong>{hours}</strong>{" "}
-                <span style={{ fontSize: width > 720 ? 12 : 10 }}> hrs </span>{" "}
-                &nbsp; <strong>{minutes}</strong>{" "}
-                <span style={{ fontSize: width > 720 ? 12 : 10 }}> mins </span>{" "}
-                &nbsp;{" "}
+                <span style={{ fontSize: 11 }}> hrs </span> &nbsp;{" "}
+                <strong>{minutes}</strong>{" "}
+                <span style={{ fontSize: 11 }}> mins </span> &nbsp;{" "}
                 <span style={{ color: "#3930b8", fontWeight: "bold" }}>
                     {seconds}
                 </span>{" "}
-                <span style={{ fontSize: width > 720 ? 12 : 10 }}> secs </span>
+                <span style={{ fontSize: 11 }}> secs </span>
             </div>
         )
     }
@@ -87,24 +84,32 @@ const CountdownTimer = (props: { type: string; dispatch: Dispatch<any> }) => {
                     textAlign: "center",
                     display: "flex",
                     justifyContent: "center",
-                    alignItems: "space-between",
                 }}
             >
-                <div style={{ marginRight: 40 }}>
-                    {days}
-                    <div style={{ fontSize: 16 }}>days</div>
-                </div>
-                <div style={{ marginLeft: 40, marginRight: 40 }}>
-                    {hours}
-                    <div style={{ fontSize: 16 }}>hours</div>
-                </div>
-                <div style={{ marginLeft: 40, marginRight: 40 }}>
-                    {minutes}
-                    <div style={{ fontSize: 16 }}>mins</div>
-                </div>
-                <div style={{ marginLeft: 40 }}>
-                    {seconds}
-                    <div style={{ fontSize: 16 }}>secs</div>
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        maxWidth: 600,
+                    }}
+                >
+                    <div>
+                        {days}
+                        <div style={{ fontSize: 16 }}>days</div>
+                    </div>
+                    <div>
+                        {hours}
+                        <div style={{ fontSize: 16 }}>hours</div>
+                    </div>
+                    <div>
+                        {minutes}
+                        <div style={{ fontSize: 16 }}>mins</div>
+                    </div>
+                    <div>
+                        {seconds}
+                        <div style={{ fontSize: 16 }}>secs</div>
+                    </div>
                 </div>
             </div>
         )
@@ -147,22 +152,18 @@ const CountdownTimer = (props: { type: string; dispatch: Dispatch<any> }) => {
         )
     }
 
-    if (type === "small") {
-        return (
-            <div>
-                <Countdown
-                    date={closingDate}
-                    renderer={smallCountdownRenderer}
-                />
-            </div>
-        )
-    } else {
-        return (
-            <div>
-                <Countdown date={closingDate} renderer={bigCountdownRenderer} />
-            </div>
-        )
-    }
+    return (
+        <div>
+            <Countdown
+                date={closingDate}
+                renderer={
+                    width > ScreenSize.SMALL
+                        ? bigCountdownRenderer
+                        : smallCountdownRenderer
+                }
+            />
+        </div>
+    )
 }
 
 function mapStateToProps() {

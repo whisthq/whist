@@ -1,12 +1,13 @@
 import React, { useState, useContext } from "react"
+import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 
 const FloatingLogo = (props: any) => {
-    const { appHighlight, setAppHighlight } = useContext(MainContext)
+    const { width, appHighlight, setAppHighlight } = useContext(MainContext)
     const [hover, setHover] = useState(false)
 
     const calculateSize = () => {
-        if (props.width > 720) {
+        if (width > ScreenSize.SMALL) {
             if (appHighlight) {
                 if (appHighlight === props.app) {
                     return [175, 25]

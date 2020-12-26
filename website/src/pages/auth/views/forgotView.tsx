@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 
+import "styles/auth.css"
+
 import Input from "shared/components/input"
 
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
 import * as AuthPureAction from "store/actions/auth/pure"
+import { deepCopy } from "shared/utils/reducerHelpers"
+import { DEFAULT } from "store/reducers/auth/default"
 
 import { checkEmail } from "pages/auth/constants/authHelpers"
 import SwitchMode from "pages/auth/components/switchMode"
@@ -40,6 +44,12 @@ const ForgotView = (props: any) => {
         }
     }
 
+    const backToLogin = () => {
+        const defaultAuthFlow = deepCopy(DEFAULT.authFlow)
+        defaultAuthFlow.mode = "Log in"
+        dispatch(AuthPureAction.updateAuthFlow(defaultAuthFlow))
+    }
+
     useEffect(() => {
         if (authFlow.forgotStatus && authFlow.forgotEmailsSent) {
             setProcessing(false)
@@ -60,21 +70,10 @@ const ForgotView = (props: any) => {
     } else if (gotResponse) {
         return (
             <div>
-                <div
-                    style={{
-                        width: 400,
-                        margin: "auto",
-                        marginTop: 120,
-                    }}
-                >
-                    <h2
-                        style={{
-                            color: "#111111",
-                            textAlign: "center",
-                        }}
-                    >
+                <div className="auth-container">
+                    <div className="auth-title">
                         {authFlow.forgotStatus ? authFlow.forgotStatus : ""}.
-                    </h2>
+                    </div>
                     <div
                         style={{
                             color: "#333333",
@@ -97,13 +96,7 @@ const ForgotView = (props: any) => {
                             question="You can return to the login page"
                             link="here"
                             closer="."
-                            onClick={() =>
-                                dispatch(
-                                    AuthPureAction.updateAuthFlow({
-                                        mode: "Log in",
-                                    })
-                                )
-                            }
+                            onClick={backToLogin}
                         />
                     </div>
                 </div>
@@ -112,21 +105,8 @@ const ForgotView = (props: any) => {
     } else {
         return (
             <div>
-                <div
-                    style={{
-                        width: 400,
-                        margin: "auto",
-                        marginTop: 120,
-                    }}
-                >
-                    <h2
-                        style={{
-                            color: "#111111",
-                            textAlign: "center",
-                        }}
-                    >
-                        Enter your email.
-                    </h2>
+                <div className="auth-container">
+                    <div className="auth-title">Enter your email.</div>
                     <div style={{ marginTop: 40 }}>
                         <Input
                             text="Email"
@@ -139,16 +119,8 @@ const ForgotView = (props: any) => {
                         />
                     </div>
                     <button
-                        className="white-button"
+                        className="purple-button"
                         style={{
-                            width: "100%",
-                            marginTop: 15,
-                            background: "#3930b8",
-                            border: "none",
-                            color: "white",
-                            fontSize: 16,
-                            paddingTop: 15,
-                            paddingBottom: 15,
                             opacity: checkEmail(email) ? 1.0 : 0.6,
                         }}
                         onClick={forgot}
@@ -156,18 +128,13 @@ const ForgotView = (props: any) => {
                     >
                         Reset
                     </button>
+                    <div className="line" />
                     <div style={{ marginTop: 20 }}>
                         <SwitchMode
                             question="Remember your password?"
                             link="Log in "
                             closer="here."
-                            onClick={() =>
-                                dispatch(
-                                    AuthPureAction.updateAuthFlow({
-                                        mode: "Log in",
-                                    })
-                                )
-                            }
+                            onClick={backToLogin}
                         />
                     </div>
                 </div>

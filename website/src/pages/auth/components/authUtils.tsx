@@ -12,23 +12,10 @@ export const Title = (props: { title: string; subtitle?: string }) => {
 
     return (
         <div>
-            <div
-                style={{
-                    width: 400,
-                    margin: "auto",
-                    marginTop: 120,
-                }}
-            >
-                <h2
-                    style={{
-                        color: "#111111",
-                        textAlign: "center",
-                    }}
-                >
-                    {title}
-                </h2>
+            <div className="auth-title" style={{ marginBottom: 15 }}>
+                {title}
             </div>
-            {subtitle ? (
+            {subtitle && (
                 <div
                     style={{
                         color: "#3930b8", // let's add some variety
@@ -37,13 +24,7 @@ export const Title = (props: { title: string; subtitle?: string }) => {
                 >
                     {subtitle}
                 </div>
-            ) : (
-                <div />
             )}
         </div>
     )
 }
-
-export const DivSpace = (props: { height: number }) => (
-    <div style={{ marginTop: props.height }} />
-)

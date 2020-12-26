@@ -10,6 +10,7 @@
     margin-bottom: 20px;
     border: solid 0.8px #cccccc;
     width: 100%;
+    position: relative;
 }
 
 .priceBox-container:hover {
@@ -22,13 +23,13 @@
 }
 
 .priceBox-checkbox {
-    float: right;
     width: 15px;
     height: 15px;
     border-radius: 8px;
     border: solid 0.5px #555555;
-    position: relative;
-    top: 9px;
+    position: absolute;
+    top: 37px;
+    right: 30px;
 }
 
 .priceBox-subText {
@@ -97,7 +98,19 @@
     margin-top: 30px;
 }
 
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width: 768px) {
+    .priceBox-container {
+        height: 278px;
+        padding: 30px 20px;
+    }
+
+    .priceBox-checkbox {
+        top: 15px;
+        right: 15px;
+    }
+}
+
+@media only screen and (max-width: 576px) {
     .plan {
         width: 100%;
         margin-top: 40px;
@@ -112,7 +125,7 @@
     }
 
     .priceBox-container {
-        width: 100%;
+        height: auto;
     }
 
     .next-button {

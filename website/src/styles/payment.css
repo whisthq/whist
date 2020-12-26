@@ -64,6 +64,12 @@
     margin-bottom: 10px;
 }
 
+.back {
+    color: #555555;
+    position: absolute;
+    top: -40px;
+}
+
 @media only screen and (max-width: 600px) {
     .payment-container {
         flex-direction: column;
@@ -76,19 +82,20 @@
         margin-bottom: 40px;
     }
 
-    .checkout {
+    .checkout,
+    .checkout-warning {
         width: 100%;
+    }
+
+    .back {
+        position: relative;
+        top: 0px;
+        margin-bottom: 10px;
     }
 }
 
 .bold {
     font-weight: 500;
-}
-
-.back {
-    color: #555555;
-    position: absolute;
-    top: -40px;
 }
 
 .back:hover {

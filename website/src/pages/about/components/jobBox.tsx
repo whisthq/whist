@@ -4,6 +4,7 @@ import engineering from "assets/icons/cloud-computing.svg"
 import sales from "assets/icons/newtons-cradle.svg"
 import systems from "assets/icons/gyroscope.svg"
 import { HashLink } from "react-router-hash-link"
+import { ScreenSize } from "shared/constants/screenSizes"
 
 const JobBox = (props: any) => {
     let iconImg: any = null
@@ -50,7 +51,9 @@ const JobBox = (props: any) => {
                             color: "#333333",
                             marginTop: 10,
                             fontSize:
-                                props.width > 700 ? "calc(13px + 0.2vw)" : 14,
+                                props.width > ScreenSize.MEDIUM
+                                    ? "calc(13px + 0.2vw)"
+                                    : 14,
                         }}
                     >
                         {props.job.summary}

@@ -18,7 +18,7 @@ import { updateUser } from "store/actions/auth/pure"
 //import { CopyToClipboard } from "react-copy-to-clipboard"
 // use copy to clipboard functionality when we add back in linux
 
-import "styles/auth.css"
+import "styles/dashboard.css"
 
 // Important Note: if you are allowed to login you will be allowed to download
 // Basically, all users who are not allowed to download won't be allowed to login
@@ -43,7 +43,7 @@ const Dashboard = (props: {
     const validUser = user.userID && user.userID !== ""
     const name = user.userID ? user.userID.split("@")[0] : ""
 
-    const { data, loading } = useSubscription(SUBSCRIBE_USER, {
+    const { data, loading, error } = useSubscription(SUBSCRIBE_USER, {
         variables: { userID: user.userID },
     })
 
@@ -54,23 +54,30 @@ const Dashboard = (props: {
                 Authorization: `Bearer ${user.accessToken}`,
             },
         },
+        skip: !user.waitlistToken,
     })
 
-    const [nullifyWaitlistToken] = useMutation(NULLIFY_WAITLIST_TOKEN, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${user.accessToken}`,
+    const [nullifyWaitlistToken, nullifyWaitlistTokenResult] = useMutation(
+        NULLIFY_WAITLIST_TOKEN,
+        {
+            context: {
+                headers: {
+                    Authorization: `Bearer ${user.accessToken}`,
+                },
             },
-        },
-    })
+        }
+    )
 
-    const [updateUserCanLogin] = useMutation(UPDATE_USER_CAN_LOGIN, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${user.accessToken}`,
+    const [updateUserCanLogin, updateUserCanLoginResult] = useMutation(
+        UPDATE_USER_CAN_LOGIN,
+        {
+            context: {
+                headers: {
+                    Authorization: `Bearer ${user.accessToken}`,
+                },
             },
-        },
-    })
+        }
+    )
 
     const toggleCanLogin = useCallback(
         (canLogin: boolean) => {
@@ -93,7 +100,7 @@ const Dashboard = (props: {
         ) {
             toggleCanLogin(true)
 
-            const offboardedUserID = waitlistUserData.data.waitlist[0].userID
+            const offboardedUserID = waitlistUserData.data.waitlist[0].user_id
             if (user.userID) {
                 updateUserCanLogin({
                     variables: {
@@ -133,7 +140,37 @@ const Dashboard = (props: {
         toggleCanLogin,
     ])
 
-    if (loading || waitlistUserData.loading) {
+    if (error || waitlistUserData.error) {
+        return (
+            <div className="fractalContainer">
+                <Header dark={false} account />
+                <div className="dashboard-container">
+                    There was an error retrieving the dashboard. Please refresh
+                    to try again.
+                </div>
+            </div>
+        )
+    } else if (
+        nullifyWaitlistTokenResult.error ||
+        updateUserCanLoginResult.error
+    ) {
+        return (
+            <div className="fractalContainer">
+                <Header dark={false} account />
+                <div className="dashboard-container">
+                    There was an error taking you off the waitlist. Please
+                    refresh to try again, or contact{" "}
+                    <a
+                        href="mailto: support@tryfractal.com"
+                        className="email-link"
+                    >
+                        support@tryfractal.com
+                    </a>{" "}
+                    if you think there was a mistake.
+                </div>
+            </div>
+        )
+    } else if (loading || waitlistUserData.loading) {
         return (
             <div
                 style={{
@@ -152,13 +189,7 @@ const Dashboard = (props: {
             return (
                 <div className="fractalContainer">
                     <Header dark={false} account />
-                    <div
-                        style={{
-                            width: 400,
-                            margin: "auto",
-                            marginTop: 70,
-                        }}
-                    >
+                    <div className="dashboard-container">
                         <div
                             style={{
                                 color: "#111111",
@@ -198,13 +229,7 @@ const Dashboard = (props: {
             return (
                 <div className="fractalContainer">
                     <Header dark={false} account />
-                    <div
-                        style={{
-                            width: 400,
-                            margin: "auto",
-                            marginTop: 70,
-                        }}
-                    >
+                    <div className="dashboard-container">
                         <div>
                             <div
                                 style={{

@@ -2,8 +2,9 @@ import React, { useState, useContext } from "react"
 import TypeWriterEffect from "react-typewriter-effect"
 import { Row, Col } from "react-bootstrap"
 
-import WaitlistForm from "shared/components/waitlistForm"
 import Header from "shared/components/header"
+import WaitlistForm from "shared/components/waitlistForm"
+import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 import FloatingLogo from "pages/landing/components/floatingLogo"
 
@@ -82,13 +83,13 @@ const TopView = (props: any) => {
     ]
 
     const tops =
-        width > 720
+        width > ScreenSize.SMALL
             ? appHighlight
                 ? [110, 20, 40, 170, 400, 390]
                 : [65, 20, 40, 190, 290, 370]
             : [30, 20, 110, 110, 200, 210]
     const lefts =
-        width > 720
+        width > ScreenSize.SMALL
             ? appHighlight
                 ? [-50, 140, 340, 175, 125, 360]
                 : [-100, 130, 340, 200, 20, 360]
@@ -163,7 +164,6 @@ const TopView = (props: any) => {
                                     "0px 4px 20px rgba(" + app.rgb + ", 0.2)"
                                 }
                                 key={"floating-icon-highlight-" + idx}
-                                width={width}
                                 top={tops[idx]}
                                 left={lefts[idx]}
                                 colorImage={app.colorImage}
@@ -187,7 +187,6 @@ const TopView = (props: any) => {
                             ", 0.2)"
                         }
                         key={"floating-icon-highlight-higlighted"}
-                        width={width}
                         top={tops[3]}
                         left={lefts[3]}
                         colorImage={appImages[appHighlightIndex].colorImage}
@@ -206,7 +205,6 @@ const TopView = (props: any) => {
                         currentIndex={currentIndex}
                         boxShadow={"0px 4px 20px rgba(" + app.rgb + ", 0.2)"}
                         key={"floating-icon-nohiglight" + idx}
-                        width={width}
                         top={tops[idx]}
                         left={lefts[idx]}
                         colorImage={app.colorImage}
@@ -227,18 +225,26 @@ const TopView = (props: any) => {
             style={{
                 width: "100%",
                 position: "relative",
-                paddingBottom: width > 720 ? 0 : 70,
+                paddingBottom: width > ScreenSize.SMALL ? 0 : 70,
             }}
         >
             <Header dark={false} />
             <Row
                 style={{
-                    paddingTop: width > 720 ? 75 : 0,
-                    backgroundImage: renderedBackground.background,
+                    paddingTop: width > ScreenSize.SMALL ? 75 : 0,
+                    backgroundImage:
+                        width > ScreenSize.MEDIUM
+                            ? renderedBackground.background
+                            : "none",
                 }}
-                className={renderedBackground.className}
+                className={
+                    width > ScreenSize.MEDIUM
+                        ? renderedBackground.className
+                        : ""
+                }
             >
                 <Col
+                    sm={12}
                     md={7}
                     style={{
                         color: "#111111",
@@ -247,15 +253,14 @@ const TopView = (props: any) => {
                         position: "relative",
                         paddingRight: 0,
                         zIndex: 1,
+                        flex: width > ScreenSize.MEDIUM ? "" : "0 1 auto",
+                        maxWidth: width > ScreenSize.MEDIUM ? "" : "100%",
                     }}
                 >
                     <div
+                        className="main-title"
                         style={{
-                            fontFamily: "Maven Pro",
-                            fontSize: width > 720 ? 80 : 50,
-                            fontWeight: "bold",
-                            color: "black",
-                            marginTop: width > 720 ? 10 : 7,
+                            marginTop: width > ScreenSize.SMALL ? 10 : 7,
                         }}
                     >
                         {appHighlight ? (
@@ -273,27 +278,19 @@ const TopView = (props: any) => {
                         )}
                     </div>
                     <div
+                        className="main-title"
                         style={{
-                            fontSize: width > 720 ? 80 : 50,
-                            fontWeight: "bold",
                             display: "inline-block",
-                            color: "black",
                             paddingBottom: 20,
-                            lineHeight: width > 720 ? 1.0 : 0.6,
+                            lineHeight: 1,
                             marginBottom: 40,
+                            position: "relative",
+                            top: width > ScreenSize.SMALL ? 0 : "-5px",
                         }}
                     >
                         just faster.
                     </div>
-                    <p
-                        style={{
-                            lineHeight: 1.6,
-                            color: "#111111",
-                            letterSpacing: 1.5,
-                            textAlign: "left",
-                            maxWidth: 500,
-                        }}
-                    >
+                    <p className="subtitle">
                         Fractal supercharges your applications by streaming them
                         from the cloud. Join our waitlist before the countdown
                         ends for access.
@@ -302,19 +299,7 @@ const TopView = (props: any) => {
                         <WaitlistForm dark={false} />
                     </div>
                 </Col>
-                <Col
-                    md={5}
-                    style={{
-                        textAlign: "right",
-                        paddingLeft: 100,
-                        marginRight: 0,
-                        paddingRight: 0,
-                        paddingTop: 30,
-                        position: "relative",
-                        zIndex: 0,
-                        top: width > 720 ? 0 : 20,
-                    }}
-                >
+                <Col sm={12} md={5} className="logos-container">
                     {renderLogos()}
                 </Col>
             </Row>

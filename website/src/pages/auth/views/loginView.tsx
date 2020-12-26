@@ -92,23 +92,8 @@ const LoginView = (props: any) => {
         // Render the login screen
         return (
             <div>
-                <div
-                    style={{
-                        width: 400,
-                        margin: "auto",
-                        marginTop: 70,
-                    }}
-                >
-                    <div
-                        style={{
-                            color: "#111111",
-                            textAlign: "center",
-                            fontSize: 32,
-                            marginBottom: 40,
-                        }}
-                    >
-                        Welcome back!
-                    </div>
+                <div className="auth-container">
+                    <div className="auth-title">Welcome back!</div>
                     {authFlow.loginWarning && authFlow.loginWarning !== "" && (
                         <div
                             style={{
@@ -160,31 +145,10 @@ const LoginView = (props: any) => {
                             valid={checkPassword(password)}
                         />
                     </div>
-                    <button
-                        className="white-button"
-                        style={{
-                            width: "100%",
-                            marginTop: 20,
-                            background: "#3930b8",
-                            border: "none",
-                            color: "white",
-                            fontSize: 16,
-                            paddingTop: 15,
-                            paddingBottom: 15,
-                        }}
-                        onClick={login}
-                    >
+                    <button className="purple-button" onClick={login}>
                         Log In
                     </button>
-                    <div
-                        style={{
-                            height: 1,
-                            width: "100%",
-                            marginTop: 30,
-                            marginBottom: 30,
-                            background: "#dfdfdf",
-                        }}
-                    />
+                    <div className="line" />
                     {/* <GoogleButton login={google_login} /> */}
                     <div style={{ marginTop: 20 }}>
                         <SwitchMode

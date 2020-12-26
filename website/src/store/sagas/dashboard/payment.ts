@@ -15,7 +15,7 @@ function* addCard(action: any) {
         apiPost,
         "/stripe/addCard",
         {
-            email: state.AuthReducer.user.user_id,
+            email: state.AuthReducer.user.userID,
             source: action.source,
         },
         state.AuthReducer.user.accessToken,
@@ -58,7 +58,7 @@ function* deleteCard(action: any) {
         apiPost,
         "/stripe/deleteCard",
         {
-            email: state.AuthReducer.user.user_id,
+            email: state.AuthReducer.user.userID,
             source: action.source,
         },
         state.AuthReducer.user.accessToken,
@@ -91,7 +91,7 @@ function* addSubscription(action: any) {
         apiPost,
         "/stripe/addSubscription",
         {
-            email: state.AuthReducer.user.user_id,
+            email: state.AuthReducer.user.userID,
             plan: action.plan,
         },
         state.AuthReducer.user.accessToken,
@@ -132,7 +132,7 @@ function* deleteSubscription(action: any) {
         apiPost,
         "/mail/cancel", // a bit old, might want to update?
         {
-            username: state.AuthReducer.user.user_id,
+            username: state.AuthReducer.user.userID,
             feedback: action.message,
         },
         ""
@@ -142,7 +142,7 @@ function* deleteSubscription(action: any) {
         apiPost,
         "/stripe/deleteSubscription",
         {
-            email: state.AuthReducer.user.user_id,
+            email: state.AuthReducer.user.userID,
         },
         state.AuthReducer.user.accessToken,
         state.AuthReducer.user.refreshToken

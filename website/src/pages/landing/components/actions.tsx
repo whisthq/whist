@@ -12,6 +12,7 @@ import history from "shared/utils/history"
 import { REFERRAL_POINTS, SIGNUP_POINTS } from "shared/utils/points"
 import MainContext from "shared/context/mainContext"
 import { config } from "shared/constants/config"
+import { ScreenSize } from "shared/constants/screenSizes"
 
 import ReactGA from "react-ga"
 
@@ -38,7 +39,7 @@ const CustomAction = (props: {
             >
                 <div
                     style={{
-                        fontSize: width > 720 ? 17 : 16,
+                        fontSize: width > ScreenSize.MEDIUM ? 17 : 16,
                         textAlign: "left",
                     }}
                 >
@@ -141,7 +142,6 @@ const Actions = (props: {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "flex-start",
-                marginTop: 50,
             }}
         >
             {renderActions()}

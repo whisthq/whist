@@ -1,6 +1,6 @@
 import { put, takeEvery, all, call, select, delay } from "redux-saga/effects"
 
-import { apiPost, graphQLPost } from "shared/utils/api"
+import { apiGet, apiPost, graphQLPost } from "shared/utils/api"
 import history from "shared/utils/history"
 
 import * as AuthPureAction from "store/actions/auth/pure"
@@ -22,9 +22,6 @@ function* emailLogin(action: any) {
         },
         ""
     )
-
-    console.log("LOGGED IN")
-    console.log(json.access_token)
 
     if (json && json.access_token) {
         yield put(
@@ -312,42 +309,19 @@ function* forgotPassword(action: any) {
 
 function* validateResetToken(action: any) {
     yield select()
-    const { json } = yield call(
-        apiPost,
-        "/token/validate",
-        {
-            token: action.token,
-        },
-        ""
-    )
+    const { json } = yield call(apiGet, "/token/validate", action.token)
 
     // at some later point in time we may find it helpful to change strings here to some sort of enum
-    if (json) {
-        if (json.status === 200) {
-            yield put(
-                AuthPureAction.updateAuthFlow({
-                    resetTokenStatus: "verified",
-                    passwordResetEmail: json.user,
-                    passwordResetToken: action.token,
-                })
-            )
-        } else {
-            if (json.error === "Expired token") {
-                yield put(
-                    AuthPureAction.updateAuthFlow({
-                        resetTokenStatus: "expired",
-                    })
-                )
-            } else {
-                yield put(
-                    AuthPureAction.updateAuthFlow({
-                        resetTokenStatus: "invalid",
-                    })
-                )
-            }
-        }
+    if (json && json.status === 200) {
+        yield put(
+            AuthPureAction.updateAuthFlow({
+                resetTokenStatus: "verified",
+                passwordResetEmail: json.user.user_id,
+                passwordResetToken: action.token,
+            })
+        )
     } else {
-        // this happens when the server 500s basically
+        // this happens when the server 500s or token is invalid/expired
         yield put(
             AuthPureAction.updateAuthFlow({
                 resetTokenStatus: "invalid",

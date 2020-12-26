@@ -53,13 +53,7 @@ const Profile = (props: any) => {
         return (
             <div className="fractalContainer">
                 <Header dark={false} account />
-                <div
-                    style={{
-                        width: 500,
-                        margin: "auto",
-                        marginTop: 70,
-                    }}
-                >
+                <div className="profile-container">
                     <h2 style={{ marginBottom: "20px" }}>Your Profile</h2>
                     <div className="section-title">Email</div>
                     <div className="section-info">{user.userID}</div>

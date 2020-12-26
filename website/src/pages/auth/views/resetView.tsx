@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
+
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import PasswordConfirmForm from "shared/components/passwordConfirmForm"
-import {
-    resetPassword,
-    validateResetToken,
-} from "store/actions/auth/sideEffects"
 import {
     checkPassword,
     checkPasswordVerbose,
@@ -13,6 +10,10 @@ import {
 import history from "shared/utils/history"
 
 import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
+import {
+    resetPassword,
+    validateResetToken,
+} from "store/actions/auth/sideEffects"
 import { deepCopy } from "shared/utils/reducerHelpers"
 import { DEFAULT } from "store/reducers/auth/default"
 
@@ -76,6 +77,12 @@ const ResetView = (props: {
         if (evt.key === "Enter") {
             reset()
         }
+    }
+
+    const backToLogin = () => {
+        dispatch(updateUser(deepCopy(DEFAULT.user)))
+        dispatch(updateAuthFlow(deepCopy(DEFAULT.authFlow)))
+        history.push("/auth/bypass")
     }
 
     // first ask for a validation and start loading
@@ -151,22 +158,10 @@ const ResetView = (props: {
     } else if (authFlow.resetTokenStatus === "verified") {
         return (
             <div>
-                <div
-                    style={{
-                        width: 400,
-                        margin: "auto",
-                        marginTop: 120,
-                    }}
-                >
-                    <h2
-                        style={{
-                            color: "#111111",
-                            textAlign: "center",
-                            fontWeight: "normal",
-                        }}
-                    >
-                        Please Enter Your New Password
-                    </h2>
+                <div className="auth-container">
+                    <div className="auth-title">
+                        Please enter your new password.
+                    </div>
                     <PasswordConfirmForm
                         changePassword={changePassword}
                         changeConfirmPassword={changeConfirmPassword}
@@ -178,16 +173,8 @@ const ResetView = (props: {
                         isFirstElement={true}
                     />
                     <button
-                        className="white-button"
+                        className="purple-button"
                         style={{
-                            width: "100%",
-                            marginTop: 15,
-                            background: "#3930b8",
-                            border: "none",
-                            color: "white",
-                            fontSize: 16,
-                            paddingTop: 15,
-                            paddingBottom: 15,
                             opacity: validPassword ? 1.0 : 0.6,
                         }}
                         onClick={reset}
@@ -201,21 +188,18 @@ const ResetView = (props: {
     } else {
         return (
             <div>
-                <div
-                    style={{
-                        width: 400,
-                        margin: "auto",
-                        marginTop: 120,
-                    }}
-                >
-                    <h2
+                <div className="auth-container">
+                    <div className="auth-title">Failed to verify token.</div>
+                    <button
+                        className="white-button"
                         style={{
-                            color: "#111111",
-                            textAlign: "center",
+                            width: "100%",
+                            fontSize: 16,
                         }}
+                        onClick={backToLogin}
                     >
-                        Failed to verify token.
-                    </h2>
+                        Back to Login
+                    </button>
                 </div>
             </div>
         )

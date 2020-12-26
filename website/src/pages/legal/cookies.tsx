@@ -1,6 +1,7 @@
 import React, { useContext } from "react"
 import { HashLink } from "react-router-hash-link"
 
+import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 
 function Cookies(props: any) {
@@ -9,7 +10,8 @@ function Cookies(props: any) {
         <div style={{ overflowX: "hidden" }} id="top">
             <div
                 style={{
-                    padding: width > 700 ? "75px 150px" : "50px 40px",
+                    padding:
+                        width > ScreenSize.MEDIUM ? "75px 150px" : "50px 40px",
                     maxWidth: 1280,
                     margin: "auto",
                 }}

@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { useMutation } from "@apollo/client"
 import { connect } from "react-redux"
 
@@ -41,10 +41,37 @@ function SecretPoints(props: {
     } = props
 
     const [updatePoints] = useMutation(UPDATE_WAITLIST_REFERRALS, {
-        onError(err) {},
+        onCompleted: () => {
+            setCompleted(true)
+        },
+        onError: () => {
+            setError(true)
+        },
     })
+    const [newEasterEggs, setNewEasterEggs] = useState({})
+    const [completed, setCompleted] = useState(false)
+    const [error, setError] = useState(false)
+
+    useEffect(() => {
+        // if successfully updated database with new point, update redux and firebase
+        if (completed && !error) {
+            // update the local state which is used to decide which buttons to display
+            dispatch(
+                updateWaitlistUser({
+                    eastereggsAvailable: newEasterEggs,
+                })
+            )
+
+            // update remote state which tells us what the "truth" really is
+            db.collection("eastereggs").doc(waitlistUser.userID).set({
+                available: newEasterEggs,
+            })
+        }
+    }, [completed, error, newEasterEggs, dispatch, waitlistUser.userID])
 
     async function handleClick() {
+        setCompleted(false)
+        setError(false)
         // get the real status from the firebase database
         const newEastereggsDocument = await db
             .collection("eastereggs")
@@ -60,18 +87,7 @@ function SecretPoints(props: {
             const newEastereggs = data.available
             const getPoints = name in newEastereggs
             delete newEastereggs[name] // pasing undefined not allowed
-
-            // update the local state which is used to decide which buttons to display
-            dispatch(
-                updateWaitlistUser({
-                    eastereggsAvailable: newEastereggs,
-                })
-            )
-
-            // update remote state which tells us what the "truth" really is
-            db.collection("eastereggs").doc(waitlistUser.userID).set({
-                available: newEastereggs,
-            })
+            setNewEasterEggs(newEastereggs)
 
             // rank is updated in the waitlist, local waitlist is subscribed so recieves update
             // this updates local user values
@@ -94,17 +110,22 @@ function SecretPoints(props: {
         renderProps ? (
             renderProps(handleClick)
         ) : (
-            <div
-                onClick={handleClick}
-                style={style ? style : { width: "50%" }}
-                className={className ? className : "pointer-hover"}
-            >
-                Click me for{" "}
-                <span style={spanStyle ? spanStyle : { color: "#3930b8" }}>
-                    {" "}
-                    {points} Points{" "}
-                </span>
-            </div>
+            <>
+                <div
+                    onClick={handleClick}
+                    style={style ? style : { width: "50%" }}
+                    className={className ? className : "pointer-hover"}
+                >
+                    Click me for{" "}
+                    <span style={spanStyle ? spanStyle : { color: "#3930b8" }}>
+                        {" "}
+                        {points} Points{" "}
+                    </span>
+                </div>
+                {error && (
+                    <div style={{ color: "#ff0000" }}>Unable to add points</div>
+                )}
+            </>
         )
     ) : (
         <div />

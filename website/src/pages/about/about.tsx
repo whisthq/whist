@@ -3,10 +3,11 @@ import { Row, Col, Carousel } from "react-bootstrap"
 
 import InvestorBox from "pages/about/components/investorBox"
 import EmployeeBox from "pages/about/components/employeeBox"
-import SideBySide from "shared/components/sideBySide"
 
-import Header from "shared/components/header"
 import Footer from "shared/components/footer"
+import Header from "shared/components/header"
+import SideBySide from "shared/components/sideBySide"
+import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 
 import { teamData } from "pages/about/constants/team"
@@ -15,6 +16,7 @@ import "styles/about.css"
 
 const About = (props: any) => {
     const { width } = useContext(MainContext)
+
     let teamCards = []
     let shuffledTeamData = teamData
         .map((a) => ({ sort: Math.random(), value: a }))
@@ -44,11 +46,17 @@ const About = (props: any) => {
                 className="fractalContainer"
             >
                 <Header dark={false} />
-                <div style={{ marginTop: 50 }}>
-                    <SideBySide case={"Gaming"} width={width} />
+                <div style={{ marginTop: width > ScreenSize.LARGE ? 50 : 0 }}>
+                    <SideBySide case={"Gaming"} />
                 </div>
                 <Row>
-                    <Col md={12} style={{ textAlign: "left", marginTop: 100 }}>
+                    <Col
+                        md={12}
+                        style={{
+                            textAlign: "left",
+                            marginTop: width > ScreenSize.XLARGE ? 100 : 50,
+                        }}
+                    >
                         <h2>Our Stories</h2>
                         <p
                             style={{
@@ -91,15 +99,15 @@ const About = (props: any) => {
                             and engineers.
                         </p>
                     </Col>
-                    {width > 700 ? (
-                        <Col md={7} style={{ paddingLeft: 60 }}>
-                            <InvestorBox />
-                        </Col>
-                    ) : (
-                        <Col md={7} style={{ padding: 0 }}>
-                            <InvestorBox />
-                        </Col>
-                    )}
+                    <Col
+                        md={{
+                            span: width > ScreenSize.LARGE ? 6 : 7,
+                            offset: width > ScreenSize.LARGE ? 1 : 0,
+                        }}
+                        style={{ padding: 0 }}
+                    >
+                        <InvestorBox />
+                    </Col>
                 </Row>
             </div>
             <Footer />

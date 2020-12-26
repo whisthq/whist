@@ -66,7 +66,7 @@ button {
     cursor: pointer !important;
 }
 
-@media only screen and (max-width: 720px) {
+@media only screen and (max-width: 576px) {
     h1 {
         font-size: 45px !important;
     }
@@ -139,13 +139,24 @@ a {
     font-size: 16px;
 }
 
-@media only screen and (max-width: 700px) {
+.resizable-container {
+    width: 500px;
+    margin: auto;
+    margin-top: 70px;
+}
+
+@media only screen and (max-width: 576px) {
     .page-link {
         font-size: 13px !important;
     }
 
     .section-name {
         font-size: 14px;
+    }
+
+    .resizable-container {
+        width: 100%;
+        margin-top: 40px;
     }
 }
 
@@ -288,6 +299,13 @@ a {
     background: none;
 }
 
+.mobile-header-link {
+    color: black;
+    font-size: 15px;
+    margin: 5px 0 5px 0;
+    letter-spacing: 1px;
+}
+
 .account-button,
 .account-button-light {
     margin-right: 0px;
@@ -364,7 +382,7 @@ a {
 .saved {
     font-style: italic;
     font-size: 14px;
-    margin-right: 15px;
+    margin-right: 10px;
     animation: FadeAnimation 0.5s ease-in 1s forwards;
 }
 
@@ -377,5 +395,6 @@ a {
     100% {
         opacity: 0;
         visibility: hidden;
+        display: none;
     }
 }

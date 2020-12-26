@@ -2,9 +2,10 @@ import React, { useContext } from "react"
 import { Row, Col } from "react-bootstrap"
 import Popup from "reactjs-popup"
 
+import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 
-import BSV from "assets/investorPhotos/bsv.png"
+import BSV from "assets/investorPhotos/bsv.svg"
 import DC from "assets/investorPhotos/dc.jpg"
 import DRF from "assets/investorPhotos/drf.jpg"
 import Michael from "assets/investorPhotos/michael.jpg"
@@ -20,8 +21,9 @@ const InvestorBox = (props: any) => {
         <Row
             style={{
                 margin: 20,
-                padding: width > 720 ? 20 : 0,
-                border: width > 720 ? "solid 10px #0b172b" : "none",
+                padding: width > ScreenSize.SMALL ? 20 : 0,
+                border:
+                    width > ScreenSize.SMALL ? "solid 10px #0b172b" : "none",
                 borderRadius: 5,
             }}
         >
@@ -32,21 +34,13 @@ const InvestorBox = (props: any) => {
                     rel="noopener noreferrer"
                     style={{ textDecoration: "none", outline: "none" }}
                 >
-                    <div
-                        style={{
-                            background: "white",
-                            padding: 20,
-                            textAlign: "center",
-                            height: 125,
-                        }}
-                    >
+                    <div className="investor-image">
                         <img
                             src={Slow}
                             alt=""
                             style={{
-                                maxWidth: 85,
-                                maxHeight: 85,
-                                paddingTop: 20,
+                                maxWidth: 75,
+                                maxHeight: 75,
                             }}
                         />
                     </div>
@@ -59,21 +53,13 @@ const InvestorBox = (props: any) => {
                     rel="noopener noreferrer"
                     style={{ textDecoration: "none", outline: "none" }}
                 >
-                    <div
-                        style={{
-                            background: "white",
-                            padding: 30,
-                            textAlign: "center",
-                            height: 125,
-                        }}
-                    >
+                    <div className="investor-image">
                         <img
                             src={Neo}
                             alt=""
                             style={{
                                 maxWidth: 75,
                                 maxHeight: 75,
-                                paddingTop: 20,
                             }}
                         />
                     </div>
@@ -86,20 +72,13 @@ const InvestorBox = (props: any) => {
                     rel="noopener noreferrer"
                     style={{ textDecoration: "none", outline: "none" }}
                 >
-                    <div
-                        style={{
-                            background: "white",
-                            padding: width > 700 ? 30 : "30px 20px",
-                            textAlign: "center",
-                            height: 125,
-                        }}
-                    >
+                    <div className="investor-image">
                         <img
                             src={BSV}
                             alt=""
                             style={{
-                                width: width > 700 ? 115 : 100,
-                                height: width > 700 ? 75 : 70,
+                                maxWidth: 75,
+                                maxHeight: 75,
                             }}
                         />
                     </div>
@@ -112,14 +91,7 @@ const InvestorBox = (props: any) => {
                     rel="noopener noreferrer"
                     style={{ textDecoration: "none", outline: "none" }}
                 >
-                    <div
-                        style={{
-                            background: "white",
-                            padding: 30,
-                            textAlign: "center",
-                            height: 125,
-                        }}
-                    >
+                    <div className="investor-image">
                         <img
                             src={DRF}
                             alt=""
@@ -135,14 +107,7 @@ const InvestorBox = (props: any) => {
                     rel="noopener noreferrer"
                     style={{ textDecoration: "none", outline: "none" }}
                 >
-                    <div
-                        style={{
-                            background: "white",
-                            padding: 30,
-                            textAlign: "center",
-                            height: 125,
-                        }}
-                    >
+                    <div className="investor-image">
                         <img
                             src={RDV}
                             alt=""
@@ -155,16 +120,7 @@ const InvestorBox = (props: any) => {
                 <Popup
                     modal
                     trigger={
-                        <div
-                            className="pointerOnHover"
-                            style={{
-                                background: "white",
-                                borderRadius: 0,
-                                padding: 30,
-                                textAlign: "center",
-                                height: 125,
-                            }}
-                        >
+                        <div className="investor-image">
                             <img
                                 src={Pankaj}
                                 alt=""
@@ -264,16 +220,7 @@ const InvestorBox = (props: any) => {
                 <Popup
                     modal
                     trigger={
-                        <div
-                            className="pointerOnHover"
-                            style={{
-                                background: "white",
-                                borderRadius: 0,
-                                padding: 30,
-                                textAlign: "center",
-                                height: 125,
-                            }}
-                        >
+                        <div className="investor-image">
                             <img
                                 src={Michael}
                                 alt=""
@@ -337,16 +284,7 @@ const InvestorBox = (props: any) => {
                 </Popup>
             </Col>
             <Col xs={6} md={4} style={{ margin: 0, padding: 0 }}>
-                <div
-                    style={{
-                        background: "white",
-                        borderRadius: 0,
-
-                        padding: 30,
-                        textAlign: "center",
-                        height: 125,
-                    }}
-                >
+                <div className="investor-image">
                     <img
                         src={Vijay}
                         alt=""
@@ -363,16 +301,7 @@ const InvestorBox = (props: any) => {
                 <Popup
                     modal
                     trigger={
-                        <div
-                            className="pointerOnHover"
-                            style={{
-                                background: "white",
-                                borderRadius: 0,
-                                padding: 30,
-                                textAlign: "center",
-                                height: 125,
-                            }}
-                        >
+                        <div className="investor-image">
                             <img
                                 src={DC}
                                 alt=""

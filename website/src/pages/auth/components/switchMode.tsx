@@ -1,4 +1,7 @@
-import React from "react"
+import React, { useContext } from "react"
+
+import { ScreenSize } from "shared/constants/screenSizes"
+import MainContext from "shared/context/mainContext"
 
 const SwitchMode = (props: {
     question: string
@@ -6,11 +9,14 @@ const SwitchMode = (props: {
     closer: string
     onClick: () => any
 }) => {
+    const { width } = useContext(MainContext)
+
     const { question, link, closer, onClick } = props
 
     return (
         <div style={{ textAlign: "center" }}>
             {question + " "}
+            {width < ScreenSize.SMALL && <br />}
             <span
                 style={{ color: "#3930b8" }}
                 className="hover"

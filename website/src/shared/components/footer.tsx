@@ -17,7 +17,7 @@ import {
     EASTEREGG_POINTS,
     EASTEREGG_RAND,
 } from "shared/utils/points"
-
+import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 
 const Footer = (props: any) => {
@@ -37,7 +37,7 @@ const Footer = (props: any) => {
             >
                 <div
                     style={{
-                        display: width > 720 ? "flex" : "block",
+                        display: width >= ScreenSize.MEDIUM ? "flex" : "block",
                         justifyContent: "space-between",
                     }}
                 >
@@ -129,9 +129,9 @@ const Footer = (props: any) => {
                     </Row>
                     <Row
                         style={{
-                            width: width > 700 ? 300 : "100%",
+                            width: width >= ScreenSize.MEDIUM ? 300 : "100%",
                             textAlign: "left",
-                            paddingTop: width > 720 ? 0 : 40,
+                            paddingTop: width >= ScreenSize.MEDIUM ? 0 : 40,
                         }}
                     >
                         <Col
@@ -139,7 +139,10 @@ const Footer = (props: any) => {
                             style={{
                                 paddingTop: 15,
                                 paddingBottom: 20,
-                                textAlign: width > 720 ? "right" : "left",
+                                textAlign:
+                                    width >= ScreenSize.MEDIUM
+                                        ? "right"
+                                        : "left",
                             }}
                         >
                             <div className="section-name">RESOURCES</div>
@@ -184,7 +187,10 @@ const Footer = (props: any) => {
                             style={{
                                 paddingTop: 15,
                                 paddingBottom: 20,
-                                textAlign: width > 720 ? "right" : "left",
+                                textAlign:
+                                    width >= ScreenSize.MEDIUM
+                                        ? "right"
+                                        : "left",
                             }}
                         >
                             <div className="section-name">CONTACT</div>
@@ -235,13 +241,13 @@ const Footer = (props: any) => {
                                 margin: 0,
                                 color: "#cccccc",
                                 overflow: "hidden",
-                                fontSize: width > 700 ? 14 : 12,
+                                fontSize: width >= ScreenSize.MEDIUM ? 14 : 12,
                             }}
                         >
                             Copyright &copy; Fractal Computers, Inc. All Rights
                             Reserved.
                         </div>
-                        {width > 700 && (
+                        {width >= ScreenSize.MEDIUM && (
                             <div
                                 style={{
                                     margin: 0,

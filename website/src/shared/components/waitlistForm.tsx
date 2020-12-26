@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react"
+import React, { useState, useContext, useEffect } from "react"
 import { connect } from "react-redux"
 import { Button } from "react-bootstrap"
 import Popup from "reactjs-popup"
@@ -8,18 +8,21 @@ import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 import { nanoid } from "nanoid"
 import { useMutation } from "@apollo/client"
 
-import MainContext from "shared/context/mainContext"
-import { INITIAL_POINTS, REFERRAL_POINTS } from "shared/utils/points"
 import { INSERT_WAITLIST } from "pages/landing/constants/graphql"
+
 import { UPDATE_WAITLIST_REFERRALS } from "shared/constants/graphql"
-
-import * as PureWaitlistAction from "store/actions/waitlist/pure"
-
-import { deep_copy } from "shared/utils/reducerHelpers"
-import { SECRET_POINTS } from "shared/utils/points"
+import { ScreenSize } from "shared/constants/screenSizes"
+import MainContext from "shared/context/mainContext"
 import { db } from "shared/utils/firebase"
+import {
+    INITIAL_POINTS,
+    REFERRAL_POINTS,
+    SECRET_POINTS,
+} from "shared/utils/points"
+import { deep_copy, deepCopy } from "shared/utils/reducerHelpers"
+
 import * as PureAuthAction from "store/actions/auth/pure"
-import { deepCopy } from "shared/utils/reducerHelpers"
+import * as PureWaitlistAction from "store/actions/waitlist/pure"
 import { DEFAULT } from "store/reducers/auth/default"
 
 import "styles/landing.css"
@@ -33,6 +36,10 @@ const WaitlistForm = (props: any) => {
     const [name, setName] = useState("")
     const [country, setCountry] = useState("United States")
     const [processing, setProcessing] = useState(false)
+    const [addWaitlistCompleted, setAddWaitlistCompleted] = useState(false)
+    const [addWaitlistError, setAddWaitlistError] = useState(false)
+    const [updatedPoints, setUpdatedPoints] = useState(0)
+    const [updatedReferralCode, setUpdatedReferralCode] = useState("")
 
     const validInputs =
         email && checkEmail(email) && name && name.length > 1 && country
@@ -43,15 +50,62 @@ const WaitlistForm = (props: any) => {
                 Authorization: `Bearer ${user.accessToken}`,
             },
         },
-    })
-
-    const [updatePoints] = useMutation(UPDATE_WAITLIST_REFERRALS, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${user.accessToken}`,
-            },
+        onCompleted: () => {
+            setAddWaitlistCompleted(true)
+        },
+        onError: () => {
+            setAddWaitlistError(true)
         },
     })
+
+    const [updatePoints, updatePointsResult] = useMutation(
+        UPDATE_WAITLIST_REFERRALS,
+        {
+            context: {
+                headers: {
+                    Authorization: `Bearer ${user.accessToken}`,
+                },
+            },
+        }
+    )
+
+    useEffect(() => {
+        // if successfully updated database, update redux and firebase
+        if (addWaitlistCompleted && !addWaitlistError) {
+            const secretPoints = deep_copy(SECRET_POINTS)
+            dispatch(
+                PureWaitlistAction.updateWaitlistUser({
+                    points: updatedPoints,
+                    referralCode: updatedReferralCode,
+                    userID: email,
+                    name: name,
+                    eastereggsAvailable: secretPoints,
+                })
+            )
+
+            dispatch(
+                PureWaitlistAction.updateNavigation({
+                    applicationRedirect: true,
+                })
+            )
+
+            db.collection("eastereggs").doc(email).set({
+                available: secretPoints,
+            })
+
+            setProcessing(false)
+        } else if (addWaitlistError) {
+            setProcessing(false)
+        }
+    }, [
+        addWaitlistCompleted,
+        addWaitlistError,
+        dispatch,
+        email,
+        name,
+        updatedPoints,
+        updatedReferralCode,
+    ])
 
     function updateEmail(evt: any) {
         evt.persist()
@@ -90,7 +144,7 @@ const WaitlistForm = (props: any) => {
         }
 
         for (var i = 0; i < waitlist.length; i++) {
-            if (waitlist[i].userID && waitlist[i].userID === email) {
+            if (waitlist[i].user_id && waitlist[i].user_id === email) {
                 return waitlist[i]
             }
         }
@@ -105,6 +159,8 @@ const WaitlistForm = (props: any) => {
     }
 
     async function insertWaitlist() {
+        setAddWaitlistCompleted(false)
+        setAddWaitlistError(false)
         setProcessing(true)
 
         const currentUser = getWaitlistUser()
@@ -113,7 +169,6 @@ const WaitlistForm = (props: any) => {
         var newReferralCode = nanoid(8)
 
         if (!currentUser) {
-            const secretPoints = deep_copy(SECRET_POINTS)
             const referrer = getReferrer()
 
             if (referrer && referrer.userID) {
@@ -127,21 +182,8 @@ const WaitlistForm = (props: any) => {
                 })
                 newPoints = newPoints + REFERRAL_POINTS
             }
-
-            dispatch(
-                PureWaitlistAction.updateWaitlistUser({
-                    points: newPoints,
-                    referralCode: newReferralCode,
-                    userID: email,
-                    name: name,
-                    eastereggsAvailable: secretPoints,
-                })
-            )
-            dispatch(
-                PureWaitlistAction.updateNavigation({
-                    applicationRedirect: true,
-                })
-            )
+            setUpdatedPoints(newPoints)
+            setUpdatedReferralCode(newReferralCode)
 
             addWaitlist({
                 variables: {
@@ -153,12 +195,6 @@ const WaitlistForm = (props: any) => {
                     country: country,
                 },
             })
-
-            db.collection("eastereggs").doc(email).set({
-                available: secretPoints,
-            })
-
-            setProcessing(false)
         } else {
             // get the easter eggs state so we can set local if you re-log in
             const eastereggsDocument = await db
@@ -218,7 +254,8 @@ const WaitlistForm = (props: any) => {
                             >
                                 <div
                                     style={{
-                                        fontSize: width > 720 ? 20 : 16,
+                                        fontSize:
+                                            width > ScreenSize.MEDIUM ? 20 : 16,
                                     }}
                                 >
                                     Join Waitlist
@@ -239,26 +276,30 @@ const WaitlistForm = (props: any) => {
                     }
                     modal
                     contentStyle={{
-                        width: width > 720 ? 720 : "90%",
+                        width: width > ScreenSize.MEDIUM ? 720 : "90%",
                         borderRadius: 5,
                         backgroundColor: "white",
                         border: "none",
                         padding: 0,
                         textAlign: "center",
                         boxShadow: "0px 4px 30px rgba(0,0,0,0.1)",
-                        position: width > 720 ? "absolute" : "relative",
+                        position:
+                            width > ScreenSize.MEDIUM ? "absolute" : "relative",
                         left: 0,
                         right: 0,
                         marginLeft: "auto",
                         marginRight: "auto",
-                        top: width > 720 ? 50 : 0,
+                        top: width > ScreenSize.MEDIUM ? 50 : 0,
                     }}
                 >
                     <div style={{ borderRadius: 5 }}>
                         <div
                             style={{
                                 width: "100%",
-                                display: width > 720 ? "flex" : "block",
+                                display:
+                                    width > ScreenSize.MEDIUM
+                                        ? "flex"
+                                        : "block",
                                 justifyContent: "space-between",
                                 zIndex: 100,
                                 padding: 0,
@@ -317,6 +358,25 @@ const WaitlistForm = (props: any) => {
                                 </Button>
                             )}
                         </div>
+                        {updatePointsResult.error && (
+                            <div className="waitlist-form-error">
+                                There was an error adding referral points to
+                                your friend's account. For help, please contact{" "}
+                                <a
+                                    href="mailto: support@tryfractal.com"
+                                    className="support-link"
+                                >
+                                    support@tryfractal.com
+                                </a>
+                                .
+                            </div>
+                        )}
+                        {addWaitlistError && (
+                            <div className="waitlist-form-error">
+                                There was an error adding you to the waitlist.
+                                Please try again.
+                            </div>
+                        )}
                     </div>
                 </Popup>
             )}

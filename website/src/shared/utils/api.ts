@@ -21,7 +21,25 @@ import history from "shared/utils/history"
 //     }
 // }
 
-async function sendPost(endpoint: string, body: any, token: string) {
+export const apiGet = async (endpoint: string, token: string) => {
+    try {
+        const response = await fetch(config.url.WEBSERVER_URL + endpoint, {
+            method: "GET",
+            mode: "cors",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        const json = await response.json()
+        return { json, response }
+    } catch (err) {
+        debugLog(err)
+        return { json: null, response: { status: 500 } }
+    }
+}
+
+const sendPost = async (endpoint: string, body: any, token: string) => {
     try {
         const response = await fetch(config.url.WEBSERVER_URL + endpoint, {
             method: "POST",
@@ -40,12 +58,12 @@ async function sendPost(endpoint: string, body: any, token: string) {
     }
 }
 
-export async function apiPost(
+export const apiPost = async (
     endpoint: string,
     body: any,
     accessToken: string,
     refreshToken?: string
-) {
+) => {
     try {
         var { json, response } = await sendPost(endpoint, body, accessToken)
         if (
@@ -79,12 +97,12 @@ export async function apiPost(
     }
 }
 
-export async function graphQLPost(
+export const graphQLPost = async (
     operationsDoc: any,
     operationName: string,
     variables: any,
     accessToken?: string
-) {
+) => {
     try {
         const response = await fetch(config.url.GRAPHQL_HTTP_URL, {
             method: "POST",
@@ -106,6 +124,6 @@ export async function graphQLPost(
     }
 }
 
-export function stringifyGQL(doc: any) {
+export const stringifyGQL = (doc: any) => {
     return doc.loc && doc.loc.source.body
 }

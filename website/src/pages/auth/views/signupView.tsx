@@ -4,7 +4,6 @@ import { PuffAnimation } from "shared/components/loadingAnimations"
 
 import "styles/auth.css"
 
-// import MainContext from "shared/context/mainContext"
 import Input from "shared/components/input"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
 import * as AuthPureAction from "store/actions/auth/pure"
@@ -144,23 +143,8 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
         // Render the signup screen
         return (
             <div>
-                <div
-                    style={{
-                        width: 400,
-                        margin: "auto",
-                        marginTop: 70,
-                    }}
-                >
-                    <div
-                        style={{
-                            color: "#111111",
-                            textAlign: "center",
-                            fontSize: 32,
-                            marginBottom: 40,
-                        }}
-                    >
-                        Let's get started.
-                    </div>
+                <div className="auth-container">
+                    <div className="auth-title">Let's get started.</div>
                     {authFlow &&
                         authFlow.signupWarning &&
                         authFlow.signupWarning !== "" && (
@@ -213,16 +197,8 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                         isFirstElement={false}
                     />
                     <button
-                        className="white-button"
+                        className="purple-button"
                         style={{
-                            width: "100%",
-                            marginTop: 20,
-                            background: "#3930b8",
-                            border: "none",
-                            color: "white",
-                            fontSize: 16,
-                            paddingTop: 15,
-                            paddingBottom: 15,
                             opacity: signupEnabled(
                                 email,
                                 name,
@@ -244,15 +220,7 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                     >
                         Sign up
                     </button>
-                    <div
-                        style={{
-                            height: 1,
-                            width: "100%",
-                            marginTop: 30,
-                            marginBottom: 30,
-                            background: "#dfdfdf",
-                        }}
-                    />
+                    <div className="line" />
                     {/* <GoogleButton login={google_signup} /> */}
                     <div style={{ marginTop: 20 }}>
                         <SwitchMode

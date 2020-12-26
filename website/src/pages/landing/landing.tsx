@@ -6,6 +6,7 @@ import MainContext from "shared/context/mainContext"
 import { SUBSCRIBE_WAITLIST } from "pages/landing/constants/graphql"
 
 import * as PureWaitlistAction from "store/actions/waitlist/pure"
+import { DEFAULT } from "store/reducers/waitlist/default"
 
 import "styles/landing.css"
 import "styles/shared.css"
@@ -22,7 +23,7 @@ const Landing = (props: any) => {
     const { setReferralCode, setAppHighlight } = useContext(MainContext)
     const { dispatch, waitlistUser, match, applicationRedirect } = props
 
-    const { data } = useSubscription(SUBSCRIBE_WAITLIST)
+    const { data, error } = useSubscription(SUBSCRIBE_WAITLIST)
 
     const apps = ["Photoshop", "Blender", "Figma", "VSCode", "Chrome", "Maya"]
     const appsLowercase = [
@@ -37,7 +38,7 @@ const Landing = (props: any) => {
     const getUser = useCallback(
         (waitlist: any) => {
             for (var i = 0; i < waitlist.length; i++) {
-                if (waitlist[i].userID === waitlistUser.userID) {
+                if (waitlist[i].user_id === waitlistUser.userID) {
                     return {
                         ...waitlist[i],
                         ranking: i + 1,
@@ -114,6 +115,17 @@ const Landing = (props: any) => {
             setReferralCode(firstParam)
         }
     }, [match, apps, appsLowercase, setAppHighlight, setReferralCode])
+
+    // clear waitlist if there is an error fetching data
+    useEffect(() => {
+        if (error) {
+            dispatch(
+                PureWaitlistAction.updateWaitlistData({
+                    waitlist: DEFAULT.waitlistData.waitlist,
+                })
+            )
+        }
+    }, [dispatch, error])
 
     return (
         <div>

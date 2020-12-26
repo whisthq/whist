@@ -98,10 +98,20 @@ const PaymentMethod = (props: {
                                 style={{
                                     display: "flex",
                                     flexDirection: "row",
+                                    position: "relative",
                                 }}
                             >
                                 {savedCard && (
-                                    <div className="saved">Saved!</div>
+                                    <div
+                                        className="saved"
+                                        style={{
+                                            position: "absolute",
+                                            top: 20,
+                                            marginRight: 0,
+                                        }}
+                                    >
+                                        Saved!
+                                    </div>
                                 )}
                                 <div
                                     className="update"

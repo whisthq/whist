@@ -36,13 +36,7 @@ const Confirmation = (props: { user: any; stripeInfo: any }) => {
         return (
             <div className="fractalContainer">
                 <Header dark={false} account />
-                <div
-                    style={{
-                        width: 500,
-                        margin: "auto",
-                        marginTop: 70,
-                    }}
-                >
+                <div className="resizable-container">
                     <h3 style={{ marginBottom: "30px" }}>
                         Success! You've started your Fractal plan.
                     </h3>

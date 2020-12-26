@@ -5,6 +5,7 @@ import { FaGoogle } from "react-icons/fa"
 
 import MainContext from "shared/context/mainContext"
 import { config } from "shared/constants/config"
+import { ScreenSize } from "shared/constants/screenSizes"
 
 import "styles/auth.css"
 import { updateAuthFlow } from "store/actions/auth/pure"
@@ -49,7 +50,7 @@ const GoogleButton = (props: { dispatch: any; login: (code: any) => any }) => {
             />
             <div
                 style={{
-                    fontSize: width > 720 ? 16 : 14,
+                    fontSize: width > ScreenSize.MEDIUM ? 16 : 14,
                 }}
             >
                 Log in with Google

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
 
+import "styles/auth.css"
+
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import {
     validateVerificationToken,
@@ -8,7 +10,7 @@ import {
 } from "store/actions/auth/sideEffects"
 import { updateAuthFlow, resetUser } from "store/actions/auth/pure"
 import history from "shared/utils/history"
-import { DivSpace, Title } from "pages/auth/components/authUtils"
+import { Title } from "pages/auth/components/authUtils"
 
 import "styles/auth.css"
 
@@ -18,16 +20,9 @@ const RetryButton = (props: {
     onClick: (evt: any) => any
 }) => (
     <button
-        className="white-button"
+        className="purple-button"
         style={{
-            width: "100%",
-            marginTop: 15,
-            background: "#3930b8",
-            border: "none",
-            color: "white",
-            fontSize: 16,
-            paddingTop: 15,
-            paddingBottom: 15,
+            marginTop: 40,
             opacity: props.checkEmail ? 1.0 : 0.6,
         }}
         onClick={props.onClick}
@@ -117,18 +112,11 @@ const VerifyView = (props: {
 
     if (!validToken) {
         return (
-            <div
-                style={{
-                    width: 400,
-                    margin: "auto",
-                    marginTop: 70,
-                }}
-            >
+            <div className="auth-container">
                 <Title
                     title="Check your inbox to verify your email"
                     subtitle="(and/or spam)"
                 />
-                <DivSpace height={40} />
                 <RetryButton
                     text={retryMessage}
                     checkEmail={validUser && canRetry}
@@ -154,18 +142,12 @@ const VerifyView = (props: {
         } else {
             // this state is reached after processing has finished and failed
             return (
-                <div
-                    style={{
-                        width: 400,
-                        margin: "auto",
-                        marginTop: 70,
-                    }}
-                >
+                <div className="auth-container">
                     {authFlow.verificationStatus === "success" && (
                         <>
                             <Title
                                 title="Successfully verified email!"
-                                subtitle="Redirecting you back to the homepage"
+                                subtitle="Redirecting you to your dashboard"
                             />
                             <PuffAnimation />
                         </>
@@ -173,7 +155,6 @@ const VerifyView = (props: {
                     {authFlow.verificationStatus === "failed" && (
                         <>
                             <Title title="Failed to verify" />
-                            <DivSpace height={40} />
                             <RetryButton
                                 text={retryMessage}
                                 checkEmail={validUser && canRetry}
