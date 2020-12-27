@@ -74,12 +74,6 @@ jobs:
                   # Create new deploy for this Sentry release
                   sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
 
-            - name: Notify Slack
-              run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"fractal/fractal Production Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
     notify-slack:
         name: Notify Slack
         needs: [fractal-push-sentry-releases-main]
@@ -90,5 +84,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"fractal/fractal Production Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry Production Releases Pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
