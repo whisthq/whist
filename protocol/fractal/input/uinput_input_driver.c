@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <linux/uinput.h>
 #include <dirent.h>
+#include <sys/sysmacros.h>
 
 #define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                          \
     if (ioctl(FD, PARAMS) == -1) {                                                 \
@@ -312,6 +313,7 @@ InputDevice* create_input_device() {
     memset(input_device, 0, sizeof(InputDevice));
 
     // create event writing FDs
+    mknod("/dev/uinput", S_IFCHR | S_IRUSR | S_IWUSR, makedev(10, 223));
 
     input_device->fd_absmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     input_device->fd_relmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
@@ -407,13 +409,13 @@ InputDevice* create_input_device() {
 
     return input_device;
 failure:
-    DestroyInputDevice(input_device);
+    destroy_input_device(input_device);
     return NULL;
 }
 
 void destroy_input_device(InputDevice* input_device) {
     if (!input_device) {
-        LOG_INFO("DestroyInputDevice: Nothing to do, device is null!");
+        LOG_INFO("destroy_input_device: Nothing to do, device is null!");
         return;
     }
     ioctl(input_device->fd_absmouse, UI_DEV_DESTROY);
@@ -434,6 +436,7 @@ void emit_input_event(int fd, int type, int code, int val) {
     ie.time.tv_sec = 0;
     ie.time.tv_usec = 0;
 
+    LOG_INFO("emitting input event");
     write(fd, &ie, sizeof(ie));
 }
 
@@ -455,8 +458,8 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode sdl_keycode
 }
 
 int emit_key_event(InputDevice* input_device, FractalKeycode sdl_keycode, int pressed) {
-    EmitInputEvent(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(sdl_keycode), pressed);
-    EmitInputEvent(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
+    emit_input_event(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(sdl_keycode), pressed);
+    emit_input_event(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
     input_device->keyboard_state[sdl_keycode] = pressed;
 
     if (sdl_keycode == FK_CAPSLOCK && pressed) {
@@ -471,32 +474,32 @@ int emit_key_event(InputDevice* input_device, FractalKeycode sdl_keycode, int pr
 
 int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int relative) {
     if (relative) {
-        EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_X, x);
-        EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_Y, y);
-        EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
+        emit_input_event(input_device->fd_relmouse, EV_REL, REL_X, x);
+        emit_input_event(input_device->fd_relmouse, EV_REL, REL_Y, y);
+        emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     } else {
-        EmitInputEvent(
+        emit_input_event(
             input_device->fd_absmouse, EV_ABS, ABS_X,
             (int)(x * (int32_t)UINPUT_MOUSE_COORDINATE_RANGE / (int32_t)MOUSE_SCALING_FACTOR));
-        EmitInputEvent(
+        emit_input_event(
             input_device->fd_absmouse, EV_ABS, ABS_Y,
             (int)(y * (int32_t)UINPUT_MOUSE_COORDINATE_RANGE / (int32_t)MOUSE_SCALING_FACTOR));
-        EmitInputEvent(input_device->fd_absmouse, EV_KEY, BTN_TOOL_PEN, 1);
-        EmitInputEvent(input_device->fd_absmouse, EV_SYN, SYN_REPORT, 0);
+        emit_input_event(input_device->fd_absmouse, EV_KEY, BTN_TOOL_PEN, 1);
+        emit_input_event(input_device->fd_absmouse, EV_SYN, SYN_REPORT, 0);
     }
     return 0;
 }
 
 int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button, int pressed) {
-    EmitInputEvent(input_device->fd_relmouse, EV_KEY, GetLinuxMouseButton(button), pressed);
-    EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
+    emit_input_event(input_device->fd_relmouse, EV_KEY, GetLinuxMouseButton(button), pressed);
+    emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     return 0;
 }
 
 int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
-    EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x);
-    EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_WHEEL, y);
-    EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
+    emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x);
+    emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL, y);
+    emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     return 0;
 }
 
