@@ -1,8 +1,8 @@
 {
     "author": {
-        "email": "support@tryfractal.com",
+        "email": "support@fractal.co",
         "name": "Fractal Computers, Inc.",
-        "url": "https://www.tryfractal.com"
+        "url": "https://www.fractal.co"
     },
     "browserslist": [
         "extends browserslist-config-erb"
@@ -106,11 +106,11 @@
     },
     "contributors": [
         {
-            "email": "phil@tryfractal.com",
+            "email": "phil@fractal.co",
             "name": "Philippe Noel"
         },
         {
-            "email": "ming@tryfractal.com",
+            "email": "ming@fractal.co",
             "name": "Ming Ying"
         }
     ],
