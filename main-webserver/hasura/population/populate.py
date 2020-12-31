@@ -489,10 +489,7 @@ def migrate_login_history():
     session = new_session()
 
     for row in rows:
-        if (
-            not row["username"] == "None"
-            and row["username"]
-        ):
+        if not row["username"] == "None" and row["username"]:
             print("Migrating {time}".format(time=row["timestamp"]))
             row = dict(row)
 
