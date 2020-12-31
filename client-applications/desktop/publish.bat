@@ -35,7 +35,7 @@ if "%1%" == "--help" (
 
     if "%publish%" == "true" (
         yarn package-ci 
-        REM yarn package-ci && curl -X POST -H Content-Type:application/json  -d "{ \"branch\" : \"%1\", \"version\" : \"%2\" }" https://staging-webserver.tryfractal.com/version
+        REM yarn package-ci && curl -X POST -H Content-Type:application/json  -d "{ \"branch\" : \"%1\", \"version\" : \"%2\" }" https://staging-server.fractal.co/version
     ) else (
         yarn package
     )

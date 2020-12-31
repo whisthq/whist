@@ -10,7 +10,7 @@ from app.helpers.utils.general.logs import fractal_log
 def signup_mail(username, promo_code):
     try:
         message = Mail(
-            from_email="phil@tryfractal.com",
+            from_email="phil@fractal.co",
             to_emails=username,
             subject="Welcome to Fractal",
             html_content=render_template("on_signup.html", code=promo_code),

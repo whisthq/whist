@@ -141,7 +141,7 @@ def register_helper(username, password, name, reason_for_signup, can_login):
         try:
             message = Mail(
                 from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
-                to_emails="support@tryfractal.com",
+                to_emails="support@fractal.co",
                 subject=username + " just created an account!",
                 html_content=(
                     f"<p>Just letting you know that {name} created an account. Their reason for "
