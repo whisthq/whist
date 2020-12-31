@@ -9,9 +9,9 @@ import {
 // app where you can choose where to go to
 export const webservers: { [key: string]: string } = {
     local: "http://127.0.0.1:7730",
-    dev: "http://dev-server.tryfractal.com/",
-    staging: "https://fractal-staging-server.herokuapp.com",
-    production: "https://fractal-prod-server.herokuapp.com",
+    dev: "http://dev-server.fractal.co/",
+    staging: "https://staging-server.fractal.co",
+    production: "https://prod-server.fractal.co",
 }
 
 const environment: FractalEnvironment = {
@@ -19,8 +19,8 @@ const environment: FractalEnvironment = {
         url: {
             WEBSERVER_URL: webservers.local,
             FRONTEND_URL: "http://localhost:3000",
-            GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
-            GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
+            GRAPHQL_HTTP_URL: "https://dev-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://dev-database.fractal.co/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
         },
         keys: {
@@ -39,9 +39,9 @@ const environment: FractalEnvironment = {
     DEVELOPMENT: {
         url: {
             WEBSERVER_URL: webservers.dev,
-            FRONTEND_URL: "https://dev.tryfractal.com",
-            GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
-            GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
+            FRONTEND_URL: "https://dev.fractal.co",
+            GRAPHQL_HTTP_URL: "https://dev-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://dev-database.fractal.co/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
         },
         keys: {
@@ -60,10 +60,10 @@ const environment: FractalEnvironment = {
     STAGING: {
         url: {
             WEBSERVER_URL: webservers.staging,
-            FRONTEND_URL: "https://staging.tryfractal.com",
+            FRONTEND_URL: "https://staging.fractal.co",
             GRAPHQL_HTTP_URL:
-                "https://staging-database.tryfractal.com/v1/graphql",
-            GRAPHQL_WS_URL: "wss://staging-database.tryfractal.com/v1/graphql",
+                "https://staging-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://staging-database.fractal.co/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
         },
         keys: {
@@ -82,9 +82,9 @@ const environment: FractalEnvironment = {
     PRODUCTION: {
         url: {
             WEBSERVER_URL: webservers.production,
-            FRONTEND_URL: "https://tryfractal.com",
-            GRAPHQL_HTTP_URL: "https://prod-database.tryfractal.com/v1/graphql",
-            GRAPHQL_WS_URL: "wss://prod-database.tryfractal.com/v1/graphql",
+            FRONTEND_URL: "https://fractal.co",
+            GRAPHQL_HTTP_URL: "https://prod-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://prod-database.fractal.co/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
         },
         keys: {

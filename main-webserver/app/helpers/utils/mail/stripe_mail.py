@@ -35,7 +35,7 @@ def chargeFailedMail(username, custId):
     try:
         message = Mail(
             from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
-            to_emails="support@tryfractal.com",
+            to_emails="support@fractal.co",
             subject="Payment is overdue for " + username,
             html_content="<div>The charge has failed for account " + custId + "</div>",
         )
@@ -58,7 +58,7 @@ def chargeSuccessMail(username, custId):
     try:
         message = Mail(
             from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
-            to_emails="support@tryfractal.com",
+            to_emails="support@fractal.co",
             subject="Payment recieved from " + username,
             html_content="<div>The charge has succeeded for account " + custId + "</div>",
         )

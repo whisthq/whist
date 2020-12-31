@@ -123,7 +123,7 @@ def admin_required(func):
 
 
 def developer_required(func):
-    """Similar decorator to admin_required, but it allows @tryfractal.com
+    """Similar decorator to admin_required, but it allows @fractal.co
     users as well. It is meant for developer endpoints such as the test_endpoint where we,
     for ease of testing, prefer to let any of the fractal members connect. It will return
     unauthorized for non-developers.
@@ -142,7 +142,7 @@ def developer_required(func):
         current_user = get_jwt_identity()
         if not (
             current_app.config["DASHBOARD_USERNAME"] in current_user
-            or "@tryfractal.com" in current_user
+            or "@fractal.co" in current_user
         ):
             return (
                 jsonify(

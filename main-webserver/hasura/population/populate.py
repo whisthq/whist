@@ -382,7 +382,7 @@ def migrate_protocol_logs():
     session = new_session()
 
     for row in rows:
-        if row["username"] != "None" and row["username"] != "sean@tryfractal.com":
+        if row["username"] != "None":
             row = dict(row)
 
             command = """
@@ -490,11 +490,8 @@ def migrate_login_history():
 
     for row in rows:
         if (
-            not row["username"] == "pquiggles@alumni.stanford.edu"
-            and not row["username"] == "sean@tryfractal.com"
-            and not row["username"] == "None"
+            not row["username"] == "None"
             and row["username"]
-            and row["username"] != "roshan2@tryfractal.com"
         ):
             print("Migrating {time}".format(time=row["timestamp"]))
             row = dict(row)

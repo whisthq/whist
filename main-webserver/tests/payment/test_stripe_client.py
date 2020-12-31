@@ -49,7 +49,7 @@ dummy_zip_us = "08902"
 
 # arbitrary
 dummy_nonexistent_email = "sdfsd23498io2u3ihwe232342njkosjdfldsfsdfs12312kh"
-dummy_referrer = "ming@tryfractal.com"  # make sure we don't remove ming
+dummy_referrer = "ming@fractal.co"  # make sure we don't remove ming
 
 dummy_invalid_referral_code = "asdofhasiuldofjlasnklfd23980q9wsiojdnh"
 

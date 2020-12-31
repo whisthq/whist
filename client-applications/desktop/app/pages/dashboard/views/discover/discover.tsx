@@ -42,7 +42,7 @@ const Discover = (props: {
     const adminUsername =
         username &&
         username.indexOf("@") > -1 &&
-        username.split("@")[1] === "tryfractal.com"
+        username.split("@")[1] === "fractal.co"
 
     // Define local state
 
