@@ -61,8 +61,7 @@ const environment: FractalEnvironment = {
         url: {
             WEBSERVER_URL: webservers.staging,
             FRONTEND_URL: "https://staging.fractal.co",
-            GRAPHQL_HTTP_URL:
-                "https://staging-database.fractal.co/v1/graphql",
+            GRAPHQL_HTTP_URL: "https://staging-database.fractal.co/v1/graphql",
             GRAPHQL_WS_URL: "wss://staging-database.fractal.co/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
         },
