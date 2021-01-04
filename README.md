@@ -28,18 +28,19 @@ This monorepo contains 9 Fractal subrepos:
 - main-webserver
 - protocol
 
-| Subrepo name | Subrepo description |
-| ------------ | ------------------- |
-| client-applications | This contains the client-side Electron App that users will download and use to launch the protocol in a user-friendly manner |
-| container-images | This contains Dockerfiles that are used for creating Fractal containers. There is a Dockerfile for Chrome, for Figma, for Blender, etc. |
-| ecs-host-service | A helper service that manages the state of the many Fractal containers that may be running on any given host |
-| ecs-host-setup | This contains scripts to setup an EC2 Host Machine as a machine to host clusters of Fractal containers. This will install dependencies, and ecs-host-service, among other things |
-| ecs-task-definitions | This contains the JSON task definitions for each of the applications we stream via containers on AWS ECS |
-| log-analysis | This contains tools used to analysis logs generated from protocol runs. This can be used to address performance issues or bugs |
-| main-webserver | This contains the REST API for managing our containers, along with providing back-end support for front-end features |
-| protocol | This contains the C code for Client and Server of the protocol. If the Server is running on one machine, and the Client on another machine having been given the IP address of the Server, then the Client will open up a window that allows one to interact with the Server at low-latency 60 FPS. This program is run via commandline. |
+| Subrepo name         | Subrepo description                                                                                                                                                                                                                                                                                                                      |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| client-applications  | This contains the client-side Electron App that users will download and use to launch the protocol in a user-friendly manner                                                                                                                                                                                                             |
+| container-images     | This contains Dockerfiles that are used for creating Fractal containers. There is a Dockerfile for Chrome, for Figma, for Blender, etc.                                                                                                                                                                                                  |
+| ecs-host-service     | A helper service that manages the state of the many Fractal containers that may be running on any given host                                                                                                                                                                                                                             |
+| ecs-host-setup       | This contains scripts to setup an EC2 Host Machine as a machine to host clusters of Fractal containers. This will install dependencies, and ecs-host-service, among other things                                                                                                                                                         |
+| ecs-task-definitions | This contains the JSON task definitions for each of the applications we stream via containers on AWS ECS                                                                                                                                                                                                                                 |
+| log-analysis         | This contains tools used to analysis logs generated from protocol runs. This can be used to address performance issues or bugs                                                                                                                                                                                                           |
+| main-webserver       | This contains the REST API for managing our containers, along with providing back-end support for front-end features                                                                                                                                                                                                                     |
+| protocol             | This contains the C code for Client and Server of the protocol. If the Server is running on one machine, and the Client on another machine having been given the IP address of the Server, then the Client will open up a window that allows one to interact with the Server at low-latency 60 FPS. This program is run via commandline. |
 
 At a high-level, Fractal works as such:
+
 - First, the user downloads the client-applications Electron App. They log-in, and launch a Blender container for instance.
 - The log-in and launch process are REST API requests sent to the main-webserver.
 - The main-webserver will receive the launch request and will proceed to send an ecs-task-definitions task definition to AWS ECS.
