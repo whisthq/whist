@@ -17,7 +17,7 @@
 
 ## Map of the Repo
 
-This monorepo contains 9 Fractal subrepos:
+This monorepo contains 8 Fractal subrepos:
 
 - client-applications
 - container-images
