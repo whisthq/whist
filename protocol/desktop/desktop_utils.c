@@ -22,6 +22,7 @@ TODO
 #include "desktop_utils.h"
 #include "network.h"
 #include "../fractal/utils/logging.h"
+#include "../fractal/utils/string_utils.h"
 #include "../fractal/core/fractalgetopt.h"
 
 extern volatile char binary_aes_private_key[16];
@@ -109,9 +110,9 @@ int parse_args(int argc, char *argv[]) {
     memcpy((char *)&hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(hex_aes_private_key));
 
     // default user email
-    strcpy(user_email, "None");
+    safe_strncpy(user_email, "None", USER_EMAIL_MAXLEN);
     // default icon filename
-    strcpy(icon_png_filename, "");
+    safe_strncpy(icon_png_filename, "", ICON_PNG_FILENAME_MAXLEN);
 
     int opt;
     long int ret;
@@ -176,19 +177,28 @@ int parse_args(int argc, char *argv[]) {
                 break;
             }
             case 'u': {
-                strcpy(user_email, optarg);
+                if (!safe_strncpy(user_email, optarg, USER_EMAIL_MAXLEN)) {
+                    printf("User email is too long: %s\n", optarg);
+                    return -1;
+                }
                 break;
             }
             case 'e': {
                 // only log "production" and "staging" env sentry events
                 if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
-                    strcpy(sentry_environment, optarg);
+                    if (!safe_strncpy(sentry_environment, optarg, FRACTAL_ENVIRONMENT_MAXLEN + 1)) {
+                        printf("Sentry environment is too long: %s\n", optarg);
+                        return -1;
+                    }
                     using_sentry = true;
                 }
                 break;
             }
             case 'i': {
-                strcpy(icon_png_filename, optarg);
+                if (!safe_strncpy(icon_png_filename, optarg, ICON_PNG_FILENAME_MAXLEN)) {
+                    printf("Icon PNG filename is too long: %s\n", optarg);
+                    return -1;
+                }
                 break;
             }
             case 'p': {
@@ -208,9 +218,8 @@ int parse_args(int argc, char *argv[]) {
                         port_mappings[origin_port] = destination_port;
                     } else {
                         char invalid_s[13];
-                        unsigned short invalid_s_len = (unsigned short)min(bytes_read, 12);
-                        strncpy(invalid_s, str, invalid_s_len);
-                        invalid_s[invalid_s_len] = '\0';
+                        unsigned short invalid_s_len = (unsigned short)min(bytes_read + 1, 13);
+                        safe_strncpy(invalid_s, str, invalid_s_len);
                         LOG_ERROR("Unable to parse the port mapping \"%s\"", invalid_s);
                         break;
                     }
@@ -392,7 +401,10 @@ int configure_cache(void) {
 
 int prepare_init_to_server(FractalDiscoveryRequestMessage *fmsg, char *email) {
     // Copy email
-    strcpy(fmsg->user_email, email);
+    if (!safe_strncpy(fmsg->user_email, email, USER_EMAIL_MAXLEN)) {
+        LOG_ERROR("User email is too long: %s.\n", email);
+        return -1;
+    }
     // Copy time
     if (get_time_data(&(fmsg->time_data)) != 0) {
         LOG_ERROR("Failed to get time data.");

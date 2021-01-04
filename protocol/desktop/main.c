@@ -57,6 +57,8 @@ volatile char binary_aes_private_key[16];
 volatile char hex_aes_private_key[33];
 volatile int connection_id;
 volatile SDL_Window* window;
+volatile char* window_title;
+volatile bool should_update_window_title;
 volatile bool run_receive_packets;
 volatile bool run_send_clipboard_packets;
 volatile bool is_timing_latency;
@@ -649,6 +651,17 @@ int main(int argc, char* argv[]) {
             if (running_ci && get_timer(ci_timer) > time_to_run_ci) {
                 exiting = 1;
                 LOG_INFO("Exiting CI run");
+            }
+
+            // Check if window title should be updated
+            if (should_update_window_title) {
+                if (window_title) {
+                    SDL_SetWindowTitle((SDL_Window*)window, (char*)window_title);
+                    free((char*)window_title);
+                } else {
+                    LOG_ERROR("Window Title should not be null!");
+                }
+                should_update_window_title = false;
             }
 
             if (get_timer(keyboard_sync_timer) > 50.0 / MS_IN_SECOND) {

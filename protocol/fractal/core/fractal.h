@@ -506,6 +506,7 @@ typedef enum FractalServerMessageType {
     MESSAGE_PONG = 1,
     MESSAGE_AUDIO_FREQUENCY = 2,
     SMESSAGE_CLIPBOARD = 3,
+    SMESSAGE_WINDOW_TITLE = 4,
     MESSAGE_DISCOVERY_REPLY = 5,
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
@@ -536,6 +537,7 @@ typedef struct FractalServerMessage {
     };
     union {
         ClipboardData clipboard;
+        char window_title[0];
         char discovery_reply[0];
         char init_msg[0];
     };
