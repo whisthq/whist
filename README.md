@@ -17,32 +17,29 @@
 
 ## Map of the Repo
 
-This monorepo rolls together 9 old Fractal repos:
+This monorepo contains 9 Fractal subrepos:
 
-- container-images
-- protocol
-- main-webserver
 - client-applications
-- ecs-host-setup
+- container-images
 - ecs-host-service
-- log-analysis
+- ecs-host-setup
 - ecs-task-definitions
-- figma-font-bindings (in `container-images/creative/figma/figma-font-bindings`)
+- log-analysis
+- main-webserver
+- protocol
 
-The `master` branch of this repo started with each top-level folder containing a copy of the `master` branch of the eponymous repository (i.e. the `client-applications` folder on `master` contains a copy of the old `client-applications` repository on master). Similarly, `staging` contained a copy of each old repo's `staging` (and was therefore identical to master), and `dev` contained a copy of each old repo's `dev`. The only exception was `figma-font-bindings`, which is located inside `container-images/creative/figma/figma-font-bindings` instead.
+| Subrepo name | Subrepo description |
+| ------------ | ------------------- |
+| client-applications | This contains the client-side Electron App that users will download and use to launch the protocol in a user-friendly manner |
+| container-images | This contains Dockerfiles that are used for creating Fractal containers. There is a Dockerfile for Chrome, for Figma, for Blender, etc. |
+| ecs-host-service | A helper service that manages the state of the many Fractal containers that may be running on any given host |
+| ecs-host-setup | This contains scripts to setup an EC2 Host Machine as a machine to host clusters of Fractal containers. This will install dependencies, and ecs-host-service, among other things |
+| ecs-task-definitions | This contains the JSON task definitions for each of the applications we stream via containers on AWS ECS |
+| log-analysis | This contains tools used to analysis logs generated from protocol runs. This can be used to address performance issues or bugs |
+| main-webserver | This contains the REST API for managing our containers, along with providing back-end support for front-end features |
+| protocol | This contains the C code for Client and Server of the protocol. If the Server is running on one machine, and the Client on another machine having been given the IP address of the Server, then the Client will open up a window that allows one to interact with the Server at low-latency 60 FPS. This program is run via commandline. |
 
-There were only minor modifications made to the repos (for instance, removing large, previously deleted objects from the git history). History was kept as intact as possible.
-
-Feature branches have been ported over as follows:
-
-- Each branch named `<user>/<feature>` in repo `<repo>` is now named `<user>/<repo>/<feature>` (i.e. `djsavvy/make-unicorns` in `main-webserver` is now in `djsavvy/main-webserver/make-unicorns`).
-- On feature branches, all the other top-level directories in the repo are set to the `dev` versions. There are four exceptions, which were either too outdated or complicated for me to rebase on my own. For these branches, the only committed files are those from the corresponding project (i.e. top-level directory).
-  - `owenniles/main-webserver/migrations`
-  - `tina/main-webserver/regions`
-  - `rpadaki/protocol/emscripten-client`
-  - `suriya/protocol/android-client`
-
-To accomplish all this, histories had to be rewritten in many of the repos. In particular, all the feature branches had to be rebased onto the `dev` branch of the corresponding repo, and `dev` had to rebased onto `master`. Therefore, the history and contents of feature branches might be a bit different from what you expect, but both should be reasonably close to the "true" history, and both will be useful for git commands like `git log`. (For those interested in the gory details, having useful output from commands like `git log` was one reason why I could not use the simple subtree-merging strategy used by tools like [tomono](https://github.com/hraban/tomono).)
+At a high-level, Fractal works as such: First, the user downloads the client-applications Electron App. They log-in, and launch a Blender container for instance. The log-in and launch process are REST API requests sent to the main-webserver. The main-webserver will receive the launch request and will proceed to send an ecs-task-definitions task definition to AWS ECS. This will either (A) Use an EC2 Instance that is already spun-up, or (B) This will spin up a new EC2 Instance, and then run the ecs-host-setup scripts on it. This will install dependencies, and install ecs-host-service. After (A) or (B) happens, an EC2 Instance will now be available, with potentially many Docker containers already running on it. The ecs-task-definitions task definition will then spin up an additional Docker container on that chosen EC2 Instance using a Dockerfile from client-applications, specifically choosing the Blender Dockerfile (Or whichever application they happened to choose). This Dockerfile will install dependencies, including the Server protocol executable, then install and run Blender, and then proceed to execute the Server protocol executable. The client-application Electron App will then execute the Client protocol executable and pass in the IP address of the Server as received from main-webserver. A window will then open, giving the user a low-latency 60 FPS Blender experience.
 
 ## Workflow and Conventions
 
