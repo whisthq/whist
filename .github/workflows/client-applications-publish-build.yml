@@ -5,9 +5,16 @@
 
 name: "Client Applications: Publish Desktop Applications"
 
+# TODO: add staging and dev branches as part of staging taskdefs
 on:
     push:
-        branches: [master]
+        branches:
+            - master
+        paths-ignore:
+            - "README.md"
+            - "**/README.md"
+            - ".github/workflows/README.md"
+    workflow_dispatch:
 
 jobs:
     build-and-publish-desktop-applications:
@@ -102,10 +109,10 @@ jobs:
               run: |
                   # curl GraphQL API
                   curl -X POST \
-                  -H "Content-Type: application/json" \
-                  -H "X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}" \
+                  -H 'Content-Type: application/json' \
+                  -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
                   --data '{ "query": "query { desktop_app_version { commit_hash major minor micro } }" }' \
-                  http://config-database.tryfractal.com/v1/graphql > response.json
+                  https://config-database.tryfractal.com/v1/graphql > response.json
 
                   # parse JSON into major.minor.micro
                   MAJOR=$(cat response.json | jq '.data.desktop_app_version[0].major')
@@ -144,9 +151,20 @@ jobs:
             - name: Publish the macOS/Linux Ubuntu Electron Applications
               if: runner.os == 'macOS' || runner.os == 'Linux'
               env:
-                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
+                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
               shell: bash
               run: |
+                  # Explicitly retrieve macOS 10.14 SDK
+                  wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
+
+                  # Untar it
+                  xz -d MacOSX10.14.sdk.tar.xz
+                  tar -xf MacOSX10.14.sdk.tar
+
+                  # Move it to the right folder for building the protocol
+                  mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
+
+                  # Build the Fractal protocol and package the Electron application
                   cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
 
     update-graphql-and-notify-slack:
@@ -159,10 +177,10 @@ jobs:
             - name: Update Version in Config Database via GraphQL API
               run: |
                   curl -X POST \
-                  -H "Content-Type: application/json" \
-                  -H "X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}" \
-                  --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk ( pk_columns: { id: 1 } _set: { micro: ${{ env.NEW_VERSION }}, commit_hash: ${{ env.GITHUB_SHA }} }, ) { id micro commit_hash } }\" }" \
-                  http://config-database.tryfractal.com/v1/graphql
+                  -H 'Content-Type: application/json' \
+                  -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
+                  --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk ( pk_columns: { id: 1 } _set: { micro: ${{ env.new_micro_version }}, commit_hash: ${{ env.GITHUB_SHA }} }, ) { id micro commit_hash } }\" }" \
+                  https://config-database.tryfractal.com/v1/graphql
 
             - name: Notify Slack
               run: |
