@@ -19,8 +19,9 @@ relate different events across server and client.
 #include <stdlib.h>
 #include <string.h>
 
+#include "logging.h"
+#include "string_utils.h"
 #include "../core/fractal.h"
-#include "../utils/logging.h"
 #include "clock.h"
 
 #ifdef _WIN32
@@ -138,7 +139,7 @@ int get_time_data(FractalTimeData* time_data) {
 
     char* win_tz_name = NULL;
     runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
-    strncpy(time_data->win_tz_name, win_tz_name, sizeof(time_data->win_tz_name));
+    safe_strncpy(time_data->win_tz_name, win_tz_name, sizeof(time_data->win_tz_name));
     time_data->win_tz_name[strlen(time_data->win_tz_name) - 1] = '\0';
     free(win_tz_name);
 
@@ -158,7 +159,7 @@ int get_time_data(FractalTimeData* time_data) {
         "path=$(readlink /etc/localtime); echo "
         "${path#\"/var/db/timezone/zoneinfo\"}",
         &response);
-    strncpy(time_data->linux_tz_name, response, sizeof(time_data->linux_tz_name));
+    safe_strncpy(time_data->linux_tz_name, response, sizeof(time_data->linux_tz_name));
     free(response);
 
     return 0;
@@ -172,7 +173,7 @@ int get_time_data(FractalTimeData* time_data) {
 
     char* response = NULL;
     runcmd("cat /etc/timezone", &response);
-    strncpy(time_data->linux_tz_name, response, sizeof(time_data->linux_tz_name));
+    safe_strncpy(time_data->linux_tz_name, response, sizeof(time_data->linux_tz_name));
     free(response);
 
     return 0;

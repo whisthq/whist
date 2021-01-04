@@ -17,6 +17,7 @@ respective "ClipboardGet___" or "ClipboardSet___".
 */
 
 #include "clipboard_osx.h"
+#include "../utils/string_utils.h"
 
 #include <AppKit/AppKit.h>
 
@@ -121,8 +122,12 @@ void clipboard_get_files(OSXFilenames *filenames[]) {
     if ([pasteboard canReadObjectForClasses:classArray options:options]) {
         NSArray *fileURLs = [pasteboard readObjectsForClasses:classArray options:options];
         for (NSUInteger i = 0; i < [fileURLs count]; i++) {
-            strcpy(filenames[i]->fullPath, [fileURLs[i] fileSystemRepresentation]);
-            strcpy(filenames[i]->filename, [[fileURLs[i] lastPathComponent] UTF8String]);
+            // TODO(anton) if it is possible that a file path can be longer than PATH_MAX, then we
+            // may want to check the return value of safe_strncpy to see if the file path was
+            // truncated
+            safe_strncpy(filenames[i]->fullPath, [fileURLs[i] fileSystemRepresentation], PATH_MAX);
+            safe_strncpy(filenames[i]->filename, [[fileURLs[i] lastPathComponent] UTF8String],
+                         PATH_MAX);
         }
     } else {
         printf("Can't get Mac Clipboard Files data.\n");
