@@ -1,9 +1,9 @@
 # workflows/readmes-linting.yml
 #
 # Readmes: Linting
-# Lint readmes using eslint.
+# Lint READMEs using eslint.
 
-name: "Readmes: Linting"
+name: "READMEs: Linting"
 
 on:
     pull_request:
@@ -19,11 +19,11 @@ on:
 
 jobs:
     readmes-linting-main:
-        name: Lint Readmes
+        name: Lint READMEs
         runs-on: ubuntu-20.04
 
         steps:
-            - name: Check out Git repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
@@ -37,5 +37,5 @@ jobs:
             - name: Install prettier
               run: npm install -g prettier
 
-            - name: Check if readmes are formatted
+            - name: Check if READMEs are formatted
               run: prettier --check '**/README.md' # prettier glob syntax hits all readmes with this

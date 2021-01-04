@@ -7,7 +7,16 @@ name: "Fractal: Push Sentry Releases"
 
 on:
     push:
-        branches: [master]
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
+        paths-ignore:
+            - "README.md"
+            - "**/README.md"
+            - ".github/workflows/README.md"
+    workflow_dispatch:
 
 jobs:
     fractal-push-sentry-releases-main:

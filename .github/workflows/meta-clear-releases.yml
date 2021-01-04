@@ -8,6 +8,7 @@ name: "Meta: Clean Up Releases & Tags"
 on:
     schedule:
         - cron: "0 0 * * 0" # every 7 days
+    workflow_dispatch:
 
 jobs:
     meta-clear-releases-main:
