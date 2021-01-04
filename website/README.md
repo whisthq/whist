@@ -1,7 +1,7 @@
 # Fractal Website
 
-![Node.js CI](https://github.com/fractal/website/workflows/Node.js%20CI/badge.svg)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/6bf95ae3-d9ee-4e92-99e2-fc67c52f540f/deploy-status)](https://app.netlify.com/sites/fractal-prod/deploys)
+![Website: Node.js Build and Test](https://github.com/fractal/website/workflows/Website:%20Node.js%20Build%20and%20Test/badge.svg)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/fractal-prod/deploys)
 
 This repository contains the code for the Fractal website for application streaming. The Fractal website is used to advertise the product, and handle account management and authentication.
 
