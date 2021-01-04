@@ -116,14 +116,20 @@ function SecretPoints(props: {
                     style={style ? style : { width: "50%" }}
                     className={className ? className : "pointer-hover"}
                 >
-                    Click me for{" "}
+                    Click me for
+{" "}
                     <span style={spanStyle ? spanStyle : { color: "#3930b8" }}>
                         {" "}
-                        {points} Points{" "}
+                        {points}
+{' '}
+Points
+{" "}
                     </span>
                 </div>
                 {error && (
-                    <div style={{ color: "#ff0000" }}>Unable to add points</div>
+                    <div style={{ color: "#ff0000" }}>
+Unable to add points
+</div>
                 )}
             </>
         )

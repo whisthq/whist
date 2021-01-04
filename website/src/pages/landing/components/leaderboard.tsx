@@ -86,8 +86,12 @@ const Leaderboard = (props: { waitlist: any[]; waitlistUser: any }) => {
                                 color: userRow ? "white" : "#111111",
                             }}
                         >
-                            <strong>{points}</strong> pts
-                        </div>
+                            <strong>
+{points}
+</strong>
+{' '}
+pts
+</div>
                     </Col>
                 </Row>
                 <Row style={{ paddingTop: (idx = 3 ? 20 : 0) }}>
@@ -116,7 +120,9 @@ const Leaderboard = (props: { waitlist: any[]; waitlistUser: any }) => {
     const getRows = () => {
         const topThree = topSix.slice(0, 3)
         if (!props.waitlist) {
-            return <tr>No data to show.</tr>
+            return <tr>
+No data to show.
+</tr>
         } else if (
             !props.waitlistUser.userID ||
             props.waitlistUser.ranking <= 5

@@ -67,7 +67,9 @@ const NameForm = (props: any) => {
 
     return (
         <>
-            <div className="section-title">Name</div>
+            <div className="section-title">
+Name
+</div>
             <div className="section-info">
                 {editingName ? (
                     <div
@@ -114,7 +116,10 @@ const NameForm = (props: any) => {
                 ) : (
                     <>
                         {user.name ? (
-                            <div>{user.name} </div>
+                            <div>
+{user.name}
+{' '}
+ </div>
                         ) : (
                             <div
                                 className="add"
@@ -135,7 +140,9 @@ const NameForm = (props: any) => {
                                 }}
                             >
                                 {savedName && (
-                                    <div className="saved">Saved!</div>
+                                    <div className="saved">
+Saved!
+</div>
                                 )}
                                 <FaEdit
                                     className="edit"

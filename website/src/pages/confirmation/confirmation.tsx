@@ -41,16 +41,26 @@ const Confirmation = (props: { user: any; stripeInfo: any }) => {
                         Success! You've started your Fractal plan.
                     </h3>
                     <div>
-                        Your plan is:{" "}
+                        Your plan is:
+{" "}
                         <span className="bold">
-                            {stripeInfo.plan} - $
-                            {PLANS[stripeInfo.plan].price.toFixed(2)} /mo (
-                            {PLANS[stripeInfo.plan].subtext})
-                        </span>
-                        , and your next billing date is on{" "}
-                        <span className="bold">{trialEnd}</span>. You can cancel
+                            {stripeInfo.plan}
+{' '}
+- $
+{PLANS[stripeInfo.plan].price.toFixed(2)}
+{' '}
+/mo (
+{PLANS[stripeInfo.plan].subtext}
+)
+</span>
+                        , and your next billing date is on
+{" "}
+                        <span className="bold">
+{trialEnd}
+</span>
+. You can cancel
                         your plan at any time.
-                    </div>
+</div>
                     <button
                         className="white-button"
                         style={{ width: "100%", fontSize: 16, marginTop: 20 }}

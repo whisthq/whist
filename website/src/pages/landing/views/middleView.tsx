@@ -75,7 +75,9 @@ const MiddleView = (props: any) => {
                 id="leaderboard"
             >
                 <Col md={12} lg={9}>
-                    <h1>How can I get access?</h1>
+                    <h1>
+How can I get access?
+</h1>
                     <p style={{ marginTop: 30 }}>
                         Join the waitlist—when the countdown hits zero, we’ll
                         invite the top 100 people on the leaderboard to try

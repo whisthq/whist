@@ -30,7 +30,7 @@ const LoginView = (props: any) => {
         } else {
             dispatch(
                 AuthPureAction.updateAuthFlow({
-                    loginWarning: "Invalid username or password. Try again.",
+                    loginWarning: "Invalid email or password. Try again.",
                 })
             )
         }
@@ -93,7 +93,9 @@ const LoginView = (props: any) => {
         return (
             <div>
                 <div className="auth-container">
-                    <div className="auth-title">Welcome back!</div>
+                    <div className="auth-title">
+Welcome back!
+</div>
                     {authFlow.loginWarning && authFlow.loginWarning !== "" && (
                         <div
                             style={{
@@ -153,8 +155,8 @@ const LoginView = (props: any) => {
                     <div style={{ marginTop: 20 }}>
                         <SwitchMode
                             question="Need to create an account?"
-                            link="Sign up "
-                            closer="here."
+                            link="Sign up here"
+                            closer="."
                             onClick={() =>
                                 dispatch(
                                     AuthPureAction.updateAuthFlow({

@@ -5,14 +5,19 @@ import json
 
 class ProductHunt:
     def parse_html(self, url):
-        """returns the BeautifulSoup Text of
+        """
+        Returns the BeautifulSoup Text of
         ProductHunt
         """
+
         html_doc = requests.get(url)
         return BeautifulSoup(html_doc.text)
 
     def find_makers_and_hunters(self):
-        """returns the makers and hunters of today's producthunt"""
+        """
+        Returns the makers and hunters of today's ProductHunt
+        """
+        
         b = self.parse_html("http://www.producthunt.com/")
         l = b.find_all("a", class_="link_523b9")
 

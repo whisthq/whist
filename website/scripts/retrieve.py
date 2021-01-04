@@ -25,7 +25,6 @@ def get_upload_filename(repo, filetype, timestamp=None):
     ])
 
 def get_latest_filename(repo, filetype, s3):
-
     file_objects = s3.Bucket(SECRET_BUCKET).objects.all()
 
     # the latest name in the format repo-filetype-name
@@ -95,6 +94,4 @@ if __name__ == "__main__":
     s3.Bucket(SECRET_BUCKET).download_file(remote, local)
 
     print(f"Downloaded {remote} to {local}.")
-
-
     

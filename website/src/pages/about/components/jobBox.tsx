@@ -32,6 +32,7 @@ const JobBox = (props: any) => {
                 >
                     <img
                         src={iconImg}
+                        alt=""
                         style={{
                             width: 50,
                             marginBottom: 30,

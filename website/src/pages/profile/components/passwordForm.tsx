@@ -96,7 +96,9 @@ const PasswordForm = (props: any) => {
 
     return (
         <>
-            <div className="section-title">Password</div>
+            <div className="section-title">
+Password
+</div>
             <div className="section-info">
                 {user.usingGoogleLogin && (
                     <div style={{ fontStyle: "italic" }}>
@@ -149,7 +151,9 @@ const PasswordForm = (props: any) => {
                                         }}
                                     />
                                 ) : (
-                                    <span>SAVE</span>
+                                    <span>
+SAVE
+</span>
                                 )}
                             </button>
                             <button
@@ -169,7 +173,9 @@ const PasswordForm = (props: any) => {
                 )}
                 {!changingPassword && !user.usingGoogleLogin && (
                     <>
-                        <div>••••••••••••</div>
+                        <div>
+••••••••••••
+</div>
                         <div
                             style={{
                                 display: "flex",
@@ -177,7 +183,9 @@ const PasswordForm = (props: any) => {
                             }}
                         >
                             {savedPassword && (
-                                <div className="saved">Saved!</div>
+                                <div className="saved">
+Saved!
+</div>
                             )}
                             <FaEdit
                                 className="edit"

@@ -57,7 +57,9 @@ const About = (props: any) => {
                             marginTop: width > ScreenSize.XLARGE ? 100 : 50,
                         }}
                     >
-                        <h2>Our Stories</h2>
+                        <h2>
+Our Stories
+</h2>
                         <p
                             style={{
                                 marginTop: 25,
@@ -69,12 +71,16 @@ const About = (props: any) => {
                         </p>
                     </Col>
                     <Col md={12} style={{ marginTop: 50, textAlign: "left" }}>
-                        <Carousel controls={false}>{teamCards}</Carousel>
+                        <Carousel controls={false}>
+{teamCards}
+</Carousel>
                     </Col>
                 </Row>
                 <Row style={{ marginTop: 100 }}>
                     <Col md={5}>
-                        <h2>Our Investors</h2>
+                        <h2>
+Our Investors
+</h2>
                         <p
                             style={{
                                 marginTop: 30,

@@ -144,7 +144,9 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
         return (
             <div>
                 <div className="auth-container">
-                    <div className="auth-title">Let's get started.</div>
+                    <div className="auth-title">
+Let's get started.
+</div>
                     {authFlow &&
                         authFlow.signupWarning &&
                         authFlow.signupWarning !== "" && (
@@ -225,8 +227,8 @@ const SignupView = (props: { dispatch: any; user: any; authFlow: any }) => {
                     <div style={{ marginTop: 20 }}>
                         <SwitchMode
                             question="Already have an account?"
-                            link="Log in "
-                            closer="here."
+                            link="Log in here"
+                            closer="."
                             onClick={() =>
                                 dispatch(
                                     AuthPureAction.updateAuthFlow({

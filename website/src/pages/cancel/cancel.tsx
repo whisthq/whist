@@ -70,14 +70,22 @@ const Cancel = (props: any) => {
             <div className="fractalContainer">
                 <Header dark={false} account />
                 <div className="resizable-container">
-                    <h3 style={{ marginBottom: "30px" }}>Cancel Plan</h3>
+                    <h3 style={{ marginBottom: "30px" }}>
+Cancel Plan
+</h3>
                     <div style={{ marginBottom: "30px" }}>
-                        Are you sure you want to cancel the following plan:{" "}
+                        Are you sure you want to cancel the following plan:
+{" "}
                         <span className="bold">
-                            {stripeInfo.plan} - $
-                            {PLANS[stripeInfo.plan].price.toFixed(2)} /mo (
-                            {PLANS[stripeInfo.plan].subtext})
-                        </span>
+                            {stripeInfo.plan}
+{' '}
+- $
+{PLANS[stripeInfo.plan].price.toFixed(2)}
+{' '}
+/mo (
+{PLANS[stripeInfo.plan].subtext}
+)
+</span>
                         ?
                     </div>
                     <div style={{ marginBottom: "15px" }}>
@@ -126,7 +134,9 @@ const Cancel = (props: any) => {
                                 }}
                             />
                         ) : (
-                            <span>Cancel Plan</span>
+                            <span>
+Cancel Plan
+</span>
                         )}
                     </button>
                     <button

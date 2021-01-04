@@ -1,31 +1,49 @@
 # Fractal Website
 
 ![Node.js CI](https://github.com/fractal/website/workflows/Node.js%20CI/badge.svg)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/6bf95ae3-d9ee-4e92-99e2-fc67c52f540f/deploy-status)](https://app.netlify.com/sites/tryfractal/deploys)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/6bf95ae3-d9ee-4e92-99e2-fc67c52f540f/deploy-status)](https://app.netlify.com/sites/fractal-prod/deploys)
 
-This repository contains the code for the new Fractal website for single app streaming.
+This repository contains the code for the Fractal website for application streaming. The Fractal website is used to advertise the product, and handle account management and authentication.
 
-## Setting Up Development
+## Development
 
-The admin dashboard is developed using the `npm` package manager. You can start developing by running `npm install`, and can launch into a localhost via `npm start`.
+This project is developed using the `npm` package manager. You can start developing by running `npm install`, and can launch into a localhost via `npm start`. If you need to update dependencies, you can run `npm upgrade`, followed by `npm prune` to remove unnecessary dependencies.
 
-If you need to update dependencies, you can run `npm upgrade`, followed by `npm prune` to remove unnecessary dependencies.
+### Retrieving Environment Variables
 
-Basic continuous integration is set up for this project. For every push or PR, basic NodeJS tests will be compiled and run within GitHub Actions. This will also attempt to format the code via Prettier and inform you if your code is not properly formatted. You should make sure that every pull request to `master` passes the build in GitHub Actions, and that you pre-formatted the code via Prettier beforehand.
+If you do not have the `.env` environment folder, run `python retrieve.py` in the `scripts` folder. This will download the environment secrets necessary to fully run the site locally. You will need to have configured your AWS Access Key and Secret Access Key locally for the script to work properly. If you haven't done so already, you can do it by running `aws configure`.
+
+### Logging
 
 To ensure that no lingering `console.log()` statements make it to production and can be inspected by users, please use `debugLog()` to print to the console. This custom logging function gets automatically hidden in production.
 
-If you do not have the `.env` environment folder. Run `python retrieve.py` in the `scripts` folder. It will download the environment secrets necessary to run the site locally. You will need to export your aws secret access key and access key id for it to work with `export AWS_SECRET_ACCESS_KEY=...`/`set AWS_SECRET_ACCESS_KEY` and `export AWS_ACCESS_KEY_ID=...`/`set AWS_ACCESS_KEY_ID` (replace `...` with each of the two values respectively). You should be able to see these keys in the onboarding email from Phil or your AWS account. Ask someone with root user access if you do not know what your credentials are (probably Ming or Phil). If the code is not working and you do not have time to fix it, consider using the CLI or AWS Console per the instructions in the Notion Engineering Wiki doc.
+### Continous Integration and Netlify Deployments
+
+Basic continuous integration is set up for this project. For every PR, basic Node.js tests will be compiled and run within GitHub Actions, including linting. Your code needs to pass all linting and tests to be approved for merge. If you create new functions, make sure to create tests for them and add them to the continuous integration, when relevant.
+
+The website auto-deploys from GitHub directly to Netlify, which is our web hosting provider. For every `push` to our main branches, the code in that branch will be automatically built and deployed on Netlify. You will also see deploy previews for your branches when you make a PR - they *need* to pass for merging to be approved. You most likely won't need to access Netlify directly, but if you do ask one of the code owners.
+
+- The branch `dev` deploys to https://fractal-dev.netlify.app.
+- The branch `staging` deploys to https://fractal-staging.netlify.app.
+- The branch `master` deploys to https://fractal.co.
+
+## Google Analytics, A/B Testing, and Tracking
+
+To improve our retention rates and scientifically approach the question of *"what makes a user stick in our website?"*, we use basic pageview and event tracking with Google Analytics. When users click a button, a Google Analytics (GA) event will trigger that will inform GA of the fact that they clicked, and it will also keep track of their rough geographical location and of which page(s) they are viewing.
+
+The Google Analytics code is in the `withTracker.tsx` component as well as in `gaEvents`. The Google Analytics IDs that you need to connect this to your own GA account are included in `shared/constants/config`. There can be multiple IDs since Google Analytics allows us to connect multiple GA accounts to one website.
+
+To set up your GA dashboard follow the tutorial on the [Notion Engineering Wiki](https://www.notion.so/tryfractal/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615).
 
 ## Styling
 
-To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Prettier.
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Prettier.
+
+Additional specific checks are done by ESLint. Please run `npm run lint-check` or `npm run lint-fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to .eslintrc and either demote to warnings or mute entirely.
 
 You can always run Prettier directly from a terminal by typing `npm run format`, or you can install it directly within your IDE by via the following instructions:
 
 ### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-
-Additional specific checks are done by ESLint. Please run `npm run lint-check` or `npm run lint-fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to .eslintrc and either demote to warnings or mute entirely.
 
 Launch VS Code Quick Open (Ctrl+P), paste the following command, and press enter.
 
@@ -46,12 +64,4 @@ To ensure that this extension is used over other extensions you may have install
 
 ## Contributing
 
-Before contributing, please familiarize yourself with your [coding philosophy](https://www.notion.so/tryfractal/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615). Unless otherwise specified, contributors should branch off `staging` and PR back into `staging`. Because both `staging` and `master` auto-deploy the their respective Netlify sites, pushing to `staging` and `master` is blocked by non-code owners.
-
-## Google Analytics, A/B Testing, and Tracking
-
-To improve our retention rates and scientifically approach the question of "what makes a user stick in our website?" we use basic pageview and event tracking with Google analytics. When users click a button a google analytics (GA) event will trigger that will inform GA of the fact that they clicked, and it will also keep track of their rough geographical locations and page views (which pages they are viewing).
-
-The GA code is in the `withTracker.tsx` component as well as in gaEvents. The GA ids that you need to connect this to your own GA account are included in config. There can be multiple since GA allows us to connect multiple GA accounts to one website, which is good, since that means multiple team members working on A/B testing and analytics can link their GA account to Fractal and avoid having a shared account.
-
-To set up your GA dashboard follow the tutorial on the [Notion engineering wiki](https://www.notion.so/tryfractal/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615).
+Before contributing, please familiarize yourself with our [Coding Philosophy](https://www.notion.so/tryfractal/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615). Unless otherwise specified, contributors should branch off `dev` and PR back into `dev`. Because all three of `dev`, `staging` and `master` auto-deploy the their respective Netlify sites, pushing to `staging` and `master` is blocked by non-code owners.

@@ -53,16 +53,27 @@ const PaymentMethod = (props: {
                 />
                 Choose Plan
             </div>
-            <h3>Payment method</h3>
+            <h3>
+Payment method
+</h3>
             <div>
-                Your plan: {paymentFlow.plan} - $
-                {PLANS[paymentFlow.plan].price.toFixed(2)} /mo (
-                {PLANS[paymentFlow.plan].subtext})
-            </div>
+                Your plan: 
+{' '}
+{paymentFlow.plan}
+{' '}
+- $
+{PLANS[paymentFlow.plan].price.toFixed(2)}
+{' '}
+/mo (
+{PLANS[paymentFlow.plan].subtext}
+)
+</div>
             <div style={{ marginTop: 20 }}>
                 Your first seven days are free, and you can cancel anytime.
             </div>
-            <div className="card-title">Your card</div>
+            <div className="card-title">
+Your card
+</div>
             {hasCard ? (
                 <>
                     {editingCard ? (
@@ -91,7 +102,9 @@ const PaymentMethod = (props: {
                                     />
                                 )}
                                 <div>
-                                    **** **** **** {stripeInfo.cardLastFour}
+                                    **** **** **** 
+{' '}
+{stripeInfo.cardLastFour}
                                 </div>
                             </div>
                             <div

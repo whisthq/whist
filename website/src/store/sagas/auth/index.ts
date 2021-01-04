@@ -53,7 +53,7 @@ function* emailLogin(action: any) {
     } else {
         yield put(
             AuthPureAction.updateAuthFlow({
-                loginWarning: "Invalid username or password. Try again.",
+                loginWarning: "Invalid email or password. Try again.",
             })
         )
     }

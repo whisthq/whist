@@ -189,7 +189,9 @@ const ResetView = (props: {
         return (
             <div>
                 <div className="auth-container">
-                    <div className="auth-title">Failed to verify token.</div>
+                    <div className="auth-title">
+Failed to verify token.
+</div>
                     <button
                         className="white-button"
                         style={{

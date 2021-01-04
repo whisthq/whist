@@ -72,8 +72,9 @@ const ForgotView = (props: any) => {
             <div>
                 <div className="auth-container">
                     <div className="auth-title">
-                        {authFlow.forgotStatus ? authFlow.forgotStatus : ""}.
-                    </div>
+                        {authFlow.forgotStatus ? authFlow.forgotStatus : ""}
+.
+</div>
                     <div
                         style={{
                             color: "#333333",
@@ -82,7 +83,8 @@ const ForgotView = (props: any) => {
                         }}
                     >
                         Didn't receive an email? Please check your spam folder.
-                        To receive another email, click{" "}
+                        To receive another email, click
+{" "}
                         <span
                             onClick={() => setGotResponse(false)}
                             style={{ color: "#3930b8", cursor: "pointer" }}
@@ -106,7 +108,9 @@ const ForgotView = (props: any) => {
         return (
             <div>
                 <div className="auth-container">
-                    <div className="auth-title">Enter your email.</div>
+                    <div className="auth-title">
+Enter your email.
+</div>
                     <div style={{ marginTop: 40 }}>
                         <Input
                             text="Email"

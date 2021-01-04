@@ -159,13 +159,15 @@ const Dashboard = (props: {
                 <Header dark={false} account />
                 <div className="dashboard-container">
                     There was an error taking you off the waitlist. Please
-                    refresh to try again, or contact{" "}
+                    refresh to try again, or contact
+{" "}
                     <a
                         href="mailto: support@tryfractal.com"
                         className="email-link"
                     >
                         support@tryfractal.com
-                    </a>{" "}
+                    </a>
+{" "}
                     if you think there was a mistake.
                 </div>
             </div>
@@ -239,8 +241,9 @@ const Dashboard = (props: {
                                 }}
                             >
                                 Congratulations
-                                {name.length < 7 ? " " + name : ""}!
-                            </div>
+                                {name.length < 7 ? " " + name : ""}
+!
+</div>
                             <div
                                 style={{
                                     marginTop: 20,

@@ -34,7 +34,9 @@ const Plan = (props: any) => {
             <div className="fractalContainer">
                 <Header dark={false} account />
                 <div className="plan">
-                    <h3>Choose your plan</h3>
+                    <h3>
+Choose your plan
+</h3>
                     <div>
                         No payment is required until your free trial has ended.
                         You can change or cancel your plan at any time.

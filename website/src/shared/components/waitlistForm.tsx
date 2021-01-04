@@ -261,8 +261,11 @@ const WaitlistForm = (props: any) => {
                                     Join Waitlist
                                 </div>
                                 <div className="points">
-                                    +{INITIAL_POINTS} points
-                                </div>
+                                    +
+{INITIAL_POINTS}
+{' '}
+points
+</div>
                             </button>
                         ) : (
                             <button
@@ -361,7 +364,8 @@ const WaitlistForm = (props: any) => {
                         {updatePointsResult.error && (
                             <div className="waitlist-form-error">
                                 There was an error adding referral points to
-                                your friend's account. For help, please contact{" "}
+                                your friend's account. For help, please contact
+{" "}
                                 <a
                                     href="mailto: support@tryfractal.com"
                                     className="support-link"

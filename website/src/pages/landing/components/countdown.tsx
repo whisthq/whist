@@ -53,16 +53,49 @@ const CountdownTimer = (props: { dispatch: Dispatch<any> }) => {
                     textAlign: "center",
                 }}
             >
-                <strong>{days}</strong>{" "}
-                <span style={{ fontSize: 10 }}> days &nbsp; </span>{" "}
-                <strong>{hours}</strong>{" "}
-                <span style={{ fontSize: 11 }}> hrs </span> &nbsp;{" "}
-                <strong>{minutes}</strong>{" "}
-                <span style={{ fontSize: 11 }}> mins </span> &nbsp;{" "}
+                <strong>
+{days}
+</strong>
+{" "}
+                <span style={{ fontSize: 10 }}>
+{' '}
+days &nbsp;
+{' '}
+</span>
+{" "}
+                <strong>
+{hours}
+</strong>
+{" "}
+                <span style={{ fontSize: 11 }}>
+{' '}
+hrs
+{' '}
+</span>
+{' '}
+&nbsp;
+{" "}
+                <strong>
+{minutes}
+</strong>
+{" "}
+                <span style={{ fontSize: 11 }}>
+{' '}
+mins
+{' '}
+</span>
+{' '}
+&nbsp;
+{" "}
                 <span style={{ color: "#3930b8", fontWeight: "bold" }}>
                     {seconds}
-                </span>{" "}
-                <span style={{ fontSize: 11 }}> secs </span>
+                </span>
+{" "}
+                <span style={{ fontSize: 11 }}>
+{' '}
+secs
+{' '}
+</span>
             </div>
         )
     }
@@ -96,19 +129,27 @@ const CountdownTimer = (props: { dispatch: Dispatch<any> }) => {
                 >
                     <div>
                         {days}
-                        <div style={{ fontSize: 16 }}>days</div>
+                        <div style={{ fontSize: 16 }}>
+days
+</div>
                     </div>
                     <div>
                         {hours}
-                        <div style={{ fontSize: 16 }}>hours</div>
+                        <div style={{ fontSize: 16 }}>
+hours
+</div>
                     </div>
                     <div>
                         {minutes}
-                        <div style={{ fontSize: 16 }}>mins</div>
+                        <div style={{ fontSize: 16 }}>
+mins
+</div>
                     </div>
                     <div>
                         {seconds}
-                        <div style={{ fontSize: 16 }}>secs</div>
+                        <div style={{ fontSize: 16 }}>
+secs
+</div>
                     </div>
                 </div>
             </div>

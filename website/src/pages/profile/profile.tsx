@@ -54,9 +54,15 @@ const Profile = (props: any) => {
             <div className="fractalContainer">
                 <Header dark={false} account />
                 <div className="profile-container">
-                    <h2 style={{ marginBottom: "20px" }}>Your Profile</h2>
-                    <div className="section-title">Email</div>
-                    <div className="section-info">{user.userID}</div>
+                    <h2 style={{ marginBottom: "20px" }}>
+Your Profile
+</h2>
+                    <div className="section-title">
+Email
+</div>
+                    <div className="section-info">
+{user.userID}
+</div>
                     <NameForm />
                     <PasswordForm />
                     {config.payment_enabled && (
