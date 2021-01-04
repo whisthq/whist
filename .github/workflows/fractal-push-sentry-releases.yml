@@ -11,7 +11,6 @@ on:
             - master
             - staging
             - dev
-            - project/**
         paths-ignore:
             - "README.md"
             - "**/README.md"
@@ -28,15 +27,16 @@ jobs:
                 project:
                     - name: Main Webserver
                       sentry-project: main-webserver
-                    - name: Protocol
-                      sentry-project: protocol
+                    - name: Protocol (macOS, Windows, Linux Ubuntu)
+                      sentry-project: desktop-protocol
                     - name: ECS Host Service
                       sentry-project: ecs-host-service
+                    - name: Client Applications (macOS, Windows, Linux Ubuntu)
+                      sentry-project: desktop-client
         env:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
             SENTRY_ORG: tryfractal
             SENTRY_PROJECT: ${{ matrix.project.sentry-project }}
-            SENTRY_DEPLOY_ENVIRONMENT: production
 
         steps:
             - name: Checkout Git Repository
@@ -48,6 +48,17 @@ jobs:
             - name: Set Git Repository URL to enable sentry-cli automatic commit tagging
               run: |
                   git remote set-url origin https://github.com/fractal/fractal
+
+            - name: Set SENTRY_DEPLOY_ENVIRONMENT based on Git branch
+              shell: bash
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=production" >> $GITHUB_ENV
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
+                  else
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
+                  fi
 
             - name: Create new Sentry release
               run: |
@@ -63,8 +74,15 @@ jobs:
                   # Create new deploy for this Sentry release
                   sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
 
+    notify-slack:
+        name: Notify Slack
+        needs: [fractal-push-sentry-releases-main]
+        if: success()
+        runs-on: ubuntu-20.04
+
+        steps:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"fractal/fractal Production Release pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry Production Releases Pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
