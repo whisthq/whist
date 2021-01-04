@@ -2,7 +2,7 @@
 
 This repository contains the scripts to set up an AWS EC2 host machine to host Fractal containers. The `setup_ubuntu20_host.sh` script is intended for setting up a general host for development, while the `setup_ubuntu20_ami_host.sh` script sets up an EC2 host and stores it as an AMI (Amazon Machine Image) for programmatic deployment. To use either of the scripts:
 
-First, create an Ubuntu Server 20.04 g3s.xlarge EC2 instance (which will later be linked with ECS) - the **g3** instance type is required for GPU compatibility with our containers and streaming technology. Before lauching, make sure to select 32GB of storage space in the "Add Storage" section, as the default 8GB is not enough to build the protocol and the base image. Also before launching, add your EC2 instance to the the security group **fractal-containerized-protocol-group** if on AWS region **us-east-2**, or **container-testing** if on AWS region **us-east-1** in the "Security Groups" section.
+First, create an Ubuntu Server 20.04 g3s.xlarge EC2 instance (which will later be linked with ECS) - the **g3** instance type is required for GPU compatibility with our containers and streaming technology. Before lauching, make sure to select 32GB of storage space in the "Add Storage" section, as the default 8GB is not enough to build the protocol and the base image. Also before launching, add your EC2 instance to the the security group **container-testing** if on AWS region **us-east-1**, or **fractal-containerized-protocol-group** if on AWS region **us-east-2** in the "Security Groups" section. Most people set up their dev instance on **us-east-1**, so it is recommended that you do the same.
 
 Then, launch the instance. Create a new key pair for the instance and make sure to save the `.pem` file, as it's required to SSH into the instance. After the EC2 instance boots up, SSH into it. Install `go` ([instructions](https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/)), then run the following commands:
 
@@ -24,7 +24,21 @@ cd ~/fractal/container-images
 ./run_local_container_image.sh base
 ```
 
-Now, try starting a Fractal client to connect to the Fractal server by following the instructions in `protocol/desktop/README.md`. You can get the IP address of your EC2 instance by running `curl ipinfo.io` inside the instance. If a window pops up that streams xterm/whatever the base application is, then you are set!
+Next, from your local terminal, run the following command:
+
+```
+curl --silent --location --request PUT 'https://{YOUR_DEV_INSTANCE_IP_ADDR}/set_container_dpi' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "auth_secret": "testwebserverauthsecretdev",
+    "host_port": 32262,
+    "dpi": 96
+}'
+```
+
+You may need the `--insecure` flag as well. Make sure to replace `{YOUR_DEV_INSTANCE_IP_ADDR}` with the actual IP address of your dev instance, which you can get by running `curl ipinfo.io` inside the instance. Note: you will need to run this `curl` command while the `ecs-host-service` and application container are running every time you spin up a new application container.
+
+Now, try starting a Fractal client to connect to the Fractal server by following the instructions in `protocol/desktop/README.md`. If a window pops up that streams xterm/whatever the base application is, then you are set!
 
 ## Design Decisions
 

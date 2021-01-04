@@ -45,7 +45,7 @@ build_specific_image () {
 # e.g. build_image_with_deps creative/figma false
 # If always_show_output is false, then the build output is shown only on error
 build_image_with_deps() {
-    if [[ $# != 3 ]]
+    if [[ $# != 5 ]]
     then
         echo "build_image_with_deps(): Missing an argument!"
         exit -1
@@ -53,8 +53,13 @@ build_image_with_deps() {
 
     if [[ $1 == "base" ]]
     then
-        # Deal with base case
-        build_specific_image "$1" "$2" "$3"
+        # Deal with base case by pulling from ECR
+        echo "Pulling $1 from $4"
+        ecr_uri=$(aws ecr get-authorization-token --region $4 --query authorizationData[0].proxyEndpoint --output text | cut -c 9-)
+        image=$ecr_uri/fractal/$1:$5
+        aws ecr get-login-password --region $4 | docker login --username AWS --password-stdin $ecr_uri
+        docker pull $image
+        docker tag $image fractal/$1:$2
     else
         # Get the fractal images that are also dependencies
         deps_with_tags=$(grep -o -E "^[[:blank:]]*FROM[[:blank:]]+fractal[^[:blank:]]*" $1/Dockerfile.20 | sed "s/[[:blank:]]*FROM[[:blank:]]\+fractal\///g")
@@ -76,7 +81,7 @@ build_image_with_deps() {
                 tag="latest"
             fi
 
-            build_image_with_deps "$dep" "$tag" "$3"
+            build_image_with_deps "$dep" "$tag" "$3" "$4" "$5"
         done < <(printf "%s\n" "$deps_with_tags")
 
         # Build the final image
@@ -87,35 +92,13 @@ build_image_with_deps() {
 
 # Input variables and constants
 local_tag=current-build
-app_path=${1:-base}
+base_region=${1:-us-east-1}
+remote_tag=$(git rev-parse HEAD)
+app_path=${2:-base}
 app_path=${app_path%/}
-force_output=${2:-false}
+force_output=${3:-false}
 
 # enter proper dir
 cd "$DIR"
 
-# Check if protocol has been built
-if [ ! -f ../protocol/server/build64/libsentry.so ]; then
-  echo "Could not find $DIR/../protocol/server/build64/libsentry.so... building protocol"
-  ../protocol/build_protocol.sh
-fi
-if [ ! -f ../protocol/server/build64/crashpad_handler ]; then
-  echo "Could not find $DIR/../protocol/sentry-native/crashpad_build/handler/crashpad_handler... building protocol"
-  ../protocol/build_protocol.sh
-fi
-if [ ! -f ../protocol/server/build64/FractalServer ]; then
-  echo "Could not find $DIR/../protocol/server/build64/FractalServer... building protocol"
-  ../protocol/build_protocol.sh
-fi
-
-echo "A protocol build exists, though it is not guaranteed to be up-to-date."
-
-mkdir "base/build_temp"
-cp ../protocol/server/build64/libsentry.so base/build_temp
-cp ../protocol/server/build64/crashpad_handler base/build_temp
-cp ../protocol/server/build64/FractalServer base/build_temp
-
-build_image_with_deps "$app_path" "$local_tag" "$force_output"
-
-echo "Cleaning up..."
-rm -rf "base/build_temp"
+build_image_with_deps "$app_path" "$local_tag" "$force_output" "$base_region" "$remote_tag"
