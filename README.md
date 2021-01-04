@@ -49,6 +49,8 @@ At a high-level, Fractal works as such:
 - This container-images Dockerfile will install dependencies, including the Server protocol executable, then install and run Blender, and then proceed to execute the Server protocol executable.
 - The client-application Electron App will then execute the Client protocol executable and pass in the IP address of the Server as received from main-webserver. A window will then open, giving the user a low-latency 60 FPS Blender experience.
 
+For more in-depth explanations of each subrepo, simply peruse the README's of the respective file from the root Fractal repo.
+
 ## Workflow and Conventions
 
 ### `master` is for releases only. `staging` is "almost `master`".
