@@ -10,6 +10,7 @@
  * @file fractal.h
  * @brief This file contains the core of Fractal custom structs and definitions
  *        used throughout.
+
 ============================
 Usage
 ============================
@@ -101,7 +102,7 @@ Defines
 
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
-#define USING_XTEST_INPUT_DRIVER true
+#define USING_XTEST_INPUT_DRIVER false
 #define USING_GPU_CAPTURE true
 #define USING_SHM true
 
