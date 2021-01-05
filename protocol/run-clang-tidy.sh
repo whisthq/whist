@@ -80,7 +80,7 @@ perl -i -p -000 -e 's/  - DiagnosticName:[^\n]*\n(    [^\n]*\n)*[ ]*FilePath:[ ]
 
 if [[ $CICheck == 1 ]]
 then
-    numLines=$(cat ${yamlFolder}/${fixesFilename} | wc -l | bc) # wc on mac has leading whitespace for god knows what reason
+    numLines=$(cat ${yamlFolder}/${fixesFilename} | wc -l | tr -d ' ') # wc on mac has leading whitespace for god knows what reason
     # A yaml file with no format issues should have exactly 4 lines
     if [[ $numLines != 4 ]]
     then
