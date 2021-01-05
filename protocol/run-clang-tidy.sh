@@ -84,7 +84,7 @@ then
     # A yaml file with no format issues should have exactly 4 lines
     if [[ $numLines != 4 ]]
     then
-        echo "format issues found"
+        echo "Format issues found. See ${yamlFolder}/${fixesFilename}"
         exit 1
     fi
     echo "clang-tidy successful"
