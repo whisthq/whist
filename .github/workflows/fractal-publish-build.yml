@@ -88,10 +88,10 @@ jobs:
 
             - name: Push container images
               run: |
-                   for app in ${{ env.apps }}
-                   do
-                     ./container-images/push_container_image.sh $app
-                   done
+                  for app in ${{ env.apps }}
+                  do
+                    ./container-images/push_container_image.sh $app
+                  done
               env:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
                   GH_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
@@ -112,7 +112,7 @@ jobs:
 
                   echo "::set-output name=task-definitions-matrix::$matrix"
 
-           - name: Notify Slack
+            - name: Notify Slack
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to production via Docker push to GitHub Container Registry :github:\", \"icon_emoji\": \":fractal:\"}" \
