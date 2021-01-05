@@ -72,6 +72,10 @@
                 {
                     "name": "NVIDIA_VISIBLE_DEVICES",
                     "value": "all"
+                },
+                {
+                    "name": "SENTRY_ENV",
+                    "value": "production"
                 }
             ],
             "resourceRequirements": null,
