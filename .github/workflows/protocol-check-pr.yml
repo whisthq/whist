@@ -43,11 +43,11 @@ jobs:
 
             ############################# Windows Configuration Steps START #############################
 
-            - name: Install yq (for clang-tidy) and cppcheck via Chocolatey on Windows GHA Machine
+            - name: Install cppcheck via Chocolatey on Windows GHA Machine
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
               with:
-                  args: install yq cppcheck
+                  args: install cppcheck
 
             - name: Install CUDA on Windows GHA Machine
               if: runner.os == 'Windows'
@@ -106,12 +106,11 @@ jobs:
                   if [ "$RUNNER_OS" == "Linux" ]; then
                       ./protocol/desktop/linux-client-setup.sh
 
-                      # install yq for clang-tidy, coreutils for realpath
-                      sudo snap install yq
+                      # install clang-tidy, coreutils for realpath, and perl
                       sudo apt install -y clang-tidy coreutils perl
                   else
                       # llvm for clang-tidy, coreutils for realpath
-                      brew install yq llvm coreutils perl
+                      brew install llvm coreutils perl
                       ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
                       ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
                   fi
