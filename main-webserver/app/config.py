@@ -51,7 +51,7 @@ def _callback_webserver_hostname():
     return (
         request.host
         if not any((host in request.host for host in ("localhost", "127.0.0.1")))
-        else "dev-server.tryfractal.com"
+        else "dev-server.fractal.co"
     )
 
 
@@ -191,7 +191,7 @@ class DeploymentConfig:
     REDIS_URL = property(getter("REDIS_URL", fetch=False))
     SECRET_KEY = property(getter("SECRET_KEY", fetch=False))
     SENDGRID_API_KEY = property(getter("SENDGRID_API_KEY"))
-    SENDGRID_DEFAULT_FROM = "noreply@tryfractal.com"
+    SENDGRID_DEFAULT_FROM = "noreply@fractal.co"
     SHA_SECRET_KEY = property(getter("SHA_SECRET_KEY"))
     SILENCED_ENDPOINTS = ("/status", "/ping")
     SQLALCHEMY_DATABASE_URI = property(getter("DATABASE_URL", fetch=False))

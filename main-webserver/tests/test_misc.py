@@ -9,7 +9,7 @@ def test_callback_webserver_hostname_localhost():
     """Make sure the callback webserver hostname is that of the Heroku dev server."""
 
     with current_app.test_request_context():
-        assert _callback_webserver_hostname() == "dev-server.tryfractal.com"
+        assert _callback_webserver_hostname() == "dev-server.fractal.co"
 
 
 def test_callback_websesrver_hostname_not_localhost():
@@ -25,4 +25,4 @@ def test_callback_webserver_hostname_localhost_with_port():
     """Make sure the callback webserver hostname is that of the Heroku dev server."""
 
     with current_app.test_request_context(headers={"Host": "localhost:80"}):
-        assert _callback_webserver_hostname() == "dev-server.tryfractal.com"
+        assert _callback_webserver_hostname() == "dev-server.fractal.co"

@@ -1,8 +1,8 @@
 {
     "author": {
-        "email": "support@tryfractal.com",
+        "email": "support@fractal.co",
         "name": "Fractal Computers, Inc.",
-        "url": "https://www.tryfractal.com"
+        "url": "https://www.fractal.co"
     },
     "browserslist": [
         "extends browserslist-config-erb"
@@ -106,17 +106,17 @@
     },
     "contributors": [
         {
-            "email": "phil@tryfractal.com",
+            "email": "phil@fractal.co",
             "name": "Philippe Noel"
         },
         {
-            "email": "ming@tryfractal.com",
+            "email": "ming@fractal.co",
             "name": "Ming Ying"
         }
     ],
     "dependencies": {
-        "-": "^0.0.1",
         "3": "^2.1.0",
+        "-": "^0.0.1",
         "@apollo/client": "^3.2.4",
         "@fortawesome/fontawesome-free": "^5.12.1",
         "@fortawesome/fontawesome-svg-core": "^1.2.27",
@@ -262,7 +262,7 @@
         "enzyme": "^3.11.0",
         "enzyme-adapter-react-16": "^1.15.2",
         "enzyme-to-json": "^3.4.4",
-        "eslint": "^6.8.0",
+        "eslint": "^7.16.0",
         "eslint-config-airbnb-typescript": "6.3.1",
         "eslint-config-erb": "^0.3.0",
         "eslint-config-prettier": "^6.9.0",

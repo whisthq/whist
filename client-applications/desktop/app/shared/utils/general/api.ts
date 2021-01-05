@@ -58,7 +58,7 @@ export const apiPost = async (
         endpoint (string) : HTTP endpoint (e.g. /account/login)
         body (JSON) : POST request body
         token (string) : Access token
-        webserver (string) : HTTP URL (e.g. https://fractal-prod-server.tryfractal.com)
+        webserver (string) : HTTP URL (e.g. https://prod-server.fractal.co)
     
     Returns:
         { json, success } (JSON) : Returned JSON of POST request and success True/False
@@ -102,7 +102,7 @@ export const apiGet = async (
     Arguments:
         endpoint (string) : HTTP endpoint (e.g. /account/login)
         token (string) : Access token
-        webserver (string) : HTTP URL (e.g. https://fractal-prod-server.tryfractal.com)
+        webserver (string) : HTTP URL (e.g. https://prod-server.fractal.co)
     
     Returns:
         { json, success } (JSON) : Returned JSON of GET request and success True/False
@@ -145,7 +145,7 @@ export const apiDelete = async (
     Arguments:
         endpoint (string) : HTTP endpoint (e.g. /account/login)
         token (string) : Access token
-        webserver (string) : HTTP URL (e.g. https://fractal-prod-server.tryfractal.com)
+        webserver (string) : HTTP URL (e.g. https://prod-server.fractal.co)
     
     Returns:
         { json, success } (JSON) : Returned JSON of GET request and success True/False
