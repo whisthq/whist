@@ -102,6 +102,9 @@
             "volumesFrom": [],
             "stopTimeout": null,
             "image": "[IMAGE-PLACEHOLDER]",
+	    "repositoryCredentials": {
+		"credentialsParameters": "arn:aws:secretsmanager:us-east-1:747391415460:secret:ghcrDockerAuthentication"
+	    },
             "startTimeout": null,
             "firelensConfiguration": null,
             "dependsOn": null,
