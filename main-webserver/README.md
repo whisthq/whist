@@ -29,7 +29,7 @@ The following environment variables must also be set in `docker/.env` (neither t
 - `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
 - `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
 
-Finally, if the Redis instance used for testing is running anywhere other than `redis://localhost:6379/0`, `REDIS_URL` should be set to indicate the correct connection URI. Take a moment to understand that setting `REDIS_URL` has no effect on the Flask instance running in the `docker-compose`; it only affects Flask applications launched manually (e.g. Flask applications created by `pytest` for testing purposes).
+Finally, the local tests require a connection to a running Redis instance. See [Setting up Redis](#setting-up-redis) for instructions on how to establish such a connection. If the Redis instance used for testing is running anywhere other than `redis://localhost:6379/0`, `REDIS_URL` should be set to indicate the correct connection URI. Take a moment to understand that setting `REDIS_URL` has no effect on the Flask instance running in the `docker-compose`; it only affects Flask applications launched manually (e.g. Flask applications created by `pytest` for testing purposes).
 
 **1. Set environment variables**
 
@@ -101,7 +101,15 @@ GraphQL is already set up, but here's a [setup doc](https://hasura.io/docs/1.0/g
 
 ## Testing
 
-**Pytest**
+### Setting up Redis
+
+In order to run tests locally, the tests must be able to connect to a running Redis instance. It is recommended that you start this Redis instance yourself. Here are two ways in which you can configure your development environment so the test code can connect to your Redis instance:
+
+1. Launch a Redis container with `docker run -d -p 6379:6379 redis`. 6379 is the default Redis port. This command launches Redis in the default location on the network&mdash;`redis://localhost:6379`. The test code detects that Redis running on the default host and port and connects.
+
+2. Spin up the `docker-compose` stack (as described in [Local Setup](#local-setup)) and set `REDIS_URL` in `docker/.env` to point the test code at the appropriate Redis instance. The Redis instance spun up by the `docker-compose` stack is accessible at `redis://localhost:7810` (see `services.redis.ports` in `docker/docker-compose.yml`). Therefore, `REDIS_URL` should be set to `redis://localhost:7810`.
+
+### `pytest`
 
 We have pytest tests in the `tests` subdirectory. To run tests, just run `pytest` in a terminal. Refer to the [pytest documentation](https://docs.pytest.org/en/stable/contents.html) to learn how to use pytest.
 
