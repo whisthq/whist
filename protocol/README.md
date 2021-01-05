@@ -166,23 +166,16 @@ Make sure your code is following code standards by running the script `./run-cla
 
 ```
 MacOS:
-# install yq
-brew install yq
 # set up clang-tidy and clang-apply-replacements
 brew install llvm
 ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 ln -s "$(brew --prefix llvm)/bin/clang-apply-replacements" "/usr/local/bin/clang-apply-replacements"
 
 Linux Ubuntu:
-# install yq
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CC86BB64
-sudo add-apt-repository ppa:rmescandon/yq
-sudo apt update
-sudo apt install yq -y
+sudo apt install clang-tidy -y
 # clang-tidy and clang-apply-replacements-10 should come installed with clang
 
 Windows:
-choco install yq
 # Go to https://releases.llvm.org/download.html and install the pre-built LLVM binary. In the installation wizard, make sure to select "add to path".
 ```
 
