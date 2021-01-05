@@ -11,6 +11,7 @@ from datadog import initialize, api
 
 # ones with F at the end must be formatted
 from app.helpers.utils.datadog.event_tags import (
+    CONTAINER_ASSIGNMENT,
     CONTAINER_CREATION,
     CONTAINER_DELETION,
     CONTAINER_LIFECYCLE,
@@ -128,6 +129,42 @@ def datadogEvent_containerCreate(
 
     datadogEvent(
         title="Created new Container",
+        text=to_text(
+            container_name=container_name,
+            cluster_name=cluster_name,
+            username=username,
+            spinup_time=time_taken,
+        ),
+        tags=tags,
+    )
+
+
+def datadogEvent_containerAssign(
+    container_name, cluster_name, username="unknown", time_taken="unknown"
+):
+    """Logs an event for container creation. This is necessary for lifecycle events to be
+    able to work so that they can find the time that the deleted container was created.
+
+    Args:
+        container_name (str): The name of the container which was created.
+            This is used to search in lifecycle.
+        cluster_name (str): The cluster it was created in.
+        username (str, optional): The username of the user this is created for.
+        time_taken
+    """
+
+    tags = [
+        CONTAINER_ASSIGNMENT,
+        CONTAINER_LIFECYCLE,
+        SUCCESS,
+        CONTAINER_NAME_F.format(container_name=container_name),
+        CLUSTER_NAME_F.format(cluster_name=cluster_name),
+    ]
+    if username:
+        tags.append(CONTAINER_USER_F.format(container_user=username))
+
+    datadogEvent(
+        title="Assigned new Container",
         text=to_text(
             container_name=container_name,
             cluster_name=cluster_name,

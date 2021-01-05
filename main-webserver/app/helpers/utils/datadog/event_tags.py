@@ -5,6 +5,7 @@ used by our datadog loggers. Please use these constants to keep our code clean i
 
 """Event type tags."""
 CONTAINER_CREATION = "container-creation"
+CONTAINER_ASSIGNMENT = "container-assignment"
 CONTAINER_DELETION = "container-deletion"
 
 CLUSTER_CREATION = "cluster-creation"

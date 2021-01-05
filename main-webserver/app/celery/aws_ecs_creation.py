@@ -27,6 +27,7 @@ from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 from app.serializers.oauth import CredentialSchema
 
 from app.helpers.utils.datadog.events import (
+    datadogEvent_containerAssign,
     datadogEvent_containerCreate,
     datadogEvent_clusterCreate,
 )
@@ -372,6 +373,7 @@ def assign_container(
     """
 
     enable_reconnect = False
+    task_start_time = time.time()
     user = User.query.get(username)
 
     assert user
@@ -531,7 +533,7 @@ def assign_container(
 
     _mount_cloud_storage(user, base_container)  # Not tested
     _pass_start_dpi_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
-    time.sleep(5)
+    time.sleep(1)
 
     if not _poll(base_container.container_id):
         fractal_log(
@@ -560,6 +562,11 @@ def assign_container(
             task_definition_arn,
             region_name=region_name,
             webserver_url=webserver_url,
+        )
+    if not current_app.testing:
+        task_time_taken = time.time() - task_start_time
+        datadogEvent_containerAssign(
+            base_container.container_id, cluster_name, username=username, time_taken=task_time_taken
         )
     return user_container_schema.dump(base_container)
 
