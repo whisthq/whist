@@ -4,7 +4,6 @@ import { HashLink } from "react-router-hash-link"
 import {
     FaLinkedinIn,
     FaTwitter,
-    FaFacebook,
     FaInstagram,
     FaMediumM,
 } from "react-icons/fa"
@@ -114,18 +113,6 @@ Fractal
                                         <FaInstagram className="icon" />
                                     </div>
                                 </a>
-                                <a
-                                    href="https://www.facebook.com/tryfractal"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                        textDecoration: "none",
-                                    }}
-                                >
-                                    <div className="icon-box">
-                                        <FaFacebook className="icon" />
-                                    </div>
-                                </a>
                             </div>
                         </Col>
                     </Row>
@@ -202,7 +189,7 @@ CONTACT
 </div>
                             <div>
                                 <a
-                                    href="mailto: sales@tryfractal.com"
+                                    href="mailto: sales@fractal.co"
                                     className="page-link"
                                 >
                                     Sales
@@ -210,7 +197,7 @@ CONTACT
                             </div>
                             <div>
                                 <a
-                                    href="mailto: support@tryfractal.com"
+                                    href="mailto: support@fractal.co"
                                     className="page-link"
                                 >
                                     Support
@@ -218,7 +205,7 @@ CONTACT
                             </div>
                             <div>
                                 <a
-                                    href="mailto: careers@tryfractal.com"
+                                    href="mailto: careers@fractal.co"
                                     className="page-link"
                                 >
                                     Careers
@@ -250,7 +237,7 @@ CONTACT
                                 fontSize: width >= ScreenSize.MEDIUM ? 14 : 12,
                             }}
                         >
-                            Copyright &copy; Fractal Computers, Inc. All Rights
+                            &copy; 2021 Fractal Computers, Inc. All Rights
                             Reserved.
                         </div>
                         {width >= ScreenSize.MEDIUM && (
