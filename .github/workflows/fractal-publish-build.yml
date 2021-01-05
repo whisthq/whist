@@ -46,13 +46,12 @@ jobs:
                   echo "branch is $BRANCH_NAME"
                   echo "::set-output name=branch::$BRANCH_NAME"
 
-    # Container Images: Build & Publish Base Image to AWS ECR
-    # Build and publish the base image to the placeholder region, so that parallel build
-    #   processes can build and publish everything on top of base.
+    # Container Images: Build & Publish to GitHub Container Registry
+    # Build and publish the container images to a GitHub Container Registry repository
     # Runs if config succeeds and branch is in ["master"].
 
-    container-images-publish-base-image-ecr:
-        name: "Container Images: Build & Push Publish Image to AWS ECR"
+    container-images-publish-images-ghcr:
+        name: "Container Images: Build & Publish Images to GitHub Container Registry"
         runs-on: ubuntu-20.04
         outputs:
             task-definitions-matrix: ${{ steps.package-matrix.outputs.task-definitions-matrix }}
@@ -74,26 +73,30 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
-                  aws-region: ${{ env.aws-placeholder-region }}
+            - name: Walk repo to find all dockerfiles and store path as env variable
+              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
             - name: Build release protocol # No need to run this for debug, just for release
               run: ./protocol/build_protocol.sh release
 
-            - name: Build base container image
-              run: ./container-images/build_container_image.sh base
+            - name: Build container images
+              run: |
+                  for app in ${{ env.apps }}
+                  do
+                    ./container-images/build_container_image.sh $app
+                  done
 
-            - name: Push base container image to placeholder region
-              run: ./container-images/push_container_image.sh base ${{ env.aws-placeholder-region }}
+            - name: Push container images
+              run: |
+                   for app in ${{ env.apps }}
+                   do
+                     ./container-images/push_container_image.sh $app
+                   done
+              env:
+                  GH_USERNAME: ${{ secrets.GHA_USERNAME }}
+                  GH_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
-            - name: Walk repo to find all dockerfiles and store path as env variable
-              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
-
-            - name: Package app names and regions into json for container-images and ecs-task-definitions strategy matrices
+            - name: Package app names and regions into json for ecs-task-definitions strategy matrices
               id: package-matrix
               run: |
                   matrix='{"aws-region": [], "app": []}'
@@ -109,71 +112,21 @@ jobs:
 
                   echo "::set-output name=task-definitions-matrix::$matrix"
 
-    # Container Images: Build & Publish to AWS ECR
-    # Build and publish the container images to an ECR repository from which the EC2 instance pull,
-    #   for every region.
-    # Runs if container-images-publish-base-image-ecr succeeds.
-
-    container-images-publish-images-ecr:
-        name: "Container Images: Build & Publish ${{ matrix.app }} to AWS ECR"
-        runs-on: ubuntu-20.04
-        needs: [container-images-publish-base-image-ecr]
-
-        strategy:
-            matrix: ${{ fromJSON(needs.container-images-publish-base-image-ecr.outputs.task-definitions-matrix) }}
-
-        env:
-            aws-placeholder-region: us-east-1
-
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  submodules: recursive
-
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
-                  aws-region: ${{ matrix.aws-region }}
-
-            - name: Build container image over base from placeholder region
-              run: ./container-images/build_container_image_from_base.sh ${{ env.aws-placeholder-region }} ${{ matrix.app }}
-
-            - name: Push container image
-              run: ./container-images/push_container_image.sh ${{ matrix.app }} ${{ matrix.aws-region }}
-
-            - name: Create Lifecycle Policies for image, only keeps latest 10
-              run: ./container-images/apply_ecr_lifecycle_policy.sh ${{ matrix.app }} ${{ matrix.aws-region }}
-
-    # Container Images: Notify Slack
-    # Notify Slack after building and pushing all the container images.
-    # Runs if publish-images-ecr succeeds.
-
-    container-images-notify-slack:
-        name: "Container Images: Notify Slack"
-        needs: [container-images-publish-images-ecr]
-        if: success()
-        runs-on: ubuntu-20.04
-        steps:
-            - name: Notify Slack
+           - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to production via Docker push to ECR :bezos:\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to production via Docker push to GitHub Container Registry :github:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # ECS Host Service: Build & Publish to AWS S3
     # Build and publish the ECS host service to an S3 bucket from which EC2 hosts pull.
-    # Runs if config succeeds and branch is in ["master"] and publish-images-ecr succeeds.
+    # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds.
 
     ecs-host-service-publish-build-s3:
         name: "ECS Host Service: Build & Publish to AWS S3"
         runs-on: ubuntu-20.04
         needs:
-            [fractal-publish-build-config, container-images-publish-images-ecr]
+            [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
         env:
             binary-location: ecs-host-service/build
@@ -219,17 +172,17 @@ jobs:
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
     # Render and deploy the app task definitions to ECS.
-    # Runs if config succeeds and branch is in ["master"] and publish-images-ecr succeeds.
+    # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds.
 
     ecs-task-definitions-deploy-task-definitions-ecs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
         needs:
-            [fractal-publish-build-config, container-images-publish-images-ecr]
+            [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
 
         strategy:
-            matrix: ${{ fromJSON(needs.container-images-publish-base-image-ecr.outputs.task-definitions-matrix) }}
+            matrix: ${{ fromJSON(needs.container-images-publish-base-image-ghcr.outputs.task-definitions-matrix) }}
 
         steps:
             - name: Checkout Git Repository
@@ -248,12 +201,8 @@ jobs:
             # TODO: this can be done way more elegantly, now that it's a monorepo
             - name: Retrieve master git hash as env variable
               run: echo "containers_gha_sha=$(git ls-remote https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/fractal | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
-
-            - name: Retrieve AWS account number as env variable
-              run: echo "aws_account=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
-
-            - name: Store AWS ECR base uri as env variable
-              run: echo "ecr_base_uri=${{ env.aws_account }}.dkr.ecr.${{ matrix.aws-region }}.amazonaws.com" >> $GITHUB_ENV
+            - name: Store GitHub container registry base uri as env variable
+              run: echo "ghcr_base_uri=ghcr.io" >> $GITHUB_ENV
 
             - name: Store taskdef name as env variable
               run: echo "taskdef_name=$(echo fractal/${{ matrix.app }} | tr / -)" >> $GITHUB_ENV
@@ -270,7 +219,7 @@ jobs:
               with:
                   container-name: fractal-container
                   task-definition: ${{ env.taskdef_json }}
-                  image: ${{ env.ecr_base_uri }}/fractal/${{ matrix.app }}:${{ env.containers_gha_sha }}
+                  image: ${{ env.ghcr_base_uri }}/fractal/${{ matrix.app }}:${{ env.containers_gha_sha }}
 
             - name: Deploy to Amazon ECS service
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
@@ -295,12 +244,12 @@ jobs:
 
     # Main Webserver: Deploy to Heroku
     # Push the main-webserver subtree to the appropriate Heroku app.
-    # Runs if config succeeds and branch is in ["master"] and publish-images-ecr succeeds, or unconditionally if branch is in ["dev"] (since other workflows won't run then)
+    # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds, or unconditionally if branch is in ["dev"] (since other workflows won't run then)
 
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         needs:
-            [fractal-publish-build-config, container-images-publish-images-ecr]
+            [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: |
             ( 
                 contains(
