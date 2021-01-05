@@ -128,7 +128,7 @@ const Dashboard = (props: {
         if (data && data.users && data.users[0] && user.userID) {
             toggleCanLogin(
                 data.users[0].can_login ||
-                    user.userID.includes("@tryfractal.com")
+                    user.userID.includes("@fractal.co")
             )
         }
     }, [
@@ -162,10 +162,10 @@ const Dashboard = (props: {
                     refresh to try again, or contact
 {" "}
                     <a
-                        href="mailto: support@tryfractal.com"
+                        href="mailto: support@fractal.co"
                         className="email-link"
                     >
-                        support@tryfractal.com
+                        support@fractal.co
                     </a>
 {" "}
                     if you think there was a mistake.

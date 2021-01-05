@@ -367,10 +367,10 @@ points
                                 your friend's account. For help, please contact
 {" "}
                                 <a
-                                    href="mailto: support@tryfractal.com"
+                                    href="mailto: support@fractal.co"
                                     className="support-link"
                                 >
-                                    support@tryfractal.com
+                                    support@fractal.co
                                 </a>
                                 .
                             </div>

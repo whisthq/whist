@@ -4,8 +4,8 @@ const environment: any = {
         url: {
             WEBSERVER_URL: "http://127.0.0.1:7730",
             FRONTEND_URL: "http://localhost:3000",
-            GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
-            GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
+            GRAPHQL_HTTP_URL: "https://dev-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://dev-database.fractal.co/v1/graphql",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
@@ -24,10 +24,10 @@ const environment: any = {
     },
     development: {
         url: {
-            WEBSERVER_URL: "https://dev-server.tryfractal.com",
-            FRONTEND_URL: "https://dev.tryfractal.com",
-            GRAPHQL_HTTP_URL: "https://dev-database.tryfractal.com/v1/graphql",
-            GRAPHQL_WS_URL: "wss://dev-database.tryfractal.com/v1/graphql",
+            WEBSERVER_URL: "https://dev-server.fractal.co",
+            FRONTEND_URL: "https://dev.fractal.co",
+            GRAPHQL_HTTP_URL: "https://dev-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://dev-database.fractal.co/v1/graphql",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
@@ -47,10 +47,10 @@ const environment: any = {
     staging: {
         url: {
             WEBSERVER_URL: "https://fractal-staging-server.herokuapp.com",
-            FRONTEND_URL: "https://staging.tryfractal.com",
+            FRONTEND_URL: "https://staging.fractal.co",
             GRAPHQL_HTTP_URL:
-                "https://staging-database.tryfractal.com/v1/graphql",
-            GRAPHQL_WS_URL: "wss://staging-database.tryfractal.com/v1/graphql",
+                "https://staging-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://staging-database.fractal.co/v1/graphql",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
@@ -70,9 +70,9 @@ const environment: any = {
     production: {
         url: {
             WEBSERVER_URL: "https://fractal-prod-server.herokuapp.com",
-            FRONTEND_URL: "https://tryfractal.com",
-            GRAPHQL_HTTP_URL: "https://prod-database.tryfractal.com/v1/graphql",
-            GRAPHQL_WS_URL: "wss://prod-database.tryfractal.com/v1/graphql",
+            FRONTEND_URL: "https://fractal.co",
+            GRAPHQL_HTTP_URL: "https://prod-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://prod-database.fractal.co/v1/graphql",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_PROD_PUBLIC_KEY,

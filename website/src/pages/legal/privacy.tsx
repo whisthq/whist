@@ -29,8 +29,8 @@ PRIVACY POLICY
                     (“Fractal”, “we”, “us”, or “our”). When you visit our
                     website,
 {" "}
-                    <a href="https://www.tryfractal.com">
-www.tryfractal.com
+                    <a href="https://www.fractal.co">
+www.fractal.co
 </a>
 ,
                     and use our services, you trust us with your personal
@@ -39,8 +39,8 @@ www.tryfractal.com
                     privacy. This privacy policy explains what happens to the
                     personal information we collect through our website (such as
 {" "}
-                    <a href="https://www.tryfractal.com">
-www.tryfractal.com
+                    <a href="https://www.fractal.co">
+www.fractal.co
 </a>
                     ), and/or any related services, sales, marketing or events
                     (we refer to them collectively in this privacy policy as the
@@ -50,8 +50,8 @@ www.tryfractal.com
                     with regards to your personal information, please contact us
                     at
 {" "}
-                    <a href="mailto: support@tryfractal.com">
-                        support@tryfractal.com
+                    <a href="mailto: support@fractal.co">
+                        support@fractal.co
                     </a>
                     . We encourage you to read through this important
                     information. If there are any terms in this privacy policy
@@ -314,8 +314,8 @@ We process your information with your
                         your name and testimonial. If you wish to update or
                         delete your testimonial, please contact us at
 {" "}
-                        <a href="mailto: support@tryfractal.com">
-                            support@tryfractal.com
+                        <a href="mailto: support@fractal.co">
+                            support@fractal.co
                         </a>
 {" "}
                         and be sure to include your name, testimonial location,
@@ -613,8 +613,8 @@ We do not knowingly collect data from, or
                     aware of any data we have collected from children under age
                     18, please contact us at
 {" "}
-                    <a href="mailto: support@tryfractal.com">
-                        support@tryfractal.com
+                    <a href="mailto: support@fractal.co">
+                        support@fractal.co
                     </a>
                     .
                 </p>
@@ -686,8 +686,8 @@ You may review, change, or terminate your
                     . If you have questions or comments about your privacy
                     rights, you may email us at
 {" "}
-                    <a href="mailto: support@tryfractal.com">
-                        support@tryfractal.com
+                    <a href="mailto: support@fractal.co">
+                        support@fractal.co
                     </a>
                     .
                 </p>
@@ -703,8 +703,8 @@ Account Information
                         Log into your account settings and update your user
                         account, or contact us at
 {" "}
-                        <a href="mailto: support@tryfractal.com">
-                            support@tryfractal.com
+                        <a href="mailto: support@fractal.co">
+                            support@fractal.co
                         </a>
                         .
                     </p>
@@ -715,7 +715,7 @@ Account Information
                         retained in our files to prevent fraud, troubleshoot
                         problems, assist with any investigations, enforce our
 {" "}
-                        <a href="https://www.tryfractal.com/termsofservice">
+                        <a href="https://www.fractal.co/termsofservice">
                             Terms of Service
                         </a>
 {" "}
@@ -754,8 +754,8 @@ Account Information
                         the site, access your account settings and update
                         preferences, or contact us by email at
 {" "}
-                        <a href="mailto: support@tryfractal.com">
-                            support@tryfractal.com
+                        <a href="mailto: support@fractal.co">
+                            support@fractal.co
                         </a>
                         .
                     </p>
@@ -853,8 +853,8 @@ Yes, we will update this policy as necessary
                     If you have questions or comments about this policy, you may
                     email us at
 {" "}
-                    <a href="mailto: support@tryfractal.com">
-                        support@tryfractal.com
+                    <a href="mailto: support@fractal.co">
+                        support@fractal.co
                     </a>
 {" "}
                     or by post to:

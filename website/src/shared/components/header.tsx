@@ -96,13 +96,13 @@ const Header = (props: {
                                 About
                             </Link>
                             <a
-                                href="mailto: support@tryfractal.com"
+                                href="mailto: support@fractal.co"
                                 className="header-link"
                             >
                                 Support
                             </a>
                             <a
-                                href="mailto: careers@tryfractal.com"
+                                href="mailto: careers@fractal.co"
                                 className="header-link"
                             >
                                 Careers
@@ -249,13 +249,13 @@ const Header = (props: {
                                             About
                                         </Link>
                                         <a
-                                            href="mailto: support@tryfractal.com"
+                                            href="mailto: support@fractal.co"
                                             className="mobile-header-link"
                                         >
                                             Support
                                         </a>
                                         <a
-                                            href="mailto: careers@tryfractal.com"
+                                            href="mailto: careers@fractal.co"
                                             className="mobile-header-link"
                                         >
                                             Careers

@@ -26,8 +26,8 @@ TERMS OF SERVICE
                         PLEASE READ THESE TERMS OF SERVICE (COLLECTIVELY WITH
                         FRACTAL'S PRIVACY POLICY
 {" "}
-                        <a href="https://www.tryfractal.com/privacy">
-                            www.tryfractal.com/privacy
+                        <a href="https://www.fractal.co/privacy">
+                            www.fractal.co/privacy
                         </a>
 {" "}
                         AND
@@ -38,8 +38,8 @@ TERMS OF SERVICE
                         , THE "TERMS OF SERVICE ") FULLY AND CAREFULLY BEFORE
                         USING
 {" "}
-                        <a href="https://www.tryfractal.com">
-                            WWW.TRYFRACTAL.COM
+                        <a href="https://www.fractal.co">
+                            WWW.FRACTAL.CO
                         </a>
 {" "}
                         (THE "SITE"), ANY DESKTOP OR MOBILE APPLICATIONS
@@ -805,8 +805,8 @@ Product
                         Stamford, CT 06901 
 {' '}
 <br />
-                        <a href="mailto: support@tryfractal.com">
-                            support@tryfractal.com
+                        <a href="mailto: support@fractal.co">
+                            support@fractal.co
                         </a>
 {" "}
                         <br />
@@ -925,8 +925,8 @@ Notices
                         agree to try to resolve the dispute informally by
                         opening a support ticket via email to
 {" "}
-                        <a href="mailto: support@tryfractal.com">
-                            support@tryfractal.com
+                        <a href="mailto: support@fractal.co">
+                            support@fractal.co
                         </a>
                         . We will try to resolve the dispute informally. If a
                         dispute is not resolved within fifteen days of
@@ -964,8 +964,8 @@ Notices
                         You can opt-out of the requirement to arbitrate by
                         emailing
 {" "}
-                        <a href="mailto: support@tryfractal.com">
-                            support@tryfractal.com
+                        <a href="mailto: support@fractal.co">
+                            support@fractal.co
                         </a>
 {" "}
                         with the subject line “Arbitration Opt-Out” within 30

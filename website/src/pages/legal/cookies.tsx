@@ -28,7 +28,7 @@ COOKIE POLICY
                     website,
 {" "}
                     <HashLink to="/privacy#top">
-www.tryfractal.com
+www.fractal.co
 </HashLink>
 ,
                     including any other media form, media channel, mobile
@@ -215,8 +215,8 @@ Privacy Policy
                     If you are looking for more information, you can contact us
                     via email at
 {" "}
-                    <a href="mailto: support@tryfractal.com">
-                        support@tryfractal.com
+                    <a href="mailto: support@fractal.co">
+                        support@fractal.co
                     </a>
                     .
                 </p>
