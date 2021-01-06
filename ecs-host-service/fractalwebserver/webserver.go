@@ -17,7 +17,7 @@ import (
 
 const devHost = "https://dev-server.fractal.co"
 const stagingHost = "https://staging-server.fractal.co"
-const productionHost = "https://main-server.fractal.co"
+const productionHost = "https://prod-server.fractal.co"
 
 const authEndpoint = "/host_service/auth"
 const heartbeatEndpoint = "/host_service/heartbeat"
