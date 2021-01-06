@@ -6,7 +6,7 @@
 name: "Fractal: Build & Publish"
 
 on:
-    push:
+    pull_request:
         branches:
             - master
             - staging
@@ -49,74 +49,6 @@ jobs:
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
     # Runs if config succeeds and branch is in ["master"].
-
-    container-images-publish-images-ghcr:
-        name: "Container Images: Build & Publish Images to GitHub Container Registry"
-        runs-on: ubuntu-20.04
-        outputs:
-            task-definitions-matrix: ${{ steps.package-matrix.outputs.task-definitions-matrix }}
-        needs: [fractal-publish-build-config]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
-
-        env:
-            aws-placeholder-region: us-east-1
-            aws-regions: >
-                us-east-1
-                us-west-1
-                ca-central-1
-            # disabled us-east-2 and us-west-2 for the time being
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  submodules: recursive
-
-            - name: Walk repo to find all dockerfiles and store path as env variable
-              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
-
-            - name: Build release protocol # No need to run this for debug, just for release
-              run: ./protocol/build_protocol.sh release
-
-            - name: Build container images
-              run: |
-                  for app in ${{ env.apps }}
-                  do
-                    ./container-images/build_container_image.sh $app
-                  done
-
-            - name: Push container images
-              run: |
-                  for app in ${{ env.apps }}
-                  do
-                    ./container-images/push_container_image.sh $app
-                  done
-              env:
-                  GH_USERNAME: ${{ secrets.GHA_USERNAME }}
-                  GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-
-            - name: Package app names and regions into json for ecs-task-definitions strategy matrices
-              id: package-matrix
-              run: |
-                  matrix='{"aws-region": [], "app": []}'
-                  for region in ${{ env.aws-regions }}
-                  do
-                    matrix=$(echo $matrix | jq -c ".\"aws-region\" += [\"$region\"]")
-                  done
-
-                  for app in ${{ env.apps }}
-                  do
-                    matrix=$(echo $matrix | jq -c ".\"app\" += [\"$app\"]")
-                  done
-
-                  echo "::set-output name=task-definitions-matrix::$matrix"
-
-            - name: Notify Slack
-              run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to production via Docker push to GitHub Container Registry :github:\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # ECS Host Service: Build & Publish to AWS S3
     # Build and publish the ECS host service to an S3 bucket from which EC2 hosts pull.
@@ -170,77 +102,6 @@ jobs:
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":athletic_shoe: ECS Host Service build pushed to production via S3 upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
-    # ECS Task Definitions: Render & Deploy Task Definitions to ECS
-    # Render and deploy the app task definitions to ECS.
-    # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds.
-
-    ecs-task-definitions-deploy-task-definitions-ecs:
-        name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
-        runs-on: ubuntu-20.04
-        needs:
-            [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
-
-        strategy:
-            matrix: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-matrix) }}
-
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
-
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ECS_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
-                  aws-region: ${{ matrix.aws-region }}
-
-            # TODO: this can be done way more elegantly, now that it's a monorepo
-            - name: Retrieve master git hash as env variable
-              run: echo "containers_gha_sha=$(git ls-remote https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/fractal | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
-            - name: Store GitHub container registry base uri as env variable
-              run: echo "ghcr_base_uri=ghcr.io" >> $GITHUB_ENV
-
-            - name: Store taskdef name as env variable
-              run: echo "taskdef_name=$(echo fractal/${{ matrix.app }} | tr / -)" >> $GITHUB_ENV
-
-            - name: Generate taskdef and store JSON path to variable
-              working-directory: ecs-task-definitions
-              run: |
-                  taskdef_json_filename=$(./generate-taskdef.sh $taskdef_name)
-                  echo "taskdef_json=ecs-task-definitions/$taskdef_json_filename" >> $GITHUB_ENV
-
-            - name: Render Amazon ECS task Definitions
-              id: render-web-container
-              uses: aws-actions/amazon-ecs-render-task-definition@v1
-              with:
-                  container-name: fractal-container
-                  task-definition: ${{ env.taskdef_json }}
-                  image: ${{ env.ghcr_base_uri }}/fractal/${{ matrix.app }}:${{ env.containers_gha_sha }}
-
-            - name: Deploy to Amazon ECS service
-              uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-              with:
-                  task-definition: ${{ steps.render-web-container.outputs.task-definition }}
-
-    # ECS Task Definitions: Notify Slack
-    # Notify Slack after rendering and deploying all the task definitions.
-    # Runs if deploy-task-definitions-ecs succeeds.
-
-    ecs-task-definitions-notify-slack:
-        name: "ECS Task Definitions: Notify Slack"
-        needs: [ecs-task-definitions-deploy-task-definitions-ecs]
-        if: success()
-        runs-on: ubuntu-20.04
-        steps:
-            - name: Notify Slack
-              run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to production via ECS upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Main Webserver: Deploy to Heroku
     # Push the main-webserver subtree to the appropriate Heroku app.
