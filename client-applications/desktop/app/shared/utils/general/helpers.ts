@@ -8,7 +8,7 @@ export const openExternal = (url: string) => {
 
     Arguments:
         url (string): Link URL to open
-    
+
     Returns:
         void
     */
@@ -34,7 +34,7 @@ export const searchArrayByKey = (
             arr (Record<string, any>[]): Array of JSON objects
             key (string): The key to search for
             target (string | number | boolean): The desired value of the key
-        
+
         Returns:
             map: { value: Record<string, any>, index: number }
     */
@@ -70,9 +70,9 @@ export const updateArrayByKey = (
             arr (Record<string, any>[]): Array of JSON objects
             key (string): The key to search for
             target (string | number | boolean): The desired value of the key
-            body: (Record<string, any>): New JSON object. 
+            body: (Record<string, any>): New JSON object.
                 NOTE: Does not need to contain all fields of JSON object, only the ones you want to replace.
-        
+
         Returns:
             map: { array: Record<string, any>[], index: number }
     */
