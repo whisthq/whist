@@ -14,8 +14,8 @@ export const execPromise = (
     Arguments:
         command (string) : Shell command (e.g. echo "Hello world")
         path (string) : Absolute path for working directory in which to run shell command
-        targetOS (OperatingSystem[]) : Operating systems on which to run this command 
-    
+        targetOS (OperatingSystem[]) : Operating systems on which to run this command
+
     Returns:
         promise : Promise
     */
@@ -43,7 +43,7 @@ export const setAWSRegion = () => {
         Runs AWS ping shell script (tells us which AWS server is closest to the client)
 
     Arguments:
-    
+
     Returns:
         promise : Promise
     */

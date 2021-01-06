@@ -53,7 +53,7 @@ export const generateMessage = (): string => {
         Returns a random loading message (defined above)
 
     Arguments:
-    
+
     Returns:
         message (string) : Loading message
     */

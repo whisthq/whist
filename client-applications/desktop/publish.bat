@@ -3,10 +3,10 @@
 setlocal enabledelayedexpansion
 
 set "map=%*"
-call :gettoken -branch branch 
-call :gettoken -version version 
-call :gettoken -bucket bucket 
-call :gettoken -publish publish 
+call :gettoken -branch branch
+call :gettoken -version version
+call :gettoken -bucket bucket
+call :gettoken -publish publish
 
 if "%1%" == "--help" (
     call :printhelp
@@ -20,7 +20,7 @@ if "%1%" == "--help" (
     nmake FractalClient
     cd ..\client-applications\desktop
     rmdir /S/Q protocol-build
-    mkdir protocol-build 
+    mkdir protocol-build
     cd protocol-build
     mkdir desktop
     mkdir desktop\loading
@@ -34,7 +34,7 @@ if "%1%" == "--help" (
     yarn -i
 
     if "%publish%" == "true" (
-        yarn package-ci 
+        yarn package-ci
         REM yarn package-ci && curl -X POST -H Content-Type:application/json  -d "{ \"branch\" : \"%1\", \"version\" : \"%2\" }" https://staging-server.fractal.co/version
     ) else (
         yarn package

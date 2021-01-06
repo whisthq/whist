@@ -21,8 +21,8 @@ function printhelp {
 }
 
 if [[ "$1" == "--help" ]]
-then 
-     printhelp 
+then
+     printhelp
 else
      branch=${branch:-dev}
      version=${version:-1.0.0}
@@ -44,8 +44,8 @@ else
      cmake . -DCMAKE_BUILD_TYPE=Release
      make FractalClient
      cd ../client-applications/desktop
-     rm -rf protocol-build 
-     mkdir protocol-build 
+     rm -rf protocol-build
+     mkdir protocol-build
      cd protocol-build
      mkdir desktop
      cd ..
@@ -77,7 +77,7 @@ else
 
      if [[ "$publish" == "true" ]]
      then
-     yarn package-ci 
+     yarn package-ci
      else
      yarn package
      fi
