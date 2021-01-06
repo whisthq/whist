@@ -51,7 +51,7 @@ def cancel_helper(user, feedback):
     try:
         message = Mail(
             from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
-            to_emails="support@tryfractal.com",
+            to_emails="support@fractal.co",
             subject=title,
             html_content=feedback,
         )
@@ -128,7 +128,7 @@ def feedback_helper(user, feedback, feedback_type):
     try:
         message = Mail(
             from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
-            to_emails="support@tryfractal.com",
+            to_emails="support@fractal.co",
             subject=title,
             html_content="<div>" + feedback + "</div>",
         )
@@ -170,7 +170,7 @@ def trial_start_helper(user, location, code):
     try:
         message = Mail(
             from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
-            to_emails="support@tryfractal.com",
+            to_emails="support@fractal.co",
             subject="[FREE TRIAL START] A new user, "
             + user
             + ", just signed up for the free trial.",
@@ -218,7 +218,7 @@ def computer_ready_helper(user, date, code, location):
     try:
         message = Mail(
             from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
-            to_emails="support@tryfractal.com",
+            to_emails="support@fractal.co",
             subject="" + user + " has signed up for a Fractal paid plan.",
             html_content="<div>{} has signed up for a Fractal paid plan.</div>".format(user),
         )

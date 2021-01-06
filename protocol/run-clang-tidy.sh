@@ -62,8 +62,7 @@ clang-tidy -header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixe
 # ---- clean up yaml file before running replacements ----
 
 # deletes all clang-diagnostic-error entries
-echo "Deleting all clang-diagnostic-error entries"
-yq d -i $yamlFolder/$fixesFilename 'Diagnostics.(DiagnosticName==clang-diagnostic-error)'
+perl -i -p -000 -e 's/  - DiagnosticName:[ ]*clang-diagnostic-error[^\n]*\n(    [^\n]*\n)*//g' ${yamlFolder}/${fixesFilename}
 
 # get current directory path based on OS
 if [[ $isWindows == 1 ]]
@@ -77,14 +76,15 @@ fi
 thisDirectory="${thisDirectory}/"
 
 # remove any diagnostic entries with excluded folder paths - some remain because of roundabout access (..)
-perl -i -p -000 -e 's/  - DiagnosticName:[^\n]*\n(    [^\n]*\n)*[ ]*FilePath: '"'"'?[:\/\\\w\.]*(include|lib|docs|sentry-native|share|nvidia-linux|fractalgetopt\.[ch])[:\/\\\w\.]*'"'"'?\n(    [^\n]*(\n|$))*//g' ${yamlFolder}/${fixesFilename}
+perl -i -p -000 -e 's/  - DiagnosticName:[^\n]*\n(    [^\n]*\n)*[ ]*FilePath:[ ]*'"'"'?[:\/\\\w\.-]*(include|lib|docs|sentry-native|share|nvidia-linux|fractalgetopt\.[ch])[:\/\\\w\.]*'"'"'?\n(    [^\n]*(\n|$))*//g' ${yamlFolder}/${fixesFilename}
 
 if [[ $CICheck == 1 ]]
 then
-    numSuggestions=$(yq r -l ${yamlFolder}/${fixesFilename} Diagnostics)
-    if [[ $numSuggestions != 0 ]]
+    numLines=$(cat ${yamlFolder}/${fixesFilename} | wc -l | tr -d ' ') # wc on mac has leading whitespace for god knows what reason
+    # A yaml file with no format issues should have exactly 4 lines
+    if [[ $numLines != 4 ]]
     then
-        echo "format issues found"
+        echo "Format issues found. See ${yamlFolder}/${fixesFilename}"
         exit 1
     fi
     echo "clang-tidy successful"

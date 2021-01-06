@@ -199,6 +199,7 @@ const Loading = (props: {
                     h: 600,
                     p: portInfo,
                     k: secretKey,
+                    n: `Fractalized ${desiredAppID}`,
                     ...(pngFile && { i: pngFile }),
                 }
 

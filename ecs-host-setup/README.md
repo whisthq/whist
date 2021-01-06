@@ -1,5 +1,7 @@
 # Fractal ECS Host Setup
 
+This subfolder contains the scripts needed to help you set up an EC2 development instance for developing Fractal, and for setting up an EC2 AMI (Amazon Machine Image), which is a fixed operating system image which is deployed on our production EC2 instances. Generating AMIs and using them in production result in faster deployment, since the AMIs are pre-created, and ensure that all of our production EC2 instances run the same exact operating system.
+
 This repository contains the scripts to set up an AWS EC2 host machine to host Fractal containers. The `setup_ubuntu20_host.sh` script is intended for setting up a general host for development, while the `setup_ubuntu20_ami_host.sh` script sets up an EC2 host and stores it as an AMI (Amazon Machine Image) for programmatic deployment. To use either of the scripts:
 
 First, create an Ubuntu Server 20.04 g3s.xlarge EC2 instance (which will later be linked with ECS) - the **g3** instance type is required for GPU compatibility with our containers and streaming technology. Before lauching, make sure to select 32GB of storage space in the "Add Storage" section, as the default 8GB is not enough to build the protocol and the base image. Also before launching, add your EC2 instance to the the security group **container-testing** if on AWS region **us-east-1**, or **fractal-containerized-protocol-group** if on AWS region **us-east-2** in the "Security Groups" section. Most people set up their dev instance on **us-east-1**, so it is recommended that you do the same.
@@ -39,6 +41,10 @@ curl --silent --location --request PUT 'https://{YOUR_DEV_INSTANCE_IP_ADDR}/set_
 You may need the `--insecure` flag as well. Make sure to replace `{YOUR_DEV_INSTANCE_IP_ADDR}` with the actual IP address of your dev instance, which you can get by running `curl ipinfo.io` inside the instance. Note: you will need to run this `curl` command while the `ecs-host-service` and application container are running every time you spin up a new application container.
 
 Now, try starting a Fractal client to connect to the Fractal server by following the instructions in `protocol/desktop/README.md`. If a window pops up that streams xterm/whatever the base application is, then you are set!
+
+## Copying AWS AMIs Across Regions
+
+If you have created an AMI in a specific AWS region (i.e. `us-east-1`) which you would like to replicate in a different AWS region (i.e. `us-west-1`), you can either re-run the scripts in a different region and start the process from scratch, or you can copy over your image. For complete details on how to do this process, see our [ECS Documentation on Notion](https://www.notion.so/tryfractal/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d4c3d96ac2a65eb31761b&p=ca4fdec782894072a6dd63f32b494e1d).
 
 ## Design Decisions
 

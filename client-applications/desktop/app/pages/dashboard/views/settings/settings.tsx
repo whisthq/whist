@@ -26,7 +26,7 @@ const Settings = (props: { username: string; externalApps: ExternalApp[] }) => {
     const adminUsername =
         username &&
         username.indexOf("@") > -1 &&
-        username.split("@")[1] === "tryfractal.com"
+        username.split("@")[1] === "fractal.co"
 
     useEffect(() => {
         const Store = require("electron-store")

@@ -15,9 +15,9 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
-const devHost = "https://dev-webserver.tryfractal.com"
-const stagingHost = "https://staging-webserver.tryfractal.com"
-const productionHost = "https://main-webserver.tryfractal.com"
+const devHost = "https://dev-server.fractal.co"
+const stagingHost = "https://staging-server.fractal.co"
+const productionHost = "https://prod-server.fractal.co"
 
 const authEndpoint = "/host_service/auth"
 const heartbeatEndpoint = "/host_service/heartbeat"

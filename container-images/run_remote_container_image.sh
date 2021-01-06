@@ -5,12 +5,11 @@ set -Eeuo pipefail
 app_path=${1%/}
 repo_name=fractal/$app_path
 remote_tag=$2
-region=${3:-us-east-1}
-mount=${4:-}
-ecr_uri=$(aws ecr get-authorization-token --region $region --query authorizationData[0].proxyEndpoint --output text | cut -c 9-)
-image=$ecr_uri/$repo_name:$remote_tag
+mount=${3:-}
+ghcr_uri=ghcr.io
+image=$ghcr_uri/$repo_name:$remote_tag
 
-aws ecr get-login-password --region $region | docker login --username AWS --password-stdin $ecr_uri
+echo $GH_PAT | docker login --username $GH_USERNAME --password-stdin $ghcr_uri
 
 docker pull $image
 

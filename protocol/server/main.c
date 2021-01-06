@@ -35,6 +35,8 @@ Includes
 #endif
 
 #include "../fractal/utils/logging.h"
+#include "../fractal/utils/string_utils.h"
+#include "../fractal/utils/window_name.h"
 #include "../fractal/core/fractalgetopt.h"
 #include "../fractal/audio/audiocapture.h"
 #include "../fractal/audio/audioencode.h"
@@ -1144,29 +1146,28 @@ int parse_args(int argc, char* argv[]) {
             }
             case 'i': {
                 printf("Identifier passed in: %s\n", optarg);
-                if (strlen(optarg) > FRACTAL_IDENTIFIER_MAXLEN) {
+                if (!safe_strncpy(identifier, optarg, FRACTAL_IDENTIFIER_MAXLEN + 1)) {
                     printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
                            (unsigned long)strlen(optarg), FRACTAL_IDENTIFIER_MAXLEN);
                     return -1;
                 }
-                strncpy(identifier, optarg, FRACTAL_IDENTIFIER_MAXLEN);
-                identifier[FRACTAL_IDENTIFIER_MAXLEN] = 0;
                 break;
             }
             case 'w': {
                 printf("Webserver URL passed in: %s\n", optarg);
-                if (strlen(optarg) > MAX_WEBSERVER_URL_LEN) {
+                if (!safe_strncpy(webserver_url, optarg, MAX_WEBSERVER_URL_LEN + 1)) {
                     printf("Webserver url passed in is too long! Has length %lu but max is %d.\n",
                            (unsigned long)strlen(optarg), MAX_WEBSERVER_URL_LEN);
                 }
-                strncpy(webserver_url, optarg, MAX_WEBSERVER_URL_LEN);
-                webserver_url[MAX_WEBSERVER_URL_LEN] = 0;
                 break;
             }
             case 'e': {
                 // only log "production" and "staging" env sentry events
                 if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
-                    strcpy(sentry_environment, optarg);
+                    if (!safe_strncpy(sentry_environment, optarg, FRACTAL_ENVIRONMENT_MAXLEN)) {
+                        printf("Sentry environment is too long: %s\n", optarg);
+                        return -1;
+                    }
                     sentry_set_tag("runner", "server");
                     using_sentry = true;
                 }
@@ -1312,9 +1313,13 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Receiving packets...");
 
     init_clipboard_synchronizer();
+    init_window_name_getter();
 
     clock ack_timer;
     start_timer(&ack_timer);
+
+    clock window_name_timer;
+    start_timer(&window_name_timer);
 
     while (!exiting) {
         if (get_timer(ack_timer) > 5) {
@@ -1358,6 +1363,32 @@ int main(int argc, char* argv[]) {
                 }
             }
             free(fmsg_response);
+        }
+
+        if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
+            char name[WINDOW_NAME_MAXLEN];
+            if (get_focused_window_name(name) == 0) {
+                LOG_INFO("Sending window title to client: '%s'\n", name);
+                size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
+                FractalServerMessage* fmsg_response = malloc(fsmsg_size);
+                fmsg_response->type = SMESSAGE_WINDOW_TITLE;
+                memcpy(&fmsg_response->window_title, name, sizeof(name));
+                if (read_lock(&is_active_rwlock) != 0) {
+                    LOG_ERROR("Failed to read-acquire is active RW lock.");
+                } else {
+                    if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response, fsmsg_size) <
+                        0) {
+                        LOG_WARNING("Could not broadcast window title Message");
+                    } else {
+                        LOG_INFO("Sent window title message!");
+                    }
+                    if (read_unlock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-release is active RW lock.");
+                    }
+                }
+                free(fmsg_response);
+            }
+            start_timer(&window_name_timer);
         }
 
         if (get_timer(last_ping_check) > 20.0) {
@@ -1439,6 +1470,7 @@ int main(int argc, char* argv[]) {
 
     destroy_input_device(input_device);
     destroy_clipboard_synchronizer();
+    destroy_window_name_getter();
 
     SDL_WaitThread(send_video_thread, NULL);
     SDL_WaitThread(send_audio_thread, NULL);

@@ -104,15 +104,15 @@ jobs:
 
             ############################# Unix Configuration Steps END #############################
 
-            - name: Retrieve Desktop App Version from Config Database
+            - name: Retrieve Desktop App Version from Config Database, Increment Minor Version, and Update Config Database Version
               shell: bash
               run: |
-                  # curl GraphQL API
+                  # curl GraphQL API to retrieve version number from config database
                   curl -X POST \
                   -H 'Content-Type: application/json' \
                   -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
                   --data '{ "query": "query { desktop_app_version { commit_hash major minor micro } }" }' \
-                  https://config-database.tryfractal.com/v1/graphql > response.json
+                  https://config-database.fractal.co/v1/graphql > response.json
 
                   # parse JSON into major.minor.micro
                   MAJOR=$(cat response.json | jq '.data.desktop_app_version[0].major')
@@ -130,6 +130,13 @@ jobs:
                   rm -rf response.json
                   echo "new_micro_version=${NEW_MICRO}" >> $GITHUB_ENV
                   echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
+
+                  # curl GraphQL API to set new version number in config database
+                  curl -X POST \
+                  -H 'Content-Type: application/json' \
+                  -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
+                  --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk ( pk_columns: { id: 1 } _set: { micro: ${{ env.new_micro_version }}, commit_hash: ${{ env.GITHUB_SHA }} }, ) { id micro commit_hash } }\" }" \
+                  https://config-database.fractal.co/v1/graphql
 
             - name: Select AWS S3 Bucket to Publish to Based on GHA Machine OS
               shell: bash
@@ -167,21 +174,13 @@ jobs:
                   # Build the Fractal protocol and package the Electron application
                   cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
 
-    update-graphql-and-notify-slack:
-        name: Update Electron Application Version in Config Database via GraphQL API and Notify Slack
+    notify-slack:
+        name: Notify Slack
         needs: [build-and-publish-desktop-applications]
         if: success()
         runs-on: ubuntu-20.04
 
         steps:
-            - name: Update Version in Config Database via GraphQL API
-              run: |
-                  curl -X POST \
-                  -H 'Content-Type: application/json' \
-                  -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
-                  --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk ( pk_columns: { id: 1 } _set: { micro: ${{ env.new_micro_version }}, commit_hash: ${{ env.GITHUB_SHA }} }, ) { id micro commit_hash } }\" }" \
-                  https://config-database.tryfractal.com/v1/graphql
-
             - name: Notify Slack
               run: |
                   curl -X POST \
