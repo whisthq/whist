@@ -251,18 +251,18 @@ jobs:
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: |
-            ( 
+            (
                 contains(
-                    fromJSON('["master"]'), 
+                    fromJSON('["master"]'),
                     needs.fractal-publish-build-config.outputs.branch
                 ) && success()
-            ) || 
+            ) ||
             (
                 contains(
                     fromJSON('["staging"]'),
                     needs.fractal-publish-build-config.outputs.branch
                 ) && always()
-            ) || 
+            ) ||
             (
                 contains(
                     fromJSON('["dev"]'),
