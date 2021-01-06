@@ -64,4 +64,4 @@ To ensure that this extension is used over other extensions you may have install
 
 ## Contributing
 
-Before contributing, please familiarize yourself with our [Coding Philosophy](https://www.notion.so/tryfractal/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615). Unless otherwise specified, contributors should branch off `dev` and PR back into `dev`. Because all three of `dev`, `staging` and `master` auto-deploy the their respective Netlify sites, pushing to `staging` and `master` is blocked by non-code owners.
+Before contributing, please familiarize yourself with our [Coding Philosophy](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b). Unless otherwise specified, contributors should branch off `dev` and PR back into `dev`. Because all three of `dev`, `staging` and `master` auto-deploy the their respective Netlify sites, pushing to `staging` and `master` is blocked by non-code owners.
