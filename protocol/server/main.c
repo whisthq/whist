@@ -1376,8 +1376,8 @@ int main(int argc, char* argv[]) {
                 if (read_lock(&is_active_rwlock) != 0) {
                     LOG_ERROR("Failed to read-acquire is active RW lock.");
                 } else {
-                    if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response, fsmsg_size) <
-                        0) {
+                    if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
+                                             (int)fsmsg_size) < 0) {
                         LOG_WARNING("Could not broadcast window title Message");
                     } else {
                         LOG_INFO("Sent window title message!");
