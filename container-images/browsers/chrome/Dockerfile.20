@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     fonts-liberation \
     xdg-utils \
     && apt-get autoremove -y \
-    && apt-get clean  
+    && apt-get clean
 
 # Install Google Chrome
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -30,7 +30,7 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable \
     && apt-get autoremove -y \
-    && apt-get clean 
+    && apt-get clean
 
 # Set default browser
 RUN su - fractal -c \

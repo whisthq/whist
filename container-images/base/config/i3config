@@ -85,13 +85,13 @@ hide_edge_borders both
 # for_window [class="Youtube-dl-gui"]                     floating enable
 # replacing the title or class by that of the application window desired
 #
-# Sometimes a combination of title and class is needed. We can also use 
+# Sometimes a combination of title and class is needed. We can also use
 # the for_window setting to force size and position, if needed.
 for_window [window_role="pop-up"]                       floating enable
-for_window [window_role="bubble"]                       floating enable 
+for_window [window_role="bubble"]                       floating enable
 for_window [window_role="task_dialog"]                  floating enable
 for_window [window_role="Preferences"]                  floating enable
-for_window [window_type="dialog"]                       floating enable 
+for_window [window_type="dialog"]                       floating enable
 for_window [window_type="menu"]                         floating enable
 
 # Make borders for floating windows look more modern
