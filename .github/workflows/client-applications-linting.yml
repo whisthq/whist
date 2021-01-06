@@ -5,7 +5,7 @@
 
 name: "Client Applications: Linting"
 
-helloworld
+helloworld: "goodbye cruel world"
 
 on:
     pull_request:
