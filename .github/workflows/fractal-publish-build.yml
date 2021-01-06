@@ -58,7 +58,7 @@ jobs:
         name: "ECS Host Service: Build & Publish to AWS S3"
         runs-on: ubuntu-20.04
         needs:
-            [fractal-publish-build-config, container-images-publish-images-ghcr]
+            [fractal-publish-build-config]
         if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
         env:
             binary-location: ecs-host-service/build
@@ -110,7 +110,7 @@ jobs:
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         needs:
-            [fractal-publish-build-config, container-images-publish-images-ghcr]
+            [fractal-publish-build-config]
         if: |
             (
                 contains(
