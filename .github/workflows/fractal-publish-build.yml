@@ -259,6 +259,12 @@ jobs:
             ) || 
             (
                 contains(
+                    fromJSON('["staging"]'),
+                    needs.fractal-publish-build-config.outputs.branch
+                ) && always()
+            ) || 
+            (
+                contains(
                     fromJSON('["dev"]'),
                     needs.fractal-publish-build-config.outputs.branch
                 ) && always()
@@ -286,8 +292,10 @@ jobs:
               run: |
                   if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
                       HEROKU_APP_NAME=fractal-dev-server
-                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == master ]]; then
+                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
                       HEROKU_APP_NAME=fractal-staging-server
+                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == master ]]; then
+                      HEROKU_APP_NAME=fractal-prod-server
                   else
                       echo 'Error: Invalid branch' && false
                   fi
@@ -309,5 +317,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":rocket: Main webserver for branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\` :heroku:\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":rocket: Webserver for branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\` :heroku:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
