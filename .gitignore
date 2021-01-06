@@ -1,6 +1,8 @@
 # Tags
 tags
 **/tags
+**/tags.lock
+**/tags.temp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
