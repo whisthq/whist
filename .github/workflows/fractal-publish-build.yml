@@ -182,7 +182,7 @@ jobs:
         if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
 
         strategy:
-            matrix: ${{ fromJSON(needs.container-images-publish-base-image-ghcr.outputs.task-definitions-matrix) }}
+            matrix: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-matrix) }}
 
         steps:
             - name: Checkout Git Repository
