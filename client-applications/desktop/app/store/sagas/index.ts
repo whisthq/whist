@@ -43,7 +43,7 @@ function* refreshAccess() {
 
 function* fetchExternalApps() {
     /*
-        Fetches metadata about all external apps Fractal allows users to connect 
+        Fetches metadata about all external apps Fractal allows users to connect
         to (i.e. cloud storage apps), and stores in state.MainReducer.apps.externalApps
     */
     const state = yield select()
@@ -67,7 +67,7 @@ function* fetchExternalApps() {
 
 function* fetchConnectedApps() {
     /*
-        Fetches list of the names of all apps the current user has connected to, and 
+        Fetches list of the names of all apps the current user has connected to, and
         stores list in state.MainReducer.apps.connectedApps
     */
     const state = yield select()
@@ -91,7 +91,7 @@ function* fetchConnectedApps() {
 
 function* validateAccessToken(action: { accessToken: string }) {
     /*
-        Validates an access token used to login a user, then call functions to fetch 
+        Validates an access token used to login a user, then call functions to fetch
         external and connected app data
     */
     const { json, success } = yield call(
@@ -137,7 +137,7 @@ function* createContainer(action: {
         Arguments:
             app (string): name of app to launch
             url (string | null): a url to immediately open in Chrome, or null if no specified url
-            test? (boolean): indicates if launching a test container 
+            test? (boolean): indicates if launching a test container
     */
     const test = action.test
     const app = action.app
@@ -353,7 +353,7 @@ function* submitFeedback(action: { feedback: string; feedbackType: string }) {
 
 function* disconnectApp(action: { app: string }) {
     /*
-        Revokes the user's access to an external app, and if successful, deletes the 
+        Revokes the user's access to an external app, and if successful, deletes the
         corresponding app name from state.MainReducer.apps.connectedApps
 
         Arguments:

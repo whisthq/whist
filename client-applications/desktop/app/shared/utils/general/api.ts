@@ -15,7 +15,7 @@ const checkResponse = (response: { status: number }): boolean => {
 
     Arguments:
         response (JSON): HTTP response
-    
+
     Returns:
         success (boolean) : True/false
     */
@@ -37,7 +37,7 @@ const checkJSON = (json: Record<string, any>): boolean => {
 
     Arguments:
         json (JSON): Any JSON object
-    
+
     Returns:
         success (boolean) : True if not undefined, false otherwise
     */
@@ -59,7 +59,7 @@ export const apiPost = async (
         body (JSON) : POST request body
         token (string) : Access token
         webserver (string) : HTTP URL (e.g. https://prod-server.fractal.co)
-    
+
     Returns:
         { json, success } (JSON) : Returned JSON of POST request and success True/False
     */
@@ -103,7 +103,7 @@ export const apiGet = async (
         endpoint (string) : HTTP endpoint (e.g. /account/login)
         token (string) : Access token
         webserver (string) : HTTP URL (e.g. https://prod-server.fractal.co)
-    
+
     Returns:
         { json, success } (JSON) : Returned JSON of GET request and success True/False
     */
@@ -146,7 +146,7 @@ export const apiDelete = async (
         endpoint (string) : HTTP endpoint (e.g. /account/login)
         token (string) : Access token
         webserver (string) : HTTP URL (e.g. https://prod-server.fractal.co)
-    
+
     Returns:
         { json, success } (JSON) : Returned JSON of GET request and success True/False
     */

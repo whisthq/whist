@@ -91,7 +91,7 @@ if __name__ == "__main__":
         remote, local = get_latest_filename(args.repo, args.type, s3)
     else:
         remote, local = args.file, TYPES_LOCAL[args.file.split("-")[1]]
-    
+
     s3.Bucket(SECRET_BUCKET).download_file(remote, local)
 
     print(f"Downloaded {remote} to {local}.")
