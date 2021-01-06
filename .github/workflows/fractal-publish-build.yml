@@ -94,7 +94,7 @@ jobs:
                   done
               env:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
-                  GH_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+                  GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
             - name: Package app names and regions into json for ecs-task-definitions strategy matrices
               id: package-matrix
