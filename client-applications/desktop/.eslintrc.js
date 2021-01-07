@@ -1,6 +1,7 @@
 module.exports = {
     extends: ['erb/typescript', 'prettier', 'prettier/react'],
     rules: {
+        'no-console': 'off',
         // A temporary hack related to IDE not resolving correct package.json
         'import/no-extraneous-dependencies': 'off',
         // camelcase is a default typescript setting

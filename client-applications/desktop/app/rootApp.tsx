@@ -1,7 +1,6 @@
 import React, { useEffect, useState, Dispatch } from "react"
 import { connect } from "react-redux"
 import { Route, Switch } from "react-router-dom"
-import { useQuery } from "@apollo/client"
 
 import Login from "pages/login/login"
 import Loading from "pages/loading/loading"
@@ -22,7 +21,7 @@ import {
 } from "store/actions/pure"
 import { setAWSRegion } from "shared/utils/files/exec"
 import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
-import { GET_FEATURED_APPS } from "shared/constants/graphql"
+import { graphqlQuery, GET_FEATURED_APPS } from "shared/constants/graphql"
 
 // import { OperatingSystem } from "shared/types/client"
 import { FractalRoute } from "shared/types/navigation"
@@ -51,7 +50,7 @@ const RootApp = (props: {
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [launched, setLaunched] = useState(false)
 
-    const { data } = useQuery(GET_FEATURED_APPS)
+    const { data } = graphqlQuery(GET_FEATURED_APPS)
 
     const featuredAppData = data
         ? data.hardware_supported_app_images.filter(checkActive)

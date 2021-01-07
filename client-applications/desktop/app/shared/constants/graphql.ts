@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client"
+import { gql, useQuery } from "@apollo/client"
 
 export const GET_FEATURED_APPS = gql`
     query GetFeaturedApps {
@@ -26,3 +26,11 @@ export const GET_BANNERS = gql`
         }
     }
 `
+
+export const graphqlQuery = (query, data) => {
+    const ret = useQuery(query, data)
+    if ("error" in ret) {
+        console.error(ret.error)
+    }
+    return ret
+}
