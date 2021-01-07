@@ -1,14 +1,17 @@
 import React, { useEffect, useState, Dispatch } from "react"
 import { Row, Col } from "react-bootstrap"
 import { connect } from "react-redux"
-import { useQuery } from "@apollo/client"
 
 import LeftColumn from "pages/dashboard/components/leftColumn/leftColumn"
 import Banner from "pages/dashboard/components/banner/banner"
 import Media from "pages/dashboard/components/media/media"
 import App from "pages/dashboard/components/app/app"
 
-import { GET_FEATURED_APPS, GET_BANNERS } from "shared/constants/graphql"
+import {
+    graphqlQuery,
+    GET_FEATURED_APPS,
+    GET_BANNERS,
+} from "shared/constants/graphql"
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import {
     checkIfShortcutExists,
@@ -57,7 +60,7 @@ const Discover = (props: {
     const [mediaData, setMediaData] = useState([])
 
     // GraphQL queries to get Fractal apps and banners
-    const appQuery = useQuery(GET_FEATURED_APPS, {
+    const appQuery = graphqlQuery(GET_FEATURED_APPS, {
         context: {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -65,7 +68,7 @@ const Discover = (props: {
         },
     })
 
-    const bannerQuery = useQuery(GET_BANNERS, {
+    const bannerQuery = graphqlQuery(GET_BANNERS, {
         context: {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
