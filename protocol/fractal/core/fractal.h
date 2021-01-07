@@ -102,7 +102,7 @@ Defines
 
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
-#define USING_XTEST_INPUT_DRIVER false
+#define USING_XTEST_INPUT_DRIVER true
 #define USING_GPU_CAPTURE true
 #define USING_SHM true
 

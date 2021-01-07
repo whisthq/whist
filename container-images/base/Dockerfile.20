@@ -78,6 +78,8 @@ RUN apt-get install --no-install-recommends -y \
     libx11-dev \
     gtk-chtheme \
     xserver-xorg-video-dummy \
+    xinput \
+    evtest \
     dkms \
     i3 \
     awesome \
@@ -410,6 +412,13 @@ RUN ln -sf $(which xterm) /usr/bin/fractal-application
 COPY build-temp/protocol/libsentry.so /usr/share/fractal/bin/libsentry.so
 COPY build-temp/protocol/crashpad_handler /usr/share/fractal/bin/crashpad_handler
 COPY build-temp/protocol/FractalServer /usr/share/fractal/bin/FractalServer
+
+# Install evdev driver.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    xserver-xorg-input-evdev \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Enter the Docker container via the entrypoint script
 CMD ["/usr/share/fractal/docker-entrypoint.sh"]
