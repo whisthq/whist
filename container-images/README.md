@@ -108,7 +108,7 @@ curl  --location --insecure --request PUT 'https://[ec2-ip-address]:4678/set_con
 
 Unless you are using a high-DPI screen, the DPI you set can just be 96. In the future, this request will be packaged into `run_container_image.sh`. Since we are just developing, the port mapping will just be 32262.
 
-Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the container via `./FractalClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360).
+Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the container via `./FractalClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
 
 ## Publishing
 
