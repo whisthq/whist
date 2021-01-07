@@ -95,14 +95,17 @@ If an image has been pushed to ECR and you wish to test it, first ensure the AWS
 As above, `APP` is the path of the application you want to run, `REGION` optionally specifies the ECR region to pull from, with a default of `us-east-1`, and `MOUNT=mount` mounts the submodule. Here `TAG` is the full Git commit hash to run.
 
 ### Connecting to Images
+
 Before connecting to the server protocol that runs in the container, the host service needs to receive a DPI request in order to allow the container to run. For now, the request is made manually, either from your local machine or from the EC2 instance itself. Using cURL, the request would be:
+
 ```
-curl  --location --insecure --request PUT 'https://[ec2-ip-address]:4678/set_container_dpi' --header 'Content-Type: application/json' --data-raw '{  
+curl  --location --insecure --request PUT 'https://[ec2-ip-address]:4678/set_container_dpi' --header 'Content-Type: application/json' --data-raw '{
     "auth_secret": "testwebserverauthsecretdev",
     "host_port": [container-32262-port-mapping],
     "dpi": [requested-dpi]
 }'
 ```
+
 Unless you are using a high-DPI screen, the DPI you set can just be 96. In the future, this request will be packaged into `run_container_image.sh`. Since we are just developing, the port mapping will just be 32262.
 
 Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the container via `./FractalClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: #360.
