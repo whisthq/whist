@@ -13,11 +13,13 @@ x-app: &base-app
 services:
   redis:
     # Matches version being used by staging as of 2020-07-08
-    image: redis:5.0.8
+    image: madflojo/redis-tls # redis:5.0.8
     ports:
       - "7810:6379" # Proxy redis on localhost:7810
     networks:
       - primary
+    volumes:
+      - ../TMP_SAVE:/certs
 
   web:
     <<: *base-app

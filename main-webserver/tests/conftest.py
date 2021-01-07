@@ -1,5 +1,6 @@
 import os
 import uuid
+import ssl
 
 from contextlib import contextmanager
 from random import getrandbits as randbits
@@ -117,10 +118,28 @@ def celery_config():
     """
 
     redis_url = os.environ.get("REDIS_TLS_URL", "rediss://")
+    key_file = "../TMP_SAVE/key.pem"
+    cert_file = "../TMP_SAVE/cert.pem"
+    ca_file = "../TMP_SAVE/cert.pem"
+
+    assert os.path.exists(key_file)
+    assert os.path.exists(cert_file)
 
     return {
         "broker_url": redis_url,
         "result_backend": redis_url,
+        "broker_use_ssl": {
+            "ssl_keyfile": key_file,
+            "ssl_certfile": cert_file,
+            "ssl_ca_certs": ca_file,
+            "ssl_cert_reqs": ssl.CERT_REQUIRED,
+        },
+        "redis_backend_use_ssl": {
+            "ssl_keyfile": key_file,
+            "ssl_certfile": cert_file,
+            "ssl_ca_certs": ca_file,
+            "ssl_cert_reqs": ssl.CERT_REQUIRED,
+        },
     }
 
 
