@@ -28,8 +28,8 @@ allowed_regions = {"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-centr
 
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
 @fractal_pre_process
-@jwt_required
-@developer_required
+# @jwt_required
+# @developer_required
 def test_endpoint(action, **kwargs):
     """This is an endpoint for administrators and developers to test
     aws container creation, cluster creation, deletion, etcetera. It differs from our

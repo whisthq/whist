@@ -188,7 +188,6 @@ class DeploymentConfig:
     JWT_QUERY_STRING_NAME = "access_token"
     JWT_SECRET_KEY = property(getter("JWT_SECRET_KEY"))
     JWT_TOKEN_LOCATION = ("headers", "query_string")
-    REDIS_URL = property(getter("REDIS_URL", fetch=False))
     SECRET_KEY = property(getter("SECRET_KEY", fetch=False))
     REDIS_TLS_URL = property(getter("REDIS_TLS_URL", fetch=False))
     SENDGRID_API_KEY = property(getter("SENDGRID_API_KEY"))
