@@ -28,8 +28,8 @@ aws_container_bp = Blueprint("aws_container_bp", __name__)
 
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
 @fractal_pre_process
-@jwt_required
-@developer_required
+# @jwt_required
+# @developer_required
 def test_endpoint(action, **kwargs):
     """This is an endpoint for administrators and developers to test
     aws container creation, cluster creation, deletion, etcetera. It differs from our
