@@ -27,6 +27,8 @@ run_container() {
         -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
         -v /fractal/containerResourceMappings:/fractal/containerResourceMappings:ro \
         -v /fractal/cloudStorage:/fractal/cloudStorage:rshared \
+        --device=/dev/input/event3 \
+        --device=/dev/input/mouse0 \
         $mount_protocol \
         --tmpfs /run \
         --tmpfs /run/lock \
