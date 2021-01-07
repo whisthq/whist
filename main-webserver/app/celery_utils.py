@@ -2,6 +2,17 @@ import ssl
 
 
 def init_celery(celery, app):
+    """
+    Adds some configs to Celery instance (`celery`) and
+    adds flask request context to all celery tasks
+
+    Args:
+        celery: a Celery instance
+        app: a Flask app
+    """
+    key_file = "./TMP_SAVE/key.pem"
+    cert_file = "./TMP_SAVE/cert.pem"
+    ca_file = "./TMP_SAVE/cert.pem"
     celery.conf.update(
         task_track_started=True,
         accept_content=["json"],
