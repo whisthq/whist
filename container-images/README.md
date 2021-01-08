@@ -79,34 +79,28 @@ You first need to build the protocol and then build the base image before you ca
 Once an image with tag `current-build` has been built locally via `build_container_images.sh`, it may be run locally by calling:
 
 ```
-./run_local_container_image.sh APP [MOUNT]
+[FRACTAL_DPI=96] ./run_local_container_image.sh APP [MOUNT]
 ```
 
 As usual, `APP` is the path to the app folder. Meanwhile, `MOUNT` is an optional argument specifying whether to facilitate server protocol development by mounting and live-updating the `base/protocol` submodule. If `MOUNT=mount`, then the submodule is mounted; else, it is not. Note that this script should be used on EC2 instances as an Nvidia GPU is required for our containers and our protocol to function properly.
+
+You can optionally override the default value of `96` for `FRACTAL_DPI` by setting the eponymous environment variable prior to running the container image. This might be useful if you are testing on a high-DPI screen.
 
 ### Running Remote-Pushed Images
 
 If an image has been pushed to ECR and you wish to test it, first ensure the AWS CLI is configured. Then, retrieve the tag you wish to run, either from ECR itself or by grabbing the relevant (full) Git commit hash from this repository, and run:
 
 ```
-./run_remote_container_image.sh APP TAG [REGION] [MOUNT]
+[FRACTAL_DPI=96] ./run_remote_container_image.sh APP TAG [REGION] [MOUNT]
 ```
 
-As above, `APP` is the path of the application you want to run, `REGION` optionally specifies the ECR region to pull from, with a default of `us-east-1`, and `MOUNT=mount` mounts the submodule. Here `TAG` is the full Git commit hash to run.
+The optional argument `REGION` specifies the ECR region to pull from, with a default of `us-east-1`, and `TAG` is the full Git commit hash to run. All other configuration is the same as for the local case.
 
 ### Connecting to Images
 
-Before connecting to the server protocol that runs in the container, the host service needs to receive a DPI request in order to allow the container to run. For now, the request is made manually, either from your local machine or from the EC2 instance itself. Using cURL, the request would be:
+Before connecting to the server protocol that runs in the container, the host service needs to receive a DPI request in order to allow the container to run. For now, this request automatically made by `run_container_image.sh`.
 
-```
-curl  --location --insecure --request PUT 'https://[ec2-ip-address]:4678/set_container_dpi' --header 'Content-Type: application/json' --data-raw '{
-    "auth_secret": "testwebserverauthsecretdev",
-    "host_port": [container-32262-port-mapping],
-    "dpi": [requested-dpi]
-}'
-```
-
-Unless you are using a high-DPI screen, the DPI you set can just be 96. In the future, this request will be packaged into `run_container_image.sh`. Since we are just developing, the port mapping will just be 32262.
+If you are using a high-DPI screen, you may want to pass in the optional DPI argument
 
 Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the container via `./FractalClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
 
