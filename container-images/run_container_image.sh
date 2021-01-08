@@ -8,7 +8,7 @@ if [[ ${2:-''} == mount ]]; then
 else
     mount_protocol=""
 fi
-dpi=${3:-96}
+dpi=${FRACTAL_DPI:-96}
 
 run_container() {
     docker run -it -d \
