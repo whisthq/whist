@@ -23,6 +23,7 @@ from app.helpers.utils.general.auth import fractal_auth, developer_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
+allowed_regions = {"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"}
 
 
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
@@ -136,6 +137,13 @@ def test_endpoint(action, **kwargs):
 @aws_container_bp.route("/container/delete", methods=("POST",))
 @fractal_pre_process
 def aws_container_delete(**kwargs):
+    """
+    Delete a container. Needs:
+    - container_id
+    - private_key
+
+    Returns celery ID to poll.
+    """
     body = kwargs.pop("body")
 
     try:
@@ -152,6 +160,13 @@ def aws_container_delete(**kwargs):
 @aws_container_bp.route("/container/protocol_info", methods=("POST",))
 @fractal_pre_process
 def aws_container_info(**kwargs):
+    """
+    Get container info. Needs:
+    - identifier (int): the port corresponding to port 32262
+    - private_key (str): aes encryption key
+
+    Returns info after a db lookup.
+    """
     body = kwargs.pop("body")
     address = kwargs.pop("received_from")
 
@@ -175,6 +190,14 @@ def aws_container_info(**kwargs):
 @aws_container_bp.route("/container/ping", methods=("POST",))
 @fractal_pre_process
 def aws_container_ping(**kwargs):
+    """
+    Ping aws container. Needs:
+    - available (bool): True if Container is not being used, False otherwise
+    - identifier (int): the port corresponding to port 32262
+    - private_key (str): aes encryption key
+
+    Returns container status
+    """
     body = kwargs.pop("body")
     address = kwargs.pop("received_from")
 
@@ -193,14 +216,19 @@ def aws_container_ping(**kwargs):
     return response
 
 
-allowed_regions = {"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"}
-
-
 @aws_container_bp.route("/container/<action>", methods=["POST"])
 @fractal_pre_process
 @jwt_required
 @fractal_auth
 def aws_container_post(action, **kwargs):
+    """
+    General aws container post. Handles:
+    - create
+    - assign
+    - delete
+    - drain
+    - stun
+    """
     response = jsonify({"status": NOT_FOUND}), NOT_FOUND
     body = kwargs.pop("body")
 
