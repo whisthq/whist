@@ -1,4 +1,4 @@
-# Fractal Mobile Applications
+# Fractal Mobile Application
 
 This repository contains the code for the Fractal mobile applications running on Android/Chromebooks and iOS/iPads. This repository contains all the directions for building the applications locally and for publishing them for production on each of the following OSes:
 
