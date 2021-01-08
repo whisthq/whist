@@ -12,7 +12,9 @@ This will build the service under directory `/build` as `ecs-host-service`.
 
 ### Running
 
-You can run locally by running `make run`. Note that the service must be run as root, which the makefile automatically does.
+It is only possible to run the host service on AWS EC2 instances. The host service code retrieves metadata about the instance on which it is running from the EC2 instance metadata endpoint <http://169.254.169.254/latest/meta-data/>. According to [the EC2 documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html), "the IP address `196.254.169.254` is a link-local address and is valid only from the [EC2] instance."
+
+Once you have access to an EC2 instance, you can run the host service with the command `make run`. Note that the service must be run as root because it has to do things like manage `systemd` and `docker`. Make sure your user has permission to use `sudo` and be prepared to supply your password after executing `make run`.
 
 If you want to test the service with our production Sentry configuration, use the command `make runprod`. Note that this will count against our Sentry logging quotas, and also attempt to start the ECS Agent! As such, we only recommend you try to do that on an ECS-optimized AWS EC2 instance.
 
