@@ -1,11 +1,3 @@
-#ifndef DESKTOP_UTILS_H
-#define DESKTOP_UTILS_H
-
-#include "../fractal/network/network.h"
-
-#define MAX_INIT_CONNECTION_ATTEMPTS (3)
-#define MAX_RECONNECTION_ATTEMPTS (10)
-
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file desktop_utils.c
@@ -14,8 +6,23 @@
 Usage
 ============================
 
-TODO
+Call these functions from anywhere within desktop where they're
+needed.
 */
+
+#ifndef DESKTOP_UTILS_H
+#define DESKTOP_UTILS_H
+
+/*
+============================
+Includes
+============================
+*/
+
+#include "../fractal/network/network.h"
+
+#define MAX_INIT_CONNECTION_ATTEMPTS (3)
+#define MAX_RECONNECTION_ATTEMPTS (10)
 
 /*
 ============================
@@ -34,7 +41,7 @@ typedef struct MouseMotionAccumulation {
 
 /*
 ============================
-Includes
+Public Functions
 ============================
 */
 
