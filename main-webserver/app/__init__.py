@@ -13,11 +13,25 @@ from .factory import create_app, jwtManager, ma, mail
 
 
 def make_celery(app_name=__name__):
+    """
+    Returns a Celery object with initialized redis parameters.
+    """
     redis = os.environ.get("REDIS_URL", "redis://")
     return Celery(app_name, broker=redis, backend=redis)
 
 
 def fractal_pre_process(func):
+    """
+    Fractal's general endpoint preprocessing decorator. It parses the incoming request
+    and provides func with the following kwargs:
+        - body (if POST request, the JSON parsed data)
+        - recieved_from
+        - webserver_url
+
+    Args:
+        func: callback, endpoint function to be decorated
+    """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         received_from = (

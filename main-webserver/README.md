@@ -59,7 +59,7 @@ This step is optional. If you choose not to complete this step, you will still b
 
 **4. Spin Up Local Servers**
 
-Use `docker-compose` to run the stack locally. First, `cd` into the `docker/` folder. Then, run the `up` command. If you are on Windows, you should run this from a command prompt in Administrator mode.
+Use `docker-compose` to run the stack locally. First, `cd` into the `docker/` folder. Then, run the `up` command. If you are on Windows, you should run this from a command prompt in Administrator mode. This will start the app at `run.py`.
 
 ```sh
 docker-compose up --build

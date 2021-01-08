@@ -22,7 +22,12 @@ mail = SendGrid()
 
 def create_app(app_name=PKG_NAME, testing=False, **kwargs):
     """
-    Create app
+    Create app.
+
+    Args:
+        app_name: str
+        testing: bool
+        kwargs: can contain `celery`, which should be an initialized celery instance
     """
     # Set up Sentry - only log errors on prod (main) and staging webservers
     env = None
@@ -62,10 +67,17 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
 
     CORS(app)
 
-    return init_app(app)
+    return register_blueprints(app)
 
 
-def init_app(app):
+def register_blueprints(app):
+    """
+    Registers all blueprints (endpoints) for the Flask app
+
+    Args:
+        - app: Flask object
+    """
+
     from .blueprints.admin.report_blueprint import report_bp
     from .blueprints.admin.analytics_blueprint import analytics_bp
     from .blueprints.admin.admin_blueprint import admin_bp
