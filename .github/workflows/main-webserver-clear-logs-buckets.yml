@@ -1,7 +1,7 @@
 # workflows/main-webserver-clear-logs-buckets.yml
 #
 # Main Webserver: Clear Webserver-Generated Logs S3 Buckets
-# Runs monthly, emptying the S3 buckets which stores the protocol logs and AWS SSM logs.
+# Runs monthly, emptying the S3 buckets which stores the Protocol logs and AWS SSM logs.
 
 name: "Main Webserver: Clear Webserver-Generated Logs S3 Buckets"
 
@@ -43,13 +43,10 @@ jobs:
 
     notify-slack:
         name: Notify Slack
-        needs:
-            [
-                main-webserver-clear-container-outputs,
-                main-webserver-clear-protocol-logs,
-            ]
+        needs: [main-webserver-clear-container-outputs,main-webserver-clear-protocol-logs]
         if: success()
         runs-on: ubuntu-20.04
+        
         steps:
             - name: Notify Slack
               run: |
