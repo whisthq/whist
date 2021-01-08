@@ -13,6 +13,7 @@ jobs:
     meta-report-all-checks-passed-main:
         name: Check Running Tasks
         runs-on: ubuntu-20.04
+        
         steps:
             - name: All Checks Passed Status
               uses: fractal/action-all-checks-passed@latest

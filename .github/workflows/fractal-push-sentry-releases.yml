@@ -1,7 +1,7 @@
 # workflows/fractal-push-sentry-releases.yml
 #
 # Fractal: Push Sentry Release
-# Automatically push a new sentry release for each of the fractal/fractal projects.
+# Automatically push a new Sentry release for each of the fractal/fractal projects.
 
 name: "Fractal: Push Sentry Releases"
 
@@ -83,5 +83,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry Production Releases Pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry \"${GITHUB_REF##*/}\" Releases Pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
