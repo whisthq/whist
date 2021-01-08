@@ -28,6 +28,22 @@ Before making a pull request, ensure that the following steps are taken:
 
 Finally, you can open PR to `dev`.
 
+## Testing launching the Fractal protocol without publishing
+
+In order to just test the protocol without publishing, do the following:
+
+#### MacOS
+
+1. Make sure you have cmake installed. Check the README in `/protocol/` if you don't.
+
+2. `cd` into `/protocol/` and run `cmake .` Then run `make FractalClient` in the same folder or cd into `/desktop` and run `make` to compile the MacOS client. 
+
+3. Open two separate Finder windows - one to `/protocol/desktop/build64/Darwin`, and the other to `client-applications/desktop/protocol-build/desktop`. Delete any files in the latter, and then copy all files from the first filepath to the second filepath.
+
+4. `cd` into `client-applications/desktop` and run `yarn dev`.
+
+#### Windows
+ 
 ## Packaging and Publishing
 
 In order to package your dev environment into a downloadable `.exe` (Windows) or `.dmg` (Mac), you'll need to run our `publish` scripts. In the desktop folder, run `publish --help` on Windows in an x86-x64 terminal (comes with Visual Studio) or `./publish.sh --help` on Mac for instructions on how to run the `publish` script. Once the script is run, the installer executable will be in `client-applications/desktop/release`. No cross-compilation is possible. You can only package the Windows application from a Windows computer.
