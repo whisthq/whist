@@ -9,4 +9,5 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 RUN add-apt-repository ppa:kdenlive/kdenlive-stable
 RUN apt-get install -y kdenlive
 
+# Setup Fractal application symlink
 RUN ln -sf /usr/bin/kdenlive /usr/bin/fractal-application

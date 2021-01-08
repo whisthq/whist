@@ -1,6 +1,6 @@
 FROM fractal/base:current-build
 
-# Install texturelab build dependencies
+# Install TextureLab build dependencies
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     unzip \
     curl \

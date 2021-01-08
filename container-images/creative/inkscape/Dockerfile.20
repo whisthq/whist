@@ -1,8 +1,10 @@
 FROM fractal/base:current-build
 
+# Install Inkscape and its dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     inkscape \
     && apt-get autoremove -y \
     && apt-get clean
 
+# Setup Fractal application symlink
 RUN ln -sf /usr/bin/inkscape /usr/bin/fractal-application
