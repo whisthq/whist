@@ -29,7 +29,7 @@ The following environment variables must also be set in `docker/.env` (neither t
 - `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
 - `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
 
-Finally, the local tests require a connection to a running Redis instance. See [Setting up Redis](#setting-up-redis) for instructions on how to establish such a connection. If the Redis instance used for testing is running anywhere other than `redis://localhost:6379/0`, `REDIS_TLS_URL` should be set to indicate the correct connection URI. Take a moment to understand that setting `REDIS_TLS_URL` has no effect on the Flask instance running in the `docker-compose`; it only affects Flask applications launched manually (e.g. Flask applications created by `pytest` for testing purposes).
+Finally, the local tests require a connection to a running Redis instance. See [Setting up Redis](#setting-up-redis) for instructions on how to establish such a connection. If the Redis instance used for testing is running anywhere other than `rediss://localhost:6379/0`, `REDIS_TLS_URL` should be set to indicate the correct connection URI. Take a moment to understand that setting `REDIS_TLS_URL` has no effect on the Flask instance running in the `docker-compose`; it only affects Flask applications launched manually (e.g. Flask applications created by `pytest` for testing purposes).
 
 **1. Set environment variables**
 
