@@ -1,7 +1,7 @@
 # workflows/client-applications-publish-desktop-apps.yml
 #
 # Client Applications: Publish Desktop Applications
-# Publishes Fractal Desktop Applications master branch to Production via S3 Upload
+# Publishes Fractal Desktop Applications master branch to Production via S3 Upload.
 
 name: "Client Applications: Publish Desktop Applications"
 
@@ -17,7 +17,7 @@ on:
     workflow_dispatch:
 
 jobs:
-    build-and-publish-desktop-applications:
+    build-and-publish-desktop-applications-main:
         name: ${{ matrix.config.name }}
         runs-on: ${{ matrix.config.os }}
 
@@ -34,7 +34,6 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
@@ -179,7 +178,7 @@ jobs:
 
     notify-slack:
         name: Notify Slack
-        needs: [build-and-publish-desktop-applications]
+        needs: [build-and-publish-desktop-applications-main]
         if: success()
         runs-on: ubuntu-20.04
 
