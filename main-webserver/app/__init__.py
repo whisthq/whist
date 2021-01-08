@@ -15,24 +15,16 @@ from .factory import create_app, jwtManager, ma, mail
 
 def make_celery(app_name=__name__):
     redis = os.environ.get("REDIS_TLS_URL", "rediss://")
-    key_file = "./TMP_SAVE/key.pem"
-    cert_file = "./TMP_SAVE/cert.pem"
-    ca_file = "./TMP_SAVE/cert.pem"
+
     return Celery(
         app_name,
         broker=redis,
         backend=redis,
         broker_use_ssl={
-            "ssl_keyfile": key_file,
-            "ssl_certfile": cert_file,
-            "ssl_ca_certs": ca_file,
-            "ssl_cert_reqs": ssl.CERT_REQUIRED,
+            "ssl_cert_reqs": ssl.CERT_NONE,
         },
         redis_backend_use_ssl={
-            "ssl_keyfile": key_file,
-            "ssl_certfile": cert_file,
-            "ssl_ca_certs": ca_file,
-            "ssl_cert_reqs": ssl.CERT_REQUIRED,
+            "ssl_cert_reqs": ssl.CERT_NONE,
         },
     )
 
