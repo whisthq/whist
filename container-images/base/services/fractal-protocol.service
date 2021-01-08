@@ -1,5 +1,5 @@
 [Unit]
-Description=Fractal Service
+Description=Fractal Protocol Entrypoint Service
 After=fractal-display.service fractal-audio.service
 Requires=fractal-display.service fractal-audio.service
 
