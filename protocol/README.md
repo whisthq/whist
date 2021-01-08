@@ -53,6 +53,7 @@ You can install both Cmake and cppcheck via Homebrew. You also need to have inst
 brew install cmake cppcheck
 ```
 
+If you can't/don't want to use brew, you can manually download from [here](https://cmake.org/download/).
 ##### Windows
 
 First you will have to install [gitbash](https://git-scm.com/downloads). You can install Cmake with the latest binaries [here](https://cmake.org/download/), and cppcheck with Chocolatey by running `choco install cppcheck --force`. This will ensure you can properly debug the protocol.
@@ -78,11 +79,11 @@ We use CMake to build. If you are using VS code, VS or Clion, this is pretty eas
 
 Currently, we use the same compiler flags for Debug and Release because we distribute binaries with debug flags, to better troubleshoot errors and bugs.
 
-The build target for desktop is "FractalClient" and the sever is "FractalServer".
+The build target for desktop is "FractalClient" and the server is "FractalServer".
 
 #### MacOS CLI
 
-You can simply run `cmake .` from the root folder, `/protocol/`, which will generate the makefiles. You can then run `make FractalClient` from the root folder, or cd into `/desktop` and run `make` to compile the MacOS client.
+You can simply run `cmake .` from the root folder, `/protocol/`, which will generate the makefiles. You can then run `make FractalClient` from the root folder, or cd into `/desktop` and run `make` to compile the MacOS client. The client will be in `/protocol/desktop/build64/Darwin`.
 
 #### Linux CLI
 
