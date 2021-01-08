@@ -64,7 +64,6 @@
             "icon": "build/icon.png",
             "synopsis": "Fractal Desktop Application",
             "target": [
-                "deb",
                 "AppImage"
             ]
         },
@@ -317,7 +316,7 @@
         "npm": ">=4.x",
         "yarn": ">=0.21.3"
     },
-    "homepage": "https://www.fractalcomputers.com",
+    "homepage": "https://www.fractal.co",
     "jest": {
         "moduleDirectories": [
             "node_modules",

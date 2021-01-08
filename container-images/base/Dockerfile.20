@@ -347,7 +347,6 @@ RUN apt-get install --no-install-recommends -y \
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
 
-COPY config/i3config /root/.config/i3/config
 COPY config/gtk-3-settings.ini /etc/gtk-3.0/settings.ini
 COPY config/.gtkrc-2.0 /root/.gtkrc-2.0
 COPY --chown=fractal config/.gtkrc-2.0 /home/fractal/.gtkrc-2.0
