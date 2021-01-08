@@ -92,6 +92,11 @@ echo "================================================"
 sudo apt install -y rclone openssl
 
 echo "================================================"
+echo "Installing Other Utilities..."
+echo "================================================"
+sudo apt install -y lsof
+
+echo "================================================"
 echo "Cleaning up the image a bit..."
 echo "================================================"
 sudo apt autoremove
