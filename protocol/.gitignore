@@ -30,7 +30,7 @@
 *.sentry-native
 sentry-native
 
-# fractal files
+# fractal
 version
 **/build32
 **/build64

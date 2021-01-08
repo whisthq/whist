@@ -1,7 +1,7 @@
 #ifndef CAPTURE_X11CAPTURE_H
 #define CAPTURE_X11CAPTURE_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright Fractal Computers, Inc. 2021
  * @file x11capture.h
  * @brief This file contains the code to do screen capture in the GPU on Linux
  *        Ubuntu.
@@ -118,7 +118,7 @@ void destroy_capture_device(CaptureDevice* device);
 
 /**
  * @brief                          Updates the capture device if the capture device is also the
- * encoder
+ *                                 encoder
  *
  * @param device                   The Linux Ubuntu screencapture device
  * @param bitrate                  The new bitrate to use for encoding

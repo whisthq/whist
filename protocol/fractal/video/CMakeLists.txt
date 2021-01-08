@@ -18,9 +18,6 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(fractalVideo PRIVATE videoencode.c videoencode.h)
 endif ()
 
-
-
-
 set_property(TARGET fractalVideo PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 

@@ -1,7 +1,7 @@
 #ifndef SERVER_NETWORK_H
 #define SERVER_NETWORK_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright Fractal Computers, Inc. 2021
  * @file network.h
  * @brief This file contains server-specific wrappers to low-level network
  *        functions.
