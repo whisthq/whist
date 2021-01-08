@@ -139,8 +139,8 @@ def test_endpoint(action, **kwargs):
 def aws_container_delete(**kwargs):
     """
     Delete a container. Needs:
-    - container_id
-    - private_key
+    - container_id (str): The ARN of the running container.
+    - private_key (str): AES key
 
     Returns celery ID to poll.
     """

@@ -25,8 +25,8 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
     Create app.
 
     Args:
-        app_name: str
-        testing: bool
+        app_name (str)
+        testing (bool)
         kwargs: can contain `celery`, which should be an initialized celery instance
     """
     # Set up Sentry - only log errors on prod (main) and staging webservers
