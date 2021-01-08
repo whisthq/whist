@@ -74,14 +74,11 @@ send_dpi_request() {
       && exit 1)
   echo "Sent DPI/container-ready request to container $1!"
   echo "Response to DPI/container-ready request from host service: $response"
-
 }
 
 
 container_id=$(run_container $1)
-
 send_dpi_request $container_id
-
 echo "Running container with ID: $container_id"
 docker exec -it $container_id /bin/bash || true
 kill_container $container_id
