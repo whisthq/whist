@@ -11,6 +11,7 @@ import { history } from "store/history"
 import { execPromise } from "shared/utils/files/exec"
 import { FractalRoute } from "shared/types/navigation"
 import { OperatingSystem, FractalDirectory } from "shared/types/client"
+import { FractalClientCache } from "shared/types/cache"
 
 import styles from "pages/loading/loading.css"
 
@@ -88,6 +89,15 @@ const Loading = (props: {
     }
 
     const launchProtocol = () => {
+        const Store = require("electron-store")
+        const storage = new Store()
+
+        const cachedLowInternetMode = storage.get(
+            FractalClientCache.LOW_INTERNET_MODE
+        )
+        const internetMode = cachedLowInternetMode ? "h265" : "h264"
+        const cachedBandwidth = storage.get(FractalClientCache.BANDWIDTH)
+
         const spawn = require("child_process").spawn
 
         const protocolPath = require("path").join(
@@ -108,6 +118,8 @@ const Loading = (props: {
                 const protocolParameters = {
                     w: 800,
                     h: 600,
+                    c: internetMode,
+                    b: cachedBandwidth,
                     p: portInfo,
                     k: secretKey,
                     n: `Fractalized ${desiredAppID}`,
