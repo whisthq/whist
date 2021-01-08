@@ -41,9 +41,9 @@ When the `docker/retrieve_config.sh` script terminates, it will print the name o
 
 **2. Set AWS credentials**
 
-Whether you're running tests or the `docker-compose` stack locally, the web server needs to be able to access AWS APIs. You can set your AWS credentials using either the same files in the `~/.aws/` directory or environment variables that you can use to configure [`boto`](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) and the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html). Environment variables set in `docker/.env` will beloaded by `pytest` during test run sessions and set in the execution environment within the containers in the docker-compose stack.
+Whether you're running tests or the `docker-compose` stack locally, the web server needs to be able to access AWS APIs. You can set your AWS credentials using either the same files in the `~/.aws/` directory or environment variables that you can use to configure [`boto`](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) and the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html). Environment variables set in `docker/.env` will be loaded by `pytest` during test run sessions and set in the execution environment within the containers in the docker-compose stack.
 
-> I recommend downloading the AWS CLI, which may you may find useful in the future, and running `aws configure`.
+> I recommend downloading the AWS CLI, which you may find useful in the future, and running `aws configure`.
 >
 > -O
 
