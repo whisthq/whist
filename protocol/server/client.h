@@ -4,10 +4,10 @@
  * Copyright Fractal Computers, Inc. 2020
  * @file client.h
  * @brief This file contains the code for interacting with the client buffer.
-============================
-Usage
-============================
 
+See
+https://www.notion.so/tryfractal/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d4c3d96ac2a65eb31761b&p=755123dad01244f3a0a3ced5139228a3
+for the specification for multi-client code
 */
 
 /*
