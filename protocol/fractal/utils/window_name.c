@@ -62,7 +62,6 @@ int get_focused_window_name(char* name_return) {
         char** list = NULL;
         result = XmbTextPropertyToTextList(display, &prop, &list, &count);
         if (result == Success) {
-            LOG_INFO("window name: %s\n", list[0]);
             safe_strncpy(name_return, list[0], WINDOW_NAME_MAXLEN);
             XFreeStringList(list);
             return 0;
