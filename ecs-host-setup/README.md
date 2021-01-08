@@ -27,6 +27,7 @@ make run # keep this open in a separate terminal
 cd ~/fractal/container-images
 ./run_local_container_image.sh base
 ```
+
 If you are on a high-DPI screen, you can optionally prepend the final line of the above code block with `FRACTAL_DPI=250` (or any other value) to override the default DPI value of 96 for the container.
 
 Now, try starting a Fractal client to connect to the Fractal server by following the instructions in `protocol/desktop/README.md`. If a window pops up that streams xterm/whatever the base application is, then you are set!
