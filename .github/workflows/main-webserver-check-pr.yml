@@ -19,7 +19,7 @@ on:
 
 jobs:
     # Linting
-    # Checks for formatting using black and pylint.
+    # Checks for formatting using Black and Pylint.
     main-webserver-check-pr-linting:
         name: Linting
         runs-on: ubuntu-20.04
@@ -27,8 +27,6 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
 
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
@@ -38,7 +36,7 @@ jobs:
             - name: Upgrade pip
               run: cd main-webserver && pip install --upgrade pip
 
-            - name: Install dependencies
+            - name: Install Dependencies
               run: cd main-webserver && pip install -r requirements.txt -r requirements-test.txt
 
             - name: Check if code is linted with Python Black
@@ -61,11 +59,9 @@ jobs:
         runs-on: ubuntu-20.04
 
         steps:
-            - name: Checkout Git repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
                   ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch not just the commit for Heroku CI to work
 
             - name: Run Tests on Heroku
