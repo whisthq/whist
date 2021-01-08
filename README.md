@@ -1,8 +1,17 @@
-# A Guide to Fractal's Monorepo
+# Fractal Application Streaming
+
+This repository contains the end-to-end code for the Fractal Application Streaming product, following a [Monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
 
 ## Table of Contents
 
-- [Map of the Repo](#map-of-the-repo)
+- [Introduction](#introduction)
+  - [Repository Structure](#repository-structure)
+
+
+
+
+
+
 - [Workflow and Conventions](#workflow-and-conventions)
   - [`master` is for releases only. `staging` is "almost `master`"](#master-is-for-releases-only-staging-is-almost-master)
   - [`dev` is for Development](#dev-is-for-development)
@@ -11,11 +20,81 @@
     - [Your branch is yours. Our branches are _ours_.](#your-branch-is-yours-our-branches-are-ours)
   - [On commit logs](#on-commit-logs)
   - [HOTfixes (i.e. prod is on fire)](#hotfixes-ie-prod-is-on-fire)
-- [Appendices](#appendices)
-  - [Useful git tricks in a monorepo](#useful-git-tricks-in-a-monorepo)
-  - [An example of bad commit history](#an-example-of-bad-commit-history)
 
-## Map of the Repo
+
+
+
+
+- [Appendix](#appendix)
+  - [Useful Monorepo git Tricks](#useful-monorepo-git-tricks)
+  - [Example of Bad Commit History](#example-of-bad-commit-history)
+
+===
+===
+
+## Introduction
+
+
+
+
+
+Application Streaming is Fractal's core service. It consists in running application
+
+
+
+
+
+
+
+
+At a high-level, Fractal works as such:
+
+- First, the user downloads the client-applications Electron App. They log-in, and launch a Blender container for instance.
+- The log-in and launch process are REST API requests sent to the main-webserver.
+- The main-webserver will receive the launch request and will proceed to send an ecs-task-definitions task definition to AWS ECS.
+- This will either (A) Use an EC2 Instance that is already spun-up, or (B) This will spin up a new EC2 Instance, and then run the ecs-host-setup scripts on it. ecs-host-setup will install dependencies, and install ecs-host-service.
+- After (A) or (B) happens, an EC2 Instance will now be available one way or another, with potentially other Docker containers already running on it.
+- The ecs-task-definitions task definition will then spin up an additional Docker container on that chosen EC2 Instance using a Dockerfile from container-images, specifically choosing the Blender Dockerfile (Or whichever application they happened to choose).
+- This container-images Dockerfile will install dependencies, including the Server protocol executable, then install and run Blender, and then proceed to execute the Server protocol executable.
+- The client-application Electron App will then execute the Client protocol executable and pass in the IP address of the Server as received from main-webserver. A window will then open, giving the user a low-latency 60 FPS Blender experience.
+
+For more in-depth explanations of each subrepo, simply peruse the README's of the respective file from the root Fractal repo.
+
+
+
+
+
+## Development
+
+
+
+
+
+
+## Publishing
+
+
+
+
+## Styling
+
+Each subfolder is its own project with dedicated style
+
+
+
+
+
+[Documentation & Code Standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597)
+
+[Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b)
+
+
+
+
+
+
+
+### Repository Structure
 
 This monorepo contains 8 Fractal subrepos:
 
@@ -39,18 +118,10 @@ This monorepo contains 8 Fractal subrepos:
 | main-webserver       | This contains the REST API for managing our containers, along with providing back-end support for front-end features                                                                                                                                                                                                                     |
 | protocol             | This contains the C code for Client and Server of the protocol. If the Server is running on one machine, and the Client on another machine having been given the IP address of the Server, then the Client will open up a window that allows one to interact with the Server at low-latency 60 FPS. This program is run via commandline. |
 
-At a high-level, Fractal works as such:
 
-- First, the user downloads the client-applications Electron App. They log-in, and launch a Blender container for instance.
-- The log-in and launch process are REST API requests sent to the main-webserver.
-- The main-webserver will receive the launch request and will proceed to send an ecs-task-definitions task definition to AWS ECS.
-- This will either (A) Use an EC2 Instance that is already spun-up, or (B) This will spin up a new EC2 Instance, and then run the ecs-host-setup scripts on it. ecs-host-setup will install dependencies, and install ecs-host-service.
-- After (A) or (B) happens, an EC2 Instance will now be available one way or another, with potentially other Docker containers already running on it.
-- The ecs-task-definitions task definition will then spin up an additional Docker container on that chosen EC2 Instance using a Dockerfile from container-images, specifically choosing the Blender Dockerfile (Or whichever application they happened to choose).
-- This container-images Dockerfile will install dependencies, including the Server protocol executable, then install and run Blender, and then proceed to execute the Server protocol executable.
-- The client-application Electron App will then execute the Client protocol executable and pass in the IP address of the Server as received from main-webserver. A window will then open, giving the user a low-latency 60 FPS Blender experience.
 
-For more in-depth explanations of each subrepo, simply peruse the README's of the respective file from the root Fractal repo.
+
+
 
 ## Workflow and Conventions
 
@@ -145,32 +216,31 @@ Here's the workflow:
 7. Merge the hotfix into `dev` as well.
 8. Write a regression test to make sure the same issue never occurs again, and add it to CI.
 
-## Appendices
 
-### Useful git tricks in a monorepo
 
-View a log of only the commits affecting a given file or subdirectory: `git log -- <path>`
 
-### An example of bad commit history
 
-This has been copied from the commit history of a fractal repo. Names have been removed, since I don't want to point fingers, only exhibit a phenomenon caused by allowing merge commits into feature branches.
 
-There's exactly two "useful" commits in the mess below. The rest are merge commits from `dev` into a feature branch, which should be avoided.
+
+
+
+
+===
+===
+
+## Appendix
+
+### Useful Monorepo git Tricks
+
+- Viewing a log of only the commits affecting a given file or subdirectory: `git log -- <path>`
+
+### Example of Bad Commit History
+
+This is an example of a bad commit history, which exhibits a phenomenon caused by allowing merge commits into feature branches. There's exactly two "useful" commits in the mess below. The rest are merge commits from `dev` into a feature branch, which should be avoided.
 
 [Back to Text](#while-on-feature-branches-git-rebase-dev-is-your-friend-git-merge-dev-is-not)
 
 ```
-| | | | | | | * | | |   552bfc74 - Merge branch 'dev' into feature_branch (6 weeks ago) <developer1>
-| | | | | | | |\ \ \ \
-| | | | | | | |/ / / /
-| | | | | | |/| | | |
-| | | | | | | * | | |   b5eedf0a - Merge branch 'dev' into feature_branch (6 weeks ago) <developer1>
-| | | | | | | |\ \ \ \
-| | | | | | |_|/ / / /
-| | | | | |/| | | | |
-| | | | | | | * | | |   2d88b181 - Merge branch 'dev' into feature_branch (7 weeks ago) <developer1>
-| | | | | | | |\ \ \ \
-| | | | | |_|_|/ / / /
 | | | | |/| | | | | |
 | | | | | | | * | | |   8bd2acce - Merge branch 'dev' into feature_branch (8 weeks ago) <developer2>
 | | | | | | | |\ \ \ \
