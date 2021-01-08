@@ -12,7 +12,7 @@ on:
     workflow_dispatch:
 
 jobs:
-    container-images-acquire-unity-activation-file:
+    container-images-acquire-unity-activation-file-main:
         name: Acquire Unity Activation File and Upload as GitHub Artifact 🔑
         runs-on: ubuntu-20.04
 

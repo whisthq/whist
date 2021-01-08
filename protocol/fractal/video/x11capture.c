@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright Fractal Computers, Inc. 2021
  * @file x11capture.c
  * @brief This file contains the code to do screen capture in the GPU on Linux
  *        Ubuntu.

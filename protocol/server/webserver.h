@@ -8,7 +8,7 @@ void update_webserver_parameters();
 
 /**
  * @brief                          Queries the webserver to get the using_stun
- * status
+ *                                 status
  *
  * @returns                        The using_stun status
  */
@@ -16,7 +16,7 @@ bool get_using_stun();
 
 /**
  * @brief                          Queries the webserver for the VM password
- * status
+ *                                 status
  *
  * @returns                        The password for the VM
  */
@@ -30,4 +30,4 @@ char* get_vm_password();
  */
 char* get_container_id();
 
-#endif
+#endif  // WEBSERVER_H

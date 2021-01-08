@@ -1,7 +1,7 @@
 #ifndef VIDEO_ENCODE_H
 #define VIDEO_ENCODE_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright Fractal Computers, Inc. 2021
  * @file videoencode.h
  * @brief This file contains the code to create and destroy Encoders and use
  *        them to encode captured screens.
@@ -144,4 +144,4 @@ void video_encoder_unset_iframe(VideoEncoder* encoder);
  */
 void destroy_video_encoder(VideoEncoder* encoder);
 
-#endif  // ENCODE_H
+#endif  // VIDEOENCODE_H

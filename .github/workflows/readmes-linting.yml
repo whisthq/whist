@@ -34,8 +34,8 @@ jobs:
               with:
                   node-version: 12
 
-            - name: Install prettier
+            - name: Install Prettier
               run: npm install -g prettier
 
             - name: Check if READMEs are formatted
-              run: prettier --check '**/README.md' # prettier glob syntax hits all readmes with this
+              run: prettier --check '**/README.md' # prettier glob syntax hits all READMEs with this

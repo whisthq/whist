@@ -33,7 +33,7 @@ jobs:
               with:
                   node-version: 12
 
-            - name: Install prettier # should match version in client-applications/package.json devDependencies
+            - name: Install Prettier # should match version in client-applications/package.json devDependencies
               run: npm install -g prettier
 
             - name: Check if code is formatted
