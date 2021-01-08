@@ -7,7 +7,13 @@
 Usage
 ============================
 
-TODO
+Use these functions for any client-specific networking needs.
+*/
+
+/*
+============================
+Includes
+============================
 */
 
 #include "network.h"
@@ -36,7 +42,26 @@ extern int uid;
 #define TCP_CONNECTION_WAIT 300  // ms
 #define UDP_CONNECTION_WAIT 300  // ms
 
+/*
+============================
+Public Function Implementations
+============================
+*/
+
 int discover_ports(bool *using_stun) {
+    /*
+        Send a discovery packet to the server to determine which TCP
+        and UDP packets are assigned to the client. Must be called
+        before `connect_to_server()`.
+
+        Arguments:
+            using_stun (bool*): whether we are using the STUN server
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
+    // Create TCP context
     SocketContext context;
     LOG_INFO("using stun is %d", *using_stun);
     if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
@@ -50,6 +75,7 @@ int discover_ports(bool *using_stun) {
         }
     }
 
+    // Create and send discovery request packet
     FractalClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_DISCOVERY_REQUEST;
     fcmsg.discoveryRequest.username = uid;
@@ -63,6 +89,7 @@ int discover_ports(bool *using_stun) {
     }
     LOG_INFO("Sent discovery packet");
 
+    // Receive discovery packets from server
     FractalPacket *packet;
     clock timer;
     start_timer(&timer);
@@ -94,6 +121,7 @@ int discover_ports(bool *using_stun) {
 
     LOG_INFO("Received discovery info packet from server!");
 
+    // Create and send discovery reply message
     FractalDiscoveryReplyMessage *reply_msg =
         (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
     if (reply_msg->client_id == -1) {
@@ -122,8 +150,17 @@ int discover_ports(bool *using_stun) {
     return 0;
 }
 
-// must be called after
 int connect_to_server(bool using_stun) {
+    /*
+        Connect to the server. Must be called after `discover_ports()`.
+
+        Arguments:
+            using_stun (bool): whether we are using the STUN server
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     LOG_INFO("using stun is %d", using_stun);
     if (udp_port < 0) {
         LOG_ERROR("Trying to connect UDP but port not set.");
@@ -162,6 +199,13 @@ int connect_to_server(bool using_stun) {
 }
 
 int close_connections(void) {
+    /*
+        Close all connections between client and server
+
+        Return:
+            (int): 0 on success
+    */
+
     closesocket(packet_send_context.s);
     closesocket(packet_receive_context.s);
     closesocket(packet_tcp_context.s);
@@ -169,6 +213,17 @@ int close_connections(void) {
 }
 
 int send_server_quit_messages(int num_messages) {
+    /*
+        Send quit message to the server
+
+        Arguments:
+            num_messages (int): the number of quit packets
+                to send to the server
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     FractalClientMessage fmsg = {0};
     fmsg.type = CMESSAGE_QUIT;
     int retval = 0;
@@ -181,12 +236,21 @@ int send_server_quit_messages(int num_messages) {
     return retval;
 }
 
-// Here we send Large fmsg's over TCP. At the moment, this is only CLIPBOARD.
-// Currently, sending FractalClientMessage packets over UDP that require multiple
-// sub-packets to send, it not supported (If low latency large
-// FractalClientMessage packets are needed, then this will have to be
-// implemented)
 int send_fmsg(FractalClientMessage *fmsg) {
+    /*
+        We send large fmsg's over TCP. At the moment, this is only CLIPBOARD;
+        Currently, sending FractalClientMessage packets over UDP that require multiple
+        sub-packets to send is not supported (if low latency large
+        FractalClientMessage packets are needed, then this will have to be
+        implemented)
+
+        Arguments:
+            fmsg (FractalClientMessage*): pointer to FractalClientMessage to be send
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     // Shouldn't overflow, will take 50 days at 1000 fmsg/second to overflow
     static unsigned int fmsg_id = 0;
     fmsg->id = fmsg_id;
