@@ -1,6 +1,6 @@
 #!/bin/bash
 
-install_chrome_extension () {
+install_brave_extension () {
 	preferences_dir_path="/opt/brave.com/brave/extensions"
 	pref_file_path="$preferences_dir_path/$1.json"
 	upd_url="https://clients2.google.com/service/update2/crx"
@@ -12,4 +12,4 @@ install_chrome_extension () {
 }
 
 # Install uBlock Ad Blocker
-install_chrome_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin"
+install_brave_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin"

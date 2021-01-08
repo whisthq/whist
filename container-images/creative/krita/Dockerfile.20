@@ -9,4 +9,5 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 RUN add-apt-repository ppa:kritalime/ppa
 RUN apt-get install -y krita
 
+# Setup Fractal application symlink
 RUN ln -sf /usr/bin/krita /usr/bin/fractal-application
