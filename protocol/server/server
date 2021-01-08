@@ -7,4 +7,3 @@ export XAUTHORITY=$(systemctl --user show-environment | awk -F = '/XAUTHORITY/{p
 cd build64
 ./FractalServer ${@:1}
 cd ..
-

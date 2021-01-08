@@ -1,7 +1,7 @@
 #ifndef VIDEO_DECODE_H
 #define VIDEO_DECODE_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright Fractal Computers, Inc. 2021
  * @file videodecode.h
  * @brief This file contains the code to create a video decoder and use that
  *        decoder to decode frames.
