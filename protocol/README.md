@@ -54,6 +54,7 @@ brew install cmake cppcheck
 ```
 
 If you can't/don't want to use brew, you can manually download from [here](https://cmake.org/download/).
+
 ##### Windows
 
 First you will have to install [gitbash](https://git-scm.com/downloads). You can install Cmake with the latest binaries [here](https://cmake.org/download/), and cppcheck with Chocolatey by running `choco install cppcheck --force`. This will ensure you can properly debug the protocol.
