@@ -16,9 +16,9 @@ Before contributing to this project, please read our in-depth coding philosophy 
 
 #### Local Setup
 
-The web application stack is comprised of three main components: the web server itself, an asynchronous task queue, and a database. The web server is written in Python using the [Flask](https://flask.palletsprojects.com/en/1.1.x/) web framework. The task queue is a Redis-backed [Celery](https://docs.celeryproject.org/en/stable/index.html) task queue. As such, the task queue can be broken down into two more granular sub-components: a pool of worker processes and a Redis store. The database is a Postgres instance that is shaared by multiple developers. In summary, there are a total of _four_ components that make up the web application stack: a Flask server, a Celery worker pool, a Redis store, and a PostgreSQL database.
+The web application stack is comprised of three main components: the web server itself, an asynchronous task queue, and a database. The web server is written in Python using the [Flask](https://flask.palletsprojects.com/en/1.1.x/) web framework. The task queue is a Redis-backed [Celery](https://docs.celeryproject.org/en/stable/index.html) task queue. As such, the task queue can be broken down into two more granular sub-components: a pool of worker processes and a Redis store. The database is a Postgres instance that is shared by multiple developers. In summary, there are a total of _four_ components that make up the web application stack: a Flask server, a Celery worker pool, a Redis store, and a PostgreSQL database.
 
-We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the web server stack up (the `docker-compose` stack does not include the Postgres database, which is shared between multiple developers and app deployments, as mentioned above) locally for development purposes. `docker-compose` builds Docker images for the Flask server and the Celery worker pool and deploys them alongside containerized Redis. There is also a `pytest` test suite that developers may run locally. Note that it is necessary to spin up each of the components (excluding the Postgres database) manually if you would like to run the test suite.
+We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the web server stack up (the `docker-compose` stack does not include the Postgres database, which is shared between multiple developers and app deployments, as mentioned above) locally for development purposes. `docker-compose` builds Docker images for the Flask server and the Celery worker pool and deploys them alongside containerized Redis. There is also a `pytest` test suite that developers may run locally.
 
 We use environment variables to configure our local development environments. Environment variables should be set by adding lines of the form `KEY=VALUE` to the file `docker/.env`. **The main environment variable that _must_ be set in order to do any kind of local development, whether with the `docker-compose` stack or the `pytest` test suite, is the `CONFIG_DB_URL` environment variable.** `CONFIG_DB_URL` specifies the PostgreSQL connection URI of the Fractal configuration database. This database contains default values for many of the variables that are used to configure the various parts of the web application stack. These default values may be overridden locally by setting alternatives in the same `docker/.env` file.
 
@@ -35,7 +35,7 @@ Finally, the local tests require a connection to a running Redis instance. See [
 
 Luckily, there is an easy way to set all of the necessary environment variables using the script `docker/retrieve_config.sh`. To set all of the required environment variables, first make sure you have [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) installed and configured. Then, run
 
-    bash /path/to/docker/retrieve_config.sh
+    bash docker/retrieve_config.sh
 
 When the `docker/retrieve_config.sh` script terminates, it will print the name of the file containing the fetched environment variables that has been written to standard error.
 
@@ -107,13 +107,13 @@ In order to run tests locally, the tests must be able to connect to a running Re
 
 1. Launch a Redis container with `docker run -d -p 6379:6379 redis`. 6379 is the default Redis port. This command launches Redis in the default location on the network&mdash;`redis://localhost:6379`. The test code detects that Redis running on the default host and port and connects.
 
-2. Spin up the `docker-compose` stack (as described in [Local Setup](#local-setup)) and set `REDIS_URL` in `docker/.env` to point the test code at the appropriate Redis instance. The Redis instance spun up by the `docker-compose` stack is accessible at `redis://localhost:7810` (see `services.redis.ports` in `docker/docker-compose.yml`). Therefore, `REDIS_URL` should be set to `redis://localhost:7810`.
-
 ### `pytest`
 
 We have pytest tests in the `tests` subdirectory. To run tests, just run `pytest` in a terminal. Refer to the [pytest documentation](https://docs.pytest.org/en/stable/contents.html) to learn how to use pytest.
 
 The docker-compose stack does **not** need to be running in order to run tests. However, the tests do need access to Redis. By default, the tests attempt to connect to `redis://localhost:6379/0`. If your Redis service is running elsewhere, expose the correct connection URI to the tests via the environment variable `REDIS_URL`.
+
+**We do not need to launch a local instance of webserver and celery to run tests. Local tests use Flask mocking to test endpoints, and they use a locally running redis to run Celery.**
 
 ## Styling
 
