@@ -1,7 +1,7 @@
 # workflows/workflows-linting.yml
 #
 # Workflows: Linting
-# Lint workflows using eslint.
+# Lint workflows using Prettier.
 
 name: "Workflows: Linting"
 
