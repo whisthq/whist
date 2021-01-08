@@ -1,0 +1,36 @@
+# workflows/ecs-host-service-check-pr.yml
+#
+# ECS Host Service: Check PR
+# Build ECS Host Service.
+
+name: "ECS Host Service: Check PR"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
+        paths:
+            - "ecs-host-service/**"
+            - "!ecs-host-service/README.md"
+    workflow_dispatch:
+
+jobs:
+    main-webserver-check-pr-building:
+      name: Build ECS Host Service
+      runs-on: ubuntu-20.04
+
+      steps:
+        - name: Checkout Git Repository
+          uses: actions/checkout@v2
+
+        - name: Setup Go environment
+          uses: actions/setup-go@v2.1.3
+
+        - name: Install Go dependencies
+          run: make deps
+
+        - name: Build Go project
+          run: make build
