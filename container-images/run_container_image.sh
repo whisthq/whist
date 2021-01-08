@@ -8,6 +8,7 @@ if [[ ${2:-''} == mount ]]; then
 else
     mount_protocol=""
 fi
+dpi=${3:-96}
 
 run_container() {
     docker run -it -d \
@@ -53,7 +54,7 @@ kill_container() {
 # This is necessary for the protocol to think it's ready to start. Normally,
 # the webserver would send this request to the host service, but we don't have
 # a full development pipeline yet, so this will have to do.
-# Args: container_id,
+# Args: container_id, DPI
 send_dpi_request() {
   # Check if host service is even running
   sudo lsof -i :4678 | grep ecs-host > /dev/null \
@@ -67,7 +68,7 @@ send_dpi_request() {
     --data-raw '{
       "auth_secret": "testwebserverauthsecretdev",
       "host_port": 32262,
-      "dpi": 240
+      "dpi": '"$dpi"'
     }') \
   || (echo "DPI/container-ready request to the host service failed!" \
       && kill_container $1 \
@@ -78,7 +79,7 @@ send_dpi_request() {
 
 
 container_id=$(run_container $1)
-send_dpi_request $container_id
+send_dpi_request $container_id $dpi
 echo "Running container with ID: $container_id"
 docker exec -it $container_id /bin/bash || true
 kill_container $container_id
