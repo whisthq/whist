@@ -91,10 +91,10 @@ You can optionally override the default value of `96` for `FRACTAL_DPI` by setti
 If an image has been pushed to ECR and you wish to test it, first ensure the AWS CLI is configured. Then, retrieve the tag you wish to run, either from ECR itself or by grabbing the relevant (full) Git commit hash from this repository, and run:
 
 ```
-[FRACTAL_DPI=96] ./run_remote_container_image.sh APP TAG [REGION] [MOUNT]
+[FRACTAL_DPI=96] ./run_remote_container_image.sh APP TAG [MOUNT]
 ```
 
-The optional argument `REGION` specifies the ECR region to pull from, with a default of `us-east-1`, and `TAG` is the full Git commit hash to run. All other configuration is the same as for the local case.
+The argument `TAG` is the full Git commit hash to run. All other configuration is the same as for the local case.
 
 ### Connecting to Images
 
