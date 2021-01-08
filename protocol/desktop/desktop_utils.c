@@ -70,6 +70,17 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
 #define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:xn:"
 
 int parse_args(int argc, char *argv[]) {
+    /*
+        Parse the arguments passed into the desktop application
+
+        Arguments:
+            argc (int): number of arguments
+            argv (char* []): array of arguments
+
+        Return:
+            (int): 0 on success and -1 on failure
+    */
+
     // TODO: replace `desktop` with argv[0]
     const char *usage =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
@@ -128,7 +139,7 @@ int parse_args(int argc, char *argv[]) {
         }
         errno = 0;
         switch (opt) {
-            case 'w': {
+            case 'w': { // width
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -137,7 +148,7 @@ int parse_args(int argc, char *argv[]) {
                 output_width = (int)ret;
                 break;
             }
-            case 'h': {
+            case 'h': { // height
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -146,7 +157,7 @@ int parse_args(int argc, char *argv[]) {
                 output_height = (int)ret;
                 break;
             }
-            case 'b': {
+            case 'b': { // bitrate
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -155,7 +166,7 @@ int parse_args(int argc, char *argv[]) {
                 max_bitrate = (int)ret;
                 break;
             }
-            case 'c': {
+            case 'c': { // codec
                 if (!strcmp(optarg, "h264")) {
                     output_codec_type = CODEC_TYPE_H264;
                 } else if (!strcmp(optarg, "h265")) {
@@ -167,7 +178,7 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'k': {
+            case 'k': { // private key
                 if (!read_hexadecimal_private_key(optarg, (char *)binary_aes_private_key,
                                                   (char *)hex_aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
@@ -176,14 +187,14 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'u': {
+            case 'u': { // user email
                 if (!safe_strncpy(user_email, optarg, USER_EMAIL_MAXLEN)) {
                     printf("User email is too long: %s\n", optarg);
                     return -1;
                 }
                 break;
             }
-            case 'e': {
+            case 'e': { // sentry environment
                 // only log "production" and "staging" env sentry events
                 if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
                     if (!safe_strncpy(sentry_environment, optarg, FRACTAL_ENVIRONMENT_MAXLEN + 1)) {
@@ -194,14 +205,14 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'i': {
+            case 'i': { // protocol window icon
                 if (!safe_strncpy(icon_png_filename, optarg, ICON_PNG_FILENAME_MAXLEN)) {
                     printf("Icon PNG filename is too long: %s\n", optarg);
                     return -1;
                 }
                 break;
             }
-            case 'p': {
+            case 'p': { // port mappings
                 char separator = '.';
                 char c = separator;
                 unsigned short origin_port;
@@ -232,11 +243,11 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'x': {
+            case 'x': { // use CI
                 running_ci = 1;
                 break;
             }
-            case 'z': {
+            case 'z': { // first connection method to try
                 if (!strcmp(optarg, "STUN")) {
                     using_stun = true;
                 } else if (!strcmp(optarg, "DIRECT")) {
@@ -248,16 +259,16 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'n': {
+            case 'n': { // window title
                 program_name = calloc(sizeof(char), strlen(optarg));
                 strcpy((char *)program_name, optarg);
                 break;
             }
-            case FRACTAL_GETOPT_HELP_CHAR: {
+            case FRACTAL_GETOPT_HELP_CHAR: { // help
                 printf("%s", usage_details);
                 return 1;
             }
-            case FRACTAL_GETOPT_VERSION_CHAR: {
+            case FRACTAL_GETOPT_VERSION_CHAR: { // version
                 printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
                 return 1;
             }
@@ -292,6 +303,16 @@ int parse_args(int argc, char *argv[]) {
 
 #ifndef _WIN32
 static char *append_path_to_home(char *path) {
+    /*
+        Generate full path from relative path
+
+        Arguments:
+            path (char*): the relative path
+
+        Return:
+            (static char*): the full path, from the home directory, as a new pointer
+    */
+
     char *home, *new_path;
     int len;
 
@@ -311,6 +332,16 @@ static char *append_path_to_home(char *path) {
 #endif
 
 char *dupstring(char *s1) {
+    /*
+        Generate a copy of a string
+
+        Arguments:
+            s1 (char*): String to be copied
+
+        Return:
+            (char*): Copy of string, as a new pointer
+    */
+
     size_t len = strlen(s1);
     char *s2 = malloc(len * sizeof *s2);
     char *ret = s2;
@@ -321,6 +352,13 @@ char *dupstring(char *s1) {
 }
 
 char *get_log_dir(void) {
+    /*
+        Get directory of Fractal log
+
+        Return:
+            (char*): Log directory string
+    */
+
 #ifdef _WIN32
     return dupstring(".");
 #else
@@ -329,6 +367,16 @@ char *get_log_dir(void) {
 }
 
 int log_connection_id(int connection_id) {
+    /*
+        Write connection id to connection_id log file
+
+        Arguments:
+            connection_id (int): connection ID
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     // itoa is not portable
     char *str_connection_id = malloc(sizeof(char) * 100);
     sprintf(str_connection_id, "%d", connection_id);
@@ -337,6 +385,7 @@ int log_connection_id(int connection_id) {
         sentry_set_tag("connection_id", str_connection_id);
     }
 
+    // path of connection id file
     char *path;
 #ifdef _WIN32
     path = dupstring("connection_id.txt");
@@ -348,6 +397,7 @@ int log_connection_id(int connection_id) {
         return -1;
     }
 
+    // open connection id file and write connection id to file
     FILE *f = fopen(path, "w");
     free(path);
     if (f == NULL) {
@@ -364,6 +414,14 @@ int log_connection_id(int connection_id) {
 }
 
 int init_socket_library(void) {
+    /*
+        Initialize the Windows socket library
+        (Does not do anything for non-Windows)
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
 #ifdef _WIN32
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
@@ -375,21 +433,36 @@ int init_socket_library(void) {
 }
 
 int destroy_socket_library(void) {
+    /*
+        Destroy the Windows socket library
+        (Does not do anything for non-Windows)
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
 #ifdef _WIN32
     WSACleanup();
 #endif
     return 0;
 }
 
-// files can't be written to a macos app bundle, so they need to be
-// cached in /Users/USERNAME/.APPNAME, here .fractal directory
-// attempt to create fractal cache directory, it will fail if it
-// already exists, which is fine
-// for Linux, this is in /home/USERNAME/.fractal, the cache is also needed
-// for the same reason
-// the mkdir command won't do anything if the folder already exists, in
-// which case we make sure to clear the previous logs and connection id
 int configure_cache(void) {
+    /*
+        Configure the cache folder for non-Windows:
+        files can't be written to a macos app bundle, so they need to be
+        cached in /Users/USERNAME/.APPNAME, here .fractal directory
+        attempt to create fractal cache directory, it will fail if it
+        already exists, which is fine
+        for Linux, this is in /home/USERNAME/.fractal, the cache is also needed
+        for the same reason
+        the mkdir command won't do anything if the folder already exists, in
+        which case we make sure to clear the previous logs and connection id
+
+        Return:
+            (int): 0 on success
+    */
+
 #ifndef _WIN32
     runcmd("mkdir -p ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
@@ -400,6 +473,19 @@ int configure_cache(void) {
 }
 
 int prepare_init_to_server(FractalDiscoveryRequestMessage *fmsg, char *email) {
+    /*
+        Prepare for initial request to server by setting
+        user email and time data
+
+        Arguments:
+            fmsg (FractalDiscoveryRequestMessage*): pointer to the discovery
+                request message packet to be sent to the server
+            email (char*): user email
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     // Copy email
     if (!safe_strncpy(fmsg->user_email, email, USER_EMAIL_MAXLEN)) {
         LOG_ERROR("User email is too long: %s.\n", email);
@@ -415,17 +501,28 @@ int prepare_init_to_server(FractalDiscoveryRequestMessage *fmsg, char *email) {
 }
 
 int update_mouse_motion() {
+    /*
+        Update mouse location if the mouse state has updated since the last call
+        to this function.
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     if (mouse_state.update) {
         int window_width, window_height;
         SDL_GetWindowSize((SDL_Window *)window, &window_width, &window_height);
         int x, y, x_nonrel, y_nonrel;
 
+        // Calculate x location of mouse cursor
         x_nonrel = mouse_state.x_nonrel * MOUSE_SCALING_FACTOR / window_width;
         if (x_nonrel < 0) {
             x_nonrel = 0;
         } else if (x_nonrel >= MOUSE_SCALING_FACTOR) {
             x_nonrel = MOUSE_SCALING_FACTOR - 1;
         }
+
+        // Calculate y location of mouse cursor
         y_nonrel = mouse_state.y_nonrel * MOUSE_SCALING_FACTOR / window_height;
         if (y_nonrel < 0) {
             y_nonrel = 0;
@@ -433,6 +530,7 @@ int update_mouse_motion() {
             y_nonrel = MOUSE_SCALING_FACTOR - 1;
         }
 
+        // Set x and y of mouse
         if (mouse_state.is_relative) {
             x = mouse_state.x_rel;
             y = mouse_state.y_rel;
@@ -441,6 +539,7 @@ int update_mouse_motion() {
             y = y_nonrel;
         }
 
+        // Send new mouse locations to server
         FractalClientMessage fmsg = {0};
         fmsg.type = MESSAGE_MOUSE_MOTION;
         fmsg.mouseMotion.relative = mouse_state.is_relative;
