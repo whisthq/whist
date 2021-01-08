@@ -14,8 +14,11 @@ on:
             - project/**
         paths:
             - "container-images/**"
-            - "!container-images/README.md"
             - ".github/workflows/container-images-build-images.yml"
+            - "!container-images/README.md"
+            - "!container-images/run_container_image.sh"
+            - "!container-images/run_local_container_image.sh"
+            - "!container-images/run_remote_container_image.sh"
     workflow_dispatch:
 
 jobs:
