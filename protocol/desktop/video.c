@@ -12,6 +12,12 @@ packets are received as standard FractalPackets by ReceiveVideo(FractalPacket*
 packet), before being saved in a proper video frame format.
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include "video.h"
 #include "sdl_utils.h"
 
@@ -62,6 +68,12 @@ volatile bool pending_resize_render = false;
 #define CURSORIMAGE_R 0x00ff0000
 #define CURSORIMAGE_G 0x0000ff00
 #define CURSORIMAGE_B 0x000000ff
+
+/*
+============================
+Custom Types
+============================
+*/
 
 typedef struct FrameData {
     char* frame_buffer;
@@ -145,100 +157,32 @@ bool has_rendered_yet = false;
 
 // START VIDEO FUNCTIONS
 
+/*
+============================
+Private Functions
+============================
+*/
+
 void update_decoder_parameters(int width, int height, CodecType codec_type);
 int32_t render_screen(SDL_Renderer* renderer);
 void loading_sdl(SDL_Renderer* renderer, int loading_index);
 
-void nack(int id, int index) {
-    if (video_data.is_waiting_for_iframe) {
-        return;
-    }
-    video_data.num_nacked++;
-    LOG_INFO("Missing Video Packet ID %d Index %d, NACKing...", id, index);
-    FractalClientMessage fmsg;
-    fmsg.type = MESSAGE_VIDEO_NACK;
-    fmsg.nack_data.id = id;
-    fmsg.nack_data.index = index;
-    send_fmsg(&fmsg);
-}
-
-bool request_iframe() {
-    if (get_timer(video_data.last_iframe_request_timer) > 1500.0 / 1000.0) {
-        FractalClientMessage fmsg;
-        fmsg.type = MESSAGE_IFRAME_REQUEST;
-        if (video_data.last_rendered_id == 0) {
-            fmsg.reinitialize_encoder = true;
-        } else {
-            fmsg.reinitialize_encoder = false;
-        }
-        send_fmsg(&fmsg);
-        start_timer(&video_data.last_iframe_request_timer);
-        video_data.is_waiting_for_iframe = true;
-        return true;
-    } else {
-        return false;
-    }
-}
-
-static enum AVPixelFormat sws_input_fmt;
-
-void update_sws_context() {
-    LOG_INFO("Updating SWS Context");
-    VideoDecoder* decoder = video_context.decoder;
-
-    sws_input_fmt = decoder->sw_frame->format;
-
-    LOG_INFO("Decoder Format: %s", av_get_pix_fmt_name(sws_input_fmt));
-
-    if (video_context.sws) {
-        av_freep(&video_context.data[0]);
-        sws_freeContext(video_context.sws);
-    }
-
-    video_context.sws = NULL;
-
-    memset(video_context.data, 0, sizeof(video_context.data));
-
-    if (sws_input_fmt != AV_PIX_FMT_YUV420P || decoder->width != output_width ||
-        decoder->height != output_height) {
-        av_image_alloc(video_context.data, video_context.linesize, output_width, output_height,
-                       AV_PIX_FMT_YUV420P, 32);
-
-        LOG_INFO("Will be resizing from %dx%d to %dx%d", decoder->width, decoder->height,
-                 output_width, output_height);
-        video_context.sws =
-            sws_getContext(decoder->width, decoder->height, sws_input_fmt, output_width,
-                           output_height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-    }
-}
-
-void update_pixel_format() {
-    if (sws_input_fmt != video_context.decoder->sw_frame->format || pending_sws_update) {
-        sws_input_fmt = video_context.decoder->sw_frame->format;
-        pending_sws_update = false;
-        update_sws_context();
-    }
-}
-
-void update_texture() {
-    if (pending_texture_update) {
-        LOG_INFO("Beginning to use %d x %d", output_width, output_height);
-        SDL_Texture* texture =
-            SDL_CreateTexture((SDL_Renderer*)video_context.renderer, SDL_PIXELFORMAT_YV12,
-                              SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
-        if (!texture) {
-            LOG_ERROR("SDL: could not create texture - exiting");
-            exit(1);
-        }
-
-        SDL_DestroyTexture(video_context.texture);
-        pending_resize_render = false;
-        video_context.texture = texture;
-        pending_texture_update = false;
-    }
-}
+/*
+============================
+Private Function Implementations
+============================
+*/
 
 void update_decoder_parameters(int width, int height, CodecType codec_type) {
+    /*
+        Update video decoder parameters
+
+        Arguments:
+            width (int): video width
+            height (int): video height
+            codec_type (CodecType): decoder codec type
+    */
+
     LOG_INFO("Updating Width & Height to %dx%d and Codec to %d", width, height, codec_type);
 
     if (video_context.decoder) {
@@ -262,27 +206,17 @@ void update_decoder_parameters(int width, int height, CodecType codec_type) {
     output_codec_type = codec_type;
 }
 
-static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
-    int ret = 0;
-
-    int window_width, window_height;
-    SDL_GetWindowSize((SDL_Window*)window, &window_width, &window_height);
-    int x = msgs->x * window_width / (int32_t)MOUSE_SCALING_FACTOR;
-    int y = msgs->y * window_height / (int32_t)MOUSE_SCALING_FACTOR;
-
-    for (; num_msgs > 0; msgs++, num_msgs--) {
-        if (client_id == msgs->peer_id) {
-            continue;
-        }
-        if (draw_peer_cursor(renderer, x, y, msgs->color.r, msgs->color.g, msgs->color.b) != 0) {
-            LOG_ERROR("Failed to draw spectator cursor.");
-            ret = -1;
-        }
-    }
-    return ret;
-}
-
 int32_t render_screen(SDL_Renderer* renderer) {
+    /*
+        Render the video screen that the user sees
+
+        Arguments:
+            renderer (SDL_Renderer*): SDL renderer used to generate video
+
+        Return:
+            (int32_t): 0 on success, -1 on failure
+    */
+
     LOG_INFO("RenderScreen running on Thread %d", SDL_GetThreadID(NULL));
 
 //    Windows GHA VM cannot render, it just segfaults on creating the renderer
@@ -489,8 +423,15 @@ int32_t render_screen(SDL_Renderer* renderer) {
     return 0;
 }
 
-// Make the screen black
 void loading_sdl(SDL_Renderer* renderer, int loading_index) {
+    /*
+        Make the screen black and show the loading screen
+
+        Arguments:
+            renderer (SDL_Renderer*): video renderer
+            loading_index (int): the index of the loading frame
+    */
+
     int gif_frame_index = loading_index % 83;
 
     clock c;
@@ -551,6 +492,121 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     }
     gif_frame_index += 1;
     gif_frame_index %= 83;  // number of loading frames
+}
+
+/*
+============================
+Public Function Implementations
+============================
+*/
+
+void nack(int id, int index) {
+    if (video_data.is_waiting_for_iframe) {
+        return;
+    }
+    video_data.num_nacked++;
+    LOG_INFO("Missing Video Packet ID %d Index %d, NACKing...", id, index);
+    FractalClientMessage fmsg;
+    fmsg.type = MESSAGE_VIDEO_NACK;
+    fmsg.nack_data.id = id;
+    fmsg.nack_data.index = index;
+    send_fmsg(&fmsg);
+}
+
+bool request_iframe() {
+    if (get_timer(video_data.last_iframe_request_timer) > 1500.0 / 1000.0) {
+        FractalClientMessage fmsg;
+        fmsg.type = MESSAGE_IFRAME_REQUEST;
+        if (video_data.last_rendered_id == 0) {
+            fmsg.reinitialize_encoder = true;
+        } else {
+            fmsg.reinitialize_encoder = false;
+        }
+        send_fmsg(&fmsg);
+        start_timer(&video_data.last_iframe_request_timer);
+        video_data.is_waiting_for_iframe = true;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+static enum AVPixelFormat sws_input_fmt;
+
+void update_sws_context() {
+    LOG_INFO("Updating SWS Context");
+    VideoDecoder* decoder = video_context.decoder;
+
+    sws_input_fmt = decoder->sw_frame->format;
+
+    LOG_INFO("Decoder Format: %s", av_get_pix_fmt_name(sws_input_fmt));
+
+    if (video_context.sws) {
+        av_freep(&video_context.data[0]);
+        sws_freeContext(video_context.sws);
+    }
+
+    video_context.sws = NULL;
+
+    memset(video_context.data, 0, sizeof(video_context.data));
+
+    if (sws_input_fmt != AV_PIX_FMT_YUV420P || decoder->width != output_width ||
+        decoder->height != output_height) {
+        av_image_alloc(video_context.data, video_context.linesize, output_width, output_height,
+                       AV_PIX_FMT_YUV420P, 32);
+
+        LOG_INFO("Will be resizing from %dx%d to %dx%d", decoder->width, decoder->height,
+                 output_width, output_height);
+        video_context.sws =
+            sws_getContext(decoder->width, decoder->height, sws_input_fmt, output_width,
+                           output_height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+    }
+}
+
+void update_pixel_format() {
+    if (sws_input_fmt != video_context.decoder->sw_frame->format || pending_sws_update) {
+        sws_input_fmt = video_context.decoder->sw_frame->format;
+        pending_sws_update = false;
+        update_sws_context();
+    }
+}
+
+void update_texture() {
+    if (pending_texture_update) {
+        LOG_INFO("Beginning to use %d x %d", output_width, output_height);
+        SDL_Texture* texture =
+            SDL_CreateTexture((SDL_Renderer*)video_context.renderer, SDL_PIXELFORMAT_YV12,
+                              SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
+        if (!texture) {
+            LOG_ERROR("SDL: could not create texture - exiting");
+            exit(1);
+        }
+
+        SDL_DestroyTexture(video_context.texture);
+        pending_resize_render = false;
+        video_context.texture = texture;
+        pending_texture_update = false;
+    }
+}
+
+static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
+    int ret = 0;
+
+    int window_width, window_height;
+    SDL_GetWindowSize((SDL_Window*)window, &window_width, &window_height);
+    int x = msgs->x * window_width / (int32_t)MOUSE_SCALING_FACTOR;
+    int y = msgs->y * window_height / (int32_t)MOUSE_SCALING_FACTOR;
+
+    for (; num_msgs > 0; msgs++, num_msgs--) {
+        if (client_id == msgs->peer_id) {
+            continue;
+        }
+        if (draw_peer_cursor(renderer, x, y, msgs->color.r, msgs->color.g, msgs->color.b) != 0) {
+            LOG_ERROR("Failed to draw spectator cursor.");
+            ret = -1;
+        }
+    }
+    return ret;
 }
 
 void clear_sdl(SDL_Renderer* renderer) {
