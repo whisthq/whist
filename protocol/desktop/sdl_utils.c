@@ -11,6 +11,12 @@ initSDL gets called first to create an SDL window, and destroySDL at the end to
 close the window.
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include "sdl_utils.h"
 #include "../fractal/utils/png.h"
 
@@ -23,10 +29,23 @@ HHOOK g_h_keyboard_hook;
 LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param);
 #endif
 
-// Send a key to SDL event queue, presumably one that is captured and wouldn't
-// naturally make it to the event queue by itself
+/*
+============================
+Private Function Implementations
+============================
+*/
 
 void send_captured_key(SDL_Keycode key, int type, int time) {
+    /*
+        Send a key to SDL event queue, presumably one that is captured and wouldn't
+        naturally make it to the event queue by itself
+
+        Arguments:
+            key (SDL_Keycode): key that was captured
+            type (int): event type (press or release)
+            time (int): time that the key event was registered
+    */
+
     SDL_Event e = {0};
     e.type = type;
     e.key.keysym.sym = key;
@@ -36,8 +55,19 @@ void send_captured_key(SDL_Keycode key, int type, int time) {
     SDL_PushEvent(&e);
 }
 
-// Handle SDL resize events
 int resizing_event_watcher(void* data, SDL_Event* event) {
+    /*
+        Event watcher to be used in SDL_AddEventWatch to capture
+        and handle window resize events
+
+        Arguments:
+            data (void*): SDL Window data
+            event (SDL_Event*): SDL event to be analyzed
+
+        Return:
+            (int): 0 on success
+    */
+
     if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_RESIZED) {
         // If the resize event if for the current window
         SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
@@ -178,6 +208,13 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 }
 
 void destroy_sdl(SDL_Window* window_param) {
+    /*
+        Destroy the SDL resources
+
+        Arguments:
+            window_param (SDL_Window*): SDL window to be destroyed
+    */
+
     LOG_INFO("Destroying SDL");
 #if defined(_WIN32)
     UnhookWindowsHookEx(g_h_keyboard_hook);
@@ -190,12 +227,22 @@ void destroy_sdl(SDL_Window* window_param) {
 }
 
 #if defined(_WIN32)
-// Function to capture keyboard strokes and block them if they encode special
-// key combinations, with intent to redirect them to send_captured_key so that the
-// keys can still be streamed over to the host
-
 HHOOK mule;
 LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param) {
+    /*
+        Function to capture keyboard strokes and block them if they encode special
+        key combinations, with intent to redirect them to send_captured_key so that the
+        keys can still be streamed over to the host
+
+        Arguments:
+            n_code (INT): keyboard code
+            w_param (WPARAM): w_param to be passed to CallNextHookEx
+            l_param (LPARAM): l_param to be passed to CallNextHookEx
+
+        Return:
+            (LRESULT CALLBACK): CallNextHookEx return callback value
+    */
+
     // By returning a non-zero value from the hook procedure, the
     // message does not get passed to the target window
     KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)l_param;
