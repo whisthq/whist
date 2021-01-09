@@ -11,6 +11,12 @@ handleServerMessage() must be called on any received message from the server.
 Any action trigged a server message must be initiated in network.c.
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include "server_message_handler.h"
 
 #include <stddef.h>
@@ -40,13 +46,36 @@ extern volatile char *window_title;
 extern volatile bool should_update_window_title;
 extern int client_id;
 
+/*
+============================
+Private Function
+============================
+*/
+
 static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handle_quit_message(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handle_audio_frequency_message(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handle_clipboard_message(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_size);
 
+/*
+============================
+Private Function Implementations
+============================
+*/
+
 int handle_server_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+    /*
+        Handle message packets from the server
+
+        Arguments:
+            fmsg (FractalServerMessage*): server message packet
+            fmsg_size (size_t): size of the packet message contents
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     switch (fmsg->type) {
         case MESSAGE_PONG:
             return handle_pong_message(fmsg, fmsg_size);
@@ -65,6 +94,17 @@ int handle_server_message(FractalServerMessage *fmsg, size_t fmsg_size) {
 }
 
 static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+    /*
+        Handle server pong message
+
+        Arguments:
+            fmsg (FractalServerMessage*): server pong message
+            fmsg_size (size_t): size of the packet message contents
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     if (fmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
@@ -83,6 +123,17 @@ static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size) {
 }
 
 static int handle_quit_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+    /*
+        Handle server quit message
+
+        Arguments:
+            fmsg (FractalServerMessage*): server quit message
+            fmsg_size (size_t): size of the packet message contents
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     UNUSED(fmsg);
     if (fmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
@@ -96,6 +147,17 @@ static int handle_quit_message(FractalServerMessage *fmsg, size_t fmsg_size) {
 }
 
 static int handle_audio_frequency_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+    /*
+        Handle server audio frequency message
+
+        Arguments:
+            fmsg (FractalServerMessage*): server audio frequency message
+            fmsg_size (size_t): size of the packet message contents
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     if (fmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
@@ -108,6 +170,17 @@ static int handle_audio_frequency_message(FractalServerMessage *fmsg, size_t fms
 }
 
 static int handle_clipboard_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+    /*
+        Handle server clipboard message
+
+        Arguments:
+            fmsg (FractalServerMessage*): server clipboard message
+            fmsg_size (size_t): size of the packet message contents
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     if (fmsg_size != sizeof(FractalServerMessage) + fmsg->clipboard.size) {
         LOG_ERROR(
             "Incorrect message size for a server message"
@@ -123,10 +196,21 @@ static int handle_clipboard_message(FractalServerMessage *fmsg, size_t fmsg_size
 }
 
 static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_size) {
-    // Since only the main thread is allowed to perform UI functionality on MacOS, instead of
-    // calling SDL_SetWindowTitle directly, this function updates a global variable window_title.
-    // The main thread periodically polls this variable to determine if it needs to update the
-    // window title.
+    /*
+        Handle server window title message
+        Since only the main thread is allowed to perform UI functionality on MacOS, instead of
+        calling SDL_SetWindowTitle directly, this function updates a global variable window_title.
+        The main thread periodically polls this variable to determine if it needs to update the
+        window title.
+
+        Arguments:
+            fmsg (FractalServerMessage*): server window title message
+            fmsg_size (size_t): size of the packet message contents
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     LOG_INFO("Received window title message from server!");
     while (should_update_window_title) {
         // wait for the main thread to process the previous request
