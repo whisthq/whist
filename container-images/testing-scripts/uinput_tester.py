@@ -1,8 +1,13 @@
 import os
 import time
+import socket
 import uinput
 
 BUS_USB = 0x03
+
+# hotfix uinput to include new hi res scrolling
+uinput.REL_WHEEL_HI_RES = (0x02, 0x0b)
+uinput.REL_HWHEEL_HI_RES = (0x02, 0x0c)
 
 # absmouse = uinput.Device([uinput.ABS_X, uinput.ABS_Y])
 relmouse = uinput.Device([
@@ -11,7 +16,9 @@ relmouse = uinput.Device([
     uinput.BTN_LEFT,
     uinput.BTN_RIGHT,
     uinput.REL_WHEEL,
-    uinput.REL_HWHEEL
+    uinput.REL_HWHEEL,
+    uinput.REL_WHEEL_HI_RES,
+    uinput.REL_HWHEEL_HI_RES
 ], name="Fractal Virtual Relative Input", bustype=BUS_USB, vendor=0xf4c1, product=0x1123, version=0x1)
 
 keycodes = [
@@ -154,12 +161,40 @@ print(f"pid: {os.getpid()}")
 print(f"relmouse file descriptor: {relmouse._Device__uinput_fd}")
 print(f"keyboard file descriptor: {keyboard._Device__uinput_fd}")
 
+SOCKET_PATH = "/tmp/uinput.socket"
+
+if os.path.exists(SOCKET_PATH):
+    os.remove(SOCKET_PATH)
+
+server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+server.bind(SOCKET_PATH)
+server.listen(1)
+
+print(f"listening at {SOCKET_PATH}")
 while True:
+    print(f"waiting for connection")
+    conn, addr = server.accept()
+    try:
+        while True:
+            data = conn.recv(1024)
+            if data:
+                print("data received:")
+                print(data)
+            else:
+                print("end of stream")
+                break
+    finally:
+        conn.close()
+
+while True:
+    # time.sleep(1)
+    # relmouse.emit_click(uinput.BTN_LEFT)
+    # print("clicking")
+    # time.sleep(1)
+    # keyboard.emit_click(uinput.KEY_A)
+    # print("typing A")
     time.sleep(1)
-    relmouse.emit_click(uinput.BTN_LEFT)
-    print("clicking")
-    time.sleep(1)
-    keyboard.emit_click(uinput.KEY_A)
-    print("typing A")
+    relmouse.emit(uinput.REL_WHEEL_HI_RES, 30)
+    print("scrolling")
 
 
