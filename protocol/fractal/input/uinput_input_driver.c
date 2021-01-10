@@ -12,6 +12,10 @@
 #include <linux/uinput.h>
 #include <dirent.h>
 #include <sys/sysmacros.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
+#include "../utils/string_utils.h"
 
 #define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                          \
     if (ioctl(FD, PARAMS) == -1) {                                                 \
@@ -308,104 +312,116 @@ const int linux_mouse_buttons[6] = {
 #define GetLinuxKeyCode(sdl_keycode) linux_keycodes[sdl_keycode]
 #define GetLinuxMouseButton(sdl_button) linux_mouse_buttons[sdl_button]
 
+int unix_socket;
+
 InputDevice* create_input_device() {
+    struct sockaddr_un addr;
+    unix_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (unix_socket == -1) {
+        LOG_ERROR("uinput: open socket failed");
+    }
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    safe_strncpy(addr.sun_path, "/tmp/uinput.socket", sizeof(addr.sun_path));
+    if (connect(unix_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+        LOG_ERROR("uinput: connect failed");
+    }
+
     InputDevice* input_device = safe_malloc(sizeof(InputDevice));
     memset(input_device, 0, sizeof(InputDevice));
 
-    // create event writing FDs
-    mknod("/dev/uinput", S_IFCHR | S_IRUSR | S_IWUSR, makedev(10, 223));
+    /* // create event writing FDs */
+    /* input_device->fd_absmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK); */
+    /* input_device->fd_relmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK); */
+    /* input_device->fd_keyboard = open("/dev/uinput", O_WRONLY | O_NONBLOCK); */
 
-    input_device->fd_absmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    input_device->fd_relmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    input_device->fd_keyboard = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    /* if (input_device->fd_absmouse < 0 || input_device->fd_relmouse < 0 || */
+    /*     input_device->fd_keyboard < 0) { */
+    /*     char buf[1024]; */
+    /*     strerror_r(errno, buf, 1024); */
+    /*     LOG_ERROR("CreateInputDevice: Error opening '/dev/uinput' for writing: %s", buf); */
+    /*     goto failure; */
+    /* } */
 
-    if (input_device->fd_absmouse < 0 || input_device->fd_relmouse < 0 ||
-        input_device->fd_keyboard < 0) {
-        char buf[1024];
-        strerror_r(errno, buf, 1024);
-        LOG_ERROR("CreateInputDevice: Error opening '/dev/uinput' for writing: %s", buf);
-        goto failure;
-    }
+    /* // register keyboard events */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_EVBIT, EV_KEY); */
+    /* int kcode; */
+    /* for (int i = 0; i < NUM_KEYCODES; ++i) { */
+    /*     if ((kcode = GetLinuxKeyCode(i))) { */
+    /*         _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_KEYBIT, kcode); */
+    /*     } */
+    /* } */
 
-    // register keyboard events
-    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_EVBIT, EV_KEY);
-    int kcode;
-    for (int i = 0; i < NUM_KEYCODES; ++i) {
-        if ((kcode = GetLinuxKeyCode(i))) {
-            _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_KEYBIT, kcode);
-        }
-    }
+    /* // register relative mouse events */
 
-    // register relative mouse events
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_EVBIT, EV_KEY); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_LEFT); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_RIGHT); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_MIDDLE); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_3); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_4); */
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_EVBIT, EV_KEY);
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_LEFT);
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_RIGHT);
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_MIDDLE);
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_3);
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_KEYBIT, BTN_4);
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_EVBIT, EV_REL); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_X); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_Y); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_WHEEL); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_HWHEEL); */
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_EVBIT, EV_REL);
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_X);
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_Y);
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_WHEEL);
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_SET_RELBIT, REL_HWHEEL);
+    /* // register absolute mouse events */
 
-    // register absolute mouse events
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_EVBIT, EV_KEY); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_TOUCH); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_TOOL_PEN); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_STYLUS); */
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_EVBIT, EV_KEY);
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_TOUCH);
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_TOOL_PEN);
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_KEYBIT, BTN_STYLUS);
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_EVBIT, EV_ABS); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_ABSBIT, ABS_X); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_ABSBIT, ABS_Y); */
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_EVBIT, EV_ABS);
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_ABSBIT, ABS_X);
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_ABSBIT, ABS_Y);
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_PROPBIT, INPUT_PROP_POINTER); */
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_PROPBIT, INPUT_PROP_POINTER);
+    /* // config devices */
 
-    // config devices
+    /* struct uinput_setup usetup = {0}; */
+    /* usetup.id.bustype = BUS_USB; */
+    /* usetup.id.vendor = 0xf4c1; */
+    /* usetup.id.version = 1; */
 
-    struct uinput_setup usetup = {0};
-    usetup.id.bustype = BUS_USB;
-    usetup.id.vendor = 0xf4c1;
-    usetup.id.version = 1;
+    /* // keyboard config */
 
-    // keyboard config
+    /* usetup.id.product = 0x1122; */
+    /* strcpy(usetup.name, "Fractal Virtual Keyboard"); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_DEV_SETUP, &usetup); */
 
-    usetup.id.product = 0x1122;
-    strcpy(usetup.name, "Fractal Virtual Keyboard");
-    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_DEV_SETUP, &usetup);
+    /* // relative mouse config */
 
-    // relative mouse config
+    /* usetup.id.product = 0x1123; */
+    /* strcpy(usetup.name, "Fractal Virtual Relative Input"); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_DEV_SETUP, &usetup); */
 
-    usetup.id.product = 0x1123;
-    strcpy(usetup.name, "Fractal Virtual Relative Input");
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_DEV_SETUP, &usetup);
+    /* // absolute mouse config */
 
-    // absolute mouse config
+    /* usetup.id.product = 0x1124; */
+    /* strcpy(usetup.name, "Fractal Virtual Absolute Input"); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_DEV_SETUP, &usetup); */
 
-    usetup.id.product = 0x1124;
-    strcpy(usetup.name, "Fractal Virtual Absolute Input");
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_DEV_SETUP, &usetup);
+    /* struct uinput_abs_setup axis_setup = {0}; */
+    /* axis_setup.absinfo.resolution = 1; */
 
-    struct uinput_abs_setup axis_setup = {0};
-    axis_setup.absinfo.resolution = 1;
+    /* axis_setup.code = ABS_X; */
+    /* axis_setup.absinfo.maximum = UINPUT_MOUSE_COORDINATE_RANGE; */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_ABS_SETUP, &axis_setup); */
 
-    axis_setup.code = ABS_X;
-    axis_setup.absinfo.maximum = UINPUT_MOUSE_COORDINATE_RANGE;
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_ABS_SETUP, &axis_setup);
+    /* axis_setup.code = ABS_Y; */
+    /* axis_setup.absinfo.maximum = UINPUT_MOUSE_COORDINATE_RANGE; */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_ABS_SETUP, &axis_setup); */
 
-    axis_setup.code = ABS_Y;
-    axis_setup.absinfo.maximum = UINPUT_MOUSE_COORDINATE_RANGE;
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_ABS_SETUP, &axis_setup);
+    /* // create devices */
 
-    // create devices
-
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_DEV_CREATE);
-    _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_DEV_CREATE);
-    _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_DEV_CREATE);
-    LOG_INFO("Created input devices!");
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_DEV_CREATE); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_DEV_CREATE); */
+    /* _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_DEV_CREATE); */
+    /* LOG_INFO("Created input devices!"); */
 
     return input_device;
 failure:
@@ -418,12 +434,12 @@ void destroy_input_device(InputDevice* input_device) {
         LOG_INFO("destroy_input_device: Nothing to do, device is null!");
         return;
     }
-    ioctl(input_device->fd_absmouse, UI_DEV_DESTROY);
-    ioctl(input_device->fd_relmouse, UI_DEV_DESTROY);
-    ioctl(input_device->fd_keyboard, UI_DEV_DESTROY);
-    close(input_device->fd_absmouse);
-    close(input_device->fd_relmouse);
-    close(input_device->fd_keyboard);
+    /* ioctl(input_device->fd_absmouse, UI_DEV_DESTROY); */
+    /* ioctl(input_device->fd_relmouse, UI_DEV_DESTROY); */
+    /* ioctl(input_device->fd_keyboard, UI_DEV_DESTROY); */
+    /* close(input_device->fd_absmouse); */
+    /* close(input_device->fd_relmouse); */
+    /* close(input_device->fd_keyboard); */
     free(input_device);
 }
 
@@ -437,7 +453,8 @@ void emit_input_event(int fd, int type, int code, int val) {
     ie.time.tv_usec = 0;
 
     LOG_INFO("emitting input event");
-    write(fd, &ie, sizeof(ie));
+    // write(fd, &ie, sizeof(ie));
+    write(unix_socket, &ie, sizeof(ie));
 }
 
 int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode sdl_keycode) {
