@@ -103,7 +103,7 @@ const environment: FractalEnvironment = {
 
 export const config: FractalConfig =
     process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
-        ? environment.PRODUCTION
+        ? environment.DEVELOPMENT
         : environment.PRODUCTION
 
 // default export until we have multiple exports
