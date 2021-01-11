@@ -428,14 +428,18 @@ int main() {
 
     if (connect(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
       LOG_INFO("connect error");
+      char buf[1024];
+      strerror_r(errno, buf, 1024);
+      LOG_INFO("%s", buf);
       return 1;
     }
 
     LOG_INFO("connected!");
 
     int fds[3] = {fd_absmouse, fd_relmouse, fd_keyboard};
-    ancil_send_fds(fd_socket, fds, 3);
-
+    if (ancil_send_fds(fd_socket, fds, 3) == -1) {
+      LOG_INFO("failed to send file descriptors");
+    }
     LOG_INFO("sent file descriptors!");
 
     // spin forever so device files don't get deleted
