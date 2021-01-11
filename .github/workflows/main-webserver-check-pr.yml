@@ -15,6 +15,7 @@ on:
         paths:
             - "main-webserver/**"
             - "!main-webserver/README.md"
+            - ".github/workflows/main-webserver-check-pr.yml"
 
 jobs:
     # Linting
