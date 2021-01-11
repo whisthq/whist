@@ -105,6 +105,8 @@ jobs:
               shell: bash
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
+                      sudo apt update
+
                       ./protocol/desktop/linux-client-setup.sh
 
                       # install clang-tidy, coreutils for realpath, and perl
