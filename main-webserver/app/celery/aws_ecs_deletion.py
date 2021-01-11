@@ -224,11 +224,17 @@ def delete_cluster(self, cluster, region_name):
             asg_name = ecs_client.describe_auto_scaling_groups_in_cluster(cluster)[0][
                 "AutoScalingGroupName"
             ]
+            launch_config_name = ecs_client.describe_auto_scaling_groups_in_cluster(cluster)[0][
+                "LaunchConfigurationName"
+            ]
             cluster_info = ClusterInfo.query.get(cluster)
 
             fractal_sql_commit(db, lambda db, x: db.session.delete(x), cluster_info)
             ecs_client.auto_scaling_client.delete_auto_scaling_group(
                 AutoScalingGroupName=asg_name, ForceDelete=True
+            )
+            ecs_client.auto_scaling_client.delete_launch_configuration(
+                LaunchConfigurationName=launch_config_name
             )
             ecs_client.ecs_client.delete_cluster(cluster=cluster)
     except Exception as error:
