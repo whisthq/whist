@@ -1,5 +1,7 @@
 import ssl
 
+from app.helpers.utils.general.logs import fractal_log
+
 
 def init_celery(celery, app):
     celery.conf.update(
