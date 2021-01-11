@@ -1,14 +1,16 @@
 """Tests for the /container/stun endpoint."""
 
+import importlib
 import uuid
 
 from http import HTTPStatus
 
+import app
+
+from app.helpers.blueprint_helpers.aws import aws_container_post
 from app.helpers.blueprint_helpers.aws.aws_container_post import set_stun
 
-
-def status(code):
-    return eval(f"""lambda *args, **kwargs: {code}""")
+from ..patches import function
 
 
 def test_no_container_id(client, authorized):
@@ -34,7 +36,7 @@ def test_no_username(client, authorized):
 def test_not_found(client, authorized, monkeypatch):
     code = HTTPStatus.NOT_FOUND
 
-    monkeypatch.setattr(set_stun, "__code__", status(code).__code__)
+    monkeypatch.setattr(aws_container_post, "set_stun", function(returns=code))
 
     response = client.post(
         "/container/stun",
@@ -47,7 +49,8 @@ def test_not_found(client, authorized, monkeypatch):
 def test_successful(client, authorized, monkeypatch):
     code = HTTPStatus.OK
 
-    monkeypatch.setattr(set_stun, "__code__", status(code).__code__)
+    monkeypatch.setattr(aws_container_post, "set_stun", function(returns=code))
+    importlib.reload(app.blueprints.aws.aws_container_blueprint)
 
     response = client.post(
         "/container/stun",

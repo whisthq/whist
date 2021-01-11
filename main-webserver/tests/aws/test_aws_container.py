@@ -9,13 +9,14 @@ import pytest
 import celery
 from celery import shared_task
 
+from app.celery import aws_ecs_creation
 from app.celery.aws_ecs_modification import update_cluster
-from app.celery.aws_ecs_creation import _poll
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.models import ClusterInfo, db, UserContainer, RegionToAmi
 
 from ..helpers.general.progress import fractalJobRunner, queryStatus
+from ..patches import function
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.celery.aws_ecs_modification import manual_scale_cluster
@@ -88,7 +89,7 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
 def test_assign_container(client, admin, monkeypatch):
-    monkeypatch.setattr(_poll, "__code__", (lambda *args, **kwargs: True).__code__)
+    monkeypatch.setattr(aws_ecs_creation, "_poll", function(returns=True))
 
     deploy_env = "dev"
     if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":

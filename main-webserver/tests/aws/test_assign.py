@@ -11,34 +11,35 @@ from flask import current_app
 
 from app.celery.aws_ecs_creation import assign_container
 from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
-from app.helpers.blueprint_helpers.aws.aws_container_post import (
-    BadAppError,
-    preprocess_task_info,
-)
+from app.helpers.blueprint_helpers.aws import aws_container_post
 from app.helpers.utils.payment.stripe_client import StripeClient
 from app.serializers.public import UserSchema
 
-from ..patches import apply_async, function
+from ..patches import function, Object
 
 
-def bad_app(*args, **kwargs):
-    raise BadAppError
+@pytest.fixture
+def set_valid_subscription(monkeypatch):
+    """Patch StripeClient according to whether or not the user's Stripe information is valid.
 
+    Args:
+        valid: A boolean indicating whether or not the user's Stripe information is valid.
 
-def set_valid_subscription(monkeypatch, valid):
-    subscriptions = ["some_subscription"] if valid else []
-    monkeypatch.setattr(StripeClient, "get_subscriptions", function(returns=subscriptions))
+    Returns:
+        None
+    """
+
+    def _set_valid_subscription(valid):
+        subscriptions = ["some_subscription"] if valid else []
+        monkeypatch.setattr(StripeClient, "get_subscriptions", function(returns=subscriptions))
+
+    return _set_valid_subscription
 
 
 # the following repeated monkeypatches (for userschema, stripeclient) are temporary, will need to replace with properly authenticated users later
-def test_bad_app(client, authorized, monkeypatch):
-    # I couldn't figure out how to patch a function that was defined at the
-    # top level of a module. I found this solution at:
-    # https://stackoverflow.com/questions/28403380/py-tests-monkeypatch-setattr-not-working-in-some-cases
-
-    monkeypatch.setattr(preprocess_task_info, "__code__", bad_app.__code__)
+def test_bad_app(client, authorized, monkeypatch, set_valid_subscription):
     monkeypatch.setattr(UserSchema, "dump", function(returns={"stripe_customer_id": "random1234"}))
-    set_valid_subscription(monkeypatch, True)
+    set_valid_subscription(True)
 
     response = client.post(
         "/container/assign", json=dict(username=authorized.user_id, app="Bad App")
@@ -46,25 +47,25 @@ def test_bad_app(client, authorized, monkeypatch):
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_no_username(client, authorized, monkeypatch):
-    set_valid_subscription(monkeypatch, True)
+def test_no_username(client, authorized, set_valid_subscription):
+    set_valid_subscription(True)
 
     response = client.post("/container/assign", json=dict(app="VSCode"))
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
-def test_no_app(client, authorized, monkeypatch):
+def test_no_app(client, authorized, monkeypatch, set_valid_subscription):
     monkeypatch.setattr(UserSchema, "dump", function(returns={"stripe_customer_id": "random1234"}))
-    set_valid_subscription(monkeypatch, True)
+    set_valid_subscription(True)
 
     response = client.post("/container/assign", json=dict(username=authorized.user_id))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_no_region(client, authorized, monkeypatch):
+def test_no_region(client, authorized, monkeypatch, set_valid_subscription):
     monkeypatch.setattr(UserSchema, "dump", function(returns={"stripe_customer_id": "random1234"}))
-    set_valid_subscription(monkeypatch, True)
+    set_valid_subscription(True)
 
     response = client.post(
         "/container/assign", json=dict(username=authorized.user_id, app="VSCode")
@@ -74,8 +75,10 @@ def test_no_region(client, authorized, monkeypatch):
 
 
 @pytest.fixture
-def test_payment(client, make_authorized_user, monkeypatch):
+def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscription):
     """Generates a function to get the response of the /container/assign endpoint given a valid user's payment information"""
+
+    task = Object()
 
     def _test_payment(onFreeTrial, isStripeValid):
         """Gets the response of the /container/assign endpoint given whether the user is on a free trial or has valid Stripe information
@@ -85,28 +88,28 @@ def test_payment(client, make_authorized_user, monkeypatch):
         if onFreeTrial:
             # create a user with a time stamp less than 7 days ago
             authorized = make_authorized_user(
-                client,
-                monkeypatch,
                 stripe_customer_id="random1234",
                 created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
             )
         else:
             # create a user with a timestamp of more than 7 days ago
             authorized = make_authorized_user(
-                client,
-                monkeypatch,
                 stripe_customer_id="random1234",
                 created_timestamp=dt.now(datetime.timezone.utc).timestamp()
                 - 7 * SECONDS_IN_MINUTE * MINUTES_IN_HOUR * HOURS_IN_DAY,
             )
 
-        set_valid_subscription(monkeypatch, isStripeValid)
-        monkeypatch.setattr(assign_container, "apply_async", apply_async)
+        task = Object()
+
+        set_valid_subscription(isStripeValid)
+        monkeypatch.setattr(assign_container, "apply_async", function(returns=task))
+        monkeypatch.setattr(task, "id", "garbage-task-uuid")
 
         response = client.post(
             "/container/assign",
             json=dict(username=authorized.user_id, app="Blender", region="us-east-1"),
         )
+
         return response
 
     return _test_payment

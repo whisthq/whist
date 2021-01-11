@@ -1,21 +1,18 @@
 """Tests for the /container/ping endpoint."""
 
+import importlib
+
 from http import HTTPStatus
 
 import pytest
 
+import app
+
+from app.helpers.blueprint_helpers.aws import aws_container_post
 from app.helpers.blueprint_helpers.aws.aws_container_post import ping_helper
 from app.models import db
 
-from ..patches import Patch
-
-
-def status_code(*args, **kwargs):
-    from tests.patches import Patch
-
-    patch = Patch()
-
-    return None, patch.status_code
+from ..patches import function
 
 
 def test_no_availability(client):
@@ -41,8 +38,7 @@ def test_no_key(client):
 def test_not_found(client, monkeypatch):
     code = HTTPStatus.NOT_FOUND
 
-    monkeypatch.setattr(Patch, "status_code", code, raising=False)
-    monkeypatch.setattr(ping_helper, "__code__", status_code.__code__)
+    monkeypatch.setattr(aws_container_post, "ping_helper", function(returns=(None, code)))
 
     response = client.post(
         "/container/ping", json=dict(available=True, identifier=0, private_key="aes_secret_key")
@@ -54,8 +50,8 @@ def test_not_found(client, monkeypatch):
 def test_successful(client, monkeypatch):
     code = HTTPStatus.OK
 
-    monkeypatch.setattr(Patch, "status_code", code, raising=False)
-    monkeypatch.setattr(ping_helper, "__code__", status_code.__code__)
+    monkeypatch.setattr(aws_container_post, "ping_helper", function(returns=({}, code)))
+    importlib.reload(app.blueprints.aws.aws_container_blueprint)
 
     response = client.post(
         "/container/ping", json=dict(available=True, identifier=0, private_key="aes_secret_key")
