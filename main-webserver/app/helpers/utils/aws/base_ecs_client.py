@@ -1,18 +1,12 @@
-import io
-import json
 import os.path
-import paramiko
 import random
 import string
 import time
 import uuid
-
 from collections import defaultdict
-from pprint import pprint
 
 import boto3
 import botocore.exceptions
-
 from flask import current_app
 
 
@@ -616,6 +610,20 @@ class ECSClient:
 
         return auto_scaling_group_name
 
+    def update_auto_scaling_group(self, auto_scaling_group_name, launch_config_name):
+        """
+        Updates a specific autoscaling group to use a new launch config
+        :param auto_scaling_group_name (str): the name of the ASG to update
+        :param launch_config_name (str): the name of the new launch config to use
+        :return: the name of the updated ASG
+        """
+        _ = self.auto_scaling_client.update_auto_scaling_group(
+            AutoScalingGroupName=auto_scaling_group_name,
+            LaunchConfigurationName=launch_config_name,
+        )
+
+        return auto_scaling_group_name
+
     def create_capacity_provider(self, auto_scaling_group_name, capacity_provider_name=None):
         """
         Args:
@@ -889,6 +897,16 @@ class ECSClient:
         )
         self.create_cluster(capacity_providers=[capacity_provider_name], cluster_name=cluster_name)
         return cluster_name, launch_config_name, auto_scaling_group_name, capacity_provider_name
+
+    def update_cluster_with_new_ami(self, cluster_name, ami):
+        self.set_cluster(cluster_name)
+        launch_config_info = self.describe_auto_scaling_groups_in_cluster(self.cluster)
+        asg_name = launch_config_info[0]["AutoScalingGroupName"]
+        launch_config_name = self.create_launch_configuration(instance_type="g3.4xlarge", ami=ami)
+        self.update_auto_scaling_group(asg_name, launch_config_name)
+        containers_list = self.get_containers_in_cluster(self.cluster)
+        self.set_containers_to_draining(containers_list)
+        return cluster_name, ami
 
 
 if __name__ == "__main__":
