@@ -45,8 +45,8 @@ def test_handle_status(app, container, make_credential, provider, user, monkeypa
     response = Object()
 
     monkeypatch.setattr(requests, "post", function(returns=response))
-    monkeypatch.setattr(response, "ok", ok, raising=False)
-    monkeypatch.setattr(response, "text", "response text", raising=False)
+    monkeypatch.setattr(response, "ok", ok)
+    monkeypatch.setattr(response, "text", "response text")
     make_credential(provider)
 
     with container() as c:

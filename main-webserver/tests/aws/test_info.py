@@ -1,24 +1,21 @@
 """Tests for the /container/protocol_info endpoint."""
 
+import importlib
+
 from http import HTTPStatus
 
+import app
+
+from app.helpers.blueprint_helpers.aws import aws_container_post
 from app.helpers.blueprint_helpers.aws.aws_container_post import protocol_info
 
-
-def not_found(*args, **kwargs):
-    from http import HTTPStatus
-
-    return None, HTTPStatus.NOT_FOUND
-
-
-def success(*args, **kwargs):
-    from http import HTTPStatus
-
-    return {}, HTTPStatus.OK
+from ..patches import function
 
 
 def test_not_found(client, monkeypatch):
-    monkeypatch.setattr(protocol_info, "__code__", not_found.__code__)
+    monkeypatch.setattr(
+        aws_container_post, "protocol_info", function(returns=(None, HTTPStatus.NOT_FOUND))
+    )
 
     response = client.post(
         "/container/protocol_info", json=dict(identifier=0, private_key="aes_secret_key")
@@ -40,7 +37,8 @@ def test_no_key(client):
 
 
 def test_successful(client, monkeypatch):
-    monkeypatch.setattr(protocol_info, "__code__", success.__code__)
+    monkeypatch.setattr(aws_container_post, "protocol_info", function(returns=({}, HTTPStatus.OK)))
+    importlib.reload(app.blueprints.aws.aws_container_blueprint)
 
     response = client.post(
         "/container/protocol_info", json=dict(identifier=0, private_key="aes_secret_key")
