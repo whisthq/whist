@@ -13,6 +13,9 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 from .celery_utils import init_celery
 from .config import CONFIG_MATRIX
 
+from app.helpers.utils.general.logs import fractal_log
+
+
 PKG_NAME = os.path.dirname(os.path.realpath(__file__)).split("/")[-1]
 
 jwtManager = JWTManager()
@@ -54,6 +57,8 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
     config = getattr(getattr(CONFIG_MATRIX, location), action)
 
     app.config.from_object(config())
+
+    fractal_log(function="", label = "", logs=str(app.config["SECRET_KEY"]))
 
     if kwargs.get("celery"):
         init_celery(kwargs.get("celery"), app)
