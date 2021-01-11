@@ -27,7 +27,7 @@ run_container() {
         -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
         -v /fractal/containerResourceMappings:/fractal/containerResourceMappings:ro \
         -v /fractal/cloudStorage:/fractal/cloudStorage:rshared \
-        -v /tmp/uinput.socket:/tmp/uinput.socket \
+        -v /tmp/sockets:/tmp/sockets \
         --device=/dev/input/event3 \
         --device=/dev/input/mouse0 \
         --device=/dev/input/event4 \
