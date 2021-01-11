@@ -902,10 +902,16 @@ class ECSClient:
         self.set_cluster(cluster_name)
         launch_config_info = self.describe_auto_scaling_groups_in_cluster(self.cluster)
         asg_name = launch_config_info[0]["AutoScalingGroupName"]
-        launch_config_name = self.create_launch_configuration(instance_type="g3.4xlarge", ami=ami)
-        self.update_auto_scaling_group(asg_name, launch_config_name)
+        old_launch_config_name = launch_config_info[0]["LaunchConfigurationName"]
+        new_launch_config_name = self.create_launch_configuration(
+            instance_type="g3.4xlarge", ami=ami
+        )
+        self.update_auto_scaling_group(asg_name, new_launch_config_name)
         containers_list = self.get_containers_in_cluster(self.cluster)
         self.set_containers_to_draining(containers_list)
+        self.auto_scaling_client.delete_launch_configuration(
+            LaunchConfigurationName=old_launch_config_name
+        )
         return cluster_name, ami
 
 
