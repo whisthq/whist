@@ -1,7 +1,7 @@
 {
   "environments": {
     "review": {
-      "addons": ["heroku-redis:hobby-dev"],
+      "addons": ["heroku-redis:premium-0"],
       "buildpacks": [
         {
           "url": "https://github.com/heroku/heroku-buildpack-awscli.git"
