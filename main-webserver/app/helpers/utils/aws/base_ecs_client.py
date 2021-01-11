@@ -901,8 +901,8 @@ class ECSClient:
     def update_cluster_with_new_ami(self, cluster_name, ami):
         """
         Updates a given cluster to use a new AMI
-        :param cluster_name: which cluster to update
-        :param ami: which AMI to use
+        :param cluster_name (str): which cluster to update
+        :param ami (str): which AMI to use
         :return: the name of the updated cluster
         """
         self.set_cluster(cluster_name)
