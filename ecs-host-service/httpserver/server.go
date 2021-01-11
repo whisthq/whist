@@ -198,7 +198,6 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	err = json.Unmarshal(body, &rawmap)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		logger.Infof("Body: %s", body)
 		return logger.MakeError("Error raw-unmarshalling JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
 	}
 	var requestAuthSecret string
