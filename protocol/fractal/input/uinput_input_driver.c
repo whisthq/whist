@@ -315,11 +315,11 @@ const int linux_mouse_buttons[6] = {
 // http://www.normalesup.org/~george/comp/libancillary/#s_2
 #define ANCIL_MAX_N_FDS 960
 
-#define ANCIL_FD_BUFFER(n)                      \
-  struct {                                      \
-    struct cmsghdr h;                           \
-    int fd[n];                                  \
-  }
+#define ANCIL_FD_BUFFER(n) \
+    struct {               \
+        struct cmsghdr h;  \
+        int fd[n];         \
+    }
 
 int ancil_recv_fds_with_buffer(int sock, int* fds, unsigned n_fds, void* buffer) {
     struct msghdr msghdr;
@@ -342,21 +342,21 @@ int ancil_recv_fds_with_buffer(int sock, int* fds, unsigned n_fds, void* buffer)
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
     for (i = 0; i < n_fds; i++) ((int*)CMSG_DATA(cmsg))[i] = -1;
-    if (recvmsg(sock, &msghdr, 0) < 0) return (-1);
+    if (recvmsg(sock, &msghdr, 0) < 0) {
+        char buf[1024];
+        strerror_r(errno, buf, 1024);
+        LOG_ERROR("uinput: recvmsg error %s", buf);
+        return (-1);
+    }
     for (i = 0; i < n_fds; i++) fds[i] = ((int*)CMSG_DATA(cmsg))[i];
     n_fds = (cmsg->cmsg_len - sizeof(struct cmsghdr)) / sizeof(int);
     return (n_fds);
 }
 
-int
-ancil_recv_fds(int sock, int *fd, unsigned n_fds)
-{
-  ANCIL_FD_BUFFER(ANCIL_MAX_N_FDS) buffer;
-
-  assert(n_fds <= ANCIL_MAX_N_FDS);
-  return(ancil_recv_fds_with_buffer(sock, fd, n_fds, &buffer));
+int ancil_recv_fds(int sock, int* fd, unsigned n_fds) {
+    ANCIL_FD_BUFFER(ANCIL_MAX_N_FDS) buffer;
+    return (ancil_recv_fds_with_buffer(sock, fd, n_fds, &buffer));
 }
-
 
 InputDevice* create_input_device() {
     // set up a unix socket server to receive file descriptor
@@ -378,10 +378,25 @@ InputDevice* create_input_device() {
         LOG_ERROR("uinput: listen failed");
     }
 
+    int fds[3];
+    while (1) {
+        int client = accept(fd_socket, NULL, NULL);
+        if (client == -1) {
+            char buf[1024];
+            strerror_r(errno, buf, 1024);
+            LOG_ERROR("uinput: accept error %s", buf);
+            continue;
+        }
+        int n = ancil_recv_fds(client, fds, 3);
+        LOG_INFO("uinput: received %d file descriptors: %d, %d, %d", n, fds[0], fds[1], fds[2]);
+        break;
+    }
+
     InputDevice* input_device = safe_malloc(sizeof(InputDevice));
     memset(input_device, 0, sizeof(InputDevice));
-
-    // TODO receive file descriptors and set input_device
+    input_device->fd_absmouse = fds[0];
+    input_device->fd_relmouse = fds[1];
+    input_device->fd_keyboard = fds[2];
 
     /* // create event writing FDs */
     /* input_device->fd_absmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK); */
