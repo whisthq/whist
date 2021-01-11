@@ -29,6 +29,7 @@ def addSubscriptionHelper(email, plan):
         label=email,
         logs="Signing {} up for plan {}".format(email, plan),
     )
+
     client = StripeClient(current_app.config["STRIPE_SECRET"])
     plans = client.get_prices()
 
@@ -37,29 +38,54 @@ def addSubscriptionHelper(email, plan):
 
     price = reduce(reduce_plan, plans, None)
 
-    fractal_log(function="addSubscriptionHelper", label=email,logs=f"Subscribing to {price}")
+    fractal_log(function="addSubscriptionHelper", label=email, logs=f"Subscribing to {price}")
 
     if price:
         try:
             client.create_subscription(email, price)
             status = SUCCESS
         except NonexistentUser:
-            fractal_log(function="addSubscriptionHelper", label=email, logs="Non existent user", level=logging.ERROR)
+            fractal_log(
+                function="addSubscriptionHelper",
+                label=email,
+                logs="Non existent user",
+                level=logging.ERROR,
+            )
             status = FORBIDDEN
         except NonexistentStripeCustomer:
-            fractal_log(function="addSubscriptionHelper", label=email, logs="Non existent Stripe customer", level=logging.ERROR)
+            fractal_log(
+                function="addSubscriptionHelper",
+                label=email,
+                logs="Non existent Stripe customer",
+                level=logging.ERROR,
+            )
             status = FORBIDDEN
         except RegionNotSupported:
-            fractal_log(function="addSubscriptionHelper", label=email, logs="Region not supported", level=logging.ERROR)
+            fractal_log(
+                function="addSubscriptionHelper",
+                label=email,
+                logs="Region not supported",
+                level=logging.ERROR,
+            )
             status = BAD_REQUEST
         except InvalidStripeToken:
-            fractal_log(function="addSubscriptionHelper", label=email, logs="Invalid Stripe token", level=logging.ERROR)
+            fractal_log(
+                function="addSubscriptionHelper",
+                label=email,
+                logs="Invalid Stripe token",
+                level=logging.ERROR,
+            )
             status = BAD_REQUEST
         except Exception as e:
             fractal_log("addSubscriptionHelper", "", str(e), level=logging.ERROR)
             status = INTERNAL_SERVER_ERROR
     else:
-        fractal_log(function="addSubscriptionHelper", label=email, logs="No plan was found", level=logging.ERROR)
+        fractal_log(
+            function="addSubscriptionHelper",
+            label=email,
+            logs="No plan was found",
+            level=logging.ERROR,
+        )
         status = BAD_REQUEST
 
     return jsonify({"status": status}), status

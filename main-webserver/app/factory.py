@@ -58,7 +58,7 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
 
     app.config.from_object(config())
 
-    fractal_log(function="", label = "", logs=str(app.config["SECRET_KEY"]))
+    fractal_log(function="", label="", logs=str(app.config["SECRET_KEY"]))
 
     if kwargs.get("celery"):
         init_celery(kwargs.get("celery"), app)
