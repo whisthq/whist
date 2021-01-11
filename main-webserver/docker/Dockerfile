@@ -15,12 +15,12 @@ WORKDIR /repo
 # Setup toolchain necessary for compilation activities in python dependencies
 # hadolint ignore=DL3008,DL3015
 RUN apt-get update \
-    && apt-get install -y \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    python-dev \
-    libpq-dev
+ && apt-get install -y \
+            build-essential \
+            libssl-dev \
+            libffi-dev \
+            python-dev \
+            libpq-dev
 
 # Install python requirements
 COPY requirements.txt ./

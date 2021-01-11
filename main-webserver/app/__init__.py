@@ -4,40 +4,20 @@ import os
 
 from functools import wraps
 
-import ssl
 from celery import Celery
 from flask import current_app, request
 from flask_sendgrid import SendGrid
-
-from app.helpers.utils.general.time import timeout
-from app.helpers.utils.general.logs import fractal_log
 
 from .config import _callback_webserver_hostname
 from .factory import create_app, jwtManager, ma, mail
 
 
-@timeout(seconds=5, error_message="could not initialize celery with redis")
 def make_celery(app_name=__name__):
-    redis = os.environ.get("REDIS_TLS_URL", "rediss://")
-
-    celery_app = Celery(
-        app_name,
-        broker=redis,
-        backend=redis,
-        broker_use_ssl={
-            "ssl_cert_reqs": ssl.CERT_NONE,
-        },
-        redis_backend_use_ssl={
-            "ssl_cert_reqs": ssl.CERT_NONE,
-        },
-    )
-
-    # this ping checks to see if redis is available. SSL connections just
-    # freeze if the instance is not properly set up, so this method is
-    # wrapped in a timeout. TODO: actually look at return from .ping()
-    celery_app.control.inspect().ping()
-
-    return celery_app
+    """
+    Returns a Celery object with initialized redis parameters.
+    """
+    redis = os.environ.get("REDIS_URL", "redis://")
+    return Celery(app_name, broker=redis, backend=redis)
 
 
 def fractal_pre_process(func):
