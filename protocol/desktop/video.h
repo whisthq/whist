@@ -53,7 +53,7 @@ int32_t receive_video(FractalPacket* packet);
 void update_video();
 
 /**
- * @brief                          Free the video thread and Vide0Context data to
+ * @brief                          Free the video thread and VideoContext data to
  *                                 exit
  */
 void destroy_video();
