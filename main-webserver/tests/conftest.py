@@ -4,6 +4,7 @@ import ssl
 import logging
 
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from random import getrandbits as randbits
 
 import pytest
@@ -14,8 +15,6 @@ from flask_jwt_extended import create_access_token
 from app.helpers.utils.general.redis import get_redis_url
 from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
-
-from .patches import do_nothing
 
 
 @pytest.fixture
@@ -261,30 +260,24 @@ def user(request):
         pytest._user_id = u.user_id
 
 
-# Note: currently only being used in tests/aws/test_assign.py, eventually want to expand to all tests
-
-
 @pytest.fixture
 def make_user():
-    """Add a row to the users table for testing.
-    Yields:
-        A function that adds a test row to the users table of the
-        database.
+    """Create a new user for testing purposes.
+
+    Args:
+        stripe_customer_id: Optional. The test user's Stripe customer ID.
+        created_timestamp: Optional. An arbitrary time at which the new user was created. Should be
+            a timezone-aware time stamp. Defaults to the current time.
+
+    Returns:
+        An instance of the User model.
     """
 
+    # Maintain a list of all of the users that have been created with this factory fixture so they
+    # can be deleted during this fixture's teardown phase.
     users = []
 
-    def _user(stripe_customer_id=None, created_timestamp=1000000000):
-        """Create a dummy user for testing.
-        Arguments:
-            stripe_customer_id (optional): The initial value with which the new row's stripe_customer_id
-                column should be populated.
-            created_timestamp (optional): The initial value with which the new row's created_timestamp
-                column should be populated. 1000000000 is an arbitrary starting value.
-        Yields:
-            An instance of the User model.
-        """
-
+    def _user(stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc)):
         user = User(
             user_id=f"test-user+{uuid.uuid4()}@fractal.co",
             password="",
@@ -300,6 +293,7 @@ def make_user():
 
     yield _user
 
+    # Clean up all of the test users that were created.
     for user in users:
         db.session.delete(user)
 
@@ -307,28 +301,27 @@ def make_user():
 
 
 @pytest.fixture
-def make_authorized_user(make_user):
-    """Add a row with an authorized user to the users table for testing.
-    Yields:
-        A function that wraps the make_user fixture and adds a test row with an authorized user to the users table of the
-        database.
+def make_authorized_user(client, make_user, monkeypatch):
+    """Create a new user for testing purposes and authorize all future test requests as that user.
+
+    Args:
+        stripe_customer_id: Optional. The test user's Stripe customer ID.
+        created_timestamp: Optional. An arbitrary time at which the new user was created. Should be
+            a timezone-aware time stamp. Defaults to the current time.
+
+    Returns:
+        An instance of the User model representing the authorized user.
     """
 
-    def _authorized_user(
-        client, monkeypatch, stripe_customer_id=None, created_timestamp=1000000000
-    ):
-        """Create a dummy authorized user for testing.
-        Arguments:
-            stripe_customer_id (optional): The initial value with which the new row's stripe_customer_id
-                column should be populated.
-            created_timestamp (optional): The initial value with which the new row's created_timestamp
-                column should be populated. 1000000000 is an arbitrary starting value.
-        Yields:
-            An authorized instance of the User model.
-        """
-        user = make_user(stripe_customer_id=stripe_customer_id, created_timestamp=created_timestamp)
+    def _authorized_user(stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc)):
+        user = make_user(
+            stripe_customer_id=stripe_customer_id,
+            created_timestamp=created_timestamp,
+        )
         access_token = create_access_token(identity=user.user_id)
+
         monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
+
         return user
 
     return _authorized_user

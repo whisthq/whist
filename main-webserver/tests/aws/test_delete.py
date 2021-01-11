@@ -1,14 +1,16 @@
 """Tests for the /container/delete endpoint."""
 
+import uuid
+
 from http import HTTPStatus
 
 import pytest
 
 from app.celery.aws_ecs_deletion import delete_container
-from app.helpers.utils.aws.aws_resource_locks import spin_lock
+from app.helpers.utils.aws import aws_resource_locks
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 
-from ..patches import apply_async, do_nothing
+from ..patches import function, Object
 
 
 def test_no_container_id(client):
@@ -24,7 +26,10 @@ def test_no_key(client):
 
 
 def test_successful(client, authorized, monkeypatch):
-    monkeypatch.setattr(delete_container, "apply_async", apply_async)
+    obj = Object()
+
+    monkeypatch.setattr(delete_container, "apply_async", function(returns=obj))
+    monkeypatch.setattr(obj, "id", str(uuid.uuid4()))
 
     response = client.post(
         "/container/delete", json=dict(container_id="mycontainerid123", private_key="garbage!")
@@ -34,9 +39,7 @@ def test_successful(client, authorized, monkeypatch):
 
 
 def test_timeout(monkeypatch):
-    give_up = lambda *args, **kwargs: -1
-
-    monkeypatch.setattr(spin_lock, "__code__", give_up.__code__)
+    monkeypatch.setattr(aws_resource_locks, "spin_lock", function(returns=-1))
 
     with pytest.raises(Exception):
         delete_container("mycontainerid123", "garbage!")
@@ -62,11 +65,11 @@ def test_delete(container, monkeypatch):
 
     c = container()
 
-    monkeypatch.setattr(ECSClient, "__init__", do_nothing)
-    monkeypatch.setattr(ECSClient, "add_task", do_nothing)
-    monkeypatch.setattr(ECSClient, "check_if_done", do_nothing)
-    monkeypatch.setattr(ECSClient, "stop_task", do_nothing)
-    monkeypatch.setattr(ECSClient, "spin_til_done", do_nothing)
+    monkeypatch.setattr(ECSClient, "__init__", function())
+    monkeypatch.setattr(ECSClient, "add_task", function())
+    monkeypatch.setattr(ECSClient, "check_if_done", function())
+    monkeypatch.setattr(ECSClient, "stop_task", function())
+    monkeypatch.setattr(ECSClient, "spin_til_done", function())
 
     delete_container.delay(c.container_id, c.secret_key)
 

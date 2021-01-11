@@ -14,25 +14,7 @@ from app.celery.aws_s3_modification import (
     upload_logs_to_s3,
 )
 
-from ..patches import apply_async
-
-
-class Resource:
-    class Object:
-        def __init__(self, *args, **kwargs):
-            pass
-
-
-def resource(*args, **kwargs):
-    return Resource()
-
-
-def put_failure(*args, **kwargs):
-    raise Exception
-
-
-def put_success(*args, **kwargs):
-    pass
+from ..patches import function, Object
 
 
 def test_bad_sender():
@@ -58,8 +40,10 @@ def test_unauthorized(container):
 
 
 def test_s3_failure(container, monkeypatch):
-    monkeypatch.setattr(Resource.Object, "put", put_failure, raising=False)
-    monkeypatch.setattr(boto3, "resource", resource)
+    obj = Object()
+
+    monkeypatch.setattr(boto3, "resource", function(returns=obj))
+    monkeypatch.setattr(obj, "put", function(raises=Exception))
 
     with container() as c:
         with pytest.raises(Exception):
@@ -72,9 +56,16 @@ def test_s3_failure(container, monkeypatch):
             )
 
 
-def test_s3_success(container, monkeypatch):
-    monkeypatch.setattr(Resource.Object, "put", put_success, raising=False)
-    monkeypatch.setattr(boto3, "resource", resource)
+@pytest.mark.parametrize("sender", ("client", "server"))
+def test_s3_success(container, sender, monkeypatch):
+    obj = Object()
+    resource = Object()
+    is_client = sender == "client"
+    connection_id = str(uuid.uuid4())
+
+    monkeypatch.setattr(boto3, "resource", function(returns=resource))
+    monkeypatch.setattr(obj, "put", function())
+    monkeypatch.setattr(resource, "Object", function(returns=obj))
 
     with container() as c:
         response = upload_logs_to_s3(
@@ -84,6 +75,7 @@ def test_s3_success(container, monkeypatch):
             c.secret_key,
             "Log message.",
         )
+
         assert response["status"] == HTTPStatus.OK
 
 
@@ -93,7 +85,10 @@ def test_bad_request(client):
 
 
 def test_successful_request(client, monkeypatch):
-    monkeypatch.setattr(upload_logs_to_s3, "apply_async", apply_async)
+    task = Object()
+
+    monkeypatch.setattr(task, "id", "task_id")
+    monkeypatch.setattr(upload_logs_to_s3, "apply_async", function(returns=task))
 
     response = client.post(
         "/logs",
