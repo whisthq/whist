@@ -49,8 +49,6 @@ class TimeoutError(Exception):
     Generic Timeout class
     """
 
-    pass
-
 
 # from https://stackoverflow.com/questions/2281850/timeout-function-if-it-takes-too-long-to-finish
 def timeout(seconds, error_message=os.strerror(errno.ETIMEDOUT)):
