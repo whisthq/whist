@@ -1,8 +1,3 @@
-import ssl
-
-from app.helpers.utils.general.logs import fractal_log
-
-
 def init_celery(celery, app):
     """
     Adds some configs to Celery instance (`celery`) and
@@ -18,8 +13,6 @@ def init_celery(celery, app):
         result_accept_content=["json"],
         worker_hijack_root_logger=True,
         celery_redis_max_connections=40,
-        broker_use_ssl={"ssl_cert_reqs": ssl.CERT_NONE},
-        redis_backend_use_ssl={"ssl_cert_reqs": ssl.CERT_NONE},
     )
     TaskBase = celery.Task  # pylint: disable=invalid-name
 

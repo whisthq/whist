@@ -9,11 +9,11 @@ from celery import Celery
 from flask import current_app, request
 from flask_sendgrid import SendGrid
 
+from app.helpers.utils.general.time import timeout
+from app.helpers.utils.general.logs import fractal_log
+
 from .config import _callback_webserver_hostname
 from .factory import create_app, jwtManager, ma, mail
-from app.helpers.utils.general.time import timeout
-
-from app.helpers.utils.general.logs import fractal_log
 
 
 @timeout(seconds=5, error_message="could not initialize celery with redis")
