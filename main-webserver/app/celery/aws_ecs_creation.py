@@ -255,10 +255,6 @@ def select_cluster(region_name):
 
     """
 
-    all_regions = RegionToAmi.query.all()
-
-    region_to_ami = {region.region_name: region.ami_id for region in all_regions}
-
     all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
     base_len = 2
@@ -269,21 +265,17 @@ def select_cluster(region_name):
             label=None,
             logs="No available clusters found. Creating new cluster...",
         )
-        cluster_name = create_new_cluster.delay(
-            region_name=region_name, ami=region_to_ami[region_name], min_size=1
-        ).get(disable_sync_subtasks=False)["cluster"]
+        cluster_name = create_new_cluster.delay(region_name=region_name, ami=None, min_size=1).get(
+            disable_sync_subtasks=False
+        )["cluster"]
         for _ in range(base_len - len(all_clusters)):
-            create_new_cluster.delay(
-                region_name=region_name, ami=region_to_ami[region_name], min_size=1
-            )
+            create_new_cluster.delay(region_name=region_name, ami=None, min_size=1)
     else:
         cluster_name = all_clusters[0].cluster
         if len(all_clusters) == 1 and float(
             all_clusters[0].registeredContainerInstancesCount
         ) > regen_fraction * float(all_clusters[0].maxContainers):
-            create_new_cluster.delay(
-                region_name=region_name, ami=region_to_ami[region_name], min_size=1
-            )
+            create_new_cluster.delay(region_name=region_name, ami=None, min_size=1)
         # delete spurious clusters
         if len(all_clusters) > 2:
             for cluster in all_clusters[2:]:
@@ -785,6 +777,11 @@ def create_new_cluster(
         user_cluster_schema: information on cluster created
     """
     task_start_time = time.time()
+    all_regions = RegionToAmi.query.all()
+
+    region_to_ami = {region.region_name: region.ami_id for region in all_regions}
+    if ami is None:
+        ami = region_to_ami[region_name]
 
     fractal_log(
         function="create_new_cluster",

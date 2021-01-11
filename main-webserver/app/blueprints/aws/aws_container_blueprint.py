@@ -47,11 +47,11 @@ def test_endpoint(action, **kwargs):
     if action == "create_cluster":
         cluster_name, instance_type, ami, region_name, max_size, min_size = (
             kwargs["body"]["cluster_name"],
-            kwargs["body"]["instance_type"],
-            kwargs["body"]["ami"],
+            kwargs["body"].get("instance_type", None),
+            kwargs["body"].get("ami", None),
             kwargs["body"]["region_name"],
-            kwargs["body"]["max_size"],
-            kwargs["body"]["min_size"],
+            kwargs["body"].get("max_size", 10),
+            kwargs["body"].get("min_size", 1),
         )
         task = create_new_cluster.apply_async(
             [cluster_name, instance_type, ami, region_name, min_size, max_size]
