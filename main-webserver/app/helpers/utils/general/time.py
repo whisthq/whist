@@ -56,8 +56,9 @@ class TimeoutError(Exception):
 def timeout(seconds, error_message=os.strerror(errno.ETIMEDOUT)):
     """
     Decorator to make a timeout for long-running functions. This is necessary
-    because Python's SSL library seems to not handle handshake timeouts
-    (https://stackoverflow.com/questions/19938593/web-app-hangs-for-several-hours-in-ssl-py-at-self-sslobj-do-handshake).
+    because Python's SSL library seems to not handle handshake timeouts (see:
+    https://stackoverflow.com/questions/19938593/web-app-hangs-for-several-hours-in-ssl-py-at-self-sslobj-do-handshake
+    )
     Unfortunately, this means we need to do the timeout ourselves.
 
     Usage:
