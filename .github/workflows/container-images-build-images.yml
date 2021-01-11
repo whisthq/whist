@@ -15,6 +15,7 @@ on:
         paths:
             - "container-images/**"
             - "!container-images/README.md"
+            - ".github/workflows/container-images-build-images.yml"
     workflow_dispatch:
 
 jobs:

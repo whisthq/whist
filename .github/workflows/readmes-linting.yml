@@ -16,6 +16,7 @@ on:
             - "README.md"
             - "**/README.md"
             - ".github/workflows/README.md"
+            - ".github/workflows/readmes-linting.yml"
 
 jobs:
     readmes-linting-main:
