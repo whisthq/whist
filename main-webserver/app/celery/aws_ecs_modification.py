@@ -15,14 +15,12 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
     fractal_log(
         function="update_cluster",
         label="None",
-        logs=(f"updating cluster {cluster_name} on ECS to ami {ami} in " f"region {region_name}"),
+        logs=f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
     )
     self.update_state(
         state="PENDING",
         meta={
-            "msg": (
-                f"updating cluster {cluster_name} on ECS to ami {ami} in " f"region {region_name}"
-            ),
+            "msg": (f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"),
         },
     )
     region_to_ami = {region.region_name: region.ami_id for region in all_regions}
@@ -33,9 +31,7 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
     self.update_state(
         state="SUCCESS",
         meta={
-            "msg": (
-                f"updating cluster {cluster_name} on ECS to ami {ami} in " f"region {region_name}"
-            ),
+            "msg": (f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"),
         },
     )
 
@@ -59,6 +55,6 @@ def update_region(self, region_name="us-east-1", ami=None):
     self.update_state(
         state="SUCCESS",
         meta={
-            "msg": (f"updating to ami {ami} in region {region_name}"),
+            "msg": f"updating to ami {ami} in region {region_name}",
         },
     )
