@@ -48,7 +48,6 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
         json=dict(
             cluster_name=cluster_name,
             instance_type="g3s.xlarge",
-            ami="ami-0c82e2febb87e6d1c",
             region_name="us-east-1",
             max_size=1,
             min_size=0,
