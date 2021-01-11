@@ -10,6 +10,7 @@ from app.celery.aws_ecs_creation import (
     send_commands,
 )
 from app.celery.aws_ecs_deletion import delete_cluster, delete_container, drain_container
+from app.celery.aws_ecs_modification import update_region
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
@@ -68,6 +69,18 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["region_name"],
         )
         task = delete_cluster.apply_async([cluster, region_name])
+
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
+
+    if action == "update_region":
+        ami, region_name = (
+            kwargs["body"].get("ami", None),
+            kwargs["body"]["region_name"],
+        )
+        task = update_region.delay(ami=ami, region_name=region_name)
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
