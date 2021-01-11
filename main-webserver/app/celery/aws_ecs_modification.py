@@ -10,6 +10,14 @@ from app.models import (
 
 @shared_task(bind=True)
 def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
+    """
+    Updates a specific cluster to use a new AMI
+    :param self: the celery instance running the task
+    :param region_name: which region the cluster is in
+    :param cluster_name: which cluster to update
+    :param ami: which AMI to use
+    :return: which cluster was updated
+    """
     all_regions = RegionToAmi.query.all()
 
     fractal_log(
@@ -38,6 +46,14 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
 
 @shared_task(bind=True)
 def update_region(self, region_name="us-east-1", ami=None):
+    """
+    Updates all clusters in a region to use a new AMI
+    calls update_cluster under the hood
+    :param self: the celery instance running the task
+    :param region_name: which region the cluster is in
+    :param ami: which AMI to use
+    :return: which cluster was updated
+    """
     self.update_state(
         state="PENDING",
         meta={
