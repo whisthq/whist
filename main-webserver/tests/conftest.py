@@ -7,6 +7,7 @@ from random import getrandbits as randbits
 
 import pytest
 
+from celery import Celery
 from celery.app.task import Task
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
@@ -146,6 +147,11 @@ def celery_parameters(app):
     return {
         "task_cls": ContextTask,
     }
+
+
+@pytest.fixture(scope="session")
+def celery_enable_logging():
+    return True
 
 
 @pytest.fixture
