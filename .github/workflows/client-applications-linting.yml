@@ -15,6 +15,7 @@ on:
         paths:
             - "client-applications/**"
             - "!client-applications/README.md"
+            - ".github/workflows/client-applications-linting.yml"
 
 jobs:
     client-applications-linting-main:
