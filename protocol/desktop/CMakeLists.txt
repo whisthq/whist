@@ -180,5 +180,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             dxguid
             shcore
             DbgHelp
+            setupapi
             )
 endif()
