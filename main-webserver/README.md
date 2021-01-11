@@ -29,7 +29,7 @@ The following environment variables must also be set in `docker/.env` (neither t
 - `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
 - `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
 
-Finally, the local tests require a connection to a running Redis instance. See [Setting up Redis](#setting-up-redis) for instructions on how to establish such a connection. If the Redis instance used for testing is running anywhere other than `rediss://localhost:6379/0`, `REDIS_TLS_URL` should be set to indicate the correct connection URI. Take a moment to understand that setting `REDIS_TLS_URL` has no effect on the Flask instance running in the `docker-compose`; it only affects Flask applications launched manually (e.g. Flask applications created by `pytest` for testing purposes).
+Finally, the local tests require a connection to a running Redis instance. See [Setting up Redis](#setting-up-redis) for instructions on how to establish such a connection. If the Redis instance used for testing is running anywhere other than `redis://localhost:6379/0`, `REDIS_URL` should be set to indicate the correct connection URI. Take a moment to understand that setting `REDIS_URL` has no effect on the Flask instance running in the `docker-compose`; it only affects Flask applications launched manually (e.g. Flask applications created by `pytest` for testing purposes).
 
 **1. Set environment variables**
 
@@ -57,11 +57,7 @@ from within the `main-webserver` directory.
 
 This step is optional. If you choose not to complete this step, you will still be able to launch containers, but those containers will not have cloud storage access, even for accounts to which a cloud storage provider is connected.
 
-**4. Make Dummy SSL Certificates.**
-
-We use a Redis+TLS instance in production, so during testing we try to maintain similarity by using a Redis+TLS docker image. Navigate to the `dummy_certs` directory and run `bash create_dummy_certs.sh` to generate temporary useless SSL certificates. The Redis+TLS docker image will use this.
-
-**5. Spin Up Local Servers**
+**4. Spin Up Local Servers**
 
 Use `docker-compose` to run the stack locally. First, `cd` into the `docker/` folder. Then, run the `up` command. If you are on Windows, you should run this from a command prompt in Administrator mode. This will start the app at `run.py`.
 
@@ -107,13 +103,15 @@ GraphQL is already set up, but here's a [setup doc](https://hasura.io/docs/1.0/g
 
 ### Setting up Redis
 
-In order to run tests locally, the tests must be able to connect to a running Redis instance. As described earlier, we need to launch a container running Redis+TLS. To do this, run in the root directory of this project `docker run -d -p 6379:6379 -v $(pwd)/dummy_certs:/certs --name redis-tls madflojo/redis-tls`. 6379 is the default Redis port. This command launches Redis in the default location on the network&mdash;`rediss://localhost:6379`. The test code detects that Redis running on the default host and port and connects.
+In order to run tests locally, the tests must be able to connect to a running Redis instance. It is recommended that you start this Redis instance yourself. Here are two ways in which you can configure your development environment so the test code can connect to your Redis instance:
+
+1. Launch a Redis container with `docker run -d -p 6379:6379 redis`. 6379 is the default Redis port. This command launches Redis in the default location on the network&mdash;`redis://localhost:6379`. The test code detects that Redis running on the default host and port and connects.
 
 ### `pytest`
 
 We have pytest tests in the `tests` subdirectory. To run tests, just run `pytest` in a terminal. Refer to the [pytest documentation](https://docs.pytest.org/en/stable/contents.html) to learn how to use pytest.
 
-The docker-compose stack does **not** need to be running in order to run tests. However, the tests do need access to Redis. By default, the tests attempt to connect to `rediss://localhost:6379/0`. If your Redis service is running elsewhere, expose the correct connection URI to the tests via the environment variable `REDIS_TLS_URL`.
+The docker-compose stack does **not** need to be running in order to run tests. However, the tests do need access to Redis. By default, the tests attempt to connect to `redis://localhost:6379/0`. If your Redis service is running elsewhere, expose the correct connection URI to the tests via the environment variable `REDIS_URL`.
 
 **We do not need to launch a local instance of webserver and celery to run tests. Local tests use Flask mocking to test endpoints, and they use a locally running redis to run Celery.**
 

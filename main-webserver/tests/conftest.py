@@ -1,13 +1,11 @@
 import os
 import uuid
-import ssl
 
 from contextlib import contextmanager
 from random import getrandbits as randbits
 
 import pytest
 
-from celery import Celery
 from celery.app.task import Task
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
@@ -118,17 +116,11 @@ def celery_config():
     https://docs.celeryproject.org/en/latest/userguide/testing.html#session-scope.
     """
 
-    redis_url = os.environ.get("REDIS_TLS_URL", "rediss://")
+    redis_url = os.environ.get("REDIS_URL", "redis://")
 
     return {
         "broker_url": redis_url,
         "result_backend": redis_url,
-        "broker_use_ssl": {
-            "ssl_cert_reqs": ssl.CERT_NONE,
-        },
-        "redis_backend_use_ssl": {
-            "ssl_cert_reqs": ssl.CERT_NONE,
-        },
     }
 
 
@@ -147,11 +139,6 @@ def celery_parameters(app):
     return {
         "task_cls": ContextTask,
     }
-
-
-@pytest.fixture(scope="session")
-def celery_enable_logging():
-    return True
 
 
 @pytest.fixture
