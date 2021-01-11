@@ -29,8 +29,8 @@ run_container() {
         -v /fractal/cloudStorage:/fractal/cloudStorage:rshared \
         -v /tmp/sockets:/tmp/sockets \
         --device=/dev/input/event3 \
-        --device=/dev/input/mouse0 \
         --device=/dev/input/event4 \
+        --device=/dev/input/event5 \
         $mount_protocol \
         --tmpfs /run \
         --tmpfs /run/lock \
