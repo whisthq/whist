@@ -48,7 +48,7 @@ extern int client_id;
 
 /*
 ============================
-Private Function
+Private Functions
 ============================
 */
 

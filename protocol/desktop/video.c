@@ -494,13 +494,16 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     gif_frame_index %= 83;  // number of loading frames
 }
 
-/*
-============================
-Public Function Implementations
-============================
-*/
-
 void nack(int id, int index) {
+    /*
+        Send a negative acknowledgement to the server if a video
+        packet is missing
+
+        Arguments:
+            id (int): missing packet ID
+            index (int): missing packet index
+    */
+
     if (video_data.is_waiting_for_iframe) {
         return;
     }
@@ -514,6 +517,13 @@ void nack(int id, int index) {
 }
 
 bool request_iframe() {
+    /*
+        Request an IFrame from the server if too long since last frame
+
+        Return:
+            (bool): true if IFrame requested, false if not
+    */
+
     if (get_timer(video_data.last_iframe_request_timer) > 1500.0 / 1000.0) {
         FractalClientMessage fmsg;
         fmsg.type = MESSAGE_IFRAME_REQUEST;
@@ -534,6 +544,10 @@ bool request_iframe() {
 static enum AVPixelFormat sws_input_fmt;
 
 void update_sws_context() {
+    /*
+        Update the SWS context for the decoded video
+    */
+
     LOG_INFO("Updating SWS Context");
     VideoDecoder* decoder = video_context.decoder;
 
@@ -564,6 +578,10 @@ void update_sws_context() {
 }
 
 void update_pixel_format() {
+    /*
+        Update the pixel format for the SWS context
+    */
+
     if (sws_input_fmt != video_context.decoder->sw_frame->format || pending_sws_update) {
         sws_input_fmt = video_context.decoder->sw_frame->format;
         pending_sws_update = false;
@@ -572,6 +590,10 @@ void update_pixel_format() {
 }
 
 void update_texture() {
+    /*
+        Update the SDL video texture
+    */
+
     if (pending_texture_update) {
         LOG_INFO("Beginning to use %d x %d", output_width, output_height);
         SDL_Texture* texture =
@@ -590,6 +612,18 @@ void update_texture() {
 }
 
 static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
+    /*
+        Render peer cursors for multiclient
+
+        Arguments:
+            renderer (SDL_Renderer*): the video renderer
+            msgs (PeerUpdateMessage*): array of peer update message packets
+            num_msgs (size_t): how many peer update messages there are in `msgs`
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     int ret = 0;
 
     int window_width, window_height;
@@ -610,12 +644,29 @@ static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t 
 }
 
 void clear_sdl(SDL_Renderer* renderer) {
+    /*
+        Clear the SDL renderer
+
+        Arguments:
+            renderer (SDL_Renderer*): the video renderer
+    */
+
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
 }
 
 int init_multithreaded_video(void* opaque) {
+    /*
+        Initialized the video rendering thread. Used as a thread function.
+
+        Arguments:
+            opaque (void*): thread argument
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     UNUSED(opaque);
 
     if (init_peer_cursors() != 0) {
@@ -704,7 +755,18 @@ int init_multithreaded_video(void* opaque) {
 }
 // END VIDEO FUNCTIONS
 
+/*
+============================
+Public Function Implementations
+============================
+*/
+
+
 void init_video() {
+    /*
+        Create the SDL video thread
+    */
+
     video_data.render_screen_thread =
         SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
 }
@@ -712,6 +774,11 @@ void init_video() {
 int last_rendered_index = 0;
 
 void update_video() {
+    /*
+        Calculate statistics about bitrate, I-Frame, etc. and request video
+        update from the server
+    */
+
     // Get statistics from the last 3 seconds of data
     if (get_timer(video_data.frame_timer) > 3) {
         double time = get_timer(video_data.frame_timer);
@@ -902,6 +969,17 @@ void update_video() {
 }
 
 int32_t receive_video(FractalPacket* packet) {
+    /*
+        Receive video packet
+
+        Arguments:
+            packet (FractalPacket*): Packet received from the server, which gets
+                sorted as video packet with proper parameters
+
+        Returns:
+            (int32_t): -1 if failed to receive packet into video frame, else 0
+    */
+
     // mprintf("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)\n",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
 
@@ -1027,6 +1105,10 @@ int32_t receive_video(FractalPacket* packet) {
 }
 
 void destroy_video() {
+    /*
+        Free the video thread and VideoContext data to exit
+    */
+
     video_data.run_render_screen_thread = false;
     SDL_WaitThread(video_data.render_screen_thread, NULL);
     SDL_DestroySemaphore(video_data.renderscreen_semaphore);
@@ -1044,6 +1126,15 @@ void destroy_video() {
 }
 
 void set_video_active_resizing(bool is_resizing) {
+    /*
+        Set the global variable 'resizing' to true if the SDL window is
+        being resized, else false
+
+        Arguments:
+            is_resizing (bool): Boolean indicating whether or not the SDL
+                window is being resized
+    */
+
     if (!is_resizing) {
         SDL_LockMutex(render_mutex);
 
