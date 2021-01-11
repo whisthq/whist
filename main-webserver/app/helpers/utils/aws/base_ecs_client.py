@@ -899,6 +899,12 @@ class ECSClient:
         return cluster_name, launch_config_name, auto_scaling_group_name, capacity_provider_name
 
     def update_cluster_with_new_ami(self, cluster_name, ami):
+        """
+        Updates a given cluster to use a new AMI
+        :param cluster_name: which cluster to update
+        :param ami: which AMI to use
+        :return: the name of the updated cluster
+        """
         self.set_cluster(cluster_name)
         launch_config_info = self.describe_auto_scaling_groups_in_cluster(self.cluster)
         asg_name = launch_config_info[0]["AutoScalingGroupName"]
