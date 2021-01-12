@@ -99,14 +99,22 @@ const Loading = (props: {
 
     useEffect(() => {
         const currentState =
-            data && data.hardware_user_app_state
+            data &&
+            data.hardware_user_app_state &&
+            data.hardware_user_app_state[0]
                 ? data.hardware_user_app_state[0].state
                 : null
 
-        if (canLaunch && currentState) {
-            console.log("CURRENT STATE", currentState)
-            console.log("LOADING", loading)
-            console.log("PERCENT LOADED", percentLoaded)
+        const gqlTaskId = currentState
+            ? data.hardware_user_app_state[0].task_id
+            : null
+        const rightTask = gqlTaskId === statusID
+
+        console.log(currentState)
+        console.log(gqlTaskId)
+        console.log(statusID)
+
+        if (canLaunch && currentState && rightTask) {
             if (
                 (currentState === FractalAppStates.PENDING || loading) &&
                 percentLoaded < 100

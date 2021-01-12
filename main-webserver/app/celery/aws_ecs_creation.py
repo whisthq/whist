@@ -643,7 +643,6 @@ def create_new_container(
         cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
 
     if cluster_info.status == "DEPROVISIONING":
-
         set_container_state(
             keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
         )
