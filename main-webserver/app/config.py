@@ -252,7 +252,7 @@ class LocalConfig(DeploymentConfig):
     db_port = property(getter("POSTGRES_PORT", default=5432, fetch=False))
     db_user = property(getter("POSTGRES_USER", default="postgres", fetch=False))
 
-    REDIS_URL = property(getter("REDIS_URL", default="", fetch=False))
+    REDIS_URL = property(getter("REDIS_URL", default="redis://", fetch=False))
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
 
     @property
