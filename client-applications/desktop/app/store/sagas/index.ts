@@ -146,7 +146,7 @@ function* createContainer(action: {
     )
 
     // so we know that we are launching the test/admin version to shut down with the right webserver
-    if (test) {
+    if (action.test) {
         yield put(
             Action.updateAdmin({
                 launched: true,
