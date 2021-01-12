@@ -47,16 +47,27 @@ echo Usage: build [OPTION 1] [OPTION 2] ...
 echo.
 echo Note: Make sure to run this script in a x86_x64 terminal on Windows.
 echo Note: All arguments to both long and short options are mandatory.
+echo.
 echo   -branch=BRANCH                set the Github protocol branch that you
 echo                                   want the client app to run
+echo.
 echo   -version=VERSION              set the version number of the client app
 echo                                   must be greater than the current version
 echo                                   in S3 bucket
+echo.
 echo   -bucket=BUCKET                set the S3 bucket to upload to (if -publish=true)
 echo                                   options are:
-echo                                     fractal-windows-application-release/fractal-windows-application-testing [Windows bucket]
-echo                                     fractal-mac-application-release/fractal-mac-application-testing [Mac bucket]
-echo                                     fractal-linux-application-release/fractal-linux-application-release [Linux bucket]
+echo.
+echo                                  fractal-windows-application-release [External Windows bucket for regular users]
+echo                                  fractal-mac-application-release     [External macOS bucket for regular users]
+echo                                  fractal-linux-application-release   [External Linux Ubuntu bucket for regular users]
+echo                                  fractal-windows-application-staging [External Windows bucket for staging users]
+echo                                  fractal-mac-application-staging     [External macOS bucket for staging users]
+echo                                  fractal-linux-application-staging   [External Linux Ubuntu bucket for staging users]
+echo                                  fractal-windows-application-dev     [Internal Windows bucket for development]
+echo                                  fractal-mac-application-dev         [Internal macOS bucket for development]
+echo                                  fractal-linux-application-dev       [Internal Linux Ubuntu bucket for development]
+echo.
 echo   -publish=PUBLISH              set whether to publish to S3 and auto-update live apps
 echo                                   defaults to false, options are true/false
 exit /b 0
