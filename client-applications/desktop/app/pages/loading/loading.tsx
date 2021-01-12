@@ -113,6 +113,7 @@ const Loading = (props: {
         console.log(currentState)
         console.log(gqlTaskId)
         console.log(statusID)
+        console.log(canLaunch)
 
         if (canLaunch && currentState && rightTask) {
             if (
@@ -149,7 +150,7 @@ const Loading = (props: {
                 setPercentLoaded(0)
             }
         }
-    }, [percentLoaded, data, loading, timedOut, canLaunch])
+    }, [percentLoaded, data, loading, timedOut, canLaunch, statusID])
 
     useEffect(() => {
         if (appState === FractalAppStates.PENDING) {

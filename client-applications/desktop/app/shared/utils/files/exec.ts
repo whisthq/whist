@@ -82,6 +82,7 @@ export const setAWSRegion = () => {
             let index = 0
             let line = output[index].replace(/  +/g, " ")
             let items = line.split(" ")
+            console.log(items)
             while (
                 !allowedRegions.includes(items[2].slice(1, -1)) &&
                 index < output.length - 1

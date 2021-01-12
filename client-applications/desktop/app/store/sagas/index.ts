@@ -9,7 +9,6 @@ import { FractalRoute } from "shared/types/navigation"
 import { FractalAPI } from "shared/types/api"
 import { FractalAuthCache } from "shared/types/cache"
 import { config } from "shared/constants/config"
-import { AWSRegion } from "shared/types/aws"
 import { FractalStatus } from "shared/types/containers"
 import { setAWSRegion } from "shared/utils/files/exec"
 
@@ -196,6 +195,8 @@ function* createContainer(action: {
         webserver
     )
 
+    console.log("CREATE CONTAINER", json)
+
     if (!success) {
         yield call(refreshAccess)
         return
@@ -216,6 +217,8 @@ function* createContainer(action: {
 // this should potentially be replaced with a graphQL query if we can get the right permissions
 // and unique keys
 function* getStatus(action: { id: string }) {
+    console.log("GET STATUS", action)
+
     const id = action.id
     const state = yield select()
     const test = state.MainReducer.admin.launched
