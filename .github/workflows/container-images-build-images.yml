@@ -32,10 +32,6 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
-<<<<<<< HEAD
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-=======
->>>>>>> c576bab1d (readd ECS host service build and lint workflows)
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
