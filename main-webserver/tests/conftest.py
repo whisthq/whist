@@ -11,10 +11,9 @@ import pytest
 from celery.app.task import Task
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
+from app.helpers.utils.general.redis import get_redis_url
 from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
-
-from app.helpers.utils.general.logs import fractal_log
 
 from .patches import do_nothing
 
@@ -120,15 +119,7 @@ def celery_config():
     https://docs.celeryproject.org/en/latest/userguide/testing.html#session-scope.
     """
 
-    redis_url = os.environ.get("REDIS_URL", "")  # should look like rediss://<something>
-    if redis_url == "":
-        fractal_log(
-            "celery_config",
-            "",
-            "Could not find REDIS_URL in env. Using rediss://",
-            level=logging.WARNING,
-        )
-        redis_url = "rediss://"
+    redis_url = get_redis_url()
 
     return {
         "broker_url": redis_url,

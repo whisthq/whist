@@ -10,7 +10,7 @@ from flask import current_app, request
 from flask_sendgrid import SendGrid
 
 from app.helpers.utils.general.time import timeout
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.redis import get_redis_url
 
 from .config import _callback_webserver_hostname
 from .factory import create_app, jwtManager, ma, mail
@@ -18,15 +18,10 @@ from .factory import create_app, jwtManager, ma, mail
 
 @timeout(seconds=5, error_message="could not initialize celery with redis")
 def make_celery(app_name=__name__):
-    redis_url = os.environ.get("REDIS_URL", "")  # should look like rediss://<something>
-    if redis_url == "":
-        fractal_log(
-            "make_celery",
-            "",
-            "Could not find REDIS_URL in env. Using rediss://",
-            level=logging.WARNING,
-        )
-        redis_url = "rediss://"
+    """
+    Returns a Celery object with initialized redis parameters.
+    """
+    redis_url = get_redis_url()
 
     celery_app = Celery(
         app_name,
