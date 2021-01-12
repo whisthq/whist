@@ -1,0 +1,19 @@
+FROM fractal/base:current-build
+
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    r-base \
+    libclang-dev \
+    && apt-get autoremove -y \
+    && apt-get clean
+
+# Install RStudio
+ENV RSTUDIO_VERSION=1.3.1093
+ENV RSTUDIO_ARCH=amd64
+# this is because they don't officially suport focal
+ENV RSTUDIO_DISTRO=bionic
+RUN wget -qO rstudio.deb "https://download1.rstudio.org/desktop/${RSTUDIO_DISTRO}/${RSTUDIO_ARCH}/rstudio-${RSTUDIO_VERSION}-${RSTUDIO_ARCH}.deb" \
+    && dpkg -i rstudio.deb \
+    && rm rstudio.deb
+
+# Setup Fractal application symlink
+RUN ln -sf /usr/bin/rstudio /usr/bin/fractal-application
