@@ -1,5 +1,7 @@
 """Tests for the /container/delete endpoint."""
 
+from http import HTTPStatus
+
 import pytest
 
 from app.celery.aws_ecs_deletion import delete_container
@@ -12,13 +14,13 @@ from ..patches import apply_async, do_nothing
 def test_no_container_id(client):
     response = client.post("/container/delete", json=dict(private_key="garbage!"))
 
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_no_key(client):
     response = client.post("/container/delete", json=dict(container_id="mycontainerid123"))
 
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_successful(client, authorized, monkeypatch):
@@ -28,7 +30,7 @@ def test_successful(client, authorized, monkeypatch):
         "/container/delete", json=dict(container_id="mycontainerid123", private_key="garbage!")
     )
 
-    assert response.status_code == 202
+    assert response.status_code == HTTPStatus.ACCEPTED
 
 
 def test_timeout(monkeypatch):

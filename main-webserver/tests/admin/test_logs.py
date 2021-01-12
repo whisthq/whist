@@ -3,6 +3,7 @@
 import uuid
 
 from datetime import datetime
+from http import HTTPStatus
 
 import boto3
 import pytest
@@ -83,12 +84,12 @@ def test_s3_success(container, monkeypatch):
             c.secret_key,
             "Log message.",
         )
-        assert response["status"] == 200
+        assert response["status"] == HTTPStatus.OK
 
 
 def test_bad_request(client):
     response = client.post("/logs", json=dict())
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_successful_request(client, monkeypatch):
@@ -105,4 +106,4 @@ def test_successful_request(client, monkeypatch):
         ),
     )
 
-    assert response.status_code == 202
+    assert response.status_code == HTTPStatus.ACCEPTED
