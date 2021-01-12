@@ -1,0 +1,85 @@
+# workflows/fractal-publish-build.yml
+#
+# Fractal: Build & Publish
+# Build and publish each of the relevant Fractal projects.
+
+name: "Fractal: Build & Publish"
+
+on:
+    pull_request:
+        branches:
+            - rpadaki/use-nvidia-grid-drivers
+        paths-ignore:
+            - "README.md"
+            - "**/README.md"
+            - ".github/workflows/README.md"
+    workflow_dispatch:
+
+jobs:
+    # Configure Jobs
+    # Detect the branch using regex matching and store as an output to regulate downstream actions.
+    # Access branch with `fractal-publish-build-config.outputs.branch`.
+
+    fractal-publish-build-config:
+        name: "Configure Jobs"
+        runs-on: ubuntu-20.04
+        outputs:
+            branch: ${{ steps.detect-branch.outputs.branch }}
+        steps:
+            - name: Detect Branch
+              id: detect-branch
+              run: |
+                  if [[ ${{ github.ref }} =~ ^refs/heads/master$ ]]; then
+                      BRANCH_NAME=master
+                  elif [[ ${{ github.ref }} =~ ^refs/heads/staging$ ]]; then
+                      BRANCH_NAME=staging
+                  elif [[ ${{ github.ref }} =~ ^refs/heads/dev$ ]]; then
+                      BRANCH_NAME=dev
+                  elif [[ ${{ github.ref }} =~ ^refs/heads/project/.*$ ]]; then
+                      BRANCH_NAME=project
+                  else
+                      BRANCH_NAME=null
+                  fi
+                  echo "branch is $BRANCH_NAME"
+                  echo "::set-output name=branch::$BRANCH_NAME"
+
+    # Container Images: Build & Publish to GitHub Container Registry
+    # Build and publish the container images to a GitHub Container Registry repository
+    # Runs if config succeeds and branch is in ["master"].
+
+    container-images-publish-images-ghcr:
+        name: "Test build container images with 4k"
+        runs-on: ubuntu-20.04
+        outputs:
+            task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
+        needs: [fractal-publish-build-config]
+        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+                  submodules: recursive
+
+            - name: Walk repo to find all dockerfiles and store path as env variable
+              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+
+            - name: Build release protocol # No need to run this for debug, just for release
+              run: ./protocol/build_protocol.sh release
+
+            - name: Configure AWS CLI # To get and install GRID driver
+              # TODO: we can get rid of the ECR permissions and rename this secret
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Build container images
+              run: |
+                  for app in ${{ env.apps }}
+                  do
+                    ./container-images/build_container_image.sh $app
+                  done
