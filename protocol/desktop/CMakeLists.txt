@@ -23,7 +23,7 @@ add_executable(FractalClient
         network.c
         sdl_event_handler.c
         sdl_utils.c
-        server_message_handler.c
+        handle_server_message.c
         video.c
         )
 
