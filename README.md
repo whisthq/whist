@@ -7,12 +7,7 @@ This repository contains the end-to-end code for the Fractal Application Streami
 - [Introduction](#introduction)
   - [Repository Structure](#repository-structure)
 
-
-
-
-
-
-- [Workflow and Conventions](#workflow-and-conventions)
+* [Workflow and Conventions](#workflow-and-conventions)
   - [`master` is for releases only. `staging` is "almost `master`"](#master-is-for-releases-only-staging-is-almost-master)
   - [`dev` is for Development](#dev-is-for-development)
     - [While on feature branches, `git rebase dev` is your friend. `git merge dev` is not.](#while-on-feature-branches-git-rebase-dev-is-your-friend-git-merge-dev-is-not)
@@ -21,31 +16,15 @@ This repository contains the end-to-end code for the Fractal Application Streami
   - [On commit logs](#on-commit-logs)
   - [HOTfixes (i.e. prod is on fire)](#hotfixes-ie-prod-is-on-fire)
 
-
-
-
-
 - [Appendix](#appendix)
   - [Useful Monorepo git Tricks](#useful-monorepo-git-tricks)
   - [Example of Bad Commit History](#example-of-bad-commit-history)
 
-===
-===
+# ===
 
 ## Introduction
 
-
-
-
-
 Application Streaming is Fractal's core service. It consists in running application
-
-
-
-
-
-
-
 
 At a high-level, Fractal works as such:
 
@@ -60,39 +39,17 @@ At a high-level, Fractal works as such:
 
 For more in-depth explanations of each subrepo, simply peruse the README's of the respective file from the root Fractal repo.
 
-
-
-
-
 ## Development
 
-
-
-
-
-
 ## Publishing
-
-
-
 
 ## Styling
 
 Each subfolder is its own project with dedicated style
 
-
-
-
-
 [Documentation & Code Standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597)
 
 [Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b)
-
-
-
-
-
-
 
 ### Repository Structure
 
@@ -117,11 +74,6 @@ This monorepo contains 8 Fractal subrepos:
 | log-analysis         | This contains tools used to analysis logs generated from protocol runs. This can be used to address performance issues or bugs                                                                                                                                                                                                           |
 | main-webserver       | This contains the REST API for managing our containers, along with providing back-end support for front-end features                                                                                                                                                                                                                     |
 | protocol             | This contains the C code for Client and Server of the protocol. If the Server is running on one machine, and the Client on another machine having been given the IP address of the Server, then the Client will open up a window that allows one to interact with the Server at low-latency 60 FPS. This program is run via commandline. |
-
-
-
-
-
 
 ## Workflow and Conventions
 
@@ -216,17 +168,7 @@ Here's the workflow:
 7. Merge the hotfix into `dev` as well.
 8. Write a regression test to make sure the same issue never occurs again, and add it to CI.
 
-
-
-
-
-
-
-
-
-
-===
-===
+# ===
 
 ## Appendix
 

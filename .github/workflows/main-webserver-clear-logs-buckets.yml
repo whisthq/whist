@@ -43,10 +43,14 @@ jobs:
 
     notify-slack:
         name: Notify Slack
-        needs: [main-webserver-clear-container-outputs,main-webserver-clear-protocol-logs]
+        needs:
+            [
+                main-webserver-clear-container-outputs,
+                main-webserver-clear-protocol-logs,
+            ]
         if: success()
         runs-on: ubuntu-20.04
-        
+
         steps:
             - name: Notify Slack
               run: |
