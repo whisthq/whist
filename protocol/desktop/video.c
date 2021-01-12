@@ -758,8 +758,8 @@ int init_multithreaded_video(void* opaque) {
     video_data.renderscreen_semaphore = SDL_CreateSemaphore(0);
     video_data.run_render_screen_thread = true;
 
-    render_screen((SDL_Renderer*) renderer);
-    SDL_DestroyRenderer((SDL_Renderer*) renderer);
+    render_screen((SDL_Renderer*)renderer);
+    SDL_DestroyRenderer((SDL_Renderer*)renderer);
     return 0;
 }
 // END VIDEO FUNCTIONS
@@ -776,8 +776,8 @@ void init_video() {
     */
 
     // renderer must be created in main thread as per SDL guidelines
-    renderer = SDL_CreateRenderer(
-        (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer((SDL_Window*)window, -1,
+                                  SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     video_data.render_screen_thread =
         SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
 }
