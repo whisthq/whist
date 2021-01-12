@@ -9,7 +9,7 @@ from random import getrandbits as randbits
 import pytest
 
 from celery.app.task import Task
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request, create_access_token
+from flask_jwt_extended import create_access_token
 
 from app.helpers.utils.general.redis import get_redis_url
 from app.factory import create_app
@@ -92,22 +92,22 @@ def app():
 
 
 @pytest.fixture
-def authorized(user, monkeypatch):
-    """Disable authentication decorators.
+def authorized(client, user, monkeypatch):
+    """Bypass authorization decorators.
 
-    By reading through the source code of the flask_jwt_extended package, I
-    figured out that get_jwt_identity and verify_jwt_in_request were the
-    functions responsible for most of the heavy lifting required to implement
-    the functionality that flask_jwt_extended provides.
+    Inject the JWT bearer token of an authorized user into the HTTP Authorization header that is
+    sent along with every request made by the Flask test client.
 
     Returns:
         An instance of the User model representing the authorized user.
     """
 
-    _get_jwt_identity = eval(f"""lambda: "{user.user_id}" """)
+    access_token = create_access_token(identity=user.user_id)
 
-    monkeypatch.setattr(get_jwt_identity, "__code__", _get_jwt_identity.__code__)
-    monkeypatch.setattr(verify_jwt_in_request, "__code__", do_nothing.__code__)
+    # environ_base contains base data that is used to construct every request that the client
+    # sends. Here, we are injecting a value into the field that contains the base HTTP
+    # Authorization header data.
+    monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
 
     return user
 
