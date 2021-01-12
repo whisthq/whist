@@ -16,10 +16,10 @@ function fetch {
     # As long as developers are going to be connecting to the database attached
     # to the development web application Heroku deployment, local deployments
     # should use the same secret key as that development deployment.
-    heroku config:get CONFIG_DB_URL SECRET_KEY --shell \
+    heroku config:get CONFIG_DB_URL SECRET_KEY AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY --shell \
 	   --app=fractal-dev-server
     heroku config:get DATABASE_URL --app=fractal-dev-server | \
-	python3 "$relpath"/pgparse.py
+	py "$relpath"/pgparse.py
 
     echo "HOT_RELOAD="
 }

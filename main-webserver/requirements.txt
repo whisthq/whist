@@ -6,7 +6,7 @@ click==7.1.2
 cryptography==3.3.1
 Flask==1.1.2
 Flask-Cors==3.0.9
-Flask-JWT-Extended==3.24.1
+Flask-JWT-Extended==3.25.0
 flask-marshmallow==0.14.0
 Flask-SendGrid==0.7.1
 Flask-SQLAlchemy==2.4.4
