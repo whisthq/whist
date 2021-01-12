@@ -88,6 +88,16 @@ jobs:
 
             - name: Notify Slack
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry ${{ env.SENTRY_DEPLOY_ENVIRONMENT }} Release Pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                    curl -X POST \
+                    --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry ${{ env.SENTRY_DEPLOY_ENVIRONMENT }} Release Pushed to Production with Environment `production`.\", \"icon_emoji\": \":sentry:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                    curl -X POST \
+                    --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry ${{ env.SENTRY_DEPLOY_ENVIRONMENT }} Release Pushed to Staging with Environment `staging`.\", \"icon_emoji\": \":sentry:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  else
+                    curl -X POST \
+                    --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry ${{ env.SENTRY_DEPLOY_ENVIRONMENT }} Release Pushed to Development with Environment `dev`.\", \"icon_emoji\": \":sentry:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  fi
