@@ -61,7 +61,10 @@ volatile bool pending_texture_update = false;
 volatile bool pending_resize_render = false;
 
 static enum AVPixelFormat sws_input_fmt;
+
+#ifdef __APPLE__
 volatile SDL_Renderer* renderer;
+#endif
 
 #define LOG_VIDEO false
 
@@ -698,8 +701,13 @@ int init_multithreaded_video(void* opaque) {
     }
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
-    // SDL_Renderer* renderer = SDL_CreateRenderer(
-    //     (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+    // SDL guidelines say that renderer functions should be done on the main thread,
+    //      but our implementation requires that the renderer is made in this thread
+    //      for non-MacOS
+    #ifndef __APPLE__
+    SDL_Renderer* renderer = SDL_CreateRenderer(
+        (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+    #endif
 
     // Show a black screen initially before anything else
     SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -775,9 +783,12 @@ void init_video() {
         Creates renderer and video thread
     */
 
-    // renderer must be created in main thread as per SDL guidelines
+    // renderer must be created in main thread as per SDL guidelines, but this
+    //      only seems to be necessary and possible on MacOS
+    #ifdef __APPLE__
     renderer = SDL_CreateRenderer((SDL_Window*)window, -1,
                                   SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+    #endif
     video_data.render_screen_thread =
         SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
 }
