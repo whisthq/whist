@@ -1,12 +1,10 @@
 """Tests for miscellaneous helper functions."""
-import os
-import ssl
+import time
 
-from celery import Celery
 from flask import current_app
 
 from app.config import _callback_webserver_hostname
-from app.helpers.utils.general.time import timeout
+from app.helpers.utils.general.time import timeout, TimeoutError
 
 
 def test_callback_webserver_hostname_localhost():
@@ -30,3 +28,26 @@ def test_callback_webserver_hostname_localhost_with_port():
 
     with current_app.test_request_context(headers={"Host": "localhost:80"}):
         assert _callback_webserver_hostname() == "dev-server.fractal.co"
+
+
+def test_timeout_decorator():
+    @timeout(seconds=1)
+    def fast_func():
+        time.sleep(0.5)
+
+    @timeout(seconds=1)
+    def slow_func():
+        time.sleep(1.5)
+
+    # this should run with no error
+    fast_func()
+
+    try:
+        slow_func()
+        raise ValueError("slow_func was not timed out")
+
+    except TimeoutError:
+        # the timeout worked and raised a TimeoutError
+        assert True
+
+    # any other exception is a true error and passed up
