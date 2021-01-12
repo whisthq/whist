@@ -1,14 +1,20 @@
 """Tests for the /container/protocol_info endpoint."""
 
+from http import HTTPStatus
+
 from app.helpers.blueprint_helpers.aws.aws_container_post import protocol_info
 
 
 def not_found(*args, **kwargs):
-    return None, 404
+    from http import HTTPStatus
+
+    return None, HTTPStatus.NOT_FOUND
 
 
 def success(*args, **kwargs):
-    return {}, 200
+    from http import HTTPStatus
+
+    return {}, HTTPStatus.OK
 
 
 def test_not_found(client, monkeypatch):
@@ -18,19 +24,19 @@ def test_not_found(client, monkeypatch):
         "/container/protocol_info", json=dict(identifier=0, private_key="aes_secret_key")
     )
 
-    assert response.status_code == 404
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 def test_no_port(client):
     response = client.post("/container/protocol_info", json=dict(private_key="aes_secret_key"))
 
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_no_key(client):
     response = client.post("/container/protocol_info", json=dict(identifier=0))
 
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_successful(client, monkeypatch):
@@ -40,21 +46,21 @@ def test_successful(client, monkeypatch):
         "/container/protocol_info", json=dict(identifier=0, private_key="aes_secret_key")
     )
 
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
 
 
 def test_no_container():
     response, status = protocol_info("x.x.x.x", 0, 0)
 
     assert not response
-    assert status == 404
+    assert status == HTTPStatus.NOT_FOUND
 
 
 def test_protocol_info(container):
     with container() as c:
         response, status = protocol_info(c.ip, c.port_32262, c.secret_key)
 
-        assert status == 200
+        assert status == HTTPStatus.OK
         assert response.pop("allow_autoupdate") == c.allow_autoupdate
         assert response.pop("branch") == c.branch
         assert response.pop("secret_key") == c.secret_key

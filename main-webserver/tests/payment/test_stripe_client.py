@@ -17,8 +17,6 @@ easy to simply use the test key given to us by stripe.
 import stripe
 import pytest
 
-from tests.helpers.general.logs import fractal_log
-
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from app.helpers.utils.general.time import date_to_unix
