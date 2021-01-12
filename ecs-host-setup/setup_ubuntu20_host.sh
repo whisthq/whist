@@ -49,7 +49,7 @@ sudo sed -i 's/GRUB_CMDLINE_LINUX=""/# GRUB_CMDLINE_LINUX=""/g' /etc/default/gru
 cat << EOF | sudo tee --append /etc/default/grub
 GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
-sudo ./get-nvidia-driver-installer.sh
+./get-nvidia-driver-installer.sh
 sudo chmod +x nvidia-driver-installer.run
 sudo ./nvidia-driver-installer.run --silent
 sudo rm nvidia-driver-installer.run
