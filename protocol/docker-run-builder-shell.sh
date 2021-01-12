@@ -9,6 +9,7 @@ then
 fi
 docker run $docker_run_flags \
     --rm \
+    -v ~/.aws:/home/fractal/.aws:ro \
     --mount type=bind,source=$mount_directory,destination=/workdir \
     --name $container_name \
     --user $username \
