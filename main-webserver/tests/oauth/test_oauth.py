@@ -2,6 +2,8 @@
 
 import functools
 
+from http import HTTPStatus
+
 import pytest
 
 from app.models import db
@@ -126,7 +128,7 @@ def test_disconnect_app(client, make_credential, monkeypatch, provider):
     app_name = _provider_id_to_app_name(provider)
     response = client.delete(f"/connected_apps/{app_name}")
 
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     assert response.json == {}
 
 
@@ -137,4 +139,4 @@ def test_disconnect_bad_app(client, provider):
     app_name = _provider_id_to_app_name(provider)
     response = client.delete(f"/connected_apps/{app_name}")
 
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST

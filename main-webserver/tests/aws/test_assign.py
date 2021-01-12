@@ -1,21 +1,24 @@
 """Tests for the /container/assign endpoint."""
+
 import datetime
 
 from datetime import timedelta, datetime as dt
-from flask import current_app
+from http import HTTPStatus
+
 import pytest
 
+from flask import current_app
+
 from app.celery.aws_ecs_creation import assign_container
+from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
     preprocess_task_info,
 )
-
-
-from ..patches import apply_async, function
 from app.helpers.utils.payment.stripe_client import StripeClient
 from app.serializers.public import UserSchema
-from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
+
+from ..patches import apply_async, function
 
 
 def bad_app(*args, **kwargs):
@@ -40,14 +43,14 @@ def test_bad_app(client, authorized, monkeypatch):
     response = client.post(
         "/container/assign", json=dict(username=authorized.user_id, app="Bad App")
     )
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_no_username(client, authorized, monkeypatch):
     set_valid_subscription(monkeypatch, True)
 
     response = client.post("/container/assign", json=dict(app="VSCode"))
-    assert response.status_code == 401
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 def test_no_app(client, authorized, monkeypatch):
@@ -56,15 +59,18 @@ def test_no_app(client, authorized, monkeypatch):
 
     response = client.post("/container/assign", json=dict(username=authorized.user_id))
 
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_no_region(client, authorized, monkeypatch):
+    monkeypatch.setattr(UserSchema, "dump", function(returns={"stripe_customer_id": "random1234"}))
     set_valid_subscription(monkeypatch, True)
 
     response = client.post(
         "/container/assign", json=dict(username=authorized.user_id, app="VSCode")
     )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.fixture
@@ -108,7 +114,12 @@ def test_payment(client, make_authorized_user, monkeypatch):
 
 @pytest.mark.parametrize(
     "has_trial, has_subscription, expected",
-    [(True, True, 202), (True, False, 202), (False, True, 202), (False, False, 402)],
+    [
+        (True, True, HTTPStatus.ACCEPTED),
+        (True, False, HTTPStatus.ACCEPTED),
+        (False, True, HTTPStatus.ACCEPTED),
+        (False, False, HTTPStatus.PAYMENT_REQUIRED),
+    ],
 )
 def test_payment_all(test_payment, has_trial, has_subscription, expected):
     """Tests all four cases of a user's possible payment information for expected behavior

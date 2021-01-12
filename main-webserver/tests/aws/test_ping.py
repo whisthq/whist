@@ -1,9 +1,9 @@
 """Tests for the /container/ping endpoint."""
 
-import os
+from http import HTTPStatus
+
 import pytest
 
-from app.constants.http_codes import SUCCESS
 from app.helpers.blueprint_helpers.aws.aws_container_post import ping_helper
 from app.models import db
 
@@ -21,7 +21,7 @@ def status_code(*args, **kwargs):
 def test_no_availability(client):
     response = client.post("/container/ping", json=dict(identifier=0, private_key="aes_secret_key"))
 
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_no_port(client):
@@ -29,17 +29,17 @@ def test_no_port(client):
         "/container/ping", json=dict(available=True, private_key="aes_secret_key")
     )
 
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_no_key(client):
     response = client.post("container/ping", json=dict(available=True, identifier=0))
 
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_not_found(client, monkeypatch):
-    code = 404
+    code = HTTPStatus.NOT_FOUND
 
     monkeypatch.setattr(Patch, "status_code", code, raising=False)
     monkeypatch.setattr(ping_helper, "__code__", status_code.__code__)
@@ -52,7 +52,7 @@ def test_not_found(client, monkeypatch):
 
 
 def test_successful(client, monkeypatch):
-    code = 200
+    code = HTTPStatus.OK
 
     monkeypatch.setattr(Patch, "status_code", code, raising=False)
     monkeypatch.setattr(ping_helper, "__code__", status_code.__code__)
@@ -67,14 +67,14 @@ def test_successful(client, monkeypatch):
 def test_no_container():
     data, status = ping_helper(True, "x.x.x.x", 0, "garbage!")
 
-    assert status == 404
+    assert status == HTTPStatus.NOT_FOUND
 
 
 def test_wrong_key(container):
     with container("RUNNING_AVAILABLE") as c:
         data, status = ping_helper(True, c.ip, c.port_32262, "garbage!")
 
-    assert status == 404
+    assert status == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.parametrize(
@@ -96,7 +96,7 @@ def test_ping_helper(available, container, final_state, initial_state):
 
         assert data.pop("status", None) == "OK"
         assert not data
-        assert status == SUCCESS
+        assert status == HTTPStatus.OK
 
         # I don't totally understand why this line is necessary, but it seems
         # to be. -O
