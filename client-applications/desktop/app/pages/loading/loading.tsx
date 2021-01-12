@@ -116,19 +116,19 @@ const Loading = (props: {
 
                 const portInfo = `32262:${port32262}.32263:${port32263}.32273:${port32273}`
                 const protocolParameters = {
-                    w: 800,
-                    h: 600,
-                    c: internetMode,
-                    b: cachedBandwidth,
-                    p: portInfo,
-                    k: secretKey,
-                    n: `Fractalized ${desiredAppID}`,
-                    ...(pngFile && { i: pngFile }),
+                    width: 800,
+                    height: 600,
+                    codec: internetMode,
+                    bitrate: cachedBandwidth,
+                    ports: portInfo,
+                    "private-key": secretKey,
+                    name: `Fractalized ${desiredAppID}`,
+                    ...(pngFile && { icon: pngFile }),
                 }
 
                 const protocolArguments = [
                     ...Object.entries(protocolParameters)
-                        .map(([flag, arg]) => [`-${flag}`, arg])
+                        .map(([flag, arg]) => [`--${flag}`, arg])
                         .flat(),
                     ip,
                 ]
@@ -138,11 +138,6 @@ const Loading = (props: {
                     cwd: protocolPath,
                     detached: false,
                     stdio: "ignore",
-                    // env: { ELECTRON_RUN_AS_NODE: 1 },
-                    // optional:
-                    // env: {
-                    //    PATH: process.env.PATH,
-                    // },
                 })
                 protocol.on("close", () => {
                     resetLaunchRedux()
