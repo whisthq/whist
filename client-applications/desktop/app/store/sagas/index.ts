@@ -12,6 +12,7 @@ import { FractalAPI } from "shared/types/api"
 import { FractalAuthCache } from "shared/types/cache"
 import { config } from "shared/constants/config"
 import { AWSRegion } from "shared/types/aws"
+import { setAWSRegion } from "shared/utils/files/exec"
 
 function* refreshAccess() {
     /*
@@ -139,23 +140,22 @@ function* createContainer(action: {
             url (string | null): a url to immediately open in Chrome, or null if no specified url
             test? (boolean): indicates if launching a test container
     */
-    const test = action.test
-    const app = action.app
-    const url = action.url
-
     yield put(
         Action.updateContainer({
-            desiredAppID: app,
+            desiredAppID: action.app,
         })
     )
 
     const state = yield select()
     const username = state.MainReducer.auth.username
+    const region = yield call(setAWSRegion)
 
-    const endpoint = test
+    console.log(region)
+
+    const endpoint = action.test
         ? FractalAPI.CONTAINER.TEST_CREATE
         : FractalAPI.CONTAINER.ASSIGN
-    const body = test
+    const body = action.test
         ? {
               username: username,
               // eslint will yell otherwise... to avoid breaking server code we are disbabling
@@ -167,28 +167,15 @@ function* createContainer(action: {
           }
         : {
               username: username,
-              region: null,
-              app: app,
-              url: url,
+              region: region,
+              app: action.app,
+              url: action.url,
               dpi: state.MainReducer.client.dpi,
           }
 
-    const webserver = test
+    const webserver = action.test
         ? state.MainReducer.admin.webserverUrl
         : config.url.WEBSERVER_URL
-
-    if (!test) {
-        let region = state.MainReducer.client.region
-            ? state.MainReducer.client.region
-            : AWSRegion.US_EAST_1
-        if (region === AWSRegion.US_EAST_2) {
-            region = AWSRegion.US_EAST_1
-        }
-        if (region === AWSRegion.US_WEST_2) {
-            region = AWSRegion.US_WEST_1
-        }
-        body.region = region
-    }
 
     if (!username || username === "None" || username === "") {
         history.push(FractalRoute.LOGIN)
