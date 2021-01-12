@@ -60,6 +60,8 @@ volatile bool pending_sws_update = false;
 volatile bool pending_texture_update = false;
 volatile bool pending_resize_render = false;
 
+static enum AVPixelFormat sws_input_fmt;
+
 #define LOG_VIDEO false
 
 #define BITRATE_BUCKET_SIZE 500000
@@ -166,6 +168,14 @@ Private Functions
 void update_decoder_parameters(int width, int height, CodecType codec_type);
 int32_t render_screen(SDL_Renderer* renderer);
 void loading_sdl(SDL_Renderer* renderer, int loading_index);
+void nack(int id, int index);
+bool request_iframe();
+void update_sws_context();
+void update_pixel_format();
+void update_texture();
+static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs);
+void clear_sdl(SDL_Renderer* renderer);
+int init_multithreaded_video(void* opaque);
 
 /*
 ============================
@@ -540,8 +550,6 @@ bool request_iframe() {
         return false;
     }
 }
-
-static enum AVPixelFormat sws_input_fmt;
 
 void update_sws_context() {
     /*
