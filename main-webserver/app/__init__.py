@@ -16,29 +16,37 @@ from .config import _callback_webserver_hostname
 from .factory import create_app, jwtManager, ma, mail
 
 
-@timeout(seconds=5, error_message="could not initialize celery with redis")
 def make_celery(app_name=__name__):
     """
     Returns a Celery object with initialized redis parameters.
     """
     redis_url = get_redis_url()
+    celery_app = None
+    if redis_url[:6] == "rediss":
+        # use SSL
+        celery_app = Celery(
+            app_name,
+            broker=redis_url,
+            backend=redis_url,
+            broker_use_ssl={
+                "ssl_cert_reqs": ssl.CERT_NONE,
+            },
+            redis_backend_use_ssl={
+                "ssl_cert_reqs": ssl.CERT_NONE,
+            },
+        )
 
-    celery_app = Celery(
-        app_name,
-        broker=redis_url,
-        backend=redis_url,
-        broker_use_ssl={
-            "ssl_cert_reqs": ssl.CERT_NONE,
-        },
-        redis_backend_use_ssl={
-            "ssl_cert_reqs": ssl.CERT_NONE,
-        },
-    )
+    elif redis_url[:5] == "redis":
+        # use regular
+        celery_app = Celery(
+            app_name,
+            broker=redis_url,
+            backend=redis_url,
+        )
 
-    # this ping checks to see if redis is available. SSL connections just
-    # freeze if the instance is not properly set up, so this method is
-    # wrapped in a timeout. TODO: actually look at return from .ping()
-    celery_app.control.inspect().ping()
+    else:
+        # unexpected input, fail out
+        raise ValueError(f"Unexpected prefix in redis url: {redis_url}")
 
     return celery_app
 

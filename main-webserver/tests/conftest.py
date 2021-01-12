@@ -121,16 +121,28 @@ def celery_config():
 
     redis_url = get_redis_url()
 
-    return {
-        "broker_url": redis_url,
-        "result_backend": redis_url,
-        "broker_use_ssl": {
-            "ssl_cert_reqs": ssl.CERT_NONE,
-        },
-        "redis_backend_use_ssl": {
-            "ssl_cert_reqs": ssl.CERT_NONE,
-        },
-    }
+    if redis_url[:6] == "rediss":
+        # use SSL
+        return {
+            "broker_url": redis_url,
+            "result_backend": redis_url,
+            "broker_use_ssl": {
+                "ssl_cert_reqs": ssl.CERT_NONE,
+            },
+            "redis_backend_use_ssl": {
+                "ssl_cert_reqs": ssl.CERT_NONE,
+            },
+        }
+
+    elif redis_url[:5] == "redis":
+        # use regular
+        return {
+            "broker_url": redis_url,
+            "result_backend": redis_url,
+        }
+
+    # unexpected input, fail out
+    raise ValueError(f"Unexpected prefix in redis url: {redis_url}")
 
 
 @pytest.fixture(scope="session")

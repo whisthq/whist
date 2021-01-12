@@ -1,7 +1,11 @@
 import os
 import logging
+import ssl
+
+import redis
 
 from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.time import timeout, TimeoutError
 
 
 def get_redis_url():
@@ -11,17 +15,68 @@ def get_redis_url():
     both are pointing to a Redis+TLS instance.
     """
 
-    redis_url = os.environ.get("REDIS_TLS_URL", "")  # should look like rediss://<something>
-    if redis_url == "":
-        redis_url = os.environ.get("REDIS_URL", "")
-        if redis_url == "":
-            fractal_log(
-                "get_redis_url",
-                "",
-                "Could not find REDIS_TLS_URL or REDIS_URL in env. Using rediss://",
-                level=logging.WARNING,
-            )
-            # default
-            redis_url = "rediss://"
+    redis_tls_url = os.environ.get("REDIS_TLS_URL", "")
+    redis_url = os.environ.get("REDIS_URL", "")
+    if redis_tls_url == "":
+        fractal_log(
+            "get_redis_url",
+            "",
+            "Could not find REDIS_TLS_URL. Will try rediss://",
+            level=logging.WARNING,
+        )
+        # default
+        redis_tls_url = "rediss://"
 
-    return redis_url
+    if redis_url == "":
+        fractal_log(
+            "get_redis_url",
+            "",
+            "Could not find REDIS_URL. Will try redis://",
+            level=logging.WARNING,
+        )
+        # default
+        redis_url = "redis://"
+
+    if try_redis_url(redis_tls_url):
+        return redis_tls_url
+    if try_redis_url(redis_url):
+        return redis_url
+    else:
+        raise ValueError("No valid redis URL could be found.")
+
+
+@timeout(seconds=5)
+def try_redis_url(redis_url):
+    """
+    Tries a redis_url. Can be SSL supported (redis://) or regular (redis://).
+    """
+
+    redis_conn = None
+
+    if redis_url[:6] == "rediss":
+        # use SSL
+        redis_conn = redis.from_url(redis_url, ssl_cert_reqs=ssl.CERT_NONE)
+
+    elif redis_url[:5] == "redis":
+        # use regulaar Redis
+        redis_conn = redis.from_url(redis_url)
+
+    else:
+        # unrecognized prefix
+        raise ValueError(f"Unexpected redis url: {redis_url}")
+
+    try:
+        # this ping checks to see if redis is available. SSL connections just
+        # freeze if the instance is not properly set up, so this method is
+        # wrapped in a timeout.
+        redis_conn.ping()
+        redis_conn.close()
+        return True
+    except TimeoutError:
+        # this can happen with SSL. Just return False.
+        return False
+    except redis.exceptions.ConnectionError:
+        # this can happen with regular redis. Just return False
+        return False
+
+    # any other code flow will be an unexpected error and will be passed to the caller
