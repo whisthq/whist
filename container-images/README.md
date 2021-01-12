@@ -22,7 +22,7 @@ See [Adding New Applications](#Adding-New-Applications) for details on how to ad
 
 To contribute to enhancing the general container images Fractal uses, you should contribute to the base Dockerfile.20 under `/base/`, unless your changes are application-specific, in which case you should contribute to the relevant Dockerfile.20 for the application in question. We strive to make container images as lean as possible to optimize for concurrency and reduce the realm of security attacks possible.
 
-Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master`. The `master` branch gets automatically deployed to production by building and uploading to AWS ECR via GitHub Actions, and must not be pushed to unless thorough testing has been performed. Currently, at every PR to `master` or `dev`, the Dockerfiles specified in `dockerfiles-building-ubuntu20.yml` will be built on GitHub Actions and status checks will be reported. These tests need to be pass before merging is approved.
+Contributions should be made via pull requests to the `dev` branch, which is then merged up to `master`. The `master` branch gets automatically deployed to production by building and uploading to [GHCR](https://ghcr.io) via GitHub Actions, and must not be pushed to unless thorough testing has been performed. Currently, at every PR to `master` or `dev`, the Dockerfiles specified in `dockerfiles-building-ubuntu20.yml` will be built on GitHub Actions and status checks will be reported. These tests need to be pass before merging is approved.
 
 ### Getting Started
 
@@ -79,36 +79,52 @@ You first need to build the protocol and then build the base image before you ca
 Once an image with tag `current-build` has been built locally via `build_container_images.sh`, it may be run locally by calling:
 
 ```
-./run_local_container_image.sh APP [MOUNT]
+[FRACTAL_DPI=96] ./run_local_container_image.sh APP [MOUNT]
 ```
 
 As usual, `APP` is the path to the app folder. Meanwhile, `MOUNT` is an optional argument specifying whether to facilitate server protocol development by mounting and live-updating the `base/protocol` submodule. If `MOUNT=mount`, then the submodule is mounted; else, it is not. Note that this script should be used on EC2 instances as an Nvidia GPU is required for our containers and our protocol to function properly.
 
+You can optionally override the default value of `96` for `FRACTAL_DPI` by setting the eponymous environment variable prior to running the container image. This might be useful if you are testing on a high-DPI screen.
+
 ### Running Remote-Pushed Images
 
-If an image has been pushed to ECR and you wish to test it, first ensure the AWS CLI is configured. Then, retrieve the tag you wish to run, either from ECR itself or by grabbing the relevant (full) Git commit hash from this repository, and run:
+If an image has been pushed to GHCR and you wish to test it, you first need to authenticate Docker to allow you to pull the relevant image. To do this, run the following:
 
 ```
-./run_remote_container_image.sh APP TAG [REGION] [MOUNT]
+echo <PAT> | docker login --username <GH_USERNAME> --password-stdin ghcr.io
 ```
 
-As above, `APP` is the path of the application you want to run, `REGION` optionally specifies the ECR region to pull from, with a default of `us-east-1`, and `MOUNT=mount` mounts the submodule. Here `TAG` is the full Git commit hash to run.
+Replace `<PAT>` with a [Github Personal Access Token](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token) with at least the `package` scope. Also, replace `<GH_USERNAME>` with your GitHub username.
+
+Then, retrieve the tag you wish to run by grabbing the relevant (full) Git commit hash from this repository, and run:
+
+```
+[FRACTAL_DPI=96] ./run_remote_container_image.sh APP TAG [MOUNT]
+```
+
+The argument `TAG` is the full Git commit hash to run. All other configuration is the same as for the local case.
+
+### Connecting to Images
+
+Before connecting to the server protocol that runs in the container, the host service needs to receive a DPI request in order to allow the container to run. For now, this request automatically made by `run_container_image.sh`.
+
+If you are using a high-DPI screen, you may want to pass in the optional DPI argument
+
+Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the container via `./FractalClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
 
 ## Publishing
 
-We store our production container images on AWS Elastic Container Registry (ECR) and deploy them on AWS Elastic Container Service (ECS).
+We store our production container images on GitHub Container Registry (GHCR) and deploy them on AWS Elastic Container Service (ECS).
 
 ### Manual Publishing
 
-Assuming you have the AWS CLI installed and configured (automatic if you have run `./setup_ubuntu20_host.sh` and you are running on an EC2 instance), you may manually push your container images to ECR so long as your IAM role allows you to do this. On an EC2 instance, simply use the `ecr_manager_instance_profile`. Otherwise, your own AWS user account should have the needed privileges.
-
-Once an image has been built via `./build_container_image.sh APP` and therefore taggedd with `current-build`, that image may be pushed by running:
+Once an image has been built via `./build_container_image.sh APP` and therefore tagged with `current-build`, that image may be manually pushed to GHCR by running (note, however, this is usually done by the CI. You shouldn't have to do this except in very rare circumstances. If you do, make sure to commit all of your changes before building and pushing):
 
 ```
-./push_container_image.sh APP [REGION]
+GH_PAT=xxx GH_USERNAME=xxx ./push_container_image.sh APP
 ```
 
-Here, `APP` is again the path to the relevant app folder; e.g., `base` or `browsers/chrome`. Meanwhile, `REGION` is an optional parameter specifying the AWS region to which to push. This defaults to `us-east-1`. The image is tagged with the full git commit hash of the current branch. Please manually push images sparingly, making sure to commit all of your changes before building and pushing.
+Replace the environment variables `GH_PAT` and `GH_USERNAME` with your GitHub personal access token and username, respectively. Here, `APP` is again the path to the relevant app folder; e.g., `base` or `browsers/chrome`. The image is tagged with the full git commit hash of the current branch.
 
 ### Continous Delivery
 

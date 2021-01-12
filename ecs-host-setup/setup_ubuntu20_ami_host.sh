@@ -7,7 +7,7 @@ sudo mkdir -p /var/log/ecs /var/lib/ecs/{data,gpu} /etc/ecs
 # Install jq to build JSON
 sudo apt install -y jq
 
-# Create list of GPU devices as 
+# Create list of GPU devices as
 DEVICES=""
 for DEVICE_INDEX in {0..64}
 do
@@ -17,7 +17,7 @@ do
   fi
 done
 DEVICE_MOUNTS=`printf "$DEVICES"`
-  
+
 sudo sh -c "echo 'net.ipv4.conf.all.route_localnet = 1' >> /etc/sysctl.conf"
 sudo sysctl -p /etc/sysctl.conf
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections

@@ -11,6 +11,7 @@ import { FractalAuthCache } from "shared/types/cache"
 import { config } from "shared/constants/config"
 import { AWSRegion } from "shared/types/aws"
 import { FractalStatus } from "shared/types/containers"
+import { setAWSRegion } from "shared/utils/files/exec"
 
 function* refreshAccess() {
     /*
@@ -42,7 +43,7 @@ function* refreshAccess() {
 
 function* fetchExternalApps() {
     /*
-        Fetches metadata about all external apps Fractal allows users to connect 
+        Fetches metadata about all external apps Fractal allows users to connect
         to (i.e. cloud storage apps), and stores in state.MainReducer.apps.externalApps
     */
     const state = yield select()
@@ -66,7 +67,7 @@ function* fetchExternalApps() {
 
 function* fetchConnectedApps() {
     /*
-        Fetches list of the names of all apps the current user has connected to, and 
+        Fetches list of the names of all apps the current user has connected to, and
         stores list in state.MainReducer.apps.connectedApps
     */
     const state = yield select()
@@ -90,7 +91,7 @@ function* fetchConnectedApps() {
 
 function* validateAccessToken(action: { accessToken: string }) {
     /*
-        Validates an access token used to login a user, then call functions to fetch 
+        Validates an access token used to login a user, then call functions to fetch
         external and connected app data
     */
     const { json, success } = yield call(
@@ -136,15 +137,11 @@ function* createContainer(action: {
         Arguments:
             app (string): name of app to launch
             url (string | null): a url to immediately open in Chrome, or null if no specified url
-            test? (boolean): indicates if launching a test container 
+            test? (boolean): indicates if launching a test container
     */
-    const test = action.test
-    const app = action.app
-    const url = action.url
-
     yield put(
         Action.updateContainer({
-            desiredAppID: app,
+            desiredAppID: action.app,
         })
     )
 
@@ -159,11 +156,12 @@ function* createContainer(action: {
 
     const state = yield select()
     const username = state.MainReducer.auth.username
+    const region = yield call(setAWSRegion)
 
-    const endpoint = test
+    const endpoint = action.test
         ? FractalAPI.CONTAINER.TEST_CREATE
-        : FractalAPI.CONTAINER.CREATE // ASSIGN
-    const body = test
+        : FractalAPI.CONTAINER.ASSIGN
+    const body = action.test
         ? {
               username: username,
               // eslint will yell otherwise... to avoid breaking server code we are disbabling
@@ -175,28 +173,15 @@ function* createContainer(action: {
           }
         : {
               username: username,
-              region: null,
-              app: app,
-              url: url,
+              region: region,
+              app: action.app,
+              url: action.url,
               dpi: state.MainReducer.client.dpi,
           }
 
-    const webserver = test
+    const webserver = action.test
         ? state.MainReducer.admin.webserverUrl
         : config.url.WEBSERVER_URL
-
-    if (!test) {
-        let region = state.MainReducer.client.region
-            ? state.MainReducer.client.region
-            : AWSRegion.US_EAST_1
-        if (region === AWSRegion.US_EAST_2) {
-            region = AWSRegion.US_EAST_1
-        }
-        if (region === AWSRegion.US_WEST_2) {
-            region = AWSRegion.US_WEST_1
-        }
-        body.region = region
-    }
 
     if (!username || username === "None" || username === "") {
         history.push(FractalRoute.LOGIN)
@@ -216,10 +201,12 @@ function* createContainer(action: {
         return
     } else {
         const id = json.ID
-        yield put(Action.updateContainer({
-            currentAppID: action.app,
-            statusID: id,
-        }))
+        yield put(
+            Action.updateContainer({
+                currentAppID: action.app,
+                statusID: id,
+            })
+        )
     }
 
     // there used to be a while loop here that did things, now
@@ -228,7 +215,7 @@ function* createContainer(action: {
 
 // this should potentially be replaced with a graphQL query if we can get the right permissions
 // and unique keys
-function *getStatus(action: {id: string}) {
+function* getStatus(action: { id: string }) {
     const id = action.id
     const state = yield select()
     const test = state.MainReducer.admin.launched
@@ -241,23 +228,23 @@ function *getStatus(action: {id: string}) {
         apiGet,
         `/status/` + id,
         state.MainReducer.auth.accessToken,
-        webserver,
+        webserver
     )
 
     if (json && json.state === FractalStatus.SUCCESS) {
         yield put(
-                Action.updateContainer({
-                    containerID: json.output.container_id,
-                    cluster: json.output.cluster,
-                    port32262: json.output.port_32262,
-                    port32263: json.output.port_32263,
-                    port32273: json.output.port_32273,
-                    location: json.output.location,
-                    publicIP: json.output.ip,
-                    secretKey: json.output.secret_key,
-                    statusID: null,
-                })
-            )
+            Action.updateContainer({
+                containerID: json.output.container_id,
+                cluster: json.output.cluster,
+                port32262: json.output.port_32262,
+                port32263: json.output.port_32263,
+                port32273: json.output.port_32273,
+                location: json.output.location,
+                publicIP: json.output.ip,
+                secretKey: json.output.secret_key,
+                statusID: null,
+            })
+        )
     } else {
         yield put(
             Action.updateContainer({
@@ -293,17 +280,19 @@ function* submitFeedback(action: { feedback: string; feedbackType: string }) {
     }
 }
 
-function* cancelContainer(action: {test: boolean}) {
-    const state= yield select()
+function* cancelContainer(action: { test: boolean }) {
+    const state = yield select()
 
     const test = action.test
 
     if (test) {
-        yield put(Action.updateAdmin({
-            launched: false,
-        }))
+        yield put(
+            Action.updateAdmin({
+                launched: false,
+            })
+        )
     }
-    
+
     const username = state.MainReducer.auth.username
     const task = state.MainReducer.container.statusID
     const webserver = test
@@ -318,27 +307,29 @@ function* cancelContainer(action: {test: boolean}) {
             task: task,
         },
         state.MainReducer.auth.accessToken,
-        webserver,
+        webserver
     )
 
     if (!success) {
         yield call(refreshAccess)
         yield call(cancelContainer, action)
     } else {
-        yield put(Action.updateContainer({
-            currentAppID: null,
-            statusID: null,
-        }))
+        yield put(
+            Action.updateContainer({
+                currentAppID: null,
+                statusID: null,
+            })
+        )
     }
 }
 
 function* disconnectApp(action: { app: string }) {
     /*
-        Revokes the user's access to an external app, and if successful, deletes the 
+        Revokes the user's access to an external app, and if successful, deletes the
         corresponding app name from state.MainReducer.apps.connectedApps
 
         Arguments:
-            app: name of external app to disconnect from
+            app: name of external giapp to disconnect from
     */
     const state = yield select()
 

@@ -18,20 +18,10 @@ const LoginView = (props: { dispatch: Dispatch }) => {
 
     const handleLoginUser = () => {
         setLoggingIn(true)
-        setAWSRegion()
-            .then((region) => {
-                dispatch(updateClient({ region: region }))
-                dispatch(
-                    updateAuth({ loginWarning: false, loginMessage: null })
-                )
-                openExternal(
-                    `${config.url.FRONTEND_URL}/auth/bypass?callback=fractal://auth`
-                )
-                return null
-            })
-            .catch((err) => {
-                throw err
-            })
+        dispatch(updateAuth({ loginWarning: false, loginMessage: null }))
+        openExternal(
+            `${config.url.FRONTEND_URL}/auth/bypass?callback=fractal://auth`
+        )
     }
 
     const changeAccessToken = (evt: ChangeEvent) => {

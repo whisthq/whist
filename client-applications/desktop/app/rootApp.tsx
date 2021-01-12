@@ -20,7 +20,6 @@ import {
     updateAuth,
     updateApps,
 } from "store/actions/pure"
-import { setAWSRegion } from "shared/utils/files/exec"
 import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
 import { GET_FEATURED_APPS } from "shared/constants/graphql"
 
@@ -169,26 +168,13 @@ const RootApp = (props: {
             props.username &&
             props.accessToken
         ) {
-            setAWSRegion()
-                .then((region) => {
-                    dispatch(updateClient({ region: region }))
-                    return null
-                })
-                .then(() => {
-                    const { appID, url } = Object(
-                        urlToApp(launchURL.toLowerCase(), featuredAppData)
-                    )
-                    dispatch(createContainer(appID, url))
-                    setLaunched(false)
-                    return null
-                })
-                .then(() => {
-                    history.push(FractalRoute.LOADING)
-                    return null
-                })
-                .catch((err) => {
-                    throw err
-                })
+            const { appID, url } = Object(
+                urlToApp(launchURL.toLowerCase(), featuredAppData)
+            )
+            dispatch(createContainer(appID, url))
+            setLaunched(false)
+            history.push(FractalRoute.LOADING)
+            return null
         }
     }, [
         needsUpdate,

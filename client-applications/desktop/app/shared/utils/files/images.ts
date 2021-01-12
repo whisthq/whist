@@ -10,7 +10,7 @@ export class SVGConverter {
             Converts an SVG to various image formats. Currently supports
             converting to Base64 PNG, .ico, and .icns.
 
-        Usage: 
+        Usage:
             const svgInput = "https://fractal-supported-app-images.s3.amazonaws.com/chrome-256.svg"
             const base64 = await SVGConverter.convertToPngBase64(svgInput)
 
@@ -19,13 +19,13 @@ export class SVGConverter {
                 Converts a base64 encoded PNG to a Buffer and returns the Buffer
             convertToPngBase64(input: string) :
                 Converts an svg (requires .svg) to base64 and returns a Promise with the base64 string
-            convertToIco(input: string) : 
+            convertToIco(input: string) :
                 Converts an svg (requires .svg) to .ico and returns a Promise with the Buffer
-            convertToIcns(input: string) : 
+            convertToIcns(input: string) :
                 Converts an svg (requires .svg) to .ico and returns a Promise with the Buffer
             convertToPngTemp(input: string, pngName: string):
                 Converts an svg (requires .svg) to a PNG and saves it as ${pngName}.png in a temp
-                folder on your local computer that auto-deletes when Electron closes (cross-platform). 
+                folder on your local computer that auto-deletes when Electron closes (cross-platform).
                 Returns PNG file path.
     */
     private static canvas: HTMLCanvasElement = document.createElement("canvas")

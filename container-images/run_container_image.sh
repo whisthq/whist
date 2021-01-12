@@ -8,8 +8,9 @@ if [[ ${2:-''} == mount ]]; then
 else
     mount_protocol=""
 fi
+dpi=${FRACTAL_DPI:-96}
 
-runcontainer() {
+run_container() {
     docker run -it -d \
         -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
         -v /fractal/containerResourceMappings:/fractal/containerResourceMappings:ro \
@@ -44,9 +45,41 @@ runcontainer() {
     # capabilities not enabled by default: CAP_NICE
 }
 
-container_id=$(runcontainer $1)
+# Args: containerid
+kill_container() {
+  docker kill $1 > /dev/null || true
+  docker rm $1 > /dev/null || true
+}
 
+# This is necessary for the protocol to think it's ready to start. Normally,
+# the webserver would send this request to the host service, but we don't have
+# a full development pipeline yet, so this will have to do.
+# Args: container_id, DPI
+send_dpi_request() {
+  # Check if host service is even running
+  sudo lsof -i :4678 | grep ecs-host > /dev/null \
+  || (echo "Cannot start container because the ecs-host-service is not listening on port 4678. Is it running successfully?" \
+     && kill_container $1 \
+     && exit 1)
+
+  # Send the DPI/container-ready request
+  response=$(curl --insecure --silent --location --request PUT 'https://localhost:4678/set_container_dpi' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{
+      "auth_secret": "testwebserverauthsecretdev",
+      "host_port": 32262,
+      "dpi": '"$dpi"'
+    }') \
+  || (echo "DPI/container-ready request to the host service failed!" \
+      && kill_container $1 \
+      && exit 1)
+  echo "Sent DPI/container-ready request to container $1!"
+  echo "Response to DPI/container-ready request from host service: $response"
+}
+
+
+container_id=$(run_container $1)
+send_dpi_request $container_id $dpi
 echo "Running container with ID: $container_id"
 docker exec -it $container_id /bin/bash || true
-docker kill $container_id || true
-docker rm $container_id || true
+kill_container $container_id

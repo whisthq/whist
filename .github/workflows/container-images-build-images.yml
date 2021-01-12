@@ -14,7 +14,11 @@ on:
             - project/**
         paths:
             - "container-images/**"
+            - ".github/workflows/container-images-build-images.yml"
             - "!container-images/README.md"
+            - "!container-images/run_container_image.sh"
+            - "!container-images/run_local_container_image.sh"
+            - "!container-images/run_remote_container_image.sh"
     workflow_dispatch:
 
 jobs:
@@ -27,7 +31,6 @@ jobs:
               uses: actions/checkout@v2
               with:
                   persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 

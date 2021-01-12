@@ -1,18 +1,12 @@
-import io
-import json
 import os.path
-import paramiko
 import random
 import string
 import time
 import uuid
-
 from collections import defaultdict
-from pprint import pprint
 
 import boto3
 import botocore.exceptions
-
 from flask import current_app
 
 
@@ -116,66 +110,15 @@ class ECSClient:
             self.auto_scaling_client = self.make_client("autoscaling")
         else:
             self.auto_scaling_client = starter_auto_scaling_client
-        self.set_cluster(cluster_name=base_cluster)
+        try:
+            self.set_cluster(cluster_name=base_cluster)
+        except Exception as e:
+            print(e)
+            self.cluster = None
 
         if not self.mock:
             self.role_name = "autoscaling_role"
-            # pylint: disable=line-too-long
-            # self.role_name = 'role_name_oqursxkjhh'
-            ## Create role and instance profile that allows containers to use SSM, S3, and EC2
-            # self.role_name = self.generate_name('role_name')
-            # assume_role_policy_document = {
-            #     "Version": "2012-10-17",
-            #     "Statement": [
-            #         {
-            #             "Effect": "Allow",
-            #             "Principal": {
-            #                 "Service": [
-            #                     "ec2.amazonaws.com"
-            #                 ]
-            #             },
-            #             "Action": [
-            #                 "sts:AssumeRole"
-            #             ]
-            #         }
-            #     ]
-            # }
-            # self.iam_client.create_role(
-            #     RoleName=self.role_name,
-            #     AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
-            # )
-            # self.iam_client.attach_role_policy(
-            #     PolicyArn='arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore',
-            #     RoleName=self.role_name,
-            # )
-            # self.iam_client.attach_role_policy(
-            #     PolicyArn='arn:aws:iam::aws:policy/AmazonS3FullAccess',
-            #     RoleName=self.role_name,
-            # )
-            # self.iam_client.attach_role_policy(
-            #     PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role',
-            #     RoleName=self.role_name,
-            # )
-            # self.iam_client.attach_role_policy(
-            #     PolicyArn='arn:aws:iam::aws:policy/AmazonEC2FullAccess',
-            #     RoleName=self.role_name,
-            # )
-            # self.iam_client.attach_role_policy(
-            #     PolicyArn='arn:aws:iam::aws:policy/AmazonEC2ContainerServiceFullAccess',
-            #     RoleName=self.role_name,
-            # )
-            # self.iam_client.attach_role_policy(
-            #     PolicyArn='arn:aws:iam::aws:policy/AmazonECS_FullAccess',
-            #     RoleName=self.role_name,
-            # )
             self.instance_profile = "auto_scaling_instance_profile"
-            # self.instance_profile = self.generate_name('instance_profile')
-            # print(self.instance_profile)
-            # self.iam_client.create_instance_profile(InstanceProfileName=self.instance_profile)
-            # self.iam_client.add_role_to_instance_profile(
-            #     InstanceProfileName=self.instance_profile, RoleName=self.role_name
-            # )
-            # pylint: enable=line-too-long
 
     def make_client(self, client_type, **kwargs):
         """
@@ -667,6 +610,20 @@ class ECSClient:
 
         return auto_scaling_group_name
 
+    def update_auto_scaling_group(self, auto_scaling_group_name, launch_config_name):
+        """
+        Updates a specific autoscaling group to use a new launch config
+        :param auto_scaling_group_name (str): the name of the ASG to update
+        :param launch_config_name (str): the name of the new launch config to use
+        :return: the name of the updated ASG
+        """
+        _ = self.auto_scaling_client.update_auto_scaling_group(
+            AutoScalingGroupName=auto_scaling_group_name,
+            LaunchConfigurationName=launch_config_name,
+        )
+
+        return auto_scaling_group_name
+
     def create_capacity_provider(self, auto_scaling_group_name, capacity_provider_name=None):
         """
         Args:
@@ -940,6 +897,28 @@ class ECSClient:
         )
         self.create_cluster(capacity_providers=[capacity_provider_name], cluster_name=cluster_name)
         return cluster_name, launch_config_name, auto_scaling_group_name, capacity_provider_name
+
+    def update_cluster_with_new_ami(self, cluster_name, ami):
+        """
+        Updates a given cluster to use a new AMI
+        :param cluster_name (str): which cluster to update
+        :param ami (str): which AMI to use
+        :return: the name of the updated cluster
+        """
+        self.set_cluster(cluster_name)
+        launch_config_info = self.describe_auto_scaling_groups_in_cluster(self.cluster)
+        asg_name = launch_config_info[0]["AutoScalingGroupName"]
+        old_launch_config_name = launch_config_info[0]["LaunchConfigurationName"]
+        new_launch_config_name = self.create_launch_configuration(
+            instance_type="g3.4xlarge", ami=ami
+        )
+        self.update_auto_scaling_group(asg_name, new_launch_config_name)
+        containers_list = self.get_containers_in_cluster(self.cluster)
+        self.set_containers_to_draining(containers_list)
+        self.auto_scaling_client.delete_launch_configuration(
+            LaunchConfigurationName=old_launch_config_name
+        )
+        return cluster_name, ami
 
 
 if __name__ == "__main__":
