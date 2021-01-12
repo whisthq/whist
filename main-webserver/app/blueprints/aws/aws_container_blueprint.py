@@ -23,7 +23,6 @@ from app.helpers.utils.general.auth import fractal_auth, developer_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
-allowed_regions = {"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"}
 
 
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
@@ -266,9 +265,6 @@ def aws_container_post(action, **kwargs):
                 app = body.pop("app")
                 region = body.pop("region")
                 dpi = body.get("dpi", 96)
-                if region not in allowed_regions:
-                    response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-                    return response
             except KeyError:
                 response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
             else:
