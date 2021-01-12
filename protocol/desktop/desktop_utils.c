@@ -178,7 +178,7 @@ int parse_args(int argc, char *argv[]) {
         }
         errno = 0;
         switch (opt) {
-            case 'w': { // width
+            case 'w': {  // width
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -187,7 +187,7 @@ int parse_args(int argc, char *argv[]) {
                 output_width = (int)ret;
                 break;
             }
-            case 'h': { // height
+            case 'h': {  // height
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -196,7 +196,7 @@ int parse_args(int argc, char *argv[]) {
                 output_height = (int)ret;
                 break;
             }
-            case 'b': { // bitrate
+            case 'b': {  // bitrate
                 ret = strtol(optarg, &endptr, 10);
                 if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                     printf("%s", usage);
@@ -205,7 +205,7 @@ int parse_args(int argc, char *argv[]) {
                 max_bitrate = (int)ret;
                 break;
             }
-            case 'c': { // codec
+            case 'c': {  // codec
                 if (!strcmp(optarg, "h264")) {
                     output_codec_type = CODEC_TYPE_H264;
                 } else if (!strcmp(optarg, "h265")) {
@@ -217,7 +217,7 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'k': { // private key
+            case 'k': {  // private key
                 if (!read_hexadecimal_private_key(optarg, (char *)binary_aes_private_key,
                                                   (char *)hex_aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
@@ -226,14 +226,14 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'u': { // user email
+            case 'u': {  // user email
                 if (!safe_strncpy(user_email, optarg, USER_EMAIL_MAXLEN)) {
                     printf("User email is too long: %s\n", optarg);
                     return -1;
                 }
                 break;
             }
-            case 'e': { // sentry environment
+            case 'e': {  // sentry environment
                 // only log "production" and "staging" env sentry events
                 if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
                     if (!safe_strncpy(sentry_environment, optarg, FRACTAL_ENVIRONMENT_MAXLEN + 1)) {
@@ -244,14 +244,14 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'i': { // protocol window icon
+            case 'i': {  // protocol window icon
                 if (!safe_strncpy(icon_png_filename, optarg, ICON_PNG_FILENAME_MAXLEN)) {
                     printf("Icon PNG filename is too long: %s\n", optarg);
                     return -1;
                 }
                 break;
             }
-            case 'p': { // port mappings
+            case 'p': {  // port mappings
                 char separator = '.';
                 char c = separator;
                 unsigned short origin_port;
@@ -282,11 +282,11 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'x': { // use CI
+            case 'x': {  // use CI
                 running_ci = 1;
                 break;
             }
-            case 'z': { // first connection method to try
+            case 'z': {  // first connection method to try
                 if (!strcmp(optarg, "STUN")) {
                     using_stun = true;
                 } else if (!strcmp(optarg, "DIRECT")) {
@@ -298,16 +298,16 @@ int parse_args(int argc, char *argv[]) {
                 }
                 break;
             }
-            case 'n': { // window title
+            case 'n': {  // window title
                 program_name = calloc(sizeof(char), strlen(optarg));
                 strcpy((char *)program_name, optarg);
                 break;
             }
-            case FRACTAL_GETOPT_HELP_CHAR: { // help
+            case FRACTAL_GETOPT_HELP_CHAR: {  // help
                 printf("%s", usage_details);
                 return 1;
             }
-            case FRACTAL_GETOPT_VERSION_CHAR: { // version
+            case FRACTAL_GETOPT_VERSION_CHAR: {  // version
                 printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
                 return 1;
             }
