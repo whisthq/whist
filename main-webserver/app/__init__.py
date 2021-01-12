@@ -18,12 +18,20 @@ from .factory import create_app, jwtManager, ma, mail
 
 @timeout(seconds=5, error_message="could not initialize celery with redis")
 def make_celery(app_name=__name__):
-    redis = os.environ.get("REDIS_TLS_URL", "rediss://")
+    redis_url = os.environ.get("REDIS_URL", "")  # should look like rediss://<something>
+    if redis_url == "":
+        fractal_log(
+            "make_celery",
+            "",
+            "Could not find REDIS_URL in env. Using rediss://",
+            level=logging.WARNING,
+        )
+        redis_url = "rediss://"
 
     celery_app = Celery(
         app_name,
-        broker=redis,
-        backend=redis,
+        broker=redis_url,
+        backend=redis_url,
         broker_use_ssl={
             "ssl_cert_reqs": ssl.CERT_NONE,
         },
