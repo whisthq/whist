@@ -769,7 +769,6 @@ Public Function Implementations
 ============================
 */
 
-
 void init_video() {
     /*
         Create the SDL video thread
