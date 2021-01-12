@@ -18,11 +18,22 @@ fi
 
 app=$1
 
+# Retrieve git branch name and set Sentry environment accordingly
+git_branch=$(git branch --show-current)
+if [ $git_branch == 'master' ]; then
+    sentry_environment=production
+elif [ $git_branch == 'staging' ]; then
+    sentry_environment=staging
+else
+    sentry_environment=dev
+fi
+
 # Generate the task definition JSON for the app
 # It's important to use fractal-taskdef-template here, else we get stdio issues
 # rewriting fractal-base.json, from the base image, which we did before
-
-cat fractal-taskdef-template.json | jq '.family |= "'$app'"' > $app.json
+# The Sentry environment is set assuming that it is the third environment
+# variable in the list. Change the environment[2] index if it gets moved.
+cat fractal-taskdef-template.json | jq '.family |= "'$app'"' | jq '.containerDefinitions[0].environment[2].value |= "'$sentry_environment'"' > $app.json
 
 # Echo the task definition filename so the GitHub Actions CI workflow can get the app name
 echo $app.json
