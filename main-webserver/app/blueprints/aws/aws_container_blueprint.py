@@ -243,9 +243,6 @@ def aws_container_post(action, **kwargs):
                 app = body.pop("app")
                 region = body.pop("region")
                 dpi = body.get("dpi", 96)
-                if region not in allowed_regions:
-                    response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-                    return response
             except KeyError:
                 response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
             else:
