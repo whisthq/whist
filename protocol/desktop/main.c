@@ -40,7 +40,7 @@ Includes
 #include "network.h"
 #include "sdl_event_handler.h"
 #include "sdl_utils.h"
-#include "server_message_handler.h"
+#include "handle_server_message.h"
 #include "video.h"
 #include "SDL_syswm.h"
 #ifdef __APPLE__

@@ -17,7 +17,7 @@ Includes
 ============================
 */
 
-#include "server_message_handler.h"
+#include "handle_server_message.h"
 
 #include <stddef.h>
 
@@ -27,7 +27,6 @@ Includes
 #include "../fractal/utils/string_utils.h"
 #include "../fractal/utils/window_name.h"
 #include "desktop_utils.h"
-#include "server_message_handler.h"
 
 #include <stddef.h>
 

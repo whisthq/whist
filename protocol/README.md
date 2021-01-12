@@ -24,6 +24,106 @@ TBD
 
 TBD
 
+## High-Level Overview
+
+In order to give the user their low-latency high-FPS experience, the protocol executes the following processes in order from top-to-bottom:
+
+-   `create_capture_device` from either `./fractal/video/dxgicapture.c` or `./fractal/video/x11capture.c` is called, the former is for Windows and the latter is for Linux. Then, `capture_screen` is called in `./server/main.c` to capture the screen.
+-   `encoder_t` from `videoencode.c` will be used to encode the screenshot using h264, if needed. If Nvidia Capture SDK is being used (`USING_GPU_CAPTURE == true` and on linux), then the image will already be encoded upon capture, and this is not necessary.
+-   A `Frame*` is created and the members of the `Frame` struct is filled in, see `./server/main.c` for the code and `./fractal/core/fractal.h` for the `Frame` struct.
+-   `broadcast_udp_packet` from `./server/network.c`is called with the `Frame*` passed in. This will break-up the `Frame*` into hundreds of individual network packets.
+-   On the client, these packets are received in `./desktop/main.c` and passed into `receive_video` in `./desktop/video.c`.
+-   `receive_video` will receive video packets and will save them in a buffer (packet 17 will be stored at `buffer + PACKET_SIZE*(17-1)`, so that the packets go into their correct slot until the entire `Frame*` is recreated). `video.c` keeps track of the ID of the most recently rendered frame, ie ID 247. Once all of the packets of ID 248 are received, it will take the pointer to the beginning of the buffer and then render it. Each packet will contain the number of packets for the `Frame*`, so once one is received, the client will know when all of them have been received.
+-   Once a `Frame*` has been accumulated, `render_screen` in `./server/video.c` will trigger, and `video_decoder_decode` from `./fractal/video/videodecode.c` will be called. Any cursor image will be rendered on-top, along with `sws_scale`'ing if the frame is not the same resolution as the client. Peruse `render_screen` for further details.
+-   Finally, `SDL_RenderPresent` will be called, rendering the Frame.
+-   If no packet from the expected ID is received within a couple hundred milliseconds, or if a subset of packets have been received and it's been a couple hundred milliseconds since the last seen packet, then the `./desktop/video.c`protocol will send a `nack()` to the server in order to get a copy of the presumably dropped or missed packet. The server keeps the last couple `Frame*`'s in a buffer in order to respond to `nack()`'s.
+
+The same process is used for audio capture, encoding, decoding, and playing. See `send_audio` of `./server/main.c`, `./fractal/audio/audio{capture,encode,decode}.c`, and `receive_audio` of `./desktop/audio.c`
+
+Throughout the life of the protocol, various messages will be send to and from the client and server. For example, if the client and server are of different resolution, the image will appear stretched, so to fix this the client will send a message to server to ask the server to change resolutions to match the client.
+
+-   To send a message from client to server, call `send_fmsg`. See `./desktop/main.c` for usage.
+-   To send a message from server to client, create a `FractalServerMessage` and call `broadcast_tcp_packet` or `broadcast_udp_packet`. See `./server/main.c` for usage.
+-   To handle a server message on the client, see `./desktop/handle_server_message.c`
+-   To handle a client message on the server, see `./server/handle_client_message.c`
+-   See `./fractal/core/fractal.h` for struct definitions.
+
+Of course, input must also be sent from client to server. This is handled in the form of SDL Events, which are retrieved in `./desktop/main.c` and handled in `sdl_event_handler.c`. These generally take the form of `fmsg`'s sent from client to server, over `UDP` for speed. We don't handle packet dropping, however, so sometimes the capslock and numlock will go out-of-sync. We use `sync_keyboard_state` to fix this, resyncing stateful keys every 50ms with an `fmsg`. This additionally handles the initial sync by-default.
+
+## File Structure
+
+`tree -I "share|sentry-native|lib|include|build*|CMakeFiles|docs|loading|cmake" -P "*.c" .`
+
+```
+./protocol
+├── desktop
+│   ├── audio.c <- Handle and play audio packets
+│   ├── desktop_utils.c <- cmdline options, among others
+│   ├── handle_server_message.c <- Handle server fmsg's
+│   ├── main.c <- SDL Event loop, receive and categorize packets as fmsg/audio/video
+│   ├── network.c <- Functions to connect to server, and send_fmsg
+│   ├── sdl_event_handler.c <- Handle SDL Events
+│   ├── sdl_utils.c <- Set window icon, resize handler
+│   └── video.c <- Handle and render video packets
+├── fractal
+│   ├── audio
+│   │   ├── alsacapture.c <- Capture Linux audio
+│   │   ├── audiodecode.c <- AAC Decode Audio
+│   │   ├── audioencode.c <- AAC Encode Audio
+│   │   └── wasapicapture.c <- Capture Windows audio
+│   ├── clipboard
+│   │   ├── clipboard.c <- Wrappers for get_clipboard/set_clipboard
+│   │   ├── clipboard_synchronizer.c <- Multithreaded wrapper for get/set clipboard,
+|   |   |                               this is what actually gets used
+│   │   ├── mac_clipboard.c <- Mac implementation of {get,set}_clipboard
+│   │   ├── win_clipboard.c <- Windows implementation of {get,set}_clipboard
+│   │   └── x11_clipboard.c <- Linux implementation of {get,set}_clipboard
+│   ├── core
+│   │   ├── fractal.c <- Various helpers
+│   │   └── fractalgetopt.c <- Cross-platform getopt
+│   ├── cursor
+│   │   ├── linuxcursor.c <- get_current_cursor for Linux
+│   │   ├── peercursor.c <- Helper functions for multiclient cursors
+│   │   └── windowscursor.c <- get_current_cursor for Windows
+│   ├── input
+│   │   ├── input.c <- Trigger keyboard/mouse press and sync, wraps raw input_driver.h calls
+|   |   ├── input_driver.h -> The following three c files share this h file
+│   │   ├── uinput_input_driver.c <- Linux uinput keyboard/mouse-press code
+│   │   ├── winapi_input_driver.c <- Windows keyboard/mouse-press code
+│   │   └── xtest_input_driver.c <- Linux X11 keyoard/mouse-press code
+│   ├── network
+│   │   └── network.c <- send udp/tcp/http packets.
+│   ├── utils
+│   │   ├── aes.c <- Generic encrypt/decrypt of network packets
+│   │   ├── clock.c <- Clock
+│   │   ├── json.c <- JSON reader implementation
+│   │   ├── logging.c <- LOG_INFO/LOG_ERROR/etc, along with sentry breadcrumbs
+│   │   ├── mac_utils.c <- Mac wrappers
+│   │   ├── mouse.c <- Mutliclient cursor colors
+│   │   ├── png.c <- Functions to encode/decode bitmap's as png's
+│   │   ├── rwlock.c <- Implementation of a lock with one writer and many readers
+│   │   ├── sdlscreeninfo.c <- Get monitor/window width/height functions
+│   │   ├── sysinfo.c <- Print RAM/OS/Memory/HDD etc for logging purposes
+│   │   └── windows_utils.c <- Log-in past windows start screen
+│   └── video
+│       ├── nvidia-linux
+│       │   └── NvFBCUtils.c (NVDA Header)
+│       ├── cpucapturetransfer.c <- ?
+│       ├── dxgicapture.c <- Capture screen using DXGI
+│       ├── videodecode.c <- Decompress h264/h265 image
+│       ├── videoencode.c <- Compress image to h264/h265
+│       ├── x11capture.c <- Capture with X11
+│       └── x11nvidiacapture.c <- Capture to h264/h265 with NvidiaCaptureSDK
+└── server
+    ├── client.c <- Handle multiclient messages
+    ├── handle_client_message.c <- Handle client fmsg's
+    ├── main.c <- Initialite server, receive packets and pass to where it needs to go
+    ├── network.c <- Networking code for multiclient
+    └── webserver.c <- Handles webserver communication over http JSON
+```
+
+The above files are fairly static. If you add or remove a file, or change what a file does, please update this directory so we can keep track of it all!
+
 ## Development
 
 We use Cmake to compile, format and run tests. You first need to make sure Cmake 3.15 or higher is installed on your system. We also use cppcheck to run static tests on the code, which you should install as well. If you are running on Windows, you also need to make sure the Nvidia CUDA Compiler, NVCC, is installed with version 10.2 or higher to compile our CUDA code.
@@ -32,8 +132,7 @@ We use Cmake to compile, format and run tests. You first need to make sure Cmake
 
 #### Linux
 
-If you are using a rolling release distro, e.g. Arch, then you can likely install the newest version using pacman or your
-distro's package manager. If you are running 20.04 the version in the Ubuntu package lists is fine. If you are running 18.04 the package lists only has 3.11. You can install the newest version from the developer with:
+If you are using a rolling release distro, e.g. Arch, then you can likely install the newest version using pacman or your distro's package manager. If you are running 20.04 the version in the Ubuntu package lists is fine. If you are running 18.04 the package lists only has 3.11. You can install the newest version from the developer with:
 
 ```
 sudo apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget -y
@@ -53,8 +152,6 @@ You can install both Cmake and cppcheck via Homebrew. You also need to have inst
 brew install cmake cppcheck
 ```
 
-If you can't/don't want to use brew, you can manually download from [here](https://cmake.org/download/).
-
 ##### Windows
 
 First you will have to install [gitbash](https://git-scm.com/downloads). You can install Cmake with the latest binaries [here](https://cmake.org/download/), and cppcheck with Chocolatey by running `choco install cppcheck --force`. This will ensure you can properly debug the protocol.
@@ -71,8 +168,7 @@ If you are on Linux Ubuntu, run `desktop/linux-client-setup.sh` to install the s
 
 #### Sentry
 
-To build you will need to install the sentry-native sdk. This can be done by running the python script get_latest_sentry.py in the root directory of this repo.
-The SDK is a CMake project which we load in our root CMakeLists.txt.
+To build you will need to install the sentry-native sdk. This can be done by running the python script get_latest_sentry.py in the root directory of this repo. The SDK is a CMake project which we load in our root CMakeLists.txt.
 
 #### IDE
 
