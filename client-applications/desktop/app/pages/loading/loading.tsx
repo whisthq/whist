@@ -58,8 +58,9 @@ const Loading = (props: {
     const [launches, setLaunches] = useState(0)
     const [status, setStatus] = useState(generateMessage())
     const [percentLoaded, setPercentLoaded] = useState(0)
-    const [canLoad, setCanLoad] = useState(true)
+    const [canLaunch, setCanLaunch] = useState(true)
     const [timedOut, setTimedOut] = useState(false)
+    const [appState, setAppState] = useState(FractalAppStates.PENDING)
 
     const percentLoadedWidth = 5 * percentLoaded
 
@@ -79,67 +80,73 @@ const Loading = (props: {
       ]
     }
     */
-    const state = data ? data.hardware_user_app_state[0].state : null
-    const gqlTaskId = data ? data.hardware_user_app_state[0].task_id : null
 
-    const rightTask = data && gqlTaskId && statusID && gqlTaskId === statusID
-    const hasState = data && state
+    // const state = data.hardware_user_app_state
+    //     ? data.hardware_user_app_state[0].state
+    //     : null
+    // const gqlTaskId = data ? data.hardware_user_app_state[0].task_id : null
 
-    const pending =
-        loading ||
-        !rightTask ||
-        (hasState && state === FractalAppStates.PENDING)
-    const ready = hasState && state === FractalAppStates.READY
-    const cancelled = hasState && state === FractalAppStates.CANCELLED
-    const failure = (hasState && state === FractalAppStates.FAILURE) || timedOut
+    // const rightTask = data && gqlTaskId && statusID && gqlTaskId === statusID
+    // const hasState = data && state
 
     useEffect(() => {
         setTimeout(() => {
-            if (canLoad && !timedOut) {
+            if (canLaunch && !timedOut) {
                 setTimedOut(true)
             }
         }, LOADING_TIMEOUT)
     }, [])
 
     useEffect(() => {
-        if (canLoad) {
-            if (pending && percentLoaded < 100) {
+        const currentState =
+            data && data.hardware_user_app_state
+                ? data.hardware_user_app_state[0].state
+                : null
+
+        if (canLaunch && currentState) {
+            console.log("CURRENT STATE", currentState)
+            console.log("LOADING", loading)
+            console.log("PERCENT LOADED", percentLoaded)
+            if (
+                (currentState === FractalAppStates.PENDING || loading) &&
+                percentLoaded < 100
+            ) {
+                setAppState(FractalAppStates.PENDING)
                 setTimeout(() => {
-                    if (canLoad) {
+                    if (canLaunch) {
                         setPercentLoaded(percentLoaded + 1)
                     }
                 }, 1000) // every second 1 percent, change later
-            } else if (ready) {
-                setCanLoad(false)
+            } else if (currentState === FractalAppStates.READY) {
+                setAppState(FractalAppStates.READY)
+                setCanLaunch(false)
                 dispatch(getStatus(statusID))
                 setPercentLoaded(100)
-                setStatus("Stream successfully started.")
+                setStatus("App successfully launched started.")
                 setTimeout(() => null, 1000) // wait one sec so they can read the message
                 setLaunches(launches + 1)
-            } else if (cancelled) {
-                setCanLoad(false)
+            } else if (currentState === FractalAppStates.CANCELLED) {
+                setAppState(FractalAppStates.CANCELLED)
+                setCanLaunch(false)
                 setStatus("Your app launch has been cancelled.")
                 setPercentLoaded(0)
-            } else if (failure) {
-                setCanLoad(false)
+            } else if (currentState === FractalAppStates.FAILURE || timedOut) {
+                setAppState(FractalAppStates.FAILURE)
+                setCanLaunch(false)
                 setStatus(
                     timedOut
-                        ? "Unexpectedly failed to spin up your app."
-                        : "Timed Out."
+                        ? "Error: Server unexpectedly timed out."
+                        : "Error: Server unexpectedly errored."
                 )
                 setPercentLoaded(0)
-            } else {
-                setStatus(
-                    "Unexpecedly lost connection to server... trying to reconnect."
-                )
             }
         }
-    }, [percentLoaded, data, loading, timedOut])
+    }, [percentLoaded, data, loading, timedOut, canLaunch])
 
     useEffect(() => {
-        if (pending) {
+        if (appState === FractalAppStates.PENDING) {
             setTimeout(() => {
-                if (canLoad) {
+                if (canLaunch) {
                     setStatus(generateMessage())
                 }
             }, 5000)
@@ -237,7 +244,7 @@ const Loading = (props: {
     const returnToDashboard = () => {
         // emulates what the protocol would have done had you successfully closed
         // not sure if secretKey is the correct one, or if deleting while spinning up will work
-        if (!failure) {
+        if (!appState === FractalAppStates.FAILURE) {
             dispatch(cancelContainer())
         }
         resetLaunchRedux()
@@ -336,7 +343,9 @@ const Loading = (props: {
                             onClick={returnToDashboard}
                             onKeyDown={returnToDashboard} // eslint
                         >
-                            {failure ? "BACK TO DASHBOARD" : "CANCEL"}
+                            {appState === FractalAppStates.FAILURE
+                                ? "BACK TO DASHBOARD"
+                                : "CANCEL"}
                         </div>
                     </div>
                 </div>

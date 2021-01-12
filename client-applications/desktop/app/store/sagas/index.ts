@@ -224,7 +224,7 @@ function* getStatus(action: { id: string }) {
         ? state.MainReducer.admin.webserverUrl
         : config.url.WEBSERVER_URL
 
-    const { json, response } = yield call(
+    const { json } = yield call(
         apiGet,
         `/status/` + id,
         state.MainReducer.auth.accessToken,
