@@ -1,6 +1,7 @@
 from app.models import db, UserContainerState
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.constants.container_state_values import CANCELLED, PENDING
+from app.helpers.utils.general.logs import fractal_log
 
 
 def container_state_obj(**kwargs):
@@ -21,7 +22,7 @@ def container_state_obj(**kwargs):
 
 
 def can_update_container_state(user, task_id, obj=None):
-    """This let's us know if the user's entry in UserContainerState
+    """This lets us know if the user's entry in UserContainerState
     can be updated (meaning that the task_id which is calling this,
     passing its own task_id, is still the valid one for that
     entry: this is meant to avoid race conditions).
@@ -68,6 +69,8 @@ def set_container_state(keyuser, keytask, user_id=None, state=None, task_id=None
         force (bool, optional): Whether to update with a check for validity or not.
         Defaults to False.
     """
+    fractal_log(function="set_container_state", label=keyuser, logs=f"Container state is {state}")
+
     obj = container_state_obj(user_id=keyuser)
 
     if force or can_update_container_state(keyuser, keytask, obj=obj):
