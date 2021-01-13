@@ -123,7 +123,7 @@ int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
 
 bool client_joined_after_window_name_broadcast = false;
-char cur_window_name[WINDOW_NAME_MAXLEN];
+char cur_window_name[WINDOW_NAME_MAXLEN] = {0};
 
 /*
 ============================
@@ -1376,8 +1376,6 @@ int main(int argc, char* argv[]) {
             if (get_focused_window_name(name) == 0) {
                 if (client_joined_after_window_name_broadcast ||
                     strcmp(name, cur_window_name) != 0) {
-                    client_joined_after_window_name_broadcast = false;
-                    safe_strncpy(cur_window_name, name, WINDOW_NAME_MAXLEN);
                     LOG_INFO("Sending window title to client: '%s'\n", name);
                     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
                     FractalServerMessage* fmsg_response = malloc(fsmsg_size);
@@ -1391,6 +1389,8 @@ int main(int argc, char* argv[]) {
                             LOG_WARNING("Could not broadcast window title Message");
                         } else {
                             LOG_INFO("Sent window title message!");
+                            safe_strncpy(cur_window_name, name, WINDOW_NAME_MAXLEN);
+                            client_joined_after_window_name_broadcast = false;
                         }
                         if (read_unlock(&is_active_rwlock) != 0) {
                             LOG_ERROR("Failed to read-release is active RW lock.");
