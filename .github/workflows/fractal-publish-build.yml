@@ -129,14 +129,14 @@ jobs:
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
-                aws-region: >
-                    us-east-1
-                    us-east-2
-                    us-west-1
-                    us-west-2
-                    ca-central-1
-                    eu-west-1
-                    eu-central-1
+                aws-region:
+                    - us-east-1
+                    - us-east-2
+                    - us-west-1
+                    - us-west-2
+                    - ca-central-1
+                    - eu-west-1
+                    - eu-central-1
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
