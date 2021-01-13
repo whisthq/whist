@@ -1224,6 +1224,8 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    LOG_INFO("Server protocol started.");
+
     init_default_port_mappings();
 
 #if defined(_WIN32)
