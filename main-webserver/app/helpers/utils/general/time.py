@@ -46,7 +46,8 @@ def shift_unix_by_minutes(utc, num_minutes):
 # from https://stackoverflow.com/questions/2281850/timeout-function-if-it-takes-too-long-to-finish
 class TimeoutError(Exception):
     """
-    Generic Timeout class
+    Generic Timeout class. This is called if any function using the @timeout decorator
+    times out. It inherits from Exception, so any args passed go right to the parent class.
     """
 
 

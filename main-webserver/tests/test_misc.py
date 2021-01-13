@@ -2,6 +2,7 @@
 import time
 
 from flask import current_app
+import pytest
 
 from app.config import _callback_webserver_hostname
 from app.helpers.utils.general.time import timeout, TimeoutError
@@ -30,24 +31,21 @@ def test_callback_webserver_hostname_localhost_with_port():
         assert _callback_webserver_hostname() == "dev-server.fractal.co"
 
 
-def test_timeout_decorator():
+def test_timeout_decorator_no_timeout():
     @timeout(seconds=1)
     def fast_func():
         time.sleep(0.5)
 
+    # this should run with no timeout error
+    fast_func()
+
+    assert True
+
+
+def test_timeout_decorator_yes_timeout():
     @timeout(seconds=1)
     def slow_func():
         time.sleep(1.5)
 
-    # this should run with no error
-    fast_func()
-
-    try:
+    with pytest.raises(TimeoutError):
         slow_func()
-        raise ValueError("slow_func was not timed out")
-
-    except TimeoutError:
-        # the timeout worked and raised a TimeoutError
-        assert True
-
-    # any other exception is a true error and passed up
