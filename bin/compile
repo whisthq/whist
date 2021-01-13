@@ -9,8 +9,8 @@ ENV_DIR=${3:-}
 
 PROJECT_PATH=main-webserver
 
-echo "Cur app/.awscli dir"
-ls -al /app/.awscli
+echo "Cur app/bin dir"
+ls -al /app/bin
 
 echo "-----> My Subdir buildpack: path is $PROJECT_PATH"
 echo "creating cache: $CACHE_DIR"
@@ -29,9 +29,6 @@ echo "copying work dir from cache $TMP_DIR to build dir $BUILD_DIR"
 cp -R $TMP_DIR/. $BUILD_DIR/
 echo "cleaning tmp dir $TMP_DIR"
 rm -rf $TMP_DIR
-
-echo "Cur app/.awscli dir"
-ls -al /app/.awscli
 
 echo "calling main webserver compile, which is now the current directory"
 bash $BUILD_DIR/bin/compile $BUILD_DIR $CACHE_DIR $ENV_DIR
