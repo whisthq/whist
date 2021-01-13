@@ -896,7 +896,8 @@ void update_video() {
 
         FrameData* ctx = &receiving_frames[index];
 
-        // When we receive a packet that is a part of the next_render_id, and we have received every packet for that frame, we set rendering=true
+        // When we receive a packet that is a part of the next_render_id, and we have received every
+        // packet for that frame, we set rendering=true
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
                 // mprintf( "Packets: %d %s\n", ctx->num_packets,
