@@ -302,6 +302,24 @@ RUN chown root:root /run/user
 COPY scripts/docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
 RUN chmod +x /usr/share/fractal/docker-entrypoint.sh
 
+# Install NVIDIA GRID Drivers
+COPY build-temp/nvidia-driver/nvidia-driver-installer.run /root/nvidia-driver-installer.run
+RUN cd /root && \
+    chmod +x nvidia-driver-installer.run && \
+    sh nvidia-driver-installer.run -x && \
+    cd NVIDIA* && \
+    ./nvidia-installer --silent \
+                       --no-kernel-module \
+                       --install-compat32-libs \
+                       --no-nouveau-check \
+                       --no-nvidia-modprobe \
+                       --no-rpms \
+                       --no-backup \
+                       --no-check-for-alternate-installs \
+                       --no-libglx-indirect && \
+    cd .. && \
+    rm -rf NVIDIA* nvidia-driver-installer.run
+
 # Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID
 COPY config/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
 COPY services/fractal-update-nvidia-busid.service /etc/systemd/system/
@@ -381,24 +399,6 @@ RUN ln -sf $(which xterm) /usr/bin/fractal-application
 COPY build-temp/protocol/libsentry.so /usr/share/fractal/bin/libsentry.so
 COPY build-temp/protocol/crashpad_handler /usr/share/fractal/bin/crashpad_handler
 COPY build-temp/protocol/FractalServer /usr/share/fractal/bin/FractalServer
-
-# Install NVIDIA GRID Drivers
-COPY build-temp/nvidia-driver/nvidia-driver-installer.run /root/nvidia-driver-installer.run
-RUN cd /root && \
-    chmod +x nvidia-driver-installer.run && \
-    sh nvidia-driver-installer.run -x && \
-    cd NVIDIA* && \
-    ./nvidia-installer --silent \
-                       --no-kernel-module \
-                       --install-compat32-libs \
-                       --no-nouveau-check \
-                       --no-nvidia-modprobe \
-                       --no-rpms \
-                       --no-backup \
-                       --no-check-for-alternate-installs \
-                       --no-libglx-indirect && \
-    cd .. && \
-    rm -rf NVIDIA* nvidia-driver-installer.run
 
 # Enter the Docker container via the entrypoint
 CMD ["/usr/share/fractal/docker-entrypoint.sh"]
