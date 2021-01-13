@@ -179,6 +179,14 @@ def test_delete_container(client):
     )
 
     container = UserContainer.query.get(pytest.container_name)
+    if container is None:
+        fractal_log(
+            "test_delete_container",
+            label="",
+            logs="No containers returned by UserContainer db",
+        )
+        assert False
+
     resp = client.post(
         "/container/delete",
         json=dict(
