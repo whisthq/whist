@@ -9,6 +9,8 @@ ENV_DIR=${3:-}
 
 PROJECT_PATH=main-webserver
 
+echo '{}' > main-webserver/client_secret.json
+
 echo "-----> My Subdir buildpack: path is $PROJECT_PATH"
 echo "       creating cache: $CACHE_DIR"
 mkdir -p $CACHE_DIR
