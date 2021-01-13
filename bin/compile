@@ -10,7 +10,7 @@ ENV_DIR=${3:-}
 PROJECT_PATH=main-webserver
 
 echo "calling main webserver compile"
-bash main-webserver/compile
+bash main-webserver/bin/compile
 
 echo "-----> My Subdir buildpack: path is $PROJECT_PATH"
 echo "creating cache: $CACHE_DIR"
