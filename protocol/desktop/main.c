@@ -576,6 +576,8 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    LOG_INFO("Client protocol started.");
+
     srand(rand() * (unsigned int)time(NULL) + rand());
     uid = rand();
 
