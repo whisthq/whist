@@ -11,7 +11,8 @@ PROJECT_PATH=main-webserver
 
 echo "calling main webserver compile"
 bash $BUILD_DIR/main-webserver/bin/compile $BUILD_DIR $CACHE_DIR $ENV_DIR
-mv client_secret.json main-webserver
+# the result is put into $BUILD_DIR but should bin in $BUILD_DIR/main-webserver/
+mv $BUILD_DIR/client_secret.json $BUILD_DIR/main-webserver/
 
 echo "-----> My Subdir buildpack: path is $PROJECT_PATH"
 echo "creating cache: $CACHE_DIR"
