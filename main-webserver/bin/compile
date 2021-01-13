@@ -26,4 +26,4 @@ export_env_dir "$ENV_DIR" "^AWS_"
 
 echo "-----> Downloading Google client secret file from $CLIENT_SECRET_URI."
 
-/app/.awscli/bin/aws s3 cp "$CLIENT_SECRET_URI" "$BUILD_DIR"/client_secret.json
+aws s3 cp "$CLIENT_SECRET_URI" "$BUILD_DIR"/main-webserver/client_secret.json
