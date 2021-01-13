@@ -13,6 +13,9 @@ def get_redis_url():
     Gets the Redis URL from the environment. This can either be REDIS_TLS_URL
     or REDIS_URL. Heroku can be inconsistent in which it gives us, even if
     both are pointing to a Redis+TLS instance.
+
+    Returns:
+        (str) the redis URL to connect to
     """
 
     redis_tls_url = os.environ.get("REDIS_TLS_URL", "")
@@ -49,6 +52,12 @@ def get_redis_url():
 def try_redis_url(redis_url):
     """
     Tries a redis_url. Can be SSL supported (redis://) or regular (redis://).
+
+    Args:
+        redis_url (str): url to try
+
+    Returns:
+        (bool) True if valid url, False otherwise
     """
 
     redis_conn = None
