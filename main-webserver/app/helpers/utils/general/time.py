@@ -60,7 +60,7 @@ def timeout(seconds, error_message=os.strerror(errno.ETIMEDOUT)):
     Unfortunately, this means we need to do the timeout ourselves.
 
     Args:
-        TODO: have higher resolution timers (https://docs.python.org/3/library/signal.html#signal.setitimer)
+        TODO: higher res timers (https://docs.python.org/3/library/signal.html#signal.setitimer)
         seconds (int): seconds to before TimeoutError raised
         error_message (str): what to print after an error
 
