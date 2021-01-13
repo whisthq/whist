@@ -28,7 +28,7 @@ echo "cleaning tmp dir $TMP_DIR"
 rm -rf $TMP_DIR
 
 echo "calling main webserver compile, which is now the current directory"
-bash $BUILD_DIR/compile $BUILD_DIR $CACHE_DIR $ENV_DIR
+bash $BUILD_DIR/bin/compile $BUILD_DIR $CACHE_DIR $ENV_DIR
 
 exit 0
 
