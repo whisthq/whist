@@ -95,7 +95,7 @@ func startECSAgent() {
 	// }
 
 	cmd = exec.Command(
-		"usr/bin/docker",
+		"/usr/bin/docker",
 		"run",
 		"--name",
 		"ecs-agent",
