@@ -1,1 +1,3 @@
-celery: celery --app celery_worker.celery_instance worker --pool prefork --concurrency 8
+celery: celery --app tasks worker --pool prefork --concurrency 8
+do_nothing:
+
