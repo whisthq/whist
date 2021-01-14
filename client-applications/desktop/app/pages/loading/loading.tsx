@@ -119,10 +119,10 @@ const Loading = (props: {
                     width: 800,
                     height: 600,
                     codec: internetMode,
-                    bitrate: cachedBandwidth,
                     ports: portInfo,
                     "private-key": secretKey,
                     name: `Fractalized ${desiredAppID}`,
+                    ...(bitrate && { bitrate: cachedBandwidth }),
                     ...(pngFile && { icon: pngFile }),
                 }
 
