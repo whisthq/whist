@@ -147,9 +147,9 @@ int broadcast_udp_packet(FractalPacketType type, void *data, int len, int id, in
                     encrypt_packet(packet, packet_size, &encrypted_packet,
                                    (unsigned char *)clients[j].UDP_context.binary_aes_private_key);
 
-                SDL_LockMutex(clients[j].UDP_context.mutex);
+                safe_SDL_LockMutex(clients[j].UDP_context.mutex);
                 int sent_size = sendp(&(clients[j].UDP_context), &encrypted_packet, encrypt_len);
-                SDL_UnlockMutex(clients[j].UDP_context.mutex);
+                safe_SDL_UnlockMutex(clients[j].UDP_context.mutex);
                 if (sent_size < 0) {
                     int error = get_last_network_error();
                     mprintf("Unexpected Packet Error: %d\n", error);

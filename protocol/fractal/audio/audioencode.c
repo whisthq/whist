@@ -19,7 +19,7 @@ audio_encoder_fifo_intake. You can then encode via audio_encoder_encode.
 AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
     // initialize the audio encoder
 
-    AudioEncoder* encoder = (AudioEncoder*)malloc(sizeof(AudioEncoder));
+    AudioEncoder* encoder = (AudioEncoder*)safe_malloc(sizeof(AudioEncoder));
     memset(encoder, 0, sizeof(AudioEncoder));
 
     // setup the AVCodec and AVFormatContext

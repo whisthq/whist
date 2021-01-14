@@ -160,7 +160,7 @@ int xioerror_handler(Display* d) {
             * quitClients
     */
 
-    SDL_LockMutex(container_destruction_mutex);
+    safe_SDL_LockMutex(container_destruction_mutex);
 
     exiting = true;
 
@@ -177,46 +177,25 @@ int xioerror_handler(Display* d) {
         // Broadcast client quit message
         FractalServerMessage fmsg_response = {0};
         fmsg_response.type = SMESSAGE_QUIT;
-        if (read_lock(&is_active_rwlock) != 0) {
-            LOG_ERROR(
-                "Failed to read-acquire is active RW "
-                "lock.");
-        } else {
-            if (broadcast_udp_packet(PACKET_MESSAGE, (uint8_t*)&fmsg_response,
-                                     sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL,
-                                     NULL) != 0) {
-                LOG_WARNING("Could not send Quit Message");
-            }
-            if (read_unlock(&is_active_rwlock) != 0) {
-                LOG_ERROR("Failed to read-release is active RW lock.");
-            }
+        read_lock(&is_active_rwlock);
+        if (broadcast_udp_packet(PACKET_MESSAGE, (uint8_t*)&fmsg_response,
+                                 sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL,
+                                 NULL) != 0) {
+            LOG_WARNING("Could not send Quit Message");
         }
+        read_unlock(&is_active_rwlock);
 
         // Kick all clients
-        if (write_lock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-acquire is active RW lock.");
-            return -1;
-        }
-        if (SDL_LockMutex(state_lock) != 0) {
-            LOG_ERROR("Failed to lock state lock");
-            if (write_unlock(&is_active_rwlock) != 0) {
-                LOG_ERROR("Failed to write-release is active RW lock.");
-            }
-            SDL_UnlockMutex(container_destruction_mutex);
-            return -1;
-        }
+        write_lock(&is_active_rwlock);
+        safe_SDL_LockMutex(state_lock);
         if (quit_clients() != 0) {
             LOG_ERROR("Failed to quit clients.");
         }
-        if (SDL_UnlockMutex(state_lock) != 0) {
-            LOG_ERROR("Failed to unlock state lock");
-        }
-        if (write_unlock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-release is active RW lock.");
-        }
+        safe_SDL_UnlockMutex(state_lock);
+        write_unlock(&is_active_rwlock);
     }
 
-    SDL_UnlockMutex(container_destruction_mutex);
+    safe_SDL_UnlockMutex(container_destruction_mutex);
 
     return 0;
 }
@@ -624,39 +603,29 @@ int32_t send_video(void* opaque) {
                         (PeerUpdateMessage*)(((char*)frame->compressed_frame) + frame->size);
 
                     size_t num_msgs;
-                    if (read_lock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to read-acquire is active RW lock.");
-                    } else if (SDL_LockMutex(state_lock) != 0) {
-                        LOG_ERROR("Failed to lock state lock");
-                        if (read_unlock(&is_active_rwlock) != 0) {
-                            LOG_ERROR("Failed to read-release is active RW lock.");
-                        }
-                    } else {
-                        if (fill_peer_update_messages(peer_update_msgs, &num_msgs) != 0) {
-                            LOG_ERROR("Failed to copy peer update messages.");
-                        }
-                        frame->num_peer_update_msgs = (int)num_msgs;
+                    read_lock(&is_active_rwlock);
+                    safe_SDL_LockMutex(state_lock);
 
-                        start_timer(&t);
-
-                        // Send video packet to client
-                        if (broadcast_udp_packet(
-                                PACKET_VIDEO, (uint8_t*)frame,
-                                frame_size + sizeof(PeerUpdateMessage) * (int)num_msgs, id,
-                                STARTING_BURST_BITRATE, video_buffer[id % VIDEO_BUFFER_SIZE],
-                                video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) != 0) {
-                            LOG_WARNING("Could not broadcast video frame ID %d", id);
-                        } else {
-                            // Only increment ID if the send succeeded
-                            id++;
-                        }
-                        if (SDL_UnlockMutex(state_lock) != 0) {
-                            LOG_ERROR("Failed to unlock state lock");
-                        }
-                        if (read_unlock(&is_active_rwlock) != 0) {
-                            LOG_ERROR("Failed to read-release is active RW lock.");
-                        }
+                    if (fill_peer_update_messages(peer_update_msgs, &num_msgs) != 0) {
+                        LOG_ERROR("Failed to copy peer update messages.");
                     }
+                    frame->num_peer_update_msgs = (int)num_msgs;
+
+                    start_timer(&t);
+
+                    // Send video packet to client
+                    if (broadcast_udp_packet(
+                            PACKET_VIDEO, (uint8_t*)frame,
+                            frame_size + sizeof(PeerUpdateMessage) * (int)num_msgs, id,
+                            STARTING_BURST_BITRATE, video_buffer[id % VIDEO_BUFFER_SIZE],
+                            video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) != 0) {
+                        LOG_WARNING("Could not broadcast video frame ID %d", id);
+                    } else {
+                        // Only increment ID if the send succeeded
+                        id++;
+                    }
+                    safe_SDL_UnlockMutex(state_lock);
+                    read_unlock(&is_active_rwlock);
 
                     // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
                     // get_timer( t ), frame_size );
@@ -742,20 +711,15 @@ int32_t send_audio(void* opaque) {
                     //         audio_encoder->encoded_frame_size);
 
                     // Send packet
-                    if (read_lock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to read-acquire is active RW lock.");
-                    } else {
-                        if (broadcast_udp_packet(
-                                PACKET_AUDIO, audio_encoder->encoded_frame_data,
-                                audio_encoder->encoded_frame_size, id, STARTING_BURST_BITRATE,
-                                audio_buffer[id % AUDIO_BUFFER_SIZE],
-                                audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
-                            LOG_WARNING("Could not send audio frame");
-                        }
-                        if (read_unlock(&is_active_rwlock) != 0) {
-                            LOG_ERROR("Failed to read-release is active RW lock.");
-                        }
+                    read_lock(&is_active_rwlock);
+                    if (broadcast_udp_packet(PACKET_AUDIO, audio_encoder->encoded_frame_data,
+                                             audio_encoder->encoded_frame_size, id,
+                                             STARTING_BURST_BITRATE,
+                                             audio_buffer[id % AUDIO_BUFFER_SIZE],
+                                             audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
+                        LOG_WARNING("Could not send audio frame");
                     }
+                    read_unlock(&is_active_rwlock);
                     // mprintf("sent audio frame %d\n", id);
                     id++;
 
@@ -764,19 +728,14 @@ int32_t send_audio(void* opaque) {
                     av_packet_unref(&audio_encoder->packet);
                 }
 #else
-                if (read_lock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to read-acquire is active RW lock.");
-                } else {
-                    if (broadcast_udp_packet(PACKET_AUDIO, audio_device->buffer,
-                                             audio_device->buffer_size, id, STARTING_BURST_BITRATE,
-                                             audio_buffer[id % AUDIO_BUFFER_SIZE],
-                                             audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
-                        mprintf("Could not send audio frame\n");
-                    }
-                    if (readUnlock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to read-release is active RW lock.");
-                    }
+                read_lock(&is_active_rwlock);
+                if (broadcast_udp_packet(PACKET_AUDIO, audio_device->buffer,
+                                         audio_device->buffer_size, id, STARTING_BURST_BITRATE,
+                                         audio_buffer[id % AUDIO_BUFFER_SIZE],
+                                         audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
+                    LOG_WARNING("Could not send audio frame\n");
                 }
+                read_unlock(&is_active_rwlock);
                 id++;
 #endif
             }
@@ -810,10 +769,7 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
     FractalClientMessage* fcmsg = (FractalClientMessage*)packet->data;
     int username = fcmsg->discoveryRequest.username;
 
-    if (read_lock(&is_active_rwlock) != 0) {
-        LOG_ERROR("Failed to read-acquire is active RW lock.");
-        return -1;
-    }
+    read_lock(&is_active_rwlock);
     bool found;
     int ret;
     if ((ret = try_find_client_id_by_username(username, &found, client_id)) != 0) {
@@ -823,36 +779,20 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
             username);
     }
     if (ret == 0 && found) {
-        if (read_unlock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to read-release is active RW lock.");
-            closesocket(context->s);
-            return -1;
-        }
-        if (write_lock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-acquire is active RW lock.");
-            closesocket(context->s);
-            return -1;
-        }
+        read_unlock(&is_active_rwlock);
+        write_lock(&is_active_rwlock);
         ret = quit_client(*client_id);
         if (ret != 0) {
             LOG_ERROR("Failed to quit client. (ID: %d)", *client_id);
         }
-        if (write_unlock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-release is active RW lock.");
-            closesocket(context->s);
-            if (ret == 0) ret = -1;
-        }
-        if (ret != 0) return ret;
+        write_unlock(&is_active_rwlock);
     } else {
         ret = get_available_client_id(client_id);
         if (ret != 0) {
             LOG_ERROR("Failed to find available client ID.");
             closesocket(context->s);
         }
-        if (read_unlock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to read-release is active RW lock.");
-            return -1;
-        }
+        read_unlock(&is_active_rwlock);
         if (ret != 0) return -1;
     }
 
@@ -864,11 +804,7 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
 
     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
 
-    FractalServerMessage* fsmsg = malloc(fsmsg_size);
-    if (fsmsg == NULL) {
-        LOG_ERROR("Failed to malloc server message.");
-        return -1;
-    }
+    FractalServerMessage* fsmsg = safe_malloc(fsmsg_size);
     fsmsg->type = MESSAGE_DISCOVERY_REPLY;
 
     FractalDiscoveryReplyMessage* reply_msg = (FractalDiscoveryReplyMessage*)fsmsg->discovery_reply;
@@ -930,17 +866,11 @@ int multithreaded_manage_clients(void* opaque) {
     start_timer(&first_client_timer);
 
     while (!exiting) {
-        if (read_lock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to read-acquire an active RW lock.");
-            continue;
-        }
+        read_lock(&is_active_rwlock);
 
         int saved_num_active_clients = num_active_clients;
 
-        if (read_unlock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to read-release and active RW lock.");
-            continue;
-        }
+        read_unlock(&is_active_rwlock);
 
         LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
                  have_sent_logs ? "yes" : "no");
@@ -1020,18 +950,7 @@ int multithreaded_manage_clients(void* opaque) {
             continue;
         }
 
-        if (write_lock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-acquire is active RW lock.");
-            if (quit_client(client_id) != 0) {
-                LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
-            }
-            if (host_id == client_id) {
-                // if (randomlyAssignHost() != 0) {
-                //     LOG_ERROR("Failed to randomly assigned host.");
-                // }
-            }
-            continue;
-        }
+        write_lock(&is_active_rwlock);
 
         LOG_INFO("Client connected. (ID: %d)", client_id);
 
@@ -1068,20 +987,7 @@ int multithreaded_manage_clients(void* opaque) {
 
         clients[client_id].is_active = true;
 
-        if (write_unlock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-release is active RW lock.");
-            LOG_ERROR("VERY BAD. IRRECOVERABLE.");
-            if (quit_client(client_id) != 0) {
-                LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
-            }
-            if (host_id == client_id) {
-                // if (randomlyAssignHost() != 0) {
-                //     LOG_ERROR("Failed to randomly assigned host.");
-                // }
-            }
-            // MAYBE RETURN (?)
-            continue;
-        }
+        write_unlock(&is_active_rwlock);
     }
 
     return 0;
@@ -1256,9 +1162,7 @@ int main(int argc, char* argv[]) {
 #ifdef _WIN32
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
-        destroy_logger();
-        return -1;
+        LOG_FATAL("Failed to initialize Winsock with error code: %d.", WSAGetLastError());
     }
 #endif
 
@@ -1269,19 +1173,15 @@ int main(int argc, char* argv[]) {
 
 #ifdef _WIN32
     if (!init_desktop(input_device, get_vm_password())) {
-        LOG_WARNING("Could not winlogon!\n");
-        destroy_logger();
-        return 0;
+        LOG_FATAL("Could not winlogon!");
     }
 #endif
 
     if (init_clients() != 0) {
-        LOG_ERROR("Failed to initialize client objects.");
-        destroy_logger();
-        return 1;
+        LOG_FATAL("Failed to initialize client objects.");
     }
 
-    container_destruction_mutex = SDL_CreateMutex();
+    container_destruction_mutex = safe_SDL_CreateMutex();
 #ifdef __linux__
     XSetIOErrorHandler(xioerror_handler);
 #endif
@@ -1331,16 +1231,11 @@ int main(int argc, char* argv[]) {
         if (get_timer(ack_timer) > 5) {
             if (get_using_stun()) {
                 // Broadcast ack
-                if (read_lock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to read-acquire is active RW lock.");
-                } else {
-                    if (broadcast_ack() != 0) {
-                        LOG_ERROR("Failed to broadcast acks.");
-                    }
-                    if (read_unlock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to read-release is active RW lock.");
-                    }
+                read_lock(&is_active_rwlock);
+                if (broadcast_ack() != 0) {
+                    LOG_ERROR("Failed to broadcast acks.");
                 }
+                read_unlock(&is_active_rwlock);
             }
             update_server_status(num_controlling_clients > 0, webserver_url, identifier,
                                  hex_aes_private_key);
@@ -1352,22 +1247,18 @@ int main(int argc, char* argv[]) {
         ClipboardData* cb = clipboard_synchronizer_get_new_clipboard();
         if (cb) {
             LOG_INFO("Received clipboard trigger! Sending to client");
-            FractalServerMessage* fmsg_response = malloc(sizeof(FractalServerMessage) + cb->size);
+            FractalServerMessage* fmsg_response =
+                safe_malloc(sizeof(FractalServerMessage) + cb->size);
             fmsg_response->type = SMESSAGE_CLIPBOARD;
             memcpy(&fmsg_response->clipboard, cb, sizeof(ClipboardData) + cb->size);
-            if (read_lock(&is_active_rwlock) != 0) {
-                LOG_ERROR("Failed to read-acquire is active RW lock.");
+            read_lock(&is_active_rwlock);
+            if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
+                                     sizeof(FractalServerMessage) + cb->size) < 0) {
+                LOG_WARNING("Could not broadcast Clipboard Message");
             } else {
-                if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
-                                         sizeof(FractalServerMessage) + cb->size) < 0) {
-                    LOG_WARNING("Could not broadcast Clipboard Message");
-                } else {
-                    LOG_INFO("Send clipboard message!");
-                }
-                if (read_unlock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to read-release is active RW lock.");
-                }
+                LOG_INFO("Send clipboard message!");
             }
+            read_unlock(&is_active_rwlock);
             free(fmsg_response);
         }
 
@@ -1378,24 +1269,19 @@ int main(int argc, char* argv[]) {
                     strcmp(name, cur_window_name) != 0) {
                     LOG_INFO("Sending window title to client: '%s'\n", name);
                     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
-                    FractalServerMessage* fmsg_response = malloc(fsmsg_size);
+                    FractalServerMessage* fmsg_response = safe_malloc(fsmsg_size);
                     fmsg_response->type = SMESSAGE_WINDOW_TITLE;
                     memcpy(&fmsg_response->window_title, name, sizeof(name));
-                    if (read_lock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to read-acquire is active RW lock.");
+                    read_lock(&is_active_rwlock);
+                    if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
+                                             (int)fsmsg_size) < 0) {
+                        LOG_WARNING("Could not broadcast window title Message");
                     } else {
-                        if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
-                                                 (int)fsmsg_size) < 0) {
-                            LOG_WARNING("Could not broadcast window title Message");
-                        } else {
-                            LOG_INFO("Sent window title message!");
-                            safe_strncpy(cur_window_name, name, WINDOW_NAME_MAXLEN);
-                            client_joined_after_window_name_broadcast = false;
-                        }
-                        if (read_unlock(&is_active_rwlock) != 0) {
-                            LOG_ERROR("Failed to read-release is active RW lock.");
-                        }
+                        LOG_INFO("Sent window title message!");
+                        safe_strncpy(cur_window_name, name, WINDOW_NAME_MAXLEN);
+                        client_joined_after_window_name_broadcast = false;
                     }
+                    read_unlock(&is_active_rwlock);
                     free(fmsg_response);
                 }
             }
@@ -1404,41 +1290,27 @@ int main(int argc, char* argv[]) {
 
         if (get_timer(last_ping_check) > 20.0) {
             for (;;) {
-                if (read_lock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to read-acquire is active RW lock.");
-                    break;
-                }
+                read_lock(&is_active_rwlock);
                 bool exists, should_reap = false;
                 if (exists_timed_out_client(CLIENT_PING_TIMEOUT_SEC, &exists) != 0) {
                     LOG_ERROR("Failed to find if a client has timed out.");
                 } else {
                     should_reap = exists;
                 }
-                if (read_unlock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to read-release is active RW lock.");
-                    break;
-                }
+                read_unlock(&is_active_rwlock);
                 if (should_reap) {
-                    if (write_lock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to write-acquire is active RW lock.");
-                        break;
-                    }
+                    write_lock(&is_active_rwlock);
                     if (reap_timed_out_clients(CLIENT_PING_TIMEOUT_SEC) != 0) {
                         LOG_ERROR("Failed to reap timed out clients.");
                     }
-                    if (write_unlock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to write-release is active RW lock.");
-                    }
+                    write_unlock(&is_active_rwlock);
                 }
                 break;
             }
             start_timer(&last_ping_check);
         }
 
-        if (read_lock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-acquire is active lock.");
-            continue;
-        }
+        read_lock(&is_active_rwlock);
 
         for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
             if (!clients[id].is_active) continue;
@@ -1456,12 +1328,9 @@ int main(int argc, char* argv[]) {
             }
 
             // HANDLE FRACTAL CLIENT MESSAGE
-            if (SDL_LockMutex(state_lock) != 0) {
-                LOG_ERROR("Failed to lock state lock.");
-                continue;
-            }
+            safe_SDL_LockMutex(state_lock);
             bool is_controlling = clients[id].is_controlling;
-            SDL_UnlockMutex(state_lock);
+            safe_SDL_UnlockMutex(state_lock);
             if (handle_client_message(fmsg, id, is_controlling) != 0) {
                 LOG_ERROR(
                     "Failed to handle message from client. "
@@ -1473,10 +1342,7 @@ int main(int argc, char* argv[]) {
                 // }
             }
         }
-        if (read_unlock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-release is active lock.");
-            continue;
-        }
+        read_unlock(&is_active_rwlock);
     }
 
     destroy_input_device(input_device);
@@ -1489,26 +1355,13 @@ int main(int argc, char* argv[]) {
 
     SDL_DestroyMutex(packet_mutex);
 
-    if (write_lock(&is_active_rwlock) != 0) {
-        LOG_ERROR("Failed to write-acquire is active RW lock.");
-        return -1;
-    }
-    if (SDL_LockMutex(state_lock) != 0) {
-        LOG_ERROR("Failed to lock state lock");
-        if (write_unlock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-release is active RW lock.");
-        }
-        return -1;
-    }
+    write_lock(&is_active_rwlock);
+    safe_SDL_LockMutex(state_lock);
     if (quit_clients() != 0) {
         LOG_ERROR("Failed to quit clients.");
     }
-    if (SDL_UnlockMutex(state_lock) != 0) {
-        LOG_ERROR("Failed to unlock state lock");
-    }
-    if (write_unlock(&is_active_rwlock) != 0) {
-        LOG_ERROR("Failed to write-release is active RW lock.");
-    }
+    safe_SDL_UnlockMutex(state_lock);
+    write_unlock(&is_active_rwlock);
 
 #ifdef _WIN32
     WSACleanup();
@@ -1517,12 +1370,12 @@ int main(int argc, char* argv[]) {
     destroy_logger();
     destroy_clients();
 
-    SDL_LockMutex(container_destruction_mutex);
+    safe_SDL_LockMutex(container_destruction_mutex);
     if (send_container_destroy_message() == -1) {
-        SDL_UnlockMutex(container_destruction_mutex);
+        safe_SDL_UnlockMutex(container_destruction_mutex);
         return -1;
     }
-    SDL_UnlockMutex(container_destruction_mutex);
+    safe_SDL_UnlockMutex(container_destruction_mutex);
 
     return 0;
 }

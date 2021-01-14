@@ -204,13 +204,10 @@ void update_decoder_parameters(int width, int height, CodecType codec_type) {
     }
 
     VideoDecoder* decoder = create_video_decoder(width, height, USE_HARDWARE, codec_type);
-
-    video_context.decoder = decoder;
     if (!decoder) {
-        LOG_WARNING("ERROR: Decoder could not be created!");
-        destroy_logger();
-        exit(-1);
+        LOG_FATAL("ERROR: Decoder could not be created!");
     }
+    video_context.decoder = decoder;
 
     sws_input_fmt = AV_PIX_FMT_NONE;
 
@@ -247,13 +244,13 @@ int32_t render_screen(SDL_Renderer* renderer) {
 
     while (video_data.run_render_screen_thread) {
         int ret = SDL_SemTryWait(video_data.renderscreen_semaphore);
-        SDL_LockMutex(render_mutex);
+        safe_SDL_LockMutex(render_mutex);
         if (pending_resize_render) {
             SDL_RenderCopy((SDL_Renderer*)video_context.renderer, video_context.texture, NULL,
                            NULL);
             SDL_RenderPresent((SDL_Renderer*)video_context.renderer);
         }
-        SDL_UnlockMutex(render_mutex);
+        safe_SDL_UnlockMutex(render_mutex);
 
         if (ret == SDL_MUTEX_TIMEDOUT) {
             if (loading_index >= 0) {
@@ -268,12 +265,11 @@ int32_t render_screen(SDL_Renderer* renderer) {
         loading_index = -1;
 
         if (ret < 0) {
-            LOG_ERROR("Semaphore Error");
-            return -1;
+            LOG_FATAL("Semaphore Error");
         }
 
         if (!rendering) {
-            LOG_WARNING("Sem opened but rendering is not true!");
+            LOG_ERROR("Semaphore opened, but rendering is not true!");
             continue;
         }
 
@@ -330,7 +326,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
 
         // LOG_INFO( "Decode Time: %f", get_timer( decode_timer ) );
 
-        SDL_LockMutex(render_mutex);
+        safe_SDL_LockMutex(render_mutex);
         update_pixel_format();
 
         if (!skip_render && can_render) {
@@ -417,7 +413,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
             SDL_RenderPresent((SDL_Renderer*)renderer);
         }
 
-        SDL_UnlockMutex(render_mutex);
+        safe_SDL_UnlockMutex(render_mutex);
 
 #if LOG_VIDEO
         LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", renderContext.id, renderContext.frame_size,
@@ -688,7 +684,7 @@ int init_multithreaded_video(void* opaque) {
     can_render = true;
     memset(video_context.data, 0, sizeof(video_context.data));
 
-    render_mutex = SDL_CreateMutex();
+    render_mutex = safe_SDL_CreateMutex();
 
     LOG_INFO("Creating renderer for %dx%d display", output_width, output_height);
 
@@ -735,9 +731,7 @@ int init_multithreaded_video(void* opaque) {
     texture = SDL_CreateTexture((SDL_Renderer*)renderer, SDL_PIXELFORMAT_YV12,
                                 SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
     if (!texture) {
-        LOG_ERROR("SDL: could not create texture - exiting");
-        destroy_logger();
-        exit(1);
+        LOG_FATAL("SDL: could not create texture - exiting");
     }
 
     pending_sws_update = false;
@@ -973,20 +967,29 @@ void update_video() {
             // &receiving_frames[VideoData.last_rendered_id %
             // RECV_FRAMES_BUFFER_SIZE];
 
+            // If we're not even rendering anything, and we're 3 frames behind, we're too far behind
+            // and we need to catch up
             if (video_data.max_id >
                 video_data.last_rendered_id + 3)  // || (cur_ctx->id == VideoData.last_rendered_id
                                                   // && get_timer( cur_ctx->last_packet_timer )
                                                   // > 96.0 / 1000.0) )
             {
                 if (request_iframe()) {
-                    LOG_INFO("TOO FAR BEHIND! REQUEST FOR IFRAME!");
+                    LOG_INFO(
+                        "The most recent ID is 3 frames ahead of the most recent rendered frame, "
+                        "and there is no available frame to render. I-Frame is now being requested "
+                        "to catch-up.");
                 }
             }
-        }
-
-        if (video_data.max_id > video_data.last_rendered_id + 5) {
-            if (request_iframe()) {
-                LOG_INFO("WAYY TOO FAR BEHIND! REQUEST FOR IFRAME!");
+        } else {
+            // If we're rendering, then even if we're 3 frames behind we might catch up in a bit, so
+            // we're more lenient and will only i-frame if we're 5 frames behind.
+            if (video_data.max_id > video_data.last_rendered_id + 5) {
+                if (request_iframe()) {
+                    LOG_INFO(
+                        "The most recent ID is 5 frames ahead of the most recent rendered frame. "
+                        "I-Frame is now being requested to catch-up.");
+                }
             }
         }
     }
@@ -1160,7 +1163,7 @@ void set_video_active_resizing(bool is_resizing) {
     */
 
     if (!is_resizing) {
-        SDL_LockMutex(render_mutex);
+        safe_SDL_LockMutex(render_mutex);
 
         int new_width = get_window_pixel_width((SDL_Window*)window);
         int new_height = get_window_pixel_height((SDL_Window*)window);
@@ -1171,21 +1174,21 @@ void set_video_active_resizing(bool is_resizing) {
             output_height = new_height;
         }
         can_render = true;
-        SDL_UnlockMutex(render_mutex);
+        safe_SDL_UnlockMutex(render_mutex);
     } else {
-        SDL_LockMutex(render_mutex);
+        safe_SDL_LockMutex(render_mutex);
         can_render = false;
         pending_resize_render = true;
-        SDL_UnlockMutex(render_mutex);
+        safe_SDL_UnlockMutex(render_mutex);
 
         for (int i = 0; pending_resize_render && (i < 10); ++i) {
             SDL_Delay(1);
         }
 
         if (pending_resize_render) {
-            SDL_LockMutex(render_mutex);
+            safe_SDL_LockMutex(render_mutex);
             pending_resize_render = false;
-            SDL_UnlockMutex(render_mutex);
+            safe_SDL_UnlockMutex(render_mutex);
         }
     }
 }

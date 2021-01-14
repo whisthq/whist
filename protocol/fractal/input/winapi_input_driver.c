@@ -290,7 +290,7 @@ const int windows_keycodes[NUM_KEYCODES] = {
 };
 
 InputDevice* create_input_device() {
-    InputDevice* input_device = malloc(sizeof(InputDevice));
+    InputDevice* input_device = safe_malloc(sizeof(InputDevice));
     memset(input_device, 0, sizeof(InputDevice));
     return input_device;
 }

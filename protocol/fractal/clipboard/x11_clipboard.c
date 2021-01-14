@@ -164,7 +164,7 @@ ClipboardData* unsafe_get_clipboard() {
     get_clipboard_picture(cb) || get_clipboard_string(cb);
 
     // Essentially just cb_buf, we expect that the user of GetClipboard
-    // will malloc his own version if he wants to save multiple clipboards
+    // will safe_malloc his own version if he wants to save multiple clipboards
     // Otherwise, we just reuse the same memory buffer
     return cb;
 }

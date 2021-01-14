@@ -64,7 +64,7 @@ Public Functions
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int init_rw_lock(RWLock *rwlock);
+void init_rw_lock(RWLock *rwlock);
 
 /**
  * @brief                          Destroys read-write lock.
@@ -77,7 +77,7 @@ int init_rw_lock(RWLock *rwlock);
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int destroy_rw_lock(RWLock *rwlock);
+void destroy_rw_lock(RWLock *rwlock);
 
 /**
  * @brief                          Write-acquires read-write lock.
@@ -88,7 +88,7 @@ int destroy_rw_lock(RWLock *rwlock);
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int write_lock(RWLock *rwlock);
+void write_lock(RWLock *rwlock);
 
 /**
  * @brief                          Read-acquires read-write lock.
@@ -99,7 +99,7 @@ int write_lock(RWLock *rwlock);
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int read_lock(RWLock *rwlock);
+void read_lock(RWLock *rwlock);
 
 /**
  * @brief                          Write-releases read-write lock.
@@ -108,7 +108,7 @@ int read_lock(RWLock *rwlock);
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int write_unlock(RWLock *rwlock);
+void write_unlock(RWLock *rwlock);
 
 /**
  * @brief                          Read-releases read-write lock.
@@ -117,6 +117,6 @@ int write_unlock(RWLock *rwlock);
  *
  * @returns                        Returns -1 on failure, 0 success.
  */
-int read_unlock(RWLock *rwlock);
+void read_unlock(RWLock *rwlock);
 
 #endif  // RWLOCK_H

@@ -78,9 +78,9 @@ ClipboardData* unsafe_get_clipboard() {
         // allocate memory for filenames and paths
         OSXFilenames* filenames[MAX_URLS];
         for (size_t i = 0; i < MAX_URLS; i++) {
-            filenames[i] = (OSXFilenames*)malloc(sizeof(OSXFilenames));
-            filenames[i]->filename = (char*)malloc(PATH_MAX * sizeof(char));
-            filenames[i]->fullPath = (char*)malloc(PATH_MAX * sizeof(char));
+            filenames[i] = (OSXFilenames*)safe_malloc(sizeof(OSXFilenames));
+            filenames[i]->filename = (char*)safe_malloc(PATH_MAX * sizeof(char));
+            filenames[i]->fullPath = (char*)safe_malloc(PATH_MAX * sizeof(char));
 
             // pad with null terminators
             memset(filenames[i]->filename, '\0', PATH_MAX * sizeof(char));
@@ -137,8 +137,8 @@ ClipboardData* unsafe_get_clipboard() {
             LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
         }
     } else if (clipboard_has_image) {
-        // malloc some space for the image
-        OSXImage* clipboard_image = (OSXImage*)malloc(sizeof(OSXImage));
+        // safe_malloc some space for the image
+        OSXImage* clipboard_image = (OSXImage*)safe_malloc(sizeof(OSXImage));
         memset(clipboard_image, 0, sizeof(OSXImage));
 
         // get the image
@@ -176,10 +176,10 @@ void unsafe_set_clipboard(ClipboardData* cb) {
         case CLIPBOARD_TEXT: {
             // Since Objective-C clipboard string pasting does not take
             //   string size as an argument, and pastes until null character,
-            //   must malloc string to end with null character to be pasted.
+            //   must safe_malloc string to end with null character to be pasted.
             //   This means null characters cannot be within the string being
             //   pasted.
-            char* string_data = malloc(cb->size + 1);
+            char* string_data = safe_malloc(cb->size + 1);
             memset(string_data, 0, cb->size + 1);
             memcpy(string_data, cb->data, cb->size);
             LOG_INFO("SetClipboard to Text: %s", string_data);
@@ -201,7 +201,7 @@ void unsafe_set_clipboard(ClipboardData* cb) {
             // allocate memory to store filenames in clipboard
             char* filenames[MAX_URLS];
             for (size_t i = 0; i < MAX_URLS; i++) {
-                filenames[i] = (char*)malloc(PATH_MAX * sizeof(char));
+                filenames[i] = (char*)safe_malloc(PATH_MAX * sizeof(char));
                 memset(filenames[i], '\0', PATH_MAX * sizeof(char));
             }
 

@@ -284,7 +284,7 @@ void set_timezone_from_utc(int utc, int dst_flag) {
             return;
     }
     snprintf(cmd + strlen(cmd), strlen(timezone), timezone);
-    char* response = malloc(sizeof(char) * 200);
+    char* response = safe_malloc(sizeof(char) * 200);
     runcmd(cmd, &response);
     LOG_INFO("Timezone powershell command: %s ", cmd);
     free(response);

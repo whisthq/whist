@@ -26,7 +26,7 @@ Public Functions
 AudioDevice *create_audio_device() {
     // See http://alsamodular.sourceforge.net/alsa_programming_howto.html
 
-    AudioDevice *audio_device = malloc(sizeof(AudioDevice));
+    AudioDevice *audio_device = safe_malloc(sizeof(AudioDevice));
     memset(audio_device, 0, sizeof(AudioDevice));
 
     int res;
@@ -142,7 +142,7 @@ AudioDevice *create_audio_device() {
 
     snd_pcm_hw_params_free(params);
 
-    audio_device->buffer = (uint8_t *)malloc(audio_device->buffer_size);
+    audio_device->buffer = (uint8_t *)safe_malloc(audio_device->buffer_size);
 
     return audio_device;
 }

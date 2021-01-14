@@ -21,7 +21,7 @@ audio_decoder_packet_readout.
 AudioDecoder *create_audio_decoder(int sample_rate) {
     // initialize the audio decoder
 
-    AudioDecoder *decoder = (AudioDecoder *)malloc(sizeof(AudioDecoder));
+    AudioDecoder *decoder = (AudioDecoder *)safe_malloc(sizeof(AudioDecoder));
     memset(decoder, 0, sizeof(AudioDecoder));
 
     // setup the AVCodec and AVFormatContext

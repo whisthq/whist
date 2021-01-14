@@ -335,7 +335,7 @@ VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, Cod
     av_log_set_callback(swap_decoder);
 #endif
 
-    VideoDecoder* decoder = (VideoDecoder*)malloc(sizeof(VideoDecoder));
+    VideoDecoder* decoder = (VideoDecoder*)safe_malloc(sizeof(VideoDecoder));
     memset(decoder, 0, sizeof(VideoDecoder));
 
     decoder->width = width;
@@ -345,6 +345,7 @@ VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, Cod
     decoder->codec_type = codec_type;
 
     if (!try_next_decoder(decoder)) {
+        LOG_WARNING("No valid decoder to use");
         destroy_video_decoder(decoder);
         return NULL;
     }
@@ -397,7 +398,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
 
     int computed_size = 4;
 
-    AVPacket* packets = malloc(num_packets * sizeof(AVPacket));
+    AVPacket* packets = safe_malloc(num_packets * sizeof(AVPacket));
 
     for (int i = 0; i < num_packets; i++) {
         av_init_packet(&packets[i]);
