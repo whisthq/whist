@@ -203,7 +203,6 @@ jobs:
               ${{ github.event.inputs.job-name }} == 'All'
             )
         runs-on: ubuntu-20.04
-
         steps:
             - name: Notify Slack
               run: |
@@ -301,7 +300,6 @@ jobs:
               ${{ github.event.inputs.job-name }} == 'All'
             )
         runs-on: ubuntu-20.04
-
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
