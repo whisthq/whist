@@ -110,7 +110,7 @@ jobs:
                   # curl GraphQL API to retrieve version number from config database
                   curl -X POST \
                   -H 'Content-Type: application/json' \
-                  -H 'X-Hasura-Admin-Secret: _Kd&tT?97KY?ju6H8XdTjsz$wpup+nrdHBrejBE#R^&4Sp%^YeVUrY8FZu^u+c394JREPQDJjc=Kbk7W-Bah9M^M#tVwUXfs&jKV' \
+                  -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
                   --data "{ \"query\": \"query { desktop_app_version { commit_hash major minor micro } }\" }" \
                   https://config-database.fractal.co/v1/graphql > response.json
 
@@ -137,7 +137,7 @@ jobs:
                   # curl GraphQL API to set new micro version number and git commit hash in config database
                   curl -X POST \
                   -H 'Content-Type: application/json' \
-                  -H 'X-Hasura-Admin-Secret: _Kd&tT?97KY?ju6H8XdTjsz$wpup+nrdHBrejBE#R^&4Sp%^YeVUrY8FZu^u+c394JREPQDJjc=Kbk7W-Bah9M^M#tVwUXfs&jKV' \
+                  -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
                   --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
                   https://config-database.fractal.co/v1/graphql
 
