@@ -65,6 +65,12 @@ compile_commands.json
 CTestTestfile.cmake
 fixes/
 
+# SDL
+include/SDL2/*
+lib/64/SDL2/Darwin/*
+lib/64/SDL2/Linux/*
+lib/64/SDL2/Windows/*
+
 # docs
 docs/html/
 docs/latex/

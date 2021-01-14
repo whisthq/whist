@@ -42,6 +42,14 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
+            # Necessary for downloading protocol libs from AWS S3
+            - name: Configure AWS S3 CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
             ############################# Windows Configuration Steps START #############################
 
             - name: Install cppcheck via Chocolatey on Windows GHA Machine
@@ -154,8 +162,10 @@ jobs:
               run: |
                   cd protocol
                   make clang-format
-                  # Show diff in gha logs
+
+                  # Show diff in GitHub Actions logs
                   git diff HEAD --
+
                   # This will return an error if there is a non-empty diff
                   git diff-index --quiet HEAD --
 

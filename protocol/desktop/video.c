@@ -62,6 +62,10 @@ volatile bool pending_resize_render = false;
 
 static enum AVPixelFormat sws_input_fmt;
 
+#ifdef __APPLE__
+volatile SDL_Renderer* renderer;
+#endif
+
 #define LOG_VIDEO false
 
 #define BITRATE_BUCKET_SIZE 500000
@@ -697,15 +701,20 @@ int init_multithreaded_video(void* opaque) {
     }
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
+// SDL guidelines say that renderer functions should be done on the main thread,
+//      but our implementation requires that the renderer is made in this thread
+//      for non-MacOS
+#ifndef __APPLE__
     SDL_Renderer* renderer = SDL_CreateRenderer(
         (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+#endif
 
     // Show a black screen initially before anything else
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
+    SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear((SDL_Renderer*)renderer);
+    SDL_RenderPresent((SDL_Renderer*)renderer);
 
-    video_context.renderer = renderer;
+    video_context.renderer = (SDL_Renderer*)renderer;
     if (!renderer) {
         LOG_WARNING("SDL: could not create renderer - exiting: %s", SDL_GetError());
         return -1;
@@ -757,8 +766,8 @@ int init_multithreaded_video(void* opaque) {
     video_data.renderscreen_semaphore = SDL_CreateSemaphore(0);
     video_data.run_render_screen_thread = true;
 
-    render_screen(renderer);
-    SDL_DestroyRenderer(renderer);
+    render_screen((SDL_Renderer*)renderer);
+    SDL_DestroyRenderer((SDL_Renderer*)renderer);
     return 0;
 }
 // END VIDEO FUNCTIONS
@@ -770,10 +779,16 @@ Public Function Implementations
 */
 
 void init_video() {
-    /*
-        Create the SDL video thread
-    */
+/*
+    Creates renderer and video thread
+*/
 
+// renderer must be created in main thread as per SDL guidelines, but this
+//      only seems to be necessary and possible on MacOS
+#ifdef __APPLE__
+    renderer = SDL_CreateRenderer((SDL_Window*)window, -1,
+                                  SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+#endif
     video_data.render_screen_thread =
         SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
 }

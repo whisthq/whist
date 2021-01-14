@@ -166,6 +166,8 @@ After doing this, you might have to restart your terminal or IDE, after which yo
 
 If you are on Linux Ubuntu, run `desktop/linux-client-setup.sh` to install the system dependencies.
 
+Downloading precompiled binaries from S3 will require the AWS CLI to be installed and set up on your machine. If you want to manually retrieve the binaries and retrieve the binaries by other means, run cmake with the `-D DOWNLOAD_BINARIES=OFF` option. Make sure you run cmake with this option _after_ you have already downloaded your files from S3 into the proper locations.
+
 #### Sentry
 
 To build you will need to install the sentry-native sdk. This can be done by running the python script get_latest_sentry.py in the root directory of this repo. The SDK is a CMake project which we load in our root CMakeLists.txt.
