@@ -335,7 +335,6 @@ int main() {
     }
 
     // register relative mouse events
-
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_EVBIT, EV_KEY);
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_LEFT);
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_RIGHT);
@@ -348,6 +347,11 @@ int main() {
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_Y);
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_WHEEL);
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_HWHEEL);
+    //these aren't yet supported by xorg input drivers
+    /*
+    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_WHEEL_HI_RES);
+    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_HWHEEL_HI_RES);
+    */
 
     // register absolute mouse events
 
@@ -407,43 +411,46 @@ int main() {
     LOG_INFO("ABSMOUSE FD: %d", fd_absmouse);
     LOG_INFO("RELMOUSE FD: %d", fd_relmouse);
     LOG_INFO("KEYBOARD FD: %d", fd_keyboard);
-
-    struct sockaddr_un addr;
-    int fd_socket = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (fd_socket == -1) {
-      LOG_INFO("socket error");
-      return 1;
-    }
+    int fds[3] = {fd_absmouse, fd_relmouse, fd_keyboard};
 
     char* socket_path = "/tmp/sockets/uinput.sock";
-    LOG_INFO("waiting for socket file %s to be created...", socket_path);
-    while (access(socket_path, F_OK) != 0) {
-      sleep(1);
-    }
-    LOG_INFO("created!");
-
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
-
-    if (connect(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-      LOG_INFO("connect error");
-      char buf[1024];
-      strerror_r(errno, buf, 1024);
-      LOG_INFO("%s", buf);
-      return 1;
-    }
-
-    LOG_INFO("connected!");
-
-    int fds[3] = {fd_absmouse, fd_relmouse, fd_keyboard};
-    if (ancil_send_fds(fd_socket, fds, 3) == -1) {
-      LOG_INFO("failed to send file descriptors");
-    }
-    LOG_INFO("sent file descriptors!");
-
-    // spin forever so device files don't get deleted
     while (1) {
+      LOG_INFO("waiting for socket file %s to be created...", socket_path);
+      while (access(socket_path, F_OK) != 0) {
+        sleep(1);
+      }
+      LOG_INFO("created!");
+
+      struct sockaddr_un addr;
+      int fd_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+      if (fd_socket == -1) {
+        LOG_INFO("socket error");
+        return 1;
+      }
+
+      memset(&addr, 0, sizeof(addr));
+      addr.sun_family = AF_UNIX;
+      strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
+
+      if (connect(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+        LOG_INFO("connect error");
+        char buf[1024];
+        strerror_r(errno, buf, 1024);
+        LOG_INFO("%s", buf);
+        return 1;
+      }
+
+      LOG_INFO("connected!");
+
+      if (ancil_send_fds(fd_socket, fds, 3) == -1) {
+        LOG_INFO("failed to send file descriptors");
+      }
+      LOG_INFO("sent file descriptors!");
+
+      sleep(10);
+      LOG_INFO("closing and deleting socket");
+      unlink(socket_path);
+      close(fd_socket);
       sleep(10);
     }
 
