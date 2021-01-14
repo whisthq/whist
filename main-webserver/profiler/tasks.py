@@ -41,6 +41,11 @@ def make_celery():
         # unexpected input, fail out
         raise ValueError(f"Unexpected prefix in redis url: {redis_url}")
 
+    # allow many redis connections
+    app.conf.update(
+        celery_redis_max_connections=1000,
+    )
+
     TaskBase = app.Task
     loop_iters_ms = estimate_loop_iters_per_ms()
 
