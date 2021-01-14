@@ -86,7 +86,8 @@ func startECSAgent() {
 		"mask",
 		"docker-container@ecs-agent",
 	)
-	err = cmd.Run()
+	combinedout, err := cmd.CombinedOutput()
+	logger.Infof("combined output from mask command: %s\n\n\n", combinedout)
 	if err != nil {
 		logger.Panicf("Unable to mask docker-container@ecs-agent. Error: %v", err)
 	} else {
