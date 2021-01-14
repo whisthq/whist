@@ -36,8 +36,7 @@ Public Functions
 void init_video();
 
 /**
- * @brief                          Free the video thread and VideContext data to
- *                                 exit
+ * @brief                          Receive video packet
  *
  * @param packet                   Packet received from the server, which gets
  *                                 sorted as video packet with proper parameters
@@ -54,7 +53,7 @@ int32_t receive_video(FractalPacket* packet);
 void update_video();
 
 /**
- * @brief                          Free the video thread and VideContext data to
+ * @brief                          Free the video thread and VideoContext data to
  *                                 exit
  */
 void destroy_video();

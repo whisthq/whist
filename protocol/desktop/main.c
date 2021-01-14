@@ -15,6 +15,12 @@ its threads.
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+/*
+============================
+Includes
+============================
+*/
+
 #include "sentry.h"
 #include <errno.h>
 #include <stdint.h>
@@ -34,7 +40,7 @@ its threads.
 #include "network.h"
 #include "sdl_event_handler.h"
 #include "sdl_utils.h"
-#include "server_message_handler.h"
+#include "handle_server_message.h"
 #include "video.h"
 #include "SDL_syswm.h"
 #ifdef __APPLE__
@@ -112,6 +118,12 @@ volatile int try_amount;
 char filename[300];
 char username[50];
 
+/*
+============================
+Custom Types
+============================
+*/
+
 // UPDATER CODE - HANDLES ALL PERIODIC UPDATES
 struct UpdateData {
     bool tried_to_update_dimension;
@@ -119,7 +131,19 @@ struct UpdateData {
     clock last_tcp_check_timer;
 } volatile update_data;
 
+/*
+============================
+Private Function Implementations
+============================
+*/
+
 void init_update() {
+    /*
+        Initialize desktop update handler.
+        Anything that will be continuously be called (within `update()`)
+        that changes program state should be initialized in here.
+    */
+
     update_data.tried_to_update_dimension = false;
 
     start_timer((clock*)&update_data.last_tcp_check_timer);
@@ -130,17 +154,24 @@ void init_update() {
     init_clipboard_synchronizer();
 }
 
-void destroy_update() { destroy_clipboard_synchronizer(); }
+void destroy_update() {
+    /*
+        Runs the destruction sequence for anything that
+        was initialized in `init_update()` and needs to be
+        destroyed.
+    */
 
-/**
- * Check all pending updates, and act on those pending updates
- * to actually update the state of our programs
- * This function expects to be called at minimum every 5ms to keep the program
- * up-to-date
- *
- * @return void
- */
+    destroy_clipboard_synchronizer();
+}
+
 void update() {
+    /*
+        Check all pending updates, and act on those pending updates
+        to actually update the state of our program.
+        This function expects to be called at minimum every 5ms to keep
+        the program up-to-date.
+    */
+
     FractalClientMessage fmsg;
 
     // Check for a new clipboard update from the server, if it's been 25ms since
@@ -247,7 +278,14 @@ void update() {
 
 int send_clipboard_packets(void* opaque) {
     /*
-    Obtain updated clipboard and send clipboard TCP packet to server
+        Obtain updated clipboard and send clipboard TCP packet to server.
+        This is used as a thread function.
+
+        Arguments:
+            opaque (void*): any arg to be passed to thread
+
+        Return:
+            (int): 0 on success
     */
 
     opaque;
@@ -278,6 +316,16 @@ int send_clipboard_packets(void* opaque) {
 // END UPDATER CODE
 
 int receive_packets(void* opaque) {
+    /*
+        Receive any packets from the server and handle them appropriately
+
+        Arguments:
+            opaque (void*): any arg to be passed to thread
+
+        Return:
+            (int): 0 on success
+    */
+
     LOG_INFO("receive_packets running on Thread %p", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
@@ -464,6 +512,15 @@ int receive_packets(void* opaque) {
 }
 
 int sync_keyboard_state(void) {
+    /*
+        Synchronize the keyboard state of the host machine with
+        that of the server by grabbing the host keyboard state and
+        sending a packet to the server.
+
+        Return:
+            (int): 0 on success
+    */
+
     // Set keyboard state initialized to null
     FractalClientMessage fmsg = {0};
 
@@ -518,6 +575,8 @@ int main(int argc, char* argv[]) {
         // --help or --version
         return 0;
     }
+
+    LOG_INFO("Client protocol started.");
 
     srand(rand() * (unsigned int)time(NULL) + rand());
     uid = rand();
@@ -586,6 +645,8 @@ int main(int argc, char* argv[]) {
     exiting = false;
     bool failed = false;
 
+    // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
+    //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
     for (try_amount = 0; try_amount < max_connection_attempts && !exiting && !failed;
          try_amount++) {
@@ -720,6 +781,7 @@ int main(int argc, char* argv[]) {
         sentry_capture_event(event);
     }
 
+    // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
     destroy_video();
     destroy_sdl((SDL_Window*)window);

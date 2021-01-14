@@ -61,16 +61,19 @@ int get_focused_window_name(char* name_return) {
         int count = 0, result;
         char** list = NULL;
         result = XmbTextPropertyToTextList(display, &prop, &list, &count);
+        if (!count) {
+            // no window title found
+            return 1;
+        }
         if (result == Success) {
-            LOG_INFO("window name: %s\n", list[0]);
             safe_strncpy(name_return, list[0], WINDOW_NAME_MAXLEN);
             XFreeStringList(list);
             return 0;
         } else {
-            LOG_ERROR("window name: XmbTextPropertyToTextList\n");
+            LOG_ERROR("window name: XmbTextPropertyToTextList");
         }
     } else {
-        LOG_ERROR("window name: XGetWMName\n");
+        LOG_ERROR("window name: XGetWMName");
     }
     return 1;
 }

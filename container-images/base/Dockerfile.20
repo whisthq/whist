@@ -302,48 +302,23 @@ RUN chown root:root /run/user
 COPY scripts/docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
 RUN chmod +x /usr/share/fractal/docker-entrypoint.sh
 
-# Set up Nvidia inside Docker
-LABEL com.nvidia.volumes.needed="nvidia_driver"
-
-RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
-    echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
-
-RUN mkdir -p /opt/nvidia/lib && \
-    ln -s /usr/local/nvidia/lib /opt/nvidia/lib/i386-linux-gnu && \
-    ln -s /usr/local/nvidia/lib64 /opt/nvidia/lib/x86_64-linux-gnu
-
-ENV PATH /usr/local/nvidia/bin:${PATH}
-ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
-
-# hadolint ignore=DL3008
-RUN apt-get install --no-install-recommends -y \
-    linux-headers-generic \
-    && apt-get autoremove -y \
-    && apt-get clean
-
-# hadolint ignore=SC1091,SC2046,SC2086
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin
-
-# hadolint ignore=SC1091,SC2046,SC2086
-RUN mv cuda-$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g').pin /etc/apt/preferences.d/cuda-repository-pin-600
-
-# hadolint ignore=SC1091,SC2046,SC2086
-RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64/7fa2af80.pub
-
-# hadolint ignore=SC1091,SC2046,SC2086
-RUN echo deb http://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')/x86_64 / | tee /etc/apt/sources.list.d/cuda.list
-
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    nvidia-dkms-450=450.80.02-0ubuntu1 \
-    nvidia-driver-450=450.80.02-0ubuntu1 \
-    nvidia-settings=450.80.02-0ubuntu1 \
-    nvidia-modprobe=450.80.02-0ubuntu1 \
-    cuda-drivers-450=450.80.02-1 \
-    cuda-drivers=450.80.02-1 \
-    && apt-get autoremove -y \
-    && apt-get clean
-
-ENV PATH /usr/local/cuda-11.0/bin${PATH:+:${PATH}}
+# Install NVIDIA GRID Drivers
+COPY build-temp/nvidia-driver/nvidia-driver-installer.run /root/nvidia-driver-installer.run
+RUN cd /root && \
+    chmod +x nvidia-driver-installer.run && \
+    sh nvidia-driver-installer.run -x && \
+    cd NVIDIA* && \
+    ./nvidia-installer --silent \
+                       --no-kernel-module \
+                       --install-compat32-libs \
+                       --no-nouveau-check \
+                       --no-nvidia-modprobe \
+                       --no-rpms \
+                       --no-backup \
+                       --no-check-for-alternate-installs \
+                       --no-libglx-indirect && \
+    cd .. && \
+    rm -rf NVIDIA* nvidia-driver-installer.run
 
 # Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID
 COPY config/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
@@ -421,9 +396,9 @@ RUN ln -sf /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 RUN ln -sf $(which xterm) /usr/bin/fractal-application
 
 # Grab pre-compiled Fractal Protocol
-COPY build_temp/libsentry.so /usr/share/fractal/bin/libsentry.so
-COPY build_temp/crashpad_handler /usr/share/fractal/bin/crashpad_handler
-COPY build_temp/FractalServer /usr/share/fractal/bin/FractalServer
+COPY build-temp/protocol/libsentry.so /usr/share/fractal/bin/libsentry.so
+COPY build-temp/protocol/crashpad_handler /usr/share/fractal/bin/crashpad_handler
+COPY build-temp/protocol/FractalServer /usr/share/fractal/bin/FractalServer
 
 # Enter the Docker container via the entrypoint
 CMD ["/usr/share/fractal/docker-entrypoint.sh"]

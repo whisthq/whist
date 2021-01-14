@@ -1,0 +1,15 @@
+FROM fractal/base:current-build
+
+ENV SHOTCUT_VERSION_MAJOR 20
+ENV SHOTCUT_VERSION_MINOR 11
+ENV SHOTCUT_VERSION_MICRO 28
+ENV SHOTCUT_VERSION_STRING v${SHOTCUT_VERSION_MAJOR}.${SHOTCUT_VERSION_MINOR}.${SHOTCUT_VERSION_MICRO}
+ENV SHOTCUT_VERSION_TAG ${SHOTCUT_VERSION_MAJOR}${SHOTCUT_VERSION_MINOR}${SHOTCUT_VERSION_MICRO}
+ENV SHOTCUT_URL https://github.com/mltframework/shotcut/releases/download/${SHOTCUT_VERSION_STRING}/shotcut-linux-x86_64-${SHOTCUT_VERSION_TAG}.txz
+
+RUN wget -qO - ${SHOTCUT_URL} | tar -xJ && \
+    mv Shotcut/Shotcut.app /opt/shotcut && \
+    rm -rf Shotcut 
+
+# Setup Fractal application symlink
+RUN ln -sf /opt/shotcut/shotcut /usr/bin/fractal-application

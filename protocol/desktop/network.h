@@ -12,13 +12,34 @@
 Usage
 ============================
 
-TODO
+Use these functions for any client-specific networking needs.
 */
 
-// must be called before connectToServer()
+/*
+============================
+Public Functions
+============================
+*/
+
+/**
+ * @brief                          Send a discovery packet to the server to determine which TCP
+ *                                 and UDP packets are assigned to the client. Must be called
+ *                                 before `connect_to_server()`.
+ *
+ * @param using_stun               Whether we are using the STUN server
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
 int discover_ports(bool* using_stun);
 
-// must be called after discoverPorts()
+/**
+ * @brief                          Connect to the server. Must be called after
+ *                                 `discover_ports()`.
+ *
+ * @param using_stun               Whether we are using the STUN server
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
 int connect_to_server(bool using_stun);
 
 int close_connections(void);

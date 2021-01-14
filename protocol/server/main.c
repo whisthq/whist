@@ -122,6 +122,9 @@ int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
 
+bool client_joined_after_window_name_broadcast = false;
+char cur_window_name[WINDOW_NAME_MAXLEN] = {0};
+
 /*
 ============================
 Private Functions
@@ -1038,6 +1041,7 @@ int multithreaded_manage_clients(void* opaque) {
         }
 
         num_active_clients++;
+        client_joined_after_window_name_broadcast = true;
         /* Make everyone a controller */
         clients[client_id].is_controlling = true;
         num_controlling_clients++;
@@ -1220,6 +1224,8 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    LOG_INFO("Server protocol started.");
+
     init_default_port_mappings();
 
 #if defined(_WIN32)
@@ -1368,25 +1374,30 @@ int main(int argc, char* argv[]) {
         if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
             char name[WINDOW_NAME_MAXLEN];
             if (get_focused_window_name(name) == 0) {
-                LOG_INFO("Sending window title to client: '%s'\n", name);
-                size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
-                FractalServerMessage* fmsg_response = malloc(fsmsg_size);
-                fmsg_response->type = SMESSAGE_WINDOW_TITLE;
-                memcpy(&fmsg_response->window_title, name, sizeof(name));
-                if (read_lock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to read-acquire is active RW lock.");
-                } else {
-                    if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
-                                             (int)fsmsg_size) < 0) {
-                        LOG_WARNING("Could not broadcast window title Message");
+                if (client_joined_after_window_name_broadcast ||
+                    strcmp(name, cur_window_name) != 0) {
+                    LOG_INFO("Sending window title to client: '%s'\n", name);
+                    size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
+                    FractalServerMessage* fmsg_response = malloc(fsmsg_size);
+                    fmsg_response->type = SMESSAGE_WINDOW_TITLE;
+                    memcpy(&fmsg_response->window_title, name, sizeof(name));
+                    if (read_lock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-acquire is active RW lock.");
                     } else {
-                        LOG_INFO("Sent window title message!");
+                        if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
+                                                 (int)fsmsg_size) < 0) {
+                            LOG_WARNING("Could not broadcast window title Message");
+                        } else {
+                            LOG_INFO("Sent window title message!");
+                            safe_strncpy(cur_window_name, name, WINDOW_NAME_MAXLEN);
+                            client_joined_after_window_name_broadcast = false;
+                        }
+                        if (read_unlock(&is_active_rwlock) != 0) {
+                            LOG_ERROR("Failed to read-release is active RW lock.");
+                        }
                     }
-                    if (read_unlock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to read-release is active RW lock.");
-                    }
+                    free(fmsg_response);
                 }
-                free(fmsg_response);
             }
             start_timer(&window_name_timer);
         }

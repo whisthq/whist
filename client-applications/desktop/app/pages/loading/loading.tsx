@@ -11,6 +11,7 @@ import { history } from "store/history"
 import { execPromise } from "shared/utils/files/exec"
 import { FractalRoute } from "shared/types/navigation"
 import { OperatingSystem, FractalDirectory } from "shared/types/client"
+import { FractalClientCache } from "shared/types/cache"
 
 import { useSubscription } from "@apollo/client"
 import { SUBSCRIBE_USER_APP_STATE } from "shared/constants/graphql"
@@ -193,6 +194,15 @@ const Loading = (props: {
     }
 
     const launchProtocol = () => {
+        const Store = require("electron-store")
+        const storage = new Store()
+
+        const cachedLowInternetMode = storage.get(
+            FractalClientCache.LOW_INTERNET_MODE
+        )
+        const internetMode = cachedLowInternetMode ? "h265" : "h264"
+        const cachedBandwidth = storage.get(FractalClientCache.BANDWIDTH)
+
         const spawn = require("child_process").spawn
 
         const protocolPath = require("path").join(
@@ -211,17 +221,19 @@ const Loading = (props: {
 
                 const portInfo = `32262:${port32262}.32263:${port32263}.32273:${port32273}`
                 const protocolParameters = {
-                    w: 800,
-                    h: 600,
-                    p: portInfo,
-                    k: secretKey,
-                    n: `Fractalized ${desiredAppID}`,
-                    ...(pngFile && { i: pngFile }),
+                    width: 800,
+                    height: 600,
+                    codec: internetMode,
+                    bitrate: cachedBandwidth,
+                    ports: portInfo,
+                    "private-key": secretKey,
+                    name: `Fractalized ${desiredAppID}`,
+                    ...(pngFile && { icon: pngFile }),
                 }
 
                 const protocolArguments = [
                     ...Object.entries(protocolParameters)
-                        .map(([flag, arg]) => [`-${flag}`, arg])
+                        .map(([flag, arg]) => [`--${flag}`, arg])
                         .flat(),
                     ip,
                 ]
@@ -231,11 +243,6 @@ const Loading = (props: {
                     cwd: protocolPath,
                     detached: false,
                     stdio: "ignore",
-                    // env: { ELECTRON_RUN_AS_NODE: 1 },
-                    // optional:
-                    // env: {
-                    //    PATH: process.env.PATH,
-                    // },
                 })
                 protocol.on("close", () => {
                     resetLaunchRedux()

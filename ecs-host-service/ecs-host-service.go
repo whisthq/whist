@@ -67,7 +67,7 @@ func startDockerDaemon() {
 
 // We take ownership of the ECS agent ourselves
 func startECSAgent() {
-	cmd := exec.Command("/usr/bin/systemctl", "enable", "docker-container@ecs-agent")
+	cmd := exec.Command("/usr/bin/systemctl", "enable", "--now", "docker-container@ecs-agent")
 	err := cmd.Run()
 	if err != nil {
 		logger.Panicf("Unable to start ECS-agent. Error: %v", err)

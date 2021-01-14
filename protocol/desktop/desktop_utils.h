@@ -1,11 +1,3 @@
-#ifndef DESKTOP_UTILS_H
-#define DESKTOP_UTILS_H
-
-#include "../fractal/network/network.h"
-
-#define MAX_INIT_CONNECTION_ATTEMPTS (3)
-#define MAX_RECONNECTION_ATTEMPTS (10)
-
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file desktop_utils.c
@@ -14,8 +6,23 @@
 Usage
 ============================
 
-TODO
+Call these functions from anywhere within desktop where they're
+needed.
 */
+
+#ifndef DESKTOP_UTILS_H
+#define DESKTOP_UTILS_H
+
+/*
+============================
+Includes
+============================
+*/
+
+#include "../fractal/network/network.h"
+
+#define MAX_INIT_CONNECTION_ATTEMPTS (3)
+#define MAX_RECONNECTION_ATTEMPTS (10)
 
 /*
 ============================
@@ -34,29 +41,78 @@ typedef struct MouseMotionAccumulation {
 
 /*
 ============================
-Includes
+Public Functions
 ============================
 */
 
+/**
+ * @brief                          Parse the arguments passed into the desktop application
+ *
+ * @param argc                     Number of arguments
+ *
+ * @param argv                     List of arguments
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
 int parse_args(int argc, char* argv[]);
 
+/**
+ * @brief                          Get directory of Fractal log
+ *
+ * @returns                        Log directory string
+ */
 char* get_log_dir(void);
 
+/**
+ * @brief                          Write connection id to connection_id log file
+ *
+ * @param connection_id            Connection ID
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
 int log_connection_id(int connection_id);
 
+/**
+ * @brief                          Initialize the Windows socket library
+ *                                 (Does not do anything for non-Windows)
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
 int init_socket_library(void);
 
+/**
+ * @brief                          Destroy the Windows socket library
+ *                                 (Does not do anything for non-Windows)
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
 int destroy_socket_library(void);
 
+/**
+ * @brief                          Configure the cache folder for non-Windows
+ *
+ * @returns                        Returns 0 on success
+ */
 int configure_cache(void);
 
 /**
- * Used to tell the server the user, which is used for sentry, along with other init information
- * @param email user email
- * @return 0 for success, -1 for failure
+ * @brief                          Prepare for initial request to server by setting
+ *                                 user email and time data
+ *
+ * @param fmsg                     Discovery request message packet to be sent to the server
+ *
+ * @param email                    User email
+ *
+ * @returns                        Returns -1 on failure, 0 on success
  */
 int prepare_init_to_server(FractalDiscoveryRequestMessage* fmsg, char* email);
 
+/**
+ * @brief                          Update mouse location if the mouse state has
+ *                                 updated since the last call to this function.
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
 int update_mouse_motion();
 
 #endif  // DESKTOP_UTILS_H

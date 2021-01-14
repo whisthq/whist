@@ -1,6 +1,5 @@
 import React, { useState, useEffect, Dispatch } from "react"
 import { connect } from "react-redux"
-import { useQuery } from "@apollo/client"
 import PuffLoader from "react-spinners/PuffLoader"
 
 import App from "pages/onboard/components/app"
@@ -9,7 +8,7 @@ import styles from "pages/onboard/onboard.css"
 import TitleBar from "shared/components/titleBar"
 import Version from "shared/components/version"
 import { requestAppsForm } from "shared/constants/externalUrls"
-import { GET_FEATURED_APPS } from "shared/constants/graphql"
+import { graphqlQuery, GET_FEATURED_APPS } from "shared/constants/graphql"
 import { FractalAuthCache } from "shared/types/cache"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalApp } from "shared/types/ui"
@@ -48,7 +47,7 @@ const Apps = (props: { dispatch: Dispatch<any>; accessToken: string }) => {
     }
 
     // GraphQL queries to get Fractal apps
-    const { loading, data } = useQuery(GET_FEATURED_APPS, {
+    const { loading, data } = graphqlQuery(GET_FEATURED_APPS, {
         context: {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
