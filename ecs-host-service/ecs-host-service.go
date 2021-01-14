@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -67,13 +68,62 @@ func startDockerDaemon() {
 
 // We take ownership of the ECS agent ourselves
 func startECSAgent() {
-	cmd := exec.Command("/usr/bin/systemctl", "enable", "--now", "docker-container@ecs-agent")
-	err := cmd.Run()
+	cmd := exec.Command(
+		"/usr/bin/docker",
+		"run",
+		"--name",
+		"ecs-agent",
+		"--init",
+		"--restart=on-failure:10",
+		"--volume=/var/run:/var/run",
+		"--volume=/var/log/ecs/:/log",
+		"--volume=/var/lib/ecs/data:/data",
+		"--volume=/etc/ecs:/etc/ecs",
+		"--volume=/sbin:/host/sbin",
+		"--volume=/lib:/lib",
+		"--volume=/lib64:/lib64",
+		"--volume=/usr/lib:/usr/lib",
+		"--volume=/usr/lib64:/usr/lib64",
+		"--volume=/proc:/host/proc",
+		"--volume=/sys/fs/cgroup:/sys/fs/cgroup",
+		"--net=host",
+		"--env-file=/etc/ecs/ecs.config",
+		"--cap-add=sys_admin",
+		"--cap-add=net_admin",
+		"--volume=/var/lib/nvidia-docker/volumes/nvidia_driver/latest:/usr/local/nvidia",
+		"--device",
+		"/dev/nvidiactl:/dev/nvidiactl",
+		"--device",
+		"/dev/nvidia0:/dev/nvidia0",
+		"--volume=/var/lib/ecs/gpu:/var/lib/ecs/gpu",
+		"amazon/amazon-ecs-agent:latest",
+	)
+	stderr, _ := cmd.StderrPipe()
+	stdout, _ := cmd.StdoutPipe()
+
+	logger.Infof("Attempting to start the ECS-agent... If you don't see an error, assume it was successful.")
+	err := cmd.Start()
 	if err != nil {
-		logger.Panicf("Unable to start ECS-agent. Error: %v", err)
-	} else {
-		logger.Info("Successfully started the ECS agent ourselves.")
+		logger.Panicf("Unable to start ECS-agent ourselves. Error: %v", err)
 	}
+
+	// If the function errored out, we want to get the output at least. Not sure
+	// if this actually works --- TODO change method of forking ecs-agent in
+	// background
+	go func() {
+		output, err1 := ioutil.ReadAll(stdout)
+		errput, err2 := ioutil.ReadAll(stderr)
+		err := cmd.Wait()
+		logger.Infof("stdout: %s\n\n\n", output)
+		logger.Infof("stderr: %s\n\n\n", errput)
+
+		if err1 != nil || err2 != nil {
+			logger.Errorf("Couldn't wait for ecs-agent starting command. Error: %v", err)
+		}
+	}()
+
+	// Give the ecs-agent some time to startup
+	time.Sleep(3 * time.Second)
 }
 
 // ---------------------------
@@ -209,7 +259,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 			return
 		}
 
-		// We close errorchan after 1000ms so the enclosing function can return an
+		// We close errorchan after `timeout` so the enclosing function can return an
 		// error if the `rclone mount` command failed immediately, or return nil if
 		// it didn't.
 		timeout := time.Second * 15
