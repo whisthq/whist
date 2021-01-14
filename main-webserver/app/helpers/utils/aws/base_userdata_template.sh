@@ -28,9 +28,7 @@ ECS_NVIDIA_RUNTIME=nvidia
 ECS_SELINUX_CAPABLE=true
 EOF
 
-systemctl stop docker-container@ecs-agent.service
 rm -f /var/lib/ecs/data/*
-systemctl start docker-container@ecs-agent.service
 
 cd /home/ubuntu
 echo export USE_PROD_SENTRY=1 >> /etc/bash.bashrc
