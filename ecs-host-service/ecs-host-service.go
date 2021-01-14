@@ -134,12 +134,14 @@ func startECSAgent() {
 	go func() {
 		output, _ := ioutil.ReadAll(stdout)
 		errput, _ := ioutil.ReadAll(stderr)
-		if err := cmd.Wait(); err != nil {
-			logger.Panicf("Couldn't wait for ecs-agent starting command. Error: %v", err)
-		}
 
+		err := cmd.Wait()
 		logger.Infof("stdout: %s\n\n\n", output)
 		logger.Infof("stderr: %s\n\n\n", errput)
+
+		if err != nil {
+			logger.Panicf("Couldn't wait for ecs-agent starting command. Error: %v", err)
+		}
 	}()
 }
 
