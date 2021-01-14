@@ -67,9 +67,36 @@ func startDockerDaemon() {
 
 // We take ownership of the ECS agent ourselves
 func startECSAgent() {
-	exec.Command("/sbin/modprobe nvidia-uvm && mknod -m 666 /dev/nvidia-uvm c $(grep nvidia-uvm /proc/devices | awk '{print $1}') 0").Run()
-
-	cmd := exec.Command("/usr/bin/systemctl", "enable", "--now", "docker-container@ecs-agent")
+	cmd := exec.Command(
+		"usr/bin/docker",
+		"run",
+		"--name",
+		"ecs-agent",
+		"--init",
+		"--restart=on-failure:10",
+		"--volume=/var/run:/var/run",
+		"--volume=/var/log/ecs/:/log",
+		"--volume=/var/lib/ecs/data:/data",
+		"--volume=/etc/ecs:/etc/ecs",
+		"--volume=/sbin:/host/sbin",
+		"--volume=/lib:/lib",
+		"--volume=/lib64:/lib64",
+		"--volume=/usr/lib:/usr/lib",
+		"--volume=/usr/lib64:/usr/lib64",
+		"--volume=/proc:/host/proc",
+		"--volume=/sys/fs/cgroup:/sys/fs/cgroup",
+		"--net=host",
+		"--env-file=/etc/ecs/ecs.config",
+		"--cap-add=sys_admin",
+		"--cap-add=net_admin",
+		"--volume=/var/lib/nvidia-docker/volumes/nvidia_driver/latest:/usr/local/nvidia",
+		"--device",
+		"/dev/nvidiactl:/dev/nvidiactl",
+		"--device",
+		"/dev/nvidia0:/dev/nvidia0",
+		"--volume=/var/lib/ecs/gpu:/var/lib/ecs/gpu",
+		"amazon/amazon-ecs-agent:latest",
+	)
 	err := cmd.Run()
 	if err != nil {
 		logger.Panicf("Unable to start ECS-agent. Error: %v", err)
