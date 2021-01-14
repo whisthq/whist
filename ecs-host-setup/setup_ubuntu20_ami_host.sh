@@ -40,52 +40,6 @@ ECS_ENABLE_GPU_SUPPORT=true
 ECS_NVIDIA_RUNTIME=nvidia
 EOF
 
-# Write systemd unit file for ECS Agent
-sudo cat << EOF > /etc/systemd/system/docker-container@ecs-agent.service
-[Unit]
-Description=Docker Container %I
-Requires=docker.service
-After=docker.service
-
-[Service]
-Restart=always
-ExecStartPre=-/usr/bin/docker rm -f %i
-ExecStart=/usr/bin/docker run --name %i \
---init \
---restart=on-failure:10 \
---volume=/var/run:/var/run \
---volume=/var/log/ecs/:/log \
---volume=/var/lib/ecs/data:/data \
---volume=/etc/ecs:/etc/ecs \
---volume=/sbin:/host/sbin \
---volume=/lib:/lib \
---volume=/lib64:/lib64 \
---volume=/usr/lib:/usr/lib \
---volume=/usr/lib64:/usr/lib64 \
---volume=/proc:/host/proc \
---volume=/sys/fs/cgroup:/sys/fs/cgroup \
---net=host \
---env-file=/etc/ecs/ecs.config \
---cap-add=sys_admin \
---cap-add=net_admin \
---volume=/var/lib/nvidia-docker/volumes/nvidia_driver/latest:/usr/local/nvidia \
---device /dev/nvidiactl:/dev/nvidiactl \
-${DEVICE_MOUNTS} \
---device /dev/nvidia-uvm:/dev/nvidia-uvm \
---volume=/var/lib/ecs/gpu:/var/lib/ecs/gpu \
-amazon/amazon-ecs-agent:latest
-ExecStop=/usr/bin/docker stop %i
-
-[Install]
-WantedBy=default.target
-EOF
-
-# Reload daemon files
-sudo /bin/systemctl daemon-reload
-
-# Disable ECS Agent (see README.md)
-sudo systemctl disable docker-container@ecs-agent.service
-
 sudo rm -rf /var/lib/cloud/instances/
 sudo rm -f /var/lib/ecs/data/*
 
