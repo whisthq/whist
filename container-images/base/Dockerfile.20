@@ -205,6 +205,7 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
     xserver-xorg-input-evdev \
+    xserver-xorg-input-libinput \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -304,6 +305,8 @@ RUN apt-get install --no-install-recommends -y \
 COPY scripts/entry.sh /usr/share/fractal
 RUN chmod +x /usr/share/fractal/entry.sh
 COPY config/fractal-display-config.env /usr/share/fractal
+COPY config/fractal-input.rules /usr/share/fractal
+RUN ln -sf /usr/share/fractal/fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
 
 # Install and enable OpenSSH
 # Note that all installations need to be prefixed by an `apt-get update` to

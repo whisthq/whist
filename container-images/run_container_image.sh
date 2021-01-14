@@ -54,6 +54,7 @@ run_container() {
         --cap-add CAP_SYS_CHROOT \
         --cap-add CAP_SETFCAP \
         --cap-add SYS_NICE \
+        --privileged \
         -p 32262:32262 \
         -p 32263:32263/udp \
         -p 32273:32273 \

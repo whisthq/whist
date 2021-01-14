@@ -520,9 +520,7 @@ void emit_input_event(int fd, int type, int code, int val) {
     ie.time.tv_sec = 0;
     ie.time.tv_usec = 0;
 
-    LOG_INFO("emitting input event");
     write(fd, &ie, sizeof(ie));
-    // write(unix_socket, &ie, sizeof(ie));
 }
 
 int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode sdl_keycode) {
@@ -559,10 +557,12 @@ int emit_key_event(InputDevice* input_device, FractalKeycode sdl_keycode, int pr
 
 int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int relative) {
     if (relative) {
+        LOG_INFO("mouse motion relative");
         emit_input_event(input_device->fd_relmouse, EV_REL, REL_X, x);
         emit_input_event(input_device->fd_relmouse, EV_REL, REL_Y, y);
         emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     } else {
+        LOG_INFO("mouse motion absolute");
         emit_input_event(
             input_device->fd_absmouse, EV_ABS, ABS_X,
             (int)(x * (int32_t)UINPUT_MOUSE_COORDINATE_RANGE / (int32_t)MOUSE_SCALING_FACTOR));
@@ -582,8 +582,12 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
 }
 
 int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
-    emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x);
-    emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL, y);
+    LOG_INFO("SCROLL: x=%d y=%d", x, y);
+    // the value of 30 was copied from
+    // https://xpra.org/trac/browser/xpra/trunk/src/xpra/x11/uinput_device.py
+    int multiplier = 1;
+    emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x * multiplier);
+    emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL, y * multiplier);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     return 0;
 }
