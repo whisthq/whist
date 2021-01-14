@@ -256,7 +256,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     else()
         set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk)
     endif()
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Require MacOS 10.13 or up, to ensure LibObj-C is standard
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
 endif()
 
 # Tell CMake where to look for includes
