@@ -7,6 +7,9 @@ name: "Client Applications: Publish Desktop Applications"
 
 # TODO: add staging and dev branches as part of staging taskdefs
 on:
+    pull_request:
+        branches:
+            - master
     push:
         branches:
             - master
