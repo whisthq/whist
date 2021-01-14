@@ -81,18 +81,18 @@ func startECSAgent() {
 		logger.Info("Successfully stopped the ECS agent systemd service.")
 	}
 
-	cmd = exec.Command(
-		"/usr/bin/systemctl",
-		"mask",
-		"docker-container@ecs-agent",
-	)
-	combinedout, err := cmd.CombinedOutput()
-	logger.Infof("combined output from mask command: %s\n\n\n", combinedout)
-	if err != nil {
-		logger.Panicf("Unable to mask docker-container@ecs-agent. Error: %v", err)
-	} else {
-		logger.Info("Successfully masked the ECS agent systemd service.")
-	}
+	// cmd = exec.Command(
+	// "/usr/bin/systemctl",
+	// "mask",
+	// "docker-container@ecs-agent",
+	// )
+	// combinedout, err := cmd.CombinedOutput()
+	// logger.Infof("combined output from mask command: %s\n\n\n", combinedout)
+	// if err != nil {
+	// logger.Panicf("Unable to mask docker-container@ecs-agent. Error: %v", err)
+	// } else {
+	// logger.Info("Successfully masked the ECS agent systemd service.")
+	// }
 
 	cmd = exec.Command(
 		"usr/bin/docker",
