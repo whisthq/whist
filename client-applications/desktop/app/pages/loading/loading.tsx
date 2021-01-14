@@ -122,7 +122,7 @@ const Loading = (props: {
                     ports: portInfo,
                     "private-key": secretKey,
                     name: `Fractalized ${desiredAppID}`,
-                    ...(bitrate && { bitrate: cachedBandwidth }),
+                    ...(cachedBandwidth && { bitrate: cachedBandwidth }),
                     ...(pngFile && { icon: pngFile }),
                 }
 
