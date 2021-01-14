@@ -94,22 +94,25 @@ else()
     set(arch 32)
 endif()
 
-# download AWS S3 binaries
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    MESSAGE(STATUS "Downloading binaries from AWS S3")
-    execute_process(COMMAND CMD /C "download-binaries.bat"
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE download_res)
-    if (NOT ${download_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download_res}")
-    endif()
-else()
-    MESSAGE(STATUS "Downloading binaries from AWS S3")
-    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE download)
-    if (NOT ${download} EQUAL "0")
-        message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download}")
+# download AWS S3 binaries unless indicated otherwise
+option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
+if (DOWNLOAD_BINARIES)
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        MESSAGE(STATUS "Downloading binaries from AWS S3")
+        execute_process(COMMAND CMD /C "download-binaries.bat"
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        RESULT_VARIABLE download_res)
+        if (NOT ${download_res} EQUAL "0")
+            message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download_res}")
+        endif()
+    else()
+        MESSAGE(STATUS "Downloading binaries from AWS S3")
+        execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        RESULT_VARIABLE download)
+        if (NOT ${download} EQUAL "0")
+            message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download}")
+        endif()
     endif()
 endif()
 
