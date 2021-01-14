@@ -163,6 +163,9 @@ jobs:
                   cd protocol
                   make clang-format
 
+                  # Show diff in GitHub Actions logs
+                  git diff HEAD --
+
                   # This will return an error if there is a non-empty diff
                   git diff-index --quiet HEAD --
 
