@@ -44,6 +44,7 @@ def profile():
 
     end = time.time()
     print(f"Completed in {end - start} sec")
+    print(f"Theoretical optimal on single core: {CONFIG.num_tasks * CONFIG.task_time_ms} sec")
 
 
 if __name__ == "__main__":
