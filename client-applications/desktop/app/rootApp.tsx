@@ -10,6 +10,7 @@ import Welcome from "pages/onboard/welcome"
 import Apps from "pages/onboard/apps"
 import Installing from "pages/onboard/installing"
 import Storage from "pages/onboard/storage"
+import Payment from "pages/payment/payment"
 
 import { history } from "store/history"
 import { createContainer, validateAccessToken } from "store/actions/sideEffects"
@@ -202,6 +203,8 @@ const RootApp = (props: {
     return (
         <div>
             <Switch>
+                <Route path={FractalRoute.PAYMENT} component={Payment} />
+
                 <Route path={FractalRoute.DASHBOARD} component={Dashboard} />
                 <Route path={FractalRoute.LOADING} component={Loading} />
                 <Route
