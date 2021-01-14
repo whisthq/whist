@@ -10,9 +10,6 @@
 rm /var/run/nologin
 # echo $SSH_PUBLIC_KEY_AWS > ~/.ssh/authorized_keys
 
-# Symlink Fractal uinput kernel module rules
-ln -sf /usr/share/fractal/fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
-
 # Begin wait loop to get TTY number and port mapping from Fractal ECS host service
 CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
 FRACTAL_MAPPINGS_DIR=/fractal/containerResourceMappings
