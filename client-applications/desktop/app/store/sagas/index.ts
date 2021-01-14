@@ -8,7 +8,7 @@ import { apiPost, apiGet, apiDelete } from "shared/utils/general/api"
 import { history } from "store/history"
 import { generateMessage } from "shared/components/loading"
 import { FractalRoute } from "shared/types/navigation"
-import { FractalAPI } from "shared/types/api"
+import { FractalHTTPCode, FractalAPI } from "shared/types/api"
 import { FractalAuthCache } from "shared/types/cache"
 import { config } from "shared/constants/config"
 import { AWSRegion } from "shared/types/aws"
@@ -21,6 +21,7 @@ function* refreshAccess() {
     const username = state.MainReducer.auth.username
 
     if (!username || username === "None" || username === "") {
+        console.log("refreshAccess log in")
         history.push(FractalRoute.LOGIN)
         return
     }
@@ -195,7 +196,7 @@ function* createContainer(action: {
         return
     }
 
-    let { json, success } = yield call(
+    let { json, success, status } = yield call(
         apiPost,
         endpoint,
         body,
@@ -204,8 +205,14 @@ function* createContainer(action: {
     )
 
     if (!success) {
-        yield call(refreshAccess)
-        return
+        if (status === FractalHTTPCode.PAYMENT_REQUIRED) {
+            history.push(FractalRoute.PAYMENT)
+            return
+        }
+        if (status === FractalHTTPCode.UNAUTHORIZED) {
+            yield call(refreshAccess)
+            return
+        }
     }
 
     // TODO (adriano) add handlers for 404 (mainly for testing, low priority)

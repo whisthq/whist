@@ -9,7 +9,7 @@ from random import getrandbits as randbits
 import pytest
 
 from celery.app.task import Task
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request, create_access_token
 
 from app.helpers.utils.general.redis import get_redis_url
 from app.factory import create_app
@@ -275,7 +275,11 @@ def user(request):
     """
 
     if "_retrieve_user" not in request.fixturenames:
-        u = User(user_id=f"test-user+{uuid.uuid4()}@fractal.co", password="")
+        u = User(
+            user_id=f"test-user+{uuid.uuid4()}@fractal.co",
+            password="",
+            created_timestamp=1000000000,
+        )
 
         db.session.add(u)
         db.session.commit()
@@ -289,3 +293,61 @@ def user(request):
         db.session.commit()
     else:
         pytest._user_id = u.user_id
+
+
+# Note: currently only being used in tests/aws/test_assign.py, eventually want to expand to all tests
+
+
+@pytest.fixture
+def make_user():
+    """Add a row to the users table for testing.
+    Yields:
+        A function that adds a test row to the users table of the
+        database.
+    """
+
+    users = []
+
+    def _user(stripe_customer_id=None, created_timestamp=1000000000):
+        """Create a dummy user for testing.
+        Arguments:
+            stripe_customer_id (optional): The initial value with which the new row's stripe_customer_id
+                column should be populated.
+            created_timestamp (optional): The initial value with which the new row's created_timestamp
+                column should be populated. 1000000000 is an arbitrary starting value.
+        Yields:
+            An instance of the User model.
+        """
+
+        user = User(
+            user_id=f"test-user+{uuid.uuid4()}@fractal.co",
+            password="",
+            created_timestamp=created_timestamp,
+            stripe_customer_id=stripe_customer_id,
+        )
+
+        db.session.add(user)
+        db.session.commit()
+        users.append(user)
+
+        return user
+
+    yield _user
+
+    for user in users:
+        db.session.delete(user)
+
+    db.session.commit()
+
+
+@pytest.fixture
+def make_authorized_user(make_user):
+    def _authorized_user(
+        client, monkeypatch, stripe_customer_id=None, created_timestamp=1000000000
+    ):
+        user = make_user(stripe_customer_id=stripe_customer_id, created_timestamp=created_timestamp)
+        access_token = create_access_token(identity=user.user_id)
+        monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
+        return user
+
+    return _authorized_user

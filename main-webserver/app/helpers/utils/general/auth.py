@@ -1,13 +1,20 @@
 import json
 import logging
+import datetime
+
+
+from datetime import timedelta, datetime as dt
 
 from functools import wraps
 
 from flask import current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
-from app.constants.http_codes import UNAUTHORIZED
+from app.models import User
+
+from app.constants.http_codes import UNAUTHORIZED, PAYMENT_REQUIRED
 from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.payment.stripe_client import StripeClient
 
 
 def fractal_auth(func):
@@ -155,6 +162,59 @@ def developer_required(func):
                 ),
                 UNAUTHORIZED,
             )
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def payment_required(func):
+    """A decorator that will return unauthorized if the invoker is not a valid
+        paying user (not on a free trial, and does not have a valid stripe id/subscription).
+        Called before a container assign attempt is made - if the user is not valid,
+        a container will not be assigned.
+
+    Args:
+        func (function): The function that is being decorated.
+
+    Returns:
+        function: A wrapper that runs some preprocessing/decoration code and
+        then calls the func in certain cases (or returns something else). Check the
+        docs on python decorators for more context.
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+
+        current_user = get_jwt_identity()
+
+        # admin override
+        if current_app.config["DASHBOARD_USERNAME"] not in current_user:
+
+            user = User.query.get(current_user)
+            stripe_client = StripeClient(current_app.config["STRIPE_SECRET"])
+
+            assert user
+
+            customer = stripe_client.user_schema.dump(user)
+            stripe_customer_id = customer["stripe_customer_id"]
+
+            time_diff = timedelta(
+                dt.now(datetime.timezone.utc).timestamp() - user.created_timestamp
+            )
+
+            if time_diff.days >= 7 and (
+                (stripe_customer_id is None)
+                or (not stripe_client.validate_customer_id(stripe_customer_id, user))
+            ):
+                return (
+                    jsonify(
+                        {
+                            "error": ("User is not a valid paying user."),
+                        }
+                    ),
+                    PAYMENT_REQUIRED,
+                )
 
         return func(*args, **kwargs)
 

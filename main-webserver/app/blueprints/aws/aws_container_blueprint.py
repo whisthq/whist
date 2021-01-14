@@ -22,7 +22,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
 )
 from app.constants.container_state_values import CANCELLED
 
-from app.helpers.utils.general.auth import fractal_auth, developer_required
+from app.helpers.utils.general.auth import fractal_auth, developer_required, payment_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
@@ -249,6 +249,50 @@ def aws_container_ping(**kwargs):
     return response
 
 
+@aws_container_bp.route("/container/assign", methods=("POST",))
+@fractal_pre_process
+@jwt_required
+@fractal_auth
+@payment_required
+def aws_container_assign(**kwargs):
+    """
+    Assigns aws container. Needs:
+    - username (str): username
+    - app (str): name of app that user is trying to use
+    - region (str): region in which to host in AWS
+    - dpi (int): dots per inch
+
+    Returns container status
+    """
+    response = jsonify({"status": NOT_FOUND}), NOT_FOUND
+    body = kwargs.pop("body")
+
+    try:
+        user = body.pop("username")
+        app = body.pop("app")
+        region = body.pop("region")
+        dpi = body.get("dpi", 96)
+    except KeyError:
+        response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+    else:
+        # assign a container.
+        try:
+            task_arn, _, _ = preprocess_task_info(app)
+        except BadAppError:
+            response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+        else:
+            task = assign_container.delay(
+                user,
+                task_arn,
+                region_name=region,
+                webserver_url=kwargs["webserver_url"],
+                dpi=dpi,
+            )
+        response = jsonify({"ID": task.id}), ACCEPTED
+
+    return response
+
+
 @aws_container_bp.route("/container/<action>", methods=["POST"])
 @fractal_pre_process
 @jwt_required
@@ -257,7 +301,6 @@ def aws_container_post(action, **kwargs):
     """
     General aws container post. Handles:
     - create
-    - assign
     - delete
     - drain
     - stun
@@ -294,29 +337,6 @@ def aws_container_post(action, **kwargs):
                         dpi=dpi,
                     )
                     response = jsonify({"ID": task.id}), ACCEPTED
-        elif action == "assign":
-            try:
-                app = body.pop("app")
-                region = body.pop("region")
-                dpi = body.get("dpi", 96)
-            except KeyError:
-                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-            else:
-                # assign a container.
-                try:
-                    task_arn, _, _ = preprocess_task_info(app)
-                except BadAppError:
-                    response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-                else:
-                    task = assign_container.delay(
-                        user,
-                        task_arn,
-                        region_name=region,
-                        webserver_url=kwargs["webserver_url"],
-                        dpi=dpi,
-                    )
-                    response = jsonify({"ID": task.id}), ACCEPTED
-
         elif action == "delete":
             try:
                 container = body.pop("container_id")
