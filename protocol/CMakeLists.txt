@@ -253,7 +253,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     else()
         set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk)
     endif()
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # deployment target must be lower than compiler SDK above
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # deployment target must be <= than compiler SDK above
 endif()
 
 # Tell CMake where to look for includes
