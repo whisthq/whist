@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -68,6 +69,31 @@ func startDockerDaemon() {
 // We take ownership of the ECS agent ourselves
 func startECSAgent() {
 	cmd := exec.Command(
+		"/usr/bin/systemctl",
+		"disable",
+		"--now",
+		"docker-container@ecs-agent",
+	)
+	err := cmd.Run()
+	if err != nil {
+		logger.Panicf("Unable to stop docker-container@ecs-agent. Error: %v", err)
+	} else {
+		logger.Info("Successfully stopped the ECS agent systemd service.")
+	}
+
+	cmd = exec.Command(
+		"/usr/bin/systemctl",
+		"mask",
+		"docker-container@ecs-agent",
+	)
+	err = cmd.Run()
+	if err != nil {
+		logger.Panicf("Unable to mask docker-container@ecs-agent. Error: %v", err)
+	} else {
+		logger.Info("Successfully masked the ECS agent systemd service.")
+	}
+
+	cmd = exec.Command(
 		"usr/bin/docker",
 		"run",
 		"--name",
@@ -97,12 +123,23 @@ func startECSAgent() {
 		"--volume=/var/lib/ecs/gpu:/var/lib/ecs/gpu",
 		"amazon/amazon-ecs-agent:latest",
 	)
-	err := cmd.Run()
+	stderr, _ := cmd.StderrPipe()
+	stdout, _ := cmd.StdoutPipe()
+	err = cmd.Start()
 	if err != nil {
-		logger.Panicf("Unable to start ECS-agent. Error: %v", err)
-	} else {
-		logger.Info("Successfully started the ECS agent ourselves.")
+		logger.Panicf("Unable to start ECS-agent ourselves. Error: %v", err)
 	}
+
+	go func() {
+		output, _ := ioutil.ReadAll(stdout)
+		errput, _ := ioutil.ReadAll(stderr)
+		if err := cmd.Wait(); err != nil {
+			logger.Panicf("Couldn't wait for ecs-agent starting command. Error: %v", err)
+		}
+
+		logger.Infof("stdout: %s\n\n\n", output)
+		logger.Infof("stderr: %s\n\n\n", errput)
+	}()
 }
 
 // ---------------------------
