@@ -7,6 +7,7 @@ export enum FractalRoute {
     ONBOARD_APPS = "/onboard/apps",
     ONBOARD_INSTALLING = "/onboard/installing",
     ONBOARD_STORAGE = "/onboard/storage",
+    PAYMENT = "/payment",
 }
 
 export enum FractalDashboardTab {

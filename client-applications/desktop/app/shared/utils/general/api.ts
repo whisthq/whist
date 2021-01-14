@@ -79,8 +79,9 @@ export const apiPost = async (
                 body: JSON.stringify(body),
             })
             const json = await response.json()
+            const status = response.status
             const success = checkJSON(json) && checkResponse(response)
-            return { json, success }
+            return { json, success, status }
         } catch (err) {
             debugLog(err)
             return err
