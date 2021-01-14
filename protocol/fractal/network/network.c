@@ -435,10 +435,10 @@ int send_udp_packet(SocketContext *context, FractalPacketType type, void *data, 
                                          (unsigned char *)context->binary_aes_private_key);
 
         // Send it off
-        SDL_LockMutex(context->mutex);
+        safe_SDL_LockMutex(context->mutex);
         // LOG_INFO("Sending UDP Packet of length %d", encrypt_len);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-        SDL_UnlockMutex(context->mutex);
+        safe_SDL_UnlockMutex(context->mutex);
 
         if (sent_size < 0) {
             int error = get_last_network_error();
@@ -475,10 +475,10 @@ int replay_packet(SocketContext *context, FractalPacket *packet, size_t len) {
     int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
                                      (unsigned char *)context->binary_aes_private_key);
 
-    SDL_LockMutex(context->mutex);
+    safe_SDL_LockMutex(context->mutex);
     LOG_INFO("Replay Packet of length %d", encrypt_len);
     int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-    SDL_UnlockMutex(context->mutex);
+    safe_SDL_UnlockMutex(context->mutex);
 
     if (sent_size < 0) {
         LOG_WARNING("Could not replay packet!");
@@ -1230,7 +1230,7 @@ int create_tcp_context(SocketContext *context, char *destination, int port, int 
         return -1;
     }
     context->timeout = recvfrom_timeout_ms;
-    context->mutex = SDL_CreateMutex();
+    context->mutex = safe_SDL_CreateMutex();
     memcpy(context->binary_aes_private_key, binary_aes_private_key,
            sizeof(context->binary_aes_private_key));
 
@@ -1573,7 +1573,7 @@ int create_udp_context(SocketContext *context, char *destination, int port, int 
     }
 
     context->timeout = recvfrom_timeout_ms;
-    context->mutex = SDL_CreateMutex();
+    context->mutex = safe_SDL_CreateMutex();
     memcpy(context->binary_aes_private_key, binary_aes_private_key,
            sizeof(context->binary_aes_private_key));
 
@@ -1675,7 +1675,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     curl_easy_setopt(curl, CURLOPT_CURLU, curl_url_handle);
 #else
     // with no urlapi, build our own URL (path must begin with '/' when passed in)
-    char *full_url = malloc(strlen(host_s) + strlen(path) + 2);
+    char *full_url = safe_malloc(strlen(host_s) + strlen(path) + 2);
     sprintf(full_url, "%s%s", host_s, path);
     curl_easy_setopt(curl, CURLOPT_URL, full_url);
     free(full_url);
@@ -1688,7 +1688,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: application/json");
         // create content-length header
-        char *content_length_header = malloc(64);
+        char *content_length_header = safe_malloc(64);
         sprintf(content_length_header, "Content-Length: %lu", strlen(payload));
         headers = curl_slist_append(headers, content_length_header);
         free(content_length_header);
@@ -1702,7 +1702,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     CurlResponseBuffer crb;
     crb.buffer = NULL;
     if (response_body) {
-        crb.buffer = malloc(max_response_size);
+        crb.buffer = safe_malloc(max_response_size);
         crb.filled_len = 0;
         crb.max_len = max_response_size;
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_curl_response_callback);
@@ -1710,7 +1710,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     }
 
     // LOG_ERROR curl's error if it fails
-    char *error_buf = malloc(CURL_ERROR_SIZE);
+    char *error_buf = safe_malloc(CURL_ERROR_SIZE);
     curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error_buf);
     if (curl_easy_perform(curl) != 0) {
         LOG_ERROR("curl to %s/%s failed: %s", host_s, path, error_buf);
@@ -1758,7 +1758,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
             // add request headers:
             //       "Content-Type: application/json\r\n"
             //       "Content-Length: %d\r\n"
-            char *headers = malloc(128);
+            char *headers = safe_malloc(128);
             sprintf(headers,
                     "Content-Type: application/json\r\n"
                     "Content-Length: %d",
@@ -1784,7 +1784,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     DWORD size_to_download = 0;
     // keep checking for data while there is still data
     if (response_body) {
-        *response_body = malloc(max_response_size);
+        *response_body = safe_malloc(max_response_size);
 
         do {
             // check for available data

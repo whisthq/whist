@@ -23,7 +23,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     LOG_INFO("Creating capture device for resolution %dx%d...", width, height);
     memset(device, 0, sizeof(CaptureDevice));
 
-    device->hardware = (DisplayHardware*)malloc(sizeof(DisplayHardware));
+    device->hardware = (DisplayHardware*)safe_malloc(sizeof(DisplayHardware));
     memset(device->hardware, 0, sizeof(DisplayHardware));
 
     DisplayHardware* hardware = device->hardware;
@@ -116,7 +116,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         LOG_WARNING("Could not GetDisplayModeList: %X", hr);
     }
 
-    DXGI_MODE_DESC* p_descs = malloc(sizeof(DXGI_MODE_DESC) * num_display_modes);
+    DXGI_MODE_DESC* p_descs = safe_malloc(sizeof(DXGI_MODE_DESC) * num_display_modes);
     hardware->output->lpVtbl->GetDisplayModeList(hardware->output, format, flags,
                                                  &num_display_modes, p_descs);
     if (FAILED(hr)) {
@@ -276,7 +276,7 @@ void get_bitmap_screenshot(CaptureDevice* device) {
 
     int bitmap_size = 10000000;
     if (!device->bitmap) {
-        device->bitmap = malloc(bitmap_size);
+        device->bitmap = safe_malloc(bitmap_size);
     }
     GetBitmapBits(h_bitmap, bitmap_size, device->bitmap);
 

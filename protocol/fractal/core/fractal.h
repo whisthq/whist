@@ -620,4 +620,41 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
  */
 int get_fmsg_size(FractalClientMessage* fmsg);
 
+/**
+ * @brief                          Terminates the protocol
+ */
+__attribute__((noreturn)) void
+terminate_protocol();  // noreturn silences warnings if you use terminate_protocol in a function
+                       // that should return something
+
+/**
+ * @brief                          Wrapper around malloc that will correctly exit the protocol when
+ * malloc fails
+ */
+void* safe_malloc(int size);
+
+/**
+ * @brief                          Wrapper around SDL_CreateMutex that will correctly exit the
+ * protocol when SDL_CreateMutex fails
+ */
+SDL_mutex* safe_SDL_CreateMutex();  // NOLINT(readability-identifier-naming)
+
+/**
+ * @brief                          Wrapper around SDL_LockMutex that will correctly exit the
+ * protocol when SDL_LockMutex fails
+ */
+void safe_SDL_LockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+
+/**
+ * @brief                          Wrapper around SDL_UnlockMutex that will correctly exit the
+ * protocol when SDL_UnlockMutex fails
+ */
+void safe_SDL_UnlockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+
+/**
+ * @brief                          Wrapper around SDL_CondWait that will correctly exit the protocol
+ * when SDL_CondWait fails
+ */
+void safe_SDL_CondWait(SDL_cond* cond, SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+
 #endif  // FRACTAL_H

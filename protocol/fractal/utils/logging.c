@@ -119,7 +119,7 @@ void init_logger(char *log_dir) {
     char f[1000] = "";
     if (log_dir) {
         size_t dir_len = strlen(log_dir);
-        log_directory = (char *)malloc(dir_len + 2);
+        log_directory = (char *)safe_malloc(dir_len + 2);
         strncpy(log_directory, log_dir, dir_len + 1);
 #if defined(_WIN32)
         log_directory[dir_len] = '\\';
@@ -143,7 +143,7 @@ void init_logger(char *log_dir) {
     }
 
     run_multithreaded_printf = true;
-    logger_mutex = SDL_CreateMutex();
+    logger_mutex = safe_SDL_CreateMutex();
     logger_semaphore = SDL_CreateSemaphore(0);
     mprintf_thread =
         SDL_CreateThread((SDL_ThreadFunction)multi_threaded_printf, "MultiThreadedPrintf", NULL);
@@ -153,7 +153,7 @@ void init_logger(char *log_dir) {
 
 // Sets up logs for a new connection, overwriting previous
 void start_connection_log() {
-    SDL_LockMutex((SDL_mutex *)logger_mutex);
+    safe_SDL_LockMutex((SDL_mutex *)logger_mutex);
 
     if (mprintf_log_connection_file) {
         fclose(mprintf_log_connection_file);
@@ -164,7 +164,7 @@ void start_connection_log() {
     mprintf_log_connection_file = fopen(log_connection_directory, "w+b");
     log_connection_log_id = logger_global_id;
 
-    SDL_UnlockMutex((SDL_mutex *)logger_mutex);
+    safe_SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 
     LOG_INFO("Beginning connection log");
 }
@@ -242,7 +242,7 @@ int multi_threaded_printf(void *opaque) {
 
         // Clear the queue into the cache,
         // And then let go of the mutex so that printf can continue accumulating
-        SDL_LockMutex((SDL_mutex *)logger_mutex);
+        safe_SDL_LockMutex((SDL_mutex *)logger_mutex);
         cache_size = logger_queue_size;
         for (int i = 0; i < logger_queue_size; i++) {
             safe_strncpy((char *)logger_queue_cache[i].buf,
@@ -257,7 +257,7 @@ int multi_threaded_printf(void *opaque) {
             }
         }
         logger_queue_size = 0;
-        SDL_UnlockMutex((SDL_mutex *)logger_mutex);
+        safe_SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 
         // Print all of the data into the cache
         // int last_printf = -1;
@@ -346,7 +346,7 @@ int multi_threaded_printf(void *opaque) {
             if (sz > MAX_LOG_FILE_SIZE) {
                 long buf_len = MAX_LOG_FILE_SIZE / 2;
 
-                char *original_buf = malloc(buf_len);
+                char *original_buf = safe_malloc(buf_len);
                 char *buf = original_buf;
                 fseek(mprintf_log_connection_file, -buf_len, SEEK_END);
                 fread(buf, buf_len, 1, mprintf_log_connection_file);
@@ -380,7 +380,7 @@ int multi_threaded_printf(void *opaque) {
  */
 char *escape_string(char *old_string, bool escape_all) {
     size_t old_string_len = strlen(old_string);
-    char *new_string = malloc(2 * (old_string_len + 1));
+    char *new_string = safe_malloc(2 * (old_string_len + 1));
     int new_str_len = 0;
     for (size_t i = 0; i < old_string_len; i++) {
         switch (old_string[i]) {
@@ -445,7 +445,7 @@ void real_mprintf(bool log, const char *fmt_str, va_list args) {
         return;
     }
 
-    SDL_LockMutex((SDL_mutex *)logger_mutex);
+    safe_SDL_LockMutex((SDL_mutex *)logger_mutex);
 
     int index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
     char *buf = NULL;
@@ -474,7 +474,7 @@ void real_mprintf(bool log, const char *fmt_str, va_list args) {
             int len = vsnprintf(NULL, 0, fmt_str, args) + 1;
 
             // print to a temp buf so we can split on \n
-            char *temp_buf = malloc(sizeof(char) * (len + 1));
+            char *temp_buf = safe_malloc(sizeof(char) * (len + 1));
             vsnprintf(temp_buf, len, fmt_str, args_copy);
             // use strtok_r over strtok due to thread safety
             char *strtok_context = NULL;  // strtok_r context var
@@ -516,13 +516,13 @@ void real_mprintf(bool log, const char *fmt_str, va_list args) {
         SDL_SemPost((SDL_sem *)logger_semaphore);
     }
 
-    SDL_UnlockMutex((SDL_mutex *)logger_mutex);
+    safe_SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 }
 
 SDL_mutex *crash_handler_mutex;
 
 void print_stacktrace() {
-    SDL_LockMutex(crash_handler_mutex);
+    safe_SDL_LockMutex(crash_handler_mutex);
 
 #ifdef _WIN32
     unsigned int i;
@@ -569,7 +569,7 @@ void print_stacktrace() {
     fprintf(stderr, "\n\n");
 #endif
 
-    SDL_UnlockMutex(crash_handler_mutex);
+    safe_SDL_UnlockMutex(crash_handler_mutex);
 }
 
 #ifdef _WIN32
@@ -661,7 +661,7 @@ void crash_handler(int sig) {
 #endif
 
 void init_backtrace_handler() {
-    crash_handler_mutex = SDL_CreateMutex();
+    crash_handler_mutex = safe_SDL_CreateMutex();
 #ifdef _WIN32
     SetUnhandledExceptionFilter(windows_exception_handler);
 #else
@@ -730,7 +730,7 @@ int send_connection_history(char *host, char *identifier, char *hex_aes_private_
     // This is for HTTP request, not filesystem
     char *request_path = "/logs/insert";
 
-    SDL_LockMutex((SDL_mutex *)logger_mutex);
+    safe_SDL_LockMutex((SDL_mutex *)logger_mutex);
 
     FILE *log_connection_file = NULL;
     bool new_file = false;
@@ -750,7 +750,7 @@ int send_connection_history(char *host, char *identifier, char *hex_aes_private_
 
         fseek(log_connection_file, 0L, SEEK_END);
         long sz = ftell(log_connection_file);
-        logs_raw = malloc(sz + 5);
+        logs_raw = safe_malloc(sz + 5);
 
         fseek(log_connection_file, 0L, SEEK_SET);
 
@@ -780,20 +780,20 @@ int send_connection_history(char *host, char *identifier, char *hex_aes_private_
         printf("No Log Connection File!\n");
     }
 
-    SDL_UnlockMutex((SDL_mutex *)logger_mutex);
+    safe_SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 
     if (logs_raw) {
         char *logs = escape_string(logs_raw, true);
         free(logs_raw);
 
-        char *json = malloc(1000 + strlen(logs));
+        char *json = safe_malloc(1000 + strlen(logs));
 
         char connection_id_filename[1000] = "";
         strcat(connection_id_filename, log_directory);
         strcat(connection_id_filename, "connection_id.txt");
         FILE *connection_id_file = fopen(connection_id_filename, "rb");
         if (connection_id_file) {
-            char *connection_id_data = malloc(100);
+            char *connection_id_data = safe_malloc(100);
             size_t size = fread(connection_id_data, 1, 50, connection_id_file);
             connection_id_data[size] = '\0';
 
@@ -852,7 +852,7 @@ int32_t multithreaded_update_server_status(void *data) {
 void update_server_status(bool is_connected, char *host, char *identifier,
                           char *hex_aes_private_key) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
-    UpdateStatusData *d = malloc(sizeof(UpdateStatusData));
+    UpdateStatusData *d = safe_malloc(sizeof(UpdateStatusData));
     d->is_connected = is_connected;
     d->host = host;
     d->identifier = identifier;

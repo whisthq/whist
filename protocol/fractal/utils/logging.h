@@ -79,6 +79,7 @@ Defines
 #define LOG_ARGS(LOG_TAG) current_time_str(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE "\n"
+#define FATAL_ERROR_TAG "FATAL_ERROR"
 #define ERROR_TAG "ERROR"
 #define WARNING_TAG "WARNING"
 #define INFO_TAG "INFO"
@@ -91,6 +92,7 @@ Defines
 #define LOG_DEBUG(message, ...)
 #endif
 
+// LOG_INFO refers to something that can happen, and does not imply that anything went wrong
 #if LOG_LEVEL >= INFO_LEVEL
 #define LOG_INFO(message, ...) \
     PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(INFO_TAG), ##__VA_ARGS__)
@@ -98,6 +100,8 @@ Defines
 #define LOG_INFO(message, ...)
 #endif
 
+// LOG_WARNING refers to something going wrong, but it's unknown whether or not it's the code or the
+// host's configuration (i.e. no audio device etc)
 #if LOG_LEVEL >= WARNING_LEVEL
 #define LOG_WARNING(message, ...)                                                 \
     PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__); \
@@ -106,6 +110,8 @@ Defines
 #define LOG_WARNING(message, ...)
 #endif
 
+// LOG_ERROR must imply that something is fundamentally wrong with our code, but it is a recoverable
+// error
 #if LOG_LEVEL >= ERROR_LEVEL
 #define LOG_ERROR(message, ...)                                                 \
     PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__); \
@@ -113,6 +119,13 @@ Defines
 #else
 #define LOG_ERROR(message, ...)
 #endif
+
+// LOG_FATAL implies that the protocol cannot recover from this error, something might be
+// wrong with our code (Or e.g. the host is out of RAM etc)
+#define LOG_FATAL(message, ...)                                                       \
+    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(FATAL_ERROR_TAG), ##__VA_ARGS__); \
+    SENTRYEVENT(message, ##__VA_ARGS__);                                              \
+    terminate_protocol()
 
 #if LOG_LEVEL >= NO_LOGS
 #define LOG_IF(condition, message, ...) \

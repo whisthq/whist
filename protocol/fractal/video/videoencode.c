@@ -33,7 +33,7 @@ typedef VideoEncoder *(*VideoEncoderCreator)(int, int, int, int, int, CodecType)
 VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
                                    int bitrate, CodecType codec_type) {
     LOG_INFO("Trying NVENC encoder...");
-    VideoEncoder *encoder = (VideoEncoder *)malloc(sizeof(VideoEncoder));
+    VideoEncoder *encoder = (VideoEncoder *)safe_malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
 
     encoder->type = NVENC_ENCODE;
@@ -63,7 +63,7 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
     // set frame size and allocate memory for it
     int frame_size =
         av_image_get_buffer_size(in_format, encoder->out_width, encoder->out_height, 1);
-    encoder->sw_frame_buffer = malloc(frame_size);
+    encoder->sw_frame_buffer = safe_malloc(frame_size);
 
     // fill picture with empty frame buffer
     av_image_fill_arrays(encoder->sw_frame->data, encoder->sw_frame->linesize,
@@ -270,7 +270,7 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
 VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int out_height,
                                  int bitrate, CodecType codec_type) {
     LOG_INFO("Trying QSV encoder...");
-    VideoEncoder *encoder = (VideoEncoder *)malloc(sizeof(VideoEncoder));
+    VideoEncoder *encoder = (VideoEncoder *)safe_malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
 
     encoder->type = QSV_ENCODE;
@@ -297,7 +297,7 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
     // set frame size and allocate memory for it
     int frame_size =
         av_image_get_buffer_size(in_format, encoder->out_width, encoder->out_height, 1);
-    encoder->sw_frame_buffer = malloc(frame_size);
+    encoder->sw_frame_buffer = safe_malloc(frame_size);
 
     // fill picture with empty frame buffer
     av_image_fill_arrays(encoder->sw_frame->data, encoder->sw_frame->linesize,
@@ -454,7 +454,7 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
 VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
                                 int bitrate, CodecType codec_type) {
     LOG_INFO("Trying software encoder...");
-    VideoEncoder *encoder = (VideoEncoder *)malloc(sizeof(VideoEncoder));
+    VideoEncoder *encoder = (VideoEncoder *)safe_malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
 
     encoder->type = SOFTWARE_ENCODE;
@@ -483,7 +483,7 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
     // set frame size and allocate memory for it
     int frame_size =
         av_image_get_buffer_size(out_format, encoder->out_width, encoder->out_height, 1);
-    encoder->sw_frame_buffer = malloc(frame_size);
+    encoder->sw_frame_buffer = safe_malloc(frame_size);
 
     // fill picture with empty frame buffer
     av_image_fill_arrays(encoder->sw_frame->data, encoder->sw_frame->linesize,

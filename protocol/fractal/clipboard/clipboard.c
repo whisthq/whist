@@ -4,7 +4,7 @@
 SDL_mutex* mutex;
 
 void init_clipboard() {
-    mutex = SDL_CreateMutex();
+    mutex = safe_SDL_CreateMutex();
     unsafe_init_clipboard();
 }
 
@@ -14,14 +14,10 @@ ClipboardData* get_clipboard() {
         return NULL;
     }
 
-    if (SDL_LockMutex(mutex) == 0) {
-        ClipboardData* cb = unsafe_get_clipboard();
-        SDL_UnlockMutex(mutex);
-        return cb;
-    } else {
-        LOG_WARNING("get_clipboard SDL_LockMutex failed");
-        return NULL;
-    }
+    safe_SDL_LockMutex(mutex);
+    ClipboardData* cb = unsafe_get_clipboard();
+    safe_SDL_UnlockMutex(mutex);
+    return cb;
 }
 
 void set_clipboard(ClipboardData* cb) {
@@ -30,14 +26,11 @@ void set_clipboard(ClipboardData* cb) {
         return;
     }
 
-    if (SDL_LockMutex(mutex) == 0) {
-        unsafe_set_clipboard(cb);
-        // clear out update from filling clipboard
-        unsafe_has_clipboard_updated();
-        SDL_UnlockMutex(mutex);
-    } else {
-        LOG_WARNING("set_clipboard SDL_LockMutex failed");
-    }
+    safe_SDL_LockMutex(mutex);
+    unsafe_set_clipboard(cb);
+    // clear out update from filling clipboard
+    unsafe_has_clipboard_updated();
+    safe_SDL_UnlockMutex(mutex);
 }
 
 bool has_clipboard_updated() {
@@ -48,7 +41,7 @@ bool has_clipboard_updated() {
 
     if (SDL_TryLockMutex(mutex) == 0) {
         bool has_clipboard_updated = unsafe_has_clipboard_updated();
-        SDL_UnlockMutex(mutex);
+        safe_SDL_UnlockMutex(mutex);
         return has_clipboard_updated;
     } else {
         // LOG_WARNING("Could not check has_clipboard_updated, clipboard is busy!");
@@ -62,10 +55,7 @@ void destroy_clipboard() {
         return;
     }
 
-    if (SDL_LockMutex(mutex) == 0) {
-        unsafe_destroy_clipboard();
-        SDL_UnlockMutex(mutex);
-    } else {
-        LOG_WARNING("destroy_clipboard SDL_LockMutex failed");
-    }
+    safe_SDL_LockMutex(mutex);
+    unsafe_destroy_clipboard();
+    safe_SDL_UnlockMutex(mutex);
 }

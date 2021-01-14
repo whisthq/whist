@@ -28,15 +28,8 @@ volatile clock last_nongraceful_exit;  // start this after every nongraceful exi
 
 // locks shouldn't matter. they are getting created.
 int init_clients(void) {
-    if ((state_lock = SDL_CreateMutex()) == 0) {
-        LOG_ERROR("Failed to create state lock.");
-        return -1;
-    }
-    if (init_rw_lock(&is_active_rwlock) != 0) {
-        LOG_ERROR("Failed to create is active read-write lock.");
-        SDL_DestroyMutex(state_lock);
-        return -1;
-    }
+    state_lock = safe_SDL_CreateMutex();
+    init_rw_lock(&is_active_rwlock);
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         clients[id].is_active = false;
 
@@ -51,10 +44,7 @@ int init_clients(void) {
 // locks shouldn't matter. they are getting trashed.
 int destroy_clients(void) {
     SDL_DestroyMutex(state_lock);
-    if (destroy_rw_lock(&is_active_rwlock) != 0) {
-        LOG_ERROR("Failed to destroy is active read-write lock.");
-        return -1;
-    }
+    destroy_rw_lock(&is_active_rwlock);
     return 0;
 }
 

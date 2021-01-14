@@ -5,6 +5,7 @@
  **/
 
 #include "fractal.h"  // header file for this protocol, includes winsock
+#include "../utils/logging.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -45,14 +46,12 @@ typedef struct DynamicBuffer {
 } DynamicBuffer;
 
 DynamicBuffer* init_dynamic_buffer() {
-    DynamicBuffer* db = malloc(sizeof(DynamicBuffer));
+    DynamicBuffer* db = safe_malloc(sizeof(DynamicBuffer));
     db->size = 0;
     db->capacity = 128;
-    db->buf = malloc(db->capacity);
+    db->buf = safe_malloc(db->capacity);
     if (!db->buf) {
-        LOG_ERROR("Could not malloc size %d!", db->capacity);
-        SDL_Delay(50);
-        exit(-1);
+        LOG_FATAL("Could not safe_malloc size %d!", db->capacity);
     }
     return db;
 }
@@ -62,9 +61,7 @@ void resize_dynamic_buffer(DynamicBuffer* db, int new_size) {
         int new_capacity = new_size * 2;
         char* new_buffer = realloc(db->buf, new_capacity);
         if (!new_buffer) {
-            LOG_ERROR("Could not realloc from %d to %d!", db->capacity, new_capacity);
-            SDL_Delay(50);
-            exit(-1);
+            LOG_FATAL("Could not realloc from %d to %d!", db->capacity, new_capacity);
         } else {
             db->capacity = new_capacity;
             db->size = new_size;
@@ -213,7 +210,7 @@ int runcmd(const char* cmdline, char** response) {
          * like a text file.
          */
 
-        char* cmd = malloc(strlen(cmdline) + 128);
+        char* cmd = safe_malloc(strlen(cmdline) + 128);
         snprintf(cmd, strlen(cmdline) + 128, "%s 2>/dev/null", cmdline);
 
         if ((p_pipe = popen(cmd, "r")) == NULL) {
@@ -289,5 +286,46 @@ int get_fmsg_size(FractalClientMessage* fmsg) {
     } else {
         // Send small fmsg's when we don't need unnecessarily large ones
         return sizeof(fmsg->type) + 40;
+    }
+}
+
+void terminate_protocol() {
+    LOG_INFO("Terminating Protocol");
+    destroy_logger();
+    exit(-1);
+}
+
+void* safe_malloc(int size) {
+    void* ret = malloc(size);
+    if (ret == NULL) {
+        LOG_FATAL("Malloc of size %d failed!", size);
+    } else {
+        return ret;
+    }
+}
+
+SDL_mutex* safe_SDL_CreateMutex() {  // NOLINT(readability-identifier-naming)
+    SDL_mutex* ret = SDL_CreateMutex();
+    if (ret == NULL) {
+        LOG_FATAL("Failed to safe_SDL_CreateMutex! %s", SDL_GetError());
+    }
+    return ret;
+}
+
+void safe_SDL_LockMutex(SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
+    if (SDL_LockMutex(mutex) < 0) {
+        LOG_FATAL("Failed to safe_SDL_LockMutex! %s", SDL_GetError());
+    }
+}
+
+void safe_SDL_UnlockMutex(SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
+    if (SDL_UnlockMutex(mutex) < 0) {
+        LOG_FATAL("Failed to safe_SDL_UnlockMutex! %s", SDL_GetError());
+    }
+}
+
+void safe_SDL_CondWait(SDL_cond* cond, SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
+    if (SDL_CondWait(cond, mutex) < 0) {
+        LOG_FATAL("Failed to safe_SDL_CondWait! %s", SDL_GetError());
     }
 }

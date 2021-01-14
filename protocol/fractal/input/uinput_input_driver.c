@@ -308,7 +308,7 @@ const int linux_mouse_buttons[6] = {
 #define GetLinuxMouseButton(sdl_button) linux_mouse_buttons[sdl_button]
 
 InputDevice* create_input_device() {
-    InputDevice* input_device = malloc(sizeof(InputDevice));
+    InputDevice* input_device = safe_malloc(sizeof(InputDevice));
     memset(input_device, 0, sizeof(InputDevice));
 
     // create event writing FDs
