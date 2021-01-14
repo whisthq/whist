@@ -29,7 +29,7 @@ void update_webserver_parameters() {
 
     LOG_INFO("GETTING JSON from container/protocol_info");
 
-    char* msg = (char*)malloc(64 + strlen(identifier) + strlen(hex_aes_private_key));
+    char* msg = (char*)safe_malloc(64 + strlen(identifier) + strlen(hex_aes_private_key));
     sprintf(msg,
             "{\n"
             "   \"identifier\" : %s,\n"

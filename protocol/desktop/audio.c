@@ -63,14 +63,10 @@ SDL_mutex* audio_mutex;
 
 void reinit_audio() {
     LOG_INFO("Re-init'ing Audio!");
-    if (SDL_LockMutex(audio_mutex) != 0) {
-        LOG_ERROR("Failed to lock mutex!");
-        destroy_logger();
-        exit(-1);
-    }
+    safe_SDL_LockMutex(audio_mutex);
     destroy_audio();
     init_audio();
-    SDL_UnlockMutex(audio_mutex);
+    safe_SDL_UnlockMutex(audio_mutex);
 }
 
 int multithreaded_reinit_audio(void* opaque) {
@@ -81,12 +77,7 @@ int multithreaded_reinit_audio(void* opaque) {
 
 void init_audio() {
     if (!audio_mutex) {
-        audio_mutex = SDL_CreateMutex();
-        if (!audio_mutex) {
-            LOG_ERROR("Failed to initialize mutex!");
-            destroy_logger();
-            exit(-1);
-        }
+        audio_mutex = safe_SDL_CreateMutex();
     }
     start_timer(&nack_timer);
 
@@ -106,9 +97,7 @@ void init_audio() {
     audio_data.dev =
         SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &audio_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (audio_data.dev == 0) {
-        LOG_ERROR("Failed to open audio, %s", SDL_GetError());
-        destroy_logger();
-        exit(1);
+        LOG_FATAL("Failed to open audio: %s", SDL_GetError());
     }
 
     SDL_PauseAudioDevice(audio_data.dev, 0);
@@ -130,9 +119,7 @@ void destroy_audio() {
 
 void update_audio() {
     if (!audio_mutex) {
-        LOG_ERROR("Mutex or audio is not initialized yet!");
-        destroy_logger();
-        exit(-1);
+        LOG_FATAL("Mutex or audio is not initialized yet!");
     }
     int status = SDL_TryLockMutex(audio_mutex);
     if (!audio_data.dev || status != 0) {
@@ -183,7 +170,7 @@ void update_audio() {
 
     if (gapping) {
         if (bytes_until_can_play < TARGET_AUDIO_QUEUE_LIMIT) {
-            SDL_UnlockMutex(audio_mutex);
+            safe_SDL_UnlockMutex(audio_mutex);
             return;
         } else {
             LOG_INFO("Done catching up! Audio Queue: %d", bytes_until_can_play);
@@ -192,7 +179,7 @@ void update_audio() {
     }
 
     if (last_played_id == -1) {
-        SDL_UnlockMutex(audio_mutex);
+        safe_SDL_UnlockMutex(audio_mutex);
         return;
     }
 
@@ -203,7 +190,7 @@ void update_audio() {
 
         if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
             LOG_WARNING("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!");
-            SDL_UnlockMutex(audio_mutex);
+            safe_SDL_UnlockMutex(audio_mutex);
             return;
         }
 
@@ -315,7 +302,7 @@ void update_audio() {
             last_nacked_id = i;
         }
     }
-    SDL_UnlockMutex(audio_mutex);
+    safe_SDL_UnlockMutex(audio_mutex);
 }
 
 int32_t receive_audio(FractalPacket* packet) {
@@ -358,7 +345,6 @@ int32_t receive_audio(FractalPacket* packet) {
             }
 
             if (last_played_id > 0) {
-                (void)old_last_played_id;  // suppress unused variable warning.
                 LOG_INFO(
                     "Audio packet being overwritten before being played! ID %d "
                     "replaced with ID %d, when the Last Played ID was %d. Last "
@@ -376,8 +362,8 @@ int32_t receive_audio(FractalPacket* packet) {
                     "needed.",
                     packet->id, packet->index);
             } else {
-                LOG_WARNING("NACK for Audio ID %d, Index %d Received Wrongly!", packet->id,
-                            packet->index);
+                LOG_ERROR("NACK for Audio ID %d, Index %d Received, but of unexpected index?",
+                          packet->id, packet->index);
             }
         }
 

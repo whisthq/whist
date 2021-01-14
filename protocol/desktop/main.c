@@ -297,7 +297,7 @@ int send_clipboard_packets(void* opaque) {
         ClipboardData* clipboard = clipboard_synchronizer_get_new_clipboard();
         if (clipboard) {
             FractalClientMessage* fmsg_clipboard =
-                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
+                safe_malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
             fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
             memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
             send_fmsg(fmsg_clipboard);
@@ -613,19 +613,15 @@ int main(int argc, char* argv[]) {
     }
 
     if (init_socket_library() != 0) {
-        LOG_ERROR("Failed to initialize socket library.");
-        destroy_logger();
-        return -1;
+        LOG_FATAL("Failed to initialize socket library.");
     }
 
     // Initialize the SDL window
     window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
 
     if (!window) {
-        LOG_ERROR("Failed to initialize SDL");
         destroy_socket_library();
-        destroy_logger();
-        return -1;
+        LOG_FATAL("Failed to initialize SDL");
     }
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);

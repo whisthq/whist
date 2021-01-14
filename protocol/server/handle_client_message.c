@@ -119,14 +119,11 @@ static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
     }
 
     if (fmsg->type == MESSAGE_MOUSE_MOTION) {
-        if (SDL_LockMutex(state_lock) != 0) {
-            LOG_ERROR("Failed to unlock client's mouse lock.");
-            return -1;
-        }
+        safe_SDL_LockMutex(state_lock);
         clients[client_id].mouse.is_active = true;
         clients[client_id].mouse.x = fmsg->mouseMotion.x_nonrel;
         clients[client_id].mouse.y = fmsg->mouseMotion.y_nonrel;
-        SDL_UnlockMutex(state_lock);
+        safe_SDL_UnlockMutex(state_lock);
     }
 
     return 0;
@@ -284,7 +281,7 @@ static int handle_interaction_mode_message(FractalClientMessage *fmsg, int clien
     is_controlling;
 
     /*
-    if (SDL_LockMutex(state_lock) != 0) {
+    if (safe_SDL_LockMutex(state_lock) != 0) {
         LOG_ERROR("Failed to lock client's mouse lock.");
         return -1;
     }
@@ -305,7 +302,7 @@ static int handle_interaction_mode_message(FractalClientMessage *fmsg, int clien
         }
     } else {
         LOG_ERROR("Unrecognized interaction mode (Mode: %d)", (int)mode);
-        SDL_UnlockMutex(state_lock);
+        safe_SDL_UnlockMutex(state_lock);
         return -1;
     }
 
@@ -317,7 +314,7 @@ static int handle_interaction_mode_message(FractalClientMessage *fmsg, int clien
             }
         }
     }
-    SDL_UnlockMutex(state_lock);
+    safe_SDL_UnlockMutex(state_lock);
     */
     // Remove below if uncommenting
     fmsg;
@@ -330,46 +327,16 @@ static int handle_quit_message(FractalClientMessage *fmsg, int client_id, bool i
     is_controlling;
     fmsg;
     int ret = 0;
-    if (read_unlock(&is_active_rwlock) != 0) {
-        LOG_ERROR("Failed to read unlock is active lock.");
-        ret = -1;
-    }
-    if (write_lock(&is_active_rwlock) != 0) {
-        LOG_ERROR("Failed to write-acquire is active RW lock.");
-        if (read_lock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to read lock is active lock.");
-            LOG_ERROR("BAD. IRRECOVERABLE.");
-        }
-        return -1;
-    }
-    if (SDL_LockMutex(state_lock) != 0) {
-        LOG_ERROR("Failed to lock state lock");
-        if (write_unlock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-release is active RW lock.");
-        }
-        if (read_lock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to read lock is active lock.");
-            LOG_ERROR("BAD. IRRECOVERABLE.");
-        }
-        return -1;
-    }
+    read_unlock(&is_active_rwlock);
+    write_lock(&is_active_rwlock);
+    safe_SDL_LockMutex(state_lock);
     if (quit_client(client_id) != 0) {
         LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
         ret = -1;
     }
-    if (SDL_UnlockMutex(state_lock) != 0) {
-        LOG_ERROR("Failed to unlock state lock");
-        ret = -1;
-    }
-    if (write_unlock(&is_active_rwlock) != 0) {
-        LOG_ERROR("Failed to write-release is active RW lock.");
-        ret = -1;
-    }
-    if (read_lock(&is_active_rwlock) != 0) {
-        LOG_ERROR("Failed to read lock is active lock.");
-        LOG_ERROR("BAD. IRRECOVERABLE.");
-        ret = -1;
-    }
+    safe_SDL_UnlockMutex(state_lock);
+    write_unlock(&is_active_rwlock);
+    read_lock(&is_active_rwlock);
     if (ret == 0) {
         LOG_INFO("Client successfully quit. (ID: %d)", client_id);
     }

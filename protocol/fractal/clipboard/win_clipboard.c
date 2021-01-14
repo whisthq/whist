@@ -285,7 +285,7 @@ ClipboardData* unsafe_get_clipboard() {
                 // windows clipboard saves bitmap data without header -
                 //      add BMP header and then convert from bmp to png
                 //      before saving to clipboard data to be sent to peer
-                char* bmp_data = malloc(cb->size + 14);
+                char* bmp_data = safe_malloc(cb->size + 14);
                 if (!bmp_data) {
                     break;
                 }

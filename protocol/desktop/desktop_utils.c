@@ -94,9 +94,8 @@ char *dupstring(char *s1) {
     */
 
     size_t len = strlen(s1);
-    char *s2 = malloc(len * sizeof *s2);
+    char *s2 = safe_malloc(len * sizeof *s2);
     char *ret = s2;
-    if (s2 == NULL) return NULL;
     for (; *s1; s1++, s2++) *s2 = *s1;
     *s2 = *s1;
     return ret;
@@ -358,8 +357,7 @@ static char *append_path_to_home(char *path) {
     home = getenv("HOME");
 
     len = strlen(home) + strlen(path) + 2;
-    new_path = malloc(len * sizeof *new_path);
-    if (new_path == NULL) return NULL;
+    new_path = safe_malloc(len * sizeof *new_path);
 
     if (sprintf(new_path, "%s/%s", home, path) < 0) {
         free(new_path);
@@ -397,7 +395,7 @@ int log_connection_id(int connection_id) {
     */
 
     // itoa is not portable
-    char *str_connection_id = malloc(sizeof(char) * 100);
+    char *str_connection_id = safe_malloc(sizeof(char) * 100);
     sprintf(str_connection_id, "%d", connection_id);
     // send connection id to sentry as a tag, server also does this
     if (using_sentry) {

@@ -93,7 +93,7 @@ void print_model_info() {
         make_model[sz] = '\0';
 
         // Get rid of consecutive spaces
-        char* tmp = malloc(sz);
+        char* tmp = safe_malloc(sz);
         for (int i = 1; i < sz; i++) {
             if (make_model[i] == ' ' && make_model[i - 1] == ' ') {
                 int target = i - 1;
@@ -119,7 +119,7 @@ void print_model_info() {
     size_t len = 0;
     sysctlbyname("hw.model", NULL, &len, NULL, 0);
     if (len) {
-        char* model = malloc(len * sizeof(char));
+        char* model = safe_malloc(len * sizeof(char));
         sysctlbyname("hw.model", model, &len, NULL, 0);
         LOG_INFO("  Make and Model: %s", model);
         free(model);

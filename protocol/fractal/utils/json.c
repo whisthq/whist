@@ -137,7 +137,7 @@ bool parse_json(char* str, Json* json) {
     }
 
     json->size = num_kv_pairs;
-    json->pairs = malloc(sizeof(KVPair) * num_kv_pairs);
+    json->pairs = safe_malloc(sizeof(KVPair) * num_kv_pairs);
     memcpy(json->pairs, kv_pairs, sizeof(KVPair) * num_kv_pairs);
 
     /*
@@ -182,7 +182,7 @@ void free_json(Json json) {
 
 char* clone(char* str) {
     size_t len = strlen(str) + 1;
-    char* ret_str = malloc(len);
+    char* ret_str = safe_malloc(len);
     memcpy(ret_str, str, len);
     return ret_str;
 }
@@ -221,7 +221,7 @@ char* read_escaped_string(char** str) {
         // LOG_INFO("CHAR: %c", c);
         str_len++;
     }
-    char* return_str = malloc(str_len + 1);
+    char* return_str = safe_malloc(str_len + 1);
     memcpy(return_str, original_string, str_len);
     return_str[str_len] = '\0';
 

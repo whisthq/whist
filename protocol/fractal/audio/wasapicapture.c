@@ -18,7 +18,7 @@ device via DestroyAudioDevice.
 #include "wasapicapture.h"
 
 AudioDevice *create_audio_device() {
-    AudioDevice *audio_device = malloc(sizeof(AudioDevice));
+    AudioDevice *audio_device = safe_malloc(sizeof(AudioDevice));
     memset(audio_device, 0, sizeof(AudioDevice));
 
     HRESULT hr = CoInitialize(NULL);
