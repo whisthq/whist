@@ -73,6 +73,8 @@ func getWebserverHost() string {
 
 // InitializeHeartbeat starts the heartbeat goroutine
 func InitializeHeartbeat() error {
+	return nil
+
 	resp, err := handshake()
 	if err != nil {
 		return logger.MakeError("Error handshaking with webserver: %v", err)
