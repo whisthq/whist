@@ -17,6 +17,11 @@ on:
             - "**/README.md"
             - ".github/workflows/README.md"
     workflow_dispatch:
+        inputs:
+            job-name:
+                description: "Name of the job to trigger, or 'All' to trigger all jobs."
+                required: true
+                default: "None" # Avoid accidental mistakes by making the default not run any jobs
 
 jobs:
     # Configure Jobs
@@ -55,7 +60,13 @@ jobs:
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
         needs: [fractal-publish-build-config]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
+        if: |
+            contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
+            (
+                ${{ github.event_name == 'push' }} ||
+                ${{ github.event.inputs.job-name }} == 'container-images-publish-images-ghcr' ||
+                ${{ github.event.inputs.job-name }} == 'All'
+            )
 
         steps:
             - name: Checkout Git Repository
@@ -120,8 +131,13 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
-
+        if: |
+            contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
+            (
+                ${{ github.event_name == 'push' }} ||
+                ${{ github.event.inputs.job-name }} == 'ecs-task-definitions-deploy-task-definitions-ecs' ||
+                ${{ github.event.inputs.job-name }} == 'All'
+            )
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
@@ -179,7 +195,13 @@ jobs:
     ecs-task-definitions-notify-slack:
         name: "ECS Task Definitions: Notify Slack"
         needs: [ecs-task-definitions-deploy-task-definitions-ecs]
-        if: success()
+        if: |
+            success() &&
+            (
+                ${{ github.event_name == 'push' }} ||
+                ${{ github.event.inputs.job-name }} == 'ecs-task-definitions-deploy-task-definitions-ecs' ||
+                ${{ github.event.inputs.job-name }} == 'All'
+            )
         runs-on: ubuntu-20.04
 
         steps:
@@ -197,11 +219,17 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
+        if: |
+            contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
+            (
+                ${{ github.event_name == 'push' }} ||
+                ${{ github.event.inputs.job-name }} == 'ecs-host-service-publish-build-s3' ||
+                ${{ github.event.inputs.job-name }} == 'All'
+            )
         env:
             binary-location: ecs-host-service/build
             binary-name: ecs-host-service
-            s3-bucket-region: us-east-1 # eventually, we should replicate s3 per region
+            s3-bucket-region: us-east-1
             s3-bucket-uri: s3://fractal-ecs-host-service
 
         steps:
@@ -249,22 +277,29 @@ jobs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: |
             (
-                contains(
-                    fromJSON('["master"]'),
-                    needs.fractal-publish-build-config.outputs.branch
-                ) && success()
-            ) ||
+              (
+                  contains(
+                      fromJSON('["master"]'),
+                      needs.fractal-publish-build-config.outputs.branch
+                  ) && success()
+              ) ||
+              (
+                  contains(
+                      fromJSON('["staging"]'),
+                      needs.fractal-publish-build-config.outputs.branch
+                  ) && always()
+              ) ||
+              (
+                  contains(
+                      fromJSON('["dev"]'),
+                      needs.fractal-publish-build-config.outputs.branch
+                  ) && always()
+              )
+            ) &&
             (
-                contains(
-                    fromJSON('["staging"]'),
-                    needs.fractal-publish-build-config.outputs.branch
-                ) && always()
-            ) ||
-            (
-                contains(
-                    fromJSON('["dev"]'),
-                    needs.fractal-publish-build-config.outputs.branch
-                ) && always()
+                ${{ github.event_name == 'push' }} ||
+                ${{ github.event.inputs.job-name }} == 'main-webserver-deploy-heroku' ||
+                ${{ github.event.inputs.job-name }} == 'All'
             )
 
         steps:
