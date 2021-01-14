@@ -1,5 +1,6 @@
 import os
 import time
+import ssl
 
 from celery import Celery, shared_task
 
@@ -12,11 +13,33 @@ def make_celery():
     """
     # TODO: replace this with get_redis_url when stuff merges
     redis_url = get_redis_url()
-    app = Celery(
-        "",
-        broker=redis_url,
-        backend=redis_url,
-    )
+
+    app = None
+    if redis_url[:6] == "rediss":
+        # use SSL
+        app = Celery(
+            "",
+            broker=redis_url,
+            backend=redis_url,
+            broker_use_ssl={
+                "ssl_cert_reqs": ssl.CERT_NONE,
+            },
+            redis_backend_use_ssl={
+                "ssl_cert_reqs": ssl.CERT_NONE,
+            },
+        )
+
+    elif redis_url[:5] == "redis":
+        # use regular
+        app = Celery(
+            "",
+            broker=redis_url,
+            backend=redis_url,
+        )
+
+    else:
+        # unexpected input, fail out
+        raise ValueError(f"Unexpected prefix in redis url: {redis_url}")
 
     TaskBase = app.Task
     loop_iters_ms = estimate_loop_iters_per_ms()
