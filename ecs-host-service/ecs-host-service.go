@@ -67,6 +67,8 @@ func startDockerDaemon() {
 
 // We take ownership of the ECS agent ourselves
 func startECSAgent() {
+	exec.Command("/sbin/modprobe nvidia-uvm && mknod -m 666 /dev/nvidia-uvm c $(grep nvidia-uvm /proc/devices | awk '{print $1}') 0").Run()
+
 	cmd := exec.Command("/usr/bin/systemctl", "enable", "--now", "docker-container@ecs-agent")
 	err := cmd.Run()
 	if err != nil {
