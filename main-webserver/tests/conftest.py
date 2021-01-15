@@ -1,5 +1,7 @@
 import os
 import uuid
+import ssl
+import logging
 
 from contextlib import contextmanager
 from random import getrandbits as randbits
@@ -9,6 +11,7 @@ import pytest
 from celery.app.task import Task
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
+from app.helpers.utils.general.redis import get_redis_url
 from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
 
@@ -116,12 +119,30 @@ def celery_config():
     https://docs.celeryproject.org/en/latest/userguide/testing.html#session-scope.
     """
 
-    redis_url = os.environ.get("REDIS_URL", "redis://")
+    redis_url = get_redis_url()
 
-    return {
-        "broker_url": redis_url,
-        "result_backend": redis_url,
-    }
+    if redis_url[:6] == "rediss":
+        # use SSL
+        return {
+            "broker_url": redis_url,
+            "result_backend": redis_url,
+            "broker_use_ssl": {
+                "ssl_cert_reqs": ssl.CERT_NONE,
+            },
+            "redis_backend_use_ssl": {
+                "ssl_cert_reqs": ssl.CERT_NONE,
+            },
+        }
+
+    elif redis_url[:5] == "redis":
+        # use regular
+        return {
+            "broker_url": redis_url,
+            "result_backend": redis_url,
+        }
+
+    # unexpected input, fail out
+    raise ValueError(f"Unexpected prefix in redis url: {redis_url}")
 
 
 @pytest.fixture(scope="session")
@@ -139,6 +160,11 @@ def celery_parameters(app):
     return {
         "task_cls": ContextTask,
     }
+
+
+@pytest.fixture(scope="session")
+def celery_enable_logging():
+    return True
 
 
 @pytest.fixture

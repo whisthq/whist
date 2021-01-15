@@ -1,3 +1,6 @@
+# Certs for testing
+dummy_certs/*.pem
+
 # Python
 .env*
 *.egg-info/
