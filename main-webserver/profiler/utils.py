@@ -80,7 +80,7 @@ def get_redis_url():
         raise ValueError("No valid redis URL could be found.")
 
 
-@timeout(seconds=5)
+@timeout(seconds=1)
 def try_redis_url(redis_url):
     """
     Tries a redis_url. Can be SSL supported (redis://) or regular (redis://).

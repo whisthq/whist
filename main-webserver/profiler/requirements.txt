@@ -1,7 +1,6 @@
 Flask==1.1.2
 celery==5.0.5
 redis==3.5.3
-greenlet==0.4.17
 gevent==20.12.1
 waitress==1.4.4
 dataclasses==0.6

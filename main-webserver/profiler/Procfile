@@ -1,3 +1,0 @@
-celery: celery --app tasks worker --pool prefork --concurrency 8
-profiler: python profiler.py && python dummy_app.py
-

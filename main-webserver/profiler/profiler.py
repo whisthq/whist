@@ -19,7 +19,7 @@ CONFIG = ProfileConfig(
     num_tasks=100,
     frac_cpu=0.1,
     task_time_ms=100,
-    poll_freq=0.5,
+    poll_freq=0.1,
 )
 
 
@@ -48,7 +48,7 @@ def profile():
     end = time.time()
     print(f"Completed in {end - start} sec")
     print(
-        f"Theoretical optimal on single core: {CONFIG.num_tasks * CONFIG.task_time_ms / 1000} sec"
+        f"Theoretical optimal on single core with no timeshare yielding: {CONFIG.num_tasks * CONFIG.task_time_ms / 1000} sec"
     )
 
 
