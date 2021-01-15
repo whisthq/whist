@@ -1,0 +1,115 @@
+/*
+ * @NOTE: Prepend a `~` to css file paths that are in your node_modules
+ *        See https://github.com/webpack-contrib/sass-loader#imports
+ */
+/* @import '~@fortawesome/fontawesome-free/css/all.css';
+@import '~bootstrap/dist/css/bootstrap.min.css'; */
+
+@font-face {
+    font-family: 'Maven Pro';
+    src: url('assets/fonts/MavenPro-Regular.ttf');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Maven Pro Medium';
+    src: url('assets/fonts/MavenPro-Medium.ttf');
+    font-style: bold;
+}
+
+@font-face {
+    font-family: 'Maven Pro SemiBold';
+    src: url('assets/fonts/MavenPro-SemiBold.ttf');
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Maven Pro Bold';
+    src: url('assets/fonts/MavenPro-Bold.ttf');
+    font-style: normal;
+}
+
+:root {
+    --background-color: #060217;
+    --primary-color: #553de9;
+    --accent-color: #69f5b2;
+    --primary-text-color: #111111;
+    --light-text-color: #555555;
+    --text-background-color: #ffffff;
+    --light-box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    --heavy-box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
+    --bottom-layer: 0;
+    --first-layer: 1;
+    --second-layer: 2;
+    --top-layer: 9999;
+}
+
+body {
+    position: relative;
+    color: black;
+    padding: 0px;
+    margin: 0px;
+    background-color: white;
+    font-family: 'Maven Pro';
+    overflow-y: hidden;
+    letter-spacing: 1.1px !important;
+}
+
+div {
+    outline: none;
+    letter-spacing: 1.1px !important;
+}
+
+h2 {
+    margin: 0;
+    font-size: 2.25rem;
+    font-weight: bold;
+    letter-spacing: -0.025em;
+    color: black;
+}
+
+p {
+    font-size: 24px;
+}
+
+li {
+    list-style: none;
+}
+
+button {
+    border: none;
+    background: none;
+    outline: none !important;
+}
+
+a {
+    color: black;
+    opacity: 0.75;
+    text-decoration: none;
+}
+
+a:hover {
+    opacity: 1;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.sc-htpNat svg > path {
+    fill: #ffffff;
+    z-index: 9999;
+}
+
+.sc-bdVaJa {
+    z-index: 9999;
+    background: #060217;
+}
+
+.macTitleBar {
+    -webkit-app-region: drag;
+    margin-top: 22px;
+}
+
+.removeDrag {
+    -webkit-app-region: no-drag;
+}

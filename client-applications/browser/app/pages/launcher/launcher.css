@@ -1,0 +1,39 @@
+@import '~app.global.css';
+
+.launcherWrapper {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: var(--background-color);
+}
+
+.loadingWrapper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.loadingText {
+    color: white;
+    font-weight: bold;
+    margin-top: 30px;
+}
+
+.greenButton {
+    border: solid 1px var(--accent-color);
+    background: var(--accent-color);
+    color: black;
+    border-radius: 2px;
+    font-weight: bold;
+    padding: 9px 50px;
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+}
+
+.greenButton:hover {
+    border: solid 1px white;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
