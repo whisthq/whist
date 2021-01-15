@@ -149,6 +149,13 @@ Constants
 #define DEFAULT_DPI 72.0
 #endif
 
+// noreturn silences warnings if used for a function that should never return
+#ifdef _WIN32
+#define NORETURN __declspec(noreturn)
+#else
+#define NORETURN __attribute__((noreturn))
+#endif
+
 /*
 ============================
 Custom Types
@@ -623,9 +630,7 @@ int get_fmsg_size(FractalClientMessage* fmsg);
 /**
  * @brief                          Terminates the protocol
  */
-__attribute__((noreturn)) void
-terminate_protocol();  // noreturn silences warnings if you use terminate_protocol in a function
-                       // that should return something
+NORETURN void terminate_protocol();
 
 /**
  * @brief                          Wrapper around malloc that will correctly exit the protocol when
