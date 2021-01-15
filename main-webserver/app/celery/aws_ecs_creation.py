@@ -121,21 +121,24 @@ def _mount_cloud_storage(user, container):
         )
 
 
-def _pass_start_dpi_to_instance(ip, port, dpi):
-    """Send the DPI of a client display to the host service.
+def _pass_start_values_to_instance(ip, port, dpi, user_id):
+    """
+    Send the instance start values to the host service.
 
     Arguments:
         ip: The IP address of the instance on which the container is running.
         port: The port on the instance to which port 32262 within the container has been mapped.
         dpi: The DPI of the client display.
+        user_id: The container's assigned user's user ID
     """
 
     try:
         response = requests.put(
-            f"https://{ip}:{current_app.config['HOST_SERVICE_PORT']}/set_container_dpi",
+            f"https://{ip}:{current_app.config['HOST_SERVICE_PORT']}/set_container_start_values",
             json={
                 "host_port": port,
                 "dpi": dpi,
+                "user_id": user_id,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
             },
             verify=False,
@@ -151,18 +154,18 @@ def _pass_start_dpi_to_instance(ip, port, dpi):
     else:
         if response.ok:
             log_kwargs = {
-                "logs": "DPI set.",
+                "logs": "Container user values set.",
                 "level": logging.INFO,
             }
         else:
             log_kwargs = {
-                "logs": f"Received unsuccessful set-DPI response: {response.text}",
+                "logs": f"Received unsuccessful set-start-values response: {response.text}",
                 "level": logging.ERROR,
             }
 
     fractal_log(
-        function="_pass_start_dpi_to_instance",
-        label=str(dpi),
+        function="_pass_start_values_to_instance",
+        label=str([dpi, user_id]),
         **log_kwargs,
     )
 
@@ -509,7 +512,7 @@ def assign_container(
             raise Ignore
 
     _mount_cloud_storage(user, base_container)  # Not tested
-    _pass_start_dpi_to_instance(base_container.ip, base_container.port_32262, base_container.dpi)
+    _pass_start_values_to_instance(base_container.ip, base_container.port_32262, base_container.dpi, user.user_id)
     time.sleep(1)
 
     if not _poll(base_container.container_id):
@@ -729,7 +732,7 @@ def create_new_container(
             assert user
 
             _mount_cloud_storage(user, container)
-            _pass_start_dpi_to_instance(container.ip, container.port_32262, container.dpi)
+            _pass_start_values_to_instance(container.ip, container.port_32262, container.dpi, user.user_id)
 
             if not _poll(container.container_id):
 

@@ -424,10 +424,22 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 
 // Creates a file containing the DPI assigned to a specific container, and make it
 // accessible to that container
-func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
-	// Compute container-specific directory to write DPI data to
+func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) error {
+	/*
+		Creates a file containing the DPI assigned to a specific container, and make
+		it accessible to that container. Also take the received User ID and retrieve
+		the user's app configs if the User ID is set.
+
+		Arguments:
+			req: the SetContainerStartValuesRequest that contains DPI and User ID
+
+		Returns:
+			error: nil if no problems, error object if otherwise.
+	*/
+
+	// Compute container-specific directory to write start value data to
 	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
-		return logger.MakeError("Invalid HostPort for DPI request: %v", req.HostPort)
+		return logger.MakeError("Invalid HostPort for start values request: %v", req.HostPort)
 	}
 	hostPort := uint16(req.HostPort)
 	id, exists := containerIDs[hostPort]
@@ -449,6 +461,14 @@ func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
 	err := writeAssignmentToFile(filename, strdpi)
 	if err != nil {
 		return logger.MakeError("Could not write value %v to DPI file %v. Error: %s", strdpi, filename, err)
+	}
+
+	// Write user ID information to file
+	struserid := logger.Sprintf("%v", req.UserID)
+	filename := datadir + "UserID"
+	err := writeAssignmentToFile(filename, struserid)
+	if err != nil {
+		return logger.MakeError("Could not write value %v to UserID file %v. Error: %s", struserid, filename, err)
 	}
 
 	// Indicate that we are ready for the container to read the data back
@@ -567,10 +587,10 @@ func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id str
 	hostPortUint16 := uint16(hostPortInt64)
 	containerIDs[hostPortUint16] = id
 
-	// We do not mark the container as "ready" but instead let handleDPIRequest
-	// do that, since we don't want to mark a container as ready until the DPI is
-	// set. We are confident that the DPI request will arrive after the Docker
-	// start handler is called, since the DPI request is not triggered until the
+	// We do not mark the container as "ready" but instead let handleStartValuesRequest
+	// do that, since we don't want to mark a container as ready until the start values are
+	// set. We are confident that the start values request will arrive after the Docker
+	// start handler is called, since the start values request is not triggered until the
 	// webserver receives the hostPort from AWS, which does not happen until the
 	// container is in a "RUNNING" state.
 
@@ -892,8 +912,8 @@ eventLoop:
 
 		case serverevent := <-serverEvents:
 			switch serverevent.(type) {
-			case *httpserver.SetContainerDPIRequest:
-				err := handleDPIRequest(serverevent.(*httpserver.SetContainerDPIRequest))
+			case *httpserver.SetContainerStartValuesRequest:
+				err := handleStartValuesRequest(serverevent.(*httpserver.SetContainerStartValuesRequest))
 				if err != nil {
 					logger.Error(err)
 				}
