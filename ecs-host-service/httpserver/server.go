@@ -121,36 +121,37 @@ func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, que
 	res.send(w)
 }
 
-// SetContainerDPIRequest defines the (unauthenticated) DPI endpoint
-type SetContainerDPIRequest struct {
-	HostPort   int                `json:"host_port"` // Port on the host to mount the DPI file to
-	DPI        int                `json:"dpi"`       // DPI to set for the container
-	resultChan chan requestResult // Channel to pass DPI setting result between goroutines
+// SetContainerStartValuesRequest defines the (unauthenticated) start values endpoint
+type SetContainerStartValuesRequest struct {
+	HostPort   int `json:"host_port"`
+	DPI        int `json:"dpi"`
+	UserID	   int `json:"user_id"`
+	resultChan chan requestResult
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *SetContainerDPIRequest) ReturnResult(result string, err error) {
+// request handler
+func (s *SetContainerStartValuesRequest) ReturnResult(result string, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
-// createResultChan is called to create the Go channel to pass DPI setting request
-// result back to the HTTP request handler via ReturnResult.
-func (s *SetContainerDPIRequest) createResultChan() {
+// createResultChan is called to create the Go channel to pass start values setting request
+// result back to the HTTP request handler via ReturnResult
+func (s *SetContainerStartValuesRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
 	}
 }
 
-// Process an HTTP request for setting the DPI of a container, to be handled in ecs-host-service.go
-func processSetContainerDPIRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+// Process an HTTP request for setting the start values of a container, to be handled in ecs-host-service.go
+func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
 	// Verify that it is an PUT request
 	if verifyRequestType(w, r, http.MethodPut) != nil {
 		return
 	}
 
 	// Verify authorization and unmarshal into the right object type
-	var reqdata SetContainerDPIRequest
+	var reqdata SetContainerStartValuesRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
 		logger.Infof(err.Error())
 		return
@@ -413,9 +414,9 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 
 	http.Handle("/", http.NotFoundHandler())
 	http.HandleFunc("/mount_cloud_storage", createHandler(processMountCloudStorageRequest))
-	http.HandleFunc("/set_container_dpi", createHandler(processSetContainerDPIRequest))
 	http.HandleFunc("/register_docker_container_id", createHandler(processRegisterDockerContainerIDRequest))
 	http.HandleFunc("/create_uinput_devices", createHandler(processCreateUinputDevicesRequest))
+	http.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
 	go func() {
 		// TODO: defer things correctly so that a panic here is actually caught and resolved
 		logger.Panicf("HTTP Server Error: %v", http.ListenAndServeTLS("0.0.0.0"+PortToListen, certPath, privatekeyPath, nil))
