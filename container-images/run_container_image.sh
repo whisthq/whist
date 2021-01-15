@@ -28,6 +28,7 @@ run_container() {
         -v /fractal/containerResourceMappings:/fractal/containerResourceMappings:ro \
         -v /fractal/cloudStorage:/fractal/cloudStorage:rshared \
         -v /tmp/sockets:/tmp/sockets \
+        -v /run/udev/data:/run/udev/data:ro \
         --device=/dev/input/event3 \
         --device=/dev/input/event4 \
         --device=/dev/input/event5 \
@@ -54,7 +55,6 @@ run_container() {
         --cap-add CAP_SYS_CHROOT \
         --cap-add CAP_SETFCAP \
         --cap-add SYS_NICE \
-        --privileged \
         -p 32262:32262 \
         -p 32263:32263/udp \
         -p 32273:32273 \
