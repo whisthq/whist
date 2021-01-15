@@ -70,10 +70,10 @@ int get_focused_window_name(char* name_return) {
             XFreeStringList(list);
             return 0;
         } else {
-            LOG_ERROR("window name: XmbTextPropertyToTextList");
+            LOG_ERROR("XmbTextPropertyToTextList failed to convert window name to string");
         }
     } else {
-        LOG_ERROR("window name: XGetWMName");
+        LOG_ERROR("XGetWMName failed to get the name of the focused window");
     }
     return 1;
 }
