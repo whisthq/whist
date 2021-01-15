@@ -145,7 +145,7 @@ const Settings = (props: { username: string; externalApps: ExternalApp[] }) => {
                         <Slider
                             axis="x"
                             xstep={5}
-                            xmin={10}
+                            xmin={5}
                             xmax={50}
                             x={bandwidth}
                             onChange={({ x }) => changeBandwidth(x)}
