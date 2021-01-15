@@ -197,13 +197,12 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Install evdev driver for XServer input.
+# Install libinput driver for XServer input.
 # For some reason, this installation does not work if included with the previous
 # commands.
 # Note that all installations need to be prefixed by an `apt-get update` to
 # prevent certain errors.
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    xserver-xorg-input-evdev \
     xserver-xorg-input-libinput \
     && apt-get autoremove -y \
     && apt-get clean \
