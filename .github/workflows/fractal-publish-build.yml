@@ -309,9 +309,14 @@ jobs:
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
 
+            - name: Install splitsh-lite for Subtree Split
+              run: >
+                  wget -qO - https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz
+                  | sudo tar -zxp --directory /usr/local/bin/
+
             - name: Split off and checkout main-webserver subtree
               run: |
-                  git subtree split --prefix main-webserver -b workflows-private/main-webserver
+                  splitsh-lite --prefix main-webserver --target refs/heads/workflows-private/main-webserver
                   git checkout workflows-private/main-webserver
 
             - name: Push to Heroku remote, deploying the app # force push is only necessary for the transition period, then should be removed
