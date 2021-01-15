@@ -47,35 +47,23 @@ def profile():
 
     end = time.time()
     print(f"Completed in {end - start} sec")
-    print(f"Theoretical optimal on single core: {CONFIG.num_tasks * CONFIG.task_time_ms / 1000} sec")
+    print(
+        f"Theoretical optimal on single core: {CONFIG.num_tasks * CONFIG.task_time_ms / 1000} sec"
+    )
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run a profiler.')
+    parser = argparse.ArgumentParser(description="Run a profiler.")
 
+    parser.add_argument("--num_tasks", type=int, default=100, help="Number of tasks to run.")
     parser.add_argument(
-        '--num_tasks',
-        type=int,
-        default=100,
-        help='Number of tasks to run.'
+        "--frac_cpu", type=float, default=0.1, help="Fraction of time spent doing CPU work."
     )
     parser.add_argument(
-        '--frac_cpu',
-        type=float,
-        default=0.1,
-        help='Fraction of time spent doing CPU work.'
+        "--task_time_ms", type=int, default=100, help="How long a task should take, in ms."
     )
     parser.add_argument(
-        '--task_time_ms',
-        type=int,
-        default=100,
-        help='How long a task should take, in ms.'
-    )
-    parser.add_argument(
-        '--poll_freq',
-        type=float,
-        default=0.5,
-        help='How often to poll for results, in sec.'
+        "--poll_freq", type=float, default=0.5, help="How often to poll for results, in sec."
     )
 
     args = parser.parse_args()
@@ -86,4 +74,3 @@ if __name__ == "__main__":
     CONFIG.poll_freq = args.poll_freq
 
     profile()
-
