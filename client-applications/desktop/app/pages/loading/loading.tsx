@@ -89,13 +89,15 @@ const Loading = (props: {
     }
 
     const launchProtocol = () => {
+        
         const Store = require("electron-store")
-        const storage = new Store()
-
-        const cachedLowInternetMode = storage.get(
-            FractalClientCache.LOW_INTERNET_MODE
-        )
-        const internetMode = cachedLowInternetMode ? "h265" : "h264"
+        const storage = new Store({
+            defaults: {
+                [FractalClientCache.LOW_INTERNET_MODE]: false,
+                [FractalClientCache.BANDWIDTH]: 50
+            }
+        })
+        const internetMode = storage.get(FractalClientCache.LOW_INTERNET_MODE) ? "h265" : "h264"
         const cachedBandwidth = storage.get(FractalClientCache.BANDWIDTH)
 
         const spawn = require("child_process").spawn
