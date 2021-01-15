@@ -39,7 +39,7 @@ def profile():
                 to_poll.remove(tid)
                 num_done += 1
 
-        print(f"Progress: {round(num_done / 100, 2)}", end="\r")
+        print(f"Progress: {round(num_done / CONFIG.num_tasks, 2)}%", end="\r")
         if len(to_poll) == 0:
             break
 
