@@ -304,12 +304,10 @@ RUN apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 
-# Install FractalServer scripts and kernel module input rules
+# Install FractalServer scripts
 COPY scripts/entry.sh /usr/share/fractal
 RUN chmod +x /usr/share/fractal/entry.sh
 COPY config/fractal-display-config.env /usr/share/fractal
-COPY config/fractal-input.rules /usr/share/fractal
-RUN ln -sf /usr/share/fractal/fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
 
 # Install and enable OpenSSH
 # Note that all installations need to be prefixed by an `apt-get update` to
