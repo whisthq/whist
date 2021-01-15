@@ -383,9 +383,6 @@ COPY scripts/xinitrc /root/.xinitrc
 COPY config/awesome-rc.lua /home/fractal/.config/awesome/rc.lua
 
 # Install Fractal services
-RUN mkdir /etc/systemd/system/systemd-udevd.service.d
-COPY services/systemd-udevd.override.conf /etc/systemd/system/systemd-udevd.service.d/override.conf
-
 COPY services/fractal-entrypoint.service /etc/systemd/system
 RUN systemctl enable fractal-entrypoint
 
