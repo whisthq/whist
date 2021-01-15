@@ -44,6 +44,8 @@ const Loading = (props: {
         dispatch,
     } = props
 
+    const BYTES_IN_KILOBYTE = 1024
+
     // figure out how to use useEffect
     // note to future developers: setting state inside useffect when you rely on
     // change for those variables to trigger runs forever and is bad
@@ -89,16 +91,20 @@ const Loading = (props: {
     }
 
     const launchProtocol = () => {
-        
         const Store = require("electron-store")
         const storage = new Store({
             defaults: {
                 [FractalClientCache.LOW_INTERNET_MODE]: false,
-                [FractalClientCache.BANDWIDTH]: 50
-            }
+                [FractalClientCache.BANDWIDTH]: 500,
+            },
         })
-        const internetMode = storage.get(FractalClientCache.LOW_INTERNET_MODE) ? "h265" : "h264"
-        const cachedBandwidth = storage.get(FractalClientCache.BANDWIDTH)
+        const internetMode = storage.get(FractalClientCache.LOW_INTERNET_MODE)
+            ? "h265"
+            : "h264"
+        const cachedBandwidth =
+            storage.get(FractalClientCache.BANDWIDTH) *
+            BYTES_IN_KILOBYTE *
+            BYTES_IN_KILOBYTE
 
         const spawn = require("child_process").spawn
 
