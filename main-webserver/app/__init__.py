@@ -19,6 +19,12 @@ from .factory import create_app, jwtManager, ma, mail
 def make_celery(app_name=__name__):
     """
     Returns a Celery object with initialized redis parameters.
+
+    Args:
+        app_name (str): the name of the app to pass to the initial Celery object
+
+    Returns:
+        an initialized `celery.Celery` instance with Redis broker/backend
     """
     redis_url = get_redis_url()
     celery_app = None
