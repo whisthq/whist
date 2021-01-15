@@ -98,7 +98,7 @@ func startECSAgent() {
 		"/usr/bin/docker",
 		"run",
 		"--name",
-		"ecs-agent",
+		"fractal-owned-ecs-agent",
 		"--init",
 		"--restart=on-failure:10",
 		"--volume=/var/run:/var/run",
