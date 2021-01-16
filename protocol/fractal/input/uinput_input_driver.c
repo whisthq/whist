@@ -312,16 +312,13 @@ const int linux_mouse_buttons[6] = {
 #define GetLinuxKeyCode(sdl_keycode) linux_keycodes[sdl_keycode]
 #define GetLinuxMouseButton(sdl_button) linux_mouse_buttons[sdl_button]
 
-// http://www.normalesup.org/~george/comp/libancillary/#s_2
-#define ANCIL_MAX_N_FDS 960
+// see http://www.normalesup.org/~george/comp/libancillary/ for reference
+int recv_fds(int sock, int* fds, unsigned n_fds) {
+    struct {
+        struct cmsghdr h;
+        int fd[n_fds];
+    } buffer;
 
-#define ANCIL_FD_BUFFER(n) \
-    struct {               \
-        struct cmsghdr h;  \
-        int fd[n];         \
-    }
-
-int ancil_recv_fds_with_buffer(int sock, int* fds, unsigned n_fds, void* buffer) {
     struct msghdr msghdr;
     char nothing;
     struct iovec nothing_ptr;
@@ -335,7 +332,7 @@ int ancil_recv_fds_with_buffer(int sock, int* fds, unsigned n_fds, void* buffer)
     msghdr.msg_iov = &nothing_ptr;
     msghdr.msg_iovlen = 1;
     msghdr.msg_flags = 0;
-    msghdr.msg_control = buffer;
+    msghdr.msg_control = &buffer;
     msghdr.msg_controllen = sizeof(struct cmsghdr) + sizeof(int) * n_fds;
     cmsg = CMSG_FIRSTHDR(&msghdr);
     cmsg->cmsg_len = msghdr.msg_controllen;
@@ -351,11 +348,6 @@ int ancil_recv_fds_with_buffer(int sock, int* fds, unsigned n_fds, void* buffer)
     for (i = 0; i < n_fds; i++) fds[i] = ((int*)CMSG_DATA(cmsg))[i];
     n_fds = (cmsg->cmsg_len - sizeof(struct cmsghdr)) / sizeof(int);
     return (n_fds);
-}
-
-int ancil_recv_fds(int sock, int* fd, unsigned n_fds) {
-    ANCIL_FD_BUFFER(ANCIL_MAX_N_FDS) buffer;
-    return (ancil_recv_fds_with_buffer(sock, fd, n_fds, &buffer));
 }
 
 InputDevice* create_input_device() {
@@ -387,7 +379,7 @@ InputDevice* create_input_device() {
             LOG_ERROR("uinput: accept error %s", buf);
             continue;
         }
-        int n = ancil_recv_fds(client, fds, 3);
+        int n = recv_fds(client, fds, 3);
         LOG_INFO("uinput: received %d file descriptors: %d, %d, %d", n, fds[0], fds[1], fds[2]);
         break;
     }
