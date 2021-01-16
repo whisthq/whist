@@ -8,8 +8,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "ancillary.h"
-
 #define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                          \
     if (ioctl(FD, PARAMS) == -1) {                                                 \
         char buf[1024];                                                            \
@@ -311,6 +309,37 @@ const int linux_mouse_buttons[6] = {
 #define GetLinuxKeyCode(sdl_keycode) linux_keycodes[sdl_keycode]
 #define GetLinuxMouseButton(sdl_button) linux_mouse_buttons[sdl_button]
 
+// see http://www.normalesup.org/~george/comp/libancillary/ for reference
+int send_fds(int sock, const int *fds, unsigned n_fds) {
+  struct {
+    struct cmsghdr h;
+    int fd[n_fds];
+  } buffer;
+
+  struct msghdr msghdr;
+  char nothing = '!';
+  struct iovec nothing_ptr;
+  struct cmsghdr *cmsg;
+  int i;
+
+  nothing_ptr.iov_base = &nothing;
+  nothing_ptr.iov_len = 1;
+  msghdr.msg_name = NULL;
+  msghdr.msg_namelen = 0;
+  msghdr.msg_iov = &nothing_ptr;
+  msghdr.msg_iovlen = 1;
+  msghdr.msg_flags = 0;
+  msghdr.msg_control = &buffer;
+  msghdr.msg_controllen = sizeof(struct cmsghdr) + sizeof(int) * n_fds;
+  cmsg = CMSG_FIRSTHDR(&msghdr);
+  cmsg->cmsg_len = msghdr.msg_controllen;
+  cmsg->cmsg_level = SOL_SOCKET;
+  cmsg->cmsg_type = SCM_RIGHTS;
+  for(i = 0; i < n_fds; i++)
+    ((int *)CMSG_DATA(cmsg))[i] = fds[i];
+  return(sendmsg(sock, &msghdr, 0) >= 0 ? 0 : -1);
+}
+
 int main() {
     // create event writing FDs
     int fd_absmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
@@ -442,7 +471,7 @@ int main() {
 
       LOG_INFO("connected!");
 
-      if (ancil_send_fds(fd_socket, fds, 3) == -1) {
+      if (send_fds(fd_socket, fds, 3) == -1) {
         LOG_INFO("failed to send file descriptors");
       }
       LOG_INFO("sent file descriptors!");
@@ -453,48 +482,6 @@ int main() {
       close(fd_socket);
       sleep(10);
     }
-
-    /*
-    char* socket_path = "/tmp/uinput.sock";
-
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
-    unlink(socket_path);
-
-    if (bind(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-      LOG_INFO("bind error");
-      return 1;
-    }
-
-    // 5 is backlog
-    if (listen(fd_socket, 5) == -1) {
-      LOG_INFO("listen error");
-      return 1;
-    }
-
-    while (1) {
-      int client = accept(fd_socket, NULL, NULL);
-      if (client == -1) {
-        LOG_INFO("accept error");
-        continue;
-      }
-
-      int bytes;
-      char buf[100];
-      while (bytes = read(client, buf, sizeof(buf)) > 0) {
-        printf("read %u bytes: %.*s\n", bytes, bytes, buf);
-      }
-
-      if (bytes == -1) {
-        LOG_INFO("read error");
-        return 1;
-      } else if (bytes == 0) {
-        LOG_INFO("EOF");
-        close(client);
-      }
-    }
-    */
 
     return 0;
 }
