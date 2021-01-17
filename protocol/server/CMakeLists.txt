@@ -169,5 +169,6 @@ if (${WIN32})
             shlwapi
             shcore
             DbgHelp
+            setupapi
             )
 endif()
