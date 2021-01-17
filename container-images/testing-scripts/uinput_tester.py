@@ -161,31 +161,6 @@ print(f"pid: {os.getpid()}")
 print(f"relmouse file descriptor: {relmouse._Device__uinput_fd}")
 print(f"keyboard file descriptor: {keyboard._Device__uinput_fd}")
 
-SOCKET_PATH = "/tmp/uinput.socket"
-
-if os.path.exists(SOCKET_PATH):
-    os.remove(SOCKET_PATH)
-
-server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-server.bind(SOCKET_PATH)
-server.listen(1)
-
-print(f"listening at {SOCKET_PATH}")
-while True:
-    print(f"waiting for connection")
-    conn, addr = server.accept()
-    try:
-        while True:
-            data = conn.recv(1024)
-            if data:
-                print("data received:")
-                print(data)
-            else:
-                print("end of stream")
-                break
-    finally:
-        conn.close()
-
 while True:
     # time.sleep(1)
     # relmouse.emit_click(uinput.BTN_LEFT)
@@ -197,4 +172,28 @@ while True:
     relmouse.emit(uinput.REL_WHEEL_HI_RES, 30)
     print("scrolling")
 
+# SOCKET_PATH = "/tmp/uinput.sock"
+
+# if os.path.exists(SOCKET_PATH):
+#     os.remove(SOCKET_PATH)
+
+# server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+# server.bind(SOCKET_PATH)
+# server.listen(1)
+
+# print(f"listening at {SOCKET_PATH}")
+# while True:
+#     print(f"waiting for connection")
+#     conn, addr = server.accept()
+#     try:
+#         while True:
+#             data = conn.recv(1024)
+#             if data:
+#                 print("data received:")
+#                 print(data)
+#             else:
+#                 print("end of stream")
+#                 break
+#     finally:
+#         conn.close()
 
