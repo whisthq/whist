@@ -93,16 +93,22 @@ Defines
 #define USING_AUDIO_ENCODE_DECODE true
 #define USING_FFMPEG_IFRAME_FLAG false
 
+#define WINAPI_INPUT_DRIVER 1
+#define XTEST_INPUT_DRIVER 2
+#define UINPUT_INPUT_DRIVER 3
+#define SOCKET_INPUT_DRIVER 4
+
 #ifdef _WIN32
 
 // possible on windows, so let's do it
 #define USING_SERVERSIDE_SCALE true
+#define INPUT_DRIVER WINAPI_INPUT_DRIVER
 
 #else
 
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
-#define USING_XTEST_INPUT_DRIVER false
+#define INPUT_DRIVER SOCKET_INPUT_DRIVER
 #define USING_GPU_CAPTURE true
 #define USING_SHM true
 

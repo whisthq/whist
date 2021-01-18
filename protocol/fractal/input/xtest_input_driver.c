@@ -1,6 +1,6 @@
 #include "input_driver.h"
 
-#if USING_XTEST_INPUT_DRIVER
+#if INPUT_DRIVER == XTEST_INPUT_DRIVER
 
 #define XK_LATIN1
 #define XK_MISCELLANY
@@ -280,6 +280,7 @@ const int x11_keysyms[NUM_KEYCODES] = {
 };
 
 InputDevice* create_input_device() {
+    LOG_INFO("creating xtest input driver");
     InputDevice* input_device = safe_malloc(sizeof(InputDevice));
     memset(input_device, 0, sizeof(InputDevice));
 
@@ -397,4 +398,4 @@ int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
     return 0;
 }
 
-#endif  // USING_XTEST_INPUT_DRIVER
+#endif  // INPUT_DRIVER == XTEST_INPUT_DRIVER
