@@ -22,15 +22,17 @@ Includes
 
 #include "../core/fractal.h"
 
-#ifdef _WIN32
+#if INPUT_DRIVER == WINAPI_INPUT_DRIVER
 #include "winapi_input_driver.h"
-#else
-#if USING_XTEST_INPUT_DRIVER
+#elif INPUT_DRIVER == XTEST_INPUT_DRIVER
 #include "xtest_input_driver.h"
-#else
+#elif INPUT_DRIVER == UINPUT_INPUT_DRIVER
 #include "uinput_input_driver.h"
-#endif  // USING_XTEST_INPUT_DRIVER
-#endif  // _WIN32
+#elif INPUT_DRIVER == SOCKET_INPUT_DRIVER
+#include "socket_input_driver.h"
+#else
+#error "Unrecognized INPUT_DRIVER option"
+#endif
 
 /*
 ============================
