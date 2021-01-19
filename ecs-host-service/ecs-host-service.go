@@ -465,8 +465,8 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 
 	// Write user ID information to file
 	struserid := logger.Sprintf("%v", req.UserID)
-	filename := datadir + "UserID"
-	err := writeAssignmentToFile(filename, struserid)
+	filename = datadir + "UserID"
+	err = writeAssignmentToFile(filename, struserid)
 	if err != nil {
 		return logger.MakeError("Could not write value %v to UserID file %v. Error: %s", struserid, filename, err)
 	}
