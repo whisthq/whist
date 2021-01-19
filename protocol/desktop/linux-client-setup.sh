@@ -4,7 +4,7 @@ sudo apt-get install libssl-dev libavcodec-dev libavdevice-dev libx11-dev libxts
 
 # install aws cli
 sudo apt-get install curl unzip -y
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
+curl -Ss "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip -q awscliv2.zip
 sudo ./aws/install
 sudo apt-get remove curl unzip -y
