@@ -77,7 +77,6 @@ def test_endpoint(action, **kwargs):
         json, int: the json http response and the http status code
         (which is an int like 200, 400, ...).
     """
-
     if action == "create_cluster":
         try:
             cluster_name, instance_type, ami, region_name, max_size, min_size = (
@@ -117,7 +116,6 @@ def test_endpoint(action, **kwargs):
             kwargs["body"].get("ami", None),
             kwargs["body"]["region_name"],
         )
-
         task = update_region.delay(ami=ami, region_name=region_name)
 
         if not task:

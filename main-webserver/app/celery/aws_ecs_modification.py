@@ -1,7 +1,4 @@
-import logging
-
-import celery
-from celery import shared_task, group
+from celery import shared_task
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
@@ -9,7 +6,6 @@ from app.models import (
     SortedClusters,
     RegionToAmi,
 )
-from app.helpers.utils.celery.celery_utils import find_group_task_with_state
 
 
 @shared_task(bind=True)
@@ -22,9 +18,6 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
     :param ami (str): which AMI to use
     :return: which cluster was updated
     """
-    print("NOOOOO")
-    print(ami == "ami-0ff8a91507f77f867")
-    return
     all_regions = RegionToAmi.query.all()
 
     fractal_log(
@@ -82,8 +75,8 @@ def update_region(self, region_name="us-east-1", ami=None):
     fractal_log(
         function="update_region",
         label=None,
-        logs=f"update_region is returning with success. It spun up the "
-        "following update_cluster tasks: {tasks}",
+        logs="update_region is returning with success. It spun up the "
+        f"following update_cluster tasks: {tasks}",
     )
 
     self.update_state(
