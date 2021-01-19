@@ -13,7 +13,7 @@ This repository contains the code for the Fractal mobile applications running on
 
 1. We will be using Expo to run locally on Android emulators. To do this, make sure you have `npm` and Node installed, and type `npm install -g expo-cli` in your terminal.
 
-2. In your terminal, `cd` into this folder, and run `expo start.` This will open up your React Native app on localhost.
+2. In your terminal, `cd` into this folder, and run `yarn add expo`, then `yarn run start`. This will open up your React Native app on localhost. If you want to test in production mode, run `yarn run production`. You can see all the commands in `mobile\package.json`.
 
 3. If you happen to have an Android device, connect your Android device to your computer via USB and select the "Start Android emulator" option in the left-hand tab. If you don't, you'll need to download Android Studio: https://developer.android.com/studio.
 
