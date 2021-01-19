@@ -37,11 +37,12 @@ devices_arg=""
 # capabilities, for security purposes
 create_container() {
     docker create -it \
-        -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+        -v "/sys/fs/cgroup:/sys/fs/cgroup:ro" \
         -v "/fractal/$fractal_id/containerResourceMappings:/fractal/resourceMappings:ro" \
         -v "/fractalCloudStorage/$fractal_id:/fractal/cloudStorage:rshared" \
-        -v /fractal/temp/$fractal_id/sockets:/tmp/sockets \
-        -v /run/udev/data:/run/udev/data:ro \
+        -v "/fractal/temp/$fractal_id/sockets:/tmp/sockets" \
+        -v "/run/udev/data:/run/udev/data:ro" \
+        -v "/fractal/userConfigs:/fractal/userConfigs:rshared" \
         $devices_arg \
         $mount_protocol \
         --tmpfs /run \

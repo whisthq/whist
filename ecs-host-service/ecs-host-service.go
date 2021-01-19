@@ -49,6 +49,7 @@ const fractalDir = "/fractal/"
 const cloudStorageDir = "/fractalCloudStorage/"
 const fractalTempDir = fractalDir + "temp/"
 const containerResourceMappings = "containerResourceMappings/"
+const userConfigsDirectory = "/fractal/userConfigs"
 
 // TODO: get rid of this security nemesis
 // Opens all permissions on /fractal directory
@@ -422,8 +423,77 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	return err
 }
 
-// Creates a file containing the DPI assigned to a specific container, and make it
-// accessible to that container
+func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
+	/*
+		Populate the config folder under the container's host port for the
+		container's attached user and running application
+
+		Arguments:
+			req: the SetContainerStartValuesRequest (contains UserID and HostPort)
+
+		Returns:
+			error: nil if no errors, else the error object generated
+	*/
+
+	// Get needed vars and create path for config
+	userID := req.UserID
+	hostPort := logger.Sprintf("%v", req.HostPort)
+	configPath := userConfigsDirectory + hostPort + "/"
+
+	// Get app name
+	getAppnameStrcmd := strings.Join(
+		[]string{
+			"/usr/bin/docker", "inspect",
+			"--format='{{.Config.Image}}'",
+			containerID, "|",
+			"/usr/bin/sed", "'s/.*fractal\/\(.*\):.*/\1/'"
+		}, " ")
+
+	getAppnameScriptpath := configPath + "get-app-name.sh"
+	f, _ := os.Create(getAppnameScriptpath)
+	_, _ = f.WriteString(logger.Sprintf("#!/bin/sh\n\n"))
+	_, _ = f.WriteString(getAppnameStrcmd)
+	os.Chmod(getAppnameScriptpath, 0700)
+	f.Close()
+	defer os.RemoveAll(getAppnameScriptpath)
+	getAppnameCmd := exec.Command(getAppnameScriptpath)
+
+	appName, err := getAppnameCmd.CombinedOutput()
+	if err != nil {
+		return logger.MakeError("Could not run \"docker inspect\" command: %s. Output: %s", err, appName)
+	} else {
+		logger.Info("Ran \"docker inspect\" command with output: %s", appName)
+	}
+
+	// Retrieve app config from S3
+	s3ConfigPath := "s3://fractal-user-app-configs/" + userId + "/" + appName
+	retrieveConfigStrcmd := strings.Join(
+		[]string{
+			"/usr/local/bin/aws", "s3", "sync",
+			s3ConfigPath, configPath,
+			"--recursive"
+		}, " ")
+
+	getConfigScriptPath := path + "get-app-config.sh"
+	f, _ := os.Create(getConfigScriptPath)
+	_, _ = f.WriteString(logger.Sprintf("#!/bin/sh\n\n"))
+	_, _ = f.WriteString(retrieveConfigStrcmd)
+	os.Chmod(getConfigScriptPath, 0700)
+	f.Close()
+	defer os.RemoveAll(getConfigScriptPath)
+	getConfigCmd := exec.Command(getConfigScriptPath)
+
+	getConfigOutput, err := getConfigCmd.CombinedOutput()
+	if err != nil {
+		return logger.MakeError("Could not run \"aws s3 sync\" command: %s. Output: %s", err, getConfigOutput)
+	} else {
+		logger.Info("Ran \"aws s3 sync\" command with output: %s", getConfigOutput)
+	}
+
+	err = <-errorchan
+	return err
+}
+
 func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) error {
 	/*
 		Creates a file containing the DPI assigned to a specific container, and make
@@ -463,12 +533,19 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 		return logger.MakeError("Could not write value %v to DPI file %v. Error: %s", strdpi, filename, err)
 	}
 
+	// TODO: remove this - the file is unneeded
 	// Write user ID information to file
 	struserid := logger.Sprintf("%v", req.UserID)
 	filename = datadir + "UserID"
 	err = writeAssignmentToFile(filename, struserid)
 	if err != nil {
 		return logger.MakeError("Could not write value %v to UserID file %v. Error: %s", struserid, filename, err)
+	}
+
+	// Populate the user config folder for the container's app
+	err = getUserConfig(req)
+	if err != nil {
+		logger.Error(err)
 	}
 
 	// Indicate that we are ready for the container to read the data back
@@ -738,7 +815,14 @@ func initializeFilesystem() {
 	if err != nil {
 		logger.Panicf("Could not mkdir path %s. Error: %s", cloudStorageDir, err)
 	}
-	makeFractalDirectoriesFreeForAll()
+
+	// Create user config directory
+	err = os.MkdirAll(userConfigsDirectory, 0777)
+	if err != nil {
+		logger.Panicf("Could not mkdir path %s. Error: %s", userConfigsDirectory, err)
+	}
+
+	makeFractalDirectoryFreeForAll()
 }
 
 // Delete the directory used to store the container resource allocations
