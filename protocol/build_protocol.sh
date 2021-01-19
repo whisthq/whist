@@ -26,7 +26,7 @@ fi
         -S .                       \
         -D BUILD_CLIENT=OFF        \
         -D DOWNLOAD_BINARIES=OFF   \
-    	${release_tag} &&          \
+        ${release_tag} &&          \
     make clang-format &&           \
     make -j FractalServer          \
     "
