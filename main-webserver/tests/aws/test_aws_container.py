@@ -313,8 +313,7 @@ def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=No
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
-# @pytest.mark.usefixtures("_retrieve_user")
-@pytest.mark.usefixtures("_save_user")
+@pytest.mark.usefixtures("_retrieve_user")
 def test_update_region(client, admin, monkeypatch, cluster=pytest.cluster_name):
     cluster = cluster or pytest.cluster_name
 
