@@ -66,12 +66,6 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
-            - name: Walk repo to find all dockerfiles and store path as env variable
-              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
-
-            - name: Build release protocol # No need to run this for debug, just for release
-              run: ./protocol/build_protocol.sh release
-
             - name: Configure AWS CLI # To get and install GRID driver
               # TODO: we can get rid of the ECR permissions and rename this secret
               uses: aws-actions/configure-aws-credentials@v1
@@ -79,6 +73,12 @@ jobs:
                   aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
+
+            - name: Walk repo to find all dockerfiles and store path as env variable
+              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+
+            - name: Build release protocol # No need to run this for debug, just for release
+              run: ./protocol/build_protocol.sh release
 
             - name: Build container images
               run: |
