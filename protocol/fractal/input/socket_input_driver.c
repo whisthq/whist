@@ -313,7 +313,7 @@ int recv_fds(int sock, int* fds, unsigned n_fds) {
     char nothing;
     struct iovec nothing_ptr;
     struct cmsghdr* cmsg;
-    int i;
+    unsigned i;
 
     nothing_ptr.iov_base = &nothing;
     nothing_ptr.iov_len = 1;
