@@ -36,8 +36,8 @@ jobs:
 
             - name: Install the AWS CLI to build the protocol on Linux
               env:
-                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+                  AWS_ACCESS_KEY_ID: "thecowjumped"
+                  AWS_SECRET_ACCESS_KEY: "overthemoon"
               run: |
                   curl -Ss "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
                   unzip -q awscliv2.zip
@@ -46,6 +46,8 @@ jobs:
                   echo "[default]" > ~/.aws/credentials
                   echo "\"aws_access_key_id = $AWS_ACCESS_KEY_ID\"" >> ~/.aws/credentials
                   echo "\"aws_secret_access_key = $AWS_SECRET_ACCESS_KEY\"" >> ~/.aws/credentials
+                  echo "AWS CONFIG: "
+                  cat ~/.aws/credentials
 
 
             - name: Build the protocol
