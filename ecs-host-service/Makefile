@@ -17,7 +17,7 @@ WEBSERVER_AUTH_SECRET_STAGING ?= testwebserverauthsecretstaging
 WEBSERVER_AUTH_SECRET_PROD ?= testwebserverauthsecretprod
 
 
-all: deps build
+all: build
 
 checkCI:
 	$(info building in $(BUILD_FOLDER) with CI set to $(CI)...)
@@ -73,7 +73,4 @@ runprod: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with production configuration...)
 	sudo env PATH=$(PATH) USE_PROD_SENTRY=1 APP_ENV=production $(BUILD_FOLDER)/$(BINARY_NAME)
 
-deps:
-	$(GOGET) github.com/docker/docker@v19.03.13
-
-.PHONY: build clean run runprod deps
+.PHONY: build clean run runprod
