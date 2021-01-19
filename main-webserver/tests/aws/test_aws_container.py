@@ -7,6 +7,8 @@ import time
 from collections import defaultdict
 
 import pytest
+import celery
+from celery import shared_task
 
 from app.celery.aws_ecs_modification import update_cluster
 from app.celery.aws_ecs_creation import _poll
@@ -294,8 +296,59 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
     assert True
 
 
-def test_update_region():
-    
+@shared_task(bind=True)
+def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
+    # check that the arguments are as expected
+    assert region_name == "us-east-1"
+    assert ami == "ami-0ff8a91507f77f867"  # a generic Linux AMI
+
+    self.update_state(
+        state="SUCCESS",
+        meta={
+            "msg": ("mock got the right args"),
+        },
+    )
+
+
+@pytest.mark.container_serial
+@pytest.mark.usefixtures("celery_session_app")
+@pytest.mark.usefixtures("celery_session_worker")
+# @pytest.mark.usefixtures("_retrieve_user")
+@pytest.mark.usefixtures("_save_user")
+def test_update_region(client, admin, monkeypatch, cluster=pytest.cluster_name):
+    cluster = cluster or pytest.cluster_name
+
+    # this temporary makes update_cluster behave like dummy_update_cluster.
+    # undone after test function finishes.
+    # we use update_cluster.delay in update_region, but here we override with a mock
+    monkeypatch.setattr(update_cluster, "delay", mock_update_cluster.delay)
+
+    fractal_log(
+        function="test_update_region",
+        label=None,
+        logs="Calling update_region with monkeypatched update_cluster",
+    )
+
+    resp = client.post(
+        "/aws_container/update_region",
+        json=dict(
+            region_name="us-east-1",
+            ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+        ),
+    )
+
+    task = queryStatus(client, resp, timeout=10)
+
+    if task["status"] < 1:
+        fractal_log(
+            function="test_update_region",
+            label=None,
+            logs=task["output"],
+            level=logging.ERROR,
+        )
+        assert False
+
+    assert True
 
 
 @pytest.mark.skipif(

@@ -22,6 +22,9 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
     :param ami (str): which AMI to use
     :return: which cluster was updated
     """
+    print("NOOOOO")
+    print(ami == "ami-0ff8a91507f77f867")
+    return
     all_regions = RegionToAmi.query.all()
 
     fractal_log(
@@ -73,51 +76,19 @@ def update_region(self, region_name="us-east-1", ami=None):
 
     tasks = []
     for cluster in all_clusters:
-        # .s sets up the task to be run with args but does not actually start running it
-        task = update_cluster.s(region_name, cluster.cluster, ami)
-        tasks.append(task)
-    job = group(tasks)
-    job_res = job.apply_async()
+        task = update_cluster.delay(region_name, cluster.cluster, ami)
+        tasks.append(task.id)
 
-    success = False
-    try:
-        # give all tasks 60 seconds to finish
-        job_res.get(timeout=60)
-        success = True
+    fractal_log(
+        function="update_region",
+        label=None,
+        logs=f"update_region is returning with success. It spun up the "
+        "following update_cluster tasks: {tasks}",
+    )
 
-    except celery.exceptions.TimeoutError:
-        # a task did not finish
-        bad_task_i = find_group_task_with_state(job_res, "PENDING")
-        bad_cluster = all_clusters[bad_task_i]
-        fractal_log(
-            "update_region",
-            None,
-            f"Timed out when updating cluster {bad_cluster}",
-            level=logging.ERROR,
-        )
-
-    except Exception as e:
-        # a task experienced an error and is reraised here
-        bad_task_i = find_group_task_with_state(job_res, "FAILURE")
-        bad_cluster = all_clusters[bad_task_i]
-        fractal_log(
-            "update_region",
-            None,
-            f"Exception when updating cluster {bad_cluster}. Error str: {str(e)}",
-            level=logging.ERROR,
-        )
-
-    if success:
-        self.update_state(
-            state="SUCCESS",
-            meta={
-                "msg": f"updated to ami {ami} in region {region_name}",
-            },
-        )
-    else:
-        self.update_state(
-            state="FAILURE",
-            meta={
-                "msg": f"failed to update to ami {ami} in region {region_name}",
-            },
-        )
+    self.update_state(
+        state="SUCCESS",
+        meta={
+            "msg": f"updated to ami {ami} in region {region_name}",
+        },
+    )
