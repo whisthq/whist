@@ -910,7 +910,9 @@ class ECSClient:
         asg_name = launch_config_info[0]["AutoScalingGroupName"]
         old_launch_config_name = launch_config_info[0]["LaunchConfigurationName"]
         _, new_launch_config_name = self.create_launch_configuration(
-            instance_type="g3.4xlarge", ami=ami
+            instance_type="g3.4xlarge",
+            ami=ami,
+            cluster_name=cluster_name,
         )
         self.update_auto_scaling_group(asg_name, new_launch_config_name)
         containers_list = self.get_containers_in_cluster(self.cluster)
