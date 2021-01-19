@@ -47,6 +47,7 @@ jobs:
 ~/.aws/credentials
                   echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
 
+
             - name: Build the protocol
               run: ./protocol/build_protocol.sh
 
