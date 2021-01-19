@@ -15,16 +15,18 @@ fi
 # build protocol
 # note: we clean build to prevent cmake caching issues, for example when
 # switching container base from Ubuntu 18 to Ubuntu 20 and back
+(cd "$DIR/.." && git clean -dfx -- protocol)
+(cd "$DIR" && ./download-binaries.sh)
 (cd "$DIR" && ./docker-create-builder.sh)
 (cd "$DIR" && ./docker-run-builder-shell.sh \
     $(pwd)/.. \
     "                              \
-    git clean -dfx -- protocol &&  \
     cd protocol &&                 \
     cmake                          \
         -S .                       \
         -D BUILD_CLIENT=OFF        \
-        ${release_tag} &&          \
+        -D DOWNLOAD_BINARIES=OFF   \
+    	${release_tag} &&          \
     make clang-format &&           \
     make -j FractalServer          \
     "
