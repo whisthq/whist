@@ -2,11 +2,13 @@ import copy
 import logging
 import os
 import uuid
+import time
 
 from collections import defaultdict
 
 import pytest
 
+from app.celery.aws_ecs_modification import update_cluster
 from app.celery.aws_ecs_creation import _poll
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
@@ -170,6 +172,34 @@ def test_send_commands(client):
     assert True
 
 
+def test_update_cluster(cluster=pytest.cluster_name):
+    cluster = cluster or pytest.cluster_name
+    # call update_cluster directly as the API only allows /update_region, but
+    # until we run a local DB we don't want to ruin the dev DB for a test
+    # TODO: use a local DB for testing/CI
+    task = update_cluster.delay(
+        region_name="us-east-1",
+        cluster_name=cluster,
+        ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+    )
+    # poll for 30 sec
+    for _ in range(30):
+        if task.ready():
+            break
+        time.sleep(1)
+
+    assert task.ready()
+    assert task.status == "SUCCESS"
+
+    fractal_log(
+        "test_update_cluster",
+        None,
+        f"update_cluster output: {task.result}",
+    )
+
+    assert True
+
+
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
@@ -262,6 +292,10 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
         )
         assert False
     assert True
+
+
+def test_update_region():
+    
 
 
 @pytest.mark.skipif(
