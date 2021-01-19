@@ -34,6 +34,30 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   submodules: recursive
 
+            - name: Install the AWS CLI to build the protocol on Linux
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+                  CREDENTIALS_FILE: "~/.aws/credentials"
+              run: |
+                  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                  unzip awscliv2.zip
+                  sudo ./aws/install
+                  echo "[default]" > "$CREDENTIALS_FILE"
+                  echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> "$CREDENTIALS_FILE"
+                  echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> "$CREDENTIALS_FILE"
+
+            - name: Build the protocol
+              run: ./protocol/build_protocol.sh
+
+            - name: Uninstall the AWS CLI
+              env:
+                CREDENTIALS_FILE: "~/.aws/credentials"
+              run: |
+                rm ~/.aws/credentials
+                sudo rm -rf /usr/local/aws-cli/
+
+
             - name: Configure AWS CLI # To get and install GRID driver
               uses: aws-actions/configure-aws-credentials@v1
               with:
