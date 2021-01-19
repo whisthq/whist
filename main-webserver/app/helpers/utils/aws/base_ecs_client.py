@@ -916,7 +916,8 @@ class ECSClient:
         )
         self.update_auto_scaling_group(asg_name, new_launch_config_name)
         containers_list = self.get_containers_in_cluster(self.cluster)
-        self.set_containers_to_draining(containers_list)
+        if len(containers_list) > 0:
+            self.set_containers_to_draining(containers_list)
         self.auto_scaling_client.delete_launch_configuration(
             LaunchConfigurationName=old_launch_config_name
         )
