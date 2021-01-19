@@ -47,6 +47,8 @@ jobs:
                   echo "\"aws_access_key_id = $AWS_ACCESS_KEY_ID\"" >> ~/.aws/credentials
                   echo "\"aws_secret_access_key = $AWS_SECRET_ACCESS_KEY\"" >> ~/.aws/credentials
 
+            - name: Test aws cli
+              run: aws s3 cp s3://fractal-protocol-shared-libs/shared-libs.tar.gz
 
             - name: Build the protocol
               run: ./protocol/build_protocol.sh
