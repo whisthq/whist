@@ -29,6 +29,8 @@ import (
 
 	httpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
 
+	ecsagent "github.com/fractal/fractal/ecs-host-service/ecs-agent"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
@@ -374,7 +376,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string) e
 	// We ignore the ecs-agent container, since we don't need to do anything to
 	// it, and we want to avoid triggering an error that '32262/tcp' is unmapped
 	// (which gets sent to Sentry).
-	if c.Name == "ecs-agent" {
+	if c.Name == "ecs-agent" || c.Name == "fractal-owned-ecs-agent" {
 		logger.Info("Detected ecs-agent starting. Doing nothing.")
 		return nil
 	}
@@ -383,7 +385,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string) e
 	// We only need to keep track of the mapping of the container's tcp 32262 on the host
 	hostPort, exists := c.NetworkSettings.Ports["32262/tcp"]
 	if !exists {
-		return logger.MakeError("Could not find mapping for port 32262/tcp for container %s", id)
+		return logger.MakeError("Could not find mapping for port 32262/tcp for container %s with name %s", id, c.Name)
 	}
 	if len(hostPort) != 1 {
 		return logger.MakeError("The hostPort mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", id, hostPort)
