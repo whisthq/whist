@@ -123,10 +123,10 @@ func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, que
 
 // SetContainerStartValuesRequest defines the (unauthenticated) start values endpoint
 type SetContainerStartValuesRequest struct {
-	HostPort   int `json:"host_port"`
-	DPI        int `json:"dpi"`
-	UserID	   int `json:"user_id"`
-	resultChan chan requestResult
+	HostPort   int    `json:"host_port"`
+	DPI        int    `json:"dpi"`
+	UserID     string `json:"user_id"`
+	resultChan chan    requestResult
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
