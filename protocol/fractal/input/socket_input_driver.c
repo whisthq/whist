@@ -332,7 +332,7 @@ int recv_fds(int sock, int* fds, unsigned n_fds) {
     if (recvmsg(sock, &msghdr, 0) < 0) {
         char buf[1024];
         strerror_r(errno, buf, 1024);
-        LOG_ERROR("uinput: recvmsg error %s", buf);
+        LOG_ERROR("Socket input driver failed to receive file descriptors: recvmsg error %s", buf);
         return (-1);
     }
     for (i = 0; i < n_fds; i++) fds[i] = ((int*)CMSG_DATA(cmsg))[i];
@@ -346,7 +346,10 @@ InputDevice* create_input_device() {
     struct sockaddr_un addr;
     int fd_socket = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd_socket == -1) {
-        LOG_ERROR("uinput: open socket failed");
+        char buf[1024];
+        strerror_r(errno, buf, 1024);
+        LOG_ERROR("Socket input driver failed to open unix socket: %s", buf);
+        return NULL;
     }
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
@@ -354,11 +357,17 @@ InputDevice* create_input_device() {
     safe_strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path));
     unlink(socket_path);
     if (bind(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        LOG_ERROR("uinput: bind failed");
+        char buf[1024];
+        strerror_r(errno, buf, 1024);
+        LOG_ERROR("Socket input driver failed to bind unix socket to %s: %s", socket_path, buf);
+        return NULL;
     }
 
     if (listen(fd_socket, 5) == -1) {
-        LOG_ERROR("uinput: listen failed");
+        char buf[1024];
+        strerror_r(errno, buf, 1024);
+        LOG_ERROR("Socket input driver failed to listen on unix socket: %s", buf);
+        return NULL;
     }
 
     int fds[3];
@@ -367,11 +376,19 @@ InputDevice* create_input_device() {
         if (client == -1) {
             char buf[1024];
             strerror_r(errno, buf, 1024);
-            LOG_ERROR("uinput: accept error %s", buf);
+            LOG_WARNING("Socket input driver failed to accept client: %s", buf);
             continue;
         }
         int n = recv_fds(client, fds, 3);
-        LOG_INFO("uinput: received %d file descriptors: %d, %d, %d", n, fds[0], fds[1], fds[2]);
+        if (n != 3) {
+            LOG_ERROR(
+                "Socket input driver received incorrect number of file descriptors, expected 3, "
+                "got %d",
+                n);
+            return NULL;
+        }
+        LOG_INFO("Socket input driver received %d file descriptors: %d, %d, %d", n, fds[0], fds[1],
+                 fds[2]);
         break;
     }
 
@@ -465,8 +482,8 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
 
 int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
     LOG_INFO("SCROLL: x=%d y=%d", x, y);
-    // the value of 30 was copied from
-    // https://xpra.org/trac/browser/xpra/trunk/src/xpra/x11/uinput_device.py
+    // We may need a multiplier to calibrate the scroll speed.
+    // See https://xpra.org/trac/browser/xpra/trunk/src/xpra/x11/uinput_device.py.
     int multiplier = 1;
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x * multiplier);
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL, y * multiplier);
