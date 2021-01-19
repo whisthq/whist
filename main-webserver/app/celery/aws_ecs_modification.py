@@ -71,6 +71,6 @@ def update_region(self, region_name="us-east-1", ami=None):
     self.update_state(
         state="SUCCESS",
         meta={
-            "msg": f"updating to ami {ami} in region {region_name}",
+            "msg": f"updated to ami {ami} in region {region_name}",
         },
     )
