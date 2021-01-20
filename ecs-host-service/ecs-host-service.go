@@ -522,22 +522,11 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		logger.Info("Ran \"docker inspect\" command with output: %s", appName)
 	}
 
+	// store app name and user ID in maps
+	containerAppNames[uint16(req.HostPort)] = string(appName)
+	containerUserIDs[uint16(req.HostPort)] = string(userID)
+
 	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
-
-	// Make sure that the user has a config folder for this app in the S3 bucket by creating a '.exists' file in the config path
-	s3ExistsFilePath := s3ConfigPath + ".exists"
-	localExistsFilePath := configPath + ".exists"
-	f, _ = os.Create(localExistsFilePath)
-	os.Chmod(localExistsFilePath, 0700)
-	f.Close()
-	createExistsFileCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", localExistsFilePath, s3ExistsFilePath)
-
-	createExistsFileOutput, err := createExistsFileCmd.CombinedOutput()
-	if err != nil {
-		return logger.MakeError("Could not run \"aws s3 cp\" command: %s. Output: %s", err, createExistsFileOutput)
-	} else {
-		logger.Info("Ran \"aws s3 cp\" command with output: %s", createExistsFileOutput)
-	}
 
 	// Retrieve app config from S3, except for the created ".exists file"
 	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", s3ConfigPath, configPath, "--exclude", ".exists")
@@ -549,8 +538,50 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		logger.Info("Ran \"aws s3 sync\" command with output: %s", getConfigOutput)
 	}
 
-	containerAppNames[uint16(req.HostPort)] = string(appName)
-	containerUserIDs[uint16(req.HostPort)] = string(userID)
+	// If config folder does not exist in S3, then copy default config to the local config folder
+	//	folder existence in S3 is marked by the presence of the `.exists` file in the relevant app
+	//	config folder, which will have been copied over with `aws s3 sync` above
+	s3ExistsFilePath := s3ConfigPath + ".exists"
+	localExistsFilePath := configPath + ".exists"
+
+	if _, err := os.Stat(localExistsFilePath); os.IsNotExist(err) {
+		// copy all default config files and folders to this local config folder
+		// TODO: get the app-appropriate files (not always google chrome)
+		copyDefaultConfigCmd := exec.Command("cp", "-r", "/home/fractal/.config/google-chrome", configPath)
+		copyDefaultConfigOutput, err := copyDefaultConfigCmd.CombinedOutput()
+		if err != nil {
+			return logger.Errorf("Could not run \"cp -r <default configs>\" command: %s. Output: %s", err, copyDefaultConfigOutput)
+		} else {
+			logger.Info("Ran \"cp -r <default configs>\" command with output: %s", copyDefaultConfigOutput)
+
+			// create .exists file
+			f, _ = os.Create(localExistsFilePath)
+			os.Chmod(localExistsFilePath, 0700)
+			f.Close()
+		}
+	}
+
+	// copy symbolic links between all local configs and the target locations for the app
+	linkLocalConfigCmd := exec.Command("cp", "-rflT", configPath + "google-chrome", "/home/fractal/.config/google-chrome")
+
+	linkLocalConfigOutput, err := linkLocalConfigCmd.CombinedOutput()
+	if err != nil {
+		return logger.Errorf("Could not run \"cp -rflT <local configs to locations>\" command: %s. Output: %s", err, linkLocalConfigOutput)
+	} else {
+		logger.Info("Ran \"cp -rflT <local configs to locations>\" command with output: %s", linkLocalConfigOutput)
+	}
+
+	// f, _ = os.Create(localExistsFilePath)
+	// os.Chmod(localExistsFilePath, 0700)
+	// f.Close()
+	// createExistsFileCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", localExistsFilePath, s3ExistsFilePath)
+
+	// createExistsFileOutput, err := createExistsFileCmd.CombinedOutput()
+	// if err != nil {
+	// 	return logger.MakeError("Could not run \"aws s3 cp\" command: %s. Output: %s", err, createExistsFileOutput)
+	// } else {
+	// 	logger.Info("Ran \"aws s3 cp\" command with output: %s", createExistsFileOutput)
+	// }
 
 	return nil
 }
