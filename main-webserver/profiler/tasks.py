@@ -83,7 +83,7 @@ def estimate_loop_iters_per_ms():
 celery_app = make_celery()
 
 
-@celery_app.task()
+@celery_app.task
 def simulate_cpu_io_task(frac_cpu, total_time_ms, **kwargs):
     """
     Simulate an IO and CPU task.

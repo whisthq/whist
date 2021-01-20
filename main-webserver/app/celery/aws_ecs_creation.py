@@ -318,8 +318,6 @@ def assign_container(
     :param webserver_url: the webserver originating the request
     :return: the generated container, in json form
     """
-    time_start = time.time()
-    cpu_start = time.process_time()
 
     fractal_log(
         function="assign_container",
@@ -566,13 +564,6 @@ def assign_container(
             base_container.container_id, cluster_name, username=username, time_taken=task_time_taken
         )
 
-    time_end = time.time()
-    cpu_end = time.process_time()
-    fractal_log(
-        function="assign_container",
-        label=None,
-        logs=f"TOTAL TIME: {time_end - time_start}, TOTAL CPU TIME: {cpu_end - cpu_start}",
-    )
     return user_container_schema.dump(base_container)
 
 

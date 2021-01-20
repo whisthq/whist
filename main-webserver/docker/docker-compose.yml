@@ -40,6 +40,7 @@ services:
     environment:
       REDIS_URL: rediss://redis
       AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
+      NUM_WORKERS: 500
     volumes:
       - ..:/app
       - $HOME/.aws:/.aws

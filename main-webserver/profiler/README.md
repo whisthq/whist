@@ -1,1 +1,59 @@
-TODO: explain profiling
+This folder contains code to profile celery task execution. The main questions are:
+
+1. What "type" of pooling should we use? The options are prefork (uses `fork` syscall)
+   and coroutines (userspace threads; `gevent` library is used by celery). This link
+   has a good description of the differences: https://www.distributedpython.com/2018/10/26/celery-execution-pool/
+2. What "type" of tasks are we running on our webserver? Specifically, are our tasks IO
+   or CPU bound? We suspect IO because most of the time is spent doing blocking API calls to AWS.
+
+Results and more detail can be found [here.](https://docs.google.com/spreadsheets/d/1ykcQvhhCdNhCl0IvZ7LQGtpNFIPMi8BS1Lls3xmZrtk/edit?usp=sharing).
+
+To do this yourself, on a multi-core laptop run the following:
+
+```
+celery --app tasks worker --pool prefork --concurrency NUM_WORKERS
+python profiler.py
+```
+
+Set NUM_WORKERS to whatever level of parallelism you want (use `nproc` to see how many cores you have).
+By default, `profiler.py` runs 100 tasks with 10% of a task's time spent using CPU
+(the other 90% is blocking IO, aka sleeping). Each task takes 100ms and results are polled at
+0.1 second intervals. The following (optional), hopefully self-explanatory flags can be passed to try different tasks:
+
+```
+--num_tasks
+--frac_cpu
+--task_time_ms
+--poll_freq
+```
+
+If you want to try the `gevent` pooling option, kill celery then run:
+
+```
+celery --app tasks worker --pool gevent --concurrency NUM_WORKERS
+python profiler.py
+```
+
+To understand the CPU/IO profile of our webserver, use `time.time()` and `time.process_time()` inside a function of choice. The former checks wall time, the latter checks process CPU time. For example, you could profile `assign_container` (in `app/celery/aws_creation`) by adding the following near the start and end of the function:
+
+```
+time_start = time.time()
+cpu_start = time.process_time()
+
+...
+(main function body)
+...
+
+time_end = time.time()
+cpu_end = time.process_time()
+
+fractal_log(
+    function="assign_container",
+    label=None,
+    logs=f"TOTAL TIME: {time_end - time_start}, TOTAL CPU TIME: {cpu_end - cpu_start}",
+)
+
+return <function returns>
+```
+
+Then, you could use our testing framework to execute this function. See the webserver README on how to run tests. Note testing will actually report a higher CPU ratio than when deployed because the `_poll` function is mocked.
