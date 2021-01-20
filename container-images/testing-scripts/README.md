@@ -19,6 +19,7 @@ python3 connection_tester.py server
 ```
 
 ## uinput_tester.py
+
 Creates virtual device nodes using `/dev/uinput` in order to test the uinput driver. Contains code that periodically writes to the virtual device node, which is useful for testing if the xserver running on the container is reading from the device files. Also contains code that sets up a unix socket, which is useful for testing if the container is able to communicate with the host via a socket.
 
 Usage:
@@ -29,6 +30,7 @@ python3 uinput_tester.py
 ```
 
 ## uinput_server.c
+
 More feature-ful version of `uinput_tester.py` that performs all the steps that the host service would need to do in order for the uinput driver to work. The script is based on `uinput_input_driver.c`. It creates virtual devices using `/dev/uinput`, then waits for the container to initialize a unix socket at `/tmp/sockets/uinput.sock`. Once it detects the file is present, it connects to the socket as a client and passes the file descriptors of the virtual devices over to the container.
 
 Usage:
