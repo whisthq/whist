@@ -512,9 +512,14 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		logger.Info("Ran \"docker inspect\" command with output: %s", appName)
 	}
 
-	// Retrieve app config from S3
-	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName)
-	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", s3ConfigPath, configPath)
+	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
+
+	// Make sure that the user has a config folder for this app in the S3 bucket by creating a '.exists' file in the config path
+	s3ExistsFilePath := s3ConfigPath + ".exists"
+	createExistsFileCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", "--metadata", "'{\"touched\":\"now\"}'", s3ExistsFilePath, s3ExistsFilePath)
+
+	// Retrieve app config from S3, except for the created ".exists file"
+	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", s3ConfigPath, configPath, "--exclude", ".exists")
 
 	getConfigOutput, err := getConfigCmd.CombinedOutput()
 	if err != nil {
