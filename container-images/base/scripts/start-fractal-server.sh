@@ -9,6 +9,8 @@
 #       perhaps better is to copy the contents to the appropriate locations in the
 #       host service from the get-go, instead of symlinking ahead of tim
 #       early symlinks to things that eventually won't exist may lead to broken links
+# - actually, cannot copy-paste directly because then can't upload back to S3 from the host
+# - perhaps create the
 # all configs are at /home/fractal/...
 # programs that have a /home/fractal/.nv folder for cache are marked with (nv)
 # some programs might have stuff in the .local/share folder ?
