@@ -73,8 +73,16 @@ fi
 # Create a google_drive folder in the user's home
 ln -sf /fractal/cloudStorage/$IDENTIFIER/google_drive /home/fractal/
 
-# Symlink the user's retrieved config to the .config folder
-# ln -sf /fractal/userConfigs/$IDENTIFIER/google-chrome /home/fractal/.config/
+# Check whether the '.exists' file is in the user app config folder
+# If no, then copy default configs to the synced app config folder
+existsFile=/fractal/userConfig/$IDENTIFIER/.exists
+if [ ! -f "$existsFile" ]; then
+    cp -rT /home/fractal/.config/google-chrome /fractal/userConfig/$IDENTIFIER/google-chrome
+    touch $existsFile
+fi
+
+# Create symlinks between all local configs and the target locations for the running application
+cp -rflT /fractal/userConfig/$IDENTIFIER/google-chrome /home/fractal/.config/google-chrome
 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
