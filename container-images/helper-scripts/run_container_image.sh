@@ -94,19 +94,20 @@ check_if_host_service_running() {
   || (echo "Cannot start container because the ecs-host-service is not listening on port 4678. Is it running successfully?" && exit 1)
 }
 
-# Send a DPI request to the Fractal ECS host service HTTP server running on localhost
+# Send a start values request to the Fractal ECS host service HTTP server running on localhost
 # This is necessary for the Fractal server protocol to think that it is ready to start. In production,
 # the webserver would send this request to the Fractal host service, but for local development we need
 # to send it manually until our development pipeline is fully built
 # Args: container_id, DPI
-send_dpi_request() {
+send_start_values_request() {
   # Send the DPI/container-ready request
-  response=$(curl --insecure --silent --location --request PUT 'https://localhost:4678/set_container_dpi' \
+  response=$(curl --insecure --silent --location --request PUT 'https://localhost:4678/set_container_start_values' \
     --header 'Content-Type: application/json' \
     --data-raw '{
       "auth_secret": "testwebserverauthsecretdev",
       "host_port": 32262,
-      "dpi": '"$dpi"'
+      "dpi": '"$dpi"',
+      "user_id": "suriya@fractal.co"
     }') \
   || (print_error_and_kill_container $1 "DPI/container-ready request to the host service failed!")
   echo "Sent DPI/container-ready request to container $1!"
