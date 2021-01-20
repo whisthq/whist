@@ -563,7 +563,6 @@ def assign_container(
         datadogEvent_containerAssign(
             base_container.container_id, cluster_name, username=username, time_taken=task_time_taken
         )
-
     return user_container_schema.dump(base_container)
 
 
