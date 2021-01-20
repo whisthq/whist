@@ -437,8 +437,18 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 
 	// Get needed vars and create path for config
 	userID := req.UserID
+        containerID := containerIDs[(uint16)(req.HostPort)]
 	hostPort := logger.Sprintf("%v", req.HostPort)
 	configPath := userConfigsDirectory + hostPort + "/"
+
+        // Make directory to mount in
+	err := os.MkdirAll(configPath, 0777)
+	if err != nil {
+		return logger.MakeError("Could not mkdir path %s. Error: %s", configPath, err)
+	} else {
+		logger.Infof("Created directory %s", configPath)
+	}
+	makeFractalDirectoryFreeForAll()
 
 	// Get app name
 	getAppnameStrcmd := strings.Join(
@@ -446,10 +456,10 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 			"/usr/bin/docker", "inspect",
 			"--format='{{.Config.Image}}'",
 			containerID, "|",
-			"/usr/bin/sed", "'s/.*fractal\/\(.*\):.*/\1/'"
+			"/usr/bin/sed", "'s/.*fractal\\/\\(.*\\):.*/\\1/'",
 		}, " ")
 
-	getAppnameScriptpath := configPath + "get-app-name.sh"
+	getAppnameScriptpath := resourceMappingDirectory + "get-app-name-" + hostPort + ".sh"
 	f, _ := os.Create(getAppnameScriptpath)
 	_, _ = f.WriteString(logger.Sprintf("#!/bin/sh\n\n"))
 	_, _ = f.WriteString(getAppnameStrcmd)
@@ -457,7 +467,6 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	f.Close()
 	defer os.RemoveAll(getAppnameScriptpath)
 	getAppnameCmd := exec.Command(getAppnameScriptpath)
-
 	appName, err := getAppnameCmd.CombinedOutput()
 	if err != nil {
 		return logger.MakeError("Could not run \"docker inspect\" command: %s. Output: %s", err, appName)
@@ -466,22 +475,8 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	}
 
 	// Retrieve app config from S3
-	s3ConfigPath := "s3://fractal-user-app-configs/" + userId + "/" + appName
-	retrieveConfigStrcmd := strings.Join(
-		[]string{
-			"/usr/local/bin/aws", "s3", "sync",
-			s3ConfigPath, configPath,
-			"--recursive"
-		}, " ")
-
-	getConfigScriptPath := path + "get-app-config.sh"
-	f, _ := os.Create(getConfigScriptPath)
-	_, _ = f.WriteString(logger.Sprintf("#!/bin/sh\n\n"))
-	_, _ = f.WriteString(retrieveConfigStrcmd)
-	os.Chmod(getConfigScriptPath, 0700)
-	f.Close()
-	defer os.RemoveAll(getConfigScriptPath)
-	getConfigCmd := exec.Command(getConfigScriptPath)
+	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName)
+	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", s3ConfigPath, configPath)
 
 	getConfigOutput, err := getConfigCmd.CombinedOutput()
 	if err != nil {
@@ -490,8 +485,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		logger.Info("Ran \"aws s3 sync\" command with output: %s", getConfigOutput)
 	}
 
-	err = <-errorchan
-	return err
+	return nil
 }
 
 func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) error {
