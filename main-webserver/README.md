@@ -105,6 +105,16 @@ GraphQL is already set up, but here's a [setup doc](https://hasura.io/docs/1.0/g
 
 ## Testing
 
+TODO: rework
+
+### Setting up Postgres
+
+You need the CLI utilities `pg_dump` and `psql`. On Mac:
+
+```
+brew install postgresql
+```
+
 ### Setting up Redis
 
 In order to run tests locally, the tests must be able to connect to a running Redis instance. As described earlier, we need to launch a container running Redis+TLS. To do this, run in the root directory of this project `docker run -d -p 6379:6379 -v $(pwd)/dummy_certs:/certs --name redis-tls madflojo/redis-tls`. This command launches Redis in the default location on the network&mdash;`rediss://localhost:6379`. The test code looks at the environment variable `REDIS_URL` to connect to redis. Since this is not set, it tries the default port of 6379. Note: if the docker container doesn't seem to be starting, make sure you have your dummy SSL certificates set up.
