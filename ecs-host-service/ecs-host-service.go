@@ -104,8 +104,11 @@ var containerIDs map[uint16]string = make(map[uint16]string)
 // unique identifier for each container created by our modified ecs-agent
 var fractalIDs map[string]string = make(map[string]string)
 
-// keys: hostPort, values: slice containing all cloud storage directories that
-// are mounted for that specific container
+// keep track of the mapping from hostPort to app (e.g. browsers/chrome)
+var containerAppNames map[uint16]string = make(map[uint16]string)
+
+// keys: hostPort, values: slice containing all cloud storage directories that are
+// mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
 
 type uinputDevices struct {
@@ -423,6 +426,41 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	return err
 }
 
+func saveUserConfig(hostPort uint16) {
+	/*
+		When container disconnects, re-sync the user config back to S3
+		and delete the folder
+
+		Arguments:
+			hostPort: the host port of the container
+	*/
+
+	_, ok := containerAppNames[hostPort]
+	if !ok {
+		logger.Infof("No user config found for hostPort %v", hostPort)
+		return
+	}
+
+	// Sync app config back to S3
+	hostPortString := logger.Sprintf("%v", req.HostPort)
+	configPath := userConfigsDirectory + hostPortString + "/"
+	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName)
+	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", configPath, s3ConfigPath)
+
+	getConfigOutput, err := getConfigCmd.CombinedOutput()
+	if err != nil {
+		return logger.MakeError("Could not run \"aws s3 sync\" command: %s. Output: %s", err, getConfigOutput)
+	} else {
+		logger.Info("Ran \"aws s3 sync\" command with output: %s", getConfigOutput)
+	}
+
+	// remove app name mapping for container on hostPort
+	delete(containerAppNames, hostPort)
+
+	// clear contents of config directory
+	os.RemoveAll(configPath)
+}
+
 func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	/*
 		Populate the config folder under the container's host port for the
@@ -484,6 +522,8 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	} else {
 		logger.Info("Ran \"aws s3 sync\" command with output: %s", getConfigOutput)
 	}
+
+	containerAppNames[hostPort] = appName
 
 	return nil
 }
@@ -732,6 +772,9 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	uinputDevices.relmouse.Close()
 	uinputDevices.keyboard.Close()
 	delete(devices, fractalID)
+	
+	// Delete user config and resave to S3
+	saveUserConfig(hostPort)
 }
 
 // ---------------------------
@@ -841,6 +884,11 @@ func uninitializeFilesystem() {
 		for k := range dirs {
 			unmountCloudStorageDir(port, k)
 		}
+	}
+
+	// Sync app configs back to S3
+	for port := range containerAppNames {
+		saveUserConfig(port)
 	}
 }
 
