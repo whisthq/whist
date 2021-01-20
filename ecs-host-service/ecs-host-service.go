@@ -107,6 +107,10 @@ var fractalIDs map[string]string = make(map[string]string)
 // keep track of the mapping from hostPort to app (e.g. browsers/chrome)
 var containerAppNames map[uint16]string = make(map[uint16]string)
 
+
+// keep track of the mapping from hostPort to user ID
+var containerUserIDs map[uint16]string = make(map[uint16]string)
+
 // keys: hostPort, values: slice containing all cloud storage directories that are
 // mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
@@ -435,21 +439,27 @@ func saveUserConfig(hostPort uint16) {
 			hostPort: the host port of the container
 	*/
 
-	_, ok := containerAppNames[hostPort]
+	appName, ok := containerAppNames[hostPort]
 	if !ok {
-		logger.Infof("No user config found for hostPort %v", hostPort)
+		logger.Infof("No app name found for hostPort %v", hostPort)
+		return
+	}
+
+	userID, ok := containerUserIDs[hostPort]
+	if !ok {
+		logger.Infof("No user ID found for hostPort %v", hostPort)
 		return
 	}
 
 	// Sync app config back to S3
-	hostPortString := logger.Sprintf("%v", req.HostPort)
+	hostPortString := logger.Sprintf("%v", hostPort)
 	configPath := userConfigsDirectory + hostPortString + "/"
 	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName)
 	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", configPath, s3ConfigPath)
 
 	getConfigOutput, err := getConfigCmd.CombinedOutput()
 	if err != nil {
-		return logger.MakeError("Could not run \"aws s3 sync\" command: %s. Output: %s", err, getConfigOutput)
+		logger.Errorf("Could not run \"aws s3 sync\" command: %s. Output: %s", err, getConfigOutput)
 	} else {
 		logger.Info("Ran \"aws s3 sync\" command with output: %s", getConfigOutput)
 	}
@@ -516,7 +526,18 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 
 	// Make sure that the user has a config folder for this app in the S3 bucket by creating a '.exists' file in the config path
 	s3ExistsFilePath := s3ConfigPath + ".exists"
-	createExistsFileCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", "--metadata", "'{\"touched\":\"now\"}'", s3ExistsFilePath, s3ExistsFilePath)
+	localExistsFilePath := configPath + ".exists"
+	f, _ = os.Create(localExistsFilePath)
+	os.Chmod(localExistsFilePath, 0700)
+	f.Close()
+	createExistsFileCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", localExistsFilePath, s3ExistsFilePath)
+
+	createExistsFileOutput, err := createExistsFileCmd.CombinedOutput()
+	if err != nil {
+		return logger.MakeError("Could not run \"aws s3 cp\" command: %s. Output: %s", err, createExistsFileOutput)
+	} else {
+		logger.Info("Ran \"aws s3 cp\" command with output: %s", createExistsFileOutput)
+	}
 
 	// Retrieve app config from S3, except for the created ".exists file"
 	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", s3ConfigPath, configPath, "--exclude", ".exists")
@@ -528,7 +549,8 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		logger.Info("Ran \"aws s3 sync\" command with output: %s", getConfigOutput)
 	}
 
-	containerAppNames[hostPort] = appName
+	containerAppNames[uint16(req.HostPort)] = string(appName)
+	containerUserIDs[uint16(req.HostPort)] = string(userID)
 
 	return nil
 }
