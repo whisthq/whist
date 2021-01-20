@@ -1,9 +1,11 @@
+import logging
+
 from celery import shared_task
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
 from app.models import (
-    SortedClusters,
+    ClusterInfo,
     RegionToAmi,
 )
 
@@ -53,6 +55,9 @@ def update_region(self, region_name="us-east-1", ami=None):
     :param region_name (str): which region the cluster is in
     :param ami (str): which AMI to use
     :return: which cluster was updated
+
+    TODO: update RegionToAmi to use new AMI. We probably want a local testing
+    db first.
     """
     self.update_state(
         state="PENDING",
@@ -64,9 +69,31 @@ def update_region(self, region_name="us-east-1", ami=None):
     region_to_ami = {region.region_name: region.ami_id for region in all_regions}
     if ami is None:
         ami = region_to_ami[region_name]
-    all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
+    # TODO: use SortedClusters when we have a local testing DB
+    all_clusters = list(ClusterInfo.query.filter_by(location=region_name).all())
+    # TODO: can we delete this
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
 
+    if len(all_clusters) == 0:
+        fractal_log(
+            function="update_region",
+            label=None,
+            logs=f"No clusters found in region {region_name}",
+            level=logging.WARNING,
+        )
+        self.update_state(
+            state="SUCCESS",
+            meta={
+                "msg": f"No clusters in region {region_name}",
+            },
+        )
+        return
+
+    fractal_log(
+        function="update_region",
+        label=None,
+        logs=f"Updating clusters: {all_clusters}",
+    )
     tasks = []
     for cluster in all_clusters:
         task = update_cluster.delay(region_name, cluster.cluster, ami)

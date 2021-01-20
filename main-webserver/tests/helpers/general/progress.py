@@ -9,7 +9,7 @@ from tests.constants.settings import ALLOW_MULTITHREADING
 def queryStatus(client, resp, timeout=10):
     """
     @params:
-        resp        - Required  : Flask response
+        resp        - Required  : Flask HTTP response
         timeout     - Required  : Timeout in minutes, return -1 if timeout is succeeded
     """
     assert resp.status_code == 202

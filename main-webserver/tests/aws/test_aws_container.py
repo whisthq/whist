@@ -174,14 +174,13 @@ def test_send_commands(client):
     assert True
 
 
-def test_update_cluster(cluster=pytest.cluster_name):
-    cluster = cluster or pytest.cluster_name
+def test_update_cluster():
     # call update_cluster directly as the API only allows /update_region, but
     # until we run a local DB we don't want to ruin the dev DB for a test
     # TODO: use a local DB for testing/CI
     task = update_cluster.delay(
         region_name="us-east-1",
-        cluster_name=cluster,
+        cluster_name=pytest.cluster_name,
         ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
     )
     # poll for 30 sec
@@ -314,11 +313,9 @@ def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=No
 @pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_save_user")
-def test_update_region(client, admin, monkeypatch, cluster=pytest.cluster_name):
-    cluster = cluster or pytest.cluster_name
-
+def test_update_region(client, admin, monkeypatch):
     # this temporary makes update_cluster behave like dummy_update_cluster.
-    # undone after test function finishes.
+    # it is undone after test function finishes.
     # we use update_cluster.delay in update_region, but here we override with a mock
     monkeypatch.setattr(update_cluster, "delay", mock_update_cluster.delay)
 
