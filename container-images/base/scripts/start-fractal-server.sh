@@ -74,7 +74,7 @@ fi
 ln -sf /fractal/cloudStorage/$IDENTIFIER/google_drive /home/fractal/
 
 # Symlink the user's retrieved config to the .config folder
-ln -sf /fractal/userConfigs/$IDENTIFIER/google-chrome /home/fractal/.config/
+# ln -sf /fractal/userConfigs/$IDENTIFIER/google-chrome /home/fractal/.config/
 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
