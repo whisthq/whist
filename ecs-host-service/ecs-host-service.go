@@ -454,11 +454,14 @@ func saveUserConfig(hostPort uint16) {
 	// Save app config back to s3 - first tar, then upload
 	hostPortString := logger.Sprintf("%v", hostPort)
 	configPath := userConfigsDirectory + hostPortString + "/"
-	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName)
+	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
 
 	tarPath := configPath + "fractal-app-config.tar.gz"
-	tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath)
-	tarConfigOuptut, err := getConfigCmd.CombinedOutput()
+
+	os.RemoveAll(tarPath) // first remove the previous config tar, if it exists
+
+	tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath, ".")
+	tarConfigOuptut, err := tarConfigCmd.CombinedOutput()
 	if err != nil {
 		logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOuptut)
 	}
@@ -522,18 +525,20 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	f.Close()
 	defer os.RemoveAll(getAppnameScriptpath)
 	getAppnameCmd := exec.Command(getAppnameScriptpath)
-	appName, err := getAppnameCmd.CombinedOutput()
+	appNameOutput, err := getAppnameCmd.CombinedOutput()
 	if err != nil {
-		return logger.MakeError("Could not run \"docker inspect\" command: %s. Output: %s", err, appName)
+		return logger.MakeError("Could not run \"docker inspect\" command: %s. Output: %s", err, appNameOutput)
 	} else {
-		logger.Info("Ran \"docker inspect\" command with output: %s", appName)
+		logger.Info("Ran \"docker inspect\" command with output: %s", appNameOutput)
 	}
 
+	appName := strings.TrimSpace(string(appNameOutput))
+
 	// store app name and user ID in maps
-	containerAppNames[uint16(req.HostPort)] = string(appName)
+	containerAppNames[uint16(req.HostPort)] = appName
 	containerUserIDs[uint16(req.HostPort)] = string(userID)
 
-	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/fractal-app-config.tar.gz"
+	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName  + "/fractal-app-config.tar.gz"
 
 	// Retrieve app config from S3
 	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", s3ConfigPath, configPath)
