@@ -53,6 +53,7 @@ else
 endif
 
 build: checkCI
+	export GOSUMDB=false
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretDev=$(WEBSERVER_AUTH_SECRET_DEV)'\
@@ -81,8 +82,5 @@ runstaging: build
 runprod: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with production configuration...)
 	sudo env PATH=$(PATH) USE_PROD_SENTRY=1 APP_ENV=production $(BUILD_FOLDER)/$(BINARY_NAME)
-
-deps:
-	$(GOGET) github.com/docker/docker@v19.03.13
 
 .PHONY: build clean run runprod deps
