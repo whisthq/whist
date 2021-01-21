@@ -258,7 +258,7 @@ def select_cluster(region_name):
     all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
     base_len = 2
-    regen_fraction = 0.7
+    regen_fraction = 1.0
     if len(all_clusters) == 0:
         fractal_log(
             function="select_cluster",
@@ -274,7 +274,7 @@ def select_cluster(region_name):
         cluster_name = all_clusters[0].cluster
         if len(all_clusters) == 1 and float(
             all_clusters[0].registeredContainerInstancesCount
-        ) > regen_fraction * float(all_clusters[0].maxContainers):
+        ) >= regen_fraction * float(all_clusters[0].maxContainers):
             create_new_cluster.delay(region_name=region_name, ami=None, min_size=1)
         # delete spurious clusters
         if len(all_clusters) > 2:
