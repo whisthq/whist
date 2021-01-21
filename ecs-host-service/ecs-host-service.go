@@ -458,9 +458,14 @@ func saveUserConfig(hostPort uint16) {
 
 	tarPath := configPath + "fractal-app-config.tar.gz"
 
-	os.RemoveAll(tarPath) // first remove the previous config tar, if it exists
-
-	tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath, ".")
+	//os.RemoveAll(tarPath) // first remove the previous config tar, if it exists
+	// create an empty tar file if it doesn't exist
+	tarFile, err := os.OpenFile(tarPath, os.O_RDONLY|os.O_CREATE, 0777)
+	if err == nil {
+		tarFile.Close()
+	}
+	tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czvf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
+	//tarConfigCmd := exec.Command("/usr/bin/tar", "-czvf", tarPath, configPath);
 	tarConfigOuptut, err := tarConfigCmd.CombinedOutput()
 	if err != nil {
 		logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOuptut)
