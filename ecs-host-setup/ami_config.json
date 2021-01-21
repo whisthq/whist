@@ -1,0 +1,67 @@
+{
+    "builders": [
+        {
+            "secret_key": "2UbWrGYH05m/PN6nC8xr7oVbkxL579FmlrPZSnEE",
+            "access_key": "AKIA24A776SSE7SP4HWG",
+            "region": "us-east-1",
+            "instance_type": "g3.4xlarge",
+            "ami_name": "testing-packer-4",
+            "source_ami": "ami-0656db14219ddffd0",
+            "type": "amazon-ebs",
+            "ssh_username": "ubuntu",
+            "launch_block_device_mappings": [
+                {
+                  "volume_type": "gp2",
+                  "device_name": "/dev/sda1",
+                  "delete_on_termination": true,
+                  "volume_size": 32
+                }
+            ],
+            "ebs_optimized": true,
+            "security_group_ids": [
+                "sg-0678c7029eb05c2fe",
+                "sg-0addb36a8bbb37831"
+            ]
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "expect_disconnect": "true",
+            "inline": [
+                "sudo apt-get remove unattended-upgrades -y",
+                "sudo reboot"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "../ecs-host-setup",
+            "destination": "/home/ubuntu"
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "cd /home/ubuntu/ecs-host-setup",
+                "echo 'in ecs-host-setup directory!'",
+                "ls",
+                "sudo su ubuntu",
+                "./setup_ubuntu20_host.sh"
+            ]
+        },
+        {
+            "type": "shell",
+            "expect_disconnect": "true",
+            "inline": [
+                "sudo reboot"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "cd /home/ubuntu/ecs-host-setup",
+                "echo 'in ecs-host-setup directory!'",
+                "ls",
+                "./setup_ubuntu20_ami_host.sh"]
+        }
+    ]
+}
