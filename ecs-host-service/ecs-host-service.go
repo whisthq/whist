@@ -738,6 +738,10 @@ func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id str
 
 // Frees all resources assigned to a container and kill it
 func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id string) {
+	/*
+		Handle tasks to be completed when a container dies
+	*/
+
 	// Get the fractalID and use it to compute the right data directory. Also,
 	// exit if we are not dealing with a Fractal container.
 	fractalID, ok := fractalIDs[id]
@@ -779,6 +783,10 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 		logger.Infof("containerDieHandler(): Could not find a hostPort mapping for container %s", id)
 		return
 	}
+
+	// Delete user config and resave to S3
+	saveUserConfig(hostPort)
+
 	delete(containerIDs, hostPort)
 	logger.Infof("containerDieHandler(): Deleted mapping from hostPort %v to container ID %v", hostPort, id)
 
@@ -800,9 +808,6 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	uinputDevices.relmouse.Close()
 	uinputDevices.keyboard.Close()
 	delete(devices, fractalID)
-	
-	// Delete user config and resave to S3
-	saveUserConfig(hostPort)
 }
 
 // ---------------------------
@@ -907,16 +912,16 @@ func uninitializeFilesystem() {
 		logger.Infof("Successfully deleted directory %s\n", httpserver.FractalPrivatePath)
 	}
 
+	// Sync app configs back to S3
+	for port := range containerAppNames {
+		saveUserConfig(port)
+	}
+
 	// Unmount all cloud-storage folders
 	for port, dirs := range cloudStorageDirs {
 		for k := range dirs {
 			unmountCloudStorageDir(port, k)
 		}
-	}
-
-	// Sync app configs back to S3
-	for port := range containerAppNames {
-		saveUserConfig(port)
 	}
 }
 
