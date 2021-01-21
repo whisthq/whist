@@ -1,0 +1,38 @@
+# workflows/fractal-publish-ami.yml
+#
+# Fractal: Build & Publish AMI
+# Build and publish Linux AMI to all AWS regions.
+
+name: "Fractal: Build & Publish AMI"
+
+on:
+    push:
+        branches:
+            - master
+            - staging
+            - dev
+            - mia-packer-ami
+        paths:
+            - "ecs-host-setup/**"
+            - "!ecs-host-setup/README.md"
+    workflow_dispatch:
+
+jobs:
+    name: Build & Publish AMIs
+    runs-on: ubuntu-20.04
+
+    steps:
+        - name: Check out Git repository
+          uses: actions/checkout@v2
+
+
+        # - name:
+        #   working-directory: ecs-host-setup
+        #   run: |
+        #     ./create_ami.sh 
+
+
+    # TODO: ping us in Slack when the script succeded. 
+            
+
+
