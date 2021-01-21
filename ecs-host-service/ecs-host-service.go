@@ -465,7 +465,6 @@ func saveUserConfig(hostPort uint16) {
 		tarFile.Close()
 	}
 	tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czvf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
-	//tarConfigCmd := exec.Command("/usr/bin/tar", "-czvf", tarPath, configPath);
 	tarConfigOuptut, err := tarConfigCmd.CombinedOutput()
 	if err != nil {
 		logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOuptut)
