@@ -26,22 +26,16 @@ sudo apt-get update
 # Install latest Docker runtime and dependencies
 sudo apt-get install -y apt-transport-https ca-certificates curl wget gnupg-agent software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-echo "19"
 sudo apt-key fingerprint 0EBFCD88
-echo "20"
 sudo add-apt-repository \
    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
    $(lsb_release -cs) \
    stable"
-echo "22-25"
 sudo apt-get update -y
-echo "27"
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-echo "29"
 
 # Attempt to Add Docker group, but allow failure with "||:" in case it already exists
 sudo groupadd docker ||:
-echo "33"
 sudo gpasswd -a $USER docker
 
 echo "================================================"
