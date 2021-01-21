@@ -71,7 +71,7 @@ func startDockerDaemon() {
 
 // We take ownership of the ECS agent ourselves
 func startECSAgent() {
-	ecsagent.ECSAgentMain()
+	go ecsagent.ECSAgentMain()
 }
 
 // ---------------------------
