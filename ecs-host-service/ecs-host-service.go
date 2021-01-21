@@ -29,7 +29,7 @@ import (
 
 	httpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
 
-	ecsagent "github.com/fractal/fractal/ecs-host-service/ecs-agent"
+	ecsagent "github.com/fractal/fractal/ecs-host-service/ecsagent"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
@@ -592,6 +592,8 @@ func main() {
 	// code on shutdown of the host service. In particular, we want to send a
 	// message to Sentry and/or the fractal webserver upon our death.
 	defer shutdownHostService()
+
+	ecsagent.TempFunc()
 
 	// Initialize Sentry. We do this right after the above defer so that we can
 	// capture and log the potential error of starting the service as a non-root
