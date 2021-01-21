@@ -83,6 +83,9 @@ else
     tar -xzf $tarFile -C /fractal/userConfigs/$IDENTIFIER/
 fi
 
+# Delete broken symlinks from config
+find /fractal/userConfigs/$IDENTIFIER/ -xtype l -delete
+
 # Create symlinks between all local configs and the target locations for the running application
 rm -rf /home/fractal/.config/google-chrome
 ln -sfnT /fractal/userConfigs/$IDENTIFIER/google-chrome /home/fractal/.config/google-chrome
