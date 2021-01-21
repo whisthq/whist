@@ -5,7 +5,10 @@
 
 set -Eeuo pipefail
 
-# Create directories for the ECS agent
+echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+sudo apt-get install -y -q
+
+# Create directories for ECS agent
 sudo mkdir -p /var/log/ecs /var/lib/ecs/{data,gpu} /etc/ecs
 
 # Install jq to build JSON
