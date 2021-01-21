@@ -540,23 +540,11 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 
 	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName  + "/fractal-app-config.tar.gz"
 
-	// Check if config tar exists in S3
-	checkConfigExistsCmd := exec.Command("/usr/local/bin/aws", "s3", "ls", s3ConfigPath)
-	checkConfigExistsOutput, err := checkConfigExistsCmd.CombinedOutput()
-	if err != nil {
-		logger.Errorf("Could not run \"aws s3 ls\" command: %s. Output: %s", err, checkConfigExistsOutput)
-	} else {
-		if len(checkConfigExistsOutput) == 0 {
-			// if the file doesn't exist, then don't cp the file from S3 to the host below
-			return nil
-		}
-	}
-
 	// Retrieve app config from S3
 	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", s3ConfigPath, configPath)
 	getConfigOutput, err := getConfigCmd.CombinedOutput()
 	if err != nil {
-		logger.Errorf("Could not run \"aws s3 cp\" command: %s. Output: %s", err, getConfigOutput)
+		logger.Info("Ran \"aws s3 cp\" command: %s and file doesn't exist. Output: %s", err, getConfigOutput)
 	} else {
 		logger.Info("Ran \"aws s3 cp\" command with output: %s", getConfigOutput)
 	}
