@@ -647,7 +647,7 @@ class ECSClient:
                     "maximumScalingStepSize": 1000,
                     "minimumScalingStepSize": 1,
                     "status": "ENABLED",
-                    "targetCapacity": 70,
+                    "targetCapacity": 100,
                 },
             },
         )
