@@ -71,62 +71,7 @@ func startDockerDaemon() {
 
 // We take ownership of the ECS agent ourselves
 func startECSAgent() {
-	cmd := exec.Command(
-		"/usr/bin/docker",
-		"run",
-		"--name",
-		"ecs-agent",
-		"--init",
-		"--restart=on-failure:10",
-		"--volume=/var/run:/var/run",
-		"--volume=/var/log/ecs/:/log",
-		"--volume=/var/lib/ecs/data:/data",
-		"--volume=/etc/ecs:/etc/ecs",
-		"--volume=/sbin:/host/sbin",
-		"--volume=/lib:/lib",
-		"--volume=/lib64:/lib64",
-		"--volume=/usr/lib:/usr/lib",
-		"--volume=/usr/lib64:/usr/lib64",
-		"--volume=/proc:/host/proc",
-		"--volume=/sys/fs/cgroup:/sys/fs/cgroup",
-		"--net=host",
-		"--env-file=/etc/ecs/ecs.config",
-		"--cap-add=sys_admin",
-		"--cap-add=net_admin",
-		"--volume=/var/lib/nvidia-docker/volumes/nvidia_driver/latest:/usr/local/nvidia",
-		"--device",
-		"/dev/nvidiactl:/dev/nvidiactl",
-		"--device",
-		"/dev/nvidia0:/dev/nvidia0",
-		"--volume=/var/lib/ecs/gpu:/var/lib/ecs/gpu",
-		"amazon/amazon-ecs-agent:latest",
-	)
-	stderr, _ := cmd.StderrPipe()
-	stdout, _ := cmd.StdoutPipe()
-
-	logger.Infof("Attempting to start the ECS-agent... If you don't see an error, assume it was successful.")
-	err := cmd.Start()
-	if err != nil {
-		logger.Panicf("Unable to start ECS-agent ourselves. Error: %v", err)
-	}
-
-	// If the function errored out, we want to get the output at least. Not sure
-	// if this actually works --- TODO change method of forking ecs-agent in
-	// background
-	go func() {
-		output, err1 := ioutil.ReadAll(stdout)
-		errput, err2 := ioutil.ReadAll(stderr)
-		err := cmd.Wait()
-		logger.Infof("stdout: %s\n\n\n", output)
-		logger.Infof("stderr: %s\n\n\n", errput)
-
-		if err1 != nil || err2 != nil {
-			logger.Errorf("Couldn't wait for ecs-agent starting command. Error: %v", err)
-		}
-	}()
-
-	// Give the ecs-agent some time to startup
-	time.Sleep(3 * time.Second)
+	ecsagent.ECSAgentMain()
 }
 
 // ---------------------------
@@ -593,8 +538,6 @@ func main() {
 	// message to Sentry and/or the fractal webserver upon our death.
 	defer shutdownHostService()
 
-	ecsagent.TempFunc()
-
 	// Initialize Sentry. We do this right after the above defer so that we can
 	// capture and log the potential error of starting the service as a non-root
 	// user.
@@ -663,7 +606,7 @@ func main() {
 	// Only start the ECS Agent if we are talking to a dev, staging, or
 	// production webserver.
 	if logger.GetAppEnvironment() != logger.EnvLocalDev {
-		logger.Infof("Running in production, starting ECS Agent.")
+		logger.Infof("Talking to the %v webserver -- starting ECS Agent.", logger.GetAppEnvironment())
 		startECSAgent()
 	}
 
