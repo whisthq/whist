@@ -75,10 +75,12 @@ ln -sf /fractal/cloudStorage/$IDENTIFIER/google_drive /home/fractal/
 
 # Check whether the '.exists' file is in the user app config folder
 # If no, then copy default configs to the synced app config folder
-existsFile=/fractal/userConfigs/$IDENTIFIER/.exists
-if [ ! -f "$existsFile" ]; then
+tarFile=/fractal/userConfigs/$IDENTIFIER/fractal-app-config.tar.gz
+if [ ! -f "$tarFile" ]; then
     cp -rT /home/fractal/.config/google-chrome /fractal/userConfigs/$IDENTIFIER/google-chrome
-    touch $existsFile
+    # touch $existsFile
+else
+    tar -xzf $tarFile -C /fractal/userConfigs/$IDENTIFIER/
 fi
 
 # Create symlinks between all local configs and the target locations for the running application
