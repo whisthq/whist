@@ -61,6 +61,10 @@ build: checkCI
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretProd=$(WEBSERVER_AUTH_SECRET_PROD)'\
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
 
+
+upload: build
+	aws s3api put-object --bucket fractal-ecs-host-service --key djsavvy/swallow-ecs-agent --body build/ecs-host-service
+
 clean:
 	$(GOCLEAN)
 	rm -rf $(BUILD_FOLDER)
