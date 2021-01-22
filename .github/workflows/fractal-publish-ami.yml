@@ -47,7 +47,7 @@ jobs:
 
           - name: Pull Latest AMI ID from Database via GraphQL Query
             run: |
-              echo "source_region='us-east-1'" >> $GITHUB_ENV
+              echo "source_region=us-east-1" >> $GITHUB_ENV
               
               if [ "${GITHUB_REF##*/}" == "master" ]; then
                 echo "db_url='http://prod-database.fractal.co/v1/graphql'" >> $GITHUB_ENV
@@ -57,8 +57,8 @@ jobs:
                 echo "db_url='http://dev-database.fractal.co/v1/graphql'" >> $GITHUB_ENV
               fi 
 
-              Q1='{"query":"query get_orig_ami {\n  hardware_region_to_ami(where: {region_name: {_eq: \"'
-              Q2='\"}}) {\n    ami_id\n  }\n}","variables":{}}'
+              Q1='{"query":"query get_orig_ami {hardware_region_to_ami(where: {region_name: {_eq: \"'
+              Q2='\"}}) {ami_id}}","variables":{}}'
               QUERY="$Q1${{ env.source_region }}$Q2"
               SOURCE_AMI=$(grep -oE 'ami-[0-9a-z]+' <<< $(curl --location --request POST ${{ env.db_url }}\
                                                                  --header 'Content-Type: application/json' \
