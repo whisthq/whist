@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -164,41 +163,42 @@ func unmountCloudStorageDir(hostPort uint16, path string) {
 
 // Mounts the cloud storage directory and waits around to clean it up once it's unmounted.
 func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
-	sanitized_provider := func() string {
-		p := strings.ReplaceAll(req.Provider, " ", "_")
-		p = regexp.MustCompile("[^a-zA-Z0-9_]+").ReplaceAllString(p, "")
-		return p
-	}()
+	var rcloneType string
+	var dirName string
+
+	switch req.Provider {
+	case "google_drive":
+		rcloneType = "drive"
+		dirName = "Google Drive"
+	case "dropbox":
+		rcloneType = "dropbox"
+		dirName = "Dropbox"
+	default:
+		return logger.MakeError("Unrecognized cloud storage provider: req.Provider=%s", req.Provider)
+	}
 
 	// Don't forget the trailing slash
 	hostPort := logger.Sprintf("%v", req.HostPort)
-	path := cloudStorageDirectory + hostPort + "/" + sanitized_provider + "/"
-	configName := hostPort + sanitized_provider
+	path := cloudStorageDirectory + hostPort + "/" + dirName + "/"
+	configName := hostPort + rcloneType
 
-	// Create tokens for Rclone
-	token, err := func() (string, error) {
-		buf, err := json.Marshal(
-			struct {
-				AccessToken  string `json:"access_token"`
-				TokenType    string `json:"token_type"`
-				RefreshToken string `json:"refresh_token"`
-				Expiry       string `json:"expiry"`
-			}{
-				req.AccessToken,
-				req.TokenType,
-				req.RefreshToken,
-				req.Expiry,
-			},
-		)
-		if err != nil {
-			return "", logger.MakeError("Error creating token for Rclone: %s", err)
-		}
-
-		return logger.Sprintf("'%s'", buf), nil
-	}()
+	buf, err := json.Marshal(
+		struct {
+			AccessToken  string `json:"access_token"`
+			TokenType    string `json:"token_type"`
+			RefreshToken string `json:"refresh_token"`
+			Expiry       string `json:"expiry"`
+		}{
+			req.AccessToken,
+			req.TokenType,
+			req.RefreshToken,
+			req.Expiry,
+		},
+	)
 	if err != nil {
-		return err
+		return logger.MakeError("Error creating token for rclone: %s", err)
 	}
+	token := logger.Sprintf("'%s'", buf)
 
 	// Make directory to mount in
 	err = os.MkdirAll(path, 0777)
@@ -215,11 +215,10 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	// cmd := exec.Command(
 	strcmd := strings.Join(
 		[]string{
-			"/usr/bin/rclone", "config", "create", configName, "drive",
+			"/usr/bin/rclone", "config", "create", configName, rcloneType,
 			"config_is_local", "false",
 			"config_refresh_token", "false",
 			"token", token,
-			"scope", "drive",
 			"client_id", req.ClientID,
 			"client_secret", req.ClientSecret,
 		}, " ")
