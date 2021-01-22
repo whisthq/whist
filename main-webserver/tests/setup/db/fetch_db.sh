@@ -35,7 +35,7 @@ fi
 
 # in CI we need to slightly modify the download script because Heroku does not let us run
 # a superuser and do whatever we want to the db
-if [ -z $IN_CI ]; then
+if [ ! -z $IN_CI ]; then
   echo "=== Cleaning the script for CI ===\n"
   python create_ci_db_schema.py
 fi

@@ -1,8 +1,11 @@
 #!/bin/bash
 
+# exit on error
+set -o errexit
+
 # check if in CI; if so just run fetch and setup scripts then exit
 # all env vars should be provided by caller
-if [ -z $IN_CI ]; then
+if [ ! -z $IN_CI ]; then
     cd db
     bash fetch_db.sh
     bash db_setup.sh
@@ -31,9 +34,11 @@ docker-compose up -d --build
 # let db prepare. TODO: make more robust
 sleep 2
 
+# local testing uses localhost db
+export POSTGRES_LOCAL_HOST="localhost"
 cd db
 bash db_setup.sh
 cd ..
 
-echo "Teardown with: docker-compose down"
+echo "Success! Teardown when you are done with: docker-compose down"
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # in CI we just run the (modified) download script
-if [ -z $IN_CI ]; then
+if [ ! -z $IN_CI ]; then
   echo "=== Initializing db for CI ===\n"
   python create_ci_db_schema.py
 
@@ -48,7 +48,7 @@ else
   # need user/db env vars, but first check they exist
 
   # if this is not defined in env, use default of 9999
-  if [-z $POSTGRES_LOCAL_PORT]; then
+  if [ -z $POSTGRES_LOCAL_PORT ]; then
     POSTGRES_LOCAL_PORT="9999"
   fi
 
