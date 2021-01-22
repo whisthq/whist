@@ -39,7 +39,6 @@ destroyClipboardSynchronizer();
 #include "../core/fractal.h"
 #include "clipboard.h"
 
-#define UNUSED(x) (void)(x)
 #define MS_IN_SECOND 1000
 
 int update_clipboard(void* opaque);

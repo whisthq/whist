@@ -26,8 +26,6 @@ Includes
 #include "desktop_utils.h"
 #include "network.h"
 
-#define UNUSED(x) (void)(x)
-
 // Keyboard state variables
 extern bool alt_pressed;
 extern bool ctrl_pressed;

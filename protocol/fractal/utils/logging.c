@@ -50,8 +50,6 @@ could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 #include "logging.h"
 #include <sentry.h>
 
-#define UNUSED(x) (void)(x)
-
 char *get_logger_history();
 int get_logger_history_len();
 void init_backtrace_handler();

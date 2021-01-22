@@ -288,7 +288,7 @@ int send_clipboard_packets(void* opaque) {
             (int): 0 on success
     */
 
-    opaque;
+    UNUSED(opaque);
     LOG_INFO("SendClipboardPackets running on Thread %p", SDL_GetThreadID(NULL));
 
     clock clipboard_time;

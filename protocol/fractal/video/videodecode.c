@@ -12,8 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define UNUSED(x) (void)(x)
-
 void destroy_video_decoder_members(VideoDecoder* decoder);
 
 #define SHOW_DECODER_LOGS false

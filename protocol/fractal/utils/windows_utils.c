@@ -21,8 +21,8 @@ DesktopContext: This type represents a Windows desktop object.
 void log_to_file(char* msg, char* filename) {
     FILE* fp;
     fp = fopen(filename, "a+");
-    fprintf(fp, msg);
-    printf(msg);
+    fprintf(fp, "%s", msg);
+    printf("%s", msg);
     fclose(fp);
 }
 
