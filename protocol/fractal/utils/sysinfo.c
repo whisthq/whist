@@ -86,8 +86,8 @@ void print_model_info() {
 
         // Get rid of trailing whitespace
         int sz = (int)strlen(make_model);
-        while (sz > 0 && make_model[sz - 1] == ' ' || make_model[sz - 1] == '\n' ||
-               make_model[sz - 1] == '\r') {
+        while (sz > 0 && (make_model[sz - 1] == ' ' || make_model[sz - 1] == '\n' ||
+                          make_model[sz - 1] == '\r')) {
             sz--;
         }
         make_model[sz] = '\0';

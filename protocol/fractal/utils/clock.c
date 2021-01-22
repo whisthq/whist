@@ -12,8 +12,6 @@ relate different events across server and client.
 
 #define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
 
-#define UNUSED(x) (void)(x)
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -283,7 +281,7 @@ void set_timezone_from_utc(int utc, int dst_flag) {
             LOG_WARNING("Note a valid UTC offset: %d", utc);
             return;
     }
-    snprintf(cmd + strlen(cmd), strlen(timezone), timezone);
+    snprintf(cmd + strlen(cmd), strlen(timezone), "%s", timezone);
     char* response = safe_malloc(sizeof(char) * 200);
     runcmd(cmd, &response);
     LOG_INFO("Timezone powershell command: %s ", cmd);

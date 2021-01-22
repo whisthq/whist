@@ -30,8 +30,6 @@ Includes
 
 #include <stddef.h>
 
-#define UNUSED(x) (void)(x)
-
 extern char filename[300];
 extern char username[50];
 extern bool exiting;

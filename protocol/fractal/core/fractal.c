@@ -12,7 +12,6 @@
 
 #include "../utils/sysinfo.h"
 
-#define UNUSED(x) (void)(x)
 char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 bool using_sentry = false;
 
@@ -270,10 +269,11 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
         sscanf(&hex_string[2 * i], "%2hhx", &(binary_private_key[i]));
     }
 
-    snprintf(hex_private_key, 33, "%08X%08X%08X%08X", htonl(*((uint32_t*)(binary_private_key))),
-             htonl(*((uint32_t*)(binary_private_key + 4))),
-             htonl(*((uint32_t*)(binary_private_key + 8))),
-             htonl(*((uint32_t*)(binary_private_key + 12))));
+    snprintf(hex_private_key, 33, "%08X%08X%08X%08X",
+             (unsigned int)htonl(*((uint32_t*)(binary_private_key))),
+             (unsigned int)htonl(*((uint32_t*)(binary_private_key + 4))),
+             (unsigned int)htonl(*((uint32_t*)(binary_private_key + 8))),
+             (unsigned int)htonl(*((uint32_t*)(binary_private_key + 12))));
 
     return true;
 }
@@ -295,7 +295,7 @@ void terminate_protocol() {
     exit(-1);
 }
 
-void* safe_malloc(int size) {
+void* safe_malloc(size_t size) {
     void* ret = malloc(size);
     if (ret == NULL) {
         LOG_FATAL("Malloc of size %d failed!", size);

@@ -304,17 +304,17 @@ void destroy_input_device(InputDevice* input_device) {
 #define KEYPRESS_MASK 0x8000
 
 int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode sdl_keycode) {
-    input_device;
+    UNUSED(input_device);
     return 1 & GetKeyState(GetWindowsKeyCode(sdl_keycode));
 }
 
 int get_keyboard_key_state(InputDevice* input_device, FractalKeycode sdl_keycode) {
-    input_device;
+    UNUSED(input_device);
     return (KEYPRESS_MASK & GetAsyncKeyState(GetWindowsKeyCode(sdl_keycode))) >> 15;
 }
 
 int emit_key_event(InputDevice* input_device, FractalKeycode sdl_keycode, int pressed) {
-    input_device;
+    UNUSED(input_device);
 
     INPUT ip;
     ip.type = INPUT_KEYBOARD;
@@ -348,7 +348,7 @@ int emit_key_event(InputDevice* input_device, FractalKeycode sdl_keycode, int pr
 }
 
 int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int relative) {
-    input_device;
+    UNUSED(input_device);
 
     INPUT ip;
     ip.type = INPUT_MOUSE;
@@ -374,7 +374,7 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
 }
 
 int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button, int pressed) {
-    input_device;
+    UNUSED(input_device);
 
     INPUT ip;
     ip.type = INPUT_MOUSE;
@@ -406,6 +406,8 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
                 ip.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
             }
             break;
+        default:
+            break;
     }
 
     int ret = SendInput(1, &ip, sizeof(INPUT));
@@ -420,7 +422,7 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
 }
 
 int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
-    input_device;
+    UNUSED(input_device);
 
     INPUT ip[2];  // vertical and horizontal are separate
     ip[0].type = INPUT_MOUSE;

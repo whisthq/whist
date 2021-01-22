@@ -18,9 +18,7 @@ LGET_CLIPBOARD and LSET_CLIPBOARD are the wide-character versions of these
 strings, for use on windows OS's
 */
 
-#if defined(_WIN32)
-#define _CRT_SECURE_NO_WARNINGS
-#endif
+#ifdef _WIN32
 
 #include "../core/fractal.h"
 #include "../utils/png.h"
@@ -28,7 +26,6 @@ strings, for use on windows OS's
 
 bool start_tracking_clipboard_updates();
 
-#ifdef _WIN32
 char* get_clipboard_directory() {
     static char buf[MAX_PATH];
     wcstombs(buf, lget_clipboard_directory(), sizeof(buf));
@@ -39,7 +36,6 @@ char* set_clipboard_directory() {
     wcstombs(buf, lset_clipboard_directory(), sizeof(buf));
     return buf;
 }
-#endif
 
 void unsafe_init_clipboard() {
     get_clipboard_directory();
@@ -49,7 +45,6 @@ void unsafe_init_clipboard() {
 
 void unsafe_destroy_clipboard() {}
 
-#ifdef _WIN32
 #include "shlwapi.h"
 #pragma comment(lib, "Shlwapi.lib")
 #include "Knownfolders.h"
@@ -191,8 +186,6 @@ bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
     return true;
 }
 
-#endif
-
 static int last_clipboard_sequence_number = -1;
 
 static char clipboard_buf[9000000];
@@ -235,14 +228,14 @@ ClipboardData* unsafe_get_clipboard() {
 
     int cf_type = -1;
 
-    for (int i = 0; i < sizeof(cf_types) / sizeof(cf_types[0]) && cf_type == -1; i++) {
+    for (int i = 0; i < (int)(sizeof(cf_types) / sizeof(cf_types[0])) && cf_type == -1; i++) {
         if (IsClipboardFormatAvailable(cf_types[i])) {
             HGLOBAL hglb = GetClipboardData(cf_types[i]);
             if (hglb != NULL) {
                 LPTSTR lptstr = GlobalLock(hglb);
                 if (lptstr != NULL) {
                     int data_size = (int)GlobalSize(hglb);
-                    if (data_size < sizeof(clipboard_buf)) {
+                    if (data_size < (int)sizeof(clipboard_buf)) {
                         cb->size = data_size;
                         memcpy(cb->data, lptstr, data_size);
                         cf_type = cf_types[i];
@@ -500,7 +493,7 @@ void unsafe_set_clipboard(ClipboardData* cb) {
                     LOG_ERROR("Clipboard image png -> bmp conversion failed");
                     return;
                 }
-                if (pkt.size - 14 > sizeof(clipboard_buf)) {
+                if (pkt.size - 14 > (int)sizeof(clipboard_buf)) {
                     av_packet_unref(&pkt);
                     LOG_WARNING("Could not copy, clipboard too large! %d bytes", pkt.size - 14);
                     return;
@@ -601,3 +594,5 @@ void unsafe_set_clipboard(ClipboardData* cb) {
         CloseClipboard();
     }
 }
+
+#endif  // _WIN32
