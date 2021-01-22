@@ -5,38 +5,16 @@ import functools
 import pytest
 
 from app.models import db
-from app.blueprints.oauth import put_credential as _put_credential
+from app.blueprints.oauth import put_credential
 
 from ..patches import function
 
 
-@pytest.fixture
-def put_credential(user):
-    """Automatically populate the user_id argument to the put_credential function.
-
-    Arguments:
-        user: An instance of the User model.
-
-    Returns:
-        The partial application of the put_credential function to its first argument, the user_id
-        of the user who owns the credential.
-    """
-
-    return functools.partial(_put_credential, user.user_id)
-
-
-def test_create_credential(make_token, put_credential, user):
-    """Create a test user's first credential.
-
-    Arguments:
-        make_token: A function that generates a fake OAuth token for testing purposes.
-        put_credential: A wrapper around the real put_credential function that does not require a
-            user_id as an argument.
-        user: An instance of the User model.
-    """
+def test_create_credential(make_token, user):
+    """Create a test user's first credential."""
 
     token = make_token()
-    credential = put_credential(token)
+    credential = put_credential(user.user_id, token)
 
     assert len(user.credentials) == 1
     assert credential.user == user
@@ -49,16 +27,8 @@ def test_create_credential(make_token, put_credential, user):
     db.session.commit()
 
 
-def test_overwrite_credential(make_credential, make_token, put_credential, user):
-    """Replace an existing credential with a new one.
-
-    Arguments:
-        make_credential: A function that adds test rows to the oauth.credentials table.
-        make_token: A function that generates fake OAuth token for testing purposes.
-        put_credential: A wrapper around the real put_credential function that does not require a
-            user_id as an argument.
-        user: an instance of the User model.
-    """
+def test_overwrite_credential(make_credential, make_token, user):
+    """Replace an existing credential with a new one."""
 
     credential = make_credential(cleanup=False)
 
@@ -67,7 +37,7 @@ def test_overwrite_credential(make_credential, make_token, put_credential, user)
 
     db.session.expire(credential)
 
-    credential = put_credential(make_token())
+    credential = put_credential(user.user_id, make_token())
 
     assert len(user.credentials) == 1
     assert credential.user == user
@@ -76,16 +46,8 @@ def test_overwrite_credential(make_credential, make_token, put_credential, user)
     db.session.commit()
 
 
-def test_update_credential(make_credential, make_token, put_credential, user):
-    """Update an existing credential with a new one.
-
-    Arguments:
-        make_credential: A function that adds test rows to the oauth.credentials table.
-        make_token: A function that generates fake OAuth token for testing purposes.
-        put_credential: A wrapper around the real put_credential function that does not require a
-            user_id as an argument.
-        user: an instance of the User model.
-    """
+def test_update_credential(make_credential, make_token, user):
+    """Update an existing credential with a new one."""
 
     token = make_token(refresh=False)
     credential = make_credential()
@@ -95,7 +57,7 @@ def test_update_credential(make_credential, make_token, put_credential, user):
 
     assert len(user.credentials) == 1
 
-    credential = put_credential(token)
+    credential = put_credential(user.user_id, token)
 
     assert len(user.credentials) == 1
     assert credential.user == user
