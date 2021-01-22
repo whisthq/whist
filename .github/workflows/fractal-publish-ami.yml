@@ -18,21 +18,111 @@ on:
     workflow_dispatch:
 
 jobs:
-    name: Build & Publish AMIs
-    runs-on: ubuntu-20.04
+  fractal-build-and-publish-ami-main:
+      name: Build & Publish AMIs
+      runs-on: ubuntu-20.04
 
-    steps:
-        - name: Check out Git repository
-          uses: actions/checkout@v2
+      strategy:
+          matrix:
+              aws-region:
+                  # - us-east-1
+                  # - us-east-2
+                  # - us-west-1
+                  # - us-west-2
+                  # - ca-central-1
+                  # - eu-west-1
+                  - eu-central-1
+
+      steps:
+          - name: Checkout Git repository
+            uses: actions/checkout@v2
+
+          - name: Configure AWS CLI
+            uses: aws-actions/configure-aws-credentials@v1
+            with:
+                aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
+                aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+                aws-region: ${{ matrix.aws-region }}
+
+          - name: Retrieve master git hash as env variable
+            run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
 
-        # - name:
-        #   working-directory: ecs-host-setup
-        #   run: |
-        #     ./create_ami.sh 
+          # TODO: run GraphQL to pull latest AMI from database
+          - name: Pull Latest AMI Version from Database via GraphQL Query
+            run: |
+              if [ "${GITHUB_REF##*/}" == "master" ]; then
+
+                # TODO: then pull from the prod database
+
+              elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+
+                # TODO: pull frm the staging database
+
+              else
+
+                # TODO: pull from the dev database
+
+              fi 
+
+              # TODO: save value as gitHub environment variable
 
 
-    # TODO: ping us in Slack when the script succeded. 
-            
+          # TODO: Modify the ami_config.json with jq to the right values
+          - name: 
+            working-directory: ecs-host-setup
+            run: |
+
+                cat ami_config.json | jq '.builders[0].secret_key |= ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'
+
+
+                cat ami_config.json | jq '.builders[0].secret_key |= ami-us-east-1-${{ env.commit_sha }}'
+
+
+                cat ami_config.json | jq '.builders[0]._key |= ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'
+
+
+
+
+
+          # TODO: run the AMI creation script with right parameters
+          - name:
+            working-directory: ecs-host-setup
+            run: |
+              ./create_ami.sh ${{ matrix.aws-region }} ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}
+
+
+          # TODO: run the AMI copying script with right parameters
+
+
+          # TODO: update GraphQL Database to new AMI versions (again, updating the right database, based on the branch)
+
+                
+
+
+
+    # TODO: ping us in Slack when the script succeded. -- change the message here to a relevant message
+    notify-slack:
+        name: Notify Slack
+        needs: [fractal-build-and-publish-ami-main]
+        if: success()
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Notify Slack
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to Production via Upload to `master` AWS S3 Bucket.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to Staging via Upload to `staging` AWS S3 Bucket.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  else
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to Development via Upload to `dev` AWS S3 Bucket.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  fi            
 
 
