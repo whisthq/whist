@@ -47,7 +47,7 @@ def _mount_cloud_storage(user, container):
     """Send a request to the ECS host service to mount a cloud storage folder to the container.
 
     Arguments:
-        user: The user who owns the container.
+        user: An instance of the User model representing the user who owns the container.
         container: An instance of the UserContainer model.
     """
 
@@ -57,8 +57,14 @@ def _mount_cloud_storage(user, container):
         if k.startswith("client")
     }
     schema = CredentialSchema()
+    credential = None
 
-    if not user.credentials:
+    for cred in user.credentials:
+        if cred.provider_id == "google":
+            credential = cred
+            break
+
+    if not credential:
         log_kwargs = {
             "logs": f"No cloud storage credentials found for user '{user}'.",
             "level": logging.WARNING,
@@ -80,7 +86,7 @@ def _mount_cloud_storage(user, container):
                     auth_secret=current_app.config["HOST_SERVICE_SECRET"],
                     host_port=container.port_32262,
                     provider="google_drive",
-                    **schema.dump(user.credentials[0]),
+                    **schema.dump(credential),
                     **oauth_client_credentials,
                 ),
                 verify=False,
