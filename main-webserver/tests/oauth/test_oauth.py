@@ -69,6 +69,27 @@ def test_update_credential(make_credential, make_token, provider, user):
     assert credential.token_type == token.token_type
 
 
+def test_multiple_credentials(make_token, user):
+    """Try saving credentials for multiple external applications.
+
+    This test covers a bug caused by the ORM being out of sync with the actual database schema.
+    Before the bug was fixed, the primary key on the Credential model was the user_id of the user
+    who owned the credential. This made it impossible to save credentals for multiple external
+    applications because the data would fail local validation.
+    """
+
+    google_token = make_token()
+    dropbox_token = make_token()
+    google_credential = put_credential(user.user_id, "google", google_token)
+    dropbox_credential = put_credential(user.user_id, "dropbox", dropbox_token)
+
+    assert len(user.credentials) == 2
+
+    db.session.delete(google_credential)
+    db.session.delete(dropbox_credential)
+    db.session.commit()
+
+
 @pytest.mark.usefixtures("authorized")
 def test_list_no_connected_apps(client):
     """Return an empty list of connected external applications.
