@@ -5,7 +5,7 @@ import functools
 import pytest
 
 from app.models import db
-from app.blueprints.oauth import put_credential
+from app.blueprints.oauth import _provider_id_to_app_name, put_credential
 
 from ..patches import function
 
@@ -13,13 +13,15 @@ from ..patches import function
 def test_create_credential(make_token, user):
     """Create a test user's first credential."""
 
+    provider = "google"
     token = make_token()
-    credential = put_credential(user.user_id, token)
+    credential = put_credential(user.user_id, provider, token)
 
     assert len(user.credentials) == 1
     assert credential.user == user
     assert credential.access_token == token.access_token
     assert credential.expiry == token.expiry
+    assert credential.provider_id == provider
     assert credential.refresh_token == token.refresh_token
     assert credential.token_type == token.token_type
 
@@ -30,14 +32,15 @@ def test_create_credential(make_token, user):
 def test_overwrite_credential(make_credential, make_token, user):
     """Replace an existing credential with a new one."""
 
-    credential = make_credential(cleanup=False)
+    provider = "google"
+    credential = make_credential(provider, cleanup=False)
 
     assert len(user.credentials) == 1
     assert credential.user == user
 
     db.session.expire(credential)
 
-    credential = put_credential(user.user_id, make_token())
+    credential = put_credential(user.user_id, provider, make_token())
 
     assert len(user.credentials) == 1
     assert credential.user == user
@@ -49,20 +52,22 @@ def test_overwrite_credential(make_credential, make_token, user):
 def test_update_credential(make_credential, make_token, user):
     """Update an existing credential with a new one."""
 
+    provider = "google"
     token = make_token(refresh=False)
-    credential = make_credential()
+    credential = make_credential(provider)
     refresh_token = credential.refresh_token
 
     db.session.expire(credential)
 
     assert len(user.credentials) == 1
 
-    credential = put_credential(user.user_id, token)
+    credential = put_credential(user.user_id, provider, token)
 
     assert len(user.credentials) == 1
     assert credential.user == user
     assert credential.access_token == token.access_token
     assert credential.expiry == token.expiry
+    assert credential.provider_id == provider
     assert credential.refresh_token == refresh_token
     assert credential.token_type == token.token_type
 
@@ -82,38 +87,29 @@ def test_list_no_connected_apps(client):
 
 @pytest.mark.usefixtures("authorized")
 def test_list_connected_apps(client, make_credential):
-    """Return a list of connected applications.
+    """Return a list of connected applications."""
 
-    Arguments:
-        client: An instance of the Flask test client.
-        make_credential: A function that adds test rows to the oauth.credentials table.
-    """
+    provider = "google"
 
-    make_credential()
+    make_credential(provider)
 
     response = client.get("/connected_apps")
+    app_name = _provider_id_to_app_name(provider)
 
-    assert response.json == {"app_names": ["google_drive"]}
+    assert response.json == {"app_names": [app_name]}
 
 
 @pytest.mark.usefixtures("authorized")
 def test_disconnect_app(client, make_credential, monkeypatch):
-    """Disconnect an external application from the test user's Fractal account.
+    """Disconnect an external application from the test user's Fractal account."""
 
-    Arguments:
-        client: An instance of the Flask test client.
-        make_credential: A function that adds test rows to the oauth.credentials table.
-        monkeypatch: The built-in monkeypatch test fixture.
-    """
-
-    # TODO: Patch over the request to revoke the test user's fake access token so it doesn't
-    # actually get sent.
-
-    credential = make_credential()
+    provider = "google"
+    credential = make_credential(provider)
 
     monkeypatch.setattr(credential, "revoke", function())
 
-    response = client.delete("/connected_apps/google_drive")
+    app_name = _provider_id_to_app_name(provider)
+    response = client.delete(f"/connected_apps/{app_name}")
 
     assert response.status_code == 200
     assert response.json == {}
@@ -121,12 +117,10 @@ def test_disconnect_app(client, make_credential, monkeypatch):
 
 @pytest.mark.usefixtures("authorized")
 def test_disconnect_bad_app(client):
-    """Attempt to disconnect an external application that is already disconnected.
+    """Attempt to disconnect an external application that is already disconnected."""
 
-    Arguments:
-        client: An instance of the Flask test client.
-    """
-
-    response = client.delete("/connected_apps/google_drive")
+    provider = "google"
+    app_name = _provider_id_to_app_name(provider)
+    response = client.delete(f"/connected_apps/{app_name}")
 
     assert response.status_code == 400

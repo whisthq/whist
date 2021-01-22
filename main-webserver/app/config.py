@@ -181,6 +181,8 @@ class DeploymentConfig:
     DASHBOARD_USERNAME = property(getter("DASHBOARD_USERNAME"))
     DATADOG_API_KEY = property(getter("DATADOG_API_KEY"))
     DATADOG_APP_KEY = property(getter("DATADOG_APP_KEY"))
+    DROPBOX_APP_KEY = property(getter("DROPBOX_APP_KEY", fetch=False, raising=False))
+    DROPBOX_APP_SECRET = property(getter("DROPBOX_APP_SECRET", fetch=False, raising=False))
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
     HOST_SERVICE_PORT = 4678
