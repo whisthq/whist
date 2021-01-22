@@ -58,7 +58,7 @@ jobs:
               fi 
 
               Q1='{"query":"query get_orig_ami {hardware_region_to_ami(where: {region_name: {_eq: \"'
-              Q2='\"}}) {ami_id}","variables":{}}'
+              Q2='\"}}) {ami_id}}","variables":{}}'
               QUERY="$Q1${{ env.source_region }}$Q2"
               SOURCE_AMI=$(grep -oE 'ami-[0-9a-z]+' <<< $(curl --location --request POST ${{ env.db_url }}\
                                                                  --header 'Content-Type: application/json' \
