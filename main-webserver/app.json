@@ -8,7 +8,7 @@
         },
         {
           "plan": "heroku-postgresql:standard-0",
-          "as": "POSTGRESQL",
+          "as": "HEROKU_POSTGRES",
           "options": {
             "version": "12"
           }
