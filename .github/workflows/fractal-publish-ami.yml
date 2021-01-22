@@ -62,7 +62,7 @@ jobs:
 
               Q1='{"query":"query get_orig_ami {\n  hardware_region_to_ami(where: {region_name: {_eq: \"'
               Q2='\"}}) {\n    ami_id\n  }\n}","variables":{}}'
-              QUERY=$Q1${{ env.source_region }}$Q2
+              QUERY="$Q1${{ env.source_region }}$Q2"
               SOURCE_AMI=$(grep -oE 'ami-[0-9a-z]+' <<< $(curl --location --request POST ${{ env.db_url }}\
                                                                  --header 'Content-Type: application/json' \
                                                                  --header 'x-hasura-admin-secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
