@@ -19,7 +19,7 @@ on:
     workflow_dispatch:
         inputs:
             job-name:
-                description: "Name of the job to trigger, or 'All' to trigger all jobs."
+                description: "Name of the job to trigger, or 'all' to trigger all jobs."
                 required: true
                 default: "None" # Avoid accidental mistakes by making the default not run any jobs
 
@@ -32,7 +32,7 @@ jobs:
         runs-on: ubuntu-20.04
         outputs:
             branch: ${{ steps.detect-branch.outputs.branch }}
-
+            job: ${{ steps.detect-job.outputs.job }}
         steps:
             - name: Detect Branch
               id: detect-branch
@@ -51,6 +51,24 @@ jobs:
                   echo "branch is $BRANCH_NAME"
                   echo "::set-output name=branch::$BRANCH_NAME"
 
+            - name: Detect Job
+              id: detect-job
+              run: |
+                  if [[ ${{ github.event_name }} == 'push' || ${{ github.event.inputs.job-name }} == 'all' ]]; then
+                    JOB_NAME=all
+                  elif [[ ${{ github.event.inputs.job-name }} == 'container-images-publish-images-ghcr' ]]; then
+                    JOB_NAME=container-images-publish-images-ghcr
+                  elif [[ ${{ github.event.inputs.job-name }} == 'ecs-task-definitions-deploy-task-definitions-ecs' ]]; then
+                    JOB_NAME=ecs-task-definitions-deploy-task-definitions-ecs
+                  elif [[ ${{ github.event.inputs.job-name }} == 'ecs-host-service-publish-build-s3' ]]; then
+                    JOB_NAME=ecs-host-service-publish-build-s3
+                  elif [[ ${{ github.event.inputs.job-name }} == 'main-webserver-deploy-heroku' ]]; then
+                    JOB_NAME=main-webserver-deploy-heroku
+                  fi
+                  echo "job is $JOB_NAME"
+                  echo "::set-output name=job::$JOB_NAME"
+
+
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
     # Runs if config succeeds and branch is in ["master"].
@@ -62,12 +80,7 @@ jobs:
         needs: [fractal-publish-build-config]
         if: |
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
-            (
-              ${{ github.event_name == 'push' }} ||
-              ${{ github.event.inputs.job-name }} == 'container-images-publish-images-ghcr' ||
-              ${{ github.event.inputs.job-name }} == 'All'
-            )
-
+            contains(fromJSON('["all"], ["container-images-publish-images-ghcr"]'), needs.fractal-publish-build-config.outputs.job)
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -133,11 +146,7 @@ jobs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: |
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
-            (
-              ${{ github.event_name == 'push' }} ||
-              ${{ github.event.inputs.job-name }} == 'ecs-task-definitions-deploy-task-definitions-ecs' ||
-              ${{ github.event.inputs.job-name }} == 'All'
-            )
+            contains(fromJSON('["all"], ["ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
@@ -197,11 +206,7 @@ jobs:
         needs: [ecs-task-definitions-deploy-task-definitions-ecs]
         if: |
             success() &&
-            (
-              ${{ github.event_name == 'push' }} ||
-              ${{ github.event.inputs.job-name }} == 'ecs-task-definitions-deploy-task-definitions-ecs' ||
-              ${{ github.event.inputs.job-name }} == 'All'
-            )
+            contains(fromJSON('["all"], ["ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
         runs-on: ubuntu-20.04
         steps:
             - name: Notify Slack
@@ -220,11 +225,7 @@ jobs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: |
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
-            (
-              ${{ github.event_name == 'push' }} ||
-              ${{ github.event.inputs.job-name }} == 'ecs-host-service-publish-build-s3' ||
-              ${{ github.event.inputs.job-name }} == 'All'
-            )
+            contains(fromJSON('["all"], ["ecs-host-service-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
         env:
             binary-location: ecs-host-service/build
             binary-name: ecs-host-service
@@ -294,11 +295,7 @@ jobs:
                   needs.fractal-publish-build-config.outputs.branch
                 ) && always()
             ) &&
-            (
-              ${{ github.event_name == 'push' }} ||
-              ${{ github.event.inputs.job-name }} == 'main-webserver-deploy-heroku' ||
-              ${{ github.event.inputs.job-name }} == 'All'
-            )
+            contains(fromJSON('["all"], ["main-webserver-deploy-heroku"]'), needs.fractal-publish-build-config.outputs.job)
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
