@@ -90,14 +90,14 @@ jobs:
                   # OS-independent matchers
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cppcheck_matcher.json"
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cmake_matcher.json"
-                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
                   # OS-specific matchers
                   if [ "$RUNNER_OS" == "Linux" ]; then
                       echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/gcc_matcher.json"
                   elif [ "$RUNNER_OS" == "Windows" ]; then
                       echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/msvc_matcher.json"
-                      echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/msvc_linker_matcher.json"
+                  elif [ "$RUNNER_OS" == "macOS" ]; then
+                      echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
                   fi
 
             - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
@@ -133,7 +133,7 @@ jobs:
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               run: |
                   cd protocol/
-                  cmake . -DCMAKE_BUILD_TYPE=Debug -G "NMake Makefiles"
+                  cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE -G "NMake Makefiles"
                   nmake FractalClient
 
             - name: Build Protocol Client on macOS/Linux Ubuntu
@@ -143,7 +143,7 @@ jobs:
               shell: bash
               run: |
                   cd protocol/
-                  cmake . -DCMAKE_BUILD_TYPE=Debug
+                  cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
                   make FractalClient
                   cd ~
 
@@ -152,7 +152,7 @@ jobs:
               shell: bash
               run: |
                   cd protocol/
-                  cmake . -DCMAKE_BUILD_TYPE=Debug
+                  cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
                   make FractalServer
                   cd ~
 
@@ -160,6 +160,9 @@ jobs:
               if: runner.os == 'Linux'
               shell: bash
               run: |
+                  # Clang-matcher for clang-format, added after the main build sequence so that clang doesn't match gcc errors
+                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+
                   cd protocol
                   make clang-format
 
@@ -172,6 +175,9 @@ jobs:
             - name: Verify Builds with clang-tidy
               shell: bash
               run: |
+                  # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+
                   cd protocol/
                   ./run-clang-tidy.sh -c
                   cd ~

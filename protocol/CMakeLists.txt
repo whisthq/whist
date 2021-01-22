@@ -243,13 +243,9 @@ set_target_properties(sentry PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
         )
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_compile_options(sentry PRIVATE -Wno-pedantic)
-endif()
 
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_compile_options(sentry PRIVATE -Wno-error -Wno-typedef-redefinition)
     set(CMAKE_C_COMPILER clang)
     if(DEFINED ENV{FRACTAL_OSX_SYSROOT})
         set(CMAKE_OSX_SYSROOT $ENV{FRACTAL_OSX_SYSROOT})
@@ -259,12 +255,28 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # deployment target must be <= than compiler SDK above
 endif()
 
+# Store compiler options of native libraries, for now, we simply pass in "-w" to disable warnings
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(NONFRACTAL_COMPILE_OPTIONS -w)
+    target_compile_options(mini_chromium PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        target_compile_options(crashpad_compat PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
+    endif()
+    target_compile_options(crashpad_util PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
+    target_compile_options(crashpad_client PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
+    target_compile_options(crashpad_snapshot PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
+    target_compile_options(crashpad_minidump PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
+    target_compile_options(crashpad_handler_lib PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
+    target_compile_options(crashpad_tools PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
+    target_compile_options(crashpad_handler PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
+    target_compile_options(sentry PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
+endif()
+
 # Tell CMake where to look for includes
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
 include_directories(sentry-native/include)
-
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)

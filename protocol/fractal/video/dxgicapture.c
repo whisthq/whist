@@ -18,7 +18,7 @@ ID3D11Texture2D* create_texture(CaptureDevice* device);
 
 int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
     // tech debt: don't ignore dpi
-    dpi;
+    UNUSED(dpi);
 
     LOG_INFO("Creating capture device for resolution %dx%d...", width, height);
     memset(device, 0, sizeof(CaptureDevice));
@@ -464,7 +464,7 @@ void destroy_capture_device(CaptureDevice* device) {
 }
 
 void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec) {
-    device;
-    bitrate;
-    codec;
+    UNUSED(device);
+    UNUSED(bitrate);
+    UNUSED(codec);
 }

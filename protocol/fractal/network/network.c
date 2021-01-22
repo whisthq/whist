@@ -86,7 +86,6 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #define STUN_IP "52.5.240.234"
 #define STUN_PORT 48800
 
-#define UNUSED(x) (void)(x)
 #define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
@@ -1762,7 +1761,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
             sprintf(headers,
                     "Content-Type: application/json\r\n"
                     "Content-Length: %d",
-                    payload_size);
+                    (int)payload_size);
             if (!WinHttpAddRequestHeaders(http_request, (LPCWSTR)headers, (DWORD)strlen(headers),
                                           0)) {
                 LOG_ERROR("WinHttpAddRequestHeaders failed with error %u", GetLastError());

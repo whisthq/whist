@@ -133,7 +133,7 @@ static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
 // Synchronize client and server keyboard state
 static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_id,
                                          bool is_controlling) {
-    client_id;
+    UNUSED(client_id);
     if (!is_controlling) return 0;
     update_keyboard_state(input_device, fmsg);
     return 0;
@@ -142,7 +142,7 @@ static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_
 // Update mbps
 // idk how to handle this
 static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
-    client_id;
+    UNUSED(client_id);
     if (!is_controlling) return 0;
     LOG_INFO("MSG RECEIVED FOR MBPS: %f", fmsg->mbps);
     max_mbps = max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
@@ -151,7 +151,7 @@ static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, boo
 }
 
 static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
-    is_controlling;
+    UNUSED(is_controlling);
     LOG_INFO("Ping Received - Client ID: %d, Ping ID %d", client_id, fmsg->ping_id);
 
     // Update ping timer
@@ -174,7 +174,7 @@ static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool i
 
 static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling) {
-    client_id;
+    UNUSED(client_id);
     if (!is_controlling) return 0;
     // Update knowledge of client monitor dimensions
     LOG_INFO("Request to use dimensions %dx%d received", fmsg->dimensions.width,
@@ -193,7 +193,7 @@ static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
 
 static int handle_clipboard_message(FractalClientMessage *fmsg, int client_id,
                                     bool is_controlling) {
-    client_id;
+    UNUSED(client_id);
     if (!is_controlling) return 0;
     // Update clipboard with message
     LOG_INFO("Received Clipboard Data! %d", fmsg->clipboard.type);
@@ -261,8 +261,8 @@ static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id,
 
 static int handle_iframe_request_message(FractalClientMessage *fmsg, int client_id,
                                          bool is_controlling) {
-    client_id;
-    is_controlling;
+    UNUSED(client_id);
+    UNUSED(is_controlling);
     LOG_INFO("Request for i-frame found: Creating iframe");
     if (fmsg->reinitialize_encoder) {
         update_encoder = true;
@@ -278,7 +278,7 @@ static int handle_iframe_request_message(FractalClientMessage *fmsg, int client_
 
 static int handle_interaction_mode_message(FractalClientMessage *fmsg, int client_id,
                                            bool is_controlling) {
-    is_controlling;
+    UNUSED(is_controlling);
 
     /*
     if (safe_SDL_LockMutex(state_lock) != 0) {
@@ -317,15 +317,15 @@ static int handle_interaction_mode_message(FractalClientMessage *fmsg, int clien
     safe_SDL_UnlockMutex(state_lock);
     */
     // Remove below if uncommenting
-    fmsg;
-    client_id;
+    UNUSED(fmsg);
+    UNUSED(client_id);
 
     return 0;
 }
 
 static int handle_quit_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
-    is_controlling;
-    fmsg;
+    UNUSED(is_controlling);
+    UNUSED(fmsg);
     int ret = 0;
     read_unlock(&is_active_rwlock);
     write_lock(&is_active_rwlock);
@@ -344,7 +344,8 @@ static int handle_quit_message(FractalClientMessage *fmsg, int client_id, bool i
 }
 
 static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool is_controlling) {
-    client_id, is_controlling;
+    UNUSED(client_id);
+    UNUSED(is_controlling);
     LOG_INFO("Receiving a message time packet");
 
     FractalDiscoveryRequestMessage fmsg = cfmsg->discoveryRequest;
@@ -386,8 +387,8 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
 
 static int handle_mouse_inactive_message(FractalClientMessage *fmsg, int client_id,
                                          bool is_controlling) {
-    fmsg;
-    is_controlling;
+    UNUSED(fmsg);
+    UNUSED(is_controlling);
     clients[client_id].mouse.is_active = false;
     return 0;
 }

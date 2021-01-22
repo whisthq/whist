@@ -257,7 +257,7 @@ int send_container_destroy_message() {
 }
 
 int32_t multithreaded_encoder_factory(void* opaque) {
-    opaque;
+    UNUSED(opaque);
     encoder_factory_result = create_video_encoder(
         encoder_factory_server_w, encoder_factory_server_h, encoder_factory_client_w,
         encoder_factory_client_h, encoder_factory_current_bitrate, encoder_factory_codec_type);
@@ -271,7 +271,7 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
 }
 
 int32_t send_video(void* opaque) {
-    opaque;
+    UNUSED(opaque);
     SDL_Delay(500);
 
 #if defined(_WIN32)
@@ -656,7 +656,7 @@ int32_t send_video(void* opaque) {
 static int sample_rate = -1;
 
 int32_t send_audio(void* opaque) {
-    opaque;
+    UNUSED(opaque);
     int id = 1;
 
     AudioDevice* audio_device = create_audio_device();
@@ -845,7 +845,7 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
 }
 
 int multithreaded_manage_clients(void* opaque) {
-    opaque;
+    UNUSED(opaque);
 
     SocketContext discovery_context;
     int client_id;

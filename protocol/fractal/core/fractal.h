@@ -79,6 +79,8 @@ Defines
 ============================
 */
 
+#define UNUSED(var) (void)(var)
+
 #define NUM_KEYCODES 265
 #define CAPTURE_SPECIAL_WINDOWS_KEYS false
 
@@ -636,7 +638,7 @@ NORETURN void terminate_protocol();
  * @brief                          Wrapper around malloc that will correctly exit the protocol when
  * malloc fails
  */
-void* safe_malloc(int size);
+void* safe_malloc(size_t size);
 
 /**
  * @brief                          Wrapper around SDL_CreateMutex that will correctly exit the

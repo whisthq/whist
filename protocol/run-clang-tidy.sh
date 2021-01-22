@@ -62,7 +62,7 @@ clang-tidy -header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixe
 # ---- clean up yaml file before running replacements ----
 
 # deletes all clang-diagnostic-error entries
-perl -i -p -000 -e 's/  - DiagnosticName:[ ]*clang-diagnostic-error[^\n]*\n(    [^\n]*\n)*//g' ${yamlFolder}/${fixesFilename}
+perl -i -p -000 -e 's/  - DiagnosticName:[ ]*(clang-diagnostic-error|clang-diagnostic-unknown-pragmas)[^\n]*\n(    [^\n]*\n)*//g' ${yamlFolder}/${fixesFilename}
 
 # get current directory path based on OS
 if [[ $isWindows == 1 ]]

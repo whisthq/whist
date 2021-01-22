@@ -29,8 +29,6 @@ Includes
 #include "SDL2/SDL.h"
 #include "network.h"
 
-#define UNUSED(x) (void)(x)
-
 #define USE_HARDWARE true
 
 // Global Variables
