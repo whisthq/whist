@@ -1,7 +1,19 @@
 {
   "environments": {
     "review": {
-      "addons": ["heroku-redis:premium-0", "heroku-postgresql:standard-0"],
+      "addons": [
+        {
+          "plan": "heroku-redis:premium-0",
+          "as": "REDIS"
+        },
+        {
+          "plan": "heroku-postgresql:standard-0",
+          "as": "POSTGRESQL",
+          "options": {
+            "version": "12.5"
+          }
+        }
+      ],
       "buildpacks": [
         {
           "url": "https://github.com/heroku/heroku-buildpack-inline.git"
