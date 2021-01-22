@@ -10,10 +10,9 @@ from app.blueprints.oauth import _provider_id_to_app_name, put_credential
 from ..patches import function
 
 
-def test_create_credential(make_token, user):
+def test_create_credential(make_token, provider, user):
     """Create a test user's first credential."""
 
-    provider = "google"
     token = make_token()
     credential = put_credential(user.user_id, provider, token)
 
@@ -29,10 +28,9 @@ def test_create_credential(make_token, user):
     db.session.commit()
 
 
-def test_overwrite_credential(make_credential, make_token, user):
+def test_overwrite_credential(make_credential, make_token, provider, user):
     """Replace an existing credential with a new one."""
 
-    provider = "google"
     credential = make_credential(provider, cleanup=False)
 
     assert len(user.credentials) == 1
@@ -49,10 +47,9 @@ def test_overwrite_credential(make_credential, make_token, user):
     db.session.commit()
 
 
-def test_update_credential(make_credential, make_token, user):
+def test_update_credential(make_credential, make_token, provider, user):
     """Update an existing credential with a new one."""
 
-    provider = "google"
     token = make_token(refresh=False)
     credential = make_credential(provider)
     refresh_token = credential.refresh_token
@@ -86,10 +83,8 @@ def test_list_no_connected_apps(client):
 
 
 @pytest.mark.usefixtures("authorized")
-def test_list_connected_apps(client, make_credential):
+def test_list_connected_apps(client, make_credential, provider):
     """Return a list of connected applications."""
-
-    provider = "google"
 
     make_credential(provider)
 
@@ -100,10 +95,9 @@ def test_list_connected_apps(client, make_credential):
 
 
 @pytest.mark.usefixtures("authorized")
-def test_disconnect_app(client, make_credential, monkeypatch):
+def test_disconnect_app(client, make_credential, monkeypatch, provider):
     """Disconnect an external application from the test user's Fractal account."""
 
-    provider = "google"
     credential = make_credential(provider)
 
     monkeypatch.setattr(credential, "revoke", function())
@@ -116,10 +110,9 @@ def test_disconnect_app(client, make_credential, monkeypatch):
 
 
 @pytest.mark.usefixtures("authorized")
-def test_disconnect_bad_app(client):
+def test_disconnect_bad_app(client, provider):
     """Attempt to disconnect an external application that is already disconnected."""
 
-    provider = "google"
     app_name = _provider_id_to_app_name(provider)
     response = client.delete(f"/connected_apps/{app_name}")
 
