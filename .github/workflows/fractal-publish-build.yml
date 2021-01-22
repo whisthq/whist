@@ -68,7 +68,6 @@ jobs:
                   echo "job is $JOB_NAME"
                   echo "::set-output name=job::$JOB_NAME"
 
-
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
     # Runs if config succeeds and branch is in ["master"].
