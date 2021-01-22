@@ -13,9 +13,6 @@ on:
             - dev
             - mia-packer-ami
         # TODO: CHANGE AFTER TESTING
-        paths:
-            - "ecs-host-setup/**"
-            - "!ecs-host-setup/README.md"
     workflow_dispatch:
 
 jobs:
