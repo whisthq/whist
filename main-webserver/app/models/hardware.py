@@ -1,7 +1,8 @@
 from sqlalchemy import Index
 from sqlalchemy.orm import relationship
+from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine, StringEncryptedType
 
-from ._meta import db
+from ._meta import db, secret_key
 
 
 class UserContainer(db.Model):
@@ -29,7 +30,9 @@ class UserContainer(db.Model):
     allow_autoupdate = db.Column(db.Boolean, nullable=False, default=True)
     temporary_lock = db.Column(db.Integer)
     dpi = db.Column(db.Integer)
-    secret_key = db.Column(db.String(32), nullable=False)
+    secret_key = db.Column(
+        StringEncryptedType(db.String, secret_key, AesEngine, "pkcs5"), nullable=False
+    )
 
 
 class ClusterInfo(db.Model):
