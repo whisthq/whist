@@ -19,15 +19,16 @@ if [ ! -z $IN_CI ]; then
     cd setup
     bash setup_tests.sh
     cd ..
+    # app looks at POSTGRES_URI to connect to db. point to CI db
+    export POSTGRES_URI=$POSTGRES_LOCAL_HOST
 else
-    # if local, setup_tests should already be run (once).
-    # db is running at localhost:9999 so we set this
-    export POSTGRES_LOCAL_HOST="localhost"
+    # add env vars to current env
+    export $(cat ../../docker/.env | xargs)
+
+    # override POSTGRES_HOST and POSTGRES_PORT to be local
+    export POSTGRES_HOST="localhost"
     export POSTGRES_PORT="9999"
 fi
-
-# app looks at POSTGRES_HOST to connect to db. override to point to testing db (CI or local)
-export POSTGRES_HOST=$POSTGRES_LOCAL_HOST
 
 # we need to cd back out of tests into root dir for main-webserver
 cd ..

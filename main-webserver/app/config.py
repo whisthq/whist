@@ -249,6 +249,7 @@ class LocalConfig(DeploymentConfig):
     # instance. The following lines allow developers to specify individual parts of the connection
     # URI and to fill in the remaining values with reasonable defaults rather than requiring them
     # to specify the whole thing.
+    db_uri = property(getter("POSTGRES_URI", default="", fetch=False))
     db_host = property(getter("POSTGRES_HOST", default="localhost", fetch=False))
     db_name = property(getter("POSTGRES_DB", default="postgres", fetch=False))
     db_password = property(getter("POSTGRES_PASSWORD", fetch=False))
@@ -287,10 +288,15 @@ class LocalConfig(DeploymentConfig):
             A PostgreSQL connection URI.
         """
 
-        return (
-            f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
-            f"{self.db_name}"
-        )
+        if self.db_uri != "":
+            print("HERE")
+            return self.db_uri
+        else:
+            # create URI from components
+            return (
+                f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
+                f"{self.db_name}"
+            )
 
 
 DeploymentTestConfig = _TestConfig(DeploymentConfig)
