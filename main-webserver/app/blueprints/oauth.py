@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 
 import click
 
+from dropbox import DropboxOAuth2Flow
 from flask import abort, Blueprint, current_app, jsonify, redirect, request, session, url_for
 from flask.views import MethodView
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -14,6 +15,7 @@ from google_auth_oauthlib.flow import Flow
 
 from app.models import Credential, db, User
 from app.serializers.oauth import CredentialSchema
+from app.models.oauth import _app_name_to_provider_id, _provider_id_to_app_name
 
 oauth_bp = Blueprint("oauth", __name__, cli_group="credentials")
 Token = namedtuple(
@@ -38,8 +40,8 @@ class ConnectedAppsAPI(MethodView):
 
         assert user
 
-        if user.credentials:
-            apps.append("google_drive")
+        for credential in user.credentials:
+            apps.append(_provider_id_to_app_name(credential.provider_id))
 
         return jsonify({"app_names": apps})
 
@@ -50,15 +52,19 @@ class ConnectedAppsAPI(MethodView):
             app_name: The name of the application for which to revoke Fractal's authorization.
         """
 
+        credential = None
         user = User.query.get(get_jwt_identity())
 
         assert user
 
-        if not (user.credentials and app_name == "google_drive"):
+        for cred in user.credentials:
+            if _provider_id_to_app_name(cred.provider_id) == app_name:
+                credential = cred
+
+        if not credential:
             abort(400)
 
-        for credential in user.credentials:
-            credential.revoke()
+        credential.revoke()
 
         # TODO: It may be appropriate to return a status code of 204 here. Doing so would require
         # some changes to be made to the client application's apiDelete function.
@@ -83,19 +89,32 @@ def authorize():
     except KeyError:
         abort(400)
 
-    # TODO: Support external applications other than Google drive.
-    assert app_name == "google_drive"
-
     callback_uri = url_for(".callback", _external=True)
-    flow = Flow.from_client_config(
-        current_app.config["GOOGLE_CLIENT_SECRET_OBJECT"],
-        ("https://www.googleapis.com/auth/drive",),
-        redirect_uri=callback_uri,
-    )
-    auth_url, state = flow.authorization_url(access_type="offline", include_granted_scopes="true")
+
+    if app_name == "dropbox":
+        flow = DropboxOAuth2Flow(
+            current_app.config["DROPBOX_APP_KEY"],
+            callback_uri,
+            session,
+            current_app.config["DROPBOX_CSRF_TOKEN_SESSION_KEY"],
+            consumer_secret=current_app.config["DROPBOX_APP_SECRET"],
+            token_access_type="offline",
+        )
+        auth_url = flow.start()
+    elif app_name == "google_drive":
+        flow = Flow.from_client_config(
+            current_app.config["GOOGLE_CLIENT_SECRET_OBJECT"],
+            ("https://www.googleapis.com/auth/drive",),
+            redirect_uri=callback_uri,
+        )
+        auth_url, state = flow.authorization_url(
+            access_type="offline", include_granted_scopes="true"
+        )
+        session["state"] = state
+    else:
+        abort(400)
 
     session["external_app"] = app_name
-    session["state"] = state
     session["user"] = get_jwt_identity()
 
     return redirect(auth_url)
@@ -114,32 +133,50 @@ def callback():
 
     try:
         app_name = session["external_app"]
-        state = session["state"]
         user = session["user"]
     except KeyError:
         abort(400)
 
-    # TODO: Support external applications other than Google drive.
-    assert app_name == "google_drive"
-
     callback_uri = url_for(".callback", _external=True)
-    flow = Flow.from_client_config(
-        current_app.config["GOOGLE_CLIENT_SECRET_OBJECT"],
-        None,
-        redirect_uri=callback_uri,
-        state=state,
-    )
 
-    flow.fetch_token(authorization_response=request.url)
+    if app_name == "dropbox":
+        flow = DropboxOAuth2Flow(
+            current_app.config["DROPBOX_APP_KEY"],
+            callback_uri,
+            session,
+            current_app.config["DROPBOX_CSRF_TOKEN_SESSION_KEY"],
+            consumer_secret=current_app.config["DROPBOX_APP_SECRET"],
+            token_access_type="offline",
+        )
+        result = flow.finish(request.args)
+        token = Token(result.access_token, result.expires_at, result.refresh_token)
+    elif app_name == "google_drive":
+        try:
+            state = session["state"]
+        except KeyError:
+            abort(400)
 
-    token = Token(flow.credentials.token, flow.credentials.expiry, flow.credentials.refresh_token)
+        flow = Flow.from_client_config(
+            current_app.config["GOOGLE_CLIENT_SECRET_OBJECT"],
+            None,
+            redirect_uri=callback_uri,
+            state=state,
+        )
 
-    put_credential(user, token)
+        flow.fetch_token(authorization_response=request.url)
+
+        token = Token(
+            flow.credentials.token, flow.credentials.expiry, flow.credentials.refresh_token
+        )
+    else:
+        abort(400)
+
+    put_credential(user, _app_name_to_provider_id(app_name), token)
 
     return redirect(
         urljoin(
             current_app.config["FRONTEND_URL"],
-            "/auth/bypass?callback=fractal://oauth?successfully_authenticated=google_drive",
+            f"/auth/bypass?callback=fractal://oauth?successfully_authenticated={app_name}",
         )
     )
 
@@ -153,11 +190,17 @@ def external_apps():
         {
             "data": [
                 {
+                    "code_name": "dropbox",
+                    "display_name": "Dropbox",
+                    "image_s3_uri": "https://fractal-external-app-images.s3.amazonaws.com/dropbox.svg",  # pylint: disable=line-too-long
+                    "tos_uri": "https://www.dropbox.com/terms",
+                },
+                {
                     "code_name": "google_drive",
                     "display_name": "Google Drive",
                     "image_s3_uri": "https://fractal-external-app-images.s3.amazonaws.com/google-drive-256.svg",  # pylint: disable=line-too-long
                     "tos_uri": "https://www.google.com/drive/terms-of-service/",
-                }
+                },
             ]
         }
     )
@@ -231,6 +274,7 @@ def put_credential(user_id, provider_id, token):
 
     Arguments:
         user_id: The user ID of the user who owns this credential.
+        provider_id: The ID of the OAuth 2.0 provider as a string.
         token: An instance of the Token namedtuple wrapper.
 
     Returns:
@@ -242,31 +286,30 @@ def put_credential(user_id, provider_id, token):
 
     assert user
 
-    credentials = user.credentials
+    for cred in user.credentials:
+        # Try to update an existing credential.
+        if cred.provider_id == provider_id:
+            if not credential:
+                credential = cred
+                cred.access_token = token.access_token
+                cred.expiry = token.expiry
 
-    if credentials and not token.refresh_token:
-        assert len(credentials) == 1
+                if token.refresh_token:
+                    cred.refresh_token = token.refresh_token
 
-        credential = credentials[0]
-        credential.access_token = token.access_token
-        credential.expiry = token.expiry
+                db.session.add(cred)
+            else:
+                # Delete any other entries that have the same provider_id.
+                db.session.delete(cred)
 
-        assert token.token_type == credential.token_type
-    else:
-        # This branch of the conditional will be run if either the user's list of credentials is
-        # empty or the new token's refresh token differs from an existing token's refresh token and
-        # is not blank. In the former case, the loop below has no effect. In the latter case, we
-        # can consider the existing token or tokens stale and delete them; no user should have more
-        # than one OAuth token associated with her account at a time because there is only one
-        # supported external application.
-        for cred in credentials:
-            db.session.delete(cred)
-
+    if not credential:
+        # Insert a new credential.
         credential = Credential(
             user_id=user.user_id,
             access_token=token.access_token,
             token_type=token.token_type,
             expiry=token.expiry,
+            provider_id=provider_id,
             refresh_token=token.refresh_token,
         )
 
