@@ -194,7 +194,39 @@ def get_credential(user, provider):
     click.echo(json.dumps([schema.dump(credential) for credential in credentials], indent=2))
 
 
-def put_credential(user_id, token):
+@oauth_bp.cli.command("revoke", help="Revoke token used to authenticate with PROVIDER as USER.")
+@click.argument("user")
+@click.argument("provider")
+def revoke_credential(user, provider):
+    """Revoke the token used to authenticate with PROVIDER as USER.
+
+    Arguments:
+        user: The user_id of the user whose credentials should be retrieved.
+        provider: The provider_id of the OAuth provider against which the token should be revoked.
+    """
+
+    credentials = []
+    user_row = User.query.get(user)
+
+    if not user_row:
+        raise click.ClickException(f"Could not find user '{user}'.")
+
+    for credential in user_row.credentials:
+        if credential.provider_id == provider:
+            credentials.append(credential)
+
+    if not credentials:
+        raise click.ClickException(
+            f"User '{user}' has not authorized Fractal to use '{provider}' on their behalf."
+        )
+
+    for credential in credentials:
+        credential.revoke()
+
+    click.echo(f"Successfully revoked fractal's access to '{provider}' on behalf of '{user}'.")
+
+
+def put_credential(user_id, provider_id, token):
     """Add a new credential to the database or update an existing one.
 
     Arguments:
