@@ -12,17 +12,13 @@ from app.blueprints.oauth import Token
 def make_credential(make_token, user):
     """Expose a function that allows test code to create test credentials.
 
-    Arguments:
-        make_token: A function that generates a fake OAuth token for testing purposes.
-        user: An instance of the User model.
-
     Returns:
         A function that adds test data to the configuration database.
     """
 
     credentials = []
 
-    def _credential(cleanup=True):
+    def _credential(provider, cleanup=True):
         """Create a test row in the oauth.credentials table in the database.
 
         Keyword arguments:
@@ -37,6 +33,7 @@ def make_credential(make_token, user):
         credential = Credential(
             access_token=token.access_token,
             expiry=token.expiry,
+            provider_id=provider,
             refresh_token=token.refresh_token,
             token_type=token.token_type,
             user_id=user.user_id,
@@ -81,3 +78,8 @@ def make_token():
         )
 
     return _token
+
+
+@pytest.fixture(params=("dropbox", "google"))
+def provider(request):
+    return request.param

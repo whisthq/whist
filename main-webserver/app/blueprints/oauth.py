@@ -1,5 +1,7 @@
 """A blueprint for endpoints that allow users to manage connected applications."""
 
+import json
+
 from collections import namedtuple
 from urllib.parse import urljoin
 
@@ -161,31 +163,35 @@ def external_apps():
     )
 
 
-@oauth_bp.cli.command("get", help="Show the credentials owned by the user with user_id USER_ID.")
-@click.argument("user_id")
-def get_credential(user_id):
-    """Show the credentials owned by the user with user_id USER_ID.
+@oauth_bp.cli.command("get", help="Show the token used to authenticate with PROVIDER as USER.")
+@click.argument("user")
+@click.argument("provider")
+def get_credential(user, provider):
+    """Show the token used to authenticate with PROVIDER as USER.
 
     Arguments:
-        user_id: The user_id of the user whose credentials should be retrieved.
+        user: The user_id of the user whose credentials should be retrieved.
+        provider: The provider_id of the OAuth provider with which the token is used to
+            authenticate.
     """
 
-    user = User.query.get(user_id)
-    schema = CredentialSchema()
+    credentials = []
+    user_row = User.query.get(user)
+    schema = CredentialSchema(only=("access_token", "expiry", "refresh_token", "token_type"))
 
-    if not user:
-        raise click.ClickException(f"Could not find user '{user.user_id}'.")
+    if not user_row:
+        raise click.ClickException(f"Could not find user '{user}'.")
 
-    credentials = user.credentials
+    for credential in user_row.credentials:
+        if credential.provider_id == provider:
+            credentials.append(credential)
 
     if not credentials:
         raise click.ClickException(
-            f"User '{user.user_id}' has not connected any applications to their Fractal account."
+            f"User '{user}' has not authorized Fractal to use '{provider}' on their behalf."
         )
 
-    assert len(credentials) == 1
-
-    click.echo(schema.dumps(credentials[0], indent=2))
+    click.echo(json.dumps([schema.dump(credential) for credential in credentials], indent=2))
 
 
 def put_credential(user_id, token):
