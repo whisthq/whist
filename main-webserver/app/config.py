@@ -154,6 +154,8 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
         config_table = "dev"
 
         STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
+        # this should be in the env
+        SQLALCHEMY_DATABASE_URI = property(getter("POSTGRES_URI", fetch=False))
         TESTING = True
 
         @property
@@ -289,7 +291,6 @@ class LocalConfig(DeploymentConfig):
         """
 
         if self.db_uri != "":
-            print("HERE")
             return self.db_uri
         else:
             # create URI from components
