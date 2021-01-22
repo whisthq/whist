@@ -3,6 +3,12 @@
 # exit on error
 set -o errexit
 
+# check if we are in the tests folder
+if [ -d tests ]; then
+    echo "Please cd into tests and then run this script."
+    exit 1
+fi
+
 echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
 # if in CI, run setup tests and set env vars
@@ -22,5 +28,8 @@ fi
 
 # app looks at POSTGRES_HOST to connect to db. override to point to testing db (CI or local)
 export POSTGRES_HOST=$POSTGRES_LOCAL_HOST
+
+# we need to cd back out of tests into root dir for main-webserver
+cd ..
 pytest --no-mock-aws
 
