@@ -15,7 +15,6 @@ on:
         # TODO: CHANGE AFTER TESTING
         paths:
             - "ecs-host-setup/**"
-            - ".github/fractal-publish-ami.yml"
             - "!ecs-host-setup/README.md"
     workflow_dispatch:
 
