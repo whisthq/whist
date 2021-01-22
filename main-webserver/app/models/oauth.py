@@ -13,17 +13,7 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine, StringEnc
 
 from app.helpers.utils.general.logs import fractal_log
 
-from ._meta import db
-
-
-def secret_key():
-    """Retrieve the secret key from the Flask application's configuration.
-
-    Returns:
-        The value of the SECRET_KEY configuration variable, a string.
-    """
-
-    return current_app.secret_key
+from ._meta import db, secret_key
 
 
 class Credential(db.Model):
