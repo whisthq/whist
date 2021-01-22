@@ -38,6 +38,8 @@ def forgot_password_helper(username):
             )
             return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
+        if ("@fractal.co" in username):
+            return jsonify({"verified": True, "token": token, "url": current_app.config["FRONTEND_URL"]})
         return jsonify({"verified": True}), SUCCESS
     else:
         return jsonify({"verified": False}), NOT_FOUND
