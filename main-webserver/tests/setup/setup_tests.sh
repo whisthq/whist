@@ -8,22 +8,24 @@ fi
 # add to current env
 export $(cat ../../docker/.env | xargs)
 
-if [ ! -f db/db_schema.sql ]; then
+if [ -f db/db_schema.sql ]; then
+    echo "Found existing schema and data sql scripts. Skipping fetching db."
+else
     cd db
     bash fetch_db.sh
     cd ..
 fi
 
-# if not in CI, use docker-compose
-if [ ! -z "${IN_CI}" ]; then
-    docker-compose up -d --build
-fi
+# # if not in CI, use docker-compose
+# if [ ! -z "${IN_CI}" ]; then
+#     docker-compose up -d --build
+# fi
 
-# let db prepare
-sleep 2
+# # let db prepare
+# sleep 2
 
-cd db
-bash db_setup.sh
+# cd db
+# bash db_setup.sh
 
-echo "Teardown with: docker-compose down"
+# echo "Teardown with: docker-compose down"
 
