@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app import fractal_pre_process
 from app.constants.http_codes import SUCCESS
@@ -18,9 +18,10 @@ from app.helpers.blueprint_helpers.auth.account_post import (
     verify_password_helper,
 )
 from app.helpers.utils.general.auth import fractal_auth
+from app.helpers.utils.general.auth import developer_required
+
 
 account_bp = Blueprint("account_bp", __name__)
-
 
 @account_bp.route("/account/delete", methods=["POST"])
 @fractal_pre_process
@@ -59,7 +60,7 @@ def account_post(action, **kwargs):
 
     elif action == "register":
         # Account creation endpoint
-
+        
         username, password = body["username"], body["password"]
         name = body["name"]
         reason_for_signup = body["feedback"]
@@ -67,7 +68,13 @@ def account_post(action, **kwargs):
 
         output = register_helper(username, password, name, reason_for_signup, can_login)
 
-        return jsonify(output), output["status"]
+        if ("@fractal.co" in username):
+            return jsonify(output)
+         
+        return jsonify(body), output["status"]
+
+
+        # return jsonify(output), output["status"]
 
     elif action == "verify":
         # Email verification endpoint
