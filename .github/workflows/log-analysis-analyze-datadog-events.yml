@@ -1,9 +1,9 @@
-# workflows/log-analysis-analyze-datadog-events.yml
+# workflows/main-webserver-analyze-datadog-events.yml
 #
-# Log Analysis: Analyze Datadog Events
+# Main Webserver: Analyze Datadog Events
 # Runs daily, running analysis on Datadog events from the past day.
 
-name: "Log Analysis: Analyze Datadog Events"
+name: "Main Webserver: Analyze Datadog Events"
 
 on:
     schedule:
@@ -11,7 +11,7 @@ on:
     workflow_dispatch:
 
 jobs:
-    log-analysis-analyze-datadog-events-main:
+    main-webserer-analyze-datadog-events-main:
         name: Run Events Analysis
         runs-on: ubuntu-20.04
 
@@ -35,7 +35,7 @@ jobs:
                   pip install python-dotenv numpy datadog boto3
 
             - name: Run Webserver Events Analysis Python Script
-              run: python log-analysis/webserver/datadog/analyze.py weekly
+              run: python webserver/analytics/datadog/analyze.py weekly
 
             - name: Notify Slack
               run: |
