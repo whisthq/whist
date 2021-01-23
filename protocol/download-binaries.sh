@@ -32,4 +32,4 @@ aws s3 cp s3://fractal-protocol-shared-libs/fractal-linux-sdl2-static-lib.tar.gz
 mkdir lib/64/SDL2/Windows
 aws s3 cp s3://fractal-protocol-shared-libs/fractal-windows-sdl2-static-lib.tar.gz - | tar xz -C lib/64/SDL2/Windows
 
-echo "Done"
+echo "Completed"
