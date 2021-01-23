@@ -188,7 +188,7 @@ This is an example of a bad commit history, which exhibits a phenomenon caused b
 | | | | | | | | |/| |
 | | | | | | | * | | |   ee0961e5 - Merge branch 'dev' into feature_branch (8 weeks ago) <developer1>
 | | | | | | | |\ \ \ \
-| | | | | | | * \ \ \ \   c4301083 - Merge branch 'dev' into feature_branch (8 weeks ago) <developer1>
+| | | | | | | * \ \ \ \   c4301083 - Merge branch 'dev' into feature_branch (8 weeks ago) <developer2>
 | | | | | | | |\ \ \ \ \
 | | | | | | | * \ \ \ \ \   4c521824 - Merge branch 'dev' into feature_branch (10 weeks ago) <developer1>
 | | | | | | | |\ \ \ \ \ \
@@ -197,7 +197,7 @@ This is an example of a bad commit history, which exhibits a phenomenon caused b
 | | | | | | | * | | | | | | | 34ca8f9b - clang format (10 weeks ago) <developer1>
 | | | | | | | * | | | | | | |   6e1501d6 - Merge branch 'dev' into feature_branch (10 weeks ago) <developer1>
 | | | | | | | |\ \ \ \ \ \ \ \
-| | | | | | | * \ \ \ \ \ \ \ \   1fc9f76e - Merge branch 'dev' into feature_branch (10 weeks ago) <developer1>
+| | | | | | | * \ \ \ \ \ \ \ \   1fc9f76e - Merge branch 'dev' into feature_branch (10 weeks ago) <developer2>
 | | | | | | | |\ \ \ \ \ \ \ \ \
 | | | | | | | * \ \ \ \ \ \ \ \ \   d3fabb5e - Merge branch 'dev' into feature_branch (2 months ago) <developer1>
 | | | | | | | |\ \ \ \ \ \ \ \ \ \
