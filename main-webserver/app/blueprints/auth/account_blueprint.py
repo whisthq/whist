@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
 from app.constants.http_codes import SUCCESS
@@ -18,8 +18,6 @@ from app.helpers.blueprint_helpers.auth.account_post import (
     verify_password_helper,
 )
 from app.helpers.utils.general.auth import fractal_auth
-from app.helpers.utils.general.auth import developer_required
-
 
 account_bp = Blueprint("account_bp", __name__)
 
@@ -61,7 +59,8 @@ def account_post(action, **kwargs):
 
     elif action == "register":
         # Account creation endpoint
-        # Only returns email verification, access, and refresh tokens if the username ends in @fractal.co for testing frontend integration tests
+        # Only returns email verification, access, and refresh tokens if
+        # the username ends in @fractal.co for testing frontend integration tests
 
         username, password = body["username"], body["password"]
         name = body["name"]
