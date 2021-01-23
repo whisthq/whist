@@ -201,7 +201,7 @@ To build on Windows, run the command `cmake -G "NMake Makefiles"` at the root di
 
 #### Further documentation
 
-More documentation is in our [Google Drive](https://docs.google.com/document/d/1T9Lc3HVoqhqSjdUbiaFaQU71oV1VH25iFGDNvAYjtOs/edit?usp=sharing), if needed. We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install doxygen via your local package manager, and run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs gitignored to avoid clutter on the repository, since we don't publish them anywhere.
+We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install doxygen via your local package manager, and run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs gitignored to avoid clutter on the repository, since we don't publish them anywhere.
 
 ## CI & CD
 
@@ -222,16 +222,6 @@ These builds will also have `cppcheck` run against them which is a static analys
 These builds will also (TODO) be tested against a live server VM. This workflow will spin up an Azure VM, upload the server build to it, and then use GitHub Actions VMs on Windows, MacOS and Linux Ubuntu as clients to connect and stream via the protocol for one minute. This will also occur nightly against the `dev` branch, but these builds will not be released (this can be removed once testing is stable and re-enabled on all commits).
 
 To see the warnings in context go to the Actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log, where you can clearly see the warnings/errors generated.
-
-### Testing on VMs
-
-As mentioned above, every commit to `dev`, `staging` and `master` and every new PR results in a build being uploaded to Github Releases. The server build in this release can be easily uploaded to a VM for testing using the `deploy_server_release.py` script. The script requires that you specify the IP address of a VM that is currently running and also allows you to specify the specific release to test, defaulting to the latest release on `dev`. For example, to run the server build in the latest release in the `staging` branch on the VM at IP address 52.168.66.248, you can run `python deploy_server_release.py --vm-ip=52.168.66.248 --release=latest:staging`. To see other optional arguments that are exposed, just open up `deploy_server_release.py`.
-
-### Special Cases
-
-You can add `WIP` anywhere in the title of a PR to keep the CD auto-build workflow from running
-
-You can include `skip-ci` anywhere in a commit message to `dev`, `staging`, or `master` to keep the CD auto-build workflow from running.
 
 ### Continuous Integration
 

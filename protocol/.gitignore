@@ -1,4 +1,10 @@
-# general files
+# Tags
+tags
+**/tags
+**/tags.lock
+**/tags.temp
+
+# General files
 *.a
 *.o
 *.obj
@@ -6,7 +12,7 @@
 *.pyc
 *.cbp
 
-# visual studio
+# Visual Studio
 **/Debug/
 **/Release/
 .vs/
@@ -26,11 +32,11 @@
 # macOS
 .DS_Store
 
-# sentry
+# Sentry
 *.sentry-native
 sentry-native
 
-# fractal
+# Fractal
 version
 **/build32
 **/build64
@@ -42,7 +48,7 @@ desktop/external_utils/Windows/ssh.exe
 ._share
 connection_id.txt
 
-# cmake
+# Cmake
 *.cmake
 *.make
 *.marks
@@ -71,9 +77,6 @@ lib/64/SDL2/Darwin/*
 lib/64/SDL2/Linux/*
 lib/64/SDL2/Windows/*
 
-# docs
+# Docs
 docs/html/
 docs/latex/
-
-# tags
-tags
