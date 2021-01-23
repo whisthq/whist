@@ -59,8 +59,8 @@ jobs:
               fi 
           - name: Pull latest AMI from specified DB
             run: |
-              echo "Q1={"query":"query get_orig_ami {hardware_region_to_ami(where: {region_name: {_eq: \""" >> $GITHUB_ENV
-              echo "Q2=\"}}) {ami_id}}","variables":{}}" >> $GITHUB_ENV
+              echo "Q1={\"query\":\"query get_orig_ami {hardware_region_to_ami(where: {region_name: {_eq: \"\"" >> $GITHUB_ENV
+              echo "Q2=\"}}) {ami_id}}\",\"variables\":{}}" >> $GITHUB_ENV
               echo "QUERY=${env.Q1}${{ env.source_region }}${env.Q2}" >> $GITHUB_ENV
               echo "source_ami=$(curl --location --request POST ${{ env.db_url }}\
                                 --header 'Content-Type: application/json' \
