@@ -87,7 +87,7 @@ jobs:
               # QUERY="$Q1${{ env.new_ami }}$Q2${{ env.source_region }}$Q3"
               QUERY="$Q1${{ env.new_ami }}$Q2 test-region $Q3"
 
-              curl --location --request POST ${{ env.db_url }} \
+              curl --location --request POST "${{ env.db_url }}" \
                    --header 'Content-Type: application/json' \
                    --header 'x-hasura-admin-secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
                    --data-raw "$QUERY"
@@ -103,7 +103,7 @@ jobs:
               Q3='\") {\n  update_hardware_region_to_ami(where: {region_name: {_eq: $_eq}}, _set: {ami_id: $ami_id}) {\n    returning {\n      region_name\n      ami_id\n    }\n  }\n}","variables":{}}'
               QUERY="$Q1$AMI$Q2$REGION$Q3"
 
-              curl --location --request POST ${{ env.db_url }} \
+              curl --location --request POST "${{ env.db_url }}" \
                    --header 'Content-Type: application/json' \
                    --header 'x-hasura-admin-secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
                    --data-raw "$QUERY"
