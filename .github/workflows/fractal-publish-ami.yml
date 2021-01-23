@@ -11,7 +11,7 @@ on:
             - master
             - staging
             - dev
-            - mia-packer-ami
+            - mia/packer-ami
         # TODO: CHANGE AFTER TESTING
     workflow_dispatch:
 
