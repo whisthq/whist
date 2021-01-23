@@ -42,8 +42,6 @@
             "type": "shell",
             "inline": [
                 "cd /home/ubuntu/ecs-host-setup",
-                "echo 'in ecs-host-setup directory!'",
-                "ls",
                 "sudo su ubuntu",
                 "./setup_ubuntu20_host.sh"
             ]
@@ -59,8 +57,6 @@
             "type": "shell",
             "inline": [
                 "cd /home/ubuntu/ecs-host-setup",
-                "echo 'in ecs-host-setup directory!'",
-                "ls",
                 "./setup_ubuntu20_ami_host.sh"]
         }
     ]
