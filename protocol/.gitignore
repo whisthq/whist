@@ -75,10 +75,5 @@ lib/64/SDL2/Windows/*
 docs/html/
 docs/latex/
 
-# vagrant
-.vagrant
-*.box
-ubuntu-bionic-18.04-cloudimg-console.log
-
 # tags
 tags
