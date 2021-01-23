@@ -61,11 +61,12 @@ jobs:
             run: |
               Q1='{"query":"query get_orig_ami {hardware_region_to_ami(where: {region_name: {_eq: \"'
               Q2='\"}}) {ami_id}}","variables":{}}'
-              QUERY="$Q1${{ env.source_region }}$Q2"
+              QUERY="${Q1}${{ env.source_region }}${Q2}"
               SOURCE_AMI=$(curl --location --request POST ${{ env.db_url }}\
                                 --header 'Content-Type: application/json' \
                                 --header 'x-hasura-admin-secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
                                 --data-raw "$QUERY" | grep -oE 'ami-[0-9a-z]+')
+              echo "source_ami=$SOURCE_AMI" >> $GITHUB_ENV
 
           - name: Modify the ami_config.json with jq to the right values
             working-directory: ecs-host-setup
@@ -85,7 +86,7 @@ jobs:
               Q3='\") {\n  update_hardware_region_to_ami(where: {region_name: {_eq: $_eq}}, _set: {ami_id: $ami_id}) {\n    returning {\n      region_name\n      ami_id\n    }\n  }\n}","variables":{}}'
               
               # TODO: change after testing
-              # QUERY="$Q1${{ env.new_ami }}$Q2${{ env.source_region }}$Q3"
+              # QUERY="${Q1}${{ env.new_ami }}$Q2${{ env.source_region }}${Q3}"
               QUERY="$Q1${{ env.new_ami }}$Q2 test-region $Q3"
 
               curl --location --request POST "${{ env.db_url }}" \
