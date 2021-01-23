@@ -66,7 +66,6 @@ jobs:
                                 --header 'Content-Type: application/json' \
                                 --header 'x-hasura-admin-secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
                                 --data-raw "$QUERY" | grep -oE 'ami-[0-9a-z]+')
-              echo "source_ami=$SOURCE_AMI" >> $GITHUB_ENV
 
           - name: Modify the ami_config.json with jq to the right values
             working-directory: ecs-host-setup
