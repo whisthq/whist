@@ -45,10 +45,11 @@ jobs:
           - name: Retrieve master git hash as env variable
             run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
+          - name: Define source region
+            run: echo "source_region=us-east-1" >> $GITHUB_ENV
+
           - name: Pull Latest AMI ID from Database via GraphQL Query
             run: |
-              echo "source_region=us-east-1" >> $GITHUB_ENV
-              
               if [ "${GITHUB_REF##*/}" == "master" ]; then
                 echo "db_url='http://prod-database.fractal.co/v1/graphql'" >> $GITHUB_ENV
               elif [ "${GITHUB_REF##*/}" == "staging" ]; then
@@ -56,7 +57,7 @@ jobs:
               else
                 echo "db_url='http://dev-database.fractal.co/v1/graphql'" >> $GITHUB_ENV
               fi 
-
+              
               Q1='{"query":"query get_orig_ami {hardware_region_to_ami(where: {region_name: {_eq: \"'
               Q2='\"}}) {ami_id}}","variables":{}}'
               QUERY="$Q1${{ env.source_region }}$Q2"
