@@ -60,7 +60,7 @@ jobs:
           - name: Pull latest AMI from specified DB
             working-directory: ecs-host-setup
             run: |
-              echo "SOURCE_AMI=$(cat build_query.sh ${{ env.source_region }} ${{ env.db_url }} ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }})" >> $GITHUB_ENV
+              echo "SOURCE_AMI=$(grep -oE 'ami-[0-9a-z]+' <<< bash build_query.sh ${{ env.source_region }} ${{ env.db_url }} ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }})" >> $GITHUB_ENV
 
           - name: Modify the ami_config.json with jq to the right values
             working-directory: ecs-host-setup
