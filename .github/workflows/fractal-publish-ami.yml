@@ -20,19 +20,15 @@ jobs:
       name: Build & Publish AMIs
       runs-on: ubuntu-20.04
 
-      strategy:
-          matrix:
-              aws-region:
-                  # - us-east-1
-                  # - us-east-2
-                  # - us-west-1
-                  # - us-west-2
-                  # - ca-central-1
-                  # - eu-west-1
-                  - eu-central-1
-
       env:
-          aws_source_region: us-east-1
+        aws_source_region: us-east-1
+        aws-regions: # all supported AWS regions but aws_source_region, which is already taken care of when creating the new AMI
+            # - us-east-2
+            # - us-west-1
+            # - us-west-2
+            # - ca-central-1
+            # - eu-west-1
+            - eu-central-1
 
       steps:
           - name: Checkout Git Repository
@@ -43,7 +39,7 @@ jobs:
             with:
                 aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
                 aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
-                aws-region: ${{ matrix.aws-region }}
+                aws-region: ${{ env.aws-regions }}
 
           - name: Retrieve Branch HEAD Git Hash as Env Variable
             run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
@@ -91,7 +87,7 @@ jobs:
                 # create new AMI for aws_source_region
                 echo "new_ami_id=$(grep -oE 'ami-[0-9a-z]+' <<< $(packer build ami_config.json)" >> $GITHUB_ENV
 
-                # update AMI for aws_source_region in appropriate database to new AMI
+                # update AMI ID for aws_source_region in appropriate database to new AMI ID
                 curl -X POST \
                 -H "Content-Type: application/json" \
                 -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
@@ -101,30 +97,18 @@ jobs:
           - name: Copy New AMI to All Supported AWS Regions
             working-directory: ecs-host-setup
             run: |
+                for aws_region in ${{ env.aws_regions }}
+                do
+                  # retrieve new AMI ID for aws_region, from the new AMI ID in aws_source_region
+                  region_new_ami_id=$(grep -oE 'ami-[0-9a-z]+' <<< $(aws ec2 copy-image --source-image-id ${{ env.new_ami_id }} --source-region ${{ env.aws_source_region }} --region $aws_region --name "ami-$aws_region-${{ env.commit_sha }}"))
 
-
-          # TODO
-              REGION=${{ matrix.aws-region }}
-              AMI=$(grep -oE 'ami-[0-9a-z]+' <<< $(aws ec2 copy-image --source-image-id ${{ env.new_ami }} --source-region ${{ env.aws_source_region }} --region $REGION --name 'ami-$REGION-${{ env.commit_sha }}'))
-
-              Q1='{"query":"mutation NewAMI($ami_id: String = \"'
-              Q2='\", $_eq: String = \"'
-              Q3='\") {\n  update_hardware_region_to_ami(where: {region_name: {_eq: $_eq}}, _set: {ami_id: $ami_id}) {\n    returning {\n      region_name\n      ami_id\n    }\n  }\n}","variables":{}}'
-              QUERY="$Q1$AMI$Q2$REGION$Q3"
-
-              curl --location --request POST "${{ env.db_url }}" \
-                   --header 'Content-Type: application/json' \
-                   --header 'x-hasura-admin-secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
-                   --data-raw "$QUERY"
-
-
-
-
-
-
-
-
-
+                  # update AMI for aws_region in appropriate database to the new AMI ID
+                  curl -X POST \
+                  -H "Content-Type: application/json" \
+                  -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
+                  --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${{ env.region_new_ami_id }}\\\" }, where: { region_name: { _eq: \\\"$aws_region\\\" } }) { returning { ami_id } } }\" }" \
+                  ${{ env.graphql_db_url }}
+                done
 
   notify-slack:
       name: Notify Slack
