@@ -60,7 +60,7 @@ jobs:
           - name: Build query
             run: echo "QUERY=$(bash build_query.sh ${{ env.source_region }})" >> $GITHUB_ENV
           
-            - name: Pull latest AMI from specified DB
+          - name: Pull latest AMI from specified DB
             run: |
               SOURCE_AMI=$(curl --location --request POST ${{ env.db_url }}\
                                 --header 'Content-Type: application/json' \
