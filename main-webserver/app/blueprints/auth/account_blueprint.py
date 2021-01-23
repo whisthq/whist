@@ -69,10 +69,7 @@ def account_post(action, **kwargs):
 
         output = register_helper(username, password, name, reason_for_signup, can_login)
 
-        if "@fractal.co" in username:
-            return jsonify(output)
-
-        return jsonify(body), output["status"]
+        return jsonify(output), output["status"]
 
     elif action == "verify":
         # Email verification endpoint
