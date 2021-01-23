@@ -4,5 +4,5 @@ QUERY=${Q1}${1}${Q2}
 SOURCE_AMI=$(curl --location --request POST ${2}\
                 --header 'Content-Type: application/json' \
                 --header "x-hasura-admin-secret: ${3}" \
-                --data-raw "$QUERY" | grep -oE 'ami-[0-9a-z]+')
+                --data-raw "$QUERY")
 echo $SOURCE_AMI
