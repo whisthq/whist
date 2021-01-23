@@ -57,17 +57,10 @@ jobs:
               else
                 echo "db_url='http://dev-database.fractal.co/v1/graphql'" >> $GITHUB_ENV
               fi 
-          - name: Build query
-            working-directory: ecs-host-setup
-            run: echo "QUERY=$(bash build_query.sh ${{ env.source_region }})" >> $GITHUB_ENV
-          
           - name: Pull latest AMI from specified DB
+            working-directory: ecs-host-setup
             run: |
-              SOURCE_AMI=$(curl --location --request POST ${{ env.db_url }}\
-                                --header 'Content-Type: application/json' \
-                                --header 'x-hasura-admin-secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
-                                --data-raw "${{ env.QUERY }}" | grep -oE 'ami-[0-9a-z]+')
-              echo "source_ami=$SOURCE_AMI" >> $GITHUB_ENV
+              echo "SOURCE_AMI=$(bash build_query.sh ${{ env.source_region }} ${{ env.db_url }} ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }})" >> $GITHUB_ENV
 
           - name: Modify the ami_config.json with jq to the right values
             working-directory: ecs-host-setup
