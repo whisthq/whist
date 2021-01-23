@@ -12,6 +12,7 @@ from app.models import User
 
 
 def forgot_password_helper(username):
+    # returns access token if given user ends in @fractal.co for frontend testing purposes
     user = User.query.get(username)
 
     if user:
@@ -38,8 +39,13 @@ def forgot_password_helper(username):
             )
             return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
-        if ("@fractal.co" in username):
-            return jsonify({"verified": True, "token": token, "url": current_app.config["FRONTEND_URL"]})
+        if "@fractal.co" in username:
+            return (
+                jsonify(
+                    {"verified": True, "token": token, "url": current_app.config["FRONTEND_URL"]}
+                ),
+                SUCCESS,
+            )
         return jsonify({"verified": True}), SUCCESS
     else:
         return jsonify({"verified": False}), NOT_FOUND

@@ -23,6 +23,7 @@ from app.helpers.utils.general.auth import developer_required
 
 account_bp = Blueprint("account_bp", __name__)
 
+
 @account_bp.route("/account/delete", methods=["POST"])
 @fractal_pre_process
 @jwt_required
@@ -60,7 +61,8 @@ def account_post(action, **kwargs):
 
     elif action == "register":
         # Account creation endpoint
-        
+        # Only returns email verification, access, and refresh tokens if the username ends in @fractal.co for testing frontend integration tests
+
         username, password = body["username"], body["password"]
         name = body["name"]
         reason_for_signup = body["feedback"]
@@ -68,13 +70,10 @@ def account_post(action, **kwargs):
 
         output = register_helper(username, password, name, reason_for_signup, can_login)
 
-        if ("@fractal.co" in username):
+        if "@fractal.co" in username:
             return jsonify(output)
-         
+
         return jsonify(body), output["status"]
-
-
-        # return jsonify(output), output["status"]
 
     elif action == "verify":
         # Email verification endpoint
