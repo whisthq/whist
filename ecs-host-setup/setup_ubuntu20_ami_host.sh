@@ -5,7 +5,7 @@
 
 set -Eeuo pipefail
 
-# Suppress error with frontend
+# Set dkpg frontend as non-interactive to avoid irrelevant warnings
 echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
 sudo apt-get install -y -q
 
