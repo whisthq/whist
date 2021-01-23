@@ -89,42 +89,21 @@ jobs:
             working-directory: ecs-host-setup
             run: |
                 # create new AMI for aws_source_region
-                echo "new_ami=$(grep -oE 'ami-[0-9a-z]+' <<< $(packer build ami_config.json)" >> $GITHUB_ENV
+                echo "new_ami_id=$(grep -oE 'ami-[0-9a-z]+' <<< $(packer build ami_config.json)" >> $GITHUB_ENV
 
-                # update AMI for aws_source_region in appropriate database
+                # update AMI for aws_source_region in appropriate database to new AMI
                 curl -X POST \
                 -H "Content-Type: application/json" \
                 -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
+                --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${{ env.new_ami_id }}\\\" }, where: { region_name: { _eq: \\\"${{ env.aws_source_region }}\\\" } }) { returning { ami_id } } }\" }" \
+                ${{ env.graphql_db_url }}
 
-
-
-
-              # here's an example of mutation that works to help you
-              # --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
-              # https://config-database.fractal.co/v1/graphql
-
-
-
-                Q1='{"query":"mutation NewAMI($ami_id: String = \"'
-                Q2='\", $_eq: String = \"'
-                Q3='\") {\n  update_hardware_region_to_ami(where: {region_name: {_eq: $_eq}}, _set: {ami_id: $ami_id}) {\n    returning {\n      region_name\n      ami_id\n    }\n  }\n}","variables":{}}'
-                
-                # TODO: change after testing
-                # QUERY="${Q1}${{ env.new_ami }}$Q2${{ env.aws_source_region }}${Q3}"
-                QUERY="$Q1${{ env.new_ami }}$Q2 test-region $Q3"
-
-                curl --location --request POST "${{ env.db_url }}" \
-                    --header 'Content-Type: application/json' \
-                    --header 'x-hasura-admin-secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
-                    --data-raw "$QUERY"
-
-
+          - name: Copy New AMI to All Supported AWS Regions
+            working-directory: ecs-host-setup
+            run: |
 
 
           # TODO
-          - name: Copy AMI to all regions
-            working-directory: ecs-host-setup
-            run: |
               REGION=${{ matrix.aws-region }}
               AMI=$(grep -oE 'ami-[0-9a-z]+' <<< $(aws ec2 copy-image --source-image-id ${{ env.new_ami }} --source-region ${{ env.aws_source_region }} --region $REGION --name 'ami-$REGION-${{ env.commit_sha }}'))
 
