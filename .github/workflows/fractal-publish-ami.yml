@@ -59,14 +59,13 @@ jobs:
               fi 
           - name: Pull latest AMI from specified DB
             run: |
-              Q1='{"query":"query get_orig_ami {hardware_region_to_ami(where: {region_name: {_eq: \"'
-              Q2='\"}}) {ami_id}}","variables":{}}'
-              QUERY="${Q1}${{ env.source_region }}${Q2}"
-              SOURCE_AMI=$(curl --location --request POST ${{ env.db_url }}\
+              echo "Q1={"query":"query get_orig_ami {hardware_region_to_ami(where: {region_name: {_eq: \""" >> $GITHUB_ENV
+              echo "Q2=\"}}) {ami_id}}","variables":{}}" >> $GITHUB_ENV
+              echo "QUERY=${env.Q1}${{ env.source_region }}${env.Q2}" >> $GITHUB_ENV
+              echo "source_ami=$(curl --location --request POST ${{ env.db_url }}\
                                 --header 'Content-Type: application/json' \
                                 --header 'x-hasura-admin-secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY }}' \
-                                --data-raw "$QUERY" | grep -oE 'ami-[0-9a-z]+')
-              echo "source_ami=$SOURCE_AMI" >> $GITHUB_ENV
+                                --data-raw "$QUERY" | grep -oE 'ami-[0-9a-z]+')" >> $GITHUB_ENV
 
           - name: Modify the ami_config.json with jq to the right values
             working-directory: ecs-host-setup
