@@ -1,7 +1,7 @@
 # workflows/workflows-linting.yml
 #
 # Workflows: Linting
-# Lint workflows using Prettier.
+# Lint YAML workflows using Prettier.
 
 name: "Workflows: Linting"
 
@@ -36,4 +36,5 @@ jobs:
               run: npm install -g prettier
 
             - name: Check if Code is Formatted
-              run: cd .github/workflows && prettier --check '*.yml'
+              working-directory: .github/workflows
+              run: prettier --check '*.yml'

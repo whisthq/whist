@@ -15,13 +15,14 @@ on:
         paths:
             - "ecs-host-service/**"
             - "!ecs-host-service/README.md"
+            - ".github/workflows/ecs-host-service-check-pr.yml"
     workflow_dispatch:
 
 jobs:
     # Linting
     # Checks for formatting using Goimports.
     ecs-host-service-check-pr-linting:
-        name: ECS Host Service Linting
+        name: Linting
         runs-on: ubuntu-20.04
 
         steps:
@@ -49,7 +50,7 @@ jobs:
     # Building
     # Check that the ECS Host Service builds.
     ecs-host-service-check-pr-building:
-        name: ECS Host Service Building
+        name: Building
         runs-on: ubuntu-20.04
 
         steps:
@@ -64,9 +65,9 @@ jobs:
               run: make deps
 
             - name: Build Go project
-              working-directory: ecs-host-service
               env:
                   WEBSERVER_AUTH_SECRET_DEV: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_DEV }}
                   WEBSERVER_AUTH_SECRET_STAGING: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_STAGING }}
                   WEBSERVER_AUTH_SECRET_PROD: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_PROD }}
+              working-directory: ecs-host-service
               run: make build
