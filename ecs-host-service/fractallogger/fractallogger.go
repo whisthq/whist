@@ -18,7 +18,7 @@ func Sprintf(format string, v ...interface{}) string {
 	return fmt.Sprintf(format, v...)
 }
 
-// Log an error and send it to sentry.
+// Log an error and send it to Sentry.
 func Error(err error) {
 	errstr := fmt.Sprintf("ERROR: %v", err)
 	log.Println(errstr)
@@ -57,6 +57,7 @@ func Infof(format string, v ...interface{}) {
 	Info(format, v...)
 }
 
+// Print the stack trace, for debugging purposes.
 func PrintStackTrace() {
 	Info("Printing stack trace: ")
 	debug.PrintStack()

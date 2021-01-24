@@ -164,7 +164,7 @@ After doing this, you might have to restart your terminal or IDE, after which yo
 
 ### Building
 
-If you are on Linux Ubuntu, run `desktop/linux-client-setup.sh` to install the system dependencies.
+If you are on Linux Ubuntu, run `setup-linux-build-environment.sh` to install the system dependencies.
 
 Downloading precompiled binaries from S3 will require the AWS CLI to be installed and set up on your machine. If you want to manually retrieve the binaries and retrieve the binaries by other means, run cmake with the `-D DOWNLOAD_BINARIES=OFF` option. Make sure you run cmake with this option _after_ you have already downloaded your files from S3 into the proper locations.
 

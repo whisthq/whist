@@ -9,7 +9,7 @@ import (
 	"time"
 
 	// We use this package instead of the standard library log so that we never
-	// forget to send a message via sentry.  For the same reason, we make sure
+	// forget to send a message via Sentry. For the same reason, we make sure
 	// not to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"

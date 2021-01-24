@@ -9,11 +9,11 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-// InitializeSentry initializes sentry for use.
+// InitializeSentry initializes Sentry for use.
 func InitializeSentry() error {
 	// Only set up Sentry to log events if running in production
 	strProd := os.Getenv("USE_PROD_SENTRY")
-	// We want to use the production sentry config if we run with that
+	// We want to use the production Sentry config if we run with that
 	// environment variable, or if we are actually running in production.
 	useProdSentry := (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (GetAppEnvironment() == EnvProd)
 	if useProdSentry {
