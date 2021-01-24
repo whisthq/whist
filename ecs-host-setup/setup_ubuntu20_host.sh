@@ -1,20 +1,33 @@
 #!/bin/bash
+
 set -Eeuo pipefail
+
+
+
+# This script 
+
+
+
+
+
 
 # If we run this script as root, then the "ubuntu"/default user will not be
 # added to the "docker" group, only root will.
-if [ "$EUID" -eq 0 ]
-    then echo "Do not run this script as root!"
+if [ "$EUID" -eq 0 ]; then
+    echo "This script cannot be run as root!"
     exit
 fi
 
 echo "================================================"
-echo "Replacing potentially outdated docker runtime..."
+echo "Replacing potentially outdated Docker runtime..."
 echo "================================================"
 
-# Allow failure with ||:
+# Attempt to remove potentially oudated Docker runtime
+# Allow failure with ||:, in case they're not installed yet
 sudo apt-get remove docker docker-engine docker.io containerd runc ||:
 sudo apt-get update
+
+# Install latest Docker runtime and dependencies
 sudo apt-get install -y apt-transport-https ca-certificates curl wget gnupg-agent software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo apt-key fingerprint 0EBFCD88
@@ -25,7 +38,7 @@ sudo add-apt-repository \
 sudo apt-get update -y
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 
-# Docker group might already exist, so we allow failure with "||:"
+# Attempt to Add Docker group, but allow failure with "||:" in case it already exists
 sudo groupadd docker ||:
 sudo gpasswd -a $USER docker
 
@@ -36,10 +49,13 @@ echo "================================================"
 sudo apt install -y awscli
 
 echo "================================================"
-echo "Installing nvidia drivers..."
+echo "Installing NVIDIA drivers..."
 echo "================================================"
 
+# Install Linux headers
 sudo apt-get install -y gcc make linux-headers-$(uname -r)
+
+# Blacklist some Linux kernel modules that would block NVIDIA drivers
 cat << EOF | sudo tee --append /etc/modprobe.d/blacklist.conf
 blacklist vga16fb
 blacklist nouveau
@@ -51,6 +67,8 @@ sudo sed -i 's/GRUB_CMDLINE_LINUX=""/# GRUB_CMDLINE_LINUX=""/g' /etc/default/gru
 cat << EOF | sudo tee --append /etc/default/grub
 GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
+
+# Install NVIDIA GRID (virtualized GPU) drivers
 ./get-nvidia-driver-installer.sh
 sudo chmod +x nvidia-driver-installer.run
 sudo ./nvidia-driver-installer.run --silent
@@ -58,13 +76,16 @@ sudo rm nvidia-driver-installer.run
 
 echo "================================================"
 echo "Installing nvidia-docker..."
-echo "Note that (as of 10/5/20) the URLs may still say 18.04. This is because"
-echo "NVIDIA has redirected the corresponding 20.04 URLs to the 18.04 versions."
+echo "Note that (as of 10/5/20) the URLs may still say Ubuntu 18.04. This is because"
+echo "NVIDIA has redirected the corresponding Ubuntu 20.04 URLs to the 18.04 versions."
 echo "================================================"
 
+# Source nvidia-docker apt package
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+# Install nvidia-docker via apt
 sudo apt-get update
 sudo apt-get install -y nvidia-docker2
 
@@ -72,9 +93,11 @@ echo "================================================"
 echo "Configuring Docker daemon..."
 echo "================================================"
 
+# Set custom seccomp filter
 sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
 sudo cp docker-daemon-config/seccomp-filter.json /etc/docker/seccomp-filter.json
-# disable Docker (see README.md)
+
+# Disable Docker (see README.md)
 sudo systemctl restart docker
 sudo systemctl disable --now docker
 
@@ -82,20 +105,20 @@ echo "================================================"
 echo "Installing Cloud Storage Dependencies..."
 echo "================================================"
 
-sudo apt install -y rclone openssl
+sudo apt-get install -y rclone openssl
 
 echo "================================================"
 echo "Installing Other Utilities..."
 echo "================================================"
 
-sudo apt install -y lsof
+sudo apt-get install -y lsof
 
 echo "================================================"
 echo "Cleaning up the image a bit..."
 echo "================================================"
 
-sudo apt autoremove
+sudo apt-get autoremove
 
 echo
-echo 'Install complete. Please "sudo reboot" before continuing.'
+echo "Install complete. Please 'sudo reboot' before continuing."
 echo
