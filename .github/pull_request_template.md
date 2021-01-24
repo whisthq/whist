@@ -8,15 +8,11 @@ Give a brief description and context of what you are working on.
 
 ## Implementation / Approach
 
-Briefly describe your approach, design, implementation to solve the problem if applicable.
+Briefly describe your approach, design, and implementation to solve the problem, if applicable.
 
 ## Tests
 
 List all the possible scenarios/edge cases that you tested.
-
-## Documentation
-
-List the documentation that you have written to support your code.
 
 ## Checklist
 
