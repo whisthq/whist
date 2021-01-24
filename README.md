@@ -20,8 +20,6 @@ This repository contains the end-to-end code for the Fractal Application Streami
   - [Useful Monorepo git Tricks](#useful-monorepo-git-tricks)
   - [Example of Bad Commit History](#example-of-bad-commit-history)
 
-
-
 All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
 
 | Browsers         | Creative   | Productivity |
@@ -33,12 +31,7 @@ All of the following applications are based off of the **Ubuntu 20.04 Base Image
 |                  | Gimp       |              |
 |                  | Lightworks |              |
 
-
-
 Note that before your new task definition is ready to go into production, you need to also edit the database with the app's logo, terms of service link, description, task definition link, etc.
-
-
-
 
 # ===
 
@@ -84,12 +77,12 @@ This monorepo contains 8 Fractal subrepos:
 - protocol
 
 | Subrepo name         | Subrepo description                                                                                                                                                                                                                                                                                                                      |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
 | client-applications  | This contains the client-side Electron App that users will download and use to launch the protocol in a user-friendly manner                                                                                                                                                                                                             |
 | container-images     | This contains Dockerfiles that are used for creating Fractal containers. There is a Dockerfile for Chrome, for Figma, for Blender, etc.                                                                                                                                                                                                  |
 | ecs-host-service     | A helper service that manages the state of the many Fractal containers that may be running on any given host                                                                                                                                                                                                                             |
 | ecs-host-setup       | This contains scripts to setup an EC2 Host Machine as a machine to host clusters of Fractal containers. This will install dependencies, and ecs-host-service, among other things                                                                                                                                                         |
-| ecs-task-definitions | This contains the JSON task definitions for each of the applications we stream via containers on AWS ECS                                                                                                                                                                                                                                 |                                                                                                                                                                                                        |
+| ecs-task-definitions | This contains the JSON task definitions for each of the applications we stream via containers on AWS ECS                                                                                                                                                                                                                                 |     |
 | main-webserver       | This contains the REST API for managing our containers, along with providing back-end support for front-end features                                                                                                                                                                                                                     |
 | protocol             | This contains the C code for Client and Server of the protocol. If the Server is running on one machine, and the Client on another machine having been given the IP address of the Server, then the Client will open up a window that allows one to interact with the Server at low-latency 60 FPS. This program is run via commandline. |
 
