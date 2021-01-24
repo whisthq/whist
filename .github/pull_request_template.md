@@ -12,11 +12,11 @@ Briefly describe your approach, design, and implementation to solve the problem,
 
 ## Tests
 
-List all the possible scenarios/edge cases that you tested.
+List all the possible scenarios/edge cases that you tested and the programmatic tests you wrote.
 
 ## Checklist
 
 - [ ] Appropriate documentation coverage
-- [ ] Appropriate unit test coverage
+- [ ] Appropriate unit and integration test coverage
 - [ ] Manual testing has been performed
 - [ ] This PR is linted, tested and follows the best practices of the organization

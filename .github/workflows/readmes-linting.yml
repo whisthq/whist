@@ -1,6 +1,6 @@
 # workflows/readmes-linting.yml
 #
-# Readmes: Linting
+# READMEs: Linting
 # Lint READMEs using Prettier.
 
 name: "READMEs: Linting"
@@ -37,4 +37,4 @@ jobs:
               run: npm install -g prettier
 
             - name: Check if READMEs are Formatted
-              run: prettier --check '**/README.md' # prettier glob syntax hits all READMEs with this
+              run: prettier --check '**/README.md' # Prettier glob syntax hits all READMEs with this
