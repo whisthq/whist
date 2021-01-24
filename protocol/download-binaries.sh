@@ -53,4 +53,13 @@ mkdir lib/64/SDL2/Windows
 aws s3 cp s3://fractal-protocol-shared-libs/fractal-windows-sdl2-static-lib.tar.gz - | tar xz -C lib/64/SDL2/Windows
 
 ###############################
+# Download OpenSSL libraries
+###############################
+
+# Emscripten
+mkdir lib/64/openssl
+mkdir lib/64/openssl/Emscripten
+aws s3 cp s3://fractal-protocol-shared-libs/fractal-emscripten-libcrypto.tar.gz - | tar xz -C lib/64/openssl/Emscripten
+
+###############################
 echo "Download Completed"
