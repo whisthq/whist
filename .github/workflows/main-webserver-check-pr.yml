@@ -16,6 +16,7 @@ on:
             - "main-webserver/**"
             - "!main-webserver/README.md"
             - ".github/workflows/main-webserver-check-pr.yml"
+    workflow_dispatch:
 
 jobs:
     # Linting
@@ -34,23 +35,26 @@ jobs:
                   python-version: 3.8
 
             - name: Upgrade pip
-              run: cd main-webserver && pip install --upgrade pip
+              working-directory: main-webserver
+              run: pip install --upgrade pip
 
             - name: Install Dependencies
-              run: cd main-webserver && pip install -r requirements.txt -r requirements-test.txt
+              working-directory: main-webserver
+              run: pip install -r requirements.txt -r requirements-test.txt
 
-            - name: Check if code is linted with Python Black
+            - name: Check if Code is Linted with Python Black
+              working-directory: main-webserver
               run: |
-                  cd main-webserver
-                  result=$(black . --check) # black --check returns 0 if the code is already linted
+                  result=$(black . --check) # Returns 0 if the code is already linted
                   if [ "$result" -ne "0" ]; then
                     (echo "To pass this check please lint the code with Python Black" && false)
                   else
                     (echo "Code is linted with Python Black" && true)
                   fi
 
-            - name: Check if code matches Pylint standards
-              run: cd main-webserver && pylint app # Returns 0 iff code is linted
+            - name: Check if Code Matches Pylint Standards
+              working-directory: main-webserver
+              run: pylint app # Returns 0 iff code is linted
 
     # Heroku Testing
     # Checks unit tests on the Heroku pipeline.
@@ -62,9 +66,10 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
-                  ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch not just the commit for Heroku CI to work
+                  ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
 
             - name: Run Tests on Heroku
-              run: cd main-webserver && heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
+              working-directory: main-webserver
+              run: heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}

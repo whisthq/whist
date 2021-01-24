@@ -1,6 +1,6 @@
 # Fractal GitHub Actions Workflows
 
-This repository contains the YAML workflow files for our GitHub Actions workflows. These workflows are integral to our continuous integration, handling everything from tests to building and deployment to cron jobs for cleanup and analysis.
+This subfolder contains the YAML workflow files for our GitHub Actions workflows. These workflows are integral to our continuous integration, handling everything from tests to building and deployment to cron jobs for cleanup and analysis.
 
 ## Syntax
 
@@ -74,10 +74,8 @@ Below this, you can optionally specify input parameters. Then, navigate to the p
 
 ## Contributing
 
-Workflows should almost always be merged to `dev`, not to `master`. When a PR is opened, the workflows that are run are those in the new head branch; there is usually no reason for these to be merged up to `master` prematurely.
-
-Of course, there are significant cases in which this does not apply. If you know what you're doing, go ahead and PR to `master`; if you don't, please reach out to others to quickly figure things out.
+Since we use `dev` as our head branch, there is usually no reason for workflows to be merged up to `master` prematurely. Simply create your workflow, test it manually via `workflow_dispatch` or via setting it to run on `push` to your feature branch, and then PR it to `dev` as usual. 
 
 ## Documentation
 
-When writing a complicated workflow, or when you figure out how a confusing undocumented workflow works, please open a PR to dev documenting the details of that workflow below.
+When writing a complicated workflow, or when you figure out how a confusing undocumented workflow works, please open a PR to `dev` documenting the details of that workflow below.

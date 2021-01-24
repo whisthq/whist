@@ -1,7 +1,7 @@
 # workflows/container-images-build-images.yml
 #
 # Container Images: Build Images
-# Build docker images to test that they actually build.
+# Build Docker images to test that they actually build.
 
 name: "Container Images: Build Images"
 
@@ -42,7 +42,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Walk repo to find all dockerfiles and store path as env variable
+            - name: Walk repo to find all Dockerfiles and store path as env variable
               run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
             - name: Build container images

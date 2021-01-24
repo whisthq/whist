@@ -112,8 +112,10 @@ jobs:
               shell: bash
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
-                      sudo apt update
+                      # update apt before installing packages to avoid package not found errors
+                      sudo apt-get update
 
+                      # install Linux protocol dependencies
                       ./protocol/desktop/linux-client-setup.sh
 
                       # install clang-tidy, coreutils for realpath, and perl

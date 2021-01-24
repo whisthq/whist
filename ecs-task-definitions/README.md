@@ -1,12 +1,12 @@
-# ECS Task Definitions
+# Fractal ECS Task Definitions
 
-This folder contains the code to generate ECS task definitions for each of the applications we stream in containers on AWS Elastic Container Service. On ECS, each container image needs an associated task definition, which is why we need an ECS task definition for each application we containerize.
+This subfolder contains the code to generate ECS task definitions for each of the applications we stream in containers on AWS Elastic Container Service (ECS). On ECS, each container image needs an associated task definition, which is why we need an ECS task definition for each application we containerize.
 
 ## Generating Task Definitions
 
-You can generate a task definition for a specific application from `fractal-taskdef-template.json` by running `./generate_taskdefs.sh [APP]`. For example, `./generate_taskdefs.sh chrome` will generate a task definition for running a Chrome container on ECS.
+You can generate a task definition for a specific application from `fractal-taskdef-template.json` by running `./generate_taskdefs.sh [APP]`. For example, `./generate_taskdefs.sh chrome` will generate a task definition to be associatd with a Chrome container for running on ECS.
 
-This script assumes that the application you generate a task definition for does not require any specific parameters that are application-specific to be set in the task definition JSON. If it does, you will need to modify `generate_taskdefs.sh`. 
+This script assumes that the application you generate a task definition for does not require any specific parameters that are application-specific to be set in the task definition JSON. If it does, you will need to modify `generate_taskdefs.sh` script to do more than simply set the name of the task definition family. 
 
 ## Design Decisions
 
@@ -14,4 +14,4 @@ Note that the `:rshared` string in the cloud storage mount point is an instance 
 
 ## Publishing
 
-Task definitions get automatically published to AWS ECS through the `build-and-publish.yml` GitHub Actions workflow for all applications specified in the YAML workflow to all AWS regions specified in the YAML workflow.
+Task definitions for all currently supported apps get automatically published to AWS ECS through the `build-and-publish.yml` GitHub Actions workflow. See `build-and-publish.yml` for the exact list of applications and AWS regions supported.

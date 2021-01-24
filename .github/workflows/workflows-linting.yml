@@ -16,6 +16,7 @@ on:
             - ".github/workflows/**"
             - "!.github/workflows/README.md"
             - ".github/workflows/workflows-linting.yml"
+    workflow_dispatch:
 
 jobs:
     workflows-linting-main:

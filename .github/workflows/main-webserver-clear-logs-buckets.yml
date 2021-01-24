@@ -24,7 +24,7 @@ jobs:
                   AWS_S3_BUCKET: fractal-protocol-logs
                   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
-                  AWS_REGION: "us-east-1"
+                  AWS_REGION: us-east-1
 
     main-webserver-clear-container-outputs:
         name: Empty Container Outputs from S3 Bucket
@@ -39,7 +39,7 @@ jobs:
                   AWS_S3_BUCKET: fractal-container-outputs
                   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
-                  AWS_REGION: "us-east-2"
+                  AWS_REGION: us-east-2
 
     notify-slack:
         name: Notify Slack
