@@ -25,16 +25,14 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
 
             - name: Install Node.js 12
               uses: actions/setup-node@v1
               with:
                   node-version: 12
 
-            - name: Install Prettier # should match version in client-applications/package.json devDependencies
+            - name: Install Prettier
               run: npm install -g prettier
 
-            - name: Check if code is formatted
+            - name: Check if Code is Formatted
               run: cd .github/workflows && prettier --check '*.yml'

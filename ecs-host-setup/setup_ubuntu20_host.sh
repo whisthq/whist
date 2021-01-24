@@ -11,6 +11,7 @@ fi
 echo "================================================"
 echo "Replacing potentially outdated docker runtime..."
 echo "================================================"
+
 # Allow failure with ||:
 sudo apt-get remove docker docker-engine docker.io containerd runc ||:
 sudo apt-get update
@@ -31,6 +32,7 @@ sudo gpasswd -a $USER docker
 echo "================================================"
 echo "Installing AWS CLI..."
 echo "================================================"
+
 sudo apt install -y awscli
 
 echo "================================================"
@@ -59,6 +61,7 @@ echo "Installing nvidia-docker..."
 echo "Note that (as of 10/5/20) the URLs may still say 18.04. This is because"
 echo "NVIDIA has redirected the corresponding 20.04 URLs to the 18.04 versions."
 echo "================================================"
+
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
@@ -66,8 +69,9 @@ sudo apt-get update
 sudo apt-get install -y nvidia-docker2
 
 echo "================================================"
-echo "Configuring docker daemon..."
+echo "Configuring Docker daemon..."
 echo "================================================"
+
 sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
 sudo cp docker-daemon-config/seccomp-filter.json /etc/docker/seccomp-filter.json
 # disable Docker (see README.md)
@@ -77,18 +81,21 @@ sudo systemctl disable --now docker
 echo "================================================"
 echo "Installing Cloud Storage Dependencies..."
 echo "================================================"
+
 sudo apt install -y rclone openssl
 
 echo "================================================"
 echo "Installing Other Utilities..."
 echo "================================================"
+
 sudo apt install -y lsof
 
 echo "================================================"
 echo "Cleaning up the image a bit..."
 echo "================================================"
+
 sudo apt autoremove
 
 echo
-echo 'Install complete. Please "sudo reboot" before continuing'
+echo 'Install complete. Please "sudo reboot" before continuing.'
 echo
