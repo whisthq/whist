@@ -615,10 +615,9 @@ int32_t send_video(void* opaque) {
                     frame->is_iframe = encoder->is_iframe;
                     video_encoder_write_buffer(encoder, (void*)frame->compressed_frame);
 
-                    // mprintf("Sent video packet %d (Size: %d) %s\n", id,
-                    // encoder->encoded_frame_size, frame->is_iframe ?
-                    // "(I-frame)" :
-                    // "");
+                    LOG_INFO("Sending video frame %d (Size: %d) %s\n", id,
+                             encoder->encoded_frame_size, frame->is_iframe ? "(I-frame)" : "");
+
                     PeerUpdateMessage* peer_update_msgs =
                         (PeerUpdateMessage*)(((char*)frame->compressed_frame) + frame->size);
 
