@@ -225,11 +225,11 @@ void update() {
     // If the code has triggered a mbps update, then notify the server of the
     // newly desired mbps
     if (update_mbps) {
-        update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_bitrate / (double)BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE;
         LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
         send_fmsg(&fmsg);
+        update_mbps = false;
     }
 
     // If it's been 1 second since the last ping, we should warn

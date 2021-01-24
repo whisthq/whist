@@ -893,6 +893,10 @@ void update_video() {
         video_data.nack_by_bitrate[video_data.bucket] += video_data.num_nacked;
         video_data.seconds_by_bitrate[video_data.bucket] += time;
 
+        LOG_INFO("*******************");
+        LOG_INFO("*******************");
+        LOG_INFO("*******************");
+        LOG_INFO("*******************");
         LOG_INFO("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====",
                  video_data.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
 
@@ -936,13 +940,15 @@ void update_video() {
         video_data.bucket = (int)video_data.target_mbps / BITRATE_BUCKET_SIZE;
         max_bitrate = (int)video_data.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
 
-        LOG_INFO("MBPS3: %d", max_bitrate);
+        LOG_INFO("final calculated MBPS: %d", max_bitrate);
         video_data.num_nacked = 0;
 
         video_data.bytes_transferred = 0;
         video_data.frames_received = 0;
         video_data.last_statistics_id = video_data.max_id;
         start_timer(&video_data.frame_timer);
+
+        update_mbps = false;
     }
 
     if (video_data.last_rendered_id == -1 && video_data.most_recent_iframe > 0) {

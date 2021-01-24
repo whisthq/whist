@@ -144,9 +144,9 @@ static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_
 static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     UNUSED(client_id);
     if (!is_controlling) return 0;
-    LOG_INFO("MSG RECEIVED FOR MBPS: %f", fmsg->mbps);
+    LOG_INFO("Message receive to update MBPS: %f mbps", fmsg->mbps);
     max_mbps = max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
-    // update_encoder = true;
+    update_encoder = true;
     return 0;
 }
 

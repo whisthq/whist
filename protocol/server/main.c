@@ -548,8 +548,9 @@ int32_t send_video(void* opaque) {
             bytes_tested_frames += encoder->encoded_frame_size;
 
             if (encoder->encoded_frame_size != 0) {
-                double delay = -1.0;
+                // double delay = -1.0;
 
+                /*
                 if (previous_frame_size > 0) {
                     double frame_time = get_timer(previous_frame_time);
                     start_timer(&previous_frame_time);
@@ -594,6 +595,7 @@ int32_t send_video(void* opaque) {
                         }
                     }
                 }
+                */
 
                 int frame_size = sizeof(Frame) + encoder->encoded_frame_size;
                 if (frame_size > LARGEST_FRAME_SIZE) {
@@ -648,7 +650,7 @@ int32_t send_video(void* opaque) {
                     // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
                     // get_timer( t ), frame_size );
 
-                    previous_frame_size = encoder->encoded_frame_size;
+                    // previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time =
                     // get_timer(server_frame_timer); mprintf("Server Frame
                     // Time for ID %d: %f\n", id, server_frame_time);
