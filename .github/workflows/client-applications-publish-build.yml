@@ -26,9 +26,9 @@ jobs:
             matrix:
                 config:
                     - name: "Build and Publish Fractal Windows Desktop Application to Production"
-                      os: windows-2016
+                      os: windows-2016 # cmake is pre-installed on windows-2016+ GHA machines
                     - name: "Build and Publish Fractal macOS Desktop Application to Production"
-                      os: macos-10.14
+                      os: macos-10.14 # cmake is pre-installed on macos-10.14+ machines
 
         steps:
             - name: Checkout Git Repository
@@ -50,8 +50,8 @@ jobs:
             - name: Install CUDA on Windows GHA Machine
               if: runner.os == 'Windows'
               env:
-                  visual_studio: "Visual Studio 16 2019" # Imported from env in the .ps1 script
-                  cuda: "11.0.167" # Imported from env in the .ps1 script
+                  visual_studio: "Visual Studio 16 2019" # Imported from env in the install_cuda_windows.ps1
+                  cuda: "11.0.167" # Imported from env in install_cuda_windows.ps1
               shell: powershell
               run: |
                   .\.github\workflows\helpers\protocol\install_cuda_windows.ps1
@@ -93,8 +93,6 @@ jobs:
               with:
                   p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
                   p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
-
-            # cmake is already installed on GHA Machines
 
             - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
               if: runner.os == 'Linux'
