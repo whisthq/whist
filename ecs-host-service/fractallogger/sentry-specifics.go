@@ -17,9 +17,9 @@ func InitializeSentry() error {
 	// environment variable, or if we are actually running in production.
 	useProdSentry := (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (GetAppEnvironment() == EnvProd)
 	if useProdSentry {
-		log.Print("Using production sentry configuration.")
+		log.Print("Using production Sentry configuration.")
 	} else {
-		log.Print("Not production - not setting up sentry")
+		log.Print("Not production - not setting up Sentry")
 		return nil
 	}
 
@@ -31,7 +31,7 @@ func InitializeSentry() error {
 	if err != nil {
 		return MakeError("Error calling Sentry.init: %v", err)
 	}
-	log.Printf("Set sentry release to git commit hash: %s", GetGitCommit())
+	log.Printf("Set Sentry release to git commit hash: %s", GetGitCommit())
 
 	// Configure Sentry's scope with some instance-specific information
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
@@ -44,42 +44,42 @@ func InitializeSentry() error {
 			defer Errorf("Unable to set Sentry tag aws.ami-id: %v", err)
 		} else {
 			scope.SetTag("aws.ami-id", val)
-			log.Printf("Set sentry tag aws.ami-id: %s", val)
+			log.Printf("Set Sentry tag aws.ami-id: %s", val)
 		}
 
 		if val, err := GetAwsAmiLaunchIndex(); err != nil {
 			defer Errorf("Unable to set Sentry tag aws.ami-launch-index: %v", err)
 		} else {
 			scope.SetTag("aws.ami-launch-index", val)
-			log.Printf("Set sentry tag aws.ami-launch-index: %s", val)
+			log.Printf("Set Sentry tag aws.ami-launch-index: %s", val)
 		}
 
 		if val, err := GetAwsInstanceID(); err != nil {
 			defer Errorf("Unable to set Sentry tag aws.instance-id: %v", err)
 		} else {
 			scope.SetTag("aws.instance-id", val)
-			log.Printf("Set sentry tag aws.instance-id: %s", val)
+			log.Printf("Set Sentry tag aws.instance-id: %s", val)
 		}
 
 		if val, err := GetAwsInstanceType(); err != nil {
 			defer Errorf("Unable to set Sentry tag aws.instance-type: %v", err)
 		} else {
 			scope.SetTag("aws.instance-type", val)
-			log.Printf("Set sentry tag aws.instance-type: %s", val)
+			log.Printf("Set Sentry tag aws.instance-type: %s", val)
 		}
 
 		if val, err := GetAwsPlacementRegion(); err != nil {
 			defer Errorf("Unable to set Sentry tag aws.placement-region: %v", err)
 		} else {
 			scope.SetTag("aws.placement-region", val)
-			log.Printf("Set sentry tag aws.placement-region: %s", val)
+			log.Printf("Set Sentry tag aws.placement-region: %s", val)
 		}
 
 		if val, err := GetAwsPublicIpv4(); err != nil {
 			defer Errorf("Unable to set Sentry tag aws.public-ipv4: %v", err)
 		} else {
 			scope.SetTag("aws.public-ipv4", val)
-			log.Printf("Set sentry tag aws.public-ipv4: %s", val)
+			log.Printf("Set Sentry tag aws.public-ipv4: %s", val)
 		}
 	})
 	return nil
