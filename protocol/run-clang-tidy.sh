@@ -1,12 +1,11 @@
 #!/bin/bash
 
+# This script runs clang-tidy to check for C coding standards and linting, and propose
+# edits if it finds areas for improvements.
 
-
-# This script runs clang-tidy to 
-
-# this can only be run if compile_commands.json exists:
+# This script can only be run if compile_commands.json exists:
 #   set(CMAKE_EXPORT_COMPILE_COMMANDS ON) must be set in CMakeLists.txt
-# this must be run after calling make within desktop (and server, if applicable)
+# This script can only be run after calling make within /desktop (and /server, if applicable)
 
 # run with option -c for CI check without replacement option
 OPTIND=1
@@ -24,7 +23,7 @@ shift $((OPTIND-1))
 
 [ "${1:-}" = "--" ] && shift
 
-# find machine type (necessary for pwd behavior)
+# find machine type (necessary for appropriate pwd behavior)
 isWindows=0
 unameOut="$(uname -s)"
 case "${unameOut}" in
@@ -39,6 +38,7 @@ declare -a includeFolders=(
     "server"
 )
 
+# 
 yamlFolder="fixes"
 mkdir $yamlFolder
 fixesFilename=clang-tidy-fixes.yaml
@@ -59,7 +59,7 @@ do
     done
 done
 
-# header files to be included in clang-tidy (don't want to include third-party folders)
+# header files to be included in clang-tidy (we don't want to include third-party folders, only our code)
 headerFilter="desktop/|fractal/|server/"
 
 clang-tidy -header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix

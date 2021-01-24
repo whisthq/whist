@@ -3,7 +3,7 @@
 # ECS Host Service: Linting
 # Lint ECS Host Service using Goimports.
 
-name: "READMEs: Linting"
+name: "ECS Host Service: Linting"
 
 on:
     pull_request:
