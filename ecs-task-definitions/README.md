@@ -1,39 +1,17 @@
-# Fractal ECS Task Definitions
+# ECS Task Definitions
 
-This repository contains the JSON task definitions for each of the applications we stream via containers on AWS Elastic Container Service. Each application we stream has its dedicated JSON task definition.
-
-You can retrieve the JSON of a task definition directly in the AWS console when manually testing and developing a new task ahead of production release, and then add it here for version-tracking or simply base it on the existing task definitions.
-
-### Supported Applications
-
-All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
-
-| Browsers         | Creative   | Productivity |
-| ---------------- | ---------- | ------------ |
-| Google Chrome    | Blender    | Slack        |
-| Mozilla Firefox  | Blockbench | Notion       |
-| Brave Browser    | Figma      | Discord      |
-| Sidekick Browser | TextureLab |              |
-|                  | Gimp       |              |
-|                  | Lightworks |              |
+This folder contains the code to generate ECS task definitions for each of the applications we stream in containers on AWS Elastic Container Service. On ECS, each container image needs an associated task definition, which is why we need an ECS task definition for each application we containerize.
 
 ## Generating Task Definitions
 
-You can generate the task definitions from `fractal-base.json` by running `./generate_taskdefs.sh`.
+You can generate a task definition for a specific application from `fractal-taskdef-template.json` by running `./generate_taskdefs.sh [APP]`. For example, `./generate_taskdefs.sh chrome` will generate a task definition for running a Chrome container on ECS.
 
-## Adding New Task Definitions
-
-To add a new task definition, first ensure that support was added for the specific application on the `container-images` repository.
-
-Once that done, add the application to the `apps` array in `generate_taskdefs.sh` as `fractal-[folder-name-on-container-images]-[application-name]`, alongside with any app-specific tags that need to be modified from the `fractal-base.json` template, in the for loop. Lastly, add your newly-supported application to the `app` list in `.github/workflows/render-and-deploy.yml` as `fractal/[folder-name-on-container-images]/[application-name]`, i.e. `fractal/browsers/chrome`, and you'll be all set to auto-deploy this new task definition on AWS via GitHub Actions! Note that before your new task definition is ready to go into production, you need to also edit the database with the app's logo, terms of service link, description, task definition link, etc.
-
-## Publishing & Continous Integration
-
-For every push to `main`, all the task definitions specified in `.github/workflows/render-and-deploy.yml`, which should be all task definition JSONs in this repository, will be automatically rendered and deployed to all supported AWS regions listed under `aws-regions` in `.github/workflows/render-and-deploy.yml`.
-
-On top of that, whenever there is a push to `master` on the `container-images` repository, all task definitions specified in `.github/workflows/render-and-deploy.yml` will be rendered and deployed automatically to update the task definition tags to point to the newly-deployed container images.
+This script assumes that the application you generate a task definition for does not require any specific parameters that are application-specific to be set in the task definition JSON. If it does, you will need to modify `generate_taskdefs.sh`. 
 
 ## Design Decisions
 
-Note that the `:rshared` string in the cloud storage mount point is an instance of us using this undocumented hack in AWS: https://github.com/aws/containers-roadmap/issues/362
-However, it's been around since 2017, so hopefully it doesn't get patched out before we transition to multicloud/running Docker containers ourselves.
+Note that the `:rshared` string in the cloud storage mount point is an instance of us using this undocumented hack in AWS: [https://github.com/aws/containers-roadmap/issues/362](https://github.com/aws/containers-roadmap/issues/362). However, it's been around since 2017, so hopefully it doesn't get patched out before we transition to multicloud with Kubernetes/running Docker containers ourselves to bypass the ECS task definitions.
+
+## Publishing
+
+Task definitions get automatically published to AWS ECS through the `build-and-publish.yml` GitHub Actions workflow for all applications specified in the YAML workflow to all AWS regions specified in the YAML workflow.

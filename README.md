@@ -20,6 +20,26 @@ This repository contains the end-to-end code for the Fractal Application Streami
   - [Useful Monorepo git Tricks](#useful-monorepo-git-tricks)
   - [Example of Bad Commit History](#example-of-bad-commit-history)
 
+
+
+All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
+
+| Browsers         | Creative   | Productivity |
+| ---------------- | ---------- | ------------ |
+| Google Chrome    | Blender    | Slack        |
+| Mozilla Firefox  | Blockbench | Notion       |
+| Brave Browser    | Figma      | Discord      |
+| Sidekick Browser | TextureLab |              |
+|                  | Gimp       |              |
+|                  | Lightworks |              |
+
+
+
+Note that before your new task definition is ready to go into production, you need to also edit the database with the app's logo, terms of service link, description, task definition link, etc.
+
+
+
+
 # ===
 
 ## Introduction
