@@ -49,9 +49,7 @@ def event_val_num(event, textkey):
         # in our case should happen in the case of a datetime object (really timedelta)3
         # because we can only strptime with datetime we do this (get a timedelta td):
         td = datetime.strptime("0:01:13.964650", "%H:%M:%S.%f")
-        td = td - datetime(
-            year=td.year, month=td.month, day=td.day
-        )  # normally will be 1900, 1, 1
+        td = td - datetime(year=td.year, month=td.month, day=td.day)  # normally will be 1900, 1, 1
         return td.total_seconds()
 
 
@@ -78,9 +76,7 @@ def fetch(previous_time, tag_by, time_step=3600, format_version="1.0"):
 
     while current_time > previous_time:
         # there may be one last window that is a bit smaller than the rest
-        end_time, start_time = current_time, max(
-            current_time - time_step, previous_time
-        )
+        end_time, start_time = current_time, max(current_time - time_step, previous_time)
 
         # unfortunately datadog docs are a bit misleading
         # it looks like the list of tags is an AND and not an OR

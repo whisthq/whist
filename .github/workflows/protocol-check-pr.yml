@@ -116,7 +116,7 @@ jobs:
                       sudo apt-get update
 
                       # install Linux protocol dependencies
-                      ./protocol/desktop/linux-client-setup.sh
+                      ./protocol/setup-linux-build-environment.sh
 
                       # install clang-tidy, coreutils for realpath, and perl
                       sudo apt install -y clang-tidy coreutils perl
