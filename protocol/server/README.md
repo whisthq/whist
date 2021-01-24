@@ -4,7 +4,7 @@ This folder builds a server to stream via Fractal. It supports Windows and Linux
 
 ### Development
 
-You can run `server.bat` (Windows) or `server.sh` to restart your dev environment.
+You can run `server.bat` (Windows) or `./server` to restart your dev environment.
 
 To compile, you should first run `cmake .` (MacOS/Linux) or `cmake -G "NMake Makefiles"` (Windows) from the root directory, `/protocol/`. You can then cd into this folder and run `make` (MacOS/Linux) or `nmake` (Windows).
 
