@@ -1,4 +1,9 @@
 #!/bin/bash
+
+
+
+# This script runs clang-tidy to 
+
 # this can only be run if compile_commands.json exists:
 #   set(CMAKE_EXPORT_COMPILE_COMMANDS ON) must be set in CMakeLists.txt
 # this must be run after calling make within desktop (and server, if applicable)
