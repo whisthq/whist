@@ -96,8 +96,7 @@ jobs:
 
             - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
               if: runner.os == 'Linux'
-              run: |
-                  ./protocol/desktop/linux-client-setup.sh
+              run: ./protocol/setup-linux-build-environment.sh
 
             ############################# Unix Configuration Steps END #############################
 
