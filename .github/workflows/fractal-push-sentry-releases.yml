@@ -3,7 +3,7 @@
 # Fractal: Push Sentry Release
 # Automatically push a new Sentry release for each of the fractal/fractal projects.
 
-name: "Fractal: Push Sentry Releases"
+name: "Fractal: Push Sentry Release"
 
 on:
     push:
@@ -25,12 +25,12 @@ jobs:
         strategy:
             matrix:
                 project:
-                    - name: Webserver
-                      sentry-project: webserver
+                    - name: Main Webserver
+                      sentry-project: main-webserver
                     - name: Protocol (macOS, Windows, Linux Ubuntu)
                       sentry-project: desktop-protocol
-                    - name: Host Service
-                      sentry-project: host-service
+                    - name: ECS Host Service
+                      sentry-project: ecs-host-service
                     - name: Client Applications (macOS, Windows, Linux Ubuntu)
                       sentry-project: desktop-client
         env:
@@ -46,7 +46,6 @@ jobs:
               run: git remote set-url origin https://github.com/fractal/fractal
 
             - name: Set SENTRY_DEPLOY_ENVIRONMENT Based on Git Branch
-              shell: bash
               run: |
                   if [ "${GITHUB_REF##*/}" == "master" ]; then
                       echo "SENTRY_DEPLOY_ENVIRONMENT=production" >> $GITHUB_ENV
@@ -80,5 +79,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry \"${GITHUB_REF##*/}\" Releases Pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry ${{ env.SENTRY_DEPLOY_ENVIRONMENT }} Release Pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}

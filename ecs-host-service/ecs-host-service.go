@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"math"
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
-	// that we never forget to send a message via sentry. Instead, use the
+	// that we never forget to send a message via Sentry. Instead, use the
 	// fractallogger package imported below as `logger`
 	"context"
 	"encoding/json"
@@ -21,7 +21,7 @@ import (
 	"time"
 
 	// We use this package instead of the standard library log so that we never
-	// forget to send a message via sentry.  For the same reason, we make sure
+	// forget to send a message via Sentry.  For the same reason, we make sure
 	// not to import the fmt package either, instead separating required
 	// functionality in this impoted package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
@@ -56,6 +56,7 @@ func checkRunningPermissions() {
 	}
 }
 
+// Start the Docker daemon ourselves, to have control over all Docker containers spun
 func startDockerDaemon() {
 	cmd := exec.Command("/usr/bin/systemctl", "start", "docker")
 	err := cmd.Run()
@@ -140,6 +141,7 @@ var containerIDs map[uint16]string = make(map[uint16]string)
 // keys: hostPort, values: slice containing all cloud storage directories that are mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
 
+// 
 func unmountCloudStorageDir(hostPort uint16, path string) {
 	// Unmount lazily, i.e. will unmount as soon as the directory is not busy
 	cmd := exec.Command("fusermount", "-u", "-z", path)
@@ -596,7 +598,7 @@ func main() {
 	// able to use sentry.WithScope(), but that is future work.
 	err := logger.InitializeSentry()
 	if err != nil {
-		logger.Panicf("Unable to initialize sentry. Error: %s", err)
+		logger.Panicf("Unable to initialize Sentry. Error: %s", err)
 	}
 	// We flush Sentry's queue in shutdownHostService(), so we don't need to defer it here
 
