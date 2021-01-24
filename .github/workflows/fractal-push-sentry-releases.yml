@@ -42,11 +42,10 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set Git Repository URL to enable sentry-cli automatic commit tagging
-              run: |
-                  git remote set-url origin https://github.com/fractal/fractal
+            - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
+              run: git remote set-url origin https://github.com/fractal/fractal
 
-            - name: Set SENTRY_DEPLOY_ENVIRONMENT based on Git branch
+            - name: Set SENTRY_DEPLOY_ENVIRONMENT Based on Git Branch
               shell: bash
               run: |
                   if [ "${GITHUB_REF##*/}" == "master" ]; then
@@ -57,7 +56,7 @@ jobs:
                       echo "SENTRY_DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
                   fi
 
-            - name: Create new Sentry release
+            - name: Create New Sentry Release
               run: |
                   # Install Sentry CLI
                   curl -sL https://sentry.io/get-cli/ | bash
