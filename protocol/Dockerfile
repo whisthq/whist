@@ -24,8 +24,8 @@ RUN apt-get install -y cppcheck sudo clang-format
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 # Install Fractal protocol Linux dependencies
-ADD desktop/linux-client-setup.sh /
-RUN apt-get update && apt-get clean && /linux-client-setup.sh
+ADD setup-linux-build-environment.sh /
+RUN apt-get update && apt-get clean && /setup-linux-build-environment.sh
 
 # Create fractal Linux user for building the protocol
 RUN groupadd fractal
