@@ -40,6 +40,7 @@ type requestResult struct {
 	Err    error  `json:"error"`
 }
 
+// send is called to send an HTTP response
 func (r requestResult) send(w http.ResponseWriter) {
 	var buf []byte
 	var err error
@@ -124,7 +125,7 @@ type SetContainerDPIRequest struct {
 	resultChan chan requestResult
 }
 
-// ReturnResult is called to pass the result of a request back to the the HTTP
+// ReturnResult is called to pass the result of a request back to the HTTP
 // request handler
 func (s *SetContainerDPIRequest) ReturnResult(result string, err error) {
 	s.resultChan <- requestResult{result, err}

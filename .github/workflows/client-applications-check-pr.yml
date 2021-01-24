@@ -1,9 +1,9 @@
-# workflows/client-applications-linting.yml
+# workflows/client-applications-check-pr.yml
 #
-# Client Applications: Linting
-# Lint client-applications using ESlint.
+# Client Applications: Check PR
+# Checks an ECS Host Service PR for linting and building success.
 
-name: "Client Applications: Linting"
+name: "Client Applications: Check PR"
 
 on:
     pull_request:
@@ -19,8 +19,10 @@ on:
     workflow_dispatch:
 
 jobs:
-    client-applications-linting-main:
-        name: Lint Client Applications
+    # Linting
+    # Checks for formatting using ESlint.
+    client-applications-check-pr-linting:
+        name: Linting
         runs-on: ubuntu-20.04
 
         steps:
@@ -33,8 +35,26 @@ jobs:
                   node-version: 12
 
             - name: Run yarn -i in /desktop
-              run: cd client-applications/desktop && yarn -i
+              working-directory: client-applications/desktop
+              run: yarn -i
 
             - name: Check if code follows ESLint standards
-              run: |
-                  cd client-applications/desktop && yarn lint-check
+              working-directory: client-applications/desktop
+              run: yarn lint-check
+
+    # Building
+    # Check that the Client Applications build.
+    client-applications-check-pr-building:
+        name: Building
+
+
+
+
+        runs-on: ubuntu-20.04
+
+        steps:
+
+
+
+
+
