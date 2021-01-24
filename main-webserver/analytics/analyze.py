@@ -86,9 +86,7 @@ def initialize_datadog():
     )
 
     if secrets_file is None:
-        raise RuntimeError(
-            "Could not find datadog API secrets in the dev secrets bucket."
-        )
+        raise RuntimeError("Could not find datadog API secrets in the dev secrets bucket.")
 
     remote = secrets_file
     local = ".env"
@@ -123,11 +121,7 @@ def _init_recap(textkey2label, textkey2label_val=False):
 def _for_tag_textkey_region_events(region2events, textkey2label, recap, f):
     for tag, textkey in TAGS_TEXTKEYS:
         for region in REGIONS:
-            print(
-                "analyzing tag {} with textkey {} with region {}".format(
-                    tag, textkey, region
-                )
-            )
+            print("analyzing tag {} with textkey {} with region {}".format(tag, textkey, region))
             events = region2events[region]
             events_with_tag = filter(lambda event: tag in event["tags"], events)
 
@@ -214,9 +208,7 @@ def store_average_each_window(window=DAY):
 
     now = datetime.now()
     _update_daily_recap = _update_daily_recap_curry(now)
-    _for_tag_textkey_region_events(
-        region2events, textkey2label, recap, _update_daily_recap
-    )
+    _for_tag_textkey_region_events(region2events, textkey2label, recap, _update_daily_recap)
     print("Finished analysis.")
 
     filename = DAILY_RECAP + now.strftime("%Y%m%d") + ".json"
@@ -230,9 +222,7 @@ def store_average_each_window(window=DAY):
     # label is the type of processing that happened on the log
     #   i.e. which analysis algo did we use and which numerical
     #   value of the log did we run on
-    print(
-        "Stored file and logged daily metrics with <tag>.<region>.<label> as their metric."
-    )
+    print("Stored file and logged daily metrics with <tag>.<region>.<label> as their metric.")
 
 
 # we can run this weekly to get the average usage per day... or whatever
@@ -263,9 +253,7 @@ def store_averages_to_files_by_interval(window=DAY, interval=WEEK):
     print("Initialized datastructure.")
 
     _update_weekly_recap = _update_weekly_recap_curry(window, interval)
-    _for_tag_textkey_region_events(
-        region2events, textkey2label, recap, _update_weekly_recap
-    )
+    _for_tag_textkey_region_events(region2events, textkey2label, recap, _update_weekly_recap)
     print("Finished analysis.")
 
     recap_json = json.dumps(recap).encode("utf-8")
@@ -293,6 +281,4 @@ if __name__ == "__main__":
     elif (args.interval).lower() == "daily":
         store_average_each_window()
     else:
-        raise RuntimeError(
-            "Interval argument must be 'weekly' or 'daily' caps ignored."
-        )
+        raise RuntimeError("Interval argument must be 'weekly' or 'daily' caps ignored.")

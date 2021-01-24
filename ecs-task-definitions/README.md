@@ -6,7 +6,7 @@ This subfolder contains the code to generate ECS task definitions for each of th
 
 You can generate a task definition for a specific application from `fractal-taskdef-template.json` by running `./generate_taskdefs.sh [APP]`. For example, `./generate_taskdefs.sh chrome` will generate a task definition to be associatd with a Chrome container for running on ECS.
 
-This script assumes that the application you generate a task definition for does not require any specific parameters that are application-specific to be set in the task definition JSON. If it does, you will need to modify `generate_taskdefs.sh` script to do more than simply set the name of the task definition family. 
+This script assumes that the application you generate a task definition for does not require any specific parameters that are application-specific to be set in the task definition JSON. If it does, you will need to modify `generate_taskdefs.sh` script to do more than simply set the name of the task definition family.
 
 ## Design Decisions
 
