@@ -66,11 +66,10 @@ jobs:
                   submodules: recursive
 
             - name: Configure AWS CLI # To get and install GRID driver
-              # TODO: we can get rid of the ECR permissions and rename this secret
               uses: aws-actions/configure-aws-credentials@v1
               with:
-                  aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
             - name: Walk repo to find all dockerfiles and store path as env variable
@@ -139,8 +138,6 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -149,9 +146,9 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ matrix.aws-region }}
 
-            # TODO: this can be done way more elegantly, now that it's a monorepo
             - name: Retrieve master git hash as env variable
-              run: echo "containers_gha_sha=$(git ls-remote https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/fractal --refs --heads master | head -1 | awk '{print $1;}')" >> $GITHUB_ENV
+              run: echo "containers_gha_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+            
             - name: Store GitHub container registry base uri as env variable
               run: echo "ghcr_base_uri=ghcr.io" >> $GITHUB_ENV
 
@@ -212,9 +209,6 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
             - name: Setup Go environment
               uses: actions/setup-go@v2.1.3
