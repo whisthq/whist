@@ -6,6 +6,9 @@
 name: "Main Webserver: Clear Webserver-Generated Logs S3 Buckets"
 
 on:
+    push:
+        branches:
+            - phil/documentation
     schedule:
         - cron: "0 0 1 * *" # every month
     workflow_dispatch:
