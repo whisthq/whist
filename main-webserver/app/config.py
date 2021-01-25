@@ -287,9 +287,9 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
 
         STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
         # This logic is a bit convoluted. Here's what's happening:
-        # TestConfig is used in two cases, local testing or CI. It modifies LocalConfig and DeploymentConfig
-        # respectively. In local testing, LocalConfig already defines SQLALCHEMY_DATABASE_URI. In CI,
-        # we use the POSTGRES_URI env var.
+        # TestConfig is used in two cases, local testing or CI. It modifies LocalConfig
+        # and DeploymentConfig respectively. In local testing, LocalConfig already defines
+        # SQLALCHEMY_DATABASE_URI. In CI, we use the POSTGRES_URI env var.
         if BaseConfig.TYPE == "deployment":
             SQLALCHEMY_DATABASE_URI = property(getter("POSTGRES_URI", fetch=False))
 
