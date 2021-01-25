@@ -76,11 +76,8 @@ jobs:
             working-directory: ecs-host-setup
             run: |
                 # create new AMI for aws_source_region
-                # echo "new_ami_id=$(packer build ami_config.json | grep -oE 'ami-[0-9a-z]+')" >> $GITHUB_ENV
-          
-          - name: Temp new sub task to see which part is erroring
-            working-directory: ecs-host-setup
-            run: |
+                echo "new_ami_id=$(packer build ami_config.json | grep -oE 'ami-[0-9a-z]+')" >> $GITHUB_ENV
+
                 # update AMI ID for aws_source_region in appropriate database to new AMI ID
                 curl -X POST \
                 -H "Content-Type: application/json" \
