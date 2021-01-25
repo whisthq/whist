@@ -59,5 +59,12 @@
                 "cd /home/ubuntu/ecs-host-setup",
                 "./setup_ubuntu20_ami_host.sh"]
         }
+    ],
+    "post-processors": [
+        {
+          "type": "manifest",
+          "output": "manifest.json",
+          "strip_path": true
+        }
     ]
 }
