@@ -27,6 +27,9 @@ jobs:
           - name: Checkout Git Repository
             uses: actions/checkout@v2
 
+          - name: Retrieve master git hash as env variable
+            run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
           - name: Configure AWS CLI
             uses: aws-actions/configure-aws-credentials@v1
             with:
