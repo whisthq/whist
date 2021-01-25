@@ -51,7 +51,7 @@
       },
       "scripts": {
         "test-setup": "echo '{}' > client_secret.json",
-        "test": "cd tests && bash run_tests.sh"
+        "test": "cd tests && bash run_tests.sh --no-mock-aws"
       }
     }
   }

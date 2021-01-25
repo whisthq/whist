@@ -31,6 +31,7 @@ else
 fi
 
 # we need to cd back out of tests into root dir for main-webserver
-# cd ..
-pytest --no-mock-aws
+cd ..
+# pass args to pytest
+pytest "$@"
 

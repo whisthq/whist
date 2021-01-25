@@ -117,7 +117,7 @@ First, we need to setup a local Redis and Postgres instance. Navigate to `tests/
 
 ### Testing
 
-Now, navigate to `tests` and run `bash run_tests.sh`. This loads the environment variables in `docker/.env` and uses `pytest` to run the tests. If something goes wrong during testing and you kill it early, clean up clusters using the AWS console. Note that since the db is local and ephemeral, any db changes can be safely done.
+Now, navigate to `tests` and run `bash run_tests.sh --no-mock-aws`. This loads the environment variables in `docker/.env` and uses `pytest` to run the tests. If something goes wrong during testing and you kill it early, clean up clusters using the AWS console. Note that since the db is local and ephemeral, any db changes can be safely done.
 
 ## How To Contribute
 
