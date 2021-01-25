@@ -5,7 +5,7 @@ import styles from "pages/login/components/redirect/redirect.css"
 export const Redirect = (props: {
     onClick: () => void
     onChange: (evt: ChangeEvent) => void
-    onKeyPress: (evt: KeyboardEvent) => void
+    onKeyPress: (evt: KeyboardEvent<HTMLInputElement>) => void
 }) => {
     /*
         When the user clicks log in, they are redirected to this page, which tells

@@ -25,6 +25,7 @@ import { uploadToS3 } from "shared/utils/files/aws"
 import { launchProtocol } from "shared/utils/files/exec"
 import Animation from "shared/components/loadingAnimation/loadingAnimation"
 import LoadingMessage from "pages/launcher/constants/loadingMessages"
+import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
 
 import styles from "pages/launcher/launcher.css"
 
@@ -193,6 +194,7 @@ export const Launcher = (props: {
 
     return (
         <div className={styles.launcherWrapper}>
+            <ChromeBackground />
             <div className={styles.loadingWrapper}>
                 <Animation />
                 <div className={styles.loadingText}>{loadingMessage}</div>

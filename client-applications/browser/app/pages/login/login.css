@@ -1,10 +1,10 @@
-@import '~app.global.css';
+@import "~app.global.css";
 
 .loginWrapper {
     width: 100vw;
     height: 100vh;
     position: relative;
-    background: var(--background-color);
+    background: var(--text-background-color);
     overflow-y: hidden;
     overflow-x: hidden;
 }

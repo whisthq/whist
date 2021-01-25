@@ -1,5 +1,7 @@
+@import "~app.global.css";
+
 .loginText {
-    color: white;
+    color: var(--primary-text-color);
     margin-bottom: 35px;
 }
 

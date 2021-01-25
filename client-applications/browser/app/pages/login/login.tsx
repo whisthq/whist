@@ -80,7 +80,7 @@ export const Login = (props: {
             <div style={{ position: "relative" }}>
                 <div style={{ position: "absolute", top: 825, left: 425 }}>
                     <GeometricComponent
-                        color="#FFFFFF23"
+                        color="#00000023"
                         scale={3}
                         flip={false}
                     />
@@ -88,7 +88,7 @@ export const Login = (props: {
             </div>
             <div style={{ position: "relative" }}>
                 <div style={{ position: "absolute", top: 825, right: -840 }}>
-                    <GeometricComponent color="#FFFFFF23" scale={3} flip />
+                    <GeometricComponent color="#00000023" scale={3} flip />
                 </div>
             </div>
             <div className={styles.loginCenter}>
