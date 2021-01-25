@@ -79,25 +79,28 @@ type MountCloudStorageRequest struct {
 	Provider     string `json:"provider"`		// Cloud storage provider (i.e. google_drive) 
 	AccessToken  string `json:"access_token"`	// Cloud storage access token
 	RefreshToken string `json:"refresh_token"`	// Cloud storage access token refresher
-	Expiry       string `json:"expiry"`			// 
-	TokenType    string `json:"token_type"`		// 
-	ClientID     string `json:"client_id"`		// 
-	ClientSecret string `json:"client_secret"`	// 
-	resultChan   chan requestResult				// Channel to cloud storage pass mounting result between goroutines
+	Expiry       string `json:"expiry"`			// Expiration date of access_token
+	TokenType    string `json:"token_type"`		// Type of access_token, currently always "bearer"
+	ClientID     string `json:"client_id"`		// ID to tell cloud storage provider that we are the Fractal client they approved
+	ClientSecret string `json:"client_secret"`	// Secret associated with client_id
+	resultChan   chan requestResult				// Channel to pass cloud storage mounting result between goroutines
 }
 
-// ReturnResult is called to pass the result of a request back to the the HTTP
+// ReturnResult is called to pass the result of a request back to the HTTP
 // request handler
 func (s *MountCloudStorageRequest) ReturnResult(result string, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
+// createResultChan is called to create the Go channel to pass cloud storage mounting request
+// result back to the HTTP request handler via ReturnResult
 func (s *MountCloudStorageRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
 	}
 }
 
+// Process an HTTP request for mounting a cloud storage folder to a container, to be handled in ecs-host-service.go
 func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
 	// Verify that it is a POST
 	if verifyRequestType(w, r, http.MethodPost) != nil {
@@ -120,9 +123,9 @@ func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, que
 
 // SetContainerDPIRequest defines the (unauthenticated) DPI endpoint
 type SetContainerDPIRequest struct {
-	HostPort   int `json:"host_port"`
-	DPI        int `json:"dpi"`
-	resultChan chan requestResult
+	HostPort   int `json:"host_port"`	// Port on the host to mount the DPI file to
+	DPI        int `json:"dpi"`			// DPI to set for the container
+	resultChan chan requestResult		// Channel to pass DPI setting result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -131,12 +134,15 @@ func (s *SetContainerDPIRequest) ReturnResult(result string, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
+// createResultChan is called to create the Go channel to pass DPI setting request
+// result back to the HTTP request handler via ReturnResult
 func (s *SetContainerDPIRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
 	}
 }
 
+// Process an HTTP request for setting the DPI of a container, to be handled in ecs-host-service.go
 func processSetContainerDPIRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
 	// Verify that it is an PUT request
 	if verifyRequestType(w, r, http.MethodPut) != nil {
@@ -281,6 +287,7 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 	return events, nil
 }
 
+// Creates a TLS certificate/private key pair for secure communication with the Fractal webserver
 func initializeTLS() error {
 	// Create a self-signed passwordless certificate
 	// https://unix.stackexchange.com/questions/104171/create-ssl-certificate-non-interactively
