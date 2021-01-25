@@ -4,7 +4,8 @@
 set -Eeuo pipefail
 
 # check if in CI; if so just run fetch and setup scripts then exit
-if [ ! -z $IN_CI ]; then
+IN_CI=${IN_CI:=false} # default: false
+if [ $IN_CI == "true" ]; then
     cd db
     bash fetch_db.sh
     bash db_setup.sh
@@ -20,11 +21,7 @@ fi
 
 # add env vars to current env. these tell us the host, db, role, pwd
 export $(cat ../../docker/.env | xargs)
-# all these env vars should exist in the docker/.env file.
-if [ -z $POSTGRES_HOST ] || [ -z $POSTGRES_USER ] || [ -z $POSTGRES_PASSWORD ] || [ -z $POSTGRES_DB ]; then
-    echo "Missing one of POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB"
-    exit 1
-fi
+
 # rename for clarity, as we have a remote host and a local host
 export POSTGRES_REMOTE_HOST=$POSTGRES_HOST
 export POSTGRES_REMOTE_USER=$POSTGRES_USER

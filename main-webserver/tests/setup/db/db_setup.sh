@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# exit on error
+# exit on error and missing env var
 set -Eeuo pipefail
 
 # in CI we can just run the modified download script against the db, which already
 # has an initialized user/database. CI uses URI connection method.
-if [ ! -z $IN_CI ]; then
+IN_CI=${IN_CI:=false} # default: false
+if [ $IN_CI == "true" ]; then
   echo "=== Initializing db for CI ===\n"
 
   # copy (slightly modified; see modify_ci_db_schema.py) schema
@@ -19,24 +20,7 @@ if [ ! -z $IN_CI ]; then
   exit 0
 fi
 
-# otherwise, run the typical setup script against a fresh, empty db. we do not use
-# the URI method locally
-if [ -z $POSTGRES_LOCAL_HOST ]; then
-  echo "Must provide POSTGRES_LOCAL_HOST"
-  exit 1
-fi
-
-# these vars must exist to make local db look like remote. we don't need a password
-# because local db trusts all incoming connections
-if [ -z $POSTGRES_LOCAL_USER ] || [ -z $POSTGRES_LOCAL_DB ]; then
-  echo "Missing one of these env vars: POSTGRES_LOCAL_USER, POSTGRES_LOCAL_DB"
-  exit 1
-fi
-
-# if this is not defined in env, use default of 9999
-if [ -z $POSTGRES_LOCAL_PORT ]; then
-  POSTGRES_LOCAL_PORT="9999"
-fi
+POSTGRES_LOCAL_PORT=${POSTGRES_LOCAL_PORT:=9999} # default: 9999
 
 echo "=== Make sure to update the schema periodically ===\n"
 echo "===            Initializing db                  ===\n"
