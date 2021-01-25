@@ -51,6 +51,8 @@ jobs:
             - name: Install cppcheck via Chocolatey on Windows GHA Machine
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
+              with:
+                  args: install cppcheck
 
             - name: Install CUDA on Windows GHA Machine
               if: runner.os == 'Windows'
