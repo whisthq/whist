@@ -288,7 +288,7 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
         # TestConfig is used in two cases, local testing or CI. It modifies LocalConfig
         # and DeploymentConfig respectively. In local testing, LocalConfig already defines
         # SQLALCHEMY_DATABASE_URI. In CI, we use the POSTGRES_URI env var.
-        if type(BaseConfig) == DeploymentConfig:
+        if BaseConfig == DeploymentConfig:
             SQLALCHEMY_DATABASE_URI = property(getter("POSTGRES_URI", fetch=False))
 
         TESTING = True
