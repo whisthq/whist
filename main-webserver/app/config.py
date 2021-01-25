@@ -151,7 +151,6 @@ class DeploymentConfig:
 
         self.session = Session(bind=engine)
 
-    TYPE = "deployment"
     DASHBOARD_PASSWORD = property(getter("DASHBOARD_PASSWORD"))
     DASHBOARD_USERNAME = property(getter("DASHBOARD_USERNAME"))
     DATADOG_API_KEY = property(getter("DATADOG_API_KEY"))
@@ -218,7 +217,6 @@ class LocalConfig(DeploymentConfig):
         load_dotenv(dotenv_path=os.path.join(os.getcwd(), "docker/.env"), verbose=True)
         super().__init__()
 
-    TYPE = "local"
     config_table = "dev"
 
     # When deploying the web server locally, a developer may want to connect to a local Postgres
@@ -290,7 +288,7 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
         # TestConfig is used in two cases, local testing or CI. It modifies LocalConfig
         # and DeploymentConfig respectively. In local testing, LocalConfig already defines
         # SQLALCHEMY_DATABASE_URI. In CI, we use the POSTGRES_URI env var.
-        if BaseConfig.TYPE == "deployment":
+        if type(BaseConfig) == DeploymentConfig:
             SQLALCHEMY_DATABASE_URI = property(getter("POSTGRES_URI", fetch=False))
 
         TESTING = True
