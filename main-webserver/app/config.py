@@ -138,34 +138,6 @@ def getter(key, fetch=True, **kwargs):
     return _getter
 
 
-def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
-    """Generate a test configuration class that is a subclass of a base configuration class.
-
-    Arguments:
-        BaseConfig: A base configuration class (either DeploymentConfig or LocalConfig).
-
-    Returns:
-        A configuration class to be used to configure a Flask application for testing.
-    """
-
-    class TestConfig(BaseConfig):  # pylint: disable=invalid-name
-        """Place the application in testing mode."""
-
-        config_table = "dev"
-
-        STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
-        # this should be in the env
-        SQLALCHEMY_DATABASE_URI = property(getter("POSTGRES_URI", fetch=False))
-        TESTING = True
-
-        @property
-        def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
-            # Test deployments should not be able to act as OAuth clients.
-            return {}
-
-    return TestConfig
-
-
 class DeploymentConfig:
     """Flask application configuration for deployed applications.
 
@@ -179,6 +151,7 @@ class DeploymentConfig:
 
         self.session = Session(bind=engine)
 
+    TYPE = "deployment"
     DASHBOARD_PASSWORD = property(getter("DASHBOARD_PASSWORD"))
     DASHBOARD_USERNAME = property(getter("DASHBOARD_USERNAME"))
     DATADOG_API_KEY = property(getter("DATADOG_API_KEY"))
@@ -245,13 +218,13 @@ class LocalConfig(DeploymentConfig):
         load_dotenv(dotenv_path=os.path.join(os.getcwd(), "docker/.env"), verbose=True)
         super().__init__()
 
+    TYPE = "local"
     config_table = "dev"
 
     # When deploying the web server locally, a developer may want to connect to a local Postgres
     # instance. The following lines allow developers to specify individual parts of the connection
     # URI and to fill in the remaining values with reasonable defaults rather than requiring them
     # to specify the whole thing.
-    db_uri = property(getter("POSTGRES_URI", default="", fetch=False))
     db_host = property(getter("POSTGRES_HOST", default="localhost", fetch=False))
     db_name = property(getter("POSTGRES_DB", default="postgres", fetch=False))
     db_password = property(getter("POSTGRES_PASSWORD", fetch=False))
@@ -290,14 +263,44 @@ class LocalConfig(DeploymentConfig):
             A PostgreSQL connection URI.
         """
 
-        if self.db_uri != "":
-            return self.db_uri
-        else:
-            # create URI from components
-            return (
-                f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
-                f"{self.db_name}"
-            )
+        # create URI from components
+        return (
+            f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
+            f"{self.db_name}"
+        )
+
+
+def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
+    """Generate a test configuration class that is a subclass of a base configuration class.
+
+    Arguments:
+        BaseConfig: A base configuration class (either DeploymentConfig or LocalConfig).
+
+    Returns:
+        A configuration class to be used to configure a Flask application for testing.
+    """
+
+    class TestConfig(BaseConfig):  # pylint: disable=invalid-name
+        """Place the application in testing mode."""
+
+        config_table = "dev"
+
+        STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
+        # This logic is a bit convoluted. Here's what's happening:
+        # TestConfig is used in two cases, local testing or CI. It modifies LocalConfig and DeploymentConfig
+        # respectively. In local testing, LocalConfig already defines SQLALCHEMY_DATABASE_URI. In CI,
+        # we use the POSTGRES_URI env var.
+        if BaseConfig.TYPE == "deployment":
+            SQLALCHEMY_DATABASE_URI = property(getter("POSTGRES_URI", fetch=False))
+
+        TESTING = True
+
+        @property
+        def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
+            # Test deployments should not be able to act as OAuth clients.
+            return {}
+
+    return TestConfig
 
 
 DeploymentTestConfig = _TestConfig(DeploymentConfig)

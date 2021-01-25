@@ -51,6 +51,7 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
     # We want to look up CONFIG_MATRIX.location.action
     action = "test" if testing else "serve"
     location = "deployment" if "DYNO" in os.environ else "local"
+    # raise ValueError(f"LOCATION: {location}, ACTION: {action}, testing: {testing}")
     config = getattr(getattr(CONFIG_MATRIX, location), action)
 
     app.config.from_object(config())

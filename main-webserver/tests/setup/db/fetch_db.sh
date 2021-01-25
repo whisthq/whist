@@ -1,41 +1,39 @@
 #!/bin/bash
 
-if [ -z $POSTGRES_HOST ]; then
-  echo "Missing env var POSTGRES_HOST"
+if [ -z $POSTGRES_REMOTE_URI ] && [ -z $POSTGRES_REMOTE_HOST ]; then
+  echo "Must provide one of POSTGRES_REMOTE_URI, POSTGRES_REMOTE_HOST"
   exit 1
 fi
 
 # retrieve db info depending on if a URI is given or host/db/user. we check the prefix for a URI
-if [[ ^$POSTGRES_HOST =~ "postgres://" ]]; then
+if [[ ^$POSTGRES_REMOTE_URI =~ "postgres://" ]]; then
   # prefix is a URI, use URI method
-  
   echo "=== Retrieving DB schema === \n"
-  (pg_dump -C -d $POSTGRES_HOST -s) > db_schema.sql
+  (pg_dump -C -d $POSTGRES_REMOTE_URI -s) > db_schema.sql
 
   echo "===  Retrieving DB data  === \n"
-  (pg_dump -d $POSTGRES_HOST --data-only --column-inserts -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
+  (pg_dump -d $POSTGRES_REMOTE_URI --data-only --column-inserts -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
   
 else
-  # need user/db env vars, but first check they exist
-
-  if [ -z $POSTGRES_USER ] || [ -z $POSTGRES_PASSWORD ] || [ -z $POSTGRES_DB ]; then
-    echo "Missing one of these env vars: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB"
+  # need user, pwd, db env vars, but first check they exist
+  if [ -z $POSTGRES_REMOTE_USER ] || [ -z $POSTGRES_REMOTE_PASSWORD ] || [ -z $POSTGRES_REMOTE_DB ]; then
+    echo "Missing one of these env vars: POSTGRES_REMOTE_USER, POSTGRES_REMOTE_PASSWORD, POSTGRES_REMOTE_DB"
     exit 1
   fi
 
   # pg_dump will look at this and skip asking for a prompt
-  export PGPASSWORD=$POSTGRES_PASSWORD
+  export PGPASSWORD=$POSTGRES_REMOTE_PASSWORD
 
   echo "=== Retrieving DB schema ===\n"
-  (pg_dump -C -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -s) > db_schema.sql
+  (pg_dump -C -h $POSTGRES_REMOTE_HOST -U $POSTGRES_REMOTE_USER -d $POSTGRES_REMOTE_DB -s) > db_schema.sql
 
-  echo "=== Retrieving DB schema ===\n"
-  (pg_dump -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB --data-only --column-inserts -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
+  echo "=== Retrieving DB data ===\n"
+  (pg_dump -h $POSTGRES_REMOTE_HOST -U $POSTGRES_REMOTE_USER -d $POSTGRES_REMOTE_DB --data-only --column-inserts -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
 fi
 
 # in CI we need to slightly modify the download script because Heroku does not let us run
 # a superuser and do whatever we want to the db
 if [ ! -z $IN_CI ]; then
   echo "=== Cleaning the script for CI ===\n"
-  python create_ci_db_schema.py
+  python modify_ci_db_schema.py
 fi
