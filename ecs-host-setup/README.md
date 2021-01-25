@@ -4,7 +4,7 @@ This subfolder contains the scripts to set up AWS EC2 instances for developing F
 
 An AMI is an operating system image, in our case a snapshot of Linux Ubuntu with specific packages, drivers and settings preinstalled and preconfigured, which can be easily loaded onto an EC2 instance instead of using default Linux Ubuntu. We use Fractal-specific AMIs with our EC2 instances as it results in faster deployment (the images are prebuilt) and ensures that all of our EC2 instances run the exact same operating system, which is specifically optimized for running Fractal containers.
 
-The `setup_ubuntu20_host.sh` script lets you set up a general EC2 instance host for development, while running `setup_ubuntu20_host.sh` followed by `setup_ubuntu20_ami_host.sh` sets up an EC2 host that can be manually stored as an AMI for programmatic deployment.
+The `setup_ubuntu20_host.sh` script lets you set up a general EC2 instance host for development (by setting up proper NVIDIA drivers and Docker daemon configs and filters), while running `setup_ubuntu20_host.sh` followed by `setup_ubuntu20_ami_host.sh` sets up an EC2 host that can be manually stored as an AMI for programmatic deployment.
 
 ## Setting Up a Development Instance
 
@@ -66,7 +66,8 @@ To create an AMI:
 # clones `dev` by default
 git clone https://github.com/fractal/fractal.git
 
-# set up the EC2 host with proper packages and drivers
+# set up the EC2 host with proper packages and drivers,
+# and sets Fractal Docker daemon configs from docker-demon-config/daemon.json
 cd ~/fractal/ecs-host-setup
 ./setup_ubuntu20_host.sh
 sudo reboot
