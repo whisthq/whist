@@ -79,7 +79,7 @@ jobs:
         needs: [fractal-publish-build-config]
         if: |
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
-            contains(fromJSON('["all"], ["container-images-publish-images-ghcr"]'), needs.fractal-publish-build-config.outputs.job)
+            contains(fromJSON('["all", "container-images-publish-images-ghcr"]'), needs.fractal-publish-build-config.outputs.job)
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -145,7 +145,7 @@ jobs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: |
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
-            contains(fromJSON('["all"], ["ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
+            contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
@@ -205,7 +205,7 @@ jobs:
         needs: [ecs-task-definitions-deploy-task-definitions-ecs]
         if: |
             success() &&
-            contains(fromJSON('["all"], ["ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
+            contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
         runs-on: ubuntu-20.04
         steps:
             - name: Notify Slack
@@ -224,7 +224,7 @@ jobs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: |
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
-            contains(fromJSON('["all"], ["ecs-host-service-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
+            contains(fromJSON('["all", "ecs-host-service-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
         env:
             binary-location: ecs-host-service/build
             binary-name: ecs-host-service
@@ -284,16 +284,10 @@ jobs:
               ) ||
               (
                 contains(
-                  fromJSON('["staging"]'),
+                  fromJSON('["staging", "dev"]'),
                   needs.fractal-publish-build-config.outputs.branch
                 ) && always()
-              ) ||
-              (
-                contains(
-                  fromJSON('["dev"]'),
-                  needs.fractal-publish-build-config.outputs.branch
-                ) && always()
-            ) &&
+              ) &&
             contains(fromJSON('["all"], ["main-webserver-deploy-heroku"]'), needs.fractal-publish-build-config.outputs.job)
         runs-on: ubuntu-20.04
         steps:
