@@ -70,7 +70,7 @@ jobs:
           - name: Modify the Packer ami_config.json via jq to the Right Values for Building New AMI
             working-directory: ecs-host-setup
             run: |
-                cat ami_config.json | jq '.builders[0].secret_key = "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'" | .builders[0].access_key = "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'" | .builders[0].ami_name = "'ami-us-east-1-${{ env.commit_sha }}'" | .builders[0].source_ami = "'${{ env.source_ami }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
+                cat ami_config.json | jq '.builders[0].secret_key = "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'" | .builders[0].access_key = "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'" | .builders[0].ami_name = "'ami-us-east-1-${{ env.commit_sha }}'" | .builders[0].source_ami = "'${{ env.source_ami }}'" | .provisioners[2].inline[2] = "'./setup_ubuntu20_host.s ${{ secrets.AWS_EC2_ACCESS_KEY_ID }} ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
                 cat ami_config.json
 
           # This spins up an AWS EC2 instance to create the AMI, and then deletes it
@@ -84,7 +84,7 @@ jobs:
                 echo "created file"
                 packer -machine-readable build ami_config.json | tee build.log
                 cat build.log
-                echo "$(grep build.log -oE 'ami-[0-9a-z]+' | tail -1)"
+                echo "new_ami_id=$(grep build.log -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
           - name: Temp separate
             working-directory: ecs-host-setup
             run: |
@@ -111,25 +111,25 @@ jobs:
                   ${{ env.graphql_db_url }}
                 done
 
-  # notify-slack:
-  #     name: Notify Slack
-  #     needs: [fractal-build-and-publish-ami-main]
-  #     if: success()
-  #     runs-on: ubuntu-20.04
+  notify-slack:
+      name: Notify Slack
+      needs: [fractal-build-and-publish-ami-main]
+      if: success()
+      runs-on: ubuntu-20.04
 
-  #     steps:
-  #         - name: Notify Slack
-  #           run: |
-  #               if [ "${GITHUB_REF##*/}" == "master" ]; then
-  #                   curl -X POST \
-  #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to AWS from \`master\`.\", \"icon_emoji\": \":fractal:\"}" \
-  #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-  #               elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-  #                   curl -X POST \
-  #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to AWS from \`staging\`.\", \"icon_emoji\": \":fractal:\"}" \
-  #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-  #               else
-  #                   curl -X POST \
-  #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to AWS from \`dev\`.\", \"icon_emoji\": \":fractal:\"}" \
-  #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-  #               fi
+      steps:
+          - name: Notify Slack
+            run: |
+                if [ "${GITHUB_REF##*/}" == "master" ]; then
+                    curl -X POST \
+                    --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to AWS from \`master\`.\", \"icon_emoji\": \":fractal:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                    curl -X POST \
+                    --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to AWS from \`staging\`.\", \"icon_emoji\": \":fractal:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                else
+                    curl -X POST \
+                    --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to AWS from \`dev\`.\", \"icon_emoji\": \":fractal:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                fi
