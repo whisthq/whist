@@ -22,7 +22,6 @@ jobs:
     # Configure Jobs
     # Detect the branch using regex matching and store as an output to regulate downstream actions.
     # Access branch with `fractal-publish-build-config.outputs.branch`.
-
     fractal-publish-build-config:
         name: "Configure Jobs"
         runs-on: ubuntu-20.04
@@ -49,7 +48,6 @@ jobs:
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
     # Runs if config succeeds and branch is in ["master"].
-
     container-images-publish-images-ghcr:
         name: "Container Images: Build & Publish Images to GitHub Container Registry"
         runs-on: ubuntu-20.04
@@ -95,7 +93,7 @@ jobs:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
                   GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
-            - name: Package app names into json for ecs-task-definitions strategy matrices
+            - name: Package app names into JSON for ecs-task-definitions strategy matrices
               id: package-matrix
               run: |
                   apps_json='[]'
@@ -116,7 +114,6 @@ jobs:
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
     # Render and deploy the app task definitions to ECS.
     # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds.
-
     ecs-task-definitions-deploy-task-definitions-ecs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
@@ -149,7 +146,7 @@ jobs:
             - name: Retrieve master git hash as env variable
               run: echo "containers_gha_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-            - name: Store GitHub container registry base uri as env variable
+            - name: Store GitHub Container Registry base URI as env variable
               run: echo "ghcr_base_uri=ghcr.io" >> $GITHUB_ENV
 
             - name: Store taskdef name as env variable
@@ -221,14 +218,16 @@ jobs:
                   aws-region: ${{ env.s3-bucket-region }}
 
             - name: Install Go dependencies
-              run: cd ecs-host-service && make deps
+              working-directory: ecs-host-service
+              run: make deps
 
             - name: Build Go project
               env:
                   WEBSERVER_AUTH_SECRET_DEV: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_DEV }}
                   WEBSERVER_AUTH_SECRET_STAGING: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_STAGING }}
                   WEBSERVER_AUTH_SECRET_PROD: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_PROD }}
-              run: cd ecs-host-service && make build
+              working-directory: ecs-host-service
+              run: make build
 
             - name: Upload binary to S3
               run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
@@ -242,7 +241,6 @@ jobs:
     # Main Webserver: Deploy to Heroku
     # Push the main-webserver subtree to the appropriate Heroku app.
     # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds, or unconditionally if branch is in ["dev"] (since other workflows won't run then)
-
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         needs:
