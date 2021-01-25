@@ -287,8 +287,8 @@ jobs:
                   fromJSON('["staging", "dev"]'),
                   needs.fractal-publish-build-config.outputs.branch
                 ) && always()
-              ) &&
-            contains(fromJSON('["all"], ["main-webserver-deploy-heroku"]'), needs.fractal-publish-build-config.outputs.job)
+              )
+            ) && contains(fromJSON('["all"], ["main-webserver-deploy-heroku"]'), needs.fractal-publish-build-config.outputs.job)
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
