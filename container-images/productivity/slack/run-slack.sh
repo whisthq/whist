@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# close all instances of Google Chrome (to simplify login redirection story)
+# Close all instances of Google Chrome (to simplify login redirection from the browser to Slack)
 if pgrep chrome; then
     pkill chrome
 fi
 
-# open slack
+# Start Slack
 exec /usr/lib/slack/slack $@

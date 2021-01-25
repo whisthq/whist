@@ -10,7 +10,7 @@ RUN wget -qO sidekick.deb https://api.meetsidekick.com/downloads/df/linux/deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set default browser
+# Set as default browser
 RUN su - fractal -c \
     "xdg-mime default sidekick-browser.desktop text/html \
     && xdg-mime default sidekick-browser.desktop x-scheme-handler/http \

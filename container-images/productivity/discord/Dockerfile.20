@@ -1,5 +1,6 @@
 FROM fractal/base:current-build
 
+# Install Discord dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libgconf-2-4 \
     libappindicator1 \
