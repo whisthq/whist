@@ -67,10 +67,10 @@ jobs:
           - name: Modify the Packer ami_config.json via jq to the Right Values for Building New AMI
             working-directory: ecs-host-setup
             run: |
-                cat ami_config.json | jq '.builders[0].secret_key |= "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
-                cat ami_config.json | jq '.builders[0].access_key |= "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
-                cat ami_config.json | jq '.builders[0].ami_name |= "'ami-us-east-1-${{ env.commit_sha }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
-                cat ami_config.json | jq '.builders[0].source_ami |= "'${{ env.source_ami }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
+                cat ami_config.json | jq '.builders[0].secret_key = "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'" | \
+                .builders[0].access_key = "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'" | \
+                .builders[0].ami_name = "'ami-us-east-1-${{ env.commit_sha }}'" | \
+                .builders[0].source_ami = "'${{ env.source_ami }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
 
           # This spins up an AWS EC2 instance to create the AMI, and then deletes it
           # It *could* fail if we are maxed-out in number AWS vCPUs allowed in AWS Source Region
@@ -79,7 +79,6 @@ jobs:
             run: |
                 # create new AMI for aws_source_region
                 # echo "new_ami_id=$(packer build ami_config.json | grep -oE 'ami-[0-9a-z]+')" >> $GITHUB_ENV
-                echo "$(packer build ami_config.json | grep -oE 'ami-[0-9a-z]+')"
           
           - name: Temp new sub task to see which part is erroring
             working-directory: ecs-host-setup
