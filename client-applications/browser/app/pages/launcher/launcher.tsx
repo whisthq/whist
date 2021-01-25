@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { useSubscription } from "@apollo/client"
-import S3 from "aws-s3"
 
 // import { FadeIn } from "react-fade-in"
 
@@ -110,8 +109,8 @@ export const Launcher = (props: {
 
         const s3FileName = `CLIENT${new Date().getTime()}.txt`
 
-        uploadToS3(logPath, s3FileName, (error: string) => {
-            if (error) {
+        uploadToS3(logPath, s3FileName, (s3Error: string) => {
+            if (s3Error) {
                 logger.logInfo(`Upload to S3 errored: ${error}`, userID)
             } else {
                 logger.logInfo(

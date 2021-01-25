@@ -12,14 +12,14 @@ import styles from "shared/components/chromeBackground/chromeBackground.css"
 export const ChromeBackground = () => {
     return (
         <>
-            <div className={styles.titlebar}></div>
+            <div className={styles.titlebar} />
             <div style={{ position: "relative", top: 38 }}>
-                <div className={styles.innerRound}></div>
-                <div className={styles.tab}></div>
+                <div className={styles.innerRound} />
+                <div className={styles.tab} />
                 <div
                     className={styles.innerRound}
                     style={{ left: 259, transform: "scaleX(-1)" }}
-                ></div>
+                />
                 <FaPlus className={styles.addTab} />
                 <div className={styles.searchBarWrapper}>
                     <div>
@@ -40,7 +40,7 @@ export const ChromeBackground = () => {
                             className={styles.navigationIcon}
                         />
                     </div>
-                    <div className={styles.searchBar}></div>
+                    <div className={styles.searchBar} />
                     <div>
                         <FaEllipsisV
                             className={styles.navigationIcon}

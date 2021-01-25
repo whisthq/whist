@@ -37,7 +37,6 @@ export const execPromise = (
     })
 }
 
-
 const getExecutableName = (): string => {
     /*
     Description:

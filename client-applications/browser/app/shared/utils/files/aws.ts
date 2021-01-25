@@ -4,7 +4,7 @@ import { allowedRegions } from "shared/types/aws"
 import { fractalBackoff } from "shared/utils/general/helpers"
 import { QUERY_REGION_TO_AMI } from "shared/constants/graphql"
 import { OperatingSystem, FractalDirectory } from "shared/types/client"
-import {config} from "shared/constants/config"
+import { config } from "shared/constants/config"
 
 export const setAWSRegion = (accessToken: string, backoff?: true) => {
     /*
@@ -110,7 +110,7 @@ export const uploadToS3 = (
     callback: (error: string) => void,
     accessKey = config.keys.AWS_ACCESS_KEY,
     secretKey = config.keys.AWS_SECRET_KEY,
-    bucketName = "fractal-protocol-logs",
+    bucketName = "fractal-protocol-logs"
 ) => {
     /*
     Description:
