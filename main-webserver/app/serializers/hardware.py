@@ -7,6 +7,7 @@ from app.models import (
     RegionToAmi,
     SupportedAppImages,
     UserContainer,
+    UserContainerState,
 )
 
 
@@ -45,3 +46,9 @@ class RegionToAmiSchema(ma.SQLAlchemyAutoSchema):
 class BannersSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Banners
+
+
+class UserContainerStateSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = UserContainerState
+        include_fk = True

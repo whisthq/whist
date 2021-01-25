@@ -1,0 +1,22 @@
+@import '~app.global.css';
+
+.loadingWrapper {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: var(--background-color);
+}
+
+.loadingCentered {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.loadingText {
+    color: white;
+    font-weight: bold;
+    margin-top: 30px;
+}

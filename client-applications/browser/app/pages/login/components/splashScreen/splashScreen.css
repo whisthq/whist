@@ -1,0 +1,23 @@
+@import '~app.global.css';
+
+.loginText {
+    color: white;
+    margin-bottom: 35px;
+}
+
+.transparentButton {
+    border: solid 1px white;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 2px;
+    font-weight: bold;
+    padding: 9px 50px;
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+}
+
+.transparentButton:hover {
+    border: solid 1px var(--accent-color);
+    background: var(--accent-color);
+    color: black;
+}

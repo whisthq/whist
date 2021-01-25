@@ -68,3 +68,4 @@ for /f "tokens=1 delims= " %%a in ("%tmpvar%") do set tmpvar=%%a
 set "%~2=!tmpvar:~1!"
 )
 exit /b
+
