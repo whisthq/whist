@@ -40,7 +40,7 @@ import (
 const resourceMappingDirectory = "/fractal/containerResourceMappings/"
 const cloudStorageDirectory = "/fractal/cloudStorage/"
 
-
+// Opens all permissions on /fractal directory
 func makeFractalDirectoryFreeForAll() {
 	cmd := exec.Command("chown", "-R", "ubuntu", "/fractal")
 	cmd.Run()
@@ -142,7 +142,7 @@ var containerIDs map[uint16]string = make(map[uint16]string)
 // keys: hostPort, values: slice containing all cloud storage directories that are mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
 
-// 
+// Unmounts a cloud storage directory mounted on hostPort
 func unmountCloudStorageDir(hostPort uint16, path string) {
 	// Unmount lazily, i.e. will unmount as soon as the directory is not busy
 	cmd := exec.Command("fusermount", "-u", "-z", path)
@@ -505,8 +505,8 @@ func shutdownHostService() {
 	os.Exit(0)
 }
 
-// Create the directory used to store the container resource allocations (e.g.
-// TTYs) on disk
+// Create the directory used to store the container resource allocations
+// (e.g. TTYs) on disk
 func initializeFilesystem() {
 	// check if resource mapping directory already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid

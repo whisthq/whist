@@ -1,7 +1,7 @@
 # workflows/protocol-check-pr.yml
 #
 # Protocol: Check PR
-# Builds the Fractal Protocol on Windows, macOS and Linux, and Run Static Checks (cppcheck, clang-tidy)
+# Checks a protocol PR for linting, clang standards and building success.
 
 name: "Protocol: Check PR"
 
@@ -37,9 +37,6 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  submodules: recursive
 
             # Necessary for downloading protocol libs from AWS S3
             - name: Configure AWS S3 CLI
@@ -54,8 +51,6 @@ jobs:
             - name: Install cppcheck via Chocolatey on Windows GHA Machine
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
-              with:
-                  args: install cppcheck
 
             - name: Install CUDA on Windows GHA Machine
               if: runner.os == 'Windows'

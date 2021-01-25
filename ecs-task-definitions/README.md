@@ -14,4 +14,4 @@ Note that the `:rshared` string in the cloud storage mount point is an instance 
 
 ## Publishing
 
-Task definitions for all currently supported apps get automatically published to AWS ECS through the `build-and-publish.yml` GitHub Actions workflow. See `build-and-publish.yml` for the exact list of applications and AWS regions supported.
+Task definitions for all currently supported apps get automatically published to AWS ECS through the `build-and-publish.yml` GitHub Actions workflow, under the `ecs-task-definitions-deploy-task-definitions-ecs` job. See `build-and-publish.yml` for the exact list of applications and AWS regions supported.
