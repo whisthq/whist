@@ -54,17 +54,13 @@ If you are on a high-DPI screen, you can optionally prepend the final line of th
 
 
 
-
-
-
-**NOTE**: If you want to see the actual userdata that gets passed into the EC2 hosts, it's in the subfolder `main-webserver` under the [`fractal/fractal`](https://github.com/fractal/fractal) repository; it is the file [`app/helpers/utils/aws/base_userdata_template.sh`](https://github.com/fractal/fractal/blob/dev/main-webserver/app/helpers/utils/aws/base_userdata_template.sh).
-
+To create an AMI
 
 
 
 
 
-
+**NOTE**: If you want to see the actual userdata that gets passed into the EC2 hosts, it's in the subfolder `main-webserver` in the file [`app/helpers/utils/aws/base_userdata_template.sh`](https://github.com/fractal/fractal/blob/dev/main-webserver/app/helpers/utils/aws/base_userdata_template.sh).
 
 ## Copying AMIs Across AWS Regions
 
@@ -81,26 +77,3 @@ Previously, the Docker daemon and ECS Agent would start up on host machine at bo
 ## Publishing
 
 We are currently building a pipeline to automatically build and deploy new AMIs to all supported AWS regions through the `build-and-publish.yml` GitHub Actions workflow, as with the other components of Fractal. Once it is completed, this section will be updated.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
