@@ -167,6 +167,7 @@ export const Launcher = (props: {
                             "Container creation state is FAILURE",
                             userID
                         )
+                        setTaskState(FractalAppState.FAILURE)
                         setLoadingMessage(LoadingMessage.FAILURE)
                         break
                     default:
