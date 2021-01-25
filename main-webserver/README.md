@@ -1,6 +1,6 @@
 # Fractal Main Webserver
 
-This repository contains the code for our webserver, which is our REST API and provides backend support for our user interfaces, our internal tools, and our container/virtual machine management.
+This repository contains the code for our webserver, which is our REST API and provides backend support for our user interfaces, our internal tools, and our container/virtual machine management. This README contains general set-up information&mdash;for a high-level understanding of the code, read each of the READMEs in the the subdirectories here (`/app`, `/docker`, etc.)
 
 Our webservers and CD pipeline are hosted on Heroku. Our production database is attached as an Heroku Add-On PostgresSQL to the associated webserver in Heroku, `main-webserver`, and has automated backups in place daily at 2 AM PST. See [here](https://devcenter.heroku.com/articles/heroku-postgres-backups#creating-a-backup) for further information.
 
@@ -111,11 +111,25 @@ In order to run tests locally, the tests must be able to connect to a running Re
 
 ### `pytest`
 
-We have pytest tests in the `tests` subdirectory. To run tests, just run `pytest` in a terminal. Refer to the [pytest documentation](https://docs.pytest.org/en/stable/contents.html) to learn how to use pytest.
+We have pytest tests in the `tests` subdirectory. To run tests, make sure you have pytest installed with Python 3, as well as all of the other Python dependencies (`pip3 install -r requirements-test.txt`). Then run `pytest --no-mock-aws` in the `main-webserver` directory. Refer to the [pytest documentation](https://docs.pytest.org/en/stable/contents.html) to learn how to use pytest.
 
 The docker-compose stack does **not** need to be running in order to run tests. However, the tests do need access to Redis. By default, the tests attempt to connect to `rediss://localhost:6379/0`. If Redis is running elsewhere, expose the correct connection URI to the tests via the environment variable `REDIS_URL`. This can even be a remote URI!
 
 **To reiterate, we do not need to launch a local instance of webserver and celery to run tests. Local tests use Flask mocking to test endpoints, and they use a locally running redis to run Celery.**
+
+## How To Contribute
+
+Before making a pull request, ensure that the following steps are taken:
+
+1. Make sure that your code follows the guidelines outlined in our [Python Webserver Coding Philosophy](https://www.notion.so/tryfractal/Code-Philosophy-Webserver-backend-d036205444464f8b8a61dc36eeae7dbb).
+
+2. Lint your code by running `black .` and `pylint app` from the `main-webserver` directory. If this does not pass, your code will fail Github CI. NOTE: Depending on where the directory containing your virtual environment is located, `black .` may attempt to lint the source code for all of the packages specified in your requirements files. In this case, use the --exclude flag.
+
+3. Run all test files by running `pytest --no-mock-aws` in the `main-webserver` directory. NOTE: If you have written new functions, make sure it has a corresponding test, or code reviewers will request changes on your PR.
+
+4. Rebase against `dev` by pulling `dev` and running `git rebase dev`.
+
+Finally, you can open a PR to `dev`.
 
 ## Styling
 
