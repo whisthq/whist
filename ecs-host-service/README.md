@@ -1,16 +1,33 @@
 # Fractal ECS Host Service
 
-This subfolder contains the Fractal ECS host service, which is installed on AWS EC2 instances running Fractal containers via AWS ECS to perform dynamic tty allocation and ensure new containers can be safely allocated on the host machine as simultaneous requests come in.
+
+
+
+This subfolder contains the code for the Fractal ECS host service, 
+
+
+The Fractal ECS host service is responsible for orchestrating containers on Fractal EC2 instances
+
+
+
+which is installed on AWS EC2 instances running Fractal containers via AWS ECS to perform dynamic tty allocation and ensure new containers can be safely allocated on the host machine as simultaneous requests come in.
+
+
+
 
 ## Development
 
 ### Building
 
-To build the service, first install Go via your local package manager, i.e. `brew install go` (MacOS) or `sudo snap install --classic --channel=1.15/stable go` (Linux), and then run `make`. Note that this was only tested using Go version >= 1.15.
+To build the service, first install Go via your local package manager, i.e. `brew install go` on macOS, `sudo snap install --classic --channel=1.15/stable go` on Linux, or `choco install golang` on Windows, and then run `make`. Note that this was only tested using Go version >= 1.15.
 
 This will build the service under directory `/build` as `ecs-host-service`.
 
 ### Running
+
+
+
+
 
 It is only possible to run the host service on AWS EC2 instances. The host service code retrieves metadata about the instance on which it is running from the EC2 instance metadata endpoint <http://169.254.169.254/latest/meta-data/>. According to [the EC2 documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html), "the IP address `196.254.169.254` is a link-local address and is valid only from the [EC2] instance."
 
@@ -35,3 +52,10 @@ You can install `goimports` and `golint` by running `go get -u golang.org/x/tool
 ## Publishing
 
 This service gets automatically published with every push to `master` by a GitHub Actions workflow which uploads the executable to an S3 bucket, `fractal-ecs-host-service`, from which a script in the User Data section of the Fractal AMIs pulls the service into the EC2 instances deployed. Pushing to `master` will also trigger an automated Sentry release through GitHub Actions, and our following Sentry logs will be tagged with this release. For more details, see `.github/workflows/publish-build.yml` and `.github/workflows/sentry-release.yml`.
+
+
+
+Task definitions for all currently supported apps get automatically published to AWS ECS through the `build-and-publish.yml` GitHub Actions workflow. See `build-and-publish.yml` for the exact list of applications and AWS regions supported.
+
+
+

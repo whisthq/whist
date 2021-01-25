@@ -38,7 +38,7 @@ declare -a includeFolders=(
     "server"
 )
 
-# 
+# set clang-tidy-fixes file
 yamlFolder="fixes"
 mkdir $yamlFolder
 fixesFilename=clang-tidy-fixes.yaml

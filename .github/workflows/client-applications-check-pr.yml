@@ -1,7 +1,7 @@
 # workflows/client-applications-check-pr.yml
 #
 # Client Applications: Check PR
-# Checks an ECS Host Service PR for linting and building success.
+# Checks a client-applications PR for linting and building success.
 
 name: "Client Applications: Check PR"
 
