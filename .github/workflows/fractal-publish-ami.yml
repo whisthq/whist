@@ -79,12 +79,12 @@ jobs:
             working-directory: ecs-host-setup
             run: |
                 # create new AMI for aws_source_region
-                # echo "new_ami_id=$(packer -machine-readable build ami_config.json | grep -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
-                touch build.log
-                echo "created file"
-                packer -machine-readable build ami_config.json | tee build.log
-                cat build.log
-                echo "new_ami_id=$(grep build.log -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
+                echo "new_ami_id=$(packer -machine-readable build ami_config.json | grep -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
+                # touch build.log
+                # echo "created file"
+                # packer -machine-readable build ami_config.json | tee build.log
+                # cat build.log
+                # echo "new_ami_id=$(grep -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
           - name: Temp separate
             working-directory: ecs-host-setup
             run: |
