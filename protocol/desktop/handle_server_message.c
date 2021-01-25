@@ -41,6 +41,7 @@ extern volatile int ping_failures;
 extern volatile int try_amount;
 extern volatile char *window_title;
 extern volatile bool should_update_window_title;
+extern volatile double latency;
 extern int client_id;
 
 /*
@@ -109,7 +110,8 @@ static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size) {
         return -1;
     }
     if (ping_id == fmsg->ping_id) {
-        LOG_INFO("Latency: %f", get_timer(latency_timer));
+        latency = (latency + get_timer(latency_timer)) / 2.0;
+        LOG_INFO("Latency: %f (Geometric Average: %f)", get_timer(latency_timer), latency);
         is_timing_latency = false;
         ping_failures = 0;
         try_amount = 0;

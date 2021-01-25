@@ -59,6 +59,8 @@ extern volatile FractalRGBColor* native_window_color;
 extern volatile bool native_window_color_update;
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
+volatile double latency = 0.050;  // 50ms default latency before nack
+
 // START VIDEO VARIABLES
 volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* cursor = NULL;
@@ -130,6 +132,7 @@ struct VideoData {
 
     double target_mbps;
     int num_nacked;
+    int num_very_late_packets;
     int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
     double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
@@ -306,7 +309,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
                 frame->is_iframe ? "(I-Frame)" : "");
 #endif
 
-        if (get_timer(render_context.frame_creation_timer) > 25.0 / 1000.0) {
+        if (get_timer(render_context.frame_creation_timer) > latency * 1.3) {
             LOG_INFO("Late! Rendering ID %d (Age %f) (Packets %d) %s", render_context.id,
                      get_timer(render_context.frame_creation_timer), render_context.num_packets,
                      frame->is_iframe ? "(I-Frame)" : "");
@@ -621,7 +624,8 @@ bool request_iframe() {
             (bool): true if IFrame requested, false if not
     */
 
-    if (get_timer(video_data.last_iframe_request_timer) > 1500.0 / 1000.0) {
+    // Only request an i-frame at most once every 5 seconds
+    if (get_timer(video_data.last_iframe_request_timer) > 5000.0) {
         FractalClientMessage fmsg;
         fmsg.type = MESSAGE_IFRAME_REQUEST;
         if (video_data.last_rendered_id == 0) {
@@ -834,6 +838,7 @@ int init_multithreaded_video(void* opaque) {
     video_data.max_id = 0;
     video_data.most_recent_iframe = -1;
     video_data.num_nacked = 0;
+    video_data.num_very_late_packets = 0;
     video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     start_timer(&video_data.last_iframe_request_timer);
 
@@ -872,83 +877,91 @@ void update_video() {
         update from the server
     */
 
+    static bool updated_last_3_seconds = true;
+
     // Get statistics from the last 3 seconds of data
+    // The data isn't really valid if we _just_ requested an iframe, so "updated_last_3_seconds"
+    // must be false
     if (get_timer(video_data.frame_timer) > 3) {
         double time = get_timer(video_data.frame_timer);
 
-        // Calculate statistics
-        /*
-        int expected_frames = VideoData.max_id - VideoData.last_statistics_id;
-        // double fps = 1.0 * expected_frames / time; // TODO: finish birate
-        // throttling alg double mbps = VideoData.bytes_transferred * 8.0 /
-        // 1024.0 / 1024.0 / time; // TODO bitrate throttle
-        double receive_rate =
-            expected_frames == 0
-                ? 1.0
-                : 1.0 * VideoData.frames_received / expected_frames;
-        double dropped_rate = 1.0 - receive_rate;
-        */
-
-        double nack_per_second = video_data.num_nacked / time;
-        video_data.nack_by_bitrate[video_data.bucket] += video_data.num_nacked;
-        video_data.seconds_by_bitrate[video_data.bucket] += time;
-
-        LOG_INFO("*******************");
-        LOG_INFO("*******************");
-        LOG_INFO("*******************");
-        LOG_INFO("*******************");
-        LOG_INFO("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====",
-                 video_data.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
-
-        // Print statistics
-
-        // mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 *
-        // dropped_rate);
-
-        LOG_INFO("MBPS: %f %f", video_data.target_mbps, nack_per_second);
-
-        // Adjust mbps based on dropped packets
-        if (nack_per_second > 50) {
-            video_data.target_mbps = video_data.target_mbps * 0.75;
-            working_mbps = video_data.target_mbps;
-            update_mbps = true;
-        } else if (nack_per_second > 25) {
-            video_data.target_mbps = video_data.target_mbps * 0.83;
-            working_mbps = video_data.target_mbps;
-            update_mbps = true;
-        } else if (nack_per_second > 15) {
-            video_data.target_mbps = video_data.target_mbps * 0.9;
-            working_mbps = video_data.target_mbps;
-            update_mbps = true;
-        } else if (nack_per_second > 10) {
-            video_data.target_mbps = video_data.target_mbps * 0.95;
-            working_mbps = video_data.target_mbps;
-            update_mbps = true;
-        } else if (nack_per_second > 6) {
-            video_data.target_mbps = video_data.target_mbps * 0.98;
-            working_mbps = video_data.target_mbps;
-            update_mbps = true;
+        if (updated_last_3_seconds) {
+            updated_last_3_seconds = false;
         } else {
-            working_mbps = max(video_data.target_mbps * 1.05, working_mbps);
-            video_data.target_mbps = (video_data.target_mbps + working_mbps) / 2.0;
-            video_data.target_mbps = min(video_data.target_mbps, MAXIMUM_BITRATE);
-            update_mbps = true;
+            // Calculate statistics
+            /*
+            int expected_frames = VideoData.max_id - VideoData.last_statistics_id;
+            // double fps = 1.0 * expected_frames / time; // TODO: finish birate
+            // throttling alg double mbps = VideoData.bytes_transferred * 8.0 /
+            // 1024.0 / 1024.0 / time; // TODO bitrate throttle
+            double receive_rate =
+                expected_frames == 0
+                    ? 1.0
+                    : 1.0 * VideoData.frames_received / expected_frames;
+            double dropped_rate = 1.0 - receive_rate;
+            */
+
+            double nacks_per_second = video_data.num_nacked / time;
+            video_data.nack_by_bitrate[video_data.bucket] += video_data.num_nacked;
+            video_data.seconds_by_bitrate[video_data.bucket] += time;
+            int num_very_late_packets = video_data.num_very_late_packets;
+
+            LOG_INFO("*******************");
+            LOG_INFO("*******************");
+            LOG_INFO("*******************");
+            LOG_INFO("*******************");
+            LOG_INFO("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\nVery Late Packets:%d\n====",
+                     video_data.bucket * BITRATE_BUCKET_SIZE, time, nacks_per_second,
+                     num_very_late_packets);
+            LOG_INFO("This working mbps: %f", working_mbps);
+
+            // Print statistics
+
+            // mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 *
+            // dropped_rate);
+
+            LOG_INFO("MBPS: %f %f", video_data.target_mbps, nacks_per_second);
+
+            // Adjust mbps based on dropped packets
+            if (nacks_per_second > 10 || num_very_late_packets > 2) {
+                video_data.target_mbps = video_data.target_mbps * 0.4;
+                working_mbps = video_data.target_mbps;
+                update_mbps = true;
+            } else if (nacks_per_second > 5 || num_very_late_packets > 1) {
+                video_data.target_mbps = video_data.target_mbps * 0.6;
+                working_mbps = video_data.target_mbps;
+                update_mbps = true;
+            } else if (nacks_per_second > 3) {
+                video_data.target_mbps = video_data.target_mbps * 0.7;
+                working_mbps = video_data.target_mbps;
+                update_mbps = true;
+            } else {
+                // working_mbps = max(video_data.target_mbps * 1.05, working_mbps);
+                // video_data.target_mbps = (video_data.target_mbps + working_mbps) / 2.0;
+                // video_data.target_mbps = min(video_data.target_mbps, MAXIMUM_BITRATE);
+                // update_mbps = true;
+            }
+
+            LOG_INFO("MBPS2: %f", video_data.target_mbps);
+
+            video_data.bucket = (int)video_data.target_mbps / BITRATE_BUCKET_SIZE;
+            max_bitrate = (int)video_data.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
+
+            LOG_INFO("Lowest Working MBPS: %f",
+                     working_mbps / BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE);
+            LOG_INFO("final calculated MBPS: %d", max_bitrate);
+
+            if (update_mbps) {
+                updated_last_3_seconds = true;
+            }
         }
-
-        LOG_INFO("MBPS2: %f", video_data.target_mbps);
-
-        video_data.bucket = (int)video_data.target_mbps / BITRATE_BUCKET_SIZE;
-        max_bitrate = (int)video_data.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
-
-        LOG_INFO("final calculated MBPS: %d", max_bitrate);
         video_data.num_nacked = 0;
+        video_data.num_very_late_packets = 0;
 
         video_data.bytes_transferred = 0;
         video_data.frames_received = 0;
         video_data.last_statistics_id = video_data.max_id;
         start_timer(&video_data.frame_timer);
-
-        update_mbps = false;
     }
 
     if (video_data.last_rendered_id == -1 && video_data.most_recent_iframe > 0) {
@@ -1013,9 +1026,10 @@ void update_video() {
                 }
                 SDL_SemPost(video_data.renderscreen_semaphore);
             } else {
-                if ((get_timer(ctx->last_packet_timer) > 6.0 / 1000.0) &&
+                // When the packet is late, 50% past normal latency, we should NACK
+                if ((get_timer(ctx->last_packet_timer) > latency * 1.5) &&
                     get_timer(ctx->last_nacked_timer) >
-                        (8.0 + 8.0 * ctx->num_times_nacked) / 1000.0) {
+                        (latency * 1.5 + latency * ctx->num_times_nacked)) {
                     if (ctx->num_times_nacked == -1) {
                         ctx->num_times_nacked = 0;
                         ctx->last_nacked_index = -1;
@@ -1045,33 +1059,38 @@ void update_video() {
             }
         }
 
+        int frames_until_iframe_request = 40;  // latency * 3.0 / (1 / 60.0);
         if (!rendering) {
             // FrameData* cur_ctx =
             // &receiving_frames[VideoData.last_rendered_id %
             // RECV_FRAMES_BUFFER_SIZE];
 
-            // If we're not even rendering anything, and we're 3 frames behind, we're too far behind
-            // and we need to catch up
+            // If we're not even rendering anything, and we're %d frames behind, we're too far
+            // behind and we need to catch up
+
             if (video_data.max_id >
-                video_data.last_rendered_id + 3)  // || (cur_ctx->id == VideoData.last_rendered_id
+                video_data.last_rendered_id +
+                    frames_until_iframe_request)  // || (cur_ctx->id == VideoData.last_rendered_id
                                                   // && get_timer( cur_ctx->last_packet_timer )
                                                   // > 96.0 / 1000.0) )
             {
                 if (request_iframe()) {
                     LOG_INFO(
-                        "The most recent ID is 3 frames ahead of the most recent rendered frame, "
+                        "The most recent ID is %d frames ahead of the most recent rendered frame, "
                         "and there is no available frame to render. I-Frame is now being requested "
-                        "to catch-up.");
+                        "to catch-up.",
+                        frames_until_iframe_request);
                 }
             }
         } else {
-            // If we're rendering, then even if we're 3 frames behind we might catch up in a bit, so
-            // we're more lenient and will only i-frame if we're 5 frames behind.
-            if (video_data.max_id > video_data.last_rendered_id + 5) {
+            // If we're rendering, then even if we're %d frames behind we might catch up in a bit,
+            // so we're more lenient and will only i-frame if we're 2 * %d frames behind.
+            if (video_data.max_id > video_data.last_rendered_id + frames_until_iframe_request * 2) {
                 if (request_iframe()) {
                     LOG_INFO(
-                        "The most recent ID is 5 frames ahead of the most recent rendered frame. "
-                        "I-Frame is now being requested to catch-up.");
+                        "The most recent ID is %d frames ahead of the most recent rendered frame. "
+                        "I-Frame is now being requested to catch-up.",
+                        2 * frames_until_iframe_request);
                 }
             }
         }
@@ -1099,6 +1118,28 @@ int32_t receive_video(FractalPacket* packet) {
     int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
 
     FrameData* ctx = &receiving_frames[index];
+
+    if (!packet->is_a_nack) {
+        static bool test = false;
+        static FILE* f;
+        static int indexer = 0;
+        static clock c;
+        static clock last_packet_time;
+        if (!test) {
+            start_timer(&last_packet_time);
+            start_timer(&c);
+            f = fopen(
+                "/home/npip99/Documents/programming/fractal/fractal/protocol/desktop/frames.csv",
+                "w");
+            test = true;
+            fprintf(f, "ID,Time,ID,Index\n");
+        }
+        if (get_timer(last_packet_time) > 2 * latency) {
+            video_data.num_very_late_packets++;
+        }
+        fprintf(f, "%d,%f,%d,%d\n", indexer++, get_timer(c), packet->id, packet->index);
+        start_timer(&last_packet_time);
+    }
 
     // Check if we have to initialize the frame buffer
     if (packet->id < ctx->id) {
@@ -1169,10 +1210,13 @@ int32_t receive_video(FractalPacket* packet) {
     video_data.max_id = max(video_data.max_id, ctx->id);
 
     ctx->received_indicies[packet->index] = true;
-    if (packet->index > 0 && get_timer(ctx->last_nacked_timer) > 6.0 / 1000) {
+    /*
+    if (packet->index > 0 && get_timer(ctx->last_nacked_timer) > latency * 1.5) {
         int to_index = packet->index - 5;
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             // Nacking index i
+            LOG_INFO("NACKing index %d because %d has been received and %d is too far behind", i,
+                     packet->index, i);
             ctx->last_nacked_index = max(ctx->last_nacked_index, i);
             if (!ctx->received_indicies[i]) {
                 ctx->nacked_indicies[i] = true;
@@ -1182,6 +1226,7 @@ int32_t receive_video(FractalPacket* packet) {
             }
         }
     }
+    */
     ctx->packets_received++;
 
     // Copy packet data

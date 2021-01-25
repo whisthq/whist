@@ -75,7 +75,8 @@ Defines
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
 #define SENTRYBREADCRUMB(tag, format, ...) sentry_send_bread_crumb(tag, format, ##__VA_ARGS__)
 #define SENTRYEVENT(format, ...) sentry_send_event(format, ##__VA_ARGS__)
-#define LOG_FMT "%s | %-7s | %-35s | %-30s:%-5d | "
+#define LOG_FMT "%-15s | %-7s | %-45s | %-40s:%-5d | "
+#define LOG_FMT_EMPTY "%-15s | %-7s | %-45s | %-46s | "
 #define LOG_ARGS(LOG_TAG) current_time_str(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE "\n"

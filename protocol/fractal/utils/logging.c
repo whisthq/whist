@@ -491,7 +491,7 @@ void real_mprintf(bool log, const char *fmt_str, va_list args) {
             line = strtok_r(NULL, "\n", &strtok_context);
             while (line != NULL) {
                 san_line = escape_string(line, false);
-                snprintf(buf, LOGGER_BUF_SIZE, "|    %s \n", san_line);
+                snprintf(buf, LOGGER_BUF_SIZE, LOG_FMT_EMPTY "%s\n", "", "", "", "", san_line);
                 free(san_line);
                 logger_queue[index].log = log;
                 logger_queue[index].id = logger_global_id++;
