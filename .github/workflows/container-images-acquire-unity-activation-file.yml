@@ -24,7 +24,7 @@ jobs:
                   unityVersion: 2019.2.11f1 # change this version to match the one used in the Fractal Unity containers
 
             # Upload artifact (Unity_v20XX.X.XXXX.alf)
-            - name: Expose As GitHub Artifact
+            - name: Expose as GitHub Artifact
               uses: actions/upload-artifact@v1
               with:
                   name: ${{ steps.getManualLicenseFile.outputs.filePath }}
@@ -33,5 +33,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Unity Activation File Acquired and Uploaded to GitHub Artifact via Manual GitHub Workflow Triggering.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Unity Activation File Acquired and Uploaded to GitHub Artifact via Manually Triggering GitHub Actions Workflow.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
