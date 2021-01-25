@@ -80,6 +80,7 @@ jobs:
             run: |
                 # create new AMI for aws_source_region
                 echo "new_ami_id=$(packer build ami_config.json | grep -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
+                cat manifest.json
 
           - name: Temp separate
             working-directory: ecs-host-setup
