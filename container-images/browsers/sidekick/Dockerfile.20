@@ -5,9 +5,10 @@ FROM fractal/base:current-build
 # prevent certain errors.
 RUN wget -qO sidekick.deb https://api.meetsidekick.com/downloads/df/linux/deb \
     && apt install -y ./sidekick.deb \
-    && apt autoremove -y \
-    && apt clean \
-    && rm sidekick.deb
+    && rm sidekick.deb \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set default browser
 RUN su - fractal -c \

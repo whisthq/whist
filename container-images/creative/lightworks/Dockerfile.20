@@ -7,8 +7,9 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 	libjack0 \
 	libssl1.0.0 \
 	wget \
-	&& apt-get autoremove -y \
-	&& apt-get clean
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Note that this is NOT the latest version of Lightworks -- it is an older version which works on Ubuntu 20.04
 # It would be ideal to get the latest version to work, but it may not be possible for some time
