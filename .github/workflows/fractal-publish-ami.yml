@@ -78,7 +78,8 @@ jobs:
             working-directory: ecs-host-setup
             run: |
                 # create new AMI for aws_source_region
-                echo "new_ami_id=$(grep -oE 'ami-[0-9a-z]+' <<< $(packer build ami_config.json)" >> $GITHUB_ENV
+                # echo "new_ami_id=$(packer build ami_config.json | grep -oE 'ami-[0-9a-z]+')" >> $GITHUB_ENV
+                echo $(packer build ami_config.json | grep -oE 'ami-[0-9a-z]+')
           
           - name: Temp new sub task to see which part is erroring
             working-directory: ecs-host-setup
