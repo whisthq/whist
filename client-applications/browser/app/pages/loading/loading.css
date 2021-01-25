@@ -1,10 +1,10 @@
-@import '~app.global.css';
+@import "~app.global.css";
 
 .loadingWrapper {
     width: 100vw;
     height: 100vh;
     position: relative;
-    background: var(--background-color);
+    background: var(--text-background-color);
 }
 
 .loadingCentered {
@@ -16,7 +16,12 @@
 }
 
 .loadingText {
-    color: white;
+    color: black;
     font-weight: bold;
-    margin-top: 30px;
+    margin-top: 0px;
+}
+
+.lightIcon {
+    -webkit-text-stroke: 1px red;
+    stroke-width: 1px;
 }

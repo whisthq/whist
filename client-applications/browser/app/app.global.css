@@ -6,27 +6,27 @@
 @import '~bootstrap/dist/css/bootstrap.min.css'; */
 
 @font-face {
-    font-family: 'Maven Pro';
-    src: url('assets/fonts/MavenPro-Regular.ttf');
+    font-family: "Maven Pro";
+    src: url("assets/fonts/MavenPro-Regular.ttf");
     font-weight: normal;
     font-style: normal;
 }
 
 @font-face {
-    font-family: 'Maven Pro Medium';
-    src: url('assets/fonts/MavenPro-Medium.ttf');
+    font-family: "Maven Pro Medium";
+    src: url("assets/fonts/MavenPro-Medium.ttf");
     font-style: bold;
 }
 
 @font-face {
-    font-family: 'Maven Pro SemiBold';
-    src: url('assets/fonts/MavenPro-SemiBold.ttf');
+    font-family: "Maven Pro SemiBold";
+    src: url("assets/fonts/MavenPro-SemiBold.ttf");
     font-style: normal;
 }
 
 @font-face {
-    font-family: 'Maven Pro Bold';
-    src: url('assets/fonts/MavenPro-Bold.ttf');
+    font-family: "Maven Pro Bold";
+    src: url("assets/fonts/MavenPro-Bold.ttf");
     font-style: normal;
 }
 
@@ -51,7 +51,7 @@ body {
     padding: 0px;
     margin: 0px;
     background-color: white;
-    font-family: 'Maven Pro';
+    font-family: "Maven Pro";
     overflow-y: hidden;
     letter-spacing: 1.1px !important;
 }
@@ -96,13 +96,21 @@ a:hover {
 }
 
 .sc-htpNat svg > path {
-    fill: #ffffff;
+    fill: #333333;
     z-index: 9999;
+    stroke-width: 0.5px;
 }
 
 .sc-bdVaJa {
     z-index: 9999;
-    background: #060217;
+    background: rgba(0, 0, 0, 0);
+    padding-bottom: 5px;
+    border-bottom: solid 4px white;
+    position: absolute;
+}
+
+.loadingWrapper path {
+    stroke-width: 1 !important;
 }
 
 .macTitleBar {
