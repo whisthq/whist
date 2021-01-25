@@ -40,6 +40,7 @@ import (
 const resourceMappingDirectory = "/fractal/containerResourceMappings/"
 const cloudStorageDirectory = "/fractal/cloudStorage/"
 
+
 func makeFractalDirectoryFreeForAll() {
 	cmd := exec.Command("chown", "-R", "ubuntu", "/fractal")
 	cmd.Run()

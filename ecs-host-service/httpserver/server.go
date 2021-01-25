@@ -75,15 +75,15 @@ func (r requestResult) send(w http.ResponseWriter) {
 // MountCloudStorageRequest defines the (unauthenticated) mount_cloud_storage
 // endpoint
 type MountCloudStorageRequest struct {
-	HostPort     int    `json:"host_port"`
-	Provider     string `json:"provider"`
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	Expiry       string `json:"expiry"`
-	TokenType    string `json:"token_type"`
-	ClientID     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
-	resultChan   chan requestResult
+	HostPort     int    `json:"host_port"`		// Port on the host to mount the cloud storage drive to
+	Provider     string `json:"provider"`		// Cloud storage provider (i.e. google_drive) 
+	AccessToken  string `json:"access_token"`	// Cloud storage access token
+	RefreshToken string `json:"refresh_token"`	// Cloud storage access token refresher
+	Expiry       string `json:"expiry"`			// 
+	TokenType    string `json:"token_type"`		// 
+	ClientID     string `json:"client_id"`		// 
+	ClientSecret string `json:"client_secret"`	// 
+	resultChan   chan requestResult				// Channel to cloud storage pass mounting result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the the HTTP
