@@ -5,7 +5,7 @@ set -Eeuo pipefail
 
 # in CI we can just run the modified download script against the db, which already
 # has an initialized user/database. CI uses URI connection method.
-IN_CI=${IN_CI:=false} # default: false
+IN_CI=${CI:=false} # default: false
 if [ $IN_CI == "true" ]; then
   echo "=== Initializing db for CI ===\n"
 

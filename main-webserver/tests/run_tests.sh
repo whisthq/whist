@@ -12,7 +12,7 @@ fi
 echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
 # if in CI, run setup tests and set env vars
-IN_CI=${IN_CI:=false} # default: false
+IN_CI=${CI:=false} # default: false
 if [ $IN_CI == "true" ]; then
     # these are needed to migrate schema/data
     export POSTGRES_REMOTE_URI=$DATABASE_URL # set in config vars on Heroku

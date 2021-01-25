@@ -27,7 +27,7 @@ fi
 
 # in CI we need to slightly modify the download script because Heroku does not let us run
 # a superuser and do whatever we want to the db
-IN_CI=${IN_CI:=false} # default: false
+IN_CI=${CI:=false} # default: false
 if [ $IN_CI == "true" ]; then
   echo "=== Cleaning the script for CI ===\n"
   python modify_ci_db_schema.py

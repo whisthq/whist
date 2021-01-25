@@ -4,7 +4,7 @@
 set -Eeuo pipefail
 
 # check if in CI; if so just run fetch and setup scripts then exit
-IN_CI=${IN_CI:=false} # default: false
+IN_CI=${CI:=false} # default: false
 if [ $IN_CI == "true" ]; then
     cd db
     bash fetch_db.sh
