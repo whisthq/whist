@@ -28,7 +28,6 @@ function* createContainer() {
 
     // Get region
     const region = yield call(setAWSRegion, accessToken)
-    console.log(`Region is ${region}`)
     // Get client DPI
     const dpi = findDPI()
 
