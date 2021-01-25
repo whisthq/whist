@@ -10,6 +10,12 @@ import {
 import styles from "shared/components/chromeBackground/chromeBackground.css"
 
 export const ChromeBackground = () => {
+    /*
+        Background that looks like an empty Chrome tab
+ 
+        Arguments: none
+    */
+
     return (
         <>
             <div className={styles.titlebar} />

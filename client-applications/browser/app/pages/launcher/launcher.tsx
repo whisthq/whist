@@ -95,7 +95,7 @@ export const Launcher = (props: {
     const protocolOnStart = () => {
         // IPC sends boolean to the main thread to hide the Electron browser Window
         logger.logInfo("Protocol started, callback fired", userID)
-        // ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
     }
 
     // Callback function meant to be fired when protocol exits
