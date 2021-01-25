@@ -12,8 +12,21 @@ from app.models import User
 
 
 def forgot_password_helper(username, email_token=None):
-    # returns access token if given user ends in @fractal.co and an email token
-    # for frontend testing purposes - tests email token against a user
+    """
+    Sends verification mail for resetting a password
+
+    Parameters:
+        username (str): the username
+        email_token (optional, str): email verification token of user with username
+                            'username', used for integration testing wtih frontend as
+                            another check alongside their email containing @fractal.co
+
+    Returns:
+        json: request
+            if fail or user not found, returns false
+            if email_token exists and username is a developer, returns url and reset token
+            otherwise returns true
+    """
     user = User.query.get(username)
 
     if user:
