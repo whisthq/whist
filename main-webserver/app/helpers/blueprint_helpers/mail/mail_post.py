@@ -17,8 +17,6 @@ def forgot_password_helper(username, email_token=None):
     user = User.query.get(username)
 
     if user:
-        print("printing user")
-        print(user.token)
         token = create_access_token(identity=username, expires_delta=timedelta(minutes=10))
 
         try:
