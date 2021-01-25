@@ -91,7 +91,7 @@ jobs:
                 curl -X POST \
                 -H "Content-Type: application/json" \
                 -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-                --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${{ env.new_ami_id }}\\\" }, where: { region_name: { _eq: \\\"${{ env.aws_source_region }}\\\" } }) { returning { ami_id } } }\" }" \
+                --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${{ env.new_ami_id }}\\\" }, where: { region_name: { _eq: \\\"${{ env.aws_source_region }}-dummy\\\" } }) { returning { ami_id } } }\" }" \
                 ${{ env.graphql_db_url }}
 
           - name: Copy New AMI to All Supported AWS Regions
@@ -106,7 +106,7 @@ jobs:
                   curl -X POST \
                   -H "Content-Type: application/json" \
                   -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-                  --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${{ env.region_new_ami_id }}\\\" }, where: { region_name: { _eq: \\\"$aws_region\\\" } }) { returning { ami_id } } }\" }" \
+                  --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${{ env.region_new_ami_id }}\\\" }, where: { region_name: { _eq: \\\"${aws_region}-dummy\\\" } }) { returning { ami_id } } }\" }" \
                   ${{ env.graphql_db_url }}
                 done
 
