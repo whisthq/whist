@@ -54,6 +54,7 @@ jobs:
             - name: Detect Job
               id: detect-job
               run: |
+                  # by design, we want to be able to manually run either only one job or all jobs
                   if [[ ${{ github.event_name }} == 'push' || ${{ github.event.inputs.job-name }} == 'all' ]]; then
                     JOB_NAME=all
                   elif [[ ${{ github.event.inputs.job-name }} == 'container-images-publish-images-ghcr' ]]; then
