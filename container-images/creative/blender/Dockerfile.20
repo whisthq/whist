@@ -7,9 +7,10 @@ RUN apt-get update && \
 	libxi6 \
 	libxrender1 \
 	unzip \
-	xz-utils && \
-	apt-get -y autoremove && \
-	rm -rf /var/lib/apt/lists/*
+	xz-utils \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV BLENDER_VERSION 2.82
 ENV BLENDER_VERSION_FULL ${BLENDER_VERSION}a

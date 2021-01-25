@@ -1,13 +1,14 @@
 FROM fractal/base:current-build
 
 # Install Gimp and its dependencies explicitly
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libgimp2.0 \
     gimp \
-    && apt-get -y autoremove \
+    && apt-get autoremove -y \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set GIMP GTK theme (see comment in gimprc)
+# Set Gimp GTK theme (see comment in gimprc)
 COPY --chown=fractal gimprc /home/fractal/.config/GIMP/2.10/gimprc
 COPY gimprc /root/.config/GIMP/2.10/gimprc
 

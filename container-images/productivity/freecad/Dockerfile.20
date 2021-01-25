@@ -3,7 +3,8 @@ FROM fractal/base:current-build
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     freecad \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Setup Fractal application symlink
 RUN ln -sf /usr/bin/freecad /usr/bin/fractal-application
