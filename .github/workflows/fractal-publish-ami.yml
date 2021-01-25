@@ -67,10 +67,10 @@ jobs:
           - name: Modify the Packer ami_config.json via jq to the Right Values for Building New AMI
             working-directory: ecs-host-setup
             run: |
-                cat ami_config.json | jq ".builders[0].secret_key : ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}"
-                cat ami_config.json | jq ".builders[0].access_key : ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
-                cat ami_config.json | jq ".builders[0].ami_name : ami-us-east-1-${{ env.commit_sha }}"
-                cat ami_config.json | jq ".builders[0].source_ami : ${{ env.source_ami }}"
+                cat ami_config.json | jq ".builders[0].secret_key |= ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}"
+                cat ami_config.json | jq ".builders[0].access_key |= ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
+                cat ami_config.json | jq ".builders[0].ami_name |= ami-us-east-1-${{ env.commit_sha }}"
+                cat ami_config.json | jq ".builders[0].source_ami |= ${{ env.source_ami }}"
 
           # This spins up an AWS EC2 instance to create the AMI, and then deletes it
           # It *could* fail if we are maxed-out in number AWS vCPUs allowed in AWS Source Region
