@@ -32,6 +32,7 @@ jobs:
             with:
                 aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
                 aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+                aws-region: ${{ env.aws_source_region }}
 
           - name: Set Appropriate GraphQL URL and Access Key (prod, staging, dev) Based on Git Branch (master, staging, dev)
             run: |
