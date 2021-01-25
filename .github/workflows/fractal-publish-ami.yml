@@ -22,8 +22,6 @@ jobs:
 
       env:
         aws_source_region: us-east-1
-        # all supported AWS regions but aws_source_region, which is already taken care of when creating the new AMI
-        aws-regions: (us-east-2,us-west-1,us-west-2,ca-central-1,eu-west-1,eu-central-1)
 
       steps:
           - name: Checkout Git Repository
@@ -51,6 +49,9 @@ jobs:
                 echo "graphql_db_url=https://dev-database.fractal.co/v1/graphql" >> $GITHUB_ENV
                 echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
               fi
+
+          - name: Define Supported AWS Regions (apart from aws_source, defined above) # being done this way because of errors when defining list in env
+            run: echo "aws-regions=[us-east-2,us-west-1,us-west-2,ca-central-1,eu-west-1,eu-central-1]" >> $GITHUB_ENV
 
           # This AMI is used as a source AMI for building the new AMI
           - name: Retrieve Current aws_source_region AMI ID from Appropriate Database (prod, staging, dev)
