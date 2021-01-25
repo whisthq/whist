@@ -36,16 +36,16 @@ jobs:
 
           - name: Set Appropriate GraphQL URL and Access Key (prod, staging, dev) Based on Git Branch (master, staging, dev)
             run: |
-              if [ "${GITHUB_REF##*/}" == "master" ]; then
-                echo "graphql_db_url=https://prod-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
-              elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-                echo "graphql_db_url=https://staging-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}" >> $GITHUB_ENV
-              else
-                echo "graphql_db_url=https://dev-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
-              fi
+                if [ "${GITHUB_REF##*/}" == "master" ]; then
+                  echo "graphql_db_url=https://prod-database.fractal.co/v1/graphql" >> $GITHUB_ENV
+                  echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
+                elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                  echo "graphql_db_url=https://staging-database.fractal.co/v1/graphql" >> $GITHUB_ENV
+                  echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}" >> $GITHUB_ENV
+                else
+                  echo "graphql_db_url=https://dev-database.fractal.co/v1/graphql" >> $GITHUB_ENV
+                  echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
+                fi
 
           - name: Define Supported AWS Regions (apart from aws_source, defined above) # being done this way because of errors when defining list in env
             run: echo "aws-regions=[us-east-2,us-west-1,us-west-2,ca-central-1,eu-west-1,eu-central-1]" >> $GITHUB_ENV
@@ -67,10 +67,11 @@ jobs:
           - name: Modify the Packer ami_config.json via jq to the Right Values for Building New AMI
             working-directory: ecs-host-setup
             run: |
-                cat ami_config.json | jq '.builders[0].secret_key |= "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'"'
-                cat ami_config.json | jq '.builders[0].access_key |= "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'"'
-                cat ami_config.json | jq '.builders[0].ami_name |= "'ami-us-east-1-${{ env.commit_sha }}'"'
-                cat ami_config.json | jq '.builders[0].source_ami |= "'${{ env.source_ami }}'"'
+                
+                cat ami_config.json | jq '.builders[0].secret_key |= ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}' > ami_config.json
+                # cat ami_config.json | jq '.builders[0].access_key |= "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'"' > ami_config.json
+                # cat ami_config.json | jq '.builders[0].ami_name |= "'ami-us-east-1-${{ env.commit_sha }}'"' > ami_config.json
+                # cat ami_config.json | jq '.builders[0].source_ami |= "'${{ env.source_ami }}'"' > ami_config.json
 
           # This spins up an AWS EC2 instance to create the AMI, and then deletes it
           # It *could* fail if we are maxed-out in number AWS vCPUs allowed in AWS Source Region
