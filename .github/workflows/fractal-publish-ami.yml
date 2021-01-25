@@ -74,11 +74,11 @@ jobs:
 
           # This spins up an AWS EC2 instance to create the AMI, and then deletes it
           # It *could* fail if we are maxed-out in number AWS vCPUs allowed in AWS Source Region
-          - name: Create New AMI in aws_source_region via Packer and Update Appropriate Database (prod, staging, dev)
-            working-directory: ecs-host-setup
-            run: |
-                # create new AMI for aws_source_region
-                echo "new_ami_id=$(grep -oE 'ami-[0-9a-z]+' <<< $(packer build ami_config.json)" >> $GITHUB_ENV
+          # - name: Create New AMI in aws_source_region via Packer and Update Appropriate Database (prod, staging, dev)
+          #   working-directory: ecs-host-setup
+          #   run: |
+          #       # create new AMI for aws_source_region
+          #       echo "new_ami_id=$(grep -oE 'ami-[0-9a-z]+' <<< $(packer build ami_config.json)" >> $GITHUB_ENV
           - name: Temp new sub task to see which part is erroring
             working-directory: ecs-host-setup
             run: |
