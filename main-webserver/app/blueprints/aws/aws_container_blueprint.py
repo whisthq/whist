@@ -9,9 +9,10 @@ from app.celery.aws_ecs_creation import (
     create_new_container,
     send_commands,
 )
+from app.helpers.blueprint_helpers.aws.container_state import set_container_state
 from app.celery.aws_ecs_deletion import delete_cluster, delete_container, drain_container
 from app.celery.aws_ecs_modification import update_region
-from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
+from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND, SUCCESS
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
     ping_helper,
@@ -19,11 +20,43 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     protocol_info,
     set_stun,
 )
+from app.constants.container_state_values import CANCELLED
 
 from app.helpers.utils.general.auth import fractal_auth, developer_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
+
+
+@aws_container_bp.route("/container_state/<action>", methods=["POST"])
+@fractal_pre_process
+@jwt_required
+@fractal_auth
+def container_state(action, **kwargs):
+    """This is an endpoint which accesses our container_state_values table.
+    This table hides much of the inner workings of container spinup from users
+    and simply provides information regarding whether a user's app/container is
+    ready, cancelled, failed, etc. It is meant to be listened on through
+    a GraphQL websocket (subscription) for the loading page in the client app.
+
+    Args:
+        action (str): The string at the end of the URL which signifies
+        which action we want to take. Currently, only the cancel endpoint is provided,
+        which allows us to easily cancel a spinning up container and clean up our redux state.
+
+    Returns:
+        json, int: A json HTTP response and status code.
+    """
+    if action == "cancel":
+        body = kwargs.pop("body")
+        try:
+            user = body.pop("username")
+            task = body.pop("task")
+            set_container_state(keyuser=user, keytask=task, state=CANCELLED)
+        except:
+            return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+        return jsonify({"status": SUCCESS}), SUCCESS
+    return jsonify({"error": NOT_FOUND}), NOT_FOUND
 
 
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
@@ -102,6 +135,7 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
+
         task = assign_container.apply_async(
             [username, task_definition_arn],
             {
@@ -110,6 +144,7 @@ def test_endpoint(action, **kwargs):
                 "webserver_url": kwargs["webserver_url"],
             },
         )
+
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
 

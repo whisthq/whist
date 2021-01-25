@@ -11,6 +11,7 @@ from .hardware import (
     RegionToAmi,
     SortedClusters,
     SupportedAppImages,
+    UserContainerState,
 )
 from .logs import LoginHistory, MonitorLog, ProtocolLog
 from .oauth import Credential

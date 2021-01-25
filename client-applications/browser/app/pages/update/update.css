@@ -1,0 +1,49 @@
+@import '~app.global.css';
+
+.updateWrapper {
+    background: var(--background-color);
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+}
+
+.updateCentered {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 1000px;
+    margin: auto;
+}
+
+.loadingBar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loadingBar .remaining {
+    height: 6px;
+    background: #69f5b2;
+}
+
+.loadingBar .downloaded {
+    height: 6px;
+    background: var(--accent-color);
+}
+
+.updateTextWrapper {
+    margin-top: 25px;
+    font-size: 14px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+}
+
+.updateSubtext {
+    font-size: 10px;
+    margin: auto;
+    margin-top: 5px;
+    color: #cccccc;
+}

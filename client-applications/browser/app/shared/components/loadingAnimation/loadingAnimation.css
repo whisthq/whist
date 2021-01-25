@@ -1,0 +1,44 @@
+.animatedLogo {
+    stroke-dasharray: 125;
+    stroke-dashoffset: 125;
+    animation: logo 4s linear alternate infinite;
+}
+
+.animationWrapper {
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid white;
+    display: inline-block;
+    padding: 20px;
+}
+
+.animationWrapper svg {
+    display: block;
+}
+
+.animationWrapper:before {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    content: '';
+    border-bottom: 20px solid white;
+    border-left: 20px solid transparent;
+}
+
+.animationWrapper:after {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    content: '';
+    border-bottom: 20px solid var(--background-color);
+    border-left: 20px solid transparent;
+}
+
+@keyframes logo {
+    from {
+        stroke-dashoffset: 125;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}

@@ -1,0 +1,15 @@
+.loginText {
+    color: white;
+    margin-bottom: 35px;
+}
+
+.devInput {
+    width: 400px;
+    border: none;
+    box-shadow: none;
+    margin: auto;
+    background: rgba(237, 240, 247, 0.75);
+    padding: 5px 20px;
+    border-radius: 5px;
+    outline: none;
+}
