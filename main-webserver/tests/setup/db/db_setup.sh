@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# exit on error
+set -Eeuo pipefail
+
 # in CI we can just run the modified download script against the db, which already
 # has an initialized user/database. CI uses URI connection method.
 if [ ! -z $IN_CI ]; then

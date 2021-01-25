@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# exit on error
+set -Eeuo pipefail
+
 if [ -z $POSTGRES_REMOTE_URI ] && [ -z $POSTGRES_REMOTE_HOST ]; then
   echo "Must provide one of POSTGRES_REMOTE_URI, POSTGRES_REMOTE_HOST"
   exit 1

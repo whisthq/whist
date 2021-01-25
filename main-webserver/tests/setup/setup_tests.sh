@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # exit on error
-set -o errexit
+set -Eeuo pipefail
 
 # check if in CI; if so just run fetch and setup scripts then exit
 if [ ! -z $IN_CI ]; then

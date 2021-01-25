@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # exit on error
-set -o errexit
+set -Eeuo pipefail
 
 # we must be in the tests folder, so the folder `tests` cannot exist
 if [ -d tests ]; then
