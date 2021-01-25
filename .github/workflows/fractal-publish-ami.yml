@@ -69,7 +69,7 @@ jobs:
             run: |
                 cat ami_config.json | jq '.builders[0].secret_key |= "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
                 cat ami_config.json | jq '.builders[0].access_key |= "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
-                cat ami_config.json | jq '.builders[0].ami_name |= ami-us-east-1-"'${{ env.commit_sha }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
+                cat ami_config.json | jq '.builders[0].ami_name |= "'ami-us-east-1-${{ env.commit_sha }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
                 cat ami_config.json | jq '.builders[0].source_ami |= "'${{ env.source_ami }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
 
           # This spins up an AWS EC2 instance to create the AMI, and then deletes it
