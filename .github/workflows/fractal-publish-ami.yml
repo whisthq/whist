@@ -108,25 +108,25 @@ jobs:
                   ${{ env.graphql_db_url }}
                 done
 
-  notify-slack:
-      name: Notify Slack
-      needs: [fractal-build-and-publish-ami-main]
-      if: success()
-      runs-on: ubuntu-20.04
+  # notify-slack:
+  #     name: Notify Slack
+  #     needs: [fractal-build-and-publish-ami-main]
+  #     if: success()
+  #     runs-on: ubuntu-20.04
 
-      steps:
-          - name: Notify Slack
-            run: |
-                if [ "${GITHUB_REF##*/}" == "master" ]; then
-                    curl -X POST \
-                    --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to AWS from \`master\`.\", \"icon_emoji\": \":fractal:\"}" \
-                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-                    curl -X POST \
-                    --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to AWS from \`staging\`.\", \"icon_emoji\": \":fractal:\"}" \
-                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                else
-                    curl -X POST \
-                    --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to AWS from \`dev\`.\", \"icon_emoji\": \":fractal:\"}" \
-                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                fi
+  #     steps:
+  #         - name: Notify Slack
+  #           run: |
+  #               if [ "${GITHUB_REF##*/}" == "master" ]; then
+  #                   curl -X POST \
+  #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to AWS from \`master\`.\", \"icon_emoji\": \":fractal:\"}" \
+  #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+  #               elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+  #                   curl -X POST \
+  #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to AWS from \`staging\`.\", \"icon_emoji\": \":fractal:\"}" \
+  #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+  #               else
+  #                   curl -X POST \
+  #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to AWS from \`dev\`.\", \"icon_emoji\": \":fractal:\"}" \
+  #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+  #               fi
