@@ -175,6 +175,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	path := cloudStorageDirectory + hostPort + "/" + sanitized_provider + "/"
 	configName := hostPort + sanitized_provider
 
+	// Create tokens for Rclone
 	token, err := func() (string, error) {
 		buf, err := json.Marshal(
 			struct {
@@ -190,7 +191,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 			},
 		)
 		if err != nil {
-			return "", logger.MakeError("Error creating token for rclone: %s", err)
+			return "", logger.MakeError("Error creating token for Rclone: %s", err)
 		}
 
 		return logger.Sprintf("'%s'", buf), nil
@@ -294,6 +295,8 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	return err
 }
 
+// Creates a file containing the DPI assigned to a specific container, and make it 
+// accessible to that container
 func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
 	// Compute container-specific directory to write DPI data to
 	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
@@ -325,6 +328,7 @@ func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
 	return nil
 }
 
+// Helper function to write data to a file
 func writeAssignmentToFile(filename, data string) (err error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
 	if err != nil {
@@ -352,6 +356,8 @@ func writeAssignmentToFile(filename, data string) (err error) {
 	return nil
 }
 
+// Starts a container on the host by assigning to it the relevant parameters and
+// an unused TTY
 func containerStartHandler(ctx context.Context, cli *client.Client, id string) error {
 	// Create a container-specific directory to store mappings
 	datadir := resourceMappingDirectory + id + "/"
@@ -429,6 +435,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string) e
 	return nil
 }
 
+// Frees all resources assigned to a container and kill it
 func containerDieHandler(ctx context.Context, cli *client.Client, id string) {
 	// Delete the container-specific data directory we used
 	datadir := resourceMappingDirectory + id + "/"
@@ -479,6 +486,7 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string) {
 // Service shutdown and initialization
 // ---------------------------
 
+// Terminates the Fractal ECS host service
 func shutdownHostService() {
 	logger.Info("Beginning host service shutdown procedure.")
 
@@ -495,7 +503,7 @@ func shutdownHostService() {
 	logger.PrintStackTrace()
 
 	// Flush buffered Sentry events before the program terminates.
-	logger.Info("Flushing sentry...")
+	logger.Info("Flushing Sentry...")
 	logger.FlushSentry()
 
 	logger.Info("Sending final heartbeat...")
@@ -506,7 +514,7 @@ func shutdownHostService() {
 }
 
 // Create the directory used to store the container resource allocations
-// (e.g. TTYs) on disk
+// (e.g. TTYs and cloud storage folders) on disk
 func initializeFilesystem() {
 	// check if resource mapping directory already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
@@ -552,6 +560,8 @@ func initializeFilesystem() {
 	makeFractalDirectoryFreeForAll()
 }
 
+// Delete the directory used to store the container resource allocations
+// (e.g. TTYs and cloud storage folders) on disk
 func uninitializeFilesystem() {
 	err := os.RemoveAll(resourceMappingDirectory)
 	if err != nil {

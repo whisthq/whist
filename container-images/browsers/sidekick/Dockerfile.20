@@ -1,10 +1,11 @@
 FROM fractal/base:current-build
 
+# Download Sidekick installer
+RUN wget -qO sidekick.deb https://api.meetsidekick.com/downloads/df/linux/deb
+
 # Install Sidekick
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
-RUN wget -qO sidekick.deb https://api.meetsidekick.com/downloads/df/linux/deb \
-    && apt install -y ./sidekick.deb \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    ./sidekick.deb \
     && rm sidekick.deb \
     && apt-get autoremove -y \
     && apt-get clean \

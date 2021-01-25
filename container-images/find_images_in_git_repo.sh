@@ -5,7 +5,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
-# find all the Dockerfiles
+# Find all the Dockerfiles
 dockerfile_paths=()
 find . -name "Dockerfile.20" -print0 >tmpfile
 while IFS=  read -r -d $'\0'; do
@@ -13,7 +13,7 @@ while IFS=  read -r -d $'\0'; do
 done <tmpfile
 rm -f tmpfile
 
-# parse images to get the proper format for ECR
+# Parse Dockerfiles to get the proper format for GitHub Container Registry
 apps=()
 for path in "${dockerfile_paths[@]}"
 do

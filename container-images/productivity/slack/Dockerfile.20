@@ -1,7 +1,7 @@
 FROM fractal/browsers/chrome:current-build
 
 # Install Slack dependencies explicitly
-RUN apt-get update && apt-get install --allow-downgrades -y \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libappindicator1 \
     dbus-x11 \
     gconf-service-backend \
@@ -19,7 +19,14 @@ RUN apt-get update && apt-get install --allow-downgrades -y \
     gvfs-bin \
     jq \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download Slack installer
+
+
+
+
 
 # Install Slack
 RUN wget --quiet https://downloads.slack-edge.com/linux_releases/slack-desktop-4.0.2-amd64.deb -O /tmp/slack-desktop-4.0.2-amd64.deb && \
