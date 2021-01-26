@@ -42,10 +42,15 @@
         },
         {
             "type": "shell",
-            "expect_disconnect": "true",
             "inline": [
                 "cd /home/ubuntu/ecs-host-setup",
-                "./setup_ubuntu20_host.sh",
+                "./setup_ubuntu20_host.sh"
+            ]
+        },
+        {
+            "type": "shell",
+            "expect_disconnect": "true",
+            "inline": [
                 "sudo reboot"
             ]
         },
