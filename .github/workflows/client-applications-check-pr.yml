@@ -66,6 +66,8 @@ jobs:
 
 
 
+
+
             ############################# Unix Configuration Steps START #############################
 
             - name: Install macOS Codesigning Certificates on macOS GHA Machine
@@ -82,13 +84,7 @@ jobs:
             ############################# Unix Configuration Steps END #############################
 
 
-
-
-
-
-
-
-            - name: Publish the Windows Electron Application
+            - name: Build the Windows Electron Application
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               working-directory: client-applications\desktop
@@ -98,8 +94,8 @@ jobs:
             
 
 
-            - name: Publish the macOS/Linux Ubuntu Electron Applications
-              if: runner.os == 'macOS' || runner.os == 'Linux'
+            - name: Build the macOS Electron Applications
+              if: runner.os == 'macOS'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
               shell: bash
