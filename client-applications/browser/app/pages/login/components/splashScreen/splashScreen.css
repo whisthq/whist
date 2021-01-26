@@ -3,6 +3,11 @@
 .loginText {
     color: var(--primary-text-color);
     margin-bottom: 35px;
+    font-size: 80px;
+    text-align: left;
+    display: flex;
+    width: 600px;
+    font-weight: bold;
 }
 
 .transparentButton {
@@ -11,10 +16,13 @@
     color: var(--text-background-color);
     border-radius: 2px;
     font-weight: bold;
-    padding: 11px 50px;
+    padding: 15px 60px;
     text-transform: uppercase;
     letter-spacing: 1.6px;
     cursor: pointer;
+    margin-top: 40px;
+    transition-duration: 0.5s;
+    font-size: 16px;
 }
 
 .transparentButton:hover {

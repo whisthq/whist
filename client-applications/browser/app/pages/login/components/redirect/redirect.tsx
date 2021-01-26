@@ -22,8 +22,7 @@ export const Redirect = (props: {
     return (
         <div>
             <div className={styles.loginText}>
-                A browser window should open momentarily where you can login.
-                Click{" "}
+                A browser window should open where you can login. Click{" "}
                 <span
                     role="button"
                     tabIndex={0}
@@ -32,6 +31,7 @@ export const Redirect = (props: {
                     style={{
                         fontWeight: "bold",
                         cursor: "pointer",
+                        outline: "none",
                     }}
                 >
                     here

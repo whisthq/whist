@@ -90,6 +90,7 @@ const createWindow = async () => {
                 enableRemoteModule: true,
             },
             icon: path.join(__dirname, "/build/icon.png"),
+            transparent: true,
         })
     }
     mainWindow.loadURL(`file://${__dirname}/app.html`)

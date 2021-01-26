@@ -5,7 +5,10 @@ import {
     FaRedo,
     FaEllipsisV,
     FaPlus,
+    FaTimes,
 } from "react-icons/fa"
+
+import { FractalIPC } from "shared/types/ipc"
 
 import styles from "shared/components/chromeBackground/chromeBackground.css"
 
@@ -16,12 +19,21 @@ export const ChromeBackground = () => {
         Arguments: none
     */
 
+    // const ipc = require("electron").ipcRenderer
+
+    // const closeTab = () => {
+    //     ipc.sendSync(FractalIPC.FORCE_QUIT)
+    // }
+
     return (
         <>
             <div className={styles.titlebar} />
             <div style={{ position: "relative", top: 38 }}>
                 <div className={styles.innerRound} />
                 <div className={styles.tab} />
+                <div className={styles.tabCloseWrapper}>
+                    <FaTimes className={styles.tabClose} />
+                </div>
                 <div
                     className={styles.innerRound}
                     style={{ left: 259, transform: "scaleX(-1)" }}
