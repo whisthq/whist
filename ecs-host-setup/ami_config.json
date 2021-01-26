@@ -26,14 +26,6 @@
     ],
     "provisioners": [
         {
-            "type": "shell",
-            "expect_disconnect": "true",
-            "inline": [
-                "sudo apt-get remove unattended-upgrades -y",
-                "sudo reboot"
-            ]
-        },
-        {
             "type": "file",
             "source": "../ecs-host-setup",
             "destination": "/home/ubuntu"
