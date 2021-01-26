@@ -33,7 +33,7 @@
                 "sudo apt-get remove unattended-upgrades -y",
                 "sudo apt-get autoremove -y",
                 "sudo apt-get clean",
-                "sudo apt-get rm -rf /var/lib/apt/lists/*",
+                "sudo rm -rf /var/lib/apt/lists/*",
                 "sudo reboot"
             ]
         },
