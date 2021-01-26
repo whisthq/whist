@@ -31,32 +31,26 @@
             "expect_disconnect": "true",
             "inline": [
                 "sudo apt-get remove unattended-upgrades -y",
-                "sudo apt-get autoremove -y",
-                "sudo apt-get clean",
-                "sudo rm -rf /var/lib/apt/lists/*",
                 "sudo reboot"
             ]
         },
         {
+            "pause_before": "15s",
             "type": "file",
             "source": "../ecs-host-setup",
             "destination": "/home/ubuntu"
         },
         {
             "type": "shell",
-            "inline": [
-                "cd /home/ubuntu/ecs-host-setup",
-                "./setup_ubuntu20_host.sh"
-            ]
-        },
-        {
-            "type": "shell",
             "expect_disconnect": "true",
             "inline": [
+                "cd /home/ubuntu/ecs-host-setup",
+                "./setup_ubuntu20_host.sh",
                 "sudo reboot"
             ]
         },
         {
+            "pause_before": "15s",
             "type": "shell",
             "inline": [
                 "cd /home/ubuntu/ecs-host-setup",
