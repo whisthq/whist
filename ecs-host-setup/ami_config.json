@@ -57,7 +57,8 @@
             "type": "shell",
             "inline": [
                 "cd /home/ubuntu/ecs-host-setup",
-                "./setup_ubuntu20_ami_host.sh"]
+                "./setup_ubuntu20_ami_host.sh"
+            ]
         }
     ],
     "post-processors": [
