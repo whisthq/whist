@@ -9,7 +9,7 @@
       "source_ami": "PLACEHOLDER",
       "instance_type": "g3.4xlarge",
       "ssh_username": "ubuntu",
-      "ssh_interface": "private_ip",
+      "ssh_interface": "session_manager",
       "ami_name": "PLACEHOLDER",
       "ami_description": "Fractal-optimized Ubuntu 20.04 AWS Machine Image.",
       "launch_block_device_mappings": [
