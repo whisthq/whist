@@ -11,7 +11,22 @@ from app.helpers.utils.general.logs import fractal_log
 from app.models import User
 
 
-def forgot_password_helper(username):
+def forgot_password_helper(username, email_token=None):
+    """
+    Sends verification mail for resetting a password
+
+    Parameters:
+        username (str): the username
+        email_token (optional, str): email verification token of user with username
+                            'username', used for integration testing wtih frontend as
+                            another check alongside their email containing @fractal.co
+
+    Returns:
+        json: request
+            if fail or user not found, returns false
+            if email_token exists and username is a developer, returns url and reset token
+            otherwise returns true
+    """
     user = User.query.get(username)
 
     if user:
@@ -38,6 +53,18 @@ def forgot_password_helper(username):
             )
             return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
+        if email_token:  # for frontend testing
+            if email_token == user.token and "@fractal.co" in username:
+                return (
+                    jsonify(
+                        {
+                            "verified": True,
+                            "token": token,
+                            "url": current_app.config["FRONTEND_URL"],
+                        }
+                    ),
+                    SUCCESS,
+                )
         return jsonify({"verified": True}), SUCCESS
     else:
         return jsonify({"verified": False}), NOT_FOUND

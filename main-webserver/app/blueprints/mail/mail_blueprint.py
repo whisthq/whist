@@ -19,9 +19,24 @@ mail_bp = Blueprint("mail_bp", __name__)
 @mail_bp.route("/mail/<action>", methods=["POST"])
 @fractal_pre_process
 def mail(action, **kwargs):
+    """
+    Handles all /mail routes
+
+    Paramters:
+        action (str): the specific endpoint the client is making
+        **kwargs (obj): request data
+
+    Returns:
+        json: Response from API
+    """
+
     body = kwargs["body"]
     if action == "forgot":
-        return forgot_password_helper(body["username"])
+        email_token = None
+        if "emailToken" in body:
+            email_token = body["emailToken"]
+        return forgot_password_helper(body["username"], email_token=email_token)
+
     elif action == "cancel":
         return cancel_helper(body["username"], body["feedback"])
 
