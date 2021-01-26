@@ -55,8 +55,6 @@ jobs:
                       os: windows-2016
                     - name: macOS
                       os: macos-10.14
-                    - name: Linux Ubuntu
-                      os: ubuntu-18.04
 
         steps:
             - name: Checkout Git Repository
