@@ -28,7 +28,6 @@
     "provisioners": [
         {
             "type": "shell",
-            "expect_disconnect": "true",
             "inline": [
                 "sudo apt-get remove unattended-upgrades -y"
             ]
