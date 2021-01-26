@@ -72,8 +72,8 @@ jobs:
             run: |
                 # cat ami_config.json | jq '.builders[0].secret_key = "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'" | .builders[0].access_key = "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'" | .builders[0].ami_name = "'ami-us-east-1-${{ env.commit_sha }}'" | .builders[0].source_ami = "'${{ env.source_ami }}'" | .provisioners[2].inline[2] = "'./setup_ubuntu20_host.sh\ ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}\ ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
                 
-                one='"2UbWrGYH05m/PN6nC8xr7oVbkxL579FmlrPZSnEE"'
-                two='"AKIA24A776SSE7SP4HWG"'
+                one='\'2UbWrGYH05m/PN6nC8xr7oVbkxL579FmlrPZSnEE\''
+                two='\'AKIA24A776SSE7SP4HWG\''
                 cat ami_config.json | jq '.builders[0].secret_key = "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'" | .builders[0].access_key = "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'" | .builders[0].ami_name = "'ami-us-east-1-${{ env.commit_sha }}'" | .builders[0].source_ami = "'${{ env.source_ami }}'" | .provisioners[2].inline[2] = "'./setup_ubuntu20_host.sh\ ${one}\ ${two}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
                 cat ami_config.json 
 
