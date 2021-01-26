@@ -1,8 +1,6 @@
 FROM fractal/base:current-build
 
-# Install Brave dependencies explicitly
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
+# Install Brave Browser dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     apt-transport-https \
     curl \
@@ -10,17 +8,18 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Brave Browser
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
+# Download Brave Browser installer
 RUN curl -s https://brave-browser-apt-release.s3.brave.com/brave-core.asc | apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-release.gpg add -
 RUN echo "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" | tee /etc/apt/sources.list.d/brave-browser-release.list
-RUN apt-get update && apt-get install --no-install-recommends -y brave-browser \
+
+# Install Brave Browser
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    brave-browser \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Brave Extensions
+# Install Brave Browser extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh
 RUN chmod +x /usr/bin/install-extensions.sh
 RUN /usr/bin/install-extensions.sh

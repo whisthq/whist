@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# 
+
+# 
 install_brave_extension () {
 	preferences_dir_path="/opt/brave.com/brave/extensions"
 	pref_file_path="$preferences_dir_path/$1.json"
