@@ -1,8 +1,6 @@
 FROM fractal/base:current-build
 
 # Install Google Chrome dependencies explicitly
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libappindicator3-1 \
     libatk-bridge2.0-0 \
@@ -24,14 +22,16 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
+# Download Google Chrome installer
 RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update && apt-get install --no-install-recommends -y google-chrome-stable \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+
+# Install Google Chrome
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    google-chrome-stable \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set default browser
 RUN su - fractal -c \
@@ -40,7 +40,12 @@ RUN su - fractal -c \
     && xdg-mime default google-chrome.desktop x-scheme-handler/https \
     && xdg-mime default google-chrome.desktop x-scheme-handler/about"
 
-# Install extensions
+
+
+
+
+
+# Install Google Chrome extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh
 RUN chmod +x /usr/bin/install-extensions.sh
 RUN /usr/bin/install-extensions.sh
