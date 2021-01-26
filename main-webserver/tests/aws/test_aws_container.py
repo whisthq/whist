@@ -17,9 +17,20 @@ from app.models import ClusterInfo, db, UserContainer, RegionToAmi
 
 from ..helpers.general.progress import fractalJobRunner, queryStatus
 
+from app.celery.aws_ecs_modification import manual_scale_cluster
+
 
 pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
 pytest.container_name = None
+
+
+@pytest.mark.usefixtures("celery_session_app")
+@pytest.mark.usefixtures("celery_session_worker")
+def test_manual_scale_cluster():
+    cluster = "test-cluster-4b7568b8-d9ef-4345-bb7e-481c3ac0d7b5"
+    region = "us-east-1"
+    manual_scale_cluster.delay(cluster, region)
+
 
 
 @pytest.mark.container_serial

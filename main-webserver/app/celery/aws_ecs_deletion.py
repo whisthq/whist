@@ -23,6 +23,10 @@ from app.helpers.utils.datadog.events import (
     datadogEvent_clusterDelete,
 )
 
+from app.celery.aws_ecs_modification import (
+    manual_scale_cluster
+)
+
 
 @shared_task(bind=True)
 def delete_container(self, container_name, aes_key):
@@ -78,8 +82,9 @@ def delete_container(self, container_name, aes_key):
     )
 
     container_cluster = container.cluster
+    container_location = container.location
     ecs_client = ECSClient(
-        base_cluster=container_cluster, region_name=container.location, grab_logs=False
+        base_cluster=container_cluster, region_name=container_location, grab_logs=False
     )
 
     ecs_client.add_task(container_name)
@@ -119,6 +124,9 @@ def delete_container(self, container_name, aes_key):
         )
 
         raise Exception("SQL update failed.")
+
+    # trigger celery task to see if manual scaling should be done
+    manual_scale_cluster.delay(container_cluster, container_location)
 
     if not current_app.testing:
         task_time_taken = time.time() - task_start_time

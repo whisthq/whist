@@ -4,6 +4,7 @@ import string
 import time
 import uuid
 from collections import defaultdict
+from typing import List, Dict
 
 import boto3
 import botocore.exceptions
@@ -183,6 +184,7 @@ class ECSClient:
         self.set_cluster(cluster_name)
         return cluster_name
 
+
     def set_cluster(self, cluster_name=None):
         """Set the task's compute cluster.
 
@@ -219,12 +221,22 @@ class ECSClient:
                 break
         return clusters
 
-    def describe_auto_scaling_groups_in_cluster(self, cluster):
+
+    def describe_cluster(self, cluster: str) -> Dict:
         """
+        Gets the raw JSON (as dict) description of a cluster.
+
         Args:
-            cluster (str): name of cluster to set task's compute cluster to
-        Returns:
-            List[Dict]: each dict contains details about an auto scaling group in the cluster
+            cluster: cluster todescribe
+
+        TODO: decide if cluster needs to be passed as an arg or stored by class
+        """
+        return self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0]
+
+
+    def get_auto_scaling_groups_in_cluster(self, cluster: str) -> List[str]:
+        """
+        Get the name of all ASGs in a cluster.
         """
         capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0][
             "capacityProviders"
@@ -234,13 +246,41 @@ class ECSClient:
         )["capacityProviders"]
         auto_scaling_groups = list(
             map(
+                # this graps the autoscaling group name from ARN, as the API needs the name
                 lambda cp: cp["autoScalingGroupProvider"]["autoScalingGroupArn"].split("/")[-1],
                 capacity_providers_info,
             )
         )
+        return auto_scaling_groups
+
+
+    def set_auto_scaling_group_capacity(self, asg_name: str, desired_capacity: int):
+        """
+        Set the desired capacity (number of instances) of an ASG
+
+        Args:
+            asg_name: name of asg to change capacity
+            desired_capacity: new capacity
+        """
+        self.auto_scaling_client.set_desired_capacity(
+            AutoScalingGroupName=asg_name,
+            DesiredCapacity=desired_capacity,
+            HonorCooldown=False,
+        )
+
+
+    def describe_auto_scaling_groups_in_cluster(self, cluster):
+        """
+        Args:
+            cluster (str): name of cluster to set task's compute cluster to
+        Returns:
+            List[Dict]: each dict contains details about an auto scaling group in the cluster
+        """
+        auto_scaling_groups = self.get_autoscaling_groups_in_cluster(cluster)
         return self.auto_scaling_client.describe_auto_scaling_groups(
             AutoScalingGroupNames=auto_scaling_groups
         )["AutoScalingGroups"]
+
 
     def get_container_instance_ips(self, cluster, containers):
         """
