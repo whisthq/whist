@@ -1,5 +1,5 @@
 [Unit]
-Description=Display and protocol entrypoint, runs as root
+Description=Starts the NVIDIA display configured for Fractal, runs as root
 After=fractal-entrypoint.service
 Requires=fractal-entrypoint.service
 
