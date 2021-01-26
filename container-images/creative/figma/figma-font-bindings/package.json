@@ -1,7 +1,7 @@
 {
   "name": "figma-linux-rust-binding",
   "version": "0.1.5",
-  "description": "Rust module that makes object of meta data of fonts",
+  "description": "Rust module that makes object of metadata of fonts",
   "main": "native/index.node",
   "author": "Fractal",
   "engines": {
@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fractal/figma-font-bindings.git"
+    "url": "https://github.com/fractal/fractal/tree/dev/container-images/creative/figma/figma-font-bindings"
   },
   "bugs": {
-    "url": "https://github.com/fractal/figma-font-bindings/issues"
+    "url": "https://github.com/fractal/fractal/issues"
   },
-  "homepage": "https://github.com/fractal/figma-font-bindings",
+  "homepage": "https://github.com/fractal/fractal/tree/dev/container-images/creative/figma/figma-font-bindings",
   "keywords": [
     "Rust",
     "nodejs",
