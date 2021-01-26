@@ -57,6 +57,9 @@ jobs:
 
           - name: Check/install  Packer version
             run: |
+              # delete current packer installation
+              sudo rm -rf /usr/local/bin/packer
+
               # reinstall packer to latest version
 
               PACKER_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/packer | jq -r .current_version)
