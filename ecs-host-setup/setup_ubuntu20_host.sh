@@ -14,6 +14,10 @@ if [ "$EUID" -eq 0 ]; then
     exit
 fi
 
+# Set dkpg frontend as non-interactive to avoid irrelevant warnings
+echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+sudo apt-get install -y -q
+
 echo "================================================"
 echo "Replacing potentially outdated Docker runtime..."
 echo "================================================"
