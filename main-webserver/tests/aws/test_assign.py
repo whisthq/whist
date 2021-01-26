@@ -12,7 +12,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
 )
 
 
-from ..patches import apply_async, function, set_stripe_customer_id
+from ..patches import apply_async, function
 from app.helpers.utils.payment.stripe_client import StripeClient
 from app.serializers.public import UserSchema
 
@@ -30,24 +30,23 @@ def test_bad_app(client, authorized, monkeypatch):
     # https://stackoverflow.com/questions/28403380/py-tests-monkeypatch-setattr-not-working-in-some-cases
 
     monkeypatch.setattr(preprocess_task_info, "__code__", bad_app.__code__)
-    monkeypatch.setattr(UserSchema, "dump", set_stripe_customer_id)
+    monkeypatch.setattr(UserSchema, "dump", function(returns={"stripe_customer_id": "random1234"}))
     monkeypatch.setattr(StripeClient, "validate_customer_id", function(returns=True))
 
     response = client.post(
         "/container/assign", json=dict(username=authorized.user_id, app="Bad App")
     )
-
     assert response.status_code == 400
 
 
 def test_no_username(client, authorized):
-    response = client.post("/container/assign", json=dict(app="VSCode"))
 
+    response = client.post("/container/assign", json=dict(app="VSCode"))
     assert response.status_code == 401
 
 
 def test_no_app(client, authorized, monkeypatch):
-    monkeypatch.setattr(UserSchema, "dump", set_stripe_customer_id)
+    monkeypatch.setattr(UserSchema, "dump", function(returns={"stripe_customer_id": "random1234"}))
     monkeypatch.setattr(StripeClient, "validate_customer_id", function(returns=True))
 
     response = client.post("/container/assign", json=dict(username=authorized.user_id))
@@ -62,9 +61,14 @@ def test_no_region(client, authorized):
 
 
 @pytest.fixture
-def test_payment_required(make_authorized_user):
-    def _test_payment_required(onFreeTrial, isStripeValid, client, monkeypatch):
+def test_payment(client, make_authorized_user, monkeypatch):
+    """Generates a function to get the response of the /container/assign endpoint given a valid user's payment information"""
 
+    def _test_payment(onFreeTrial, isStripeValid):
+        """Gets the response of the /container/assign endpoint given whether the user is on a free trial or has valid Stripe information
+
+        Creates a user with the correct timestamp information and patches functions appropriately, then POSTs to get a response from the /container/assign endpoint
+        """
         if onFreeTrial:
             # create a user with a time stamp less than 7 days ago
             authorized = make_authorized_user(
@@ -88,15 +92,16 @@ def test_payment_required(make_authorized_user):
         )
         return response
 
-    return _test_payment_required
+    return _test_payment
 
 
-def test_successful(client, monkeypatch, test_payment_required):
-    response1 = test_payment_required(True, True, client, monkeypatch)
-    assert response1.status_code == 202
-    response2 = test_payment_required(True, False, client, monkeypatch)
-    assert response2.status_code == 202
-    response3 = test_payment_required(False, True, client, monkeypatch)
-    assert response3.status_code == 202
-    response4 = test_payment_required(False, False, client, monkeypatch)
-    assert response4.status_code == 402
+@pytest.mark.parametrize(
+    "has_trial, has_subscription, expected",
+    [(True, True, 202), (True, False, 202), (False, True, 202), (False, False, 402)],
+)
+def test_payment_all(test_payment, has_trial, has_subscription, expected):
+    """Tests all four cases of a user's possible payment information for expected behavior
+
+    Tests the @payment_required decorator with whether a user has/does not have a free Fractal trial and has/does not have a subscription
+    """
+    assert test_payment(has_trial, has_subscription).status_code == expected
