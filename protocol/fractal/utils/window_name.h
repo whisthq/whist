@@ -30,7 +30,7 @@ Defines
 ============================
 */
 
-#define WINDOW_NAME_MAXLEN 64
+#define WINDOW_NAME_MAXLEN 128
 
 /*
 ============================
