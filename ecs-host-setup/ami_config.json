@@ -1,78 +1,69 @@
 {
-    "builders": [
+  "builders": [
+    {
+      "access_key": "PLACEHOLDER",
+      "secret_key": "PLACEHOLDER",
+      "name": "Fractal AWS AMI Builder",
+      "type": "amazon-ebs",
+      "region": "us-east-1",
+      "source_ami": "PLACEHOLDER",
+      "instance_type": "g3.4xlarge",
+      "ssh_username": "ubuntu",
+      "ssh_interface": "private_ip",
+      "ami_name": "PLACEHOLDER",
+      "ami_description": "Fractal-optimized Ubuntu 20.04 AWS Machine Image.",
+      "launch_block_device_mappings": [
         {
-            "access_key": "PLACEHOLDER",
-            "secret_key": "PLACEHOLDER",
-            "name": "Fractal AWS AMI Builder",
-            "type": "amazon-ebs",
-            "region": "us-east-1",
-            "source_ami": "PLACEHOLDER",
-            "instance_type": "g3.4xlarge",
-            "ssh_username": "ubuntu",
-            "ssh_interface": "private_ip",
-            "ami_name": "PLACEHOLDER",
-            "ami_description": "Fractal-optimized Ubuntu 20.04 AWS Machine Image.",
-            "launch_block_device_mappings": [
-                {
-                  "volume_type": "gp2",
-                  "device_name": "/dev/sda1",
-                  "delete_on_termination": true,
-                  "volume_size": 32
-                }
-            ],
-            "ebs_optimized": true,
-            "subnet_id": "subnet-3341731d",
-            "vpc_id": "vpc-34aded4e"
+          "volume_type": "gp2",
+          "device_name": "/dev/sda1",
+          "delete_on_termination": true,
+          "volume_size": 32
         }
-    ],
-    "provisioners": [
-        {
-            "type": "shell",
-            "inline": [
-                "sudo apt-get remove unattended-upgrades -y"
-            ]
-        },
-        {
-            "type": "shell",
-            "expect_disconnect": "true",
-            "inline": [
-                "sudo reboot"
-            ]
-        },
-        {
-            "pause_before": "30s",
-            "type": "file",
-            "source": "../ecs-host-setup",
-            "destination": "/home/ubuntu"
-        },
-        {
-            "type": "shell",
-            "inline": [
-                "cd /home/ubuntu/ecs-host-setup",
-                "./setup_ubuntu20_host.sh"
-            ]
-        },
-        {
-            "type": "shell",
-            "expect_disconnect": "true",
-            "inline": [
-                "sudo reboot"
-            ]
-        },
-        {
-            "pause_before": "30s",
-            "type": "shell",
-            "inline": [
-                "cd /home/ubuntu/ecs-host-setup",
-                "./setup_ubuntu20_ami_host.sh"
-            ]
-        }
-    ],
-    "post-processors": [
-        {
-          "type": "manifest",
-          "output": "manifest.json",
-          "strip_path": true
-        }
-    ]
+      ],
+      "ebs_optimized": true,
+      "subnet_id": "subnet-3341731d",
+      "vpc_id": "vpc-34aded4e"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": ["sudo apt-get remove unattended-upgrades -y"]
+    },
+    {
+      "type": "shell",
+      "expect_disconnect": "true",
+      "inline": ["sudo reboot"]
+    },
+    {
+      "pause_before": "30s",
+      "type": "file",
+      "source": "../ecs-host-setup",
+      "destination": "/home/ubuntu"
+    },
+    {
+      "type": "shell",
+      "inline": ["cd /home/ubuntu/ecs-host-setup", "./setup_ubuntu20_host.sh"]
+    },
+    {
+      "type": "shell",
+      "expect_disconnect": "true",
+      "inline": ["sudo reboot"]
+    },
+    {
+      "pause_before": "30s",
+      "type": "shell",
+      "inline": [
+        "cd /home/ubuntu/ecs-host-setup",
+        "./setup_ubuntu20_ami_host.sh"
+      ]
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "manifest",
+      "output": "manifest.json",
+      "strip_path": true
+    }
+  ]
 }
