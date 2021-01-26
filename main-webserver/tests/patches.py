@@ -39,7 +39,3 @@ def function(**kwargs):
         return kwargs.get("returns")
 
     return func
-
-
-def set_stripe_customer_id(*args, **kwargs):
-    return {"stripe_customer_id": "random1234"}

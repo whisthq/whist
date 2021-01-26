@@ -342,9 +342,24 @@ def make_user():
 
 @pytest.fixture
 def make_authorized_user(make_user):
+    """Add a row with an authorized user to the users table for testing.
+    Yields:
+        A function that wraps the make_user fixture and adds a test row with an authorized user to the users table of the
+        database.
+    """
+
     def _authorized_user(
         client, monkeypatch, stripe_customer_id=None, created_timestamp=1000000000
     ):
+        """Create a dummy authorized user for testing.
+        Arguments:
+            stripe_customer_id (optional): The initial value with which the new row's stripe_customer_id
+                column should be populated.
+            created_timestamp (optional): The initial value with which the new row's created_timestamp
+                column should be populated. 1000000000 is an arbitrary starting value.
+        Yields:
+            An authorized instance of the User model.
+        """
         user = make_user(stripe_customer_id=stripe_customer_id, created_timestamp=created_timestamp)
         access_token = create_access_token(identity=user.user_id)
         monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")

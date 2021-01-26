@@ -8,8 +8,7 @@ import {
 // since we are going to be using them in logic for admin integration testing
 // app where you can choose where to go to
 export const webservers: { [key: string]: string } = {
-    // local: "http://127.0.0.1:7730",
-    local: "http://127.0.0.1:7810",
+    local: "http://127.0.0.1:7730",
     dev: "http://dev-server.fractal.co/",
     staging: "https://staging-server.fractal.co",
     production: "https://prod-server.fractal.co",
@@ -106,8 +105,6 @@ export const config: FractalConfig =
     process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
         ? environment.DEVELOPMENT
         : environment.PRODUCTION
-
-// export const config: FractalConfig = environment.LOCAL
 
 // default export until we have multiple exports
 export default config

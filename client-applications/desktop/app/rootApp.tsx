@@ -11,7 +11,6 @@ import Apps from "pages/onboard/apps"
 import Installing from "pages/onboard/installing"
 import Storage from "pages/onboard/storage"
 import Payment from "pages/payment/payment"
-
 import { history } from "store/history"
 import { createContainer, validateAccessToken } from "store/actions/sideEffects"
 import {
@@ -23,8 +22,6 @@ import {
 import { setAWSRegion } from "shared/utils/files/exec"
 import { checkActive, urlToApp, findDPI } from "pages/login/constants/helpers"
 import { graphqlQuery, GET_FEATURED_APPS } from "shared/constants/graphql"
-
-// import { OperatingSystem } from "shared/types/client"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalAuthCache } from "shared/types/cache"
 
@@ -38,6 +35,20 @@ const RootApp = (props: {
     connectedApps: string[]
     dispatch: Dispatch<any>
 }) => {
+    /*
+        Root react component containing the rest of the application.
+ 
+        Arguments:
+            launches: number of application launches
+            launchURL: URL to launch the Fractal application
+            clientOS: OS of the client
+            dpi: dots per inch
+            username: username of the user
+            accessToken: user's access token
+            connectedApps: array of apps that the user has connected
+            dispatch: method to dispatch actions in redux
+    */
+
     const {
         launches,
         launchURL,

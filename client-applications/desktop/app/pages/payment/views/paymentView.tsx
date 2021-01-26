@@ -8,11 +8,32 @@ import { config } from "shared/constants/config"
 import { history } from "store/history"
 
 const PaymentView = () => {
+    /*
+        Description:
+            React component to display the text and interactive components on the Payment page of the client application
+
+        Arguments:
+    */
+
     const handleRedirectPayment = () => {
+        /*
+            Description:
+                Redirects the client to the payment page on the website
+
+            Arguments:
+            Returns:
+        */
         openExternal(`${config.url.FRONTEND_URL}/dashboard/settings/payment`)
     }
 
     const handleDone = () => {
+        /*
+            Description:
+                Redirects the client back to the dashboard
+
+            Arguments:
+            Returns:
+        */
         history.push(FractalRoute.DASHBOARD)
     }
 

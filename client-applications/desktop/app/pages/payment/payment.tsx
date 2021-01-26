@@ -5,10 +5,15 @@ import TitleBar from "shared/components/titleBar"
 import Version from "shared/components/version"
 import BackgroundView from "shared/views/backgroundView"
 import PaymentView from "pages/payment/views/paymentView"
-
 import styles from "pages/login/login.css"
 
 const Payment = () => {
+    /*
+        Description:
+            React component that wraps all the components (content, background, etc.) shown on the Payment page of client application.
+
+        Arguments:
+    */
     return (
         <div className={styles.container} data-tid="container">
             <TitleBar />
