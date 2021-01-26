@@ -25,6 +25,10 @@ echo "================================================"
 # Attempt to remove potentially oudated Docker runtime
 # Allow failure with ||:, in case they're not installed yet
 sudo apt-get remove docker docker-engine docker.io containerd runc ||:
+
+
+sudo apt-get clean
+sudo apt-get upgrade
 sudo apt-get update
 
 # Install latest Docker runtime and dependencies
