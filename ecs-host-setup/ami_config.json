@@ -30,10 +30,10 @@
             "type": "shell",
             "expect_disconnect": "true",
             "inline": [
-                "apt-get remove unattended-upgrades -y",
-                "apt-get autoremove -y",
-                "apt-get clean",
-                "apt-get rm -rf /var/lib/apt/lists/*",
+                "sudo apt-get remove unattended-upgrades -y",
+                "sudo apt-get autoremove -y",
+                "sudo apt-get clean",
+                "sudo apt-get rm -rf /var/lib/apt/lists/*",
                 "sudo reboot"
             ]
         },
