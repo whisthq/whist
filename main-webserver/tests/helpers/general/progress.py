@@ -9,9 +9,10 @@ from tests.constants.settings import ALLOW_MULTITHREADING
 def queryStatus(client, resp, timeout=10):
     """
     @params:
-        resp        - Required  : Raw celery function call response
+        resp        - Required  : Flask response
         timeout     - Required  : Timeout in minutes, return -1 if timeout is succeeded
     """
+    assert resp.status_code == 202
 
     def getStatus(status_id):
         if status_id:
