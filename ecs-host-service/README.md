@@ -69,6 +69,9 @@ This service gets automatically published with every push to `master` by a GitHu
 
 
 
+
+
+
 Task definitions for all currently supported apps get automatically published to AWS ECS through the `build-and-publish.yml` GitHub Actions workflow. See `build-and-publish.yml` for the exact list of applications and AWS regions supported.
 
 
