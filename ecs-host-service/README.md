@@ -1,6 +1,6 @@
 # Fractal ECS Host Service
 
-This subfolder contains the code for the Fractal ECS host service, which is responsible for orchestrating containers on Fractal EC2 instances, which are referred as **hosts** throughout the codebase. The host service is responsible for making Docker calls to start and stop containers, for enabling multiple containers to run concurrently on the same host by dynamically assigning TTYs, and for passing startup data to the containers from the Fractal webserver(s), like DPI and third-party cloud storage providers folders to mount.
+This subfolder contains the code for the Fractal ECS host service, which is responsible for orchestrating containers on Fractal EC2 instances, which are referred to as **hosts** throughout the codebase. The host service is responsible for making Docker calls to start and stop containers, for enabling multiple containers to run concurrently on the same host by dynamically assigning TTYs, and for passing startup data to the containers from the Fractal webserver(s), like DPI and third-party cloud storage providers folders to mount.
 
 ## Development
 
@@ -20,9 +20,9 @@ If you want to test the host service with our production Sentry configuration, u
 
 ### Design Decisions
 
-This service will not restart on crash/panic, since that could lead to an inconsistency between the actually running containers and the data left on the filesystem. Instead, we note that if the service crashes, no new containers will be able to report themselves to the Fractal webserver, meaning there will be no new connections to the EC2 host and once all running containers are disconnected, the instance will be spun down.
+This service will not restart on crash/panic, since that could lead to an inconsistency between the actually running containers and the data left on the filesystem. Instead, we note that if the service crashes, no new containers will be able to report themselves to the Fractal webserver(s), meaning there will be no new connections to the EC2 host and once all running containers are disconnected, the instance will be spun down.
 
-We never use `os.exit()` or any of the `log.fatal()` variants, since we want to send out a message to our Fractal webserver and/or Sentry upon the death of this service (this is done with a `defer` function call, which runs after `panic` but not after `exit`).
+We never use `os.exit()` or any of the `log.fatal()` variants, since we want to send out a message to our Fractal webserver(s) and/or Sentry upon the death of this service (this is done with a `defer` function call, which runs after `panic` but not after `exit`).
 
 For more details, see the comments at the beginning of `main()` and `shutdownHostService()`.
 
@@ -39,22 +39,8 @@ go get -u golang.org/x/lint/golint
 PATH=$PATH:~/go/bin
 ```
 
-Then, you lint your code with `goimports [path-to-file-to-lint.go]` and `golint [path-to-file-to-lint.go]`, respectively.
+Then, format your code with `goimports [path-to-file-to-lint.go]` and `golint [path-to-file-to-format.go]`, respectively.
 
 ## Publishing
 
-
-
-
-
-
-This service gets automatically published with every push to `master` by a GitHub Actions workflow which uploads the executable to an S3 bucket, `fractal-ecs-host-service`, from which a script in the User Data section of the Fractal AMIs pulls the service into the EC2 instances deployed. Pushing to `master` will also trigger an automated Sentry release through GitHub Actions, and our following Sentry logs will be tagged with this release. For more details, see `.github/workflows/publish-build.yml` and `.github/workflows/sentry-release.yml`.
-
-
-
-
-
-
-Task definitions for all currently supported apps get automatically published to AWS ECS through the `fractal-publish-build.yml` GitHub Actions workflow, under the `ecs-task-definitions-deploy-task-definitions-ecs` job. See `.github/workflows/fractal-publish-build.yml` for the exact list of applications and AWS regions supported.
-
-
+The Fractal host service gets automatically published to an AWS S3 bucket, `fractal-ecs-host-service`, through the `fractal-publish-build.yml` GitHub Actions workflow, under the `ecs-host-service-publish-build-s3` job. The `userdata-bootstrap.sh` script, which gets executed at runtime on the AWS EC2 hosts by the Fractal webserver(s), pulls the latest version of the Fractal host service from its AWS S3 bucket onto the deployed EC2 instance deployed. Once automated AMI-building is complete, we plan on integrating the Fractal ECS host service directly by updating the AMIs, without needing to upload the Fractal host service to AWS S3.
