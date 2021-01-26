@@ -3,15 +3,14 @@ import moment from "moment"
 
 import * as Action from "store/actions/pure"
 import * as SideEffect from "store/actions/sideEffects"
-
-import { apiPost, apiGet, apiDelete } from "shared/utils/general/api"
 import { history } from "store/history"
+import { apiPost, apiGet, apiDelete } from "shared/utils/general/api"
 import { generateMessage } from "shared/components/loading"
-import { FractalRoute } from "shared/types/navigation"
+import { config } from "shared/constants/config"
 import { FractalHTTPCode, FractalAPI } from "shared/types/api"
 import { FractalAuthCache } from "shared/types/cache"
-import { config } from "shared/constants/config"
 import { AWSRegion } from "shared/types/aws"
+import { FractalRoute } from "shared/types/navigation"
 
 function* refreshAccess() {
     /*
@@ -21,7 +20,6 @@ function* refreshAccess() {
     const username = state.MainReducer.auth.username
 
     if (!username || username === "None" || username === "") {
-        console.log("refreshAccess log in")
         history.push(FractalRoute.LOGIN)
         return
     }
