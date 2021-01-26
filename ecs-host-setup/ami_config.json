@@ -18,10 +18,9 @@
                 }
             ],
             "ebs_optimized": true,
-            "security_group_ids": [
-                "sg-0678c7029eb05c2fe",
-                "sg-0addb36a8bbb37831"
-            ]
+            "subnet_id": "subnet-76c0f411",
+            "vpc_id": "vpc-34aded4e",
+            "associate_public_ip_address ": true
         }
     ],
     "provisioners": [
