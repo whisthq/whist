@@ -7,6 +7,9 @@ This repository contains the end-to-end code for the Fractal Application Streami
 - [Introduction](#introduction)
   - [Repository Structure](#repository-structure)
 
+
+
+
 * [Workflow and Conventions](#workflow-and-conventions)
   - [`master` is for releases only. `staging` is "almost `master`"](#master-is-for-releases-only-staging-is-almost-master)
   - [`dev` is for Development](#dev-is-for-development)
@@ -20,28 +23,24 @@ This repository contains the end-to-end code for the Fractal Application Streami
   - [Useful Monorepo git Tricks](#useful-monorepo-git-tricks)
   - [Example of Bad Commit History](#example-of-bad-commit-history)
 
-All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
 
-| Browsers         | Creative   | Productivity |
-| ---------------- | ---------- | ------------ |
-| Google Chrome    | Blender    | Slack        |
-| Mozilla Firefox  | Blockbench | Notion       |
-| Brave Browser    | Figma      | Discord      |
-| Sidekick Browser | TextureLab |              |
-|                  | Gimp       |              |
-|                  | Lightworks |              |
 
-Note that before your new task definition is ready to go into production, you need to also edit the database with the app's logo, terms of service link, description, task definition link, etc.
 
 # ===
 
 ## Introduction
 
-Application Streaming is Fractal's core service. It consists in running application
+Application Streaming is Fractal's core service. It consists in running application(s) on GPU-enabled Linux Docker containers on powerful host servers in the cloud, and streaming them to user devices.
+
+
+
 
 At a high-level, Fractal works as such:
 
-- First, the user downloads the client-applications Electron App. They log-in, and launch a Blender container for instance.
+- 
+
+
+First, the user downloads the client-applications Electron App. They log-in, and launch a Blender container for instance.
 - The log-in and launch process are REST API requests sent to the main-webserver.
 - The main-webserver will receive the launch request and will proceed to send an ecs-task-definitions task definition to AWS ECS.
 - This will either (A) Use an EC2 Instance that is already spun-up, or (B) This will spin up a new EC2 Instance, and then run the ecs-host-setup scripts on it. ecs-host-setup will install dependencies, and install ecs-host-service.
@@ -58,6 +57,25 @@ For more in-depth explanations of each subrepo, simply peruse the README's of th
 
 ## Styling
 
+
+
+
+To see the list of supported applications, check
+
+All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
+
+| Browsers         | Creative   | Productivity |
+| ---------------- | ---------- | ------------ |
+| Google Chrome    | Blender    | Slack        |
+| Mozilla Firefox  | Blockbench | Notion       |
+| Brave Browser    | Figma      | Discord      |
+| Sidekick Browser | TextureLab |              |
+|                  | Gimp       |              |
+|                  | Lightworks |              |
+
+Note that before your new task definition is ready to go into production, you need to also edit the database with the app's logo, terms of service link, description, task definition link, etc.
+
+
 Each subfolder is its own project with dedicated style
 
 [Documentation & Code Standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597)
@@ -66,7 +84,7 @@ Each subfolder is its own project with dedicated style
 
 ### Repository Structure
 
-This monorepo contains 8 Fractal subrepos:
+This monorepo contains 7 Fractal subrepos:
 
 - client-applications
 - container-images

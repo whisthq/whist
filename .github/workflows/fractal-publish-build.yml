@@ -27,6 +27,7 @@ jobs:
         runs-on: ubuntu-20.04
         outputs:
             branch: ${{ steps.detect-branch.outputs.branch }}
+
         steps:
             - name: Detect Branch
               id: detect-branch
@@ -59,9 +60,6 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  submodules: recursive
 
             - name: Configure AWS CLI # To get and install GRID driver
               uses: aws-actions/configure-aws-credentials@v1
@@ -132,6 +130,7 @@ jobs:
                     - ca-central-1
                     - eu-west-1
                     - eu-central-1
+
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -174,12 +173,12 @@ jobs:
     # ECS Task Definitions: Notify Slack
     # Notify Slack after rendering and deploying all the task definitions.
     # Runs if deploy-task-definitions-ecs succeeds.
-
     ecs-task-definitions-notify-slack:
         name: "ECS Task Definitions: Notify Slack"
         needs: [ecs-task-definitions-deploy-task-definitions-ecs]
         if: success()
         runs-on: ubuntu-20.04
+
         steps:
             - name: Notify Slack
               run: |
@@ -190,7 +189,6 @@ jobs:
     # ECS Host Service: Build & Publish to AWS S3
     # Build and publish the ECS host service to an S3 bucket from which EC2 hosts pull.
     # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds.
-
     ecs-host-service-publish-build-s3:
         name: "ECS Host Service: Build & Publish to AWS S3"
         runs-on: ubuntu-20.04
@@ -243,6 +241,7 @@ jobs:
     # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds, or unconditionally if branch is in ["dev"] (since other workflows won't run then)
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
+        runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: |
@@ -264,7 +263,7 @@ jobs:
                     needs.fractal-publish-build-config.outputs.branch
                 ) && always()
             )
-        runs-on: ubuntu-20.04
+        
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
