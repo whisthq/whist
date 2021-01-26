@@ -59,6 +59,8 @@ def account_post(action, **kwargs):
 
     elif action == "register":
         # Account creation endpoint
+        # Only returns email verification, access, and refresh tokens if
+        # the username ends in @fractal.co for testing frontend integration tests
 
         username, password = body["username"], body["password"]
         name = body["name"]
