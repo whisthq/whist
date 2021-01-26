@@ -6,9 +6,9 @@ This folder contains code to profile celery task execution. The main questions a
 2. What "type" of tasks are we running on our webserver? Specifically, are our tasks IO
    or CPU bound? We suspect IO because most of the time is spent doing blocking API calls to AWS.
 
-Results and more detail can be found [here.](https://docs.google.com/spreadsheets/d/1ykcQvhhCdNhCl0IvZ7LQGtpNFIPMi8BS1Lls3xmZrtk/edit?usp=sharing).
+Results and more detail can be found [here](https://docs.google.com/spreadsheets/d/1ykcQvhhCdNhCl0IvZ7LQGtpNFIPMi8BS1Lls3xmZrtk/edit?usp=sharing).
 
-To do this yourself, on a multi-core laptop run each of the following on a unique terminal.
+To do this yourself, on a multi-core laptop run each of the following on a unique terminal. You should close out of as many applications as possible to not waste any CPU resources.
 
 ```
 docker run -p 6379:6379 --name redis redis
@@ -58,3 +58,14 @@ return <function returns>
 ```
 
 Then, you could use our testing framework to execute this function. See the webserver README on how to run tests. Note testing will actually report a higher CPU ratio than when deployed because the `_poll` function is mocked.
+
+## Conclusions
+
+We should use gevent as our pooling method. Our tasks are heavily IO-bound (assign container was using CPU only 0.3% of the time). Profiling showed that gevent outperforms prefork when the fraction of time spent doing CPU work is roughly under 15%. Also, we are using NUM_WORKERS = 50 in the docker-compose and production because that outperformed other options under the following parameters:
+
+```
+num_tasks: 500
+frac_cpu: 0.1
+task_time_ms: 100
+poll_freq: 0.1
+```
