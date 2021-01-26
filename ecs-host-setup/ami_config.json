@@ -1,14 +1,16 @@
 {
     "builders": [
         {
-            "secret_key": "NA",
-            "access_key": "NA",
-            "region": "us-east-1",
-            "instance_type": "g3.4xlarge",
-            "ami_name": "NA",
-            "source_ami": "NA",
+            "access_key": "PLACEHOLDER",
+            "secret_key": "PLACEHOLDER",
+            "name": "Fractal AWS AMI Builder",
             "type": "amazon-ebs",
+            "region": "us-east-1",
+            "source_ami": "PLACEHOLDER",
+            "instance_type": "g3.4xlarge",
             "ssh_username": "ubuntu",
+            "ami_name": "PLACEHOLDER",
+            "ami_description": "Fractal-optimized Ubuntu 20.04 AWS Machine Image.",
             "launch_block_device_mappings": [
                 {
                   "volume_type": "gp2",
@@ -18,9 +20,9 @@
                 }
             ],
             "ebs_optimized": true,
+            "associate_public_ip_address ": true,
             "subnet_id": "subnet-76c0f411",
-            "vpc_id": "vpc-34aded4e",
-            "associate_public_ip_address ": true
+            "vpc_id": "vpc-34aded4e"
         }
     ],
     "provisioners": [
