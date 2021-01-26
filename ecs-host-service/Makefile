@@ -20,7 +20,7 @@ WEBSERVER_AUTH_SECRET_STAGING ?= testwebserverauthsecretstaging
 WEBSERVER_AUTH_SECRET_PROD ?= testwebserverauthsecretprod
 
 
-all: deps build
+all: build
 
 # Check that the required environment variables for building as part of our 
 # continuous integration/deployment pipeline on GitHub Actions are set properly.
@@ -53,6 +53,7 @@ else
 endif
 
 build: checkCI
+	$(GOGET) -d github.com/fractal/ecs-agent/agent@dev
 	export GOSUMDB=false
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'\
@@ -87,4 +88,4 @@ runprod: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with production configuration...)
 	sudo env PATH=$(PATH) USE_PROD_SENTRY=1 APP_ENV=production $(BUILD_FOLDER)/$(BINARY_NAME)
 
-.PHONY: build clean run runprod deps
+.PHONY: build clean run runprod
