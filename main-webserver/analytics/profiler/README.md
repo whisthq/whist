@@ -8,9 +8,10 @@ This folder contains code to profile celery task execution. The main questions a
 
 Results and more detail can be found [here.](https://docs.google.com/spreadsheets/d/1ykcQvhhCdNhCl0IvZ7LQGtpNFIPMi8BS1Lls3xmZrtk/edit?usp=sharing).
 
-To do this yourself, on a multi-core laptop run the following:
+To do this yourself, on a multi-core laptop run each of the following on a unique terminal.
 
 ```
+docker run -p 6379:6379 --name redis redis
 celery --app tasks worker --pool prefork --concurrency NUM_WORKERS
 python profiler.py
 ```
