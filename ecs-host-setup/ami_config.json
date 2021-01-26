@@ -1,12 +1,12 @@
 {
     "builders": [
         {
-            "secret_key": "2UbWrGYH05m/PN6nC8xr7oVbkxL579FmlrPZSnEE",
-            "access_key": "AKIA24A776SSE7SP4HWG",
+            "secret_key": "NA",
+            "access_key": "NA",
             "region": "us-east-1",
             "instance_type": "g3.4xlarge",
-            "ami_name": "testing-packer-4thelasttimebruh",
-            "source_ami": "ami-0656db14219ddffd0",
+            "ami_name": "NA",
+            "source_ami": "NA",
             "type": "amazon-ebs",
             "ssh_username": "ubuntu",
             "launch_block_device_mappings": [
