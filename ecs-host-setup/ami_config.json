@@ -21,7 +21,7 @@
             ],
             "ebs_optimized": true,
             "associate_public_ip_address": true,
-            "subnet_id": "subnet-76c0f411",
+            "subnet_id": "subnet-3341731d",
             "vpc_id": "vpc-34aded4e"
         }
     ],
