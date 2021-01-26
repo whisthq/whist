@@ -5,10 +5,6 @@
 
 set -Eeuo pipefail
 
-# Set dkpg frontend as non-interactive to avoid irrelevant warnings
-echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
-sudo apt-get install -y -q
-
 # Create directories for ECS agent
 sudo mkdir -p /var/log/ecs /var/lib/ecs/{data,gpu} /etc/ecs
 
