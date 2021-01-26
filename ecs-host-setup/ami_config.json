@@ -28,12 +28,8 @@
   "provisioners": [
     {
       "type": "shell",
-      "inline": ["sudo apt-get remove unattended-upgrades -y"]
-    },
-    {
-      "type": "shell",
       "expect_disconnect": "true",
-      "inline": ["sudo reboot"]
+      "inline": ["sudo apt-get remove unattended-upgrades -y", "sudo reboot"]
     },
     {
       "pause_before": "30s",
