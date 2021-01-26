@@ -1,8 +1,6 @@
 FROM fractal/base:current-build
 
 # Install Firefox dependencies explicitly
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libatk1.0-0 \
     libc6 \
@@ -41,17 +39,17 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     xul-ext-ubufox \
     fonts-lyx \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Firefox
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
-RUN apt-get update && apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     firefox \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Firefox extensions - uBlock
 RUN wget -P /usr/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/ https://addons.mozilla.org/firefox/downloads/file/3663488/ublock_origin-1.30.6-an+fx.xpi
 RUN mv /usr/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/ublock_origin-1.30.6-an+fx.xpi /usr/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/uBlock0@raymondhill.net.xpi
 
