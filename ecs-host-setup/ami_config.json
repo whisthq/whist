@@ -34,7 +34,6 @@
             "type": "shell",
             "inline": [
                 "cd /home/ubuntu/ecs-host-setup",
-                "sudo su ubuntu",
                 "./setup_ubuntu20_host.sh"
             ]
         },
