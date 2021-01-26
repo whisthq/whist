@@ -80,7 +80,10 @@ jobs:
             working-directory: ecs-host-setup
             run: |
                 # create new AMI for aws_source_region
+                # no debugging
                 # echo "new_ami_id=$(packer -machine-readable build ami_config.json | grep -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
+                
+                # yes debugging 
                 touch build.log
                 echo "created file"
                 packer -machine-readable build ami_config.json | tee build.log
