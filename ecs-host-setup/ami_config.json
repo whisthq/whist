@@ -35,7 +35,7 @@
             ]
         },
         {
-            "pause_before": "15s",
+            "pause_before": "30s",
             "type": "file",
             "source": "../ecs-host-setup",
             "destination": "/home/ubuntu"
@@ -55,7 +55,7 @@
             ]
         },
         {
-            "pause_before": "15s",
+            "pause_before": "30s",
             "type": "shell",
             "inline": [
                 "cd /home/ubuntu/ecs-host-setup",
