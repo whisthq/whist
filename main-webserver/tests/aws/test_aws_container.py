@@ -119,7 +119,9 @@ def test_assign_container(client, admin, monkeypatch):
         )
         assert False
     pytest.container_name = task["result"]["container_id"]
-    if not UserContainer.query.get(pytest.container_name):
+
+    container_name = UserContainer.query.get(pytest.container_name)
+    if container_name is None:
         fractal_log(
             function="test_assign_container",
             label="container/assign",
