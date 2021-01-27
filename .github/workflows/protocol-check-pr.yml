@@ -60,8 +60,9 @@ jobs:
                   visual_studio: "Visual Studio 16 2019" # Imported from env in the .ps1 script
                   cuda: "11.0.167" # Imported from env in the .ps1 script
               shell: powershell
+              working-directory: .github\workflows\helpers\protocol
               run: |
-                  .\.github\workflows\helpers\protocol\install_cuda_windows.ps1
+                  .\install_cuda_windows.ps1
 
                   if ($?) {
                     # Set paths for subsequent steps, using $env:CUDA_PATH
@@ -107,13 +108,14 @@ jobs:
             - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
               if: runner.os == 'macOS' || runner.os == 'Linux'
               shell: bash
+              working-directory: protocol
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
                       # update apt before installing packages to avoid package not found errors
                       sudo apt-get update
 
                       # install Linux protocol dependencies
-                      ./protocol/setup-linux-build-environment.sh
+                      ./setup-linux-build-environment.sh
 
                       # install clang-tidy, coreutils for realpath, and perl
                       sudo apt install -y clang-tidy coreutils perl
@@ -126,33 +128,30 @@ jobs:
 
             ############################# Unix Configuration Steps END #############################
 
-            - name: Build Protocol Client on Windows
+            - name: Build Protocol Client and Server on Windows
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+              working-directory: protocol
               run: |
-                  cd protocol/
                   cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE -G "NMake Makefiles"
                   nmake FractalClient
+                  nmake FractalServer
 
             - name: Build Protocol Client on macOS/Linux Ubuntu
               if: runner.os == 'macOS' || runner.os == 'Linux'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
               shell: bash
+              working-directory: protocol
               run: |
-                  cd protocol/
                   cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
                   make FractalClient
-                  cd ~
 
             - name: Build Protocol Server on Linux Ubuntu
               if: runner.os == 'Linux'
               shell: bash
-              run: |
-                  cd protocol/
-                  cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
-                  make FractalServer
-                  cd ~
+              working-directory: protocol
+              run: ./build_protocol.sh release
 
             - name: Verify Builds with clang-format
               if: runner.os == 'Linux'
@@ -172,10 +171,9 @@ jobs:
 
             - name: Verify Builds with clang-tidy
               shell: bash
+              working-directory: protocol
               run: |
                   # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
-                  cd protocol/
                   ./run-clang-tidy.sh -c
-                  cd ~
