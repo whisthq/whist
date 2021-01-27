@@ -320,8 +320,7 @@ def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=No
 @pytest.mark.usefixtures("celery_session_worker")
 @pytest.mark.usefixtures("_save_user")
 def test_update_region(client, admin, monkeypatch):
-    # this temporary makes update_cluster behave like dummy_update_cluster.
-    # it is undone after test function finishes.
+    # this makes update_cluster behave like dummy_update_cluster. undone after test finishes.
     # we use update_cluster.delay in update_region, but here we override with a mock
     monkeypatch.setattr(update_cluster, "delay", mock_update_cluster.delay)
 

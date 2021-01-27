@@ -5,6 +5,7 @@ from celery import shared_task
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
 from app.models import (
+    db,
     ClusterInfo,
     RegionToAmi,
 )
@@ -65,18 +66,22 @@ def update_region(self, region_name="us-east-1", ami=None):
             "msg": (f"updating to ami {ami} in region {region_name}"),
         },
     )
-    all_regions = RegionToAmi.query.all()
-    region_to_ami = {region.region_name: region.ami_id for region in all_regions}
+    region_to_ami = RegionToAmi.query.filter_by(
+        region_name=region_name,
+    ).limit(1).first()
+
+    if region_to_ami is None:
+        raise ValueError(f"Region {region_name} is not in db.")
+
     if ami is None:
         # use existing AMI
-        ami = region_to_ami[region_name]
+        ami = region_to_ami.ami_id
     else:
         # update db with new AMI
-        region_to_ami[region_name] = ami
+        region_to_ami.ami_id = ami
+        db.session.commit()
 
-    # TODO: use SortedClusters when we have a local testing DB
     all_clusters = list(ClusterInfo.query.filter_by(location=region_name).all())
-    # TODO: can we delete this
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
 
     if len(all_clusters) == 0:
