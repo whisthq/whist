@@ -17,7 +17,6 @@ export const debugLog = <T>(callback: T) => {
 }
 
 export class FractalLogger {
-    logger: any
     fileName = "logs/renderer.log"
     maxFileSize = 10000000
     token = "IroqVsvNytmNricZSTLUSVtJbxNYBgxp"
@@ -40,7 +39,7 @@ export class FractalLogger {
                 will also log to DataDog.
     */
 
-    constructor() {
+    private createLogger = () => {
         // Where to send the logs
         const transport = [
             new transports.Console(),
@@ -50,7 +49,7 @@ export class FractalLogger {
             }),
         ]
 
-        this.logger = createLogger({
+        let logger = createLogger({
             levels: config.syslog.levels,
             format: combine(
                 timestamp({
@@ -63,12 +62,14 @@ export class FractalLogger {
         })
 
         if (process.env.NODE_ENV === FractalNodeEnvironment.PRODUCTION) {
-            this.logger.add(
+            logger.add(
                 new Logzio({
                     token: this.token,
                 })
             )
         }
+
+        return logger
     }
 
     private formatuserID = (userID: string) => {
@@ -80,18 +81,29 @@ export class FractalLogger {
     }
 
     logInfo = (logs: string, userID = "", callback?: () => void) => {
+        // if(callback) {
+        //     this.logger.info(`${this.formatuserID(userID)} | ${logs}`, {}, callback())
+        // } else {
+        //     this.logger.info(`${this.formatuserID(userID)} | ${logs}`)
+        // }
+        const logger = this.createLogger()
+        logger.info(`${this.formatuserID(userID)} | ${logs}`)
+        logger.end()
         if(callback) {
-            this.logger.info(`${this.formatuserID(userID)} | ${logs}`, {}, callback())
-        } else {
-            this.logger.info(`${this.formatuserID(userID)} | ${logs}`)
+            logger.on("finish", () => {
+                callback()
+            });
         }
     }
 
     logError = (logs: string, userID = "", callback?: () => void) => {
+        const logger = this.createLogger()
+        logger.error(`${this.formatuserID(userID)} | ${logs}`)
+        logger.end()
         if(callback) {
-            this.logger.error(`${this.formatuserID(userID)} | ${logs}`, {}, callback())
-        } else {
-            this.logger.error(`${this.formatuserID(userID)} | ${logs}`)
+            logger.on("finish", () => {
+                callback()
+            });
         }
     }
 }
