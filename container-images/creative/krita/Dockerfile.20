@@ -13,7 +13,7 @@ RUN add-apt-repository ppa:kritalime/ppa
 
 # Install Krita
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    krita
+    krita \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
