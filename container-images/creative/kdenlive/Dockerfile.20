@@ -13,7 +13,7 @@ RUN add-apt-repository ppa:kdenlive/kdenlive-stable
 
 # Install Kdenlive
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    kdenlive
+    kdenlive \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*

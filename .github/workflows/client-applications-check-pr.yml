@@ -126,7 +126,7 @@ jobs:
               working-directory: client-applications\desktop
               run: .\publish.bat -branch=${{ env.current_git_branch }} -version=1.0.0 -bucket=not-applicable -publish=false
               
-            - name: Build the macOS Electron Applications
+            - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
