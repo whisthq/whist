@@ -78,7 +78,8 @@ Public Functions
  *
  * @returns                        0 if succeeded, else -1
  */
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi, int bitrate,
+                          CodecType codec);
 
 /**
  * @brief                          Capture a bitmap snapshot of the screen, in
