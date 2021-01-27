@@ -110,16 +110,16 @@ export const Launcher = (props: {
 
         uploadToS3(logPath, s3FileName, (s3Error: string) => {
             if (s3Error) {
-                logger.logInfo(`Upload to S3 errored: ${error}`, userID)
+                logger.logInfo(`Upload to S3 errored: ${error}`, userID, () =>
+                    ipc.sendSync(FractalIPC.FORCE_QUIT)
+                )
             } else {
                 logger.logInfo(
                     `Protocol client logs: https://fractal-protocol-logs.s3.amazonaws.com/${s3FileName}`,
-                    userID
+                    userID,
+                    () => ipc.sendSync(FractalIPC.FORCE_QUIT)
                 )
             }
-            // Quit the app
-            logger.logInfo("------------- EXITED -----------------", userID)
-            ipc.sendSync(FractalIPC.FORCE_QUIT)
         })
     }
 
