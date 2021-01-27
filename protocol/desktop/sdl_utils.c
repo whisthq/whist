@@ -18,7 +18,7 @@ Includes
 */
 
 #include "sdl_utils.h"
-#include "../fractal/utils/png.h"
+#include "utils/png.h"
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 #include "native_window_utils.h"
@@ -100,22 +100,7 @@ void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
             None
     */
 
-    AVPacket pkt;
-    av_init_packet(&pkt);
-    png_file_to_bmp(filename, &pkt);
-
-    SDL_RWops* rw = SDL_RWFromMem(pkt.data, pkt.size);
-
-    // second parameter nonzero means free the rw after reading it, no need to free rw ourselves
-    SDL_Surface* icon_surface = SDL_LoadBMP_RW(rw, 1);
-    if (icon_surface == NULL) {
-        LOG_ERROR("Failed to load icon from file '%s': %s", filename, SDL_GetError());
-        return;
-    }
-
-    // free pkt.data which is initialized by calloc in png_file_to_bmp
-    free(pkt.data);
-
+    SDL_Surface* icon_surface = sdl_surface_from_png_file(filename);
     SDL_SetWindowIcon(sdl_window, icon_surface);
 
     // surface can now be freed
