@@ -15,6 +15,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
 from ..patches import apply_async, function
 from app.helpers.utils.payment.stripe_client import StripeClient
 from app.serializers.public import UserSchema
+from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
 
 
 def bad_app(*args, **kwargs):
@@ -80,7 +81,11 @@ def test_payment(client, make_authorized_user, monkeypatch):
         else:
             # create a user with a timestamp of more than 7 days ago
             authorized = make_authorized_user(
-                client, monkeypatch, stripe_customer_id="random1234", created_timestamp=1000000000
+                client,
+                monkeypatch,
+                stripe_customer_id="random1234",
+                created_timestamp=dt.now(datetime.timezone.utc).timestamp()
+                - 7 * SECONDS_IN_MINUTE * MINUTES_IN_HOUR * HOURS_IN_DAY,
             )
 
         monkeypatch.setattr(StripeClient, "validate_customer_id", function(returns=isStripeValid))
