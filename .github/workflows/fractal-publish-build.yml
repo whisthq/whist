@@ -77,7 +77,7 @@ jobs:
             - name: Detect Whether to Publish the Job(s) or Not
               id: detect-publish
               run: |
-                  if [[ ${{ github.event.inputs.publishing }} == 'true' ]]; then
+                  if [[ ${{ github.event.inputs.publish }} == 'true' ]]; then
                     PUBLISHING=true
                   else
                     PUBLISHING=false
