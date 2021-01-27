@@ -19,7 +19,7 @@ export const setAWSRegion = (accessToken: string, backoff?: true) => {
     */
 
     const awsPromise = () => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const { spawn } = require("child_process")
             const platform = require("os").platform()
             const path = require("path")
@@ -79,7 +79,7 @@ export const setAWSRegion = (accessToken: string, backoff?: true) => {
                 try {
                     items[2].slice(1, -1)
                 } catch (err) {
-                    reject(new Error("AWS ping failed"))
+                    throw (new Error("AWS ping failed"))
                 }
 
                 while (
