@@ -411,5 +411,5 @@ COPY build-temp/protocol/libsentry.so /usr/share/fractal/bin/libsentry.so
 COPY build-temp/protocol/crashpad_handler /usr/share/fractal/bin/crashpad_handler
 COPY build-temp/protocol/FractalServer /usr/share/fractal/bin/FractalServer
 
-# Enter the Docker container via the entrypoint
+# Enter the Docker container via the entrypoint script
 CMD ["/usr/share/fractal/docker-entrypoint.sh"]
