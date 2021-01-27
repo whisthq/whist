@@ -23,7 +23,7 @@ on:
                 required: true
                 default: "None" # Avoid accidental mistakes by making the default not run any jobs
             publish:
-                description: "'true' if the job(s) being run should publish, or 'false' if it should do a test run without publishing"                
+                description: "'true' if the job(s) being run should publish, or 'false' if it should do a test run without publishing"
                 required: true
                 default: false # Avoid accidental mistakes by making the default not publish
 
@@ -165,7 +165,7 @@ jobs:
         if: |
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
-        
+
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
