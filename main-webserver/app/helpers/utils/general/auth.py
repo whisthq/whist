@@ -3,7 +3,7 @@ import logging
 import datetime
 
 
-from datetime import timedelta, datetime as dt
+from datetime import datetime as dt
 
 from functools import wraps
 
@@ -13,6 +13,7 @@ from flask_jwt_extended import get_jwt_identity
 from app.models import User
 
 from app.constants.http_codes import UNAUTHORIZED, PAYMENT_REQUIRED
+from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.payment.stripe_client import StripeClient
 
@@ -199,11 +200,12 @@ def payment_required(func):
             customer = stripe_client.user_schema.dump(user)
             stripe_customer_id = customer["stripe_customer_id"]
 
-            time_diff = timedelta(
-                dt.now(datetime.timezone.utc).timestamp() - user.created_timestamp
+            time_diff = round(dt.now(datetime.timezone.utc).timestamp()) - user.created_timestamp
+            days_since_account_created = (
+                time_diff / SECONDS_IN_MINUTE / MINUTES_IN_HOUR / HOURS_IN_DAY
             )
 
-            if time_diff.days >= 7 and (
+            if days_since_account_created >= 7 and (
                 (stripe_customer_id is None)
                 or (not stripe_client.validate_customer_id(stripe_customer_id, user))
             ):
