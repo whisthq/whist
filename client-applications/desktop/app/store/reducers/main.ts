@@ -47,7 +47,7 @@ const MainReducer = (
         case MainAction.UPDATE_APPS:
             return {
                 ...stateCopy,
-                payment: Object.assign(stateCopy.apps, action.body),
+                apps: Object.assign(stateCopy.apps, action.body),
             }
         default:
             return state
