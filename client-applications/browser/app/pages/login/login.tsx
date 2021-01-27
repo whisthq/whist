@@ -12,7 +12,7 @@ import { history } from "store/history"
 import { FractalIPC } from "shared/types/ipc"
 import SplashScreenComponent from "pages/login/components/splashScreen/splashScreen"
 import RedirectComponent from "pages/login/components/redirect/redirect"
-import GeometricComponent from "pages/login/components/geometric/geometric"
+import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
 
 import styles from "pages/login/login.css"
 
@@ -77,27 +77,14 @@ export const Login = (props: {
 
     return (
         <div className={styles.loginWrapper}>
-            <div style={{ position: "relative" }}>
-                <div style={{ position: "absolute", top: 825, left: 425 }}>
-                    <GeometricComponent
-                        color="#FFFFFF23"
-                        scale={3}
-                        flip={false}
-                    />
-                </div>
-            </div>
-            <div style={{ position: "relative" }}>
-                <div style={{ position: "absolute", top: 825, right: -840 }}>
-                    <GeometricComponent color="#FFFFFF23" scale={3} flip />
-                </div>
-            </div>
+            <ChromeBackground />
             <div className={styles.loginCenter}>
                 {!buttonClicked ? (
                     <div>
                         <SplashScreenComponent onClick={handleLogin} />
                     </div>
                 ) : (
-                    <div>
+                    <div style={{ position: "relative", left: "10%" }}>
                         <RedirectComponent
                             onClick={handleLogin}
                             onChange={changeAccessToken}

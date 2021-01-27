@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { useSubscription } from "@apollo/client"
-import S3 from "aws-s3"
 
 // import { FadeIn } from "react-fade-in"
 
@@ -25,6 +24,7 @@ import { uploadToS3 } from "shared/utils/files/aws"
 import { launchProtocol } from "shared/utils/files/exec"
 import Animation from "shared/components/loadingAnimation/loadingAnimation"
 import LoadingMessage from "pages/launcher/constants/loadingMessages"
+import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
 
 import styles from "pages/launcher/launcher.css"
 
@@ -95,7 +95,7 @@ export const Launcher = (props: {
     const protocolOnStart = () => {
         // IPC sends boolean to the main thread to hide the Electron browser Window
         logger.logInfo("Protocol started, callback fired", userID)
-        // ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
     }
 
     // Callback function meant to be fired when protocol exits
@@ -109,8 +109,8 @@ export const Launcher = (props: {
 
         const s3FileName = `CLIENT${new Date().getTime()}.txt`
 
-        uploadToS3(logPath, s3FileName, (error: string) => {
-            if (error) {
+        uploadToS3(logPath, s3FileName, (s3Error: string) => {
+            if (s3Error) {
                 logger.logInfo(`Upload to S3 errored: ${error}`, userID)
             } else {
                 logger.logInfo(
@@ -167,6 +167,7 @@ export const Launcher = (props: {
                             "Container creation state is FAILURE",
                             userID
                         )
+                        setTaskState(FractalAppState.FAILURE)
                         setLoadingMessage(LoadingMessage.FAILURE)
                         break
                     default:
@@ -193,6 +194,7 @@ export const Launcher = (props: {
 
     return (
         <div className={styles.launcherWrapper}>
+            <ChromeBackground />
             <div className={styles.loadingWrapper}>
                 <Animation />
                 <div className={styles.loadingText}>{loadingMessage}</div>

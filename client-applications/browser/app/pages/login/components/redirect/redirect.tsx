@@ -5,7 +5,7 @@ import styles from "pages/login/components/redirect/redirect.css"
 export const Redirect = (props: {
     onClick: () => void
     onChange: (evt: ChangeEvent) => void
-    onKeyPress: (evt: KeyboardEvent) => void
+    onKeyPress: (evt: KeyboardEvent<HTMLInputElement>) => void
 }) => {
     /*
         When the user clicks log in, they are redirected to this page, which tells
@@ -22,8 +22,7 @@ export const Redirect = (props: {
     return (
         <div>
             <div className={styles.loginText}>
-                A browser window should open momentarily where you can login.
-                Click{" "}
+                A browser window should open where you can login. Click{" "}
                 <span
                     role="button"
                     tabIndex={0}
@@ -32,6 +31,7 @@ export const Redirect = (props: {
                     style={{
                         fontWeight: "bold",
                         cursor: "pointer",
+                        outline: "none",
                     }}
                 >
                     here

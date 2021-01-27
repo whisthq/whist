@@ -13,6 +13,7 @@ import { history } from "store/history"
 import { FractalRoute } from "shared/types/navigation"
 import { FractalIPC } from "shared/types/ipc"
 import Animation from "shared/components/loadingAnimation/loadingAnimation"
+import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
 
 import styles from "pages/loading/loading.css"
 
@@ -72,98 +73,46 @@ export const Loading = (props: {
 
     // Check for update. If update available, then update, otherwise proceed to authenticate user
     useEffect(() => {
-        // First, check to see if the autoupdater checked for an update
-        switch (updateReceived) {
-            case true:
-                logger.logInfo(`Electron-builder update received`, userID)
-                switch (needsUpdate) {
-                    // If an update is needed, update
-                    case true:
-                        logger.logInfo(`Auto update detected`, userID)
-                        history.push(FractalRoute.UPDATE)
-                        break
-                    // If an update is not needed, check to see if we have cleared the Redux state already
-                    case false:
-                        logger.logInfo(`Auto update NOT detected`, userID)
-                        switch (reduxCleared) {
-                            // If we have, check to see if we have login credentials
-                            case true:
-                                logger.logInfo(
-                                    `Redux was cleared successfully`,
-                                    userID
-                                )
-                                switch (userID !== "" && accessToken !== "") {
-                                    // If we do, skip the login screen
-                                    case true:
-                                        logger.logInfo(
-                                            `Authenticated, redirecting to launcher`,
-                                            userID
-                                        )
-                                        history.push(FractalRoute.LAUNCHER)
-                                        break
-                                    // If we don't, check to see if we have login credentials cached
-                                    case false: {
-                                        logger.logInfo(
-                                            `Not yet authenticated`,
-                                            userID
-                                        )
-                                        const cachedAccessToken = storage.get(
-                                            FractalAuthCache.ACCESS_TOKEN
-                                        )
-                                        // If we have the cached access token and have not unsuccessfully verified them,
-                                        // then verify the cahced access token. Otherwise, redirect the user to login.
-                                        const shouldValidate = !!(
-                                            cachedAccessToken && failures === 0
-                                        )
-
-                                        switch (shouldValidate) {
-                                            case true:
-                                                logger.logInfo(
-                                                    `Dispatching validate access token`,
-                                                    userID
-                                                )
-                                                dispatch(
-                                                    validateAccessToken(
-                                                        cachedAccessToken
-                                                    )
-                                                )
-                                                break
-                                            case false:
-                                                logger.logInfo(
-                                                    `Redirecting to login, cached access token is ${cachedAccessToken} and validation failures is ${failures.toString()}`,
-                                                    userID
-                                                )
-                                                history.push(FractalRoute.LOGIN)
-                                                break
-                                            default:
-                                                break
-                                        }
-                                        break
-                                    }
-                                    default:
-                                        break
-                                }
-                                break
-                            case false:
-                                logger.logInfo(`Redux not yet cleared`, userID)
-                                break
-                            default:
-                                break
-                        }
-                        break
-                    default:
-                        break
-                }
-                break
-            case false:
-                break
-            default:
-                break
+        if (!updateReceived) {
+            return
+        }
+        logger.logInfo(`Electron-builder update received`, userID)
+        if (needsUpdate) {
+            logger.logInfo(`Auto update detected`, userID)
+            history.push(FractalRoute.UPDATE)
+            return
+        }
+        logger.logInfo(`Auto update NOT detected`, userID)
+        if (!reduxCleared) {
+            logger.logInfo(`Redux not yet cleared`, userID)
+            return
+        }
+        logger.logInfo(`Redux was cleared successfully`, userID)
+        if (userID !== "" && accessToken !== "") {
+            logger.logInfo(`Authenticated, redirecting to launcher`, userID)
+            history.push(FractalRoute.LAUNCHER)
+            return
+        }
+        logger.logInfo(`Not yet authenticated`, userID)
+        const cachedAccessToken = storage.get(FractalAuthCache.ACCESS_TOKEN)
+        // If we have the cached access token and have not unsuccessfully verified them,
+        // then verify the cached access token. Otherwise, redirect the user to login.
+        const shouldValidate = !!(cachedAccessToken && failures === 0)
+        if (shouldValidate) {
+            logger.logInfo(`Dispatching validate access token`, userID)
+            dispatch(validateAccessToken(cachedAccessToken))
+        } else {
+            logger.logInfo(
+                `Redirecting to login, cached access token is ${cachedAccessToken} and validation failures is ${failures.toString()}`,
+                userID
+            )
+            history.push(FractalRoute.LOGIN)
         }
     }, [reduxCleared, accessToken, updateReceived, needsUpdate, failures])
 
     return (
         <div className={styles.loadingWrapper}>
+            <ChromeBackground />
             <div className={styles.loadingCentered}>
                 <Animation />
                 <div className={styles.loadingText}>Loading</div>
