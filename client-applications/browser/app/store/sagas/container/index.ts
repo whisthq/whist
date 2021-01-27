@@ -14,6 +14,7 @@ import { deepCopyObject } from "shared/utils/general/reducer"
 import { setAWSRegion } from "shared/utils/files/aws"
 import { findDPI } from "shared/utils/general/dpi"
 import { allowedRegions } from "shared/types/aws"
+import { FractalLogger } from "shared/utils/general/logging"
 
 function* createContainer() {
     /*
@@ -22,6 +23,7 @@ function* createContainer() {
 
     Arguments: none
     */
+    const logger = new FractalLogger()
 
     const state = yield select()
     const userID = state.AuthReducer.user.userID
@@ -31,8 +33,9 @@ function* createContainer() {
     let region = allowedRegions[0]
     try {
         region = yield call(setAWSRegion, accessToken)
+        logger.logInfo(`Fetch AWS region found region ${region}`, userID)
     } catch(err) {
-        console.log(err)
+        logger.logError(`Fetch AWS region errored with ${err}, using default region ${region}`, userID)
     }
 
     // Get client DPI
