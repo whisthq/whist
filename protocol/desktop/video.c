@@ -61,7 +61,8 @@ volatile bool pending_resize_render = false;
 static enum AVPixelFormat sws_input_fmt;
 
 #ifdef __APPLE__
-volatile SDL_Renderer* renderer;
+// on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
+extern volatile SDL_Renderer* renderer;
 #endif
 
 #define LOG_VIDEO false
@@ -774,13 +775,6 @@ void init_video() {
 /*
     Creates renderer and video thread
 */
-
-// renderer must be created in main thread as per SDL guidelines, but this
-//      only seems to be necessary and possible on MacOS
-#ifdef __APPLE__
-    renderer = SDL_CreateRenderer((SDL_Window*)window, -1,
-                                  SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
-#endif
     video_data.render_screen_thread =
         SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
 }
