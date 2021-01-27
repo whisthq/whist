@@ -1,9 +1,9 @@
 #!/bin/bash
 
-
-
-# This script 
-
+# This script is the first script run within the Fractal container. It retrieves the
+# container-specific parameters from Linux environment variables and sets them for
+# the Fractal container to use. It then starts systemd, which starts all of the 
+# Fractal system services (.service files), starting Fractal inside the container
 
 # If FRACTAL_AES_KEY is set, then create file
 if [ -n "${FRACTAL_AES_KEY+1}" ]
