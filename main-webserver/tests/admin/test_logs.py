@@ -73,6 +73,7 @@ def test_s3_failure(container, monkeypatch):
 
 
 def test_s3_success(container, monkeypatch):
+    monkeypatch.setattr(Resource.Object, "put", put_success, raising=False)
     monkeypatch.setattr(boto3, "resource", resource)
 
     with container() as c:
