@@ -60,11 +60,49 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Retrieve Current Git Branch Name
+              run: echo "current_git_branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')" >> $GITHUB_ENV
 
+            ############################# Windows Configuration Steps START #############################
 
+            - name: Install CUDA on Windows GHA Machine
+              if: runner.os == 'Windows'
+              env:
+                  visual_studio: "Visual Studio 16 2019" # Imported from env in the install_cuda_windows.ps1
+                  cuda: "11.0.167" # Imported from env in install_cuda_windows.ps1
+              shell: powershell
+              working-directory: .github\workflows\helpers\protocol
+              run: |
+                  .\install_cuda_windows.ps1
 
+                  if ($?) {
+                    # Set paths for subsequent steps, using $env:CUDA_PATH
+                    echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
+                    echo "CUDA_PATH=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                    echo "$env:CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                    echo "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                  }
 
+            - name: Verify that NVCC is Installed on GHA Windows Machine
+              if: runner.os == 'Windows'
+              shell: powershell
+              run: |
+                  nvcc -V
+                  ls $env:CUDA_PATH
+                  ls $env:CUDA_PATH\bin
+                  ls $env:CUDA_PATH\include
 
+            - name: Install cmake via Chocolatey on Windows GHA Machine
+              if: runner.os == 'Windows'
+              uses: crazy-max/ghaction-chocolatey@v1
+              with:
+                  args: install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+
+            - name: Set up Visual Studio Developer Command Prompt (for nmake)
+              if: runner.os == 'Windows'
+              uses: ilammy/msvc-dev-cmd@v1
+
+            ############################# Windows Configuration Steps END #############################
 
             ############################# Unix Configuration Steps START #############################
 
@@ -77,21 +115,17 @@ jobs:
 
             - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
               if: runner.os == 'Linux'
-              run: ./protocol/setup-linux-build-environment.sh
+              working-directory: protocol
+              run: ./setup-linux-build-environment.sh
 
             ############################# Unix Configuration Steps END #############################
-
 
             - name: Build the Windows Electron Application
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               working-directory: client-applications\desktop
-              run: .\publish.bat -branch=master -version=1.0.0 -bucket=test -publish=false
+              run: .\publish.bat -branch=${{ env.current_git_branch }} -version=1.0.0 -bucket=not-applicable -publish=false
               
-              
-            
-
-
             - name: Build the macOS Electron Applications
               if: runner.os == 'macOS'
               env:
@@ -110,10 +144,4 @@ jobs:
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # Build the Fractal protocol and package the Electron application
-                  ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
-
-
-
-
-
-
+                  ./publish.sh --branch ${{ env.current_git_branch }} --version 1.0.0 --bucket not-applicable --publish false
