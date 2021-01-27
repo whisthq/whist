@@ -61,7 +61,7 @@ jobs:
               uses: actions/checkout@v2
 
             - name: Retrieve Current Git Branch Name
-              run: echo "current_git_branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')" >> $GITHUB_ENV
+              run: echo "current_git_branch=$(git symbolic-ref --short HEAD)" >> $GITHUB_ENV
 
             ############################# Windows Configuration Steps START #############################
 
