@@ -314,8 +314,9 @@ int32_t send_video(void* opaque) {
     pending_encoder = false;
     encoder_finished = false;
 
+    // TODO: Make this an attribute of device, to abstract it away
 #ifdef _WIN32
-    bool dxgi_cuda_available = false;
+    // bool dxgi_cuda_available = false;
 #endif
 
     while (!exiting) {
@@ -328,10 +329,12 @@ int32_t send_video(void* opaque) {
         if (update_device) {
             update_device = false;
 
-#ifdef _WIN32
-            // need to reinitialize this, so close it
-            dxgi_cuda_close_transfer_context();
-#endif
+            /* TODO: This should be done inside of destroy_capture_device
+            #ifdef _WIN32
+                        // need to reinitialize this, so close it
+                        dxgi_cuda_close_transfer_context();
+            #endif
+            */
 
             if (device) {
                 destroy_capture_device(device);
@@ -350,74 +353,97 @@ int32_t send_video(void* opaque) {
 
             LOG_INFO("Created Capture Device of dimensions %dx%d", device->width, device->height);
 
+            // If an encoder is pending, while capture_device is updating, then we should wait for
+            // it to be created
             while (pending_encoder) {
                 if (encoder_finished) {
-                    if (encoder) {
-                        SDL_CreateThread(multithreaded_destroy_encoder,
-                                         "MultithreadedDestroyEncoder", encoder);
-                    }
                     encoder = encoder_factory_result;
                     pending_encoder = false;
-                    update_encoder = false;
                     break;
                 }
                 SDL_Delay(1);
             }
-            update_encoder = true;
+            // If an encoder exists, then we should destroy it since the capture device is being
+            // created now
             if (encoder) {
-                multithreaded_destroy_encoder(encoder);
+                SDL_CreateThread(multithreaded_destroy_encoder, "multithreaded_destroy_encoder",
+                                 encoder);
                 encoder = NULL;
+            }
+            if (device->uses_device_encoder) {
+                // TODO: Create dummy encoder for the device if it doesn't need a real encoder
+                encoder = create_dummy_encoder();
+            } else {
+                update_encoder = true;
             }
         }
 
         // Update encoder with new parameters
         if (update_encoder) {
-            update_capture_encoder(device, current_bitrate, client_codec_type);
-            // encoder = NULL;
-            if (pending_encoder) {
-                if (encoder_finished) {
-                    if (encoder) {
-                        SDL_CreateThread(multithreaded_destroy_encoder,
-                                         "multithreaded_destroy_encoder", encoder);
-                    }
-                    encoder = encoder_factory_result;
-                    pending_encoder = false;
-                    update_encoder = false;
-                }
+            if (device->uses_device_encoder) {
+                // If this device uses a device encoder, then we should update it
+                update_device_encoder(device, current_bitrate, client_codec_type);
+                // We keep the dummy encoder
             } else {
-                LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate, max_mbps);
-                current_bitrate = (int)(max_mbps * 1024 * 1024);
-                pending_encoder = true;
-                encoder_finished = false;
-                encoder_factory_server_w = device->width;
-                encoder_factory_server_h = device->height;
-                encoder_factory_client_w = (int)client_width;
-                encoder_factory_client_h = (int)client_height;
-                encoder_factory_codec_type = (CodecType)client_codec_type;
-                encoder_factory_current_bitrate = current_bitrate;
-                if (encoder == NULL) {
-                    // Run on this thread bc we have to wait for it anyway
-                    multithreaded_encoder_factory(NULL);
-                    encoder = encoder_factory_result;
-                    pending_encoder = false;
-                    update_encoder = false;
+                // Otherwise, this capture device must use an external encoder,
+                // so we should start making it in our encoder factory
+                if (pending_encoder) {
+                    if (encoder_finished) {
+                        // Once encoder_finished, we'll destroy the old one that we've been using,
+                        // and replace it with the result of multithreaded_encoder_factory
+                        if (encoder) {
+                            SDL_CreateThread(multithreaded_destroy_encoder,
+                                             "multithreaded_destroy_encoder", encoder);
+                        }
+                        encoder = encoder_factory_result;
+                        pending_encoder = false;
+                        update_encoder = false;
+                    }
                 } else {
-                    SDL_CreateThread(multithreaded_encoder_factory, "multithreaded_encoder_factory",
-                                     NULL);
+                    // Starting making new encoder. This will set pending_encoder=true, but won't
+                    // actually update it yet, we'll still use the old one for a bit
+                    LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate,
+                             max_mbps);
+                    current_bitrate = (int)(max_mbps * 1024 * 1024);
+                    pending_encoder = true;
+                    encoder_finished = false;
+                    encoder_factory_server_w = device->width;
+                    encoder_factory_server_h = device->height;
+                    encoder_factory_client_w = (int)client_width;
+                    encoder_factory_client_h = (int)client_height;
+                    encoder_factory_codec_type = (CodecType)client_codec_type;
+                    encoder_factory_current_bitrate = current_bitrate;
+                    if (encoder == NULL) {
+                        // Run on this thread bc we have to wait for it anyway, encoder == NULL
+                        multithreaded_encoder_factory(NULL);
+                        encoder = encoder_factory_result;
+                        pending_encoder = false;
+                        update_encoder = false;
+                    } else {
+                        SDL_CreateThread(multithreaded_encoder_factory,
+                                         "multithreaded_encoder_factory", NULL);
+                    }
                 }
-            }
 
+                // Reinitializes the internal context that handles transferring from device to
+                // encoder.
+                // TODO: Create this function using the comments below
+                reinitialize_transfer_context(device, encoder);
+
+                /*
 #ifdef _WIN32
-            if (encoder->type == NVENC_ENCODE) {
-                // initialize the transfer context
-                if (!dxgi_cuda_start_transfer_context(device)) {
-                    dxgi_cuda_available = true;
+                if (encoder->type == NVENC_ENCODE) {
+                    // initialize the transfer context
+                    if (!dxgi_cuda_start_transfer_context(device)) {
+                        dxgi_cuda_available = true;
+                    }
+                } else if (dxgi_cuda_available) {
+                    // end the transfer context
+                    dxgi_cuda_close_transfer_context();
                 }
-            } else if (dxgi_cuda_available) {
-                // end the transfer context
-                dxgi_cuda_close_transfer_context();
-            }
 #endif
+                */
+            }
         }
 
         // Accumulated_frames is equal to how many frames have passed since the
@@ -457,6 +483,9 @@ int32_t send_video(void* opaque) {
                 LOG_INFO("Sending current frame!");
             }
 
+            // TODO: Make a function that does the following
+            transfer_device_encoder(device, encoder);
+            /*
             // transfer the screen to a buffer
             int transfer_res = 2;  // haven't tried anything yet
 #if defined(_WIN32)
@@ -474,6 +503,7 @@ int32_t send_video(void* opaque) {
                 exiting = true;
                 break;
             }
+            */
 
             if (wants_iframe) {
                 // True I-Frame is WIP
