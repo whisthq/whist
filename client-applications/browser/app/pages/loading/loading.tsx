@@ -6,6 +6,7 @@ import { Dispatch } from "shared/types/redux"
 import { FractalAuthCache } from "shared/types/cache"
 import { validateAccessToken } from "store/actions/auth/sideEffects"
 import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
+import { updateTimer } from "store/actions/analytics/pure"
 import { DEFAULT, User, AuthFlow } from "store/reducers/auth/default"
 import { deepCopyObject } from "shared/utils/general/reducer"
 import { history } from "store/history"
@@ -45,6 +46,10 @@ export const Loading = (props: {
     const ipc = require("electron").ipcRenderer
 
     const logger = new FractalLogger()
+
+    useEffect(() => {
+        dispatch(updateTimer({ appOpened: Date.now() }))
+    }, [dispatch])
 
     useEffect(() => {
         if (!listenerCreated) {
@@ -89,6 +94,7 @@ export const Loading = (props: {
         logger.logInfo(`Redux was cleared successfully`, userID)
         if (userID !== "" && accessToken !== "") {
             logger.logInfo(`Authenticated, redirecting to launcher`, userID)
+            dispatch(updateTimer({ appDoneLoading: Date.now() }))
             history.push(FractalRoute.LAUNCHER)
             return
         }
@@ -105,9 +111,17 @@ export const Loading = (props: {
                 `Redirecting to login, cached access token is ${cachedAccessToken} and validation failures is ${failures.toString()}`,
                 userID
             )
+            dispatch(updateTimer({ appDoneLoading: Date.now() }))
             history.push(FractalRoute.LOGIN)
         }
-    }, [reduxCleared, accessToken, updateReceived, needsUpdate, failures])
+    }, [
+        reduxCleared,
+        accessToken,
+        updateReceived,
+        needsUpdate,
+        failures,
+        dispatch,
+    ])
 
     return (
         <div className={styles.loadingWrapper}>
