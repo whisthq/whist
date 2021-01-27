@@ -15,6 +15,7 @@ add_library(fractalUtils STATIC
         string_utils.c
         sysinfo.c
         png.c
+        lodepng.c
         mouse.c
         rwlock.c
         )
@@ -23,7 +24,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(fractalUtils PRIVATE windows_utils.c windows_utils.h)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         target_sources(fractalUtils PRIVATE mac_utils.c mac_utils.h)
-endif ()
+endif()
 
 set_property(TARGET fractalUtils PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
