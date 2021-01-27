@@ -61,59 +61,52 @@ def upload_logs_to_s3(sender, ip, port, aes_key, message):
 
         raise BadSenderError(sender)
 
+    container = UserContainer.query.filter_by(ip=ip, port_32262=port).first()
+
+    # Make sure that the container with the specified networking attributes
+    # exists.
+    if not container or aes_key.lower() != container.secret_key.lower():
+        if container:
+            message = f"Expected secret key {container.secret_key}. Got {aes_key}."
+        else:
+            message = f"Container {container} does not exist."
+
+        fractal_log(
+            function="upload_logs_to_s3",
+            label=container,
+            logs=message,
+            level=logging.ERROR,
+        )
+
+        raise ContainerNotFoundError(ip, port)
+
+    # Do logging.
+    username = str(container.user_id)
+    updated_at = str(round(time.time()))
+    filename = f"{source}_{username}_{updated_at}.txt"
+    s3_resource = boto3.resource("s3")
+    s3_object = s3_resource.Object(BUCKET_NAME, filename)
+
+    try:
+        s3_object.put(ACL="private", Body=message, ContentType="text/plain")
+    except Exception as e:  # TODO: Handle specfic exceptions.
+        fractal_log(
+            function="upload_logs_to_s3",
+            label=username,
+            logs=f"Error uploading {sender.lower()} logs to S3: {e}",
+            level=logging.ERROR,
+        )
+
+        raise e
+
+    # Logs have been successfully uploaded to S3. Now we save to the database a
+    # pointer to the S3 object.
+    url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
+
     fractal_log(
         function="upload_logs_to_s3",
-        label=None,
-        logs=f"Looking for container with IP {ip} and port {str(port)}",
-        level=logging.ERROR,
+        label=username,
+        logs=f"Protocol server logs: {url}",
     )
-
-    container = UserContainer.query.filter_by(ip=ip).first()
-
-    # # Make sure that the container with the specified networking attributes
-    # # exists.
-    # if not container or aes_key.lower() != container.secret_key.lower():
-    #     if container:
-    #         message = f"Expected secret key {container.secret_key}. Got {aes_key}."
-    #     else:
-    #         message = f"Container {container} does not exist."
-
-    #     fractal_log(
-    #         function="upload_logs_to_s3",
-    #         label=container,
-    #         logs=message,
-    #         level=logging.ERROR,
-    #     )
-
-    #     raise ContainerNotFoundError(ip, port)
-
-    # # Do logging.
-    # username = str(container.user_id)
-    # updated_at = str(round(time.time()))
-    # filename = f"{source}_{username}_{updated_at}.txt"
-    # s3_resource = boto3.resource("s3")
-    # s3_object = s3_resource.Object(BUCKET_NAME, filename)
-
-    # try:
-    #     s3_object.put(ACL="private", Body=message, ContentType="text/plain")
-    # except Exception as e:  # TODO: Handle specfic exceptions.
-    #     fractal_log(
-    #         function="upload_logs_to_s3",
-    #         label=username,
-    #         logs=f"Error uploading {sender.lower()} logs to S3: {e}",
-    #         level=logging.ERROR,
-    #     )
-
-    #     raise e
-
-    # # Logs have been successfully uploaded to S3. Now we save to the database a
-    # # pointer to the S3 object.
-    # url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
-
-    # fractal_log(
-    #     function="upload_logs_to_s3",
-    #     label=username,
-    #     logs=f"Protocol server logs: {filename}",
-    # )
 
     return {"status": SUCCESS}
