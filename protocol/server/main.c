@@ -854,10 +854,8 @@ int multithreaded_manage_clients(void* opaque) {
     clock last_update_timer;
     start_timer(&last_update_timer);
 
-    send_connection_history(webserver_url, identifier, hex_aes_private_key);
     connection_id = rand();
     start_connection_log();
-    bool have_sent_logs = true;
 
     double nongraceful_grace_period = 600.0;  // 10 min after nongraceful disconn to reconn
     bool first_client_connected = false;      // set to true once the first client has connected
@@ -872,14 +870,7 @@ int multithreaded_manage_clients(void* opaque) {
 
         read_unlock(&is_active_rwlock);
 
-        LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
-                 have_sent_logs ? "yes" : "no");
-        if (saved_num_active_clients == 0 && !have_sent_logs) {
-            send_connection_history(webserver_url, identifier, hex_aes_private_key);
-            have_sent_logs = true;
-        } else if (saved_num_active_clients > 0 && have_sent_logs) {
-            have_sent_logs = false;
-        }
+        LOG_INFO("Num Active Clients %d", saved_num_active_clients);
 
         if (saved_num_active_clients == 0) {
             connection_id = rand();

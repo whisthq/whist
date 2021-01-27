@@ -3,21 +3,6 @@ from sqlalchemy.orm import relationship
 from ._meta import db
 
 
-class ProtocolLog(db.Model):
-    __tablename__ = "protocol_logs"
-    __table_args__ = {"extend_existing": True, "schema": "logs"}
-
-    user_id = db.Column(db.ForeignKey("users.user_id"))
-    user = relationship("User", back_populates="protocol_logs")
-    server_logs = db.Column(db.String(250))
-    # must be unique below
-    connection_id = db.Column(db.String(250), nullable=False, primary_key=True)
-    bookmarked = db.Column(db.Boolean, default=False)
-    timestamp = db.Column(db.BigInteger)
-    version = db.Column(db.String(250))
-    client_logs = db.Column(db.String(250))
-
-
 class MonitorLog(db.Model):
     __tablename__ = "monitor_logs"
     __table_args__ = {"extend_existing": True, "schema": "logs"}
