@@ -21,14 +21,13 @@ OPTIONS=""
 if [ -f "$PRIVATE_KEY_FILENAME" ]; then
     export FRACTAL_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
     OPTIONS="$OPTIONS --private-key=$FRACTAL_AES_KEY"
-    # use --private-key without argument to make it read the private key from env variable
 fi
 
 # Send in Fractal webserver url, if set
 if [ -f "$WEBSERVER_URL_FILENAME" ]; then
     export WEBSERVER_URL=$(cat $WEBSERVER_URL_FILENAME)
-    OPTIONS="$OPTIONS --webserver=$WEBSERVER_URL"
 fi
+OPTIONS="$OPTIONS --webserver=$WEBSERVER_URL"
 
 # Send in Sentry environment, if set
 if [ -f "$SENTRY_ENV_FILENAME" ]; then
@@ -36,8 +35,25 @@ if [ -f "$SENTRY_ENV_FILENAME" ]; then
     OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
 fi
 
-# Symlink the Google Drive cloud storage folder to the container home directory
+# send in identifier
+OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
+
 ln -sf /fractal/cloudStorage/$IDENTIFIER/google_drive /home/fractal/
 
-# Start the Fractal protocol server
-/usr/share/fractal/FractalServer --identifier=$IDENTIFIER $OPTIONS
+/usr/share/fractal/FractalServer $OPTIONS
+
+# Send logs to webserver
+curl \
+    --header "Content-Type: application/json" \
+    --request POST \
+    --data @- \
+    $WEBSERVER_URL/logs \
+    <<END
+{
+    "sender": "server",
+    "identifier": "$IDENTIFIER",
+    "secret_key": "$FRACTAL_AES_KEY",
+    "logs": $(jq -Rs . </usr/share/fractal/log.txt)
+}
+END
+

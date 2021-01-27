@@ -13,7 +13,7 @@ from .hardware import (
     SupportedAppImages,
     UserContainerState,
 )
-from .logs import LoginHistory, MonitorLog, ProtocolLog
+from .logs import LoginHistory, MonitorLog
 from .oauth import Credential
 from .public import User
 from .sales import MainNewsletter, StripeProduct

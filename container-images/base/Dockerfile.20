@@ -192,6 +192,7 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
     libxcb-dri3-0 \
     libcurl4 \
     curl \
+    jq \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*

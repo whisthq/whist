@@ -12,7 +12,6 @@ from app.celery.aws_s3_modification import (
     ContainerNotFoundError,
     upload_logs_to_s3,
 )
-from app.models import db, ProtocolLog
 
 from ..patches import apply_async
 
@@ -84,7 +83,7 @@ def test_s3_success(container, monkeypatch):
             c.secret_key,
             "Log message.",
         )
-        assert response.status == 200
+        assert response["status"] == 200
 
 
 def test_bad_request(client):
