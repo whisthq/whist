@@ -50,10 +50,11 @@ echo "================================================"
 echo "Installing AWS CLI..."
 echo "================================================"
 
-sudo apt install -y awscli
+# we don't need to configure this because it runs on an EC2 instance
+sudo apt-get install -y awscli
 
 echo "================================================"
-echo "Installing NVIDIA drivers..."
+echo "Installing Nvidia drivers..."
 echo "================================================"
 
 # Install Linux headers
