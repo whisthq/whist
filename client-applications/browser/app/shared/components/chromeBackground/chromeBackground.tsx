@@ -8,7 +8,7 @@ import {
     FaTimes,
 } from "react-icons/fa"
 
-import { FractalIPC } from "shared/types/ipc"
+// import { FractalIPC } from "shared/types/ipc"
 
 import styles from "shared/components/chromeBackground/chromeBackground.css"
 

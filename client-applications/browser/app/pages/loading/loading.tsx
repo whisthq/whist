@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 
-import { AvailableLoggers } from "shared/types/logs"
 import { FractalLogger } from "shared/utils/general/logging"
 import { Dispatch } from "shared/types/redux"
 import { FractalAuthCache } from "shared/types/cache"
@@ -45,7 +44,7 @@ export const Loading = (props: {
 
     const ipc = require("electron").ipcRenderer
 
-    const logger = new FractalLogger(AvailableLoggers.LOADING)
+    const logger = new FractalLogger()
 
     useEffect(() => {
         if (!listenerCreated) {
