@@ -53,8 +53,8 @@ else
 endif
 
 build: checkCI
-	$(GOGET) -d github.com/fractal/ecs-agent/agent@dev
-	export GOSUMDB=false
+	GOPRIVATE=github.com/fractal/ecs-agent $(GOGET) -d github.com/fractal/ecs-agent/agent@dev
+	go mod tidy
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretDev=$(WEBSERVER_AUTH_SECRET_DEV)'\
