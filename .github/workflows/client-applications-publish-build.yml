@@ -50,8 +50,9 @@ jobs:
                   visual_studio: "Visual Studio 16 2019" # Imported from env in the install_cuda_windows.ps1
                   cuda: "11.0.167" # Imported from env in install_cuda_windows.ps1
               shell: powershell
+              working-directory: .github\workflows\helpers\protocol
               run: |
-                  .\.github\workflows\helpers\protocol\install_cuda_windows.ps1
+                  .\install_cuda_windows.ps1
 
                   if ($?) {
                     # Set paths for subsequent steps, using $env:CUDA_PATH
@@ -93,7 +94,8 @@ jobs:
 
             - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
               if: runner.os == 'Linux'
-              run: ./protocol/setup-linux-build-environment.sh
+              working-directory: protocol
+              run: ./setup-linux-build-environment.sh
 
             ############################# Unix Configuration Steps END #############################
 
@@ -148,14 +150,15 @@ jobs:
             - name: Publish the Windows Electron Application
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-              run: |
-                  cd client-applications\desktop\ && .\publish.bat -branch=master -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -publish=true
+              working-directory: client-applications\desktop
+              run: .\publish.bat -branch=master -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -publish=true
 
             - name: Publish the macOS/Linux Ubuntu Electron Applications
               if: runner.os == 'macOS' || runner.os == 'Linux'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
               shell: bash
+              working-directory: client-applications/desktop
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
                   wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
@@ -168,7 +171,7 @@ jobs:
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # Build the Fractal protocol and package the Electron application
-                  cd client-applications/desktop && ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
+                  ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
 
     notify-slack:
         name: Notify Slack
