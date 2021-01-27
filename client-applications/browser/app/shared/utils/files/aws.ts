@@ -79,7 +79,7 @@ export const setAWSRegion = (accessToken: string, backoff?: true) => {
                 try {
                     items[2].slice(1, -1)
                 } catch (err) {
-                    throw (new Error("AWS ping failed"))
+                    throw new Error("AWS ping failed")
                 }
 
                 while (
