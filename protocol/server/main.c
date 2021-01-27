@@ -372,8 +372,10 @@ int32_t send_video(void* opaque) {
             }
             if (device->uses_device_encoder) {
                 // TODO: Create dummy encoder for the device if it doesn't need a real encoder
+                // If we're using a device encoder, then we should make a dummy encoder
                 encoder = create_dummy_encoder();
             } else {
+                // Otherwise, we should update our ffmpeg encoder
                 update_encoder = true;
             }
         }
@@ -383,7 +385,7 @@ int32_t send_video(void* opaque) {
             if (device->uses_device_encoder) {
                 // If this device uses a device encoder, then we should update it
                 update_device_encoder(device, current_bitrate, client_codec_type);
-                // We keep the dummy encoder
+                // We keep the dummy encoder as-is
             } else {
                 // Otherwise, this capture device must use an external encoder,
                 // so we should start making it in our encoder factory
