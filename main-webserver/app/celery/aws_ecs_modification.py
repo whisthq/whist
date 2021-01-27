@@ -68,7 +68,12 @@ def update_region(self, region_name="us-east-1", ami=None):
     all_regions = RegionToAmi.query.all()
     region_to_ami = {region.region_name: region.ami_id for region in all_regions}
     if ami is None:
+        # use existing AMI
         ami = region_to_ami[region_name]
+    else:
+        # update db with new AMI
+        region_to_ami[region_name] = ami
+
     # TODO: use SortedClusters when we have a local testing DB
     all_clusters = list(ClusterInfo.query.filter_by(location=region_name).all())
     # TODO: can we delete this
@@ -105,6 +110,8 @@ def update_region(self, region_name="us-east-1", ami=None):
         logs="update_region is returning with success. It spun up the "
         f"following update_cluster tasks: {tasks}",
     )
+
+    region_name
 
     self.update_state(
         state="SUCCESS",
