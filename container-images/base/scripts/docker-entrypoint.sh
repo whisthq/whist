@@ -1,34 +1,41 @@
 #!/bin/bash
 
-# if FRACTAL_AES_KEY is set, then create file
+
+
+# This script 
+
+
+# If FRACTAL_AES_KEY is set, then create file
 if [ -n "${FRACTAL_AES_KEY+1}" ]
 then
     echo $FRACTAL_AES_KEY > /usr/share/fractal/private/aes_key
 fi
 
-# if WEBSERVER_URL is set, then create file
+# If WEBSERVER_URL is set, then create file
 if [ -n "${WEBSERVER_URL+1}" ]
 then
     echo $WEBSERVER_URL > /usr/share/fractal/private/webserver_url
 fi
 
-# if FRACTAL_DPI is set, then create file
+# If FRACTAL_DPI is set, then create file
 if [ -n "${FRACTAL_DPI+1}" ]
 then
     echo $FRACTAL_DPI > /usr/share/fractal/private/dpi
 fi
 
-# if SENTRY_ENV is set, then create file
+# If SENTRY_ENV is set, then create file
 if [ -n "${SENTRY_ENV+1}" ]
 then
    echo $SENTRY_ENV > /usr/share/fractal/private/sentry_env
 fi
 
-# make sure this environment variable does not leak in any way (probably
-# redundant, but still good practice)
+# Unset the AWS key to make sure that this environment variable does not 
+# leak in any way (probably redundant, but still good practice)
 unset FRACTAL_AES_KEY
-# in case the webserver is still passing in this environment variable (that
-# method has been superseded by a request to the host service)
+
+# Unset the DPI in case the webserver is still passing in this environment
+# variable (that method has been superseded by a request to the host service)
 unset FRACTAL_DPI
 
+# Start systemd
 exec /lib/systemd/systemd
