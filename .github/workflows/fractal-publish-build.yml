@@ -266,7 +266,7 @@ jobs:
                     needs.fractal-publish-build-config.outputs.branch
                 ) && always()
             )
-        
+
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2

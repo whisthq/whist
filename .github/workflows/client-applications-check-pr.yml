@@ -125,7 +125,7 @@ jobs:
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               working-directory: client-applications\desktop
               run: .\publish.bat -branch=${{ env.current_git_branch }} -version=1.0.0 -bucket=not-applicable -publish=false
-              
+
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
               env:
