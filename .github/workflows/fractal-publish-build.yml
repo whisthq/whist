@@ -22,6 +22,10 @@ on:
                 description: "Name of the job to trigger, or 'all' to trigger all jobs."
                 required: true
                 default: "None" # Avoid accidental mistakes by making the default not run any jobs
+            publish:
+                description: "'true' if the job(s) being run should publish, or 'false' if it should do a test run without publishing"                
+                required: true
+                default: false # Avoid accidental mistakes by making the default not publish
 
 jobs:
     # Configure Jobs
@@ -33,6 +37,7 @@ jobs:
         outputs:
             branch: ${{ steps.detect-branch.outputs.branch }}
             job: ${{ steps.detect-job.outputs.job }}
+            publishing: ${{ steps.detect-publishing.outputs.publishing }}
         steps:
             - name: Detect Branch
               id: detect-branch
@@ -51,7 +56,7 @@ jobs:
                   echo "branch is $BRANCH_NAME"
                   echo "::set-output name=branch::$BRANCH_NAME"
 
-            - name: Detect Job
+            - name: Detect Job(s)
               id: detect-job
               run: |
                   # by design, we want to be able to manually run either only one job or all jobs
@@ -68,6 +73,18 @@ jobs:
                   fi
                   echo "job is $JOB_NAME"
                   echo "::set-output name=job::$JOB_NAME"
+
+            - name: Detect Whether to Publish the Job(s) or Not
+              id: detect-publish
+              run: |
+                  if [[ ${{ github.event.inputs.job-name }} == 'true' ]]; then
+                    PUBLISHING=true
+                  else
+                    PUBLISHING=false
+                  fi
+
+                  echo "publishing is $PUBLISHING"
+                  echo "::set-output name=publishing::$PUBLISHING"
 
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
@@ -109,6 +126,7 @@ jobs:
 
             - name: Push container images
               working-directory: container-images
+              if: fractal-publish-build-config.outputs.job == 'true'
               run: |
                   for app in ${{ env.apps }}
                   do
@@ -147,6 +165,7 @@ jobs:
         if: |
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
+        
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
@@ -194,6 +213,7 @@ jobs:
                   image: ${{ env.ghcr_base_uri }}/fractal/${{ matrix.app }}:${{ env.containers_gha_sha }}
 
             - name: Deploy to Amazon ECS service
+              if: fractal-publish-build-config.outputs.job == 'true'
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                   task-definition: ${{ steps.render-web-container.outputs.task-definition }}
@@ -259,6 +279,7 @@ jobs:
               run: make build
 
             - name: Upload binary to S3
+              if: fractal-publish-build-config.outputs.job == 'true'
               run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
 
             - name: Notify Slack
@@ -334,6 +355,7 @@ jobs:
                   git checkout workflows-private/main-webserver
 
             - name: Push to Heroku remote, deploying the app # force push is only necessary for the transition period, then should be removed
+              if: fractal-publish-build-config.outputs.job == 'true'
               run: |
                   git push -f heroku-fractal-server workflows-private/main-webserver:master
 
