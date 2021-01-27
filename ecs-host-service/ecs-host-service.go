@@ -455,19 +455,15 @@ func saveUserConfig(hostPort uint16) {
 	hostPortString := logger.Sprintf("%v", hostPort)
 	configPath := userConfigsDirectory + hostPortString + "/"
 	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
-
+/*
 	tarPath := configPath + "fractal-app-config.tar.gz"
 
-	//os.RemoveAll(tarPath) // first remove the previous config tar, if it exists
-	// create an empty tar file if it doesn't exist
-	tarFile, err := os.OpenFile(tarPath, os.O_RDONLY|os.O_CREATE, 0777)
-	if err == nil {
-		tarFile.Close()
-	}
-	tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czvf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
-	tarConfigOuptut, err := tarConfigCmd.CombinedOutput()
+	tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
+	tarConfigOutput, err := tarConfigCmd.CombinedOutput()
 	if err != nil {
-		logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOuptut)
+		logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
+	} else {
+		logger.Infof("Tar config directory output: %s", tarConfigOutput);
 	}
 
 	saveConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
@@ -475,7 +471,16 @@ func saveUserConfig(hostPort uint16) {
 	if err != nil {
 		logger.Errorf("Could not run \"aws s3 cp\" command: %s. Output: %s", err, saveConfigOutput)
 	} else {
-		logger.Info("Ran \"aws s3 cp\" command with output: %s", saveConfigOutput)
+		logger.Infof("Ran \"aws s3 cp\" command with output: %s", saveConfigOutput)
+	}
+*/
+	saveConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", configPath, s3ConfigPath)
+
+	saveConfigOutput, err := saveConfigCmd.CombinedOutput()
+	if err != nil {
+		logger.Errorf("Could not run \"aws s3 sync\" command: %s. Output: %s", err, saveConfigOutput)
+	} else {
+		logger.Infof("aws s3 sync with output: %s", saveConfigOutput)
 	}
 
 	// remove app name mapping for container on hostPort
@@ -541,7 +546,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	// store app name and user ID in maps
 	containerAppNames[uint16(req.HostPort)] = appName
 	containerUserIDs[uint16(req.HostPort)] = string(userID)
-
+/*
 	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName  + "/fractal-app-config.tar.gz"
 
 	// Retrieve app config from S3
@@ -551,6 +556,17 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		logger.Info("Ran \"aws s3 cp\" command: %s and file doesn't exist. Output: %s", err, getConfigOutput)
 	} else {
 		logger.Info("Ran \"aws s3 cp\" command with output: %s", getConfigOutput)
+	}
+*/
+	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
+	// Retrieve app config from S3, except for the created ".exists file"
+	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", s3ConfigPath, configPath, "--exclude", ".exists")
+
+	getConfigOutput, err := getConfigCmd.CombinedOutput()
+	if err != nil {
+		return logger.MakeError("Could not run \"aws s3 sync\" command: %s. Output: %s", err, getConfigOutput)
+	} else {
+		logger.Infof("aws s3 sync with output: %s", getConfigOutput)
 	}
 
 	return nil
