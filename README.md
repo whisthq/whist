@@ -17,9 +17,11 @@ This repository contains the end-to-end code for the Fractal Application Streami
 
 ## Introduction
 
-Application Streaming is Fractal's core service. It consists in running an application in a GPU-enabled Linux Docker container on a powerful host server, currently EC2 virtual machines, in the cloud, and streaming the content of the container to user devices.
+Application Streaming is Fractal's core service. It consists in running an application in a GPU-enabled Linux Docker container on a powerful host server in the cloud, currently EC2 instances, and streaming the content of the container to a user device.
 
-At a high-level, Fractal the following:
+At a high-level, Fractal works the following way:
+
+
 
 
 
@@ -51,22 +53,31 @@ For more in-depth explanations of each subrepo, simply peruse the README's of th
 
 ### Repository Structure
 
+
+
+
+| Subrepository        | Description            |
+| -------------------- | ----------------- |
+| client-applications  | Insert Title Here |
+| container-images     | Insert Title Here |
+| ecs-host-service     | Insert Title Here |
+| ecs-host-setup       | Insert Title Here |
+| ecs-task-definitions | Insert Title Here |
+| main-webserver       | Insert Title Here |
+| protocol             | Insert Title Here |
+
+
+
 The Fractal monorepository contains 7 Fractal subrepositories:
 
 - client-applications -- The client-side Electron application users download and interact with to stream a Fractal application
 - container-images -- The Dockerfiles for the application containers users stream
 - ecs-host-service -- The Fractal services which runs on hosts and orchestrates container management
 - ecs-host-setup -- The Scripts to setup an EC2 instance into a Fractal-optimized host ready to run Fractal containers
-- ecs-task-definitions -- 
+- ecs-task-definitions -- This contains the JSON task definitions for each of the applications we stream via containers on AWS ECS
 - main-webserver -- The REST API for managing our AWS infrastructure, supporting our front-end and handling communicating between our frontend and container infrastructure when users use Fractal
 - protocol -- The streaming protocol, both client and server, which streams the content of a Fractal container to a user and streams the user's actions back to the container. This program is run via commandline.
 
-
-
-
-
-
-| ecs-task-definitions | This contains the JSON task definitions for each of the applications we stream via containers on AWS ECS                                                                                                                                   
 
 
 
