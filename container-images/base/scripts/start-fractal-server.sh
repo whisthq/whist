@@ -1,5 +1,10 @@
 #!/bin/sh
 
+
+# This script starts the Fractal protocol server executable, on Linux Ubuntu, 
+
+
+
 CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
 FRACTAL_MAPPINGS_DIR=/fractal/containerResourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
