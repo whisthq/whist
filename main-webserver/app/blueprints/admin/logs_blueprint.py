@@ -1,18 +1,10 @@
 import logging
 
-from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask import Blueprint, jsonify
 
 from app import fractal_pre_process
-from app.celery.aws_s3_deletion import delete_logs_from_s3
 from app.celery.aws_s3_modification import upload_logs_to_s3
-from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND
-from app.helpers.blueprint_helpers.admin.logs_get import logs_helper
-from app.helpers.blueprint_helpers.admin.logs_post import (
-    bookmark_helper,
-    unbookmark_helper,
-)
-from app.helpers.utils.general.auth import admin_required
+from app.constants.http_codes import ACCEPTED, BAD_REQUEST
 from app.helpers.utils.general.logs import fractal_log
 
 logs_bp = Blueprint("logs_bp", __name__)
