@@ -29,6 +29,11 @@ HHOOK g_h_keyboard_hook;
 LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param);
 #endif
 
+#ifdef __APPLE__
+// on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
+volatile SDL_Renderer* renderer;
+#endif
+
 /*
 ============================
 Private Function Implementations
@@ -177,6 +182,17 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         (name == NULL ? "Fractal" : name), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         target_output_width, target_output_height,
         SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : windowed_flags));
+
+    /*
+        On macOS, we must initialize the renderer in the main thread -- seems not needed
+        and not possible on other OSes. If the renderer is created later in the main thread
+        on macOS, the user will see a window open in this function, then close/reopen during
+        renderer creation
+    */
+    #ifdef __APPLE__
+        renderer = SDL_CreateRenderer(sdl_window, -1,
+                                    SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+    #endif
 
     // Set icon
     if (strcmp(icon_filename, "") != 0) {
