@@ -264,6 +264,7 @@ int32_t multithreaded_encoder_factory(void* opaque) {
     encoder_finished = true;
     return 0;
 }
+
 int32_t multithreaded_destroy_encoder(void* opaque) {
     VideoEncoder* encoder = (VideoEncoder*)opaque;
     destroy_video_encoder(encoder);
@@ -288,6 +289,10 @@ int32_t send_video(void* opaque) {
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
     VideoEncoder* encoder = NULL;
+
+    // If we are using nvidia's built in encoder, then we do not need to create a real encoder
+    // struct since frames will already be encoded
+    VideoEncoder dummy_encoder = {0};
 
     double worst_fps = 40.0;
     int ideal_bitrate = current_bitrate;
@@ -342,7 +347,8 @@ int32_t send_video(void* opaque) {
             }
 
             device = &rdevice;
-            if (create_capture_device(device, client_width, client_height, client_dpi) < 0) {
+            if (create_capture_device(device, client_width, client_height, client_dpi,
+                                      current_bitrate, client_codec_type) < 0) {
                 LOG_WARNING("Failed to create capture device");
                 device = NULL;
                 update_device = true;
@@ -353,38 +359,40 @@ int32_t send_video(void* opaque) {
 
             LOG_INFO("Created Capture Device of dimensions %dx%d", device->width, device->height);
 
-            // If an encoder is pending, while capture_device is updating, then we should wait for
-            // it to be created
-            while (pending_encoder) {
-                if (encoder_finished) {
-                    encoder = encoder_factory_result;
-                    pending_encoder = false;
-                    break;
-                }
-                SDL_Delay(1);
-            }
-            // If an encoder exists, then we should destroy it since the capture device is being
-            // created now
-            if (encoder) {
-                SDL_CreateThread(multithreaded_destroy_encoder, "multithreaded_destroy_encoder",
-                                 encoder);
-                encoder = NULL;
-            }
-            if (device->uses_device_encoder) {
-                // TODO: Create dummy encoder for the device if it doesn't need a real encoder
-                // If we're using a device encoder, then we should make a dummy encoder
-                encoder = create_dummy_encoder();
+            if (device->using_nvidia) {
+                // The frames will already arrive encoded by the GPU, so we do not need to do any
+                // encoding ourselves
+                encoder = &dummy_encoder;
+                memset(encoder, 0, sizeof(VideoEncoder));
+                update_encoder = false;
             } else {
-                // Otherwise, we should update our ffmpeg encoder
+                // If an encoder is pending, while capture_device is updating, then we should wait
+                // for it to be created
+                while (pending_encoder) {
+                    if (encoder_finished) {
+                        encoder = encoder_factory_result;
+                        pending_encoder = false;
+                        break;
+                    }
+                    SDL_Delay(1);
+                }
+                // If an encoder exists, then we should destroy it since the capture device is being
+                // created now
+                if (encoder) {
+                    SDL_CreateThread(multithreaded_destroy_encoder, "multithreaded_destroy_encoder",
+                                     encoder);
+                    encoder = NULL;
+                }
+                // Next, we should update our ffmpeg encoder
                 update_encoder = true;
             }
         }
 
         // Update encoder with new parameters
         if (update_encoder) {
-            if (device->uses_device_encoder) {
+            if (device->using_nvidia) {
                 // If this device uses a device encoder, then we should update it
-                update_device_encoder(device, current_bitrate, client_codec_type);
+                update_capture_encoder(device, current_bitrate, client_codec_type);
                 // We keep the dummy encoder as-is
             } else {
                 // Otherwise, this capture device must use an external encoder,
@@ -430,7 +438,7 @@ int32_t send_video(void* opaque) {
                 // Reinitializes the internal context that handles transferring from device to
                 // encoder.
                 // TODO: Create this function using the comments below
-                reinitialize_transfer_context(device, encoder);
+                // reinitialize_transfer_context(device, encoder);
 
                 /*
 #ifdef _WIN32
@@ -486,8 +494,8 @@ int32_t send_video(void* opaque) {
             }
 
             // TODO: Make a function that does the following
-            transfer_device_encoder(device, encoder);
-            /*
+            // transfer_device_encoder(device, encoder);
+
             // transfer the screen to a buffer
             int transfer_res = 2;  // haven't tried anything yet
 #if defined(_WIN32)
@@ -505,7 +513,6 @@ int32_t send_video(void* opaque) {
                 exiting = true;
                 break;
             }
-            */
 
             if (wants_iframe) {
                 // True I-Frame is WIP
