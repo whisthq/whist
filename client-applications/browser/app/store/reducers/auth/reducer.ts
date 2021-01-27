@@ -2,13 +2,21 @@ import { DEFAULT, User, AuthFlow } from "store/reducers/auth/default"
 import * as AuthAction from "store/actions/auth/pure"
 import { deepCopyObject } from "shared/utils/general/reducer"
 
-export default function (
+export default (
     state = DEFAULT,
     action: {
         body: User | AuthFlow
         type: string
     }
-) {
+) => {
+    /*
+        Description:
+            Reducer for auth actions
+        Arguments:
+            body (User | AuthFlow): Action body 
+            type (string): Action type
+    */
+
     const stateCopy = deepCopyObject(state)
 
     switch (action.type) {

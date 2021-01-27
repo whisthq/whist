@@ -149,7 +149,7 @@ export const Launcher = (props: {
         // Upload client logs to S3 and shut down Electron
         uploadToS3(logPath, s3FileName, (s3Error: string) => {
             if (s3Error) {
-                logger.logInfo(`Upload to S3 errored: ${error}`, userID)
+                logger.logError(`Upload to S3 errored: ${error}`, userID)
             }
             forceQuit()
         })

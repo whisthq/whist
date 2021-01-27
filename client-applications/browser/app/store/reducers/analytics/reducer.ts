@@ -2,13 +2,13 @@ import { DEFAULT, Timer } from "store/reducers/analytics/default"
 import * as AnalyticsAction from "store/actions/analytics/pure"
 import { deepCopyObject } from "shared/utils/general/reducer"
 
-export default function (
+export default (
     state = DEFAULT,
     action: {
         body: Timer
         type: string
     }
-) {
+) => {
     /*
         Description:
             Reducer for analytics actions
