@@ -10,6 +10,7 @@ from app.models import db, ProtocolLog, UserContainer
 
 BUCKET_NAME = "fractal-protocol-logs"
 
+
 class BadSenderError(Exception):
     """Raised by upload_logs_to_s3.
 
@@ -67,7 +68,7 @@ def upload_logs_to_s3(sender, ip, port, aes_key, message):
         level=logging.ERROR,
     )
 
-    container = UserContainer.query.filter_by(ip=ip, port_32262=str(port)).first()
+    container = UserContainer.query.filter_by(ip=ip).first()
 
     # # Make sure that the container with the specified networking attributes
     # # exists.
@@ -116,6 +117,3 @@ def upload_logs_to_s3(sender, ip, port, aes_key, message):
     # )
 
     return {"status": SUCCESS}
-
-
-
