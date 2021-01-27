@@ -18,7 +18,7 @@ export const debugLog = <T>(callback: T) => {
 
 export class FractalLogger {
     logger: any
-    fileName = "renderer.log"
+    fileName = "logs/renderer.log"
     maxFileSize = 10000000
     token = "IroqVsvNytmNricZSTLUSVtJbxNYBgxp"
 
@@ -79,11 +79,19 @@ export class FractalLogger {
         return userID
     }
 
-    logInfo = (logs: string, userID = "") => {
-        this.logger.info(`${this.formatuserID(userID)} | ${logs}`)
+    logInfo = (logs: string, userID = "", callback?: () => void) => {
+        if(callback) {
+            this.logger.info(`${this.formatuserID(userID)} | ${logs}`, {}, callback())
+        } else {
+            this.logger.info(`${this.formatuserID(userID)} | ${logs}`)
+        }
     }
 
-    logError = (logs: string, userID = "") => {
-        this.logger.error(`${this.formatuserID(userID)} | ${logs}`)
+    logError = (logs: string, userID = "", callback?: () => void) => {
+        if(callback) {
+            this.logger.error(`${this.formatuserID(userID)} | ${logs}`, {}, callback())
+        } else {
+            this.logger.error(`${this.formatuserID(userID)} | ${logs}`)
+        }
     }
 }
