@@ -12,6 +12,8 @@ from app.models import (
 )
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 
+from flask import current_app
+
 
 @shared_task(bind=True)
 def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
@@ -135,8 +137,8 @@ def update_region(self, region_name="us-east-1", ami=None):
 def manual_scale_cluster(self, cluster: str, region_name: str):
     """
     Manually scales the cluster according the the following logic:
-        - if num_tasks // FACTOR < num_instances, set_desired_capacity to x such that
-        x < num_tasks * FACTOR < x + 1
+        - if num_tasks < AWS_TASKS_PER_INSTANCE * num_instances, set capacity to x such that
+        AWS_TASKS_PER_INSTANCE * x < num_tasks < AWS_TASKS_PER_INSTANCE * (x + 1)
 
     FACTOR is hard-coded to 10 at the moment.
     This function does not handle outscaling at the moment.
@@ -153,8 +155,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         },
     )
 
-    #TODO: set in environment or make configurable
-    factor = 10
+    factor = current_app.config["AWS_TASKS_PER_INSTANCE"]
 
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     cluster_data = ecs_client.describe_cluster(cluster)
@@ -165,47 +166,74 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     ]
     for k in keys:
         if k not in cluster_data:
-            raise ValueError(f"Expected key {k} in AWS describle_cluster API response: {cluster_data}")
+            raise ValueError(f"""Expected key {k} in AWS describle_cluster API response. 
+                            Got: {cluster_data}""")
             
-    tasks = cluster_data["runningTasksCount"] + cluster_data["pendingTasksCount"]
-    instances = cluster_data["registeredContainerInstancesCount"]
-    expected_instances = math.ceil(tasks/factor)
+    num_tasks = cluster_data["runningTasksCount"] + cluster_data["pendingTasksCount"]
+    num_instances = cluster_data["registeredContainerInstancesCount"]
+    expected_num_instances = math.ceil(num_tasks/factor)
 
-    if expected_instances < instances:
-        # we only implement manual scale down
-        self.update_state(
-            state="PENDING",
-            meta={
-                "msg": f"Scaling cluster {cluster} from {instances} to {expected_instances}.",
-            },
-        )
-        fractal_log(
-            "manual_scale_cluster",
-            None,
-            f"""Cluster {cluster} had {instances} instances but should have had 
-                {expected_instances}. Number of tasks: {tasks}. Triggering a scale down.""",
-            level=logging.WARNING,
-        )
-
-        asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
-        if len(asg_list) != 1:
-            #TODO: SENTRY
-            raise ValueError(f"Expected 1 ASG but got {len(asg_list)} for cluster {cluster}")
-        
-        asg = asg_list[0]
-        ecs_client.set_auto_scaling_group_capacity(asg, expected_instances)
-
-        self.update_state(
-            state="SUCCESS",
-            meta={
-                "msg": f"Scaled cluster {cluster} from {instances} to {expected_instances}.",
-            },
-        )
-
-    else:
+    if expected_num_instances == num_instances:
         self.update_state(
             state="SUCCESS",
             meta={
                 "msg": f"Cluster {cluster} did not need any scaling.",
             },
         )
+
+    # now we check if there are actually empty instances
+    instances = ecs_client.list_container_instances(cluster)
+    instances_tasks = ecs_client.describe_container_instances(cluster, instances)
+    if num_instances != len(instances_tasks) != len(instances):
+        # there could be a slight race condition here where an instance is spun-up
+        # between the describe_cluster, list_container_instances, describe_container_instances
+        # should we just not error check?
+        raise ValueError(f"""Got {len(instances)} from list_container_instances and 
+                            {len(instances)} from describe_container_instances""")
+
+    empty_instances = 0
+    for instance_task_data in instances_tasks:
+        if "runningTasksCount" not in instance_task_data:
+            raise ValueError(f"""Expected key {k} in AWS describe_container_instances 
+                            API response: {instance_task_data}""")
+        num_tasks = instance_task_data["runningTasksCount"]
+        if num_tasks == 0:
+            empty_instances += 1
+
+    if empty_instances == 0:
+        fractal_log(
+            "manual_scale_cluster",
+            None,
+            f"""Cluster {cluster} had {num_instances} instances but should have 
+                {expected_num_instances}. Number of total tasks: {num_tasks}. However, no instance 
+                is empty so a scale down cannot be triggered. This means AWS ECS has suboptimally
+                distributed tasks onto instances.""",
+            level=logging.INFO,
+        )
+
+        self.update_state(
+            state="SUCCESS",
+            meta={
+                "msg": """Detected that scale-down should happen but could 
+                        not because there are no empty instances.""",
+            },
+        )
+
+    else:
+        # at this point, we have detected scale-down should happen and know that
+        # there are some empty instances for us to delete. we can safely do a scale-down.
+        asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
+        if len(asg_list) != 1:
+            raise ValueError(f"Expected 1 ASG but got {len(asg_list)} for cluster {cluster}")
+        
+        asg = asg_list[0]
+        # keep whichever instances are not empty
+        ecs_client.set_auto_scaling_group_capacity(asg, num_instances - empty_instances)
+
+        self.update_state(
+            state="SUCCESS",
+            meta={
+                "msg": f"Scaled cluster {cluster} from {num_instances} to {num_instances - empty_instances}.",
+            },
+        )
+    

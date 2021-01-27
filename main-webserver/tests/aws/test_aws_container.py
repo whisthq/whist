@@ -17,20 +17,12 @@ from app.models import ClusterInfo, db, UserContainer, RegionToAmi
 
 from ..helpers.general.progress import fractalJobRunner, queryStatus
 
+from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.celery.aws_ecs_modification import manual_scale_cluster
 
 
 pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
 pytest.container_name = None
-
-
-@pytest.mark.usefixtures("celery_session_app")
-@pytest.mark.usefixtures("celery_session_worker")
-def test_manual_scale_cluster():
-    cluster = "test-cluster-4b7568b8-d9ef-4345-bb7e-481c3ac0d7b5"
-    region = "us-east-1"
-    manual_scale_cluster.delay(cluster, region)
-
 
 
 @pytest.mark.container_serial
@@ -222,6 +214,17 @@ def test_delete_container(client):
         )
         assert False
 
+    # delete_container will call manual_scale_cluster
+    # it should follow through the logic until it actually tries to kill the instance,
+    # which we don't need to do since delete_cluster handles it
+    mock_set_capacity_success = False
+
+    def mock_set_capacity(self, asg_name: str, desired_capacity: int):
+        nonlocal mock_set_capacity_success
+        mock_set_capacity_success = desired_capacity == 0
+
+    monkeypatch.setattr(ECSClient, "set_auto_scaling_group_capacity", mock_set_capacity)
+
     resp = client.post(
         "/container/delete",
         json=dict(
@@ -252,7 +255,25 @@ def test_delete_container(client):
         )
         assert False
 
+    assert mock_set_capacity_success
     assert True
+
+
+# @pytest.mark.usefixtures("celery_session_app")
+# @pytest.mark.usefixtures("celery_session_worker")
+# def test_manual_scale_cluster(monkeypatch):
+#     cluster = pytest.cluster_name
+#     region = "us-east-1"
+
+#     # the next function will actually delete the cluster. This checks to
+#     # see if manual scaler would have
+#     def mock_set_capacity(self, asg_name: str, desired_capacity: int):
+#         assert desired_capacity == 0
+
+#     monkeypatch.setattr(ECSClient, "set_auto_scaling_group_capacity", "mock_set_capacity")
+#     res = manual_scale_cluster.delay(cluster, region).get(timeout=10)
+
+#     assert res.successful()
 
 
 @pytest.mark.container_serial

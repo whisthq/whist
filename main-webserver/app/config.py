@@ -174,6 +174,7 @@ class DeploymentConfig:
     SQLALCHEMY_DATABASE_URI = property(getter("DATABASE_URL", fetch=False))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
+    AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
 
     @property
     def config_table(self):
@@ -231,6 +232,7 @@ class LocalConfig(DeploymentConfig):
 
     REDIS_URL = property(getter("REDIS_URL", default="", fetch=False))
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
+    AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name

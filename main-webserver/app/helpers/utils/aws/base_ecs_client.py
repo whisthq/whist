@@ -276,10 +276,59 @@ class ECSClient:
         Returns:
             List[Dict]: each dict contains details about an auto scaling group in the cluster
         """
-        auto_scaling_groups = self.get_autoscaling_groups_in_cluster(cluster)
+        capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0][
+            "capacityProviders"
+        ]
+        capacity_providers_info = self.ecs_client.describe_capacity_providers(
+            capacityProviders=capacity_providers
+        )["capacityProviders"]
+        auto_scaling_groups = list(
+            map(
+                lambda cp: cp["autoScalingGroupProvider"]["autoScalingGroupArn"].split("/")[-1],
+                capacity_providers_info,
+            )
+        )
         return self.auto_scaling_client.describe_auto_scaling_groups(
             AutoScalingGroupNames=auto_scaling_groups
         )["AutoScalingGroups"]
+
+
+    def list_container_instances(self, cluster: str) -> List[str]:
+        """
+        Args:
+            cluster: name of cluster
+
+        Returns:
+            A list of container ARNs
+        """
+        resp = self.ecs_client.list_container_instances(
+            cluster=cluster,
+        )
+        key = "containerInstanceArns"
+        if key not in resp:
+            raise ValueError(f"""Unexpected AWS API response to list_container_instances. 
+                                Expected key {key}. Got: {resp}.""")
+        return resp[key]
+
+
+    def describe_container_instances(self, cluster: str, container_arns: List[str]) -> List[Dict]:
+        """
+        Args:
+            cluster: name of cluster
+            container_arns: list of container ARNs
+
+        Returns:
+            JSON response (as dict) description for each container
+        """
+        resp = self.ecs_client.describe_container_instances(
+            cluster=cluster,
+            containerInstances=container_arns,
+        )
+        key = "containerInstances"
+        if key not in resp:
+            raise ValueError(f"""Unexpected AWS API response to describe_container_instances. 
+                                Expected key {key}. Got: {resp}.""")
+        return resp[key]
 
 
     def get_container_instance_ips(self, cluster, containers):
