@@ -12,7 +12,7 @@ exports.default = async function notarizing(context) {
     return await notarize({
         appBundleId: 'com.fractalcomputers.fractal',
         appPath: `${appOutDir}/${appName}.app`,
-        appleId: `phil@fractalcomputers.com`,
+        appleId: `phil@fractal.co`,
         appleIdPassword: `seoy-fnou-zjro-xicr`,
     })
 }
