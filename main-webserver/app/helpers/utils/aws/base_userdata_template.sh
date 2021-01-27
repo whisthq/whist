@@ -17,10 +17,10 @@ echo "{{\"DriverVersion\":\"${{DRIVER_VERSION}}\",\"GPUIDs\":${{ID_JSON}}}}" > /
 #Create ECS config
 cat << EOF > /etc/ecs/ecs.config
 ECS_CLUSTER={}
-ECS_DATADIR=/data
+ECS_DATADIR=/var/lib/ecs/data
 ECS_ENABLE_TASK_IAM_ROLE=true
 ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
-ECS_LOGFILE=/log/ecs-agent.log
+ECS_LOGFILE=/var/log/ecs/ecs-agent.log
 ECS_AVAILABLE_LOGGING_DRIVERS=["syslog","json-file","journald","awslogs"]
 ECS_LOGLEVEL=info
 ECS_ENABLE_GPU_SUPPORT=true
