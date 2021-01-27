@@ -16,145 +16,141 @@ on:
     workflow_dispatch:
 
 jobs:
-  fractal-build-and-publish-ami-main:
-      name: Build & Publish AMIs
-      runs-on: ubuntu-20.04
+    fractal-build-and-publish-ami-main:
+        name: Build & Publish AMIs
+        runs-on: ubuntu-20.04
 
-      env:
-        aws_source_region: us-east-1
+        env:
+            aws_source_region: us-east-1
 
-      steps:
-          - name: Checkout Git Repository
-            uses: actions/checkout@v2
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
 
-          - name: Retrieve master git hash as env variable
-            run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+            - name: Retrieve master git hash as env variable
+              run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-          - name: Configure AWS CLI
-            uses: aws-actions/configure-aws-credentials@v1
-            with:
-                aws-access-key-id: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
-                aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
-                aws-region: ${{ env.aws_source_region }}
+            - name: Configure AWS CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.aws_source_region }}
 
-          - name: Set Appropriate GraphQL URL and Access Key (prod, staging, dev) Based on Git Branch (master, staging, dev)
-            run: |
-                if [ "${GITHUB_REF##*/}" == "master" ]; then
-                  echo "graphql_db_url=https://prod-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                  echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
-                elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-                  echo "graphql_db_url=https://staging-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                  echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}" >> $GITHUB_ENV
-                else
-                  echo "graphql_db_url=https://dev-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                  echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
-                fi
+            - name: Set Appropriate GraphQL URL and Access Key (prod, staging, dev) Based on Git Branch (master, staging, dev)
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                    echo "graphql_db_url=https://prod-database.fractal.co/v1/graphql" >> $GITHUB_ENV
+                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                    echo "graphql_db_url=https://staging-database.fractal.co/v1/graphql" >> $GITHUB_ENV
+                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}" >> $GITHUB_ENV
+                  else
+                    echo "graphql_db_url=https://dev-database.fractal.co/v1/graphql" >> $GITHUB_ENV
+                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
+                  fi
 
-          - name: Define Supported AWS Regions (apart from aws_source, defined above) # being done this way because of errors when defining list in env
-            run: echo "aws-regions=[us-east-2,us-west-1,us-west-2,ca-central-1,eu-west-1,eu-central-1]" >> $GITHUB_ENV
+            - name: Define Supported AWS Regions (apart from aws_source, defined above) # being done this way because of errors when defining list in env
+              run: echo "aws-regions=[us-east-2,us-west-1,us-west-2,ca-central-1,eu-west-1,eu-central-1]" >> $GITHUB_ENV
 
+            - name: Check/install  Packer version
+              run: |
+                  # delete current packer installation
+                  sudo rm -rf /usr/local/bin/packer
 
+                  # reinstall packer to latest version
 
-          - name: Check/install  Packer version
-            run: |
-              # delete current packer installation
-              sudo rm -rf /usr/local/bin/packer
+                  PACKER_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/packer | jq -r .current_version)
+                  curl -LO "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip"
+                  sudo unzip "packer_${PACKER_VERSION}_linux_amd64.zip" -d /usr/local/bin
+                  rm -f "packer_${PACKER_VERSION}_linux_amd64.zip"
 
-              # reinstall packer to latest version
+                  packer --version
 
-              PACKER_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/packer | jq -r .current_version)
-              curl -LO "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip"
-              sudo unzip "packer_${PACKER_VERSION}_linux_amd64.zip" -d /usr/local/bin
-              rm -f "packer_${PACKER_VERSION}_linux_amd64.zip"
-            
-              packer --version
+            # This AMI is used as a source AMI for building the new AMI
+            - name: Retrieve Current aws_source_region AMI ID from Appropriate Database (prod, staging, dev)
+              working-directory: ecs-host-setup
+              run: |
+                  # curl GraphQL API to retrieve version number from config database
+                  SOURCE_AMI=$(curl -X POST \
+                               -H "Content-Type: application/json" \
+                               -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
+                               --data "{ \"query\": \"query { hardware_region_to_ami(where: { region_name: { _eq: \\\"${{ env.aws_source_region }}\\\" } }) { ami_id } }\" }" \
+                               ${{ env.graphql_db_url }} | grep -oE 'ami-[0-9a-z]+')
 
+                  # save to GitHub Environment
+                  echo "source_ami=${SOURCE_AMI}" >> $GITHUB_ENV
 
+            - name: Modify the Packer ami_config.json via jq to the Right Values for Building New AMI
+              working-directory: ecs-host-setup
+              run: |
+                  # cat ami_config.json | jq '.builders[0].secret_key = "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'" | .builders[0].access_key = "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'" | .builders[0].ami_name = "'ami-us-east-1-${{ env.commit_sha }}'" | .builders[0].source_ami = "'${{ env.source_ami }}'" | .provisioners[2].inline[1] = "'./setup_ubuntu20_host.sh\ ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}\ ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
 
-          # This AMI is used as a source AMI for building the new AMI
-          - name: Retrieve Current aws_source_region AMI ID from Appropriate Database (prod, staging, dev)
-            working-directory: ecs-host-setup
-            run: |
-                # curl GraphQL API to retrieve version number from config database
-                SOURCE_AMI=$(curl -X POST \
-                             -H "Content-Type: application/json" \
-                             -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-                             --data "{ \"query\": \"query { hardware_region_to_ami(where: { region_name: { _eq: \\\"${{ env.aws_source_region }}\\\" } }) { ami_id } }\" }" \
-                             ${{ env.graphql_db_url }} | grep -oE 'ami-[0-9a-z]+')
-                
-                # save to GitHub Environment
-                echo "source_ami=${SOURCE_AMI}" >> $GITHUB_ENV
+                  one=\'2UbWrGYH05m/PN6nC8xr7oVbkxL579FmlrPZSnEE\'
+                  two=\'AKIA24A776SSE7SP4HWG\'
+                  cat ami_config.json | jq '.builders[0].secret_key = "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'" | .builders[0].access_key = "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'" | .builders[0].ami_name = "'ami-us-east-1-${{ env.commit_sha }}'" | .builders[0].source_ami = "'${{ env.source_ami }}'" | .provisioners[2].inline[1] = "'./setup_ubuntu20_host.sh\ ${one}\ ${two}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
+                  cat ami_config.json
 
-          - name: Modify the Packer ami_config.json via jq to the Right Values for Building New AMI
-            working-directory: ecs-host-setup
-            run: |
-                # cat ami_config.json | jq '.builders[0].secret_key = "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'" | .builders[0].access_key = "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'" | .builders[0].ami_name = "'ami-us-east-1-${{ env.commit_sha }}'" | .builders[0].source_ami = "'${{ env.source_ami }}'" | .provisioners[2].inline[1] = "'./setup_ubuntu20_host.sh\ ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}\ ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
-                
-                one=\'2UbWrGYH05m/PN6nC8xr7oVbkxL579FmlrPZSnEE\'
-                two=\'AKIA24A776SSE7SP4HWG\'
-                cat ami_config.json | jq '.builders[0].secret_key = "'${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}'" | .builders[0].access_key = "'${{ secrets.AWS_EC2_ACCESS_KEY_ID }}'" | .builders[0].ami_name = "'ami-us-east-1-${{ env.commit_sha }}'" | .builders[0].source_ami = "'${{ env.source_ami }}'" | .provisioners[2].inline[1] = "'./setup_ubuntu20_host.sh\ ${one}\ ${two}'"' > ami_config_tmp.json && mv ami_config_tmp.json ami_config.json
-                cat ami_config.json 
+            # This spins up an AWS EC2 instance to create the AMI, and then deletes it
+            # It *could* fail if we are maxed-out in number AWS vCPUs allowed in AWS Source Region
+            - name: Create New AMI in aws_source_region via Packer and Update Appropriate Database (prod, staging, dev)
+              working-directory: ecs-host-setup
+              run: |
+                  # create new AMI for aws_source_region
+                  # no debugging
+                  # echo "new_ami_id=$(packer -machine-readable build ami_config.json | grep -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
 
-          # This spins up an AWS EC2 instance to create the AMI, and then deletes it
-          # It *could* fail if we are maxed-out in number AWS vCPUs allowed in AWS Source Region
-          - name: Create New AMI in aws_source_region via Packer and Update Appropriate Database (prod, staging, dev)
-            working-directory: ecs-host-setup
-            run: |
-                # create new AMI for aws_source_region
-                # no debugging
-                # echo "new_ami_id=$(packer -machine-readable build ami_config.json | grep -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
-                
-                # yes debugging 
-                touch build.log
-                echo "created file"
-                packer -machine-readable build ami_config.json | tee build.log
-                cat build.log
-                echo "new_ami_id=$(cat build.log | grep -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
-          - name: Temp separate
-            working-directory: ecs-host-setup
-            run: |
-                # update AMI ID for aws_source_region in appropriate database to new AMI ID
-                curl -X POST \
-                -H "Content-Type: application/json" \
-                -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-                --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${{ env.new_ami_id }}\\\" }, where: { region_name: { _eq: \\\"${{ env.aws_source_region }}-dummy\\\" } }) { returning { ami_id } } }\" }" \
-                ${{ env.graphql_db_url }}
-
-          - name: Copy New AMI to All Supported AWS Regions
-            working-directory: ecs-host-setup
-            run: |
-                for aws_region in ${{ env.aws_regions }}
-                do
-                  # retrieve new AMI ID for aws_region, from the new AMI ID in aws_source_region
-                  region_new_ami_id=$(grep -oE 'ami-[0-9a-z]+' <<< $(aws ec2 copy-image --source-image-id ${{ env.new_ami_id }} --source-region ${{ env.aws_source_region }} --region $aws_region --name "ami-$aws_region-${{ env.commit_sha }}"))
-
-                  # update AMI for aws_region in appropriate database to the new AMI ID
+                  # yes debugging 
+                  touch build.log
+                  echo "created file"
+                  packer -machine-readable build ami_config.json | tee build.log
+                  cat build.log
+                  echo "new_ami_id=$(cat build.log | grep -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
+            - name: Temp separate
+              working-directory: ecs-host-setup
+              run: |
+                  # update AMI ID for aws_source_region in appropriate database to new AMI ID
                   curl -X POST \
                   -H "Content-Type: application/json" \
                   -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-                  --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${{ env.region_new_ami_id }}\\\" }, where: { region_name: { _eq: \\\"${aws_region}-dummy\\\" } }) { returning { ami_id } } }\" }" \
+                  --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${{ env.new_ami_id }}\\\" }, where: { region_name: { _eq: \\\"${{ env.aws_source_region }}-dummy\\\" } }) { returning { ami_id } } }\" }" \
                   ${{ env.graphql_db_url }}
-                done
 
-  # notify-slack:
-  #     name: Notify Slack
-  #     needs: [fractal-build-and-publish-ami-main]
-  #     if: success()
-  #     runs-on: ubuntu-20.04
+            - name: Copy New AMI to All Supported AWS Regions
+              working-directory: ecs-host-setup
+              run: |
+                  for aws_region in ${{ env.aws_regions }}
+                  do
+                    # retrieve new AMI ID for aws_region, from the new AMI ID in aws_source_region
+                    region_new_ami_id=$(grep -oE 'ami-[0-9a-z]+' <<< $(aws ec2 copy-image --source-image-id ${{ env.new_ami_id }} --source-region ${{ env.aws_source_region }} --region $aws_region --name "ami-$aws_region-${{ env.commit_sha }}"))
 
-  #     steps:
-  #         - name: Notify Slack
-  #           run: |
-  #               if [ "${GITHUB_REF##*/}" == "master" ]; then
-  #                   curl -X POST \
-  #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to AWS from \`master\`.\", \"icon_emoji\": \":fractal:\"}" \
-  #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-  #               elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-  #                   curl -X POST \
-  #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to AWS from \`staging\`.\", \"icon_emoji\": \":fractal:\"}" \
-  #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-  #               else
-  #                   curl -X POST \
-  #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to AWS from \`dev\`.\", \"icon_emoji\": \":fractal:\"}" \
-  #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-  #               fi
+                    # update AMI for aws_region in appropriate database to the new AMI ID
+                    curl -X POST \
+                    -H "Content-Type: application/json" \
+                    -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
+                    --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${{ env.region_new_ami_id }}\\\" }, where: { region_name: { _eq: \\\"${aws_region}-dummy\\\" } }) { returning { ami_id } } }\" }" \
+                    ${{ env.graphql_db_url }}
+                  done
+
+    # notify-slack:
+    #     name: Notify Slack
+    #     needs: [fractal-build-and-publish-ami-main]
+    #     if: success()
+    #     runs-on: ubuntu-20.04
+
+    #     steps:
+    #         - name: Notify Slack
+    #           run: |
+    #               if [ "${GITHUB_REF##*/}" == "master" ]; then
+    #                   curl -X POST \
+    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to AWS from \`master\`.\", \"icon_emoji\": \":fractal:\"}" \
+    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+    #               elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+    #                   curl -X POST \
+    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to AWS from \`staging\`.\", \"icon_emoji\": \":fractal:\"}" \
+    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+    #               else
+    #                   curl -X POST \
+    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to AWS from \`dev\`.\", \"icon_emoji\": \":fractal:\"}" \
+    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+    #               fi
