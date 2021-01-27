@@ -22,14 +22,12 @@ We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the 
 
 We use environment variables to configure our local development environments. Environment variables should be set by adding lines of the form `KEY=VALUE` to the file `docker/.env`. **The main environment variable that _must_ be set in order to do any kind of local development, whether with the `docker-compose` stack or the `pytest` test suite, is the `CONFIG_DB_URL` environment variable.** `CONFIG_DB_URL` specifies the PostgreSQL connection URI of the Fractal configuration database. This database contains default values for many of the variables that are used to configure the various parts of the web application stack. These default values may be overridden locally by setting alternatives in the same `docker/.env` file.
 
-The following environment variables must also be set in `docker/.env` (neither the test suite nor the `docker-compose` stack will work without them):
+The following environment variables must also be set in `docker/.env` (neither the test suite nor the `docker-compose` stack will work without them).
 
 - `POSTGRES_DB` &ndash; The name of the Postgres database to which to connect.
 - `POSTGRES_HOST` &ndash; The hostname or IP address of the development Postgres instance.
 - `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
 - `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
-
-Finally, the local tests require a connection to a running Redis instance. See [Setting up Redis](#setting-up-redis) for instructions on how to establish such a connection. If the Redis instance used for testing is running anywhere other than `rediss://localhost:6379/0`, `REDIS_URL` should be set to indicate the correct connection URI. Take a moment to understand that setting `REDIS_URL` has no effect on the Flask instance running in the `docker-compose`; it only affects Flask applications launched manually (e.g. Flask applications created by `pytest` for testing purposes).
 
 **1. Set environment variables**
 
@@ -105,17 +103,19 @@ GraphQL is already set up, but here's a [setup doc](https://hasura.io/docs/1.0/g
 
 ## Testing
 
-### Setting up Redis
+### Setting Up
 
-In order to run tests locally, the tests must be able to connect to a running Redis instance. As described earlier, we need to launch a container running Redis+TLS. To do this, run in the root directory of this project `docker run -d -p 6379:6379 -v $(pwd)/dummy_certs:/certs --name redis-tls madflojo/redis-tls`. This command launches Redis in the default location on the network&mdash;`rediss://localhost:6379`. The test code looks at the environment variable `REDIS_URL` to connect to redis. Since this is not set, it tries the default port of 6379. Note: if the docker container doesn't seem to be starting, make sure you have your dummy SSL certificates set up.
+You need the CLI utilities `pg_dump` and `psql`. On Mac:
 
-### `pytest`
+```
+brew install postgresql
+```
 
-We have pytest tests in the `tests` subdirectory. To run tests, make sure you have pytest installed with Python 3, as well as all of the other Python dependencies (`pip3 install -r requirements-test.txt`). Then run `pytest --no-mock-aws` in the `main-webserver` directory. Refer to the [pytest documentation](https://docs.pytest.org/en/stable/contents.html) to learn how to use pytest.
+First, we need to setup a local Redis and Postgres instance. Navigate to `tests/setup` and run `bash setup_tests.sh`. This only has to be run once for as long as you are testing. This script will use `docker-compose` to set up a local db that looks like a fresh version of the remote dev db. It'll be mostly empty except for a few tables. You can use TablePlus to connect to it locally at `localhost:9999`. You can find the username and database (pwd optional) in `docker/.env`. When you are done testing, end the containers with `docker-compose down`. Note: the `setup_tests..sh` script saves SQL scripts to `tests/setup/db`. Delete these once in a while to get an updated pull of the database.
 
-The docker-compose stack does **not** need to be running in order to run tests. However, the tests do need access to Redis. By default, the tests attempt to connect to `rediss://localhost:6379/0`. If Redis is running elsewhere, expose the correct connection URI to the tests via the environment variable `REDIS_URL`. This can even be a remote URI!
+### Testing
 
-**To reiterate, we do not need to launch a local instance of webserver and celery to run tests. Local tests use Flask mocking to test endpoints, and they use a locally running redis to run Celery.**
+Now, navigate to `tests` and run `bash run_tests.sh --no-mock-aws`. This loads the environment variables in `docker/.env` and uses `pytest` to run the tests. If something goes wrong during testing and you kill it early, clean up clusters using the AWS console. Note that since the db is local and ephemeral, any db changes can be safely done.
 
 ## How To Contribute
 

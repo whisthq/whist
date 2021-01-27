@@ -138,32 +138,6 @@ def getter(key, fetch=True, **kwargs):
     return _getter
 
 
-def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
-    """Generate a test configuration class that is a subclass of a base configuration class.
-
-    Arguments:
-        BaseConfig: A base configuration class (either DeploymentConfig or LocalConfig).
-
-    Returns:
-        A configuration class to be used to configure a Flask application for testing.
-    """
-
-    class TestConfig(BaseConfig):  # pylint: disable=invalid-name
-        """Place the application in testing mode."""
-
-        config_table = "dev"
-
-        STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
-        TESTING = True
-
-        @property
-        def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
-            # Test deployments should not be able to act as OAuth clients.
-            return {}
-
-    return TestConfig
-
-
 class DeploymentConfig:
     """Flask application configuration for deployed applications.
 
@@ -287,10 +261,44 @@ class LocalConfig(DeploymentConfig):
             A PostgreSQL connection URI.
         """
 
+        # create URI from components
         return (
             f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
             f"{self.db_name}"
         )
+
+
+def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
+    """Generate a test configuration class that is a subclass of a base configuration class.
+
+    Arguments:
+        BaseConfig: A base configuration class (either DeploymentConfig or LocalConfig).
+
+    Returns:
+        A configuration class to be used to configure a Flask application for testing.
+    """
+
+    class TestConfig(BaseConfig):  # pylint: disable=invalid-name
+        """Place the application in testing mode."""
+
+        config_table = "dev"
+
+        STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
+        # This logic is a bit convoluted. Here's what's happening:
+        # TestConfig is used in two cases, local testing or CI. It modifies LocalConfig
+        # and DeploymentConfig respectively. In local testing, LocalConfig already defines
+        # SQLALCHEMY_DATABASE_URI. In CI, we use the POSTGRES_URI env var.
+        if BaseConfig == DeploymentConfig:
+            SQLALCHEMY_DATABASE_URI = property(getter("POSTGRES_URI", fetch=False))
+
+        TESTING = True
+
+        @property
+        def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
+            # Test deployments should not be able to act as OAuth clients.
+            return {}
+
+    return TestConfig
 
 
 DeploymentTestConfig = _TestConfig(DeploymentConfig)
