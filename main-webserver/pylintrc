@@ -12,16 +12,9 @@ fail-under=10
 # paths.
 ignore=CVS,
        admin_blueprint.py,
-       analytics.py,
-       analytics_blueprint.py,
-       analytics_post.py,
        base_ecs_client.py,
        hash_bad_words.py,
        newsletter_blueprint.py,
-       report_blueprint.py,
-       report_get.py,
-       report_post.py,
-       sql_table_blueprint.py,
        stripe_blueprint.py,
        stripe_mail.py,
        stripe_post.py
