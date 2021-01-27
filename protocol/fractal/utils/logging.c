@@ -726,7 +726,7 @@ void save_connection_id(int connection_id_int) {
 // before the first connection, if they haven't been overwritten.
 int send_connection_history(char *host, char *identifier, char *hex_aes_private_key) {
     // This is for HTTP request, not filesystem
-    char *request_path = "/logs/insert";
+    char *request_path = "/logs";
 
     safe_SDL_LockMutex((SDL_mutex *)logger_mutex);
 
