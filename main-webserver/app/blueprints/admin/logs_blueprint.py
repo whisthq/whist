@@ -33,7 +33,7 @@ def logs_post(**kwargs):
         )
     except KeyError as e:
         fractal_log(
-            function="logs_post",
+            function="logs",
             label=None,
             logs=f"Error while reading body: {str(e)}",
             level=logging.ERROR,
