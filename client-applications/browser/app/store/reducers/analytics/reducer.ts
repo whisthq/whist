@@ -9,6 +9,14 @@ export default function (
         type: string
     }
 ) {
+    /*
+        Description:
+            Reducer for analytics actions
+        Arguments:
+            body (Timer): Action body 
+            type (string): Action type
+    */
+
     const stateCopy = deepCopyObject(state)
 
     switch (action.type) {
