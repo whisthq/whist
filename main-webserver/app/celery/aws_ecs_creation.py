@@ -35,9 +35,6 @@ from app.serializers.oauth import CredentialSchema
 
 from app.constants.container_state_values import FAILURE, PENDING, READY
 
-# from app.helpers.utils.aws.aws_general import build_base_from_image
-
-
 MAX_POLL_ITERATIONS = 20
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
