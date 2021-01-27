@@ -799,12 +799,11 @@ int send_connection_history(char *host, char *identifier, char *hex_aes_private_
                 sprintf(json,
                         "{"
                         "   \"sender\" : \"server\","
-                        "   \"connection_id\" : \"%s\","
                         "   \"logs\" : \"%s\","
                         "   \"identifier\" : %s,"
                         "   \"secret_key\" : \"%s\""
                         "}",
-                        connection_id_data, logs, identifier, hex_aes_private_key);
+                        logs, identifier, hex_aes_private_key);
 
                 LOG_INFO("Sending logs to webserver...");
                 send_post_request(host, request_path, json, NULL, 0);
