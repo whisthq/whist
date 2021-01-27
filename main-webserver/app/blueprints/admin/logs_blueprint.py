@@ -17,6 +17,7 @@ from app.helpers.utils.general.logs import fractal_log
 
 logs_bp = Blueprint("logs_bp", __name__)
 
+
 @logs_bp.route("/logs", methods=["POST"])
 @fractal_pre_process
 def logs_post(**kwargs):
@@ -42,4 +43,3 @@ def logs_post(**kwargs):
     task = upload_logs_to_s3.delay(*args)
 
     return jsonify({"ID": task.id}), ACCEPTED
-
