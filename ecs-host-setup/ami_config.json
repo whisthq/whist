@@ -6,10 +6,10 @@
       "name": "Fractal AWS AMI Builder",
       "type": "amazon-ebs",
       "region": "us-east-1",
-      "source_ami": "PLACEHOLDER",
+      "source_ami": "ami-0885b1f6bd170450c",
       "instance_type": "g3.4xlarge",
+      "iam_instance_profile": "PackerAMIBuilder",
       "ssh_username": "ubuntu",
-      "ssh_interface": "session_manager",
       "ami_name": "PLACEHOLDER",
       "ami_description": "Fractal-optimized Ubuntu 20.04 AWS Machine Image.",
       "launch_block_device_mappings": [
@@ -32,7 +32,7 @@
       "inline": ["sudo apt-get remove unattended-upgrades -y", "sudo reboot"]
     },
     {
-      "pause_before": "30s",
+      "pause_before": "10s",
       "type": "file",
       "source": "../ecs-host-setup",
       "destination": "/home/ubuntu"
@@ -47,7 +47,7 @@
       "inline": ["sudo reboot"]
     },
     {
-      "pause_before": "30s",
+      "pause_before": "10s",
       "type": "shell",
       "inline": [
         "cd /home/ubuntu/ecs-host-setup",
