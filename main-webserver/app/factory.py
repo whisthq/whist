@@ -78,10 +78,7 @@ def register_blueprints(app):
         - app: Flask object
     """
 
-    from .blueprints.admin.report_blueprint import report_bp
-    from .blueprints.admin.analytics_blueprint import analytics_bp
     from .blueprints.admin.admin_blueprint import admin_bp
-    from .blueprints.admin.sql_table_blueprint import table_bp
     from .blueprints.admin.logs_blueprint import logs_bp
     from .blueprints.admin.hasura_blueprint import hasura_bp
 
@@ -111,10 +108,7 @@ def register_blueprints(app):
     app.register_blueprint(mail_bp)
     app.register_blueprint(newsletter_bp)
     app.register_blueprint(stripe_bp)
-    app.register_blueprint(report_bp)
-    app.register_blueprint(analytics_bp)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(table_bp)
     app.register_blueprint(logs_bp)
     app.register_blueprint(host_service_bp)
     app.register_blueprint(oauth_bp)
