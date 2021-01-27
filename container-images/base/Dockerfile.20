@@ -57,7 +57,8 @@ RUN apt-get install --no-install-recommends -y \
     mpv \
     psmisc \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install X Server and window manager dependencies and basic Ubuntu packages
 # These packages need to be installed before installing/updating Python
@@ -135,7 +136,8 @@ RUN apt-get install --no-install-recommends -y \
     libxcb-xfixes0 \
     ocl-icd-libopencl1 \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install Pulse Audio & XDummy dependencies explicitly
 # These packages need to be installed before installing/updating Python
@@ -158,7 +160,8 @@ RUN apt-get install --no-install-recommends -y \
     libltdl7 \
     libtdb1 \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install Nvidia CUDA Drivers dependencies explicitly
 # These packages need to be installed before installing/updating Python
@@ -170,7 +173,8 @@ RUN apt-get install --no-install-recommends -y \
     libgtk2.0-0 \
     libjansson4 \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install general Ubuntu packages
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -189,7 +193,8 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
     libcurl4 \
     curl \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install xterm dependencies explicitly
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -212,7 +217,8 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
     xbitmaps \
     x11-utils \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install xterm
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -220,7 +226,8 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
 RUN apt-get install --allow-downgrades --no-install-recommends -y \
     xterm \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install time while avoiding interactive installation for tzdata - uses UTC
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -229,7 +236,8 @@ ENV LOCAL="yes"
 RUN apt-get install --no-install-recommends -y \
     tzdata \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
@@ -245,7 +253,8 @@ RUN useradd --create-home fractal \
 RUN apt-get install --no-install-recommends -y \
     pulseaudio \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Give access to Pulse Audio virtual sound card
 RUN adduser root pulse-access \
@@ -274,7 +283,8 @@ RUN apt-get install --no-install-recommends -y \
     libavdevice-dev \
     libx11-dev \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 
 # Install FractalServer scripts and kernel module input rules
@@ -290,7 +300,8 @@ RUN apt-get install --no-install-recommends -y \
     openssh-sftp-server \
     openssh-server \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 RUN systemctl enable ssh
 
@@ -341,7 +352,8 @@ RUN apt-get install --no-install-recommends -y \
     mesa-vdpau-drivers \
     libvdpau-va-gl1 \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Set up window manager running on X server, with GTK/QT theming
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
