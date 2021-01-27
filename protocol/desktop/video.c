@@ -24,7 +24,6 @@ Includes
 #include <stdio.h>
 
 #include "../fractal/cursor/peercursor.h"
-#include "../fractal/utils/png.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "SDL2/SDL.h"
 #include "network.h"
@@ -772,9 +771,9 @@ Public Function Implementations
 */
 
 void init_video() {
-/*
-    Creates renderer and video thread
-*/
+    /*
+        Creates renderer and video thread
+    */
     video_data.render_screen_thread =
         SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
 }
