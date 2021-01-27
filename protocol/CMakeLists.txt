@@ -24,10 +24,6 @@ cmake_policy(SET CMP0091 NEW)
 # export compile commands database - comment this out if not running clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-
-
-
-
 project(FractalProtocol LANGUAGES C)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
