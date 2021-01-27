@@ -37,7 +37,6 @@ export const execPromise = (
     })
 }
 
-
 const getExecutableName = (): string => {
     /*
     Description:
@@ -98,8 +97,8 @@ export const launchProtocol = (
             // Protocol arguments
             const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
             const protocolParameters = {
-                width: window.screen.availWidth * window.devicePixelRatio,
-                height: window.screen.availHeight * window.devicePixelRatio,
+                width: 800,
+                height: 600,
                 ports: portInfo,
                 "private-key": container.secretKey,
                 name: "Fractalized Chrome",

@@ -22,6 +22,7 @@ module.exports = {
         'import/prefer-default-export': 1,
         'no-shadow': 1,
         'react/jsx-props-no-spreading': 1,
+        'import/no-named-as-default': 'off',
     },
     settings: {
         'import/resolver': {

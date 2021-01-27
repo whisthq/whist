@@ -1,19 +1,28 @@
 @import '~app.global.css';
 
 .loginText {
-    color: white;
+    color: var(--primary-text-color);
     margin-bottom: 35px;
+    font-size: 80px;
+    text-align: left;
+    display: flex;
+    width: 600px;
+    font-weight: bold;
 }
 
 .transparentButton {
-    border: solid 1px white;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
+    border: solid 1px var(--primary-color);
+    background: var(--primary-color);
+    color: var(--text-background-color);
     border-radius: 2px;
     font-weight: bold;
-    padding: 9px 50px;
+    padding: 15px 60px;
     text-transform: uppercase;
     letter-spacing: 1.6px;
+    cursor: pointer;
+    margin-top: 40px;
+    transition-duration: 0.5s;
+    font-size: 16px;
 }
 
 .transparentButton:hover {

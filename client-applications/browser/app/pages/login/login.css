@@ -4,7 +4,7 @@
     width: 100vw;
     height: 100vh;
     position: relative;
-    background: var(--background-color);
+    background: var(--text-background-color);
     overflow-y: hidden;
     overflow-x: hidden;
 }
@@ -12,7 +12,7 @@
 .loginCenter {
     position: absolute;
     top: 50%;
-    left: 50%;
+    left: 45%;
     transform: translate(-50%, -50%);
     text-align: center;
 }

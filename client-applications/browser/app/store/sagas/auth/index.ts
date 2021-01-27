@@ -1,4 +1,4 @@
-import { put, takeEvery, all, call, select, delay } from "redux-saga/effects"
+import { put, takeEvery, all, call, select } from "redux-saga/effects"
 
 import { apiGet } from "shared/utils/general/api"
 import { FractalAPI } from "shared/types/api"

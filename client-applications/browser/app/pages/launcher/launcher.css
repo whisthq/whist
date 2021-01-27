@@ -4,7 +4,7 @@
     width: 100vw;
     height: 100vh;
     position: relative;
-    background: var(--background-color);
+    background: var(--text-background-color);
 }
 
 .loadingWrapper {
@@ -16,7 +16,7 @@
 }
 
 .loadingText {
-    color: white;
+    color: var(--primary-text-color);
     font-weight: bold;
     margin-top: 30px;
 }

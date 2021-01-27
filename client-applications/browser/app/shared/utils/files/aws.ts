@@ -4,7 +4,7 @@ import { allowedRegions } from "shared/types/aws"
 import { fractalBackoff } from "shared/utils/general/helpers"
 import { QUERY_REGION_TO_AMI } from "shared/constants/graphql"
 import { OperatingSystem, FractalDirectory } from "shared/types/client"
-import {config} from "shared/constants/config"
+import { config } from "shared/constants/config"
 
 export const setAWSRegion = (accessToken: string, backoff?: true) => {
     /*
@@ -110,7 +110,7 @@ export const uploadToS3 = (
     callback: (error: string) => void,
     accessKey = config.keys.AWS_ACCESS_KEY,
     secretKey = config.keys.AWS_SECRET_KEY,
-    bucketName = "fractal-protocol-logs",
+    bucketName = "fractal-protocol-logs"
 ) => {
     /*
     Description:
@@ -121,7 +121,7 @@ export const uploadToS3 = (
         s3FileName (string): What to call the file once it's uploaded to S3 (e.g. "FILE.txt")
         callback (function): Callback function to fire once file is uploaded
     Returns:
-        void
+        boolean: Success true/false
     */
 
     const fs = require("fs")
@@ -131,17 +131,21 @@ export const uploadToS3 = (
         secretAccessKey: secretKey,
     })
     // Read file into buffer
-    const fileContent = fs.readFileSync(localFilePath)
+    try {
+        const fileContent = fs.readFileSync(localFilePath)
 
-    // Set up S3 upload parameters
-    const params = {
-        Bucket: bucketName,
-        Key: s3FileName,
-        Body: fileContent,
+        // Set up S3 upload parameters
+        const params = {
+            Bucket: bucketName,
+            Key: s3FileName,
+            Body: fileContent,
+        }
+
+        // Upload files to the bucket
+        s3.upload(params, (s3Error: string) => {
+            callback(s3Error)
+        })
+    } catch (unknownErr) {
+        callback(unknownErr)
     }
-
-    // Upload files to the bucket
-    s3.upload(params, (error: string) => {
-        callback(error)
-    })
 }
