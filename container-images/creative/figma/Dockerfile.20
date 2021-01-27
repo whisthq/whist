@@ -4,7 +4,6 @@
 # EXPOSES electron.v to bindings-builder
 # EXPOSES all of figma-1 to figma-2 as the final image
 ##########################################################
-
 FROM fractal/browsers/chrome:current-build as figma-1
 
 # Install Figma build dependencies explicitly
@@ -39,7 +38,6 @@ RUN ELECTRON_V="v$(cat electron.v)" \
 # - Copy figma-font-bindings subfolder to be compiled
 # EXPOSES bindings.node to figma-2 to provide getFonts() to Figma
 ###################################################################
-
 FROM ubuntu:20.04 as bindings-builder
 
 # Install Figma Font Bindings build dependencies explicitly
@@ -80,14 +78,14 @@ RUN ELECTRON_V="$(cat electron.v)" \
 ##########################################################
 FROM figma-1 as figma-2
 
-# Copy bindings.node from bindings-builder stage into figma directory
+# Copy bindings.node from bindings-builder stage into Figma directory
 COPY --from=bindings-builder bindings.node tmp/build/build/Release/bindings.node
 
-# Install figma into /opt/figma
+# Install Figma into /opt/figma
 RUN mv tmp/build /opt/figma \
     && rm electron.v
 
-# Install run script into /usr/bin
+# Install Fractal wrapper script to run Figma into /usr/bin
 COPY run-figma.sh /usr/bin/figma
 RUN chmod +x /usr/bin/figma
 
@@ -95,7 +93,7 @@ RUN chmod +x /usr/bin/figma
 COPY figma-app.desktop /opt/figma/figma-app.desktop
 RUN su - fractal -c 'xdg-desktop-menu install /opt/figma/figma-app.desktop'
 
-# Whitelist figma:// in google-chrome
+# Whitelist figma:// in Google Chrome, for authentication redirection
 RUN mkdir -p /etc/opt/chrome/policies/managed \
     && echo {} \
     | jq '.URLWhitelist=["figma://*"]' \
