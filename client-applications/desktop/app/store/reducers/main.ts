@@ -44,11 +44,34 @@ const MainReducer = (
                 ...stateCopy,
                 payment: Object.assign(stateCopy.payment, action.body),
             }
-        case MainAction.UPDATE_APPS:
+        case MainAction.UPDATE_APPS: {
+            const { authenticated, disconnected } = action.body
+            let apps = Object.assign(stateCopy.apps, action.body)
+
+            if (
+                authenticated &&
+                apps.connectedApps.indexOf(authenticated) < 0
+            ) {
+                // Add a newly-authenticated application to the list of connected applications.
+                apps.connectedApps.push(authenticated)
+            } else if (disconnected) {
+                const index = apps.connectedApps.indexOf(disconnected)
+
+                if (index > -1) {
+                    // Remove the newly-disconnected application from the list of connected
+                    // applications.
+                    apps.connectedApps.splice(
+                        apps.connectedApps.indexOf(disconnected),
+                        1
+                    )
+                }
+            }
+
             return {
                 ...stateCopy,
-                apps: Object.assign(stateCopy.apps, action.body),
+                apps,
             }
+        }
         default:
             return state
     }

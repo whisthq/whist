@@ -358,40 +358,26 @@ function* submitFeedback(action: { feedback: string; feedbackType: string }) {
 
 function* disconnectApp(action: { app: string }) {
     /*
-        Revokes the user's access to an external app, and if successful, deletes the
-        corresponding app name from state.MainReducer.apps.connectedApps
+        Revokes the user's access to an external app. The name of the application to which
+	authorization has just been revoked will be removed from the list of authorized
+	applications iff the revocation is successful.
 
         Arguments:
             app: name of external app to disconnect from
     */
-    const state = yield select()
 
+    let body = {}
+    const state = yield select()
     const { success } = yield call(
         apiDelete,
         `${FractalAPI.APPS.CONNECTED}/${action.app}`,
         state.MainReducer.auth.accessToken
     )
+    const key = success ? "disconnected" : "disconnectWarning"
 
-    if (success) {
-        const connectedApps = state.MainReducer.apps.connectedApps
-        const index = connectedApps.indexOf(action.app)
-        if (index > -1) {
-            const newConnectedApps = Object.assign([], connectedApps)
-            newConnectedApps.splice(index, 1)
-            yield put(
-                Action.updateApps({
-                    connectedApps: newConnectedApps,
-                    disconnected: action.app,
-                })
-            )
-        }
-    } else {
-        yield put(
-            Action.updateApps({
-                disconnectWarning: action.app,
-            })
-        )
-    }
+    body[key] = action.app
+
+    yield put(Action.updateApps(body))
 }
 
 export default function* rootSaga() {
