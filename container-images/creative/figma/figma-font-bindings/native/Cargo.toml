@@ -2,7 +2,7 @@
 name = "figma-font-bindings"
 version = "0.1.5"
 authors = ["Fractal"]
-edition = "2021"
+edition = "2018"
 license = "UNLICENSED"
 build = "build.rs"
 exclude = ["artifacts.json", "index.node"]
