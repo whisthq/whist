@@ -1,12 +1,9 @@
 #!/bin/bash
 
 # This script runs a Fractal container by executing the `docker run` command with the right
-# 
-
-
-# 
-
-
+# arguments, and also containers helper functions for manually killing a container and for
+# manually sending a DPI request to a locally-run container (two tasks handled by the Fractal
+# webserver, in production), which facilitates local development.
 
 set -Eeuo pipefail
 
@@ -20,15 +17,11 @@ else
     mount_protocol=""
 fi
 
-# DPI to set the X Server to inside the container, defaults to 96 (HD) if not set
+# DPI to set the X Server to inside the container, defaults to 96 (High Definition) if not set
 dpi=${FRACTAL_DPI:-96}
 
-
-
-
-
-
-
+# Run the specified Docker container image with as-restrictive-as-possible system
+# capabilities, for security purposes
 run_container() {
     docker run -it -d \
         -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
@@ -64,18 +57,20 @@ run_container() {
     # capabilities not enabled by default: CAP_NICE
 }
 
-# Args: containerid
+# Helper fucntion to kill a locally running Docker container
+# Args: container_id
 kill_container() {
   docker kill $1 > /dev/null || true
   docker rm $1 > /dev/null || true
 }
 
-# This is necessary for the protocol to think it's ready to start. Normally,
-# the webserver would send this request to the host service, but we don't have
-# a full development pipeline yet, so this will have to do.
+# Send a DPI request to the Fractal ECS host service HTTP server running on localhost
+# This is necessary for the Fractal server protocol to think that it is ready to start. In production,
+# the webserver would send this request to the Fractal host service, but for local development we need
+# to send it manually until our development pipeline is fully built
 # Args: container_id, DPI
 send_dpi_request() {
-  # Check if host service is even running
+  # Check if Fractal host service is even running
   sudo lsof -i :4678 | grep ecs-host > /dev/null \
   || (echo "Cannot start container because the ecs-host-service is not listening on port 4678. Is it running successfully?" \
      && kill_container $1 \
@@ -96,9 +91,14 @@ send_dpi_request() {
   echo "Response to DPI/container-ready request from host service: $response"
 }
 
-
+# Main executing thread
+# Set the container_id and DPI request
 container_id=$(run_container $1)
 send_dpi_request $container_id $dpi
+
+# Run the Docker container
 echo "Running container with ID: $container_id"
 docker exec -it $container_id /bin/bash || true
+
+# Kill the Docker container once we are done
 kill_container $container_id

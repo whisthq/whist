@@ -7,11 +7,32 @@ This repository contains the end-to-end code for the Fractal Application Streami
 - [Introduction](#introduction)
   - [Repository Structure](#repository-structure)
 - [Development](#introduction)
+  - [Branch Conventions](#branches-convention)
+    - [`master` is for releases only; `staging` is "almost `master`"](#master-is-for-releases-only-staging-is-almost-master)
+    - [`dev` is for Development](#dev-is-for-development)
+    - [Your branch is yours; our branches are _ours_](#your-branch-is-yours-our-branches-are-ours)
+  - [Git Best Practices](#git-best-practices)
+    
+    
+    
+    - [On commit logs](#on-commit-logs)
+
+  - [Hotfixes (i.e. production is on fire)](#hotfixes-ie-prod-is-on-fire)
 - [Publishing](#publishing)
 - [Styling](#styling)
 - [Appendix](#appendix)
   - [Useful Monorepo git Tricks](#useful-monorepo-git-tricks)
   - [Example of Bad Commit History](#example-of-bad-commit-history)
+
+
+
+    - [While on feature branches, `git rebase dev` is your friend. `git merge dev` is not.](#while-on-feature-branches-git-rebase-dev-is-your-friend-git-merge-dev-is-not)
+    - [When merging branches, _usually_ do a merge instead of a rebase.](#but-when-merging-feature-branches-usually-do-a-merge-instead-of-a-rebase)
+
+
+
+
+
 
 # ===
 
@@ -73,25 +94,13 @@ For more in-depth explanations of each subrepository, see that subrepository's R
 
 ## Development
 
+To get started with development, clone this repository and navigate to a specific subrepository. While it is likely that you will work on a feature that touches multiple subrepositories, each subrepository has its own development and styling standards which you should follow, in addition to the usual [Fractal Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
 
+To avoid pushing code that does not follow our coding guidelines, we recommend you install pre-commit hooks by running `pip install pre-commit`, followed by `pre-commit install` in the top-level directory. This will install the linting rules specified in `.pre-commit-config.yaml` and prevent you from pushing if your code is not linted. 
 
-To get started with development, clone this repository and navigate to the subrepository 
+### Branch Conventions
 
-
-While it is likely that you will work on a feature which touches multiple subrepositories, each subrepository has its own development workflow which you should follow. We recommend that you always work within a specific subrepository
-
-
-When cloning, you can install the pre-commit hooks via `pip install pre-commit`
-
-and then run `pre-commit install`
-
-
-Each subrepository has their own README with instructions on how to develop for that repository, but all w
-
-
-
-
-[Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b)
+#### `master` is for Releases only; `staging` is "almost `master`"
 
 
 
@@ -99,58 +108,6 @@ Each subrepository has their own README with instructions on how to develop for 
 
 
 
-
-
-
-* [Workflow and Conventions](#workflow-and-conventions)
-  - [`master` is for releases only. `staging` is "almost `master`"](#master-is-for-releases-only-staging-is-almost-master)
-  - [`dev` is for Development](#dev-is-for-development)
-    - [While on feature branches, `git rebase dev` is your friend. `git merge dev` is not.](#while-on-feature-branches-git-rebase-dev-is-your-friend-git-merge-dev-is-not)
-    - [But when merging branches, _usually_ do a merge instead of a rebase.](#but-when-merging-feature-branches-usually-do-a-merge-instead-of-a-rebase)
-    - [Your branch is yours. Our branches are _ours_.](#your-branch-is-yours-our-branches-are-ours)
-  - [On commit logs](#on-commit-logs)
-  - [HOTfixes (i.e. prod is on fire)](#hotfixes-ie-prod-is-on-fire)
-
-
-
-
-
-
-
-
-
-
-## Publishing
-
-
-
-
-
-## Styling
-
-Each subfolder in this monorepository is its own project with its dedicated style. 
-
-
-
-
-
-Each subfolder is its own project with dedicated style
-
-[Documentation & Code Standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597)
-
-
-
-
-
-
-
-
-
-
-
-## Workflow and Conventions
-
-### `master` is for releases only. `staging` is "almost `master`".
 
 At Fractal, we maintain a `master` branch for releases only, and auto-tag every commit on `master` with a release tag (TODO).
 
@@ -176,6 +133,25 @@ We do all feature development and most bug-fixing on feature branches that are f
 - Broader feature branches that touch multiple projects should be named in the form `<author>/<feature-verb>`.
 
 Note that the last part of the branch name should almost always be an **action** instead of an object (i.e. `add-llama-theme` instead of `llama-theme`). This makes commit logs much easier to parse.
+
+
+
+
+
+#### Your branch is yours; our branches are _ours_
+
+In general, feel free to rebase your personal feature branches, amend commit messages/commits for clarify, force-push, or otherwise rewrite git history on them.
+
+However, in the less common case where multiple people are working on a single feature together, they belong on a single feature branch with consistent history. The usual rules of not rewriting published commits apply there. Before making a PR into dev, the point person for that feature should let everyone else know to stop working on that branch and rebase the feature onto dev.
+
+
+
+### Git Best Practices
+
+
+
+
+
 
 #### While on feature branches, `git rebase dev` is your friend. `git merge dev` is not.
 
@@ -206,11 +182,6 @@ PRs with really small changes can just be fast-forwarded onto dev, which gives t
 
 In all other cases, select the first option ("Create a merge commit"). **Never** make a squash commit. If you want cleaner git history, rewrite and force-push your own branch (with carefully-applied `git rebase`), then merge it into dev.
 
-#### Your branch is yours. Our branches are _ours_.
-
-In general, feel free to rebase your personal feature branches, amend commit messages/commits for clarify, force-push, or otherwise rewrite git history on them.
-
-However, in the less common case where multiple people are working on a single feature together, they belong on a single feature branch with consistent history. The usual rules of not rewriting published commits apply there. Before making a PR into dev, the point person for that feature should let everyone else know to stop working on that branch and rebase the feature onto dev.
 
 ### On commit logs
 
@@ -240,6 +211,41 @@ Here's the workflow:
 6. Once the fix is confirmed to work, fast-forward `staging` to match `master`.
 7. Merge the hotfix into `dev` as well.
 8. Write a regression test to make sure the same issue never occurs again, and add it to CI.
+
+
+
+
+
+
+
+
+
+
+## Publishing
+
+
+
+
+
+## Styling
+
+Each subfolder in this monorepository is its own project with its dedicated style, which you must follow. 
+
+
+
+
+
+Each subfolder is its own project with dedicated style
+
+[Documentation & Code Standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597)
+
+
+
+
+
+
+
+
 
 
 
