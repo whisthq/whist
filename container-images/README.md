@@ -18,8 +18,8 @@ All of the following applications are based off of the **Ubuntu 20.04 Base Image
 | Google Chrome    | Blender          | Lightworks       | Slack        |
 | Mozilla Firefox  | Blockbench       | Kdenlive         | Notion       |
 | Brave Browser    | Figma            |                  | Discord      |
-| Sidekick Browser | TextureLab       |                  |              |
-|                  | Gimp             |                  |              |
+| Sidekick Browser | TextureLab       |                  | R Studio     |
+|                  | Gimp             |                  | FreeCAD      |
 |                  | Inkscape         |                  |              |
 |                  | Krita            |                  |              |
 

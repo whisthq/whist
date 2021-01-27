@@ -75,10 +75,15 @@ For more in-depth explanations of each subrepository, see that subrepository's R
 
 
 
-To get started with development, clone this repository and 
+To get started with development, clone this repository and navigate to the subrepository 
 
 
-While it is likely that you will work on a feature which touches multiple subrepositories, 
+While it is likely that you will work on a feature which touches multiple subrepositories, each subrepository has its own development workflow which you should follow. We recommend that you always work within a specific subrepository
+
+
+When cloning, you can install the pre-commit hooks via `pip install pre-commit`
+
+and then run `pre-commit install`
 
 
 Each subrepository has their own README with instructions on how to develop for that repository, but all w
