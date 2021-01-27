@@ -119,6 +119,8 @@ endif()
 ################## MACOS ##################
 ]]
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    target_sources(FractalClient PRIVATE native_window_utils_mac.m)
+
     target_link_libraries(FractalClient
         "-framework OpenGL"
         "-framework VideoToolbox"

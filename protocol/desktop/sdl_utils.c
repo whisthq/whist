@@ -19,6 +19,7 @@ Includes
 
 #include "sdl_utils.h"
 #include "../fractal/utils/png.h"
+#include "native_window_utils.h"
 
 extern volatile int output_width;
 extern volatile int output_height;
@@ -183,22 +184,23 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         target_output_width, target_output_height,
         SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : windowed_flags));
 
-    /*
-        On macOS, we must initialize the renderer in the main thread -- seems not needed
-        and not possible on other OSes. If the renderer is created later in the main thread
-        on macOS, the user will see a window open in this function, then close/reopen during
-        renderer creation
-    */
-    #ifdef __APPLE__
-        renderer = SDL_CreateRenderer(sdl_window, -1,
-                                    SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
-    #endif
+/*
+    On macOS, we must initialize the renderer in the main thread -- seems not needed
+    and not possible on other OSes. If the renderer is created later in the main thread
+    on macOS, the user will see a window open in this function, then close/reopen during
+    renderer creation
+*/
+#ifdef __APPLE__
+    renderer =
+        SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+#endif
 
     // Set icon
     if (strcmp(icon_filename, "") != 0) {
         set_window_icon_from_png(sdl_window, icon_filename);
     }
 
+    set_native_window_color(sdl_window, 222, 226, 229);
     if (!is_fullscreen) {
         // Resize event handling
         SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)sdl_window);
