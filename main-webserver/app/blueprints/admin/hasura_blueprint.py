@@ -9,6 +9,7 @@ from app.helpers.utils.general.logs import fractal_log
 
 hasura_bp = Blueprint("hasura_bp", __name__)
 
+
 @hasura_bp.route("/hasura/auth", methods=["GET"])
 @fractal_pre_process
 def hasura_auth_get(**kwargs):  # pylint: disable=unused-argument
