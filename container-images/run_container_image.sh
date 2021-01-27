@@ -1,14 +1,33 @@
 #!/bin/bash
 
+# This script runs a Fractal container by executing the `docker run` command with the right
+# 
+
+
+# 
+
+
+
 set -Eeuo pipefail
 
+# Fractal container image to run
 image=${1:-fractal/base:current-build}
+
+# Define the folder to mount the Fractal protocol server into the container
 if [[ ${2:-''} == mount ]]; then
     mount_protocol="--mount type=bind,source=$(cd base/protocol/server/build64;pwd),destination=/usr/share/fractal/bin"
 else
     mount_protocol=""
 fi
+
+# DPI to set the X Server to inside the container, defaults to 96 (HD) if not set
 dpi=${FRACTAL_DPI:-96}
+
+
+
+
+
+
 
 run_container() {
     docker run -it -d \

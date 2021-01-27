@@ -1,15 +1,13 @@
 #################### STAGE 1: figma-1 ####################
-# - Download and organize figma and electron
-# - Cache electron version in electron.v
+# - Download and organize Figma and Electron
+# - Cache Electron version in electron.v
 # EXPOSES electron.v to bindings-builder
 # EXPOSES all of figma-1 to figma-2 as the final image
 ##########################################################
 
 FROM fractal/browsers/chrome:current-build as figma-1
 
-# Install figma build dependencies explicitly
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
+# Install Figma build dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     unzip \
     jq \
@@ -17,7 +15,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install figma electron app and write down electron version
+# Install the Figma macOS Electron application and write down its Electron version
 RUN wget -qO figma.zip https://www.figma.com/download/desktop/mac \
     && mkdir -p tmp/build/build/Release \
     && unzip figma.zip -d tmp/figma \
@@ -30,21 +28,21 @@ RUN wget -qO figma.zip https://www.figma.com/download/desktop/mac \
     > electron.v \
     && rm -rf tmp/figma
 
-# Install appropriate electron version
+# Install appropriate Electron version
 RUN ELECTRON_V="v$(cat electron.v)" \
-    && wget -qO electron.zip \
-    "https://github.com/electron/electron/releases/download/$ELECTRON_V/electron-$ELECTRON_V-linux-x64.zip" \
+    && wget -qO electron.zip "https://github.com/electron/electron/releases/download/$ELECTRON_V/electron-$ELECTRON_V-linux-x64.zip" \
     && unzip electron.zip -d tmp/build \
     && rm -rf electron.zip
 
 #################### STAGE 2: bindings-builder ####################
-# - Copy electron version from figma1
-# - Copy figma-font-bindings subrepo to be compiled
-# EXPOSES bindings.node to figma-2 to provide getFonts() to figma
+# - Copy Electron version from figma-1
+# - Copy figma-font-bindings subfolder to be compiled
+# EXPOSES bindings.node to figma-2 to provide getFonts() to Figma
 ###################################################################
+
 FROM ubuntu:20.04 as bindings-builder
 
-# Bindings build dependencies
+# Install Figma Font Bindings build dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     npm \
     rustc \
@@ -54,12 +52,13 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     make \
     cmake \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy electron version
+# Copy Electron version
 COPY --from=figma-1 electron.v .
 
-# Copy figma-font-bindings submodule
+# Copy figma-font-bindings subfolder
 COPY figma-font-bindings figma-font-bindings
 
 # Build bindings.node
@@ -72,8 +71,8 @@ RUN ELECTRON_V="$(cat electron.v)" \
     && rm -rf figma-font-bindings electron.v
 
 #################### STAGE 3: figma-2 ####################
-# - Install bindings.node into figma
-# - Install figma to /opt/figma and script to /usr/bin
+# - Install bindings.node into Figma
+# - Install Figma to /opt/figma and script to /usr/bin
 # - Configure figma:// protocol handling
 # - Whitelist figma:// in google-chrome
 # - Cache electron version in electron.v

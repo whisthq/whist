@@ -144,6 +144,8 @@ For every new application that you add support for, in addition to creating its 
 -   Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`, for pre-commit hooks
 -   Update the list of supported applications in this README
 
+Note that before your new application is ready to go into production, you need to also edit the database with the app's logo, terms of service link, description, task definition link, etc.
+
 And, if you're adding a new AWS region, you should add the region name under `aws-regions` in `push-images.yml`.
 
 ## Styling

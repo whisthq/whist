@@ -26,24 +26,28 @@ At a high-level, Fractal works the following way:
 
 
 
-- Users download the Fractal Electron application for their OS
-
-- 
-
-
+- Users download the Fractal Electron application for their OS and log in to launch the streamed application(s).
+- The login and launch processes are REST API requests to the Fractal webserver.
+- When the webserver receives a launch request, it sends a task definition JSON to AWS ECS, to tell it to run a specific container.
 
 
 
-First, the user downloads the client-applications Electron App. They log-in, and launch a Blender container for instance.
-- The log-in and launch process are REST API requests sent to the main-webserver.
-- The main-webserver will receive the launch request and will proceed to send an ecs-task-definitions task definition to AWS ECS.
+
+
+- The webserver will either provision a new AWS EC2 instance, if all existing ones are full, or will use an existing one to place a container with the requested application on it.
+
+
+
+
+
 - This will either (A) Use an EC2 Instance that is already spun-up, or (B) This will spin up a new EC2 Instance, and then run the ecs-host-setup scripts on it. ecs-host-setup will install dependencies, and install ecs-host-service.
 - After (A) or (B) happens, an EC2 Instance will now be available one way or another, with potentially other Docker containers already running on it.
 - The ecs-task-definitions task definition will then spin up an additional Docker container on that chosen EC2 Instance using a Dockerfile from container-images, specifically choosing the Blender Dockerfile (Or whichever application they happened to choose).
 - This container-images Dockerfile will install dependencies, including the Server protocol executable, then install and run Blender, and then proceed to execute the Server protocol executable.
 - The client-application Electron App will then execute the Client protocol executable and pass in the IP address of the Server as received from main-webserver. A window will then open, giving the user a low-latency 60 FPS Blender experience.
 
-For more in-depth explanations of each subrepo, simply peruse the README's of the respective file from the root Fractal repo.
+
+
 
 
 
@@ -53,62 +57,41 @@ For more in-depth explanations of each subrepo, simply peruse the README's of th
 
 ### Repository Structure
 
-
-
-
-| Subrepository        | Description            |
-| -------------------- | ----------------- |
-| client-applications  | Insert Title Here |
-| container-images     | Insert Title Here |
-| ecs-host-service     | Insert Title Here |
-| ecs-host-setup       | Insert Title Here |
-| ecs-task-definitions | Insert Title Here |
-| main-webserver       | Insert Title Here |
-| protocol             | Insert Title Here |
-
-
-
 The Fractal monorepository contains 7 Fractal subrepositories:
 
-- client-applications -- The client-side Electron application users download and interact with to stream a Fractal application
-- container-images -- The Dockerfiles for the application containers users stream
-- ecs-host-service -- The Fractal services which runs on hosts and orchestrates container management
-- ecs-host-setup -- The Scripts to setup an EC2 instance into a Fractal-optimized host ready to run Fractal containers
-- ecs-task-definitions -- This contains the JSON task definitions for each of the applications we stream via containers on AWS ECS
-- main-webserver -- The REST API for managing our AWS infrastructure, supporting our front-end and handling communicating between our frontend and container infrastructure when users use Fractal
-- protocol -- The streaming protocol, both client and server, which streams the content of a Fractal container to a user and streams the user's actions back to the container. This program is run via commandline.
+| Subrepository        | Description                                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------- |
+| client-applications  | The client-side Electron-based applicaiton users download and use to launch a streamed application.      |
+| container-images     | The Dockerfiles defining the container images and helper scripts for the applications we stream.         |
+| ecs-host-service     | The Fractal service which runs on EC2 instance hosts and orchestrates container management.              |
+| ecs-host-setup       | The scripts to setup an EC2 innstance into a Fractal-optimized host ready to run Fractal containers.     |
+| ecs-task-definitions | The JSONs needed by AWS Elastic Container Service (ECS) for defining how container tasks are run.        |
+| main-webserver       | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two.      |
+| protocol             | The streaming technology API, both client and server, for streaming containerized applications to users. |
 
-
-
-
-
-
+For more in-depth explanations of each subrepository, see that subrepository's README.
 
 ## Development
 
 
 
+To get started with development, clone this repository and 
+
+
+While it is likely that you will work on a feature which touches multiple subrepositories, 
+
+
+Each subrepository has their own README with instructions on how to develop for that repository, but all w
 
 
 
-
-## Publishing
-
-
-
-
-
-## Styling
-
-
-
-
-
-Each subfolder is its own project with dedicated style
-
-[Documentation & Code Standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597)
 
 [Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b)
+
+
+
+
+
 
 
 
@@ -128,20 +111,36 @@ Each subfolder is its own project with dedicated style
 
 
 
-To see the list of supported applications, check
 
-All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
 
-| Browsers         | Creative   | Productivity |
-| ---------------- | ---------- | ------------ |
-| Google Chrome    | Blender    | Slack        |
-| Mozilla Firefox  | Blockbench | Notion       |
-| Brave Browser    | Figma      | Discord      |
-| Sidekick Browser | TextureLab |              |
-|                  | Gimp       |              |
-|                  | Lightworks |              |
 
-Note that before your new task definition is ready to go into production, you need to also edit the database with the app's logo, terms of service link, description, task definition link, etc.
+
+## Publishing
+
+
+
+
+
+## Styling
+
+Each subfolder in this monorepository is its own project with its dedicated style. 
+
+
+
+
+
+Each subfolder is its own project with dedicated style
+
+[Documentation & Code Standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597)
+
+
+
+
+
+
+
+
+
 
 
 ## Workflow and Conventions
@@ -236,6 +235,15 @@ Here's the workflow:
 6. Once the fix is confirmed to work, fast-forward `staging` to match `master`.
 7. Merge the hotfix into `dev` as well.
 8. Write a regression test to make sure the same issue never occurs again, and add it to CI.
+
+
+
+
+
+
+
+
+
 
 # ===
 
