@@ -5,7 +5,6 @@ import { useSubscription } from "@apollo/client"
 // import { FadeIn } from "react-fade-in"
 
 import { FractalLogger } from "shared/utils/general/logging"
-import { AvailableLoggers } from "shared/types/logs"
 import { Dispatch } from "shared/types/redux"
 import { SUBSCRIBE_USER_APP_STATE } from "shared/constants/graphql"
 import { FractalAppState, FractalTaskStatus } from "shared/types/containers"
@@ -61,7 +60,7 @@ export const Launcher = (props: {
 
     const ipc = require("electron").ipcRenderer
 
-    const logger = new FractalLogger(AvailableLoggers.LOADING)
+    const logger = new FractalLogger()
 
     // Restores Redux state to before a container was created
     const resetLaunch = () => {

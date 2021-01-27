@@ -13,6 +13,7 @@ import { history } from "store/history"
 import { deepCopyObject } from "shared/utils/general/reducer"
 import { setAWSRegion } from "shared/utils/files/aws"
 import { findDPI } from "shared/utils/general/dpi"
+import { allowedRegions } from "shared/types/aws"
 
 function* createContainer() {
     /*
@@ -27,7 +28,13 @@ function* createContainer() {
     const accessToken = state.AuthReducer.user.accessToken
 
     // Get region
-    const region = yield call(setAWSRegion, accessToken)
+    let region = allowedRegions[0]
+    try {
+        region = yield call(setAWSRegion, accessToken)
+    } catch(err) {
+        console.log(err)
+    }
+
     // Get client DPI
     const dpi = findDPI()
 
