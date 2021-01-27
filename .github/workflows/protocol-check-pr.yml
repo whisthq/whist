@@ -156,11 +156,11 @@ jobs:
             - name: Verify Builds with clang-format
               if: runner.os == 'Linux'
               shell: bash
+              working-directory: protocol
               run: |
                   # Clang-matcher for clang-format, added after the main build sequence so that clang doesn't match gcc errors
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
-                  cd protocol
                   make clang-format
 
                   # Show diff in GitHub Actions logs
