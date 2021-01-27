@@ -32,12 +32,11 @@ const RootApp = (props: {
     dpi: number
     username: string
     accessToken: string
-    connectedApps: string[]
     dispatch: Dispatch<any>
 }) => {
     /*
         Root react component containing the rest of the application.
- 
+
         Arguments:
             launches: number of application launches
             launchURL: URL to launch the Fractal application
@@ -45,19 +44,10 @@ const RootApp = (props: {
             dpi: dots per inch
             username: username of the user
             accessToken: user's access token
-            connectedApps: array of apps that the user has connected
             dispatch: method to dispatch actions in redux
     */
 
-    const {
-        launches,
-        launchURL,
-        clientOS,
-        dpi,
-        connectedApps,
-        dispatch,
-    } = props
-
+    const { launches, launchURL, clientOS, dpi, dispatch } = props
     const [needsUpdate, setNeedsUpdate] = useState(false)
     const [updatePingReceived, setUpdatePingReceived] = useState(false)
     const [launched, setLaunched] = useState(false)
@@ -72,6 +62,7 @@ const RootApp = (props: {
     const storage = new Store()
 
     useEffect(() => {
+        // NOTE: None of keys on the props object have meaningful values in this scope.
         const ipc = require("electron").ipcRenderer
         let localAccessToken: string | null = null
 
@@ -102,19 +93,7 @@ const RootApp = (props: {
                     )
                     dispatch(validateAccessToken(localAccessToken))
                 } else if (authenticatedApp) {
-                    if (connectedApps.indexOf(authenticatedApp) === -1) {
-                        const newConnectedApps = Object.assign(
-                            [],
-                            connectedApps
-                        )
-                        newConnectedApps.push(authenticatedApp)
-                        dispatch(
-                            updateApps({
-                                connectedApps: newConnectedApps,
-                                authenticated: authenticatedApp,
-                            })
-                        )
-                    }
+                    dispatch(updateApps({ authenticated: authenticatedApp }))
                 } else {
                     dispatch(updateContainer({ launchURL: urlObj.hostname }))
                 }
@@ -256,9 +235,6 @@ const mapStateToProps = (state: {
             clientOS: string
             dpi: number
         }
-        apps: {
-            connectedApps: string[]
-        }
     }
 }) => {
     return {
@@ -269,7 +245,6 @@ const mapStateToProps = (state: {
         launchURL: state.MainReducer.container.launchURL,
         clientOS: state.MainReducer.client.clientOS,
         dpi: state.MainReducer.client.dpi,
-        connectedApps: state.MainReducer.apps.connectedApps,
     }
 }
 
