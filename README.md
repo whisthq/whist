@@ -9,11 +9,11 @@ This repository contains the end-to-end code for the Fractal Application Streami
 - [Development](#introduction)
   - [Branch Conventions](#branches-convention)
     - [`master` is for releases only; `staging` is "almost `master`"](#master-is-for-releases-only-staging-is-almost-master)
-    - [`dev` is for Development](#dev-is-for-development)
+    - [`dev` is for development](#dev-is-for-development)
     - [Your branch is yours; our branches are _ours_](#your-branch-is-yours-our-branches-are-ours)
   - [Git Best Practices](#git-best-practices)
-      - [On feature branches, use rebase instead of merge](#on-feature-branches-use-rebase-instead-of-merge)
-      - [When merging feature branches, _usually_ use merge instead of rebase](#when-merging-feature-branches-usually-use-merge-instead-of-rebase)
+    - [On feature branches, use rebase instead of merge](#on-feature-branches-use-rebase-instead-of-merge)
+    - [When merging feature branches, _usually_ use merge instead of rebase](#when-merging-feature-branches-usually-use-merge-instead-of-rebase)
     - [On commit logs](#on-commit-logs)
   - [Hotfixes (i.e. production is on fire)](#hotfixes-ie-prod-is-on-fire)
 - [Publishing](#publishing)
@@ -33,35 +33,11 @@ At a high-level, Fractal works the following way:
 - Users download the Fractal Electron application for their OS and log in to launch the streamed application(s).
 - The login and launch processes are REST API requests to the Fractal webserver.
 - When the webserver receives a launch request, it sends a task definition JSON to AWS ECS, to tell it to run a specific container.
-
-
-
-
-
-
-
-
-
-- The webserver will either provision a new AWS EC2 instance, if all existing ones are full, or will use an existing one to place a container with the requested application on it.
-
-
-
-
-
-- This will either (A) Use an EC2 Instance that is already spun-up, or (B) This will spin up a new EC2 Instance, and then run the ecs-host-setup scripts on it. ecs-host-setup will install dependencies, and install ecs-host-service.
-- After (A) or (B) happens, an EC2 Instance will now be available one way or another, with potentially other Docker containers already running on it.
-- The ecs-task-definitions task definition will then spin up an additional Docker container on that chosen EC2 Instance using a Dockerfile from container-images, specifically choosing the Blender Dockerfile (Or whichever application they happened to choose).
-- This container-images Dockerfile will install dependencies, including the Server protocol executable, then install and run Blender, and then proceed to execute the Server protocol executable.
-- The client-application Electron App will then execute the Client protocol executable and pass in the IP address of the Server as received from main-webserver. A window will then open, giving the user a low-latency 60 FPS Blender experience.
-
-
-
-
-
-
-
-
-
+- The webserver will then provision a container associated with the specific streamed application/task definition requested.
+  - If all existing EC2 instances are at maxed capacity of containers running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the /ecs-host-setup scripts and has the /ecs-host-service preinstalled.
+- If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the chosen task definition will cause AWS ECS to spin up a Docker container for the requested application on the chosen EC2 instance. The Fractal protocol server inside this container image will be started and will notify the webserver that it is ready to stream.
+  - The container images are based off of /container-images and are pre-built and stored in GitHub Container Registry, where AWS ECS pulls the images from.
+- Once the webserver receives a confirmation that the container is ready to stream, it will notify the Fractal Electron application that it can launch the Fractal protocol client, which will happen and start the stream.
 
 ### Repository Structure
 
@@ -83,18 +59,11 @@ For more in-depth explanations of each subrepository, see that subrepository's R
 
 To get started with development, clone this repository and navigate to a specific subrepository. While it is likely that you will work on a feature that touches multiple subrepositories, each subrepository has its own development and styling standards which you should follow, in addition to the usual [Fractal Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
 
-To avoid pushing code that does not follow our coding guidelines, we recommend you install pre-commit hooks by running `pip install pre-commit`, followed by `pre-commit install` in the top-level directory. This will install the linting rules specified in `.pre-commit-config.yaml` and prevent you from pushing if your code is not linted. 
+To avoid pushing code that does not follow our coding guidelines, we recommend you install pre-commit hooks by running `pip install pre-commit`, followed by `pre-commit install` in the top-level directory. This will install the linting rules specified in `.pre-commit-config.yaml` and prevent you from pushing if your code is not linted.
 
 ### Branch Conventions
 
 #### `master` is for Releases only; `staging` is "almost `master`"
-
-
-
-
-
-
-
 
 At Fractal, we maintain a `master` branch for releases only, and auto-tag every commit on `master` with a release tag (TODO).
 
@@ -110,7 +79,7 @@ When we approach a release milestone, we:
 4. To release, we merge `staging` back into `master`, creates a tagged release commit. This triggers our auto-deployment workflows, and we push to production.
 5. If changes were made to `staging` before release, we merge `staging` into `dev` as well.
 
-### `dev` is for Development
+### `dev` is for development
 
 We do all feature development and most bug-fixing on feature branches that are forked off `dev`.
 
@@ -121,24 +90,13 @@ We do all feature development and most bug-fixing on feature branches that are f
 
 Note that the last part of the branch name should almost always be an **action** instead of an object (i.e. `add-llama-theme` instead of `llama-theme`). This makes commit logs much easier to parse.
 
-
-
-
-
 #### Your branch is yours; our branches are _ours_
 
 In general, feel free to rebase your personal feature branches, amend commit messages/commits for clarify, force-push, or otherwise rewrite git history on them.
 
-However, in the less common case where multiple people are working on a single feature together, they belong on a single feature branch with consistent history. The usual rules of not rewriting published commits apply there. Before making a PR into dev, the point person for that feature should let everyone else know to stop working on that branch and rebase the feature onto dev.
-
-
+However, in the less common case where multiple people are working on a single feature together, they belong on a single feature branch with consistent history, typically with branch name `project/[feature]`. The usual rules of not rewriting published commits apply there. Before making a PR into dev, the point person for that feature should let everyone else know to stop working on that branch and rebase the feature onto dev.
 
 ### Git Best Practices
-
-
-
-
-
 
 #### On feature branches, use rebase insetead of merge
 
@@ -169,7 +127,6 @@ PRs with really small changes can just be fast-forwarded onto dev, which gives t
 
 In all other cases, select the first option ("Create a merge commit"). **Never** make a squash commit. If you want cleaner git history, rewrite and force-push your own branch (with carefully-applied `git rebase`), then merge it into dev.
 
-
 ### On commit logs
 
 Clear commit logs are _far_ more important in a monorepo than when spread over several multirepos. There's so many more moving parts, so it's increasingly important to be able to filter a list of commits to what's actually relevant. Tooling can help with this (e.g. `git log -- <subdirectory>`), but in the end we are still limited by the quality of our own commit logs.
@@ -184,7 +141,7 @@ Some good rules of thumb:
 
 In general, if you find yourself staring at a historic commit log, it's probably because something's gone wrong, and you're trying to piece together what happened. Or maybe you're trying to understand why some code is organized the way it is, and seeing how it evolved can lead you to that understanding. Either way, you've probably lost the mental context you had when writing the code (or you never even had it), so the quality of breadcrumbs (i.e. commit messages) left in the commit log correlates directly with the quality of your well-being in that situation.
 
-### HOTfixes (i.e. prod is on fire)
+### Hotfixes (i.e. prod is on fire)
 
 Eventually, but hopefully rarely, production will be on fire, and we will need to deploy a quick fix ASAP.
 
@@ -199,26 +156,11 @@ Here's the workflow:
 7. Merge the hotfix into `dev` as well.
 8. Write a regression test to make sure the same issue never occurs again, and add it to CI.
 
-
-
-
-
-
-
-
-
-
 ## Publishing
 
+We have developed a complex continuous deployment pipeline via GitHub Actions, which enables us to automatically deploy all subrepositories of this monorepositories in the right order when pushing to `master`. See `.github/workflows/fractal-publish-build.yml` and `.github/workflows/client-applications-publish.yml` to see how we deploy, which AWS regions and which streamed applications get deployed, and more. If something goes wrong in the continuous deployment pipeline and a specific job fails, it is possible to manually trigger a specific job of the `fractal-publish-build.yml` workflow via the GitHub Actions console.
 
-
-
-
-
-
-
-
-
+As of writing, these YAML workflows only deploy our `master` branch, which is our production code. We are working on integrating continuous deployment for `staging` and `dev` branches, so that we can have a true continuous deployment pipeline. To understand how these branches interact together when it comes to releases, check our [Release Schedule](https://www.notion.so/tryfractal/Release-Schedule-c29cbe11c5f94cedb9c01aaa6d0d1ca4).
 
 ## Styling
 

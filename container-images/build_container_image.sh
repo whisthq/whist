@@ -1,15 +1,5 @@
 #!/bin/bash
 
-
-
-
-
-
-# This script walks the folder tree it is run in, finds all Dockerfile.20 it contains and 
-# formats their path properly for pushing to GitHub Container Registry.
-
-
-
 set -Eeuo pipefail
 
 # Retrieve relative subfolder path
