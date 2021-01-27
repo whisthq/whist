@@ -90,6 +90,12 @@ export const Launcher = (props: {
         resetLaunch()
     }
 
+    const forceQuit = () => {
+        setTimeout(() => {
+            ipc.sendSync(FractalIPC.FORCE_QUIT)
+        }, 3000)
+    }
+
     // Callback function meant to be fired before protocol starts
     const protocolOnStart = () => {
         // IPC sends boolean to the main thread to hide the Electron browser Window
@@ -111,13 +117,13 @@ export const Launcher = (props: {
         uploadToS3(logPath, s3FileName, (s3Error: string) => {
             if (s3Error) {
                 logger.logInfo(`Upload to S3 errored: ${error}`, userID, () =>
-                    ipc.sendSync(FractalIPC.FORCE_QUIT)
+                    forceQuit()
                 )
             } else {
                 logger.logInfo(
                     `Protocol client logs: https://fractal-protocol-logs.s3.amazonaws.com/${s3FileName}`,
                     userID,
-                    () => ipc.sendSync(FractalIPC.FORCE_QUIT)
+                    () => forceQuit()
                 )
             }
         })
