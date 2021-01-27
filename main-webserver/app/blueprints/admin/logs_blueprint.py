@@ -1,3 +1,5 @@
+import logging
+
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
@@ -11,11 +13,11 @@ from app.helpers.blueprint_helpers.admin.logs_post import (
     unbookmark_helper,
 )
 from app.helpers.utils.general.auth import admin_required
+from app.helpers.utils.general.logs import fractal_log
 
 logs_bp = Blueprint("logs_bp", __name__)
 
-
-@logs_bp.route("/logs/insert", methods=["POST"])
+@logs_bp.route("/logs", methods=["POST"])
 @fractal_pre_process
 def logs_post(**kwargs):
     body = kwargs.pop("body")
@@ -23,66 +25,21 @@ def logs_post(**kwargs):
     try:
         args = (
             body.pop("sender"),
-            body.pop("version", None),
-            body.pop("connection_id"),
             body.pop("ip", kwargs.pop("received_from")),
             body.pop("identifier"),
             body.pop("secret_key"),
             body.pop("logs"),
         )
-    except KeyError:
+    except KeyError as e:
+        fractal_log(
+            function="logs_post",
+            label=None,
+            logs=f"Error while reading body: {str(e)}",
+            level=logging.ERROR,
+        )
         return jsonify({"ID": None}), BAD_REQUEST
 
     task = upload_logs_to_s3.delay(*args)
 
     return jsonify({"ID": task.id}), ACCEPTED
 
-
-@logs_bp.route("/logs/<action>", methods=("POST",))
-@fractal_pre_process
-@jwt_required
-@admin_required
-def logs_manage(action, **kwargs):
-    if action == "delete":
-        connection_id = kwargs["body"]["connection_id"]
-
-        task = delete_logs_from_s3.apply_async([connection_id])
-
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-
-        return jsonify({"ID": task.id}), ACCEPTED
-
-    if action == "bookmark":
-        connection_id = kwargs["body"]["connection_id"]
-
-        output = bookmark_helper(connection_id)
-
-        return jsonify(output), output["status"]
-
-    if action == "unbookmark":
-        connection_id = kwargs["body"]["connection_id"]
-
-        output = unbookmark_helper(connection_id)
-
-        return jsonify(output), output["status"]
-
-    return jsonify({"error": NOT_FOUND}), NOT_FOUND
-
-
-@logs_bp.route("/logs", methods=["GET"])
-@fractal_pre_process
-@jwt_required
-@admin_required
-def logs_get(**kwargs):  # pylint: disable=unused-argument
-    connection_id, username, bookmarked = (
-        request.args.get("connection_id"),
-        request.args.get("username"),
-        request.args.get("bookmarked"),
-    )
-
-    bookmarked = str(bookmarked.upper()) == "TRUE" if bookmarked else False
-
-    output = logs_helper(connection_id, username, bookmarked)
-
-    return jsonify(output), output["status"]
