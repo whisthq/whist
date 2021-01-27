@@ -12,27 +12,15 @@ This repository contains the end-to-end code for the Fractal Application Streami
     - [`dev` is for Development](#dev-is-for-development)
     - [Your branch is yours; our branches are _ours_](#your-branch-is-yours-our-branches-are-ours)
   - [Git Best Practices](#git-best-practices)
-    
-    
-    
+      - [On feature branches, use rebase instead of merge](#on-feature-branches-use-rebase-instead-of-merge)
+      - [When merging feature branches, _usually_ use merge instead of rebase](#when-merging-feature-branches-usually-use-merge-instead-of-rebase)
     - [On commit logs](#on-commit-logs)
-
   - [Hotfixes (i.e. production is on fire)](#hotfixes-ie-prod-is-on-fire)
 - [Publishing](#publishing)
 - [Styling](#styling)
 - [Appendix](#appendix)
   - [Useful Monorepo git Tricks](#useful-monorepo-git-tricks)
   - [Example of Bad Commit History](#example-of-bad-commit-history)
-
-
-
-    - [While on feature branches, `git rebase dev` is your friend. `git merge dev` is not.](#while-on-feature-branches-git-rebase-dev-is-your-friend-git-merge-dev-is-not)
-    - [When merging branches, _usually_ do a merge instead of a rebase.](#but-when-merging-feature-branches-usually-do-a-merge-instead-of-a-rebase)
-
-
-
-
-
 
 # ===
 
@@ -42,14 +30,13 @@ Application Streaming is Fractal's core service. It consists in running an appli
 
 At a high-level, Fractal works the following way:
 
-
-
-
-
-
 - Users download the Fractal Electron application for their OS and log in to launch the streamed application(s).
 - The login and launch processes are REST API requests to the Fractal webserver.
 - When the webserver receives a launch request, it sends a task definition JSON to AWS ECS, to tell it to run a specific container.
+
+
+
+
 
 
 
@@ -153,7 +140,7 @@ However, in the less common case where multiple people are working on a single f
 
 
 
-#### While on feature branches, `git rebase dev` is your friend. `git merge dev` is not.
+#### On feature branches, use rebase insetead of merge
 
 When making a PR for a feature branch into `dev`, you'll usually find that there's been changes to `dev` since you last branched off. Both the frequency and scope of this situation are magnified by the complexity of a monorepo.
 
@@ -174,7 +161,7 @@ git rebase dev
 
 Most of the time, that rebase will work silently, since most changes to dev should not affect the feature branch. If there are any conflicts, that means that someone else is working on the same files as you, and you'll have to manually resolve the conflicts, just as with a merge. If you're having problems rebasing, try `git rebase -r dev` (which handles merge commits differently), then come ask an org admin for help.
 
-#### But when merging feature branches, _usually_ do a merge instead of a rebase.
+#### When merging feature branches, _usually_ merge instead of rebasing
 
 PRs with really small changes can just be fast-forwarded onto dev, which gives the illusion later of having committed directly onto dev, simplifying the commit log. This can be done on the Github PR page:
 
@@ -227,34 +214,15 @@ Here's the workflow:
 
 
 
+
+
+
+
+
+
 ## Styling
 
-Each subfolder in this monorepository is its own project with its dedicated style, which you must follow. 
-
-
-
-
-
-Each subfolder is its own project with dedicated style
-
-[Documentation & Code Standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Each subfolder in this monorepository is its own project with its dedicated style, which you must follow. All work done on this monorepository must follow the [Documentation & Code Standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597) and the [Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
 
 # ===
 
