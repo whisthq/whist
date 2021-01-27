@@ -72,20 +72,23 @@ jobs:
               run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
             - name: Build release protocol # No need to run this for debug, just for release
-              run: ./protocol/build_protocol.sh release
+              working-directory: protocol
+              run: ./build_protocol.sh release
 
             - name: Build container images
+              working-directory: container-images
               run: |
                   for app in ${{ env.apps }}
                   do
-                    ./container-images/build_container_image.sh $app
+                    ./build_container_image.sh $app
                   done
 
             - name: Push container images
+              working-directory: container-images
               run: |
                   for app in ${{ env.apps }}
                   do
-                    ./container-images/push_container_image.sh $app
+                    ./push_container_image.sh $app
                   done
               env:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
