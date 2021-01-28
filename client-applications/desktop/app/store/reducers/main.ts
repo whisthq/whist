@@ -46,7 +46,7 @@ const MainReducer = (
             }
         case MainAction.UPDATE_APPS: {
             const { authenticated, disconnected } = action.body
-            let apps = Object.assign(stateCopy.apps, action.body)
+            const apps = Object.assign(stateCopy.apps, action.body)
 
             if (
                 authenticated &&
