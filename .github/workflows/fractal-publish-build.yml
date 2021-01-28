@@ -23,7 +23,7 @@ on:
                 required: true
                 default: "None" # Avoid accidental mistakes by making the default not run any jobs
             publish:
-                description: "'true' if the job(s) being run should publish, or 'false' if it should do a test run without publishing"
+                description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing"
                 required: true
                 default: false # Avoid accidental mistakes by making the default not publish
 
