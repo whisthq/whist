@@ -174,6 +174,7 @@ class DeploymentConfig:
     SQLALCHEMY_DATABASE_URI = property(getter("DATABASE_URL", fetch=False))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
+    TYPE = "deployment"
 
     @property
     def config_table(self):
@@ -231,6 +232,7 @@ class LocalConfig(DeploymentConfig):
 
     REDIS_URL = property(getter("REDIS_URL", default="", fetch=False))
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
+    TYPE = "local"
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
@@ -288,7 +290,7 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
         # TestConfig is used in two cases, local testing or CI. It modifies LocalConfig
         # and DeploymentConfig respectively. In local testing, LocalConfig already defines
         # SQLALCHEMY_DATABASE_URI. In CI, we use the POSTGRES_URI env var.
-        if BaseConfig == DeploymentConfig:
+        if BaseConfig.TYPE == "deployment":
             SQLALCHEMY_DATABASE_URI = property(getter("POSTGRES_URI", fetch=False))
 
         TESTING = True
