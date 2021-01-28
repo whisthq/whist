@@ -94,7 +94,7 @@ jobs:
               working-directory: ecs-host-setup
               run: |
                   # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
-                  packer -machine-readable build ami_config.json
+                  # packer -machine-readable build ami_config.json
                   new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
                   for artifact in ${new_ami_ids}
                   do
