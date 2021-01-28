@@ -183,7 +183,7 @@ def test_update_cluster():
         cluster_name=pytest.cluster_name,
         ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
     )
-    
+
     # poll for 30 sec
     for _ in range(30):
         if task.ready():
@@ -298,7 +298,7 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
 
 @shared_task(bind=True)
 def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
-    setattr(mock_update_cluster, "was_called")  # mark function as called
+    setattr(mock_update_cluster, "was_called", "true")  # mark function as called
     # check that the arguments are as expected
     assert cluster_name == pytest.cluster_name
     assert region_name == "us-east-1"
