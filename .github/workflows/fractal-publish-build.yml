@@ -311,7 +311,7 @@ jobs:
                 ) && always()
               )
             ) && contains(fromJSON('["all"], ["main-webserver-deploy-heroku"]'), needs.fractal-publish-build-config.outputs.job)
-        runs-on: ubuntu-20.04
+
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
