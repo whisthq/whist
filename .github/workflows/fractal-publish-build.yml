@@ -74,10 +74,13 @@ jobs:
             - name: Detect Whether to Publish the Job(s) or Not
               id: detect-publish
               run: |
-                  if [[ ${{ github.event.inputs.publish }} == 'true' ]]; then
+                  # if running from workflow_dispatch, publish will be set, so we set it as environment variable
+                  # if running from push, publish will not be set and PUBLISH will be empty
+                  PUBLISHING=${{ github.event.inputs.publish }}
+
+                  # if PUBLISHING is empty, this workflow was triggered by push, so we want to publish all jobs
+                  if [[ -z $PUBLISHING && ${{ github.event_name }} == 'push' ]]; then
                     PUBLISHING=true
-                  else
-                    PUBLISHING=false
                   fi
 
                   echo "publishing is $PUBLISHING"
@@ -89,9 +92,9 @@ jobs:
     container-images-publish-images-ghcr:
         name: "Container Images: Build & Publish Images to GitHub Container Registry"
         runs-on: ubuntu-20.04
+        needs: [fractal-publish-build-config]
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
-        needs: [fractal-publish-build-config]
         if: >
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "container-images-publish-images-ghcr"]'), needs.fractal-publish-build-config.outputs.job)
