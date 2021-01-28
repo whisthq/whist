@@ -96,13 +96,11 @@ jobs:
                   # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
                   # packer -machine-readable build ami_config.json
                   new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
-                  for artifact in ${new_ami_ids}
+                  for artifact in ${new_ami_ids//,/ }
                   do
+
                     ami_id=$(echo ${artifact} | grep -oE 'ami-[0-9a-z]+')
                     region=$(echo ${artifact} | grep -oE '[0-9a-z-]+:'| sed 's/.$//')
-                    
-                    echo $ami_id
-                    echo $region
 
                     curl -X POST \
                     -H "Content-Type: application/json" \
