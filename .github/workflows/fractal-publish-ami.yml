@@ -95,7 +95,7 @@ jobs:
                   # create the new AMI in aws_new_ami_source_region (region set in previous step)
                   packer -machine-readable build ami_config.json
                   new_ami_id=$(cat manifest.json | jq ".builds[0].artifact_id" | grep -oE 'ami-[0-9a-z]+')
-                  echo "new_ami_id=$new_ami_id" " >> $GITHUB_ENV
+                  echo "new_ami_id=${new_ami_id}" >> $GITHUB_ENV
 
                   # update AMI ID for aws_source_region in appropriate database to new AMI ID
                   curl -X POST \

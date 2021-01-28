@@ -28,6 +28,12 @@
   "provisioners": [
     {
       "type": "shell",
+      "inline": [
+        "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done"
+      ]
+    },
+    {
+      "type": "shell",
       "expect_disconnect": "true",
       "inline": ["sudo apt-get remove unattended-upgrades -y", "sudo reboot"]
     },
