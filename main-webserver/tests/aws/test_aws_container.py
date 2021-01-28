@@ -354,6 +354,15 @@ def test_update_region(client, admin, monkeypatch):
     for region in region_to_ami_post:
         if region == "us-east-1":
             assert region_to_ami_post[region] == "ami-0ff8a91507f77f867"  # a generic Linux AMI
+            # restore db to old (correct) AMI in case any future tests need it
+            region_to_ami = (
+                RegionToAmi.query.filter_by(
+                    region_name="us-east-1",
+                )
+                .first()
+            )
+            region_to_ami.ami_id = region_to_ami_pre["us-east-1"]
+            fractal_sql_commit(db)
         else:
             # nothing else in db should change
             assert region_to_ami_post[region] == region_to_ami_pre[region]
