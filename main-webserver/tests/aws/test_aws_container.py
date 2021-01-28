@@ -297,11 +297,11 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
 
 @shared_task(bind=True)
 def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
-    setattr(mock_update_cluster, "was_called") # mark function as called
+    setattr(mock_update_cluster, "was_called")  # mark function as called
     # check that the arguments are as expected
     assert cluster_name == pytest.cluster_name
     assert region_name == "us-east-1"
-    assert ami == "ami-0ff8a91507f77f867" # a generic Linux AMI
+    assert ami == "ami-0ff8a91507f77f867"  # a generic Linux AMI
 
     self.update_state(
         state="SUCCESS",
@@ -355,12 +355,9 @@ def test_update_region(client, admin, monkeypatch):
         if region == "us-east-1":
             assert region_to_ami_post[region] == "ami-0ff8a91507f77f867"  # a generic Linux AMI
             # restore db to old (correct) AMI in case any future tests need it
-            region_to_ami = (
-                RegionToAmi.query.filter_by(
-                    region_name="us-east-1",
-                )
-                .first()
-            )
+            region_to_ami = RegionToAmi.query.filter_by(
+                region_name="us-east-1",
+            ).first()
             region_to_ami.ami_id = region_to_ami_pre["us-east-1"]
             fractal_sql_commit(db)
         else:

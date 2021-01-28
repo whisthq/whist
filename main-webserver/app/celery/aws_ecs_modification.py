@@ -67,12 +67,9 @@ def update_region(self, region_name="us-east-1", ami=None):
             "msg": (f"updating to ami {ami} in region {region_name}"),
         },
     )
-    region_to_ami = (
-        RegionToAmi.query.filter_by(
-            region_name=region_name,
-        )
-        .first()
-    )
+    region_to_ami = RegionToAmi.query.filter_by(
+        region_name=region_name,
+    ).first()
 
     if region_to_ami is None:
         raise ValueError(f"Region {region_name} is not in db.")
