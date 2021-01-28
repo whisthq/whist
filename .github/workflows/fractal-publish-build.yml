@@ -60,23 +60,12 @@ jobs:
               id: detect-job
               run: |
                   # if running from workflow_dispatch, a job-name will be set, so we set it as environment variable
-                  # if running from push, no job-name will be set, so we set null as environment variable
-                  INPUT_JOB_NAME=${{ github.event.inputs.job-name }}
-                  if [[ -z $INPUT_JOB_NAME ]]; then
-                    INPUT_JOB_NAME=null
-                  fi
+                  # if running from push, no job-name will be set and JOB_NAME will be empty
+                  JOB_NAME=${{ github.event.inputs.job-name }}
 
-                  # by design, we want to run either only one specific job, or all jobs                    
-                  if [[ ${{ github.event_name }} == 'push' || ${{ github.event.inputs.job-name }} == 'all' ]]; then
+                  # if JOB_NAME is empty, this workflow was triggered by push, so we want to run all jobs
+                  if [[ -z $JOB_NAME && ${{ github.event_name }} == 'push' ]]; then
                     JOB_NAME=all
-                  elif [[ ${{ github.event.inputs.job-name }} == 'container-images-publish-images-ghcr' ]]; then
-                    JOB_NAME=container-images-publish-images-ghcr
-                  elif [[ ${{ github.event.inputs.job-name }} == 'ecs-task-definitions-deploy-task-definitions-ecs' ]]; then
-                    JOB_NAME=ecs-task-definitions-deploy-task-definitions-ecs
-                  elif [[ ${{ github.event.inputs.job-name }} == 'ecs-host-service-publish-build-s3' ]]; then
-                    JOB_NAME=ecs-host-service-publish-build-s3
-                  elif [[ ${{ github.event.inputs.job-name }} == 'main-webserver-deploy-heroku' ]]; then
-                    JOB_NAME=main-webserver-deploy-heroku
                   fi
 
                   echo "job is $JOB_NAME"
