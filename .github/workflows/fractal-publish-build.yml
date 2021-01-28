@@ -95,7 +95,7 @@ jobs:
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
         needs: [fractal-publish-build-config]
-        if: |
+        if: >
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "container-images-publish-images-ghcr"]'), needs.fractal-publish-build-config.outputs.job)
         steps:
@@ -126,7 +126,7 @@ jobs:
 
             - name: Push container images
               working-directory: container-images
-              if: fractal-publish-build-config.outputs.job == 'true'
+              if: fractal-publish-build-config.outputs.publishing == 'true'
               run: |
                   for app in ${{ env.apps }}
                   do
@@ -162,7 +162,7 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: |
+        if: >
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
 
@@ -213,7 +213,7 @@ jobs:
                   image: ${{ env.ghcr_base_uri }}/fractal/${{ matrix.app }}:${{ env.containers_gha_sha }}
 
             - name: Deploy to Amazon ECS service
-              if: fractal-publish-build-config.outputs.job == 'true'
+              if: fractal-publish-build-config.outputs.publishing == 'true'
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                   task-definition: ${{ steps.render-web-container.outputs.task-definition }}
@@ -224,7 +224,7 @@ jobs:
     ecs-task-definitions-notify-slack:
         name: "ECS Task Definitions: Notify Slack"
         needs: [ecs-task-definitions-deploy-task-definitions-ecs]
-        if: |
+        if: >
             success() &&
             contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
         runs-on: ubuntu-20.04
@@ -243,7 +243,7 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: |
+        if: >
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "ecs-host-service-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
         env:
@@ -279,7 +279,7 @@ jobs:
               run: make build
 
             - name: Upload binary to S3
-              if: fractal-publish-build-config.outputs.job == 'true'
+              if: fractal-publish-build-config.outputs.publishing == 'true'
               run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
 
             - name: Notify Slack
@@ -296,7 +296,7 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: |
+        if: >
             (
               (
                 contains(
@@ -355,9 +355,8 @@ jobs:
                   git checkout workflows-private/main-webserver
 
             - name: Push to Heroku remote, deploying the app # force push is only necessary for the transition period, then should be removed
-              if: fractal-publish-build-config.outputs.job == 'true'
-              run: |
-                  git push -f heroku-fractal-server workflows-private/main-webserver:master
+              if: fractal-publish-build-config.outputs.publishing == 'true'
+              run: git push -f heroku-fractal-server workflows-private/main-webserver:master
 
             - name: Notify Slack
               run: |
