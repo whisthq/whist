@@ -22,8 +22,8 @@
         }
       ],
       "ebs_optimized": true,
-      "subnet_id": "subnet-3341731d",
-      "vpc_id": "vpc-34aded4e"
+      "subnet_id": "PLACEHOLDER",
+      "vpc_id": "PLACEHOLDER"
     }
   ],
   "provisioners": [
