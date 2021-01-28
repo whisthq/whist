@@ -64,6 +64,13 @@ def update_region(self, region_name="us-east-1", ami=None):
             "msg": (f"updating to ami {ami} in region {region_name}"),
         },
     )
+
+    fractal_log(
+        "update_region",
+        None,
+        "in update region",
+    )
+
     region_to_ami = RegionToAmi.query.filter_by(
         region_name=region_name,
     ).first()
@@ -78,6 +85,12 @@ def update_region(self, region_name="us-east-1", ami=None):
         # update db with new AMI
         region_to_ami.ami_id = ami
         fractal_sql_commit(db)
+
+    fractal_log(
+        "update_region",
+        None,
+        f"updated AMI in {region_name} to {ami}",
+    )
 
     all_clusters = list(ClusterInfo.query.filter_by(location=region_name).all())
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]

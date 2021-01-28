@@ -302,6 +302,8 @@ def test_update_region(client, admin, monkeypatch):
 
     task = queryStatus(client, resp, timeout=10)
     if task["status"] < 1:
+        from app.helpers.utils.general.logs import fractal_log
+
         fractal_log(
             function="test_update_region",
             label=None,
