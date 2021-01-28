@@ -60,6 +60,14 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            # To retrieve Fractal protocol libraries from AWS S3
+            - name: Configure AWS S3 CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
             - name: Retrieve Current Git Branch Name
               run: echo "current_git_branch=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
