@@ -1,7 +1,7 @@
 # workflows/protocol-check-pr.yml
 #
 # Protocol: Check PR
-# Builds the Fractal Protocol on Windows, macOS and Linux, and Run Static Checks (cppcheck, clang-tidy)
+# Checks a protocol PR for linting, clang standards and building success.
 
 name: "Protocol: Check PR"
 
@@ -37,10 +37,6 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  submodules: recursive
 
             # Necessary for downloading protocol libs from AWS S3
             - name: Configure AWS S3 CLI
@@ -64,8 +60,9 @@ jobs:
                   visual_studio: "Visual Studio 16 2019" # Imported from env in the .ps1 script
                   cuda: "11.0.167" # Imported from env in the .ps1 script
               shell: powershell
+              working-directory: .github\workflows\helpers\protocol
               run: |
-                  .\.github\workflows\helpers\protocol\install_cuda_windows.ps1
+                  .\install_cuda_windows.ps1
 
                   if ($?) {
                     # Set paths for subsequent steps, using $env:CUDA_PATH
@@ -111,14 +108,17 @@ jobs:
             - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
               if: runner.os == 'macOS' || runner.os == 'Linux'
               shell: bash
+              working-directory: protocol
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
-                      sudo apt update
+                      # update apt before installing packages to avoid package not found errors
+                      sudo apt-get update
 
-                      ./protocol/desktop/linux-client-setup.sh
+                      # install Linux protocol dependencies
+                      ./setup-linux-build-environment.sh
 
                       # install clang-tidy, coreutils for realpath, and perl
-                      sudo apt install -y clang-tidy coreutils perl
+                      sudo apt-get install -y clang-tidy coreutils perl
                   else
                       # llvm for clang-tidy, coreutils for realpath
                       brew install llvm coreutils perl
@@ -128,42 +128,44 @@ jobs:
 
             ############################# Unix Configuration Steps END #############################
 
-            - name: Build Protocol Client on Windows
+            - name: Build Protocol Client and Server on Windows
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+              working-directory: protocol
               run: |
-                  cd protocol/
                   cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE -G "NMake Makefiles"
                   nmake FractalClient
+                  nmake FractalServer
 
             - name: Build Protocol Client on macOS/Linux Ubuntu
               if: runner.os == 'macOS' || runner.os == 'Linux'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
               shell: bash
+              working-directory: protocol
               run: |
-                  cd protocol/
                   cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
                   make FractalClient
-                  cd ~
 
+            # This tests building the protocol on the GitHub Actions VM, so that we can run clang-format and clang-tidy
             - name: Build Protocol Server on Linux Ubuntu
               if: runner.os == 'Linux'
+              env:
+                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
               shell: bash
+              working-directory: protocol
               run: |
-                  cd protocol/
                   cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
                   make FractalServer
-                  cd ~
 
             - name: Verify Builds with clang-format
               if: runner.os == 'Linux'
               shell: bash
+              working-directory: protocol
               run: |
                   # Clang-matcher for clang-format, added after the main build sequence so that clang doesn't match gcc errors
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
-                  cd protocol
                   make clang-format
 
                   # Show diff in GitHub Actions logs
@@ -174,10 +176,16 @@ jobs:
 
             - name: Verify Builds with clang-tidy
               shell: bash
+              working-directory: protocol
               run: |
                   # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
-                  cd protocol/
                   ./run-clang-tidy.sh -c
-                  cd ~
+
+            # This tests building the protocol in a container, the same way we do it in production
+            - name: Build Protocol Server in Docker Container
+              if: runner.os == 'Linux'
+              shell: bash
+              working-directory: protocol
+              run: ./build_protocol.sh release

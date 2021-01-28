@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"math"
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
-	// that we never forget to send a message via sentry. Instead, use the
+	// that we never forget to send a message via Sentry. Instead, use the
 	// fractallogger package imported below as `logger`
 	"context"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -20,7 +21,7 @@ import (
 	"time"
 
 	// We use this package instead of the standard library log so that we never
-	// forget to send a message via sentry.  For the same reason, we make sure
+	// forget to send a message via Sentry.  For the same reason, we make sure
 	// not to import the fmt package either, instead separating required
 	// functionality in this impoted package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
@@ -39,6 +40,7 @@ import (
 const resourceMappingDirectory = "/fractal/containerResourceMappings/"
 const cloudStorageDirectory = "/fractal/cloudStorage/"
 
+// Opens all permissions on /fractal directory
 func makeFractalDirectoryFreeForAll() {
 	cmd := exec.Command("chown", "-R", "ubuntu", "/fractal")
 	cmd.Run()
@@ -55,6 +57,7 @@ func checkRunningPermissions() {
 	}
 }
 
+// Start the Docker daemon ourselves, to have control over all Docker containers spun
 func startDockerDaemon() {
 	cmd := exec.Command("/usr/bin/systemctl", "start", "docker")
 	err := cmd.Run()
@@ -67,13 +70,62 @@ func startDockerDaemon() {
 
 // We take ownership of the ECS agent ourselves
 func startECSAgent() {
-	cmd := exec.Command("/usr/bin/systemctl", "enable", "--now", "docker-container@ecs-agent")
-	err := cmd.Run()
+	cmd := exec.Command(
+		"/usr/bin/docker",
+		"run",
+		"--name",
+		"ecs-agent",
+		"--init",
+		"--restart=on-failure:10",
+		"--volume=/var/run:/var/run",
+		"--volume=/var/log/ecs/:/log",
+		"--volume=/var/lib/ecs/data:/data",
+		"--volume=/etc/ecs:/etc/ecs",
+		"--volume=/sbin:/host/sbin",
+		"--volume=/lib:/lib",
+		"--volume=/lib64:/lib64",
+		"--volume=/usr/lib:/usr/lib",
+		"--volume=/usr/lib64:/usr/lib64",
+		"--volume=/proc:/host/proc",
+		"--volume=/sys/fs/cgroup:/sys/fs/cgroup",
+		"--net=host",
+		"--env-file=/etc/ecs/ecs.config",
+		"--cap-add=sys_admin",
+		"--cap-add=net_admin",
+		"--volume=/var/lib/nvidia-docker/volumes/nvidia_driver/latest:/usr/local/nvidia",
+		"--device",
+		"/dev/nvidiactl:/dev/nvidiactl",
+		"--device",
+		"/dev/nvidia0:/dev/nvidia0",
+		"--volume=/var/lib/ecs/gpu:/var/lib/ecs/gpu",
+		"amazon/amazon-ecs-agent:latest",
+	)
+	stderr, _ := cmd.StderrPipe()
+	stdout, _ := cmd.StdoutPipe()
+
+	logger.Infof("Attempting to start the ECS-agent... If you don't see an error, assume it was successful.")
+	err := cmd.Start()
 	if err != nil {
-		logger.Panicf("Unable to start ECS-agent. Error: %v", err)
-	} else {
-		logger.Info("Successfully started the ECS agent ourselves.")
+		logger.Panicf("Unable to start ECS-agent ourselves. Error: %v", err)
 	}
+
+	// If the function errored out, we want to get the output at least. Not sure
+	// if this actually works --- TODO change method of forking ecs-agent in
+	// background
+	go func() {
+		output, err1 := ioutil.ReadAll(stdout)
+		errput, err2 := ioutil.ReadAll(stderr)
+		err := cmd.Wait()
+		logger.Infof("stdout: %s\n\n\n", output)
+		logger.Infof("stderr: %s\n\n\n", errput)
+
+		if err1 != nil || err2 != nil {
+			logger.Errorf("Couldn't wait for ecs-agent starting command. Error: %v", err)
+		}
+	}()
+
+	// Give the ecs-agent some time to startup
+	time.Sleep(3 * time.Second)
 }
 
 // ---------------------------
@@ -90,6 +142,7 @@ var containerIDs map[uint16]string = make(map[uint16]string)
 // keys: hostPort, values: slice containing all cloud storage directories that are mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
 
+// Unmounts a cloud storage directory mounted on hostPort
 func unmountCloudStorageDir(hostPort uint16, path string) {
 	// Unmount lazily, i.e. will unmount as soon as the directory is not busy
 	cmd := exec.Command("fusermount", "-u", "-z", path)
@@ -122,6 +175,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	path := cloudStorageDirectory + hostPort + "/" + sanitized_provider + "/"
 	configName := hostPort + sanitized_provider
 
+	// Create tokens for Rclone
 	token, err := func() (string, error) {
 		buf, err := json.Marshal(
 			struct {
@@ -137,7 +191,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 			},
 		)
 		if err != nil {
-			return "", logger.MakeError("Error creating token for rclone: %s", err)
+			return "", logger.MakeError("Error creating token for Rclone: %s", err)
 		}
 
 		return logger.Sprintf("'%s'", buf), nil
@@ -209,7 +263,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 			return
 		}
 
-		// We close errorchan after 1000ms so the enclosing function can return an
+		// We close errorchan after `timeout` so the enclosing function can return an
 		// error if the `rclone mount` command failed immediately, or return nil if
 		// it didn't.
 		timeout := time.Second * 15
@@ -241,6 +295,8 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	return err
 }
 
+// Creates a file containing the DPI assigned to a specific container, and make it 
+// accessible to that container
 func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
 	// Compute container-specific directory to write DPI data to
 	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
@@ -272,6 +328,7 @@ func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
 	return nil
 }
 
+// Helper function to write data to a file
 func writeAssignmentToFile(filename, data string) (err error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
 	if err != nil {
@@ -299,6 +356,8 @@ func writeAssignmentToFile(filename, data string) (err error) {
 	return nil
 }
 
+// Starts a container on the host by assigning to it the relevant parameters and
+// an unused TTY
 func containerStartHandler(ctx context.Context, cli *client.Client, id string) error {
 	// Create a container-specific directory to store mappings
 	datadir := resourceMappingDirectory + id + "/"
@@ -376,6 +435,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string) e
 	return nil
 }
 
+// Frees all resources assigned to a container and kill it
 func containerDieHandler(ctx context.Context, cli *client.Client, id string) {
 	// Delete the container-specific data directory we used
 	datadir := resourceMappingDirectory + id + "/"
@@ -426,6 +486,7 @@ func containerDieHandler(ctx context.Context, cli *client.Client, id string) {
 // Service shutdown and initialization
 // ---------------------------
 
+// Terminates the Fractal ECS host service
 func shutdownHostService() {
 	logger.Info("Beginning host service shutdown procedure.")
 
@@ -442,7 +503,7 @@ func shutdownHostService() {
 	logger.PrintStackTrace()
 
 	// Flush buffered Sentry events before the program terminates.
-	logger.Info("Flushing sentry...")
+	logger.Info("Flushing Sentry...")
 	logger.FlushSentry()
 
 	logger.Info("Sending final heartbeat...")
@@ -452,8 +513,8 @@ func shutdownHostService() {
 	os.Exit(0)
 }
 
-// Create the directory used to store the container resource allocations (e.g.
-// TTYs) on disk
+// Create the directory used to store the container resource allocations
+// (e.g. TTYs and cloud storage folders) on disk
 func initializeFilesystem() {
 	// check if resource mapping directory already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
@@ -499,6 +560,8 @@ func initializeFilesystem() {
 	makeFractalDirectoryFreeForAll()
 }
 
+// Delete the directory used to store the container resource allocations
+// (e.g. TTYs and cloud storage folders) on disk
 func uninitializeFilesystem() {
 	err := os.RemoveAll(resourceMappingDirectory)
 	if err != nil {
@@ -546,7 +609,7 @@ func main() {
 	// able to use sentry.WithScope(), but that is future work.
 	err := logger.InitializeSentry()
 	if err != nil {
-		logger.Panicf("Unable to initialize sentry. Error: %s", err)
+		logger.Panicf("Unable to initialize Sentry. Error: %s", err)
 	}
 	// We flush Sentry's queue in shutdownHostService(), so we don't need to defer it here
 

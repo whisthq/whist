@@ -1,15 +1,17 @@
 FROM fractal/base:current-build
 
-# Install Sidekick
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
-RUN wget -qO sidekick.deb https://api.meetsidekick.com/downloads/df/linux/deb \
-    && apt install -y ./sidekick.deb \
-    && apt autoremove -y \
-    && apt clean \
-    && rm sidekick.deb
+# Download Sidekick installer
+RUN wget -qO sidekick.deb https://api.meetsidekick.com/downloads/df/linux/deb
 
-# Set default browser
+# Install Sidekick
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    ./sidekick.deb \
+    && rm sidekick.deb \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set as default browser
 RUN su - fractal -c \
     "xdg-mime default sidekick-browser.desktop text/html \
     && xdg-mime default sidekick-browser.desktop x-scheme-handler/http \

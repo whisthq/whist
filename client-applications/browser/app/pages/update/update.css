@@ -25,7 +25,7 @@
 
 .loadingBar .remaining {
     height: 6px;
-    background: #69f5b2;
+    background: var(--background-color);
 }
 
 .loadingBar .downloaded {

@@ -6,11 +6,14 @@ GOCLEAN      = $(GOCMD) clean
 GOTEST       = $(GOCMD) test
 GOGET        = $(GOCMD) get
 
+# Build parameters
 BUILD_FOLDER = build
 BINARY_NAME  = ecs-host-service
 
+# Git parameters
 GIT_COMMIT := $(shell git rev-list -1 HEAD)
 
+# Continuous Integration parameters
 CI ?= false
 WEBSERVER_AUTH_SECRET_DEV ?= testwebserverauthsecretdev
 WEBSERVER_AUTH_SECRET_STAGING ?= testwebserverauthsecretstaging
@@ -19,13 +22,15 @@ WEBSERVER_AUTH_SECRET_PROD ?= testwebserverauthsecretprod
 
 all: deps build
 
+# Check that the required environment variables for building as part of our 
+# continuous integration/deployment pipeline on GitHub Actions are set properly.
 checkCI:
 	$(info building in $(BUILD_FOLDER) with CI set to $(CI)...)
 ifeq ($(CI),true)
-# We're building on GHA, so we need to require non-trivial secrets
+	# We're building on GitHub Actions, so we need to require non-trivial secrets
 	$(info CI is true)
 ifeq ($(origin WEBSERVER_AUTH_SECRET_DEV),file)
-# This means that a replacement secret was not passed in on the command-line or as an environment variable
+	# This means that a replacement secret was not passed in on the command-line or as an environment variable
 	$(error "WEBSERVER_AUTH_SECRET_DEV is not set, but CI is true")
 endif
 ifeq ($(WEBSERVER_AUTH_SECRET_DEV),)
@@ -60,7 +65,7 @@ clean:
 	rm -rf $(BUILD_FOLDER)
 
 run: build
-	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with debug configuration...)
+	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev (debug) configuration...)
 	# we run the built binary instead of using `go run` because otherwise signal
 	# handling for Ctrl+C does not work
 	sudo env PATH=$(PATH) APP_ENV=development $(BUILD_FOLDER)/$(BINARY_NAME)

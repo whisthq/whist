@@ -21,7 +21,7 @@ def server():
 
     while time.time() - startTime < 30.0:
         data, address = test_socket.recvfrom(4096)
-        print("Recieved %d bytes from %s" % (len(data), address))
+        print("Received %d bytes from %s" % (len(data), address))
         if len(data) > 0:
             timeDelay = current_milli_time() - int.from_bytes(data, byteorder="big")
             print("Time delay is %d" % timeDelay)
@@ -55,7 +55,7 @@ def main():
         try:
             destination = sys.argv[2]
         except IndexError:
-            print("Need to specify the IP address to conect to")
+            print("Need to specify the IP address to connect to")
 
     if is_server:
         server()

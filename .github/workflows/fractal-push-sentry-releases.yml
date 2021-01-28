@@ -1,9 +1,9 @@
 # workflows/fractal-push-sentry-releases.yml
 #
 # Fractal: Push Sentry Release
-# Automatically push a new sentry release for each of the fractal/fractal projects.
+# Automatically push a new Sentry release for each of the fractal/fractal projects.
 
-name: "Fractal: Push Sentry Releases"
+name: "Fractal: Push Sentry Release"
 
 on:
     push:
@@ -41,16 +41,11 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
-            - name: Set Git Repository URL to enable sentry-cli automatic commit tagging
-              run: |
-                  git remote set-url origin https://github.com/fractal/fractal
+            - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
+              run: git remote set-url origin https://github.com/fractal/fractal
 
-            - name: Set SENTRY_DEPLOY_ENVIRONMENT based on Git branch
-              shell: bash
+            - name: Set SENTRY_DEPLOY_ENVIRONMENT Based on Git Branch
               run: |
                   if [ "${GITHUB_REF##*/}" == "master" ]; then
                       echo "SENTRY_DEPLOY_ENVIRONMENT=production" >> $GITHUB_ENV
@@ -60,7 +55,7 @@ jobs:
                       echo "SENTRY_DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
                   fi
 
-            - name: Create new Sentry release
+            - name: Create New Sentry Release
               run: |
                   # Install Sentry CLI
                   curl -sL https://sentry.io/get-cli/ | bash
@@ -84,5 +79,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry Production Releases Pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry ${{ env.SENTRY_DEPLOY_ENVIRONMENT }} Release Pushed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}

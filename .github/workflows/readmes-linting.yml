@@ -1,7 +1,7 @@
 # workflows/readmes-linting.yml
 #
-# Readmes: Linting
-# Lint READMEs using eslint.
+# READMEs: Linting
+# Lint READMEs using Prettier.
 
 name: "READMEs: Linting"
 
@@ -17,6 +17,7 @@ on:
             - "**/README.md"
             - ".github/workflows/README.md"
             - ".github/workflows/readmes-linting.yml"
+    workflow_dispatch:
 
 jobs:
     readmes-linting-main:
@@ -26,16 +27,14 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
 
             - name: Install Node.js 12
               uses: actions/setup-node@v1
               with:
                   node-version: 12
 
-            - name: Install prettier
+            - name: Install Prettier
               run: npm install -g prettier
 
-            - name: Check if READMEs are formatted
-              run: prettier --check '**/README.md' # prettier glob syntax hits all readmes with this
+            - name: Check if READMEs are Formatted
+              run: prettier --check '**/README.md' # Prettier glob syntax hits all READMEs with this

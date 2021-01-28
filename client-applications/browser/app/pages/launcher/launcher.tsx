@@ -5,14 +5,23 @@ import { useSubscription } from "@apollo/client"
 // import { FadeIn } from "react-fade-in"
 
 import { FractalLogger } from "shared/utils/general/logging"
-import { AvailableLoggers } from "shared/types/logs"
 import { Dispatch } from "shared/types/redux"
 import { SUBSCRIBE_USER_APP_STATE } from "shared/constants/graphql"
 import { FractalAppState, FractalTaskStatus } from "shared/types/containers"
 import { deepCopyObject } from "shared/utils/general/reducer"
 import { User } from "store/reducers/auth/default"
-import { Container, Task, DEFAULT } from "store/reducers/container/default"
+import {
+    Timer,
+    DEFAULT as AnalyticsDefault,
+} from "store/reducers/analytics/default"
+import {
+    Container,
+    Task,
+    DEFAULT as ContainerDefault,
+} from "store/reducers/container/default"
+
 import { updateContainer, updateTask } from "store/actions/container/pure"
+import { updateTimer } from "store/actions/analytics/pure"
 import {
     getContainerInfo,
     createContainer,
@@ -34,6 +43,7 @@ export const Launcher = (props: {
     taskID: string
     status: FractalTaskStatus
     container: Container
+    timer: Timer
     dispatch: Dispatch
 }) => {
     /*
@@ -47,7 +57,15 @@ export const Launcher = (props: {
             container (Container): Container from Redux state
     */
 
-    const { userID, running, taskID, status, container, dispatch } = props
+    const {
+        userID,
+        running,
+        taskID,
+        status,
+        container,
+        timer,
+        dispatch,
+    } = props
 
     const [protocolLaunched, setProtocolLaunched] = useState(false)
     const [loadingMessage, setLoadingMessage] = useState(
@@ -61,17 +79,20 @@ export const Launcher = (props: {
 
     const ipc = require("electron").ipcRenderer
 
-    const logger = new FractalLogger(AvailableLoggers.LOADING)
+    const logger = new FractalLogger()
 
     // Restores Redux state to before a container was created
     const resetLaunch = () => {
-        const defaultContainerState = deepCopyObject(DEFAULT.container)
-        const defaultTaskState = deepCopyObject(DEFAULT.task)
+        const defaultContainerState = deepCopyObject(ContainerDefault.container)
+        const defaultTaskState = deepCopyObject(ContainerDefault.task)
+        const defaultTimerState = deepCopyObject(AnalyticsDefault.timer)
 
         // Erase old container info
         dispatch(updateContainer(defaultContainerState))
         // Erase old task info
         dispatch(updateTask(defaultTaskState))
+        // Erase old timer info
+        dispatch(updateTimer(defaultTimerState))
     }
 
     // If the webserver failed, function to try again
@@ -91,17 +112,26 @@ export const Launcher = (props: {
         resetLaunch()
     }
 
+    const forceQuit = () => {
+        setTimeout(() => {
+            ipc.sendSync(FractalIPC.FORCE_QUIT)
+        }, 1000)
+    }
+
     // Callback function meant to be fired before protocol starts
     const protocolOnStart = () => {
         // IPC sends boolean to the main thread to hide the Electron browser Window
         logger.logInfo("Protocol started, callback fired", userID)
+        dispatch(updateTimer({ protocolLaunched: Date.now() }))
         ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
     }
 
     // Callback function meant to be fired when protocol exits
     const protocolOnExit = () => {
-        resetLaunch()
+        // Log timer analytics data
+        dispatch(updateTimer({ protocolClosed: Date.now() }))
 
+        // For S3 protocol client log upload
         const logPath = require("path").join(
             FractalDirectory.getRootDirectory(),
             "protocol-build/desktop/log.txt"
@@ -109,20 +139,31 @@ export const Launcher = (props: {
 
         const s3FileName = `CLIENT${new Date().getTime()}.txt`
 
+        logger.logInfo(
+            `Protocol client logs: https://fractal-protocol-logs.s3.amazonaws.com/${s3FileName}`,
+            userID
+        )
+        // Clear the Redux state just in case
+        resetLaunch()
+
+        // Upload client logs to S3 and shut down Electron
         uploadToS3(logPath, s3FileName, (s3Error: string) => {
             if (s3Error) {
-                logger.logInfo(`Upload to S3 errored: ${error}`, userID)
-            } else {
-                logger.logInfo(
-                    `Protocol client logs: https://fractal-protocol-logs.s3.amazonaws.com/${s3FileName}`,
-                    userID
-                )
+                logger.logError(`Upload to S3 errored: ${error}`, userID)
             }
-            // Quit the app
-            logger.logInfo("------------- EXITED -----------------", userID)
-            ipc.sendSync(FractalIPC.FORCE_QUIT)
+            forceQuit()
         })
     }
+
+    // Log timer analytics
+    useEffect(() => {
+        if (timer.protocolClosed && timer.protocolClosed > 0) {
+            logger.logInfo(
+                `Protocol exited! Timer logs are ${JSON.stringify(timer)}`,
+                userID
+            )
+        }
+    }, [timer])
 
     // On app start, check if a container creation request has been sent.
     // If not, create a container and set running = true to prevent multiple containers
@@ -130,10 +171,11 @@ export const Launcher = (props: {
     useEffect(() => {
         if (!running && !protocolLaunched) {
             logger.logInfo("Dispatching create container action", userID)
+            dispatch(updateTimer({ createContainerRequestSent: Date.now() }))
             dispatch(updateTask({ running: true }))
             dispatch(createContainer())
         }
-    }, [running])
+    }, [running, dispatch])
 
     // Listen to container creation task state
     useEffect(() => {
@@ -223,6 +265,9 @@ export const mapStateToProps = (state: {
         task: Task
         container: Container
     }
+    AnalyticsReducer: {
+        timer: Timer
+    }
 }) => {
     return {
         userID: state.AuthReducer.user.userID,
@@ -230,6 +275,7 @@ export const mapStateToProps = (state: {
         taskID: state.ContainerReducer.task.taskID,
         status: state.ContainerReducer.task.status,
         container: state.ContainerReducer.container,
+        timer: state.AnalyticsReducer.timer,
     }
 }
 

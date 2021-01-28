@@ -2,6 +2,8 @@
 
 This repository contains the code for containerizing the various applications that Fractal streams. The base Dockerfile.20 running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
 
+TODO: add a directory structure like Nick did for the protocol, which is really good. We should also have that in the client-applications and main-webserver
+
 ### Supported Applications
 
 All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
@@ -11,8 +13,8 @@ All of the following applications are based off of the **Ubuntu 20.04 Base Image
 | Google Chrome    | Blender          | Lightworks       | Slack        |
 | Mozilla Firefox  | Blockbench       | Kdenlive         | Notion       |
 | Brave Browser    | Figma            |                  | Discord      |
-| Sidekick Browser | TextureLab       |                  |              |
-|                  | Gimp             |                  |              |
+| Sidekick Browser | TextureLab       |                  | R Studio     |
+|                  | Gimp             |                  | FreeCAD      |
 |                  | Inkscape         |                  |              |
 |                  | Krita            |                  |              |
 
@@ -136,6 +138,8 @@ For every new application that you add support for, in addition to creating its 
 
 -   Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`, for pre-commit hooks
 -   Update the list of supported applications in this README
+
+Note that before your new application is ready to go into production, you need to also edit the database with the app's logo, terms of service link, description, task definition link, etc.
 
 And, if you're adding a new AWS region, you should add the region name under `aws-regions` in `push-images.yml`.
 

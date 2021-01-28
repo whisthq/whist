@@ -1,7 +1,5 @@
-# Update Nvidia BUSID before X starts
-
 [Unit]
-Description=Update Nvidia BUSID in /usr/share/X11/xorg.conf.d/01-nvidia.conf before X starts
+Description=Updates Nvidia BUSID in /usr/share/X11/xorg.conf.d/01-nvidia.conf before X starts, runs as root
 DefaultDependencies=yes
 After=syslog.target
 Before=display-manager.service multi-user.target

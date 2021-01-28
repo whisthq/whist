@@ -1,12 +1,22 @@
 FROM fractal/base:current-build
 
+# Install Kdenlive dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     software-properties-common \
     libqt5svg5 \
     && apt-get autoremove -y \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
+# Source Kdenlive repository
 RUN add-apt-repository ppa:kdenlive/kdenlive-stable
-RUN apt-get install -y kdenlive
 
+# Install Kdenlive
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    kdenlive \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Setup Fractal application symlink
 RUN ln -sf /usr/bin/kdenlive /usr/bin/fractal-application

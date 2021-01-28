@@ -1,60 +1,69 @@
-# A Guide to Fractal's Monorepo
+# Fractal Application Streaming
+
+This repository contains the end-to-end code for the Fractal Application Streaming product, following a [Monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
 
 ## Table of Contents
 
-- [Map of the Repo](#map-of-the-repo)
-- [Workflow and Conventions](#workflow-and-conventions)
-  - [`master` is for releases only. `staging` is "almost `master`"](#master-is-for-releases-only-staging-is-almost-master)
-  - [`dev` is for Development](#dev-is-for-development)
-    - [While on feature branches, `git rebase dev` is your friend. `git merge dev` is not.](#while-on-feature-branches-git-rebase-dev-is-your-friend-git-merge-dev-is-not)
-    - [But when merging branches, _usually_ do a merge instead of a rebase.](#but-when-merging-feature-branches-usually-do-a-merge-instead-of-a-rebase)
-    - [Your branch is yours. Our branches are _ours_.](#your-branch-is-yours-our-branches-are-ours)
-  - [On commit logs](#on-commit-logs)
-  - [HOTfixes (i.e. prod is on fire)](#hotfixes-ie-prod-is-on-fire)
-- [Appendices](#appendices)
-  - [Useful git tricks in a monorepo](#useful-git-tricks-in-a-monorepo)
-  - [An example of bad commit history](#an-example-of-bad-commit-history)
+- [Introduction](#introduction)
+  - [Repository Structure](#repository-structure)
+- [Development](#introduction)
+  - [Branch Conventions](#branches-convention)
+    - [`master` is for releases only; `staging` is "almost `master`"](#master-is-for-releases-only-staging-is-almost-master)
+    - [`dev` is for development](#dev-is-for-development)
+    - [Your branch is yours; our branches are _ours_](#your-branch-is-yours-our-branches-are-ours)
+  - [Git Best Practices](#git-best-practices)
+    - [On feature branches, use rebase instead of merge](#on-feature-branches-use-rebase-instead-of-merge)
+    - [When merging feature branches, _usually_ use merge instead of rebase](#when-merging-feature-branches-usually-use-merge-instead-of-rebase)
+    - [On commit logs](#on-commit-logs)
+  - [Hotfixes (i.e. production is on fire)](#hotfixes-ie-prod-is-on-fire)
+- [Publishing](#publishing)
+- [Styling](#styling)
+- [Appendix](#appendix)
+  - [Useful Monorepo git Tricks](#useful-monorepo-git-tricks)
+  - [Example of Bad Commit History](#example-of-bad-commit-history)
 
-## Map of the Repo
+# ===
 
-This monorepo contains 8 Fractal subrepos:
+## Introduction
 
-- client-applications
-- container-images
-- ecs-host-service
-- ecs-host-setup
-- ecs-task-definitions
-- log-analysis
-- main-webserver
-- protocol
+Application Streaming is Fractal's core service. It consists in running an application in a GPU-enabled Linux Docker container on a powerful host server in the cloud, currently EC2 instances, and streaming the content of the container to a user device.
 
-| Subrepo name         | Subrepo description                                                                                                                                                                                                                                                                                                                      |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| client-applications  | This contains the client-side Electron App that users will download and use to launch the protocol in a user-friendly manner                                                                                                                                                                                                             |
-| container-images     | This contains Dockerfiles that are used for creating Fractal containers. There is a Dockerfile for Chrome, for Figma, for Blender, etc.                                                                                                                                                                                                  |
-| ecs-host-service     | A helper service that manages the state of the many Fractal containers that may be running on any given host                                                                                                                                                                                                                             |
-| ecs-host-setup       | This contains scripts to setup an EC2 Host Machine as a machine to host clusters of Fractal containers. This will install dependencies, and ecs-host-service, among other things                                                                                                                                                         |
-| ecs-task-definitions | This contains the JSON task definitions for each of the applications we stream via containers on AWS ECS                                                                                                                                                                                                                                 |
-| log-analysis         | This contains tools used to analysis logs generated from protocol runs. This can be used to address performance issues or bugs                                                                                                                                                                                                           |
-| main-webserver       | This contains the REST API for managing our containers, along with providing back-end support for front-end features                                                                                                                                                                                                                     |
-| protocol             | This contains the C code for Client and Server of the protocol. If the Server is running on one machine, and the Client on another machine having been given the IP address of the Server, then the Client will open up a window that allows one to interact with the Server at low-latency 60 FPS. This program is run via commandline. |
+At a high-level, Fractal works the following way:
 
-At a high-level, Fractal works as such:
+- Users download the Fractal Electron application for their OS and log in to launch the streamed application(s).
+- The login and launch processes are REST API requests to the Fractal webserver.
+- When the webserver receives a launch request, it sends a task definition JSON to AWS ECS, to tell it to run a specific container.
+- The webserver will then provision a container associated with the specific streamed application/task definition requested.
+  - If all existing EC2 instances are at maxed capacity of containers running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the /ecs-host-setup scripts and has the /ecs-host-service preinstalled.
+- If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the chosen task definition will cause AWS ECS to spin up a Docker container for the requested application on the chosen EC2 instance. The Fractal protocol server inside this container image will be started and will notify the webserver that it is ready to stream.
+  - The container images are based off of /container-images and are pre-built and stored in GitHub Container Registry, where AWS ECS pulls the images from.
+- Once the webserver receives a confirmation that the container is ready to stream, it will notify the Fractal Electron application that it can launch the Fractal protocol client, which will happen and start the stream.
 
-- First, the user downloads the client-applications Electron App. They log-in, and launch a Blender container for instance.
-- The log-in and launch process are REST API requests sent to the main-webserver.
-- The main-webserver will receive the launch request and will proceed to send an ecs-task-definitions task definition to AWS ECS.
-- This will either (A) Use an EC2 Instance that is already spun-up, or (B) This will spin up a new EC2 Instance, and then run the ecs-host-setup scripts on it. ecs-host-setup will install dependencies, and install ecs-host-service.
-- After (A) or (B) happens, an EC2 Instance will now be available one way or another, with potentially other Docker containers already running on it.
-- The ecs-task-definitions task definition will then spin up an additional Docker container on that chosen EC2 Instance using a Dockerfile from container-images, specifically choosing the Blender Dockerfile (Or whichever application they happened to choose).
-- This container-images Dockerfile will install dependencies, including the Server protocol executable, then install and run Blender, and then proceed to execute the Server protocol executable.
-- The client-application Electron App will then execute the Client protocol executable and pass in the IP address of the Server as received from main-webserver. A window will then open, giving the user a low-latency 60 FPS Blender experience.
+### Repository Structure
 
-For more in-depth explanations of each subrepo, simply peruse the README's of the respective file from the root Fractal repo.
+The Fractal monorepository contains 7 Fractal subrepositories:
 
-## Workflow and Conventions
+| Subrepository        | Description                                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------- |
+| client-applications  | The client-side Electron-based applicaiton users download and use to launch a streamed application.      |
+| container-images     | The Dockerfiles defining the container images and helper scripts for the applications we stream.         |
+| ecs-host-service     | The Fractal service which runs on EC2 instance hosts and orchestrates container management.              |
+| ecs-host-setup       | The scripts to setup an EC2 innstance into a Fractal-optimized host ready to run Fractal containers.     |
+| ecs-task-definitions | The JSONs needed by AWS Elastic Container Service (ECS) for defining how container tasks are run.        |
+| main-webserver       | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two.      |
+| protocol             | The streaming technology API, both client and server, for streaming containerized applications to users. |
 
-### `master` is for releases only. `staging` is "almost `master`".
+For more in-depth explanations of each subrepository, see that subrepository's README.
+
+## Development
+
+To get started with development, clone this repository and navigate to a specific subrepository. While it is likely that you will work on a feature that touches multiple subrepositories, each subrepository has its own development and styling standards which you should follow, in addition to the usual [Fractal Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
+
+To avoid pushing code that does not follow our coding guidelines, we recommend you install pre-commit hooks by running `pip install pre-commit`, followed by `pre-commit install` in the top-level directory. This will install the linting rules specified in `.pre-commit-config.yaml` and prevent you from pushing if your code is not linted.
+
+### Branch Conventions
+
+#### `master` is for Releases only; `staging` is "almost `master`"
 
 At Fractal, we maintain a `master` branch for releases only, and auto-tag every commit on `master` with a release tag (TODO).
 
@@ -70,7 +79,7 @@ When we approach a release milestone, we:
 4. To release, we merge `staging` back into `master`, creates a tagged release commit. This triggers our auto-deployment workflows, and we push to production.
 5. If changes were made to `staging` before release, we merge `staging` into `dev` as well.
 
-### `dev` is for Development
+### `dev` is for development
 
 We do all feature development and most bug-fixing on feature branches that are forked off `dev`.
 
@@ -81,7 +90,15 @@ We do all feature development and most bug-fixing on feature branches that are f
 
 Note that the last part of the branch name should almost always be an **action** instead of an object (i.e. `add-llama-theme` instead of `llama-theme`). This makes commit logs much easier to parse.
 
-#### While on feature branches, `git rebase dev` is your friend. `git merge dev` is not.
+#### Your branch is yours; our branches are _ours_
+
+In general, feel free to rebase your personal feature branches, amend commit messages/commits for clarify, force-push, or otherwise rewrite git history on them.
+
+However, in the less common case where multiple people are working on a single feature together, they belong on a single feature branch with consistent history, typically with branch name `project/[feature]`. The usual rules of not rewriting published commits apply there. Before making a PR into dev, the point person for that feature should let everyone else know to stop working on that branch and rebase the feature onto dev.
+
+### Git Best Practices
+
+#### On feature branches, use rebase insetead of merge
 
 When making a PR for a feature branch into `dev`, you'll usually find that there's been changes to `dev` since you last branched off. Both the frequency and scope of this situation are magnified by the complexity of a monorepo.
 
@@ -102,19 +119,13 @@ git rebase dev
 
 Most of the time, that rebase will work silently, since most changes to dev should not affect the feature branch. If there are any conflicts, that means that someone else is working on the same files as you, and you'll have to manually resolve the conflicts, just as with a merge. If you're having problems rebasing, try `git rebase -r dev` (which handles merge commits differently), then come ask an org admin for help.
 
-#### But when merging feature branches, _usually_ do a merge instead of a rebase.
+#### When merging feature branches, _usually_ merge instead of rebasing
 
 PRs with really small changes can just be fast-forwarded onto dev, which gives the illusion later of having committed directly onto dev, simplifying the commit log. This can be done on the Github PR page:
 
 ![Picture of "Rebase and merge" option](https://ntsim.uk/static/77d197658c4f050ba0a4080747505d8e/3346a/github-rebase-and-merge.png)
 
 In all other cases, select the first option ("Create a merge commit"). **Never** make a squash commit. If you want cleaner git history, rewrite and force-push your own branch (with carefully-applied `git rebase`), then merge it into dev.
-
-#### Your branch is yours. Our branches are _ours_.
-
-In general, feel free to rebase your personal feature branches, amend commit messages/commits for clarify, force-push, or otherwise rewrite git history on them.
-
-However, in the less common case where multiple people are working on a single feature together, they belong on a single feature branch with consistent history. The usual rules of not rewriting published commits apply there. Before making a PR into dev, the point person for that feature should let everyone else know to stop working on that branch and rebase the feature onto dev.
 
 ### On commit logs
 
@@ -130,7 +141,7 @@ Some good rules of thumb:
 
 In general, if you find yourself staring at a historic commit log, it's probably because something's gone wrong, and you're trying to piece together what happened. Or maybe you're trying to understand why some code is organized the way it is, and seeing how it evolved can lead you to that understanding. Either way, you've probably lost the mental context you had when writing the code (or you never even had it), so the quality of breadcrumbs (i.e. commit messages) left in the commit log correlates directly with the quality of your well-being in that situation.
 
-### HOTfixes (i.e. prod is on fire)
+### Hotfixes (i.e. prod is on fire)
 
 Eventually, but hopefully rarely, production will be on fire, and we will need to deploy a quick fix ASAP.
 
@@ -145,32 +156,31 @@ Here's the workflow:
 7. Merge the hotfix into `dev` as well.
 8. Write a regression test to make sure the same issue never occurs again, and add it to CI.
 
-## Appendices
+## Publishing
 
-### Useful git tricks in a monorepo
+We have developed a complex continuous deployment pipeline via GitHub Actions, which enables us to automatically deploy all subrepositories of this monorepositories in the right order when pushing to `master`. See `.github/workflows/fractal-publish-build.yml` and `.github/workflows/client-applications-publish.yml` to see how we deploy, which AWS regions and which streamed applications get deployed, and more. If something goes wrong in the continuous deployment pipeline and a specific job fails, it is possible to manually trigger a specific job of the `fractal-publish-build.yml` workflow via the GitHub Actions console.
 
-View a log of only the commits affecting a given file or subdirectory: `git log -- <path>`
+As of writing, these YAML workflows only deploy our `master` branch, which is our production code. We are working on integrating continuous deployment for `staging` and `dev` branches, so that we can have a true continuous deployment pipeline. To understand how these branches interact together when it comes to releases, check our [Release Schedule](https://www.notion.so/tryfractal/Release-Schedule-c29cbe11c5f94cedb9c01aaa6d0d1ca4).
 
-### An example of bad commit history
+## Styling
 
-This has been copied from the commit history of a fractal repo. Names have been removed, since I don't want to point fingers, only exhibit a phenomenon caused by allowing merge commits into feature branches.
+Each subfolder in this monorepository is its own project with its dedicated style, which you must follow. All work done on this monorepository must follow the [Documentation & Code Standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597) and the [Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
 
-There's exactly two "useful" commits in the mess below. The rest are merge commits from `dev` into a feature branch, which should be avoided.
+# ===
+
+## Appendix
+
+### Useful Monorepo git Tricks
+
+- Viewing a log of only the commits affecting a given file or subdirectory: `git log -- <path>`
+
+### Example of Bad Commit History
+
+This is an example of a bad commit history, which exhibits a phenomenon caused by allowing merge commits into feature branches. There's exactly two "useful" commits in the mess below. The rest are merge commits from `dev` into a feature branch, which should be avoided.
 
 [Back to Text](#while-on-feature-branches-git-rebase-dev-is-your-friend-git-merge-dev-is-not)
 
 ```
-| | | | | | | * | | |   552bfc74 - Merge branch 'dev' into feature_branch (6 weeks ago) <developer1>
-| | | | | | | |\ \ \ \
-| | | | | | | |/ / / /
-| | | | | | |/| | | |
-| | | | | | | * | | |   b5eedf0a - Merge branch 'dev' into feature_branch (6 weeks ago) <developer1>
-| | | | | | | |\ \ \ \
-| | | | | | |_|/ / / /
-| | | | | |/| | | | |
-| | | | | | | * | | |   2d88b181 - Merge branch 'dev' into feature_branch (7 weeks ago) <developer1>
-| | | | | | | |\ \ \ \
-| | | | | |_|_|/ / / /
 | | | | |/| | | | | |
 | | | | | | | * | | |   8bd2acce - Merge branch 'dev' into feature_branch (8 weeks ago) <developer2>
 | | | | | | | |\ \ \ \
@@ -178,7 +188,7 @@ There's exactly two "useful" commits in the mess below. The rest are merge commi
 | | | | | | | | |/| |
 | | | | | | | * | | |   ee0961e5 - Merge branch 'dev' into feature_branch (8 weeks ago) <developer1>
 | | | | | | | |\ \ \ \
-| | | | | | | * \ \ \ \   c4301083 - Merge branch 'dev' into feature_branch (8 weeks ago) <developer1>
+| | | | | | | * \ \ \ \   c4301083 - Merge branch 'dev' into feature_branch (8 weeks ago) <developer2>
 | | | | | | | |\ \ \ \ \
 | | | | | | | * \ \ \ \ \   4c521824 - Merge branch 'dev' into feature_branch (10 weeks ago) <developer1>
 | | | | | | | |\ \ \ \ \ \
@@ -187,7 +197,7 @@ There's exactly two "useful" commits in the mess below. The rest are merge commi
 | | | | | | | * | | | | | | | 34ca8f9b - clang format (10 weeks ago) <developer1>
 | | | | | | | * | | | | | | |   6e1501d6 - Merge branch 'dev' into feature_branch (10 weeks ago) <developer1>
 | | | | | | | |\ \ \ \ \ \ \ \
-| | | | | | | * \ \ \ \ \ \ \ \   1fc9f76e - Merge branch 'dev' into feature_branch (10 weeks ago) <developer1>
+| | | | | | | * \ \ \ \ \ \ \ \   1fc9f76e - Merge branch 'dev' into feature_branch (10 weeks ago) <developer2>
 | | | | | | | |\ \ \ \ \ \ \ \ \
 | | | | | | | * \ \ \ \ \ \ \ \ \   d3fabb5e - Merge branch 'dev' into feature_branch (2 months ago) <developer1>
 | | | | | | | |\ \ \ \ \ \ \ \ \ \

@@ -5,18 +5,17 @@
 
 # The '*' pattern is global owners.
 # Global rule:
-*                       @rpadaki @djsavvy @philippemnoel @fractal/code-standard-reviewers
+*                       @fractal/code-standard-reviewers @rpadaki @philippemnoel @djsavvy
 
 # Order is important. The last matching pattern has the most precedence.
 # The folders are ordered as follows:
 
 /client-applications/   @fractal/code-standard-reviewers @mingy98 @npip99 @philippemnoel
 /container-images/      @fractal/code-standard-reviewers @djsavvy @rpadaki @philippemnoel
-/ecs-host-service/      @fractal/code-standard-reviewers @djsavvy @rpadaki
-/ecs-host-setup/        @fractal/code-standard-reviewers @rpadaki @djsavvy
-/ecs-task-definitions/  @fractal/code-standard-reviewers @rpadaki @FishmanL
-/log-analysis/          @fractal/code-standard-reviewers @rpadaki @philippemnoel
-/main-webserver/        @fractal/code-standard-reviewers @FishmanL @owenniles
+/ecs-host-service/      @fractal/code-standard-reviewers @djsavvy @sardination @rpadaki
+/ecs-host-setup/        @fractal/code-standard-reviewers @rpadaki @djsavvy @philippemnoel
+/ecs-task-definitions/  @fractal/code-standard-reviewers @rpadaki @FishmanL @philippemnoel
+/main-webserver/        @fractal/code-standard-reviewers @FishmanL @owenniles @jmather625
 /protocol/              @fractal/code-standard-reviewers @npip99 @rpadaki @sardination
 
 # In each subsection folders are ordered first by depth, then alphabetically.

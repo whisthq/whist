@@ -1,6 +1,6 @@
 import { createLogger, format, transports, config } from "winston"
 import { FractalNodeEnvironment } from "shared/types/config"
-import { Logger } from "shared/types/logs"
+import Logzio from "winston-logzio"
 
 const { combine, timestamp, json } = format
 
@@ -17,15 +17,18 @@ export const debugLog = <T>(callback: T) => {
 }
 
 export class FractalLogger {
-    logger: any
+    fileName = "logs/renderer.log"
 
     maxFileSize = 10000000
+
+    token = "IroqVsvNytmNricZSTLUSVtJbxNYBgxp"
+
     /*
         Description:
             Uses the winston logging module to log to console, local .log file, and DataDog
 
         Usage:
-            const logger = new FractalLogger(AvailableLoggers.LOADING)
+            const logger = new FractalLogger()
             logger.logInfo("Example info log")
             logger.logError("Example error log")
 
@@ -38,22 +41,18 @@ export class FractalLogger {
                 will also log to DataDog.
     */
 
-    constructor(logger: Logger) {
-        // Credentials for Datadog logs
-        const Logzio = require("winston-logzio")
-
+    private createLogger = () => {
         // Where to send the logs
         const transport = [
             new transports.Console(),
             new transports.File({
-                filename: logger.fileName,
+                filename: this.fileName,
                 maxsize: this.maxFileSize,
             }),
         ]
 
-        this.logger = createLogger({
+        const logger = createLogger({
             levels: config.syslog.levels,
-            defaultMeta: { component: logger.componentName },
             format: combine(
                 timestamp({
                     format: "YYYY-MM-DD HH:mm:ss",
@@ -65,12 +64,14 @@ export class FractalLogger {
         })
 
         if (process.env.NODE_ENV === FractalNodeEnvironment.PRODUCTION) {
-            this.logger.add(
+            logger.add(
                 new Logzio({
-                    token: "IroqVsvNytmNricZSTLUSVtJbxNYBgxp",
+                    token: this.token,
                 })
             )
         }
+
+        return logger
     }
 
     private formatuserID = (userID: string) => {
@@ -81,11 +82,25 @@ export class FractalLogger {
         return userID
     }
 
-    logInfo = (logs: string, userID = "") => {
-        this.logger.info(`${this.formatuserID(userID)} | ${logs}`)
+    logInfo = (logs: string, userID = "", callback?: () => void) => {
+        const logger = this.createLogger()
+        logger.info(`${this.formatuserID(userID)} | ${logs}`)
+        logger.end()
+        if (callback) {
+            logger.on("finish", () => {
+                callback()
+            })
+        }
     }
 
-    logError = (logs: string, userID = "") => {
-        this.logger.error(`${this.formatuserID(userID)} | ${logs}`)
+    logError = (logs: string, userID = "", callback?: () => void) => {
+        const logger = this.createLogger()
+        logger.error(`${this.formatuserID(userID)} | ${logs}`)
+        logger.end()
+        if (callback) {
+            logger.on("finish", () => {
+                callback()
+            })
+        }
     }
 }

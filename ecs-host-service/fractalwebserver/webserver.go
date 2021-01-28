@@ -9,12 +9,13 @@ import (
 	"time"
 
 	// We use this package instead of the standard library log so that we never
-	// forget to send a message via sentry.  For the same reason, we make sure
+	// forget to send a message via Sentry. For the same reason, we make sure
 	// not to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
+// Fractal webserver URLs and relevant webserver endpoints
 const devHost = "https://dev-server.fractal.co"
 const stagingHost = "https://staging-server.fractal.co"
 const productionHost = "https://prod-server.fractal.co"
@@ -27,24 +28,30 @@ const heartbeatEndpoint = "/host_service/heartbeat"
 // well).
 var webserverHost = getWebserverHost()
 
+// We define custom types to easily interact with the relevant webserver endpoints
+
+// We send the webserver the webserver the host instance ID when handshaking
 type handshakeRequest struct {
 	InstanceID string
 }
 
+// We receive an auth token from the webserver if handshaking succeeded, which is 
+// necessary for communicating with it thereafter
 type handshakeResponse struct {
 	AuthToken string
 }
 
+// We periodically send heartbeats to the webserver to notify it of this EC2 host's state
 type heartbeatRequest struct {
-	AuthToken        string
-	Timestamp        string
-	HeartbeatNumber  uint64
-	InstanceID       string
-	InstanceType     string
-	TotalRAMinKB     string
-	FreeRAMinKB      string
-	AvailRAMinKB     string
-	IsDyingHeartbeat bool
+	AuthToken        string 	// Handshake-response auth token to authenticate with webserver
+	Timestamp        string 	// Current timestamp
+	HeartbeatNumber  uint64 	// Index of heartbeat since host service started
+	InstanceID       string 	// EC2 instance ID
+	InstanceType     string 	// EC2 instance type
+	TotalRAMinKB     string 	// Total amount of RAM on the host, in kilobytes
+	FreeRAMinKB      string 	// Lower bound on RAM available on the host (not consumed by running containers), in kilobytes 
+	AvailRAMinKB     string 	// Upper bound on RAM available on the host (not consumed by running containers), in kilobytes
+	IsDyingHeartbeat bool   	// Whether this 
 }
 
 var authToken string
@@ -54,7 +61,7 @@ var httpClient = http.Client{
 }
 
 // Get the appropriate webserverHost based on whether we're running in
-// production or development
+// production, staging or development
 func getWebserverHost() string {
 	switch logger.GetAppEnvironment() {
 	case logger.EnvStaging:
@@ -105,7 +112,7 @@ func SendGracefulShutdownNotice() {
 // Talk to the auth endpoint for the host service startup (to authenticate all
 // future requests). We currently send the EC2 instance ID in the request as a
 // (weak) layer of defense against unauthenticated/spoofed handshakes. We
-// expect back a JSON response containing a field called "AuthToken"
+// expect back a JSON response containing a field called "AuthToken".
 func handshake() (handshakeResponse, error) {
 	var resp handshakeResponse
 

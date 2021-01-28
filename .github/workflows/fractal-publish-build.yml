@@ -17,17 +17,27 @@ on:
             - "**/README.md"
             - ".github/workflows/README.md"
     workflow_dispatch:
+        inputs:
+            job-name:
+                description: "Name of the job to trigger, or 'all' to trigger all jobs."
+                required: true
+                default: "None" # Avoid accidental mistakes by making the default not run any jobs
+            publish:
+                description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing"
+                required: true
+                default: false # Avoid accidental mistakes by making the default not publish
 
 jobs:
     # Configure Jobs
     # Detect the branch using regex matching and store as an output to regulate downstream actions.
     # Access branch with `fractal-publish-build-config.outputs.branch`.
-
     fractal-publish-build-config:
         name: "Configure Jobs"
         runs-on: ubuntu-20.04
         outputs:
             branch: ${{ steps.detect-branch.outputs.branch }}
+            job: ${{ steps.detect-job.outputs.job }}
+            publishing: ${{ steps.detect-publishing.outputs.publishing }}
         steps:
             - name: Detect Branch
               id: detect-branch
@@ -46,58 +56,94 @@ jobs:
                   echo "branch is $BRANCH_NAME"
                   echo "::set-output name=branch::$BRANCH_NAME"
 
+            - name: Detect Job(s)
+              id: detect-job
+              run: |
+                  # first, check whether we're running from a push or from a workflow_dispatch
+                  if [[ ${{ github.event_name }} == 'push' ]]; then
+                    # running from push
+                    JOB_NAME=all
+                  else
+                    # running workflow_dispatch, select which job(s) to run (by deisgn, either one specific job or all of them)
+                    if [[ ${{ github.event.inputs.job-name }} == 'all' ]]; then
+                      JOB_NAME=all
+                    elif [[ ${{ github.event.inputs.job-name }} == 'container-images-publish-images-ghcr' ]]; then
+                      JOB_NAME=container-images-publish-images-ghcr
+                    elif [[ ${{ github.event.inputs.job-name }} == 'ecs-task-definitions-deploy-task-definitions-ecs' ]]; then
+                      JOB_NAME=ecs-task-definitions-deploy-task-definitions-ecs
+                    elif [[ ${{ github.event.inputs.job-name }} == 'ecs-host-service-publish-build-s3' ]]; then
+                      JOB_NAME=ecs-host-service-publish-build-s3
+                    elif [[ ${{ github.event.inputs.job-name }} == 'main-webserver-deploy-heroku' ]]; then
+                      JOB_NAME=main-webserver-deploy-heroku
+                    fi
+                  fi
+
+                  echo "job is $JOB_NAME"
+                  echo "::set-output name=job::$JOB_NAME"
+
+            - name: Detect Whether to Publish the Job(s) or Not
+              id: detect-publish
+              run: |
+                  if [[ ${{ github.event.inputs.publish }} == 'true' ]]; then
+                    PUBLISHING=true
+                  else
+                    PUBLISHING=false
+                  fi
+
+                  echo "publishing is $PUBLISHING"
+                  echo "::set-output name=publishing::$PUBLISHING"
+
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
     # Runs if config succeeds and branch is in ["master"].
-
     container-images-publish-images-ghcr:
         name: "Container Images: Build & Publish Images to GitHub Container Registry"
         runs-on: ubuntu-20.04
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
         needs: [fractal-publish-build-config]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
-
+        if: >
+            contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
+            contains(fromJSON('["all", "container-images-publish-images-ghcr"]'), needs.fractal-publish-build-config.outputs.job)
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  submodules: recursive
 
             - name: Configure AWS CLI # To get and install GRID driver
-              # TODO: we can get rid of the ECR permissions and rename this secret
               uses: aws-actions/configure-aws-credentials@v1
               with:
-                  aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
             - name: Walk repo to find all dockerfiles and store path as env variable
               run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
             - name: Build release protocol # No need to run this for debug, just for release
-              run: ./protocol/build_protocol.sh release
+              working-directory: protocol
+              run: ./build_protocol.sh release
 
             - name: Build container images
+              working-directory: container-images
               run: |
                   for app in ${{ env.apps }}
                   do
-                    ./container-images/build_container_image.sh $app
+                    ./build_container_image.sh $app
                   done
 
             - name: Push container images
+              working-directory: container-images
+              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
               run: |
                   for app in ${{ env.apps }}
                   do
-                    ./container-images/push_container_image.sh $app
+                    ./push_container_image.sh $app
                   done
               env:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
                   GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
-            - name: Package app names into json for ecs-task-definitions strategy matrices
+            - name: Package app names into JSON for ecs-task-definitions strategy matrices
               id: package-matrix
               run: |
                   apps_json='[]'
@@ -118,13 +164,14 @@ jobs:
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
     # Render and deploy the app task definitions to ECS.
     # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds.
-
     ecs-task-definitions-deploy-task-definitions-ecs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
+        if: >
+            contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
+            contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
 
         strategy:
             matrix:
@@ -137,11 +184,10 @@ jobs:
                     - ca-central-1
                     - eu-west-1
                     - eu-central-1
+
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -150,10 +196,10 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ matrix.aws-region }}
 
-            # TODO: this can be done way more elegantly, now that it's a monorepo
             - name: Retrieve master git hash as env variable
-              run: echo "containers_gha_sha=$(git ls-remote https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/fractal --refs --heads master | head -1 | awk '{print $1;}')" >> $GITHUB_ENV
-            - name: Store GitHub container registry base uri as env variable
+              run: echo "containers_gha_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+            - name: Store GitHub Container Registry base URI as env variable
               run: echo "ghcr_base_uri=ghcr.io" >> $GITHUB_ENV
 
             - name: Store taskdef name as env variable
@@ -174,6 +220,7 @@ jobs:
                   image: ${{ env.ghcr_base_uri }}/fractal/${{ matrix.app }}:${{ env.containers_gha_sha }}
 
             - name: Deploy to Amazon ECS service
+              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                   task-definition: ${{ steps.render-web-container.outputs.task-definition }}
@@ -181,11 +228,12 @@ jobs:
     # ECS Task Definitions: Notify Slack
     # Notify Slack after rendering and deploying all the task definitions.
     # Runs if deploy-task-definitions-ecs succeeds.
-
     ecs-task-definitions-notify-slack:
         name: "ECS Task Definitions: Notify Slack"
         needs: [ecs-task-definitions-deploy-task-definitions-ecs]
-        if: success()
+        if: >
+            success() &&
+            contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
         runs-on: ubuntu-20.04
         steps:
             - name: Notify Slack
@@ -197,25 +245,23 @@ jobs:
     # ECS Host Service: Build & Publish to AWS S3
     # Build and publish the ECS host service to an S3 bucket from which EC2 hosts pull.
     # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds.
-
     ecs-host-service-publish-build-s3:
         name: "ECS Host Service: Build & Publish to AWS S3"
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
+        if: >
+            contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
+            contains(fromJSON('["all", "ecs-host-service-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
         env:
             binary-location: ecs-host-service/build
             binary-name: ecs-host-service
-            s3-bucket-region: us-east-1 # eventually, we should replicate s3 per region
+            s3-bucket-region: us-east-1
             s3-bucket-uri: s3://fractal-ecs-host-service
 
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
             - name: Setup Go environment
               uses: actions/setup-go@v2.1.3
@@ -228,16 +274,19 @@ jobs:
                   aws-region: ${{ env.s3-bucket-region }}
 
             - name: Install Go dependencies
-              run: cd ecs-host-service && make deps
+              working-directory: ecs-host-service
+              run: make deps
 
             - name: Build Go project
               env:
                   WEBSERVER_AUTH_SECRET_DEV: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_DEV }}
                   WEBSERVER_AUTH_SECRET_STAGING: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_STAGING }}
                   WEBSERVER_AUTH_SECRET_PROD: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_PROD }}
-              run: cd ecs-host-service && make build
+              working-directory: ecs-host-service
+              run: make build
 
             - name: Upload binary to S3
+              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
               run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
 
             - name: Notify Slack
@@ -249,37 +298,32 @@ jobs:
     # Main Webserver: Deploy to Heroku
     # Push the main-webserver subtree to the appropriate Heroku app.
     # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds, or unconditionally if branch is in ["dev"] (since other workflows won't run then)
-
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
+        runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: |
+        if: >
             (
+              (
                 contains(
-                    fromJSON('["master"]'),
-                    needs.fractal-publish-build-config.outputs.branch
+                  fromJSON('["master"]'),
+                  needs.fractal-publish-build-config.outputs.branch
                 ) && success()
-            ) ||
-            (
+              ) ||
+              (
                 contains(
-                    fromJSON('["staging"]'),
-                    needs.fractal-publish-build-config.outputs.branch
+                  fromJSON('["staging", "dev"]'),
+                  needs.fractal-publish-build-config.outputs.branch
                 ) && always()
-            ) ||
-            (
-                contains(
-                    fromJSON('["dev"]'),
-                    needs.fractal-publish-build-config.outputs.branch
-                ) && always()
-            )
-        runs-on: ubuntu-20.04
+              )
+            ) && contains(fromJSON('["all"], ["main-webserver-deploy-heroku"]'), needs.fractal-publish-build-config.outputs.job)
+
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+                  fetch-depth: 0 # need to get full history for splitsh-lite
 
             - name: Authenticate Heroku
               run: |
@@ -320,8 +364,8 @@ jobs:
                   git checkout workflows-private/main-webserver
 
             - name: Push to Heroku remote, deploying the app # force push is only necessary for the transition period, then should be removed
-              run: |
-                  git push -f heroku-fractal-server workflows-private/main-webserver:master
+              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
+              run: git push -f heroku-fractal-server workflows-private/main-webserver:master
 
             - name: Notify Slack
               run: |

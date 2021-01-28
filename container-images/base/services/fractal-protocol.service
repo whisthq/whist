@@ -1,5 +1,5 @@
 [Unit]
-Description=Fractal Service
+Description=Starts the Fractal Protocol Server with the right environment variables and NVIDIA display, runs as root
 After=fractal-display.service fractal-audio.service
 Requires=fractal-display.service fractal-audio.service
 

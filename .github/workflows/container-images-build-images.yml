@@ -1,7 +1,7 @@
 # workflows/container-images-build-images.yml
 #
 # Container Images: Build Images
-# Build docker images to test that they actually build.
+# Build Docker container images to test that they actually build.
 
 name: "Container Images: Build Images"
 
@@ -31,10 +31,6 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  submodules: recursive
 
             - name: Configure AWS CLI # To get and install GRID driver
               uses: aws-actions/configure-aws-credentials@v1
@@ -43,10 +39,10 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Walk repo to find all dockerfiles and store path as env variable
+            - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
               run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
-            - name: Build container images
+            - name: Build Container Images
               run: |
                   for app in ${{ env.apps }}
                   do
