@@ -61,6 +61,9 @@ double test_time;
 SDL_mutex* audio_mutex;
 
 void reinit_audio() {
+    /*
+        Hold the mutex, destroy the audio, and then recreate it
+    */
     LOG_INFO("Re-init'ing Audio!");
     safe_SDL_LockMutex(audio_mutex);
     destroy_audio();
@@ -75,6 +78,10 @@ int multithreaded_reinit_audio(void* opaque) {
 }
 
 void init_audio() {
+    /*
+        Initialize the audio device
+        NOTE: Does not hold audio mutex! Must be held prior to calling this function!
+    */
     if (!audio_mutex) {
         audio_mutex = safe_SDL_CreateMutex();
     }
@@ -96,33 +103,47 @@ void init_audio() {
     audio_data.dev =
         SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &audio_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (audio_data.dev == 0) {
-        LOG_FATAL("Failed to open audio: %s", SDL_GetError());
-    }
-
-    SDL_PauseAudioDevice(audio_data.dev, 0);
-
-    for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
-        receiving_audio[i].id = -1;
-        receiving_audio[i].nacked_amount = 0;
-        receiving_audio[i].nacked_for = -1;
+        LOG_ERROR("Failed to open audio: %s", SDL_GetError());
+    } else {
+        SDL_PauseAudioDevice(audio_data.dev, 0);
+        for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
+            receiving_audio[i].id = -1;
+            receiving_audio[i].nacked_amount = 0;
+            receiving_audio[i].nacked_for = -1;
+        }
     }
 }
 
 void destroy_audio() {
-    SDL_CloseAudioDevice(audio_data.dev);
+    /*
+        Destroys the audio device
+        NOTE: Does not hold audio mutex! Must be held prior to calling this function!
+    */
+    if (audio_data.dev) {
+        SDL_CloseAudioDevice(audio_data.dev);
+        audio_data.dev = 0;
+    }
     if (audio_data.audio_decoder) {
         destroy_audio_decoder(audio_data.audio_decoder);
     }
-    audio_data.dev = 0;
 }
 
 void update_audio() {
+    /*
+        This function will create or reinit the audio device if needed,
+        and it will play any queued audio packets.
+        This function will hold the audio mutex.
+    */
     if (!audio_mutex) {
         LOG_FATAL("Mutex or audio is not initialized yet!");
     }
     int status = SDL_TryLockMutex(audio_mutex);
-    if (!audio_data.dev || status != 0) {
+    if (status != 0) {
         LOG_INFO("Couldn't lock mutex in updateAudio!");
+        return;
+    }
+    if (!audio_data.dev) {
+        // No Audio Device found
         return;
     }
 #if LOG_AUDIO
@@ -305,6 +326,18 @@ void update_audio() {
 }
 
 int32_t receive_audio(FractalPacket* packet) {
+    /*
+        This function will store an audio packet in its internal buffer, to be played on later
+        calls to update_audio. A buffer is needed so that the audio comes out smoothly. We delay the
+        audio by about 30ms to ensure that the buffer is never empty while we call update_audio. If
+        the buffer is empty, the speakers will make a "pop" noise.
+
+        Arguments:
+            packet (FractalPacket*): FractalPacket wrapped audio data.
+
+        Return:
+            ret (int): 0 on success, -1 on failure
+    */
     if (packet->index >= MAX_NUM_AUDIO_INDICES) {
         LOG_WARNING("Packet Index too large!");
         return -1;
