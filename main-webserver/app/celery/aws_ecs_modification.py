@@ -57,9 +57,6 @@ def update_region(self, region_name="us-east-1", ami=None):
     :param region_name (str): which region the cluster is in
     :param ami (str): which AMI to use
     :return: which cluster was updated
-
-    TODO: update RegionToAmi to use new AMI. We probably want a local testing
-    db first.
     """
     self.update_state(
         state="PENDING",

@@ -182,12 +182,7 @@ def test_update_cluster():
         region_name="us-east-1",
         cluster_name=pytest.cluster_name,
         ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
-    )
-    # poll for 30 sec
-    for _ in range(30):
-        if task.ready():
-            break
-        time.sleep(1)
+    ).get(timeout=30)
 
     assert task.ready()
     assert task.status == "SUCCESS"
