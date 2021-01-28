@@ -160,7 +160,8 @@ jobs:
     ecs-task-definitions-deploy-task-definitions-ecs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config, container-images-publish-images-ghcr]
+        needs:
+            [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: >
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
@@ -240,7 +241,8 @@ jobs:
     ecs-host-service-publish-build-s3:
         name: "ECS Host Service: Build & Publish to AWS S3"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config, container-images-publish-images-ghcr]
+        needs:
+            [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: >
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "ecs-host-service-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
@@ -292,7 +294,8 @@ jobs:
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config, container-images-publish-images-ghcr]
+        needs:
+            [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: >
             (
               (
