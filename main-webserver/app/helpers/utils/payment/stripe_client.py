@@ -175,6 +175,21 @@ class StripeClient:
                 raise e
         return True
 
+    def get_subscriptions(self, stripe_customer_id):
+        """Gets all active subscriptions associated with a customer ID
+
+        Args:
+            stripe_customer_id (str): The customer id string of the stripe customer, might be none.
+
+        Returns:
+            List of subscriptions tied to the customer
+        """
+        if not stripe_customer_id:
+            return []
+
+        subscriptions = stripe.Subscription.list(customer=stripe_customer_id)
+        return subscriptions["data"]
+
     def get_products(self, product_names=["Fractal"], limit=20):
         """Fetch the product ids of various products.
 

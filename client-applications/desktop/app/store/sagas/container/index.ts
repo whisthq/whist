@@ -15,6 +15,10 @@ import { setAWSRegion } from "shared/utils/files/aws"
 import { findDPI } from "shared/utils/general/dpi"
 import { allowedRegions } from "shared/types/aws"
 import { FractalLogger } from "shared/utils/general/logging"
+import { FractalHTTPCode } from "shared/types/api"
+import {
+    DEFAULT as ContainerDefault,
+} from "store/reducers/container/default"
 
 function* createContainer() {
     /*
@@ -45,7 +49,7 @@ function* createContainer() {
     const dpi = findDPI()
 
     // Send container assign request
-    const { json, success } = yield call(
+    const { json, success, response } = yield call(
         apiPost,
         FractalAPI.CONTAINER.ASSIGN,
         {
@@ -61,9 +65,14 @@ function* createContainer() {
     if (success && json.ID) {
         yield put(updateTask({ taskID: json.ID }))
     } else {
-        yield put(updateTask({ running: false }))
-        yield put(updateUser(deepCopyObject(DEFAULT.user)))
-        history.push(FractalRoute.LOGIN)
+        yield put(updateTask(ContainerDefault.task))
+                
+        if(response.status === FractalHTTPCode.PAYMENT_REQUIRED) {
+            history.push(FractalRoute.PAYMENT)
+        } else {
+            yield put(updateUser(deepCopyObject(DEFAULT.user)))
+            history.push(FractalRoute.LOGIN)
+        }
     }
 }
 

@@ -117,8 +117,8 @@ def admin_required(func):
                 jsonify(
                     {
                         "error": (
-                            "Authorization failed. Provided username does not match the username "
-                            "associated with the provided Bearer token."
+                            "Authorization failed. Provided username does not match"
+                            "the username associated with the provided Bearer token."
                         ),
                     }
                 ),
@@ -204,11 +204,19 @@ def payment_required(func):
             days_since_account_created = (
                 time_diff / SECONDS_IN_MINUTE / MINUTES_IN_HOUR / HOURS_IN_DAY
             )
+            subscriptions = (
+                []
+                if not stripe_customer_id
+                else stripe_client.get_subscriptions(stripe_customer_id)
+            )
 
-            if days_since_account_created >= 7 and (
-                (stripe_customer_id is None)
-                or (not stripe_client.validate_customer_id(stripe_customer_id, user))
-            ):
+            fractal_log(
+                function="payment_required",
+                label=current_user,
+                logs=f"Created {days_since_account_created} days ago, stripe {stripe_customer_id}",
+            )
+
+            if days_since_account_created >= 7 and (not stripe_customer_id or not subscriptions):
                 return (
                     jsonify(
                         {

@@ -21,7 +21,6 @@ class User(db.Model):
     using_google_login = db.Column(db.Boolean, default=text("false"))
     verified = db.Column(db.Boolean, default=text("false"))
     using_facebook_login = db.Column(db.Boolean, default=text("false"))
-    can_login = db.Column(db.Boolean, default=text("false"))
 
     # Setting passive_deletes causes SQLAlchemy to defer to the database to
     # handle, e.g., cascade deletes. Setting the value to "all" may work as

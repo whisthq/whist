@@ -23,7 +23,7 @@ if "%1%" == "--help" (
     cd ..\..\protocol
     cmake . -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles"
     nmake FractalClient
-    cd ..\client-applications\desktop
+    cd ..\client-applications\browser
     rmdir /S/Q protocol-build
     mkdir protocol-build
     cd protocol-build

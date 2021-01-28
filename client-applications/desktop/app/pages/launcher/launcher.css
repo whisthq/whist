@@ -1,4 +1,4 @@
-@import '~app.global.css';
+@import "~app.global.css";
 
 .launcherWrapper {
     width: 100vw;
@@ -26,14 +26,15 @@
     background: var(--accent-color);
     color: black;
     border-radius: 2px;
-    font-weight: bold;
-    padding: 9px 50px;
+    padding: 12px 50px;
     text-transform: uppercase;
     letter-spacing: 1.6px;
+    cursor: pointer;
+    transition-duration: 0.5s;
 }
 
 .greenButton:hover {
-    border: solid 1px white;
-    background: rgba(255, 255, 255, 0.2);
+    border: solid 1px var(--primary-color);
+    background: var(--primary-color);
     color: white;
 }

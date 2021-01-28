@@ -62,7 +62,7 @@ export const apiPost = async (
         webserver (string) : HTTP URL (e.g. https://prod-server.fractal.co)
 
     Returns:
-        { json, success } (JSON) : Returned JSON of POST request and success True/False
+        { json, success, response } (JSON) : Returned JSON of POST request, success True/False, and HTTP response
     */
     if (webserver) {
         const webserverUrl =
@@ -83,13 +83,13 @@ export const apiPost = async (
             )
             const json = await response.json()
             const success = checkJSON(json) && checkResponse(response)
-            return { json, success }
+            return { json, success, response }
         } catch (err) {
             debugLog(err)
             return err
         }
     } else {
-        return { json: null, success: false }
+        return { json: null, success: false, response: null }
     }
 }
 
