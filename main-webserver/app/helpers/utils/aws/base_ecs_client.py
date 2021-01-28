@@ -184,7 +184,6 @@ class ECSClient:
         self.set_cluster(cluster_name)
         return cluster_name
 
-
     def set_cluster(self, cluster_name=None):
         """Set the task's compute cluster.
 
@@ -221,7 +220,6 @@ class ECSClient:
                 break
         return clusters
 
-
     def describe_cluster(self, cluster: str) -> Dict:
         """
         Gets the raw JSON (as dict) description of a cluster.
@@ -232,7 +230,6 @@ class ECSClient:
         TODO: decide if cluster needs to be passed as an arg or stored by class
         """
         return self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0]
-
 
     def get_auto_scaling_groups_in_cluster(self, cluster: str) -> List[str]:
         """
@@ -253,7 +250,6 @@ class ECSClient:
         )
         return auto_scaling_groups
 
-
     def set_auto_scaling_group_capacity(self, asg_name: str, desired_capacity: int):
         """
         Set the desired capacity (number of instances) of an ASG
@@ -267,7 +263,6 @@ class ECSClient:
             DesiredCapacity=desired_capacity,
             HonorCooldown=False,
         )
-
 
     def describe_auto_scaling_groups_in_cluster(self, cluster):
         """
@@ -292,7 +287,6 @@ class ECSClient:
             AutoScalingGroupNames=auto_scaling_groups
         )["AutoScalingGroups"]
 
-
     def list_container_instances(self, cluster: str) -> List[str]:
         """
         Args:
@@ -306,10 +300,11 @@ class ECSClient:
         )
         key = "containerInstanceArns"
         if key not in resp:
-            raise ValueError(f"""Unexpected AWS API response to list_container_instances. 
-                                Expected key {key}. Got: {resp}.""")
+            raise ValueError(
+                f"""Unexpected AWS API response to list_container_instances. 
+                                Expected key {key}. Got: {resp}."""
+            )
         return resp[key]
-
 
     def describe_container_instances(self, cluster: str, container_arns: List[str]) -> List[Dict]:
         """
@@ -326,10 +321,11 @@ class ECSClient:
         )
         key = "containerInstances"
         if key not in resp:
-            raise ValueError(f"""Unexpected AWS API response to describe_container_instances. 
-                                Expected key {key}. Got: {resp}.""")
+            raise ValueError(
+                f"""Unexpected AWS API response to describe_container_instances. 
+                                Expected key {key}. Got: {resp}."""
+            )
         return resp[key]
-
 
     def get_container_instance_ips(self, cluster, containers):
         """

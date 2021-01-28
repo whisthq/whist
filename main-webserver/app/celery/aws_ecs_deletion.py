@@ -23,9 +23,7 @@ from app.helpers.utils.datadog.events import (
     datadogEvent_clusterDelete,
 )
 
-from app.celery.aws_ecs_modification import (
-    manual_scale_cluster
-)
+from app.celery.aws_ecs_modification import manual_scale_cluster
 
 
 @shared_task(bind=True)

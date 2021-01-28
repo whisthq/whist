@@ -166,12 +166,14 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     ]
     for k in keys:
         if k not in cluster_data:
-            raise ValueError(f"""Expected key {k} in AWS describle_cluster API response. 
-                            Got: {cluster_data}""")
-            
+            raise ValueError(
+                f"""Expected key {k} in AWS describle_cluster API response. 
+                            Got: {cluster_data}"""
+            )
+
     num_tasks = cluster_data["runningTasksCount"] + cluster_data["pendingTasksCount"]
     num_instances = cluster_data["registeredContainerInstancesCount"]
-    expected_num_instances = math.ceil(num_tasks/factor)
+    expected_num_instances = math.ceil(num_tasks / factor)
 
     if expected_num_instances == num_instances:
         self.update_state(
@@ -188,14 +190,18 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         # there could be a slight race condition here where an instance is spun-up
         # between the describe_cluster, list_container_instances, describe_container_instances
         # should we just not error check?
-        raise ValueError(f"""Got {len(instances)} from list_container_instances and 
-                            {len(instances)} from describe_container_instances""")
+        raise ValueError(
+            f"""Got {len(instances)} from list_container_instances and 
+                            {len(instances)} from describe_container_instances"""
+        )
 
     empty_instances = 0
     for instance_task_data in instances_tasks:
         if "runningTasksCount" not in instance_task_data:
-            raise ValueError(f"""Expected key {k} in AWS describe_container_instances 
-                            API response: {instance_task_data}""")
+            raise ValueError(
+                f"""Expected key {k} in AWS describe_container_instances 
+                            API response: {instance_task_data}"""
+            )
         num_tasks = instance_task_data["runningTasksCount"]
         if num_tasks == 0:
             empty_instances += 1
@@ -225,7 +231,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
         if len(asg_list) != 1:
             raise ValueError(f"Expected 1 ASG but got {len(asg_list)} for cluster {cluster}")
-        
+
         asg = asg_list[0]
         # keep whichever instances are not empty
         ecs_client.set_auto_scaling_group_capacity(asg, num_instances - empty_instances)
@@ -236,4 +242,3 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
                 "msg": f"Scaled cluster {cluster} from {num_instances} to {num_instances - empty_instances}.",
             },
         )
-    
