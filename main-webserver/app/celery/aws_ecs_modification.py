@@ -137,10 +137,9 @@ def update_region(self, region_name="us-east-1", ami=None):
 def manual_scale_cluster(self, cluster: str, region_name: str):
     """
     Manually scales the cluster according the the following logic:
-        - if num_tasks < AWS_TASKS_PER_INSTANCE * num_instances, set capacity to x such that
-        AWS_TASKS_PER_INSTANCE * x < num_tasks < AWS_TASKS_PER_INSTANCE * (x + 1)
+        - see if active_tasks + pending_tasks > num_instances * AWS_TASKS_PER_INSTANCE
+        - see if there are instances with 0 tasks
 
-    FACTOR is hard-coded to 10 at the moment.
     This function does not handle outscaling at the moment.
     This function can be expanded to handle more custom scaling logic as we grow.
 
@@ -186,14 +185,6 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     # now we check if there are actually empty instances
     instances = ecs_client.list_container_instances(cluster)
     instances_tasks = ecs_client.describe_container_instances(cluster, instances)
-    if num_instances != len(instances_tasks) != len(instances):
-        # there could be a slight race condition here where an instance is spun-up
-        # between the describe_cluster, list_container_instances, describe_container_instances
-        # should we just not error check?
-        raise ValueError(
-            f"""Got {len(instances)} from list_container_instances and 
-                            {len(instances)} from describe_container_instances"""
-        )
 
     empty_instances = 0
     for instance_task_data in instances_tasks:
