@@ -84,7 +84,7 @@ jobs:
                   | jq -c ".builders[0].subnet_id = \"${{ env.aws_new_ami_subnet_id }}\""
                   | jq -c ".builders[0].vpc_id = \"${{ env.aws_new_ami_vpc_id }}\""
                   | jq -c ".builders[0].source_ami = \"${{ env.aws_source_ami_id }}\""
-                  | jq -c ".builders[0].ami_regions = \"${{ env.aws_additional_supported_regions }}\""
+                  | jq -c ".builders[0].ami_regions = ${{ env.aws_additional_supported_regions }}"
                   > ami_config_tmp.json
                   && mv ami_config_tmp.json ami_config.json
 
