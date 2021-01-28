@@ -112,6 +112,9 @@ jobs:
                     # retrieve new AMI ID for aws_region, from the new AMI ID in aws_source_region
                     region_new_ami_id=$(grep -oE 'ami-[0-9a-z]+' <<< $(aws ec2 copy-image --source-image-id ${{ env.new_ami_id }} --source-region ${{ env.aws_new_ami_source_region }} --region $aws_region --name "ami-$aws_region-${{ env.commit_sha }}"))
 
+                    # wait for ami to become available
+                    aws ec2 wait image-available --image-ids ${region_new_ami_id}
+
                     # update AMI for aws_region in appropriate database to the new AMI ID
                     curl -X POST \
                     -H "Content-Type: application/json" \
