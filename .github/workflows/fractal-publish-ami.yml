@@ -93,7 +93,9 @@ jobs:
               working-directory: ecs-host-setup
               run: |
                   # create the new AMI in aws_new_ami_source_region (region set in previous step)
-                  echo "new_ami_id=$(packer -machine-readable build ami_config.json | grep -oE 'ami-[0-9a-z]+')" >> $GITHUB_ENV
+                  # echo "new_ami_id=$(packer -machine-readable build ami_config.json | grep -oE 'ami-[0-9a-z]+' | tail -1)" >> $GITHUB_ENV
+                  packer -machine-readable build ami_config.json
+                  cat manifest.json
 
                   # update AMI ID for aws_source_region in appropriate database to new AMI ID
                   curl -X POST \
@@ -118,25 +120,25 @@ jobs:
                     ${{ env.graphql_db_url }}
                   done
 
-    # notify-slack:
-    #     name: Notify Slack
-    #     needs: [fractal-build-and-publish-ami-main]
-    #     if: success()
-    #     runs-on: ubuntu-20.04
+    notify-slack:
+        name: Notify Slack
+        needs: [fractal-build-and-publish-ami-main]
+        if: success()
+        runs-on: ubuntu-20.04
 
-    #     steps:
-    #         - name: Notify Slack
-    #           run: |
-    #               if [ "${GITHUB_REF##*/}" == "master" ]; then
-    #                   curl -X POST \
-    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to All Supported AWS Regions from fractal/fractal \`master\` branch.\", \"icon_emoji\": \":fractal:\"}" \
-    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-    #               elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-    #                   curl -X POST \
-    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to All Supported AWS Regions from fractal/fractal \`staging\` branch.\", \"icon_emoji\": \":fractal:\"}" \
-    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-    #               else
-    #                   curl -X POST \
-    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to All Supported AWS Regions from fractal/fractal \`dev\` branch.\", \"icon_emoji\": \":fractal:\"}" \
-    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-    #               fi
+        steps:
+            - name: Notify Slack
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to All Supported AWS Regions from fractal/fractal \`master\` branch.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to All Supported AWS Regions from fractal/fractal \`staging\` branch.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  else
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to All Supported AWS Regions from fractal/fractal \`dev\` branch.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  fi
