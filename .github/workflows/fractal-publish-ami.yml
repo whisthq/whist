@@ -93,57 +93,44 @@ jobs:
             - name: Create New AMI in aws_new_ami_source_region via Packer and Update Appropriate Database (prod, staging, dev)
               working-directory: ecs-host-setup
               run: |
-                  cat ami_config.json
-                  # create the new AMI in aws_new_ami_source_region (region set in previous step)
+                  # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
                   packer -machine-readable build ami_config.json
-                  new_ami_id=$(cat manifest.json | jq ".builds[0].artifact_id" | grep -oE 'ami-[0-9a-z]+')
+                  new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
                   echo "new_ami_id=${new_ami_id}" >> $GITHUB_ENV
 
-    #               # update AMI ID for aws_source_region in appropriate database to new AMI ID
-    #               curl -X POST \
-    #               -H "Content-Type: application/json" \
-    #               -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-    #               --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${new_ami_id}\\\" }, where: { region_name: { _eq: \\\"${{ env.aws_new_ami_source_region }}\\\" } }) { returning { ami_id } } }\" }" \
-    #               ${{ env.graphql_db_url }}
+                  # update AMI for all regions in appropriate database
+                  for artifact in ${new_ami_ids}
+                  do
+                    ami_id=$(echo ${artifact} | grep -oE 'ami-[0-9a-z]+')
+                    region=$(echo ${artifact} | grep -oE '[0-9a-z-]+:'| sed 's/.$//')
+                    
+                    curl -X POST \
+                    -H "Content-Type: application/json" \
+                    -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
+                    --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${ami_id}\\\" }, where: { region_name: { _eq: \\\"${region}\\\" } }) { returning { ami_id } } }\" }" \
+                    ${{ env.graphql_db_url }}
+                  done
 
-    #         - name: Copy New AMI to All Supported AWS Regions
-    #           working-directory: ecs-host-setup
-    #           run: |
-    #               for aws_region in ${{ env.aws_additional_supported_regions }}
-    #               do
-    #                 # retrieve new AMI ID for aws_region, from the new AMI ID in aws_source_region
-    #                 region_new_ami_id=$(grep -oE 'ami-[0-9a-z]+' <<< $(aws ec2 copy-image --source-image-id ${{ env.new_ami_id }} --source-region ${{ env.aws_new_ami_source_region }} --region $aws_region --name "ami-$aws_region-${{ env.commit_sha }}"))
 
-    #                 # wait for ami to become available
-    #                 aws ec2 wait image-available --image-ids ${region_new_ami_id}
+    notify-slack:
+        name: Notify Slack
+        needs: [fractal-build-and-publish-ami-main]
+        if: success()
+        runs-on: ubuntu-20.04
 
-    #                 # update AMI for aws_region in appropriate database to the new AMI ID
-    #                 curl -X POST \
-    #                 -H "Content-Type: application/json" \
-    #                 -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-    #                 --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${region_new_ami_id}\\\" }, where: { region_name: { _eq: \\\"${aws_region}\\\" } }) { returning { ami_id } } }\" }" \
-    #                 ${{ env.graphql_db_url }}
-    #               done
-
-    # notify-slack:
-    #     name: Notify Slack
-    #     needs: [fractal-build-and-publish-ami-main]
-    #     if: success()
-    #     runs-on: ubuntu-20.04
-
-    #     steps:
-    #         - name: Notify Slack
-    #           run: |
-    #               if [ "${GITHUB_REF##*/}" == "master" ]; then
-    #                   curl -X POST \
-    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to All Supported AWS Regions from fractal/fractal \`master\` branch.\", \"icon_emoji\": \":fractal:\"}" \
-    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-    #               elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-    #                   curl -X POST \
-    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to All Supported AWS Regions from fractal/fractal \`staging\` branch.\", \"icon_emoji\": \":fractal:\"}" \
-    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-    #               else
-    #                   curl -X POST \
-    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to All Supported AWS Regions from fractal/fractal \`dev\` branch.\", \"icon_emoji\": \":fractal:\"}" \
-    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-    #               fi
+        steps:
+            - name: Notify Slack
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to All Supported AWS Regions from fractal/fractal \`master\` branch.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to All Supported AWS Regions from fractal/fractal \`staging\` branch.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  else
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to All Supported AWS Regions from fractal/fractal \`dev\` branch.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  fi
