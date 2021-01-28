@@ -126,7 +126,7 @@ jobs:
 
             - name: Push container images
               working-directory: container-images
-              if: fractal-publish-build-config.outputs.publishing == 'true'
+              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
               run: |
                   for app in ${{ env.apps }}
                   do
@@ -213,7 +213,7 @@ jobs:
                   image: ${{ env.ghcr_base_uri }}/fractal/${{ matrix.app }}:${{ env.containers_gha_sha }}
 
             - name: Deploy to Amazon ECS service
-              if: fractal-publish-build-config.outputs.publishing == 'true'
+              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                   task-definition: ${{ steps.render-web-container.outputs.task-definition }}
@@ -279,7 +279,7 @@ jobs:
               run: make build
 
             - name: Upload binary to S3
-              if: fractal-publish-build-config.outputs.publishing == 'true'
+              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
               run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
 
             - name: Notify Slack
@@ -315,6 +315,8 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0 # need to get full history for splitsh-lite
 
             - name: Authenticate Heroku
               run: |
@@ -355,7 +357,7 @@ jobs:
                   git checkout workflows-private/main-webserver
 
             - name: Push to Heroku remote, deploying the app # force push is only necessary for the transition period, then should be removed
-              if: fractal-publish-build-config.outputs.publishing == 'true'
+              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
               run: git push -f heroku-fractal-server workflows-private/main-webserver:master
 
             - name: Notify Slack
