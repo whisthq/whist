@@ -59,23 +59,24 @@ jobs:
             - name: Detect Job(s)
               id: detect-job
               run: |
-                  # first, check whether we're running from a push or from a workflow_dispatch
-                  if [[ ${{ github.event_name }} == 'push' ]]; then
-                    # running from push
+                  # if running from workflow_dispatch, a job-name will be set, so we set it as environment variable
+                  # if running from push, no job-name will be set, so we set null as environment variable
+                  INPUT_JOB_NAME=${{ github.event.inputs.job-name }}
+                  if [[ -z $INPUT_JOB_NAME ]]; then
+                    INPUT_JOB_NAME=null
+                  fi
+
+                  # by design, we want to run either only one specific job, or all jobs                    
+                  if [[ ${{ github.event_name }} == 'push' || ${{ github.event.inputs.job-name }} == 'all' ]]; then
                     JOB_NAME=all
-                  else
-                    # running workflow_dispatch, select which job(s) to run (by deisgn, either one specific job or all of them)
-                    if [[ ${{ github.event.inputs.job-name }} == 'all' ]]; then
-                      JOB_NAME=all
-                    elif [[ ${{ github.event.inputs.job-name }} == 'container-images-publish-images-ghcr' ]]; then
-                      JOB_NAME=container-images-publish-images-ghcr
-                    elif [[ ${{ github.event.inputs.job-name }} == 'ecs-task-definitions-deploy-task-definitions-ecs' ]]; then
-                      JOB_NAME=ecs-task-definitions-deploy-task-definitions-ecs
-                    elif [[ ${{ github.event.inputs.job-name }} == 'ecs-host-service-publish-build-s3' ]]; then
-                      JOB_NAME=ecs-host-service-publish-build-s3
-                    elif [[ ${{ github.event.inputs.job-name }} == 'main-webserver-deploy-heroku' ]]; then
-                      JOB_NAME=main-webserver-deploy-heroku
-                    fi
+                  elif [[ ${{ github.event.inputs.job-name }} == 'container-images-publish-images-ghcr' ]]; then
+                    JOB_NAME=container-images-publish-images-ghcr
+                  elif [[ ${{ github.event.inputs.job-name }} == 'ecs-task-definitions-deploy-task-definitions-ecs' ]]; then
+                    JOB_NAME=ecs-task-definitions-deploy-task-definitions-ecs
+                  elif [[ ${{ github.event.inputs.job-name }} == 'ecs-host-service-publish-build-s3' ]]; then
+                    JOB_NAME=ecs-host-service-publish-build-s3
+                  elif [[ ${{ github.event.inputs.job-name }} == 'main-webserver-deploy-heroku' ]]; then
+                    JOB_NAME=main-webserver-deploy-heroku
                   fi
 
                   echo "job is $JOB_NAME"
