@@ -87,7 +87,10 @@ jobs:
                   | jq -c ".builders[0].ami_regions = \"${{ env.aws_additional_supported_regions }}\""
                   > ami_config_tmp.json
                   && mv ami_config_tmp.json ami_config.json
-                  cat ami_config.json
+                  
+            - name: Print ami_config.json
+              working-directory: ecs-host-setup
+              run:cat ami_config.json
 
     #         # This spins up an AWS EC2 instance to create the AMI, and then deletes it
     #         # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
