@@ -11,7 +11,7 @@ on:
             - master
             - staging
             - dev
-            # - mia/packer-ami # TODO: remove after testing
+            - mia/packer-ami # TODO: remove after testing
     workflow_dispatch:
 
 jobs:
