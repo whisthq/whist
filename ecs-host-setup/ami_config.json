@@ -7,6 +7,7 @@
       "type": "amazon-ebs",
       "region": "PLACEHOLDER",
       "source_ami": "PLACEHOLDER",
+      "ami_regions": "PLACEHOLDER",
       "instance_type": "PLACEHOLDER",
       "iam_instance_profile": "PackerAMIBuilder",
       "ssh_username": "ubuntu",
