@@ -17,6 +17,15 @@ on:
             - "**/README.md"
             - ".github/workflows/README.md"
     workflow_dispatch:
+        inputs:
+            job-name:
+                description: "Name of the job to trigger, or 'all' to trigger all jobs."
+                required: true
+                default: "None" # Avoid accidental mistakes by making the default not run any jobs
+            publish:
+                description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing"
+                required: true
+                default: false # Avoid accidental mistakes by making the default not publish
 
 jobs:
     # Configure Jobs
@@ -27,7 +36,8 @@ jobs:
         runs-on: ubuntu-20.04
         outputs:
             branch: ${{ steps.detect-branch.outputs.branch }}
-
+            job: ${{ steps.detect-job.outputs.job }}
+            publishing: ${{ steps.detect-publishing.outputs.publishing }}
         steps:
             - name: Detect Branch
               id: detect-branch
@@ -46,6 +56,36 @@ jobs:
                   echo "branch is $BRANCH_NAME"
                   echo "::set-output name=branch::$BRANCH_NAME"
 
+            - name: Detect Job(s)
+              id: detect-job
+              run: |
+                  # by design, we want to be able to manually run either only one job or all jobs
+                  if [[ ${{ github.event_name }} == 'push' || ${{ github.event.inputs.job-name }} == 'all' ]]; then
+                    JOB_NAME=all
+                  elif [[ ${{ github.event.inputs.job-name }} == 'container-images-publish-images-ghcr' ]]; then
+                    JOB_NAME=container-images-publish-images-ghcr
+                  elif [[ ${{ github.event.inputs.job-name }} == 'ecs-task-definitions-deploy-task-definitions-ecs' ]]; then
+                    JOB_NAME=ecs-task-definitions-deploy-task-definitions-ecs
+                  elif [[ ${{ github.event.inputs.job-name }} == 'ecs-host-service-publish-build-s3' ]]; then
+                    JOB_NAME=ecs-host-service-publish-build-s3
+                  elif [[ ${{ github.event.inputs.job-name }} == 'main-webserver-deploy-heroku' ]]; then
+                    JOB_NAME=main-webserver-deploy-heroku
+                  fi
+                  echo "job is $JOB_NAME"
+                  echo "::set-output name=job::$JOB_NAME"
+
+            - name: Detect Whether to Publish the Job(s) or Not
+              id: detect-publish
+              run: |
+                  if [[ ${{ github.event.inputs.publish }} == 'true' ]]; then
+                    PUBLISHING=true
+                  else
+                    PUBLISHING=false
+                  fi
+
+                  echo "publishing is $PUBLISHING"
+                  echo "::set-output name=publishing::$PUBLISHING"
+
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
     # Runs if config succeeds and branch is in ["master"].
@@ -55,8 +95,9 @@ jobs:
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
         needs: [fractal-publish-build-config]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
-
+        if: >
+            contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
+            contains(fromJSON('["all", "container-images-publish-images-ghcr"]'), needs.fractal-publish-build-config.outputs.job)
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -85,6 +126,7 @@ jobs:
 
             - name: Push container images
               working-directory: container-images
+              if: fractal-publish-build-config.outputs.publishing == 'true'
               run: |
                   for app in ${{ env.apps }}
                   do
@@ -120,7 +162,9 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
+        if: >
+            contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
+            contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
 
         strategy:
             matrix:
@@ -169,6 +213,7 @@ jobs:
                   image: ${{ env.ghcr_base_uri }}/fractal/${{ matrix.app }}:${{ env.containers_gha_sha }}
 
             - name: Deploy to Amazon ECS service
+              if: fractal-publish-build-config.outputs.publishing == 'true'
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                   task-definition: ${{ steps.render-web-container.outputs.task-definition }}
@@ -179,9 +224,10 @@ jobs:
     ecs-task-definitions-notify-slack:
         name: "ECS Task Definitions: Notify Slack"
         needs: [ecs-task-definitions-deploy-task-definitions-ecs]
-        if: success()
+        if: >
+            success() &&
+            contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
         runs-on: ubuntu-20.04
-
         steps:
             - name: Notify Slack
               run: |
@@ -197,11 +243,13 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch)
+        if: >
+            contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
+            contains(fromJSON('["all", "ecs-host-service-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
         env:
             binary-location: ecs-host-service/build
             binary-name: ecs-host-service
-            s3-bucket-region: us-east-1 # eventually, we should replicate s3 per region
+            s3-bucket-region: us-east-1
             s3-bucket-uri: s3://fractal-ecs-host-service
 
         steps:
@@ -231,6 +279,7 @@ jobs:
               run: make build
 
             - name: Upload binary to S3
+              if: fractal-publish-build-config.outputs.publishing == 'true'
               run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
 
             - name: Notify Slack
@@ -247,25 +296,21 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: |
+        if: >
             (
+              (
                 contains(
-                    fromJSON('["master"]'),
-                    needs.fractal-publish-build-config.outputs.branch
+                  fromJSON('["master"]'),
+                  needs.fractal-publish-build-config.outputs.branch
                 ) && success()
-            ) ||
-            (
+              ) ||
+              (
                 contains(
-                    fromJSON('["staging"]'),
-                    needs.fractal-publish-build-config.outputs.branch
+                  fromJSON('["staging", "dev"]'),
+                  needs.fractal-publish-build-config.outputs.branch
                 ) && always()
-            ) ||
-            (
-                contains(
-                    fromJSON('["dev"]'),
-                    needs.fractal-publish-build-config.outputs.branch
-                ) && always()
-            )
+              )
+            ) && contains(fromJSON('["all"], ["main-webserver-deploy-heroku"]'), needs.fractal-publish-build-config.outputs.job)
 
         steps:
             - name: Checkout Git Repository
@@ -310,8 +355,8 @@ jobs:
                   git checkout workflows-private/main-webserver
 
             - name: Push to Heroku remote, deploying the app # force push is only necessary for the transition period, then should be removed
-              run: |
-                  git push -f heroku-fractal-server workflows-private/main-webserver:master
+              if: fractal-publish-build-config.outputs.publishing == 'true'
+              run: git push -f heroku-fractal-server workflows-private/main-webserver:master
 
             - name: Notify Slack
               run: |
