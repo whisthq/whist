@@ -9,6 +9,9 @@ from dropbox import Dropbox
 from google_auth_oauthlib.flow import Flow
 from oauthlib.oauth2 import InvalidGrantError
 
+from app.models.oauth import _provider_id_to_app_name
+from app.serializers.oauth import CredentialSchema
+
 from ..patches import function, Object
 
 
@@ -167,3 +170,19 @@ def test_revoke_error(make_credential):
     credential = make_credential("google")
 
     credential.revoke(cleanup=False)
+
+
+def test_serialize(make_credential, provider):
+    """Make sure the CredentialSchema serializer serializes provider_id correctly."""
+
+    schema = CredentialSchema()
+    credential = make_credential(provider)
+    obj = schema.dump(credential)
+
+    assert obj == {
+        "access_token": credential.access_token,
+        "provider": _provider_id_to_app_name(credential.provider_id),
+        "expiry": credential.expiry.isoformat(),
+        "refresh_token": credential.refresh_token,
+        "token_type": credential.token_type,
+    }
