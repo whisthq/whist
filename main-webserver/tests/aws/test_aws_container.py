@@ -14,12 +14,7 @@ from app.celery.aws_ecs_modification import update_cluster
 from app.celery.aws_ecs_creation import _poll
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
-from app.models import (
-    ClusterInfo,
-    db,
-    UserContainer,
-    RegionToAmi
-)
+from app.models import ClusterInfo, db, UserContainer, RegionToAmi
 
 from ..helpers.general.progress import fractalJobRunner, queryStatus
 
@@ -302,6 +297,7 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
 
 @shared_task(bind=True)
 def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
+    setattr(mock_update_cluster, "was_called") # mark function as called
     # check that the arguments are as expected
     assert cluster_name == pytest.cluster_name
     assert region_name == "us-east-1"
@@ -330,6 +326,7 @@ def test_update_region(client, admin, monkeypatch):
         logs="Calling update_region with monkeypatched update_cluster",
     )
 
+    db.session.expire_all()
     all_regions_pre = RegionToAmi.query.all()
     region_to_ami_pre = {region.region_name: region.ami_id for region in all_regions_pre}
 
@@ -337,12 +334,11 @@ def test_update_region(client, admin, monkeypatch):
         "/aws_container/update_region",
         json=dict(
             region_name="us-east-1",
-            ami="ami-0ff8a91507f77f867", # a generic Linux AMI
+            ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
         ),
     )
 
     task = queryStatus(client, resp, timeout=10)
-
     if task["status"] < 1:
         fractal_log(
             function="test_update_region",
@@ -352,14 +348,17 @@ def test_update_region(client, admin, monkeypatch):
         )
         assert False
 
+    db.session.expire_all()
     all_regions_post = RegionToAmi.query.all()
     region_to_ami_post = {region.region_name: region.ami_id for region in all_regions_post}
     for region in region_to_ami_post:
         if region == "us-east-1":
-            assert region_to_ami_post[region] == "ami-0ff8a91507f77f867" # a generic Linux AMI
+            assert region_to_ami_post[region] == "ami-0ff8a91507f77f867"  # a generic Linux AMI
         else:
             # nothing else in db should change
             assert region_to_ami_post[region] == region_to_ami_pre[region]
+
+    assert hasattr(mock_update_cluster, "was_called"), "mock_update_cluster was never called!"
 
     assert True
 

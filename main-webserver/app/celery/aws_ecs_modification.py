@@ -9,6 +9,7 @@ from app.models import (
     ClusterInfo,
     RegionToAmi,
 )
+from app.helpers.utils.general.sql_commands import fractal_sql_commit
 
 
 @shared_task(bind=True)
@@ -66,9 +67,12 @@ def update_region(self, region_name="us-east-1", ami=None):
             "msg": (f"updating to ami {ami} in region {region_name}"),
         },
     )
-    region_to_ami = RegionToAmi.query.filter_by(
-        region_name=region_name,
-    ).limit(1).first()
+    region_to_ami = (
+        RegionToAmi.query.filter_by(
+            region_name=region_name,
+        )
+        .first()
+    )
 
     if region_to_ami is None:
         raise ValueError(f"Region {region_name} is not in db.")
@@ -79,7 +83,7 @@ def update_region(self, region_name="us-east-1", ami=None):
     else:
         # update db with new AMI
         region_to_ami.ami_id = ami
-        db.session.commit()
+        fractal_sql_commit(db)
 
     all_clusters = list(ClusterInfo.query.filter_by(location=region_name).all())
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
@@ -115,8 +119,6 @@ def update_region(self, region_name="us-east-1", ami=None):
         logs="update_region is returning with success. It spun up the "
         f"following update_cluster tasks: {tasks}",
     )
-
-    region_name
 
     self.update_state(
         state="SUCCESS",
