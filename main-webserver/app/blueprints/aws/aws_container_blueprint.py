@@ -112,6 +112,8 @@ def test_endpoint(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "update_region":
+        from app.helpers.utils.general.logs import fractal_log
+
         fractal_log(
             "test_endpoint",
             None,
