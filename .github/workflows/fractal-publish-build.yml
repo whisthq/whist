@@ -315,6 +315,8 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0 # need to get full history for splitsh-lite
 
             - name: Authenticate Heroku
               run: |
