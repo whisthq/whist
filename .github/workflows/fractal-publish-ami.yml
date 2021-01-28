@@ -33,7 +33,7 @@ jobs:
             # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
             # We define them as a Bash environment variable array directly since it is not supported in the GHA env context
             - name: Define Supported AWS Regions (in addition to aws_new_ami_source_region, defined above)
-              run: echo "aws_additional_supported_regions=[\\\\\"us-east-2\\\\\", \\\\\"us-west-1\\\\\", \\\\\"us-west-2\\\\\", \\\\\"ca-central-1\\\\\", \\\\\"eu-west-1\\\\\", \\\\\"eu-central-1\\\\\"]" >> $GITHUB_ENV
+              run: echo 'aws_additional_supported_regions=[\\\\\"us-east-2\\\\\", \\\\\"us-west-1\\\\\", \\\\\"us-west-2\\\\\", \\\\\"ca-central-1\\\\\", \\\\\"eu-west-1\\\\\", \\\\\"eu-central-1\\\\\"]' >> $GITHUB_ENV
 
             - name: Retrieve Current Git Hash as Environment Variable
               run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
