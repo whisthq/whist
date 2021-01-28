@@ -254,61 +254,22 @@ def test_delete_container(client):
     assert True
 
 
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
-@pytest.mark.usefixtures("celery_worker")
-@pytest.mark.usefixtures("_retrieve_user")
-@pytest.mark.usefixtures("admin")
-def test_delete_cluster(client, cluster=pytest.cluster_name):
-    cluster = cluster or pytest.cluster_name
-    fractal_log(
-        function="test_delete_cluster",
-        label="cluster/delete",
-        logs="Starting to delete cluster {}".format(cluster),
-    )
-
-    resp = client.post(
-        "/aws_container/delete_cluster",
-        json=dict(
-            cluster_name=pytest.cluster_name,
-            region_name="us-east-1",
-        ),
-    )
-
-    task = queryStatus(client, resp, timeout=10)
-
-    if task["status"] < 1:
-        fractal_log(
-            function="test_delete_cluster",
-            label="cluster/delete",
-            logs=task["output"],
-            level=logging.ERROR,
-        )
-        assert False
-    if ClusterInfo.query.get(cluster):
-        fractal_log(
-            function="test_delete_cluster",
-            label="cluster/delete",
-            logs="Cluster was not deleted in database",
-            level=logging.ERROR,
-        )
-        assert False
-    assert True
-
-
 @shared_task(bind=True)
 def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
-    setattr(mock_update_cluster, "was_called", "true")  # mark function as called
+    success = True
     # check that the arguments are as expected
-    assert cluster_name == pytest.cluster_name
-    assert region_name == "us-east-1"
-    assert ami == "ami-0ff8a91507f77f867"  # a generic Linux AMI
+    if cluster_name != pytest.cluster_name:
+        success = False
+    elif region_name != "us-east-1":
+        success = False
+    elif ami != "ami-0ff8a91507f77f867":  # a generic Linux AMI
+        success = False
+
+    # testing code reads this
+    setattr(mock_update_cluster, "test_passed", success)
 
     self.update_state(
         state="SUCCESS",
-        meta={
-            "msg": ("mock got the right args"),
-        },
     )
 
 
@@ -365,8 +326,49 @@ def test_update_region(client, admin, monkeypatch):
             # nothing else in db should change
             assert region_to_ami_post[region] == region_to_ami_pre[region]
 
-    assert hasattr(mock_update_cluster, "was_called"), "mock_update_cluster was never called!"
+    assert hasattr(mock_update_cluster, "test_passed"), "mock_update_cluster was never called!"
+    assert getattr(mock_update_cluster, "test_passed")
 
+
+@pytest.mark.container_serial
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+@pytest.mark.usefixtures("_retrieve_user")
+@pytest.mark.usefixtures("admin")
+def test_delete_cluster(client, cluster=pytest.cluster_name):
+    cluster = cluster or pytest.cluster_name
+    fractal_log(
+        function="test_delete_cluster",
+        label="cluster/delete",
+        logs="Starting to delete cluster {}".format(cluster),
+    )
+
+    resp = client.post(
+        "/aws_container/delete_cluster",
+        json=dict(
+            cluster_name=pytest.cluster_name,
+            region_name="us-east-1",
+        ),
+    )
+
+    task = queryStatus(client, resp, timeout=10)
+
+    if task["status"] < 1:
+        fractal_log(
+            function="test_delete_cluster",
+            label="cluster/delete",
+            logs=task["output"],
+            level=logging.ERROR,
+        )
+        assert False
+    if ClusterInfo.query.get(cluster):
+        fractal_log(
+            function="test_delete_cluster",
+            label="cluster/delete",
+            logs="Cluster was not deleted in database",
+            level=logging.ERROR,
+        )
+        assert False
     assert True
 
 
