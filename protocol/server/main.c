@@ -114,6 +114,9 @@ volatile bool update_encoder;
 bool pending_encoder;
 bool encoder_finished;
 VideoEncoder* encoder_factory_result = NULL;
+// If we are using nvidia's built in encoder, then we do not need to create a real encoder
+// struct since frames will already be encoded, So we can use this dummy encoder.
+VideoEncoder dummy_encoder = {0};
 
 int encoder_factory_server_w;
 int encoder_factory_server_h;
@@ -267,7 +270,9 @@ int32_t multithreaded_encoder_factory(void* opaque) {
 
 int32_t multithreaded_destroy_encoder(void* opaque) {
     VideoEncoder* encoder = (VideoEncoder*)opaque;
-    destroy_video_encoder(encoder);
+    if (encoder != &dummy_encoder) {
+        destroy_video_encoder(encoder);
+    }
     return 0;
 }
 
@@ -289,10 +294,6 @@ int32_t send_video(void* opaque) {
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
     VideoEncoder* encoder = NULL;
-
-    // If we are using nvidia's built in encoder, then we do not need to create a real encoder
-    // struct since frames will already be encoded
-    VideoEncoder dummy_encoder = {0};
 
     double worst_fps = 40.0;
     int ideal_bitrate = current_bitrate;
@@ -332,6 +333,7 @@ int32_t send_video(void* opaque) {
 
         // Update device with new parameters
         if (update_device) {
+            LOG_INFO("PROFILE_DIMENSION updating device");
             update_device = false;
 
             /* TODO: This should be done inside of destroy_capture_device
@@ -342,11 +344,14 @@ int32_t send_video(void* opaque) {
             */
 
             if (device) {
+                LOG_INFO("PROFILE_DIMENSION destroying capture device");
                 destroy_capture_device(device);
+                LOG_INFO("PROFILE_DIMENSION done destroying capture device");
                 device = NULL;
             }
 
             device = &rdevice;
+            LOG_INFO("PROFILE_DIMENSION creating capture device");
             if (create_capture_device(device, client_width, client_height, client_dpi,
                                       current_bitrate, client_codec_type) < 0) {
                 LOG_WARNING("Failed to create capture device");
@@ -356,6 +361,7 @@ int32_t send_video(void* opaque) {
                 SDL_Delay(100);
                 continue;
             }
+            LOG_INFO("PROFILE_DIMENSION done creating capture device");
 
             LOG_INFO("Created Capture Device of dimensions %dx%d", device->width, device->height);
 
@@ -391,9 +397,12 @@ int32_t send_video(void* opaque) {
         // Update encoder with new parameters
         if (update_encoder) {
             if (device->using_nvidia) {
+                LOG_INFO("PROFILE_DIMENSION updating encoder");
                 // If this device uses a device encoder, then we should update it
                 update_capture_encoder(device, current_bitrate, client_codec_type);
                 // We keep the dummy encoder as-is
+                LOG_INFO("PROFILE_DIMENSION done updating encoder");
+                update_encoder = false;
             } else {
                 // Otherwise, this capture device must use an external encoder,
                 // so we should start making it in our encoder factory
