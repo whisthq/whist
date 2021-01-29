@@ -198,7 +198,7 @@ def test_update_cluster(client):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_delete_container(client):
+def test_delete_container(client, monkeypatch):
     fractal_log(
         function="test_delete_container",
         label="container/delete",
@@ -216,12 +216,9 @@ def test_delete_container(client):
 
     # delete_container will call manual_scale_cluster
     # it should follow through the logic until it actually tries to kill the instance,
-    # which we don't need to do since delete_cluster handles it
-    mock_set_capacity_success = False
-
+    # which we don't need to do since delete_cluster handles it. hence we mock it.
     def mock_set_capacity(self, asg_name: str, desired_capacity: int):
-        nonlocal mock_set_capacity_success
-        mock_set_capacity_success = desired_capacity == 0
+        setattr(mock_set_capacity, "test_passed", desired_capacity == 0)
 
     monkeypatch.setattr(ECSClient, "set_auto_scaling_group_capacity", mock_set_capacity)
 
@@ -255,25 +252,8 @@ def test_delete_container(client):
         )
         assert False
 
-    assert mock_set_capacity_success
-    assert True
-
-
-# @pytest.mark.usefixtures("celery_session_app")
-# @pytest.mark.usefixtures("celery_session_worker")
-# def test_manual_scale_cluster(monkeypatch):
-#     cluster = pytest.cluster_name
-#     region = "us-east-1"
-
-#     # the next function will actually delete the cluster. This checks to
-#     # see if manual scaler would have
-#     def mock_set_capacity(self, asg_name: str, desired_capacity: int):
-#         assert desired_capacity == 0
-
-#     monkeypatch.setattr(ECSClient, "set_auto_scaling_group_capacity", "mock_set_capacity")
-#     res = manual_scale_cluster.delay(cluster, region).get(timeout=10)
-
-#     assert res.successful()
+    assert hasattr(mock_set_capacity, "test_passed")  # make sure function was called
+    assert getattr(mock_set_capacity, "test_passed")  # make sure function passed
 
 
 @pytest.mark.container_serial
