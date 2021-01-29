@@ -166,8 +166,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     for k in keys:
         if k not in cluster_data:
             raise ValueError(
-                f"""Expected key {k} in AWS describle_cluster API response. 
-                            Got: {cluster_data}"""
+                f"""Expected key {k} in AWS describle_cluster API response. Got: {cluster_data}"""
             )
 
     num_tasks = cluster_data["runningTasksCount"] + cluster_data["pendingTasksCount"]
@@ -190,8 +189,8 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     for instance_task_data in instances_tasks:
         if "runningTasksCount" not in instance_task_data:
             raise ValueError(
-                f"""Expected key {k} in AWS describe_container_instances 
-                            API response: {instance_task_data}"""
+                f"""Expected key {k} in AWS describe_container_instances API response:
+                 {instance_task_data}"""
             )
         num_tasks = instance_task_data["runningTasksCount"]
         if num_tasks == 0:
@@ -211,8 +210,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         self.update_state(
             state="SUCCESS",
             meta={
-                "msg": """Detected that scale-down should happen but could 
-                        not because there are no empty instances.""",
+                "msg": "Could not scale-down because no empty instances.",
             },
         )
 
