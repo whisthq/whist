@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# This script takes an EC2 instance set up for running Fractal manually (for development) via setup_ubuntu20_host.sh
-# and sets it up to run Fractal automatically (for production).
+# This script takes an EC2 instance already set up for running Fractal manually
+# (for development) via setup_ubuntu20_host.sh and sets it up to run Fractal
+# automatically (for production).
 
 set -Eeuo pipefail
 
