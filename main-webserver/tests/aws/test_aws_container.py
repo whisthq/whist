@@ -80,98 +80,98 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
     assert True
 
 
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
-@pytest.mark.usefixtures("celery_worker")
-@pytest.mark.usefixtures("_retrieve_user")
-@pytest.mark.usefixtures("_save_user")
-def test_assign_container(client, admin, monkeypatch):
-    monkeypatch.setattr(_poll, "__code__", (lambda *args, **kwargs: True).__code__)
+# @pytest.mark.container_serial
+# @pytest.mark.usefixtures("celery_app")
+# @pytest.mark.usefixtures("celery_worker")
+# @pytest.mark.usefixtures("_retrieve_user")
+# @pytest.mark.usefixtures("_save_user")
+# def test_assign_container(client, admin, monkeypatch):
+#     monkeypatch.setattr(_poll, "__code__", (lambda *args, **kwargs: True).__code__)
 
-    fractal_log(
-        function="test_assign_container",
-        label="container/assign",
-        logs="Starting to assign container in cluster {}".format(pytest.cluster_name),
-    )
-    resp = client.post(
-        "/aws_container/assign_container",
-        json=dict(
-            username=admin.user_id,
-            cluster_name=pytest.cluster_name,
-            region_name="us-east-1",
-            task_definition_arn="fractal-browsers-chrome",
-        ),
-    )
+#     fractal_log(
+#         function="test_assign_container",
+#         label="container/assign",
+#         logs="Starting to assign container in cluster {}".format(pytest.cluster_name),
+#     )
+#     resp = client.post(
+#         "/aws_container/assign_container",
+#         json=dict(
+#             username=admin.user_id,
+#             cluster_name=pytest.cluster_name,
+#             region_name="us-east-1",
+#             task_definition_arn="fractal-browsers-chrome",
+#         ),
+#     )
 
-    task = queryStatus(client, resp, timeout=50)
+#     task = queryStatus(client, resp, timeout=50)
 
-    if task["status"] < 1:
-        fractal_log(
-            function="test_assign_container",
-            label="container/assign",
-            logs=task["output"],
-            level=logging.ERROR,
-        )
-        assert False
+#     if task["status"] < 1:
+#         fractal_log(
+#             function="test_assign_container",
+#             label="container/assign",
+#             logs=task["output"],
+#             level=logging.ERROR,
+#         )
+#         assert False
 
-    if not task["result"]:
-        fractal_log(
-            function="test_assign_container",
-            label="container/assign",
-            logs="No container returned",
-            level=logging.ERROR,
-        )
-        assert False
-    pytest.container_name = task["result"]["container_id"]
+#     if not task["result"]:
+#         fractal_log(
+#             function="test_assign_container",
+#             label="container/assign",
+#             logs="No container returned",
+#             level=logging.ERROR,
+#         )
+#         assert False
+#     pytest.container_name = task["result"]["container_id"]
 
-    container_name = UserContainer.query.get(pytest.container_name)
-    if container_name is None:
-        fractal_log(
-            function="test_assign_container",
-            label="container/assign",
-            logs="Container was not inserted in database",
-            level=logging.ERROR,
-        )
-        assert False
+#     container_name = UserContainer.query.get(pytest.container_name)
+#     if container_name is None:
+#         fractal_log(
+#             function="test_assign_container",
+#             label="container/assign",
+#             logs="Container was not inserted in database",
+#             level=logging.ERROR,
+#         )
+#         assert False
 
-    assert True
-    return task["result"]
+#     assert True
+#     return task["result"]
 
 
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
-@pytest.mark.usefixtures("celery_worker")
-@pytest.mark.usefixtures("_retrieve_user")
-@pytest.mark.usefixtures("_save_user")
-@pytest.mark.usefixtures("admin")
-def test_send_commands(client):
-    fractal_log(
-        function="test_send_commands",
-        label="cluster/send_commands",
-        logs="Starting to send commands to cluster {}".format(pytest.cluster_name),
-    )
+# @pytest.mark.container_serial
+# @pytest.mark.usefixtures("celery_app")
+# @pytest.mark.usefixtures("celery_worker")
+# @pytest.mark.usefixtures("_retrieve_user")
+# @pytest.mark.usefixtures("_save_user")
+# @pytest.mark.usefixtures("admin")
+# def test_send_commands(client):
+#     fractal_log(
+#         function="test_send_commands",
+#         label="cluster/send_commands",
+#         logs="Starting to send commands to cluster {}".format(pytest.cluster_name),
+#     )
 
-    resp = client.post(
-        "/aws_container/send_commands",
-        json=dict(
-            cluster=pytest.cluster_name,
-            region_name="us-east-1",
-            commands=["echo test_send_commands"],
-        ),
-    )
+#     resp = client.post(
+#         "/aws_container/send_commands",
+#         json=dict(
+#             cluster=pytest.cluster_name,
+#             region_name="us-east-1",
+#             commands=["echo test_send_commands"],
+#         ),
+#     )
 
-    task = queryStatus(client, resp, timeout=10)
+#     task = queryStatus(client, resp, timeout=10)
 
-    if task["status"] < 1:
-        fractal_log(
-            function="test_send_commands",
-            label="cluster/send_commands",
-            logs=task["output"],
-            level=logging.ERROR,
-        )
-        assert False
+#     if task["status"] < 1:
+#         fractal_log(
+#             function="test_send_commands",
+#             label="cluster/send_commands",
+#             logs=task["output"],
+#             level=logging.ERROR,
+#         )
+#         assert False
 
-    assert True
+#     assert True
 
 
 def test_update_cluster():
@@ -187,56 +187,56 @@ def test_update_cluster():
     assert res.state == "SUCCESS"
 
 
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
-@pytest.mark.usefixtures("celery_worker")
-def test_delete_container(client):
-    fractal_log(
-        function="test_delete_container",
-        label="container/delete",
-        logs="Starting to delete container {}".format(pytest.container_name),
-    )
+# @pytest.mark.container_serial
+# @pytest.mark.usefixtures("celery_app")
+# @pytest.mark.usefixtures("celery_worker")
+# def test_delete_container(client):
+#     fractal_log(
+#         function="test_delete_container",
+#         label="container/delete",
+#         logs="Starting to delete container {}".format(pytest.container_name),
+#     )
 
-    container = UserContainer.query.get(pytest.container_name)
-    if container is None:
-        fractal_log(
-            "test_delete_container",
-            label="",
-            logs="No containers returned by UserContainer db",
-        )
-        assert False
+#     container = UserContainer.query.get(pytest.container_name)
+#     if container is None:
+#         fractal_log(
+#             "test_delete_container",
+#             label="",
+#             logs="No containers returned by UserContainer db",
+#         )
+#         assert False
 
-    resp = client.post(
-        "/container/delete",
-        json=dict(
-            private_key=container.secret_key,
-            container_id=pytest.container_name,
-        ),
-    )
+#     resp = client.post(
+#         "/container/delete",
+#         json=dict(
+#             private_key=container.secret_key,
+#             container_id=pytest.container_name,
+#         ),
+#     )
 
-    task = queryStatus(client, resp, timeout=10)
+#     task = queryStatus(client, resp, timeout=10)
 
-    if task["status"] < 1:
-        fractal_log(
-            function="test_delete_container",
-            label="container/delete",
-            logs=task["output"],
-            level=logging.ERROR,
-        )
-        assert False
+#     if task["status"] < 1:
+#         fractal_log(
+#             function="test_delete_container",
+#             label="container/delete",
+#             logs=task["output"],
+#             level=logging.ERROR,
+#         )
+#         assert False
 
-    db.session.expire(container)
+#     db.session.expire(container)
 
-    if UserContainer.query.get(pytest.container_name):
-        fractal_log(
-            function="test_delete_container",
-            label="container/delete",
-            logs="Container was not deleted from database",
-            level=logging.ERROR,
-        )
-        assert False
+#     if UserContainer.query.get(pytest.container_name):
+#         fractal_log(
+#             function="test_delete_container",
+#             label="container/delete",
+#             logs="Container was not deleted from database",
+#             level=logging.ERROR,
+#         )
+#         assert False
 
-    assert True
+#     assert True
 
 
 @shared_task(bind=True)
@@ -317,46 +317,46 @@ def test_update_region(client, admin, monkeypatch):
     assert getattr(mock_update_cluster, "test_passed")
 
 
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
-@pytest.mark.usefixtures("celery_worker")
-@pytest.mark.usefixtures("_retrieve_user")
-@pytest.mark.usefixtures("admin")
-def test_delete_cluster(client, cluster=pytest.cluster_name):
-    cluster = cluster or pytest.cluster_name
-    fractal_log(
-        function="test_delete_cluster",
-        label="cluster/delete",
-        logs="Starting to delete cluster {}".format(cluster),
-    )
+# @pytest.mark.container_serial
+# @pytest.mark.usefixtures("celery_app")
+# @pytest.mark.usefixtures("celery_worker")
+# @pytest.mark.usefixtures("_retrieve_user")
+# @pytest.mark.usefixtures("admin")
+# def test_delete_cluster(client, cluster=pytest.cluster_name):
+#     cluster = cluster or pytest.cluster_name
+#     fractal_log(
+#         function="test_delete_cluster",
+#         label="cluster/delete",
+#         logs="Starting to delete cluster {}".format(cluster),
+#     )
 
-    resp = client.post(
-        "/aws_container/delete_cluster",
-        json=dict(
-            cluster_name=pytest.cluster_name,
-            region_name="us-east-1",
-        ),
-    )
+#     resp = client.post(
+#         "/aws_container/delete_cluster",
+#         json=dict(
+#             cluster_name=pytest.cluster_name,
+#             region_name="us-east-1",
+#         ),
+#     )
 
-    task = queryStatus(client, resp, timeout=10)
+#     task = queryStatus(client, resp, timeout=10)
 
-    if task["status"] < 1:
-        fractal_log(
-            function="test_delete_cluster",
-            label="cluster/delete",
-            logs=task["output"],
-            level=logging.ERROR,
-        )
-        assert False
-    if ClusterInfo.query.get(cluster):
-        fractal_log(
-            function="test_delete_cluster",
-            label="cluster/delete",
-            logs="Cluster was not deleted in database",
-            level=logging.ERROR,
-        )
-        assert False
-    assert True
+#     if task["status"] < 1:
+#         fractal_log(
+#             function="test_delete_cluster",
+#             label="cluster/delete",
+#             logs=task["output"],
+#             level=logging.ERROR,
+#         )
+#         assert False
+#     if ClusterInfo.query.get(cluster):
+#         fractal_log(
+#             function="test_delete_cluster",
+#             label="cluster/delete",
+#             logs="Cluster was not deleted in database",
+#             level=logging.ERROR,
+#         )
+#         assert False
+#     assert True
 
 
 @pytest.mark.skipif(

@@ -22,19 +22,20 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
     :param ami (str): which AMI to use
     :return: which cluster was updated
     """
-    all_regions = RegionToAmi.query.all()
-
-    fractal_log(
-        function="update_cluster",
-        label="None",
-        logs=f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
-    )
     self.update_state(
         state="PENDING",
         meta={
             "msg": (f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"),
         },
     )
+
+    fractal_log(
+        function="update_cluster",
+        label="None",
+        logs=f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
+    )
+
+    all_regions = RegionToAmi.query.all()
     region_to_ami = {region.region_name: region.ami_id for region in all_regions}
     if ami is None:
         ami = region_to_ami[region_name]
