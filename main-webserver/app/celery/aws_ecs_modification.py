@@ -154,7 +154,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         },
     )
 
-    factor = current_app.config["AWS_TASKS_PER_INSTANCE"]
+    factor = int(current_app.config["AWS_TASKS_PER_INSTANCE"])
 
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     cluster_data = ecs_client.describe_cluster(cluster)
