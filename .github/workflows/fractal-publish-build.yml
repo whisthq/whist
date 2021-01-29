@@ -375,9 +375,16 @@ jobs:
     # from which Electron-Updater pulls them for auto-updating
     # Runs if config succeeds and branch is in ["master"] and all previous publish jobs succeed
     client-applications-publish-build-s3:
-        name: "Client Applications: Build & Publish ${{ matrix.config.name }}"      
+        name: "Client Applications: Build & Publish ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
-        needs: [fractal-publish-build-config, container-images-publish-images-ghcr, ecs-task-definitions-deploy-task-definitions-ecs, ecs-host-service-publish-build-s3, main-webserver-deploy-heroku]
+        needs:
+            [
+                fractal-publish-build-config,
+                container-images-publish-images-ghcr,
+                ecs-task-definitions-deploy-task-definitions-ecs,
+                ecs-host-service-publish-build-s3,
+                main-webserver-deploy-heroku,
+            ]
         if: >
             contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "client-applications-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
