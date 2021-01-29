@@ -83,14 +83,19 @@ existsFile=/fractal/userConfigs/$IDENTIFIER/.exists
 #   and the original location is the destination
 # Iterate through the possible configuration locations and copy
 for row in $(cat app-config-map.json | jq -rc '.[]'); do
-    SOURCE_CONFIG_SUBPATH=$(${row} | jq -r '.source')
-    SOURCE_CONFIG_PATH=/fractal/userConfigs/$IDENTIFIER/SOURCE_CONFIG_PATH
-    DEST_CONFIG_PATH=$(${row} | jq -r '.destination')
+    SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
+    SOURCE_CONFIG_PATH=/fractal/userConfigs/$IDENTIFIER/$SOURCE_CONFIG_SUBPATH
+    DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
+
+    # if config path does not exist, then continue
+    if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
+        continue
+    fi
 
     # If no, then copy default configs to the synced app config folder
     if [ ! -f "$existsFile" ]; then
-        cp -rT $SOURCE_CONFIG_PATH
-    done
+        cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
+    fi 
 
     # Remove the original configs and symlink the new ones to the original locations
     rm -rf $DEST_CONFIG_PATH
