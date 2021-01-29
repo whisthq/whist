@@ -11,7 +11,6 @@ on:
             - master
             - staging
             - dev
-            - mia/packer-ami # TODO: remove after testing
         paths-ignore:
             - "README.md"
             - "**/README.md"
@@ -76,6 +75,7 @@ jobs:
                   # confirm Packer version
                   packer --version
 
+            # no quotes around ${{ env.aws_additional_supported_regions }} because ami_regions expects list
             - name: Generate ami_config.json Packer Config File for Building New AMI
               working-directory: ecs-host-setup
               run: >
@@ -90,12 +90,12 @@ jobs:
                   | jq -c ".builders[0].source_ami = \"${{ env.aws_source_ami_id }}\""
                   | jq -c ".builders[0].ami_regions = ${{ env.aws_additional_supported_regions }}"
                   > ami_config_tmp.json
-                  && mv ami_config_tmp.json ami_config.json
-            # no quotes around aws_additional_supported_regions because ami_regions expects list
+                  && mv ami_config_tmp.json 
+                  ami_config.json
 
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
-            - name: Create New AMI in aws_new_ami_source_region via Packer
+            - name: Create New AMI in aws_new_ami_source_region via Packer and Update Appropriate Database
               working-directory: ecs-host-setup
               run: |
                   # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
