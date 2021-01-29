@@ -226,46 +226,46 @@ def test_delete_container(client):
     assert True
 
 
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_session_app")
-@pytest.mark.usefixtures("celery_session_worker")
-@pytest.mark.usefixtures("_retrieve_user")
-@pytest.mark.usefixtures("admin")
-def test_delete_cluster(client, cluster=pytest.cluster_name):
-    cluster = cluster or pytest.cluster_name
-    fractal_log(
-        function="test_delete_cluster",
-        label="cluster/delete",
-        logs="Starting to delete cluster {}".format(cluster),
-    )
+# @pytest.mark.container_serial
+# @pytest.mark.usefixtures("celery_session_app")
+# @pytest.mark.usefixtures("celery_session_worker")
+# @pytest.mark.usefixtures("_retrieve_user")
+# @pytest.mark.usefixtures("admin")
+# def test_delete_cluster(client, cluster=pytest.cluster_name):
+#     cluster = cluster or pytest.cluster_name
+#     fractal_log(
+#         function="test_delete_cluster",
+#         label="cluster/delete",
+#         logs="Starting to delete cluster {}".format(cluster),
+#     )
 
-    resp = client.post(
-        "/aws_container/delete_cluster",
-        json=dict(
-            cluster_name=pytest.cluster_name,
-            region_name="us-east-1",
-        ),
-    )
+#     resp = client.post(
+#         "/aws_container/delete_cluster",
+#         json=dict(
+#             cluster_name=pytest.cluster_name,
+#             region_name="us-east-1",
+#         ),
+#     )
 
-    task = queryStatus(client, resp, timeout=10)
+#     task = queryStatus(client, resp, timeout=10)
 
-    if task["status"] < 1:
-        fractal_log(
-            function="test_delete_cluster",
-            label="cluster/delete",
-            logs=task["output"],
-            level=logging.ERROR,
-        )
-        # assert False # tech debt: spurious test failures caused by AWS API change
-    if ClusterInfo.query.get(cluster):
-        fractal_log(
-            function="test_delete_cluster",
-            label="cluster/delete",
-            logs="Cluster was not deleted in database",
-            level=logging.ERROR,
-        )
-        # assert False # tech debt: spurious test failures caused by AWS API change
-    assert True
+#     if task["status"] < 1:
+#         fractal_log(
+#             function="test_delete_cluster",
+#             label="cluster/delete",
+#             logs=task["output"],
+#             level=logging.ERROR,
+#         )
+#         # assert False # tech debt: spurious test failures caused by AWS API change
+#     if ClusterInfo.query.get(cluster):
+#         fractal_log(
+#             function="test_delete_cluster",
+#             label="cluster/delete",
+#             logs="Cluster was not deleted in database",
+#             level=logging.ERROR,
+#         )
+#         # assert False # tech debt: spurious test failures caused by AWS API change
+#     assert True
 
 
 @pytest.mark.skipif(
