@@ -36,8 +36,8 @@ jobs:
 
             - name: Install Hadolint
               run: |
-                sudo wget -O hadolint https://github.com/hadolint/hadolint/releases/download/v1.19.0/hadolint-Linux-x86_64 \
-                && chmod +x hadolint
+                sudo wget -O hadolint https://github.com/hadolint/hadolint/releases/download/v1.19.0/hadolint-Linux-x86_64 && \
+                sudo chmod +x hadolint
 
             - name: Check if Container Images Dockerfiles Follows Hadolint Standards
               run: ./hadolint ./**/*Dockerfile.20
