@@ -276,7 +276,7 @@ def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=No
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
-@pytest.mark.usefixtures("_retrieve_user")
+@pytest.mark.usefixtures("_save_user")
 def test_update_region(client, admin, monkeypatch):
     # this makes update_cluster behave like dummy_update_cluster. undone after test finishes.
     # we use update_cluster.delay in update_region, but here we override with a mock
